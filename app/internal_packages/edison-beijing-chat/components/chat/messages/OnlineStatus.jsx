@@ -94,7 +94,10 @@ export default class OnlineStatus extends Component {
     const { conversation } = nextProps;
     let chat_online, isAuthenticating;
     if (conversation) {
-      const { curJid } = conversation;
+      const { curJid, jid } = conversation;
+      if (jid === 'NEW_CONVERSATION') {
+        return;
+      }
       chat_online = !!OnlineUserStore.onlineAccounts[curJid];
       isAuthenticating = !!OnlineUserStore.authingAccounts[curJid];
     } else {
