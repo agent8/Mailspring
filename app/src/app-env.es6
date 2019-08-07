@@ -2,14 +2,16 @@
 /* eslint import/no-dynamic-require: 0 */
 import _ from 'underscore';
 import path from 'path';
-import { ipcRenderer, remote } from 'electron';
+import { ipcRenderer, remote, desktopCapturer } from 'electron';
 import { Emitter } from 'event-kit';
 import { mapSourcePosition } from 'source-map-support';
 import fs from 'fs';
+import stream from 'stream';
 import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 const LOG = require('electron-log');
+const archiver = require('archiver');
 let getOSInfo = null;
 let getDeviceHash = null;
 
@@ -241,7 +243,10 @@ export default class AppEnvConstructor {
       getOSInfo = getOSInfo || require('./system-utils').getOSInfo;
       extra.osInfo = getOSInfo();
       extra.chatEnabled = this.config.get('chatEnable');
-      extra.pluginIds = this._findPluginsFromError(error);
+      extra.pluginIds = JSON.stringify(this._findPluginsFromError(error));
+      if (!!extra.errorData) {
+        extra.errorData = JSON.stringify(extra.errorData);
+      }
     } catch (err) {
       // can happen when an error is thrown very early
       extra.pluginIds = [];
@@ -255,35 +260,17 @@ export default class AppEnvConstructor {
   // `AppEnv.reportError` hooks into test failures and dev tool popups.
   //
   reportError(error, extra = {}, { noWindows } = {}) {
-    extra = this._expandReportLog(error, extra);
-
-    if (error instanceof APIError) {
-      // API Errors are logged by our backend and happen all the time (offline, etc.)
-      // Don't clutter the front-end metrics with these.
-      return;
-    }
-
-    if (this.inSpecMode()) {
-      if (global.jasmine || window.jasmine) {
-        jasmine.getEnv().currentSpec.fail(error);
-      }
-    } else if (this.inDevMode() && !noWindows) {
-      if (!this.isDevToolsOpened()) {
-        this.openDevTools();
-        this.executeJavaScriptInDevTools('DevToolsAPI.showPanel(\'console\')');
-      }
-    }
-    this.logError(error);
-    try {
-      const strippedError = this._stripSensitiveData(error);
-      error = strippedError;
-    } catch (e) {
-      console.log(e);
-    }
-    this.errorLogger.reportError(error, extra);
+    this._reportLog(error, extra, { noWindows }, 'error');
   }
 
   reportWarning(error, extra = {}, { noWindows } = {}) {
+    this._reportLog(error, extra, { noWindows }, 'warning');
+  }
+  reportLog(error, extra = {}, { noWindows } = {}) {
+    this._reportLog(error, extra, { noWindows }, 'log');
+  }
+
+  _reportLog(error, extra = {}, { noWindows } = {}, type = '') {
     extra = this._expandReportLog(error, extra);
 
     if (error instanceof APIError) {
@@ -302,14 +289,29 @@ export default class AppEnvConstructor {
         this.executeJavaScriptInDevTools('DevToolsAPI.showPanel(\'console\')');
       }
     }
-    this.logWarning(error);
+    if (type.toLocaleLowerCase() === 'error') {
+      this.logError(error);
+    } else if (type.toLocaleLowerCase() === 'warning') {
+      this.logWarning(error);
+    } else {
+      this.logDebug(error);
+    }
     try {
       const strippedError = this._stripSensitiveData();
       error = strippedError;
+      if (!!extra.errorData) {
+        extra.errorData = this._stripSensitiveData(extra.errorData);
+      }
     } catch (e) {
       console.log(e);
     }
-    this.errorLogger.reportWarning(error, extra);
+    if (type.toLocaleLowerCase() === 'error') {
+      this.errorLogger.reportError(error, extra);
+    } else if (type.toLocaleLowerCase() === 'warning') {
+      this.errorLogger.reportWarning(error, extra);
+    } else {
+      this.errorLogger.reportLog(error, extra);
+    }
   }
 
   initSupportInfo() {
@@ -523,6 +525,9 @@ export default class AppEnvConstructor {
     loadSettings.title = title;
     this.loadSettings = loadSettings;
     this.emitter.emit('window-props-received', this.loadSettings.windowProps)
+  }
+  setWindowTitle(title){
+    this.getCurrentWindow().setTitle(title);
   }
 
   /*
@@ -1122,6 +1127,91 @@ export default class AppEnvConstructor {
     Event.prototype.isPropagationStopped = function isPropagationStopped() {
       return this.propagationStopped;
     };
+  }
+
+  captureScreen() {
+    return new Promise((resolve, reject) => {
+      const resourcePath = this.getConfigDirPath();
+      desktopCapturer.getSources(
+        {
+          types: ['window'],
+          thumbnailSize: { width: 1200, height: 1200 },
+        },
+        (error, sources) => {
+          if (error) {
+            reject(error);
+          }
+          const ourApp = sources.filter(source => {
+            return source.name === 'EdisonMail';
+          });
+          if (ourApp.length === 0) {
+            resolve('');
+          }
+          const img = ourApp[0].thumbnail;
+          if (!img.isEmpty()) {
+            const outputPath = path.join(resourcePath, `${ourApp[0].name}.png`);
+            const output = fs.createWriteStream(outputPath);
+            const pass = new stream.PassThrough();
+            pass.end(img.toPNG());
+            pass.pipe(output);
+            output.on('close', function() {
+              output.close();
+              resolve(outputPath);
+            });
+            output.on('end', function() {
+              output.close();
+              reject();
+            });
+            output.on('error', function() {
+              output.close();
+              reject();
+            });
+          }
+        }
+      );
+    });
+  }
+  grabLogs(fileName = '') {
+    return new Promise((resolve, reject) => {
+      const resourcePath = this.getConfigDirPath();
+      const logPath = path.dirname(LOG.transports.file.findLogPath());
+      if(fileName === ''){
+        fileName = parseInt(Date.now());
+      }
+      const outputPath = path.join(resourcePath, `logs-${fileName}.zip`);
+      const output = fs.createWriteStream(outputPath);
+      const archive = archiver('zip', {
+        zlib: { level: 9 } // Sets the compression level.
+      });
+
+      output.on('close', function() {
+        console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
+        console.log('archiver has been finalized and the output file descriptor has closed.');
+        resolve(outputPath);
+      });
+      output.on('end', function() {
+        console.log('\n----->\nData has been drained');
+        resolve(outputPath);
+      });
+      archive.on('warning', function(err) {
+        if (err.code === 'ENOENT') {
+          console.log(err);
+        } else {
+          output.close();
+          console.log(err);
+          reject(err)
+        }
+      });
+      archive.on('error', function(err) {
+        output.close();
+        console.log(err);
+        reject(err);
+      });
+      archive.pipe(output);
+      archive.directory(logPath, 'uiLog');
+      archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
+      archive.finalize();
+    });
   }
 
   anonymizeAccount(account) {

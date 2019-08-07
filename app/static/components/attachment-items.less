@@ -8,7 +8,7 @@
   display: inline-block;
   position: relative;
   font-size: @font-size-small;
-  margin: 0 0 @spacing-standard @spacing-standard;
+  margin: 0 @spacing-standard @spacing-standard 0;
   width: calc(~'50% - 23px');
   min-width: 320px;
 
@@ -49,7 +49,9 @@
     overflow: visible;
     &:hover {
       .attachment-action-bar {
-        opacity: 1;
+        .file-action-icon {
+          opacity: 1;
+        }
       }
     }
     .attachment-action-bar {
@@ -59,13 +61,13 @@
       right: 0;
       display: flex;
       height: 100%;
-      transition: opacity 0.2s;
-      opacity: 0;
       justify-content: flex-end;
       .file-action-icon {
         border: none;
         margin-left: 0;
         cursor: pointer;
+        transition: opacity 0.2s;
+        opacity: 0;
       }
     }
   }
@@ -85,11 +87,22 @@
       width: 55px;
       height: 55px;
       overflow: hidden;
+      background-color: @off-white-light;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
       .file-icon {
         width: 100%;
       }
       img {
         width: 100%;
+        &.content-mask {
+          width: 30px;
+          margin: 0;
+          margin-top: -2px;
+          background-color: @gray;
+        }
       }
       .file-thumbnail-preview {
         height: 100%;
@@ -117,6 +130,7 @@
       }
       .file-size {
         color: @gray-light;
+        font-weight: bold;
       }
     }
     .file-icon {

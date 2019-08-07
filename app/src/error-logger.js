@@ -8,7 +8,7 @@ if (process.type === 'renderer') {
 } else {
   app = require('electron').app;
 }
-
+const { getDeviceHash } = require('./system-utils');
 var appVersion = app.getVersion();
 var crashReporter = require('electron').crashReporter;
 // var RavenErrorReporter = require('./error-logger-extensions/raven-error-reporter');
@@ -150,6 +150,52 @@ module.exports = ErrorLogger = (function () {
       // console.warn(error, extra);
     }
   };
+  ErrorLogger.prototype.reportLog = function (error, extra = {}) {
+    if (this.inSpecMode) {
+      return;
+    }
+    if (!error) {
+      error = { stack: '' };
+    }
+    if (process.type === 'renderer') {
+      var errorJSON = '{}';
+      try {
+        errorJSON = JSON.stringify(error);
+      } catch (err) {
+        var recoveredError = new Error();
+        recoveredError.stack = error.stack;
+        recoveredError.message = `Recovered Error: ${error.message}`;
+        errorJSON = JSON.stringify(recoveredError);
+      }
+
+      var extraJSON;
+      try {
+        extraJSON = JSON.stringify(extra);
+      } catch (err) {
+        extraJSON = '{}';
+      }
+
+      /**
+       * We synchronously send all errors to the backend main process.
+       *
+       * This is important because errors can frequently happen right
+       * before a renderer window is closing. Since error reporting hits
+       * APIs and is asynchronous it's possible for the window to be
+       * destroyed before the report makes it.
+       *
+       * This is a rare use of `sendSync` to ensure the command has made
+       * it before the window closes.
+       */
+      ipcRenderer.sendSync('report-log', { errorJSON: errorJSON, extra: extraJSON });
+    } else {
+      this._notifyExtensions('reportLog', error, extra);
+    }
+    if (error.name === 'conflict' && error.status === 409) {
+      console.log(error, extra);
+    } else {
+      // console.warn(error, extra);
+    }
+  };
 
   /////////////////////////////////////////////////////////////////////
   ////////////////////////// PRIVATE METHODS //////////////////////////
@@ -157,23 +203,22 @@ module.exports = ErrorLogger = (function () {
 
   ErrorLogger.prototype._startCrashReporter = function (args) {
     const crashPath = path.join(this.resourcePath, 'crashReport');
-    let serverURL = '';
-    if(process.env.NODE_ENV !== 'production'){
-      serverURL = `http://tiger:1127/post`;
-    }else{
-      serverURL = `https://cp.stag.easilydo.cc/api/log/`;
-    }
-    crashReporter.start({
-      productName: 'EdisonMail',
-      companyName: 'Edison Tech',
-      submitURL: serverURL,
-      uploadToServer: true,
-      autoSubmit: true,
-      crashesDirectory: crashPath,
-      extra: {
-        version: appVersion,
-        platform: process.platform,
-      },
+    // const serverURL = `http://tiger:1127/post`;
+    const serverURL = `https://cp.stag.easilydo.cc/api/log2/`;
+    getDeviceHash().then(deviceId=>{
+      crashReporter.start({
+        productName: 'EdisonMail',
+        companyName: 'Edison Tech',
+        submitURL: serverURL,
+        uploadToServer: true,
+        autoSubmit: true,
+        crashesDirectory: crashPath,
+        extra: {
+          version: appVersion,
+          platform: process.platform,
+          deviceId: deviceId
+        },
+      });
     });
   };
 

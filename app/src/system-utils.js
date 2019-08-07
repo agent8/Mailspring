@@ -2,6 +2,7 @@ const os = require('os');
 const crypto = require('crypto');
 const serialNumber = require('serial-number');
 let deviceSerial = '';
+let deviceHash = '';
 const getDeviceHash = () => {
   return new Promise(resolve => {
     if (deviceSerial === '') {
@@ -11,20 +12,18 @@ const getDeviceHash = () => {
         } else {
           deviceSerial = value;
         }
-        resolve(
-          crypto
-            .createHash('sha256')
-            .update(`${os.arch()}-${os.cpus()[0].model}-${deviceSerial}-${os.platform()}`)
-            .digest('hex')
-        );
-      });
-    } else {
-      resolve(
-        crypto
+        deviceHash = crypto
           .createHash('sha256')
           .update(`${os.arch()}-${os.cpus()[0].model}-${deviceSerial}-${os.platform()}`)
-          .digest('hex')
-      );
+          .digest('hex');
+        resolve(deviceHash);
+      });
+    } else {
+      deviceHash = crypto
+        .createHash('sha256')
+        .update(`${os.arch()}-${os.cpus()[0].model}-${deviceSerial}-${os.platform()}`)
+        .digest('hex');
+      resolve(deviceHash);
     }
     // const networks = os.networkInterfaces();
     // const macs = Object.keys(networks)
@@ -46,19 +45,31 @@ const getDeviceHash = () => {
 
 };
 const getOSInfo = () => {
+  let cpuModel = os.cpus();
+  if(Array.isArray(cpuModel) && cpuModel.length > 0){
+    cpuModel = cpuModel[0].model;
+  }
   return {
-    cpuModel: os.cpus(),
+    cpuModel: cpuModel,
     platform: os.platform(),
     arch: os.arch(),
     release: os.release(),
     uptime: os.uptime(),
     freeMemInBytes: os.freemem(),
     totalMemInBytes: os.totalmem(),
-    loadAvg: os.loadavg(),
+    loadAvg: JSON.stringify(os.loadavg()),
   };
 };
+const syncGetDeviceHash = () => {
+  if (deviceHash === '') {
+    getDeviceHash();
+  }
+  return deviceHash;
+};
+syncGetDeviceHash();
 
 module.exports = {
   getDeviceHash: getDeviceHash,
   getOSInfo: getOSInfo,
+  syncGetDeviceHash: syncGetDeviceHash,
 };

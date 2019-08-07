@@ -153,6 +153,9 @@ export default class Application extends EventEmitter {
       fs.mkdirSync(avatarPath);
     }
   }
+  getOpenWindows(){
+    return this.windowManager.getOpenWindows();
+  }
 
   getMainWindow() {
     const win = this.windowManager.get(WindowManager.MAIN_WINDOW);
@@ -487,6 +490,15 @@ export default class Application extends EventEmitter {
     this.on('application:view-help', () => {
       const helpUrl = 'https://www.edison.tech/';
       require('electron').shell.openExternal(helpUrl);
+    });
+    this.on('application:bug-report', () => {
+      const bugReportWindow = this.windowManager.get(WindowManager.BUG_REPORT_WINDOW);
+      if (bugReportWindow) {
+        bugReportWindow.show();
+        bugReportWindow.focus();
+      } else {
+        this.windowManager.ensureWindow(WindowManager.BUG_REPORT_WINDOW, { title: 'Bug Report' });
+      }
     });
 
     this.on('application:view-privacy', () => {
@@ -1044,6 +1056,28 @@ export default class Application extends EventEmitter {
         global.errorLogger.reportError(parseError, {});
       }
       event.returnValue = true;
+    });
+    ipcMain.on('report-log', (event, params = {}) => {
+      try {
+        const errorParams = JSON.parse(params.errorJSON || '{}');
+        const extra = JSON.parse(params.extra || '{}');
+        let err = new Error();
+        err = Object.assign(err, errorParams);
+        global.errorLogger.reportLog(err, extra);
+      } catch (parseError) {
+        console.error(parseError);
+        global.errorLogger.reportError(parseError, {});
+      }
+      event.returnValue = true;
+    });
+    ipcMain.on('grab-log', (event, params = {}) => {
+      try{
+
+      } catch (e) {
+        console.error(e);
+      }finally {
+        event.returnValue = true;
+      }
     });
     ipcMain.on('after-add-account', (event, account) => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
