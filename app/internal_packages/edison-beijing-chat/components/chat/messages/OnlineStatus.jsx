@@ -4,6 +4,7 @@ import registerLoginChat from '../../../utils/register-login-chat';
 import { RetinaImg } from 'mailspring-component-kit';
 import { ChatActions, OnlineUserStore } from 'chat-exports';
 import { log } from '../../../utils/log';
+import { NEW_CONVERSATION } from '../../../utils/constant';
 
 export default class OnlineStatus extends Component {
   static propTypes = {
@@ -95,7 +96,7 @@ export default class OnlineStatus extends Component {
     let chat_online, isAuthenticating;
     if (conversation) {
       const { curJid, jid } = conversation;
-      if (jid === 'NEW_CONVERSATION') {
+      if (jid === NEW_CONVERSATION) {
         return;
       }
       chat_online = !!OnlineUserStore.onlineAccounts[curJid];
