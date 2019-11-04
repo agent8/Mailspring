@@ -34,6 +34,8 @@ export default class NewConversation extends Component {
 
   initContacts = async () => {
     const contacts = await ContactStore.getContacts();
+    console.log('this.state.contacts', JSON.stringify(contacts));
+
     if (this._mounted) {
       this.setState({ contacts, loading: false });
     }
@@ -117,7 +119,21 @@ export default class NewConversation extends Component {
           contacts.length > 4
             ? names.slice(0, 3).join(', ') + ' & ' + `${names.length - 3} others`
             : names.slice(0, names.length - 1).join(', ') + ' & ' + names[names.length - 1];
-        ConversationStore.createGroupConversation({ contacts, roomId, name, curJid });
+
+        // console.log(
+        //   'contacts.concat',
+        //   contacts.concat(this.state.contacts.find(itme => itme.jid === itme.curJid))
+        // );
+        ConversationStore.createGroupConversation({
+          contacts,
+          roomId,
+          name,
+          curJid,
+          creator: this.state.contacts.find(
+            itme =>
+              itme.jid === itme.curJid && contacts.findIndex(i => i.curJid === itme.curJid) > -1
+          ),
+        });
       }
       AppEnv.config.set('chatNeedAddIntialConversations', false);
     }
