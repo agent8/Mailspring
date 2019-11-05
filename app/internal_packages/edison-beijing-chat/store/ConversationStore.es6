@@ -111,7 +111,6 @@ class ConversationStore extends MailspringStore {
     }
     await this._clearUnreadCount(jid);
     const conv = await this.getConversationByJid(jid);
-    console.log('setSelectedConversation===', jid, conv);
     this.selectedConversation = conv;
     this._triggerDebounced();
   };
