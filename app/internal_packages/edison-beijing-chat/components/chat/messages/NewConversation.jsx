@@ -26,6 +26,7 @@ export default class NewConversation extends Component {
   componentDidMount() {
     this._mounted = true;
     this.unsub = AppStore.listen(() => {
+      console.log('AppStore.listen', arguments);
       this.initContacts();
     });
     setTimeout(this._setDropDownHeight, 300);
@@ -34,7 +35,6 @@ export default class NewConversation extends Component {
 
   initContacts = async () => {
     const contacts = await ContactStore.getContacts();
-    console.log('this.state.contacts', JSON.stringify(contacts));
 
     if (this._mounted) {
       this.setState({ contacts, loading: false });
