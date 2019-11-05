@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import ContactAvatar from '../../common/ContactAvatar';
 import Button from '../../common/Button';
-import { ContactStore, MemberProfileStore, BlockStore, MessageStore, LocalStorage } from 'chat-exports';
+import {
+  ContactStore,
+  MemberProfileStore,
+  BlockStore,
+  MessageStore,
+  LocalStorage,
+} from 'chat-exports';
 import { uploadContacts } from '../../../utils/restjs';
 import { remote } from 'electron';
 import { checkToken, refreshChatAccountTokens, queryProfile } from '../../../utils/restjs';
@@ -165,17 +171,17 @@ export default class MemberProfile extends Component {
     menus.push(
       isBlocked
         ? {
-          label: `Unblock this Contact`,
-          click: () => {
-            this.unblockContact();
-          },
-        }
+            label: `Unblock this Contact`,
+            click: () => {
+              this.unblockContact();
+            },
+          }
         : {
-          label: `Block this Contact`,
-          click: () => {
-            this.blockContact();
-          },
-        }
+            label: `Block this Contact`,
+            click: () => {
+              this.blockContact();
+            },
+          }
     );
 
     remote.Menu.buildFromTemplate(menus).popup(remote.getCurrentWindow());
@@ -254,20 +260,17 @@ export default class MemberProfile extends Component {
     }
 
     const member = this.state.member || {};
-    const jid = member.jid && typeof member.jid != 'string' ? member.jid.bare : member.jid || '';
+    const jid = member.jid && typeof member.jid !== 'string' ? member.jid.bare : member.jid || '';
 
     return (
       <div className="member-profile-panel" ref={el => (this.panelElement = el)} tabIndex={1}>
         <Button className="more" onClick={this.showMenu}></Button>
         <div className="avatar-area">
-          <ContactAvatar
-            jid={jid}
-            name={member.name}
-            email={member.email}
-            size={140}
-          />
+          <ContactAvatar jid={jid} name={member.name} email={member.email} size={140} />
           <div className="name-buttons">
-            <h2 className="member-name">{member.name}</h2>
+            <h2 className="member-name" title={member.name}>
+              {member.name}
+            </h2>
             <button
               className="btn btn-toolbar command-button"
               title="Start a private chat"
