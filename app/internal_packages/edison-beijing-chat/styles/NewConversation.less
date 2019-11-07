@@ -34,6 +34,7 @@
     left: 0;
     top: 0;
   }
+
   .btn.btn-disabled {
     color: @text-color-inverse;
     background: @btn-disabled-color;
@@ -41,9 +42,11 @@
       background: @btn-disabled-color;
     }
   }
+
   .contact-select-wrapper {
     cursor: text;
   }
+
   .to {
     display: flex;
     flex-direction: column;
@@ -79,6 +82,7 @@
       }
     }
   }
+
   .go {
     margin: 10px 0 0 10px;
     height: 48px;
@@ -177,8 +181,6 @@ li.rc-select-dropdown-menu-item-selected {
   }
 }
 .rc-select-dropdown {
-  // init set 1px, fixbug DC-990:4
-  max-height: 1px;
   overflow-y: auto;
   z-index: 8;
   .chip {

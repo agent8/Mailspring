@@ -3,7 +3,16 @@ import PropTypes from 'prop-types';
 import Button from '../../common/Button';
 import InfoMember from './InfoMember';
 import { remote } from 'electron';
-import { ChatActions, MessageStore, RoomStore, ConversationStore, ContactStore, UserCacheStore, AppStore, LocalStorage } from 'chat-exports';
+import {
+  ChatActions,
+  MessageStore,
+  RoomStore,
+  ConversationStore,
+  ContactStore,
+  UserCacheStore,
+  AppStore,
+  LocalStorage,
+} from 'chat-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import { FixedPopover } from 'mailspring-component-kit';
 import { NEW_CONVERSATION } from '../../../utils/constant';
@@ -22,7 +31,8 @@ export default class ConversationInfo extends Component {
       members: [],
       loadingMembers: false,
       visible: false,
-      isHiddenNotifi: props.selectedConversation && !!props.selectedConversation.isHiddenNotification,
+      isHiddenNotifi:
+        props.selectedConversation && !!props.selectedConversation.isHiddenNotification,
     };
   }
 
@@ -38,8 +48,6 @@ export default class ConversationInfo extends Component {
     }
   }
 
-
-
   componentDidMount() {
     this._listenToStore();
     this.refreshRoomMembers();
@@ -54,13 +62,13 @@ export default class ConversationInfo extends Component {
     }
   }
 
-  refreshRoomMembers = async (nextProps) => {
+  refreshRoomMembers = async nextProps => {
     this.setState({ loadingMembers: true });
     const members = await this.getRoomMembers(nextProps);
     for (const member of members) {
       member.name = name(member.jid);
     }
-    members.sort((a, b) => (a.affiliation + a.name) > (b.affiliation + b.name) ? 1 : -1);
+    members.sort((a, b) => (a.affiliation + a.name > b.affiliation + b.name ? 1 : -1));
     this.setState({
       members,
       loadingMembers: false,
@@ -68,7 +76,8 @@ export default class ConversationInfo extends Component {
   };
 
   getRoomMembers = async (nextProps = {}) => {
-    const conversation = nextProps && nextProps.selectedConversation || this.props.selectedConversation;
+    const conversation =
+      (nextProps && nextProps.selectedConversation) || this.props.selectedConversation;
     if (conversation && conversation.isGroup) {
       return await RoomStore.getRoomMembers(conversation.jid, conversation.curJid, true);
     }
@@ -82,33 +91,39 @@ export default class ConversationInfo extends Component {
     return;
   };
 
-  toggleNotification = (event) => {
+  toggleNotification = event => {
     const isHidden = !this.props.selectedConversation.isHiddenNotification;
     this.props.selectedConversation.isHiddenNotification = isHidden;
-    ConversationStore.updateConversationByJid({ isHiddenNotification: isHidden }, this.props.selectedConversation.jid);
+    ConversationStore.updateConversationByJid(
+      { isHiddenNotification: isHidden },
+      this.props.selectedConversation.jid
+    );
     this.setState({
       isHiddenNotifi: isHidden,
     });
   };
 
   exitGroup = async () => {
-    if (!confirm('Are you sure to exit from this group?')) {
+    if (!window.confirm('Are you sure to exit from this group?')) {
       return;
     }
     const { selectedConversation: conversation } = this.props;
-    await xmpp.leaveRoom(conversation.jid, conversation.curJid, conversation.curJid);
-    const isNeedRetain = await RoomStore.updateConversationCurJid(conversation.curJid, conversation.jid);
+    await window.xmpp.leaveRoom(conversation.jid, conversation.curJid, conversation.curJid);
+    const isNeedRetain = await RoomStore.updateConversationCurJid(
+      conversation.curJid,
+      conversation.jid
+    );
     if (!isNeedRetain) {
       ChatActions.removeConversation(conversation.jid);
       ChatActions.deselectConversation();
     }
   };
 
-  toggleInvite = (moreBtnEl) => {
+  toggleInvite = moreBtnEl => {
     this.setState({ inviting: !this.state.inviting, moreBtnEl });
   };
 
-  onUpdateGroup = async (contacts) => {
+  onUpdateGroup = async contacts => {
     this.setState({ inviting: false });
     const { selectedConversation } = this.props;
     if (contacts.some(contact => contact.jid.match(/@app/))) {
@@ -117,9 +132,11 @@ export default class ConversationInfo extends Component {
     }
     if (contacts && contacts.length > 0) {
       if (selectedConversation.isGroup) {
-        await Promise.all(contacts.map(contact => (
-          xmpp.addMember(selectedConversation.jid, contact.jid, selectedConversation.curJid)
-        )));
+        await Promise.all(
+          contacts.map(contact =>
+            xmpp.addMember(selectedConversation.jid, contact.jid, selectedConversation.curJid)
+          )
+        );
       } else {
         const roomId = uuid() + GROUP_CHAT_DOMAIN;
         if (!contacts.filter(item => item.jid === selectedConversation.jid).length) {
@@ -139,7 +156,8 @@ export default class ConversationInfo extends Component {
           }
         }
         const names = contacts.map(item => item.name);
-        const chatName = names.slice(0, names.length - 1).join(', ') + ' & ' + names[names.length - 1];
+        const chatName =
+          names.slice(0, names.length - 1).join(', ') + ' & ' + names[names.length - 1];
         // const { onGroupConversationCompleted } = this.props;
         ConversationStore.createGroupConversation({
           contacts,
@@ -151,14 +169,14 @@ export default class ConversationInfo extends Component {
     }
   };
 
-  showMenu = (e) => {
+  showMenu = e => {
     const props = this.props;
     const isHidden = props.selectedConversation.isHiddenNotification;
     let menuToggleNotificationLabel;
     if (isHidden) {
       menuToggleNotificationLabel = 'Show notifications';
     } else {
-      menuToggleNotificationLabel = 'Hide notifications'
+      menuToggleNotificationLabel = 'Hide notifications';
     }
     const menus = [
       {
@@ -170,7 +188,7 @@ export default class ConversationInfo extends Component {
       { type: 'separator' },
       {
         label: menuToggleNotificationLabel,
-        click: (e) => {
+        click: e => {
           this.toggleNotification(e);
         },
       },
@@ -193,7 +211,10 @@ export default class ConversationInfo extends Component {
       const memberJids = this.state.members.map(c => c.email);
       return !memberJids.includes(contact.email);
     } else {
-      if (this.props.selectedConversation.roomMembers && this.props.selectedConversation.roomMembers.length > 0) {
+      if (
+        this.props.selectedConversation.roomMembers &&
+        this.props.selectedConversation.roomMembers.length > 0
+      ) {
         return [this.props.selectedConversation.roomMembers[0].email];
       } else {
         return [this.props.selectedConversation.email];
@@ -221,73 +242,73 @@ export default class ConversationInfo extends Component {
     return (
       <div className="info-content">
         <div className="member-management">
-          {loadingMembers ?
-            <RetinaImg
-              name="inline-loading-spinner.gif"
-              mode={RetinaImg.Mode.ContentPreserve}
-            /> :
+          {loadingMembers ? (
+            <RetinaImg name="inline-loading-spinner.gif" mode={RetinaImg.Mode.ContentPreserve} />
+          ) : (
             <div className="member-count">
               {conversation.isGroup ? roomMembers.length + ' People' : ''}
             </div>
-          }
+          )}
           <Button className="close" onClick={this.props.onCloseInfoPanel}></Button>
           <Button className="more" onClick={this.showMenu}></Button>
         </div>
         <div className="members">
-          {
-            !conversation.isGroup ? ([
-              <InfoMember
-                conversation={conversation}
-                member={privateChatMember}
-                currentUserIsOwner={currentUserIsOwner}
-                key={privateChatMember.jid}
-              />,
-              self && (
+          {!conversation.isGroup
+            ? [
                 <InfoMember
                   conversation={conversation}
-                  member={self}
+                  member={privateChatMember}
                   currentUserIsOwner={currentUserIsOwner}
-                  key="curJid"
-                />
-              )
-            ]) : null
-          }
-          {
-            conversation.isGroup && ([
-              roomMembers && roomMembers.map(member => {
+                  key={privateChatMember.jid}
+                />,
+                self && (
+                  <InfoMember
+                    conversation={conversation}
+                    member={self}
+                    currentUserIsOwner={currentUserIsOwner}
+                    key="curJid"
+                  />
+                ),
+              ]
+            : null}
+          {conversation.isGroup && [
+            roomMembers &&
+              roomMembers.map(member => {
                 return (
                   <InfoMember
                     conversation={conversation}
                     member={member}
                     currentUserIsOwner={currentUserIsOwner}
                     key={member.jid}
-                  />);
+                  />
+                );
               }),
-              <div
-                key="exit-group"
-                className="exit-group"
-                onClick={this.exitGroup}>
-                Exit from Group
-              </div>
-            ])
-          }
+            <div key="exit-group" className="exit-group" onClick={this.exitGroup}>
+              Exit from Group
+            </div>,
+          ]}
         </div>
         {inviting && conversation.jid !== NEW_CONVERSATION && (
-          <FixedPopover {...{
-            direction: 'down',
-            originRect: {
-              width: 350,
-              height: 430,
-              top: this.state.moreBtnEl.getBoundingClientRect().top,
-              left: this.state.moreBtnEl.getBoundingClientRect().left,
-            },
-            closeOnAppBlur: false,
-            onClose: () => {
-              this.setState({ inviting: false });
-            },
-          }}>
-            <InviteGroupChatList contacts={contacts.filter(this.filterCurrentMemebers)} groupMode={true}
-              onUpdateGroup={this.onUpdateGroup} />
+          <FixedPopover
+            {...{
+              direction: 'down',
+              originRect: {
+                width: 350,
+                height: 430,
+                top: this.state.moreBtnEl.getBoundingClientRect().top,
+                left: this.state.moreBtnEl.getBoundingClientRect().left,
+              },
+              closeOnAppBlur: false,
+              onClose: () => {
+                this.setState({ inviting: false });
+              },
+            }}
+          >
+            <InviteGroupChatList
+              contacts={contacts.filter(this.filterCurrentMemebers)}
+              groupMode={true}
+              onUpdateGroup={this.onUpdateGroup}
+            />
           </FixedPopover>
         )}
       </div>
@@ -298,8 +319,8 @@ export default class ConversationInfo extends Component {
 ConversationInfo.propTypes = {
   selectedConversation: PropTypes.shape({
     jid: PropTypes.string.isRequired,
-    name: PropTypes.string,//.isRequired,
-    email: PropTypes.string,//.isRequired,
+    name: PropTypes.string, //.isRequired,
+    email: PropTypes.string, //.isRequired,
     avatar: PropTypes.string,
     isGroup: PropTypes.bool.isRequired,
     roomMembers: PropTypes.array,

@@ -209,6 +209,7 @@ export default class NewConversation extends Component {
               mode="tags"
               id="contact-select"
               style={{ width: '400px', flex: 1, height: '70px' }}
+              dropdownStyle={{ maxHeight: 1 }} // init set 1px, fixbug DC-990:4
               onChange={this.handleChange}
               onSelect={this.focusIntoInput}
               defaultOpen
