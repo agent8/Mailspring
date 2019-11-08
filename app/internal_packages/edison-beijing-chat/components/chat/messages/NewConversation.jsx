@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import { RetinaImg, InjectedComponent } from 'mailspring-component-kit';
 import Select, { Option } from 'rc-select';
-import ContactAvatar from '../../common/ContactAvatar';
-import Button from '../../common/Button';
-import uuid from 'uuid/v4';
 import { Actions, WorkspaceStore } from 'mailspring-exports';
 import { ChatActions, ConversationStore, ContactStore, AppStore } from 'chat-exports';
-const { AccountStore } = require('mailspring-exports');
+import ContactAvatar from '../../common/ContactAvatar';
+import Button from '../../common/Button';
+import genRoomId from '../../../utils/genRoomId';
 
-const GROUP_CHAT_DOMAIN = '@muc.im.edison.tech';
+const { AccountStore } = require('mailspring-exports');
 export default class NewConversation extends Component {
   static displayName = 'NewConversation';
 
@@ -26,7 +25,6 @@ export default class NewConversation extends Component {
   componentDidMount() {
     this._mounted = true;
     this.unsub = AppStore.listen(() => {
-      console.log('AppStore.listen', arguments);
       this.initContacts();
     });
     setTimeout(this._setDropDownHeight, 300);
@@ -113,7 +111,7 @@ export default class NewConversation extends Component {
         alert('Should only create private conversation with single plugin app contact.');
         return;
       } else {
-        const roomId = uuid() + GROUP_CHAT_DOMAIN;
+        const roomId = genRoomId();
         const names = contacts.map(contact => contact.name);
         const name =
           contacts.length > 4

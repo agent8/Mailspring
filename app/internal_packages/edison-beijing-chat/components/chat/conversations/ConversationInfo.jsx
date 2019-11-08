@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import Button from '../../common/Button';
-import InfoMember from './InfoMember';
 import { remote } from 'electron';
+import { RetinaImg } from 'mailspring-component-kit';
+import { FixedPopover } from 'mailspring-component-kit';
 import {
   ChatActions,
   MessageStore,
@@ -13,16 +13,13 @@ import {
   AppStore,
   LocalStorage,
 } from 'chat-exports';
-import { RetinaImg } from 'mailspring-component-kit';
-import { FixedPopover } from 'mailspring-component-kit';
+import Button from '../../common/Button';
+import InfoMember from './InfoMember';
 import { NEW_CONVERSATION } from '../../../utils/constant';
 import InviteGroupChatList from '../new/InviteGroupChatList';
-import uuid from 'uuid/v4';
 import { name } from '../../../utils/name';
 import { alert } from '../../../utils/electron-utils';
-
-const GROUP_CHAT_DOMAIN = '@muc.im.edison.tech';
-
+import genRoomId from '../../../utils/genRoomId';
 export default class ConversationInfo extends Component {
   constructor(props) {
     super();
@@ -134,11 +131,15 @@ export default class ConversationInfo extends Component {
       if (selectedConversation.isGroup) {
         await Promise.all(
           contacts.map(contact =>
-            xmpp.addMember(selectedConversation.jid, contact.jid, selectedConversation.curJid)
+            window.xmpp.addMember(
+              selectedConversation.jid,
+              contact.jid,
+              selectedConversation.curJid
+            )
           )
         );
       } else {
-        const roomId = uuid() + GROUP_CHAT_DOMAIN;
+        const roomId = genRoomId();
         if (!contacts.filter(item => item.jid === selectedConversation.jid).length) {
           const other = await ContactStore.findContactByJid(selectedConversation.jid);
           if (other) {
