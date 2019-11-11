@@ -18,7 +18,7 @@ import keyMannager from '../../../../../src/key-manager';
 import { RetinaImg } from 'mailspring-component-kit';
 import { ConversationStore } from 'chat-exports';
 import { nickname, name } from '../../../utils/name';
-
+import { jidlocal, jidbare } from '../../../utils/jid';
 export default class MemberProfile extends Component {
   static timer;
 
@@ -45,13 +45,14 @@ export default class MemberProfile extends Component {
     document.body.removeEventListener('click', this.onClickWithProfile);
     this._unsub();
   };
+
   queryProfile = async () => {
     const { member } = this.state;
     if (!member) {
       return;
     }
     const chatAccounts = AppEnv.config.get('chatAccounts') || {};
-    const userId = member.jid.local || member.jid.split('@')[0];
+    const userId = jidlocal(member.jid);
     const email = Object.keys(chatAccounts)[0];
     let accessToken = keyMannager.getAccessTokenByEmail(email);
     const { err, res } = await checkToken(accessToken);
@@ -143,8 +144,8 @@ export default class MemberProfile extends Component {
       return;
     }
     const jid = member.jid.bare || member.jid;
-    const nicknames = chatLocalStorage.nicknames;
-    if (nicknames[jid] != member.nickname) {
+    const nicknames = global.chatLocalStorage.nicknames;
+    if (nicknames[jid] !== member.nickname) {
       nicknames[jid] = member.nickname;
       LocalStorage.saveToLocalStorage();
     }
@@ -162,7 +163,6 @@ export default class MemberProfile extends Component {
       {
         label: `Add to Contacts`,
         click: () => {
-          const moreBtnEl = document.querySelector('.more');
           this.addToContacts();
         },
       },
@@ -194,6 +194,7 @@ export default class MemberProfile extends Component {
     await BlockStore.block(jid, curJid);
     alert(`You have blocked ${member.nickname || member.name}`);
   };
+
   unblockContact = async () => {
     const member = this.state.member;
     const jid = member.jid.bare || member.jid;
@@ -201,6 +202,7 @@ export default class MemberProfile extends Component {
     await BlockStore.unblock(jid, curJid);
     alert(`You have unblocked ${member.nickname || member.name}`);
   };
+
   addToContacts = async () => {
     const member = this.state.member;
     const jid = member.jid.bare || member.jid;
@@ -254,54 +256,66 @@ export default class MemberProfile extends Component {
     return true;
   };
 
+  renderMessageButton() {
+    return (
+      <button
+        className="btn btn-toolbar command-button"
+        title="Start a private chat"
+        onClick={this.startPrivateChat}
+      >
+        <RetinaImg
+          name={'chat.svg'}
+          style={{ width: 16 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
+        <span className="btnText">Messages</span>
+      </button>
+    );
+  }
+
+  renderComposeButton() {
+    return (
+      <button
+        className="btn btn-toolbar command-button"
+        title="Compose new message"
+        onClick={this.composeEmail}
+      >
+        <RetinaImg
+          name={'email.svg'}
+          style={{ width: 16 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
+        <span className="btnText">Compose</span>
+      </button>
+    );
+  }
+
   render = () => {
     if (!this.state.visible) {
       return null;
     }
-
-    const member = this.state.member || {};
-    const jid = member.jid && typeof member.jid !== 'string' ? member.jid.bare : member.jid || '';
+    let { name, nickname, email, jid } = this.state.member || {};
+    let curJid = this.props.conversation && this.props.conversation.curJid;
+    const isNotMe = jid !== curJid;
 
     return (
       <div className="member-profile-panel" ref={el => (this.panelElement = el)} tabIndex={1}>
         <Button className="more" onClick={this.showMenu}></Button>
         <div className="avatar-area">
-          <ContactAvatar jid={jid} name={member.name} email={member.email} size={140} />
+          <ContactAvatar jid={jidbare(jid)} name={name} email={email} size={140} />
           <div className="name-buttons">
-            <h2 className="member-name" title={member.name}>
-              {member.name}
+            <h2 className="member-name" title={name}>
+              {name}
             </h2>
-            <button
-              className="btn btn-toolbar command-button"
-              title="Start a private chat"
-              onClick={this.startPrivateChat}
-            >
-              <RetinaImg
-                name={'chat.svg'}
-                style={{ width: 16 }}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-              />
-              <span>Messages</span>
-            </button>
-            <button
-              className="btn btn-toolbar command-button"
-              title="Compose new message"
-              onClick={this.composeEmail}
-            >
-              <RetinaImg
-                name={'email.svg'}
-                style={{ width: 16 }}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-              />
-              <span>Compose</span>
-            </button>
+            {isNotMe && this.renderMessageButton()}
+            {this.renderComposeButton()}
           </div>
         </div>
         <div className="email">
           <div className="email-label">email</div>
-          <div className="member-email">{member.email}</div>
+          <div className="member-email">{email}</div>
         </div>
         <div className="nickname">
           <div className="nickname-label">nickname</div>
@@ -309,7 +323,7 @@ export default class MemberProfile extends Component {
             className="nickname-input"
             type="text"
             placeholder="input nickname here"
-            value={member.nickname}
+            value={nickname}
             onChange={this.onChangeNickname}
             onKeyPress={this.onKeyPressEvent}
             onBlur={this.onChangeNickname}

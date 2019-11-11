@@ -1,4 +1,4 @@
-export const jidlocal = (jid) => {
+export const jidlocal = jid => {
   if (typeof jid === 'string') {
     if (jid.indexOf('@') > 0) {
       return jid.split('@')[0];
@@ -8,11 +8,13 @@ export const jidlocal = (jid) => {
   } else if (jid) {
     return jid.local;
   }
-}
-export const jidbare = (jid) => {
+  return '';
+};
+export const jidbare = jid => {
   if (typeof jid === 'string') {
     return jid;
-  } else if (jid) {
+  } else if (typeof jid === 'object') {
     return jid.bare;
   }
-}
+  return '';
+};
