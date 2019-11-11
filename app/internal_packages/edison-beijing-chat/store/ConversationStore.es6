@@ -13,6 +13,7 @@ class ConversationStore extends MailspringStore {
     super();
     this.selectedConversation = null;
     this.conversations = [];
+    this.convName = {};
     this._registerListeners();
     this.refreshConversations();
     this._triggerDebounced = _.debounce(() => this.trigger(), 20);
@@ -307,8 +308,8 @@ class ConversationStore extends MailspringStore {
     }
     chatConversationsInitialized = email + ' ' + chatConversationsInitialized;
     const curjid = chatAccount.userId + '@im.edison.tech';
-    let conversations = this.conversations;
-    conversations = conversations.filter(conv => conv.curJid === curjid);
+    // let conversations = this.conversations;
+    // conversations = conversations.filter(conv => conv.curJid === curjid);
     contacts = contacts.filter(
       contact =>
         !contact.jid.match(/@app/) && !contact.jid.includes('^at^') && contact.curJid === curjid
@@ -350,7 +351,6 @@ class ConversationStore extends MailspringStore {
     await RoomStore.updateRoomName(convJid, config.name);
   };
 
-  convName = {};
   saveConversationName = async (jid, name) => {
     const conv = await this.getConversationByJid(jid);
     if (!conv || conv.name === name) {

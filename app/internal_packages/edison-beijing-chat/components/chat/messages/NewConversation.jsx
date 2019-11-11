@@ -6,7 +6,7 @@ import { ChatActions, ConversationStore, ContactStore, AppStore } from 'chat-exp
 import ContactAvatar from '../../common/ContactAvatar';
 import Button from '../../common/Button';
 import genRoomId from '../../../utils/genRoomId';
-
+import conversationTitle from '../../../utils/conversationTitle';
 const { AccountStore } = require('mailspring-exports');
 export default class NewConversation extends Component {
   static displayName = 'NewConversation';
@@ -108,24 +108,19 @@ export default class NewConversation extends Component {
       if (contacts.length === 1) {
         ConversationStore.createPrivateConversation(contacts[0]);
       } else if (contacts.some(contact => contact.jid.match(/@app/))) {
-        alert('Should only create private conversation with single plugin app contact.');
-        return;
+        return alert('Should only create private conversation with single plugin app contact.');
       } else {
         const roomId = genRoomId();
         const names = contacts.map(contact => contact.name);
-        const name =
-          contacts.length > 4
-            ? names.slice(0, 3).join(', ') + ' & ' + `${names.length - 3} others`
-            : names.slice(0, names.length - 1).join(', ') + ' & ' + names[names.length - 1];
+        const creator = this.state.contacts.find(
+          item => item.jid === item.curJid && contacts.findIndex(i => i.curJid === item.curJid) > -1
+        );
         ConversationStore.createGroupConversation({
           contacts,
           roomId,
-          name,
+          name: conversationTitle(names),
           curJid,
-          creator: this.state.contacts.find(
-            item =>
-              item.jid === item.curJid && contacts.findIndex(i => i.curJid === item.curJid) > -1
-          ),
+          creator,
         });
       }
       AppEnv.config.set('chatNeedAddIntialConversations', false);

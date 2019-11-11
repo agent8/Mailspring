@@ -20,6 +20,7 @@ import InviteGroupChatList from '../new/InviteGroupChatList';
 import { name } from '../../../utils/name';
 import { alert } from '../../../utils/electron-utils';
 import genRoomId from '../../../utils/genRoomId';
+import conversationTitle from '../../../utils/conversationTitle';
 export default class ConversationInfo extends Component {
   constructor(props) {
     super();
@@ -66,11 +67,25 @@ export default class ConversationInfo extends Component {
       member.name = name(member.jid);
     }
     members.sort((a, b) => (a.affiliation + a.name > b.affiliation + b.name ? 1 : -1));
+
     this.setState({
       members,
       loadingMembers: false,
     });
+
+    if (this.props.selectedConversation.isGroup) {
+      this.refreshConversationTitle(members);
+    }
   };
+
+  refreshConversationTitle(members) {
+    const names = [...members].reverse().map(i => i.name);
+    const { selectedConversation } = this.props;
+    ConversationStore.updateConversationByJid(
+      { name: conversationTitle(names) },
+      selectedConversation.jid
+    );
+  }
 
   getRoomMembers = async (nextProps = {}) => {
     const conversation =
@@ -101,11 +116,11 @@ export default class ConversationInfo extends Component {
   };
 
   exitGroup = async () => {
-    if (!window.confirm('Are you sure to exit from this group?')) {
+    if (!global.confirm('Are you sure to exit from this group?')) {
       return;
     }
     const { selectedConversation: conversation } = this.props;
-    await window.xmpp.leaveRoom(conversation.jid, conversation.curJid, conversation.curJid);
+    await global.xmpp.leaveRoom(conversation.jid, conversation.curJid, conversation.curJid);
     const isNeedRetain = await RoomStore.updateConversationCurJid(
       conversation.curJid,
       conversation.jid
@@ -122,51 +137,49 @@ export default class ConversationInfo extends Component {
 
   onUpdateGroup = async contacts => {
     this.setState({ inviting: false });
-    const { selectedConversation } = this.props;
+
     if (contacts.some(contact => contact.jid.match(/@app/))) {
-      alert('plugin app should not be added to any group chat as contact.');
+      return alert('plugin app should not be added to any group chat as contact.');
+    }
+    if (!contacts || !contacts.length) {
       return;
     }
-    if (contacts && contacts.length > 0) {
-      if (selectedConversation.isGroup) {
-        await Promise.all(
-          contacts.map(contact =>
-            window.xmpp.addMember(
-              selectedConversation.jid,
-              contact.jid,
-              selectedConversation.curJid
-            )
-          )
-        );
-      } else {
-        const roomId = genRoomId();
-        if (!contacts.filter(item => item.jid === selectedConversation.jid).length) {
-          const other = await ContactStore.findContactByJid(selectedConversation.jid);
-          if (other) {
-            contacts.unshift(other);
-          } else {
-            contacts.unshift({ jid: selectedConversation.jid, name: '' });
-          }
+
+    const { selectedConversation } = this.props;
+    // console.log('contacts===', contacts, selectedConversation);
+    if (selectedConversation.isGroup) {
+      Promise.all(
+        contacts.map(contact =>
+          global.xmpp.addMember(selectedConversation.jid, contact.jid, selectedConversation.curJid)
+        )
+      );
+    } else {
+      const roomId = genRoomId();
+      const owner = await ContactStore.findContactByJid(selectedConversation.curJid);
+
+      if (!contacts.filter(item => item.jid === selectedConversation.jid).length) {
+        const other = await ContactStore.findContactByJid(selectedConversation.jid);
+        if (other) {
+          contacts.unshift(other);
+        } else {
+          contacts.unshift({ jid: selectedConversation.jid, name: '' });
         }
-        if (!contacts.filter(item => item.jid === selectedConversation.curJid).length) {
-          const owner = await ContactStore.findContactByJid(selectedConversation.curJid);
-          if (owner) {
-            contacts.unshift(owner);
-          } else {
-            contacts.unshift({ jid: selectedConversation.curJid, name: '' });
-          }
-        }
-        const names = contacts.map(item => item.name);
-        const chatName =
-          names.slice(0, names.length - 1).join(', ') + ' & ' + names[names.length - 1];
-        // const { onGroupConversationCompleted } = this.props;
-        ConversationStore.createGroupConversation({
-          contacts,
-          roomId,
-          name: chatName,
-          curJid: selectedConversation.curJid,
-        });
       }
+      if (!contacts.filter(item => item.jid === selectedConversation.curJid).length) {
+        if (owner) {
+          contacts.unshift(owner);
+        } else {
+          contacts.unshift({ jid: selectedConversation.curJid, name: '' });
+        }
+      }
+      const names = contacts.map(item => item.name);
+      ConversationStore.createGroupConversation({
+        contacts,
+        roomId,
+        name: conversationTitle(names),
+        curJid: selectedConversation.curJid,
+        creator: owner,
+      });
     }
   };
 
@@ -207,6 +220,7 @@ export default class ConversationInfo extends Component {
     }
     this.menu = remote.Menu.buildFromTemplate(menus).popup(remote.getCurrentWindow());
   };
+
   filterCurrentMemebers = contact => {
     if (this.props.selectedConversation.isGroup) {
       const memberJids = this.state.members.map(c => c.email);
@@ -271,23 +285,22 @@ export default class ConversationInfo extends Component {
                   />
                 ),
               ]
-            : null}
-          {conversation.isGroup && [
-            roomMembers &&
-              roomMembers.map(member => {
-                return (
-                  <InfoMember
-                    conversation={conversation}
-                    member={member}
-                    currentUserIsOwner={currentUserIsOwner}
-                    key={member.jid}
-                  />
-                );
-              }),
-            <div key="exit-group" className="exit-group" onClick={this.exitGroup}>
-              Exit from Group
-            </div>,
-          ]}
+            : [
+                roomMembers &&
+                  roomMembers.map(member => {
+                    return (
+                      <InfoMember
+                        conversation={conversation}
+                        member={member}
+                        currentUserIsOwner={currentUserIsOwner}
+                        key={member.jid}
+                      />
+                    );
+                  }),
+                <div key="exit-group" className="exit-group" onClick={this.exitGroup}>
+                  Exit from Group
+                </div>,
+              ]}
         </div>
         {inviting && conversation.jid !== NEW_CONVERSATION && (
           <FixedPopover

@@ -30,9 +30,9 @@ import { getToken } from '../../../utils/appmgt';
 import { LocalStorage } from 'chat-exports';
 import { alert } from '../../../utils/electron-utils';
 import { log } from '../../../utils/log';
+import { NEW_CONVERSATION } from '../../../utils/constant';
 
 const { exec } = require('child_process');
-import { NEW_CONVERSATION } from '../../../utils/constant';
 
 export default class MessagesPanel extends Component {
   constructor(props) {
@@ -64,8 +64,8 @@ export default class MessagesPanel extends Component {
         selectedConversation &&
         !selectedConversation.isGroup &&
         !selectedConversation.email &&
-        selectedConversation.jid.indexOf('@app') == -1 &&
-        selectedConversation.jid != 'NEW_CONVERSATION'
+        selectedConversation.jid.indexOf('@app') === -1 &&
+        selectedConversation.jid !== 'NEW_CONVERSATION'
       ) {
         // let user = await ContactStore.findContactByJid(selectedConversation.jid);
         let user = await UserCacheStore.getUserInfoByJid(selectedConversation.jid);
@@ -224,7 +224,7 @@ export default class MessagesPanel extends Component {
             conversationJid: conversation.jid,
             body,
             sender: conversation.curJid,
-            sentTime: new Date().getTime() + edisonChatServerDiffTime,
+            sentTime: new Date().getTime() + global.edisonChatServerDiffTime,
             status: MESSAGE_STATUS_TRANSFER_FAILED,
           };
           MessageStore.saveMessagesAndRefresh([message]);
@@ -293,14 +293,14 @@ export default class MessagesPanel extends Component {
         } else {
           request = http;
         }
-        request.get(msgBody.mediaObjectId, function (res) {
+        request.get(msgBody.mediaObjectId, function(res) {
           var imgData = '';
           res.setEncoding('binary');
-          res.on('data', function (chunk) {
+          res.on('data', function(chunk) {
             imgData += chunk;
           });
-          res.on('end', function () {
-            fs.writeFile(filepath, imgData, 'binary', function (err) {
+          res.on('end', function() {
+            fs.writeFile(filepath, imgData, 'binary', function(err) {
               if (err) {
                 console.error('down fail', err);
               } else {
@@ -446,16 +446,14 @@ export default class MessagesPanel extends Component {
             </CSSTransitionGroup>
           </div>
         ) : (
-            <div className="unselectedHint">
-              <span>
-                <RetinaImg name={`EmptyChat.png`} mode={RetinaImg.Mode.ContentPreserve} />
-              </span>
-            </div>
-          )}
+          <div className="unselectedHint">
+            <span>
+              <RetinaImg name={`EmptyChat.png`} mode={RetinaImg.Mode.ContentPreserve} />
+            </span>
+          </div>
+        )}
         <OnlineStatus conversation={selectedConversation}></OnlineStatus>
-        <MemberProfile
-          conversation={selectedConversation}
-        ></MemberProfile>
+        <MemberProfile conversation={selectedConversation}></MemberProfile>
       </div>
     );
   }
