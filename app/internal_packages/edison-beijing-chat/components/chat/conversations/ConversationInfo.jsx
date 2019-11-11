@@ -67,15 +67,10 @@ export default class ConversationInfo extends Component {
       member.name = name(member.jid);
     }
     members.sort((a, b) => (a.affiliation + a.name > b.affiliation + b.name ? 1 : -1));
-
     this.setState({
       members,
       loadingMembers: false,
     });
-
-    if (this.props.selectedConversation.isGroup) {
-      this.refreshConversationTitle(members);
-    }
   };
 
   refreshConversationTitle(members) {
