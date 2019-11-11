@@ -174,9 +174,9 @@ export default class ConversationInfo extends Component {
     const isHidden = props.selectedConversation.isHiddenNotification;
     let menuToggleNotificationLabel;
     if (isHidden) {
-      menuToggleNotificationLabel = 'Show notifications';
+      menuToggleNotificationLabel = 'Show Notifications';
     } else {
-      menuToggleNotificationLabel = 'Hide notifications';
+      menuToggleNotificationLabel = 'Hide Notifications';
     }
     const menus = [
       {
