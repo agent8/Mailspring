@@ -73,15 +73,6 @@ export default class ConversationInfo extends Component {
     });
   };
 
-  refreshConversationTitle(members) {
-    const names = [...members].reverse().map(i => i.name);
-    const { selectedConversation } = this.props;
-    ConversationStore.updateConversationByJid(
-      { name: conversationTitle(names) },
-      selectedConversation.jid
-    );
-  }
-
   getRoomMembers = async (nextProps = {}) => {
     const conversation =
       (nextProps && nextProps.selectedConversation) || this.props.selectedConversation;
