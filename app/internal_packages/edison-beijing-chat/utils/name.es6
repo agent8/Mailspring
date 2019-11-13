@@ -1,15 +1,14 @@
 import { UserCacheStore, ContactStore } from 'chat-exports';
 
-export function nickname(jid){
+export function nickname(jid) {
   const nicknames = window.chatLocalStorage.nicknames;
   return nicknames[jid];
 }
 
 export function name(jid) {
   const nicknames = window.chatLocalStorage.nicknames;
-
   if (nicknames[jid]) {
-    return nicknames[jid]
+    return nicknames[jid];
   }
   const info = UserCacheStore.getUserInfoByJid(jid);
   const name = info && info.name;
@@ -17,7 +16,7 @@ export function name(jid) {
     return name;
   }
   const email = info && info.email;
-  return email && email.split('@')[0] || '';
+  return (email && email.split('@')[0]) || jid || '';
 }
 
 export async function getName(jid) {
@@ -29,11 +28,11 @@ export async function getName(jid) {
   if (!contact) {
     return '';
   }
-  return contact.name || contact.email && contact.email.split('@')[0] || ''
+  return contact.name || (contact.email && contact.email.split('@')[0]) || '';
 }
 
 export default {
   nickname,
   name,
-  getName
-}
+  getName,
+};

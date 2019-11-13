@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import { AccountStore } from 'mailspring-exports';
-import { ConversationStore, UserCacheStore, MemberProfileStore } from 'chat-exports';
+import { ChatActions, ConversationStore, UserCacheStore } from 'chat-exports';
 import ContactAvatar from '../../common/ContactAvatar';
 import CancelIcon from '../../common/icons/CancelIcon';
 import { theme } from '../../../utils/colors';
 import { name } from '../../../utils/name';
+import { jidbare } from '../../../utils/jid';
 import { getAppByJid } from '../../../utils/appmgt';
 const { primaryColor } = theme;
 export default class InfoMember extends Component {
@@ -46,9 +47,7 @@ export default class InfoMember extends Component {
 
   editProfile = () => {
     const { member } = this.props;
-    setTimeout(() => {
-      MemberProfileStore.setMember(member);
-    }, 10);
+    ChatActions.checkMember({ member });
   };
 
   removeMember = async member => {
@@ -58,7 +57,7 @@ export default class InfoMember extends Component {
       return;
     }
     const jid = typeof member.jid === 'object' ? member.jid.bare : member.jid;
-    await xmpp.leaveRoom(conversation.jid, jid, conversation.curJid);
+    await global.xmpp.leaveRoom(conversation.jid, jid, conversation.curJid);
   };
 
   changeCurrent = async jid => {
@@ -72,18 +71,22 @@ export default class InfoMember extends Component {
   };
 
   render = () => {
-    const { conversation, member } = this.props;
-    const jid = typeof member.jid === 'object' ? member.jid.bare : member.jid;
-    let membername = name(jid) || member.name || member.email || jid;
+    let {
+      conversation,
+      member: { jid, email, affiliation },
+    } = this.props;
+
+    jid = jidbare(jid);
+    let membername = name(jid) || name || email || jid;
     if (!membername && (jid || '').match(/@app/)) {
       const app = getAppByJid(jid);
       if (app) {
         membername = app.name || app.shortName || app.appName;
       }
     }
-    const email = member.email;
+
     const moreInfo = [];
-    if (member.affiliation === 'owner') {
+    if (affiliation === 'owner') {
       moreInfo.push('Owner');
     }
     if (jid === conversation.curJid) {
@@ -110,7 +113,7 @@ export default class InfoMember extends Component {
           </div>
           <div className="email">{email}</div>
         </div>
-        {this.props.currentUserIsOwner && member.affiliation !== 'owner' && (
+        {this.props.currentUserIsOwner && affiliation !== 'owner' && (
           <span className="remove-member" onClick={this.onClickRemove}>
             <CancelIcon color={primaryColor} />
           </span>

@@ -17,7 +17,7 @@ import Button from '../../common/Button';
 import InfoMember from './InfoMember';
 import { NEW_CONVERSATION } from '../../../utils/constant';
 import InviteGroupChatList from '../new/InviteGroupChatList';
-import { name } from '../../../utils/name';
+import { name, nickname } from '../../../utils/name';
 import { alert } from '../../../utils/electron-utils';
 import genRoomId from '../../../utils/genRoomId';
 import conversationTitle from '../../../utils/conversationTitle';
@@ -65,6 +65,7 @@ export default class ConversationInfo extends Component {
     const members = await this.getRoomMembers(nextProps);
     for (const member of members) {
       member.name = name(member.jid);
+      member.nickname = nickname(member.jid);
     }
     members.sort((a, b) => (a.affiliation + a.name > b.affiliation + b.name ? 1 : -1));
     this.setState({
@@ -132,7 +133,6 @@ export default class ConversationInfo extends Component {
     }
 
     const { selectedConversation } = this.props;
-    // console.log('contacts===', contacts, selectedConversation);
     if (selectedConversation.isGroup) {
       Promise.all(
         contacts.map(contact =>
@@ -227,6 +227,7 @@ export default class ConversationInfo extends Component {
     const { selectedConversation: conversation, contacts } = this.props;
     const { members: roomMembers, loadingMembers, inviting } = this.state;
     let currentUserIsOwner = false;
+
     for (const member of roomMembers) {
       const jid = typeof member.jid === 'object' ? member.jid.bare : member.jid;
       if (member.affiliation === 'owner' && jid === conversation.curJid) {

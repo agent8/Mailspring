@@ -20,25 +20,19 @@ import { ConversationStore } from 'chat-exports';
 import { nickname, name } from '../../../utils/name';
 import { jidlocal, jidbare } from '../../../utils/jid';
 export default class MemberProfile extends Component {
-  static timer;
-
   constructor(props) {
     super(props);
     this.state = {
       member: null,
-      visible: true,
+      visible: false,
     };
+    this.panelElementRef = React.createRef();
   }
 
   componentDidMount = () => {
-    this.mounted = true;
-
-    this.queryProfile();
-    const rect = this.panelElement.getBoundingClientRect();
-    this.panelRect = rect;
+    // this.queryProfile();
     document.body.addEventListener('click', this.onClickWithProfile);
-    this._unsub = MemberProfileStore.listen(() => this.setMember(MemberProfileStore.member));
-    this.setMember(null);
+    this._unsub = MemberProfileStore.listen(({ member }) => this.setMember(member));
   };
 
   componentWillUnmount = () => {
@@ -46,75 +40,35 @@ export default class MemberProfile extends Component {
     this._unsub();
   };
 
-  queryProfile = async () => {
-    const { member } = this.state;
-    if (!member) {
-      return;
-    }
-    const chatAccounts = AppEnv.config.get('chatAccounts') || {};
-    const userId = jidlocal(member.jid);
-    const email = Object.keys(chatAccounts)[0];
-    let accessToken = keyMannager.getAccessTokenByEmail(email);
-    const { err, res } = await checkToken(accessToken);
-    if (err || !res || res.resultCode !== 1) {
-      await refreshChatAccountTokens();
-      accessToken = keyMannager.getAccessTokenByEmail(email);
-    }
-    queryProfile({ accessToken, userId }, (err, res) => {
-      if (!res) {
-        console.log('fail to queryProfile');
-        return;
-      }
-      if (isJsonStr(res)) {
-        res = JSON.parse(res);
-      }
-      if (!this.state.member) {
-        return;
-      }
-      Object.assign(this.state.member, res.data);
-      const state = Object.assign({}, this.state);
-      if (this.mounted) {
-        this.setState(state);
-      } else {
-        this.state = state;
-      }
-    });
+  setMember = member => {
+    this.setState({ member, visible: true });
   };
 
   onClickWithProfile = e => {
     //  cxm:
     // because onBlur on a div container does not work as expected
     // so it's necessary to use this as a workaround
-    setTimeout(() => {
-      if (this.clickSame) {
-        this.clickSame = false;
-        return;
-      }
-      const rect = this.panelRect;
-      if (
-        e.clientX < rect.left ||
-        e.clientX > rect.right ||
-        e.clientY < rect.top ||
-        e.clientY > rect.bottom
-      ) {
-        this.exitProfile(this.state.member);
-      }
-    }, 5);
-  };
+    // 判断是否点击在更多按钮上
+    let btnMore = document.querySelector('.button-more__profile');
+    if (e.target === btnMore) return;
+    // 判断是否点击在member上
+    let rows = document.querySelectorAll('.row');
+    for (let row of rows) {
+      if (row.contains && row.contains(e.target)) return;
+    }
 
-  setMember = member => {
-    this.clickSame = member && member === this.state.member;
-    if (this.clickSame) {
-      return;
+    let current = this.panelElementRef.current;
+    if (!current) return;
+
+    const rect = current.getBoundingClientRect();
+    if (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom
+    ) {
+      this.exitProfile(this.state.member);
     }
-    if (member && (!this.state.member || member.email !== this.state.member.email)) {
-      this.queryProfile();
-    }
-    if (member) {
-      member.nickname = nickname(member.jid);
-      member.name = name(member.jid);
-    }
-    this.setState({ member, visible: !!member });
   };
 
   startPrivateChat = e => {
@@ -149,12 +103,13 @@ export default class MemberProfile extends Component {
       nicknames[jid] = member.nickname;
       LocalStorage.saveToLocalStorage();
     }
-    MemberProfileStore.setMember(null);
-    MessageStore.saveMessagesAndRefresh([]);
+    this.setState({ visible: false });
+    MessageStore.saveMessagesAndRefresh();
     LocalStorage.trigger();
   };
 
   showMenu = async e => {
+    e.stopPropagation();
     const { member } = this.state;
     const jid = member.jid.bare || member.jid;
     const curJid = this.props.conversation.curJid;
@@ -239,11 +194,12 @@ export default class MemberProfile extends Component {
   };
 
   onChangeNickname = e => {
-    const { member } = this.state;
-    member.nickname = e.target.value;
-    const state = Object({}, this.state, { member });
-    this.setState(state);
-    return;
+    this.setState({
+      member: {
+        ...this.state.member,
+        nickname: e.target.value,
+      },
+    });
   };
 
   onKeyPressEvent = e => {
@@ -255,6 +211,17 @@ export default class MemberProfile extends Component {
     }
     return true;
   };
+
+  get name() {
+    let { name, nickname } = this.state.member || {};
+    return nickname || name;
+  }
+
+  get isNotMe() {
+    let { jid } = this.state.member || {};
+    let curJid = this.props.conversation && this.props.conversation.curJid;
+    return jid !== curJid;
+  }
 
   renderMessageButton() {
     return (
@@ -296,20 +263,18 @@ export default class MemberProfile extends Component {
     if (!this.state.visible) {
       return null;
     }
-    let { name, nickname, email, jid } = this.state.member || {};
-    let curJid = this.props.conversation && this.props.conversation.curJid;
-    const isNotMe = jid !== curJid;
+    let { nickname, email, jid } = this.state.member || {};
 
     return (
-      <div className="member-profile-panel" ref={el => (this.panelElement = el)} tabIndex={1}>
-        <Button className="more" onClick={this.showMenu}></Button>
+      <div className="member-profile-panel" ref={this.panelElementRef} tabIndex={1}>
+        <Button className="more button-more__profile" onClick={this.showMenu}></Button>
         <div className="avatar-area">
-          <ContactAvatar jid={jidbare(jid)} name={name} email={email} size={140} />
+          <ContactAvatar jid={jidbare(jid)} name={this.name} email={email} size={140} />
           <div className="name-buttons">
-            <h2 className="member-name" title={name}>
-              {name}
+            <h2 className="member-name" title={this.name}>
+              {this.name}
             </h2>
-            {isNotMe && this.renderMessageButton()}
+            {this.isNotMe && this.renderMessageButton()}
             {this.renderComposeButton()}
           </div>
         </div>
@@ -323,7 +288,7 @@ export default class MemberProfile extends Component {
             className="nickname-input"
             type="text"
             placeholder="input nickname here"
-            value={nickname}
+            defaultValue={nickname}
             onChange={this.onChangeNickname}
             onKeyPress={this.onKeyPressEvent}
             onBlur={this.onChangeNickname}

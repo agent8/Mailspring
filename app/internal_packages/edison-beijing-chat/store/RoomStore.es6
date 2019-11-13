@@ -12,7 +12,6 @@ import {
   ConversationStore,
   ChatActions,
 } from 'chat-exports';
-import delay from '../utils/delay';
 
 const ROOM_MEMBER_VER = 'room_member_ver_';
 const ROOM_LIST_VER = 'room_list_ver_';
@@ -94,7 +93,9 @@ class RoomStore extends MailspringStore {
     }
     if (!members) {
       members = this.getRoomMembersFromCache(roomId, curJid);
+
       if (members) {
+        UserCacheStore.saveUserCache(members);
         return members;
       } else {
         console.warn('***members is null', roomId, curJid, force);
@@ -189,7 +190,7 @@ class RoomStore extends MailspringStore {
   };
 
   onMembersChange = async payload => {
-    const nicknames = chatLocalStorage.nicknames;
+    const nicknames = global.chatLocalStorage.nicknames;
     const conversationJid = payload.from.bare;
     const fromjid = payload.userJid;
     let fromcontact = await UserCacheStore.getUserInfoByJid(fromjid);
