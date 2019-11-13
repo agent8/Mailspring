@@ -1,22 +1,28 @@
 @import 'ui-variables';
 
+.color_icon() {
+  .color_archive {
+    background-color: @action-color-green;
+  }
+  .color_trash {
+    background-color: @action-color-red;
+  }
+  .color_flag {
+    background-color: @action-color-orange;
+  }
+  .color_read {
+    background-color: @action-color-blue;
+  }
+  .color_folder {
+    background-color: @action-color-purple;
+  }
+}
 .preferences-wrap {
   .container-customize-actions {
-    .color_archive {
-      background-color: @action-color-green!important;
+    .item {
+      .color_icon();
     }
-    .color_trash {
-      background-color: @action-color-red!important;
-    }
-    .color_flag {
-      background-color: @action-color-orange!important;
-    }
-    .color_read {
-      background-color: @action-color-blue!important;
-    }
-    .color_folder {
-      background-color: @action-color-purple!important;
-    }
+
     .button-dropdown {
       .only-item {
         min-width: 160px;
@@ -48,6 +54,35 @@
         right: 35px;
       }
     }
+    .email-action-preview {
+      position: relative;
+      width: 500px;
+      .content-mask {
+        background-color: @gray;
+      }
+      .action_icon {
+        position: absolute;
+        top: 37px;
+      }
+      .action_1 {
+        right: 192px;
+      }
+      .action_2 {
+        right: 153px;
+      }
+      .action_3 {
+        right: 114px;
+      }
+      .action_4 {
+        right: 75px;
+      }
+      .action_5 {
+        right: 36px;
+      }
+    }
+    .email-actions .content-mask {
+      background-color: @gray;
+    }
     .swipe-action-preview {
       position: relative;
       width: 500px;
@@ -55,6 +90,7 @@
         position: relative;
         z-index: 2;
       }
+      .color_icon();
       .action_color {
         position: absolute;
         left: 18px;
@@ -79,53 +115,6 @@
       label {
         display: inline-block;
         min-width: 102px;
-      }
-    }
-
-    .local-data {
-      .btn {
-        margin: 4px 0 0 8px;
-        border: 1px solid @dropdown-default-border-color;
-        box-shadow: none;
-        border-radius: 5px;
-      }
-    }
-    .support {
-      position: relative;
-      .popup {
-        padding: 0 0.8em;
-        border-radius: 10px;
-        border: 0;
-        cursor: default;
-        color: @black;
-        background: @gray-light;
-        box-shadow: 0 0.5px 0 rgba(0, 0, 0, 0.15), 0 -0.5px 0 rgba(0, 0, 0, 0.15),
-          0.5px 0 0 rgba(0, 0, 0, 0.15), -0.5px 0 0 rgba(0, 0, 0, 0.15),
-          0 0.5px 1px rgba(0, 0, 0, 0.15);
-        height: 1.9em;
-        line-height: 1.9em;
-        font-size: 12.09px;
-        position: absolute;
-        top: -8px;
-        left: 180px;
-        animation: popupFrames 1.6s linear;
-      }
-      @keyframes popupFrames {
-        0% {
-          opacity: 0.1;
-        }
-        50% {
-          opacity: 0.8;
-        }
-        100% {
-          opacity: 0.1;
-        }
-      }
-      .btn {
-        margin: 4px 0 0 8px;
-        border: 1px solid @dropdown-default-border-color;
-        box-shadow: none;
-        border-radius: 5px;
       }
     }
   }

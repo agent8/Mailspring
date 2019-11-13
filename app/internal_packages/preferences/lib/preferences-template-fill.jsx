@@ -3,6 +3,8 @@ import {
   LaunchSystemStartItem,
   DefaultAccountSending,
   DownloadSelection,
+  LocalData,
+  SupportId,
 } from './components/preferences-general-components';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
@@ -14,6 +16,7 @@ import {
 import {
   CustomizeQuickActions,
   CustomizeSwipeActions,
+  CustomizeEmailActions,
 } from './components/preferences-customize-components';
 import BlockedSenders from './components/preferences-blocked-senders';
 import { Privacy } from './components/preferences-privacy-components';
@@ -185,6 +188,26 @@ const preferencesTemplateFill = {
             },
           ],
         },
+        {
+          groupName: 'Local Data',
+          groupItem: [
+            {
+              label: 'Local Data',
+              component: LocalData,
+              keywords: [],
+            },
+          ],
+        },
+        {
+          groupName: 'Support Id',
+          groupItem: [
+            {
+              label: 'Support Id',
+              component: SupportId,
+              keywords: [],
+            },
+          ],
+        },
       ],
     },
     {
@@ -300,6 +323,17 @@ const preferencesTemplateFill = {
             },
           ],
         },
+        // {
+        //   groupName: 'Email Actions',
+        //   groupItem: [
+        //     {
+        //       label: 'email actions',
+        //       configSchema: configSchema => configSchema,
+        //       component: CustomizeEmailActions,
+        //       keywords: ['buttons', 'Archive', 'flag', 'trash', 'read', 'unread', 'spam'],
+        //     },
+        //   ],
+        // },
       ],
     },
     {

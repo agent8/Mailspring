@@ -127,6 +127,8 @@ lazyLoadAndRegisterTask('BlockContactTask', 'block-contact-task');
 lazyLoadAndRegisterTask('UnBlockContactTask', 'unblock-contact-task');
 lazyLoadAndRegisterTask('GetBlockListTask', 'sync-block-list-task');
 lazyLoadAndRegisterTask('TrashFromSenderTask', 'trash-from-sender-task');
+lazyLoadAndRegisterTask('SiftExpungeUserDataTask', 'sift-expunge-user-data-task');
+lazyLoadAndRegisterTask('SiftExportUserDataTask', 'sift-export-user-data-task');
 
 // Stores
 // These need to be required immediately since some Stores are
@@ -166,6 +168,7 @@ load('DebugStore', 'flux/stores/debug-store');
 load('SystemInfoStore', 'flux/stores/system-info-store');
 load('CalendarStore', 'flux/stores/calendar-store');
 load('SiftStore', 'flux/stores/sift-store');
+load('MessageBodyStore', 'flux/stores/message-body-store');
 lazyLoad('ThreadStore', 'flux/stores/thread-store');
 lazyLoad('BlockedSendersStore', 'flux/stores/blocked-senders-store');
 
