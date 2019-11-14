@@ -389,7 +389,7 @@ export default class MessagesPanel extends Component {
       },
       onInfoPressed: () =>
         this.setState({ showConversationInfo: !this.state.showConversationInfo }),
-      selectedConversation,
+      selectedConversation: JSON.parse(JSON.stringify(selectedConversation)),
     };
     const messagesProps = {
       currentUserId,

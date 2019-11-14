@@ -15,40 +15,42 @@ export default class MessagesTopBar extends Component {
     selectedConversation: PropTypes.shape({
       isGroup: PropTypes.bool.isRequired,
       jid: PropTypes.string.isRequired,
-      name: PropTypes.string,//.isRequired,
-      email: PropTypes.string,//.isRequired,
+      name: PropTypes.string, //.isRequired,
+      email: PropTypes.string, //.isRequired,
       avatar: PropTypes.string,
     }),
-  }
+  };
   static defaultProps = {
-    onInfoPressed: () => { },
+    onInfoPressed: () => {},
     selectedConversation: null,
-  }
+  };
   static inputEl;
   constructor(props) {
     super(props);
     this.state = {
-      conversationName: this.props.selectedConversation.name
-    }
+      conversationName: this.props.selectedConversation.name,
+    };
   }
   UNSAFE_componentWillReceiveProps(nextProps) {
-    if (!this.props.selectedConversation
-      || this.props.selectedConversation.jid !== nextProps.selectedConversation.jid) {
+    if (
+      !this.props.selectedConversation ||
+      this.props.selectedConversation.jid !== nextProps.selectedConversation.jid ||
+      this.props.selectedConversation.name !== nextProps.selectedConversation.name
+    ) {
       this.setState({
-        conversationName: nextProps.selectedConversation.name
+        conversationName: nextProps.selectedConversation.name,
       });
     }
   }
 
-  _onkeyDown = (e) => {
+  _onkeyDown = e => {
     if (e.keyCode === 13) {
       e.currentTarget.blur();
       // this.saveRoomName(e.currentTarget.innerText);
       e.preventDefault();
-    }
-    else if (e.keyCode === 27) {
+    } else if (e.keyCode === 27) {
       this.setState({
-        conversationName: this.props.selectedConversation.name
+        conversationName: this.props.selectedConversation.name,
       });
       // waiting for rendering over
       setTimeout(() => {
@@ -56,9 +58,9 @@ export default class MessagesTopBar extends Component {
       }, 20);
       e.preventDefault();
     }
-  }
+  };
 
-  _onBlur = (e) => {
+  _onBlur = e => {
     const { conversationName } = this.state;
     if (conversationName === this.props.selectedConversation.name) {
       return;
@@ -71,47 +73,48 @@ export default class MessagesTopBar extends Component {
       });
       const { selectedConversation } = this.props;
       this.setState({
-        conversationName: selectedConversation.name
-      })
-      return
+        conversationName: selectedConversation.name,
+      });
+      return;
     }
     this.saveRoomName(conversationName);
-  }
+  };
 
   async saveRoomName(name) {
     const { selectedConversation } = this.props;
     if (name && name !== selectedConversation.name) {
       ConversationStore.saveConversationName(name);
-      await xmpp.setRoomName(selectedConversation.jid, {
-        name
-      }, selectedConversation.curJid);
+      await xmpp.setRoomName(
+        selectedConversation.jid,
+        {
+          name,
+        },
+        selectedConversation.curJid
+      );
     }
   }
 
-  _onChange = (e) => {
+  _onChange = e => {
     this.setState({
-      conversationName: e.target.value
-    })
-  }
+      conversationName: e.target.value,
+    });
+  };
 
   render() {
-    const {
-      selectedConversation: conversation,
-      onInfoPressed
-    } = this.props;
+    const { selectedConversation: conversation, onInfoPressed } = this.props;
     const { conversationName } = this.state;
 
     return (
       <TopBar
         className="messages-top-bar"
         left={
-          <div className='conv-name'>
+          <div className="conv-name">
             <div className="conversation-name">
               {conversationName}
               {conversation.isGroup && (
                 <input
                   type="text"
-                  ref={el => this.inputEl = el}
+                  ref={el => (this.inputEl = el)}
                   value={conversationName}
                   onChange={this._onChange}
                   onKeyDown={this._onkeyDown}
@@ -125,8 +128,9 @@ export default class MessagesTopBar extends Component {
         right={
           <div className="avatar-search">
             <div id="open-info" onClick={onInfoPressed}>
-              {conversation.isGroup ?
-                <GroupChatAvatar conversation={conversation} size={35} /> :
+              {conversation.isGroup ? (
+                <GroupChatAvatar conversation={conversation} size={35} />
+              ) : (
                 <ContactAvatar
                   conversation={conversation}
                   jid={conversation.jid}
@@ -134,7 +138,7 @@ export default class MessagesTopBar extends Component {
                   email={conversation.email}
                   size={35}
                 />
-              }
+              )}
             </div>
             <ThreadSearchBar />
           </div>
