@@ -223,9 +223,9 @@ export default class ConversationInfo extends Component {
     }
   };
 
-  render = () => {
-    const { selectedConversation: conversation, contacts } = this.props;
-    const { members: roomMembers, loadingMembers, inviting } = this.state;
+  renderGroupConversationMember() {
+    const { selectedConversation: conversation } = this.props;
+    const { members: roomMembers } = this.state;
     let currentUserIsOwner = false;
 
     for (const member of roomMembers) {
@@ -235,12 +235,52 @@ export default class ConversationInfo extends Component {
         break;
       }
     }
-    let privateChatMember = {};
-    let self;
-    if (!conversation.isGroup) {
-      privateChatMember = conversation;
-      self = UserCacheStore.getUserInfoByJid(conversation.curJid);
-    }
+    return [
+      roomMembers &&
+        roomMembers.map(member => {
+          return (
+            <InfoMember
+              conversation={conversation}
+              member={member}
+              currentUserIsOwner={currentUserIsOwner}
+              key={member.jid}
+            />
+          );
+        }),
+      <div key="exit-group" className="exit-group" onClick={this.exitGroup}>
+        Exit from Group
+      </div>,
+    ];
+  }
+
+  renderPrivateConversationMember() {
+    const { selectedConversation: conversation } = this.props;
+    const { dataValues, email, isNewRecord, curJid } = conversation;
+    let privateChatMember = { ...dataValues, email, isNewRecord };
+    let self = JSON.parse(JSON.stringify(UserCacheStore.getUserInfoByJid(curJid)));
+
+    return [
+      <InfoMember
+        conversation={conversation}
+        member={privateChatMember}
+        currentUserIsOwner={false}
+        key={privateChatMember.jid}
+      />,
+      self && (
+        <InfoMember
+          conversation={conversation}
+          member={self}
+          currentUserIsOwner={false}
+          key="curJid"
+        />
+      ),
+    ];
+  }
+
+  render = () => {
+    const { selectedConversation: conversation, contacts } = this.props;
+    const { members: roomMembers, loadingMembers, inviting } = this.state;
+
     return (
       <div className="info-content">
         <div className="member-management">
@@ -255,39 +295,9 @@ export default class ConversationInfo extends Component {
           <Button className="more" onClick={this.showMenu}></Button>
         </div>
         <div className="members">
-          {!conversation.isGroup
-            ? [
-                <InfoMember
-                  conversation={conversation}
-                  member={privateChatMember}
-                  currentUserIsOwner={currentUserIsOwner}
-                  key={privateChatMember.jid}
-                />,
-                self && (
-                  <InfoMember
-                    conversation={conversation}
-                    member={self}
-                    currentUserIsOwner={currentUserIsOwner}
-                    key="curJid"
-                  />
-                ),
-              ]
-            : [
-                roomMembers &&
-                  roomMembers.map(member => {
-                    return (
-                      <InfoMember
-                        conversation={conversation}
-                        member={member}
-                        currentUserIsOwner={currentUserIsOwner}
-                        key={member.jid}
-                      />
-                    );
-                  }),
-                <div key="exit-group" className="exit-group" onClick={this.exitGroup}>
-                  Exit from Group
-                </div>,
-              ]}
+          {conversation.isGroup
+            ? this.renderGroupConversationMember()
+            : this.renderPrivateConversationMember()}
         </div>
         {inviting && conversation.jid !== NEW_CONVERSATION && (
           <FixedPopover

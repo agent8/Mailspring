@@ -18,19 +18,18 @@ import keyMannager from '../../../../../src/key-manager';
 import { RetinaImg } from 'mailspring-component-kit';
 import { ConversationStore } from 'chat-exports';
 import { nickname, name } from '../../../utils/name';
-import { jidlocal, jidbare } from '../../../utils/jid';
+import { jidbare } from '../../../utils/jid';
 export default class MemberProfile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      member: null,
+      member: {},
       visible: false,
     };
     this.panelElementRef = React.createRef();
   }
 
   componentDidMount = () => {
-    // this.queryProfile();
     document.body.addEventListener('click', this.onClickWithProfile);
     this._unsub = MemberProfileStore.listen(({ member }) => this.setMember(member));
   };
@@ -41,7 +40,10 @@ export default class MemberProfile extends Component {
   };
 
   setMember = member => {
-    this.setState({ member, visible: true });
+    this.setState({
+      member: { ...member, nickname: nickname(member.jid) },
+      visible: true,
+    });
   };
 
   onClickWithProfile = e => {
@@ -97,7 +99,7 @@ export default class MemberProfile extends Component {
     if (!member) {
       return;
     }
-    const jid = member.jid.bare || member.jid;
+    const jid = jidbare(member.jid);
     const nicknames = global.chatLocalStorage.nicknames;
     if (nicknames[jid] !== member.nickname) {
       nicknames[jid] = member.nickname;
@@ -111,7 +113,7 @@ export default class MemberProfile extends Component {
   showMenu = async e => {
     e.stopPropagation();
     const { member } = this.state;
-    const jid = member.jid.bare || member.jid;
+    const jid = jidbare(member.jid);
     const curJid = this.props.conversation.curJid;
     const isBlocked = await BlockStore.isBlocked(jid, curJid);
     const menus = [
@@ -144,7 +146,7 @@ export default class MemberProfile extends Component {
 
   blockContact = async () => {
     const member = this.state.member;
-    const jid = member.jid.bare || member.jid;
+    const jid = jidbare(member.jid);
     const curJid = this.props.conversation.curJid;
     await BlockStore.block(jid, curJid);
     alert(`You have blocked ${member.nickname || member.name}`);
@@ -152,7 +154,7 @@ export default class MemberProfile extends Component {
 
   unblockContact = async () => {
     const member = this.state.member;
-    const jid = member.jid.bare || member.jid;
+    const jid = jidbare(member.jid);
     const curJid = this.props.conversation.curJid;
     await BlockStore.unblock(jid, curJid);
     alert(`You have unblocked ${member.nickname || member.name}`);
@@ -160,7 +162,7 @@ export default class MemberProfile extends Component {
 
   addToContacts = async () => {
     const member = this.state.member;
-    const jid = member.jid.bare || member.jid;
+    const jid = jidbare(member.jid);
     let contacts = await ContactStore.getContacts();
     if (contacts.some(item => item.email === member.email)) {
       alert(`This contact(${member.nickname || member.name}) has been in the contacts.`);
@@ -195,10 +197,7 @@ export default class MemberProfile extends Component {
 
   onChangeNickname = e => {
     this.setState({
-      member: {
-        ...this.state.member,
-        nickname: e.target.value,
-      },
+      member: { ...this.state.member, nickname: e.target.value },
     });
   };
 
@@ -213,12 +212,12 @@ export default class MemberProfile extends Component {
   };
 
   get name() {
-    let { name, nickname } = this.state.member || {};
+    let { name, nickname } = this.state.member;
     return nickname || name;
   }
 
   get isNotMe() {
-    let { jid } = this.state.member || {};
+    let { jid } = this.state.member;
     let curJid = this.props.conversation && this.props.conversation.curJid;
     return jid !== curJid;
   }
@@ -263,7 +262,7 @@ export default class MemberProfile extends Component {
     if (!this.state.visible) {
       return null;
     }
-    let { nickname, email, jid } = this.state.member || {};
+    let { email, jid } = this.state.member;
 
     return (
       <div className="member-profile-panel" ref={this.panelElementRef} tabIndex={1}>
@@ -288,7 +287,6 @@ export default class MemberProfile extends Component {
             className="nickname-input"
             type="text"
             placeholder="input nickname here"
-            defaultValue={nickname}
             onChange={this.onChangeNickname}
             onKeyPress={this.onKeyPressEvent}
             onBlur={this.onChangeNickname}
