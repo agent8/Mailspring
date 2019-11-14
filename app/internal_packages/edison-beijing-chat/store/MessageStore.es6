@@ -30,7 +30,7 @@ class MessageStore extends MailspringStore {
   constructor() {
     super();
     this.groupedMessages = [];
-    this.conversationJid;
+    this.conversationJid = '';
     this._registerListeners();
     this._triggerDebounced = _.debounce(() => this.trigger(), 20);
   }
@@ -125,7 +125,7 @@ class MessageStore extends MailspringStore {
       name: contact ? contact.name : name,
       isGroup: false,
       unreadMessages: refreshConv.unreadMessages,
-      lastMessageTime: refreshConv.lastMessageTime || parseInt(payload.ts),
+      lastMessageTime: refreshConv.lastMessageTime || parseInt(payload.ts, 10),
       lastMessageText: refreshConv.lastMessageText || getMessageContent(payload),
       lastMessageSender: refreshConv.sender || payload.from.bare,
       at: false,

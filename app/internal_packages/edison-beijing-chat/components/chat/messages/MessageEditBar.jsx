@@ -71,6 +71,11 @@ export default class MessageEditBar extends PureComponent {
     conversation: null,
   };
 
+  constructor() {
+    super();
+    this.initKeyMapping();
+  }
+
   state = {
     suggestions: [],
     roomMembers: [],
@@ -98,6 +103,78 @@ export default class MessageEditBar extends PureComponent {
       }
     }, 30);
   };
+
+  initKeyMapping() {
+    this.keyMapping = [
+      {
+        keyCode: 13,
+        preventDefault: true,
+        stopPropagation: true,
+        altKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+        metaKey: false,
+        // enter
+        keyEvent: () => this.EnterKeyEvent(false),
+      },
+      {
+        keyCode: 13,
+        preventDefault: true,
+        stopPropagation: true,
+        shiftKey: true,
+        // shift + enter
+        keyEvent: () => this.ShiftEnterKeyEvent(),
+      },
+      {
+        keyCode: 13,
+        preventDefault: true,
+        stopPropagation: true,
+        altKey: true,
+        shiftKey: false,
+        // alt + enter
+        keyEvent: () => this.EnterKeyEvent(true),
+      },
+      {
+        keyCode: 13,
+        preventDefault: true,
+        stopPropagation: true,
+        ctrlKey: true,
+        shiftKey: false,
+        // ctrl + enter
+        keyEvent: () => this.EnterKeyEvent(true),
+      },
+      {
+        keyCode: 13,
+        preventDefault: true,
+        stopPropagation: true,
+        metaKey: true,
+        shiftKey: false,
+        // meta + enter
+        keyEvent: () => this.EnterKeyEvent(true),
+      },
+      {
+        keyCode: 27,
+        keyEvent: this.EscKeyEvent,
+      },
+      {
+        keyCode: 40,
+        preventDefault: true,
+        stopPropagation: true,
+        keyEvent: this.DownKeyEvent,
+      },
+      {
+        keyCode: 38,
+        preventDefault: true,
+        stopPropagation: true,
+        keyEvent: this.UpKeyEvent,
+      },
+      {
+        keyCode: 50,
+        shiftKey: true,
+        keyEvent: this.AtKeyEvent,
+      },
+    ];
+  }
 
   initMsg = () => {
     this._richText.autoFocus();
@@ -194,7 +271,7 @@ export default class MessageEditBar extends PureComponent {
     if (message) {
       let body = {
         type: FILE_TYPE.TEXT,
-        timeSend: new Date().getTime() + edisonChatServerDiffTime,
+        timeSend: new Date().getTime() + global.edisonChatServerDiffTime,
         content: message,
         email: conversation.email,
         name: conversation.name,
@@ -210,6 +287,7 @@ export default class MessageEditBar extends PureComponent {
     Actions.closePopover();
     this._richText.addNode(value);
   };
+
   onEmojiTouch = () => {
     let rectPosition = ReactDOM.findDOMNode(this.emojiRef);
     if (!this.state.openEmoji) {
@@ -235,10 +313,12 @@ export default class MessageEditBar extends PureComponent {
     const state = Object.assign({}, this.state, { hidden: true });
     this.setState(state);
   };
+
   onCancel = () => {
     this.props.cancelEdit();
     this.hide();
   };
+
   onSave = () => {
     const { messageBody } = this.state;
     if (!messageBody.trim()) {
@@ -330,79 +410,10 @@ export default class MessageEditBar extends PureComponent {
       return null;
     }
 
-    const keyMapping = [
-      {
-        keyCode: 13,
-        preventDefault: true,
-        stopPropagation: true,
-        altKey: false,
-        ctrlKey: false,
-        shiftKey: false,
-        metaKey: false,
-        // enter
-        keyEvent: () => this.EnterKeyEvent(false),
-      },
-      {
-        keyCode: 13,
-        preventDefault: true,
-        stopPropagation: true,
-        shiftKey: true,
-        // shift + enter
-        keyEvent: () => this.ShiftEnterKeyEvent(),
-      },
-      {
-        keyCode: 13,
-        preventDefault: true,
-        stopPropagation: true,
-        altKey: true,
-        shiftKey: false,
-        // alt + enter
-        keyEvent: () => this.EnterKeyEvent(true),
-      },
-      {
-        keyCode: 13,
-        preventDefault: true,
-        stopPropagation: true,
-        ctrlKey: true,
-        shiftKey: false,
-        // ctrl + enter
-        keyEvent: () => this.EnterKeyEvent(true),
-      },
-      {
-        keyCode: 13,
-        preventDefault: true,
-        stopPropagation: true,
-        metaKey: true,
-        shiftKey: false,
-        // meta + enter
-        keyEvent: () => this.EnterKeyEvent(true),
-      },
-      {
-        keyCode: 27,
-        keyEvent: this.EscKeyEvent,
-      },
-      {
-        keyCode: 40,
-        preventDefault: true,
-        stopPropagation: true,
-        keyEvent: this.DownKeyEvent,
-      },
-      {
-        keyCode: 38,
-        preventDefault: true,
-        stopPropagation: true,
-        keyEvent: this.UpKeyEvent,
-      },
-      {
-        keyCode: 50,
-        shiftKey: true,
-        keyEvent: this.AtKeyEvent,
-      },
-    ];
     return (
       <div className="sendBar">
         <RichText
-          keyMapping={keyMapping}
+          keyMapping={this.keyMapping}
           placeholder="Edison Chat"
           maxRows={20}
           onChange={this.onMessageBodyChanged}

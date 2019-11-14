@@ -581,7 +581,6 @@ export default class MessagesSendBar extends PureComponent {
 
   EnterKeyEvent = funKeyIsOn => {
     const { atVisible, atContacts, atActiveIndex } = this.state;
-    console.log('xxxx===', funKeyIsOn, atVisible);
     if (funKeyIsOn || !atVisible) {
       this.sendMessage();
     } else {

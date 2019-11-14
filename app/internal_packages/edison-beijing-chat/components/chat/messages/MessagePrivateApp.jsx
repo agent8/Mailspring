@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid/v4';
-const { DateUtils } = require('mailspring-exports');
 import { RetinaImg } from 'mailspring-component-kit';
 import MessageCommand from './MessageCommand';
 import { FILE_TYPE } from '../../../utils/filetypes';
 import { MessageStore, ContactStore, MessageSend } from 'chat-exports';
+const { DateUtils } = require('mailspring-exports');
 
 export default class MessagePrivateApp extends PureComponent {
   static propTypes = {

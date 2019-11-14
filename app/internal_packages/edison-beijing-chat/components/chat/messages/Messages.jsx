@@ -117,17 +117,20 @@ export default class Messages extends Component {
         const nextIds = flattenMsgIds(groupedMessages);
         let areNewMessages = currentIds.size < nextIds.size;
         // if switched to new conversation
-        if (selectedConversation.jid !== this.props.selectedConversation.jid || currentIds.size === 0) {
+        if (
+          selectedConversation.jid !== this.props.selectedConversation.jid ||
+          currentIds.size === 0
+        ) {
           shouldDisplayMessageCounts = MESSAGE_COUNTS_EACH_PAGE;
           areNewMessages = true;
         } else {
-          shouldDisplayMessageCounts += (nextIds.size - currentIds.size);
+          shouldDisplayMessageCounts += nextIds.size - currentIds.size;
         }
         this.setState({
           groupedMessages,
           messageCounts: nextIds.size,
           shouldScrollBottom: areNewMessages,
-          shouldDisplayMessageCounts
+          shouldDisplayMessageCounts,
         });
       }
     }
@@ -279,12 +282,8 @@ export default class Messages extends Component {
     if (jid === NEW_CONVERSATION) {
       return null;
     }
-
     return (
-      <div
-        className="messages"
-        tabIndex="0"
-      >
+      <div className="messages" tabIndex="0">
         <div
           className="messages-wrap"
           ref={element => {

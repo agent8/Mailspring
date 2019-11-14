@@ -479,7 +479,7 @@ export default class Msg extends PureComponent {
       return (
         <div className="text-content">
           <div className="text" ref={el => (this.contentEl = el)}>
-            <MessageText text={textContent} />
+            <MessageText text={textContent} edited={msgBody.updating} />
           </div>
           {msgBody.failMessage ? (
             <div className="fail-message-text"> {msgBody.failMessage} </div>
@@ -497,6 +497,7 @@ export default class Msg extends PureComponent {
     const member = this.senderContact();
     const senderName = this.senderName();
     const messageFail = msg.status === 'MESSAGE_STATUS_TRANSFER_FAILED' && isCurrentUser;
+    let key = msg.id + '_' + msg.updatedAt.getTime();
 
     if (msgBody.deleted) {
       return null;
@@ -508,7 +509,7 @@ export default class Msg extends PureComponent {
           conversation={conversation}
           getContactInfoByJid={this.getContactInfoByJid}
           getContactAvatar={this.getContactAvatar}
-          key={msg.id}
+          key={key}
         />
       );
     } else if (msgBody.appJid) {
@@ -519,7 +520,7 @@ export default class Msg extends PureComponent {
           conversation={conversation}
           getContactInfoByJid={this.getContactInfoByJid}
           getContactAvatar={this.getContactAvatar}
-          key={msg.id}
+          key={key}
         />
       );
     } else {
@@ -528,7 +529,7 @@ export default class Msg extends PureComponent {
       );
       return (
         <div
-          key={msg.id}
+          key={key}
           className={
             this.getMessageClasses() +
             (isEditing ? ' editing' : '') +
