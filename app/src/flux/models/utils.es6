@@ -24,6 +24,7 @@ const GDPR_COUNTRIES = [
   "NO", "CH",
   // "CN", "US",
 ];
+const BLANK_ZWNJ = '\u200c' // &zwnj;
 
 module.exports = Utils = {
   waitFor(latch, options = {}) {
@@ -55,6 +56,15 @@ module.exports = Utils = {
       return false;
     }
     return files.find(f => (!f.contentId || f.size > 12 * 1024) && !CALENDAR_TYPES.includes(f.contentType));
+  },
+
+  superTrim(text) {
+    if (!text || typeof text !== 'string') {
+      return text;
+    }
+
+    const reg = new RegExp(`${BLANK_ZWNJ}+`, "g");
+    return text.replace(reg, '').trim();
   },
 
   extractTextFromHtml(html, param = {}) {

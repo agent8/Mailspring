@@ -74,7 +74,7 @@ export default class Msg extends PureComponent {
 
   shouldDisplayFileIcon = () => {
     const { msgBody } = this.state;
-    return msgBody.mediaObjectId && msgBody.type == FILE_TYPE.OTHER_FILE;
+    return msgBody.mediaObjectId && msgBody.type === FILE_TYPE.OTHER_FILE;
   };
 
   static timer;
@@ -345,7 +345,14 @@ export default class Msg extends PureComponent {
       const { queueLoadMessage } = this.props;
       queueLoadMessage(loadConfig);
     } else {
-      MessageSend.sendMessage(msgBody, conversation, msg.id);
+      console.log('msgBody===', msgBody);
+
+      MessageSend.sendMessage(
+        // { ...msgBody, failMessage: '', type: FILE_TYPE.text },
+        msgBody,
+        conversation,
+        msg.id
+      );
     }
   };
 
@@ -433,6 +440,7 @@ export default class Msg extends PureComponent {
       style.backgroundColor = iconInfo.color;
     }
     let isVideo = AttachmentStore.isVideo(filepath);
+
     return (
       <div className="message-file">
         <div className="file-info" onClick={() => this.clickFileCoordinate(msgBody.path)}>
@@ -455,7 +463,7 @@ export default class Msg extends PureComponent {
 
   renderContent() {
     const { msg, conversation } = this.props;
-    const { isEditing, msgBody, currentUserJid } = this.state;
+    const { isEditing, msgBody } = this.state;
     const textContent = (msgBody.path && path.basename(msgBody.path)) || msgBody.content || msgBody;
     if (isEditing) {
       return (
@@ -491,13 +499,14 @@ export default class Msg extends PureComponent {
 
   render() {
     const { msg, conversation } = this.props;
-    const { isEditing, msgBody, msgImgPath, currentUserJid } = this.state;
+    const { isEditing, msgBody, currentUserJid } = this.state;
     const isCurrentUser = msg.sender === currentUserJid;
     const color = colorForString(msg.sender);
     const member = this.senderContact();
     const senderName = this.senderName();
     const messageFail = msg.status === 'MESSAGE_STATUS_TRANSFER_FAILED' && isCurrentUser;
     let key = msg.id + '_' + msg.updatedAt.getTime();
+    console.log('msgBody===', msgBody);
 
     if (msgBody.deleted) {
       return null;
