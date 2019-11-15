@@ -196,9 +196,12 @@ export default class MemberProfile extends Component {
   };
 
   onChangeNickname = e => {
-    this.setState({
-      member: { ...this.state.member, nickname: e.target.value },
-    });
+    let nickname = e.target.value;
+    if (nickname) {
+      this.setState({
+        member: { ...this.state.member, nickname },
+      });
+    }
   };
 
   onKeyPressEvent = e => {
