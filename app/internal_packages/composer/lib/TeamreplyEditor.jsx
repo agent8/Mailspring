@@ -8,7 +8,7 @@ export default class ComposerEditor extends Component {
     return (
       <webview
         src='http://0.0.0.0:8080/p/52316330ebe411e9a7be1b757c407294'
-        style={{ display: 'inline-flex', height: '600px' }}
+        style={{ display: 'inline-flex', width: '100%', height: '350px' }}
       />
     )
   }
