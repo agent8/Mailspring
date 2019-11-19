@@ -30,6 +30,8 @@ import ActionBarPlugins from './action-bar-plugins'
 import Fields from './fields'
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary'
 
+import TeamreplyEditor from './TeamreplyEditor'
+
 const {
   hasBlockquote,
   hasNonTrailingBlockquote,
@@ -397,24 +399,7 @@ export default class ComposerView extends React.Component {
   }
 
   _renderEditor () {
-    return (
-      <ComposerEditor
-        ref={el => {
-          if (el) {
-            this._els[Fields.Body] = el
-          }
-        }}
-        className={this.state.quotedTextHidden && 'hiding-quoted-text'}
-        propsForPlugins={{ draft: this.props.draft, session: this.props.session }}
-        value={this.props.draft.bodyEditorState}
-        onFileReceived={this._onFileReceived}
-        onDrop={e => this._dropzone._onDrop(e)}
-        onBlur={this._onEditorBlur}
-        readOnly={this.props.session ? this.props.session.isPopout() : true}
-        onChange={this._onEditorChange}
-        isCrowded={this.state.isCrowded}
-      />
-    )
+    return <TeamreplyEditor />
   }
 
   _renderFooterRegions () {
@@ -594,11 +579,11 @@ export default class ComposerView extends React.Component {
   // start and end target are both not in the contenteditable. This ensures
   // that this behavior doesn't interfear with a click and drag selection.
   _onMouseDownComposerBody = event => {
-    if (ReactDOM.findDOMNode(this._els[Fields.Body]).contains(event.target)) {
-      this._mouseDownTarget = null
-    } else {
-      this._mouseDownTarget = event.target
-    }
+    // if (ReactDOM.findDOMNode(this._els[Fields.Body]).contains(event.target)) {
+    //   this._mouseDownTarget = null
+    // } else {
+    //   this._mouseDownTarget = event.target
+    // }
   }
 
   _inFooterRegion (el) {
