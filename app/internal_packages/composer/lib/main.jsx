@@ -13,7 +13,7 @@ import {
 import ComposeButton from './compose-button'
 import RefreshButton from './refresh-button'
 import ComposerView from './composer-view'
-const { spawnSync, execSync } = require('child_process')
+const { spawnSync, execSync, exec } = require('child_process')
 
 const ComposerViewForDraftClientId = InflatesDraftClientId(ComposerView)
 
@@ -135,12 +135,10 @@ class ComposerWithWindowProps extends React.Component {
 }
 
 export function activate () {
-  execSync('cd ../teamreply-client')
-  console.log(' active composer: __dir: ', __dirname)
-  const tmserverPath = './src/node/'
-  let result = spawnSync('node', [tmserverPath + 'server.js'])
-  execSync('cd ' + __dirname)
-  console.log(' spawn teamreply-client: ', result)
+  let cwd = process.cwd()
+  process.chdir('./app/internal_packages/composer/teamreply-client')
+  exec('node src/node/server.js')
+  process.chdir(cwd)
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(ComposerViewForDraftClientId, {
       role: 'Composer'
