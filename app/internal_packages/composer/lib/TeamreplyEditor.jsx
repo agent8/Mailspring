@@ -13,7 +13,7 @@ export default class TeamreplyEditor extends Component {
     const chatAccounts = AppEnv.config.get('chatAccounts') || {}
     const emails = Object.keys(chatAccounts)
     const email = emails[0] || 'yazz@qq.com'
-    const token = (await keyMannager.getAccessTokenByEmail(email)) || 'some access token'
+    const token = await keyMannager.getAccessTokenByEmail(email)
     const chatAccountList = Object.values(chatAccounts)
     console.log('tm-editor.render: chatAccounts: ', chatAccounts)
     const chatAccount = chatAccountList[0] || {}
@@ -31,13 +31,16 @@ export default class TeamreplyEditor extends Component {
         text: '',
         emailOri: { id: 'emailId', cc: ['cc'], to: ['11', '2'] },
         emailExtr: { to: ['11', '2'] },
-        coWorkers: [{ name: 'caoxm3456', userId: '427284' }, { name: 'Xingming Cao', userId: '460359so2dx' }]
+        coWorkers: [
+          { name: 'caoxm3456', userId: '427284', permission: 'edit' },
+          { name: 'Xingming Cao', userId: '460359so2dx', permission: 'edit' }
+        ]
       })
       console.log(' axios.post:createPad: res: ', res)
       if (res && res.status === 200 && res.data && res.data.data && res.data.data.padId) {
         padId = res.data.data.padId
         chatAccount.padId = padId
-        console.log('new padId: chatAccounts: ', chatAccounts)
+        console.log(' new padId: chatAccounts: ', chatAccounts)
         AppEnv.config.set('chatAccounts', chatAccounts)
       }
     }

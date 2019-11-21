@@ -332,7 +332,6 @@ export default class MessagesSendBar extends PureComponent {
         if (result.canceled) {
           return
         }
-        console.log(' selectFile: ', result.filePaths)
         const files = result.filePaths
         this.setState({ files }, () => {
           this.sendMessage()
