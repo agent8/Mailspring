@@ -8,11 +8,11 @@ export default class TeamreplyEditor extends Component {
   constructor (props) {
     super(props)
   }
-  async componentDidMount () {
+  async componentWillMount () {
     console.log('tm-editor.componentDidMount: ')
     const chatAccounts = AppEnv.config.get('chatAccounts') || {}
     const emails = Object.keys(chatAccounts)
-    const email = emails[0] || 'yazz@qq.com'
+    const email = emails[0]
     const token = await keyMannager.getAccessTokenByEmail(email)
     const chatAccountList = Object.values(chatAccounts)
     console.log('tm-editor.render: chatAccounts: ', chatAccounts)
