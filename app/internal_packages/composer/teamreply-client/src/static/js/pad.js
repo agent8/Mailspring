@@ -200,8 +200,26 @@ function savePassword () {
   return false
 }
 
+function parseQuery (searchString) {
+  const result = {}
+  searchString = decodeURIComponent(searchString)
+  if (searchString[0] === '?') {
+    searchString = searchString.substring(1)
+  }
+  const fields = searchString.split(/\s*&\s*/)
+  for (let field of fields) {
+    const pair = field.split(/\s*=\s*/)
+    const [k, v] = pair
+    result[k] = v
+  }
+  return result
+}
+
 function sendClientReady (isReconnect, messageType) {
   messageType = typeof messageType !== 'undefined' ? messageType : 'CLIENT_READY'
+  console.log(' pad.js: sendClientReady: ')
+  const query = parseQuery(document.location.search)
+  console.log('pad.js: ' + location + ':  ' + JSON.stringify(query))
   var padId = document.location.pathname.substring(document.location.pathname.lastIndexOf('/') + 1)
   padId = decodeURIComponent(padId) // unescape neccesary due to Safari and Opera interpretation of spaces
   console.log('yazz.padId:' + padId)
@@ -211,19 +229,22 @@ function sendClientReady (isReconnect, messageType) {
     document.title = padId.replace(/_+/g, ' ') + ' | ' + title
   }
 
-  var token = readCookie('token')
+  // var token = readCookie('token')
+  var token = query.token
   if (token == null) {
     token = 'r1ozRlDeSfO6NfVPha9A5Q'
     createCookie('token', token, 60)
   }
 
   var sessionID = decodeURIComponent(readCookie('sessionID'))
-  var userId = readCookie('userId')
+  // var userId = readCookie('userId')
+  var userId = query.userId
   if (!userId) {
     userId = '100007'
     createCookie('userId', userId)
   }
-  var userName = readCookie('userName')
+  // var userName = readCookie('userName')
+  var userName = query.userName
   if (!userName) {
     userName = 'yazz'
     createCookie('userName', userName)
@@ -239,6 +260,7 @@ function sendClientReady (isReconnect, messageType) {
     token: token,
     protocolVersion: 2
   }
+  console.log(' pad.js: msg: ', msg);
 
   // this is a reconnect, lets tell the server our revisionnumber
   if (isReconnect == true) {
