@@ -4,7 +4,7 @@ import Select, { Option } from 'rc-select'
 import uuid from 'uuid/v4'
 import { Actions, WorkspaceStore } from 'mailspring-exports'
 import { ChatActions, ConversationStore, ContactStore, AppStore, ContactAvatar, Button } from 'chat-exports'
-const { AccountStore } = require('mailspring-exports')
+const { AccountStore, DraftStore } = require('mailspring-exports')
 
 const GROUP_CHAT_DOMAIN = '@muc.im.edison.tech'
 export default class InvitePadMember extends Component {
@@ -129,10 +129,28 @@ export default class InvitePadMember extends Component {
 
   InvitePadMember = () => {
     const { members } = this.state
+    const { draft } = this.props
+    console.log(' InvitePadMember: draft: ', draft)
     if (!members || members.length === 0) {
       return
     }
     console.log(' InvitePadMember: ', members)
+    const emails = members.map(m => m.email)
+    const to = emails[0]
+    const cc = emails.slice(1)
+    DraftStore.createAndSendMessage({
+      subject: 'invite pad member',
+      body: `
+      <br/>
+      <br/>
+      <div><a src="http://www.baidu.com">baidu</a></div>
+      `,
+      to,
+      cc,
+      from,
+      body,
+      draft
+    })
     this._close()
   }
 
@@ -170,24 +188,22 @@ export default class InvitePadMember extends Component {
       return null
     }
 
-    const children = contacts
-      .filter(contact => !!contact && !this.isMe(contact.email))
-      .map((contact, index) => (
-        <Option
-          key={contact.jid}
-          jid={contact.jid}
-          curjid={contact.curJid}
-          value={contact.name + contact.email}
-          email={contact.email}
-          label={contact.name}
-        >
-          <div className='chip'>
-            <ContactAvatar jid={contact.jid} name={contact.name} email={contact.email} size={32} />
-            <span className='contact-name'>{contact.name}</span>
-            <span className='contact-email'>{contact.email}</span>
-          </div>
-        </Option>
-      ))
+    const children = contacts.map((contact, index) => (
+      <Option
+        key={contact.jid}
+        jid={contact.jid}
+        curjid={contact.curJid}
+        value={contact.name + contact.email}
+        email={contact.email}
+        label={contact.name}
+      >
+        <div className='chip'>
+          <ContactAvatar jid={contact.jid} name={contact.name} email={contact.email} size={32} />
+          <span className='contact-name'>{contact.name}</span>
+          <span className='contact-email'>{contact.email}</span>
+        </div>
+      </Option>
+    ))
     console.log(' invite.render: children: ', children)
     return (
       <div className='invite-member-popup' onClick={this.onClick}>

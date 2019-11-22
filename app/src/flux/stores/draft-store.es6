@@ -700,6 +700,20 @@ class DraftStore extends MailspringStore {
       });
   };
 
+  createAndSendMessage = ({subject, body, to, cc, from, draft}) => {
+    draft = DraftFactory.createDraft({
+      subject,
+      body,
+      to,
+      cc,
+      from,
+      threadId: '',
+      accountId: draft.accountId
+    });
+    console.log(' createAndSendMessage: draft: ', draft)
+    Actions.sendDraft(draft.headerMessageId);
+  }
+
   _onComposeReply = ({ thread, threadId, message, messageId, popout, type, behavior }) => {
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ message: m, thread: t }) => {

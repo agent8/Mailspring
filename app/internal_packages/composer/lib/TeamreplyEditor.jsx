@@ -45,7 +45,7 @@ export default class TeamreplyEditor extends Component {
         AppEnv.config.set('chatAccounts', chatAccounts)
       }
     }
-    const padInfo = { padId, userId, userName, token }
+    const padInfo = { padId, userId, userName, token, email }
     this.setState({ padInfo })
   }
   inviteEditor = () => {
@@ -54,6 +54,7 @@ export default class TeamreplyEditor extends Component {
 
   render () {
     const { padInfo, inviteVisible } = this.state
+    const { draft } = this.props
     if (!padInfo) {
       return <div>No edit pad information found for this email!</div>
     }
@@ -70,7 +71,7 @@ export default class TeamreplyEditor extends Component {
         <div className='teamreply-editor-invite-btn' onClick={this.inviteEditor}>
           Invite
         </div>
-        <InvitePadMember visible={inviteVisible} padInfo={padInfo} />
+        <InvitePadMember visible={inviteVisible} padInfo={padInfo} draft={draft} />
       </div>
     )
   }

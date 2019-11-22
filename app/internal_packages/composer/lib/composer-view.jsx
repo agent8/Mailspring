@@ -399,7 +399,8 @@ export default class ComposerView extends React.Component {
   }
 
   _renderEditor () {
-    return <TeamreplyEditor />
+    const draft = this.props
+    return <TeamreplyEditor draft={draft} />
   }
 
   _renderFooterRegions () {
