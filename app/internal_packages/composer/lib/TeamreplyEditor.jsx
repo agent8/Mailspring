@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import keyMannager from '../../../src/key-manager'
+import InvitePadMember from './InvitePadMember'
 var axios = require('axios')
 
 export default class TeamreplyEditor extends Component {
@@ -47,9 +48,12 @@ export default class TeamreplyEditor extends Component {
     const padInfo = { padId, userId, userName, token }
     this.setState({ padInfo })
   }
+  inviteEditor = () => {
+    this.setState({ inviteVisible: true })
+  }
 
   render () {
-    const { padInfo } = this.state
+    const { padInfo, inviteVisible } = this.state
     if (!padInfo) {
       return <div>No edit pad information found for this email!</div>
     }
@@ -58,10 +62,16 @@ export default class TeamreplyEditor extends Component {
       return <div> Can not get AND create proper edit pad for this email!</div>
     }
     return (
-      <iframe
-        className='teamreply-editor'
-        src={`http://0.0.0.0:8080/p/${padId}?userId=${userId}&userName=${userName}&token=${token}`}
-      />
+      <div className='teamreply-editor-container'>
+        <iframe
+          className='teamreply-editor'
+          src={`http://0.0.0.0:8080/p/${padId}?userId=${userId}&userName=${userName}&token=${token}`}
+        />
+        <div className='teamreply-editor-invite-btn' onClick={this.inviteEditor}>
+          Invite
+        </div>
+        <InvitePadMember visible={inviteVisible} padInfo={padInfo} />
+      </div>
     )
   }
 }
