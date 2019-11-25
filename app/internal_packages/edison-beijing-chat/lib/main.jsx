@@ -14,7 +14,7 @@ const { ComponentRegistry, WorkspaceStore } = require('mailspring-exports')
 const osLocale = require('os-locale')
 
 const CHAT_COUNTRIES = ['CN']
-function isChatTestUser() {
+function isChatTestUser () {
   // let locale = osLocale.sync();
   // if (locale.indexOf('_') !== -1) {
   //   locale = locale.split('_')[1];
@@ -26,7 +26,7 @@ function isChatTestUser() {
 const isChatTest = isChatTestUser()
 
 module.exports = {
-  activate() {
+  activate () {
     if (!AppEnv.config.get(`core.workspace.enableChat`)) {
       return
     }
@@ -74,16 +74,17 @@ module.exports = {
       //   });
       // }
     }
-    ContactModel.destroy({
-      where: {},
-      truncate: true,
-      force: true
-    }).then(() => {
-      AppStore.refreshAppsEmailContacts()
-    })
+    // ContactModel.destroy({
+    //   where: {},
+    //   truncate: true,
+    //   force: true
+    // }).then(() => {
+    //   AppStore.refreshAppsEmailContacts()
+    // })
+    AppStore.refreshAppsEmailContacts()
   },
 
-  deactivate() {
+  deactivate () {
     if (AppEnv.config.get(`core.workspace.enableChat`)) {
       const { devMode } = AppEnv.getLoadSettings()
       if (true || devMode || isChatTest) {

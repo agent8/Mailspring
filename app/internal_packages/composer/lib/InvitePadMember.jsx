@@ -38,7 +38,6 @@ export default class InvitePadMember extends Component {
     if (select_container) {
       select_container.style.top = '180px'
     }
-    setTimeout(this._setDropDownHeight, 300)
     window.addEventListener('resize', this.setUlListPosition)
   }
 
@@ -59,30 +58,10 @@ export default class InvitePadMember extends Component {
     if (this.state.members.length !== prevState.members.length) {
       this.setUlListPosition()
     }
-    // some hacks to show select dropdown correctly
-    setTimeout(() => {
-      const select_container = document.querySelector('.rc-select-dropdown')
-      if (select_container) {
-        select_container.style.top = '180px'
-      }
-    }, 1)
-  }
-  onClick = () => {
-    setTimeout(() => {
-      const select_container = document.querySelector('.rc-select-dropdown')
-      console.log(' invite.onClick: select_container: ', select_container)
-      if (select_container) {
-        select_container.style.top = '180px'
-      }
-    }, 1)
 
-    setTimeout(() => {
-      const select_container = document.querySelector('.rc-select-dropdown')
-      if (select_container) {
-        select_container.style.top = '180px'
-      }
-    }, 100)
+    setTimeout(this._setDropDownHeight, 1)
   }
+  onClick = () => {}
 
   isMe (email) {
     return !!AccountStore.accountForEmail(email)
@@ -127,30 +106,47 @@ export default class InvitePadMember extends Component {
     )
   }
 
-  InvitePadMember = () => {
+  InvitePadMember = async () => {
     const { members } = this.state
-    const { draft } = this.props
+    const { draft, padInfo } = this.props
     console.log(' InvitePadMember: draft: ', draft)
     if (!members || members.length === 0) {
       return
     }
     console.log(' InvitePadMember: ', members)
-    const emails = members.map(m => m.email)
-    const to = emails[0]
-    const cc = emails.slice(1)
-    DraftStore.createAndSendMessage({
-      subject: 'invite pad member',
-      body: `
-      <br/>
-      <br/>
-      <div><a src="http://www.baidu.com">baidu</a></div>
-      `,
-      to,
-      cc,
-      from,
-      body,
-      draft
-    })
+    const from = padInfo.email
+    const { padId } = padInfo
+    for (let member of members) {
+      const jid = member.jid
+      if (!jid) {
+        continue
+      }
+      const at = jid.indexOf('@')
+      const userId = jid.substring(0, at)
+      const url = `edisonmail://sharingedit/${
+        draft.headerMessageId
+      }?padId=${padId}&inviterEmail=${from}&inviteeUserId=${userId}`
+      const to = [member.email]
+      const cc = []
+      await DraftStore.createAndSendMessage({
+        subject: 'invitation to write an email together',
+        body: `
+        <br/>
+        <br/>
+        <div>
+        I want to invite you to write an email togegher. Please click
+        <a href="${url}">this link</a>
+        ${url}
+        to open email.
+        </div>
+        `,
+        to,
+        cc,
+        from,
+        draft
+      })
+    }
+
     this._close()
   }
 

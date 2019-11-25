@@ -1,6 +1,6 @@
-import { protocol } from 'electron';
-import fs from 'fs';
-import path from 'path';
+import { protocol } from 'electron'
+import fs from 'fs'
+import path from 'path'
 
 // Handles requests with 'mailspring' protocol.
 //
@@ -14,34 +14,35 @@ import path from 'path';
 //   * RESOURCE_PATH/node_modules
 //
 export default class MailspringProtocolHandler {
-  constructor({ configDirPath, resourcePath, safeMode }) {
-    this.loadPaths = [];
+  constructor ({ configDirPath, resourcePath, safeMode }) {
+    this.loadPaths = []
 
     if (!safeMode) {
-      this.loadPaths.push(path.join(configDirPath, 'dev', 'packages'));
+      this.loadPaths.push(path.join(configDirPath, 'dev', 'packages'))
     }
-    this.loadPaths.push(path.join(configDirPath, 'packages'));
-    this.loadPaths.push(path.join(resourcePath, 'internal_packages'));
+    this.loadPaths.push(path.join(configDirPath, 'packages'))
+    this.loadPaths.push(path.join(resourcePath, 'internal_packages'))
 
-    this.registerProtocol();
+    this.registerProtocol()
   }
 
   // Creates the 'Mailspring' custom protocol handler.
-  registerProtocol() {
-    const scheme = 'edisonmail';
+  registerProtocol () {
+    const scheme = 'edisonmail'
     protocol.registerFileProtocol(scheme, (request, callback) => {
-      const relativePath = path.normalize(request.url.substr(scheme.length + 1));
+      console.log(' registerProtocol: ', request)
+      const relativePath = path.normalize(request.url.substr(scheme.length + 1))
 
-      let filePath = null;
+      let filePath = null
       for (const loadPath of this.loadPaths) {
-        filePath = path.join(loadPath, relativePath);
-        const fileStats = fs.statSyncNoException(filePath);
+        filePath = path.join(loadPath, relativePath)
+        const fileStats = fs.statSyncNoException(filePath)
         if (fileStats.isFile && fileStats.isFile()) {
-          break;
+          break
         }
       }
 
-      callback(filePath);
-    });
+      callback(filePath)
+    })
   }
 }
