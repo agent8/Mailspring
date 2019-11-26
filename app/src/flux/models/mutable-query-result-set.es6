@@ -23,7 +23,6 @@ export default class MutableQueryResultSet extends QueryResultSet {
       this._ids = this._ids.slice(range.offset - this._offset);
       this._offset = range.offset;
     }
-
     const rangeEnd = range.offset + range.limit;
     const selfEnd = this._offset + this._ids.length;
     if (rangeEnd < selfEnd) {
@@ -37,13 +36,21 @@ export default class MutableQueryResultSet extends QueryResultSet {
   }
 
   addModelsInRange(rangeModels, range) {
-    this.addIdsInRange(rangeModels.map(m => m.id), range);
-    rangeModels.forEach(m => this.updateModel(m));
+    if (rangeModels.length > 0 && !rangeModels[0].id) {
+      console.error(`rangeModels is no model, sql: ${this._query.sql()}`);
+      this.addIdsInRange(rangeModels, range);
+    } else {
+      this.addIdsInRange(rangeModels.map(m => m.id), range);
+      rangeModels.forEach(m => this.updateModel(m));
+    }
   }
 
   addIdsInRange(rangeIds, range) {
     if (this._offset === null || range.isInfinite()) {
-      this._ids = rangeIds;
+      if (!rangeIds) {
+        console.error(`rangeIds is null`);
+      }
+      this._ids = rangeIds || [];
       this._idToIndexHash = null;
       this._offset = range.offset;
     } else {
@@ -88,6 +95,9 @@ export default class MutableQueryResultSet extends QueryResultSet {
     const existing = this._modelsHash[item.id];
     if (existing) {
       const attrs = existing.constructor.attributes;
+      if (!attrs) {
+        console.error(`attrs does not exist`);
+      }
       for (const key of Object.keys(attrs)) {
         const attr = attrs[key];
         if (attr instanceof AttributeJoinedData && item[attr.modelKey] === undefined) {

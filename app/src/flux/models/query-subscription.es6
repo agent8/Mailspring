@@ -16,7 +16,7 @@ export default class QuerySubscription {
     this._queryVersion = 1;
 
     if (this._query) {
-      if (this._query._count) {
+      if (this._query._count.main) {
         throw new Error('QuerySubscription::constructor - You cannot listen to count queries.');
       }
 
@@ -125,11 +125,11 @@ export default class QuerySubscription {
           const itemIsInSet = offset !== -1;
           const itemShouldBeInSet = item.matches(this._query.matchers());
           // DC-393 we have to force full update, because thread.data is no longer reliable.
-          if (item instanceof Thread && itemIsInSet) {
-            unknownImpacts += 1;
-            this._set = null;
-            return;
-          }
+          // if (item instanceof Thread && itemIsInSet) {
+          //   unknownImpacts += 1;
+          //   this._set = null;
+          //   return;
+          // }
           if (itemIsInSet && !itemShouldBeInSet) {
             this._set.removeModelAtOffset(item, offset);
             unknownImpacts += 1;
@@ -264,11 +264,15 @@ export default class QuerySubscription {
   }
 
   _fetchMissingModels() {
+    if(!Array.isArray(this._set.ids())){
+      console.error(`ids not array`);
+      return Promise.resolve([]);
+    }
     const missingIds = this._set.ids().filter(id => !this._set.modelWithId(id));
     if (missingIds.length === 0) {
       return Promise.resolve([]);
     }
-    return DatabaseStore.findAll(this._query._klass, { id: missingIds });
+    return DatabaseStore.findAll(this._query._klass.main, { id: missingIds });
   }
 
   _createResultAndTrigger() {

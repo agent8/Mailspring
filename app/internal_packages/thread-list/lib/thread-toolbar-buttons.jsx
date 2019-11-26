@@ -482,12 +482,7 @@ export function ToggleUnreadButton(props) {
             }
       }
     >
-      <button
-        tabIndex={-1}
-        className="btn btn-toolbar btn-hide-when-crowded"
-        title={title}
-        onClick={_onClick}
-      >
+      <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
         <RetinaImg
           name={`${fragment === 'unread' ? 'read' : 'unread'}.svg`}
           style={{ width: 24, height: 24 }}
@@ -1168,6 +1163,7 @@ export class MailActionsButtons extends React.Component {
 
   componentDidMount() {
     this._getMailActionsConfig();
+    this._unobserveTemplate = AppEnv.config.observe(this._configKey, this._getMailActionsConfig);
   }
 
   _getMailActionsConfig = () => {
@@ -1186,6 +1182,12 @@ export class MailActionsButtons extends React.Component {
 
     this.setState({ actionsList });
   };
+
+  componentWillUnmount() {
+    if (this._unobserveTemplate && typeof this._unobserveTemplate.dispose === 'function') {
+      this._unobserveTemplate.dispose();
+    }
+  }
 
   render() {
     const { actionsList } = this.state;

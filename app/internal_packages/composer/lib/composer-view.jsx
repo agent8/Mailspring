@@ -555,13 +555,14 @@ export default class ComposerView extends React.Component {
                 {this.state.isDeleting ? (
                   <LottieImg name={'loading-spinner-blue'} size={{ width: 24, height: 24 }} />
                 ) : (
-                  <RetinaImg
-                    name={'trash.svg'}
-                    style={{ width: 24, height: 24 }}
-                    isIcon
-                    mode={RetinaImg.Mode.ContentIsMask}
-                  />
-                )}
+                    <RetinaImg
+                      name={'trash.svg'}
+                      style={{ width: 24, height: 24 }}
+                      isIcon
+                      mode={RetinaImg.Mode.ContentIsMask}
+                    />
+                  )}
+                <span>Delete</span>
               </button>
             </div>
           </div>

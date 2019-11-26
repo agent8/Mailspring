@@ -29,10 +29,10 @@ class UndoRedoStore extends MailspringStore {
     this._queueingTasks = false;
 
     if (AppEnv.isMainWindow()) {
-      console.log('main window');
       this.listenTo(Actions.queueTask, this._onQueue);
       this.listenTo(Actions.queueTasks, this._onQueue);
       this.listenTo(Actions.queueUndoOnlyTask, this._onQueue);
+      this.listenTo(Actions.removeAccount, this._onAccountRemoved);
     }
   }
 
@@ -70,6 +70,20 @@ class UndoRedoStore extends MailspringStore {
           this._queueingTasks = false;
         },
         delayDuration: this.getDelayDuration(tasks),
+        taskDelaySkippedCallBacks: () => {
+          tasks.forEach(t => {
+            if (typeof t.taskDelaySkipped === 'function') {
+              t.taskDelaySkipped();
+            }
+          });
+        },
+        taskPurgedCallBacks: () => {
+          tasks.forEach(t => {
+            if (typeof t.taskPurged === 'function'){
+              t.taskPurged();
+            }
+          });
+        },
         delayTimeoutCallbacks: () => {
           tasks.forEach(t => {
             if (t.delayTimeoutCallback) {
@@ -222,7 +236,16 @@ class UndoRedoStore extends MailspringStore {
       low: low === 0 ? this._undo.low.slice() : this._undo.low.slice(low * -1),
     };
   };
-  removeTaskFromUndo = ({ block, noTrigger = false }) => {
+  _onAccountRemoved = accountId => {
+    for (const priority of Object.keys(this._undo)) {
+      for (const block of this._undo[priority]) {
+        if (block.tasks[0].accountId === accountId) {
+          this.removeTaskFromUndo({ block, purgeTask: true });
+        }
+      }
+    }
+  };
+  removeTaskFromUndo = ({ block, noTrigger = false, purgeTask = false}) => {
     let priority = 'low';
     switch (block.priority) {
       case this.priority.critical:
@@ -244,6 +267,9 @@ class UndoRedoStore extends MailspringStore {
     delete this._timeouts[block.id];
     if (!noTrigger) {
       this.trigger();
+    }
+    if (purgeTask) {
+      block.taskPurgedCallBacks();
     }
   };
   setTaskToHide = ({ block }) => {

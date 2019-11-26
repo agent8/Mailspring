@@ -4,7 +4,7 @@ import Message from '../models/message';
 import Thread from '../models/thread';
 import DatabaseStore from './database-store';
 import ThreadStore from './thread-store';
-import MessageBodyStore from './message-body-store';
+import SiftStore from './sift-store';
 import AttachmentStore from './attachment-store';
 import WorkspaceStore from './workspace-store';
 import TaskFactory from '../tasks/task-factory';
@@ -33,7 +33,7 @@ class MessageStore extends MailspringStore {
   }
 
   findAllWithBodyInDescendingOrder() {
-    return this.findAllInDescendingOrder().include(Message.attributes.body).include(Message.attributes.isPlainText);
+    return this.findAllInDescendingOrder().linkDB(Message.attributes.body);
   }
 
   findAllByThreadId({ threadId }) {
@@ -41,7 +41,7 @@ class MessageStore extends MailspringStore {
   }
 
   findAllByThreadIdWithBody({ threadId }) {
-    return this.findAllByThreadId({ threadId }).include(Message.attributes.body).include(Message.attributes.isPlainText);
+    return this.findAllByThreadId({ threadId }).linkDB(Message.attributes.body);
   }
 
   findAllByThreadIdWithBodyInDescendingOrder({ threadId }) {
@@ -69,7 +69,7 @@ class MessageStore extends MailspringStore {
   }
 
   findByMessageIdWithBody({ messageId }) {
-    return this.findByMessageId({ messageId }).include(Message.attributes.body).include(Message.attributes.isPlainText);
+    return this.findByMessageId({ messageId }).linkDB(Message.attributes.body);
   }
 
   //########## PUBLIC #####################################################
@@ -274,26 +274,15 @@ class MessageStore extends MailspringStore {
       ) {
         const item = change.objects[0];
         const itemIndex = this._items.findIndex(msg => msg.id === item.id);
-        if (
-          change.type === 'persist' &&
-          itemIndex === -1 &&
-          !Message.compareMessageState(item.state, Message.messageState.failed)
-        ) {
-          AppEnv.logDebug(`MessageStore on dataChange ${item.id} fetch body`);
-          MessageBodyStore.getPromiseBodyByMessageId(item.id).then(data => {
-            AppEnv.logDebug(`MessageStore on dataChange ${item.id} assign body`);
-            item.body = data.body;
-            item.isPlainText = !data.isHtml;
-            this._items = []
-              .concat(this._items, [item])
-              .filter(m => !m.isHidden())
-              .filter(this.filterOutDuplicateDraftHeaderMessage);
-            this._items = this._sortItemsForDisplay(this._items);
-            this._expandItemsToDefault();
-            this.trigger();
-            return;
-          });
+
+        if (change.type === 'persist' && itemIndex === -1 && !Message.compareMessageState(item.state, Message.messageState.failed)) {
+          this._items = [].concat(this._items, [item]).filter(m => !m.isHidden()).filter(this.filterOutDuplicateDraftHeaderMessage);
+          this._items = this._sortItemsForDisplay(this._items);
+          this._expandItemsToDefault();
+          this.trigger();
+          return;
         }
+
         if (change.type === 'unpersist' && itemIndex !== -1) {
           this._items = [].concat(this._items).filter(m => !m.isHidden());
           this._items.splice(itemIndex, 1);
@@ -302,6 +291,7 @@ class MessageStore extends MailspringStore {
           return;
         }
       }
+
       this._fetchFromCache();
     }
 
@@ -500,31 +490,12 @@ class MessageStore extends MailspringStore {
     if (!this._thread) return;
 
     const loadedThreadId = this._thread.id;
-    const query = this.findAllByThreadIdWithBody({ threadId: loadedThreadId }).then(messages => {
-      const promises = [];
-      messages.forEach(message => {
-        AppEnv.logDebug(`fetching ${message.id} from cache`);
-        promises.push(MessageBodyStore.getPromiseBodyByMessageId(message.id));
-      });
-      return Promise.all(promises).then(results => {
-        results.forEach(result => {
-          const { body, messageId, isHtml } = result;
-          AppEnv.logDebug(`finding message ${messageId}`);
-          const tmpMessage = messages.find(item => item && item.id === messageId);
-          if (tmpMessage) {
-            AppEnv.logDebug(`assgining body to ${tmpMessage.id}`);
-            tmpMessage.body = body;
-            tmpMessage.isPlainText = !isHtml;
-          } else {
-            AppEnv.logError(`No message found`);
-          }
-        });
-        return Promise.resolve(messages);
-      });
-    });
+    const query = this.findAllByThreadIdWithBody({ threadId: loadedThreadId });
+    // const query = DatabaseStore.findAll(Message);
+    // query.where({ threadId: loadedThreadId, state: 0 });
+    // query.include(Message.attributes.body);
 
     return query.then(items => {
-      AppEnv.logDebug(`parsing messages for message-store`);
       // Check to make sure that our thread is still the thread we were
       // loading items for. Necessary because this takes a while.
       if (loadedThreadId !== this.threadId()) return;

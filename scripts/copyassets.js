@@ -29,15 +29,15 @@ const file_mappings = [
     './app/static/images/preferences/appearance/',
   ],
   [
-    'veyron-design/images/desktop/prefs-quick-actions.png',
+    'veyron-design/images/desktop/prefs-quick-actions*.png',
     './app/static/images/preferences/appearance/',
   ],
   [
-    'veyron-design/images/desktop/prefs-email-actions.png',
+    'veyron-design/images/desktop/prefs-email-actions*.png',
     './app/static/images/preferences/appearance/',
   ],
   [
-    'veyron-design/images/desktop/prefs-swipe-colors.png',
+    'veyron-design/images/desktop/prefs-swipe-colors*.png',
     './app/static/images/preferences/appearance/',
   ],
   [
@@ -86,6 +86,10 @@ const file_mappings = [
   ],
   ['veyron-design/images/desktop/installer-background.png', './app/build/resources/mac/'],
   ['veyron-design/images/desktop/edo-previewer-loading.gif', './app/build/resources/win/'],
+  [
+    'veyron-design/images/desktop/emailtracking-popup-image.png',
+    './app/static/images/tracking/emailtracking-popup-image.png',
+  ],
 ];
 
 let errorCommands = [];

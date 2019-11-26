@@ -527,6 +527,27 @@ body.platform-win32 {
       .secondary-items .item {
         cursor: pointer;
       }
+      .remove-tracker {
+        display: inline-block;
+        position: relative;
+        cursor: pointer;
+        img {
+          background: @gray-light;
+        }
+        .remove-tracker-popover {
+          display: none;
+        }
+        &:hover .remove-tracker-popover {
+          display: block;
+        }
+        .remove-tracker-notice {
+          padding: 0 20px 40px 20px;
+          font-size: 14px;
+          img {
+            background: none;
+          }
+        }
+      }
     }
 
     .message-actions-ellipsis {
@@ -632,6 +653,7 @@ body.platform-win32 {
     div {
       font-weight: @font-weight-semi-bold;
       color: @blue;
+      cursor: pointer;
     }
   }
 

@@ -264,7 +264,7 @@ export default class Application extends EventEmitter {
     }
   }
   reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
-    if (grabLogs && !this.inDevMode()) {
+    if (grabLogs && !this.devMode) {
       this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
     } else {
       this._reportLog(error, extra, { noWindows }, 'error');
@@ -272,14 +272,14 @@ export default class Application extends EventEmitter {
   }
 
   reportWarning(error, extra = {}, { noWindows, grabLogs = false } = {}) {
-    if (grabLogs && !this.inDevMode()) {
+    if (grabLogs && !this.devMode) {
       this._grabLogAndReportLog(error, extra, { noWindows }, 'warning');
     } else {
       this._reportLog(error, extra, { noWindows }, 'warning');
     }
   }
   reportLog(error, extra = {}, { noWindows, grabLogs = false } = {}) {
-    if (grabLogs && !this.inDevMode()) {
+    if (grabLogs && !this.devMode) {
       this._grabLogAndReportLog(error, extra, { noWindows }, 'log');
     } else {
       this._reportLog(error, extra, { noWindows }, 'log');
@@ -317,11 +317,11 @@ export default class Application extends EventEmitter {
       console.log(e);
     }
     if (type.toLocaleLowerCase() === 'error') {
-      this.errorLogger.reportError(error, extra);
+      global.errorLogger.reportError(error, extra);
     } else if (type.toLocaleLowerCase() === 'warning') {
-      this.errorLogger.reportWarning(error, extra);
+      global.errorLogger.reportWarning(error, extra);
     } else {
-      this.errorLogger.reportLog(error, extra);
+      global.errorLogger.reportLog(error, extra);
     }
   }
   _expandReportLog(extra = {}) {
@@ -447,16 +447,16 @@ export default class Application extends EventEmitter {
         zlib: { level: 9 }, // Sets the compression level.
       });
 
-      output.on('close', function() {
+      output.on('close', function () {
         console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
         console.log('archiver has been finalized and the output file descriptor has closed.');
         resolve(outputPath);
       });
-      output.on('end', function() {
+      output.on('end', function () {
         console.log('\n----->\nData has been drained');
         resolve(outputPath);
       });
-      archive.on('warning', function(err) {
+      archive.on('warning', function (err) {
         if (err.code === 'ENOENT') {
           console.log(err);
         } else {
@@ -465,7 +465,7 @@ export default class Application extends EventEmitter {
           reject(err);
         }
       });
-      archive.on('error', function(err) {
+      archive.on('error', function (err) {
         output.close();
         console.log(err);
         reject(err);
@@ -477,24 +477,56 @@ export default class Application extends EventEmitter {
     });
   }
 
+  processReportErrorEvent(params, level = 'error'){
+    try {
+      const errorParams = JSON.parse(params.errorJSON || '{}');
+      const extra = { errorData: {}};
+      if (params.extra) {
+        extra.errorData = params.extra;
+      }
+      if (params.errorData) {
+        extra.errorData = params.errorData;
+      }
+      let err;
+      if (typeof params.errorMessage === 'string') {
+        err = new Error(params.errorMessage);
+      } else {
+        err = new Error();
+      }
+      err = Object.assign(err, errorParams);
+      if (level === 'error') {
+        this.reportError(err, extra, { grabLogs: params.grabLogs });
+      } else if (level === 'warning') {
+        this.reportWarning(err, extra, { grabLogs: params.grabLogs });
+      } else {
+        this.reportLog(err, extra, { grabLogs: params.grabLogs });
+      }
+    } catch (parseError) {
+      console.error(parseError);
+      global.errorLogger.reportError(parseError, {});
+    }
+  }
+
   initSupportInfo() {
     if (this.config) {
       this.config.set('core.support.native', this.nativeVersion);
     }
-    // if (!getDeviceHash) {
-    //   getDeviceHash = require('./system-utils').getDeviceHash;
-    // }
-    // const deviceHash = this.config.get('core.support.id');
-    // if (!deviceHash || deviceHash === 'Unknown') {
-    //   getDeviceHash()
-    //     .then(id => {
-    //       this.config.set('core.support.id', id);
-    //     })
-    //     .catch(e => {
-    //       AppEnv.reportError(new Error('failed to init support id'));
-    //       this.config.set('core.support.id', 'Unknown');
-    //     });
-    // }
+    if (!getDeviceHash) {
+      getDeviceHash = require('../system-utils').getDeviceHash;
+    }
+    const deviceHash = this.config.get('core.support.id');
+    if (!deviceHash || deviceHash === 'Unknown') {
+      getDeviceHash()
+        .then(id => {
+          this.config.set('core.support.id', id);
+        })
+        .catch(e => {
+          AppEnv.reportError(new Error('failed to init support id'));
+          this.config.set('core.support.id', 'Unknown');
+        });
+    }
+    LOG.transports.file.file = path.join(this.configDirPath, 'ui-log', 'application.log');
+    LOG.transports.console.level = false;
   }
 
   autoStartRestore() {
@@ -547,7 +579,7 @@ export default class Application extends EventEmitter {
   // we close windows and log out, we need to wait for these processes to completely
   // exit and then delete the file. It's hard to tell when this happens, so we just
   // retry the deletion a few times.
-  deleteFileWithRetry(filePath, callback = () => {}, retries = 5) {
+  deleteFileWithRetry(filePath, callback = () => { }, retries = 5) {
     glob(filePath, (err, files) => {
       if (err) {
         return;
@@ -592,7 +624,7 @@ export default class Application extends EventEmitter {
     });
   }
 
-  renameFileWithRetry(filePath, newPath, callback = () => {}, retries = 5) {
+  renameFileWithRetry(filePath, newPath, callback = () => { }, retries = 5) {
     const callbackWithRetry = err => {
       if (err && err.message.indexOf('no such file') === -1) {
         console.log(`File Error: ${err.message} - retrying in 150msec`);
@@ -700,35 +732,38 @@ export default class Application extends EventEmitter {
       console.log('\nedisonmail.db-wal deleted\n');
       this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db-shm'), () => {
         console.log('\nedisonmail.db-shm deleted\n');
-        this.deleteFileWithRetry(path.join(this.configDirPath, 'emdb_*'), () => {
-          console.log('\nemdb_* deleted\n');
-          if (rebuild) {
-            const dbPath = path.join(this.configDirPath, 'edisonmail.db');
-            const newDbName = `edisonmail_backup_${new Date().getTime()}.db`;
-            const newDbPath = path.join(this.configDirPath, newDbName);
-            this.renameFileWithRetry(dbPath, newDbPath, () => {
-              // repair the database
-              if (process.platform === 'darwin') {
-                const sqlPath = 'data.sql';
-                execSync(`sqlite3 ${newDbName} .dump > ${sqlPath}`, {
-                  cwd: this.configDirPath,
-                });
-                execSync(`sed -i '' 's/ROLLBACK/COMMIT/g' ${sqlPath}`, {
-                  cwd: this.configDirPath,
-                });
-                execSync(`sqlite3 edisonmail.db < ${sqlPath}`, {
-                  cwd: this.configDirPath,
-                });
-                fs.unlink(path.join(this.configDirPath, sqlPath), () => {});
-              } else {
-                // TODO in windows
-                console.warn('in this system does not implement yet');
-              }
-              callback();
-            });
-          } else {
-            this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db'), callback);
-          }
+        this.deleteFileWithRetry(path.join(this.configDirPath, 'embody*'), () => {
+          console.log('\nembody* deleted\n');
+          this.deleteFileWithRetry(path.join(this.configDirPath, 'emdb_*'), () => {
+            console.log('\nemdb_* deleted\n');
+            if (rebuild) {
+              const dbPath = path.join(this.configDirPath, 'edisonmail.db');
+              const newDbName = `edisonmail_backup_${new Date().getTime()}.db`;
+              const newDbPath = path.join(this.configDirPath, newDbName);
+              this.renameFileWithRetry(dbPath, newDbPath, () => {
+                // repair the database
+                if (process.platform === 'darwin') {
+                  const sqlPath = 'data.sql';
+                  execSync(`sqlite3 ${newDbName} .dump > ${sqlPath}`, {
+                    cwd: this.configDirPath,
+                  });
+                  execSync(`sed -i '' 's/ROLLBACK/COMMIT/g' ${sqlPath}`, {
+                    cwd: this.configDirPath,
+                  });
+                  execSync(`sqlite3 edisonmail.db < ${sqlPath}`, {
+                    cwd: this.configDirPath,
+                  });
+                  fs.unlink(path.join(this.configDirPath, sqlPath), () => { });
+                } else {
+                  // TODO in windows
+                  console.warn('in this system does not implement yet');
+                }
+                callback();
+              });
+            } else {
+              this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db'), callback);
+            }
+          });
         });
       });
     });
@@ -1402,42 +1437,16 @@ export default class Application extends EventEmitter {
     });
 
     ipcMain.on('report-error', (event, params = {}) => {
-      try {
-        const errorParams = JSON.parse(params.errorJSON || '{}');
-        const extra = JSON.parse(params.extra || '{}');
-        let err = new Error();
-        err = Object.assign(err, errorParams);
-        global.errorLogger.reportError(err, extra);
-      } catch (parseError) {
-        console.error(parseError);
-        global.errorLogger.reportError(parseError, {});
-      }
+      console.log(`\n----\nreport-error\n`);
+      this.processReportErrorEvent(params, 'error');
       event.returnValue = true;
     });
     ipcMain.on('report-warning', (event, params = {}) => {
-      try {
-        const errorParams = JSON.parse(params.errorJSON || '{}');
-        const extra = JSON.parse(params.extra || '{}');
-        let err = new Error();
-        err = Object.assign(err, errorParams);
-        global.errorLogger.reportWarning(err, extra);
-      } catch (parseError) {
-        console.error(parseError);
-        global.errorLogger.reportError(parseError, {});
-      }
+      this.processReportErrorEvent(params, 'warning');
       event.returnValue = true;
     });
     ipcMain.on('report-log', (event, params = {}) => {
-      try {
-        const errorParams = JSON.parse(params.errorJSON || '{}');
-        const extra = JSON.parse(params.extra || '{}');
-        let err = new Error();
-        err = Object.assign(err, errorParams);
-        global.errorLogger.reportLog(err, extra);
-      } catch (parseError) {
-        console.error(parseError);
-        global.errorLogger.reportError(parseError, {});
-      }
+      this.processReportErrorEvent(params, 'log');
       event.returnValue = true;
     });
     ipcMain.on('grab-log', (event, params = {}) => {

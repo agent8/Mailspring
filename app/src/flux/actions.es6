@@ -462,7 +462,6 @@ class Actions {
   */
   static removeQuoteText = ActionScopeGlobal;
   static syncDraftDataToMain = ActionScopeMainWindow;
-  static syncDraftToFile = ActionScopeMainWindow;
   static broadcastDraftData = ActionScopeGlobal;
   static editOutboxDraft = ActionScopeMainWindow;
   static resendDrafts = ActionScopeMainWindow;
@@ -599,6 +598,8 @@ class Actions {
   static dataShareOptions = ActionScopeMainWindow;
   static expungeUserData = ActionScopeMainWindow;
   static exportUserData = ActionScopeMainWindow;
+
+  static remoteSearch = ActionScopeWindow;
 }
 
 // Read the actions we declared on the dummy Actions object above
