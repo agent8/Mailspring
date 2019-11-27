@@ -307,7 +307,6 @@ export default class MessageItem extends React.Component {
   parsePadInfo = url => {
     const result = {}
     let s = url
-    console.log(' parsePadInfo: url: ', s)
     let i, j
     i = s.indexOf('edisonmail://teamedit.edison.tech')
     i += 'edisonmail://teamedit.edison.tech'.length
@@ -329,16 +328,13 @@ export default class MessageItem extends React.Component {
   _openTeamEditor = () => {
     const { message } = this.props
     const msgBody = message.body
-    console.log(' _openTeamEditor: msgBody: ', msgBody)
     const padInfo = this.parsePadInfo(msgBody)
-    console.log(' _openTeamEditor: padInfo: ', padInfo)
     DraftStore.popoutTeamEditor(padInfo)
   }
 
   _renderHeader () {
     const { message, thread, messages, pending } = this.props
     const { trackers } = this.state
-    console.log(' msgitem._renderHeader: ', this, this.props)
     const msgBody = message && message.body
     const containShareEditLink = msgBody && msgBody.includes('edisonmail://teamedit.edison.tech/')
     return (

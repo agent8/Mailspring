@@ -691,7 +691,6 @@ class DraftStore extends MailspringStore {
     }
     for (let email of emails) {
       const result = await ContactStore.parseContactsInString(email)
-      console.log(' parsed to contacts: ', result)
       if (Array.isArray(result)) {
         contacts.push.apply(contacts, result)
       } else if (result) {
@@ -706,7 +705,6 @@ class DraftStore extends MailspringStore {
     from = await this.getContactsFromEmails(from)
     to = await this.getContactsFromEmails(to)
     cc = await this.getContactsFromEmails(cc)
-    console.log(' createAndSendMessage, from,  to, cc: ', from, to, cc)
     const accounts = AppEnv.config.get('accounts') || []
     const account = accounts[0] || {}
     const accountId = account.id || '21236591'
@@ -720,9 +718,7 @@ class DraftStore extends MailspringStore {
       threadId: '',
       accountId: accountId
     })
-    console.log(' DraftFactory.createDraft: ', draft)
     await this._finalizeAndPersistNewMessage(draft)
-    console.log(' createAndSendMessage: draft: ', draft)
     const task = SendDraftTask.forSending(draft)
     Actions.queueTask(task)
   }
@@ -869,7 +865,7 @@ class DraftStore extends MailspringStore {
     Actions.composedNewBlankDraft()
   }
 
-  popoutTeamEditor = async (padInfo) => {
+  popoutTeamEditor = async padInfo => {
     const draft = await DraftFactory.createDraft()
     const { headerMessageId } = await this._finalizeAndPersistNewMessage(draft)
     await this._onPopoutDraft(headerMessageId, { padInfo, newDraft: true })
@@ -884,7 +880,7 @@ class DraftStore extends MailspringStore {
   }
 
   _onPopoutDraft = async (headerMessageId, options = {}) => {
-    const {padInfo} = options
+    const { padInfo } = options
     if (headerMessageId == null) {
       throw new Error('DraftStore::onPopoutDraftId - You must provide a headerMessageId')
     }

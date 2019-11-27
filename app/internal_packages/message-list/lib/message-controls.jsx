@@ -333,7 +333,6 @@ export default class MessageControls extends React.Component {
   render () {
     const items = this._items()
     const { trackers } = this.props
-    console.log(' msgcontrol.render props: ', this.props)
     return (
       <div className='message-actions-wrap' onClick={e => e.stopPropagation()}>
         {trackers.length > 0 ? (

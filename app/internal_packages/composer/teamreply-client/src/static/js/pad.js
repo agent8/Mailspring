@@ -217,7 +217,6 @@ function parseQuery (searchString) {
 
 function sendClientReady (isReconnect, messageType) {
   messageType = typeof messageType !== 'undefined' ? messageType : 'CLIENT_READY'
-  console.log(' pad.js: sendClientReady: ')
   const query = parseQuery(document.location.search)
   console.log('pad.js: ' + location + ':  ' + JSON.stringify(query))
   var padId = document.location.pathname.substring(document.location.pathname.lastIndexOf('/') + 1)
@@ -260,8 +259,7 @@ function sendClientReady (isReconnect, messageType) {
     token: token,
     protocolVersion: 2
   }
-  console.log(' pad.js: msg: ', msg);
-
+  
   // this is a reconnect, lets tell the server our revisionnumber
   if (isReconnect == true) {
     msg.client_rev = pad.collabClient.getCurrentRevisionNumber()

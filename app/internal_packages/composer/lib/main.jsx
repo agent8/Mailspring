@@ -26,13 +26,11 @@ class ComposerWithWindowProps extends React.Component {
 
     // We'll now always have windowProps by the time we construct this.
     const windowProps = AppEnv.getWindowProps()
-    console.log(' ComposerWithWindowProps: constructor: windowProps: ', windowProps)
     const { draftJSON, headerMessageId } = windowProps
     if (!draftJSON) {
       throw new Error('Initialize popout composer windows with valid draftJSON')
     }
     const draft = new Message().fromJSON(draftJSON)
-    console.log(' ComposerWithWindowProps: constructor: draft: ', draft)
     this.state = windowProps
     this._mounted = false
     this._unlisten = Actions.changeDraftAccountComplete.listen(this._onDraftChangeAccountComplete, this)
@@ -138,13 +136,11 @@ class ComposerWithWindowProps extends React.Component {
 
 export function activate () {
   let cwd = process.cwd()
-  console.log(' composer activate cwd: ' + cwd)
   process.chdir('./app/internal_packages/composer/teamreply-client')
   const teamProc = exec('node src/node/server.js')
   teamProc.stdout.on('data', function (data) {
-    console.log(' ***** teamreply log: ' + data.toString())
+    console.log('***** teamreply log: ' + data.toString())
   })
-  console.log(' composer activate 2: ' + teamProc)
   process.chdir(cwd)
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(ComposerViewForDraftClientId, {

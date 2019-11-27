@@ -30,7 +30,6 @@ export default class MailspringProtocolHandler {
   registerProtocol () {
     const scheme = 'edisonmail'
     protocol.registerFileProtocol(scheme, (request, callback) => {
-      console.log(' registerProtocol: ', request)
       const relativePath = path.normalize(request.url.substr(scheme.length + 1))
 
       let filePath = null

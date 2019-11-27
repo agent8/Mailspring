@@ -32,6 +32,7 @@ import InjectedComponentErrorBoundary from '../../../src/components/injected-com
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
+import axios from 'axios'
 
 const {
   hasBlockquote,
@@ -91,7 +92,6 @@ export default class ComposerView extends React.Component {
   }
   async componentWillMount () {
     const windowProps = AppEnv.getWindowProps()
-    console.log(' ComposerView.componentWillMount: windowProps: ', windowProps)
     let { padInfo } = windowProps
     this.setState({ padInfo, inTeamEditMode: !!padInfo })
   }
@@ -432,11 +432,9 @@ export default class ComposerView extends React.Component {
           { name: 'Xingming Cao', userId: '460359so2dx', permission: 'edit' }
         ]
       })
-      console.log(' axios.post:createPad: res: ', res)
       if (res && res.status === 200 && res.data && res.data.data && res.data.data.padId) {
         padId = res.data.data.padId
         chatAccount.padId = padId
-        console.log(' new padId: chatAccounts: ', chatAccounts)
         AppEnv.config.set('chatAccounts', chatAccounts)
       }
     }

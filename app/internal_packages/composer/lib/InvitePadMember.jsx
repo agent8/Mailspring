@@ -1,12 +1,11 @@
 import React, { Component } from 'react'
-import { RetinaImg, InjectedComponent } from 'mailspring-component-kit'
+import { RetinaImg } from 'mailspring-component-kit'
 import Select, { Option } from 'rc-select'
-import uuid from 'uuid/v4'
-import { Actions, WorkspaceStore } from 'mailspring-exports'
-import { ChatActions, ConversationStore, ContactStore, AppStore, ContactAvatar, Button } from 'chat-exports'
+import { ContactStore, AppStore, ContactAvatar, Button } from 'chat-exports'
+import keyMannager from '../../../src/key-manager'
+import axios from 'axios'
 const { AccountStore, DraftStore } = require('mailspring-exports')
 
-const GROUP_CHAT_DOMAIN = '@muc.im.edison.tech'
 export default class InvitePadMember extends Component {
   static displayName = 'InvitePadMember'
 
@@ -89,7 +88,6 @@ export default class InvitePadMember extends Component {
   }
 
   handleChange = (_, options) => {
-    console.log(' invite: handleChange: options: ', options)
     const members = options.map(item => ({
       name: item.props.label,
       jid: item.props.jid,
@@ -109,12 +107,28 @@ export default class InvitePadMember extends Component {
   InvitePadMember = async () => {
     const { members } = this.state
     const { draft, padInfo } = this.props
-    console.log(' InvitePadMember: draft: ', draft)
     if (!members || members.length === 0) {
       return
     }
-    console.log(' InvitePadMember: ', members)
     const from = padInfo.email
+    const token = await keyMannager.getAccessTokenByEmail(from)
+    const permission = 'edit'
+    const coworkers = members.map(member => {
+      const jid = member.jid
+      const at = jid.indexOf('@')
+      const userId = jid.substring(0, at)
+      return { userId, permission }
+    })
+    let res = await axios.post('http://127.0.0.1:9001/api/1.2.12/editMembers', {
+      userId: padInfo.userId,
+      token,
+      padID: padInfo.padId,
+      add: coworkers
+    })
+    if (!res || res.status !== 200 || !res.data || res.data.code !== 0) {
+      alert('fail to add edit members for the pad.')
+      return
+    }
     const { padId } = padInfo
     for (let member of members) {
       const jid = member.jid
@@ -177,7 +191,6 @@ export default class InvitePadMember extends Component {
 
   render () {
     const { members, contacts, loading, visible } = this.state
-    console.log(' invitemem.render: ', this.state)
 
     if (!visible) {
       return null
@@ -199,7 +212,6 @@ export default class InvitePadMember extends Component {
         </div>
       </Option>
     ))
-    console.log(' invite.render: children: ', children)
     return (
       <div className='invite-member-popup' onClick={this.onClick}>
         <div className='invite-member-panel' onKeyUp={this.onKeyUp} onKeyDown={this.onKeyDown}>

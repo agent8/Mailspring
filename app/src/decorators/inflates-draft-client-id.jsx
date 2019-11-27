@@ -226,7 +226,6 @@ function InflatesDraftClientId (ComposedComponent) {
       if (!this.state.draft) {
         return <span />
       }
-      console.log(' InflatesDraftClientId.render: ', this.props, this.state)
       return <ComposedComponent key={this.state.draft.headerMessageId} ref='composed' {...this.props} {...this.state} />
     }
   }

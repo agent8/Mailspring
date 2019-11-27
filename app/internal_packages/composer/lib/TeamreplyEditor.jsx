@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import keyMannager from '../../../src/key-manager'
 import InvitePadMember from './InvitePadMember'
-var axios = require('axios')
 
 export default class TeamreplyEditor extends Component {
   state = {}
@@ -9,15 +8,13 @@ export default class TeamreplyEditor extends Component {
   constructor (props) {
     super(props)
   }
-  inviteEditor = () => {
-    console.log(' inviteEditor: ')
+  showInvitePadMember = () => {
     this.setState({ inviteVisible: true })
   }
 
   render () {
     const { padInfo } = this.props
     const { inviteVisible } = this.state
-    console.log(' tmeditor.render: padInfo: ', padInfo)
     const { draft } = this.props
     if (!padInfo) {
       return <div>No edit pad information found for this email!</div>
@@ -32,7 +29,7 @@ export default class TeamreplyEditor extends Component {
           className='teamreply-editor'
           src={`http://0.0.0.0:8080/p/${padId}?userId=${userId}&userName=${userName}&token=${token}`}
         />
-        <div className='teamreply-editor-invite-btn' onClick={this.inviteEditor}>
+        <div className='teamreply-editor-invite-btn' onClick={this.showInvitePadMember}>
           Invite
         </div>
         <InvitePadMember visible={inviteVisible} padInfo={padInfo} draft={draft} />
