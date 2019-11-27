@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from 'react'
+import PropTypes from 'prop-types'
 import {
   Utils,
   Actions,
@@ -11,17 +11,18 @@ import {
   FocusedPerspectiveStore,
   Message,
   TrashFromSenderTask,
-} from 'mailspring-exports';
-import { RetinaImg, InjectedComponentSet, InjectedComponent } from 'mailspring-component-kit';
+  DraftStore
+} from 'mailspring-exports'
+import { RetinaImg, InjectedComponentSet, InjectedComponent } from 'mailspring-component-kit'
 
-import MessageParticipants from './message-participants';
-import MessageItemBody from './message-item-body';
-import MessageTimestamp from './message-timestamp';
-import MessageControls from './message-controls';
-import TaskFactory from '../../../src/flux/tasks/task-factory';
+import MessageParticipants from './message-participants'
+import MessageItemBody from './message-item-body'
+import MessageTimestamp from './message-timestamp'
+import MessageControls from './message-controls'
+import TaskFactory from '../../../src/flux/tasks/task-factory'
 
 export default class MessageItem extends React.Component {
-  static displayName = 'MessageItem';
+  static displayName = 'MessageItem'
 
   static propTypes = {
     isOutboxDraft: PropTypes.bool,
@@ -32,16 +33,16 @@ export default class MessageItem extends React.Component {
     pending: PropTypes.bool,
     isMostRecent: PropTypes.bool,
     className: PropTypes.string,
-    threadPopedOut: PropTypes.bool,
-  };
+    threadPopedOut: PropTypes.bool
+  }
 
-  constructor(props, context) {
-    super(props, context);
+  constructor (props, context) {
+    super(props, context)
 
-    const fileIds = this.props.message.fileIds();
-    const { message } = this.props;
-    const accountId = message.accountId;
-    const fromEmail = message.from && message.from[0] ? message.from[0].email : '';
+    const fileIds = this.props.message.fileIds()
+    const { message } = this.props
+    const accountId = message.accountId
+    const fromEmail = message.from && message.from[0] ? message.from[0].email : ''
 
     this.state = {
       // Holds the downloadData (if any) for all of our files. It's a hash
@@ -54,190 +55,186 @@ export default class MessageItem extends React.Component {
       accountId,
       fromEmail,
       isBlocked: BlockedSendersStore.isBlockedByAccount(accountId, fromEmail),
-      trackers: [],
-    };
-    this.markAsReadTimer = null;
-    this.mounted = false;
+      trackers: []
+    }
+    this.markAsReadTimer = null
+    this.mounted = false
   }
 
-  componentDidMount() {
+  componentDidMount () {
     this._storeUnlisten = [
       AttachmentStore.listen(this._onDownloadStoreChange),
       MessageStore.listen(this._onDownloadStoreChange),
       CalendarStore.listen(this._onCalendarStoreChange),
-      BlockedSendersStore.listen(this._onBlockStoreChange),
-    ];
-    this.mounted = true;
+      BlockedSendersStore.listen(this._onBlockStoreChange)
+    ]
+    this.mounted = true
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state);
+  shouldComponentUpdate (nextProps, nextState) {
+    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state)
   }
 
-  componentWillUnmount() {
-    this.mounted = false;
-    clearTimeout(this.markAsReadTimer);
+  componentWillUnmount () {
+    this.mounted = false
+    clearTimeout(this.markAsReadTimer)
     if (this._storeUnlisten) {
       for (let un of this._storeUnlisten) {
-        un();
+        un()
       }
     }
   }
 
   _onClickBlockBtn = () => {
     if (this.state.isBlocked) {
-      BlockedSendersStore.unBlockEmailByAccount(this.state.accountId, this.state.fromEmail);
+      BlockedSendersStore.unBlockEmailByAccount(this.state.accountId, this.state.fromEmail)
     } else {
-      BlockedSendersStore.blockEmailByAccount(this.state.accountId, this.state.fromEmail);
+      BlockedSendersStore.blockEmailByAccount(this.state.accountId, this.state.fromEmail)
     }
-  };
+  }
 
   _onClickParticipants = e => {
-    let el = e.target;
+    let el = e.target
     while (el !== e.currentTarget) {
       if (el.classList.contains('collapsed-participants')) {
-        this.setState({ detailedHeaders: true });
-        e.stopPropagation();
-        return;
+        this.setState({ detailedHeaders: true })
+        e.stopPropagation()
+        return
       }
-      el = el.parentElement;
+      el = el.parentElement
     }
-    return;
-  };
+  }
 
   _onClickHeader = e => {
-    this._onToggleCollapsed();
-  };
+    this._onToggleCollapsed()
+  }
 
   _onDownloadAll = () => {
     if (MessageStore.isMessageMissingAttachment(this.props.message)) {
-      Actions.fetchAttachmentsByMessage({ messageId: this.props.message.id });
+      Actions.fetchAttachmentsByMessage({ messageId: this.props.message.id })
     } else {
-      Actions.fetchAndSaveAllFiles(this.props.message.files);
+      Actions.fetchAndSaveAllFiles(this.props.message.files)
     }
-  };
+  }
 
   _onToggleCollapsed = () => {
-    const perspective = FocusedPerspectiveStore.current();
+    const perspective = FocusedPerspectiveStore.current()
     if (this.props.isMostRecent && !perspective.sift) {
-      return;
+      return
     }
-    Actions.toggleMessageIdExpanded(this.props.message.id);
-  };
+    Actions.toggleMessageIdExpanded(this.props.message.id)
+  }
 
   _onCalendarStoreChange = () => {
-    this.setState({ calendar: CalendarStore.getCalendarByMessageId(this.props.message.id) });
-  };
+    this.setState({ calendar: CalendarStore.getCalendarByMessageId(this.props.message.id) })
+  }
 
   _onDownloadStoreChange = () => {
-    const fileIds = this.props.message.fileIds();
+    const fileIds = this.props.message.fileIds()
     this.setState({
       downloads: AttachmentStore.getDownloadDataForFiles(fileIds),
       filePreviewPaths: AttachmentStore.previewPathsForFiles(fileIds),
-      missingFileIds: MessageStore.getMissingFileIds(),
-    });
-  };
+      missingFileIds: MessageStore.getMissingFileIds()
+    })
+  }
 
   _onBlockStoreChange = () => {
-    const isBlocked = BlockedSendersStore.isBlockedByAccount(
-      this.state.accountId,
-      this.state.fromEmail
-    );
-    this.setState({ isBlocked });
-  };
+    const isBlocked = BlockedSendersStore.isBlockedByAccount(this.state.accountId, this.state.fromEmail)
+    this.setState({ isBlocked })
+  }
 
   _onTrashThisSenderMail = () => {
-    const { accountId, fromEmail } = this.state;
+    const { accountId, fromEmail } = this.state
     if (accountId && fromEmail) {
-      const task = new TrashFromSenderTask({ accountId: accountId, email: fromEmail });
-      Actions.queueTask(task);
+      const task = new TrashFromSenderTask({ accountId: accountId, email: fromEmail })
+      Actions.queueTask(task)
     }
-  };
+  }
 
   _cancelMarkAsRead = () => {
     if (this.markAsReadTimer) {
-      clearTimeout(this.markAsReadTimer);
-      this.markAsReadTimer = null;
+      clearTimeout(this.markAsReadTimer)
+      this.markAsReadTimer = null
     }
-  };
+  }
   _markAsRead = () => {
     if (!this.props.message) {
-      return;
+      return
     }
     if (this.props.collapsed || this.props.pending) {
-      return;
+      return
     }
     if (!this.props.message.unread || this.props.message.draft) {
-      return;
+      return
     }
     if (this.markAsReadTimer) {
-      return;
+      return
     }
-    const messageId = this.props.message.id;
-    const threadId = this.props.message.threadId;
-    const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
+    const messageId = this.props.message.id
+    const threadId = this.props.message.threadId
+    const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay')
     this.markAsReadTimer = setTimeout(() => {
-      this.markAsReadTimer = null;
+      this.markAsReadTimer = null
       if (!this.props.message || !this.mounted || this.props.pending) {
-        return;
+        return
       }
       if (threadId !== this.props.message.threadId || messageId !== this.props.message.id) {
-        return;
+        return
       }
       if (!this.props.message.unread) {
-        return;
+        return
       }
       Actions.queueTask(
         TaskFactory.taskForInvertingUnread({
           threads: [this.props.thread],
           source: 'Thread Selected',
           canBeUndone: false,
-          unread: false,
+          unread: false
         })
-      );
-    }, markAsReadDelay);
-  };
+      )
+    }, markAsReadDelay)
+  }
 
   _setTrackers = trackers => {
-    this.setState({ trackers });
-  };
-  _isAllAttachmentsDownloading() {
+    this.setState({ trackers })
+  }
+  _isAllAttachmentsDownloading () {
     if (this.props.message.files.length > 0) {
       return this.props.message.files.every(f => {
-        return f.isDownloading;
-      });
+        return f.isDownloading
+      })
     } else {
-      return false;
+      return false
     }
   }
 
-  _renderDownloadAllButton() {
+  _renderDownloadAllButton () {
     return (
-      <div className="download-all">
-        <div className="attachment-number">
+      <div className='download-all'>
+        <div className='attachment-number'>
           <RetinaImg
-            name="feed-attachments.svg"
+            name='feed-attachments.svg'
             isIcon
             style={{ width: 18, height: 18 }}
             mode={RetinaImg.Mode.ContentIsMask}
           />
           <span>{this.props.message.files.length} attachments</span>
         </div>
-        <div className="separator">-</div>
+        <div className='separator'>-</div>
         {this._isAllAttachmentsDownloading() ? (
-          <div className="download-all-action">
+          <div className='download-all-action'>
             <RetinaImg
-              name="refresh.svg"
-              className="infinite-rotation-linear"
+              name='refresh.svg'
+              className='infinite-rotation-linear'
               style={{ width: 24, height: 24 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
           </div>
         ) : (
-          <div className="download-all-action" onClick={this._onDownloadAll}>
+          <div className='download-all-action' onClick={this._onDownloadAll}>
             <RetinaImg
-              name="download.svg"
+              name='download.svg'
               isIcon
               style={{ width: 18, height: 18 }}
               mode={RetinaImg.Mode.ContentIsMask}
@@ -246,23 +243,23 @@ export default class MessageItem extends React.Component {
           </div>
         )}
       </div>
-    );
+    )
   }
 
-  _renderAttachments() {
-    const { files = [], body, id } = this.props.message;
-    const { filePreviewPaths, downloads } = this.state;
+  _renderAttachments () {
+    const { files = [], body, id } = this.props.message
+    const { filePreviewPaths, downloads } = this.state
     const attachedFiles = files.filter(f => {
       return (
         (!f.contentId || !(body || '').includes(`cid:${f.contentId}`)) &&
         !(f.contentType || '').toLocaleLowerCase().includes('text/calendar')
-      );
-    });
+      )
+    })
 
     return (
       <div>
         {attachedFiles.length > 0 && (
-          <div className="attachments-area">
+          <div className='attachments-area'>
             <InjectedComponent
               matching={{ role: 'MessageAttachments' }}
               exposedProps={{
@@ -270,70 +267,100 @@ export default class MessageItem extends React.Component {
                 messageId: id,
                 downloads,
                 filePreviewPaths,
-                canRemoveAttachments: false,
+                canRemoveAttachments: false
               }}
             />
           </div>
         )}
         {attachedFiles.length > 1 ? this._renderDownloadAllButton() : null}
       </div>
-    );
+    )
   }
 
-  _renderFooterStatus() {
+  _renderFooterStatus () {
     return (
       <InjectedComponentSet
-        className="message-footer-status"
+        className='message-footer-status'
         matching={{ role: 'MessageFooterStatus' }}
         exposedProps={{
           message: this.props.message,
           thread: this.props.thread,
-          detailedHeaders: this.state.detailedHeaders,
+          detailedHeaders: this.state.detailedHeaders
         }}
       />
-    );
+    )
   }
 
-  _renderBlockNote() {
+  _renderBlockNote () {
     if (this.state.isBlocked) {
       return (
-        <div className="message-block-note">
-          You've successfully blocked {<span>{this.state.fromEmail}</span>}. Emails from this sender
-          will now be sent to the Trash unless you unblock them.
+        <div className='message-block-note'>
+          You've successfully blocked {<span>{this.state.fromEmail}</span>}. Emails from this sender will now be sent to
+          the Trash unless you unblock them.
           <div onClick={this._onTrashThisSenderMail}>Trash all previous mail from this sender</div>
         </div>
-      );
+      )
     }
-    return null;
+    return null
   }
 
-  _renderHeader() {
-    const { message, thread, messages, pending } = this.props;
-    const { trackers } = this.state;
+  parsePadInfo = url => {
+    const result = {}
+    let s = url
+    console.log(' parsePadInfo: url: ', s)
+    let i, j
+    i = s.indexOf('edisonmail://teamedit.edison.tech')
+    i += 'edisonmail://teamedit.edison.tech'.length
+    j = s.indexOf('?')
+    result.headerMessageId = s.substring(i, j)
+    i = s.indexOf('">the team editor')
+    s = s.substring(j + 1, i)
+    if (s[0] === '?') {
+      s = s.substring(1)
+    }
+    const fields = s.split(/\s*&amp;\s*/)
+    for (let field of fields) {
+      const pair = field.split(/\s*=\s*/)
+      const [k, v] = pair
+      result[k] = v
+    }
+    return result
+  }
+  _openTeamEditor = () => {
+    const { message } = this.props
+    const msgBody = message.body
+    console.log(' _openTeamEditor: msgBody: ', msgBody)
+    const padInfo = this.parsePadInfo(msgBody)
+    console.log(' _openTeamEditor: padInfo: ', padInfo)
+    DraftStore.popoutTeamEditor(padInfo)
+  }
+
+  _renderHeader () {
+    const { message, thread, messages, pending } = this.props
+    const { trackers } = this.state
+    console.log(' msgitem._renderHeader: ', this, this.props)
+    const msgBody = message && message.body
+    const containShareEditLink = msgBody && msgBody.includes('edisonmail://teamedit.edison.tech/')
     return (
-      <header
-        ref={el => (this._headerEl = el)}
-        className={`message-header `}
-        onClick={this._onClickHeader}
-      >
+      <header ref={el => (this._headerEl = el)} className={`message-header `} onClick={this._onClickHeader}>
         {!this.props.isOutboxDraft ? (
           <InjectedComponent
             matching={{ role: 'MessageHeader' }}
             exposedProps={{ message: message, thread: thread, messages: messages }}
           />
         ) : null}
-        {/*<div className="pending-spinner" style={{ position: 'absolute', marginTop: -2, left: 55 }}>*/}
-        {/*  <RetinaImg width={18} name="sending-spinner.gif" mode={RetinaImg.Mode.ContentPreserve} />*/}
-        {/*</div>*/}
-        <div className="message-header-right">
+        {/* <div className="pending-spinner" style={{ position: 'absolute', marginTop: -2, left: 55 }}> */}
+        {/*  <RetinaImg width={18} name="sending-spinner.gif" mode={RetinaImg.Mode.ContentPreserve} /> */}
+        {/* </div> */}
+        <div className='message-header-right'>
           {!this.props.isOutboxDraft ? (
             <InjectedComponentSet
-              className="message-header-status"
+              className='message-header-status'
               matching={{ role: 'MessageHeaderStatus' }}
               exposedProps={{
                 message: message,
                 thread: thread,
-                detailedHeaders: this.state.detailedHeaders,
+                detailedHeaders: this.state.detailedHeaders
               }}
             />
           ) : null}
@@ -346,16 +373,19 @@ export default class MessageItem extends React.Component {
             trackers={trackers}
           />
         </div>
-        <div className="blockBtn" onClick={this._onClickBlockBtn}>
+        {containShareEditLink ? (
+          <div className='share-edit-btn' onClick={this._openTeamEditor}>
+            Team Edit
+          </div>
+        ) : null}
+        <div className='blockBtn' onClick={this._onClickBlockBtn}>
           {this.state.isBlocked ? 'Unblock' : 'Block'}
         </div>
-        <div className="row">
+        <div className='row'>
           <EmailAvatar
-            key="thread-avatar"
+            key='thread-avatar'
             message={message}
-            messagePending={
-              pending || Message.compareMessageState(message.state, Message.messageState.failing)
-            }
+            messagePending={pending || Message.compareMessageState(message.state, Message.messageState.failing)}
           />
           <div>
             <MessageParticipants
@@ -380,21 +410,21 @@ export default class MessageItem extends React.Component {
         </div>
         {/* {this._renderFolder()} */}
       </header>
-    );
+    )
   }
 
-  _renderHeaderDetailToggle() {
+  _renderHeaderDetailToggle () {
     if (this.props.pending) {
-      return null;
+      return null
     }
     if (this.state.detailedHeaders) {
       return (
         <div
-          className="header-toggle-control"
+          className='header-toggle-control'
           style={{ top: 18, left: -14, transform: 'rotate(180deg)' }}
           onClick={e => {
-            this.setState({ detailedHeaders: false });
-            e.stopPropagation();
+            this.setState({ detailedHeaders: false })
+            e.stopPropagation()
           }}
         >
           <RetinaImg
@@ -404,16 +434,16 @@ export default class MessageItem extends React.Component {
             mode={RetinaImg.Mode.ContentIsMask}
           />
         </div>
-      );
+      )
     }
 
     return (
       <div
-        className="header-toggle-control inactive"
+        className='header-toggle-control inactive'
         style={{ top: 18 }}
         onClick={e => {
-          this.setState({ detailedHeaders: true });
-          e.stopPropagation();
+          this.setState({ detailedHeaders: true })
+          e.stopPropagation()
         }}
       >
         <RetinaImg
@@ -423,70 +453,62 @@ export default class MessageItem extends React.Component {
           mode={RetinaImg.Mode.ContentIsMask}
         />
       </div>
-    );
+    )
   }
 
-  _renderFolder() {
+  _renderFolder () {
     if (!this.state.detailedHeaders) {
-      return false;
+      return false
     }
 
-    const folder = this.props.message.folder;
+    const folder = this.props.message.folder
     if (!folder || folder.role === 'al') {
-      return false;
+      return false
     }
 
     return (
-      <div className="header-row">
-        <div className="header-label">Folder:&nbsp;</div>
-        <div className="header-name">{folder.displayName}</div>
+      <div className='header-row'>
+        <div className='header-label'>Folder:&nbsp;</div>
+        <div className='header-name'>{folder.displayName}</div>
       </div>
-    );
+    )
   }
 
-  _renderCollapsed() {
+  _renderCollapsed () {
     const {
       message: { snippet, from, files, date, draft },
-      className,
-    } = this.props;
+      className
+    } = this.props
 
-    const attachmentIcon = Utils.showIconForAttachments(files) ? (
-      <div className="collapsed-attachment" />
-    ) : null;
+    const attachmentIcon = Utils.showIconForAttachments(files) ? <div className='collapsed-attachment' /> : null
 
     return (
       <div className={className} onClick={this._onToggleCollapsed}>
-        <div className="message-item-white-wrap">
-          <div className="message-item-area">
-            <EmailAvatar key="thread-avatar" message={this.props.message} />
+        <div className='message-item-white-wrap'>
+          <div className='message-item-area'>
+            <EmailAvatar key='thread-avatar' message={this.props.message} />
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <div className="row">
-                <div className="collapsed-from">
-                  {from && from[0] && from[0].displayName({ compact: true })}
-                </div>
-                {draft && <div className="collapsed-pencil" />}
+              <div className='row'>
+                <div className='collapsed-from'>{from && from[0] && from[0].displayName({ compact: true })}</div>
+                {draft && <div className='collapsed-pencil' />}
                 {attachmentIcon}
-                <div className="collapsed-timestamp">
+                <div className='collapsed-timestamp'>
                   <MessageTimestamp date={date} />
                 </div>
               </div>
-              <div className="collapsed-snippet">{snippet}</div>
+              <div className='collapsed-snippet'>{snippet}</div>
             </div>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-  _renderFull() {
+  _renderFull () {
     return (
-      <div
-        className={this.props.className}
-        onMouseEnter={this._markAsRead}
-        onMouseLeave={this._cancelMarkAsRead}
-      >
-        <div className="message-item-white-wrap">
-          <div className="message-item-area">
+      <div className={this.props.className} onMouseEnter={this._markAsRead} onMouseLeave={this._cancelMarkAsRead}>
+        <div className='message-item-white-wrap'>
+          <div className='message-item-area'>
             {this._renderBlockNote()}
             {this._renderHeader()}
             <MessageItemBody
@@ -500,26 +522,26 @@ export default class MessageItem extends React.Component {
           </div>
         </div>
       </div>
-    );
+    )
   }
-  _renderOutboxDraft() {
+  _renderOutboxDraft () {
     return (
       <div className={this.props.className}>
-        <div className="message-item-white-wrap">
-          <div className="message-item-area">
+        <div className='message-item-white-wrap'>
+          <div className='message-item-area'>
             {this._renderHeader()}
             <MessageItemBody message={this.props.message} downloads={this.state.downloads} />
             {this._renderAttachments()}
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-  render() {
+  render () {
     if (this.props.isOutboxDraft) {
-      return this._renderOutboxDraft();
+      return this._renderOutboxDraft()
     }
-    return this.props.collapsed ? this._renderCollapsed() : this._renderFull();
+    return this.props.collapsed ? this._renderCollapsed() : this._renderFull()
   }
 }

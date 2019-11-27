@@ -675,6 +675,7 @@ class MessageList extends React.Component {
   }
 
   _renderReplyArea() {
+    console.log(' msglist._renderReplyArea: ', this, this.props)
     return (
       <div className="footer-reply-area-wrap"
         onClick={this.state.popedOut ? this._onPopoutThread : null} key="reply-area">

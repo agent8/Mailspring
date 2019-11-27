@@ -123,21 +123,19 @@ export default class InvitePadMember extends Component {
       }
       const at = jid.indexOf('@')
       const userId = jid.substring(0, at)
-      const url = `edisonmail://sharingedit/${
+      const url = `edisonmail://teamedit.edison.tech/${
         draft.headerMessageId
-      }?padId=${padId}&inviterEmail=${from}&inviteeUserId=${userId}`
+      }?padId=${padId}&inviterEmail=${from}&userId=${userId}&userName=${member.name}&email=${member.email}`
       const to = [member.email]
       const cc = []
       await DraftStore.createAndSendMessage({
-        subject: 'invitation to write an email together',
+        subject: 'an invitation to write email together',
         body: `
         <br/>
         <br/>
         <div>
-        I want to invite you to write an email togegher. Please click
-        <a href="${url}">this link</a>
-        ${url}
-        to open email.
+        I want to invite you write an email togegher. Please click the "Team Edit" button on the right top in the message in EdisonMail app to open
+        <a href="${url}">the team editor for the email</a>
         </div>
         `,
         to,
@@ -179,6 +177,7 @@ export default class InvitePadMember extends Component {
 
   render () {
     const { members, contacts, loading, visible } = this.state
+    console.log(' invitemem.render: ', this.state)
 
     if (!visible) {
       return null

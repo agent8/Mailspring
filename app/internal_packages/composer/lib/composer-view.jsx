@@ -30,6 +30,7 @@ import ActionBarPlugins from './action-bar-plugins'
 import Fields from './fields'
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary'
 
+import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
 
 const {
@@ -87,6 +88,12 @@ export default class ComposerView extends React.Component {
       Actions.removeQuoteText.listen(this._onQuoteRemoved, this),
       WorkspaceStore.listen(this._onResize)
     ]
+  }
+  async componentWillMount () {
+    const windowProps = AppEnv.getWindowProps()
+    console.log(' ComposerView.componentWillMount: windowProps: ', windowProps)
+    let { padInfo } = windowProps
+    this.setState({ padInfo, inTeamEditMode: !!padInfo })
   }
 
   componentDidMount () {
@@ -398,9 +405,70 @@ export default class ComposerView extends React.Component {
     }
   }
 
+  goTeamEdit = async () => {
+    const chatAccounts = AppEnv.config.get('chatAccounts') || {}
+    const emails = Object.keys(chatAccounts)
+    const email = emails[0]
+    const token = await keyMannager.getAccessTokenByEmail(email)
+    const chatAccountList = Object.values(chatAccounts)
+    console.log('tm-editor.render: chatAccounts: ', chatAccounts)
+    const chatAccount = chatAccountList[0] || {}
+    console.log('tm-editor.render: chatAccount: ', chatAccount)
+    const userId = chatAccount.userId || '100007'
+    const name = chatAccount.name
+    const userName = name
+    let padId = chatAccount.padId
+    if (!padId) {
+      let res = await axios.post('http://127.0.0.1:9001/api/1.2.12/createPad', {
+        userId,
+        email,
+        name,
+        token,
+        text: '',
+        emailOri: { id: 'emailId', cc: ['cc'], to: ['11', '2'] },
+        emailExtr: { to: ['11', '2'] },
+        coWorkers: [
+          { name: 'caoxm3456', userId: '427284', permission: 'edit' },
+          { name: 'Xingming Cao', userId: '460359so2dx', permission: 'edit' }
+        ]
+      })
+      console.log(' axios.post:createPad: res: ', res)
+      if (res && res.status === 200 && res.data && res.data.data && res.data.data.padId) {
+        padId = res.data.data.padId
+        chatAccount.padId = padId
+        console.log(' new padId: chatAccounts: ', chatAccounts)
+        AppEnv.config.set('chatAccounts', chatAccounts)
+      }
+    }
+    const padInfo = { padId, userId, userName, token, email }
+    this.setState({ inTeamEditMode: true, padInfo })
+  }
+
   _renderEditor () {
     const draft = this.props
-    return <TeamreplyEditor draft={draft} />
+    if (this.state.inTeamEditMode) {
+      const { padInfo } = this.state
+      return <TeamreplyEditor draft={draft} padInfo={padInfo} />
+    } else {
+      return (
+        <ComposerEditor
+          ref={el => {
+            if (el) {
+              this._els[Fields.Body] = el
+            }
+          }}
+          className={this.state.quotedTextHidden && 'hiding-quoted-text'}
+          propsForPlugins={{ draft: this.props.draft, session: this.props.session }}
+          value={this.props.draft.bodyEditorState}
+          onFileReceived={this._onFileReceived}
+          onDrop={e => this._dropzone._onDrop(e)}
+          onBlur={this._onEditorBlur}
+          readOnly={this.props.session ? this.props.session.isPopout() : true}
+          onChange={this._onEditorChange}
+          isCrowded={this.state.isCrowded}
+        />
+      )
+    }
   }
 
   _renderFooterRegions () {
@@ -544,6 +612,17 @@ export default class ComposerView extends React.Component {
                 />
               </button>
               <div className='divider-line' style={{ order: 10 }} />
+              {!this.state.inTeamEditMode ? (
+                <button
+                  tabIndex={-1}
+                  className='btn btn-toolbar btn-team-edit'
+                  style={{ order: 40 }}
+                  title='goto team edit mode'
+                  onClick={this.goTeamEdit}
+                >
+                  <span> Team Edit </span>
+                </button>
+              ) : null}
               <button
                 tabIndex={-1}
                 className='btn btn-toolbar btn-trash'
@@ -555,13 +634,13 @@ export default class ComposerView extends React.Component {
                 {this.state.isDeleting ? (
                   <LottieImg name={'loading-spinner-blue'} size={{ width: 24, height: 24 }} />
                 ) : (
-                    <RetinaImg
-                      name={'trash.svg'}
-                      style={{ width: 24, height: 24 }}
-                      isIcon
-                      mode={RetinaImg.Mode.ContentIsMask}
-                    />
-                  )}
+                  <RetinaImg
+                    name={'trash.svg'}
+                    style={{ width: 24, height: 24 }}
+                    isIcon
+                    mode={RetinaImg.Mode.ContentIsMask}
+                  />
+                )}
                 <span>Delete</span>
               </button>
             </div>

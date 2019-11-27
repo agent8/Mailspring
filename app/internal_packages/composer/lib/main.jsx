@@ -26,11 +26,13 @@ class ComposerWithWindowProps extends React.Component {
 
     // We'll now always have windowProps by the time we construct this.
     const windowProps = AppEnv.getWindowProps()
+    console.log(' ComposerWithWindowProps: constructor: windowProps: ', windowProps)
     const { draftJSON, headerMessageId } = windowProps
     if (!draftJSON) {
       throw new Error('Initialize popout composer windows with valid draftJSON')
     }
     const draft = new Message().fromJSON(draftJSON)
+    console.log(' ComposerWithWindowProps: constructor: draft: ', draft)
     this.state = windowProps
     this._mounted = false
     this._unlisten = Actions.changeDraftAccountComplete.listen(this._onDraftChangeAccountComplete, this)
