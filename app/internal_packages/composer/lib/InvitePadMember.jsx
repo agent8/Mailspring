@@ -143,15 +143,10 @@ export default class InvitePadMember extends Component {
       const to = [member.email]
       const cc = []
       await DraftStore.createAndSendMessage({
-        subject: 'an invitation to write email together',
-        body: `
-        <br/>
-        <br/>
-        <div>
-        I want to invite you write an email togegher. Please click the "Team Edit" button on the right top in the message in EdisonMail app to open
-        <a href="${url}">the team editor for the email</a>
-        </div>
-        `,
+        subject: 'invitation to write email together',
+        body: `I want to invite you to edit an email together. To open the team editor for the email,
+        please open this message in EdisonMail App,
+        and then click the link to <a href="${url}">the team editor for the email</a>`,
         to,
         cc,
         from,
