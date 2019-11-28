@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import path from 'path'
 import keyMannager from '../../../src/key-manager'
 import InvitePadMember from './InvitePadMember'
 
@@ -23,11 +24,14 @@ export default class TeamreplyEditor extends Component {
     if (!padId) {
       return <div> Can not get AND create proper edit pad for this email!</div>
     }
+    const cwd = process.cwd()
+    console.log(' tme.render: cwd: ', cwd)
+    const htmlPath = path.join(cwd, 'app/internal_packages/composer/teamreply-client/src/html/pad.html')
     return (
       <div className='teamreply-editor-container'>
         <iframe
           className='teamreply-editor'
-          src={`http://0.0.0.0:8080/p/${padId}?userId=${userId}&userName=${userName}&token=${token}`}
+          src={`${htmlPath}?padId=${padId}&userId=${userId}&userName=${userName}&token=${token}`}
         />
         <div className='teamreply-editor-invite-btn' onClick={this.showInvitePadMember}>
           Invite

@@ -135,13 +135,6 @@ class ComposerWithWindowProps extends React.Component {
 }
 
 export function activate () {
-  let cwd = process.cwd()
-  process.chdir('./app/internal_packages/composer/teamreply-client')
-  const teamProc = exec('node src/node/server.js')
-  teamProc.stdout.on('data', function (data) {
-    console.log('***** teamreply log: ' + data.toString())
-  })
-  process.chdir(cwd)
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(ComposerViewForDraftClientId, {
       role: 'Composer'

@@ -9,6 +9,13 @@
     "editor"
   ],
   "author": "Etherpad Foundation",
+  "main": "main.dev.js",
+  "request": "launch",
+  "cwd": "${workspaceRoot}",
+  "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+  "windows": {
+    "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+  },
   "contributors": [
     {
       "name": "John McLear"
@@ -62,13 +69,13 @@
     "ueberdb2": "0.4.0",
     "uglify-js": "2.6.2",
     "underscore": "1.8.3",
-    "unorm": "1.4.1",
-    "url": "^0.11.0"
+    "unorm": "1.4.1"
   },
   "bin": {
     "etherpad-lite": "./node/server.js"
   },
   "devDependencies": {
+    "electron": "file:electron",
     "mocha": "5.2.0",
     "nyc": "14.1.0",
     "supertest": "3.0.0",
