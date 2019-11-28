@@ -304,34 +304,6 @@ export default class MessageItem extends React.Component {
     return null
   }
 
-  parsePadInfo = url => {
-    const result = {}
-    let s = url
-    let i, j
-    i = s.indexOf('edisonmail://teamedit.edison.tech')
-    i += 'edisonmail://teamedit.edison.tech'.length
-    j = s.indexOf('?')
-    result.headerMessageId = s.substring(i, j)
-    i = s.indexOf('">the team editor')
-    s = s.substring(j + 1, i)
-    if (s[0] === '?') {
-      s = s.substring(1)
-    }
-    const fields = s.split(/\s*&amp;\s*/)
-    for (let field of fields) {
-      const pair = field.split(/\s*=\s*/)
-      const [k, v] = pair
-      result[k] = v
-    }
-    return result
-  }
-  _openTeamEditor = () => {
-    const { message } = this.props
-    const msgBody = message.body
-    const padInfo = this.parsePadInfo(msgBody)
-    DraftStore.popoutTeamEditor(padInfo)
-  }
-
   _renderHeader () {
     const { message, thread, messages, pending } = this.props
     const { trackers } = this.state
@@ -369,11 +341,6 @@ export default class MessageItem extends React.Component {
             trackers={trackers}
           />
         </div>
-        {containShareEditLink ? (
-          <div className='share-edit-btn' onClick={this._openTeamEditor}>
-            Team Edit
-          </div>
-        ) : null}
         <div className='blockBtn' onClick={this._onClickBlockBtn}>
           {this.state.isBlocked ? 'Unblock' : 'Block'}
         </div>
