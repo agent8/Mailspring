@@ -25,7 +25,6 @@ export default class TeamreplyEditor extends Component {
       return <div> Can not get AND create proper edit pad for this email!</div>
     }
     const cwd = process.cwd()
-    console.log(' tme.render: cwd: ', cwd)
     const htmlPath = path.join(cwd, 'app/internal_packages/composer/teamreply-client/src/html/pad.html')
     return (
       <div className='teamreply-editor-container'>

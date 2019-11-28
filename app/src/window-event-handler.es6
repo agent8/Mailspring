@@ -298,7 +298,6 @@ export default class WindowEventHandler {
 
     if (resolved.includes('edisonmail://teamedit.edison.tech')) {
       const padInfo = parsePadInfoFromUrl(resolved)
-      console.log(' openLink: padInfo: ', padInfo)
       DraftStore.popoutTeamEditor(padInfo)
     } else if (['mailto:', 'edisonmail:'].includes(protocol)) {
       // We sometimes get mailto URIs that are not escaped properly, or have been only partially escaped.

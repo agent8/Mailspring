@@ -145,14 +145,11 @@ function parseQuery (searchString) {
 }
 
 function sendClientReady(isReconnect, messageType) {
-  console.log(' sendClientReady: document.location: ', document.location)
   messageType = typeof messageType !== 'undefined' ? messageType : 'CLIENT_READY';
   const query = parseQuery(document.location.search)
-  console.log(' pad.js: ' + location + ':  ' + JSON.stringify(query))
-
+  
   var padId = query.padId || '0ba5b38010e711eaafbc43faca53139b';
   createCookie("padId", padId);
-  console.log(' padId:' + padId);
   if (!isReconnect) {
     var titleArray = document.title.split('|');
     var title = titleArray[titleArray.length - 1];
@@ -6563,14 +6560,11 @@ function parseQuery (searchString) {
 }
 
 function sendClientReady(isReconnect, messageType) {
-  console.log(' sendClientReady: document.location: ', document.location)
   messageType = typeof messageType !== 'undefined' ? messageType : 'CLIENT_READY';
   const query = parseQuery(document.location.search)
-  console.log(' pad.js: ' + location + ':  ' + JSON.stringify(query))
-
+  
   var padId = query.padId || '0ba5b38010e711eaafbc43faca53139b';
   createCookie("padId", padId);
-  console.log(' padId:' + padId);
   if (!isReconnect) {
     var titleArray = document.title.split('|');
     var title = titleArray[titleArray.length - 1];
@@ -13023,14 +13017,11 @@ function parseQuery (searchString) {
 }
 
 function sendClientReady(isReconnect, messageType) {
-  console.log(' sendClientReady: document.location: ', document.location)
   messageType = typeof messageType !== 'undefined' ? messageType : 'CLIENT_READY';
   const query = parseQuery(document.location.search)
-  console.log(' pad.js: ' + location + ':  ' + JSON.stringify(query))
-
+  
   var padId = query.padId || '0ba5b38010e711eaafbc43faca53139b';
   createCookie("padId", padId);
-  console.log(' padId:' + padId);
   if (!isReconnect) {
     var titleArray = document.title.split('|');
     var title = titleArray[titleArray.length - 1];

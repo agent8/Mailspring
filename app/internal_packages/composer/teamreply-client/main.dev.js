@@ -1,5 +1,4 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
-console.log(' app: ', app)
 const path = require('path')
 
 const url = require('url')
