@@ -38,15 +38,10 @@ const isSelectionPresent = () => {
 const parsePadInfoFromUrl = url => {
   const result = {}
   let s = url
-  let i, j
-  i = 'edisonmail://teamedit.edison.tech'.length
-  j = s.indexOf('?')
-  result.headerMessageId = s.substring(i, j)
-  i = s.indexOf('">the team editor')
-  s = s.substring(j + 1)
-  if (s[0] === '?') {
-    s = s.substring(1)
-  }
+  let i
+  i = s.indexOf('?')
+  result.headerMessageId = s.substring('edisonmail://teamedit.edison.tech/'.length, i)
+  s = s.substring(i + 1)
   const fields = s.split(/\s*&\s*/)
   for (let field of fields) {
     const pair = field.split(/\s*=\s*/)
@@ -301,9 +296,9 @@ export default class WindowEventHandler {
       resolved = `http://${resolved}`
     }
 
-    console.log(' openLink: resolved: ', resolved)
     if (resolved.includes('edisonmail://teamedit.edison.tech')) {
       const padInfo = parsePadInfoFromUrl(resolved)
+      console.log(' openLink: padInfo: ', padInfo)
       DraftStore.popoutTeamEditor(padInfo)
     } else if (['mailto:', 'edisonmail:'].includes(protocol)) {
       // We sometimes get mailto URIs that are not escaped properly, or have been only partially escaped.

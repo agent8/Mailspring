@@ -60,7 +60,6 @@ export default class AppEnvConstructor {
     const globalPath = path.join(resourcePath, 'src', 'global')
     const module = require('module')
     module.globalPaths.push(globalPath)
-    console.log(' APPEnv: module: ', module)
 
     this.loadTime = null
 
