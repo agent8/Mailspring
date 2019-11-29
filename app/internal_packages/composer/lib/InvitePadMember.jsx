@@ -60,7 +60,6 @@ export default class InvitePadMember extends Component {
 
     setTimeout(this._setDropDownHeight, 1)
   }
-  onClick = () => {}
 
   isMe (email) {
     return !!AccountStore.accountForEmail(email)
@@ -170,15 +169,6 @@ export default class InvitePadMember extends Component {
     }
   }
 
-  onKeyDown = event => {
-    if (event.keyCode === 27) {
-      // ESC
-      this._close()
-      event.stopPropagation()
-      event.preventDefault()
-    }
-  }
-
   focusIntoInput = () => {
     document.querySelector('#contact-select').focus()
     document.querySelector('#contact-select input').focus()
@@ -208,8 +198,8 @@ export default class InvitePadMember extends Component {
       </Option>
     ))
     return (
-      <div className='invite-member-popup' onClick={this.onClick}>
-        <div className='invite-member-panel' onKeyUp={this.onKeyUp} onKeyDown={this.onKeyDown}>
+      <div className='invite-member-popup'>
+        <div className='invite-member-panel' onKeyUp={this.onKeyUp} onKeyDown={this.onKeyUp} onKeyPress={this.onKeyUp}>
           <div className='to'>
             <span className='close' onClick={this._close}>
               <RetinaImg
