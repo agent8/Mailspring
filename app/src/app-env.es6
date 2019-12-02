@@ -93,6 +93,7 @@ export default class AppEnvConstructor {
       `ui-log-${Date.now()}.log`
     );
     LOG.transports.console.level = false;
+    LOG.transports.file.maxSize = 20485760;
     // if (devMode) {
     //   LOG.transports.file.appName = 'EdisonMail-dev';
     // } else {
