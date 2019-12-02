@@ -25,7 +25,7 @@ class ThreadListToolbar extends Component {
     const toolbarElement = (
       <InjectedComponentSet
         matching={{ role: 'ThreadListToolbarButtons' }}
-        exposedProps={{ selection, items }}
+        exposedProps={{ selection, items, position: 'threadList' }}
         style={{ height: 'auto', width: '100%' }}
       />
     );
