@@ -206,12 +206,14 @@ class MovePicker extends React.Component {
       return <span />;
     }
 
+    const folderKey = this.props.source === 'thread-list-toolbar' ? 'core:change-folders-multi' : 'core:change-folders';
     const handlers = {
-      'core:change-folders': this._onShortcutOpenMovePopover,
+      [folderKey]: this._onShortcutOpenMovePopover,
     };
     if (this._account.usesLabels()) {
+      const labelKey = this.props.source === 'thread-list-toolbar' ? 'core:change-labels-multi' : 'core:change-labels';
       Object.assign(handlers, {
-        'core:change-labels': this._onShortcutOpenLabelsPopover,
+        [labelKey]: this._onShortcutOpenLabelsPopover,
       });
     }
 
