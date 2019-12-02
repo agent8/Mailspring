@@ -130,7 +130,7 @@
     }
   }
 
-  ul {
+  & > ul {
     list-style: none;
     width: 220px;
     height: 100%;
@@ -241,6 +241,42 @@
           color: @color-info;
           font-weight: 600;
           content: 'Warning: ';
+        }
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 5px 0;
+
+        .title {
+          color: @gray-light;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 11px;
+          margin-bottom: 20px;
+        }
+
+        li {
+          color: @gray;
+          line-height: 18px;
+          margin-bottom: 13px;
+        }
+      }
+    }
+    .check-box {
+      padding: 2px 0;
+      display: flex;
+
+      input {
+        margin: 1.5px 10px 0 0;
+      }
+
+      label {
+        color: @red;
+        line-height: 18px;
+        &.checked-notice {
+          color: @text-color;
         }
       }
     }
