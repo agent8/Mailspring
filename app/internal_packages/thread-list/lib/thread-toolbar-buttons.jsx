@@ -665,7 +665,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Folder',
-            click: () => AppEnv.commands.dispatch('core:change-folders-multi', this._anchorEl),
+            click: () => AppEnv.commands.dispatch('core:change-folders', this._anchorEl),
           })
         );
       }
@@ -674,7 +674,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Apply Labels',
-            click: () => AppEnv.commands.dispatch('core:change-labels-multi', this._anchorEl),
+            click: () => AppEnv.commands.dispatch('core:change-labels', this._anchorEl),
           })
         );
       }
