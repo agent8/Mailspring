@@ -21,7 +21,7 @@ export default class EmailAvatar extends Component {
         if (!from && to) {
           from = to;
         }
-        this._parseAvatarForSendMessage(messages, from, props);
+        from = this._parseAvatarForSendMessage(messages, from, props);
       }
       from = from || {};
     } else if (props.message) {
@@ -84,6 +84,7 @@ export default class EmailAvatar extends Component {
         from = to || cc || bcc;
       }
     }
+    return from;
   };
   _findLatestSendMessage(messages){
     let sendMessage = null;
