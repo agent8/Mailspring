@@ -163,10 +163,6 @@ class MovePicker extends React.Component {
     let originRect;
     if (anchorEl && anchorEl.detail && anchorEl.detail.getBoundingClientRect) {
       originRect = anchorEl.detail.getBoundingClientRect();
-    } else if (anchorEl && anchorEl.target && anchorEl.target.getBoundingClientRect) {
-      originRect = anchorEl.target.getBoundingClientRect();
-    } else if (anchorEl && anchorEl.getBoundingClientRect) {
-      originRect = anchorEl.getBoundingClientRect();
     } else if (this._moveEl && this._moveEl.getBoundingClientRect) {
       if (this._moveEl.getBoundingClientRect().left === 0) {
         const moreEl = document.querySelector('#threadToolbarMoreButtonmessageList');
