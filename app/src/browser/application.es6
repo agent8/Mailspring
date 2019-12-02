@@ -535,6 +535,7 @@ export default class Application extends EventEmitter {
     }
     LOG.transports.file.file = path.join(this.configDirPath, 'ui-log', 'application.log');
     LOG.transports.console.level = false;
+    LOG.transports.file.maxSize = 20485760;
   }
 
   autoStartRestore() {
