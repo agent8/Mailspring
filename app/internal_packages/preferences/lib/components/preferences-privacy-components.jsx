@@ -128,9 +128,9 @@ export class Privacy extends React.Component {
 
   _onConfirmExportData = email => {
     this._onCloseExportDataModal();
-    console.error('^^^^^^^^^^^^^^^^^^^');
-    console.error(email);
-    console.error('^^^^^^^^^^^^^^^^^^^');
+    console.log('^^^^^^^^^^^^^^^^^^^');
+    console.log(email);
+    console.log('^^^^^^^^^^^^^^^^^^^');
   };
 
   renderDataShareOption() {
