@@ -177,9 +177,38 @@ const WhereDoWeSendIt = ({ sendEmailAddress, onSelectSendEmail }) => {
   );
 };
 
-const YourDataArchive = () => {
-  // TO DO
-  return <div></div>;
+const YourDataArchive = ({ sendEmailAddress, checkedNotice, onToggleCheckedNotice }) => {
+  const accountList = AccountStore.accounts();
+
+  return (
+    <div>
+      <h2>Your Data Archive</h2>
+      <p>
+        Email data associated with your connected accounts will be zipped and sent to:&nbsp;
+        <b>{sendEmailAddress}</b>
+      </p>
+      <ul>
+        <div className="title">Connected accounts</div>
+        {accountList.map(account => {
+          return <li key={account.id}>{account.emailAddress}</li>;
+        })}
+      </ul>
+      <div className="check-box">
+        <input
+          id="export-data-modal-agreement"
+          type="checkbox"
+          onChange={onToggleCheckedNotice}
+          checked={checkedNotice}
+        />
+        <label
+          htmlFor="export-data-modal-agreement"
+          className={checkedNotice ? 'checked-notice' : ''}
+        >
+          I understand my data contains sensitive information from the accounts listed above.
+        </label>
+      </div>
+    </div>
+  );
 };
 
 export default class ExportDataModal extends React.Component {
@@ -224,7 +253,15 @@ export default class ExportDataModal extends React.Component {
       },
       {
         title: `Your Data Archive`,
-        component: () => <YourDataArchive />,
+        component: () => (
+          <YourDataArchive
+            sendEmailAddress={this.state.sendEmailAddress}
+            checkedNotice={this.state.checkedNotice}
+            onToggleCheckedNotice={() => {
+              this.setState({ checkedNotice: !this.state.checkedNotice });
+            }}
+          />
+        ),
         cancelText: 'Back',
         confirmText: 'Export My Data',
         confirmDisable: () => !this.state.checkedNotice,
