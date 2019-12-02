@@ -665,7 +665,9 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Folder',
-            click: () => AppEnv.commands.dispatch('core:change-folders-multi', this._anchorEl),
+            click: () => {
+              AppEnv.commands.dispatch('core:change-folders', this._anchorEl)
+            }
           })
         );
       }
@@ -674,7 +676,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Apply Labels',
-            click: () => AppEnv.commands.dispatch('core:change-labels-multi', this._anchorEl),
+            click: () => AppEnv.commands.dispatch('core:change-labels', this._anchorEl),
           })
         );
       }
@@ -768,6 +770,7 @@ export class ThreadListMoreButton extends React.Component {
   render() {
     return (
       <button
+        id={`moreButton${this.props.position}`}
         ref={el => (this._anchorEl = el)}
         tabIndex={-1}
         className="btn btn-toolbar btn-list-more"
@@ -823,7 +826,7 @@ export class MoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Folder',
-            click: () => AppEnv.commands.dispatch('core:change-folders', this._anchorEl),
+            click: () => AppEnv.commands.dispatch('core:change-folders-list', this._anchorEl),
           })
         );
       }
@@ -832,7 +835,7 @@ export class MoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Apply Labels',
-            click: () => AppEnv.commands.dispatch('core:change-labels', this._anchorEl),
+            click: () => AppEnv.commands.dispatch('core:change-labels-list', this._anchorEl),
           })
         );
       }
@@ -1068,7 +1071,7 @@ function FolderButton(props) {
     const itemList = [
       new MenuItem({
         label: 'Move to Folder',
-        click: () => AppEnv.commands.dispatch('core:change-folders', props.anchorEl),
+        click: () => AppEnv.commands.dispatch('core:change-folders-message', props.anchorEl),
       }),
     ];
     const account = AccountStore.accountForItems(props.items);
@@ -1076,7 +1079,7 @@ function FolderButton(props) {
       itemList.push(
         new MenuItem({
           label: 'Apply Labels',
-          click: () => AppEnv.commands.dispatch('core:change-labels', props.anchorEl),
+          click: () => AppEnv.commands.dispatch('core:change-labels-message', props.anchorEl),
         })
       );
     }
