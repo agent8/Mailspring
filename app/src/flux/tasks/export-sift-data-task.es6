@@ -1,5 +1,7 @@
 import SiftTask from './sift-task';
 import Attributes from '../attributes';
+import Actions from '../actions';
+
 export default class ExportSiftDataTask extends SiftTask {
   static attributes = Object.assign({}, SiftTask.attributes, {
     sendEmail: Attributes.String({
@@ -20,6 +22,6 @@ export default class ExportSiftDataTask extends SiftTask {
   }
 
   onSuccess() {
-    Actions.changeBlockSucceeded();
+    Actions.exportSiftDataSucceeded();
   }
 }
