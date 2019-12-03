@@ -131,7 +131,7 @@ export function TrashButton(props) {
                 threads: JSON.stringify(props.items),
               },
             });
-          } catch (e) {}
+          } catch (e) { }
         }
       });
     }
@@ -173,7 +173,7 @@ export function TrashButton(props) {
                 messages: JSON.stringify(messages),
               },
             });
-          } catch (e) {}
+          } catch (e) { }
         }
       });
     }
@@ -475,16 +475,16 @@ export function ToggleUnreadButton(props) {
       commands={
         targetUnread
           ? {
-              'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
-            }
+            'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
+          }
           : {
-              'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
-            }
+            'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
+          }
       }
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
         <RetinaImg
-          name={`${fragment === 'unread' ? 'read' : 'unread'}.svg`}
+          name={`${fragment === 'unread' ? 'unread' : 'read'}.svg`}
           style={{ width: 24, height: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
@@ -613,13 +613,13 @@ class HiddenToggleImportantButton extends React.Component {
         commands={
           allImportant
             ? {
-                'core:mark-unimportant': event =>
-                  commandCb(event, this._onShortcutSetImportant, false),
-              }
+              'core:mark-unimportant': event =>
+                commandCb(event, this._onShortcutSetImportant, false),
+            }
             : {
-                'core:mark-important': event =>
-                  commandCb(event, this._onShortcutSetImportant, true),
-              }
+              'core:mark-important': event =>
+                commandCb(event, this._onShortcutSetImportant, true),
+            }
         }
       >
         <span />
@@ -665,7 +665,9 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Folder',
-            click: () => AppEnv.commands.dispatch('core:change-folders', this._anchorEl),
+            click: () => {
+              AppEnv.commands.dispatch('core:change-folders', this._anchorEl)
+            }
           })
         );
       }
@@ -768,6 +770,7 @@ export class ThreadListMoreButton extends React.Component {
   render() {
     return (
       <button
+        id={`moreButton${this.props.position}`}
         ref={el => (this._anchorEl = el)}
         tabIndex={-1}
         className="btn btn-toolbar btn-list-more"
@@ -823,7 +826,7 @@ export class MoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Folder',
-            click: () => AppEnv.commands.dispatch('core:change-folders', this._anchorEl),
+            click: () => AppEnv.commands.dispatch('core:change-folders-list', this._anchorEl),
           })
         );
       }
@@ -832,7 +835,7 @@ export class MoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Apply Labels',
-            click: () => AppEnv.commands.dispatch('core:change-labels', this._anchorEl),
+            click: () => AppEnv.commands.dispatch('core:change-labels-list', this._anchorEl),
           })
         );
       }
@@ -1068,7 +1071,7 @@ function FolderButton(props) {
     const itemList = [
       new MenuItem({
         label: 'Move to Folder',
-        click: () => AppEnv.commands.dispatch('core:change-folders', props.anchorEl),
+        click: () => AppEnv.commands.dispatch('core:change-folders-message', props.anchorEl),
       }),
     ];
     const account = AccountStore.accountForItems(props.items);
@@ -1076,7 +1079,7 @@ function FolderButton(props) {
       itemList.push(
         new MenuItem({
           label: 'Apply Labels',
-          click: () => AppEnv.commands.dispatch('core:change-labels', props.anchorEl),
+          click: () => AppEnv.commands.dispatch('core:change-labels-message', props.anchorEl),
         })
       );
     }

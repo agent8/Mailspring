@@ -58,10 +58,13 @@ Section: Models
 */
 export default class Category extends Model {
   get displayName() {
-    if (!this.path) {
+    return Category.pathToDisplayName(this.path);
+  }
+  static pathToDisplayName(pathString) {
+    if (!pathString) {
       return '';
     }
-    const decoded = utf7.imap.decode(this.path);
+    const decoded = utf7.imap.decode(pathString);
 
     for (const prefix of ['INBOX', '[Gmail]', '[Google Mail]', '[Mailspring]']) {
       if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {

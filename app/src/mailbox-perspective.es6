@@ -264,7 +264,7 @@ export default class MailboxPerspective {
   }
 
   emptyMessage() {
-    return 'No Messages';
+    return '   ';
   }
 
   emptyListIcon() {

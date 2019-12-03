@@ -77,7 +77,7 @@ class DraftList extends React.Component {
       });
       return;
     }
-    if (draft.hasOwnProperty('body') && draft.body !== null) {
+    if (!!draft.body || !!draft.snippet) {
       draft.missingAttachments().then(ret => {
         const totalMissing = ret.totalMissing().map(f => f.id);
         if (totalMissing.length === 0) {

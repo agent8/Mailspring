@@ -89,7 +89,7 @@ export default class Message extends ModelWithMetadata {
     // outbox
     failed: '-1', // This state indicates that draft have failed to send.
   };
-  static compareMessageState(currentState, targetState){
+  static compareMessageState(currentState, targetState) {
     try {
       const current = parseInt(currentState);
       const target = parseInt(targetState);
@@ -214,6 +214,10 @@ export default class Message extends ModelWithMetadata {
 
     calendarReply: Attributes.Boolean({
       modelKey: 'calendarReply',
+    }),
+
+    listUnsubscribe: Attributes.String({
+      modelKey: 'listUnsubscribe',
     }),
 
     pristine: Attributes.Boolean({
@@ -383,7 +387,7 @@ export default class Message extends ModelWithMetadata {
     const excludeMeAndFroms = cc =>
       _.reject(
         cc,
-        p => p.isMe() || _.contains(excludedFroms, Utils.toEquivalentEmailForm(p.email)),
+        p => p.isMe() || _.contains(excludedFroms, Utils.toEquivalentEmailForm(p.email))
       );
 
     let to = null;
@@ -471,7 +475,7 @@ export default class Message extends ModelWithMetadata {
         },
       };
       const total = this.files.length * 2;
-      if(total === 0){
+      if (total === 0) {
         resolve(ret);
         return;
       }
@@ -570,15 +574,13 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() {
-
-  }
+  isActiveDraft() {}
 
   isDeleted() {
     //DC-269
     return this.state == Message.messageState.deleted; // eslint-ignore-line
   }
-  isDraftSending(){
+  isDraftSending() {
     return this.draft && Message.compareMessageState(this.state === Message.messageState.sending);
   }
 
