@@ -37,6 +37,9 @@ class CategoryStore extends MailspringStore {
       .sort()
       .subscribe(this._onCategoriesChanged);
   }
+  decodePath(pathString){
+    return Category.pathToDisplayName(pathString);
+  }
 
   byId(accountOrId, categoryId) {
     const categories = this._categoryCache[asAccountId(accountOrId)] || {};
