@@ -49,17 +49,61 @@ class MovePicker extends React.Component {
     this._account = AccountStore.accountForItems(nextProps.items);
   }
 
-  _onShortcutOpenLabelsPopover = event => {
-    const threadListEl = document.querySelector('#movePickerLabelthreadList');
-    if (!threadListEl || WorkspaceStore.layoutMode() === 'list') {
-      this._onOpenLabelsPopover(event);
-    } else {
-      this._onOpenLabelsPopover(
-        event,
-        threadListEl,
-        threadSelectionScope(this.props, this.selection)
-      );
+  _shouldResponse = (event, next) => {
+    const inThreadList = this.props.position === 'threadList';
+    const inMessageList = this.props.position === 'messageList';
+    if (!inThreadList && !inMessageList) {
+      return;
     }
+    const topSheet = WorkspaceStore.topSheet();
+    const threadListAnchor = document.querySelector('#moreButtonthreadList');
+    if (WorkspaceStore.layoutMode() === 'list') {
+      if (topSheet && (topSheet.id === 'Thread' || topSheet.id === 'Sift') && !inMessageList) {
+        return;
+      }
+      if (topSheet && topSheet.id === 'Threads' && !inThreadList) {
+        return;
+      }
+      if (inMessageList) {
+        next();
+      } else if (threadListAnchor && inThreadList) {
+        next(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+      }
+    } else {
+      if (inMessageList && threadListAnchor) {
+        return;
+      }
+      if (!threadListAnchor) {
+        next(null);
+      } else {
+        next(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+      }
+    }
+  };
+
+  _onShortcutOpenLabelsPopover = event => {
+    this._shouldResponse(event, this._onOpenLabelsPopover);
+  };
+  _onThreadListOpenLabelsPopover = event => {
+    const inThreadList = this.props.position === 'threadList';
+    const threadListAnchor = document.querySelector('#moreButtonthreadList');
+    if(!threadListAnchor || !inThreadList){
+      return;
+    }
+    this._onOpenLabelsPopover(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+  };
+  _onMessageListOpenLabelsPopover = event => {
+    const inMessageList = this.props.position === 'messageList';
+    if(!inMessageList){
+      return;
+    }
+    if (event.preventDefault){
+      event.preventDefault();
+    }
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    this._onOpenLabelsPopover(event);
   };
 
   _onOpenLabelsPopover = (event, anchorEl, threads) => {
@@ -70,7 +114,9 @@ class MovePicker extends React.Component {
       return;
     }
     let originRect;
-    if (event && event.target && event.target.getBoundingClientRect) {
+    if (event && event.detail && event.detail.getBoundingClientRect) {
+      originRect = event.detail.getBoundingClientRect();
+    } else if (event && event.target && event.target.getBoundingClientRect) {
       originRect = event.target.getBoundingClientRect();
     } else if (anchorEl) {
       originRect = anchorEl.getBoundingClientRect();
@@ -100,7 +146,7 @@ class MovePicker extends React.Component {
       />,
       {
         originRect,
-        direction: 'down',
+        direction: 'up',
         disablePointer: true,
       }
     );
@@ -144,16 +190,34 @@ class MovePicker extends React.Component {
     Actions.closePopover();
   };
 
-  _onShortcutOpenMovePopover = anchorEl => {
-    const threadListEl = document.querySelector('#movePickerFolderthreadList');
-    if (!threadListEl || WorkspaceStore.layoutMode() === 'list') {
-      this._onOpenMovePopover(anchorEl);
-    } else {
-      this._onOpenMovePopover(threadListEl, threadSelectionScope(this.props, this.selection));
+  _onMessageListOpenMovePopover = event => {
+    if (event.preventDefault){
+      event.preventDefault();
     }
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    const inMessageList = this.props.position === 'messageList';
+    if (!inMessageList) {
+      return;
+    }
+    this._onOpenMovePopover(event);
   };
 
-  _onOpenMovePopover = (anchorEl, threads) => {
+  _onThreadListOpenMovePopover = event => {
+    const inThreadList = this.props.position === 'threadList';
+    let threadListAnchor = document.querySelector('#moreButtonthreadList');
+    if (!inThreadList || !threadListAnchor) {
+      return;
+    }
+    this._onOpenMovePopover(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+  };
+
+  _onShortcutOpenMovePopover = event => {
+    this._shouldResponse(event, this._onOpenMovePopover);
+  };
+
+  _onOpenMovePopover = (event, anchorEl, threads) => {
     if (!(this.props.items.length > 0)) {
       return;
     }
@@ -161,11 +225,14 @@ class MovePicker extends React.Component {
       return;
     }
     let originRect;
-    if (anchorEl && anchorEl.detail && anchorEl.detail.getBoundingClientRect) {
-      originRect = anchorEl.detail.getBoundingClientRect();
-    } else if (anchorEl && anchorEl.target && anchorEl.target.getBoundingClientRect) {
-      originRect = anchorEl.target.getBoundingClientRect();
+    if (event && event.detail && event.detail.getBoundingClientRect) {
+      console.error('detail bounding');
+      originRect = event.detail.getBoundingClientRect();
+    } else if (event && event.target && event.target.getBoundingClientRect) {
+      console.error('target bounding');
+      originRect = event.target.getBoundingClientRect();
     } else if (anchorEl && anchorEl.getBoundingClientRect) {
+      console.error('just bounding');
       originRect = anchorEl.getBoundingClientRect();
     } else if (this._moveEl && this._moveEl.getBoundingClientRect) {
       if (this._moveEl.getBoundingClientRect().left === 0) {
@@ -208,10 +275,14 @@ class MovePicker extends React.Component {
 
     const handlers = {
       'core:change-folders': this._onShortcutOpenMovePopover,
+      'core:change-folders-list': this._onThreadListOpenMovePopover,
+      'core:change-folders-message': this._onMessageListOpenMovePopover,
     };
     if (this._account.usesLabels()) {
       Object.assign(handlers, {
         'core:change-labels': this._onShortcutOpenLabelsPopover,
+        'core:change-labels-list': this._onThreadListOpenLabelsPopover,
+        'core:change-labels-message': this._onMessageListOpenLabelsPopover,
       });
     }
 

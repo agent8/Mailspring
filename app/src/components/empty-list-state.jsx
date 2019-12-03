@@ -97,8 +97,8 @@ class EmptyInboxState extends React.Component {
             src={`animations/inbox-zero/${animationName}/${animationName}.html`}
           />
           <div className="message">Hooray! You’re done.</div> */}
-          <RetinaImg name={`ic-emptystate-${name}.png`} fallback={`nomail.png`} mode={RetinaImg.Mode.ContentPreserve} />
-          <div className="message">Hooray! You’re done.</div>
+          <RetinaImg name={`ic-emptystate-.png`} fallback={`nomail.png`} mode={RetinaImg.Mode.ContentPreserve} />
+          <div className="message">{/*Hooray! You’re done.*/}</div>
         </div>
       </div>
     );

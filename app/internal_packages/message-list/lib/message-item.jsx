@@ -296,6 +296,24 @@ export default class MessageItem extends React.Component {
     );
   }
 
+  _renderBlockBtn() {
+    const { message } = this.props;
+    const { isBlocked } = this.state;
+    let btnText = '';
+
+    if (message.listUnsubscribe) {
+      btnText = isBlocked ? 'Resubscribe' : 'Unsubscribe';
+    } else {
+      btnText = isBlocked ? 'Unblock' : 'Block';
+    }
+
+    return (
+      <div className="blockBtn" onClick={this._onClickBlockBtn}>
+        {btnText}
+      </div>
+    );
+  }
+
   _renderBlockNote() {
     if (this.state.isBlocked) {
       return (
@@ -351,9 +369,7 @@ export default class MessageItem extends React.Component {
             }}
           />
         </div>
-        <div className="blockBtn" onClick={this._onClickBlockBtn}>
-          {this.state.isBlocked ? 'Unblock' : 'Block'}
-        </div>
+        {this._renderBlockBtn()}
         <div className="row">
           <EmailAvatar
             key="thread-avatar"

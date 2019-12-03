@@ -104,7 +104,7 @@ class ThreadTrashQuickAction extends React.Component {
         className="action action-trash"
         onClick={this._onExpunge}
       >
-        <RetinaImg name="trash.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask}/>
+        <RetinaImg name="trash.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
       </div>;
     }
     let allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
@@ -121,7 +121,7 @@ class ThreadTrashQuickAction extends React.Component {
       }
     }
     if (!allowed) {
-      return <span/>;
+      return <span />;
     }
 
     return (
@@ -132,7 +132,7 @@ class ThreadTrashQuickAction extends React.Component {
         className="action action-trash"
         onClick={this._onRemove}
       >
-        <RetinaImg name="trash.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask}/>
+        <RetinaImg name="trash.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
       </div>
     );
   }
@@ -238,7 +238,7 @@ class ThreadUnreadQuickAction extends React.Component {
   static propTypes = { thread: PropTypes.object };
 
   render() {
-    const imgName = this.props.thread.unread ? 'unread.svg' : 'read.svg';
+    const imgName = this.props.thread.unread ? 'read.svg' : 'unread.svg';
     const title = this.props.thread.unread ? 'Read' : 'Unread';
     return (
       <div
