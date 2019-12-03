@@ -281,10 +281,11 @@ class EditableList extends Component {
       let isDeleted = false;
       // need display confirm dialog
       if (this.props.getConfirmMessage) {
+        const { message, detail } = this.props.getConfirmMessage(selectedItem);
         const chosen = remote.dialog.showMessageBoxSync({
           type: 'info',
-          message: 'Are you sure?',
-          detail: this.props.getConfirmMessage(selectedItem),
+          message: message,
+          detail: detail,
           buttons: ['Delete', 'Cancel']
         });
         if (chosen === 0) {
