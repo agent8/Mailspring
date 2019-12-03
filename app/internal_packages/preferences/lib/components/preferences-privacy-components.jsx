@@ -1,7 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Flexbox, RetinaImg, LottieImg, FullScreenModal } from 'mailspring-component-kit';
-import { Actions, Utils, TaskQueue, SiftExpungeUserDataTask } from 'mailspring-exports';
+import {
+  Actions,
+  Utils,
+  TaskQueue,
+  SiftExpungeUserDataTask,
+  ExportSiftDataTask,
+} from 'mailspring-exports';
 import rimraf from 'rimraf';
 import ExportDataModal from './export-data-modal';
 export class Privacy extends React.Component {
@@ -37,16 +43,23 @@ export class Privacy extends React.Component {
   renderExportData() {
     if (Utils.needGDPR()) {
       return (
-        <Flexbox>
-          <div
-            className="btn-danger privacys-button"
-            onClick={() => {
-              this.setState({ exportDataModalVisible: true });
-            }}
-          >
-            Export My Data
+        <div className="config-group">
+          <h6>EXPORT YOUR DATA</h6>
+          <div className="privacys-note">
+            Get a zipped archive of all your user and email related information for all your
+            connected emails on Edison Mail.
           </div>
-        </Flexbox>
+          <Flexbox>
+            <div
+              className="btn-danger privacys-button"
+              onClick={() => {
+                this.setState({ exportDataModalVisible: true });
+              }}
+            >
+              Export My Data
+            </div>
+          </Flexbox>
+        </div>
       );
     } else {
       return null;
@@ -128,10 +141,7 @@ export class Privacy extends React.Component {
 
   _onConfirmExportData = email => {
     this._onCloseExportDataModal();
-    // To Do
-    console.log('^^^^^^^^^^^^^^^^^^^');
-    console.log(email);
-    console.log('^^^^^^^^^^^^^^^^^^^');
+    Actions.queueTask(new ExportSiftDataTask({ sendEmail: email }));
   };
 
   renderDataShareOption() {
@@ -206,14 +216,7 @@ export class Privacy extends React.Component {
             {this.renderDataShareOption()}
           </Flexbox>
         </div>
-        <div className="config-group">
-          <h6>EXPORT YOUR DATA</h6>
-          <div className="privacys-note">
-            Get a zipped archive of all your user and email related information for all your
-            connected emails on Edison Mail.
-          </div>
-          {this.renderExportData()}
-        </div>
+        {this.renderExportData()}
         <FullScreenModal
           visible={this.state.optOutModalVisible}
           closable
