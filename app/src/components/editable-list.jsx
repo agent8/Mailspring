@@ -5,6 +5,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { Utils } from 'mailspring-exports';
+import { remote } from 'electron';
 
 import ScrollRegion from './scroll-region';
 import KeyCommandsRegion from './key-commands-region';
@@ -101,7 +102,7 @@ class EditableList extends Component {
     onReorderItem: PropTypes.func,
     onItemEdited: PropTypes.func,
     onItemCreated: PropTypes.func,
-
+    getConfirmMessage: PropTypes.func,
     /* Optional, if you choose to control selection externally */
     selected: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     onSelectItem: PropTypes.func,
@@ -115,9 +116,9 @@ class EditableList extends Component {
     className: '',
     createInputProps: {},
     showEditIcon: false,
-    onDeleteItem: () => {},
-    onItemEdited: () => {},
-    onItemCreated: () => {},
+    onDeleteItem: () => { },
+    onItemEdited: () => { },
+    onItemCreated: () => { },
   };
 
   constructor(props) {
@@ -169,7 +170,7 @@ class EditableList extends Component {
     this._setStateAndFocus({ creatingItem: false }, callback);
   };
 
-  _setStateAndFocus = (state, callback = () => {}) => {
+  _setStateAndFocus = (state, callback = () => { }) => {
     this.setState(state, () => {
       this._focusSelf();
       callback();
@@ -277,8 +278,24 @@ class EditableList extends Component {
     if (selectedItem) {
       // Move the selection 1 up or down after deleting
       const newIndex = index === 0 ? index + 1 : index - 1;
-      this.props.onDeleteItem(selectedItem, index);
-      if (this.props.items[newIndex]) {
+      let isDeleted = false;
+      // need display confirm dialog
+      if (this.props.getConfirmMessage) {
+        const chosen = remote.dialog.showMessageBoxSync({
+          type: 'info',
+          message: 'Are you sure?',
+          detail: this.props.getConfirmMessage(selectedItem),
+          buttons: ['Delete', 'Cancel']
+        });
+        if (chosen === 0) {
+          this.props.onDeleteItem(selectedItem, index);
+          isDeleted = true;
+        }
+      } else {
+        this.props.onDeleteItem(selectedItem, index);
+        isDeleted = true;
+      }
+      if (isDeleted && this.props.items[newIndex]) {
         this._selectItem(this.props.items[newIndex], newIndex);
       }
     }
@@ -518,8 +535,8 @@ class EditableList extends Component {
             {items}
           </ScrollRegion>
         ) : (
-          <div>{items}</div>
-        )}
+            <div>{items}</div>
+          )}
         {this._renderButtons()}
       </KeyCommandsRegion>
     );
