@@ -4,25 +4,25 @@ import Attributes from '../attributes';
 export default class Sift extends Model {
   static categories = {
     Travel: 'Travel',
+    Packages: 'Packages',
     Bill: 'Bill & Receipts',
     Entertainment: 'Entertainment',
-    Packages: 'Packages',
   };
   static categoryStringToIntString = category => {
-    if (typeof category !== 'string'){
+    if (typeof category !== 'string') {
       debugger;
-      return '3';
+      return '1';
     }
     if (category.toLocaleLowerCase() === Sift.categories.Travel.toLocaleLowerCase()) {
       return '0';
     }
     if (category.toLocaleLowerCase() === Sift.categories.Bill.toLocaleLowerCase()) {
-      return '1';
-    }
-    if (category.toLocaleLowerCase() === Sift.categories.Entertainment.toLocaleLowerCase()) {
       return '2';
     }
-    return '3';
+    if (category.toLocaleLowerCase() === Sift.categories.Entertainment.toLocaleLowerCase()) {
+      return '3';
+    }
+    return '1';
   };
   static attributes = Object.assign({}, Model.attributes, {
     msgId: Attributes.String({
