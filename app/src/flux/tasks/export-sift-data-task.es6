@@ -16,12 +16,4 @@ export default class ExportSiftDataTask extends SiftTask {
   label() {
     return `Export sift data`;
   }
-
-  onError(err) {
-    // noop
-  }
-
-  onSuccess() {
-    Actions.exportSiftDataSucceeded();
-  }
 }

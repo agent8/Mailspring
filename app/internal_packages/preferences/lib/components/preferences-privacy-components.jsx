@@ -24,11 +24,10 @@ export class Privacy extends React.Component {
       deletingUserData: false,
       optOutModalVisible: false,
       exportDataModalVisible: false,
+      exportingSiftData: false,
     };
     this._mounted = false;
     this._expungeUserDataTimout = null;
-
-    this.listenTo(Actions.exportSiftDataSucceeded, this._exportSiftDataSucceeded);
   }
 
   componentDidMount() {
@@ -42,9 +41,26 @@ export class Privacy extends React.Component {
     }
   }
 
-  _exportSiftDataSucceeded = () => {
-    console.log('^^^^^^^^^^exportSiftDataSucceeded^^^^^^^^^');
-  };
+  renderExportDataButton() {
+    if (this.state.exportingSiftData) {
+      return (
+        <div className="btn-danger privacys-button">
+          {this.renderSpinner()}
+          Export My Data
+        </div>
+      );
+    }
+    return (
+      <div
+        className="btn-danger privacys-button"
+        onClick={() => {
+          this.setState({ exportDataModalVisible: true });
+        }}
+      >
+        Export My Data
+      </div>
+    );
+  }
 
   renderExportData() {
     if (Utils.needGDPR()) {
@@ -55,16 +71,7 @@ export class Privacy extends React.Component {
             Get a zipped archive of all your user and email related information for all your
             connected emails on Edison Mail.
           </div>
-          <Flexbox>
-            <div
-              className="btn-danger privacys-button"
-              onClick={() => {
-                this.setState({ exportDataModalVisible: true });
-              }}
-            >
-              Export My Data
-            </div>
-          </Flexbox>
+          <Flexbox>{this.renderExportDataButton()}</Flexbox>
         </div>
       );
     } else {
@@ -147,7 +154,25 @@ export class Privacy extends React.Component {
 
   _onConfirmExportData = email => {
     this._onCloseExportDataModal();
-    Actions.queueTask(new ExportSiftDataTask({ sendEmail: email }));
+    this.setState({ exportingSiftData: true }, () => {
+      const task = new ExportSiftDataTask({ sendEmail: email });
+      Actions.queueTask(task);
+      TaskQueue.waitForPerformRemote(task)
+        .then(() => {
+          console.log('^^^^^^^^^success^^^^^^^^^^');
+        })
+        .catch(() => {
+          AppEnv.showErrorDialog({
+            title: 'Export data failed.',
+            message: 'Export data from remote server failed, Please try again',
+          });
+        })
+        .finally(() => {
+          if (this._mounted) {
+            this.setState({ exportingSiftData: false });
+          }
+        });
+    });
   };
 
   renderDataShareOption() {
