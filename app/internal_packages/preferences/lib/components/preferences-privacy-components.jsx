@@ -27,6 +27,8 @@ export class Privacy extends React.Component {
     };
     this._mounted = false;
     this._expungeUserDataTimout = null;
+
+    this.listenTo(Actions.exportSiftDataSucceeded, this._exportSiftDataSucceeded);
   }
 
   componentDidMount() {
@@ -39,6 +41,10 @@ export class Privacy extends React.Component {
       clearTimeout(this._expungeUserDataTimout);
     }
   }
+
+  _exportSiftDataSucceeded = () => {
+    console.log('^^^^^^^^^^exportSiftDataSucceeded^^^^^^^^^');
+  };
 
   renderExportData() {
     if (Utils.needGDPR()) {
