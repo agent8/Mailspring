@@ -218,18 +218,9 @@ class TemplateStore extends MailspringStore {
     if (!template) {
       return;
     }
-
-    if (
-      await this._displayDialog(
-        'Delete this template?',
-        'The template and its file will be permanently deleted.',
-        ['Delete', 'Cancel']
-      )
-    ) {
-      fs.unlink(template.path, () => {
-        this._populate();
-      });
-    }
+    fs.unlink(template.path, () => {
+      this._populate();
+    });
   }
 
   _onRenameTemplate(name, newName) {

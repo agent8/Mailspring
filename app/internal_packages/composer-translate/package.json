@@ -18,8 +18,8 @@
     "url": "https://github.com/nylas/nylas-mail"
   },
   "windowTypes": {
-    "default": true,
-    "composer": true,
-    "thread-popout": true
+    "default": false,
+    "composer": false,
+    "thread-popout": false
   }
 }

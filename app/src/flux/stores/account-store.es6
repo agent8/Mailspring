@@ -259,7 +259,6 @@ class AccountStore extends MailspringStore {
    * This will update the account with its updated sync state
    */
   _onUpdateAccount = (id, updated) => {
-    console.log('on update account');
     const idx = this._accounts.findIndex(a => a.id === id);
     let account = this._accounts[idx];
     if (!account) return;
@@ -282,7 +281,19 @@ class AccountStore extends MailspringStore {
   };
   _parseErrorAccount() {
     const erroredAccounts = this._accounts.filter(a => a.hasSyncStateError());
+    const okAccounts = this._accounts.filter(a => !a.hasSyncStateError());
+    if(erroredAccounts.length !== 0 && okAccounts.length !== 0){
+      const okAccountMessages = [];
+      okAccounts.forEach(acct => {
+        if (acct) {
+          okAccountMessages.push({ id: `account-error-${acct.emailAddress}`, accountIds: [acct.id] });
+        }
+      });
+      Actions.removeAppMessages(okAccountMessages);
+    }
     if (erroredAccounts.length === 0) {
+      const message = {id: `account-error`, level: 0};
+      Actions.removeAppMessage(message);
       return;
     } else if (erroredAccounts.length > 1) {
       const message = {
