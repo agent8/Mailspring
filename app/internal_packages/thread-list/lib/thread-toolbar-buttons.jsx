@@ -131,7 +131,7 @@ export function TrashButton(props) {
                 threads: JSON.stringify(props.items),
               },
             });
-          } catch (e) {}
+          } catch (e) { }
         }
       });
     }
@@ -173,7 +173,7 @@ export function TrashButton(props) {
                 messages: JSON.stringify(messages),
               },
             });
-          } catch (e) {}
+          } catch (e) { }
         }
       });
     }
@@ -475,16 +475,16 @@ export function ToggleUnreadButton(props) {
       commands={
         targetUnread
           ? {
-              'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
-            }
+            'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
+          }
           : {
-              'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
-            }
+            'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
+          }
       }
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
         <RetinaImg
-          name={`${fragment === 'unread' ? 'read' : 'unread'}.svg`}
+          name={`${fragment === 'unread' ? 'unread' : 'read'}.svg`}
           style={{ width: 24, height: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
@@ -613,13 +613,13 @@ class HiddenToggleImportantButton extends React.Component {
         commands={
           allImportant
             ? {
-                'core:mark-unimportant': event =>
-                  commandCb(event, this._onShortcutSetImportant, false),
-              }
+              'core:mark-unimportant': event =>
+                commandCb(event, this._onShortcutSetImportant, false),
+            }
             : {
-                'core:mark-important': event =>
-                  commandCb(event, this._onShortcutSetImportant, true),
-              }
+              'core:mark-important': event =>
+                commandCb(event, this._onShortcutSetImportant, true),
+            }
         }
       >
         <span />

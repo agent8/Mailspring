@@ -263,6 +263,8 @@ class UndoSendContent extends BasicContent {
       messageStatus = 'Message sent.';
     } else if (this.state.sendStatus === 'failed') {
       messageStatus = this._generateFailedSendDraftMessage();
+    } else if (!block.due) {
+      messageStatus = 'Prepare to send';
     }
     return (
       <div

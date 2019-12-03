@@ -1,8 +1,7 @@
 /* eslint global-require: 0 */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { shell, ipcRenderer } from 'electron';
-import { EditableList } from 'mailspring-component-kit';
+import { shell, ipcRenderer, remote } from 'electron';
 import { RegExpUtils, KeyManager, Account } from 'mailspring-exports';
 import PreferencesCategory from './preferences-category';
 
@@ -90,7 +89,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => {}) => {
+  _setState = (updates, callback = () => { }) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -156,6 +155,15 @@ class PreferencesAccountDetails extends Component {
 
   _onDeleteAccount = () => {
     const { account, onRemoveAccount, onSelectAccount } = this.props;
+    const chosen = remote.dialog.showMessageBoxSync({
+      type: 'info',
+      message: 'Are you sure?',
+      detail: `Delete this account ${account.emailAddress}`,
+      buttons: ['Delete', 'Cancel']
+    });
+    if (chosen !== 0) {
+      return;
+    }
     const index = this.props.accounts.indexOf(account);
     if (account && typeof onRemoveAccount === 'function') {
       // Move the selection 1 up or down after deleting
