@@ -37,6 +37,27 @@ const threadSelectionScope = (props, selection) => {
   }
   return threads;
 };
+const hiddenButtonSelectionScope = (props, threads) => {
+  let items = threads ? threads : props.items;
+  const sheet = WorkspaceStore.topSheet();
+  const focusedItem = FocusedContentStore.focused('thread');
+  if (sheet && sheet.id === 'Thread') {
+    if (focusedItem) {
+      items = [focusedItem];
+    } else {
+      items = [];
+    }
+  } else {
+    if (!Array.isArray(items) || items.length === 0) {
+      if (focusedItem) {
+        items = [focusedItem];
+      } else {
+        items = [];
+      }
+    }
+  }
+  return items;
+}
 
 const isSameAccount = items => {
   if (!Array.isArray(items)) {
@@ -525,8 +546,8 @@ class HiddenGenericRemoveButton extends React.Component {
 
   _onRemoveFromView = threads => {
     const current = FocusedPerspectiveStore.current();
-    const tasks = current.tasksForRemovingItems(
-      threads ? this.props.items : threads,
+    const items = hiddenButtonSelectionScope(this.props, threads);
+    const tasks = current.tasksForRemovingItems(items,
       'Keyboard Shortcut'
     );
     Actions.queueTasks(tasks);
@@ -564,9 +585,10 @@ class HiddenToggleImportantButton extends React.Component {
     this._onSetImportant(important, threadSelectionScope(this.props, this.props.selection));
   };
   _onSetImportant = (important, threads) => {
+    const items = hiddenButtonSelectionScope(this.props, threads);
     Actions.queueTasks(
       TaskFactory.tasksForThreadsByAccountId(
-        threads ? threads : this.props.items,
+        items,
         (accountThreads, accountId) => {
           return [
             new ChangeLabelsTask({
@@ -611,12 +633,9 @@ class HiddenToggleImportantButton extends React.Component {
       <BindGlobalCommands
         key={allImportant ? 'unimportant' : 'important'}
         commands={
-          allImportant
-            ? {
+            {
               'core:mark-unimportant': event =>
                 commandCb(event, this._onShortcutSetImportant, false),
-            }
-            : {
               'core:mark-important': event =>
                 commandCb(event, this._onShortcutSetImportant, true),
             }
@@ -945,14 +964,17 @@ export const ThreadListToolbarButtons = CreateButtonGroup(
   [
     ArchiveButton,
     MarkAsSpamButton,
-    HiddenGenericRemoveButton,
     TrashButton,
     ToggleStarredButton,
-    HiddenToggleImportantButton,
     ToggleUnreadButton,
     ThreadListMoreButton,
     ToolbarCategoryPicker,
   ],
+  { order: 1 }
+);
+export const HiddenThreadListToolbarButtons = CreateButtonGroup(
+  'HiddenThreadListToolbarButtons',
+  [ HiddenGenericRemoveButton, HiddenToggleImportantButton ],
   { order: 1 }
 );
 
