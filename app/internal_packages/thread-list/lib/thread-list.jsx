@@ -293,7 +293,11 @@ class ThreadList extends React.Component {
 
     props.onSwipeLeft = (callback, step = 0, container) => this._onSwipe(callback, step, item, 'swipeLeft', container);
 
-    props.move_folder_el = <ToolbarCategoryPicker items={[item]} currentPerspective={FocusedPerspectiveStore.current()} />
+    props.move_folder_el = <ToolbarCategoryPicker
+      position="threadList"
+      items={[item]}
+      currentPerspective={FocusedPerspectiveStore.current()}
+    />
     // const disabledPackages = AppEnv.config.get('core.disabledPackages') || [];
     // if (disabledPackages.includes('thread-snooze')) {
     //   return props;

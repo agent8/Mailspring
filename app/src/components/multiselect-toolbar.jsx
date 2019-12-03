@@ -40,12 +40,14 @@ class MultiselectToolbar extends Component {
     refreshOnClick: PropTypes.func,
     selectAllSelectionFilter: PropTypes.func,
     renderCheckMark: PropTypes.bool,
+    renderHiddenToolbar: PropTypes.bool,
   };
   static defaultProps = {
     renderFilterSelection: true,
     renderRefresh: true,
     renderCheckMark: true,
     selectAllSelectionFilter: null,
+    renderHiddenToolbar: false
   };
 
   constructor(props) {
@@ -408,6 +410,20 @@ class MultiselectToolbar extends Component {
       </div>
     );
   }
+  renderHiddenToolbar(){
+    if(!this.props.renderHiddenToolbar){
+      return;
+    }
+    const classes = classnames({
+      'multiselect-toolbar-root': true,
+      'thread-list-toolbar': true,
+    });
+    return <div className={classes} >
+      <div className="inner">
+        {this.props.toolbarElement}
+      </div>
+    </div>;
+  }
 
   render() {
     const { selectionCount } = this.props;
@@ -420,6 +436,7 @@ class MultiselectToolbar extends Component {
         transitionEnterTimeout={200}
       >
         {selectionCount > 0 ? this.renderToolbar() : undefined}
+        {this.renderHiddenToolbar()}
         <InjectedComponentSet
           matching={{ role: 'ThreadListEmptyFolderBar' }}
           className="empty-folder-bar"

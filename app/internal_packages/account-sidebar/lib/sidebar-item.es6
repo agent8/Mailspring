@@ -459,7 +459,7 @@ class SidebarItem {
       throw new Error('parentItem must not be empty');
     }
     const seenItems = {};
-    seenItems[path.toLocaleLowerCase()] = parentItem;
+    seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentItem;
     for (let category of CategoryStore.userCategories(accountId)) {
       // https://regex101.com/r/jK8cC2/1
       var item, parentKey;
@@ -468,8 +468,7 @@ class SidebarItem {
 
       let parent = null;
       const parentComponents = itemKey.split('/');
-      if (
-        parentComponents[0].toLocaleLowerCase() !== path.toLocaleLowerCase() ||
+      if ((parentComponents[0].toLocaleLowerCase() !== CategoryStore.decodePath(path).toLocaleLowerCase()) ||
         parentComponents.length === 1
       ) {
         continue;
@@ -481,7 +480,6 @@ class SidebarItem {
           break;
         }
       }
-
       if (parent) {
         const itemDisplayName = category.displayName.substr(parentKey.length + 1);
         item = SidebarItem.forCategories([category], { name: itemDisplayName });
