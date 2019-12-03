@@ -1490,6 +1490,11 @@ export default class AppEnvConstructor {
     );
   }
 
+  mockAppMessage(data){
+    const { Actions } = require('mailspring-exports');
+    Actions.removeAppMessage(data);
+  }
+
   mockReportError(str = {}, extra = {}, opts = {}) {
     this.reportError(new Error('oeuoeueouoe'), {errorData: {task: {abc: 1, bbc: 2}, abc: 'eeee'}});
   }
