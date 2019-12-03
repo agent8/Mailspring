@@ -190,6 +190,10 @@ export default class PreferencesTemplates extends React.Component {
         <Flexbox>
           <EditableList
             showDelIcon
+            getConfirmMessage={() => ({
+              message: 'Delete this template?',
+              detail: `The template and its file will be permanently deleted.`
+            })}
             className="template-list"
             items={this.state.templates}
             itemContent={template => <div className="title">{template.name}</div>}

@@ -127,7 +127,7 @@ class SiftUnreadQuickAction extends React.Component {
   static propTypes = { message: PropTypes.object };
 
   render() {
-    const imgName = this.props.message.unread ? 'unread.svg' : 'read.svg';
+    const imgName = this.props.message.unread ? 'read.svg' : 'unread.svg';
     const title = this.props.message.unread ? 'Read' : 'Unread';
     return (
       <div
@@ -143,7 +143,7 @@ class SiftUnreadQuickAction extends React.Component {
   }
 
   _onToggleUnread = event => {
-    findThread(this.props.message).then(thread=>{
+    findThread(this.props.message).then(thread => {
       const task = TaskFactory.taskForInvertingUnread({
         threads: [thread],
         source: 'Quick Actions: Sift List',
