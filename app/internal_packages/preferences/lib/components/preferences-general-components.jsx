@@ -11,6 +11,8 @@ import { ListensToFluxStore, Menu, ButtonDropdown } from 'mailspring-component-k
 import ConfigSchemaItem from './config-schema-item';
 import rimraf from 'rimraf';
 import { Actions } from 'mailspring-exports';
+import _ from 'underscore';
+import { ipcRenderer } from 'electron';
 
 export class DefaultMailClientItem extends React.Component {
   constructor() {
@@ -302,6 +304,62 @@ export class LocalData extends React.Component {
   }
 }
 
+export class TaskDelay extends React.Component{
+  static displayName = 'TaskDelay';
+  static propTypes = {
+    config: PropTypes.object.isRequired,
+  };
+  constructor(props) {
+    super(props);
+  }
+  _renderMenuItem = ([value, label]) => {
+    return <span key={value}>{label}</span>;
+  };
+  _onChangeValue = ([value, label]) => {
+    this.props.config.set(this.props.keyPath, value);
+    this.props.config.set('core.mailsync.taskDelay', value);
+    this._dropdownComponent.toggleDropdown();
+    ipcRenderer.send('mailsync-config');
+  };
+  getSelectedMenuItem(items) {
+    const selected = this.props.config.get(this.props.keyPath);
+    for (const item of items) {
+      const [value, label] = item;
+      if (value === selected) {
+        return this._renderMenuItem(item);
+      }
+    }
+    return null;
+  }
+  render() {
+    let note = this.props.configSchema.note ? (
+      <div className="platform-note">{this.props.configSchema.note}</div>
+    ) : null;
+    const items = _.zip(this.props.configSchema.enum, this.props.configSchema.enumLabels);
+    const menu = (
+      <Menu
+        items={items}
+        itemKey={item => item}
+        itemContent={this._renderMenuItem}
+        onSelect={this._onChangeValue}
+      />
+    );
+    return (
+      <div className="item">
+        <label htmlFor={this.props.keyPath}>{this.props.label}:</label>
+        <ButtonDropdown
+          ref={cm => {
+            this._dropdownComponent = cm;
+          }}
+          primaryItem={this.getSelectedMenuItem(items)}
+          menu={menu}
+        />
+        {note}
+      </div>
+    );
+  }
+}
+
 export class SupportId extends React.Component {
   static displayName = 'SupportId';
   static propTypes = {
@@ -347,7 +405,7 @@ export class SupportId extends React.Component {
         >
           ID Copied
         </div>
-        <div className="btn-primary support-id" onClick={this._onCopySupportId}>
+        <div title="Click to Copy" className="btn-primary support-id" onClick={this._onCopySupportId}>
           {this.props.config.core.support.id}
         </div>
       </div>
