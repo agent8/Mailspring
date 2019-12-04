@@ -94,13 +94,13 @@ class SendActionButton extends React.Component {
       return;
     }
 
-    // comment out invite flow
-    // const inviteKey = 'invite.count';
-    // const shareCounts = AppEnv.config.get(inviteKey) || 0;
-    // if (shareCounts < 5 && this.props.draft) {
-    //   const { to, cc } = this.props.draft;
-    //   AppEnv.config.set(inviteKey, shareCounts + to.length + cc.length);
-    // }
+    // beta invite flow
+    const inviteKey = 'invite.count';
+    const shareCounts = AppEnv.config.get(inviteKey) || 0;
+    if (shareCounts < 5 && this.props.draft) {
+      const { to, cc } = this.props.draft;
+      AppEnv.config.set(inviteKey, shareCounts + to.length + cc.length);
+    }
     this._onSendWithAction(this.props.sendActions[0], disableDraftCheck);
   };
   _timoutButton = () => {
