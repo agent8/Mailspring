@@ -116,28 +116,31 @@ const WhatIsInYourData = () => {
   );
 };
 
-const WhereDoWeSendIt = ({ sendEmailAddress, onSelectSendEmail }) => {
+const WhereDoWeSendIt = ({ sendEmail, onSelectSendEmail }) => {
   let _dropdownComponent;
   const accountList = AccountStore.accounts();
-  const items = accountList.map(account => [account.emailAddress, account.emailAddress]);
+  const items = accountList.map(account => [account.id, account.emailAddress]);
 
-  function renderMenuItem([value]) {
-    return <span key={value}>{value}</span>;
+  function renderMenuItem([accountId, email]) {
+    return <span key={accountId}>{email}</span>;
   }
 
   function getSelectedMenuItem(items) {
     for (const item of items) {
-      const [value] = item;
-      if (value === sendEmailAddress) {
+      const [accountId] = item;
+      if (accountId === sendEmail.accountId) {
         return renderMenuItem(item);
       }
     }
-    return renderMenuItem(['Select an email']);
+    return renderMenuItem(['', 'Select an email']);
   }
 
-  function onSelectEmail([value, label]) {
+  function onSelectEmail([accountId, email]) {
     if (onSelectSendEmail && typeof onSelectSendEmail === 'function') {
-      onSelectSendEmail(value);
+      onSelectSendEmail({
+        accountId: accountId,
+        email: email,
+      });
     }
     if (_dropdownComponent && typeof _dropdownComponent.toggleDropdown === 'function') {
       _dropdownComponent.toggleDropdown();
@@ -177,7 +180,7 @@ const WhereDoWeSendIt = ({ sendEmailAddress, onSelectSendEmail }) => {
   );
 };
 
-const YourDataArchive = ({ sendEmailAddress, checkedNotice, onToggleCheckedNotice }) => {
+const YourDataArchive = ({ sendEmail, checkedNotice, onToggleCheckedNotice }) => {
   const accountList = AccountStore.accounts();
 
   return (
@@ -185,7 +188,7 @@ const YourDataArchive = ({ sendEmailAddress, checkedNotice, onToggleCheckedNotic
       <h2>Your Data Archive</h2>
       <p>
         Email data associated with your connected accounts will be zipped and sent to:&nbsp;
-        <b>{sendEmailAddress}</b>
+        <b>{sendEmail.email}</b>
       </p>
       <ul>
         <div className="title">Connected accounts</div>
@@ -223,7 +226,10 @@ export default class ExportDataModal extends React.Component {
     this.state = {
       step: 0,
       listStep: 0,
-      sendEmailAddress: '',
+      sendEmail: {
+        accountId: '',
+        email: '',
+      },
       checkedNotice: false,
     };
     this._stepList = [
@@ -239,15 +245,21 @@ export default class ExportDataModal extends React.Component {
         title: `Where do we send it?`,
         component: () => (
           <WhereDoWeSendIt
-            sendEmailAddress={this.state.sendEmailAddress}
-            onSelectSendEmail={value => {
-              this.setState({ sendEmailAddress: value });
+            sendEmail={this.state.sendEmail}
+            onSelectSendEmail={({ accountId, email }) => {
+              this.setState({
+                sendEmail: {
+                  accountId,
+                  email,
+                },
+                checkedNotice: false,
+              });
             }}
           />
         ),
         cancelText: 'Back',
         confirmText: 'Next',
-        confirmDisable: () => !this.state.sendEmailAddress,
+        confirmDisable: () => !this.state.sendEmail.accountId,
         onCancelCB: this._onBack,
         onConfirmCB: this._onNext,
       },
@@ -255,7 +267,7 @@ export default class ExportDataModal extends React.Component {
         title: `Your Data Archive`,
         component: () => (
           <YourDataArchive
-            sendEmailAddress={this.state.sendEmailAddress}
+            sendEmail={this.state.sendEmail}
             checkedNotice={this.state.checkedNotice}
             onToggleCheckedNotice={() => {
               this.setState({ checkedNotice: !this.state.checkedNotice });
@@ -292,7 +304,7 @@ export default class ExportDataModal extends React.Component {
   _onCompleteStep = () => {
     const { onConfirmCB } = this.props;
     if (onConfirmCB && typeof onConfirmCB === 'function') {
-      onConfirmCB(this.state.sendEmailAddress);
+      onConfirmCB(this.state.sendEmail);
     }
   };
 

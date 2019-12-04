@@ -6,7 +6,7 @@ import {
   Utils,
   TaskQueue,
   SiftExpungeUserDataTask,
-  ExportSiftDataTask,
+  SiftExportUserDataTask,
 } from 'mailspring-exports';
 import rimraf from 'rimraf';
 import ExportDataModal from './export-data-modal';
@@ -152,15 +152,16 @@ export class Privacy extends React.Component {
     this.setState({ exportDataModalVisible: false });
   };
 
-  _onConfirmExportData = email => {
+  _onConfirmExportData = sendEmail => {
     this._onCloseExportDataModal();
     this.setState({ exportingSiftData: true }, () => {
-      const task = new ExportSiftDataTask({ sendEmail: email });
+      const task = new SiftExportUserDataTask({
+        sendEmail: sendEmail.email,
+        accountId: sendEmail.accountId,
+      });
       Actions.queueTask(task);
       TaskQueue.waitForPerformRemote(task)
-        .then(() => {
-          console.log('^^^^^^^^^success^^^^^^^^^^');
-        })
+        .then(() => {})
         .catch(() => {
           AppEnv.showErrorDialog({
             title: 'Export data failed.',
