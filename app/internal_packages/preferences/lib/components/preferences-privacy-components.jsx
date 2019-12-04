@@ -44,7 +44,7 @@ export class Privacy extends React.Component {
   renderExportDataButton() {
     if (this.state.exportingSiftData) {
       return (
-        <div className="btn-danger privacys-button">
+        <div className="btn-primary privacys-button">
           {this.renderSpinner()}
           Export My Data
         </div>
@@ -52,7 +52,7 @@ export class Privacy extends React.Component {
     }
     return (
       <div
-        className="btn-danger privacys-button"
+        className="btn-primary privacys-button"
         onClick={() => {
           this.setState({ exportDataModalVisible: true });
         }}
