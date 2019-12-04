@@ -5,6 +5,7 @@ import {
   DownloadSelection,
   LocalData,
   SupportId,
+  TaskDelay,
 } from './components/preferences-general-components';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
@@ -101,6 +102,7 @@ const preferencesTemplateFill = {
             {
               label: 'Undo time window',
               configSchema: configSchema => configSchema.properties.task.properties.delayInMs,
+              component: TaskDelay,
               keyPath: 'core.task.delayInMs',
               keywords: [],
             },
