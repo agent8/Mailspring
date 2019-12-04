@@ -960,9 +960,11 @@ export default class MailsyncBridge {
       if (!Array.isArray(accounts) || accounts.length === 0) {
         return;
       }
+      delete defaultSettings.accounts;
       mailsyncConfig = {};
       for (let account of accounts) {
         if (account.mailsync) {
+          delete account.mailsync.taskDelay;
           mailsyncConfig[account.id] = Object.assign({}, defaultSettings, account.mailsync);
         } else {
           mailsyncConfig[account.id] = Object.assign({}, defaultSettings);
