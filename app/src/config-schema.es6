@@ -77,6 +77,13 @@ export default {
             enumLabels: ['every minute', 'every 3 minutes', 'every 5 minutes'],
             title: 'How far back would you like to sync your old mail',
           },
+          taskDelay: {
+            type: 'integer',
+            default: 5000,
+            enum: [5000, 15000, 30000, 60000, 0],
+            enumLabels: ['5 seconds', '15 seconds', '30 seconds', '60 seconds', 'Disable'],
+            title: 'Undo time window',
+          },
         },
       },
       workspace: {
