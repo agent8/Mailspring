@@ -133,9 +133,9 @@ export default class AutoUpdateManager extends EventEmitter {
   }
 
   emitUpdateAvailableEvent() {
-    if (!this.releaseVersion) {
-      return;
-    }
+    // if (!this.releaseVersion) {
+    //   return;
+    // }
     global.application.windowManager.sendToAllWindows(
       'update-available',
       {},
