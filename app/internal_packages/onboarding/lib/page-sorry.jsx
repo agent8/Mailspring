@@ -56,7 +56,7 @@ export default class SorryPage extends React.Component {
         AppEnv.config.set(CONFIG_KEY, 5);
         return;
       } else {
-        const count = 5 - checkUnlock.count;
+        const count = 5 - (checkUnlock.count || 0);
         AppEnv.config.set(CONFIG_KEY, count);
         newState.shareCounts = count;
       }
@@ -77,7 +77,7 @@ export default class SorryPage extends React.Component {
     const { body } = this.state;
     if (body && !body.error) {
       AppEnv.getCurrentWindow().setAlwaysOnTop(false);
-      ipcRenderer.send('command', 'application:send-share', `<br/><p>${body.text}</p><a href='${body.link}'>${body.link}</a>`);
+      ipcRenderer.send('command', 'application:send-share', `<br/><p>${body.text}</p><a href='${body.link + "&from=MacApp"}'>${body.link + "&from=MacApp"}</a>`);
     }
   };
 
@@ -105,7 +105,7 @@ export default class SorryPage extends React.Component {
                   Refer {5 - shareCounts} {5 - shareCounts > 1 ? 'friends' : 'friend'} to get access now.<br /><br />
                   {
                     body && !body.error ? (
-                      <a href={body.link}>{body.link}</a>
+                      <a href={body.link + "&from=MacApp"}>{body.link + "&from=MacApp"}</a>
                     ) : null
                   }
                 </p>
