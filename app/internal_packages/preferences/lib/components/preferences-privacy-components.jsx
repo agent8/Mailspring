@@ -1,9 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Flexbox, RetinaImg, LottieImg, FullScreenModal } from 'mailspring-component-kit';
-import { Actions, Utils, TaskQueue, SiftExpungeUserDataTask } from 'mailspring-exports';
+import {
+  Actions,
+  Utils,
+  TaskQueue,
+  SiftExpungeUserDataTask,
+  SiftExportUserDataTask,
+} from 'mailspring-exports';
 import rimraf from 'rimraf';
-
+import ExportDataModal from './export-data-modal';
 export class Privacy extends React.Component {
   static displayName = 'PreferencesPrivacy';
 
@@ -17,6 +23,8 @@ export class Privacy extends React.Component {
       deleteUserDataPopupOpen: false,
       deletingUserData: false,
       optOutModalVisible: false,
+      exportDataModalVisible: false,
+      exportingSiftData: false,
     };
     this._mounted = false;
     this._expungeUserDataTimout = null;
@@ -33,14 +41,42 @@ export class Privacy extends React.Component {
     }
   }
 
+  renderExportDataButton() {
+    if (this.state.exportingSiftData) {
+      return (
+        <div className="btn-primary privacys-button">
+          {this.renderSpinner()}
+          Export My Data
+        </div>
+      );
+    }
+    return (
+      <div
+        className="btn-primary privacys-button"
+        onClick={() => {
+          this.setState({ exportDataModalVisible: true });
+        }}
+      >
+        Export My Data
+      </div>
+    );
+  }
+
   renderExportData() {
-    // if (Utils.needGDPR()) {
-    //   return <Flexbox>
-    //     <div className="btn-danger privacys-button">Export My Data</div>
-    //   </Flexbox>;
-    // } else {
-    return null;
-    // }
+    if (Utils.needGDPR()) {
+      return (
+        <div className="config-group">
+          <h6>EXPORT YOUR DATA</h6>
+          <div className="privacys-note">
+            Get a zipped archive of all your user and email related information for all your
+            connected emails on Edison Mail.
+          </div>
+          <Flexbox>{this.renderExportDataButton()}</Flexbox>
+        </div>
+      );
+    } else {
+      return null;
+    }
   }
 
   expungeLocalAndReboot() {
@@ -112,6 +148,34 @@ export class Privacy extends React.Component {
     this.setState({ optOutModalVisible: false });
   };
 
+  _onCloseExportDataModal = () => {
+    this.setState({ exportDataModalVisible: false });
+  };
+
+  _onConfirmExportData = sendEmail => {
+    this._onCloseExportDataModal();
+    this.setState({ exportingSiftData: true }, () => {
+      const task = new SiftExportUserDataTask({
+        sendEmail: sendEmail.email,
+        accountId: sendEmail.accountId,
+      });
+      Actions.queueTask(task);
+      TaskQueue.waitForPerformRemote(task)
+        .then(() => {})
+        .catch(() => {
+          AppEnv.showErrorDialog({
+            title: 'Export data failed.',
+            message: 'Export data from remote server failed, Please try again',
+          });
+        })
+        .finally(() => {
+          if (this._mounted) {
+            this.setState({ exportingSiftData: false });
+          }
+        });
+    });
+  };
+
   renderDataShareOption() {
     if (this.state.deleteUserDataPopupOpen || this.state.deletingUserData) {
       return (
@@ -179,47 +243,57 @@ export class Privacy extends React.Component {
             We respect and acknowledge your right to privacy. At any time, you can discontinue use
             of this app and delete the information that is in the app and on our servers.
           </div>
-          {this.renderExportData()}
           <Flexbox>
             {this.renderDeleteUserData()}
             {this.renderDataShareOption()}
           </Flexbox>
         </div>
+        {this.renderExportData()}
         <FullScreenModal
           visible={this.state.optOutModalVisible}
           closable
           mask
           maskClosable
-          className="privacys-opt-out-modal"
           onCancel={this._onCloseOptOutModal}
         >
-          <RetinaImg
-            name={`inbox-nomail-3.png`}
-            mode={RetinaImg.Mode.ContentPreserve}
-            style={{ width: 150, height: 150 }}
-          />
-          <h2>Data makes our technology work better for you.</h2>
-          <p>
-            We use data shared with us (that does not identify you) to invent new app features, and
-            create research about national purchase trends. We never share your emails, or any data
-            that can be used to track you personally for advertising.
-            <br />
-            <br />
-            You can opt-out of data sharing at any time. Keep in mind, our data practices allow us
-            to offer you this amazing Email app for free.
-          </p>
-          <div
-            className="modal-btn-confirm"
-            onClick={() => {
-              this.toggleDataShare(true);
-              this._onCloseOptOutModal();
-            }}
-          >
-            No thanks, I want to opt out.
+          <div className="privacys-opt-out-modal preferences-modal">
+            <RetinaImg
+              name={`inbox-nomail-3.png`}
+              mode={RetinaImg.Mode.ContentPreserve}
+              style={{ width: 150, height: 150 }}
+            />
+            <h2>Data makes our technology work better for you.</h2>
+            <p>
+              We use data shared with us (that does not identify you) to invent new app features,
+              and create research about national purchase trends. We never share your emails, or any
+              data that can be used to track you personally for advertising.
+              <br />
+              <br />
+              You can opt-out of data sharing at any time. Keep in mind, our data practices allow us
+              to offer you this amazing Email app for free.
+            </p>
+            <div
+              className="modal-btn-confirm"
+              onClick={() => {
+                this.toggleDataShare(true);
+                this._onCloseOptOutModal();
+              }}
+            >
+              No thanks, I want to opt out.
+            </div>
+            <div className="modal-btn-cancel" onClick={this._onCloseOptOutModal}>
+              Cancel
+            </div>
           </div>
-          <div className="modal-btn-cancel" onClick={this._onCloseOptOutModal}>
-            Cancel
-          </div>
+        </FullScreenModal>
+        <FullScreenModal
+          visible={this.state.exportDataModalVisible}
+          closable
+          mask
+          maskClosable
+          onCancel={this._onCloseExportDataModal}
+        >
+          <ExportDataModal onConfirmCB={this._onConfirmExportData} />
         </FullScreenModal>
       </div>
     );
