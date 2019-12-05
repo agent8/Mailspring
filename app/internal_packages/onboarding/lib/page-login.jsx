@@ -7,7 +7,7 @@ export default class LoginPage extends React.Component {
 
   componentDidMount() {
     // facebook tracking: invite enter page
-    AppEnv.trackingEvent('Invite-EnterPage');
+    AppEnv.trackingEvent('Invite-InitApp');
   }
 
   _onContinue = () => {
