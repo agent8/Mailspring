@@ -90,6 +90,18 @@ const file_mappings = [
     'veyron-design/images/desktop/emailtracking-popup-image.png',
     './app/static/images/tracking/emailtracking-popup-image.png',
   ],
+  [
+    'veyron-design/images/desktop/export-data.png',
+    './app/static/images/preferences/privacy/export-data.png',
+  ],
+  [
+    'veyron-design/images/desktop/nomail-search-email.png',
+    './app/static/images/preferences/privacy/nomail-search-email.png',
+  ],
+  [
+    'veyron-design/images/desktop/send-data.png',
+    './app/static/images/preferences/privacy/send-data.png',
+  ],
 ];
 
 let errorCommands = [];
