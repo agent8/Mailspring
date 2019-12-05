@@ -18,13 +18,9 @@ export default class LoginPage extends React.Component {
             url="edisonmail://onboarding/assets/logo-light.png"
             mode={RetinaImg.Mode.ContentPreserve}
           />
-          <h1 className="hero-text">
-            Welcome to the Mac Closed Beta
-          </h1>
-          <p>
-            Connect your account to continue using the app
-          </p>
-          <button className="btn login-button" onClick={this._onContinue}>Login</button>
+          <h1 className="hero-text">Start Using Edison Mail for Mac</h1>
+          <p>Connect your account to continue using the app</p>
+          <button className="btn login-button" onClick={this._onContinue}>Connect your account to unlock</button>
         </div>
       </div>
     );
