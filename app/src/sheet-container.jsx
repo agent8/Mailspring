@@ -218,9 +218,9 @@ export default class SheetContainer extends React.Component {
                 url="edisonmail://onboarding/assets/logo-light.png"
                 mode={RetinaImg.Mode.ContentPreserve}
               />
-              <h1>Welcome to the Mac Closed Beta</h1>
+              <h1>Start Using Edison Mail for Mac</h1>
               <p>Connect your account to continue using the app</p>
-              <button onClick={this.openOnboarding}>Login</button>
+              <button onClick={this.openOnboarding}>Connect your account to unlock</button>
             </div>
           )
         }
