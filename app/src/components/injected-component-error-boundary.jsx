@@ -16,7 +16,7 @@ export default class InjectedComponentErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     this.setState({ error: error.stack });
-    AppEnv.reportError(error);
+    AppEnv.reportError(error, { errorData: info }, { grabLogs: true });
   }
 
   render() {

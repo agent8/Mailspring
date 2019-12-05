@@ -839,8 +839,10 @@ class DraftStore extends MailspringStore {
     if (!draft) {
       AppEnv.reportError(
         new Error(
-          `DraftStore::onPopoutDraft - session.draft() is false, draft not ready. headerMessageId: ${headerMessageId}`,
+          `DraftStore::onPopoutDraft - session.draft() is false, draft not ready. headerMessageId: ${headerMessageId} because ${options.source}`,
         ),
+        { errorData: { options } },
+        { grabLogs: true }
       );
       return;
     }
@@ -881,7 +883,7 @@ class DraftStore extends MailspringStore {
       // Since we pass a windowKey, if the popout composer draft already
       // exists we'll simply show that one instead of spawning a whole new
       // window.
-      // console.log(`popout draft ${headerMessageId}`);
+      AppEnv.debugLog(`Draft popout, draft was not savedOnRemote ${headerMessageId}`);
       AppEnv.newWindow({
         hidden: true, // We manually show in ComposerWithWindowProps::onDraftReady
         headerMessageId: headerMessageId,

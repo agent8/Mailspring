@@ -8,6 +8,7 @@ export default class UpdateNotification extends React.Component {
   constructor() {
     super();
     this.state = this.getStateFromStores();
+    this.state.ignoreUntilReboot = false;
   }
 
   componentDidMount() {
@@ -35,6 +36,10 @@ export default class UpdateNotification extends React.Component {
     ipcRenderer.send('command', 'application:install-update');
   };
 
+  _ignoreUpdate = () => {
+    this.setState({ ignoreUntilReboot: true});
+  };
+
   _onViewChangelog = () => {
     // zhansheng: TODO need replace our changelog link
     // remote.shell.openExternal('https://github.com/agent8/Mailspring/releases/latest');
@@ -43,7 +48,7 @@ export default class UpdateNotification extends React.Component {
   render() {
     const { updateAvailable, version, updateIsManual } = this.state;
 
-    if (!updateAvailable) {
+    if (!updateAvailable || this.state.ignoreUntilReboot) {
       return <span />;
     }
     return (
@@ -52,10 +57,13 @@ export default class UpdateNotification extends React.Component {
         title={`An update to EdisonMail is available ${
           version ? `(${version.replace('EdisonMail', '').trim()})` : ''
           }`}
-        subtitle="View changelog"
-        subtitleAction={this._onViewChangelog}
+        subtitle={updateIsManual ? 'Click to Download' : 'Restart to Install'}
         icon="volstead-upgrade.png"
         actions={[
+          {
+            label: 'Later',
+            fn: this._ignoreUpdate
+          },
           {
             label: updateIsManual ? 'Download Now' : 'Install Update',
             fn: this._onUpdate,

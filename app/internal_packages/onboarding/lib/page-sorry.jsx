@@ -63,7 +63,7 @@ export default class SorryPage extends React.Component {
         // facebook tracking: need invite
         AppEnv.trackingEvent('Invite-NeedInvite');
 
-        const count = 5 - checkUnlock.count;
+        const count = 5 - (checkUnlock.count || 0);
         AppEnv.config.set(CONFIG_KEY, count);
         newState.shareCounts = count;
       }
@@ -87,7 +87,8 @@ export default class SorryPage extends React.Component {
       ipcRenderer.send(
         'command',
         'application:send-share',
-        `<br/><p>${body.text}</p><a href='${body.link}'>${body.link}</a>`
+        `<br/><p>${body.text}</p><a href='${body.link + '&from=MacApp'}'>${body.link +
+          '&from=MacApp'}</a>`
       );
     }
   };
@@ -120,7 +121,9 @@ export default class SorryPage extends React.Component {
               now.
               <br />
               <br />
-              {body && !body.error ? <a href={body.link}>{body.link}</a> : null}
+              {body && !body.error ? (
+                <a href={body.link + '&from=MacApp'}>{body.link + '&from=MacApp'}</a>
+              ) : null}
             </p>
             <button key="next" className="btn btn-large btn-invite" onClick={this._onContinue}>
               Invite Friends
