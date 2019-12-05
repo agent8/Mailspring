@@ -5,7 +5,15 @@ import OnboardingActions from './onboarding-actions';
 export default class LoginPage extends React.Component {
   static displayName = 'LoginPage';
 
+  componentDidMount() {
+    // facebook tracking: invite enter page
+    AppEnv.trackingEvent('Invite-EnterPage');
+  }
+
   _onContinue = () => {
+    // facebook tracking: invite login
+    AppEnv.trackingEvent('Invite-Login');
+
     OnboardingActions.moveToPage('account-choose');
   };
 
@@ -20,7 +28,9 @@ export default class LoginPage extends React.Component {
           />
           <h1 className="hero-text">Start Using Edison Mail for Mac</h1>
           <p>Connect your account to continue using the app</p>
-          <button className="btn login-button" onClick={this._onContinue}>Connect your account to unlock</button>
+          <button className="btn login-button" onClick={this._onContinue}>
+            Connect your account to unlock
+          </button>
         </div>
       </div>
     );
