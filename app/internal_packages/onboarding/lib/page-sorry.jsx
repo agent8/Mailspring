@@ -30,9 +30,6 @@ export default class SorryPage extends React.Component {
   };
 
   componentDidMount = async () => {
-    // facebook tracking: need invite
-    AppEnv.trackingEvent('Invite-NeedInvite');
-
     require('electron').ipcRenderer.send('open-main-window-make-onboarding-on-top');
     this.disposable = AppEnv.config.onDidChange(CONFIG_KEY, async () => {
       const shareCounts = AppEnv.config.get(CONFIG_KEY) || 0;
@@ -63,6 +60,9 @@ export default class SorryPage extends React.Component {
         AppEnv.config.set(CONFIG_KEY, 5);
         return;
       } else {
+        // facebook tracking: need invite
+        AppEnv.trackingEvent('Invite-NeedInvite');
+
         const count = 5 - checkUnlock.count;
         AppEnv.config.set(CONFIG_KEY, count);
         newState.shareCounts = count;
