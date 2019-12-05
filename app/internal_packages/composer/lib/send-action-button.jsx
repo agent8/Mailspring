@@ -65,7 +65,7 @@ class SendActionButton extends React.Component {
   shouldComponentUpdate(nextProps, nextState) {
     return (
       nextProps.sendActions.map(a => a.configKey).join(',') !==
-      this.props.sendActions.map(a => a.configKey).join(',') ||
+        this.props.sendActions.map(a => a.configKey).join(',') ||
       this.props.disabled !== nextProps.disabled ||
       this.state.isSending !== nextState.isSending
     );
@@ -100,6 +100,9 @@ class SendActionButton extends React.Component {
     if (shareCounts < 5 && this.props.draft) {
       const { to, cc } = this.props.draft;
       AppEnv.config.set(inviteKey, shareCounts + to.length + cc.length);
+
+      // facebook tracking: invite send email
+      AppEnv.trackingEvent('Invite-SendEmail');
     }
     this._onSendWithAction(this.props.sendActions[0], disableDraftCheck);
   };
@@ -171,13 +174,13 @@ class SendActionButton extends React.Component {
             style={{ margin: '0', display: 'inline-block', float: 'left' }}
           />
         ) : (
-            <RetinaImg
-              name={'sent.svg'}
-              style={{ width: 27, height: 27 }}
-              isIcon={true}
-              mode={RetinaImg.Mode.ContentIsMask}
-            />
-          )}
+          <RetinaImg
+            name={'sent.svg'}
+            style={{ width: 27, height: 27 }}
+            isIcon={true}
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        )}
         <span className="text">Send{plusHTML}</span>
         {additionalImg}
       </span>
