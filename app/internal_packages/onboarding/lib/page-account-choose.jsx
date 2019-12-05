@@ -11,6 +11,11 @@ export default class AccountChoosePage extends React.Component {
     account: PropTypes.object,
   };
 
+  componentDidMount() {
+    // facebook tracking: add account
+    AppEnv.trackingEvent('AddAccount');
+  }
+
   _renderProviders() {
     return AccountProviders.map(({ icon, displayName, provider }) => (
       <div
