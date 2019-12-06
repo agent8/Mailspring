@@ -1573,4 +1573,9 @@ export default class AppEnvConstructor {
     }
     return response;
   }
+
+  mockUpdateAvailable(){
+    const app = remote.getGlobal('application');
+    app.autoUpdateManager.setState('update-available');
+  }
 }
