@@ -260,7 +260,16 @@ class QuotedHTMLTransformer {
   }
 
   _findBlockquoteQuotes(doc) {
-    return Array.from(doc.querySelectorAll('blockquote'));
+    const nodes = Array.from(doc.querySelectorAll('blockquote'));
+    const blocks = [];
+    for (const node of nodes) {
+      // if it is a indent, skip this block
+      if (node.style.margin === "0px 0px 0px 40px" && node.style.border === "none" && !node.className) {
+        continue;
+      }
+      blocks.push(node);
+    }
+    return blocks;
   }
 
   _findConfidentialityNotice(doc) {
