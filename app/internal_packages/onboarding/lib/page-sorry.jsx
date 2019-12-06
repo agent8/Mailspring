@@ -63,7 +63,7 @@ export default class SorryPage extends React.Component {
         // facebook tracking: need invite
         AppEnv.trackingEvent('Invite-NeedInvite');
 
-        const count = 5 - (checkUnlock.count || 0);
+        const count = 5 - (checkUnlock.count || 5);
         AppEnv.config.set(CONFIG_KEY, count);
         newState.shareCounts = count;
       }
