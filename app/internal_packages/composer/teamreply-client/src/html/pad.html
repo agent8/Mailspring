@@ -517,36 +517,10 @@
           <h2 data-l10n-id="pad.share.emebdcode" aria-label="Embed URL">Embed URL</h2>
           <input id="embedinput" type="text" value="" onclick="this.select()">
       </div>
-      
-  </div>
-
-  <div id="chaticon" onclick="chat.show();return false;" title="Chat (Alt C)" style="display: block;">
-      <span id="chatlabel" data-l10n-id="pad.chat" aria-label="Chat">Chat</span>
-      <span class="buttonicon buttonicon-chat"></span>
-      <span id="chatcounter">0</span>
-  </div>
-
-  <div id="chatbox">
-      <div id="titlebar"><span id="titlelabel" data-l10n-id="pad.chat" aria-label="Chat">Chat</span>
-        <a id="titlecross" onclick="chat.hide();return false;">-&nbsp;</a>
-        <a id="titlesticky" onclick="chat.stickToScreen(true);$('#options-stickychat').prop('checked', true);return false;" data-l10n-id="pad.chat.stick.title" title="Stick chat to screen" aria-label="Stick chat to screen">█&nbsp;&nbsp;</a>
-      </div>
-      <div id="chattext" class="authorColors" aria-live="polite" aria-relevant="additions removals text" role="log" aria-atomic="false">
-          <div alt="loading.." id="chatloadmessagesball" class="chatloadmessages loadingAnimation" align="top"></div>
-          <button id="chatloadmessagesbutton" class="chatloadmessages" data-l10n-id="pad.chat.loadmessages" aria-label="Load more messages" style="display: none;">Load more messages</button>
-      </div>
-      <div id="chatinputbox">
-          <form>
-              <input id="chatinput" type="text" maxlength="999" data-l10n-id="pad.chat.writeMessage.placeholder" placeholder="Write your message here" aria-label="Write your message here">
-          </form>
-      </div>
   </div>
 
   <div id="focusprotector">&nbsp;</div>
 
-  
-
-  
   <script type="text/javascript">
       // @license magnet:?xt=urn:btih:8e4f440f4c65981c5bf93c76d35135ba5064d8b7&dn=apache-2.0.txt
       (function() {
