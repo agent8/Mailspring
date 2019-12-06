@@ -88,7 +88,7 @@ export default class SorryPage extends React.Component {
         'command',
         'application:send-share',
         `<br/><p>${body.text}</p><a href='${body.link + '&from=MacApp'}'>${body.link +
-          '&from=MacApp'}</a>`
+        '&from=MacApp'}</a>`
       );
     }
   };
@@ -105,31 +105,31 @@ export default class SorryPage extends React.Component {
             style={{ width: 24, height: 24, marginTop: 240 }}
           />
         ) : (
-          <div className="steps-container">
-            <h1 className="hero-text">Sorry</h1>
-            <p>
-              <span className="email">{this.email}</span>address has not yet been accepted
+            <div className="steps-container">
+              <h1 className="hero-text">Sorry</h1>
+              <p>
+                <span className="email">{this.email}</span>address has not yet been accepted
               <br />
-              into the private beta. We are trying our best to
+                into the private beta. We are trying our best to
               <br />
-              accept new users as fast as possible.
+                accept new users as fast as possible.
             </p>
-            <br />
-            <br />
-            <p>
-              Refer {5 - shareCounts} {5 - shareCounts > 1 ? 'friends' : 'friend'} to get access
-              now.
               <br />
               <br />
-              {body && !body.error ? (
-                <a href={body.link + '&from=MacApp'}>{body.link + '&from=MacApp'}</a>
-              ) : null}
-            </p>
-            <button key="next" className="btn btn-large btn-invite" onClick={this._onContinue}>
-              Invite Friends
+              <p>
+                Refer {5 - shareCounts} {5 - shareCounts > 1 ? 'friends' : 'friend'} to get access
+                now.
+              <br />
+                <br />
+                {body && !body.error ? (
+                  <a href={body.link + '&from=MacApp'}>{body.link + '&from=MacApp'}</a>
+                ) : null}
+              </p>
+              <button key="next" className="btn btn-large btn-invite" onClick={this._onContinue}>
+                Invite Friends
             </button>
-          </div>
-        )}
+            </div>
+          )}
       </div>
     );
   }
