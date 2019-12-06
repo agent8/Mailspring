@@ -492,7 +492,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
   }
 
   // extracting access and refresh tokens
-  const { access_token, refresh_token } = json;
+  const { access_token, refresh_token, xoauth_yahoo_guid } = json;
 
   // get the user's email address
   const meResp = await fetch('https://social.yahooapis.com/v1/user/me/profile?format=json', {
