@@ -419,7 +419,7 @@ export default class ComposerView extends React.Component {
     const name = chatAccount.name
     const userName = name
     let padId = chatAccount.padId
-    const ctreatePadOtions = {
+    const ctreatePadOptions = {
       userId,
       email,
       name,
@@ -429,9 +429,9 @@ export default class ComposerView extends React.Component {
       emailExtr: { to: ['11', '2'] },
       coWorkers: []
     }
-    console.log(' ctreatePadOtions: ', ctreatePadOtions)
+    console.log(' ctreatePadOptions: ', ctreatePadOptions)
     if (!padId) {
-      let res = await postAsync('https://cs.stag.easilydo.cc/tr/api/1.2.12/createPad', ctreatePadOtions, {
+      let res = await postAsync('https://cs.stag.easilydo.cc/tr/api/1.2.12/createPad', ctreatePadOptions, {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',

@@ -111,7 +111,7 @@ export default class InvitePadMember extends Component {
       return
     }
     const from = padInfo.email
-    const token = await keyMannager.getAccessTokenByEmail(from)
+    let token = await keyMannager.getAccessTokenByEmail(from)
     const permission = 'edit'
     const coworkers = members.map(member => {
       const jid = member.jid

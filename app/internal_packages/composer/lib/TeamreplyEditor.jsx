@@ -9,6 +9,12 @@ export default class TeamreplyEditor extends Component {
   constructor (props) {
     super(props)
   }
+  componentWillMount = async () => {
+    const { padInfo } = this.props
+    const { email } = padInfo
+    const token = await keyMannager.getAccessTokenByEmail(email)
+    padInfo.token = token
+  }
   showInvitePadMember = () => {
     this.setState({ inviteVisible: true })
   }

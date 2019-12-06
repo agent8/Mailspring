@@ -147,6 +147,8 @@ function parseQuery (searchString) {
 function sendClientReady(isReconnect, messageType) {
   messageType = typeof messageType !== 'undefined' ? messageType : 'CLIENT_READY';
   const query = parseQuery(document.location.search)
+
+  console.log(' query: ', query)
   
   var padId = query.padId || '0ba5b38010e711eaafbc43faca53139b';
   createCookie("padId", padId);
@@ -187,15 +189,15 @@ function sendClientReady(isReconnect, messageType) {
 }
 
 function handshake() {
-  var url = "http://127.0.0.1:9001";
+  var url = "https://cs.stag.easilydo.cc";
   //find out in which subfolder we are
-  var resource = "http://127.0.0.1:9001/socket.io";//exports.baseURL.substring(1)  + "socket.io";
+  var resource = "https://cs.stag.easilydo.cc/tr/socket.io";//exports.baseURL.substring(1)  + "socket.io";
   console.log('yazz', url);
   console.log('yazz', exports.baseURL);
   //connect
   socket = pad.socket = io.connect(url, {
     // Allow deployers to host Etherpad on a non-root path
-    'path': "/socket.io",//exports.baseURL + "socket.io",
+    'path': "/tr/socket.io",//exports.baseURL + "socket.io",
     'resource': resource,
     'reconnectionAttempts': 5,
     'reconnection': true,
