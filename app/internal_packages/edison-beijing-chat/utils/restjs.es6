@@ -20,9 +20,9 @@ const domain = {
 function getBaseDomain (kind) {
   let chatObj = {}
   if (AppEnv.config.get(`chatProdEnv`)) {
-    chatObj = domain.prod
+    chatObj = domain.dev
   } else {
-    chatObj = domain.prod
+    chatObj = domain.dev
   }
   return chatObj[kind]
 }

@@ -78,6 +78,45 @@ export const post = (u, data, cb, headers) => {
   getContent(h, options, encode, data, cb);
 }
 
+export const postAsync = async (u, data, headers) => {
+  const encode = 'utf8';
+  if (data && typeof (data) !== 'string') {
+    data = JSON.stringify(data);
+  }
+  const srvUrl = url.parse(u);
+  let options = {
+    hostname: srvUrl.hostname,
+    port: srvUrl.port,
+    path: srvUrl.path,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Content-Length': data ? Buffer.byteLength(data) : 0
+    }
+  };
+  if (headers) {
+    options.headers = Object.assign(options.headers, headers);
+  }
+
+  let h;
+  if (srvUrl.protocol == 'https:') {
+    options.requestCert = false;
+    options.rejectUnauthorized = true;
+    h = https;
+  } else {
+    h = http;
+  }
+  return new Promise((resolve, reject) => {
+    getContent(h, options, encode, data, function (err, data, res) {
+      if (err) {
+        resolve(null);
+      } else {
+        resolve(data, res);
+      }
+    });
+  });
+}
+
 export default {
-  get, post
+  get, post, postAsync
 }

@@ -29,6 +29,7 @@ import SendActionButton from './send-action-button'
 import ActionBarPlugins from './action-bar-plugins'
 import Fields from './fields'
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary'
+import { postAsync } from '../../edison-beijing-chat/utils/httpex'
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
@@ -418,22 +419,31 @@ export default class ComposerView extends React.Component {
     const name = chatAccount.name
     const userName = name
     let padId = chatAccount.padId
+    const ctreatePadOtions = {
+      userId,
+      email,
+      name,
+      token,
+      text: '',
+      emailOri: { id: 'emailId', cc: ['cc'], to: ['11', '2'] },
+      emailExtr: { to: ['11', '2'] },
+      coWorkers: []
+    }
+    console.log(' ctreatePadOtions: ', ctreatePadOtions)
     if (!padId) {
-      let res = await axios.post('http://127.0.0.1:9001/api/1.2.12/createPad', {
-        userId,
-        email,
-        name,
-        token,
-        text: '',
-        emailOri: { id: 'emailId', cc: ['cc'], to: ['11', '2'] },
-        emailExtr: { to: ['11', '2'] },
-        coWorkers: [
-          { name: 'caoxm3456', userId: '427284', permission: 'edit' },
-          { name: 'Xingming Cao', userId: '460359so2dx', permission: 'edit' }
-        ]
+      let res = await postAsync('https://cs.stag.easilydo.cc/tr/api/1.2.12/createPad', ctreatePadOtions, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'cross-site'
+        }
       })
-      if (res && res.status === 200 && res.data && res.data.data && res.data.data.padId) {
-        padId = res.data.data.padId
+      if (typeof res === 'string') {
+        res = JSON.parse(res)
+      }
+      if (res && res.code === 0 && res.data && res.data && res.data.padId) {
+        padId = res.data.padId
         chatAccount.padId = padId
         AppEnv.config.set('chatAccounts', chatAccounts)
       }

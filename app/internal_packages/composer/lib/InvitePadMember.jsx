@@ -3,7 +3,8 @@ import { RetinaImg } from 'mailspring-component-kit'
 import Select, { Option } from 'rc-select'
 import { ContactStore, AppStore, ContactAvatar, Button } from 'chat-exports'
 import keyMannager from '../../../src/key-manager'
-import axios from 'axios'
+import { postAsync } from '../../edison-beijing-chat/utils/httpex'
+// import axios from 'axios'
 const { AccountStore, DraftStore } = require('mailspring-exports')
 
 export default class InvitePadMember extends Component {
@@ -118,13 +119,18 @@ export default class InvitePadMember extends Component {
       const userId = jid.substring(0, at)
       return { userId, permission }
     })
-    let res = await axios.post('http://127.0.0.1:9001/api/1.2.12/editMembers', {
+    const editMembersOptions = {
       userId: padInfo.userId,
       token,
       padID: padInfo.padId,
       add: coworkers
-    })
-    if (!res || res.status !== 200 || !res.data || res.data.code !== 0) {
+    }
+    console.log(' editMembersOptions: ', editMembersOptions)
+    let res = await postAsync('https://cs.stag.easilydo.cc/tr/api/1.2.12/editMembers', editMembersOptions)
+    if (typeof res === 'string') {
+      res = JSON.parse(res)
+    }
+    if (!res || res.code !== 0) {
       alert('fail to add edit members for the pad.')
       return
     }
