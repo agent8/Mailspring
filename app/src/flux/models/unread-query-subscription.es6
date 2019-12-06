@@ -31,7 +31,6 @@ const buildQuery = categoryIds => {
           ]),
           new Matcher.JoinAnd([
             JoinTable.useAttribute('id', 'String').in(RecentlyReadStore.ids),
-            JoinTable.useAttribute('value', 'String').in(categoryIds),
             JoinTable.useAttribute('state', 'Number').equal(0),
           ]),
         ]),
