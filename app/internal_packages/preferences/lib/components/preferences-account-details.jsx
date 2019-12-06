@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { shell, ipcRenderer, remote } from 'electron';
 import { RegExpUtils, KeyManager, Account } from 'mailspring-exports';
+import { EditableList } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 
 class AutoaddressControl extends Component {
@@ -89,7 +90,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => { }) => {
+  _setState = (updates, callback = () => {}) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -159,7 +160,7 @@ class PreferencesAccountDetails extends Component {
       type: 'info',
       message: 'Are you sure?',
       detail: `Delete this account ${account.emailAddress}`,
-      buttons: ['Delete', 'Cancel']
+      buttons: ['Delete', 'Cancel'],
     });
     if (chosen !== 0) {
       return;
@@ -386,8 +387,7 @@ class PreferencesAccountDetails extends Component {
             onSaveChanges={this._saveChanges}
           />
         </div>
-        {/* To do */}
-        {/* <div className="config-group">
+        <div className="config-group">
           <h6>ALIASES</h6>
           <div className="notice">
             You may need to configure aliases with your mail provider (Outlook, Gmail) before using
@@ -405,7 +405,7 @@ class PreferencesAccountDetails extends Component {
             />
           </div>
           {this._renderDefaultAliasSelector(account)}
-        </div> */}
+        </div>
         <div className="config-group">
           <h6>FOLDERS</h6>
           <PreferencesCategory account={account} />
