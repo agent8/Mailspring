@@ -72,6 +72,15 @@ class DraftStore extends MailspringStore {
       });
 
       ipcRenderer.on('composeFeedBack', (event, data) => {
+        const account = DraftFactory._accountForNewDraft();
+        if (account) {
+          data.subject += 'from ' + account.name;
+        }
+        data.body = `<br/><br/><br/>[MacOS] ${AppEnv.getVersion()}`;
+        Actions.composeFeedBackDraft(data);
+      });
+
+      ipcRenderer.on('composeInvite', (event, data) => {
         Actions.composeFeedBackDraft(data);
       });
 
@@ -687,7 +696,7 @@ class DraftStore extends MailspringStore {
         this._finalizeAndPersistNewMessage(draft).then(() => {
           Actions.sendDraft(draft.headerMessageId);
         }).catch(e => {
-          AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e}, {grabLogs: true});
+          AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e }, { grabLogs: true });
         });
       });
   };
@@ -782,7 +791,7 @@ class DraftStore extends MailspringStore {
         return { headerMessageId: draft.headerMessageId, draft };
       })
       .catch(t => {
-        AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: task}, {grabLogs: true});
+        AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: task }, { grabLogs: true });
         return { headerMessageId: draft.headerMessageId, draft };
       });
   }
