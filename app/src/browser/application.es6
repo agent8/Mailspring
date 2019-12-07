@@ -872,10 +872,10 @@ export default class Application extends EventEmitter {
     this.on('application:send-feedback', () => {
       const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (mainWindow) {
-        const feedbackAddress = 'macfeedback@edison.tech';
+        const feedbackAddress = 'mailsupport@edison.tech';
         mainWindow.sendMessage('composeFeedBack', {
           to: { email: feedbackAddress, name: 'Mac Feedback' },
-          subject: 'Mac Feedback',
+          subject: '[Email-macOS] Feedback ',
         });
       }
     });
@@ -883,7 +883,7 @@ export default class Application extends EventEmitter {
     this.on('application:send-share', (subject, body) => {
       const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (mainWindow) {
-        mainWindow.sendMessage('composeFeedBack', {
+        mainWindow.sendMessage('composeInvite', {
           subject,
           body
         });

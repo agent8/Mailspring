@@ -26,7 +26,7 @@ export default class UnstableChannelNotification extends React.Component {
   }
 
   _onReportIssue = () => {
-    AppEnv.windowEventHandler.openLink({ href: 'mailto:macfeedback@edison.tech' });
+    AppEnv.windowEventHandler.openLink({ href: 'mailto:mailsupport@edison.tech' });
   };
 
   render() {
