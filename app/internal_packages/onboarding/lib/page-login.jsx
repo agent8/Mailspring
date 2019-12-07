@@ -21,9 +21,9 @@ export default class LoginPage extends React.Component {
     setTimeout(() => {
       const win = AppEnv.getCurrentWindow();
       // win.unmaximize();
-      win.setSize(700, 685);
-      const left = Math.floor((screen.width - 700) / 2);
-      const top = Math.floor((screen.height - 685) / 2 - 30);
+      win.setSize(685, 700);
+      const left = Math.floor((screen.width - 685) / 2);
+      const top = Math.floor((screen.height - 700) / 2 - 30);
       win.setPosition(left, top);
       win.setResizable(false);
     }, 10)
