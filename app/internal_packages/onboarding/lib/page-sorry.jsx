@@ -87,6 +87,7 @@ export default class SorryPage extends React.Component {
       ipcRenderer.send(
         'command',
         'application:send-share',
+        body.subject,
         `<br/><p>${body.text}</p><a href='${body.link + '&from=MacApp'}'>${body.link +
         '&from=MacApp'}</a>`
       );

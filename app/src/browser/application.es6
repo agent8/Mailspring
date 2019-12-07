@@ -880,11 +880,11 @@ export default class Application extends EventEmitter {
       }
     });
 
-    this.on('application:send-share', body => {
+    this.on('application:send-share', (subject, body) => {
       const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (mainWindow) {
         mainWindow.sendMessage('composeFeedBack', {
-          subject: '',
+          subject,
           body
         });
       }
