@@ -2,6 +2,7 @@
 import { remote } from 'electron';
 import {
   React,
+  ReactDOM,
   PropTypes,
   Actions,
   TaskQueue,
@@ -124,6 +125,22 @@ export default class MessageControls extends React.Component {
     }
   };
 
+  _onPrintEmail = () => {
+    const actionsWrap = ReactDOM.findDOMNode(this._actionsWrap);
+    if (!actionsWrap) {
+      return;
+    }
+    const emailWrap = actionsWrap.closest('.message-item-wrap');
+    if (!emailWrap) {
+      return;
+    }
+    const printNode = document.createElement('div');
+    printNode.setAttribute('id', 'message-list');
+    printNode.setAttribute('class', 'print-message');
+    printNode.appendChild(emailWrap.cloneNode(true));
+    Actions.printThread(this.props.thread, printNode.outerHTML);
+  };
+
   _items() {
     const reply = {
       name: 'Reply',
@@ -156,6 +173,13 @@ export default class MessageControls extends React.Component {
       select: this._onViewOriginalEmail,
     };
 
+    const printEmail = {
+      name: 'Print',
+      image: 'print.svg',
+      transparent: true,
+      select: this._onPrintEmail,
+    };
+
     if (!this.props.message.canReplyAll()) {
       const noReplyAll = [reply, forward];
       if (!this.props.message.draft) {
@@ -164,6 +188,7 @@ export default class MessageControls extends React.Component {
       if (AppEnv.isDarkTheme()) {
         noReplyAll.push(viewOriginalEmail);
       }
+      noReplyAll.push(printEmail);
       return noReplyAll;
     }
     const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
@@ -175,6 +200,7 @@ export default class MessageControls extends React.Component {
     if (AppEnv.isDarkTheme()) {
       ret.push(viewOriginalEmail);
     }
+    ret.push(printEmail);
     return ret;
   }
 
@@ -376,7 +402,11 @@ export default class MessageControls extends React.Component {
     const items = this._items();
     const { trackers } = this.props;
     return (
-      <div className="message-actions-wrap" onClick={e => e.stopPropagation()}>
+      <div
+        className="message-actions-wrap"
+        onClick={e => e.stopPropagation()}
+        ref={el => (this._actionsWrap = el)}
+      >
         {trackers.length > 0 ? (
           <div className="remove-tracker">
             <RetinaImg
