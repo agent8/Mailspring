@@ -79,16 +79,21 @@ export default class SorryPage extends React.Component {
     this.disposable.dispose();
   }
 
-  _onContinue = () => {
+  _onContinue = async () => {
     // AppEnv.getCurrentWindow().setAlwaysOnTop(false);
-    const { body } = this.state;
+    let { body } = this.state;
+    // if body not exists or body has error, fetch body again
+    if (!body || body.error) {
+      body = await AppEnv.getUserInviteEmailBody(this.email);
+      this.setState({ body });
+    }
     if (body && !body.error) {
       AppEnv.getCurrentWindow().setAlwaysOnTop(false);
       ipcRenderer.send(
         'command',
         'application:send-share',
         body.subject,
-        `<br/><p>${body.text}</p><a href='${body.link + '&from=MacApp'}'>${body.link +
+        `<p>${body.text}</p><a href='${body.link + '&from=MacApp'}'>${body.link +
         '&from=MacApp'}</a>`
       );
     }
