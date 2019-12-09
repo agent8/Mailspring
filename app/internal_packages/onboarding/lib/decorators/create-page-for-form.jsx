@@ -341,7 +341,7 @@ const CreatePageForForm = FormComponent => {
             log={errorLog}
             message={errorMessage}
           />
-          {this._renderCredentialsNote()}
+          {/* {this._renderCredentialsNote()} */}
           <div>
             {this._renderButton()}
           </div>
