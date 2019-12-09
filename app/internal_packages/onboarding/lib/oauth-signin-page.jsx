@@ -1,4 +1,4 @@
-import { clipboard } from 'electron';
+import { clipboard, remote } from 'electron';
 import OnboardingActions from './onboarding-actions';
 import { React, ReactDOM, PropTypes } from 'mailspring-exports';
 import { RetinaImg, LottieImg } from 'mailspring-component-kit';
@@ -286,9 +286,18 @@ export default class OAuthSignInPage extends React.Component {
   }
 
   _loaded = () => {
+    if (this.refs.webview.src.indexOf('signin/rejected') !== -1) {
+      AppEnv.reportError(
+        new Error(`Oauth error: signin/rejected, url is:` + this.refs.webview.src)
+      );
+    }
     this.setState({
       loading: false
     });
+  }
+
+  openBrowser = () => {
+    remote.shell.openExternal(this.props.providerAuthPageUrl);
   }
 
   render() {
@@ -332,12 +341,20 @@ export default class OAuthSignInPage extends React.Component {
     );
     return (
       <div className={`page account-setup oauth ${this.props.serviceName.toLowerCase()}`}>
+        {/* <div title="Open system browser" className="oauth-browser-btn" onClick={this.openBrowser}>Open</div> */}
         {authStage === 'buildingAccount' && Validating}
         {authStage === 'accountSuccess' && Success}
         {!(['buildingAccount', 'accountSuccess', 'error'].includes(authStage)) && (
-          <webview key={this.randomNum} ref='webview' src={this.state.url} partition={`in-memory-only${this.randomNum}`} style={
-            isYahoo ? yahooOptions : defaultOptions
-          } />
+          <webview
+            useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+            key={this.randomNum}
+            ref='webview'
+            src={this.state.url}
+            partition={`in-memory-only${this.randomNum}`}
+            style={
+              isYahoo ? yahooOptions : defaultOptions
+            }
+          />
         )}
         {loading && !(['buildingAccount', 'accountSuccess', 'error'].includes(authStage)) && (
           <LottieImg name='loading-spinner-blue'
