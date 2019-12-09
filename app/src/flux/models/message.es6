@@ -273,6 +273,9 @@ export default class Message extends ModelWithMetadata {
     hasNewID: Attributes.Boolean({
       modelKey: 'hasNewID',
     }),
+    noSave: Attributes.Boolean({
+      noSave: 'noSave',
+    }),
     waitingForBody: Attributes.Boolean({
       modelKey: 'waitingForBody',
       queryable: false,
