@@ -66,23 +66,23 @@ class Windows {
             detail: err.message,
           });
         }
-        if (!didMakeDefault) {
-          remote.dialog.showMessageBoxSync(
-            null,
-            {
-              type: 'info',
-              buttons: ['Learn More'],
-              defaultId: 1,
-              message: 'Visit Windows Settings to finish making Mailspring your mail client',
-              detail: "Click 'Learn More' to view instructions in our knowledge base.",
-            },
-            () => {
-              shell.openExternal(
-                'http://support.getmailspring.com/hc/en-us/articles/115001881412-Choose-Mailspring-as-the-default-mail-client-on-Windows'
-              );
-            }
-          );
-        }
+        // if (!didMakeDefault) {
+        //   remote.dialog.showMessageBoxSync(
+        //     null,
+        //     {
+        //       type: 'info',
+        //       buttons: ['Learn More'],
+        //       defaultId: 1,
+        //       message: 'Visit Windows Settings to finish making Mailspring your mail client',
+        //       detail: "Click 'Learn More' to view instructions in our knowledge base.",
+        //     },
+        //     () => {
+        //       shell.openExternal(
+        //         'http://support.getmailspring.com/hc/en-us/articles/115001881412-Choose-Mailspring-as-the-default-mail-client-on-Windows'
+        //       );
+        //     }
+        //   );
+        // }
         callback(null, null);
       }
     );
