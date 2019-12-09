@@ -909,6 +909,10 @@ export default class Application extends EventEmitter {
       const helpUrl = 'http://www.edison.tech/terms.html';
       require('electron').shell.openExternal(helpUrl);
     });
+    this.on('application:view-help', () => {
+      const helpUrl = 'https://mailsupport.edison.tech/';
+      require('electron').shell.openExternal(helpUrl);
+    });
 
     this.on('application:open-preferences', () => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);

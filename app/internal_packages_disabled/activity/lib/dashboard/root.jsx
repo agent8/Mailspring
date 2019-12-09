@@ -313,7 +313,7 @@ class RootWithTimespan extends React.Component {
   };
 
   _onLearnMore = () => {
-    shell.openExternal('http://support.getmailspring.com/hc/en-us/articles/115002507891');
+    shell.openExternal('https://mailsupport.edison.tech/');
   };
 
   render() {
