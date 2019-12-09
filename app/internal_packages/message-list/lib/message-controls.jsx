@@ -152,6 +152,7 @@ export default class MessageControls extends React.Component {
     const viewOriginalEmail = {
       name: 'View original email',
       image: 'show-password.svg',
+      transparent: true,
       select: this._onViewOriginalEmail,
     };
 
@@ -188,17 +189,23 @@ export default class MessageControls extends React.Component {
   };
 
   _dropdownMenu(items) {
-    const itemContent = item => (
-      <span>
-        <RetinaImg
-          name={item.image}
-          style={{ width: 18, height: 18, marginTop: 3 }}
-          isIcon={!item.disabled}
-          mode={RetinaImg.Mode.ContentIsMask}
-        />
-        {item.name}
-      </span>
-    );
+    const itemContent = item => {
+      const style = { width: 18, height: 18, marginTop: 3 };
+      if (item.transparent) {
+        style.background = 'transparent';
+      }
+      return (
+        <span>
+          <RetinaImg
+            name={item.image}
+            style={style}
+            isIcon={!item.disabled}
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+          {item.name}
+        </span>
+      );
+    };
 
     return (
       <Menu
