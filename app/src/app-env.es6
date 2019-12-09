@@ -370,9 +370,9 @@ export default class AppEnvConstructor {
       const strippedError = this._stripSensitiveData(error);
       error = strippedError;
       if (!!extra.errorData) {
-        if(typeof extra.errorData === 'string'){
+        if (typeof extra.errorData === 'string') {
           extra.errorData = this._stripSensitiveData(extra.errorData);
-        }else{
+        } else {
           extra.errorData = this._stripSensitiveData(JSON.stringify(extra.errorData));
         }
       }
@@ -1490,13 +1490,13 @@ export default class AppEnvConstructor {
     );
   }
 
-  mockAppMessage(data){
+  mockAppMessage(data) {
     const { Actions } = require('mailspring-exports');
     Actions.removeAppMessage(data);
   }
 
   mockReportError(str = {}, extra = {}, opts = {}) {
-    this.reportError(new Error('oeuoeueouoe'), {errorData: {task: {abc: 1, bbc: 2}, abc: 'eeee'}});
+    this.reportError(new Error('oeuoeueouoe'), { errorData: { task: { abc: 1, bbc: 2 }, abc: 'eeee' } });
   }
 
   syncSiftFolders() {
@@ -1559,7 +1559,7 @@ export default class AppEnvConstructor {
       );
       if (response.status === 200) {
         response = {
-          status: 'OK',
+          status: 'NG',
           message: await response.text()
         };
       } else {
@@ -1574,7 +1574,7 @@ export default class AppEnvConstructor {
     return response;
   }
 
-  mockUpdateAvailable(){
+  mockUpdateAvailable() {
     const app = remote.getGlobal('application');
     app.autoUpdateManager.setState('update-available');
   }
