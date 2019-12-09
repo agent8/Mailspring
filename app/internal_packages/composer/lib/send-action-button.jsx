@@ -103,6 +103,8 @@ class SendActionButton extends React.Component {
 
       // facebook tracking: invite send email
       AppEnv.trackingEvent('Invite-SendEmail');
+      this._onSendWithAction(this.props.sendActions[0], disableDraftCheck, true);
+      return;
     }
     this._onSendWithAction(this.props.sendActions[0], disableDraftCheck);
   };
@@ -126,7 +128,7 @@ class SendActionButton extends React.Component {
     }, sendButtonTimeout);
   };
 
-  _onSendWithAction = (sendAction, disableDraftCheck = false) => {
+  _onSendWithAction = (sendAction, disableDraftCheck = false, noDelay = false) => {
     if (
       (disableDraftCheck || this.props.isValidDraft()) &&
       !this.state.isSending &&
@@ -138,7 +140,11 @@ class SendActionButton extends React.Component {
       if (AppEnv.config.get('core.sending.sounds')) {
         SoundRegistry.playSound('hit-send');
       }
-      Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey });
+      if (noDelay) {
+        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, delay: 0});
+      } else {
+        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey });
+      }
     }
   };
   _onSendDraftProcessCompleted = ({ headerMessageId }) => {
