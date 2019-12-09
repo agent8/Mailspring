@@ -70,6 +70,11 @@ class DraftFactory {
 
     return new Message(merged);
   }
+  async createInviteDraft(draftData){
+    const draft = await this.createDraft(draftData);
+    draft.noSave = true;
+    return draft;
+  }
   createNewDraftForEdit(draft){
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
