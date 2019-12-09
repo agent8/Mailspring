@@ -198,7 +198,7 @@ class PreferencesIdentity extends React.Component {
           Thank you for using{' '}
           <strong style={{ textTransform: 'capitalize' }}>{`EdisonMail ${planDisplayName}`}</strong>{' '}
           and supporting independent software. Get the most out of your subscription: visit the{' '}
-          <a href="https://foundry376.zendesk.com/hc/en-us/sections/115000521592-Getting-Started">
+          <a href="https://mailsupport.edison.tech/">
             Help Center
           </a>{' '}
           to learn more about great features like reminders, templates, and activity insights.
