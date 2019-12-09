@@ -42,11 +42,15 @@ class TrackingAppEvents {
     const params = {
       source: task.source,
     };
-    FB.AppEvents.logEvent(eventName, null, params);
+    if (FB) {
+      FB.AppEvents.logEvent(eventName, null, params);
+    }
   }
 
   static trackingEvent(eventName, params) {
-    FB.AppEvents.logEvent(eventName, null, params);
+    if (FB) {
+      FB.AppEvents.logEvent(eventName, null, params);
+    }
   }
 }
 
