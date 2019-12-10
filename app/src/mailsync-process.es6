@@ -15,7 +15,7 @@ let Utils = null;
 export const LocalizedErrorStrings = {
   ErrorConnection: 'Connection Error - Unable to connect to the server / port you provided.',
   ErrorInvalidAccount:
-    'This account is invalid or EdisonMail could not find the Inbox or All Mail folder. http://support.getmailspring.com/hc/en-us/articles/115001881912',
+    'This account is invalid or EdisonMail could not find the Inbox or All Mail folder. https://mailsupport.edison.tech/hc/en-us/articles/360037660151',
   ErrorTLSNotAvailable: 'TLS Not Available',
   ErrorParse: 'Parsing Error',
   ErrorCertificate:

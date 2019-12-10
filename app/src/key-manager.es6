@@ -183,7 +183,7 @@ class KeyManager {
       .showMessageBox({
         type: 'error',
         buttons: ['Quit'],
-        message: `EdisonMail could not store your password securely. ${more} For more information, visit http://support.getmailspring.com/hc/en-us/articles/115001875571`,
+        message: `EdisonMail could not store your password securely. ${more} For more information, visit https://mailsupport.edison.tech/hc/en-us/articles/360037339892`,
       })
       .then(() => {
         // tell the app to exit and rethrow the error to ensure code relying
