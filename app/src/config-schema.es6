@@ -480,7 +480,7 @@ export default {
         properties: {
           sounds: {
             type: 'boolean',
-            default: true,
+            default: false,
             title: 'Send mail sound',
           },
           defaultReplyType: {
@@ -507,7 +507,7 @@ export default {
           // },
           sounds: {
             type: 'boolean',
-            default: true,
+            default: false,
             title: 'New mail sound',
           },
           // unsnoozeToTop: {
