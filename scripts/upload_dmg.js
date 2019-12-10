@@ -26,18 +26,24 @@ uploadParams.Body = fileStream;
 uploadParams.Key = 'desktop/EdisonMail.dmg';
 
 // call S3 to retrieve upload file to specified bucket
-const request = s3.upload(uploadParams, function (err, data) {
+const request = s3.putObject(uploadParams, function (err, data) {
     if (err) {
         console.log("Upload Error", err);
     } if (data) {
-        console.log("Upload Success - 1:" + data.Location);
+        console.log("Upload Success");
         console.log(data);
+        const { protocol, host } = request.httpRequest.endpoint;
+        const downloadUrl = `${protocol}//${host}/${uploadParams.Key}`
+        console.log(downloadUrl);
     }
 });
 
-request.on('httpUploadProgress', function (progress) {
-    if (progressCallback) {
-        console.log('progress:', progress.loaded);
+let progress;
+request.on('httpUploadProgress', function (data) {
+    let p = Math.round(data.loaded / data.total * 100);
+    if (p !== progress) {
+        console.log('progress:' + p);
+        progress = p;
     }
 });
 
