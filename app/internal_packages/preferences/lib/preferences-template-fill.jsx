@@ -97,7 +97,7 @@ const preferencesTemplateFill = {
               label: 'New mail sound',
               configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
               keyPath: 'core.notifications.sounds',
-              keywords: [],
+              keywords: ['notification'],
             },
             {
               label: 'Undo time window',
