@@ -3663,7 +3663,7 @@ function Ace2Inner(){
   }
 
   function handleKeyEvent(evt)
-  {
+  { window.console.log(' handleKeyEvent: ', evt);
     // if (DEBUG && window.DONT_INCORP) return;
     if (!isEditable) return;
     var type = evt.type;
@@ -4096,6 +4096,7 @@ function Ace2Inner(){
         thisKeyDoesntTriggerNormalize = false;
       }
     });
+    window.console.log(' end handleKeyEvent: ')
   }
 
   var thisKeyDoesntTriggerNormalize = false;

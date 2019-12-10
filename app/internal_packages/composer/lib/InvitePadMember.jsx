@@ -126,7 +126,8 @@ export default class InvitePadMember extends Component {
       add: coworkers
     }
     console.log(' editMembersOptions: ', editMembersOptions)
-    let res = await postAsync('https://cs.stag.easilydo.cc/tr/api/1.2.12/editMembers', editMembersOptions)
+    const apiPath = window.teamPadConfig.teamEditAPIUrl + 'editMembers'
+    let res = await postAsync(apiPath, editMembersOptions)
     if (typeof res === 'string') {
       res = JSON.parse(res)
     }

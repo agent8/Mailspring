@@ -97,7 +97,7 @@ export const downloadFile = (aes, key, name, callback, progressBack) => {
 
 export const uploadFile = (oid, aes, file, callback, progressCallback) => {
   const filename = path.basename(file)
-  let myKey = oid + '/' + uuid.v4() + path.extname(file)
+  let myKey = oid + '/' + uuid.v4() + '--$_@_$--' + filename
   const readS = fs.createReadStream(file)
   if (aes) {
     myKey = myKey + ENCRYPTED_SUFFIX
@@ -112,7 +112,6 @@ export const uploadFile = (oid, aes, file, callback, progressCallback) => {
       progressCallback(progress)
     }
     if (+progress.loaded === +progress.total) {
-      console.log('Upload Finished. ')
       if (callback) {
         callback(null, filename, myKey, progress.loaded)
       }
@@ -120,6 +119,22 @@ export const uploadFile = (oid, aes, file, callback, progressCallback) => {
   })
   request.send()
   return request
+}
+
+export const downloadFileAsync = (oid, aes, file) => {
+  return new Promise((resolve, reject) => {
+    uploadFile(oid, aes, file, (result, filename, awsKey) => {
+      resolve({ result, filename, awsKey })
+    })
+  })
+}
+
+export const uploadFileAsync = (oid, aes, file) => {
+  return new Promise((resolve, reject) => {
+    uploadFile(oid, aes, file, (result, filename, awsKey) => {
+      resolve({ result, filename, awsKey })
+    })
+  })
 }
 
 function getSize (len) {

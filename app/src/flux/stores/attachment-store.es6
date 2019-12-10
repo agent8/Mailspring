@@ -751,6 +751,9 @@ class AttachmentStore extends MailspringStore {
         if (createdFiles.length >= total) {
           onCreated(createdFiles);
         }
+        Actions.AddedAttachments(headerMessageId,
+          inline,
+          filePaths)
       });
     } catch (err) {
       AppEnv.showErrorDialog(err.message);
@@ -793,6 +796,9 @@ class AttachmentStore extends MailspringStore {
         return files.concat([file]);
       });
       onCreated(file);
+      Actions.addedAttachment({headerMessageId,
+        filePath,
+        inline})
     } catch (err) {
       AppEnv.showErrorDialog(err.message);
     }

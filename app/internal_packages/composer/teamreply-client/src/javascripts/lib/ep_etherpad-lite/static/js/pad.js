@@ -184,14 +184,14 @@ function sendClientReady(isReconnect, messageType) {
     msg.client_rev = pad.collabClient.getCurrentRevisionNumber();
     msg.reconnect = true;
   }
-
+  console.log(' sendClientReady: msg: ', msg);
   socket.json.send(msg);
 }
 
 function handshake() {
-  var url = "https://cs.stag.easilydo.cc";
+  var url = window.teamPadConfig.stagUrl;
   //find out in which subfolder we are
-  var resource = "https://cs.stag.easilydo.cc/tr/socket.io";//exports.baseURL.substring(1)  + "socket.io";
+  var resource = window.teamPadConfig.stagServicePath + "socket.io";//exports.baseURL.substring(1)  + "socket.io";
   console.log('yazz', url);
   console.log('yazz', exports.baseURL);
   //connect
@@ -212,6 +212,14 @@ function handshake() {
     //   }
     // }
   });
+
+  var composerOnPadSocketHandler = window.parent.composerOnPadSocketHandler
+  var composerOnPadConnect = window.parent.composerOnPadConnect
+  const query = parseQuery(document.location.search)
+  composerOnPadConnect({
+    pad: pad,
+    query: query
+  })
 
   socket.once('connect', function () {
     sendClientReady(false);
@@ -289,6 +297,7 @@ function handshake() {
 
     //if we haven't recieved the clientVars yet, then this message should it be
     else if (!receivedClientVars && obj.type == "CLIENT_VARS") {
+      composerOnPadSocketHandler(obj)
       //log the message
       if (window.console) window.console.log('yazz.message2', obj);
 
@@ -349,6 +358,8 @@ function handshake() {
         pad.notifyChangeColor(settings.globalUserColor); // Updates pad.myUserInfo.colorId
         paduserlist.setMyUserInfo(pad.myUserInfo);
       }
+    } else if (obj.type === 'COLLABROOM') {
+      composerOnPadSocketHandler(obj)
     }
     //This handles every Message after the clientVars
     else {
@@ -846,12 +857,15 @@ var alertBar = (function () {
 }());
 
 function init() {
-  return pad.init();
+  const x =  pad.init();
+  console.log(window.parent)
+  window.parent.pad = pad;
+  console.log(' pad.init: window.pad: ', window.parent.pad);
+  return x;
 }
 
 var settings = {
-  LineNumbersDisabled: false
-  , noColors: false
+  noColors: false
   , useMonospaceFontGlobal: false
   , globalUserName: false
   , globalUserColor: false
@@ -871,7 +885,6 @@ exports.handshake = handshake;
 exports.pad = pad;
 exports.init = init;
 exports.alertBar = alertBar;
-
 }
 , "ep_etherpad-lite/static/js/pad_utils.js": function (require, exports, module) {
 /**
@@ -3098,13 +3111,18 @@ function getCollabClient(ace2editor, serverVars, initialUserInfo, options, _pad)
   var hiccupCount = 0;
 
   function sendMessage(msg)
-  {
+  { window.console.log(' pad.sendMessage: ', msg)
     getSocket().json.send(
     {
       type: "COLLABROOM",
       component: "pad",
       data: msg
     });
+  }
+
+  function sendJson(msg)
+  {  console.log(' sendJson: ', msg);
+    getSocket().json.send(msg);
   }
 
   function wrapRecordingErrors(catcher, func)
@@ -3139,7 +3157,7 @@ function getCollabClient(ace2editor, serverVars, initialUserInfo, options, _pad)
 
   function handleMessageFromServer(evt)
   {
-    if (window.console) console.log(evt);
+    if (window.console) console.log(' handleMessageFromServer: ', evt);
 
     if (!getSocket()) return;
     if (!evt.data) return;

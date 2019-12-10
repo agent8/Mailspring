@@ -30,9 +30,11 @@ import ActionBarPlugins from './action-bar-plugins'
 import Fields from './fields'
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
+import { uploadFileAsync } from '../../edison-beijing-chat/utils/awss3'
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
+import _ from '../teamreply-client/src/static/js/teampad-config.js'
 import axios from 'axios'
 
 const {
@@ -92,9 +94,76 @@ export default class ComposerView extends React.Component {
     ]
   }
   async componentWillMount () {
+    Actions.addedAttachment.listen(this.onAddedAttachment)
+    Actions.addedAttachments.listen(this.onAddedAttachments)
     const windowProps = AppEnv.getWindowProps()
     let { padInfo } = windowProps
-    this.setState({ padInfo, inTeamEditMode: !!padInfo })
+    this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
+  }
+
+  onAddedAttachment = async ({ headerMessageId, filePath, inline }) => {
+    const { draft } = this.props
+    const { padInfo } = this.state
+    console.log(' onAddedAttachment: ', filePath, padInfo)
+    if (!padInfo) {
+      return
+    }
+    console.log(
+      ' onAddedAttachment: ',
+      {
+        headerMessageId,
+        filePath,
+        inline
+      },
+      draft
+    )
+    if (headerMessageId !== draft.headerMessageId) {
+      return
+    }
+    const jidLocal = padInfo.userId
+    const res = await uploadFileAsync(jidLocal, null, filePath)
+    const files = padInfo.files || []
+    files.push(res.awsKey)
+    console.log(' before send pad json: draft: ', draft)
+    const { padId } = padInfo
+    const pad = window.padMap[padId]
+    const to = draft.to.map(x => x.email)
+    const cc = draft.cc.map(x => x.email)
+    const bbcc = draft.cc.map(x => x.email)
+    pad.socket.json.send({
+      type: 'COLLABROOM',
+      component: 'pad',
+      data: {
+        type: 'EMAIL_EXTR',
+        email: {
+          subject: draft.subject,
+          to,
+          cc,
+          bcc: [],
+          attachments: files
+        }
+      }
+    })
+    console.log(' uploadFileAsync: ', res)
+  }
+
+  updatePadFiles = fileMap => {
+    const { padInfo } = this.state
+    padInfo.files = fileMap
+    this.setState({ padInfo })
+    savePadInfo(padInfo)
+  }
+
+  onAddedAttachments = ({ headerMessageId, filePath, inline }) => {
+    console.log(
+      ' onAddedAttachments: ',
+      {
+        headerMessageId,
+        filePaths,
+        inline
+      },
+      this.props.draft
+    )
   }
 
   componentDidMount () {
@@ -406,7 +475,7 @@ export default class ComposerView extends React.Component {
     }
   }
 
-  goTeamEdit = async () => {
+  createTeamEditPad = async () => {
     const chatAccounts = AppEnv.config.get('chatAccounts') || {}
     const emails = Object.keys(chatAccounts)
     const email = emails[0]
@@ -419,19 +488,44 @@ export default class ComposerView extends React.Component {
     const name = chatAccount.name
     const userName = name
     let padId = chatAccount.padId
+    const { draft } = this.props
+    console.log(' createTeamEditPad: draft: ', draft)
+    const subject = draft.subject
+    const body = draft.body
+    const to = draft.to.map(x => x.email)
+    const cc = draft.cc.map(x => x.email)
+    const bcc = draft.bcc.map(x => x.email)
+    const files = draft.files.map(file => ({
+      name: file.filename
+    }))
     const ctreatePadOptions = {
       userId,
       email,
       name,
       token,
       text: '',
-      emailOri: { id: 'emailId', cc: ['cc'], to: ['11', '2'] },
-      emailExtr: { to: ['11', '2'] },
+      emailOri: {
+        id: 'emailId',
+        subject,
+        body,
+        to,
+        cc,
+        bcc,
+        attachments: files,
+      },
+      emailExtr: {
+        subject,
+        to,
+        cc,
+        bcc,
+        attachments: files
+      },
       coWorkers: []
     }
     console.log(' ctreatePadOptions: ', ctreatePadOptions)
     if (!padId) {
-      let res = await postAsync('https://cs.stag.easilydo.cc/tr/api/1.2.12/createPad', ctreatePadOptions, {
+      const apiPath = window.teamPadConfig.teamEditAPIUrl + 'createPad'
+      let res = await postAsync(apiPath, ctreatePadOptions, {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -448,15 +542,22 @@ export default class ComposerView extends React.Component {
         AppEnv.config.set('chatAccounts', chatAccounts)
       }
     }
-    const padInfo = { padId, userId, userName, token, email }
-    this.setState({ inTeamEditMode: true, padInfo })
+    return { padId, userId, userName, token, email }
+  }
+
+  toggleTeamEdit = async () => {
+    let { padInfo, inTeamEditMode } = this.state
+    if (!inTeamEditMode && !padInfo) {
+      padInfo = await this.createTeamEditPad()
+    }
+    this.setState({ inTeamEditMode: !inTeamEditMode, padInfo })
   }
 
   _renderEditor () {
     const draft = this.props
     if (this.state.inTeamEditMode) {
       const { padInfo } = this.state
-      return <TeamreplyEditor draft={draft} padInfo={padInfo} />
+      return <TeamreplyEditor draft={draft} padInfo={padInfo} updatePadFiles={this.updatePadFiles} />
     } else {
       return (
         <ComposerEditor
@@ -498,6 +599,10 @@ export default class ComposerView extends React.Component {
   }
 
   _renderAttachments () {
+    const { padInfo } = this.state
+    if (padInfo && padInfo.files) {
+      return this._renderPadAttachments()
+    }
     const { files, headerMessageId } = this.props.draft
     const nonImageFiles = files
       .filter(f => !Utils.shouldDisplayAsImage(f))
@@ -545,6 +650,62 @@ export default class ComposerView extends React.Component {
       ))
 
     return <div className='attachments-area'>{nonImageFiles.concat(imageFiles, nonInlineWithContentIdImageFiles)}</div>
+  }
+
+  _renderPadAttachments () {
+    const { padInfo } = this.state
+    console.log(' _renderPadAttachments: ', padInfo)
+    let { files } = padInfo
+    if (!files) {
+      return null
+    }
+    files = files.map(file => ({ filename: file }))
+    const nonImageFiles = files
+      .filter(f => !Utils.shouldDisplayAsImage(f))
+      .map(file => (
+        <AttachmentItem
+          key={file.id}
+          className='file-upload'
+          draggable={false}
+          filePath={file.filename}
+          displayName={file.filename}
+          fileIconName={`file-${file.extension}.png`}
+          // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
+        />
+      ))
+    console.log(' _renderPadAttachments: nonImageFiles: ', nonImageFiles)
+    const imageFiles = files
+      .filter(f => Utils.shouldDisplayAsImage(f))
+      .filter(f => !f.contentId)
+      .map(file => (
+        <ImageAttachmentItem
+          key={file.id}
+          draggable={false}
+          className='file-upload'
+          filePath={file.filename}
+          displayName={file.filename}
+          // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
+        />
+      ))
+    // const nonInlineWithContentIdImageFiles = files
+    //   .filter(f => Utils.shouldDisplayAsImage(f))
+    //   .filter(f => f.contentId)
+    //   .filter(f => !this.props.draft.body.includes(`cid:${f.contentId}`))
+    //   .map(file => (
+    //     <ImageAttachmentItem
+    //       key={file.id}
+    //       draggable={false}
+    //       className='file-upload'
+    //       filePath={AttachmentStore.pathForFile(file)}
+    //       displayName={file.filename}
+    //       onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+    //       onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
+    //     />
+    //   ))
+
+    return <div className='attachments-area'>{nonImageFiles.concat(imageFiles)}</div>
   }
 
   _renderActionsWorkspaceRegion () {
@@ -625,10 +786,20 @@ export default class ComposerView extends React.Component {
                   tabIndex={-1}
                   className='btn btn-toolbar btn-team-edit'
                   style={{ order: 40 }}
-                  title='goto team edit mode'
-                  onClick={this.goTeamEdit}
+                  title='toggle team edit mode'
+                  onClick={this.toggleTeamEdit}
                 >
                   <span> Team Edit </span>
+                </button>
+              ) : !this.state.openFromInvitation ? (
+                <button
+                  tabIndex={-1}
+                  className='btn btn-toolbar btn-team-edit'
+                  style={{ order: 40 }}
+                  title='toggle team edit mode'
+                  onClick={this.toggleTeamEdit}
+                >
+                  <span> Private Edit </span>
                 </button>
               ) : null}
               <button
@@ -742,6 +913,7 @@ export default class ComposerView extends React.Component {
   }
 
   _onAttachmentsCreated = fileObjs => {
+    console.log(' _onAttachmentsCreated: ', fileObjs)
     if (!this._mounted) return
     if (!Array.isArray(fileObjs) || fileObjs.length === 0) {
       return
@@ -766,6 +938,7 @@ export default class ComposerView extends React.Component {
   }
 
   _onAttachmentCreated = fileObj => {
+    console.log(' _onAttachmentCreated: ', fileObj)
     if (!this._mounted) return
     if (Utils.shouldDisplayAsImage(fileObj)) {
       const { draft, session } = this.props
@@ -878,6 +1051,7 @@ export default class ComposerView extends React.Component {
       Actions.selectAttachment({
         headerMessageId: this.props.draft.headerMessageId,
         onCreated: fileObjs => {
+          console.log(' _onSelectAttachment: ', fileObjs)
           if (Array.isArray(fileObjs)) {
             this._onAttachmentsCreated(fileObjs)
           } else {
