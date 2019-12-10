@@ -79,6 +79,6 @@ export default class AutoupdateImplBase extends EventEmitter {
 
   /* Public: Install the update. */
   quitAndInstall() {
-    shell.openExternal(this.lastRetrievedUpdateURL || 'https://mail.edison.tech/macDownload');
+    shell.openExternal(this.lastRetrievedUpdateURL || 'https://mail.edison.tech/download?type=mac');
   }
 }

@@ -282,7 +282,7 @@ const CreatePageForForm = FormComponent => {
       } else {
         message = 'Some providers require an app password.';
         articleURL =
-          'http://support.getmailspring.com/hc/en-us/articles/115001876051-App-Passwords';
+          'https://mailsupport.edison.tech/hc/en-us/articles/360037293392';
       }
       // We don't use a FormErrorMessage component because the content
       // we need to display has HTML.
