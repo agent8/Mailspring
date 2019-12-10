@@ -1559,7 +1559,7 @@ export default class AppEnvConstructor {
       );
       if (response.status === 200) {
         response = {
-          status: 'NG',
+          status: 'OK',
           message: await response.text()
         };
       } else {
