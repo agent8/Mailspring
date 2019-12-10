@@ -809,6 +809,7 @@ class MessageList extends React.Component {
             <LottieImg
               name={lottieName}
               size={{ width: 250, height: 250 }}
+              options={{ loop: false }}
               isClickToPauseDisabled={true}
             />
           </div>
