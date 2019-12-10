@@ -237,16 +237,16 @@ export default class MessageItem extends React.Component {
             />
           </div>
         ) : (
-          <div className="download-all-action" onClick={this._onDownloadAll}>
-            <RetinaImg
-              name="download.svg"
-              isIcon
-              style={{ width: 18, height: 18 }}
-              mode={RetinaImg.Mode.ContentIsMask}
-            />
-            <span>Download all</span>
-          </div>
-        )}
+            <div className="download-all-action" onClick={this._onDownloadAll}>
+              <RetinaImg
+                name="download.svg"
+                isIcon
+                style={{ width: 18, height: 18 }}
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
+              <span>Download all</span>
+            </div>
+          )}
       </div>
     );
   }
@@ -316,10 +316,11 @@ export default class MessageItem extends React.Component {
 
   _renderBlockNote() {
     if (this.state.isBlocked) {
+      const { message } = this.props;
       return (
         <div className="message-block-note">
-          You've successfully blocked {<span>{this.state.fromEmail}</span>}. Emails from this sender
-          will now be sent to the Trash unless you unblock them.
+          {message.listUnsubscribe ? "You unsubscribed from" : "You've successfully blocked"} {<span>{this.state.fromEmail}</span>}. Emails from this sender
+          will now be sent to the Trash unless you {message.listUnsubscribe ? 'resubscribe' : 'unblock'} them.
           <div onClick={this._onTrashThisSenderMail}>Trash all previous mail from this sender</div>
         </div>
       );

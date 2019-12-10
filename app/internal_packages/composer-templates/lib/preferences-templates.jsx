@@ -82,11 +82,11 @@ class TemplateEditor extends React.Component {
         </div>
         <div className="section note">
           Changes are saved automatically.
-          {/* View the{' '}
-          <a href="https://foundry376.zendesk.com/hc/en-us/articles/115001875231-Using-quick-reply-templates">
+          View the{' '}
+          <a href="https://mailsupport.edison.tech/hc/en-us/articles/360037710531">
             Templates Guide
           </a>{' '}
-          for tips and tricks. */}
+          for tips and tricks.
         </div>
       </div>
     );
@@ -172,12 +172,7 @@ export default class PreferencesTemplates extends React.Component {
           <h6>TEMPLATES</h6>
           <Flexbox>
             <div className="template-note">
-              Welcome to templates! A way to quickly reuse frequently sent replies in email. View
-              the{' '}
-              <a href="https://foundry376.zendesk.com/hc/en-us/articles/115001875231-Using-quick-reply-templates">
-                Templates Guide
-              </a>{' '}
-              for tips and tricks. (Changes are saved automatically.)
+              Welcome to templates! A way to quickly reuse frequently sent replies in email. (Changes are saved automatically.)
             </div>
             <div
               className="btn-primary template-folder-btn"

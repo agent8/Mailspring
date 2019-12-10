@@ -181,6 +181,7 @@ export default class AppMessageToast extends React.Component {
     const left = sidebar.getBoundingClientRect().width;
     let width = '100%';
     const threadList = document.querySelector('.toolbar-ThreadList');
+    const siftList = document.querySelector('.toolbar-SiftList');
     const messageList = document.querySelector('.toolbar-MessageList');
     const draftList = document.querySelector('.toolbar-DraftList');
     const outboxList = document.querySelector('.toolbar-Outbox');
@@ -191,6 +192,12 @@ export default class AppMessageToast extends React.Component {
     } else if (threadList) {
       width = 0;
       width += threadList.getBoundingClientRect().width;
+      if (messageList) {
+        width += messageList.getBoundingClientRect().width;
+      }
+    } else if (siftList) {
+      width = 0;
+      width += siftList.getBoundingClientRect().width;
       if (messageList) {
         width += messageList.getBoundingClientRect().width;
       }

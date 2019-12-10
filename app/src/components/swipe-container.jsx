@@ -90,6 +90,7 @@ export default class SwipeContainer extends React.Component {
     this.fired = false;
     this.isEnabled = null;
     this.swipeBufferX = 25;
+    this.onAutoSettle = false;
     this.state = {
       fullDistance: 'unknown',
       currentX: 0,
@@ -151,6 +152,11 @@ export default class SwipeContainer extends React.Component {
     if (SwipeInverted) {
       velocity = -velocity;
     }
+
+    if (this.onAutoSettle) {
+      return;
+    }
+
     this._onDragWithVelocity(velocity);
 
     if (this.phase === Phase.GestureConfirmed) {
@@ -225,6 +231,9 @@ export default class SwipeContainer extends React.Component {
   };
 
   _onScrollTouchBegin = () => {
+    if (this.onAutoSettle) {
+      return;
+    }
     this.tracking = true;
     this.trackingInitialTargetX = this.state.targetX;
   };
@@ -324,19 +333,27 @@ export default class SwipeContainer extends React.Component {
     });
   }
 
+  _judgeToggleSettleFlag = () => {
+    const { currentX, thresholdDistance } = this.state;
+    if (typeof thresholdDistance === 'number' && Math.abs(currentX) > Math.abs(thresholdDistance)) {
+      return;
+    }
+    this.onAutoSettle = false;
+  };
+
   _settle() {
     const { targetX, settleStartTime, lastDragX, swipeStep } = this.state;
     let { currentX } = this.state;
-
+    this.onAutoSettle = true;
     const f = (Date.now() - settleStartTime) / 1400.0;
     if (targetX === 0 && swipeStep) {
       const direction = lastDragX > 0 ? 1 : -1;
-      // f * 0.94 can lower speed 
-      currentX = (this.containerWidth - SpringBounceFunction(f * 0.94) * (this.containerWidth)) * direction;
+      // f * 0.94 can lower speed
+      currentX =
+        (this.containerWidth - SpringBounceFunction(f * 0.94) * this.containerWidth) * direction;
     } else {
       currentX = lastDragX + SpringBounceFunction(f) * (targetX - lastDragX);
     }
-
 
     const shouldFinish = f >= 1.0;
     const mostlyFinished =
@@ -357,15 +374,18 @@ export default class SwipeContainer extends React.Component {
 
     if (shouldFinish) {
       this.phase = Phase.None;
-      this.setState({
-        currentX: targetX,
-        targetX: targetX,
-        thresholdDistance: 'unknown',
-        fullDistance: 'unknown',
-      });
+      this.setState(
+        {
+          currentX: targetX,
+          targetX: targetX,
+          thresholdDistance: 'unknown',
+          fullDistance: 'unknown',
+        },
+        this._judgeToggleSettleFlag
+      );
     } else {
       this.phase = Phase.Settling;
-      this.setState({ currentX, lastDragX });
+      this.setState({ currentX, lastDragX }, this._judgeToggleSettleFlag);
     }
   }
 

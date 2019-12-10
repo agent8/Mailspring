@@ -492,7 +492,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
   }
 
   // extracting access and refresh tokens
-  const { access_token, refresh_token } = json;
+  const { access_token, refresh_token, xoauth_yahoo_guid } = json;
 
   // get the user's email address
   const meResp = await fetch('https://social.yahooapis.com/v1/user/me/profile?format=json', {
@@ -502,19 +502,23 @@ export async function buildYahooAccountFromAuthResponse(code) {
 
   const me = await meResp.json();
   if (!meResp.ok) {
-    throw new Error(
-      `Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
-    );
+    AppEnv.reportError(new Error(`Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`));
+    me.profile = {
+      givenName: '',
+      familyName: '',
+      emails: []
+    }
+    debugger;
   }
 
-  const { givenName, familyName, guid } = me.profile;
+  const { givenName, familyName } = me.profile;
 
   let fullName = givenName;
   if (familyName) {
     fullName += ` ${familyName}`;
   }
 
-  let email = fullName + '/Yahoo';
+  let email = fullName ? fullName + '/Yahoo' : 'Yahoo';
   if (me.profile.emails[0] && me.profile.emails[0].handle) {
     email = me.profile.emails[0].handle;
   }
@@ -528,9 +532,10 @@ export async function buildYahooAccountFromAuthResponse(code) {
         refresh_client_id: YAHOO_CLIENT_ID,
         refresh_token: refresh_token,
       },
-    })
+    }),
+    'yahoo.com'
   );
-  account.settings.imap_username = account.settings.smtp_username = guid;
+  account.settings.imap_username = account.settings.smtp_username = xoauth_yahoo_guid;
 
   account.id = idForAccount(email, account.settings);
 
