@@ -341,7 +341,18 @@ export default class OAuthSignInPage extends React.Component {
     );
     return (
       <div className={`page account-setup oauth ${this.props.serviceName.toLowerCase()}`}>
-        {/* <div title="Open system browser" className="oauth-browser-btn" onClick={this.openBrowser}>Open</div> */}
+        <div
+          title="Open browser"
+          className="oauth-browser-btn"
+          onClick={this.openBrowser}
+        >
+          <RetinaImg
+            name="popout.svg"
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+            style={{ width: 24 }}
+          />
+        </div>
         {authStage === 'buildingAccount' && Validating}
         {authStage === 'accountSuccess' && Success}
         {!(['buildingAccount', 'accountSuccess', 'error'].includes(authStage)) && (

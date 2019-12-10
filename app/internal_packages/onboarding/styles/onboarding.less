@@ -841,12 +841,16 @@
 
 .page.account-setup {
   .oauth-browser-btn {
-    position: absolute;
-    z-index: 3;
+    position: fixed;
+    z-index: 101;
     height: 28px;
     width: 28px;
-    top: 41px;
-    left: 50px;
+    top: 16px;
+    right: 12px;
+    cursor: pointer;
+    img.content-mask {
+      background-color: #b6bdc2;
+    }
   }
   form {
     width: 390px;
