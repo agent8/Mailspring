@@ -4,6 +4,8 @@ var child_process = require('child_process');
 const file_mappings = [
   // svg icon
   ['veyron-design/icons/desktop/*.svg', './app/static/icons/'],
+  // snooze/d icon
+  ['veyron-design/icons/desktop/snooze.svg', './app/static/icons/snoozed.svg'],
   // system tray icon
   [
     'veyron-design/icons/desktop/MenuItem-*.png',
