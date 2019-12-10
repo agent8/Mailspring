@@ -102,7 +102,7 @@ export class Privacy extends React.Component {
       detail:
         'By deleting your data on our servers, you are also discontinuing your use of the Email application. This action cannot be undon. ',
       showInMainWindow: true,
-      buttons: ['Confirm', 'Cancel'],
+      buttons: ['Delete', 'Cancel'],
     }).then(({ response }) => {
       if (this._mounted) {
         this.setState({ deleteUserDataPopupOpen: false });
