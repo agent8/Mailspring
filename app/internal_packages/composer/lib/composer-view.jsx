@@ -35,6 +35,7 @@ import { uploadFileAsync } from '../../edison-beijing-chat/utils/awss3'
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
 import _ from '../teamreply-client/src/static/js/teampad-config.js'
+import { loadDraftPadMap, saveDraftPadMap, loadPadInfo, savePadInfo } from './app-pad-data'
 import axios from 'axios'
 
 const {
@@ -46,6 +47,7 @@ const {
 const buttonTimer = 700
 const newDraftTimeDiff = 3000
 const TOOLBAR_MIN_WIDTH = 540
+const draftPadMap = loadDraftPadMap()
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
@@ -487,9 +489,9 @@ export default class ComposerView extends React.Component {
     const userId = chatAccount.userId || '100007'
     const name = chatAccount.name
     const userName = name
-    let padId = chatAccount.padId
     const { draft } = this.props
     console.log(' createTeamEditPad: draft: ', draft)
+    let padId = draftPadMap[draft.headerMessageId]
     const subject = draft.subject
     const body = draft.body
     const to = draft.to.map(x => x.email)
@@ -511,7 +513,7 @@ export default class ComposerView extends React.Component {
         to,
         cc,
         bcc,
-        attachments: files,
+        attachments: files
       },
       emailExtr: {
         subject,
@@ -538,8 +540,8 @@ export default class ComposerView extends React.Component {
       }
       if (res && res.code === 0 && res.data && res.data && res.data.padId) {
         padId = res.data.padId
-        chatAccount.padId = padId
-        AppEnv.config.set('chatAccounts', chatAccounts)
+        draftPadMap[draft.headerMessageId] = padId
+        saveDraftPadMap(draftPadMap)
       }
     }
     return { padId, userId, userName, token, email }
@@ -550,6 +552,7 @@ export default class ComposerView extends React.Component {
     if (!inTeamEditMode && !padInfo) {
       padInfo = await this.createTeamEditPad()
     }
+    console.log(' toggleTeamEdit: ', padInfo)
     this.setState({ inTeamEditMode: !inTeamEditMode, padInfo })
   }
 

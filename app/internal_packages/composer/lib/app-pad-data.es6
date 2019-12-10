@@ -6,6 +6,20 @@ the file is a json file with tha data structure like below:
 import path from 'path'
 import fs from 'fs'
 
+export const loadDraftPadMap = () => {
+  const configPath = AppEnv.getConfigDirPath()
+  console.log(' loadDraftPadMap: ', configPath)
+  const filePath = path.join(configPath, 'draftid-padid-map.json')
+  if (!fs.existsSync(filePath)) {
+    return {}
+  }
+  const content = fs.readFileSync(filePath)
+  if (!content) {
+    return {}
+  }
+  const result = JSON.parse(content)
+  return result
+}
 // load all pad's data
 export const loadPadData = () => {
   const configPath = AppEnv.getConfigDirPath()
@@ -30,10 +44,19 @@ export const loadPadInfo = padInfo => {
   return padInfo
 }
 
-// save all pad'sdata
+// save the data for map from draft id to pad id
+export const saveDraftPadMap = draftIdPadIdMap => {
+  const configPath = AppEnv.getConfigDirPath()
+  console.log(' saveDraftPadMap: ', configPath)
+  const filePath = path.join(configPath, 'draftid-padid-map.json')
+  const content = JSON.stringify(draftIdPadIdMap)
+  fs.writeFileSync(filePath, content)
+}
+
+// save all pad data
 export const savePadData = appPadData => {
   const configPath = AppEnv.getConfigDirPath()
-  console.log(' loadPadData: ', configPath)
+  console.log(' savePadData: ', configPath)
   const padDataFilePath = path.join(configPath, 'app-pad-data.json')
   const content = JSON.stringify(appPadData)
   fs.writeFileSync(padDataFilePath, content)
@@ -49,6 +72,8 @@ export const savePadInfo = padInfo => {
 }
 
 export default {
+  loadDraftPadMap,
+  saveDraftPadMap,
   loadPadData,
   loadPadInfo,
   savePadData,
