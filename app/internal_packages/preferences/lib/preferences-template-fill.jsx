@@ -5,6 +5,7 @@ import {
   DownloadSelection,
   LocalData,
   SupportId,
+  TaskDelay,
 } from './components/preferences-general-components';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
@@ -96,11 +97,12 @@ const preferencesTemplateFill = {
               label: 'New mail sound',
               configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
               keyPath: 'core.notifications.sounds',
-              keywords: [],
+              keywords: ['notification'],
             },
             {
               label: 'Undo time window',
               configSchema: configSchema => configSchema.properties.task.properties.delayInMs,
+              component: TaskDelay,
               keyPath: 'core.task.delayInMs',
               keywords: [],
             },

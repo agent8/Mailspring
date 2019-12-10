@@ -127,14 +127,13 @@ export default class SheetContainer extends React.Component {
   }
 
   isValidUser = () => {
-    // comment out invite flow
-    // const agree = AppEnv.config.get('agree');
-    // const shareCounts = AppEnv.config.get('invite.count') || 0;
-    // if (!AppEnv.isMainWindow()) {
-    //   return true;
-    // }
-    // return agree || shareCounts >= 5;
-    return true;
+    // beta invite flow
+    const agree = AppEnv.config.get('agree');
+    const shareCounts = AppEnv.config.get('invite.count') || 0;
+    if (!AppEnv.isMainWindow()) {
+      return true;
+    }
+    return agree || shareCounts >= 5;
   }
 
   render() {
@@ -219,9 +218,9 @@ export default class SheetContainer extends React.Component {
                 url="edisonmail://onboarding/assets/logo-light.png"
                 mode={RetinaImg.Mode.ContentPreserve}
               />
-              <h1>Welcome to the Mac Closed Beta</h1>
+              <h1>Start Using Edison Mail for Mac</h1>
               <p>Connect your account to continue using the app</p>
-              <button onClick={this.openOnboarding}>Login</button>
+              <button className="btn login-button" onClick={this.openOnboarding}>Connect your account to unlock</button>
             </div>
           )
         }

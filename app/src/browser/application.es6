@@ -1,6 +1,6 @@
 /* eslint global-require: "off" */
 
-import { BrowserWindow, Menu, app, ipcMain, dialog, systemPreferences } from 'electron';
+import { BrowserWindow, Menu, app, ipcMain, dialog, systemPreferences, Notification } from 'electron';
 
 import fs from 'fs-plus';
 import rimraf from 'rimraf';
@@ -181,6 +181,10 @@ export default class Application extends EventEmitter {
     return this.windowManager.getOpenWindows();
   }
 
+  getNotification(options) {
+    return new Notification(options);
+  }
+
   getMainWindow() {
     const win = this.windowManager.get(WindowManager.MAIN_WINDOW);
     return win ? win.browserWindow : null;
@@ -320,7 +324,7 @@ export default class Application extends EventEmitter {
         console.log(e);
       }
     }
-    ipcMain.emit('upload-to-report-server', { status: 'uploading', error: null, payload: {logID: extra.logID || ''} });
+    ipcMain.emit('upload-to-report-server', { status: 'uploading', error: null, payload: { logID: extra.logID || '' } });
     if (type.toLocaleLowerCase() === 'error') {
       global.errorLogger.reportError(error, extra);
     } else if (type.toLocaleLowerCase() === 'warning') {
@@ -335,7 +339,7 @@ export default class Application extends EventEmitter {
       extra.osInfo = getOSInfo();
       extra.native = this.nativeVersion;
       extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
-      if (!!extra.errorData && (typeof extra.errorData !== 'string') ) {
+      if (!!extra.errorData && (typeof extra.errorData !== 'string')) {
         extra.errorData = JSON.stringify(extra.errorData);
       }
     } catch (err) {
@@ -482,7 +486,7 @@ export default class Application extends EventEmitter {
     });
   }
 
-  processReportErrorEvent(params, level = 'error'){
+  processReportErrorEvent(params, level = 'error') {
     try {
       let errorParams;
       let extraParams;
@@ -496,7 +500,7 @@ export default class Application extends EventEmitter {
       let err;
       if (typeof params.errorMessage === 'string') {
         err = new Error(params.errorMessage);
-      } else if (typeof extraParams.message === 'string'){
+      } else if (typeof extraParams.message === 'string') {
         err = new Error(extraParams.message);
       } else {
         err = new Error();
@@ -868,19 +872,19 @@ export default class Application extends EventEmitter {
     this.on('application:send-feedback', () => {
       const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (mainWindow) {
-        const feedbackAddress = 'macfeedback@edison.tech';
+        const feedbackAddress = 'mailsupport@edison.tech';
         mainWindow.sendMessage('composeFeedBack', {
           to: { email: feedbackAddress, name: 'Mac Feedback' },
-          subject: 'Mac Feedback',
+          subject: '[Email-macOS] Feedback ',
         });
       }
     });
 
-    this.on('application:send-share', body => {
+    this.on('application:send-share', (subject, body) => {
       const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (mainWindow) {
-        mainWindow.sendMessage('composeFeedBack', {
-          subject: '',
+        mainWindow.sendMessage('composeInvite', {
+          subject,
           body
         });
       }
@@ -903,6 +907,10 @@ export default class Application extends EventEmitter {
 
     this.on('application:view-terms', () => {
       const helpUrl = 'http://www.edison.tech/terms.html';
+      require('electron').shell.openExternal(helpUrl);
+    });
+    this.on('application:view-help', () => {
+      const helpUrl = 'https://mailsupport.edison.tech/';
       require('electron').shell.openExternal(helpUrl);
     });
 
@@ -1494,7 +1502,7 @@ export default class Application extends EventEmitter {
     });
     ipcMain.on('upload-to-report-server', data => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      if (main){
+      if (main) {
         main.sendMessage('upload-to-report-server', data);
       }
       const bugReportWindow = this.windowManager.get(WindowManager.BUG_REPORT_WINDOW);
