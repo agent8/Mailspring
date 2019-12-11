@@ -20,7 +20,11 @@ export default class LoginPage extends React.Component {
     OnboardingActions.moveToPage('account-choose');
     setTimeout(() => {
       const win = AppEnv.getCurrentWindow();
-      win.unmaximize();
+      // win.unmaximize();
+      win.setSize(685, 700);
+      const left = Math.floor((screen.width - 685) / 2);
+      const top = Math.floor((screen.height - 700) / 2 - 30);
+      win.setPosition(left, top);
       win.setResizable(false);
     }, 10)
   };

@@ -15,7 +15,7 @@ let Utils = null;
 export const LocalizedErrorStrings = {
   ErrorConnection: 'Connection Error - Unable to connect to the server / port you provided.',
   ErrorInvalidAccount:
-    'This account is invalid or EdisonMail could not find the Inbox or All Mail folder. http://support.getmailspring.com/hc/en-us/articles/115001881912',
+    'This account is invalid or EdisonMail could not find the Inbox or All Mail folder. https://mailsupport.edison.tech/hc/en-us/articles/360037660151',
   ErrorTLSNotAvailable: 'TLS Not Available',
   ErrorParse: 'Parsing Error',
   ErrorCertificate:
@@ -115,6 +115,24 @@ export default class MailsyncProcess extends EventEmitter {
     });
   }
 
+  // -20 - 0: high
+  // 0:  normal
+  // 0 - 20: low
+  setPriority = (priority) => {
+    const proc = spawn("renice", [priority, this._proc.pid]);
+    proc.on('exit', function (code) {
+      if (code !== 0) {
+        console.log("Process exec failed with code - " + code);
+      }
+    });
+    proc.stdout.on('data', function (data) {
+      console.log('stdout: ' + data);
+    });
+    proc.stderr.on('data', function (data) {
+      console.log('stderr: ' + data);
+    });
+  }
+
   _spawnProcess(mode) {
     const env = {
       CONFIG_DIR_PATH: this.configDirPath,
@@ -124,7 +142,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log(`\n----\n---PROXY SET: ${process.env.HTTP_PROXY}`);
       env.HTTP_PROXY = process.env.HTTP_PROXY;
     }
-    if (process.env.HTTPS_PROXY){
+    if (process.env.HTTPS_PROXY) {
       console.log(`\n----\n---PROXY SET: ${process.env.HTTPS_PROXY}`);
       env.HTTPS_PROXY = process.env.HTTPS_PROXY;
     }
@@ -157,6 +175,7 @@ export default class MailsyncProcess extends EventEmitter {
     }
     console.log(`\n\n\n\n\nprocess mode: ${mode} args: ${args.join(' ')}`);
     this._proc = spawn(this.binaryPath, args, { env });
+    // this.setPriority(15);
 
     /* Allow us to buffer up to 1MB on stdin instead of 16k. This is necessary
     because some tasks (creating replies to drafts, etc.) can be gigantic amounts
@@ -188,7 +207,7 @@ export default class MailsyncProcess extends EventEmitter {
         this.syncInitilMessageSend = true;
         this._flushSendQueue();
       });
-    } else if (this.accounts && this._proc.stdout && mode === mailSyncModes.SIFT){
+    } else if (this.accounts && this._proc.stdout && mode === mailSyncModes.SIFT) {
       this._proc.stdout.once('data', () => {
         const rs = new Readable();
         let siftAccountString = '';
@@ -301,7 +320,7 @@ export default class MailsyncProcess extends EventEmitter {
   sift() {
     this.sync(mailSyncModes.SIFT);
   }
-  updatePrivacyOptions(options){
+  updatePrivacyOptions(options) {
     if (!options || !options.dataShare) {
       return;
     }
@@ -421,7 +440,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-          this.account ? this.account.id : 'no account'
+        this.account ? this.account.id : 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');

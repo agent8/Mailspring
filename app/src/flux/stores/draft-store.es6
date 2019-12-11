@@ -58,6 +58,7 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.composePopoutDraft, this._onPopoutDraft);
       this.listenTo(Actions.composeNewBlankDraft, this._onPopoutBlankDraft);
       this.listenTo(Actions.composeNewDraftToRecipient, this._onPopoutNewDraftToRecipient);
+      this.listenTo(Actions.composeInviteDraft, this._onPopoutInviteDraft);
       this.listenTo(Actions.composeFeedBackDraft, this._onPopoutFeedbackDraft);
       this.listenTo(Actions.sendQuickReply, this._onSendQuickReply);
       this.listenTo(Actions.sendDraft, this._onSendDraft);
@@ -72,7 +73,16 @@ class DraftStore extends MailspringStore {
       });
 
       ipcRenderer.on('composeFeedBack', (event, data) => {
+        const account = DraftFactory._accountForNewDraft();
+        if (account) {
+          data.subject += 'from ' + account.name;
+        }
+        data.body = `<br/><br/><br/>[MacOS] ${AppEnv.getVersion()}`;
         Actions.composeFeedBackDraft(data);
+      });
+
+      ipcRenderer.on('composeInvite', (event, data) => {
+        Actions.composeInviteDraft(data);
       });
 
       // send mail Immediately
@@ -687,7 +697,7 @@ class DraftStore extends MailspringStore {
         this._finalizeAndPersistNewMessage(draft).then(() => {
           Actions.sendDraft(draft.headerMessageId);
         }).catch(e => {
-          AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e}, {grabLogs: true});
+          AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e }, { grabLogs: true });
         });
       });
   };
@@ -782,7 +792,7 @@ class DraftStore extends MailspringStore {
         return { headerMessageId: draft.headerMessageId, draft };
       })
       .catch(t => {
-        AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: task}, {grabLogs: true});
+        AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: task }, { grabLogs: true });
         return { headerMessageId: draft.headerMessageId, draft };
       });
   }
@@ -792,6 +802,23 @@ class DraftStore extends MailspringStore {
     this._draftSessions[headerMessageId] = new DraftEditingSession(headerMessageId, draft, options);
     return this._draftSessions[headerMessageId];
   }
+
+  _onPopoutInviteDraft = async ({ to, subject = '', body } = {}) => {
+    const draftData = {
+      subject
+    }
+    if (to) {
+      const toContact = Contact.fromObject(to);
+      draftData.to = [toContact];
+    }
+    if (body) {
+      draftData.body = body
+    }
+    AppEnv.logDebug(`Creating invite draft`);
+    const draft = await DraftFactory.createInviteDraft(draftData);
+    await this._finalizeAndPersistNewMessage(draft, { popout: true });
+    AppEnv.logDebug(`Created invite draft: ${draft.headerMessageId}`);
+  };
 
   _onPopoutFeedbackDraft = async ({ to, subject = '', body } = {}) => {
     const draftData = {
@@ -1324,6 +1351,7 @@ class DraftStore extends MailspringStore {
           this._onSendDraftCancelled({ headerMessageId });
         },
       });
+      AppEnv.logDebug(`Sending draft to undo queue ${headerMessageId}`);
       Actions.queueUndoOnlyTask(undoTask);
       // ipcRenderer.send('send-later-manager', 'send-later', headerMessageId, delay, actionKey, draft.threadId);
     } else {

@@ -220,7 +220,7 @@ export default class SheetContainer extends React.Component {
               />
               <h1>Start Using Edison Mail for Mac</h1>
               <p>Connect your account to continue using the app</p>
-              <button onClick={this.openOnboarding}>Connect your account to unlock</button>
+              <button className="btn login-button" onClick={this.openOnboarding}>Connect your account to unlock</button>
             </div>
           )
         }

@@ -148,7 +148,7 @@ export default class Webview extends React.Component {
     if (httpResponseCode >= 400) {
       const error = `
         Could not reach EdisonMail. Please try again or contact
-        macfeedback@edison.tech if the issue persists.
+        mailsupport@edison.tech if the issue persists.
         (${originalURL}: ${httpResponseCode})
       `;
       this.setState({ ready: false, error: error, webviewLoading: false });

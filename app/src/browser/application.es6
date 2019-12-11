@@ -872,19 +872,19 @@ export default class Application extends EventEmitter {
     this.on('application:send-feedback', () => {
       const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (mainWindow) {
-        const feedbackAddress = 'macfeedback@edison.tech';
+        const feedbackAddress = 'mailsupport@edison.tech';
         mainWindow.sendMessage('composeFeedBack', {
           to: { email: feedbackAddress, name: 'Mac Feedback' },
-          subject: 'Mac Feedback',
+          subject: '[Email-macOS] Feedback ',
         });
       }
     });
 
-    this.on('application:send-share', body => {
+    this.on('application:send-share', (subject, body) => {
       const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (mainWindow) {
-        mainWindow.sendMessage('composeFeedBack', {
-          subject: '',
+        mainWindow.sendMessage('composeInvite', {
+          subject,
           body
         });
       }
@@ -907,6 +907,10 @@ export default class Application extends EventEmitter {
 
     this.on('application:view-terms', () => {
       const helpUrl = 'http://www.edison.tech/terms.html';
+      require('electron').shell.openExternal(helpUrl);
+    });
+    this.on('application:view-help', () => {
+      const helpUrl = 'https://mailsupport.edison.tech/';
       require('electron').shell.openExternal(helpUrl);
     });
 

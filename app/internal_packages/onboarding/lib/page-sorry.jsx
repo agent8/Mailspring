@@ -79,15 +79,21 @@ export default class SorryPage extends React.Component {
     this.disposable.dispose();
   }
 
-  _onContinue = () => {
+  _onContinue = async () => {
     // AppEnv.getCurrentWindow().setAlwaysOnTop(false);
-    const { body } = this.state;
+    let { body } = this.state;
+    // if body not exists or body has error, fetch body again
+    if (!body || body.error) {
+      body = await AppEnv.getUserInviteEmailBody(this.email);
+      this.setState({ body });
+    }
     if (body && !body.error) {
       AppEnv.getCurrentWindow().setAlwaysOnTop(false);
       ipcRenderer.send(
         'command',
         'application:send-share',
-        `<br/><p>${body.text}</p><a href='${body.link + '&from=MacApp'}'>${body.link +
+        body.subject,
+        `<p>${body.text}</p><a href='${body.link + '&from=MacApp'}'>${body.link +
         '&from=MacApp'}</a>`
       );
     }
@@ -106,28 +112,20 @@ export default class SorryPage extends React.Component {
           />
         ) : (
             <div className="steps-container">
-              <h1 className="hero-text">Sorry</h1>
+              <h1 className="hero-text">You’re on the Waitlist!</h1>
               <p>
-                <span className="email">{this.email}</span>address has not yet been accepted
-              <br />
-                into the private beta. We are trying our best to
-              <br />
-                accept new users as fast as possible.
-            </p>
-              <br />
-              <br />
-              <p>
-                Refer {5 - shareCounts} {5 - shareCounts > 1 ? 'friends' : 'friend'} to get access
-                now.
-              <br />
-                <br />
-                {body && !body.error ? (
-                  <a href={body.link + '&from=MacApp'}>{body.link + '&from=MacApp'}</a>
-                ) : null}
+                We’re releasing invites as quickly as we can, so we<br />
+                appreciate the patience. Refer {5 - shareCounts} {5 - shareCounts > 1 ? 'friends' : 'friend'} to get<br />
+                access now.
               </p>
+              <br />
+              <br />
               <button key="next" className="btn btn-large btn-invite" onClick={this._onContinue}>
-                Invite Friends
-            </button>
+                Invite {5 - shareCounts} {5 - shareCounts > 1 ? 'Friends' : 'Friend'}
+              </button>
+              {body && !body.error ? (
+                <a className="invite-link" href={body.link + '&from=MacApp'}>{body.link}</a>
+              ) : null}
             </div>
           )}
       </div>

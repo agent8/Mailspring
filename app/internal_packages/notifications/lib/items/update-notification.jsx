@@ -12,14 +12,15 @@ export default class UpdateNotification extends React.Component {
   }
 
   componentDidMount() {
-    this.disposable = AppEnv.onUpdateAvailable(() => {
-      this.setState(this.getStateFromStores());
-    });
+    remote.getGlobal('application').autoUpdateManager.on('state-changed',this.onAutoUpdateManagerStateChange);
   }
 
   componentWillUnmount() {
-    this.disposable.dispose();
+    remote.getGlobal('application').autoUpdateManager.removeListener('state-changed',this.onAutoUpdateManagerStateChange);
   }
+  onAutoUpdateManagerStateChange = ()=>{
+    this.setState(this.getStateFromStores());
+  };
 
   getStateFromStores() {
     const updater = remote.getGlobal('application').autoUpdateManager;

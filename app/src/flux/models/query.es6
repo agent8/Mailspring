@@ -74,11 +74,14 @@ export default class ModelQuery {
           if (!this._crossDB.connections[key]) {
             this._crossDB.connections[key] = {
               db: attr.joinDBName(),
-              modelKey: attr.modelKey,
-              columnKey: attr.tableColumn,
+              modelKeys: [attr.modelKey],
+              columnKeys: [attr.tableColumn],
               joinModelKey: attr.joinModelKey,
               joinTableKey: attr.joinTableKey,
             };
+          } else {
+            this._crossDB.connections[key].modelKeys.push(attr.modelKey);
+            this._crossDB.connections[key].columnKeys.push(attr.tableColumn);
           }
           if(!this._crossDB.link[key]){
             this._crossDB.link[key] = false;
@@ -121,7 +124,7 @@ export default class ModelQuery {
   crossDBs() {
     return this._crossDB.connections;
   }
-  crossDBLink(){
+  crossDBLink() {
     return this._crossDB.link;
   }
 
@@ -440,12 +443,16 @@ export default class ModelQuery {
             }
           }
         } else if (dbKey !== 'main') {
-          const { modelKey, joinModelKey, joinTableKey, columnKey} = this._crossDB.connections[dbKey];
-          const replaceObj =
-            this._mainDBCache &&
-            this._mainDBCache.find(obj => obj[joinModelKey] === object[joinTableKey]);
-          if (replaceObj) {
-            replaceObj[modelKey] = object[columnKey];
+          const { modelKeys, joinModelKey, joinTableKey, columnKeys} = this._crossDB.connections[dbKey];
+          for(let i = 0; i<modelKeys.length; i++){
+            const modelKey = modelKeys[i];
+            const columnKey = columnKeys[i];
+            const replaceObj =
+              this._mainDBCache &&
+              this._mainDBCache.find(obj => obj[joinModelKey] === object[joinTableKey]);
+            if (replaceObj) {
+              replaceObj[modelKey] = object[columnKey];
+            }
           }
         }
         return object;

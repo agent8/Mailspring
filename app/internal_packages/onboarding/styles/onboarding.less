@@ -840,6 +840,18 @@
 }
 
 .page.account-setup {
+  .oauth-browser-btn {
+    position: fixed;
+    z-index: 101;
+    height: 28px;
+    width: 28px;
+    top: 16px;
+    right: 12px;
+    cursor: pointer;
+    img.content-mask {
+      background-color: #b6bdc2;
+    }
+  }
   form {
     width: 390px;
     padding-top: 50px;
@@ -1161,10 +1173,10 @@
 
   .hero-text {
     color: white;
-    font-size: 50px;
-    line-height: 56px;
+    font-size: 58px;
+    line-height: 58px;
     cursor: default;
-    margin-top: -80px;
+    margin-top: -20px;
     font-weight: 500;
     -webkit-font-smoothing: subpixel-antialiased;
   }
@@ -1174,7 +1186,7 @@
     font-weight: 300;
   }
   .hero-subtext {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
   }
 
@@ -1186,7 +1198,7 @@
   }
 
   .btn.login-button {
-    height: 44px;
+    height: 50px;
     padding: 0 60px;
     background: transparent;
     border: 2px solid white;
@@ -1203,33 +1215,44 @@
 .page.sorry {
   display: flex;
   flex-direction: column;
-  background-image: url(edisonmail://onboarding/assets/mac-beta-back.jpg);
-  background-size: cover;
   .steps-container {
     height: 100%;
-    background: rgba(255, 255, 255, 0.7);
     .email {
       color: #1293fd;
       margin-right: 8px;
     }
     .hero-text {
-      margin-top: 160px;
+      font-size: 34pt;
+      margin-top: 110px;
       margin-bottom: 16px;
       font-weight: 500;
+      color: #000;
     }
     p {
-      font-size: 16px;
+      font-size: 20px;
+      line-height: 25px;
+      font-weight: bold;
+      width: 80%;
+      margin: 55px auto 0;
+      opacity: 0.6;
     }
     .btn.btn-invite {
-      height: 50px;
+      height: 66px;
       width: 60%;
-      font-size: 17px;
+      font-size: 20px;
       font-weight: bold;
       text-align: center;
-      border-radius: 25px;
+      border-radius: 33px;
+      margin: 20px auto 0;
+      display: block;
+    }
+    .invite-link {
       position: absolute;
       bottom: 50px;
-      left: 20%;
+      font-size: 16px;
+      left: 0;
+      right: 0;
+      font-weight: 500;
     }
   }
 }
