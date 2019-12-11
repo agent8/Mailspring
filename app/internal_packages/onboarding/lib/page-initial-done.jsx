@@ -63,6 +63,7 @@ class InitialDonePage extends React.Component {
   }
 
   _onFinished = () => {
+    AppEnv.trackingEvent('Onboarding-Done');
     this.setState({
       submitting: true
     });
