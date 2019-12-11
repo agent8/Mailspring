@@ -267,6 +267,19 @@ export class LocalData extends React.Component {
   constructor() {
     super();
     this.state = {};
+    this.resetAccountCbCount = 0;
+    this.openWindowsCountSnapshot = 0;
+    this.unsubscribe = null;
+  }
+  componentDidMount(){
+    if(AppEnv.isMainWindow()){
+      this.unsubscribe = Actions.resetSettingsCb.listen(this._onResetAccountsCb, this);
+    }
+  }
+  componentWillUnmount(){
+    if(this.unsubscribe){
+      this.unsubscribe();
+    }
   }
 
   _onReboot = () => {
@@ -279,15 +292,38 @@ export class LocalData extends React.Component {
     Actions.forceKillAllClients();
   };
 
+  _onResetAccountsCb = () => {
+    this.resetAccountCbCount++;
+    if (
+      this.openWindowsCountSnapshot === 0 ||
+      this.resetAccountCbCount === 1
+    ) {
+      const cb = () => {
+        this.openWindowsCountSnapshot = -1;
+        AppEnv.logDebug(`running reset accounts settings cb`);
+        rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
+          if (err) {
+            return AppEnv.showErrorDialog(
+              `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`,
+            );
+          }
+          this._onReboot();
+        });
+      };
+      setTimeout(cb, 100);
+    }
+  };
+
   _onResetAccountsAndSettings = () => {
-    rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
-      if (err) {
-        return AppEnv.showErrorDialog(
-          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
-        );
-      }
-      this._onReboot();
-    });
+    if (this.openWindowsCountSnapshot > 0 || this.openWindowsCountSnapshot === -1) {
+      return;
+    }
+    this.openWindowsCountSnapshot = AppEnv.getOpenWindowCount();
+    if (this.openWindowsCountSnapshot > 0) {
+      Actions.resetSettings();
+    } else {
+      this._onResetAccountsCb();
+    }
   };
 
   render() {

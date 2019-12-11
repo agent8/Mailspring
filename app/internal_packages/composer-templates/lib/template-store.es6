@@ -21,6 +21,7 @@ class TemplateStore extends MailspringStore {
     this.listenTo(TemplateActions.showTemplates, this._onShowTemplates);
     this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
     this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
+    Actions.resetSettings.listen(this.onAppSettingsReset, this);
 
     this._items = [];
     this._templatesDir = path.join(AppEnv.getConfigDirPath(), 'templates');
@@ -52,6 +53,7 @@ class TemplateStore extends MailspringStore {
 
   watch() {
     if (!this._watcher) {
+      AppEnv.logDebug('watching templates');
       try {
         this._watcher = fs.watch(this._templatesDir, () => this._populate());
       } catch (err) {
@@ -60,13 +62,18 @@ class TemplateStore extends MailspringStore {
       }
     }
   }
+  onAppSettingsReset = () => {
+    this.unwatch();
+    Actions.resetSettingsCb();
+  };
 
-  unwatch() {
+  unwatch = () => {
     if (this._watcher) {
+      AppEnv.logDebug('unwatching templates');
       this._watcher.close();
     }
     this._watcher = null;
-  }
+  };
 
   items() {
     return this._items;
