@@ -128,12 +128,13 @@ export default class SheetContainer extends React.Component {
 
   isValidUser = () => {
     // beta invite flow
+    const NEED_INVITE_COUNT = 3;
     const agree = AppEnv.config.get('agree');
     const shareCounts = AppEnv.config.get('invite.count') || 0;
     if (!AppEnv.isMainWindow()) {
       return true;
     }
-    return agree || shareCounts >= 5;
+    return agree || shareCounts >= NEED_INVITE_COUNT;
   }
 
   render() {

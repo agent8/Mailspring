@@ -182,6 +182,11 @@ class InitialPreferencesPage extends React.Component {
   }
 
   _onFinished = () => {
+    if (AppEnv.config.get('core.workspace.mode') === 'list') {
+      AppEnv.trackingEvent('Onboarding-PanelMode-single');
+    } else {
+      AppEnv.trackingEvent('Onboarding-PanelMode-split');
+    }
     OnboardingActions.moveToPage('initial-preferences-profile');
   };
 }
