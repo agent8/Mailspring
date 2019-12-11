@@ -94,12 +94,6 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
-              label: 'New mail sound',
-              configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
-              keyPath: 'core.notifications.sounds',
-              keywords: ['notification'],
-            },
-            {
               label: 'Undo time window',
               configSchema: configSchema => configSchema.properties.task.properties.delayInMs,
               component: TaskDelay,
@@ -225,6 +219,12 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.notifications.properties.enabled,
               keyPath: 'core.notifications.enabled',
+              keywords: [],
+            },
+            {
+              label: 'New mail notification sound',
+              configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
+              keyPath: 'core.notifications.sounds',
               keywords: [],
             },
             {

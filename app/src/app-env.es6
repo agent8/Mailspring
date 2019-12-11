@@ -12,13 +12,13 @@ import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 const LOG = require('electron-log');
-const archiver = require('archiver');
-let getOSInfo = null;
+// const archiver = require('archiver');
+// let getOSInfo = null;
 let getDeviceHash = null;
 // To add a new user
-const WebServerApiKey = "bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR";
+const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
 const WebServerRoot = 'https://web-marketing.edison.tech/';
-const type = "mac";
+const type = 'mac';
 
 function ensureInteger(f, fallback) {
   let int = f;
@@ -134,8 +134,9 @@ export default class AppEnvConstructor {
 
     // tracking
     const TrackingAppEvents = require('./tracking-utils').default;
-    this.trackingEvent = TrackingAppEvents.trackingEvent;
-    this.trackingTask = TrackingAppEvents.trackingTask;
+    const trackingEvents = new TrackingAppEvents({ devMode });
+    this.trackingEvent = trackingEvents.trackingEvent;
+    this.trackingTask = trackingEvents.trackingTask;
 
     // We extend observables with our own methods. This happens on
     // require of mailspring-observables
@@ -717,6 +718,16 @@ export default class AppEnvConstructor {
     return this.constructor.getCurrentWindow();
   }
 
+  getOpenWindowCount() {
+    let ret = 0;
+    try {
+      ret = remote.getGlobal('application').windowManager.getOpenWindowCount();
+    } catch (e) {
+      this.reportError(e, {});
+    }
+    return ret;
+  }
+
   // Extended: Move current window to the center of the screen.
   center() {
     if (process.platform === 'linux') {
@@ -1198,12 +1209,18 @@ export default class AppEnvConstructor {
       });
   }
 
-  showMessageBox({ title = '', showInMainWindow, detail = '', type = 'question', buttons = ['Okay', 'Cancel'] } = {}) {
+  showMessageBox({
+    title = '',
+    showInMainWindow,
+    detail = '',
+    type = 'question',
+    buttons = ['Okay', 'Cancel'],
+  } = {}) {
     let winToShow = null;
     if (showInMainWindow) {
       winToShow = remote.getGlobal('application').getMainWindow();
     }
-    return remote.dialog.showMessageBox(winToShow, { type, buttons, message: title, detail, });
+    return remote.dialog.showMessageBox(winToShow, { type, buttons, message: title, detail });
   }
 
   // Delegate to the browser's process fileListCache
@@ -1317,15 +1334,15 @@ export default class AppEnvConstructor {
             const pass = new stream.PassThrough();
             pass.end(img.toPNG());
             pass.pipe(output);
-            output.on('close', function () {
+            output.on('close', function() {
               output.close();
               resolve(outputPath);
             });
-            output.on('end', function () {
+            output.on('end', function() {
               output.close();
               reject();
             });
-            output.on('error', function () {
+            output.on('error', function() {
               output.close();
               reject();
             });
@@ -1496,7 +1513,9 @@ export default class AppEnvConstructor {
   }
 
   mockReportError(str = {}, extra = {}, opts = {}) {
-    this.reportError(new Error('oeuoeueouoe'), { errorData: { task: { abc: 1, bbc: 2 }, abc: 'eeee' } });
+    this.reportError(new Error('oeuoeueouoe'), {
+      errorData: { task: { abc: 1, bbc: 2 }, abc: 'eeee' },
+    });
   }
 
   syncSiftFolders() {
@@ -1506,11 +1525,19 @@ export default class AppEnvConstructor {
     });
   }
 
-  registerBetaUser = async (email) => {
+  registerBetaUser = async email => {
     // This is to be used to add a beta user to the queue, it requires a type, api key and email
     let response = '';
     try {
-      response = await fetch(WebServerRoot + 'registerBetaUser?type=' + type + '&apiKey=' + WebServerApiKey + '&email=' + email);
+      response = await fetch(
+        WebServerRoot +
+          'registerBetaUser?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email
+      );
       response = await response.json();
       if (response.status === 200) {
         this.config.set('invite.invitationCode', body.invitationCode);
@@ -1518,32 +1545,48 @@ export default class AppEnvConstructor {
     } catch (err) {
       console.error('registerBetaUser ERROR:', err);
       response = {
-        error: err
-      }
+        error: err,
+      };
     }
     return response;
-  }
+  };
 
   getUserInviteEmailBody = async email => {
     let response = '';
     try {
       // This is used for the mac app to get the user invite email copy. It will require an email address to get the correct share link
-      response = await fetch(WebServerRoot + 'getUserInviteEmailBody?type=' + type + '&apiKey=' + WebServerApiKey + '&email=' + email);
+      response = await fetch(
+        WebServerRoot +
+          'getUserInviteEmailBody?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email
+      );
       response = await response.json();
       if (response.error === 'email is invalid') {
         await this.registerBetaUser(email);
-        response = await fetch(WebServerRoot + 'getUserInviteEmailBody?type=' + type + '&apiKey=' + WebServerApiKey + '&email=' + email);
+        response = await fetch(
+          WebServerRoot +
+            'getUserInviteEmailBody?type=' +
+            type +
+            '&apiKey=' +
+            WebServerApiKey +
+            '&email=' +
+            email
+        );
         response = await response.json();
       }
       this.config.set('invite.body', response);
     } catch (err) {
       console.error('getUserInviteEmailBody ERROR:', err);
       response = {
-        error: err
-      }
+        error: err,
+      };
     }
     return response;
-  }
+  };
 
   checkUnlock = async (email, force) => {
     // This is a request that is intended to be sent by the mac app to check if the user is available to unlock.
@@ -1551,16 +1594,20 @@ export default class AppEnvConstructor {
     // There is an optional param called force=true which will bypass all of the invite logic and automatically accept the user into the program regardless of how many invites have been shared.
     let response = '';
     try {
-      response = await fetch(WebServerRoot
-        + 'unlock?type=' + type
-        + '&apiKey=' + WebServerApiKey
-        + '&email=' + email
-        + (force ? '&force=true' : '')
+      response = await fetch(
+        WebServerRoot +
+          'unlock?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email +
+          (force ? '&force=true' : '')
       );
       if (response.status === 200) {
         response = {
           status: 'OK',
-          message: await response.text()
+          message: await response.text(),
         };
       } else {
         response = await response.json();
@@ -1568,11 +1615,11 @@ export default class AppEnvConstructor {
     } catch (err) {
       console.error('checkUnlock ERROR:', err);
       response = {
-        error: err
-      }
+        error: err,
+      };
     }
     return response;
-  }
+  };
 
   mockUpdateAvailable() {
     const app = remote.getGlobal('application');

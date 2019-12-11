@@ -24,6 +24,10 @@ class GdprTerms extends Component {
     }
   }
 
+  componentDidMount() {
+    AppEnv.trackingEvent('Onboarding-TermsDisplayed');
+  }
+
   _isEuropeUser() {
     return Utils.needGDPR();
   }
@@ -89,6 +93,7 @@ class GdprTerms extends Component {
     } else {
       AppEnv.config.set('core.privacy.dataShare.optOut', false);
     }
+    AppEnv.trackingEvent('Onboarding-TermsAgreed');
     AppEnv.config.set("agree", true);
     OnboardingActions.moveToPage('initial-preferences');
   }

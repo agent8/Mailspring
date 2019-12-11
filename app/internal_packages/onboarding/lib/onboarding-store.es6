@@ -4,6 +4,7 @@ import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
 
 const OAUTH_LIST = ['gmail', 'yahoo', 'outlook', 'hotmail'];
+const NEED_INVITE_COUNT = 3;
 class OnboardingStore extends MailspringStore {
   constructor() {
     super();
@@ -31,7 +32,7 @@ class OnboardingStore extends MailspringStore {
     // beta invite flow
     const shareCounts = AppEnv.config.get('invite.count') || 0;
     const agree = AppEnv.config.get('agree');
-    if (!agree && shareCounts < 5) {
+    if (!agree && shareCounts < NEED_INVITE_COUNT) {
       if (hasAccounts) {
         this._pageStack = ['sorry'];
       }
@@ -145,7 +146,7 @@ class OnboardingStore extends MailspringStore {
 
   _onFinishAndAddAccount = async account => {
     // const isFirstAccount = AccountStore.accounts().length === 0;
-
+    AppEnv.trackingEvent('AddAccount-Success');
     try {
       await AccountStore.addAccount(account);
     } catch (e) {
@@ -168,7 +169,7 @@ class OnboardingStore extends MailspringStore {
       // beta invite flow
       const shareCounts = AppEnv.config.get('invite.count') || 0;
       const agree = AppEnv.config.get('agree');
-      if (!agree && shareCounts < 5) {
+      if (!agree && shareCounts < NEED_INVITE_COUNT) {
         AppEnv.config.set('invite.email', account.emailAddress);
         this._onMoveToPage('sorry');
         return;

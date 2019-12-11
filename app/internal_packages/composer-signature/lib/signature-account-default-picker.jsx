@@ -23,14 +23,16 @@ export default class SignatureAccountDefaultPicker extends React.Component {
           const isChecked = defaults[account.email] === signature.id;
           return (
             <div key={account.id}>
-              <input
-                type="checkbox"
-                onChange={() => {
-                  this._onToggleAccount(account);
-                }}
-                checked={isChecked}
-              />
-              <label>{account.email}</label>
+              <label>
+                <input
+                  type="checkbox"
+                  onChange={() => {
+                    this._onToggleAccount(account);
+                  }}
+                  checked={isChecked}
+                />
+                {account.email}
+              </label>
             </div>
           );
         })}
