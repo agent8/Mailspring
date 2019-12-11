@@ -28,6 +28,10 @@ class TrackingAppEvents {
     'Important Icon': () => '-ImportantIcon',
   };
 
+  static FBHasInit() {
+    return window.fbAsyncInit && window.fbAsyncInit.hasRun ? true : false;
+  }
+
   static onQueueTask(task) {
     const taskName = task.constructor.name;
     if (!taskName || !this.trackingTasks.includes(taskName)) {
@@ -42,19 +46,20 @@ class TrackingAppEvents {
     const params = {
       source: task.source,
     };
-    if (window.FB) {
+
+    if (this.FBHasInit() && window.FB) {
       window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
 
   static trackingEvent(eventName, params) {
-    if (window.FB) {
+    if (this.FBHasInit() && window.FB) {
       window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
 }
 
 export default {
-  trackingEvent: TrackingAppEvents.trackingEvent,
+  trackingEvent: (...args) => TrackingAppEvents.trackingEvent(...args),
   trackingTask: task => TrackingAppEvents.onQueueTask(task),
 };
