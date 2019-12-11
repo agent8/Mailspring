@@ -781,7 +781,20 @@ export default class Calendar {
   toString() {
     // For some reason, when setting attendee property value, Component.updatePropertyWithValue uses ":" instead of
     // ";', we need to manually replace them
-    return this._vCalendar.toString().replace('ATTENDEE:', 'ATTENDEE;');
+    if (!this._vCalendar) {
+      AppEnv.reportError(new Error('VCalendar not available, cannot convert to string'));
+      return '';
+    }
+    try {
+      return this._vCalendar.toString().replace('ATTENDEE:', 'ATTENDEE;');
+    } catch (e) {
+      AppEnv.reportError(e, {
+        errorData: {
+          message: 'Can not conver vCalendar to string',
+        },
+      });
+      return '';
+    }
   }
 
   static parse(str) {
@@ -804,7 +817,17 @@ export default class Calendar {
       return [];
     }
     if (!this._VEvents) {
-      this._VEvents = this._vCalendar.getAllSubcomponents('vevent').map(e => new VEvent(e, this.VTimeZones));
+      try {
+        this._VEvents = this._vCalendar.getAllSubcomponents('vevent').map(e => new VEvent(e, this.VTimeZones));
+      } catch (e) {
+        AppEnv.reportError(e, {
+          errorData: {
+            message: 'Could not parse calendar vevent',
+            calendarString: this.toString()
+          },
+        });
+        return [];
+      }
     }
     return this._VEvents;
   }
@@ -845,9 +868,19 @@ export default class Calendar {
       return [];
     }
     if (!this._VTimeZones) {
-      this._VTimeZones = this._vCalendar
-        .getAllSubcomponents('vtimezone')
-        .map(timezone => new ICAL.Timezone(timezone, timezone.getFirstPropertyValue('tzid')));
+      try {
+        this._VTimeZones = this._vCalendar
+          .getAllSubcomponents('vtimezone')
+          .map(timezone => new ICAL.Timezone(timezone, timezone.getFirstPropertyValue('tzid')));
+      } catch (e) {
+        AppEnv.reportError(e, {
+          errorData: {
+            message: 'Cannot parse timezone data',
+            calendarString: this.toString(),
+          },
+        });
+        return [];
+      }
     }
     return this._VTimeZones;
   }
