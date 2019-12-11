@@ -53,6 +53,18 @@ class CalendarStore extends MailspringStore {
     if (!cal) {
       return false;
     }
+    if (!cal.method) {
+      try {
+        AppEnv.reportError(new Error('No Method data for Calendar'), {
+          errorData: {
+            calendarString: cal.toString(),
+          },
+        });
+      } catch (e) {
+        AppEnv.reportError(e);
+      }
+      return false;
+    }
     if (cal.method.toLocaleUpperCase() !== 'REQUEST') {
       return false;
     }
