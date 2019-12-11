@@ -295,7 +295,8 @@ class EventedIFrame extends React.Component {
     // "Copy Image" and "Search Google for 'Bla'"
     event.preventDefault();
 
-    const { remote, clipboard, shell, nativeImage } = require('electron');
+    const { remote, clipboard, nativeImage } = require('electron');
+    const shell = remote.shell;
     const { Menu, MenuItem } = remote;
     const path = require('path');
     const fs = require('fs');
@@ -352,14 +353,14 @@ class EventedIFrame extends React.Component {
         new MenuItem({
           label: 'Save Image...',
           click() {
-            AppEnv.showSaveDialog({ defaultPath: srcFilename }, function(path) {
+            AppEnv.showSaveDialog({ defaultPath: srcFilename }, function (path) {
               if (!path) {
                 return;
               }
               const oReq = new XMLHttpRequest();
               oReq.open('GET', src, true);
               oReq.responseType = 'arraybuffer';
-              oReq.onload = function() {
+              oReq.onload = function () {
                 const buffer = Buffer.from(new Uint8Array(oReq.response));
                 fs.writeFile(path, buffer, err => shell.showItemInFolder(path));
               };
@@ -375,7 +376,7 @@ class EventedIFrame extends React.Component {
             let img = new Image();
             img.addEventListener(
               'load',
-              function() {
+              function () {
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
