@@ -28,6 +28,8 @@ class TrackingAppEvents {
     'Important Icon': () => '-ImportantIcon',
   };
 
+  static inDevMode = AppEnv.inDevMode();
+
   static FBHasInit() {
     return window.fbAsyncInit && window.fbAsyncInit.hasRun ? true : false;
   }
@@ -47,13 +49,13 @@ class TrackingAppEvents {
       source: task.source,
     };
 
-    if (this.FBHasInit() && window.FB) {
+    if (this.FBHasInit() && window.FB && !this.inDevMode) {
       window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
 
   static trackingEvent(eventName, params) {
-    if (this.FBHasInit() && window.FB) {
+    if (this.FBHasInit() && window.FB && !this.inDevMode) {
       window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
