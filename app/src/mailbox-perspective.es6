@@ -367,12 +367,12 @@ export default class MailboxPerspective {
         const account = AccountStore.accountForId(thread.accountId);
         if (account && account.provider === 'gmail') {
           if (this.isInbox()) { // make sure inbox label can archive
-            if (!thread.labels.some(label => label.role === 'inbox')) {
-              console.error(`The thread in inbox, but don not have inbox label. Thread id is ${thread.id}. subject is [${thread.subject}]`);
-              AppEnv.reportError(
-                new Error(`The thread in inbox, but don not have inbox label. Thread id is ${thread.id}`)
-              );
-            }
+            // if (!thread.labels.some(label => label.role === 'inbox')) {
+            //   console.error(`The thread in inbox, but do not have inbox label. Thread id is ${thread.id}. subject is [${thread.subject}]`);
+            //   AppEnv.reportError(
+            //     new Error(`The thread in inbox, but do not have inbox label. Thread id is ${thread.id}`)
+            //   );
+            // }
             return true;
           }
           return thread.labels.some(label => label.role === 'inbox');
@@ -521,16 +521,16 @@ class SiftMailboxPerspective extends MailboxPerspective {
     this.sift = true; // Mark this perspective as sift;
     this.siftCategory = siftCategory;
     if (siftCategory === Sift.categories.Travel) {
-      this.iconName = 'flight.svg';
+      this.iconName = 'menu-travel.svg';
       this.className = 'sift sift-Travel';
     } else if (siftCategory === Sift.categories.Bill) {
-      this.iconName = 'finance.svg';
+      this.iconName = 'menu-finance.svg';
       this.className = 'sift sift-Bill';
     } else if (siftCategory === Sift.categories.Packages) {
-      this.iconName = `${siftCategory.toLocaleLowerCase()}.svg`;
+      this.iconName = `menu-packages.svg`;
       this.className = 'sift sift-Packages';
     } else if (siftCategory === Sift.categories.Entertainment) {
-      this.iconName = `${siftCategory.toLocaleLowerCase()}.svg`;
+      this.iconName = `menu-entertainment.svg`;
       this.className = 'sift sift-Entertainment';
     }
     this.iconStyles = { borderRadius: '50%' };

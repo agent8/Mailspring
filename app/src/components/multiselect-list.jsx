@@ -35,10 +35,12 @@ class MultiselectList extends React.Component {
   constructor(props) {
     super(props);
     this.state = this._getStateFromStores();
+    this.mounted = false;
   }
 
   componentDidMount() {
     this.setupForProps(this.props);
+    this.mounted = true;
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -69,6 +71,7 @@ class MultiselectList extends React.Component {
   }
 
   componentWillUnmount() {
+    this.mounted = false;
     this.teardownForProps();
   }
 
@@ -244,7 +247,9 @@ class MultiselectList extends React.Component {
   };
 
   _onChange = () => {
-    this.setState(this._getStateFromStores());
+    if (this.mounted) {
+      this.setState(this._getStateFromStores());
+    }
   };
 
   _visible = () => {
@@ -261,7 +266,7 @@ class MultiselectList extends React.Component {
       resolver: item => {
         const toggle = event => {
           this._onCheckMarkClick(item, event);
-          if(event && event.stopPropagation){
+          if (event && event.stopPropagation) {
             event.stopPropagation();
           }
         };
@@ -270,7 +275,7 @@ class MultiselectList extends React.Component {
         } else {
           return (
             <div className="checkmark" onClick={toggle}>
-              <div className="inner"/>
+              <div className="inner" />
             </div>
           );
         }

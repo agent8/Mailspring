@@ -417,6 +417,7 @@ class Actions {
   static composedNewBlankDraft = ActionScopeMainWindow;
 
   static composeFeedBackDraft = ActionScopeMainWindow;
+  static composeInviteDraft = ActionScopeMainWindow;
 
   /*
   Public: Open a new composer window for a new draft addressed to the given recipient

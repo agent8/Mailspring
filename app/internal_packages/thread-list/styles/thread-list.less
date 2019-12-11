@@ -383,9 +383,9 @@ input:focus {
   .timestamp {
     font-size: @font-size-small;
     font-weight: @font-weight-normal;
+    color: @medium-grey;
     min-width: 70px;
-    margin-right: 13px;
-    opacity: 0.62;
+    margin-right: 6px;
   }
 
   .unread {
@@ -393,10 +393,10 @@ input:focus {
     &:hover {
       background: @white;
     }
-    .timestamp {
-      // color: @blue; // unread is still black
-      opacity: 1;
-    }
+    //.timestamp {
+    //  // color: @blue; // unread is still black
+    //  opacity: 1;
+    //}
   }
 
   .unread:not(.focused) {
@@ -466,7 +466,8 @@ input:focus {
     }
     &.thread-icon-unread {
       margin-left: -6px;
-      .icon-mixin('../static/icons/menu-unread.svg', @blue, auto);
+      height: 18px;
+      .icon-mixin('../static/icons/menu-unread.svg', @blue, 24px 24px);
     }
     &.thread-icon-replied {
       .icon-mixin('../static/icons/feed-reply.svg', @gray-light);
@@ -551,7 +552,7 @@ input:focus {
     }
     img.content-mask {
       margin-top: -3px;
-      background-color: @gray;
+      background-color: @gray-light;
       position: relative;
       z-index: 2;
     }
@@ -807,8 +808,7 @@ body.platform-win32 {
   .timestamp {
     order: 100;
     min-width: 0;
-    color: #afbec9;
-    opacity: 1;
+    color: @medium-grey;
   }
   .participants {
     font-size: 15px;

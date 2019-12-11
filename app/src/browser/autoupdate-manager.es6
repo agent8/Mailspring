@@ -44,7 +44,7 @@ export default class AutoUpdateManager extends EventEmitter {
     if (params.platform === 'darwin') {
       params.platform = 'mac';
     }
-    const host = process.env.updateServer || `https://cp.stag.easilydo.cc/api/ota/checkUpdate`;
+    const host = process.env.updateServer || `https://cp.edison.tech/api/ota/checkUpdate`;
     return new Promise(resolve => {
       if (this.supportId === '') {
         getDeviceHash()
@@ -163,7 +163,7 @@ export default class AutoUpdateManager extends EventEmitter {
   }
 
   check({ hidePopups } = {}) {
-    this.updateFeedURL().then(()=>{
+    this.updateFeedURL().then(() => {
       if (!hidePopups) {
         autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
         autoUpdater.once('error', this.onUpdateError);

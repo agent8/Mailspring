@@ -68,12 +68,14 @@ const participants = (draft) => {
 
   if (list.length > 0) {
     return (
-      <div className="participants">
-        <span>{list.map(p => p.displayName()).join(', ')}</span>
+      <div className="participants" style={{ flex: 1 }}>
+        <div className="participants-inner">
+          <span>{list.map(p => p.displayName()).join(', ')}</span>
+        </div>
       </div>
     );
   } else {
-    return <div className="participants no-recipients">(No Recipients)</div>;
+    return <div className="participants no-recipients" style={{ flex: 1 }}>(No Recipients)</div>;
   }
 }
 
@@ -181,7 +183,7 @@ const cNarrow = new ListTabular.Column({
         <div className="thread-info-column">
           <div className="participants-wrapper">
             {participants(draft)}
-            <span style={{ flex: 1 }} />
+            {/* <span style={{ flex: 1 }} /> */}
             <InjectedComponent
               key="outbox-injected-timestamp"
               className="outbox-injected-timestamp"

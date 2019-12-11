@@ -92,7 +92,9 @@
       background-color: lighten(@source-list-bg, 20%);
       .item {
         color: @source-list-active-color;
-        img.content-mask { background-color: @source-list-active-color; }
+        img.content-mask {
+          background-color: @source-list-active-color;
+        }
       }
     }
     &.selected:hover,
@@ -147,7 +149,7 @@
     overflow: hidden;
 
     img.content-mask {
-      background-color: @gray;
+      background-color: @light-grey;
       vertical-align: text-bottom;
     }
 
@@ -164,22 +166,30 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        img {
-          background-color: @text-color-inverse !important;
-          width: 14px !important;
-          height: 14px !important;
-        }
+        // img {
+        //   background-color: @text-color-inverse !important;
+        //   width: 14px !important;
+        //   height: 14px !important;
+        // }
         &.sift-Travel {
-          background-color: @blue;
+          img {
+            background-color: @blue;
+          }
         }
         &.sift-Bill {
-          background-color: @green;
+          img {
+            background-color: @green;
+          }
         }
         &.sift-Packages {
-          background-color: @purple;
+          img {
+            background-color: @purple;
+          }
         }
         &.sift-Entertainment {
-          background-color: @orange;
+          img {
+            background-color: @orange;
+          }
         }
       }
     }

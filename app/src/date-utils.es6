@@ -319,10 +319,9 @@ const DateUtils = {
     // Append meridian if not using 24 hour clock
     if (!use24HourClock) {
       if (opts && opts.upperCase) {
-        timeFormat += ' A';
-      } else {
-        timeFormat += ' a';
+        console.error('upperCase time format no longer used')
       }
+      timeFormat += 'a';
     }
 
     if (opts && opts.timeZone) {
@@ -450,7 +449,7 @@ const DateUtils = {
    */
   mediumTimeString(datetime) {
     let format = this._getFormat(datetime, true);
-    format += ', ' + DateUtils.getTimeFormat({ seconds: false, upperCase: true, timeZone: false });
+    format += ', ' + DateUtils.getTimeFormat({ seconds: false, timeZone: false });
 
     return moment(datetime).format(format);
   },
@@ -463,7 +462,7 @@ const DateUtils = {
    */
   fullTimeString(datetime) {
     let format = 'dddd, MMMM Do YYYY, ';
-    format += DateUtils.getTimeFormat({ seconds: true, upperCase: true, timeZone: true });
+    format += DateUtils.getTimeFormat({ seconds: true, timeZone: true });
 
     return moment(datetime)
       .tz(tz)
