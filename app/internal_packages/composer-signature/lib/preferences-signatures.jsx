@@ -32,13 +32,6 @@ class SignatureEditor extends React.Component {
     };
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const body = nextProps.signature ? nextProps.signature.body : '';
-    this.setState({
-      editorState: convertFromHTML(body),
-    });
-  }
-
   _onBaseFieldChange = event => {
     const { id, value } = event.target;
     const sig = this.props.signature;
@@ -248,6 +241,7 @@ export default class PreferencesSignatures extends React.Component {
           <SignatureEditor
             signature={this.state.selectedSignature}
             defaults={this.state.defaults}
+            key={this.state.selectedSignature ? this.state.selectedSignature.id : 'empty'}
             accountsAndAliases={this.state.accountsAndAliases}
           />
         </Flexbox>
