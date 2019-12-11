@@ -562,6 +562,9 @@ class Actions {
   static nextSearchResult = ActionScopeWindow;
   static previousSearchResult = ActionScopeWindow;
 
+  static resetSettings = ActionScopeMainWindow;
+  static resetSettingsCb = ActionScopeMainWindow;
+
   // Actions for the signature preferences and shared with the composer
   static upsertSignature = ActionScopeWindow;
   static removeSignature = ActionScopeWindow;
