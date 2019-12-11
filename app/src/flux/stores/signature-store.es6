@@ -2,6 +2,16 @@ import { Actions, AccountStore } from 'mailspring-exports';
 import MailspringStore from 'mailspring-store';
 import _ from 'underscore';
 
+const sigDefaultTemplate = {
+  id: 'initial',
+  title: 'Default',
+  body: `<div><div>Sent from <a href="https://www.edison.tech/">EdisonMail</a>, the best free email app for work</div></div>`,
+  data: {
+    title: 'Sent from Edison Mail, the best free email app for work',
+    templateName: 'SignatureB',
+  },
+};
+
 class SignatureStore extends MailspringStore {
   constructor() {
     super();
@@ -16,15 +26,7 @@ class SignatureStore extends MailspringStore {
     // create a default one for them and apply it to all their accounts.
     if (!this.signatures) {
       this.signatures = {
-        initial: {
-          id: 'initial',
-          title: 'Default',
-          body: `<div><div>Sent from <a href="https://www.edison.tech/">EdisonMail</a>, the best free email app for work</div></div>`,
-          data: {
-            title: 'Sent from Edison Mail, the best free email app for work',
-            templateName: 'SignatureB',
-          },
-        },
+        initial: sigDefaultTemplate,
       };
       AccountStore.accounts().forEach(a => {
         // this.defaultSignatures[a.emailAddress] = 'initial';
@@ -70,6 +72,10 @@ class SignatureStore extends MailspringStore {
 
   getDefaults() {
     return this.defaultSignatures;
+  }
+
+  getDefaultTemplate() {
+    return sigDefaultTemplate;
   }
 
   signatureForEmail = email => {
