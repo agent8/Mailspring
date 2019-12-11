@@ -39,8 +39,8 @@ export const loadPadData = () => {
 // load single pad info
 export const loadPadInfo = padInfo => {
   const appPadData = window.appPadData || loadPadData()
-  const { padId } = padInfo
-  Object.assign(padInfo, appPadData[padId])
+  const { padId, userId } = padInfo
+  Object.assign(padInfo, appPadData[padId + '-' + userId])
   return padInfo
 }
 
@@ -66,7 +66,9 @@ export const savePadData = appPadData => {
 export const savePadInfo = padInfo => {
   const appPadData = window.appPadData || loadPadData()
   const token = padInfo.token
-  appPadData[padInfo.padId] = padInfo
+  const { padId, userId } = padInfo
+  delete padInfo.token
+  appPadData[padId + '-' + userId] = padInfo
   savePadData(appPadData)
   padInfo.token = token
 }

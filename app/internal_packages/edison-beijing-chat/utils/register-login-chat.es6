@@ -3,6 +3,7 @@ import { register } from './restjs'
 import auth from '../xmpp/auth'
 import { OnlineUserStore, ConversationStore } from 'chat-exports'
 import { log } from './log'
+const { ipcRenderer } = require('electron')
 
 export default async function registerLoginChat () {
   let accounts = AppEnv.config.get('accounts')
@@ -92,4 +93,7 @@ export async function registerLoginEmailAccountForChat (account) {
     OnlineUserStore.addSelfAccount(jid, chatAccount)
     await auth({ jid, password: chatAccount.password })
   }
+  ipcRenderer.on('get-aes-by-conv', (event, { conv, resolve }) => {
+    console.log(' ipcRenderer.on: get-aes-by-conv: ', event, conv, resolve)
+  })
 }

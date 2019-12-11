@@ -30,7 +30,7 @@ import ActionBarPlugins from './action-bar-plugins'
 import Fields from './fields'
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
-import { uploadFileAsync } from '../../edison-beijing-chat/utils/awss3'
+import { uploadPadFile } from './pad-utils'
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
@@ -100,6 +100,9 @@ export default class ComposerView extends React.Component {
     Actions.addedAttachments.listen(this.onAddedAttachments)
     const windowProps = AppEnv.getWindowProps()
     let { padInfo } = windowProps
+    console.log(' componentWillMount: padInfo: ', padInfo)
+    const { draft } = this.props
+    draft.padInfo = padInfo
     this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
   }
 
@@ -123,7 +126,8 @@ export default class ComposerView extends React.Component {
       return
     }
     const jidLocal = padInfo.userId
-    const res = await uploadFileAsync(jidLocal, null, filePath)
+    const res = await uploadPadFile(filePath, jidLocal)
+    console.log(' uploadFileAsync: ', res)
     const files = padInfo.files || []
     files.push(res.awsKey)
     console.log(' before send pad json: draft: ', draft)
@@ -131,7 +135,7 @@ export default class ComposerView extends React.Component {
     const pad = window.padMap[padId]
     const to = draft.to.map(x => x.email)
     const cc = draft.cc.map(x => x.email)
-    const bbcc = draft.cc.map(x => x.email)
+    const bcc = draft.bcc.map(x => x.email)
     pad.socket.json.send({
       type: 'COLLABROOM',
       component: 'pad',
@@ -141,7 +145,7 @@ export default class ComposerView extends React.Component {
           subject: draft.subject,
           to,
           cc,
-          bcc: [],
+          bcc,
           attachments: files
         }
       }
@@ -500,7 +504,7 @@ export default class ComposerView extends React.Component {
     const files = draft.files.map(file => ({
       name: file.filename
     }))
-    const ctreatePadOptions = {
+    const createPadOptions = {
       userId,
       email,
       name,
@@ -524,10 +528,10 @@ export default class ComposerView extends React.Component {
       },
       coWorkers: []
     }
-    console.log(' ctreatePadOptions: ', ctreatePadOptions)
+    console.log(' createPadOptions: ', createPadOptions)
     if (!padId) {
       const apiPath = window.teamPadConfig.teamEditAPIUrl + 'createPad'
-      let res = await postAsync(apiPath, ctreatePadOptions, {
+      let res = await postAsync(apiPath, createPadOptions, {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
@@ -549,7 +553,8 @@ export default class ComposerView extends React.Component {
 
   toggleTeamEdit = async () => {
     let { padInfo, inTeamEditMode } = this.state
-    if (!inTeamEditMode && !padInfo) {
+    const { draft } = this.props
+    if (!inTeamEditMode && (!padInfo || !padInfo.padId)) {
       padInfo = await this.createTeamEditPad()
     }
     console.log(' toggleTeamEdit: ', padInfo)
@@ -727,6 +732,11 @@ export default class ComposerView extends React.Component {
   }
 
   _renderActionsRegion () {
+    const { draft } = this.props
+    const { inTeamEditMode, padInfo } = this.state
+    if (inTeamEditMode && padInfo) {
+      draft.padInfo = padInfo
+    }
     return (
       <div className='sendbar-for-dock'>
         <div className='action-bar-wrapper'>

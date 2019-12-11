@@ -3,6 +3,8 @@ import path from 'path'
 import keyMannager from '../../../src/key-manager'
 import InvitePadMember from './InvitePadMember'
 import { loadPadInfo, savePadInfo } from './app-pad-data'
+import { downloadPadFile } from './pad-utils'
+
 window.padMap = {}
 export default class TeamreplyEditor extends Component {
   state = {}

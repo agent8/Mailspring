@@ -208,6 +208,7 @@ class ConversationStore extends MailspringStore {
       //   }
       // }
     })
+    console.log(' refreshConversations: ', this.conversations)
     this.setTrayChatUnreadCount(count)
     AppEnv.config.set('conversations', conversationFormat)
     ipcRenderer.send('update-system-tray-conversation-menu')

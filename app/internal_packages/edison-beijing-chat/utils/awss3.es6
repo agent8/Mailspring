@@ -103,6 +103,7 @@ export const uploadFile = (oid, aes, file, callback, progressCallback) => {
     myKey = myKey + ENCRYPTED_SUFFIX
   }
   // 流加密
+  console.log(' uploadFile: aes: ', aes)
   const cipherStream = new CipherFileStream(aes)
   const data = readS.pipe(cipherStream)
   var uploadParams = { Bucket: getMyBucket(), Key: myKey, Body: data }
