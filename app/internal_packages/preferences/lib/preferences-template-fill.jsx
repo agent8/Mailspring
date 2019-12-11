@@ -94,12 +94,6 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
-              label: 'New mail sound',
-              configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
-              keyPath: 'core.notifications.sounds',
-              keywords: ['notification'],
-            },
-            {
               label: 'Undo time window',
               configSchema: configSchema => configSchema.properties.task.properties.delayInMs,
               component: TaskDelay,
@@ -220,6 +214,12 @@ const preferencesTemplateFill = {
         {
           groupName: 'EMAIL NOTIFICATIONS',
           groupItem: [
+            {
+              label: 'New mail notification sound',
+              configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
+              keyPath: 'core.notifications.sounds',
+              keywords: [],
+            },
             {
               label: 'Show notifications for new unread emails',
               configSchema: configSchema =>
