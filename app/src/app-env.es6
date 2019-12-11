@@ -12,8 +12,8 @@ import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 const LOG = require('electron-log');
-const archiver = require('archiver');
-let getOSInfo = null;
+// const archiver = require('archiver');
+// let getOSInfo = null;
 let getDeviceHash = null;
 // To add a new user
 const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
@@ -716,6 +716,16 @@ export default class AppEnvConstructor {
   // Extended: Get the current window
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
+  }
+
+  getOpenWindowCount() {
+    let ret = 0;
+    try {
+      ret = remote.getGlobal('application').windowManager.getOpenWindowCount();
+    } catch (e) {
+      this.reportError(e, {});
+    }
+    return ret;
   }
 
   // Extended: Move current window to the center of the screen.
