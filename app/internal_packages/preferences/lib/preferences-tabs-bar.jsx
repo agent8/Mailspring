@@ -16,6 +16,7 @@ class PreferencesTabItem extends React.Component {
 
   _onClick = () => {
     Actions.switchPreferencesTab(this.props.tabItem.tabId);
+    AppEnv.trackingEvent(`Preferences-${this.props.tabItem.tabId}`);
   };
 
   _onClickAccount = (event, accountId) => {
