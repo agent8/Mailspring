@@ -4,6 +4,7 @@ import OnboardingActions from './onboarding-actions';
 import { ipcRenderer } from 'electron';
 
 const CONFIG_KEY = 'invite.count';
+const NEED_INVITE_COUNT = 3;
 export default class SorryPage extends React.Component {
   static displayName = 'SorryPage';
 
@@ -34,7 +35,8 @@ export default class SorryPage extends React.Component {
     this.disposable = AppEnv.config.onDidChange(CONFIG_KEY, async () => {
       const shareCounts = AppEnv.config.get(CONFIG_KEY) || 0;
       // AppEnv.getCurrentWindow().setAlwaysOnTop(true);
-      if (shareCounts >= 5) {
+      // beta invite flow
+      if (shareCounts >= NEED_INVITE_COUNT) {
         this.setState({
           loading: true,
         });
@@ -57,13 +59,16 @@ export default class SorryPage extends React.Component {
       };
       const checkUnlock = await AppEnv.checkUnlock(this.email);
       if (checkUnlock.status === 'OK') {
-        AppEnv.config.set(CONFIG_KEY, 5);
+        AppEnv.config.set(CONFIG_KEY, NEED_INVITE_COUNT);
         return;
       } else {
         // facebook tracking: need invite
         AppEnv.trackingEvent('Invite-NeedInvite');
 
-        const count = 5 - (checkUnlock.count || 5);
+        let count = NEED_INVITE_COUNT - (checkUnlock.count || NEED_INVITE_COUNT);
+        if (count < 0) {
+          count = 0;
+        }
         AppEnv.config.set(CONFIG_KEY, count);
         newState.shareCounts = count;
       }
@@ -101,6 +106,7 @@ export default class SorryPage extends React.Component {
 
   render() {
     const { loading, body, shareCounts } = this.state;
+    const needInvite = NEED_INVITE_COUNT - shareCounts;
     return (
       <div className="page sorry">
         {loading ? (
@@ -115,13 +121,13 @@ export default class SorryPage extends React.Component {
               <h1 className="hero-text">You’re on the Waitlist!</h1>
               <p>
                 We’re releasing invites as quickly as we can, so we<br />
-                appreciate the patience. Refer {5 - shareCounts} {5 - shareCounts > 1 ? 'friends' : 'friend'} to get<br />
+                appreciate the patience. Refer {needInvite} {needInvite > 1 ? 'friends' : 'friend'} to get<br />
                 access now.
               </p>
               <br />
               <br />
               <button key="next" className="btn btn-large btn-invite" onClick={this._onContinue}>
-                Invite {5 - shareCounts} {5 - shareCounts > 1 ? 'Friends' : 'Friend'}
+                Invite {needInvite} {needInvite > 1 ? 'Friends' : 'Friend'}
               </button>
               {body && !body.error ? (
                 <a className="invite-link" href={body.link + '&from=MacApp'}>{body.link}</a>
