@@ -117,6 +117,11 @@ class InitialPreferencesProfilePage extends React.Component {
   }
 
   _onFinished = () => {
+    if (AppEnv.config.get('core.appearance.profile')) {
+      AppEnv.trackingEvent('Onboarding-Profile-show');
+    } else {
+      AppEnv.trackingEvent('Onboarding-Profile-hide');
+    }
     OnboardingActions.moveToPage('initial-done');
   };
 }
