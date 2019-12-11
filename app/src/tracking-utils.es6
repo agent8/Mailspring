@@ -1,4 +1,4 @@
-class TrackingAppEvents {
+export default class TrackingAppEvents {
   static trackingTasks = [
     'ChangeUnreadTask',
     'ChangeStarredTask',
@@ -52,14 +52,27 @@ class TrackingAppEvents {
     }
   }
 
-  static trackingEvent(eventName, params) {
+  static onTrackingEvent(eventName, params) {
     if (this.FBHasInit() && window.FB) {
       window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
-}
 
-export default {
-  trackingEvent: (...args) => TrackingAppEvents.trackingEvent(...args),
-  trackingTask: task => TrackingAppEvents.onQueueTask(task),
-};
+  constructor({ devMode }) {
+    this.devMode = devMode;
+  }
+
+  trackingTask = task => {
+    if (this.devMode) {
+      return;
+    }
+    TrackingAppEvents.onQueueTask(task);
+  };
+
+  trackingEvent = (...args) => {
+    if (this.devMode) {
+      return;
+    }
+    TrackingAppEvents.onTrackingEvent(...args);
+  };
+}
