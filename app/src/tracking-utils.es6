@@ -1,4 +1,4 @@
-class TrackingAppEvents {
+export default class TrackingAppEvents {
   static trackingTasks = [
     'ChangeUnreadTask',
     'ChangeStarredTask',
@@ -28,8 +28,6 @@ class TrackingAppEvents {
     'Important Icon': () => '-ImportantIcon',
   };
 
-  static inDevMode = AppEnv.inDevMode();
-
   static FBHasInit() {
     return window.fbAsyncInit && window.fbAsyncInit.hasRun ? true : false;
   }
@@ -49,19 +47,32 @@ class TrackingAppEvents {
       source: task.source,
     };
 
-    if (this.FBHasInit() && window.FB && !this.inDevMode) {
+    if (this.FBHasInit() && window.FB) {
       window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
 
-  static trackingEvent(eventName, params) {
-    if (this.FBHasInit() && window.FB && !this.inDevMode) {
+  static onTrackingEvent(eventName, params) {
+    if (this.FBHasInit() && window.FB) {
       window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
+
+  constructor({ devMode }) {
+    this.devMode = devMode;
+  }
+
+  trackingTask = task => {
+    if (this.devMode) {
+      return;
+    }
+    TrackingAppEvents.onQueueTask(task);
+  };
+
+  trackingEvent = (...args) => {
+    if (this.devMode) {
+      return;
+    }
+    TrackingAppEvents.onTrackingEvent(...args);
+  };
 }
-
-export default {
-  trackingEvent: (...args) => TrackingAppEvents.trackingEvent(...args),
-  trackingTask: task => TrackingAppEvents.onQueueTask(task),
-};
