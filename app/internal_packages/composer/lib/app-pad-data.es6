@@ -17,8 +17,12 @@ export const loadDraftPadMap = () => {
   if (!content) {
     return {}
   }
-  const result = JSON.parse(content)
-  return result
+  try {
+    const result = JSON.parse(content)
+    return result
+  } catch (e) {
+    console.log(' loadDraftPadMap: parse error: ', e, '' + content)
+  }
 }
 // load all pad's data
 export const loadPadData = () => {
@@ -32,8 +36,13 @@ export const loadPadData = () => {
   if (!content) {
     return {}
   }
-  const appPadData = JSON.parse(content)
-  return appPadData
+  try {
+    const appPadData = JSON.parse(content)
+    return appPadData
+  } catch (e) {
+    console.log('loadPadData: parse error: ', e, '' + content)
+    return {}
+  }
 }
 
 // load single pad info

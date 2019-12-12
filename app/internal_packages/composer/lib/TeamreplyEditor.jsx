@@ -54,20 +54,20 @@ export default class TeamreplyEditor extends Component {
       console.log(' composerOnPadSocketHandler: CLIENT_VARS: ', data)
       data = data.data || {}
       const attachments = (data.emailExtr && data.emailExtr.attachments) || []
-      padInfo.files = await this.processaPadAttachments(attachments, padInfo)
+      padInfo.files = await this.processPadAttachments(attachments)
       console.log(' composerOnPadSocketHandler: CLIENT_VARS: padInfo: ', padInfo)
       this.updatePadInfo(padInfo)
     } else if (data.type === 'COLLABROOM' && data.data && data.data.type === 'EMAIL_EXTR') {
       console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
       const email = data.data.email
-      padInfo.files = await this.processaPadAttachments(email.attachments)
+      padInfo.files = await this.processPadAttachments(email.attachments)
       this.updatePadInfo(padInfo)
     }
   }
 
-  processaPadAttachments = async (attachments, padInfo) => {
-    console.log(' processaPadAttachments: ', attachments)
-    const fileMap = padInfo.files || {}
+  processPadAttachments = async attachments => {
+    console.log(' processPadAttachments: ', attachments)
+    const fileMap = {}
     for (const item of attachments) {
       let file = null
       if (typeof item === 'srtring') {

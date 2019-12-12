@@ -33,7 +33,7 @@ function getMyBucket () {
     return BUCKET_DEV
   }
 }
-const SEP = '--$_@_$--'
+const SEPARATOR = '--$_@_$--'
 
 export const downloadFile = (aes, key, name, callback, progressBack) => {
   var params = {
@@ -98,7 +98,7 @@ export const downloadFile = (aes, key, name, callback, progressBack) => {
 
 export const uploadFile = (oid, aes, file, callback, progressCallback) => {
   const filename = path.basename(file)
-  let myKey = oid + '/' + uuid.v4() + SEP + filename
+  let myKey = oid + '/' + uuid.v4() + SEPARATOR + filename
   const readS = fs.createReadStream(file)
   if (aes) {
     myKey = myKey + ENCRYPTED_SUFFIX
@@ -141,7 +141,7 @@ export const uploadFileAsync = (oid, aes, file) => {
 
 export const getAwsOriginalFilename = name => {
   console.log(' getAwsOriginalFilename: ', name)
-  let i = name.lastIndexOf(SEP) + SEP.length
+  let i = name.lastIndexOf(SEPARATOR) + SEPARATOR.length
   return name.substring(i)
 }
 

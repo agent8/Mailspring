@@ -151,7 +151,6 @@ export default class ComposerView extends React.Component {
         }
       }
     })
-    console.log(' uploadFileAsync: ', res)
   }
 
   updatePadInfo = padInfo => {
@@ -658,6 +657,35 @@ export default class ComposerView extends React.Component {
 
     return <div className='attachments-area'>{nonImageFiles.concat(imageFiles, nonInlineWithContentIdImageFiles)}</div>
   }
+  onRemovePadAttachment = file => {
+    const { draft } = this.props
+    const { padInfo } = this.state
+    console.log(' onRemovePadAttachment: ', file, padInfo)
+    if (!padInfo) {
+      return
+    }
+    let files = padInfo.files || {}
+    delete files[file.awsKey]
+    files = Object.values(files)
+    const pad = window.padMap[padInfo.padId]
+    const to = draft.to.map(x => x.email)
+    const cc = draft.cc.map(x => x.email)
+    const bcc = draft.bcc.map(x => x.email)
+    pad.socket.json.send({
+      type: 'COLLABROOM',
+      component: 'pad',
+      data: {
+        type: 'EMAIL_EXTR',
+        email: {
+          subject: draft.subject,
+          to,
+          cc,
+          bcc,
+          attachments: files
+        }
+      }
+    })
+  }
 
   _renderPadAttachments () {
     const { padInfo } = this.state
@@ -678,6 +706,7 @@ export default class ComposerView extends React.Component {
           filePath={file.downloadPath}
           displayName={file.filename}
           fileIconName={`file-${file.extension}.png`}
+          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
           // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
           // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
@@ -693,6 +722,7 @@ export default class ComposerView extends React.Component {
           className='file-upload'
           filePath={file.downloadPath}
           displayName={file.filename}
+          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
           // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
           // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
