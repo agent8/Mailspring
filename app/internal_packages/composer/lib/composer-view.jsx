@@ -128,8 +128,9 @@ export default class ComposerView extends React.Component {
     const jidLocal = padInfo.userId
     const res = await uploadPadFile(filePath, jidLocal)
     console.log(' uploadFileAsync: ', res)
-    const files = padInfo.files || []
-    files.push(res.awsKey)
+    let files = padInfo.files || {}
+    files[res.awsKey] = res
+    files = Object.values(files)
     console.log(' before send pad json: draft: ', draft)
     const { padId } = padInfo
     const pad = window.padMap[padId]
@@ -153,9 +154,7 @@ export default class ComposerView extends React.Component {
     console.log(' uploadFileAsync: ', res)
   }
 
-  updatePadFiles = fileMap => {
-    const { padInfo } = this.state
-    padInfo.files = fileMap
+  updatePadInfo = padInfo => {
     this.setState({ padInfo })
     savePadInfo(padInfo)
   }
@@ -565,7 +564,7 @@ export default class ComposerView extends React.Component {
     const draft = this.props
     if (this.state.inTeamEditMode) {
       const { padInfo } = this.state
-      return <TeamreplyEditor draft={draft} padInfo={padInfo} updatePadFiles={this.updatePadFiles} />
+      return <TeamreplyEditor draft={draft} padInfo={padInfo} updatePadInfo={this.updatePadInfo} />
     } else {
       return (
         <ComposerEditor
@@ -667,15 +666,16 @@ export default class ComposerView extends React.Component {
     if (!files) {
       return null
     }
-    files = files.map(file => ({ filename: file }))
+    console.log(' _renderPadAttachments: files: ', files)
+    files = Object.values(files)
     const nonImageFiles = files
       .filter(f => !Utils.shouldDisplayAsImage(f))
       .map(file => (
         <AttachmentItem
-          key={file.id}
+          key={file.awsKey}
           className='file-upload'
           draggable={false}
-          filePath={file.filename}
+          filePath={file.downloadPath}
           displayName={file.filename}
           fileIconName={`file-${file.extension}.png`}
           // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
@@ -688,10 +688,10 @@ export default class ComposerView extends React.Component {
       .filter(f => !f.contentId)
       .map(file => (
         <ImageAttachmentItem
-          key={file.id}
+          key={file.awsKey}
           draggable={false}
           className='file-upload'
-          filePath={file.filename}
+          filePath={file.downloadPath}
           displayName={file.filename}
           // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
           // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}

@@ -3,29 +3,41 @@ import fs from 'fs'
 import { downloadFileAsync, uploadFileAsync } from '../../edison-beijing-chat/utils/awss3'
 import { ConversationStore, MessageSend } from 'chat-exports'
 const { ipcRenderer } = require('electron')
-const { BrowserWindow } = require('electron').remote
+const { BrowserWindow, getCurrentWindow } = require('electron').remote
 
-export const downloadPadFile = async (file, aes) => {
+export const downloadPadFile = async (awsKey, aes) => {
   const configPath = AppEnv.getConfigDirPath()
   console.log(' loadPadData: ', configPath)
   const downloadPath = path.join(configPath, 'teampad-download')
-  if (!fs.existsSync(downloadPath)) {
-    fs.mkdirSync(downloadPath)
+  const downloadFilePath = path.join(downloadPath, awsKey)
+  if (fs.existsSync(downloadFilePath)) {
+    return downloadFilePath
   }
-  const downloadFilePath = path.join(downloadPath, file)
-  if (!fs.existsSync(downloadFilePath)) {
-    await downloadFileAsync(aes, file, downloadFilePath)
+  const dir = path.dirname(downloadFilePath)
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
   }
+  await downloadFileAsync(awsKey, downloadFilePath, aes)
   return downloadFilePath
 }
 
-const getAesFromIpc = conv => {
-  return new Promise(function (resolve, reject) {
-    const wins = BrowserWindow.getAllWindows()
-    console.log(' getAesFromIpc: ', conv, wins, this)
-    // ipcRenderer.send('get-aes-by-conv', { conv, resolve })
-  })
+// const getAesFromIpc = conv => {
+//   return new Promise(function (resolve) {
+//     console.log(' getAesFromIpc: ', conv)
+//     const win = getCurrentWindow()
+//     console.log(' getAesFromIpc win: ', win)
+//     ipcRenderer.send('get-aes-by-conv', { win: win.id, conv: conv.jid })
+//     ipcRenderer.once('return-aes', (event, aes) => {
+//       console.log(' receive return-aes: ', event, aes)
+//       resolve(aes)
+//     })
+//   })
+// }
+
+const getAesFromIpc = async conv => {
+  return await MessageSend.getAESKey(conv)
 }
+
 export const uploadPadFile = async (file, jidLocal) => {
   let aes = null
   await ConversationStore.refreshConversations()
@@ -41,7 +53,7 @@ export const uploadPadFile = async (file, jidLocal) => {
   console.log(' uploadPadFile: aes: ', aes)
   const res = await uploadFileAsync(jidLocal, aes, file)
   res.aes = aes
-  console.log(' uploadPadFile: resL ', res)
+  console.log(' uploadPadFile: res: ', res)
   return res
 }
 

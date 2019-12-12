@@ -1,9 +1,11 @@
 import React, { Component } from 'react'
 import path from 'path'
+import fs from 'fs'
 import keyMannager from '../../../src/key-manager'
 import InvitePadMember from './InvitePadMember'
 import { loadPadInfo, savePadInfo } from './app-pad-data'
 import { downloadPadFile } from './pad-utils'
+import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
 
 window.padMap = {}
 export default class TeamreplyEditor extends Component {
@@ -13,11 +15,11 @@ export default class TeamreplyEditor extends Component {
     super(props)
   }
   componentWillMount = async () => {
-    const { updatePadFiles } = this.props
+    const { updatePadInfo } = this.props
     let { padInfo } = this.props
     loadPadInfo(padInfo)
     savePadInfo(padInfo)
-    this.updatePadFiles = updatePadFiles
+    this.updatePadInfo = updatePadInfo
     const { email } = padInfo
     const token = await keyMannager.getAccessTokenByEmail(email)
     padInfo.token = token
@@ -49,23 +51,42 @@ export default class TeamreplyEditor extends Component {
       return
     }
     if (data.type === 'CLIENT_VARS') {
-      // console.log(' composerOnPadSocketHandler: CLIENT_VARS: ', data)
+      console.log(' composerOnPadSocketHandler: CLIENT_VARS: ', data)
+      data = data.data || {}
+      const attachments = (data.emailExtr && data.emailExtr.attachments) || []
+      padInfo.files = await this.processaPadAttachments(attachments, padInfo)
+      console.log(' composerOnPadSocketHandler: CLIENT_VARS: padInfo: ', padInfo)
+      this.updatePadInfo(padInfo)
     } else if (data.type === 'COLLABROOM' && data.data && data.data.type === 'EMAIL_EXTR') {
-      // console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
+      console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
       const email = data.data.email
-      const files = email.attachments
-      const fileMap = padInfo.files || {}
-      for (const name of files) {
-        const file = fileMap[name] || {}
-        if (!file.downloadPath) {
-          file.downloadPath = await downloadPadFile(name)
-          file.filename = getAwsOriginalFilename(file)
-        }
-        fileMap[name] = file
-      }
-      this.updatePadFiles(fileMap)
+      padInfo.files = await this.processaPadAttachments(email.attachments)
+      this.updatePadInfo(padInfo)
     }
   }
+
+  processaPadAttachments = async (attachments, padInfo) => {
+    console.log(' processaPadAttachments: ', attachments)
+    const fileMap = padInfo.files || {}
+    for (const item of attachments) {
+      let file = null
+      if (typeof item === 'srtring') {
+        file = fileMap[item] || {}
+        file.awsKey = item
+        fileMap[item] = file
+      } else if (item && typeof item === 'object' && item.awsKey) {
+        file = fileMap[item.awsKey] || item
+        fileMap[item.awsKey] = file
+      }
+      if (!file.downloadPath || !fs.existsSync(file.downloadPath)) {
+        file.downloadPath = await downloadPadFile(file.awsKey, file.aes)
+      }
+      file.filename = getAwsOriginalFilename(file.awsKey)
+      file.extension = path.extname(file.filename)
+    }
+    return fileMap
+  }
+
   showInvitePadMember = () => {
     this.setState({ inviteVisible: true })
   }

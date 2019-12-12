@@ -1,7 +1,7 @@
 import keyMannager from '../../../src/key-manager'
 import { register } from './restjs'
 import auth from '../xmpp/auth'
-import { OnlineUserStore, ConversationStore } from 'chat-exports'
+import { OnlineUserStore, MessageSend, ConversationStore } from 'chat-exports'
 import { log } from './log'
 const { ipcRenderer } = require('electron')
 
@@ -93,7 +93,12 @@ export async function registerLoginEmailAccountForChat (account) {
     OnlineUserStore.addSelfAccount(jid, chatAccount)
     await auth({ jid, password: chatAccount.password })
   }
-  ipcRenderer.on('get-aes-by-conv', (event, { conv, resolve }) => {
-    console.log(' ipcRenderer.on: get-aes-by-conv: ', event, conv, resolve)
+  ipcRenderer.on('get-aes-by-conv', async (event, { conv, win }) => {
+    console.log(' ipcRenderer.on: get-aes-by-conv: ', event, conv, win)
+    conv = await ConversationStore.getConversationByJid(conv)
+    console.log('get-aes-by-conv: conv: ', conv)
+    const aes = await MessageSend.getAESKey(conv)
+    console.log('get-aes-by-conv: resolved aes: ', aes)
+    ipcRenderer.sendTo(win, 'return-aes', aes)
   })
 }

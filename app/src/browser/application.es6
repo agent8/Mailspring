@@ -1426,9 +1426,13 @@ export default class Application extends EventEmitter {
         main.sendMessage('after-add-account', account)
       }
     })
+    console.log(' ipc add get-aes-by-conv: ')
     ipcMain.on('get-aes-by-conv', (event, arg) => {
-      console.log(' ipcMain.on get-aes-by-conv: ', event, arg)
-      ipcMain.send('get-aes-by-conv', arg)
+      console.log(' ipcMain.on::get-aes-by-conv: ', arg)
+      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW)
+      if (mainWindow && mainWindow.browserWindow.webContents) {
+        mainWindow.browserWindow.webContents.send('get-aes-by-conv', arg)
+      }
     })
   }
 

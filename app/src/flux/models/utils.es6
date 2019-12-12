@@ -3,164 +3,189 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-let Utils;
-const _ = require('underscore');
-const fs = require('fs-plus');
-const path = require('path');
-const osLocale = require('os-locale');
+let Utils
+const _ = require('underscore')
+const fs = require('fs-plus')
+const path = require('path')
+const osLocale = require('os-locale')
 
-let DefaultResourcePath = null;
-const DatabaseObjectRegistry = require('../../registries/database-object-registry').default;
+let DefaultResourcePath = null
+const DatabaseObjectRegistry = require('../../registries/database-object-registry').default
 
-let imageData = null;
-let iconsData = null;
-let lottieData = null;
+let imageData = null
+let iconsData = null
+let lottieData = null
 
-const CALENDAR_TYPES = ['text/calendar', 'application/ics'];
+const CALENDAR_TYPES = ['text/calendar', 'application/ics']
 const GDPR_COUNTRIES = [
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
-  "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL",
-  "PO", "PT", "RO", "SK", "SI", "ES", "SE", "GB", "IS", "LI",
-  "NO", "CH",
+  'AT',
+  'BE',
+  'BG',
+  'HR',
+  'CY',
+  'CZ',
+  'DK',
+  'EE',
+  'FI',
+  'FR',
+  'DE',
+  'GR',
+  'HU',
+  'IE',
+  'IT',
+  'LV',
+  'LT',
+  'LU',
+  'MT',
+  'NL',
+  'PO',
+  'PT',
+  'RO',
+  'SK',
+  'SI',
+  'ES',
+  'SE',
+  'GB',
+  'IS',
+  'LI',
+  'NO',
+  'CH'
   // "CN", "US",
-];
+]
 const BLANK_ZWNJ = '\u200c' // &zwnj;
 const aggregation = (baseClass, ...mixins) => {
   class base extends baseClass {
-    constructor(...args) {
-      super(...args);
+    constructor (...args) {
+      super(...args)
       mixins.forEach(mixin => {
-        copyProps(this, new mixin(...args));
-      });
+        copyProps(this, new mixin(...args))
+      })
     }
   }
 
   const copyProps = (target, source) => {
     Object.getOwnPropertyNames(source).forEach(prop => {
-      if (
-        !prop.match(
-          /^(?:constructor|prototype|arguments|caller|name|bind|call|apply|toString|length)$/,
-        )
-      )
-        Object.defineProperty(target, prop, Object.getOwnPropertyDescriptor(source, prop));
-    });
-  };
+      if (!prop.match(/^(?:constructor|prototype|arguments|caller|name|bind|call|apply|toString|length)$/)) {
+        Object.defineProperty(target, prop, Object.getOwnPropertyDescriptor(source, prop))
+      }
+    })
+  }
   // outside contructor() to allow aggregation(A,B,C).staticFunction() to be called etc.
   mixins.forEach(mixin => {
-    copyProps(base.prototype, mixin.prototype);
-    copyProps(base, mixin);
-  });
-  return base;
-};
+    copyProps(base.prototype, mixin.prototype)
+    copyProps(base, mixin)
+  })
+  return base
+}
 module.exports = Utils = {
   multipleInheritance: (...classes) => aggregation(...classes),
-  waitFor(latch, options = {}) {
-    const timeout = options.timeout || 400;
-    const expire = Date.now() + timeout;
+  waitFor (latch, options = {}) {
+    const timeout = options.timeout || 400
+    const expire = Date.now() + timeout
     return new Promise(function (resolve, reject) {
       var attempt = function () {
         if (Date.now() > expire) {
-          return reject(new Error(`Utils.waitFor hit timeout (${timeout}ms) without firing.`));
+          return reject(new Error(`Utils.waitFor hit timeout (${timeout}ms) without firing.`))
         }
         if (latch()) {
-          return resolve();
+          return resolve()
         }
-        window.requestAnimationFrame(attempt);
-      };
-      attempt();
-    });
+        window.requestAnimationFrame(attempt)
+      }
+      attempt()
+    })
   },
-  needGDPR() {
-    let locale = osLocale.sync();
+  needGDPR () {
+    let locale = osLocale.sync()
     if (locale.indexOf('_') !== -1) {
-      locale = locale.split('_')[1];
+      locale = locale.split('_')[1]
     }
-    return GDPR_COUNTRIES.indexOf(locale) !== -1;
+    return GDPR_COUNTRIES.indexOf(locale) !== -1
   },
 
-  showIconForAttachments(files) {
+  showIconForAttachments (files) {
     if (!(files instanceof Array)) {
-      return false;
+      return false
     }
-    return files.find(f => (!f.contentId || f.size > 12 * 1024) && !CALENDAR_TYPES.includes(f.contentType));
+    return files.find(f => (!f.contentId || f.size > 12 * 1024) && !CALENDAR_TYPES.includes(f.contentType))
   },
 
-  superTrim(text) {
+  superTrim (text) {
     if (!text || typeof text !== 'string') {
-      return text;
+      return text
     }
 
-    const reg = new RegExp(`${BLANK_ZWNJ}+`, "g");
-    return text.replace(reg, '').trim();
+    const reg = new RegExp(`${BLANK_ZWNJ}+`, 'g')
+    return text.replace(reg, '').trim()
   },
 
-  extractTextFromHtml(html, param = {}) {
-    const { maxLength } = param;
+  extractTextFromHtml (html, param = {}) {
+    const { maxLength } = param
     if ((html != null ? html : '').trim().length === 0) {
-      return '';
+      return ''
     }
     if (maxLength && html.length > maxLength) {
-      html = html.slice(0, maxLength);
+      html = html.slice(0, maxLength)
     }
-    return new DOMParser().parseFromString(html, 'text/html').body.innerText;
+    return new DOMParser().parseFromString(html, 'text/html').body.innerText
   },
 
-  modelTypesReviver(k, v) {
-    const type = v != null ? v.__cls : undefined;
+  modelTypesReviver (k, v) {
+    const type = v != null ? v.__cls : undefined
     if (!type) {
-      return v;
+      return v
     }
 
     if (DatabaseObjectRegistry.isInRegistry(type)) {
-      return DatabaseObjectRegistry.deserialize(type, v);
+      return DatabaseObjectRegistry.deserialize(type, v)
     }
 
-    return v;
+    return v
   },
 
-  convertToModel(json) {
+  convertToModel (json) {
     if (!json) {
-      return null;
+      return null
     }
     if (!json.__cls) {
-      throw new Error('convertToModel: no __cls found on object. json:' + JSON.stringify(json));
+      throw new Error('convertToModel: no __cls found on object. json:' + JSON.stringify(json))
     }
     if (!DatabaseObjectRegistry.isInRegistry(json.__cls)) {
-      throw new Error('convertToModel: __cls is not a known class. json:' + JSON.stringify(json));
+      throw new Error('convertToModel: __cls is not a known class. json:' + JSON.stringify(json))
     }
-    return DatabaseObjectRegistry.deserialize(json.__cls, json);
+    return DatabaseObjectRegistry.deserialize(json.__cls, json)
   },
-  getEmptyModel(className){
+  getEmptyModel (className) {
     if (!DatabaseObjectRegistry.isInRegistry(className)) {
-      throw new Error('getEmptyModel: not a known class. className:' + className);
+      throw new Error('getEmptyModel: not a known class. className:' + className)
     }
-    return DatabaseObjectRegistry.deserialize(className, {});
+    return DatabaseObjectRegistry.deserialize(className, {})
   },
 
-  fastOmit(props, without) {
-    const otherProps = Object.assign({}, props);
+  fastOmit (props, without) {
+    const otherProps = Object.assign({}, props)
     for (let w of without) {
-      delete otherProps[w];
+      delete otherProps[w]
     }
-    return otherProps;
+    return otherProps
   },
 
-  isHash(object) {
-    return _.isObject(object) && !_.isFunction(object) && !_.isArray(object);
+  isHash (object) {
+    return _.isObject(object) && !_.isFunction(object) && !_.isArray(object)
   },
 
-  escapeRegExp(str) {
-    return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
+  escapeRegExp (str) {
+    return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
   },
 
-  range(left, right, inclusive = true) {
-    let range = [];
-    let ascending = left < right;
-    let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  range (left, right, inclusive = true) {
+    let range = []
+    let ascending = left < right
+    let end = !inclusive ? right : ascending ? right + 1 : right - 1
     for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
-      range.push(i);
+      range.push(i)
     }
-    return range;
+    return range
   },
 
   // Generates a new RegExp that is great for basic search fields. It
@@ -168,71 +193,71 @@ module.exports = Utils = {
   //
   // See regex explanation and test here:
   // https://regex101.com/r/zG7aW4/2
-  wordSearchRegExp(str = '') {
-    return new RegExp(`((?:^|\\W|$)${Utils.escapeRegExp(str.trim())})`, 'ig');
+  wordSearchRegExp (str = '') {
+    return new RegExp(`((?:^|\\W|$)${Utils.escapeRegExp(str.trim())})`, 'ig')
   },
 
   // Takes an optional customizer. The customizer is passed the key and the
   // new cloned value for that key. The customizer is expected to either
   // modify the value and return it or simply be the identity function.
-  deepClone(object, customizer, stackSeen = [], stackRefs = []) {
-    let newObject;
+  deepClone (object, customizer, stackSeen = [], stackRefs = []) {
+    let newObject
     if (!_.isObject(object)) {
-      return object;
+      return object
     }
     if (_.isFunction(object)) {
-      return object;
+      return object
     }
 
     if (_.isArray(object)) {
       // http://perfectionkills.com/how-ecmascript-5-still-does-not-allow-to-subclass-an-array/
-      newObject = [];
+      newObject = []
     } else if (object instanceof Date) {
       // You can't clone dates by iterating through `getOwnPropertyNames`
       // of the Date object. We need to special-case Dates.
-      newObject = new Date(object);
+      newObject = new Date(object)
     } else {
-      newObject = Object.create(Object.getPrototypeOf(object));
+      newObject = Object.create(Object.getPrototypeOf(object))
     }
 
     // Circular reference check
-    const seenIndex = stackSeen.indexOf(object);
+    const seenIndex = stackSeen.indexOf(object)
     if (seenIndex >= 0) {
-      return stackRefs[seenIndex];
+      return stackRefs[seenIndex]
     }
-    stackSeen.push(object);
-    stackRefs.push(newObject);
+    stackSeen.push(object)
+    stackRefs.push(newObject)
 
     // It's important to use getOwnPropertyNames instead of Object.keys to
     // get the non-enumerable items as well.
     for (let key of Object.getOwnPropertyNames(object)) {
-      const newVal = Utils.deepClone(object[key], customizer, stackSeen, stackRefs);
+      const newVal = Utils.deepClone(object[key], customizer, stackSeen, stackRefs)
       if (_.isFunction(customizer)) {
-        newObject[key] = customizer(key, newVal);
+        newObject[key] = customizer(key, newVal)
       } else {
-        newObject[key] = newVal;
+        newObject[key] = newVal
       }
     }
-    return newObject;
+    return newObject
   },
 
-  toSet(arr = []) {
-    const set = {};
+  toSet (arr = []) {
+    const set = {}
     for (let item of arr) {
-      set[item] = true;
+      set[item] = true
     }
-    return set;
+    return set
   },
 
   // Given a File object or uploadData of an uploading file object,
   // determine if it looks like an image and is in the size range for previews
-  shouldDisplayAsImage(file = {}) {
-    const name = file.filename || file.fileName || file.name || '';
-    const size = file.size || file.fileSize || 0;
-    const ext = path.extname(name).toLowerCase();
-    const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg'];
+  shouldDisplayAsImage (file = {}) {
+    const name = file.filename || file.fileName || file.name || ''
+    const size = file.size || file.fileSize || 0
+    const ext = path.extname(name).toLowerCase()
+    const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg']
 
-    return extensions.includes(ext) && size > 512 && size < 1024 * 1024 * 5;
+    return extensions.includes(ext)
   },
 
   // Escapes potentially dangerous html characters
@@ -240,215 +265,215 @@ module.exports = Utils = {
   // See their specs here:
   // https://github.com/angular/angular.js/blob/master/test/ngSanitize/sanitizeSpec.js
   // And the original source here: https://github.com/angular/angular.js/blob/master/src/ngSanitize/sanitize.js#L451
-  encodeHTMLEntities(value) {
-    const SURROGATE_PAIR_REGEXP = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
+  encodeHTMLEntities (value) {
+    const SURROGATE_PAIR_REGEXP = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
     const pairFix = function (value) {
-      const hi = value.charCodeAt(0);
-      const low = value.charCodeAt(1);
-      return `&#${(hi - 0xd800) * 0x400 + (low - 0xdc00) + 0x10000};`;
-    };
+      const hi = value.charCodeAt(0)
+      const low = value.charCodeAt(1)
+      return `&#${(hi - 0xd800) * 0x400 + (low - 0xdc00) + 0x10000};`
+    }
 
     // Match everything outside of normal chars and " (quote character)
-    const NON_ALPHANUMERIC_REGEXP = /([^#-~| |!])/g;
-    const alphaFix = value => `&#${value.charCodeAt(0)};`;
+    const NON_ALPHANUMERIC_REGEXP = /([^#-~| |!])/g
+    const alphaFix = value => `&#${value.charCodeAt(0)};`
 
     return value
       .replace(/&/g, '&amp;')
       .replace(SURROGATE_PAIR_REGEXP, pairFix)
       .replace(NON_ALPHANUMERIC_REGEXP, alphaFix)
       .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+      .replace(/>/g, '&gt;')
   },
 
-  generateTempId() {
+  generateTempId () {
     const s4 = () =>
       Math.floor((1 + Math.random()) * 0x10000)
         .toString(16)
-        .substring(1);
-    return `local-${s4()}${s4()}-${s4()}`;
+        .substring(1)
+    return `local-${s4()}${s4()}-${s4()}`
   },
 
-  generateContentId() {
+  generateContentId () {
     const s4 = () =>
       Math.floor((1 + Math.random()) * 0x10000)
         .toString(16)
-        .substring(1);
-    return `mcid-${s4()}${s4()}-${s4()}`;
+        .substring(1)
+    return `mcid-${s4()}${s4()}-${s4()}`
   },
 
-  isTempId(id) {
+  isTempId (id) {
     if (!id || !_.isString(id)) {
-      return false;
+      return false
     }
-    return id.slice(0, 6) === 'local-';
+    return id.slice(0, 6) === 'local-'
   },
-  lottieNamed(fullname, resourcePath) {
-    const [name, ext] = fullname.split('.');
+  lottieNamed (fullname, resourcePath) {
+    const [name, ext] = fullname.split('.')
 
     if (DefaultResourcePath == null) {
-      DefaultResourcePath = AppEnv.getLoadSettings().resourcePath;
+      DefaultResourcePath = AppEnv.getLoadSettings().resourcePath
     }
     if (resourcePath == null) {
-      resourcePath = DefaultResourcePath;
+      resourcePath = DefaultResourcePath
     }
 
     if (!lottieData) {
-      lottieData = AppEnv.fileListCache().lottieData || '{}';
-      Utils.lottie = JSON.parse(lottieData) || {};
+      lottieData = AppEnv.fileListCache().lottieData || '{}'
+      Utils.lottie = JSON.parse(lottieData) || {}
     }
 
     if (!Utils.lottie || !Utils.lottie[resourcePath]) {
       if (Utils.lottie == null) {
-        Utils.lottie = {};
+        Utils.lottie = {}
       }
       if (Utils.lottie[resourcePath] == null) {
-        Utils.lottie[resourcePath] = {};
+        Utils.lottie[resourcePath] = {}
       }
-      const lottieData = path.join(resourcePath, 'static', 'lottie');
-      const files = fs.listTreeSync(lottieData);
+      const lottieData = path.join(resourcePath, 'static', 'lottie')
+      const files = fs.listTreeSync(lottieData)
       for (let file of files) {
         // On Windows, we get paths like C:\images\compose.png, but
         // Chromium doesn't accept the backward slashes. Convert to
         // C:/images/compose.png
-        file = file.replace(/\\/g, '/');
-        const basename = path.basename(file);
-        Utils.lottie[resourcePath][basename] = file;
+        file = file.replace(/\\/g, '/')
+        const basename = path.basename(file)
+        Utils.lottie[resourcePath][basename] = file
       }
-      AppEnv.fileListCache().lottieData = JSON.stringify(Utils.lottie);
+      AppEnv.fileListCache().lottieData = JSON.stringify(Utils.lottie)
     }
-    let attempt = `${name}.${ext}`;
+    let attempt = `${name}.${ext}`
     if (Utils.lottie[resourcePath][attempt]) {
-      return Utils.lottie[resourcePath][attempt];
+      return Utils.lottie[resourcePath][attempt]
     }
-    return null;
+    return null
   },
-  iconNamed(fullname, resourcePath) {
-    const [name, ext] = fullname.split('.');
+  iconNamed (fullname, resourcePath) {
+    const [name, ext] = fullname.split('.')
 
     if (DefaultResourcePath == null) {
-      DefaultResourcePath = AppEnv.getLoadSettings().resourcePath;
+      DefaultResourcePath = AppEnv.getLoadSettings().resourcePath
     }
     if (resourcePath == null) {
-      resourcePath = DefaultResourcePath;
+      resourcePath = DefaultResourcePath
     }
 
     if (!iconsData) {
-      iconsData = AppEnv.fileListCache().iconsData || '{}';
-      Utils.icons = JSON.parse(iconsData) || {};
+      iconsData = AppEnv.fileListCache().iconsData || '{}'
+      Utils.icons = JSON.parse(iconsData) || {}
     }
 
     if (!Utils.icons || !Utils.icons[resourcePath]) {
       if (Utils.icons == null) {
-        Utils.icons = {};
+        Utils.icons = {}
       }
       if (Utils.icons[resourcePath] == null) {
-        Utils.icons[resourcePath] = {};
+        Utils.icons[resourcePath] = {}
       }
-      const iconsPath = path.join(resourcePath, 'static', 'icons');
-      const files = fs.listTreeSync(iconsPath);
+      const iconsPath = path.join(resourcePath, 'static', 'icons')
+      const files = fs.listTreeSync(iconsPath)
       for (let file of files) {
         // On Windows, we get paths like C:\images\compose.png, but
         // Chromium doesn't accept the backward slashes. Convert to
         // C:/images/compose.png
-        file = file.replace(/\\/g, '/');
-        const basename = path.basename(file);
-        Utils.icons[resourcePath][basename] = file;
+        file = file.replace(/\\/g, '/')
+        const basename = path.basename(file)
+        Utils.icons[resourcePath][basename] = file
       }
-      AppEnv.fileListCache().iconsData = JSON.stringify(Utils.icons);
+      AppEnv.fileListCache().iconsData = JSON.stringify(Utils.icons)
     }
-    let attempt = `${name}.${ext}`;
+    let attempt = `${name}.${ext}`
     if (Utils.icons[resourcePath][attempt]) {
-      return Utils.icons[resourcePath][attempt];
+      return Utils.icons[resourcePath][attempt]
     }
-    return null;
+    return null
   },
-  imageNamed(fullname, resourcePath) {
-    const [name, ext] = fullname.split('.');
+  imageNamed (fullname, resourcePath) {
+    const [name, ext] = fullname.split('.')
 
     if (DefaultResourcePath == null) {
-      DefaultResourcePath = AppEnv.getLoadSettings().resourcePath;
+      DefaultResourcePath = AppEnv.getLoadSettings().resourcePath
     }
     if (resourcePath == null) {
-      resourcePath = DefaultResourcePath;
+      resourcePath = DefaultResourcePath
     }
 
     if (!imageData) {
-      imageData = AppEnv.fileListCache().imageData || '{}';
-      Utils.images = JSON.parse(imageData) || {};
+      imageData = AppEnv.fileListCache().imageData || '{}'
+      Utils.images = JSON.parse(imageData) || {}
     }
 
     if (!Utils.images || !Utils.images[resourcePath]) {
       if (Utils.images == null) {
-        Utils.images = {};
+        Utils.images = {}
       }
       if (Utils.images[resourcePath] == null) {
-        Utils.images[resourcePath] = {};
+        Utils.images[resourcePath] = {}
       }
-      const imagesPath = path.join(resourcePath, 'static', 'images');
-      const files = fs.listTreeSync(imagesPath);
+      const imagesPath = path.join(resourcePath, 'static', 'images')
+      const files = fs.listTreeSync(imagesPath)
       for (let file of files) {
         // On Windows, we get paths like C:\images\compose.png, but
         // Chromium doesn't accept the backward slashes. Convert to
         // C:/images/compose.png
-        file = file.replace(/\\/g, '/');
-        const basename = path.basename(file);
-        Utils.images[resourcePath][basename] = file;
+        file = file.replace(/\\/g, '/')
+        const basename = path.basename(file)
+        Utils.images[resourcePath][basename] = file
       }
-      AppEnv.fileListCache().imageData = JSON.stringify(Utils.images);
+      AppEnv.fileListCache().imageData = JSON.stringify(Utils.images)
     }
 
-    const plat = process.platform != null ? process.platform : '';
-    const ratio = window.devicePixelRatio != null ? window.devicePixelRatio : 1;
+    const plat = process.platform != null ? process.platform : ''
+    const ratio = window.devicePixelRatio != null ? window.devicePixelRatio : 1
 
-    let attempt = `${name}-${plat}@${ratio}x.${ext}`;
+    let attempt = `${name}-${plat}@${ratio}x.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    attempt = `${name}@${ratio}x.${ext}`;
+    attempt = `${name}@${ratio}x.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    attempt = `${name}-${plat}.${ext}`;
+    attempt = `${name}-${plat}.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    attempt = `${name}.${ext}`;
+    attempt = `${name}.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    attempt = `${name}-${plat}@2x.${ext}`;
+    attempt = `${name}-${plat}@2x.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    attempt = `${name}@2x.${ext}`;
+    attempt = `${name}@2x.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    attempt = `${name}-${plat}@1x.${ext}`;
+    attempt = `${name}-${plat}@1x.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    attempt = `${name}@1x.${ext}`;
+    attempt = `${name}@1x.${ext}`
     if (Utils.images[resourcePath][attempt]) {
-      return Utils.images[resourcePath][attempt];
+      return Utils.images[resourcePath][attempt]
     }
-    return null;
+    return null
   },
 
-  subjectWithPrefix(subject, prefix) {
+  subjectWithPrefix (subject, prefix) {
     if (subject.search(/fwd:/i) === 0) {
-      return subject.replace(/fwd:/i, prefix);
+      return subject.replace(/fwd:/i, prefix)
     } else if (subject.search(/re:/i) === 0) {
-      return subject.replace(/re:/i, prefix);
+      return subject.replace(/re:/i, prefix)
     } else {
-      return `${prefix} ${subject}`;
+      return `${prefix} ${subject}`
     }
   },
 
   // True of all arguments have the same domains
-  emailsHaveSameDomain(...args) {
+  emailsHaveSameDomain (...args) {
     if (args.length < 2) {
-      return false;
+      return false
     }
     const domains = args.map((email = '') => {
       return _.last(
@@ -456,56 +481,56 @@ module.exports = Utils = {
           .toLowerCase()
           .trim()
           .split('@')
-      );
-    });
-    const toMatch = domains[0];
-    return _.every(domains, domain => domain.length > 0 && toMatch === domain);
+      )
+    })
+    const toMatch = domains[0]
+    return _.every(domains, domain => domain.length > 0 && toMatch === domain)
   },
 
-  emailHasCommonDomain(email = '') {
+  emailHasCommonDomain (email = '') {
     const domain = _.last(
       email
         .toLowerCase()
         .trim()
         .split('@')
-    );
-    return Utils.commonDomains[domain] != null ? Utils.commonDomains[domain] : false;
+    )
+    return Utils.commonDomains[domain] != null ? Utils.commonDomains[domain] : false
   },
 
   // This looks for and removes plus-ing, it taks a VERY liberal approach
   // to match an email address. We'd rather let false positives through.
-  toEquivalentEmailForm(email) {
+  toEquivalentEmailForm (email) {
     // https://regex101.com/r/iS7kD5/3
     // eslint-disable-next-line
-    const [ignored, user, domain] = /^([^+]+).*@(.+)$/gi.exec(email) || [null, '', ''];
-    return `${user}@${domain}`.trim().toLowerCase();
+    const [ignored, user, domain] = /^([^+]+).*@(.+)$/gi.exec(email) || [null, '', '']
+    return `${user}@${domain}`.trim().toLowerCase()
   },
 
-  emailIsEquivalent(email1, email2) {
+  emailIsEquivalent (email1, email2) {
     if (email1 == null) {
-      email1 = '';
+      email1 = ''
     }
     if (email2 == null) {
-      email2 = '';
+      email2 = ''
     }
-    email1 = email1.toLowerCase().trim();
-    email2 = email2.toLowerCase().trim();
+    email1 = email1.toLowerCase().trim()
+    email2 = email2.toLowerCase().trim()
     if (email1 === email2) {
-      return true;
+      return true
     }
-    email1 = Utils.toEquivalentEmailForm(email1);
-    email2 = Utils.toEquivalentEmailForm(email2);
-    return email1 === email2;
+    email1 = Utils.toEquivalentEmailForm(email1)
+    email2 = Utils.toEquivalentEmailForm(email2)
+    return email1 === email2
   },
 
-  rectVisibleInRect(r1, r2) {
-    return !(r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top);
+  rectVisibleInRect (r1, r2) {
+    return !(r2.left > r1.right || r2.right < r1.left || r2.top > r1.bottom || r2.bottom < r1.top)
   },
 
-  isEqualReact(a, b, options = {}) {
-    options.functionsAreEqual = true;
-    options.ignoreKeys = (options.ignoreKeys != null ? options.ignoreKeys : []).push('id');
-    return Utils.isEqual(a, b, options);
+  isEqualReact (a, b, options = {}) {
+    options.functionsAreEqual = true
+    options.ignoreKeys = (options.ignoreKeys != null ? options.ignoreKeys : []).push('id')
+    return Utils.isEqual(a, b, options)
   },
 
   // Customized version of Underscore 1.8.2's isEqual function
@@ -513,47 +538,47 @@ module.exports = Utils = {
   //   - functionsAreEqual: if true then all functions are equal
   //   - keysToIgnore: an array of object keys to ignore checks on
   //   - logWhenFalse: logs when isEqual returns false
-  isEqual(a, b, options = {}) {
-    const value = Utils._isEqual(a, b, [], [], options);
+  isEqual (a, b, options = {}) {
+    const value = Utils._isEqual(a, b, [], [], options)
     if (options.logWhenFalse) {
       if (value === false) {
-        console.log('isEqual is false', a, b, options);
+        console.log('isEqual is false', a, b, options)
       }
-      return value;
+      return value
     } else {
     }
-    return value;
+    return value
   },
 
-  _isEqual(a, b, aStack, bStack, options = {}) {
+  _isEqual (a, b, aStack, bStack, options = {}) {
     // Identical objects are equal. `0 is -0`, but they aren't identical.
     // See the [Harmony `egal`
     // proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
     if (a === b) {
-      return a !== 0 || 1 / a === 1 / b;
+      return a !== 0 || 1 / a === 1 / b
     }
     // A strict comparison is necessary because `null == undefined`.
     if (a === null || b === null) {
-      return a === b;
+      return a === b
     }
     // Unwrap any wrapped objects.
     if ((a != null ? a._wrapped : undefined) != null) {
-      a = a._wrapped;
+      a = a._wrapped
     }
     if ((b != null ? b._wrapped : undefined) != null) {
-      b = b._wrapped;
+      b = b._wrapped
     }
 
     if (options.functionsAreEqual) {
       if (_.isFunction(a) && _.isFunction(b)) {
-        return true;
+        return true
       }
     }
 
     // Compare `[[Class]]` names.
-    const className = toString.call(a);
+    const className = toString.call(a)
     if (className !== toString.call(b)) {
-      return false;
+      return false
     }
     switch (className) {
       // Strings, numbers, regular expressions, dates, and booleans are
@@ -563,19 +588,19 @@ module.exports = Utils = {
       case '[object String]':
         // Primitives and their corresponding object wrappers are equivalent;
         // thus, `"5"` is equivalent to `new String("5")`.
-        return `${a}` === `${b}`;
+        return `${a}` === `${b}`
       case '[object Number]':
         // `NaN`s are equivalent, but non-reflexive.
         // Object(NaN) is equivalent to NaN
         // eslint-disable-next-line
         if (+a !== +a) {
-          return +b !== +b; // eslint-disable-line
+          return +b !== +b // eslint-disable-line
         }
         // An `egal` comparison is performed for other numeric values.
         if (+a === 0) {
-          return 1 / +a === 1 / b;
+          return 1 / +a === 1 / b
         } else {
-          return +a === +b;
+          return +a === +b
         }
       case '[object Date]':
       case '[object Boolean]':
@@ -583,31 +608,26 @@ module.exports = Utils = {
         // compared by their millisecond representations. Note that invalid
         // dates with millisecond representations of `NaN` are not
         // equivalent.
-        return +a === +b;
+        return +a === +b
       default:
     }
 
-    const areArrays = className === '[object Array]';
+    const areArrays = className === '[object Array]'
     if (!areArrays) {
       if (typeof a !== 'object' || typeof b !== 'object') {
-        return false;
+        return false
       }
 
       // Objects with different constructors are not equivalent, but
       // `Object`s or `Array`s from different frames are.
-      const aCtor = a.constructor;
-      const bCtor = b.constructor;
+      const aCtor = a.constructor
+      const bCtor = b.constructor
       if (
         aCtor !== bCtor &&
-        !(
-          _.isFunction(aCtor) &&
-          aCtor instanceof aCtor &&
-          _.isFunction(bCtor) &&
-          bCtor instanceof bCtor
-        ) &&
+        !(_.isFunction(aCtor) && aCtor instanceof aCtor && _.isFunction(bCtor) && bCtor instanceof bCtor) &&
         ('constructor' in a && 'constructor' in b)
       ) {
-        return false;
+        return false
       }
     }
     // Assume equality for cyclic structures. The algorithm for detecting cyclic
@@ -615,65 +635,65 @@ module.exports = Utils = {
 
     // Initializing stack of traversed objects.
     // It's done here since we only need them for objects and arrays comparison.
-    aStack = aStack != null ? aStack : [];
-    bStack = bStack != null ? bStack : [];
-    let { length } = aStack;
+    aStack = aStack != null ? aStack : []
+    bStack = bStack != null ? bStack : []
+    let { length } = aStack
     while (length--) {
       // Linear search. Performance is inversely proportional to the number of
       // unique nested structures.
       if (aStack[length] === a) {
-        return bStack[length] === b;
+        return bStack[length] === b
       }
     }
 
     // Add the first object to the stack of traversed objects.
-    aStack.push(a);
-    bStack.push(b);
+    aStack.push(a)
+    bStack.push(b)
 
     // Recursively compare objects and arrays.
     if (areArrays) {
       // Compare array lengths to determine if a deep comparison is necessary.
-      ({ length } = a);
+      ;({ length } = a)
       if (length !== b.length) {
-        return false;
+        return false
       }
       // Deep compare the contents, ignoring non-numeric properties.
       while (length--) {
         if (!Utils._isEqual(a[length], b[length], aStack, bStack, options)) {
-          return false;
+          return false
         }
       }
     } else {
       // Deep compare objects.
-      let key = undefined;
-      const keys = Object.keys(a);
-      ({ length } = keys);
+      let key
+      const keys = Object.keys(a)
+      ;({ length } = keys)
       // Ensure that both objects contain the same number of properties
       // before comparing deep equality.
       if (Object.keys(b).length !== length) {
-        return false;
+        return false
       }
-      const keysToIgnore = {};
+      const keysToIgnore = {}
       if (options.ignoreKeys && _.isArray(options.ignoreKeys)) {
         for (key of options.ignoreKeys) {
-          keysToIgnore[key] = true;
+          keysToIgnore[key] = true
         }
       }
       while (length--) {
         // Deep compare each member
-        key = keys[length];
+        key = keys[length]
         if (key in keysToIgnore) {
-          continue;
+          continue
         }
         if (!(_.has(b, key) && Utils._isEqual(a[key], b[key], aStack, bStack, options))) {
-          return false;
+          return false
         }
       }
     }
     // Remove the first object from the stack of traversed objects.
-    aStack.pop();
-    bStack.pop();
-    return true;
+    aStack.pop()
+    bStack.pop()
+    return true
   },
 
   // https://github.com/mailcheck/mailcheck/wiki/list-of-popular-domains
@@ -780,7 +800,7 @@ module.exports = Utils = {
     'live.com.mx': true,
     'hotmail.es': true,
     'hotmail.com.mx': true,
-    'prodigy.net.mx': true,
+    'prodigy.net.mx': true
   },
 
   commonlyCapitalizedSalutations: [
@@ -850,19 +870,19 @@ module.exports = Utils = {
     'guy',
     'guys',
     'lady',
-    'ladies',
+    'ladies'
   ],
 
-  hueForString(str) {
+  hueForString (str) {
     if (str == null) {
-      str = '';
+      str = ''
     }
     return (
       str
         .split('')
         .map(c => c.charCodeAt())
         .reduce((n, a) => n + a) % 360
-    );
+    )
   },
 
   // Emails that nave no-reply or similar phrases in them are likely not a
@@ -870,10 +890,10 @@ module.exports = Utils = {
   //
   // Also emails that are really long are likely computer-generated email
   // strings used for bcc-based automated teasks.
-  likelyNonHumanEmail(email) {
+  likelyNonHumanEmail (email) {
     // simple catch for long emails that are almost always autoreplies
     if (email.length > 48) {
-      return true;
+      return true
     }
 
     // simple catch for things like hex sequences in prefixes
@@ -881,13 +901,13 @@ module.exports = Utils = {
       email
         .split('@')
         .shift()
-        .split(/[0-9]/g).length - 1;
+        .split(/[0-9]/g).length - 1
     if (digitCount >= 6) {
-      return true;
+      return true
     }
 
     // more advanced scan for common patterns
-    const at = '[-@+=]';
+    const at = '[-@+=]'
     const terms = [
       'no[-_]?reply',
       'do[-_]?not[-_]?reply',
@@ -922,17 +942,17 @@ module.exports = Utils = {
       `list[s]?${at}`,
       `distribute[s]?${at}`,
       `catchall${at}`,
-      `catch[-_]all${at}`,
-    ];
-    const reStr = `(${terms.join('|')})`;
-    const re = new RegExp(reStr, 'gi');
-    return re.test(email);
+      `catch[-_]all${at}`
+    ]
+    const reStr = `(${terms.join('|')})`
+    const re = new RegExp(reStr, 'gi')
+    return re.test(email)
   },
 
   // Does the several tests you need to determine if a test range is within
   // a bounds. Expects both objects to have `start` and `end` keys.
   // Compares any values with <= and >=.
-  overlapsBounds(bounds, test) {
+  overlapsBounds (bounds, test) {
     // Fully enclosed
     return (
       (test.start <= bounds.end && test.end >= bounds.start) ||
@@ -942,6 +962,6 @@ module.exports = Utils = {
       (test.end >= bounds.start && test.end <= bounds.end) ||
       // Spans entire boundary
       (test.end >= bounds.end && test.start <= bounds.start)
-    );
-  },
-};
+    )
+  }
+}

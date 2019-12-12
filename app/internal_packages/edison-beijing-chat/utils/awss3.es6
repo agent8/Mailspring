@@ -33,6 +33,7 @@ function getMyBucket () {
     return BUCKET_DEV
   }
 }
+const SEP = '--$_@_$--'
 
 export const downloadFile = (aes, key, name, callback, progressBack) => {
   var params = {
@@ -43,6 +44,7 @@ export const downloadFile = (aes, key, name, callback, progressBack) => {
   const request = s3.getObject(params)
   // 创建可读流、可写流和解密流
   const readStream = request.createReadStream()
+  console.log(' writeStream: name: ', name)
   const writeStream = fs.createWriteStream(name)
   const decryptStream = new DecryptFileStream(aes)
 
@@ -75,21 +77,20 @@ export const downloadFile = (aes, key, name, callback, progressBack) => {
     const fileLength = data.ContentLength
 
     // 进度事件
-    decryptStream.on('process', loaded => {
-      if (progressBack && fileLength > loaded) {
-        progressBack({
-          loaded,
-          total: fileLength
-        })
-      } else if (callback && fileLength === loaded) {
-        console.log('finished downloadFile: ', aes, key, name)
-        callback()
-      }
-    })
+    decryptStream &&
+      decryptStream.on('process', loaded => {
+        if (progressBack && fileLength > loaded) {
+          progressBack({
+            loaded,
+            total: fileLength
+          })
+        } else if (callback && fileLength === loaded) {
+          console.log('finished downloadFile: ', aes, key, name)
+          callback()
+        }
+      })
     // 流传递
-    if (decryptStream.writable && writeStream.writable) {
-      readStream.pipe(decryptStream).pipe(writeStream)
-    }
+    readStream.pipe(decryptStream).pipe(writeStream)
   })
 
   return request
@@ -97,7 +98,7 @@ export const downloadFile = (aes, key, name, callback, progressBack) => {
 
 export const uploadFile = (oid, aes, file, callback, progressCallback) => {
   const filename = path.basename(file)
-  let myKey = oid + '/' + uuid.v4() + '--$_@_$--' + filename
+  let myKey = oid + '/' + uuid.v4() + SEP + filename
   const readS = fs.createReadStream(file)
   if (aes) {
     myKey = myKey + ENCRYPTED_SUFFIX
@@ -122,10 +123,10 @@ export const uploadFile = (oid, aes, file, callback, progressCallback) => {
   return request
 }
 
-export const downloadFileAsync = (oid, aes, file) => {
-  return new Promise((resolve, reject) => {
-    uploadFile(oid, aes, file, (result, filename, awsKey) => {
-      resolve({ result, filename, awsKey })
+export const downloadFileAsync = (awsKey, filaname, aes) => {
+  return new Promise(resolve => {
+    downloadFile(aes, awsKey, filaname, () => {
+      resolve()
     })
   })
 }
@@ -136,6 +137,12 @@ export const uploadFileAsync = (oid, aes, file) => {
       resolve({ result, filename, awsKey })
     })
   })
+}
+
+export const getAwsOriginalFilename = name => {
+  console.log(' getAwsOriginalFilename: ', name)
+  let i = name.lastIndexOf(SEP) + SEP.length
+  return name.substring(i)
 }
 
 function getSize (len) {
