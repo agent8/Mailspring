@@ -52,6 +52,19 @@
     word-wrap: break-word;
     -webkit-nbsp-mode: space;
     -webkit-line-break: after-white-space;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: @gray-lighter;
+    }
+    &::-webkit-scrollbar-track {
+      background: none;
+      border: none;
+      outline: none;
+    }
   }
 
   #inbox-html-wrapper {
