@@ -23,6 +23,7 @@ export default class MessageControls extends React.Component {
     threadPopedOut: PropTypes.bool,
     hideControls: PropTypes.bool,
     trackers: PropTypes.array,
+    viewOriginalEmail: PropTypes.bool,
     setViewOriginalEmail: PropTypes.func,
   };
 
@@ -145,19 +146,19 @@ export default class MessageControls extends React.Component {
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
-      disabled: this.state.isReplying,
+      disabledIcon: this.state.isReplying,
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onReply,
     };
     const replyAll = {
       name: 'Reply All',
       image: 'reply-all.svg',
-      disabled: this.state.isReplyAlling,
+      disabledIcon: this.state.isReplyAlling,
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onReplyAll,
     };
     const forward = {
       name: 'Forward',
       image: 'forward.svg',
-      disabled: this.state.isForwarding,
+      disabledIcon: this.state.isForwarding,
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onForward,
     };
     const trash = {
@@ -170,6 +171,7 @@ export default class MessageControls extends React.Component {
       name: 'View original email',
       image: 'show-password.svg',
       transparent: true,
+      disabled: this.props.viewOriginalEmail,
       select: this._onViewOriginalEmail,
     };
 
@@ -225,7 +227,7 @@ export default class MessageControls extends React.Component {
           <RetinaImg
             name={item.image}
             style={style}
-            isIcon={!item.disabled}
+            isIcon={!item.disabledIcon}
             mode={RetinaImg.Mode.ContentIsMask}
           />
           {item.name}
