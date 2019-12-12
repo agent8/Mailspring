@@ -39,7 +39,7 @@ class MenuItem extends React.Component {
     } else {
       const className = classNames({
         item: true,
-        selected: this.props.selected,
+        selected: !this.props.disabled && this.props.selected,
         checked: this.props.checked,
         disabled: this.props.disabled,
       });
@@ -324,6 +324,7 @@ class Menu extends React.Component {
           onMouseOver={onMouseOver}
           checked={this.props.itemChecked && this.props.itemChecked(item)}
           content={content}
+          disabled={item.disabled}
           selected={this.state.selectedIndex === i}
         />
       );
