@@ -1,6 +1,6 @@
 /* eslint global-require: "off" */
 
-import { BrowserWindow, Menu, app, ipcMain, dialog, systemPreferences, Notification } from 'electron';
+import { BrowserWindow, Menu, app, ipcMain, dialog, systemPreferences, Notification, screen } from 'electron';
 
 import fs from 'fs-plus';
 import rimraf from 'rimraf';
@@ -694,6 +694,29 @@ export default class Application extends EventEmitter {
     }
   }
 
+  ensureMainWindowVisible() {
+    if (!this.config) {
+      return;
+    }
+    const accounts = this.config.get('accounts');
+    const hasAccount = accounts && accounts.length > 0;
+    const hasIdentity = this.config.get('identity.id');
+    const agree = this.config.get('agree');
+
+    if (hasAccount && hasIdentity && agree) {
+      const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (main && !main.isVisible() && !main.isMinimized()) {
+        const focusedWindow = this.windowManager.focusedWindow();
+        if (focusedWindow) {
+          const bounds = focusedWindow.browserWindow.getBounds();
+          const display = screen.getDisplayMatching(bounds);
+          main.browserWindow.setPosition(display.bounds.x + 50, display.bounds.y + 50);
+        }
+        main.show();
+      }
+    }
+  }
+
   _resetDatabaseAndRelaunch = ({ errorMessage } = {}) => {
     if (this._resettingAndRelaunching) return;
     this._resettingAndRelaunching = true;
@@ -1360,6 +1383,7 @@ export default class Application extends EventEmitter {
       if (!hasVisibleWindows) {
         this.openWindowsForTokenState();
       }
+      this.ensureMainWindowVisible();
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
         main.sendMessage('application-activate');
