@@ -136,7 +136,7 @@ export default class MessageControls extends React.Component {
     }
     const printNode = document.createElement('div');
     printNode.setAttribute('id', 'message-list');
-    printNode.setAttribute('class', 'print-message');
+    printNode.classList.add('print-message', 'message-list');
     printNode.appendChild(emailWrap.cloneNode(true));
     Actions.printThread(this.props.thread, printNode.outerHTML);
   };
