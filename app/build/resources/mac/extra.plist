@@ -5,7 +5,7 @@
 	<key>NSPrincipalClass</key>
 	<string>AtomApplication</string>
 	<key>NSUserNotificationAlertStyle</key>
-	<string>alert</string>
+	<string>banner</string>
 	<key>NSRequiresAquaSystemAppearance</key>
 	<false/>
 	<key>CFBundleDocumentTypes</key>
