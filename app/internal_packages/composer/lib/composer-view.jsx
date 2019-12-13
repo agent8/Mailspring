@@ -8,7 +8,7 @@ import {
   DraftStore,
   AttachmentStore,
   MessageStore,
-  WorkspaceStore
+  WorkspaceStore,
 } from 'mailspring-exports'
 import {
   DropZone,
@@ -22,7 +22,7 @@ import {
   ComposerEditor,
   ComposerSupport,
   Spinner,
-  LottieImg
+  LottieImg,
 } from 'mailspring-component-kit'
 import ComposerHeader from './composer-header'
 import SendActionButton from './send-action-button'
@@ -42,7 +42,7 @@ const {
   hasBlockquote,
   hasNonTrailingBlockquote,
   hideQuotedTextByDefault,
-  removeQuotedText
+  removeQuotedText,
 } = ComposerSupport.BaseBlockPlugins
 const buttonTimer = 700
 const newDraftTimeDiff = 3000
@@ -57,7 +57,7 @@ export default class ComposerView extends React.Component {
   static propTypes = {
     session: PropTypes.object.isRequired,
     draft: PropTypes.object.isRequired,
-    className: PropTypes.string
+    className: PropTypes.string,
   }
 
   constructor (props) {
@@ -73,7 +73,7 @@ export default class ComposerView extends React.Component {
       'composer:show-and-focus-cc': () => this._els.header.showAndFocusField(Fields.Cc),
       'composer:focus-to': () => this._els.header.showAndFocusField(Fields.To),
       'composer:show-and-focus-from': () => {},
-      'composer:select-attachment': () => this._onSelectAttachment()
+      'composer:select-attachment': () => this._onSelectAttachment(),
     }
 
     const draft = props.session.draft()
@@ -85,14 +85,14 @@ export default class ComposerView extends React.Component {
       editorSelection: null,
       editorSelectedText: '',
       isCrowded: false,
-      missingAttachments: true
+      missingAttachments: true,
     }
     this._deleteTimer = null
     this._unlisten = [
       Actions.destroyDraftFailed.listen(this._onDestroyedDraftProcessed, this),
       Actions.destroyDraftSucceeded.listen(this._onDestroyedDraftProcessed, this),
       Actions.removeQuoteText.listen(this._onQuoteRemoved, this),
-      WorkspaceStore.listen(this._onResize)
+      WorkspaceStore.listen(this._onResize),
     ]
   }
   async componentWillMount () {
@@ -106,6 +106,35 @@ export default class ComposerView extends React.Component {
     this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
   }
 
+  onRemovePadAttachment = file => {
+    const { draft } = this.props
+    const { padInfo } = this.state
+    console.log(' onRemovePadAttachment: ', file, padInfo)
+    if (!padInfo) {
+      return
+    }
+    let files = padInfo.files || {}
+    delete files[file.awsKey]
+    files = Object.values(files)
+    const pad = window.padMap[padInfo.padId]
+    const to = draft.to.map(x => x.email)
+    const cc = draft.cc.map(x => x.email)
+    const bcc = draft.bcc.map(x => x.email)
+    pad.socket.json.send({
+      type: 'COLLABROOM',
+      component: 'pad',
+      data: {
+        type: 'EMAIL_EXTR',
+        email: {
+          subject: draft.subject,
+          to,
+          cc,
+          bcc,
+          attachments: files,
+        },
+      },
+    })
+  }
   onAddedAttachment = async ({ headerMessageId, filePath, inline }) => {
     const { draft } = this.props
     const { padInfo } = this.state
@@ -118,7 +147,7 @@ export default class ComposerView extends React.Component {
       {
         headerMessageId,
         filePath,
-        inline
+        inline,
       },
       draft
     )
@@ -147,9 +176,9 @@ export default class ComposerView extends React.Component {
           to,
           cc,
           bcc,
-          attachments: files
-        }
-      }
+          attachments: files,
+        },
+      },
     })
   }
 
@@ -164,7 +193,7 @@ export default class ComposerView extends React.Component {
       {
         headerMessageId,
         filePaths,
-        inline
+        inline,
       },
       this.props.draft
     )
@@ -208,7 +237,10 @@ export default class ComposerView extends React.Component {
     // If the user has added an inline blockquote, show all the quoted text
     // note: this is necessary because it's hidden with CSS that can't be
     // made more specific.
-    if (this.state.quotedTextHidden && (hasNonTrailingBlockquote(draft.bodyEditorState) || isNewDraft)) {
+    if (
+      this.state.quotedTextHidden &&
+      (hasNonTrailingBlockquote(draft.bodyEditorState) || isNewDraft)
+    ) {
       this.setState({ quotedTextHidden: false })
     }
   }
@@ -263,7 +295,7 @@ export default class ComposerView extends React.Component {
         this.setState({ missingAttachments: true })
         Actions.fetchAttachments({
           accountId: props.draft.accountId,
-          missingItems: missing.map(f => f.id)
+          missingItems: missing.map(f => f.id),
         })
       } else {
         this.setState({ missingAttachments: false })
@@ -342,7 +374,7 @@ export default class ComposerView extends React.Component {
       this._els[Fields.Body].openContextMenu({
         word: this.state.editorSelectedText,
         sel: this.state.editorSelection,
-        hasSelectedText: !this.state.editorSelection.isCollapsed
+        hasSelectedText: !this.state.editorSelection.isCollapsed,
       })
     }
     event.preventDefault()
@@ -445,7 +477,11 @@ export default class ComposerView extends React.Component {
             this.setState({ quotedTextHidden: false })
           }}
         >
-          <RetinaImg title='Remove quoted text' name='image-cancel-button.png' mode={RetinaImg.Mode.ContentPreserve} />
+          <RetinaImg
+            title='Remove quoted text'
+            name='image-cancel-button.png'
+            mode={RetinaImg.Mode.ContentPreserve}
+          />
         </span>
       </a>
     )
@@ -454,7 +490,7 @@ export default class ComposerView extends React.Component {
   _onEditorBlur = (event, editor, next) => {
     this.setState({
       editorSelection: editor.value.selection,
-      editorSelectedText: editor.value.fragment.text
+      editorSelectedText: editor.value.fragment.text,
     })
     this._onEditorChange(editor)
   }
@@ -500,7 +536,7 @@ export default class ComposerView extends React.Component {
     const cc = draft.cc.map(x => x.email)
     const bcc = draft.bcc.map(x => x.email)
     const files = draft.files.map(file => ({
-      name: file.filename
+      name: file.filename,
     }))
     const createPadOptions = {
       userId,
@@ -515,16 +551,16 @@ export default class ComposerView extends React.Component {
         to,
         cc,
         bcc,
-        attachments: files
+        attachments: files,
       },
       emailExtr: {
         subject,
         to,
         cc,
         bcc,
-        attachments: files
+        attachments: files,
       },
-      coWorkers: []
+      coWorkers: [],
     }
     console.log(' createPadOptions: ', createPadOptions)
     if (!padId) {
@@ -534,8 +570,8 @@ export default class ComposerView extends React.Component {
           Accept: 'application/json',
           'Content-Type': 'application/json',
           'Sec-Fetch-Mode': 'cors',
-          'Sec-Fetch-Site': 'cross-site'
-        }
+          'Sec-Fetch-Site': 'cross-site',
+        },
       })
       if (typeof res === 'string') {
         res = JSON.parse(res)
@@ -596,14 +632,71 @@ export default class ComposerView extends React.Component {
             draft: this.props.draft,
             threadId: this.props.draft.threadId,
             headerMessageId: this.props.draft.headerMessageId,
-            session: this.props.session
+            session: this.props.session,
           }}
           direction='column'
         />
       </div>
     )
   }
+  _renderPadAttachments () {
+    const { padInfo } = this.state
+    let { files } = padInfo
+    if (!files) {
+      return null
+    }
+    console.log(' _renderPadAttachments: files: ', files)
+    files = Object.values(files)
+    const nonImageFiles = files
+      .filter(f => !Utils.shouldDisplayAsImage(f))
+      .map(file => (
+        <AttachmentItem
+          key={file.awsKey}
+          className='file-upload'
+          draggable={false}
+          filePath={file.downloadPath}
+          displayName={file.filename}
+          fileIconName={`file-${file.extension}.png`}
+          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
+          // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
+        />
+      ))
+    console.log(' _renderPadAttachments: nonImageFiles: ', nonImageFiles)
+    const imageFiles = files
+      .filter(f => Utils.shouldDisplayAsImage(f))
+      .filter(f => !f.contentId)
+      .map(file => (
+        <ImageAttachmentItem
+          key={file.awsKey}
+          draggable={false}
+          className='file-upload'
+          filePath={file.downloadPath}
+          displayName={file.filename}
+          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
+          // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
+        />
+      ))
+    console.log(' _renderPadAttachments: imageFiles: ', imageFiles)
+    // const nonInlineWithContentIdImageFiles = files
+    //   .filter(f => Utils.shouldDisplayAsImage(f))
+    //   .filter(f => f.contentId)
+    //   .filter(f => !this.props.draft.body.includes(`cid:${f.contentId}`))
+    //   .map(file => (
+    //     <ImageAttachmentItem
+    //       key={file.id}
+    //       draggable={false}
+    //       className='file-upload'
+    //       filePath={AttachmentStore.pathForFile(file)}
+    //       displayName={file.filename}
+    //       onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+    //       onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
+    //     />
+    //   ))
 
+    return <div className='attachments-area'>{nonImageFiles.concat(imageFiles)}</div>
+  }
   _renderAttachments () {
     const { padInfo } = this.state
     if (padInfo && padInfo.files) {
@@ -655,95 +748,11 @@ export default class ComposerView extends React.Component {
         />
       ))
 
-    return <div className='attachments-area'>{nonImageFiles.concat(imageFiles, nonInlineWithContentIdImageFiles)}</div>
-  }
-  onRemovePadAttachment = file => {
-    const { draft } = this.props
-    const { padInfo } = this.state
-    console.log(' onRemovePadAttachment: ', file, padInfo)
-    if (!padInfo) {
-      return
-    }
-    let files = padInfo.files || {}
-    delete files[file.awsKey]
-    files = Object.values(files)
-    const pad = window.padMap[padInfo.padId]
-    const to = draft.to.map(x => x.email)
-    const cc = draft.cc.map(x => x.email)
-    const bcc = draft.bcc.map(x => x.email)
-    pad.socket.json.send({
-      type: 'COLLABROOM',
-      component: 'pad',
-      data: {
-        type: 'EMAIL_EXTR',
-        email: {
-          subject: draft.subject,
-          to,
-          cc,
-          bcc,
-          attachments: files
-        }
-      }
-    })
-  }
-
-  _renderPadAttachments () {
-    const { padInfo } = this.state
-    console.log(' _renderPadAttachments: ', padInfo)
-    let { files } = padInfo
-    if (!files) {
-      return null
-    }
-    console.log(' _renderPadAttachments: files: ', files)
-    files = Object.values(files)
-    const nonImageFiles = files
-      .filter(f => !Utils.shouldDisplayAsImage(f))
-      .map(file => (
-        <AttachmentItem
-          key={file.awsKey}
-          className='file-upload'
-          draggable={false}
-          filePath={file.downloadPath}
-          displayName={file.filename}
-          fileIconName={`file-${file.extension}.png`}
-          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
-          // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
-          // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
-        />
-      ))
-    console.log(' _renderPadAttachments: nonImageFiles: ', nonImageFiles)
-    const imageFiles = files
-      .filter(f => Utils.shouldDisplayAsImage(f))
-      .filter(f => !f.contentId)
-      .map(file => (
-        <ImageAttachmentItem
-          key={file.awsKey}
-          draggable={false}
-          className='file-upload'
-          filePath={file.downloadPath}
-          displayName={file.filename}
-          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
-          // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
-          // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
-        />
-      ))
-    // const nonInlineWithContentIdImageFiles = files
-    //   .filter(f => Utils.shouldDisplayAsImage(f))
-    //   .filter(f => f.contentId)
-    //   .filter(f => !this.props.draft.body.includes(`cid:${f.contentId}`))
-    //   .map(file => (
-    //     <ImageAttachmentItem
-    //       key={file.id}
-    //       draggable={false}
-    //       className='file-upload'
-    //       filePath={AttachmentStore.pathForFile(file)}
-    //       displayName={file.filename}
-    //       onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
-    //       onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
-    //     />
-    //   ))
-
-    return <div className='attachments-area'>{nonImageFiles.concat(imageFiles)}</div>
+    return (
+      <div className='attachments-area'>
+        {nonImageFiles.concat(imageFiles, nonInlineWithContentIdImageFiles)}
+      </div>
+    )
   }
 
   _renderActionsWorkspaceRegion () {
@@ -755,7 +764,7 @@ export default class ComposerView extends React.Component {
           draft: this.props.draft,
           threadId: this.props.draft.threadId,
           headerMessageId: this.props.draft.headerMessageId,
-          session: this.props.session
+          session: this.props.session,
         }}
       />
     )
@@ -972,7 +981,7 @@ export default class ComposerView extends React.Component {
         match.contentId = Utils.generateContentId()
         match.isInline = true
         session.changes.add({
-          files: [].concat(draft.files)
+          files: [].concat(draft.files),
         })
       }
     }
@@ -992,7 +1001,7 @@ export default class ComposerView extends React.Component {
       match.contentId = Utils.generateContentId()
       match.isInline = true
       session.changes.add({
-        files: [].concat(draft.files)
+        files: [].concat(draft.files),
       })
       this._els[Fields.Body].insertInlineAttachment(fileObj)
       session.changes.commit()
@@ -1004,7 +1013,7 @@ export default class ComposerView extends React.Component {
     Actions.addAttachment({
       filePath: filePath,
       headerMessageId: this.props.draft.headerMessageId,
-      onCreated: this._onAttachmentCreated
+      onCreated: this._onAttachmentCreated,
     })
   }
 
@@ -1026,7 +1035,7 @@ export default class ComposerView extends React.Component {
         type: 'warning',
         buttons: ['Edit Message', 'Cancel'],
         message: 'Cannot Send',
-        detail: errors[0]
+        detail: errors[0],
       })
       return false
     }
@@ -1037,7 +1046,7 @@ export default class ComposerView extends React.Component {
           type: 'warning',
           buttons: ['Send Anyway', 'Cancel'],
           message: 'Are you sure?',
-          detail: `Send ${warnings.join(' and ')}?`
+          detail: `Send ${warnings.join(' and ')}?`,
         })
         .then(({ response } = {}) => {
           if (response === 0) {
@@ -1101,7 +1110,7 @@ export default class ComposerView extends React.Component {
             this._onAttachmentCreated(fileObjs)
           }
         },
-        type
+        type,
       })
     } else {
       Actions.selectAttachment({ headerMessageId: this.props.draft.headerMessageId, type })
@@ -1133,14 +1142,19 @@ export default class ComposerView extends React.Component {
             >
               <div className='composer-drop-cover' style={{ display: dropCoverDisplay }}>
                 <div className='centered'>
-                  <RetinaImg name='composer-drop-to-attach.png' mode={RetinaImg.Mode.ContentIsMask} />
+                  <RetinaImg
+                    name='composer-drop-to-attach.png'
+                    mode={RetinaImg.Mode.ContentIsMask}
+                  />
                   Drop to attach
                 </div>
               </div>
 
               <div className='composer-content-wrap'>{this._renderContentScrollRegion()}</div>
 
-              <div className='composer-action-bar-workspace-wrap'>{this._renderActionsWorkspaceRegion()}</div>
+              <div className='composer-action-bar-workspace-wrap'>
+                {this._renderActionsWorkspaceRegion()}
+              </div>
             </DropZone>
           </TabGroupRegion>
           {!isComposerWindow && this._renderActionsRegion()}

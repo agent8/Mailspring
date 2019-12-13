@@ -6,6 +6,7 @@ import InvitePadMember from './InvitePadMember'
 import { loadPadInfo, savePadInfo } from './app-pad-data'
 import { downloadPadFile } from './pad-utils'
 import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
+import delay from '../../edison-beijing-chat/utils/delay'
 
 window.padMap = {}
 export default class TeamreplyEditor extends Component {
@@ -61,6 +62,7 @@ export default class TeamreplyEditor extends Component {
       console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
       const email = data.data.email
       padInfo.files = await this.processPadAttachments(email.attachments)
+      await delay(500)
       this.updatePadInfo(padInfo)
     }
   }
@@ -78,7 +80,14 @@ export default class TeamreplyEditor extends Component {
         file = fileMap[item.awsKey] || item
         fileMap[item.awsKey] = file
       }
+      let needDownload = false
       if (!file.downloadPath || !fs.existsSync(file.downloadPath)) {
+        needDownload = true
+      } else {
+        const stats = fs.statSync(file.downloadPath)
+        needDownload = !stats.size
+      }
+      if (needDownload) {
         file.downloadPath = await downloadPadFile(file.awsKey, file.aes)
       }
       file.filename = getAwsOriginalFilename(file.awsKey)
@@ -102,7 +111,10 @@ export default class TeamreplyEditor extends Component {
       return <div> Can not get AND create proper edit pad for this email!</div>
     }
     const cwd = process.cwd()
-    const htmlPath = path.join(cwd, 'app/internal_packages/composer/teamreply-client/src/html/pad.html')
+    const htmlPath = path.join(
+      cwd,
+      'app/internal_packages/composer/teamreply-client/src/html/pad.html'
+    )
     return (
       <div className='teamreply-editor-container'>
         <iframe
