@@ -124,7 +124,7 @@ export default class EmailFrame extends React.Component {
     }
     doc.write(
       `<div id='inbox-html-wrapper' class="${process.platform} ${
-      this.props.viewOriginalEmail ? 'original' : null
+        this.props.viewOriginalEmail ? 'original' : ''
       }">${this._emailContent(isPlainBody)}</div>`
     );
     doc.close();
@@ -353,7 +353,7 @@ export default class EmailFrame extends React.Component {
       <div
         className={`iframe-container  ${
           this.props.viewOriginalEmail ? 'original-iframe-container' : null
-          }`}
+        }`}
         ref={el => {
           this._iframeHeightHolderEl = el;
         }}

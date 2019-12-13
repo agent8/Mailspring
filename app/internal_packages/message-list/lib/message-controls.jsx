@@ -2,6 +2,7 @@
 import { remote } from 'electron';
 import {
   React,
+  ReactDOM,
   PropTypes,
   Actions,
   TaskQueue,
@@ -22,6 +23,7 @@ export default class MessageControls extends React.Component {
     threadPopedOut: PropTypes.bool,
     hideControls: PropTypes.bool,
     trackers: PropTypes.array,
+    viewOriginalEmail: PropTypes.bool,
     setViewOriginalEmail: PropTypes.func,
   };
 
@@ -124,23 +126,39 @@ export default class MessageControls extends React.Component {
     }
   };
 
+  _onPrintEmail = () => {
+    const actionsWrap = ReactDOM.findDOMNode(this._actionsWrap);
+    if (!actionsWrap) {
+      return;
+    }
+    const emailWrap = actionsWrap.closest('.message-item-wrap');
+    if (!emailWrap) {
+      return;
+    }
+    const printNode = document.createElement('div');
+    printNode.setAttribute('id', 'message-list');
+    printNode.classList.add('print-message', 'message-list');
+    printNode.appendChild(emailWrap.cloneNode(true));
+    Actions.printThread(this.props.thread, printNode.outerHTML);
+  };
+
   _items() {
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
-      disabled: this.state.isReplying,
+      disabledIcon: this.state.isReplying,
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onReply,
     };
     const replyAll = {
       name: 'Reply All',
       image: 'reply-all.svg',
-      disabled: this.state.isReplyAlling,
+      disabledIcon: this.state.isReplyAlling,
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onReplyAll,
     };
     const forward = {
       name: 'Forward',
       image: 'forward.svg',
-      disabled: this.state.isForwarding,
+      disabledIcon: this.state.isForwarding,
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onForward,
     };
     const trash = {
@@ -152,8 +170,16 @@ export default class MessageControls extends React.Component {
     const viewOriginalEmail = {
       name: 'View original email',
       image: 'show-password.svg',
-      transparent: true,
+      iconHidden: true,
+      disabled: this.props.viewOriginalEmail,
       select: this._onViewOriginalEmail,
+    };
+
+    const printEmail = {
+      name: 'Print',
+      image: 'print.svg',
+      iconHidden: true,
+      select: this._onPrintEmail,
     };
 
     if (!this.props.message.canReplyAll()) {
@@ -164,6 +190,7 @@ export default class MessageControls extends React.Component {
       if (AppEnv.isDarkTheme()) {
         noReplyAll.push(viewOriginalEmail);
       }
+      noReplyAll.push(printEmail);
       return noReplyAll;
     }
     const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
@@ -175,6 +202,7 @@ export default class MessageControls extends React.Component {
     if (AppEnv.isDarkTheme()) {
       ret.push(viewOriginalEmail);
     }
+    ret.push(printEmail);
     return ret;
   }
 
@@ -191,7 +219,7 @@ export default class MessageControls extends React.Component {
   _dropdownMenu(items) {
     const itemContent = item => {
       const style = { width: 18, height: 18, marginTop: 3 };
-      if (item.transparent) {
+      if (item.iconHidden) {
         style.background = 'transparent';
       }
       return (
@@ -199,7 +227,7 @@ export default class MessageControls extends React.Component {
           <RetinaImg
             name={item.image}
             style={style}
-            isIcon={!item.disabled}
+            isIcon={!item.disabledIcon}
             mode={RetinaImg.Mode.ContentIsMask}
           />
           {item.name}
@@ -376,7 +404,11 @@ export default class MessageControls extends React.Component {
     const items = this._items();
     const { trackers } = this.props;
     return (
-      <div className="message-actions-wrap" onClick={e => e.stopPropagation()}>
+      <div
+        className="message-actions-wrap"
+        onClick={e => e.stopPropagation()}
+        ref={el => (this._actionsWrap = el)}
+      >
         {trackers.length > 0 ? (
           <div className="remove-tracker">
             <RetinaImg

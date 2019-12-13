@@ -60,7 +60,7 @@
     pointer-events: none;
   }
   .item.disabled {
-    background-color: @input-bg-disabled;
+    opacity: 0.4;
   }
 
   .item.checked {
@@ -74,7 +74,7 @@
   }
 
   .item.selected,
-  .item:active {
+  .item:active:not(.disabled) {
     text-decoration: none;
     background-color: @off-white;
   }
