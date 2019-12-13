@@ -2,7 +2,6 @@
 /* eslint import/no-dynamic-require: 0 */
 import _ from 'underscore';
 import path from 'path';
-import moment from 'moment';
 import { ipcRenderer, remote, desktopCapturer } from 'electron';
 import { Emitter } from 'event-kit';
 import { mapSourcePosition } from 'source-map-support';
@@ -11,6 +10,7 @@ import stream from 'stream';
 import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
+import { autoGenerateFileName } from './fs-utils';
 const LOG = require('electron-log');
 const archiver = require('archiver');
 let getOSInfo = null;
@@ -1123,14 +1123,9 @@ export default class AppEnvConstructor {
     const downloadPath = this.getSaveDirPath();
 
     if (downloadPath) {
-      let fileName = path.basename(options.defaultPath || '未命名');
-      if (fs.existsSync(path.join(downloadPath, fileName))) {
-        const extname = path.extname(fileName);
-        fileName = `${path.basename(fileName, extname)}_${moment().format(
-          'YYYY-MM-DD_HH:mm:ss'
-        )}${extname}`;
-      }
-      callback(path.join(downloadPath, fileName));
+      const fileName = path.basename(options.defaultPath || '未命名');
+      const fileNewName = autoGenerateFileName(downloadPath, fileName);
+      callback(path.join(downloadPath, fileNewName));
     } else {
       if (options.title == null) {
         options.title = 'Save File';
