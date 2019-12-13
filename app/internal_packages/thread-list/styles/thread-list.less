@@ -742,20 +742,33 @@ body.platform-win32 {
       }
     }
   }
-  .list-tabular .selection-bar .multiselect-toolbar-root .inner .checkmark {
-    &::after {
-      content: '';
-      height: 18px;
-      width: 18px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.15);
-      display: none;
-      position: absolute;
-    }
-    &:hover {
-      &:after {
-        display: block;
-        .grow-up-animation-mixin()
+  .list-tabular .selection-bar .multiselect-toolbar-root {
+    .inner {
+      .btn-toolbar:hover {
+        img.content-mask {
+          background-color: @text-color-inverse;
+        }
+        &:after {
+          background: fade(@off-white, 13);
+        }
+      }
+
+      .checkmark {
+        &::after {
+          content: '';
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.15);
+          display: none;
+          position: absolute;
+        }
+        &:hover {
+          &:after {
+            display: block;
+            .grow-up-animation-mixin();
+          }
+        }
       }
     }
   }
