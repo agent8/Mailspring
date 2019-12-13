@@ -33,7 +33,7 @@ export function autoGenerateFileName(dirPath, fileName) {
   return `${basename}(${nextNum})${extname}`;
 }
 
-// this func is for to find the min positive integer that dont in the array
+// this func is for to find the min positive integer that not in the array
 function findMinNotInArr(arr) {
   const arrFilter = arr.filter(num => num > 0 && parseInt(num) === num);
   const sortList = arrFilter.sort((a, b) => a - b);
