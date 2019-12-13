@@ -75,7 +75,10 @@ export default class EmailFrame extends React.Component {
 
   _emailContent = (isPlainBody = false) => {
     // del tracking element
-    const { body, trackers } = removeTrackers(this.props.content);
+    let { body, trackers } = removeTrackers(this.props.content);
+    // when white-space:pre, the row will never wrap, so replace it to white-space:pre-wrap.
+    body = body.replace(/(white-space:[\s]*pre)([\s]*[;,"])/g, '$1-wrap$2');
+
     if (this.props.setTrackers && typeof this.props.setTrackers === 'function') {
       this.props.setTrackers(trackers);
     }
