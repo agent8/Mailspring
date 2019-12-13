@@ -35,7 +35,8 @@ export const downloadPadFile = async (awsKey, aes) => {
 // }
 
 const getAesFromIpc = async conv => {
-  return await MessageSend.getAESKey(conv)
+  // return await MessageSend.getAESKey(conv)
+  return null
 }
 
 export const uploadPadFile = async (file, jidLocal) => {
@@ -59,5 +60,5 @@ export const uploadPadFile = async (file, jidLocal) => {
 
 export default {
   downloadPadFile,
-  uploadPadFile
+  uploadPadFile,
 }

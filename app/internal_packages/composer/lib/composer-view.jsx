@@ -106,61 +106,14 @@ export default class ComposerView extends React.Component {
     this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
   }
 
-  onRemovePadAttachment = file => {
-    const { draft } = this.props
-    const { padInfo } = this.state
-    console.log(' onRemovePadAttachment: ', file, padInfo)
-    if (!padInfo) {
-      return
-    }
-    let files = padInfo.files || {}
-    delete files[file.awsKey]
-    files = Object.values(files)
-    const pad = window.padMap[padInfo.padId]
-    const to = draft.to.map(x => x.email)
-    const cc = draft.cc.map(x => x.email)
-    const bcc = draft.bcc.map(x => x.email)
-    pad.socket.json.send({
-      type: 'COLLABROOM',
-      component: 'pad',
-      data: {
-        type: 'EMAIL_EXTR',
-        email: {
-          subject: draft.subject,
-          to,
-          cc,
-          bcc,
-          attachments: files,
-        },
-      },
-    })
+  updatePadInfo = padInfo => {
+    this.setState({ padInfo })
+    savePadInfo(padInfo)
   }
-  onAddedAttachment = async ({ headerMessageId, filePath, inline }) => {
-    const { draft } = this.props
-    const { padInfo } = this.state
-    console.log(' onAddedAttachment: ', filePath, padInfo)
-    if (!padInfo) {
-      return
-    }
-    console.log(
-      ' onAddedAttachment: ',
-      {
-        headerMessageId,
-        filePath,
-        inline,
-      },
-      draft
-    )
-    if (headerMessageId !== draft.headerMessageId) {
-      return
-    }
-    const jidLocal = padInfo.userId
-    const res = await uploadPadFile(filePath, jidLocal)
-    console.log(' uploadFileAsync: ', res)
-    let files = padInfo.files || {}
-    files[res.awsKey] = res
-    files = Object.values(files)
-    console.log(' before send pad json: draft: ', draft)
+
+  sendEmailExtra = (padInfo, draft) => {
+    const files = Object.values(padInfo.files)
+    console.log(' before send pad json: draft, files: ', draft, files)
     const { padId } = padInfo
     const pad = window.padMap[padId]
     const to = draft.to.map(x => x.email)
@@ -182,12 +135,22 @@ export default class ComposerView extends React.Component {
     })
   }
 
-  updatePadInfo = padInfo => {
-    this.setState({ padInfo })
-    savePadInfo(padInfo)
+  onRemovePadAttachment = file => {
+    const { draft } = this.props
+    const { padInfo } = this.state
+    console.log(' onRemovePadAttachment: ', file, padInfo)
+    if (!padInfo) {
+      return
+    }
+    let files = padInfo.files || {}
+    padInfo.files = files
+    delete files[file.awsKey]
+    this.sendEmailExtra(padInfo, draft)
   }
 
-  onAddedAttachments = ({ headerMessageId, filePath, inline }) => {
+  onAddedAttachments = async ({ headerMessageId, filePaths, inline }) => {
+    const { draft } = this.props
+    const { padInfo } = this.state
     console.log(
       ' onAddedAttachments: ',
       {
@@ -197,6 +160,43 @@ export default class ComposerView extends React.Component {
       },
       this.props.draft
     )
+    if (!padInfo || headerMessageId !== draft.headerMessageId) {
+      return
+    }
+    let files = padInfo.files || {}
+    padInfo.files = files
+    const jidLocal = padInfo.userId
+    for (const filePath of filePaths) {
+      const res = await uploadPadFile(filePath, jidLocal)
+      console.log(' uploadFileAsync: ', res)
+      files[res.awsKey] = res
+    }
+    this.sendEmailExtra(padInfo, draft)
+  }
+
+  onAddedAttachment = async ({ headerMessageId, filePath, inline }) => {
+    const { draft } = this.props
+    const { padInfo } = this.state
+    console.log(' onAddedAttachment: ', filePath, padInfo)
+    console.log(
+      ' onAddedAttachment: ',
+      {
+        headerMessageId,
+        filePath,
+        inline,
+      },
+      draft
+    )
+    if (!padInfo || headerMessageId !== draft.headerMessageId) {
+      return
+    }
+    const jidLocal = padInfo.userId
+    const res = await uploadPadFile(filePath, jidLocal)
+    console.log(' uploadFileAsync: ', res)
+    let files = padInfo.files || {}
+    padInfo.files = files
+    files[res.awsKey] = res
+    this.sendEmailExtra(padInfo, draft)
   }
 
   componentDidMount () {
