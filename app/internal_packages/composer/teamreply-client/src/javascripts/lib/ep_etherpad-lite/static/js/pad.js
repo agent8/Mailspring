@@ -426,11 +426,12 @@ require.define({
             pad.notifyChangeColor(settings.globalUserColor) // Updates pad.myUserInfo.colorId
             paduserlist.setMyUserInfo(pad.myUserInfo)
           }
-        } else if (obj.type === 'COLLABROOM') {
-          composerOnPadSocketHandler && composerOnPadSocketHandler(obj)
         }
         //This handles every Message after the clientVars
         else {
+          if (obj.type === 'COLLABROOM') {
+            composerOnPadSocketHandler && composerOnPadSocketHandler(obj)
+          }
           //this message advices the client to disconnect
           if (obj.disconnect) {
             console.warn('FORCED TO DISCONNECT')
@@ -2874,7 +2875,6 @@ require.define({
           doActionsPendingInit()
           doneFunc()
         }
-
         ;(function () {
           // Expose myself to global for my child frame.
           var thisFunctionsName = 'ChildAccessibleAce2Editor'
