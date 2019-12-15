@@ -75,7 +75,10 @@ export default class EmailFrame extends React.Component {
 
   _emailContent = (isPlainBody = false) => {
     // del tracking element
-    const { body, trackers } = removeTrackers(this.props.content);
+    let { body, trackers } = removeTrackers(this.props.content);
+    // when white-space:pre, the row will never wrap, so replace it to white-space:pre-wrap.
+    body = body.replace(/(white-space:[\s]*pre)([\s]*[;,"])/g, '$1-wrap$2');
+
     if (this.props.setTrackers && typeof this.props.setTrackers === 'function') {
       this.props.setTrackers(trackers);
     }
@@ -124,7 +127,7 @@ export default class EmailFrame extends React.Component {
     }
     doc.write(
       `<div id='inbox-html-wrapper' class="${process.platform} ${
-      this.props.viewOriginalEmail ? 'original' : null
+        this.props.viewOriginalEmail ? 'original' : ''
       }">${this._emailContent(isPlainBody)}</div>`
     );
     doc.close();
@@ -353,7 +356,7 @@ export default class EmailFrame extends React.Component {
       <div
         className={`iframe-container  ${
           this.props.viewOriginalEmail ? 'original-iframe-container' : null
-          }`}
+        }`}
         ref={el => {
           this._iframeHeightHolderEl = el;
         }}
