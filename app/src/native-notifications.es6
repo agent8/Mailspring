@@ -5,12 +5,15 @@ class NativeNotifications {
     this._notificationsByTag = {};
     AppEnv.onBeforeUnload(() => {
       Object.keys(this._notificationsByTag).forEach(key => {
-        this._notificationsByTag[key].close();
+        const notif = this._notificationsByTag[key];
+        if (notif && !notif.isDestroyed()) {
+          notif.close();
+        }
       });
       return true;
     });
   }
-  displayNotification({ title, subtitle, body, tag, canReply, onActivate = () => {} } = {}) {
+  displayNotification({ title, subtitle, body, tag, canReply, onActivate = () => { } } = {}) {
     let notif = null;
     if (tag && this._notificationsByTag[tag]) {
       this._notificationsByTag[tag].close();
