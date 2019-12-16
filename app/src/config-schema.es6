@@ -110,6 +110,11 @@ export default {
             default: true,
             title: 'Show important markers (Gmail only)',
           },
+          showLabels: {
+            type: 'boolean',
+            default: true,
+            title: 'Show labels (Gmail only)',
+          },
           showUnreadForAllCategories: {
             type: 'boolean',
             default: true,
