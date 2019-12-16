@@ -41,10 +41,18 @@ export const LabelColorizer = {
   },
 
   color(label) {
+    if (label.bgColor == "0") {
+      return null;
+    }
     LabelColorizer.sanitize(label);
     const bgColor = LabelColorizer.colors[label.bgColor];
-    var colr = Colr.fromHex(bgColor).darken(30);
-    return colr.toHex();
+    const RgbValueArry = Colr.fromHex(bgColor).toRgbArray();
+    var grayLevel = RgbValueArry[0] * 0.299 + RgbValueArry[1] * 0.587 + RgbValueArry[2] * 0.114;
+    if (grayLevel >= 192) {
+      return '#797d80'; // gray
+    } else {
+      return '#ffffff'; // white
+    }
   },
 
   backgroundColor(label) {
@@ -65,7 +73,7 @@ export const LabelColorizer = {
     const bgColor = LabelColorizer.colors[label.bgColor];
     var colr = Colr.fromHex(bgColor).darken(15);
     const styles = {
-      // color: LabelColorizer.color(label),
+      color: LabelColorizer.color(label),
       backgroundColor: LabelColorizer.backgroundColor(label),
       boxShadow: `inset 0 0 1px ${colr.toHex()}, inset 0 1px 1px rgba(255,255,255,0.5), 0 0.5px 0 rgba(255,255,255,0.5)`,
     };
@@ -127,7 +135,7 @@ export class MailLabel extends React.Component {
       return null;
     }
     let classname = 'mail-label';
-    let content = this.props.label.displayName;
+    let content = <span className="inner">{this.props.label.displayName}</span >;
 
     let x = null;
     if (this._removable()) {

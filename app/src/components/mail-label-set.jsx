@@ -53,6 +53,7 @@ export default class MailLabelSet extends React.Component {
         if (ignoredNames.includes(label.name) || ignoredIds.includes(label.id) || !labelExists) {
           continue;
         }
+        label.bgColor = labelExists.bgColor;
 
         if (this.props.removable) {
           labels.push(
