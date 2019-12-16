@@ -55,7 +55,7 @@ export default class ComposerEditor extends React.Component {
         .change()
         .selectAll()
         .collapseToStart()
-        .focus(),
+        .focus()
     );
   };
 
@@ -68,7 +68,7 @@ export default class ComposerEditor extends React.Component {
         value
           .change()
           .collapseToEndOf(node)
-          .focus(),
+          .focus()
       );
     });
   };
@@ -81,7 +81,7 @@ export default class ComposerEditor extends React.Component {
           .change()
           .selectAll()
           .collapseToEnd()
-          .focus(),
+          .focus()
       );
     });
   };
@@ -169,11 +169,11 @@ export default class ComposerEditor extends React.Component {
       return true;
     } else {
       const macCopiedFile = decodeURI(
-        ElectronClipboard.read('public.file-url').replace('file://', ''),
+        ElectronClipboard.read('public.file-url').replace('file://', '')
       );
       const winCopiedFile = ElectronClipboard.read('FileNameW').replace(
         new RegExp(String.fromCharCode(0), 'g'),
-        '',
+        ''
       );
       if (macCopiedFile.length || winCopiedFile.length) {
         onFileReceived(macCopiedFile || winCopiedFile);
@@ -203,7 +203,7 @@ export default class ComposerEditor extends React.Component {
     if (!html) {
       return '';
     }
-    return html.replace(/(background-color|color):.*?!important;/g, '');
+    return html.replace(/(background-color|color):[^;]*?!important;/g, '');
   }
 
   openContextMenu = ({ word, sel, hasSelectedText }) => {
@@ -243,7 +243,13 @@ export default class ComposerEditor extends React.Component {
         className={`RichEditor-root ${className || ''}`}
         localHandlers={this._pluginKeyHandlers}
       >
-        <ComposerEditorToolbar value={value} onChange={this.onChange} plugins={plugins} readOnly={this.props.readOnly} isCrowded={this.props.isCrowded} />
+        <ComposerEditorToolbar
+          value={value}
+          onChange={this.onChange}
+          plugins={plugins}
+          readOnly={this.props.readOnly}
+          isCrowded={this.props.isCrowded}
+        />
         <div
           className="RichEditor-content"
           onClick={this.onFocusIfBlurred}
@@ -269,7 +275,9 @@ export default class ComposerEditor extends React.Component {
           />
           {plugins
             .reduce((arr, p) => (p.topLevelComponents ? arr.concat(p.topLevelComponents) : arr), [])
-            .map((Component, idx) => <Component key={idx} />)}
+            .map((Component, idx) => (
+              <Component key={idx} />
+            ))}
         </div>
       </KeyCommandsRegion>
     );
