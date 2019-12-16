@@ -138,9 +138,9 @@ const c3 = new ListTabular.Column({
     }
     return (
       <span className="details">
-        <MailLabelSet thread={thread} />
         {draft}
         <span className="subject">{subject(thread.subject)}</span>
+        <MailLabelSet thread={thread} />
         <span className="snippet">{Utils.superTrim(getSnippet(thread))}</span>
         {/* <ThreadListIcon thread={thread} /> */}
       </span>

@@ -5,7 +5,7 @@ const Colr = require('colr');
 
 export const LabelColorizer = {
   colors: [
-    '#e4e3e4',
+    '#f4f6f8', // '#e4e3e4',
     '#aec9f1',
     '#8fd1bf',
     '#dfd3fe',
@@ -65,22 +65,51 @@ export const LabelColorizer = {
     const bgColor = LabelColorizer.colors[label.bgColor];
     var colr = Colr.fromHex(bgColor).darken(15);
     const styles = {
-      color: LabelColorizer.color(label),
+      // color: LabelColorizer.color(label),
       backgroundColor: LabelColorizer.backgroundColor(label),
       boxShadow: `inset 0 0 1px ${colr.toHex()}, inset 0 1px 1px rgba(255,255,255,0.5), 0 0.5px 0 rgba(255,255,255,0.5)`,
     };
-    if (process.platform !== 'win32') {
-      styles.backgroundImage = 'linear-gradient(rgba(255,255,255, 0.4), rgba(255,255,255,0))';
-    }
+    // if (process.platform !== 'win32') {
+    //   styles.backgroundImage = 'linear-gradient(rgba(255,255,255, 0.4), rgba(255,255,255,0))';
+    // }
     return styles;
   },
 };
 
+const SHOW_LABEL_KEY = 'core.workspace.showLabels';
 export class MailLabel extends React.Component {
   static propTypes = {
     label: PropTypes.object.isRequired,
     onRemove: PropTypes.func,
   };
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      showLabels: AppEnv.config.get(SHOW_LABEL_KEY)
+    }
+  }
+
+  componentDidMount = () => {
+    const configDisposer = AppEnv.config.onDidChange(SHOW_LABEL_KEY, this._onChange);
+    this._unsubscribers = [
+      configDisposer.dispose,
+    ];
+  }
+
+  componentWillUnmount = () => {
+    for (const unsubscribe of this._unsubscribers) {
+      unsubscribe();
+    }
+  }
+
+  _onChange = () => {
+    this.setState({
+      showLabels: AppEnv.config.get(SHOW_LABEL_KEY)
+    });
+    // sometimes, this component don't render automaticlly, so add forceUpdate
+    this.forceUpdate();
+  }
 
   shouldComponentUpdate(nextProps) {
     if (nextProps.label.id === this.props.label.id) {
@@ -94,6 +123,9 @@ export class MailLabel extends React.Component {
   }
 
   render() {
+    if (!this.state.showLabels) {
+      return null;
+    }
     let classname = 'mail-label';
     let content = this.props.label.displayName;
 
