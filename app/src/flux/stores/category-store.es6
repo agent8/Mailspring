@@ -37,7 +37,7 @@ class CategoryStore extends MailspringStore {
       .sort()
       .subscribe(this._onCategoriesChanged);
   }
-  decodePath(pathString){
+  decodePath(pathString) {
     return Category.pathToDisplayName(pathString);
   }
 
@@ -166,11 +166,17 @@ class CategoryStore extends MailspringStore {
 
   _onCategoriesChanged = categories => {
     this._categoryResult = categories;
-    this._categoryCache = {};
+    const categoryCache = {};
     for (const cat of categories) {
-      this._categoryCache[cat.accountId] = this._categoryCache[cat.accountId] || {};
-      this._categoryCache[cat.accountId][cat.id] = cat;
+      categoryCache[cat.accountId] = categoryCache[cat.accountId] || {};
+      // don't overwrite bgColor
+      const oldCat = this._categoryCache[cat.accountId] ? this._categoryCache[cat.accountId][cat.id] : null;
+      if (oldCat && oldCat.bgColor && oldCat.id === cat.id) {
+        cat.bgColor = oldCat.bgColor;
+      }
+      categoryCache[cat.accountId][cat.id] = cat;
     }
+    this._categoryCache = categoryCache;
 
     const filteredByAccount = fn => {
       const result = {};
