@@ -751,8 +751,8 @@ class AttachmentStore extends MailspringStore {
         if (createdFiles.length >= total) {
           onCreated(createdFiles)
         }
-        Actions.addedAttachments({ headerMessageId, inline, filePaths })
       })
+      Actions.addedAttachments({ headerMessageId, inline, filePaths })
     } catch (err) {
       AppEnv.showErrorDialog(err.message)
     }

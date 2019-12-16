@@ -62,7 +62,7 @@ export default class TeamreplyEditor extends Component {
       console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
       const email = data.data.email
       padInfo.files = await this.processPadAttachments(email.attachments)
-      await delay(500)
+      await delay(1000)
       this.updatePadInfo(padInfo)
     }
   }
@@ -85,7 +85,7 @@ export default class TeamreplyEditor extends Component {
         needDownload = true
       } else {
         const stats = fs.statSync(file.downloadPath)
-        needDownload = !stats.size
+        needDownload = stats.size < file.size
       }
       if (needDownload) {
         file.downloadPath = await downloadPadFile(file.awsKey, file.aes)

@@ -151,15 +151,7 @@ export default class ComposerView extends React.Component {
   onAddedAttachments = async ({ headerMessageId, filePaths, inline }) => {
     const { draft } = this.props
     const { padInfo } = this.state
-    console.log(
-      ' onAddedAttachments: ',
-      {
-        headerMessageId,
-        filePaths,
-        inline,
-      },
-      this.props.draft
-    )
+    console.log(' onAddedAttachments: ', { headerMessageId, filePaths, inline }, draft, padInfo)
     if (!padInfo || headerMessageId !== draft.headerMessageId) {
       return
     }

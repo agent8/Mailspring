@@ -52,8 +52,11 @@ export const uploadPadFile = async (file, jidLocal) => {
     aes = await getAesFromIpc(conv)
   }
   console.log(' uploadPadFile: aes: ', aes)
+  const stats = fs.statSync(file)
+  const size = stats.size
   const res = await uploadFileAsync(jidLocal, aes, file)
   res.aes = aes
+  res.size = size
   console.log(' uploadPadFile: res: ', res)
   return res
 }
