@@ -483,50 +483,52 @@ class AccountStore extends MailspringStore {
   accountIds = () => {
     return this._accounts.map(a => a.id);
   };
-  accountsForErrorLog = () => {
-    const stripAccountData = account => {
-      const sensitveData = [
-        'emailAddress',
-        'label',
-        'name',
-        'access_token',
-        'ews_password',
-        'ews_username',
-        'imap_username',
-        'smtp_username',
-      ]
-      const ret = {};
-      const hash = str => {
-        return crypto
-          .createHash('sha256')
-          .update(str)
-          .digest('hex')
-      };
-      for (let key in account) {
-        if (key !== 'aliases' && key !== 'settings' && !sensitveData.includes(key)) {
-          ret[key] = account[key];
-        } else if (key === 'aliases') {
-          ret.aliases = [];
-          account.aliases.forEach(alias => {
-            ret.aliases.push(hash(alias));
-          });
-        } else if (key === 'settings') {
-          ret.settings = {};
-          for (let settingKey in account.settings) {
-            if (sensitveData.includes(settingKey)) {
-              ret.settings[settingKey] = hash(account.settings[settingKey]);
-            } else {
-              ret.settings[settingKey] = account.settings[settingKey];
-            }
-          }
-        } else {
-          ret[key] = hash(account[key]);
-        }
-      }
-      return ret;
+  stripAccountData = account => {
+    const sensitveData = [
+      'emailAddress',
+      'label',
+      'name',
+      'access_token',
+      'ews_password',
+      'ews_username',
+      'imap_username',
+      'smtp_username',
+      'imap_password',
+      'smtp_password',
+    ];
+    const ret = {};
+    const hash = str => {
+      return crypto
+        .createHash('sha256')
+        .update(str)
+        .digest('hex')
     };
+    for (let key in account) {
+      if (key !== 'aliases' && key !== 'settings' && !sensitveData.includes(key)) {
+        ret[key] = account[key];
+      } else if (key === 'aliases') {
+        ret.aliases = [];
+        account.aliases.forEach(alias => {
+          ret.aliases.push(hash(alias));
+        });
+      } else if (key === 'settings') {
+        ret.settings = {};
+        for (let settingKey in account.settings) {
+          if (sensitveData.includes(settingKey)) {
+            ret.settings[settingKey] = hash(account.settings[settingKey]);
+          } else {
+            ret.settings[settingKey] = account.settings[settingKey];
+          }
+        }
+      } else {
+        ret[key] = hash(account[key]);
+      }
+    }
+    return ret;
+  };
+  accountsForErrorLog = () => {
     return this.accounts().map(account => {
-      return stripAccountData(account);
+      return this.stripAccountData(account);
     })
   };
 

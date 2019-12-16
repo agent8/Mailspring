@@ -377,6 +377,8 @@ class Config {
         'ews_username',
         'imap_username',
         'smtp_username',
+        'imap_password',
+        'smtp_password',
       ];
       const ret = {};
 
