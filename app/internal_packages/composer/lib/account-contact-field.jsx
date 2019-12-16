@@ -19,16 +19,16 @@ export default class AccountContactField extends React.Component {
 
   _onChooseContact = async contact => {
     const { draft, session, onChange } = this.props;
-    const { autoaddress } = AccountStore.accountForEmail(contact.email);
+    // const { autoaddress } = AccountStore.accountForEmail(contact.email);
 
-    const existing = [].concat(draft.to, draft.cc, draft.bcc).map(c => c.email);
-    let autocontacts = await ContactStore.parseContactsInString(autoaddress.value);
-    autocontacts = autocontacts.filter(c => !existing.includes(c.email));
+    // const existing = [].concat(draft.to, draft.cc, draft.bcc).map(c => c.email);
+    // let autocontacts = await ContactStore.parseContactsInString(autoaddress.value);
+    // autocontacts = autocontacts.filter(c => !existing.includes(c.email));
 
     this._dropdownComponent.toggleDropdown();
     const from = [contact];
-    const cc = [].concat(draft.cc).concat(autoaddress.type === 'cc' ? autocontacts : []);
-    const bcc = [].concat(draft.bcc).concat(autoaddress.type === 'bcc' ? autocontacts : []);
+    const cc = [].concat(draft.cc);
+    const bcc = [].concat(draft.bcc);
     onChange({
       from: from,
       cc: cc,
