@@ -19,7 +19,7 @@ const lazyLoadWithGetter = (prop, getter) => {
       const value = getter()
       Object.defineProperty(exports, prop, { enumerable: true, value })
       return value
-    }
+    },
   })
 }
 
@@ -73,6 +73,7 @@ lazyLoad(`BlockModel`, 'model/Block')
 // others
 lazyLoad(`Button`, 'components/common/Button')
 lazyLoad(`ContactAvatar`, 'components/common/ContactAvatar')
+lazyLoad(`delay`, 'utils/delay')
 
 process.nextTick(() => {
   let c = 0

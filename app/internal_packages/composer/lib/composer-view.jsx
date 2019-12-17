@@ -1,4 +1,6 @@
 import { remote } from 'electron'
+import fs from 'fs'
+import path from 'path'
 import {
   React,
   ReactDOM,
@@ -36,7 +38,9 @@ import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
 import _ from '../teamreply-client/src/static/js/teampad-config.js'
 import { loadDraftPadMap, saveDraftPadMap, loadPadInfo, savePadInfo } from './app-pad-data'
-import axios from 'axios'
+import { downloadPadFile } from './pad-utils'
+import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
+import delay from '../../edison-beijing-chat/utils/delay'
 
 const {
   hasBlockquote,
@@ -101,9 +105,115 @@ export default class ComposerView extends React.Component {
     const windowProps = AppEnv.getWindowProps()
     let { padInfo } = windowProps
     console.log(' componentWillMount: padInfo: ', padInfo)
-    const { draft } = this.props
+    const { draft, session } = this.props
+    draft.session = session
     draft.padInfo = padInfo
     this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
+    window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
+    window.composerOnPadConnect = this.composerOnPadConnect
+  }
+
+  composerOnPadConnect = data => {
+    console.log(' composerOnPadConnect: data:  ', data)
+    const { pad, query } = data
+    window.padMap[query.padId] = pad
+  }
+  composerOnPadSocketHandler = async data => {
+    console.log(' onComposerPadSocketHandler: data: ', data)
+    const { padInfo } = this.state
+    if (!data) {
+      return
+    }
+    if (data.type === 'CLIENT_VARS') {
+      console.log(' composerOnPadSocketHandler: CLIENT_VARS: ', data)
+      data = data.data || {}
+      const attachments = (data.emailExtr && data.emailExtr.attachments) || []
+      await this.processPadAttachments(attachments)
+      console.log(' composerOnPadSocketHandler: CLIENT_VARS: padInfo: ', padInfo)
+      this.updatePadInfo(padInfo)
+    } else if (data.type === 'COLLABROOM' && data.data && data.data.type === 'EMAIL_EXTR') {
+      console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
+      const email = data.data.email
+      await this.processPadAttachments(email.attachments)
+      await delay(1000)
+      this.updatePadInfo(padInfo)
+    }
+  }
+
+  processPadAttachments = async attachments => {
+    await this.clearDraftAttachments()
+    console.log(' processPadAttachments: ', attachments)
+    const fileMap = {}
+    for (const item of attachments) {
+      let file = null
+      if (typeof item === 'srtring') {
+        file = fileMap[item] || {}
+        file.awsKey = item
+        fileMap[item] = file
+      } else if (item && typeof item === 'object' && item.awsKey) {
+        file = fileMap[item.awsKey] || item
+        fileMap[item.awsKey] = file
+      } else {
+        continue
+      }
+      let needDownload = false
+      if (!file.downloadPath || !fs.existsSync(file.downloadPath)) {
+        needDownload = true
+      } else {
+        const stats = fs.statSync(file.downloadPath)
+        needDownload = stats.size < file.size
+      }
+      if (needDownload) {
+        file.downloadPath = await downloadPadFile(file.awsKey, file.aes)
+      }
+      file.filename = getAwsOriginalFilename(file.awsKey)
+      file.extension = path.extname(file.filename)
+    }
+    const { padInfo } = this.state
+    padInfo.files = fileMap
+    await this.addPadAttachmentsToDraft()
+  }
+
+  clearDraftAttachments = async () => {
+    const { draft } = this.props
+    const { files, headerMessageId } = draft
+    for (let file of files) {
+      await AttachmentStore._onRemoveAttachment(headerMessageId, file)
+    }
+  }
+  addPadAttachmentsToDraft = async () => {
+    const { draft } = this.props
+    const { padInfo } = this.state
+    const { headerMessageId } = draft
+    const onCreated = fileObj => {
+      console.log(' _onAttachmentCreated: ', fileObj)
+      if (Utils.shouldDisplayAsImage(fileObj)) {
+        const { draft, session } = this.props
+        const match = draft.files.find(f => f.id === fileObj.id)
+        if (!match) {
+          return
+        }
+        match.isInline = true
+        session.changes.add({
+          files: [].concat(draft.files),
+        })
+        session.changes.commit()
+      }
+    }
+    const files = Object.values(padInfo.files || {})
+    console.log(' addPadAttachmentsToDraft: ', padInfo.files)
+    const fromPad = true
+    for (let file of files) {
+      const filePath = file.downloadPath
+      const filename = getAwsOriginalFilename(filePath)
+      await AttachmentStore._onAddAttachment({
+        headerMessageId,
+        filePath,
+        filename,
+        onCreated,
+        fromPad,
+      })
+    }
   }
 
   updatePadInfo = padInfo => {
@@ -193,6 +303,8 @@ export default class ComposerView extends React.Component {
 
   componentDidMount () {
     this._mounted = true
+    const { draft, session } = this.props
+    draft.session = session
     this.props.draft.files.forEach(file => {
       if (Utils.shouldDisplayAsImage(file)) {
         Actions.fetchFile(file)
@@ -311,7 +423,7 @@ export default class ComposerView extends React.Component {
       // it is a user-friendly expression that the body can scroll
       // DC-997
       this.scrollBodyInView(this._els.header)
-    } else {
+    } else if (this._els[Fields.Body]) {
       this._els[Fields.Body].focus()
     }
   }
@@ -521,7 +633,7 @@ export default class ComposerView extends React.Component {
     const userName = name
     const { draft } = this.props
     console.log(' createTeamEditPad: draft: ', draft)
-    let padId = draftPadMap[draft.headerMessageId]
+    let padId = draftPadMap[draft.threadId]
     const subject = draft.subject
     const body = draft.body
     const to = draft.to.map(x => x.email)
@@ -570,7 +682,7 @@ export default class ComposerView extends React.Component {
       }
       if (res && res.code === 0 && res.data && res.data && res.data.padId) {
         padId = res.data.padId
-        draftPadMap[draft.headerMessageId] = padId
+        draftPadMap[draft.threadId] = padId
         saveDraftPadMap(draftPadMap)
       }
     }
@@ -690,10 +802,10 @@ export default class ComposerView extends React.Component {
     return <div className='attachments-area'>{nonImageFiles.concat(imageFiles)}</div>
   }
   _renderAttachments () {
-    const { padInfo } = this.state
-    if (padInfo && padInfo.files) {
-      return this._renderPadAttachments()
-    }
+    // const { padInfo, inTeamEditMode } = this.state
+    // if (inTeamEditMode && padInfo && padInfo.files) {
+    //   return this._renderPadAttachments()
+    // }
     const { files, headerMessageId } = this.props.draft
     const nonImageFiles = files
       .filter(f => !Utils.shouldDisplayAsImage(f))

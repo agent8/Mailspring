@@ -1,12 +1,8 @@
 import React, { Component } from 'react'
 import path from 'path'
-import fs from 'fs'
 import keyMannager from '../../../src/key-manager'
 import InvitePadMember from './InvitePadMember'
 import { loadPadInfo, savePadInfo } from './app-pad-data'
-import { downloadPadFile } from './pad-utils'
-import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
-import delay from '../../edison-beijing-chat/utils/delay'
 
 window.padMap = {}
 export default class TeamreplyEditor extends Component {
@@ -26,8 +22,6 @@ export default class TeamreplyEditor extends Component {
     padInfo.token = token
     this.setState({ padInfo })
     console.log(' TeamreplyEditor.componentWillMount: padInfo: ', padInfo, this.props.padInfo)
-    window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
-    window.composerOnPadConnect = this.composerOnPadConnect
   }
   UNSAFE_componentWillReceiveProps (nextProps) {
     const { padInfo } = nextProps
@@ -38,62 +32,6 @@ export default class TeamreplyEditor extends Component {
     setTimeout(() => {
       console.log(' TeamreplyEditor.componentDidMount: pad: ', pad)
     }, 10)
-  }
-  composerOnPadConnect = data => {
-    console.log(' composerOnPadConnect: data:  ', data)
-    const { pad, query } = data
-    window.padMap[query.padId] = pad
-  }
-  composerOnPadSocketHandler = async data => {
-    console.log(' onComposerPadSocketHandler: data: ', data)
-    const { padInfo } = this.props
-    const { padId } = padInfo
-    if (!data) {
-      return
-    }
-    if (data.type === 'CLIENT_VARS') {
-      console.log(' composerOnPadSocketHandler: CLIENT_VARS: ', data)
-      data = data.data || {}
-      const attachments = (data.emailExtr && data.emailExtr.attachments) || []
-      padInfo.files = await this.processPadAttachments(attachments)
-      console.log(' composerOnPadSocketHandler: CLIENT_VARS: padInfo: ', padInfo)
-      this.updatePadInfo(padInfo)
-    } else if (data.type === 'COLLABROOM' && data.data && data.data.type === 'EMAIL_EXTR') {
-      console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
-      const email = data.data.email
-      padInfo.files = await this.processPadAttachments(email.attachments)
-      await delay(1000)
-      this.updatePadInfo(padInfo)
-    }
-  }
-
-  processPadAttachments = async attachments => {
-    console.log(' processPadAttachments: ', attachments)
-    const fileMap = {}
-    for (const item of attachments) {
-      let file = null
-      if (typeof item === 'srtring') {
-        file = fileMap[item] || {}
-        file.awsKey = item
-        fileMap[item] = file
-      } else if (item && typeof item === 'object' && item.awsKey) {
-        file = fileMap[item.awsKey] || item
-        fileMap[item.awsKey] = file
-      }
-      let needDownload = false
-      if (!file.downloadPath || !fs.existsSync(file.downloadPath)) {
-        needDownload = true
-      } else {
-        const stats = fs.statSync(file.downloadPath)
-        needDownload = stats.size < file.size
-      }
-      if (needDownload) {
-        file.downloadPath = await downloadPadFile(file.awsKey, file.aes)
-      }
-      file.filename = getAwsOriginalFilename(file.awsKey)
-      file.extension = path.extname(file.filename)
-    }
-    return fileMap
   }
 
   showInvitePadMember = () => {

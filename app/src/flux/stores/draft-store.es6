@@ -84,7 +84,9 @@ class DraftStore extends MailspringStore {
     ipcRenderer.on('action-send-cancelled', (event, headerMessageId, actionKey) => {
       AppEnv.debugLog(`Undo Send received ${headerMessageId}`)
       if (AppEnv.isMainWindow()) {
-        AppEnv.debugLog(`Undo Send received ${headerMessageId} main window sending draftDeliveryCancelled`)
+        AppEnv.debugLog(
+          `Undo Send received ${headerMessageId} main window sending draftDeliveryCancelled`
+        )
         Actions.draftDeliveryCancelled({ headerMessageId, actionKey })
       }
       this._onSendDraftCancelled({ headerMessageId })
@@ -110,14 +112,14 @@ class DraftStore extends MailspringStore {
   findFailedByHeaderMessageId ({ headerMessageId }) {
     return DatabaseStore.findBy(Message, {
       headerMessageId: headerMessageId,
-      draft: true
+      draft: true,
     }).where([Message.attributes.state.in([Message.messageState.failed])])
   }
 
   findByHeaderMessageId ({ headerMessageId }) {
     return DatabaseStore.findBy(Message, {
       headerMessageId: headerMessageId,
-      draft: true
+      draft: true,
     }).where([
       Message.attributes.state.in([
         Message.messageState.normal,
@@ -125,8 +127,8 @@ class DraftStore extends MailspringStore {
         Message.messageState.sending,
         Message.messageState.updatingNoUID,
         Message.messageState.updatingHasUID,
-        Message.messageState.failing
-      ])
+        Message.messageState.failing,
+      ]),
     ])
   }
   findFailedByHeaderMessageIdWithBody ({ headerMessageId }) {
@@ -166,14 +168,18 @@ class DraftStore extends MailspringStore {
       } else {
         const thread = FocusedContentStore.focused('thread')
         const inFocusedThread = thread && thread.id === draft.threadId
-        if (AppEnv.isMainWindow() && inFocusedThread && !this._draftsOpenCount[headerMessageId][1]) {
+        if (
+          AppEnv.isMainWindow() &&
+          inFocusedThread &&
+          !this._draftsOpenCount[headerMessageId][1]
+        ) {
           AppEnv.logDebug(
             `Only trigger open draft count if in main window, in focus thread, and current opencount is not set`
           )
           this._onDraftOpenCount({
             headerMessageId,
             windowLevel: this._getCurrentWindowLevel(),
-            source: `draft store, session already exist ${headerMessageId}, ${this._getCurrentWindowLevel()}`
+            source: `draft store, session already exist ${headerMessageId}, ${this._getCurrentWindowLevel()}`,
           })
         }
       }
@@ -219,7 +225,11 @@ class DraftStore extends MailspringStore {
     })
   }
 
-  _onDraftAccountChange = async ({ originalMessageId, originalHeaderMessageId, newParticipants }) => {
+  _onDraftAccountChange = async ({
+    originalMessageId,
+    originalHeaderMessageId,
+    newParticipants,
+  }) => {
     const session = this._draftSessions[originalHeaderMessageId]
     if (AppEnv.isComposerWindow() || AppEnv.isThreadWindow()) {
       if (session) {
@@ -245,9 +255,9 @@ class DraftStore extends MailspringStore {
         new Message(
           Object.assign({}, oldDraft, {
             headerMessageId: originalHeaderMessageId,
-            id: originalMessageId
+            id: originalMessageId,
           })
-        )
+        ),
       ],
       { switchingAccount: true, canBeUndone: false }
     )
@@ -270,8 +280,8 @@ class DraftStore extends MailspringStore {
             deleting: this._draftsDeleting,
             deleted: this._draftsDeleted,
             openCount: this._draftsOpenCount,
-            reason
-          }
+            reason,
+          },
         },
         { grabLogs: true }
       )
@@ -306,8 +316,8 @@ class DraftStore extends MailspringStore {
         {
           errorData: {
             messages,
-            source
-          }
+            source,
+          },
         },
         { grabLogs: true }
       )
@@ -320,7 +330,10 @@ class DraftStore extends MailspringStore {
         }
         const sending = this._draftsSending[message.headerMessageId]
         if (sending) {
-          this._onSendDraftCancelled({ headerMessageId: message.headerMessageId, resumeSession: false })
+          this._onSendDraftCancelled({
+            headerMessageId: message.headerMessageId,
+            resumeSession: false,
+          })
         }
         const deleting = this._draftsDeleting[message.headerMessageId]
         if (deleting) {
@@ -343,8 +356,8 @@ class DraftStore extends MailspringStore {
         {
           errorData: {
             messages,
-            source
-          }
+            source,
+          },
         },
         { grabLogs: true }
       )
@@ -364,7 +377,7 @@ class DraftStore extends MailspringStore {
       this._draftsOpenCount[headerMessageId] = {
         1: false,
         2: false,
-        3: false
+        3: false,
       }
     }
     this._draftsOpenCount[headerMessageId][windowLevel] = true
@@ -387,7 +400,7 @@ class DraftStore extends MailspringStore {
       }
       Actions.draftOpenCountBroadcast({
         headerMessageId,
-        data: this._draftsOpenCount[headerMessageId]
+        data: this._draftsOpenCount[headerMessageId],
       })
     }
   }
@@ -413,7 +426,7 @@ class DraftStore extends MailspringStore {
       } else {
         Actions.draftOpenCountBroadcast({
           headerMessageId,
-          data: this._draftsOpenCount[headerMessageId]
+          data: this._draftsOpenCount[headerMessageId],
         })
       }
     })
@@ -439,8 +452,8 @@ class DraftStore extends MailspringStore {
             sending: this._draftsSending,
             deleting: this._draftsDeleting,
             deleted: this._draftsDeleted,
-            openCount: this._draftsOpenCount
-          }
+            openCount: this._draftsOpenCount,
+          },
         },
         { grabLogs: true }
       )
@@ -455,15 +468,18 @@ class DraftStore extends MailspringStore {
             sending: this._draftsSending,
             deleting: this._draftsDeleting,
             deleted: this._draftsDeleted,
-            openCount: this._draftsOpenCount
-          }
+            openCount: this._draftsOpenCount,
+          },
         },
         { grabLogs: true }
       )
     }
     let cancelCommits = false
     if (draft.pristine && !draft.hasRefOldDraftOnRemote) {
-      if (this._draftsDeleting[draft.headerMessageId] || this._draftsDeleted[draft.headerMessageId]) {
+      if (
+        this._draftsDeleting[draft.headerMessageId] ||
+        this._draftsDeleted[draft.headerMessageId]
+      ) {
         AppEnv.reportError(
           new Error(`Draft is deleting, should not have send delete again ${headerMessageId}`),
           {
@@ -471,8 +487,8 @@ class DraftStore extends MailspringStore {
               sending: this._draftsSending,
               deleting: this._draftsDeleting,
               deleted: this._draftsDeleted,
-              openCount: this._draftsOpenCount
-            }
+              openCount: this._draftsOpenCount,
+            },
           },
           { grabLogs: true }
         )
@@ -484,8 +500,8 @@ class DraftStore extends MailspringStore {
               sending: this._draftsSending,
               deleting: this._draftsDeleting,
               deleted: this._draftsDeleted,
-              openCount: this._draftsOpenCount
-            }
+              openCount: this._draftsOpenCount,
+            },
           },
           { grabLogs: true }
         )
@@ -512,7 +528,9 @@ class DraftStore extends MailspringStore {
         if (keys.length > 1) {
           AppEnv.reportError(
             new Error(
-              `More than one session remaining when closing composer window sessions: ${JSON.stringify(keys)}`,
+              `More than one session remaining when closing composer window sessions: ${JSON.stringify(
+                keys
+              )}`,
               {},
               { grabLogs: true }
             )
@@ -523,7 +541,7 @@ class DraftStore extends MailspringStore {
       Actions.draftWindowClosing({
         headerMessageIds: Object.keys(this._draftSessions),
         source: 'beforeUnload',
-        windowLevel: this._getCurrentWindowLevel()
+        windowLevel: this._getCurrentWindowLevel(),
       })
     } else {
       // Normally we'd just append all promises, even the ones already
@@ -674,7 +692,10 @@ class DraftStore extends MailspringStore {
             AppEnv.grabLogs()
               .then(filename => {
                 if (typeof filename === 'string' && filename.length > 0) {
-                  AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e, files: [filename] })
+                  AppEnv.reportError(new Error('SyncbackDraft Task not returned'), {
+                    errorData: e,
+                    files: [filename],
+                  })
                 }
               })
               .catch(e => {
@@ -701,13 +722,12 @@ class DraftStore extends MailspringStore {
   }
 
   createAndSendMessage = async ({ subject, body, to, cc, from, draft }) => {
-    let tos = []
     from = await this.getContactsFromEmails(from)
     to = await this.getContactsFromEmails(to)
     cc = await this.getContactsFromEmails(cc)
     const accounts = AppEnv.config.get('accounts') || []
     const account = accounts[0] || {}
-    const accountId = account.id || '21236591'
+    const accountId = account.id
     draft = await DraftFactory.createDraft({
       subject,
       body,
@@ -715,8 +735,8 @@ class DraftStore extends MailspringStore {
       to,
       cc,
       files: [],
+      accountId,
       threadId: '',
-      accountId: accountId
     })
     await this._finalizeAndPersistNewMessage(draft)
     const task = SendDraftTask.forSending(draft)
@@ -734,7 +754,7 @@ class DraftStore extends MailspringStore {
           { popout },
           {
             originalMessageId: message ? message.id : null,
-            messageType: type
+            messageType: type,
           }
         )
       })
@@ -751,7 +771,7 @@ class DraftStore extends MailspringStore {
           { popout },
           {
             originalMessageId: message ? message.id : null,
-            messageType: 'forward'
+            messageType: 'forward',
           }
         )
       })
@@ -783,7 +803,7 @@ class DraftStore extends MailspringStore {
       queries.message = MessageStore.findByMessageIdWithBody({ messageId })
     } else {
       queries.message = MessageStore.findAllByThreadIdWithBodyInDescendingOrder({
-        threadId: threadId || thread.id
+        threadId: threadId || thread.id,
       })
         .limit(10)
         .then(messages => {
@@ -824,7 +844,10 @@ class DraftStore extends MailspringStore {
         AppEnv.grabLogs()
           .then(filename => {
             if (typeof filename === 'string' && filename.length > 0) {
-              AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: task, files: [filename] })
+              AppEnv.reportError(new Error('SyncbackDraft Task not returned'), {
+                errorData: task,
+                files: [filename],
+              })
             }
           })
           .catch(e => {
@@ -876,7 +899,11 @@ class DraftStore extends MailspringStore {
     if (headerMessageId == null) {
       throw new Error('DraftStore::onPopoutDraftId - You must provide a headerMessageId')
     }
-    this._onPopoutDraft(headerMessageId, { source: 'edit outbox draft', forceCommit: true, showFailed: true })
+    this._onPopoutDraft(headerMessageId, {
+      source: 'edit outbox draft',
+      forceCommit: true,
+      showFailed: true,
+    })
   }
 
   _onPopoutDraft = async (headerMessageId, options = {}) => {
@@ -909,10 +936,13 @@ class DraftStore extends MailspringStore {
           headerMessageId: newDraft.headerMessageId,
           windowType: 'composer',
           windowKey: `composer-${newDraft.headerMessageId}`,
-          windowProps: Object.assign(options, { headerMessageId: newDraft.headerMessageId, draftJSON }),
+          windowProps: Object.assign(options, {
+            headerMessageId: newDraft.headerMessageId,
+            draftJSON,
+          }),
           title: ' ',
           threadId: newSession.draft().threadId,
-          padInfo
+          padInfo,
         })
       })
     } else {
@@ -920,9 +950,7 @@ class DraftStore extends MailspringStore {
       if (this._draftsDeleting[messageId] || this.isSendingDraft(headerMessageId)) {
         AppEnv.reportError(
           new Error(
-            `Attempting to open draft-id:${messageId} when it is being deleted or sending. this._draftDeleting: ${
-              this._draftsDeleting
-            }, this._draftSending: ${this._draftsSending}`
+            `Attempting to open draft-id:${messageId} when it is being deleted or sending. this._draftDeleting: ${this._draftsDeleting}, this._draftSending: ${this._draftsSending}`
           )
         )
         return
@@ -946,7 +974,7 @@ class DraftStore extends MailspringStore {
         windowProps: Object.assign(options, { headerMessageId, draftJSON }),
         title: ' ',
         threadId: session.draft().threadId,
-        padInfo
+        padInfo,
       })
     }
   }
@@ -978,7 +1006,7 @@ class DraftStore extends MailspringStore {
       Actions.addAttachment({
         filePath: path,
         headerMessageId: headerMessageId,
-        onCreated: callback
+        onCreated: callback,
       })
     })
   }
@@ -996,7 +1024,7 @@ class DraftStore extends MailspringStore {
           threadId: messages[0].threadId,
           windowLevel: this._getCurrentWindowLevel(),
           additionalChannelParam: 'draft',
-          deleting: true
+          deleting: true,
         })
       } else {
         AppEnv.logDebug(
@@ -1030,7 +1058,7 @@ class DraftStore extends MailspringStore {
           canBeUndone: opts.canBeUndone,
           accountId,
           messageIds: ids,
-          source: opts.source || ''
+          source: opts.source || '',
         })
       })
     )
@@ -1044,7 +1072,7 @@ class DraftStore extends MailspringStore {
     const { headerMessageId, id } = message
     if (this._draftsDeleting[id] || this._draftsDeleted[headerMessageId]) {
       AppEnv.reportError(new Error(`Draft is already deleting`), {
-        errorData: { draftsDeleting: this._draftsDeleting, currentDraft: message }
+        errorData: { draftsDeleting: this._draftsDeleting, currentDraft: message },
       })
       return
     }
@@ -1143,14 +1171,19 @@ class DraftStore extends MailspringStore {
         .then(filename => {
           if (typeof filename === 'string' && filename.length > 0) {
             AppEnv.reportError(
-              new Error(`Sending draft: ${headerMessageId}, took more than ${SendDraftTimeout / 1000} seconds`),
+              new Error(
+                `Sending draft: ${headerMessageId}, took more than ${SendDraftTimeout /
+                  1000} seconds`
+              ),
               { files: [filename] }
             )
           }
         })
         .catch(e => {
           AppEnv.reportError(
-            new Error(`Sending draft: ${headerMessageId}, took more than ${SendDraftTimeout / 1000} seconds`)
+            new Error(
+              `Sending draft: ${headerMessageId}, took more than ${SendDraftTimeout / 1000} seconds`
+            )
           )
         })
     }
@@ -1171,11 +1204,11 @@ class DraftStore extends MailspringStore {
         headerMessageId: draft.headerMessageId,
         trigger: true,
         changeSendStatus: false,
-        source
+        source,
       })
       const task = new ChangeDraftToFailedTask({
         headerMessageIds: [draft.headerMessageId],
-        accountId: draft.accountId
+        accountId: draft.accountId,
       })
       Actions.queueTask(task)
     }, SendDraftTimeout)
@@ -1210,7 +1243,7 @@ class DraftStore extends MailspringStore {
       if (this._draftSessions[headerMessageId]) {
         AppEnv.close({
           headerMessageId,
-          windowLevel: this._getCurrentWindowLevel()
+          windowLevel: this._getCurrentWindowLevel(),
         })
       } else {
         AppEnv.logDebug(`${headerMessageId} not this draft sending`)
@@ -1227,7 +1260,9 @@ class DraftStore extends MailspringStore {
             // this._startSendingDraftTimeouts({ draft: session.draft });
           } else {
             AppEnv.reportWarning(
-              new Error(`session no longer have draft for ${headerMessageId} at window: ${windowLevel}`)
+              new Error(
+                `session no longer have draft for ${headerMessageId} at window: ${windowLevel}`
+              )
             )
           }
         } else {
@@ -1239,7 +1274,9 @@ class DraftStore extends MailspringStore {
       } else {
         console.log('session not here')
         if (AppEnv.isMainWindow()) {
-          AppEnv.reportError(new Error(`session not found for ${headerMessageId} at window: ${windowLevel}`))
+          AppEnv.reportError(
+            new Error(`session not found for ${headerMessageId} at window: ${windowLevel}`)
+          )
         }
       }
       this.trigger({ headerMessageId })
@@ -1261,8 +1298,8 @@ class DraftStore extends MailspringStore {
             sending: this._draftsSending,
             deleting: this._draftsDeleting,
             deleted: this._draftsDeleted,
-            openCount: this._draftsOpenCount
-          }
+            openCount: this._draftsOpenCount,
+          },
         },
         { grabLogs: true }
       )
@@ -1277,15 +1314,18 @@ class DraftStore extends MailspringStore {
               sending: this._draftsSending,
               deleting: this._draftsDeleting,
               deleted: this._draftsDeleted,
-              openCount: this._draftsOpenCount
-            }
+              openCount: this._draftsOpenCount,
+            },
           },
           { grabLogs: true }
         )
       )
       return
     }
-    const { delay = AppEnv.config.get('core.task.delayInMs'), actionKey = DefaultSendActionKey } = options
+    const {
+      delay = AppEnv.config.get('core.task.delayInMs'),
+      actionKey = DefaultSendActionKey,
+    } = options
 
     const sendAction = SendActionsStore.sendActionForKey(actionKey)
 
@@ -1296,7 +1336,7 @@ class DraftStore extends MailspringStore {
     const sendLaterMetadataValue = {
       expiration: new Date(Date.now() + delay),
       isUndoSend: true,
-      actionKey: actionKey
+      actionKey: actionKey,
     }
     const session = this._draftSessions[headerMessageId]
     if (!session) {
@@ -1307,8 +1347,8 @@ class DraftStore extends MailspringStore {
             sending: this._draftsSending,
             deleting: this._draftsDeleting,
             deleted: this._draftsDeleted,
-            openCount: this._draftsOpenCount
-          }
+            openCount: this._draftsOpenCount,
+          },
         },
         { grabLogs: true }
       )
@@ -1378,7 +1418,7 @@ class DraftStore extends MailspringStore {
         },
         taskPurged: () => {
           this._onSendDraftCancelled({ headerMessageId })
-        }
+        },
       })
       Actions.queueUndoOnlyTask(undoTask)
       // ipcRenderer.send('send-later-manager', 'send-later', headerMessageId, delay, actionKey, draft.threadId);

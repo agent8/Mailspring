@@ -761,13 +761,21 @@ class AttachmentStore extends MailspringStore {
   _onAddAttachment = async ({
     headerMessageId,
     filePath,
+    filename,
     inline = false,
     onCreated = () => {},
+    fromPad = false,
   }) => {
+    console.log(
+      ' AttachmentStore._onAddAttachment: headerMessageId, filePath, fromPad',
+      headerMessageId,
+      filePath,
+      fromPad
+    )
     this._assertIdPresent(headerMessageId)
 
     try {
-      const filename = path.basename(filePath)
+      filename = filename || path.basename(filePath)
       const stats = await this._getFileStats(filePath)
       if (stats.isDirectory()) {
         throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`)
@@ -794,7 +802,9 @@ class AttachmentStore extends MailspringStore {
         return files.concat([file])
       })
       onCreated(file)
-      Actions.addedAttachment({ headerMessageId, filePath, inline })
+      if (!fromPad) {
+        Actions.addedAttachment({ headerMessageId, filePath, inline })
+      }
     } catch (err) {
       AppEnv.showErrorDialog(err.message)
     }

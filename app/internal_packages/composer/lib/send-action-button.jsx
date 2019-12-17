@@ -1,15 +1,24 @@
 import {
   React,
   PropTypes,
+  Utils,
   Actions,
   SendActionsStore,
   SoundRegistry,
   OnlineStatusStore,
   WorkspaceStore,
-  DraftStore
+  DraftStore,
+  AttachmentStore,
 } from 'mailspring-exports'
+import { delay } from 'chat-exports'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
-import { Menu, RetinaImg, LottieImg, ButtonDropdown, ListensToFluxStore } from 'mailspring-component-kit'
+import {
+  Menu,
+  RetinaImg,
+  LottieImg,
+  ButtonDropdown,
+  ListensToFluxStore,
+} from 'mailspring-component-kit'
 
 const sendButtonTimeout = 700
 
@@ -22,7 +31,7 @@ class SendActionButton extends React.Component {
     draft: PropTypes.object,
     isValidDraft: PropTypes.func,
     sendActions: PropTypes.array,
-    disabled: PropTypes.bool
+    disabled: PropTypes.bool,
   }
 
   constructor (props) {
@@ -31,7 +40,7 @@ class SendActionButton extends React.Component {
       isSending: false,
       mounted: false,
       showLoading: false,
-      offline: !OnlineStatusStore.isOnline()
+      offline: !OnlineStatusStore.isOnline(),
     }
     this._sendButtonTimer = null
     this._delayLoadingTimer = null
@@ -39,7 +48,7 @@ class SendActionButton extends React.Component {
     this._unlisten = [
       OnlineStatusStore.listen(this.onlineStatusChanged, this),
       Actions.draftDeliveryFailed.listen(this._onSendDraftProcessCompleted, this),
-      Actions.draftDeliveryCancelled.listen(this._onSendDraftProcessCompleted, this)
+      Actions.draftDeliveryCancelled.listen(this._onSendDraftProcessCompleted, this),
     ]
   }
 
@@ -111,8 +120,9 @@ class SendActionButton extends React.Component {
     }, sendButtonTimeout)
   }
 
-  sendTeamEditPadContent = async draft => {
-    const { subject, to, cc, from, bcc, padInfo } = draft
+  setTeamEditPadContentAsBody = async draft => {
+    const { padInfo, session } = draft
+    console.log(' setTeamEditPadContentAsBody: session: ', session)
     const { token, userId, padId } = padInfo
     const apiPath = window.teamPadConfig.teamEditAPIUrl + 'getEmail'
     const options = { token, userId, padID: padId }
@@ -120,8 +130,9 @@ class SendActionButton extends React.Component {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'cross-site'
+      'Sec-Fetch-Site': 'cross-site',
     }
+    console.log(' sendTeamEditPadContent, draft, padInfo: ', draft, padInfo)
     let res = await postAsync(apiPath, options, { headers })
     if (typeof res === 'string') {
       res = JSON.parse(res)
@@ -132,23 +143,22 @@ class SendActionButton extends React.Component {
       const { email } = res.data
       body = email.body
     }
-    await DraftStore.createAndSendMessage({
-      subject,
-      body,
-      to,
-      cc,
-      bcc,
-      from,
-      draft
-    })
+    console.log(' setTeamEditPadContentAsBody: ', body)
+    draft.body = body
+    await session.changes.commit()
+    await delay(500)
   }
-  _onSendWithAction = (sendAction, disableDraftCheck = false) => {
+  _onSendWithAction = async (sendAction, disableDraftCheck = false) => {
+    console.log(' send: _onSendWithAction: ')
     const { draft } = this.props
     if (draft.padInfo) {
-      this.sendTeamEditPadContent(draft)
-      return
+      await this.setTeamEditPadContentAsBody(draft)
     }
-    if ((disableDraftCheck || this.props.isValidDraft()) && !this.state.isSending && !this._sendButtonTimer) {
+    if (
+      (disableDraftCheck || this.props.isValidDraft()) &&
+      !this.state.isSending &&
+      !this._sendButtonTimer
+    ) {
       this._timoutButton()
       this._delayShowLoading()
       this.setState({ isSending: true })
@@ -191,7 +201,12 @@ class SendActionButton extends React.Component {
             style={{ margin: '0', display: 'inline-block', float: 'left' }}
           />
         ) : (
-          <RetinaImg name={'sent.svg'} style={{ width: 27, height: 27 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+          <RetinaImg
+            name={'sent.svg'}
+            style={{ width: 27, height: 27 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         )}
         <span className='text'>Send{plusHTML}</span>
         {additionalImg}
@@ -250,9 +265,9 @@ const EnhancedSendActionButton = ListensToFluxStore(SendActionButton, {
   stores: [SendActionsStore],
   getStateFromStores (props) {
     return {
-      sendActions: SendActionsStore.orderedSendActionsForDraft(props.draft)
+      sendActions: SendActionsStore.orderedSendActionsForDraft(props.draft),
     }
-  }
+  },
 })
 
 // TODO this is a hack so that the send button can still expose
@@ -267,7 +282,7 @@ Object.assign(EnhancedSendActionButton.prototype, {
     if (this._composedComponent) {
       this._composedComponent.primarySend(opts)
     }
-  }
+  },
 })
 
 EnhancedSendActionButton.UndecoratedSendActionButton = SendActionButton
