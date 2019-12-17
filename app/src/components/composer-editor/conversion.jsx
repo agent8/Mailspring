@@ -10,6 +10,7 @@ import InlineAttachmentPlugins from './inline-attachment-plugins';
 import MarkdownPlugins from './markdown-plugins';
 import LinkPlugins from './link-plugins';
 import EmojiPlugins from './emoji-plugins';
+import ImagePlugins from './image-plugins';
 import CrowdedButtons from './crowded-buttons';
 
 // Note: order is important here because we deserialize HTML with rules
@@ -20,11 +21,12 @@ export const plugins = [
   ...BaseMarkPlugins,
   ...TemplatePlugins,
   ...EmojiPlugins,
+  ...ImagePlugins,
   ...LinkPlugins,
   ...BaseBlockPlugins,
   ...MarkdownPlugins,
   ...SpellcheckPlugins,
-  ...CrowdedButtons
+  ...CrowdedButtons,
 ];
 const TEXT_RULE_IMPROVED = {
   deserialize: el => {
@@ -48,7 +50,9 @@ const TEXT_RULE_IMPROVED = {
           leaves: [
             {
               object: 'leaf',
-              text: el.nodeValue.replace(/\t/g, '\u00A0\u00A0\u00A0 ').replace(/([ ]+) /g, (str, match) => match.replace(/ /g, '\u00A0') + ' ')
+              text: el.nodeValue
+                .replace(/\t/g, '\u00A0\u00A0\u00A0 ')
+                .replace(/([ ]+) /g, (str, match) => match.replace(/ /g, '\u00A0') + ' '),
             },
           ],
         };
@@ -59,7 +63,9 @@ const TEXT_RULE_IMPROVED = {
           leaves: [
             {
               object: 'leaf',
-              text: el.nodeValue.replace(/\t/g, '\u00A0\u00A0\u00A0 ').replace(/([ ]+) /g, (str, match) => match.replace(/ /g, '\u00A0') + ' ')
+              text: el.nodeValue
+                .replace(/\t/g, '\u00A0\u00A0\u00A0 ')
+                .replace(/([ ]+) /g, (str, match) => match.replace(/ /g, '\u00A0') + ' '),
             },
           ],
         };
