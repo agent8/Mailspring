@@ -118,20 +118,30 @@ class ListTabular extends Component {
       );
     }
 
-    this._unlisten = () => {};
+    this._unlisten = () => { };
     this.newItemsCache = {};
     this.state = this.buildStateForRange({ start: -1, end: -1 });
     this.state.profileAvatar = AppEnv.config.get(ConfigProfileKey);
     this._scrollTimer = null;
+    this.mounted = false;
 
     this.disposable = AppEnv.config.onDidChange(ConfigProfileKey, () => {
-      this.setState({
+      this._safeSetState({
         profileAvatar: AppEnv.config.get(ConfigProfileKey),
       });
     });
   }
 
+  _safeSetState = newState => {
+    if (this.mounted) {
+      this.setState(newState)
+    } else {
+      console.error('ListTabular here should not setState, because this component is unmounted', newState)
+    }
+  }
+
   componentDidMount() {
+    this.mounted = true;
     window.addEventListener('resize', this.onWindowResize, true);
     this.setupDataSource(this.props.dataSource);
     this.updateRangeState();
@@ -167,6 +177,7 @@ class ListTabular extends Component {
   }
 
   componentWillUnmount() {
+    this.mounted = false;
     this.disposable.dispose();
     window.removeEventListener('resize', this.onWindowResize, true);
     if (this._cleanupAnimationTimeout) {
@@ -205,7 +216,7 @@ class ListTabular extends Component {
     });
 
     if (Object.keys(nextAnimatingOut).length < Object.keys(this.state.animatingOut).length) {
-      this.setState({ animatingOut: nextAnimatingOut });
+      this._safeSetState({ animatingOut: nextAnimatingOut });
     }
 
     if (Object.keys(nextAnimatingOut).length > 0) {
@@ -216,9 +227,9 @@ class ListTabular extends Component {
   setupDataSource(dataSource) {
     this._unlisten();
     this._unlisten = dataSource.listen(() => {
-      this.setState(this.buildStateForRange());
+      this._safeSetState(this.buildStateForRange());
     });
-    this.setState(this.buildStateForRange({ start: -1, end: -1, dataSource }));
+    this._safeSetState(this.buildStateForRange({ start: -1, end: -1, dataSource }));
   }
 
   getRowsToRender() {
@@ -289,7 +300,7 @@ class ListTabular extends Component {
     });
 
     const nextState = this.buildStateForRange({ start: rangeStart, end: rangeEnd });
-    this.setState(nextState);
+    this._safeSetState(nextState);
   }
 
   buildStateForRange(args = {}) {
@@ -421,7 +432,7 @@ class ListTabular extends Component {
     if (current.drafts) {
       Toolbar = ComponentRegistry.findComponentsMatching({ role: 'DraftListToolbar' })[0];
     } else if (current.outbox) {
-      Toolbar = ComponentRegistry.findComponentsMatching({ role: 'OutboxListToolbar'})[0];
+      Toolbar = ComponentRegistry.findComponentsMatching({ role: 'OutboxListToolbar' })[0];
     } else if (current.sift) {
       Toolbar = ComponentRegistry.findComponentsMatching({ role: 'SiftListToolbar' })[0];
     } else {
@@ -436,7 +447,7 @@ class ListTabular extends Component {
       <div
         className={`list-container list-tabular ${className} ${hasEmptyBar} ${profileAvatarClass}`}
       >
-        {Toolbar ? <Toolbar position={'threadList'}/> : null}
+        {Toolbar ? <Toolbar position={'threadList'} /> : null}
         <ScrollRegion
           ref={cm => {
             this._scrollRegion = cm;

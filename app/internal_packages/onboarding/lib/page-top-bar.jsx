@@ -14,12 +14,13 @@ const PageTopBar = props => {
     }
   };
   const backAction = () => {
-    const webview = document.querySelector('webview');
-    if (webview && webview.canGoBack()) {
-      webview.goBack();
-    } else if (pageDepth > 1) {
-      OnboardingActions.moveToPreviousPage();
-    }
+    // const webview = document.querySelector('webview');
+    // if (webview && webview.canGoBack()) {
+    //   webview.goBack();
+    // } else if (pageDepth > 1) {
+    //   OnboardingActions.moveToPreviousPage();
+    // }
+    OnboardingActions.moveToPreviousPage();
   };
 
   let closeButton = (

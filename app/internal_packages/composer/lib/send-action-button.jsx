@@ -65,7 +65,7 @@ class SendActionButton extends React.Component {
   shouldComponentUpdate(nextProps, nextState) {
     return (
       nextProps.sendActions.map(a => a.configKey).join(',') !==
-        this.props.sendActions.map(a => a.configKey).join(',') ||
+      this.props.sendActions.map(a => a.configKey).join(',') ||
       this.props.disabled !== nextProps.disabled ||
       this.state.isSending !== nextState.isSending
     );
@@ -96,8 +96,9 @@ class SendActionButton extends React.Component {
 
     // beta invite flow
     const inviteKey = 'invite.count';
+    const NEED_INVITE_COUNT = 3;
     const shareCounts = AppEnv.config.get(inviteKey) || 0;
-    if (shareCounts < 5 && this.props.draft) {
+    if (shareCounts < NEED_INVITE_COUNT && this.props.draft) {
       const { to, cc } = this.props.draft;
       AppEnv.config.set(inviteKey, shareCounts + to.length + cc.length);
 
@@ -141,9 +142,9 @@ class SendActionButton extends React.Component {
         SoundRegistry.playSound('hit-send');
       }
       if (noDelay) {
-        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, delay: 0});
+        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, delay: 0, source: 'No Delay' });
       } else {
-        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey });
+        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, source: 'User Trigger' });
       }
     }
   };
@@ -180,13 +181,13 @@ class SendActionButton extends React.Component {
             style={{ margin: '0', display: 'inline-block', float: 'left' }}
           />
         ) : (
-          <RetinaImg
-            name={'sent.svg'}
-            style={{ width: 27, height: 27 }}
-            isIcon={true}
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        )}
+            <RetinaImg
+              name={'sent.svg'}
+              style={{ width: 27, height: 27 }}
+              isIcon={true}
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+          )}
         <span className="text">Send{plusHTML}</span>
         {additionalImg}
       </span>

@@ -68,6 +68,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Show labels (Gmail only)',
+              configSchema: configSchema =>
+                configSchema.properties.workspace.properties.showLabels,
+              keyPath: 'core.workspace.showLabels',
+              keywords: [],
+            },
+            {
               label: 'Show unread count for all folders',
               configSchema: configSchema =>
                 configSchema.properties.workspace.properties.showUnreadForAllCategories,
@@ -92,12 +99,6 @@ const preferencesTemplateFill = {
               configSchema: configSchema => configSchema.properties.sending.properties.sounds,
               keyPath: 'core.sending.sounds',
               keywords: [],
-            },
-            {
-              label: 'New mail sound',
-              configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
-              keyPath: 'core.notifications.sounds',
-              keywords: ['notification'],
             },
             {
               label: 'Undo time window',
@@ -225,6 +226,12 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.notifications.properties.enabled,
               keyPath: 'core.notifications.enabled',
+              keywords: [],
+            },
+            {
+              label: 'New mail notification sound',
+              configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
+              keyPath: 'core.notifications.sounds',
               keywords: [],
             },
             {

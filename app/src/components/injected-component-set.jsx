@@ -81,8 +81,10 @@ export default class InjectedComponentSet extends React.Component {
       this.listen();
     } else {
       setTimeout(() => {
-        this.setState(this._getStateFromStores());
-        this.listen();
+        if (this._mounted) {
+          this.setState(this._getStateFromStores());
+          this.listen();
+        }
       }, 400);
     }
   }
