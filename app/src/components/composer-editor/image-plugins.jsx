@@ -1,17 +1,14 @@
 import React from 'react';
-import { ImageAttachmentItem, RetinaImg } from 'mailspring-component-kit';
-import { AttachmentStore, Actions } from 'mailspring-exports';
-import { isQuoteNode } from './base-block-plugins';
+import { Inline } from 'slate';
+import { RetinaImg } from 'mailspring-component-kit';
 
-const IMAGE_TYPE = 'inline-image';
+const IMAGE_TYPE = 'inline_image';
 
 function ImageNode(props) {
-  const { attributes, node, editor, targetIsHTML, isSelected } = props;
+  const { node } = props;
   const src = node.data.get ? node.data.get('src') : node.data.src;
 
-  if (targetIsHTML) {
-    return <img alt="" src={src} />;
-  }
+  return <img alt="" src={src} />;
 }
 
 function renderNode(props) {
@@ -29,14 +26,13 @@ const ToolbarAttachmentButton = ({ value, onChange }) => {
     if (typeof pathsToOpen === 'string') {
       pathsToOpen = [pathsToOpen];
     }
-    const inline = {
+    const inline = Inline.create({
       isVoid: true,
-      object: 'inline',
       type: IMAGE_TYPE,
       data: {
         src: pathsToOpen[0],
       },
-    };
+    });
 
     setTimeout(() => {
       onChange(
