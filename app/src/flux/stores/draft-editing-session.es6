@@ -139,13 +139,43 @@ function hotwireDraftBodyState(draft) {
     set: function(inHTML) {
       let nextValue = convertFromHTML(inHTML);
       if (draft.bodyEditorState) {
-        nextValue = draft.bodyEditorState
+        // DC-1243 When doing full body replace, we first get the first block, and if it's not a div, we upwrap it, insert fragment, and then rewrap it, otherwise the first line will be unwrapped for some unknown reason.
+        const firstBlock = draft.bodyEditorState
+          .change()
+          .value.document.getBlocks()
+          .get(0);
+        const firstParentBlock = draft.bodyEditorState
+          .change()
+          .value.document.getFurthestBlock(firstBlock.key);
+        let blockType = 'div';
+        if (firstParentBlock) {
+          blockType = firstParentBlock.type;
+        } else if (firstBlock) {
+          blockType = firstBlock.type;
+        }
+        let newEditor = draft.bodyEditorState
           .change()
           .selectAll()
           .delete()
+          .selectAll()
+          .collapseToStart();
+        if (blockType !== 'dvi') {
+          newEditor = newEditor
+            .unwrapBlock(blockType)
+            .selectAll()
+            .delete();
+        }
+        nextValue = newEditor
           .insertFragment(nextValue.document)
           .selectAll()
-          .collapseToStart().value;
+          .collapseToStart();
+        if (blockType !== 'dvi') {
+          nextValue = nextValue
+            .wrapBlock(blockType)
+            .selectAll()
+            .collapseToStart();
+        }
+        nextValue = nextValue.value;
       }
       draft.bodyEditorState = nextValue;
       _bodyHTMLCache = inHTML;
