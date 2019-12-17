@@ -384,7 +384,6 @@ input:focus {
     font-size: @font-size-small;
     font-weight: @font-weight-normal;
     color: @medium-grey;
-    min-width: 70px;
     margin-right: 6px;
   }
 
@@ -743,20 +742,33 @@ body.platform-win32 {
       }
     }
   }
-  .list-tabular .selection-bar .multiselect-toolbar-root .inner .checkmark {
-    &::after {
-      content: '';
-      height: 18px;
-      width: 18px;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.15);
-      display: none;
-      position: absolute;
-    }
-    &:hover {
-      &:after {
-        display: block;
-        .grow-up-animation-mixin()
+  .list-tabular .selection-bar .multiselect-toolbar-root {
+    .inner {
+      .btn-toolbar:hover {
+        img.content-mask {
+          background-color: @text-color-inverse;
+        }
+        &:after {
+          background: fade(@off-white, 13);
+        }
+      }
+
+      .checkmark {
+        &::after {
+          content: '';
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.15);
+          display: none;
+          position: absolute;
+        }
+        &:hover {
+          &:after {
+            display: block;
+            .grow-up-animation-mixin();
+          }
+        }
       }
     }
   }
@@ -807,7 +819,6 @@ body.platform-win32 {
 
   .timestamp {
     order: 100;
-    min-width: 0;
     color: @medium-grey;
   }
   .participants {

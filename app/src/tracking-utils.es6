@@ -1,4 +1,4 @@
-class TrackingAppEvents {
+export default class TrackingAppEvents {
   static trackingTasks = [
     'ChangeUnreadTask',
     'ChangeStarredTask',
@@ -28,6 +28,10 @@ class TrackingAppEvents {
     'Important Icon': () => '-ImportantIcon',
   };
 
+  static FBHasInit() {
+    return window.fbAsyncInit && window.fbAsyncInit.hasRun ? true : false;
+  }
+
   static onQueueTask(task) {
     const taskName = task.constructor.name;
     if (!taskName || !this.trackingTasks.includes(taskName)) {
@@ -42,19 +46,33 @@ class TrackingAppEvents {
     const params = {
       source: task.source,
     };
-    if (FB) {
-      FB.AppEvents.logEvent(eventName, null, params);
+
+    if (this.FBHasInit() && window.FB) {
+      window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
 
-  static trackingEvent(eventName, params) {
-    if (FB) {
-      FB.AppEvents.logEvent(eventName, null, params);
+  static onTrackingEvent(eventName, params) {
+    if (this.FBHasInit() && window.FB) {
+      window.FB.AppEvents.logEvent(eventName, null, params);
     }
   }
+
+  constructor({ devMode }) {
+    this.devMode = devMode;
+  }
+
+  trackingTask = task => {
+    if (this.devMode) {
+      return;
+    }
+    TrackingAppEvents.onQueueTask(task);
+  };
+
+  trackingEvent = (...args) => {
+    if (this.devMode) {
+      return;
+    }
+    TrackingAppEvents.onTrackingEvent(...args);
+  };
 }
-
-export default {
-  trackingEvent: TrackingAppEvents.trackingEvent,
-  trackingTask: task => TrackingAppEvents.onQueueTask(task),
-};

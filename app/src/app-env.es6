@@ -12,8 +12,8 @@ import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 import { autoGenerateFileName } from './fs-utils';
 const LOG = require('electron-log');
-const archiver = require('archiver');
-let getOSInfo = null;
+// const archiver = require('archiver');
+// let getOSInfo = null;
 let getDeviceHash = null;
 // To add a new user
 const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
@@ -134,8 +134,9 @@ export default class AppEnvConstructor {
 
     // tracking
     const TrackingAppEvents = require('./tracking-utils').default;
-    this.trackingEvent = TrackingAppEvents.trackingEvent;
-    this.trackingTask = TrackingAppEvents.trackingTask;
+    const trackingEvents = new TrackingAppEvents({ devMode });
+    this.trackingEvent = trackingEvents.trackingEvent;
+    this.trackingTask = trackingEvents.trackingTask;
 
     // We extend observables with our own methods. This happens on
     // require of mailspring-observables
@@ -715,6 +716,16 @@ export default class AppEnvConstructor {
   // Extended: Get the current window
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
+  }
+
+  getOpenWindowCount() {
+    let ret = 0;
+    try {
+      ret = remote.getGlobal('application').windowManager.getOpenWindowCount();
+    } catch (e) {
+      this.reportError(e, {});
+    }
+    return ret;
   }
 
   // Extended: Move current window to the center of the screen.

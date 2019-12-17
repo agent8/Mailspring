@@ -1,6 +1,6 @@
 import { shell, remote } from 'electron';
 import { ScrollRegion, RetinaImg, LottieImg } from 'mailspring-component-kit';
-import { React, ReactDOM, PropTypes } from 'mailspring-exports';
+import { React, ReactDOM, PropTypes, AccountStore } from 'mailspring-exports';
 import OnboardingActions from '../onboarding-actions';
 import { finalizeAndValidateAccount } from '../onboarding-helpers';
 import FormErrorMessage from '../form-error-message';
@@ -171,7 +171,9 @@ const CreatePageForForm = FormComponent => {
                     delete errorAccount.label;
                     delete errorAccount.autoaddress;
                     delete errorAccount.aliases;
-                    AppEnv.reportError(err, { account: errorAccount });
+                    AppEnv.reportError(err, {
+                      account: AccountStore.stripAccountData(errorAccount),
+                    });
                     this.setState({
                       errorMessage: err.message,
                       errorStatusCode: err.statusCode,
@@ -190,8 +192,9 @@ const CreatePageForForm = FormComponent => {
             delete errorAccount.label;
             delete errorAccount.autoaddress;
             delete errorAccount.aliases;
-            AppEnv.reportError(err, { account: errorAccount });
-
+            AppEnv.reportError(err, {
+              account: AccountStore.stripAccountData(errorAccount),
+            });
             this.setState({
               errorMessage: err.message,
               errorStatusCode: err.statusCode,

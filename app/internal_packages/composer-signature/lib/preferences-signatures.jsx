@@ -1,13 +1,4 @@
-import { remote } from 'electron';
-import {
-  React,
-  ReactDOM,
-  AccountStore,
-  SignatureStore,
-  Actions,
-  FocusedPerspectiveStore,
-  Utils,
-} from 'mailspring-exports';
+import { React, ReactDOM, AccountStore, SignatureStore, Actions, Utils } from 'mailspring-exports';
 import {
   RetinaImg,
   Flexbox,
@@ -15,7 +6,7 @@ import {
   ComposerEditor,
   ComposerSupport,
 } from 'mailspring-component-kit';
-import { ResolveSignatureData, RenderSignatureData } from './constants';
+import { ResolveSignatureData } from './constants';
 import SignatureAccountDefaultPicker from './signature-account-default-picker';
 import Templates from './templates';
 
@@ -30,13 +21,6 @@ class SignatureEditor extends React.Component {
     this.state = {
       editorState: convertFromHTML(body),
     };
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const body = nextProps.signature ? nextProps.signature.body : '';
-    this.setState({
-      editorState: convertFromHTML(body),
-    });
   }
 
   _onBaseFieldChange = event => {
@@ -150,31 +134,18 @@ export default class PreferencesSignatures extends React.Component {
   }
 
   _onAddSignature = () => {
-    const activeIds = FocusedPerspectiveStore.current().accountIds || AccountStore.accountIds();
-    const activeAccount = AccountStore.accountForId(activeIds[0]);
     const id = Utils.generateTempId();
+    const defaultTemplate = SignatureStore.getDefaultTemplate();
 
-    // let data = {};
-    // let body = null;
-    // if (this.state.selectedSignature) {
-    //   data = Object.assign({}, this.state.selectedSignature.data);
-    //   body = this.state.selectedSignature.body;
-    // } else {
-    //   data = {
-    //     templateName: Templates[0].name,
-    //     name: activeAccount.name,
-    //     email: activeAccount.emailAddress,
-    //   };
-    //   body = RenderSignatureData(data);
-    // }
-    const data = {
-      templateName: Templates[0].name,
-      name: activeAccount.name,
-      email: activeAccount.emailAddress,
-    };
-    const body = RenderSignatureData(data);
-
-    Actions.upsertSignature({ id, title: 'Untitled', body, data }, id);
+    Actions.upsertSignature(
+      {
+        id,
+        title: 'Untitled',
+        body: defaultTemplate.body,
+        data: defaultTemplate.data,
+      },
+      id
+    );
     Actions.selectSignature(id);
   };
 
@@ -248,6 +219,7 @@ export default class PreferencesSignatures extends React.Component {
           <SignatureEditor
             signature={this.state.selectedSignature}
             defaults={this.state.defaults}
+            key={this.state.selectedSignature ? this.state.selectedSignature.id : 'empty'}
             accountsAndAliases={this.state.accountsAndAliases}
           />
         </Flexbox>
