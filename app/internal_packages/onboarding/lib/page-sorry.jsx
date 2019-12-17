@@ -1,4 +1,5 @@
 import React from 'react';
+import { AccountStore } from 'mailspring-exports';
 import { LottieImg } from 'mailspring-component-kit';
 import OnboardingActions from './onboarding-actions';
 import { ipcRenderer } from 'electron';
@@ -16,6 +17,12 @@ export default class SorryPage extends React.Component {
       loading: false,
     };
     this.email = AppEnv.config.get('invite.email');
+    if (!this.email) {
+      const accounts = AccountStore.accounts();
+      if (accounts && accounts.length) {
+        this.email = accounts[0].emailAddress;
+      }
+    }
   }
 
   _readyToGo = () => {
