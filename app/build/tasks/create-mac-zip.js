@@ -15,7 +15,8 @@ module.exports = grunt => {
     }
 
     const orig = process.cwd();
-    process.chdir(path.join(grunt.config('outputDir'), 'Edison Mail-darwin-x64'));
+    const isMas = grunt.option('is-mas');
+    process.chdir(path.join(grunt.config('outputDir'), isMas ? 'Edison Mail-mas-x64' : 'Edison Mail-darwin-x64'));
 
     spawn(
       {
