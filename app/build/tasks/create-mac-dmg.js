@@ -5,9 +5,10 @@ module.exports = grunt => {
   grunt.registerTask('create-mac-dmg', 'Create DMG for EdisonMail', function pack() {
     const done = this.async();
     const dmgPath = path.join(grunt.config('outputDir'), 'Edison Mail.dmg');
+    const isMas = grunt.option('is-mas');
     createDMG(
       {
-        appPath: path.join(grunt.config('outputDir'), 'Edison Mail-darwin-x64', 'Edison Mail.app'),
+        appPath: path.join(grunt.config('outputDir'), isMas ? 'Edison Mail-mas-x64' : 'Edison Mail-darwin-x64', 'Edison Mail.app'),
         name: 'EdisonMail',
         background: path.resolve(
           grunt.config('appDir'),
