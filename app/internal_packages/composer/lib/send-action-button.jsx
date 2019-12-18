@@ -12,6 +12,8 @@ import {
 } from 'mailspring-exports'
 import { delay } from 'chat-exports'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
+import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
+
 import {
   Menu,
   RetinaImg,
@@ -119,10 +121,50 @@ class SendActionButton extends React.Component {
       }
     }, sendButtonTimeout)
   }
+  clearDraftAttachments = async draft => {
+    const { files, headerMessageId } = draft
+    for (let file of files) {
+      await AttachmentStore._onRemoveAttachment(headerMessageId, file)
+    }
+  }
+  addPadAttachmentsToDraft = async () => {
+    const { draft } = this.props
+    const { padInfo } = draft
+    const { headerMessageId } = draft
+    const onCreated = fileObj => {
+      console.log(' _onAttachmentCreated: ', fileObj, this.props)
+      if (Utils.shouldDisplayAsImage(fileObj)) {
+        const { draft, session } = this.props
+        const match = draft.files.find(f => f.id === fileObj.id)
+        if (!match) {
+          return
+        }
+        match.isInline = true
+        session.changes.add({
+          files: [].concat(draft.files),
+        })
+      }
+      session.changes.commit()
+    }
+    const files = Object.values(padInfo.files || {})
+    console.log(' addPadAttachmentsToDraft: ', padInfo.files)
+    const fromPad = true
+    for (let file of files) {
+      const filePath = file.downloadPath
+      const filename = getAwsOriginalFilename(filePath)
+      await AttachmentStore._onAddAttachment({
+        headerMessageId,
+        filePath,
+        filename,
+        onCreated,
+        fromPad,
+      })
+    }
+  }
 
-  setTeamEditPadContentAsBody = async draft => {
+  setTeamEditPadContent = async draft => {
     const { padInfo, session } = draft
-    console.log(' setTeamEditPadContentAsBody: session: ', session)
+    console.log(' setTeamEditPadContent: session: ', session)
     const { token, userId, padId } = padInfo
     const apiPath = window.teamPadConfig.teamEditAPIUrl + 'getEmail'
     const options = { token, userId, padID: padId }
@@ -143,16 +185,18 @@ class SendActionButton extends React.Component {
       const { email } = res.data
       body = email.body
     }
-    console.log(' setTeamEditPadContentAsBody: ', body)
+    console.log(' setTeamEditPadContent: ', body)
     draft.body = body
     await session.changes.commit()
+    await this.clearDraftAttachments(draft)
+    await this.addPadAttachmentsToDraft()
     await delay(500)
   }
   _onSendWithAction = async (sendAction, disableDraftCheck = false) => {
     console.log(' send: _onSendWithAction: ')
     const { draft } = this.props
     if (draft.padInfo) {
-      await this.setTeamEditPadContentAsBody(draft)
+      await this.setTeamEditPadContent(draft)
     }
     if (
       (disableDraftCheck || this.props.isValidDraft()) &&

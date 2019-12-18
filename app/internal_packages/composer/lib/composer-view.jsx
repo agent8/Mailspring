@@ -141,7 +141,7 @@ export default class ComposerView extends React.Component {
   }
 
   processPadAttachments = async attachments => {
-    await this.clearDraftAttachments()
+    // await this.clearDraftAttachments()
     console.log(' processPadAttachments: ', attachments)
     const fileMap = {}
     for (const item of attachments) {
@@ -171,49 +171,7 @@ export default class ComposerView extends React.Component {
     }
     const { padInfo } = this.state
     padInfo.files = fileMap
-    await this.addPadAttachmentsToDraft()
-  }
-
-  clearDraftAttachments = async () => {
-    const { draft } = this.props
-    const { files, headerMessageId } = draft
-    for (let file of files) {
-      await AttachmentStore._onRemoveAttachment(headerMessageId, file)
-    }
-  }
-  addPadAttachmentsToDraft = async () => {
-    const { draft } = this.props
-    const { padInfo } = this.state
-    const { headerMessageId } = draft
-    const onCreated = fileObj => {
-      console.log(' _onAttachmentCreated: ', fileObj)
-      if (Utils.shouldDisplayAsImage(fileObj)) {
-        const { draft, session } = this.props
-        const match = draft.files.find(f => f.id === fileObj.id)
-        if (!match) {
-          return
-        }
-        match.isInline = true
-        session.changes.add({
-          files: [].concat(draft.files),
-        })
-        session.changes.commit()
-      }
-    }
-    const files = Object.values(padInfo.files || {})
-    console.log(' addPadAttachmentsToDraft: ', padInfo.files)
-    const fromPad = true
-    for (let file of files) {
-      const filePath = file.downloadPath
-      const filename = getAwsOriginalFilename(filePath)
-      await AttachmentStore._onAddAttachment({
-        headerMessageId,
-        filePath,
-        filename,
-        onCreated,
-        fromPad,
-      })
-    }
+    // await this.addPadAttachmentsToDraft()
   }
 
   updatePadInfo = padInfo => {
@@ -223,7 +181,7 @@ export default class ComposerView extends React.Component {
 
   sendEmailExtra = (padInfo, draft) => {
     const files = Object.values(padInfo.files)
-    console.log(' before send pad json: draft, files: ', draft, files)
+    console.log(' sendEmailExtra: before send pad json: draft, files: ', draft, files)
     const { padId } = padInfo
     const pad = window.padMap[padId]
     const to = draft.to.map(x => x.email)
@@ -245,10 +203,15 @@ export default class ComposerView extends React.Component {
     })
   }
 
-  onRemovePadAttachment = file => {
+  removeAttachment = (headerMessageId, file) => {
+    Actions.removeAttachment(headerMessageId, file)
+    this.removePadAttachment(file)
+  }
+
+  removePadAttachment = file => {
     const { draft } = this.props
     const { padInfo } = this.state
-    console.log(' onRemovePadAttachment: ', file, padInfo)
+    console.log(' removePadAttachment: ', file, padInfo)
     if (!padInfo) {
       return
     }
@@ -761,7 +724,7 @@ export default class ComposerView extends React.Component {
           filePath={file.downloadPath}
           displayName={file.filename}
           fileIconName={`file-${file.extension}.png`}
-          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
+          onRemoveAttachment={() => this.removePadAttachment(file)}
           // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
           // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
@@ -777,7 +740,7 @@ export default class ComposerView extends React.Component {
           className='file-upload'
           filePath={file.downloadPath}
           displayName={file.filename}
-          onRemoveAttachment={() => this.onRemovePadAttachment(file)}
+          onRemoveAttachment={() => this.removePadAttachment(file)}
           // onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
           // onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
@@ -802,10 +765,10 @@ export default class ComposerView extends React.Component {
     return <div className='attachments-area'>{nonImageFiles.concat(imageFiles)}</div>
   }
   _renderAttachments () {
-    // const { padInfo, inTeamEditMode } = this.state
-    // if (inTeamEditMode && padInfo && padInfo.files) {
-    //   return this._renderPadAttachments()
-    // }
+    const { padInfo, inTeamEditMode } = this.state
+    if (inTeamEditMode && padInfo && padInfo.files) {
+      return this._renderPadAttachments()
+    }
     const { files, headerMessageId } = this.props.draft
     const nonImageFiles = files
       .filter(f => !Utils.shouldDisplayAsImage(f))
@@ -832,7 +795,7 @@ export default class ComposerView extends React.Component {
           className='file-upload'
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
-          onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          onRemoveAttachment={() => this.removeAttachment(headerMessageId, file)}
           onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
       ))
@@ -847,7 +810,7 @@ export default class ComposerView extends React.Component {
           className='file-upload'
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
-          onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          onRemoveAttachment={() => this.removeAttachment(headerMessageId, file)}
           onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
       ))
