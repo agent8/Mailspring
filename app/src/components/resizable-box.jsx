@@ -17,6 +17,7 @@ export default class ResizableBox extends Component {
     this.state = {
       disX: 0,
       disY: 0,
+      showMask: false,
     };
   }
 
@@ -70,7 +71,7 @@ export default class ResizableBox extends Component {
   };
 
   renderHandles = () => {
-    const { disableOrientation = ['n', 'w', 'ne', 'nw', 'sw'] } = this.props;
+    const { disableOrientation = [] } = this.props;
     const result = [];
     allOrientation.forEach(item => {
       if (!disableOrientation.includes(item)) {
@@ -82,8 +83,9 @@ export default class ResizableBox extends Component {
 
   render() {
     const { children, style } = this.props;
+    const { showMask } = this.state;
     return (
-      <div className={`resizable-box`} style={style ? style : {}}>
+      <div className={`resizable-box${showMask ? ` showMask` : ''}`} style={style ? style : {}}>
         <div
           className="resizable-box-mask"
           contentEditable={true}
@@ -91,6 +93,12 @@ export default class ResizableBox extends Component {
           onKeyDown={e => {
             e.stopPropagation();
             e.preventDefault();
+          }}
+          onFocus={() => {
+            this.setState({ showMask: true });
+          }}
+          onBlur={() => {
+            this.setState({ showMask: false });
           }}
         >
           {this.renderHandles()}

@@ -14,12 +14,13 @@
     z-index: 10;
     caret-color: transparent;
     cursor: default;
-    &:focus {
-      background: rgba(68, 159, 246, 0.3);
-      border: 2px solid fade(@blue, 50%);
-      .resizable-handle {
-        display: block;
-      }
+  }
+
+  &.showMask .resizable-box-mask {
+    background: rgba(68, 159, 246, 0.3);
+    border: 2px solid fade(@blue, 50%);
+    .resizable-handle {
+      display: block;
     }
   }
 
