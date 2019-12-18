@@ -114,6 +114,8 @@ lazyLoad('LazyRenderedList', 'lazy-rendered-list');
 lazyLoadFrom('AttachmentItem', 'attachment-items');
 lazyLoadFrom('ImageAttachmentItem', 'attachment-items');
 lazyLoad('CodeSnippet', 'code-snippet');
+lazyLoad('ResizableBox', 'resizable-box');
+lazyLoad('ResizableImg', 'resizable-img');
 
 lazyLoad('ComposerEditor', 'composer-editor/composer-editor');
 lazyLoad('ComposerSupport', 'composer-editor/composer-support');
