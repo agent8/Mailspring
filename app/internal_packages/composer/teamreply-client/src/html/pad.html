@@ -1,4 +1,7 @@
-<html class="" lang="en" dir="ltr"><head><title>992ad150f3ae11e9b7cdb3067d337193 | Edison pad</title>
+<html class="plugin-ep_image_upload" lang="en" dir="ltr">
+
+<head>
+  <title>| Edison pad</title>
   <script>
     /*
     |@licstart  The following is the entire license notice for the
@@ -28,15 +31,16 @@
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <link rel="shortcut icon" href="../favicon.ico">
-  
+
+
   <link href="../static/css/pad.css" rel="stylesheet">
 
-  
+
   <link href="../static/skins/no-skin/pad.css" rel="stylesheet">
-  
+
 
   <style title="dynamicsyntax"></style>
-  
+  <link rel="stylesheet" href="../javascripts/lib/ep_image_upload/static/css/ep_image_upload.css" type="text/css">
 
   <link rel="localizations" type="application/l10n+json" href="../locales/en.json">
   <script type="text/javascript" src="../static/js/html10n.js"></script>
@@ -44,558 +48,776 @@
 
   <!-- head and body had been removed intentionally -->
 
-  
-  </head><body class="readwrite"><div id="editbar" class="toolbar enabledtoolbar" title="Toolbar (Alt F9)" style="display: block; height: 33px;">
-      <div id="overlay">
-          <div id="overlay-inner"></div>
-      </div>
 
-      <ul class="menu_left" role="toolbar">
-          
-          <li data-type="button" data-key="bold"><a class="grouped-left" data-l10n-id="pad.toolbar.bold.title" title="Bold (Ctrl+B)" aria-label="Bold (Ctrl+B)"><button class=" buttonicon buttonicon-bold" data-l10n-id="pad.toolbar.bold.title" title="Bold (Ctrl+B)" aria-label="Bold (Ctrl+B)"></button></a></li>
-<li data-type="button" data-key="italic"><a class="grouped-middle" data-l10n-id="pad.toolbar.italic.title" title="Italic (Ctrl+I)" aria-label="Italic (Ctrl+I)"><button class=" buttonicon buttonicon-italic" data-l10n-id="pad.toolbar.italic.title" title="Italic (Ctrl+I)" aria-label="Italic (Ctrl+I)"></button></a></li>
-<li data-type="button" data-key="underline"><a class="grouped-middle" data-l10n-id="pad.toolbar.underline.title" title="Underline (Ctrl+U)" aria-label="Underline (Ctrl+U)"><button class=" buttonicon buttonicon-underline" data-l10n-id="pad.toolbar.underline.title" title="Underline (Ctrl+U)" aria-label="Underline (Ctrl+U)"></button></a></li>
-<li data-type="button" data-key="strikethrough"><a class="grouped-right" data-l10n-id="pad.toolbar.strikethrough.title" title="Strikethrough (Ctrl+5)" aria-label="Strikethrough (Ctrl+5)"><button class=" buttonicon buttonicon-strikethrough" data-l10n-id="pad.toolbar.strikethrough.title" title="Strikethrough (Ctrl+5)" aria-label="Strikethrough (Ctrl+5)"></button></a></li><li class="separator"></li><li data-type="button" data-key="insertorderedlist"><a class="grouped-left" data-l10n-id="pad.toolbar.ol.title" title="Ordered list (Ctrl+Shift+N)" aria-label="Ordered list (Ctrl+Shift+N)"><button class=" buttonicon buttonicon-insertorderedlist" data-l10n-id="pad.toolbar.ol.title" title="Ordered list (Ctrl+Shift+N)" aria-label="Ordered list (Ctrl+Shift+N)"></button></a></li>
-<li data-type="button" data-key="insertunorderedlist"><a class="grouped-middle" data-l10n-id="pad.toolbar.ul.title" title="Unordered List (Ctrl+Shift+L)" aria-label="Unordered List (Ctrl+Shift+L)"><button class=" buttonicon buttonicon-insertunorderedlist" data-l10n-id="pad.toolbar.ul.title" title="Unordered List (Ctrl+Shift+L)" aria-label="Unordered List (Ctrl+Shift+L)"></button></a></li>
-<li data-type="button" data-key="indent"><a class="grouped-middle" data-l10n-id="pad.toolbar.indent.title" title="Indent (TAB)" aria-label="Indent (TAB)"><button class=" buttonicon buttonicon-indent" data-l10n-id="pad.toolbar.indent.title" title="Indent (TAB)" aria-label="Indent (TAB)"></button></a></li>
-<li data-type="button" data-key="outdent"><a class="grouped-right" data-l10n-id="pad.toolbar.unindent.title" title="Outdent (Shift+TAB)" aria-label="Outdent (Shift+TAB)"><button class=" buttonicon buttonicon-outdent" data-l10n-id="pad.toolbar.unindent.title" title="Outdent (Shift+TAB)" aria-label="Outdent (Shift+TAB)"></button></a></li><li class="separator"></li><li data-type="button" data-key="undo"><a class="grouped-left" data-l10n-id="pad.toolbar.undo.title" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)"><button class=" buttonicon buttonicon-undo" data-l10n-id="pad.toolbar.undo.title" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)"></button></a></li>
-<li data-type="button" data-key="redo"><a class="grouped-right" data-l10n-id="pad.toolbar.redo.title" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)"><button class=" buttonicon buttonicon-redo" data-l10n-id="pad.toolbar.redo.title" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)"></button></a></li><li class="separator"></li><li data-type="button" data-key="clearauthorship"><a class="" data-l10n-id="pad.toolbar.clearAuthorship.title" title="Clear Authorship Colors (Ctrl+Shift+C)" aria-label="Clear Authorship Colors (Ctrl+Shift+C)"><button class=" buttonicon buttonicon-clearauthorship" data-l10n-id="pad.toolbar.clearAuthorship.title" title="Clear Authorship Colors (Ctrl+Shift+C)" aria-label="Clear Authorship Colors (Ctrl+Shift+C)"></button></a></li>
-          
-      </ul>
-      <ul class="menu_right" role="toolbar">
-          
-          <li data-type="button" data-key="import_export"><a class="grouped-left" data-l10n-id="pad.toolbar.import_export.title" title="Import/Export from/to different file formats" aria-label="Import/Export from/to different file formats"><button class=" buttonicon buttonicon-import_export" data-l10n-id="pad.toolbar.import_export.title" title="Import/Export from/to different file formats" aria-label="Import/Export from/to different file formats"></button></a></li>
-<li data-type="button" data-key="showTimeSlider"><a class="grouped-middle" data-l10n-id="pad.toolbar.timeslider.title" title="Timeslider" aria-label="Timeslider"><button class=" buttonicon buttonicon-history" data-l10n-id="pad.toolbar.timeslider.title" title="Timeslider" aria-label="Timeslider"></button></a></li>
-<li data-type="button" data-key="savedRevision"><a class="grouped-right" data-l10n-id="pad.toolbar.savedRevision.title" title="Save Revision" aria-label="Save Revision"><button class=" buttonicon buttonicon-savedRevision" data-l10n-id="pad.toolbar.savedRevision.title" title="Save Revision" aria-label="Save Revision"></button></a></li><li class="separator"></li><li data-type="button" data-key="settings"><a class="grouped-left" data-l10n-id="pad.toolbar.settings.title" title="Settings" aria-label="Settings"><button class=" buttonicon buttonicon-settings" data-l10n-id="pad.toolbar.settings.title" title="Settings" aria-label="Settings"></button></a></li>
-<li data-type="button" data-key="embed"><a class="grouped-right" data-l10n-id="pad.toolbar.embed.title" title="Share and Embed this pad" aria-label="Share and Embed this pad"><button class=" buttonicon buttonicon-embed" data-l10n-id="pad.toolbar.embed.title" title="Share and Embed this pad" aria-label="Share and Embed this pad"></button></a></li><li class="separator"></li><li data-type="button" data-key="showusers"><a class="" data-l10n-id="pad.toolbar.showusers.title" title="Show the users on this pad" aria-label="Show the users on this pad" style="box-shadow: rgb(255, 168, 168) 0px 0px 30px inset;"><button class=" buttonicon buttonicon-showusers" data-l10n-id="pad.toolbar.showusers.title" title="Show the users on this pad" aria-label="Show the users on this pad"></button><span id="online_count">2</span></a></li>
-          
-      </ul>
+</head>
+
+<body class="readwrite">
+  <div id="editbar" class="toolbar enabledtoolbar" title="Toolbar (Alt F9)" style="display: block; height: 33px;">
+    <div id="overlay">
+      <div id="overlay-inner"></div>
+    </div>
+    <ul class="menu_left" role="toolbar">
+      <li data-type="button" data-key="bold">
+        <a class="grouped-left" data-l10n-id="pad.toolbar.bold.title" title="Bold (Ctrl+B)" aria-label="Bold (Ctrl+B)">
+          <button class=" buttonicon buttonicon-bold" data-l10n-id="pad.toolbar.bold.title" title="Bold (Ctrl+B)"
+            aria-label="Bold (Ctrl+B)"></button>
+        </a>
+      </li>
+      <li data-type="button" data-key="italic"><a class="grouped-middle" data-l10n-id="pad.toolbar.italic.title"
+          title="Italic (Ctrl+I)" aria-label="Italic (Ctrl+I)"><button class=" buttonicon buttonicon-italic"
+            data-l10n-id="pad.toolbar.italic.title" title="Italic (Ctrl+I)" aria-label="Italic (Ctrl+I)"></button></a>
+      </li>
+      <li data-type="button" data-key="underline"><a class="grouped-middle" data-l10n-id="pad.toolbar.underline.title"
+          title="Underline (Ctrl+U)" aria-label="Underline (Ctrl+U)"><button class=" buttonicon buttonicon-underline"
+            data-l10n-id="pad.toolbar.underline.title" title="Underline (Ctrl+U)"
+            aria-label="Underline (Ctrl+U)"></button></a></li>
+      <li data-type="button" data-key="strikethrough"><a class="grouped-right"
+          data-l10n-id="pad.toolbar.strikethrough.title" title="Strikethrough (Ctrl+5)"
+          aria-label="Strikethrough (Ctrl+5)"><button class=" buttonicon buttonicon-strikethrough"
+            data-l10n-id="pad.toolbar.strikethrough.title" title="Strikethrough (Ctrl+5)"
+            aria-label="Strikethrough (Ctrl+5)"></button></a></li>
+      <li data-type="button" data-key="addImage">
+        <a class="grouped-right">
+          <button class=" buttonicon ep_image_upload image_upload"></button>
+        </a>
+      </li>
+      <li class="separator"></li>
+      <li data-type="button" data-key="insertorderedlist"><a class="grouped-left" data-l10n-id="pad.toolbar.ol.title"
+          title="Ordered list (Ctrl+Shift+N)" aria-label="Ordered list (Ctrl+Shift+N)"><button
+            class=" buttonicon buttonicon-insertorderedlist" data-l10n-id="pad.toolbar.ol.title"
+            title="Ordered list (Ctrl+Shift+N)" aria-label="Ordered list (Ctrl+Shift+N)"></button></a></li>
+      <li data-type="button" data-key="insertunorderedlist"><a class="grouped-middle"
+          data-l10n-id="pad.toolbar.ul.title" title="Unordered List (Ctrl+Shift+L)"
+          aria-label="Unordered List (Ctrl+Shift+L)"><button class=" buttonicon buttonicon-insertunorderedlist"
+            data-l10n-id="pad.toolbar.ul.title" title="Unordered List (Ctrl+Shift+L)"
+            aria-label="Unordered List (Ctrl+Shift+L)"></button></a></li>
+      <li data-type="button" data-key="indent"><a class="grouped-middle" data-l10n-id="pad.toolbar.indent.title"
+          title="Indent (TAB)" aria-label="Indent (TAB)"><button class=" buttonicon buttonicon-indent"
+            data-l10n-id="pad.toolbar.indent.title" title="Indent (TAB)" aria-label="Indent (TAB)"></button></a></li>
+      <li data-type="button" data-key="outdent"><a class="grouped-right" data-l10n-id="pad.toolbar.unindent.title"
+          title="Outdent (Shift+TAB)" aria-label="Outdent (Shift+TAB)"><button class=" buttonicon buttonicon-outdent"
+            data-l10n-id="pad.toolbar.unindent.title" title="Outdent (Shift+TAB)"
+            aria-label="Outdent (Shift+TAB)"></button></a></li>
+      <li class="separator"></li>
+      <li data-type="button" data-key="undo"><a class="grouped-left" data-l10n-id="pad.toolbar.undo.title"
+          title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)"><button class=" buttonicon buttonicon-undo"
+            data-l10n-id="pad.toolbar.undo.title" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)"></button></a></li>
+      <li data-type="button" data-key="redo"><a class="grouped-right" data-l10n-id="pad.toolbar.redo.title"
+          title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)"><button class=" buttonicon buttonicon-redo"
+            data-l10n-id="pad.toolbar.redo.title" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)"></button></a></li>
+      <li class="separator"></li>
+      <li data-type="button" data-key="clearauthorship"><a class="" data-l10n-id="pad.toolbar.clearAuthorship.title"
+          title="Clear Authorship Colors (Ctrl+Shift+C)" aria-label="Clear Authorship Colors (Ctrl+Shift+C)"><button
+            class=" buttonicon buttonicon-clearauthorship" data-l10n-id="pad.toolbar.clearAuthorship.title"
+            title="Clear Authorship Colors (Ctrl+Shift+C)"
+            aria-label="Clear Authorship Colors (Ctrl+Shift+C)"></button></a></li>
+
+    </ul>
+    <ul class="menu_right" role="toolbar">
+
+      <li data-type="button" data-key="import_export"><a class="grouped-left"
+          data-l10n-id="pad.toolbar.import_export.title" title="Import/Export from/to different file formats"
+          aria-label="Import/Export from/to different file formats"><button class=" buttonicon buttonicon-import_export"
+            data-l10n-id="pad.toolbar.import_export.title" title="Import/Export from/to different file formats"
+            aria-label="Import/Export from/to different file formats"></button></a></li>
+      <li data-type="button" data-key="showTimeSlider"><a class="grouped-middle"
+          data-l10n-id="pad.toolbar.timeslider.title" title="Timeslider" aria-label="Timeslider"><button
+            class=" buttonicon buttonicon-history" data-l10n-id="pad.toolbar.timeslider.title" title="Timeslider"
+            aria-label="Timeslider"></button></a></li>
+      <li data-type="button" data-key="savedRevision"><a class="grouped-right"
+          data-l10n-id="pad.toolbar.savedRevision.title" title="Save Revision" aria-label="Save Revision"><button
+            class=" buttonicon buttonicon-savedRevision" data-l10n-id="pad.toolbar.savedRevision.title"
+            title="Save Revision" aria-label="Save Revision"></button></a></li>
+      <li class="separator"></li>
+      <li data-type="button" data-key="settings"><a class="grouped-left" data-l10n-id="pad.toolbar.settings.title"
+          title="Settings" aria-label="Settings"><button class=" buttonicon buttonicon-settings"
+            data-l10n-id="pad.toolbar.settings.title" title="Settings" aria-label="Settings"></button></a></li>
+      <li data-type="button" data-key="embed"><a class="grouped-right" data-l10n-id="pad.toolbar.embed.title"
+          title="Share and Embed this pad" aria-label="Share and Embed this pad"><button
+            class=" buttonicon buttonicon-embed" data-l10n-id="pad.toolbar.embed.title" title="Share and Embed this pad"
+            aria-label="Share and Embed this pad"></button></a></li>
+      <li class="separator"></li>
+      <li data-type="button" data-key="showusers"><a class="" data-l10n-id="pad.toolbar.showusers.title"
+          title="Show the users on this pad" aria-label="Show the users on this pad"
+          style="box-shadow: rgb(255, 168, 168) 0px 0px 30px inset;"><button class=" buttonicon buttonicon-showusers"
+            data-l10n-id="pad.toolbar.showusers.title" title="Show the users on this pad"
+            aria-label="Show the users on this pad"></button><span id="online_count">1</span></a></li>
+      <style>
+        button.buttonicon.ep_image_upload.image_upload:before {
+          content: "\E80C";
+        }
+      </style>
+
+    </ul>
   </div>
-  
+
 
   <div id="users">
-      
-      <div id="connectionstatus"></div>
-      <div id="myuser">
-          <div id="mycolorpicker">
-              <div id="colorpicker"><div class="farbtastic" style="position: relative; width: 220px; height: 220px;" width="220" height="220"><div class="farbtastic-solid" width="220" height="220" style="width: 117px; height: 117px; position: absolute; left: 51px; top: 51px; background-color: rgb(255, 0, 0);"></div><canvas class="farbtastic-mask" width="220" height="220" style="width: 220px; height: 220px; position: absolute;"></canvas><canvas class="farbtastic-overlay" width="220" height="220" style="width: 220px; height: 220px; position: absolute;"></canvas></div></div>
-              <button id="mycolorpickersave" data-l10n-id="pad.colorpicker.save" class="btn btn-primary" aria-label="Save">Save</button>
-              <button id="mycolorpickercancel" data-l10n-id="pad.colorpicker.cancel" class="btn btn-default" aria-label="Cancel">Cancel</button>
-              <span id="mycolorpickerpreview" class="myswatchboxhoverable" style="background-color: rgb(128, 128, 128); color: rgb(255, 255, 255);"></span>
+
+    <div id="connectionstatus"></div>
+    <div id="myuser">
+      <div id="mycolorpicker">
+        <div id="colorpicker">
+          <div class="farbtastic" style="position: relative; width: 220px; height: 220px;" width="220" height="220">
+            <div class="farbtastic-solid" width="220" height="220"
+              style="width: 117px; height: 117px; position: absolute; left: 51px; top: 51px; background-color: rgb(255, 0, 0);">
+            </div><canvas class="farbtastic-mask" width="220" height="220"
+              style="width: 220px; height: 220px; position: absolute;"></canvas><canvas class="farbtastic-overlay"
+              width="220" height="220" style="width: 220px; height: 220px; position: absolute;"></canvas>
           </div>
-          <div id="myswatchbox" class="myswatchboxhoverable"><div id="myswatch" style="background-color: rgb(255, 168, 168);"></div></div>
-          <div id="myusernameform"><input type="text" id="myusernameedit" data-l10n-id="pad.userlist.entername" aria-label="Enter your name" class="myusernameedithoverable editable"></div>
-          <div id="mystatusform"><input type="text" id="mystatusedit" disabled="disabled"></div>
+        </div>
+        <button id="mycolorpickersave" data-l10n-id="pad.colorpicker.save" class="btn btn-primary"
+          aria-label="Save">Save</button>
+        <button id="mycolorpickercancel" data-l10n-id="pad.colorpicker.cancel" class="btn btn-default"
+          aria-label="Cancel">Cancel</button>
+        <span id="mycolorpickerpreview" class="myswatchboxhoverable"
+          style="background-color: rgb(128, 128, 128); color: rgb(255, 255, 255);"></span>
       </div>
-      <div id="otherusers" aria-role="document">
-          <div id="guestprompts"></div>
-          <table id="otheruserstable" cellspacing="0" cellpadding="0" border="0" style="display: table;">
-              <tbody><tr data-authorid="100004" id="usertr1"><td style="height: 26px; opacity: 1;" class="usertdswatch"><div class="swatch" style="background:#e7b1b1">&nbsp;</div></td><td style="height: 26px; opacity: 1;" class="usertdname">yazz</td><td style="height: 26px; opacity: 1;" class="activity"></td></tr>
-          </tbody></table>
-          <div id="nootherusers" style="display: none;"></div>
+      <div id="myswatchbox" class="myswatchboxhoverable">
+        <div id="myswatch" style="background-color: rgb(255, 168, 168);"></div>
       </div>
-      <div id="userlistbuttonarea"></div>
-      
+      <div id="myusernameform"><input type="text" id="myusernameedit" data-l10n-id="pad.userlist.entername"
+          aria-label="Enter your name" class="myusernameedithoverable editable"></div>
+      <div id="mystatusform"><input type="text" id="mystatusedit" disabled="disabled"></div>
+    </div>
+    <div id="otherusers" aria-role="document">
+      <div id="guestprompts"></div>
+      <table id="otheruserstable" cellspacing="0" cellpadding="0" border="0" style="display: table;">
+        <tbody>
+          <tr data-authorid="100004" id="usertr1">
+            <td style="height: 26px; opacity: 1;" class="usertdswatch">
+              <div class="swatch" style="background:#e7b1b1">&nbsp;</div>
+            </td>
+            <td style="height: 26px; opacity: 1;" class="usertdname">yazz</td>
+            <td style="height: 26px; opacity: 1;" class="activity"></td>
+          </tr>
+        </tbody>
+      </table>
+      <div id="nootherusers" style="display: none;"></div>
+    </div>
+    <div id="userlistbuttonarea"></div>
+
   </div>
 
   <div id="editorcontainerbox">
-      <div id="editorcontainer" class="editorcontainer" style="top: 38px;">
-        <iframe id="ace_outer" name="ace_outer" frameborder="0" title="Ether"></iframe></div>
-      <div id="editorloadingbox" style="display: none;">
-        <div id="passwordRequired">
-          <p data-l10n-id="pad.passwordRequired" aria-label="You need a password to access this pad">You need a password to access this pad</p>
-          <form class="passForm" method="POST">
-            <input id="passwordinput" type="password" name="password"><input type="submit" value="Submit">
-          </form>
-        </div>
-        <div id="permissionDenied">
-          <p data-l10n-id="pad.permissionDenied" aria-label="You do not have permission to access this pad">You do not have permission to access this pad</p>
-        </div>
-        <div id="wrongPassword">
-          <p data-l10n-id="pad.wrongPassword" aria-label="Your password was wrong">Your password was wrong</p>
-        </div>
-        <div id="noCookie">
-          <p data-l10n-id="pad.noCookie" aria-label="Cookie could not be found. Please allow cookies in your browser!">Cookie could not be found. Please allow cookies in your browser!</p>
-        </div>
-        
-        <p data-l10n-id="pad.loading" id="loading" aria-label="Loading...">Loading...</p>
-        
-        <noscript><strong>Sorry, you have to enable Javascript in order to use this.</strong></noscript>
+    <div id="editorcontainer" class="editorcontainer" style="top: 38px;">
+      <iframe id="ace_outer" name="ace_outer" frameborder="0" title="Ether"></iframe></div>
+    <div id="editorloadingbox" style="display: none;">
+      <div id="passwordRequired">
+        <p data-l10n-id="pad.passwordRequired" aria-label="You need a password to access this pad">You need a password
+          to access this pad</p>
+        <form class="passForm" method="POST">
+          <input id="passwordinput" type="password" name="password"><input type="submit" value="Submit">
+        </form>
       </div>
+      <div id="permissionDenied">
+        <p data-l10n-id="pad.permissionDenied" aria-label="You do not have permission to access this pad">You do not
+          have permission to access this pad</p>
+      </div>
+      <div id="wrongPassword">
+        <p data-l10n-id="pad.wrongPassword" aria-label="Your password was wrong">Your password was wrong</p>
+      </div>
+      <div id="noCookie">
+        <p data-l10n-id="pad.noCookie" aria-label="Cookie could not be found. Please allow cookies in your browser!">
+          Cookie could not be found. Please allow cookies in your browser!</p>
+      </div>
+
+      <p data-l10n-id="pad.loading" id="loading" aria-label="Loading...">Loading...</p>
+
+      <noscript><strong>Sorry, you have to enable Javascript in order to use this.</strong></noscript>
+    </div>
   </div>
 
   <div id="settings" class="popup" style="top: 38px;">
-      <h1 data-l10n-id="pad.settings.padSettings" aria-label="Pad Settings">Pad Settings</h1>
-      <div class="row">
-        <div class="column">
-            
-            <h2 data-l10n-id="pad.settings.myView" aria-label="My View">My View</h2>
-            <p>
-                <input type="checkbox" id="options-stickychat" onclick="chat.stickToScreen();">
-                <label for="options-stickychat" data-l10n-id="pad.settings.stickychat" aria-label="Chat always on screen">Chat always on screen</label>
-            </p>
-            <p>
-                <input type="checkbox" id="options-chatandusers" onclick="chat.chatAndUsers();">
-                <label for="options-chatandusers" data-l10n-id="pad.settings.chatandusers" aria-label="Show Chat and Users">Show Chat and Users</label>
-            </p>
-            <p>
-                <input type="checkbox" id="options-colorscheck" checked="checked">
-                <label for="options-colorscheck" data-l10n-id="pad.settings.colorcheck" aria-label="Authorship colors">Authorship colors</label>
-            </p>
-            <p>
-                <input type="checkbox" id="options-linenoscheck" checked="checked">
-                <label for="options-linenoscheck" data-l10n-id="pad.settings.linenocheck" aria-label="Line numbers">Line numbers</label>
-            </p>
-            <p>
-                <input type="checkbox" id="options-rtlcheck">
-                <label for="options-rtlcheck" data-l10n-id="pad.settings.rtlcheck" aria-label="Read content from right to left?">Read content from right to left?</label>
-            </p>
-            
-            <table>
-                
-                <tbody><tr>
-                    <td>
-                        <label for="viewfontmenu" data-l10n-id="pad.settings.fontType" aria-label="Font type:">Font type:</label>
-                    </td>
-                    <td>
-                        <select id="viewfontmenu">
-                            <option value="normal" data-l10n-id="pad.settings.fontType.normal" aria-label="Normal">Normal</option>
-                            <option value="monospace" data-l10n-id="pad.settings.fontType.monospaced" aria-label="Monospace">Monospace</option>
-                            <option value="montserrat" data-l10n-id="pad.settings.fontType.montserrat" aria-label="Montserrat">Montserrat</option>
-                            <option value="opendyslexic" data-l10n-id="pad.settings.fontType.opendyslexic" aria-label="Open Dyslexic">Open Dyslexic</option>
-                            <option value="comicsans" data-l10n-id="pad.settings.fontType.comicsans" aria-label="Comic Sans">Comic Sans</option>
-                            <option value="georgia" data-l10n-id="pad.settings.fontType.georgia" aria-label="Georgia">Georgia</option>
-                            <option value="impact" data-l10n-id="pad.settings.fontType.impact" aria-label="Impact">Impact</option>
-                            <option value="lucida" data-l10n-id="pad.settings.fontType.lucida" aria-label="Lucida">Lucida</option>
-                            <option value="lucidasans" data-l10n-id="pad.settings.fontType.lucidasans" aria-label="Lucida Sans">Lucida Sans</option>
-                            <option value="palatino" data-l10n-id="pad.settings.fontType.palatino" aria-label="Palatino">Palatino</option>
-                            <option value="robotomono" data-l10n-id="pad.settings.fontType.robotomono" aria-label="RobotoMono">RobotoMono</option>
-                            <option value="tahoma" data-l10n-id="pad.settings.fontType.tahoma" aria-label="Tahoma">Tahoma</option>
-                            <option value="timesnewroman" data-l10n-id="pad.settings.fontType.timesnewroman" aria-label="Times New Roman">Times New Roman</option>
-                            <option value="trebuchet" data-l10n-id="pad.settings.fontType.trebuchet" aria-label="Trebuchet">Trebuchet</option>
-                            <option value="verdana" data-l10n-id="pad.settings.fontType.verdana" aria-label="Verdana">Verdana</option>
-                            <option value="symbol" data-l10n-id="pad.settings.fontType.symbol" aria-label="Symbol">Symbol</option>
-                            <option value="webdings" data-l10n-id="pad.settings.fontType.webdings" aria-label="Webdings">Webdings</option>
-                            <option value="wingdings" data-l10n-id="pad.settings.fontType.wingdings" aria-label="Wingdings">Wingdings</option>
-                            <option value="sansserif" data-l10n-id="pad.settings.fontType.sansserif" aria-label="Sans Serif">Sans Serif</option>
-                            <option value="serif" data-l10n-id="pad.settings.fontType.serif" aria-label="Serif">Serif</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <label for="languagemenu" data-l10n-id="pad.settings.language" aria-label="Language:">Language:</label>
-                    </td>
-                    <td>
-                        <select id="languagemenu">
-                            
-                            <option value="af">Afrikaans</option>
-                            
-                            <option value="ar">العربية</option>
-                            
-                            <option value="ast">asturianu</option>
-                            
-                            <option value="az">azərbaycanca</option>
-                            
-                            <option value="azb">تورکجه</option>
-                            
-                            <option value="bcc">بلوچی مکرانی</option>
-                            
-                            <option value="be-tarask">беларуская (тарашкевіца)‎</option>
-                            
-                            <option value="bg">български</option>
-                            
-                            <option value="bn">বাংলা</option>
-                            
-                            <option value="br">brezhoneg</option>
-                            
-                            <option value="bs">bosanski</option>
-                            
-                            <option value="ca">català</option>
-                            
-                            <option value="cs">česky</option>
-                            
-                            <option value="da">dansk</option>
-                            
-                            <option value="de">Deutsch</option>
-                            
-                            <option value="diq">Zazaki</option>
-                            
-                            <option value="dsb">dolnoserbski</option>
-                            
-                            <option value="el">Ελληνικά</option>
-                            
-                            <option value="en-gb">British English</option>
-                            
-                            <option value="en">English</option>
-                            
-                            <option value="eo">Esperanto</option>
-                            
-                            <option value="es">español</option>
-                            
-                            <option value="et">eesti</option>
-                            
-                            <option value="eu">euskara</option>
-                            
-                            <option value="fa">فارسی</option>
-                            
-                            <option value="fi">suomi</option>
-                            
-                            <option value="fo">føroyskt</option>
-                            
-                            <option value="fr">français</option>
-                            
-                            <option value="fy">Frysk</option>
-                            
-                            <option value="gl">galego</option>
-                            
-                            <option value="gu">ગુજરાતી</option>
-                            
-                            <option value="he">עברית</option>
-                            
-                            <option value="hi">हिन्दी</option>
-                            
-                            <option value="hr">hrvatski</option>
-                            
-                            <option value="hsb">hornjoserbsce</option>
-                            
-                            <option value="hu">magyar</option>
-                            
-                            <option value="hy">Հայերեն</option>
-                            
-                            <option value="ia">interlingua</option>
-                            
-                            <option value="is">íslenska</option>
-                            
-                            <option value="it">italiano</option>
-                            
-                            <option value="ja">日本語</option>
-                            
-                            <option value="kab">Taqbaylit</option>
-                            
-                            <option value="km">ភាសាខ្មែរ</option>
-                            
-                            <option value="ko">한국어</option>
-                            
-                            <option value="krc">къарачай-малкъар</option>
-                            
-                            <option value="ksh">Ripoarisch</option>
-                            
-                            <option value="ku-latn">Kurdî (latînî)‎</option>
-                            
-                            <option value="lb">Lëtzebuergesch</option>
-                            
-                            <option value="lt">lietuvių</option>
-                            
-                            <option value="lv">latviešu</option>
-                            
-                            <option value="map-bms">Basa Banyumasan</option>
-                            
-                            <option value="mg">Malagasy</option>
-                            
-                            <option value="mk">македонски</option>
-                            
-                            <option value="ml">മലയാളം</option>
-                            
-                            <option value="mn">монгол</option>
-                            
-                            <option value="mnw">ဘာသာ မန်</option>
-                            
-                            <option value="mr">मराठी</option>
-                            
-                            <option value="ms">Bahasa Melayu</option>
-                            
-                            <option value="nah">Nāhuatl</option>
-                            
-                            <option value="nap">Nnapulitano</option>
-                            
-                            <option value="nb">norsk (bokmål)‎</option>
-                            
-                            <option value="nds">Plattdüütsch</option>
-                            
-                            <option value="ne">नेपाली</option>
-                            
-                            <option value="nl">Nederlands</option>
-                            
-                            <option value="nn">norsk (nynorsk)‎</option>
-                            
-                            <option value="oc">occitan</option>
-                            
-                            <option value="os">Ирон</option>
-                            
-                            <option value="pa">ਪੰਜਾਬੀ</option>
-                            
-                            <option value="pl">polski</option>
-                            
-                            <option value="pms">Piemontèis</option>
-                            
-                            <option value="ps">پښتو</option>
-                            
-                            <option value="pt-br">português do Brasil</option>
-                            
-                            <option value="pt">português</option>
-                            
-                            <option value="qqq">Message documentation</option>
-                            
-                            <option value="ro">română</option>
-                            
-                            <option value="ru">русский</option>
-                            
-                            <option value="sco">Scots</option>
-                            
-                            <option value="sd">سنڌي</option>
-                            
-                            <option value="sh">srpskohrvatski / српскохрватски</option>
-                            
-                            <option value="shn">လိၵ်ႈတႆး</option>
-                            
-                            <option value="sk">slovenčina</option>
-                            
-                            <option value="sl">slovenščina</option>
-                            
-                            <option value="sq">shqip</option>
-                            
-                            <option value="sr-ec">српски (ћирилица)‎</option>
-                            
-                            <option value="sr-el">srpski (latinica)‎</option>
-                            
-                            <option value="sv">svenska</option>
-                            
-                            <option value="ta">தமிழ்</option>
-                            
-                            <option value="tcy">ತುಳು</option>
-                            
-                            <option value="te">తెలుగు</option>
-                            
-                            <option value="th">ไทย</option>
-                            
-                            <option value="tr">Türkçe</option>
-                            
-                            <option value="uk">українська</option>
-                            
-                            <option value="vi">Tiếng Việt</option>
-                            
-                            <option value="zh-hans">中文（简体）‎</option>
-                            
-                            <option value="zh-hant">中文（繁體）‎</option>
-                            
-                        </select>
-                    </td>
-                </tr>
-                
-            </tbody></table>
-        </div>
-        <div class="column">
-            
-            <h2 data-l10n-id="pad.settings.globalView" aria-label="Global View">Global View</h2>
-            
-        </div>
+    <h1 data-l10n-id="pad.settings.padSettings" aria-label="Pad Settings">Pad Settings</h1>
+    <div class="row">
+      <div class="column">
+
+        <h2 data-l10n-id="pad.settings.myView" aria-label="My View">My View</h2>
+        <p>
+          <input type="checkbox" id="options-stickychat" onclick="chat.stickToScreen();">
+          <label for="options-stickychat" data-l10n-id="pad.settings.stickychat" aria-label="Chat always on screen">Chat
+            always on screen</label>
+        </p>
+        <p>
+          <input type="checkbox" id="options-chatandusers" onclick="chat.chatAndUsers();">
+          <label for="options-chatandusers" data-l10n-id="pad.settings.chatandusers"
+            aria-label="Show Chat and Users">Show Chat and Users</label>
+        </p>
+        <p>
+          <input type="checkbox" id="options-colorscheck" checked="checked">
+          <label for="options-colorscheck" data-l10n-id="pad.settings.colorcheck"
+            aria-label="Authorship colors">Authorship colors</label>
+        </p>
+        <p>
+          <input type="checkbox" id="options-linenoscheck" checked="checked">
+          <label for="options-linenoscheck" data-l10n-id="pad.settings.linenocheck" aria-label="Line numbers">Line
+            numbers</label>
+        </p>
+        <p>
+          <input type="checkbox" id="options-rtlcheck">
+          <label for="options-rtlcheck" data-l10n-id="pad.settings.rtlcheck"
+            aria-label="Read content from right to left?">Read content from right to left?</label>
+        </p>
+
+        <table>
+
+          <tbody>
+            <tr>
+              <td>
+                <label for="viewfontmenu" data-l10n-id="pad.settings.fontType" aria-label="Font type:">Font
+                  type:</label>
+              </td>
+              <td>
+                <select id="viewfontmenu">
+                  <option value="normal" data-l10n-id="pad.settings.fontType.normal" aria-label="Normal">Normal</option>
+                  <option value="monospace" data-l10n-id="pad.settings.fontType.monospaced" aria-label="Monospace">
+                    Monospace</option>
+                  <option value="montserrat" data-l10n-id="pad.settings.fontType.montserrat" aria-label="Montserrat">
+                    Montserrat</option>
+                  <option value="opendyslexic" data-l10n-id="pad.settings.fontType.opendyslexic"
+                    aria-label="Open Dyslexic">Open Dyslexic</option>
+                  <option value="comicsans" data-l10n-id="pad.settings.fontType.comicsans" aria-label="Comic Sans">Comic
+                    Sans</option>
+                  <option value="georgia" data-l10n-id="pad.settings.fontType.georgia" aria-label="Georgia">Georgia
+                  </option>
+                  <option value="impact" data-l10n-id="pad.settings.fontType.impact" aria-label="Impact">Impact</option>
+                  <option value="lucida" data-l10n-id="pad.settings.fontType.lucida" aria-label="Lucida">Lucida</option>
+                  <option value="lucidasans" data-l10n-id="pad.settings.fontType.lucidasans" aria-label="Lucida Sans">
+                    Lucida Sans</option>
+                  <option value="palatino" data-l10n-id="pad.settings.fontType.palatino" aria-label="Palatino">Palatino
+                  </option>
+                  <option value="robotomono" data-l10n-id="pad.settings.fontType.robotomono" aria-label="RobotoMono">
+                    RobotoMono</option>
+                  <option value="tahoma" data-l10n-id="pad.settings.fontType.tahoma" aria-label="Tahoma">Tahoma</option>
+                  <option value="timesnewroman" data-l10n-id="pad.settings.fontType.timesnewroman"
+                    aria-label="Times New Roman">Times New Roman</option>
+                  <option value="trebuchet" data-l10n-id="pad.settings.fontType.trebuchet" aria-label="Trebuchet">
+                    Trebuchet</option>
+                  <option value="verdana" data-l10n-id="pad.settings.fontType.verdana" aria-label="Verdana">Verdana
+                  </option>
+                  <option value="symbol" data-l10n-id="pad.settings.fontType.symbol" aria-label="Symbol">Symbol</option>
+                  <option value="webdings" data-l10n-id="pad.settings.fontType.webdings" aria-label="Webdings">Webdings
+                  </option>
+                  <option value="wingdings" data-l10n-id="pad.settings.fontType.wingdings" aria-label="Wingdings">
+                    Wingdings</option>
+                  <option value="sansserif" data-l10n-id="pad.settings.fontType.sansserif" aria-label="Sans Serif">Sans
+                    Serif</option>
+                  <option value="serif" data-l10n-id="pad.settings.fontType.serif" aria-label="Serif">Serif</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <label for="languagemenu" data-l10n-id="pad.settings.language" aria-label="Language:">Language:</label>
+              </td>
+              <td>
+                <select id="languagemenu">
+
+                  <option value="af">Afrikaans</option>
+
+                  <option value="ar">العربية</option>
+
+                  <option value="ast">asturianu</option>
+
+                  <option value="az">azərbaycanca</option>
+
+                  <option value="azb">تورکجه</option>
+
+                  <option value="bcc">بلوچی مکرانی</option>
+
+                  <option value="be-tarask">беларуская (тарашкевіца)‎</option>
+
+                  <option value="bg">български</option>
+
+                  <option value="bn">বাংলা</option>
+
+                  <option value="br">brezhoneg</option>
+
+                  <option value="bs">bosanski</option>
+
+                  <option value="ca">català</option>
+
+                  <option value="cs">česky</option>
+
+                  <option value="da">dansk</option>
+
+                  <option value="de">Deutsch</option>
+
+                  <option value="diq">Zazaki</option>
+
+                  <option value="dsb">dolnoserbski</option>
+
+                  <option value="el">Ελληνικά</option>
+
+                  <option value="en-gb">British English</option>
+
+                  <option value="en">English</option>
+
+                  <option value="eo">Esperanto</option>
+
+                  <option value="es">español</option>
+
+                  <option value="et">eesti</option>
+
+                  <option value="eu">euskara</option>
+
+                  <option value="fa">فارسی</option>
+
+                  <option value="fi">suomi</option>
+
+                  <option value="fo">føroyskt</option>
+
+                  <option value="fr">français</option>
+
+                  <option value="fy">Frysk</option>
+
+                  <option value="gl">galego</option>
+
+                  <option value="gu">ગુજરાતી</option>
+
+                  <option value="he">עברית</option>
+
+                  <option value="hi">हिन्दी</option>
+
+                  <option value="hr">hrvatski</option>
+
+                  <option value="hsb">hornjoserbsce</option>
+
+                  <option value="hu">magyar</option>
+
+                  <option value="hy">Հայերեն</option>
+
+                  <option value="ia">interlingua</option>
+
+                  <option value="is">íslenska</option>
+
+                  <option value="it">italiano</option>
+
+                  <option value="ja">日本語</option>
+
+                  <option value="kab">Taqbaylit</option>
+
+                  <option value="km">ភាសាខ្មែរ</option>
+
+                  <option value="ko">한국어</option>
+
+                  <option value="krc">къарачай-малкъар</option>
+
+                  <option value="ksh">Ripoarisch</option>
+
+                  <option value="ku-latn">Kurdî (latînî)‎</option>
+
+                  <option value="lb">Lëtzebuergesch</option>
+
+                  <option value="lt">lietuvių</option>
+
+                  <option value="lv">latviešu</option>
+
+                  <option value="map-bms">Basa Banyumasan</option>
+
+                  <option value="mg">Malagasy</option>
+
+                  <option value="mk">македонски</option>
+
+                  <option value="ml">മലയാളം</option>
+
+                  <option value="mn">монгол</option>
+
+                  <option value="mnw">ဘာသာ မန်</option>
+
+                  <option value="mr">मराठी</option>
+
+                  <option value="ms">Bahasa Melayu</option>
+
+                  <option value="nah">Nāhuatl</option>
+
+                  <option value="nap">Nnapulitano</option>
+
+                  <option value="nb">norsk (bokmål)‎</option>
+
+                  <option value="nds">Plattdüütsch</option>
+
+                  <option value="ne">नेपाली</option>
+
+                  <option value="nl">Nederlands</option>
+
+                  <option value="nn">norsk (nynorsk)‎</option>
+
+                  <option value="oc">occitan</option>
+
+                  <option value="os">Ирон</option>
+
+                  <option value="pa">ਪੰਜਾਬੀ</option>
+
+                  <option value="pl">polski</option>
+
+                  <option value="pms">Piemontèis</option>
+
+                  <option value="ps">پښتو</option>
+
+                  <option value="pt-br">português do Brasil</option>
+
+                  <option value="pt">português</option>
+
+                  <option value="qqq">Message documentation</option>
+
+                  <option value="ro">română</option>
+
+                  <option value="ru">русский</option>
+
+                  <option value="sco">Scots</option>
+
+                  <option value="sd">سنڌي</option>
+
+                  <option value="sh">srpskohrvatski / српскохрватски</option>
+
+                  <option value="shn">လိၵ်ႈတႆး</option>
+
+                  <option value="sk">slovenčina</option>
+
+                  <option value="sl">slovenščina</option>
+
+                  <option value="sq">shqip</option>
+
+                  <option value="sr-ec">српски (ћирилица)‎</option>
+
+                  <option value="sr-el">srpski (latinica)‎</option>
+
+                  <option value="sv">svenska</option>
+
+                  <option value="ta">தமிழ்</option>
+
+                  <option value="tcy">ತುಳು</option>
+
+                  <option value="te">తెలుగు</option>
+
+                  <option value="th">ไทย</option>
+
+                  <option value="tr">Türkçe</option>
+
+                  <option value="uk">українська</option>
+
+                  <option value="vi">Tiếng Việt</option>
+
+                  <option value="zh-hans">中文（简体）‎</option>
+
+                  <option value="zh-hant">中文（繁體）‎</option>
+
+                </select>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
       </div>
-      <div class="row">
-        <h2 data-l10n-id="pad.settings.about">About</h2>
-        <span data-l10n-id="pad.settings.poweredBy">Powered by</span>
-        <a href="http://etherpad.org">Etherpad-lite</a>
-        
+      <div class="column">
+
+        <h2 data-l10n-id="pad.settings.globalView" aria-label="Global View">Global View</h2>
+
       </div>
+    </div>
+    <div class="row">
+      <h2 data-l10n-id="pad.settings.about">About</h2>
+      <span data-l10n-id="pad.settings.poweredBy">Powered by</span>
+      <a href="http://etherpad.org">Etherpad-lite</a>
+
+    </div>
   </div>
 
   <div id="import_export" class="popup" style="top: 38px;">
-      <h1 data-l10n-id="pad.importExport.import_export" aria-label="Import/Export">Import/Export</h1>
-      <div class="column acl-write">
-          
-          <h2 data-l10n-id="pad.importExport.import" aria-label="Upload any text file or document">Upload any text file or document</h2>
-          <div class="importmessage" id="importmessageabiword" data-l10n-id="pad.importExport.abiword.innerHTML" aria-label="You only can import from plain text or HTML formats. For more advanced import features please <a href=&quot;https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord&quot;>install AbiWord</a>." style="display: block;">You only can import from plain text or HTML formats. For more advanced import features please <a href="https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord">install AbiWord</a>.</div><br>
-          <form id="importform" method="post" action="https://cs.stag.easilydo.cc/tr/p/99/import" target="importiframe" enctype="multipart/form-data">
-              <div class="importformdiv" id="importformfilediv">
-                  <input type="file" name="file" size="10" id="importfileinput">
-                  <div class="importmessage" id="importmessagefail"></div>
-              </div>
-              <div id="import"><iframe style="display: none;" name="importiframe" class="importframe"></iframe></div>
-              <div class="importmessage" id="importmessagesuccess" data-l10n-id="pad.importExport.importSuccessful" aria-label="Successful!">Successful!</div>
-              <div class="importformdiv" id="importformsubmitdiv">
-                  <span class="nowrap">
-                      <input type="submit" name="submit" value="Import Now" disabled="disabled" id="importsubmitinput">
-                      <div alt="" id="importstatusball" class="loadingAnimation" align="top"></div>
-                  </span>
-              </div>
-          </form>
-          
-      </div>
-      <div class="column" id="exportColumn">
-          <h2 data-l10n-id="pad.importExport.export" aria-label="Export current pad as:">Export current pad as:</h2>
-          
-          <a id="exportetherpada" target="_blank" class="exportlink" href="/p/99/export/etherpad"><div class="exporttype" id="exportetherpad" data-l10n-id="pad.importExport.exportetherpad" aria-label="Etherpad">Etherpad</div></a>
-          <a id="exporthtmla" target="_blank" class="exportlink" href="/p/99/export/html"><div class="exporttype" id="exporthtml" data-l10n-id="pad.importExport.exporthtml" aria-label="HTML">HTML</div></a>
-          <a id="exportplaina" target="_blank" class="exportlink" href="/p/99/export/txt"><div class="exporttype" id="exportplain" data-l10n-id="pad.importExport.exportplain" aria-label="Plain text">Plain text</div></a>
-          
-          
-          
-          
-      </div>
+    <h1 data-l10n-id="pad.importExport.import_export" aria-label="Import/Export">Import/Export</h1>
+    <div class="column acl-write">
+
+      <h2 data-l10n-id="pad.importExport.import" aria-label="Upload any text file or document">Upload any text file or
+        document</h2>
+      <div class="importmessage" id="importmessageabiword" data-l10n-id="pad.importExport.abiword.innerHTML"
+        aria-label="You only can import from plain text or HTML formats. For more advanced import features please <a href=&quot;https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord&quot;>install AbiWord</a>."
+        style="display: block;">You only can import from plain text or HTML formats. For more advanced import features
+        please <a
+          href="https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord">install
+          AbiWord</a>.</div><br>
+      <form id="importform" method="post" action="https://cs.stag.easilydo.cc/tr/p/99/import" target="importiframe"
+        enctype="multipart/form-data">
+        <div class="importformdiv" id="importformfilediv">
+          <input type="file" name="file" size="10" id="importfileinput">
+          <div class="importmessage" id="importmessagefail"></div>
+        </div>
+        <div id="import"><iframe style="display: none;" name="importiframe" class="importframe"></iframe></div>
+        <div class="importmessage" id="importmessagesuccess" data-l10n-id="pad.importExport.importSuccessful"
+          aria-label="Successful!">Successful!</div>
+        <div class="importformdiv" id="importformsubmitdiv">
+          <span class="nowrap">
+            <input type="submit" name="submit" value="Import Now" disabled="disabled" id="importsubmitinput">
+            <div alt="" id="importstatusball" class="loadingAnimation" align="top"></div>
+          </span>
+        </div>
+      </form>
+
+    </div>
+    <div class="column" id="exportColumn">
+      <h2 data-l10n-id="pad.importExport.export" aria-label="Export current pad as:">Export current pad as:</h2>
+
+      <a id="exportetherpada" target="_blank" class="exportlink" href="/p/99/export/etherpad">
+        <div class="exporttype" id="exportetherpad" data-l10n-id="pad.importExport.exportetherpad"
+          aria-label="Etherpad">Etherpad</div>
+      </a>
+      <a id="exporthtmla" target="_blank" class="exportlink" href="/p/99/export/html">
+        <div class="exporttype" id="exporthtml" data-l10n-id="pad.importExport.exporthtml" aria-label="HTML">HTML</div>
+      </a>
+      <a id="exportplaina" target="_blank" class="exportlink" href="/p/99/export/txt">
+        <div class="exporttype" id="exportplain" data-l10n-id="pad.importExport.exportplain" aria-label="Plain text">
+          Plain text</div>
+      </a>
+
+
+
+
+    </div>
   </div>
 
   <div id="connectivity" class="popup" style="top: 38px;">
-      
-          <div class="connected visible">
-            <h2 data-l10n-id="pad.modals.connected" aria-label="Connected.">Connected.</h2>
-          </div>
-          <div class="reconnecting">
-            <h1 data-l10n-id="pad.modals.reconnecting" aria-label="Reconnecting to your pad..">Reconnecting to your pad..</h1>
-            <p class="loadingAnimation"></p>
-          </div>
-          <div class="userdup">
-            <h1 data-l10n-id="pad.modals.userdup" aria-label="Opened in another window">Opened in another window</h1>
-            <h2 data-l10n-id="pad.modals.userdup.explanation" aria-label="This pad seems to be opened in more than one browser window on this computer.">This pad seems to be opened in more than one browser window on this computer.</h2>
-            <p id="defaulttext" data-l10n-id="pad.modals.userdup.advice" aria-label="Reconnect to use this window instead.">Reconnect to use this window instead.</p>
-            <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force reconnect</button>
-          </div>
-          <div class="unauth">
-            <h1 data-l10n-id="pad.modals.unauth" aria-label="Not authorized">Not authorized</h1>
-            <p id="defaulttext" data-l10n-id="pad.modals.unauth.explanation" aria-label="Your permissions have changed while viewing this page. Try to reconnect.">Your permissions have changed while viewing this page. Try to reconnect.</p>
-            <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force reconnect</button>
-          </div>
-          <div class="looping">
-            <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.</h1>
-            <h2 data-l10n-id="pad.modals.looping.explanation" aria-label="There are communication problems with the synchronization server.">There are communication problems with the synchronization server.</h2>
-            <p data-l10n-id="pad.modals.looping.cause" aria-label="Perhaps you connected through an incompatible firewall or proxy.">Perhaps you connected through an incompatible firewall or proxy.</p>
-          </div>
-          <div class="initsocketfail">
-            <h1 data-l10n-id="pad.modals.initsocketfail" aria-label="Server is unreachable.">Server is unreachable.</h1>
-            <h2 data-l10n-id="pad.modals.initsocketfail.explanation" aria-label="Couldn't connect to the synchronization server.">Couldn't connect to the synchronization server.</h2>
-            <p data-l10n-id="pad.modals.initsocketfail.cause" aria-label="This is probably due to a problem with your browser or your internet connection.">This is probably due to a problem with your browser or your internet connection.</p>
-          </div>
-          <div class="slowcommit with_reconnect_timer">
-            <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.</h1>
-            <h2 data-l10n-id="pad.modals.slowcommit.explanation" aria-label="The server is not responding.">The server is not responding.</h2>
-            <p id="defaulttext" data-l10n-id="pad.modals.slowcommit.cause" aria-label="This could be due to problems with network connectivity.">This could be due to problems with network connectivity.</p>
-            <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force reconnect</button>
-          </div>
-          <div class="badChangeset with_reconnect_timer">
-            <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.</h1>
-            <h2 data-l10n-id="pad.modals.badChangeset.explanation" aria-label="An edit you have made was classified illegal by the synchronization server.">An edit you have made was classified illegal by the synchronization server.</h2>
-            <p id="defaulttext" data-l10n-id="pad.modals.badChangeset.cause" aria-label="This could be due to a wrong server configuration or some other unexpected behavior. Please contact the service administrator, if you feel this is an error. Try to reconnect in order to continue editing.">This could be due to a wrong server configuration or some other unexpected behavior. Please contact the service administrator, if you feel this is an error. Try to reconnect in order to continue editing.</p>
-            <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force reconnect</button>
-          </div>
-          <div class="corruptPad">
-            <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.</h1>
-            <h2 data-l10n-id="pad.modals.corruptPad.explanation" aria-label="The pad you are trying to access is corrupt.">The pad you are trying to access is corrupt.</h2>
-            <p data-l10n-id="pad.modals.corruptPad.cause" aria-label="This may be due to a wrong server configuration or some other unexpected behavior. Please contact the service administrator.">This may be due to a wrong server configuration or some other unexpected behavior. Please contact the service administrator.</p>
-          </div>
-          <div class="deleted">
-            <h1 data-l10n-id="pad.modals.deleted" aria-label="Deleted.">Deleted.</h1>
-            <p data-l10n-id="pad.modals.deleted.explanation" aria-label="This pad has been removed.">This pad has been removed.</p>
-          </div>
-          <div class="disconnected with_reconnect_timer">
-            
-            <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.</h1>
-            <h2 data-l10n-id="pad.modals.disconnected.explanation" aria-label="The connection to the server was lost">The connection to the server was lost</h2>
-            <p id="defaulttext" data-l10n-id="pad.modals.disconnected.cause" aria-label="The server may be unavailable. Please notify the service administrator if this continues to happen.">The server may be unavailable. Please notify the service administrator if this continues to happen.</p>
-            <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force reconnect</button>
-            
-          </div>
-          <form id="reconnectform" method="post" action="/ep/pad/reconnect" accept-charset="UTF-8" style="display: none;">
-              <input type="hidden" class="padId" name="padId">
-              <input type="hidden" class="diagnosticInfo" name="diagnosticInfo">
-              <input type="hidden" class="missedChanges" name="missedChanges">
-          </form>
-      
+
+    <div class="connected visible">
+      <h2 data-l10n-id="pad.modals.connected" aria-label="Connected.">Connected.</h2>
+    </div>
+    <div class="reconnecting">
+      <h1 data-l10n-id="pad.modals.reconnecting" aria-label="Reconnecting to your pad..">Reconnecting to your pad..</h1>
+      <p class="loadingAnimation"></p>
+    </div>
+    <div class="userdup">
+      <h1 data-l10n-id="pad.modals.userdup" aria-label="Opened in another window">Opened in another window</h1>
+      <h2 data-l10n-id="pad.modals.userdup.explanation"
+        aria-label="This pad seems to be opened in more than one browser window on this computer.">This pad seems to be
+        opened in more than one browser window on this computer.</h2>
+      <p id="defaulttext" data-l10n-id="pad.modals.userdup.advice" aria-label="Reconnect to use this window instead.">
+        Reconnect to use this window instead.</p>
+      <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force
+        reconnect</button>
+    </div>
+    <div class="unauth">
+      <h1 data-l10n-id="pad.modals.unauth" aria-label="Not authorized">Not authorized</h1>
+      <p id="defaulttext" data-l10n-id="pad.modals.unauth.explanation"
+        aria-label="Your permissions have changed while viewing this page. Try to reconnect.">Your permissions have
+        changed while viewing this page. Try to reconnect.</p>
+      <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force
+        reconnect</button>
+    </div>
+    <div class="looping">
+      <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.
+      </h1>
+      <h2 data-l10n-id="pad.modals.looping.explanation"
+        aria-label="There are communication problems with the synchronization server.">There are communication problems
+        with the synchronization server.</h2>
+      <p data-l10n-id="pad.modals.looping.cause"
+        aria-label="Perhaps you connected through an incompatible firewall or proxy.">Perhaps you connected through an
+        incompatible firewall or proxy.</p>
+    </div>
+    <div class="initsocketfail">
+      <h1 data-l10n-id="pad.modals.initsocketfail" aria-label="Server is unreachable.">Server is unreachable.</h1>
+      <h2 data-l10n-id="pad.modals.initsocketfail.explanation"
+        aria-label="Couldn't connect to the synchronization server.">Couldn't connect to the synchronization server.
+      </h2>
+      <p data-l10n-id="pad.modals.initsocketfail.cause"
+        aria-label="This is probably due to a problem with your browser or your internet connection.">This is probably
+        due to a problem with your browser or your internet connection.</p>
+    </div>
+    <div class="slowcommit with_reconnect_timer">
+      <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.
+      </h1>
+      <h2 data-l10n-id="pad.modals.slowcommit.explanation" aria-label="The server is not responding.">The server is not
+        responding.</h2>
+      <p id="defaulttext" data-l10n-id="pad.modals.slowcommit.cause"
+        aria-label="This could be due to problems with network connectivity.">This could be due to problems with network
+        connectivity.</p>
+      <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force
+        reconnect</button>
+    </div>
+    <div class="badChangeset with_reconnect_timer">
+      <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.
+      </h1>
+      <h2 data-l10n-id="pad.modals.badChangeset.explanation"
+        aria-label="An edit you have made was classified illegal by the synchronization server.">An edit you have made
+        was classified illegal by the synchronization server.</h2>
+      <p id="defaulttext" data-l10n-id="pad.modals.badChangeset.cause"
+        aria-label="This could be due to a wrong server configuration or some other unexpected behavior. Please contact the service administrator, if you feel this is an error. Try to reconnect in order to continue editing.">
+        This could be due to a wrong server configuration or some other unexpected behavior. Please contact the service
+        administrator, if you feel this is an error. Try to reconnect in order to continue editing.</p>
+      <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force
+        reconnect</button>
+    </div>
+    <div class="corruptPad">
+      <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.
+      </h1>
+      <h2 data-l10n-id="pad.modals.corruptPad.explanation" aria-label="The pad you are trying to access is corrupt.">The
+        pad you are trying to access is corrupt.</h2>
+      <p data-l10n-id="pad.modals.corruptPad.cause"
+        aria-label="This may be due to a wrong server configuration or some other unexpected behavior. Please contact the service administrator.">
+        This may be due to a wrong server configuration or some other unexpected behavior. Please contact the service
+        administrator.</p>
+    </div>
+    <div class="deleted">
+      <h1 data-l10n-id="pad.modals.deleted" aria-label="Deleted.">Deleted.</h1>
+      <p data-l10n-id="pad.modals.deleted.explanation" aria-label="This pad has been removed.">This pad has been
+        removed.</p>
+    </div>
+    <div class="disconnected with_reconnect_timer">
+
+      <h1 data-l10n-id="pad.modals.disconnected" aria-label="You have been disconnected.">You have been disconnected.
+      </h1>
+      <h2 data-l10n-id="pad.modals.disconnected.explanation" aria-label="The connection to the server was lost">The
+        connection to the server was lost</h2>
+      <p id="defaulttext" data-l10n-id="pad.modals.disconnected.cause"
+        aria-label="The server may be unavailable. Please notify the service administrator if this continues to happen.">
+        The server may be unavailable. Please notify the service administrator if this continues to happen.</p>
+      <button id="forcereconnect" data-l10n-id="pad.modals.forcereconnect" aria-label="Force reconnect">Force
+        reconnect</button>
+
+    </div>
+    <form id="reconnectform" method="post" action="/ep/pad/reconnect" accept-charset="UTF-8" style="display: none;">
+      <input type="hidden" class="padId" name="padId">
+      <input type="hidden" class="diagnosticInfo" name="diagnosticInfo">
+      <input type="hidden" class="missedChanges" name="missedChanges">
+    </form>
+
   </div>
 
   <div id="embed" class="popup" style="top: 38px;">
-      
-      <div id="embedreadonly" class="right acl-write">
-          <input type="checkbox" id="readonlyinput">
-          <label for="readonlyinput" data-l10n-id="pad.share.readonly" aria-label="Read only">Read only</label>
-      </div>
-      <h1 data-l10n-id="pad.share" aria-label="Share this pad">Share this pad</h1>
-      <div id="linkcode">
-          <h2 data-l10n-id="pad.share.link" aria-label="Link">Link</h2>
-          <input id="linkinput" type="text" value="" onclick="this.select()">
-      </div>
-      <br>
-      <div id="embedcode">
-          <h2 data-l10n-id="pad.share.emebdcode" aria-label="Embed URL">Embed URL</h2>
-          <input id="embedinput" type="text" value="" onclick="this.select()">
-      </div>
+
+    <div id="embedreadonly" class="right acl-write">
+      <input type="checkbox" id="readonlyinput">
+      <label for="readonlyinput" data-l10n-id="pad.share.readonly" aria-label="Read only">Read only</label>
+    </div>
+    <h1 data-l10n-id="pad.share" aria-label="Share this pad">Share this pad</h1>
+    <div id="linkcode">
+      <h2 data-l10n-id="pad.share.link" aria-label="Link">Link</h2>
+      <input id="linkinput" type="text" value="" onclick="this.select()">
+    </div>
+    <br>
+    <div id="embedcode">
+      <h2 data-l10n-id="pad.share.emebdcode" aria-label="Embed URL">Embed URL</h2>
+      <input id="embedinput" type="text" value="" onclick="this.select()">
+    </div>
+
+  </div>
+
+  <div id="chaticon" onclick="chat.show();return false;" title="Chat (Alt C)" style="display: block;">
+    <span id="chatlabel" data-l10n-id="pad.chat" aria-label="Chat">Chat</span>
+    <span class="buttonicon buttonicon-chat"></span>
+    <span id="chatcounter">0</span>
+  </div>
+
+  <div id="chatbox">
+    <div id="titlebar"><span id="titlelabel" data-l10n-id="pad.chat" aria-label="Chat">Chat</span>
+      <a id="titlecross" onclick="chat.hide();return false;">-&nbsp;</a>
+      <a id="titlesticky"
+        onclick="chat.stickToScreen(true);$('#options-stickychat').prop('checked', true);return false;"
+        data-l10n-id="pad.chat.stick.title" title="Stick chat to screen"
+        aria-label="Stick chat to screen">█&nbsp;&nbsp;</a>
+    </div>
+    <div id="chattext" class="authorColors" aria-live="polite" aria-relevant="additions removals text" role="log"
+      aria-atomic="false">
+      <div alt="loading.." id="chatloadmessagesball" class="chatloadmessages loadingAnimation" align="top"></div>
+      <button id="chatloadmessagesbutton" class="chatloadmessages" data-l10n-id="pad.chat.loadmessages"
+        aria-label="Load more messages" style="display: none;">Load more messages</button>
+    </div>
+    <div id="chatinputbox">
+      <form>
+        <input id="chatinput" type="text" maxlength="999" data-l10n-id="pad.chat.writeMessage.placeholder"
+          placeholder="Write your message here" aria-label="Write your message here">
+      </form>
+    </div>
   </div>
 
   <div id="focusprotector">&nbsp;</div>
+  <div id="imageUploadModalError" class="popup" style="top: 38px;">
+    <h2 class="error"></h2>
+    <br>
+    <button id="closeErrorModalButton">Close</button>
+  </div>
+  <div id="imageUploadModalLoader" class="popup" style="top: 38px;">
+    <p class="loadingAnimation"></p>
+  </div>
+
 
   <script type="text/javascript">
-      // @license magnet:?xt=urn:btih:8e4f440f4c65981c5bf93c76d35135ba5064d8b7&dn=apache-2.0.txt
-      (function() {
-        // Display errors on page load to the user
-        // (Gets overridden by padutils.setupGlobalExceptionHandler)
-        var originalHandler = window.onerror;
-        window.onerror = function(msg, url, line) {
-          var box   = document.getElementById('editorloadingbox');
-          box.innerHTML = '<p><b>An error occurred while loading the pad</b></p>'
-                        + '<p><b>'+msg+'</b> '
-                        + '<small>in '+ url +' (line '+ line +')</small></p>';
-          // call original error handler
-          if(typeof(originalHandler) == 'function') originalHandler.call(null, arguments);
-        };
-      })();
+    // @license magnet:?xt=urn:btih:8e4f440f4c65981c5bf93c76d35135ba5064d8b7&dn=apache-2.0.txt
+    (function () {
+      // Display errors on page load to the user
+      // (Gets overridden by padutils.setupGlobalExceptionHandler)
+      var originalHandler = window.onerror;
+      window.onerror = function (msg, url, line) {
+        var box = document.getElementById('editorloadingbox');
+        box.innerHTML = '<p><b>An error occurred while loading the pad</b></p>'
+          + '<p><b>' + msg + '</b> '
+          + '<small>in ' + url + ' (line ' + line + ')</small></p>';
+        // call original error handler
+        if (typeof (originalHandler) == 'function') originalHandler.call(null, arguments);
+      };
+    })();
       // @license-end
   </script>
-  <script type="text/javascript" src="../static/js/teampad-config.js"></script>
   <script type="text/javascript" src="../static/js/require-kernel.js"></script>
-  <!-- <script type="text/javascript" src="../static/js/socket.io.js"></script> -->
+  <!-- <script type="text/javascript" src="http://127.0.0.1:8087/socket.io/socket.io.js"></script> -->
   <script type="text/javascript" src="https://cs.stag.easilydo.cc/tr/socket.io/socket.io.js"></script>
 
   <!-- Include base packages manually (this help with debugging) -->
-  <script type="text/javascript" src="../javascripts/lib/ep_etherpad-lite/static/js/pad.js?callback=require.define"></script>
-  <script type="text/javascript" src="../javascripts/lib/ep_etherpad-lite/static/js/ace2_common.js?callback=require.define"></script>
+  <script type="text/javascript"
+    src="../javascripts/lib/ep_etherpad-lite/static/js/pad.js?callback=require.define"></script>
+  <script type="text/javascript"
+    src="../javascripts/lib/ep_etherpad-lite/static/js/ace2_common.js?callback=require.define"></script>
 
-  
+
   <script type="text/javascript" src="../static/skins/no-skin/pad.js"></script>
-  
+
 
   <!-- Bootstrap page -->
   <script type="text/javascript">
-      // @license magnet:?xt=urn:btih:8e4f440f4c65981c5bf93c76d35135ba5064d8b7&dn=apache-2.0.txt
-      var clientVars = {};
-      // require.setRootURI("../javascripts/src");
-      // require.setLibraryURI("../javascripts/lib");
-      // require.setGlobalKeyPath("require");
-      // var pad = require('ep_etherpad-lite/static/js/pad');
-      // pad.init();
+    // @license magnet:?xt=urn:btih:8e4f440f4c65981c5bf93c76d35135ba5064d8b7&dn=apache-2.0.txt
+    var clientVars = {};
+    // require.setRootURI("../javascripts/src");
+    // require.setLibraryURI("../javascripts/lib");
+    // require.setGlobalKeyPath("require");
+    // var pad = require('ep_etherpad-lite/static/js/pad');
+    // pad.init();
 
-      (function () {
-        require.setRootURI("../javascripts/src");
-        require.setLibraryURI("../javascripts/lib");
-        require.setGlobalKeyPath("require");
+    (function () {
+      require.setRootURI("../javascripts/src");
+      require.setLibraryURI("../javascripts/lib");
+      require.setGlobalKeyPath("require");
 
-        $ = jQuery = require('ep_etherpad-lite/static/js/rjquery').jQuery; // Expose jQuery #HACK
-        browser = require('ep_etherpad-lite/static/js/browser');
+      $ = jQuery = require('ep_etherpad-lite/static/js/rjquery').jQuery; // Expose jQuery #HACK
+      browser = require('ep_etherpad-lite/static/js/browser');
 
-        var plugins = require('ep_etherpad-lite/static/js/pluginfw/client_plugins');
-        var hooks = require('ep_etherpad-lite/static/js/pluginfw/hooks');
-        plugins.adoptPluginsFromAncestorsOf(require);
+      var plugins = require('ep_etherpad-lite/static/js/pluginfw/client_plugins');
+      var hooks = require('ep_etherpad-lite/static/js/pluginfw/hooks');
+      plugins.adoptPluginsFromAncestorsOf(require);
 
-        plugins.baseURL = "";
-        plugins.update(function () {
-          hooks.plugins = plugins;
+      plugins.baseURL = "";
+      plugins.update(function () {
+        hooks.plugins = plugins;
 
-          // Call documentReady hook
-          $(function() {
-            hooks.aCallAll('documentReady');
-          });
-
-          var pad = require('ep_etherpad-lite/static/js/pad');
-          pad.baseURL = "";
-          pad.init();
+        // Call documentReady hook
+        $(function () {
+          hooks.aCallAll('documentReady');
         });
 
-        /* TODO: These globals shouldn't exist. */
-        pad = require('ep_etherpad-lite/static/js/pad').pad;
-        chat = require('ep_etherpad-lite/static/js/chat').chat;
-        padeditbar = require('ep_etherpad-lite/static/js/pad_editbar').padeditbar;
-        padimpexp = require('ep_etherpad-lite/static/js/pad_impexp').padimpexp;
-      }());
+        var pad = require('ep_etherpad-lite/static/js/pad');
+        pad.baseURL = "";
+        pad.init();
+      });
+
+      /* TODO: These globals shouldn't exist. */
+      pad = require('ep_etherpad-lite/static/js/pad').pad;
+      chat = require('ep_etherpad-lite/static/js/chat').chat;
+      padeditbar = require('ep_etherpad-lite/static/js/pad_editbar').padeditbar;
+      padimpexp = require('ep_etherpad-lite/static/js/pad_impexp').padimpexp;
+    }());
       // @license-end
   </script>
   <div style="display:none"><a href="/javascript" data-jslicense="1">JavaScript license information</a></div>
-  
 
-</body></html>
+
+</body>
+
+</html>

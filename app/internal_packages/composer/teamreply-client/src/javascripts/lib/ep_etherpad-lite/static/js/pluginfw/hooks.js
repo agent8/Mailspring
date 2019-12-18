@@ -13401,7 +13401,9 @@ exports.flatten = function (lst) {
 exports.callAll = function (hook_name, args) {
   if (!args) args = {};
   if (exports.plugins){
-    if (exports.plugins.hooks[hook_name] === undefined) return [];
+		// console.log('yazz.hooks.hook_name1',hook_name);
+		if (exports.plugins.hooks[hook_name] === undefined) return [];
+		console.log('yazz.hooks.hook_name2',hook_name);
     return _.flatten(_.map(exports.plugins.hooks[hook_name], function (hook) {
       return hookCallWrapper(hook, hook_name, args);
     }), true);
