@@ -1,9 +1,9 @@
-import Reflux from 'reflux';
-import { Action } from 'rxjs/internal/scheduler/Action';
+import Reflux from 'reflux'
+import { Action } from 'rxjs/internal/scheduler/Action'
 
-const ActionScopeWindow = 'window';
-const ActionScopeGlobal = 'global';
-const ActionScopeMainWindow = 'main';
+const ActionScopeWindow = 'window'
+const ActionScopeGlobal = 'global'
+const ActionScopeMainWindow = 'main'
 
 /*
 Public: In the Flux {Architecture.md}, almost every user action
@@ -71,16 +71,16 @@ class Actions {
   }
   ```
   */
-  static downloadStateChanged = ActionScopeGlobal;
+  static downloadStateChanged = ActionScopeGlobal
 
-  static analyzeDB = ActionScopeMainWindow;
+  static analyzeDB = ActionScopeMainWindow
 
   /*
   Public: Queue a {Task} object to the {TaskQueue}.
 
   *Scope: Main Window*
   */
-  static queueTask = ActionScopeMainWindow;
+  static queueTask = ActionScopeMainWindow
 
   /*
   Public: Queue multiple {Task} objects to the {TaskQueue}, which should be
@@ -88,57 +88,57 @@ class Actions {
 
   *Scope: Main Window*
   */
-  static queueTasks = ActionScopeMainWindow;
+  static queueTasks = ActionScopeMainWindow
 
   /*
   Broadcast tasks queue results to non mainWindow for task process.
    */
-  static rebroadcastTasksQueueResults = ActionScopeGlobal;
+  static rebroadcastTasksQueueResults = ActionScopeGlobal
   /*
   Public: Cancel a specific {Task} in the {TaskQueue}.
 
   *Scope: Main Window*
   */
-  static cancelTask = ActionScopeMainWindow;
+  static cancelTask = ActionScopeMainWindow
 
   /*
   Public: Queue a task that does not require processing, placing it on the undo stack only.
   *Scope: Main Window*
   */
-  static queueUndoOnlyTask = ActionScopeMainWindow;
+  static queueUndoOnlyTask = ActionScopeMainWindow
 
   /*
   Public: Dequeue a {Task} matching the description provided.
 
   *Scope: Main Window*
   */
-  static checkOnlineStatus = ActionScopeWindow;
+  static checkOnlineStatus = ActionScopeWindow
 
   /*
   Public: Open the preferences view.
 
   *Scope: Global*
   */
-  static openPreferences = ActionScopeGlobal;
+  static openPreferences = ActionScopeGlobal
 
   /*
   Public: Switch to the preferences tab with the specific name
 
   *Scope: Global*
   */
-  static switchPreferencesTab = ActionScopeGlobal;
+  static switchPreferencesTab = ActionScopeGlobal
 
   /*
   Public: Manage the Nylas identity
   */
-  static logoutNylasIdentity = ActionScopeWindow;
+  static logoutNylasIdentity = ActionScopeWindow
 
   /*
   Public: Remove the selected account
 
   *Scope: Window*
   */
-  static removeAccount = ActionScopeWindow;
+  static removeAccount = ActionScopeWindow
 
   /*
   Public: Update the provided account
@@ -149,7 +149,7 @@ class Actions {
   Actions.updateAccount(account.id, {accountName: 'new'})
   ```
   */
-  static updateAccount = ActionScopeWindow;
+  static updateAccount = ActionScopeWindow
 
   /*
   Public: Re-order the provided account in the account list.
@@ -160,9 +160,9 @@ class Actions {
   Actions.reorderAccount(account.id, newIndex)
   ```
   */
-  static reorderAccount = ActionScopeWindow;
+  static reorderAccount = ActionScopeWindow
 
-  static siftUpdateAccount = ActionScopeMainWindow;
+  static siftUpdateAccount = ActionScopeMainWindow
   /*
   Public: Select the provided sheet in the current window. This action changes
   the top level sheet.
@@ -173,7 +173,7 @@ class Actions {
   Actions.selectRootSheet(WorkspaceStore.Sheet.Threads)
   ```
   */
-  static selectRootSheet = ActionScopeWindow;
+  static selectRootSheet = ActionScopeWindow
 
   /*
   Public: Toggle whether a particular column is visible. Call this action
@@ -183,9 +183,9 @@ class Actions {
   Actions.toggleWorkspaceLocationHidden(WorkspaceStore.Location.MessageListSidebar)
   ```
   */
-  static toggleWorkspaceLocationHidden = ActionScopeWindow;
-  static hideWorkspaceLocation = ActionScopeWindow;
-  static showWorkspaceLocation = ActionScopeWindow;
+  static toggleWorkspaceLocationHidden = ActionScopeWindow
+  static hideWorkspaceLocation = ActionScopeWindow
+  static showWorkspaceLocation = ActionScopeWindow
 
   /*
   Public: Focus the keyboard on an item in a collection. This action moves the
@@ -198,7 +198,7 @@ class Actions {
   Actions.setCursorPosition(collection: 'thread', item: <Thread>)
   ```
   */
-  static setCursorPosition = ActionScopeWindow;
+  static setCursorPosition = ActionScopeWindow
 
   /*
   Public: Focus on an item in a collection. This action changes the selection
@@ -210,7 +210,7 @@ class Actions {
   Actions.setFocus(collection: 'thread', item: <Thread>)
   ```
   */
-  static setFocus = ActionScopeWindow;
+  static setFocus = ActionScopeWindow
 
   /*
   Public: Focus the interface on a specific {MailboxPerspective}.
@@ -221,7 +221,7 @@ class Actions {
   Actions.focusMailboxPerspective(<Category>)
   ```
   */
-  static focusMailboxPerspective = ActionScopeWindow;
+  static focusMailboxPerspective = ActionScopeWindow
 
   /*
   Public: Focus the interface on the default mailbox perspective for the provided
@@ -229,9 +229,9 @@ class Actions {
 
   *Scope: Window*
   */
-  static focusDefaultMailboxPerspectiveForAccounts = ActionScopeWindow;
+  static focusDefaultMailboxPerspectiveForAccounts = ActionScopeWindow
 
-  static setObservableRange = ActionScopeMainWindow;
+  static setObservableRange = ActionScopeMainWindow
 
   /*
   Public: Focus the mailbox perspective for the given account id and category names
@@ -242,7 +242,7 @@ class Actions {
   Actions.ensureCategoryIsFocused(accountIds, categoryName)
   ```
   */
-  static ensureCategoryIsFocused = ActionScopeWindow;
+  static ensureCategoryIsFocused = ActionScopeWindow
 
   /*
   Public: If the message with the provided id is currently beign displayed in the
@@ -255,13 +255,13 @@ class Actions {
   Actions.toggleMessageIdExpanded(message.id)
   ```
   */
-  static toggleMessageIdExpanded = ActionScopeWindow;
+  static toggleMessageIdExpanded = ActionScopeWindow
 
   /*
   Public: Toggle whether messages from trash and spam are shown in the current
   message view.
   */
-  static toggleHiddenMessages = ActionScopeWindow;
+  static toggleHiddenMessages = ActionScopeWindow
 
   /*
   Public: This action toggles wether to collapse or expand all messages in a
@@ -273,7 +273,7 @@ class Actions {
   Actions.toggleAllMessagesExpanded()
   ```
   */
-  static toggleAllMessagesExpanded = ActionScopeWindow;
+  static toggleAllMessagesExpanded = ActionScopeWindow
 
   /*
   Public: Print the currently selected thread.
@@ -285,7 +285,7 @@ class Actions {
   Actions.printThread(thread)
   ```
   */
-  static printThread = ActionScopeWindow;
+  static printThread = ActionScopeWindow
 
   /*
   Public: Export the currently selected thread to pdf.
@@ -297,7 +297,7 @@ class Actions {
   Actions.printThread(thread)
   ```
   */
-  static pdfThread = ActionScopeWindow;
+  static pdfThread = ActionScopeWindow
 
   /*
   Public: Display the thread in a new popout window
@@ -309,7 +309,7 @@ class Actions {
   Actions.popoutThread(thread)
   ```
   */
-  static popoutThread = ActionScopeWindow;
+  static popoutThread = ActionScopeWindow
 
   /*
   Public: Display the thread in the main window
@@ -321,7 +321,7 @@ class Actions {
   Actions.focusThreadMainWindow(thread)
   ```
   */
-  static focusThreadMainWindow = ActionScopeGlobal;
+  static focusThreadMainWindow = ActionScopeGlobal
 
   /*
   Public: Create a new reply to the provided threadId and messageId and populate
@@ -334,7 +334,7 @@ class Actions {
   Actions.sendQuickReply({threadId: '123', messageId: '234'}, "Thanks Ben!")
   ```
   */
-  static sendQuickReply = ActionScopeMainWindow;
+  static sendQuickReply = ActionScopeMainWindow
 
   /*
   Public: Create a new reply to the provided threadId and messageId. Note that
@@ -351,7 +351,7 @@ class Actions {
   Actions.composeReply({threadId: '123', messageId: '123'})
   ```
   */
-  static composeReply = ActionScopeMainWindow;
+  static composeReply = ActionScopeMainWindow
 
   /*
   Change the account of current draft.
@@ -362,7 +362,7 @@ class Actions {
   }
    */
 
-  static changeDraftAccount = ActionScopeMainWindow;
+  static changeDraftAccount = ActionScopeMainWindow
 
   /*
   Change the account of current draft complete.
@@ -370,7 +370,7 @@ class Actions {
     newDraftJSON
   }
    */
-  static changeDraftAccountComplete = ActionScopeGlobal;
+  static changeDraftAccountComplete = ActionScopeGlobal
 
   /*
   Public: Create a new draft for forwarding the provided threadId and messageId. See
@@ -378,7 +378,7 @@ class Actions {
 
   *Scope: Window*
   */
-  static composeForward = ActionScopeMainWindow;
+  static composeForward = ActionScopeMainWindow
 
   /*
   Public: Send a draft created action back to components, so disabled buttons can be enabled.
@@ -388,7 +388,7 @@ class Actions {
   }
   */
 
-  static draftReplyForwardCreated = ActionScopeMainWindow;
+  static draftReplyForwardCreated = ActionScopeMainWindow
 
   /*
   Public: Pop out the draft with the provided ID so the user can edit it in another
@@ -401,8 +401,8 @@ class Actions {
   Actions.composePopoutDraft(messageId)
   ```
   */
-  static composeFailedPopoutDraft = ActionScopeMainWindow;
-  static composePopoutDraft = ActionScopeMainWindow;
+  static composeFailedPopoutDraft = ActionScopeMainWindow
+  static composePopoutDraft = ActionScopeMainWindow
 
   /*
   Public: Open a new composer window for creating a new draft from scratch.
@@ -413,10 +413,11 @@ class Actions {
   Actions.composeNewBlankDraft()
   ```
   */
-  static composeNewBlankDraft = ActionScopeMainWindow;
-  static composedNewBlankDraft = ActionScopeMainWindow;
+  static composeNewBlankDraft = ActionScopeMainWindow
+  static composedNewBlankDraft = ActionScopeMainWindow
 
-  static composeFeedBackDraft = ActionScopeMainWindow;
+  static composeFeedBackDraft = ActionScopeMainWindow
+  static popoutTeamEditor = ActionScopeMainWindow
 
   /*
   Public: Open a new composer window for a new draft addressed to the given recipient
@@ -427,7 +428,7 @@ class Actions {
   Actions.composeNewDraftToRecipient(contact)
   ```
   */
-  static composeNewDraftToRecipient = ActionScopeMainWindow;
+  static composeNewDraftToRecipient = ActionScopeMainWindow
 
   /*
   Public: Send the draft with the given ID. This Action is handled by the {DraftStore},
@@ -441,18 +442,18 @@ class Actions {
   Actions.sendDraft('123', {actionKey})
   ```
   */
-  static sendDraft = ActionScopeMainWindow;
-  static sendingDraft = ActionScopeGlobal;
-  static failingDraft = ActionScopeMainWindow;
+  static sendDraft = ActionScopeMainWindow
+  static sendingDraft = ActionScopeGlobal
+  static failingDraft = ActionScopeMainWindow
   /*
   Public: Fired when a draft is successfully sent
   *Scope: Global*
 
   Recieves the id of the message that was sent
   */
-  static draftDeliveryCancelled = ActionScopeGlobal;
-  static draftDeliverySucceeded = ActionScopeGlobal;
-  static draftDeliveryFailed = ActionScopeGlobal;
+  static draftDeliveryCancelled = ActionScopeGlobal
+  static draftDeliverySucceeded = ActionScopeGlobal
+  static draftDeliveryFailed = ActionScopeGlobal
 
   /*
   Public: Destroys the draft with the given ID. This Action is handled by the {DraftStore},
@@ -460,55 +461,55 @@ class Actions {
 
   *Scope: Window*
   */
-  static removeQuoteText = ActionScopeGlobal;
-  static syncDraftDataToMain = ActionScopeMainWindow;
-  static broadcastDraftData = ActionScopeGlobal;
-  static editOutboxDraft = ActionScopeMainWindow;
-  static resendDrafts = ActionScopeMainWindow;
-  static cancelOutboxDrafts = ActionScopeMainWindow;
-  static destroyDraft = ActionScopeGlobal;
-  static destroyDraftSucceeded = ActionScopeMainWindow;
-  static destroyDraftFailed = ActionScopeMainWindow;
-  static draftWindowClosing = ActionScopeMainWindow;
-  static draftOpenCount = ActionScopeMainWindow;
-  static draftOpenCountBroadcast = ActionScopeGlobal;
-  static gotoOutbox = ActionScopeWindow;
+  static removeQuoteText = ActionScopeGlobal
+  static syncDraftDataToMain = ActionScopeMainWindow
+  static broadcastDraftData = ActionScopeGlobal
+  static editOutboxDraft = ActionScopeMainWindow
+  static resendDrafts = ActionScopeMainWindow
+  static cancelOutboxDrafts = ActionScopeMainWindow
+  static destroyDraft = ActionScopeGlobal
+  static destroyDraftSucceeded = ActionScopeMainWindow
+  static destroyDraftFailed = ActionScopeMainWindow
+  static draftWindowClosing = ActionScopeMainWindow
+  static draftOpenCount = ActionScopeMainWindow
+  static draftOpenCountBroadcast = ActionScopeGlobal
+  static gotoOutbox = ActionScopeWindow
 
   /*
   Public: Submits the user's response to an RSVP event.
 
   *Scope: Window*
   */
-  static RSVPEvent = ActionScopeMainWindow;
-  static RSVPEventFailed = ActionScopeMainWindow;
+  static RSVPEvent = ActionScopeMainWindow
+  static RSVPEventFailed = ActionScopeMainWindow
 
   // FullContact Sidebar
-  static getFullContactDetails = ActionScopeWindow;
-  static focusContact = ActionScopeWindow;
+  static getFullContactDetails = ActionScopeWindow
+  static focusContact = ActionScopeWindow
 
   // Account Sidebar
-  static setCollapsedSidebarItem = ActionScopeWindow;
+  static setCollapsedSidebarItem = ActionScopeWindow
 
   // File Actions
   // Some file actions only need to be processed in their current window
-  static addAttachment = ActionScopeWindow;
-  static addAttachments = ActionScopeWindow;
-  static addedAttachment = ActionScopeWindow;
-  static addedAttachments = ActionScopeWindow;
+  static addAttachment = ActionScopeWindow
+  static addAttachments = ActionScopeWindow
+  static addedAttachment = ActionScopeWindow
+  static addedAttachments = ActionScopeWindow
 
-  static selectAttachment = ActionScopeWindow;
-  static removeAttachment = ActionScopeWindow;
+  static selectAttachment = ActionScopeWindow
+  static removeAttachment = ActionScopeWindow
 
-  static syncFolders = ActionScopeMainWindow;
-  static syncSiftFolder = ActionScopeMainWindow;
-  static fetchBodies = ActionScopeMainWindow;
-  static fetchAttachmentsByMessage = ActionScopeWindow;
-  static fetchAttachments = ActionScopeMainWindow;
-  static fetchAndOpenFile = ActionScopeWindow;
-  static fetchAndSaveFile = ActionScopeWindow;
-  static fetchAndSaveAllFiles = ActionScopeWindow;
-  static fetchFile = ActionScopeWindow;
-  static abortFetchFile = ActionScopeWindow;
+  static syncFolders = ActionScopeMainWindow
+  static syncSiftFolder = ActionScopeMainWindow
+  static fetchBodies = ActionScopeMainWindow
+  static fetchAttachmentsByMessage = ActionScopeWindow
+  static fetchAttachments = ActionScopeMainWindow
+  static fetchAndOpenFile = ActionScopeWindow
+  static fetchAndSaveFile = ActionScopeWindow
+  static fetchAndSaveAllFiles = ActionScopeWindow
+  static fetchFile = ActionScopeWindow
+  static abortFetchFile = ActionScopeWindow
 
   /*
   Public: Pop the current sheet off the Sheet stack maintained by the {WorkspaceStore}.
@@ -516,14 +517,14 @@ class Actions {
 
   *Scope: Window*
   */
-  static popSheet = ActionScopeWindow;
+  static popSheet = ActionScopeWindow
 
   /*
   Public: Pop the to the root sheet currently selected.
 
   *Scope: Window*
   */
-  static popToRootSheet = ActionScopeWindow;
+  static popToRootSheet = ActionScopeWindow
 
   /*
   Public: Push a sheet of a specific type onto the Sheet stack maintained by the
@@ -542,67 +543,67 @@ class Actions {
   this.pushSheet(WorkspaceStore.Sheet.Thread)
   ```
   */
-  static pushSheet = ActionScopeWindow;
+  static pushSheet = ActionScopeWindow
 
-  static addMailRule = ActionScopeWindow;
-  static reorderMailRule = ActionScopeWindow;
-  static updateMailRule = ActionScopeWindow;
-  static deleteMailRule = ActionScopeWindow;
-  static disableMailRule = ActionScopeWindow;
-  static startReprocessingMailRules = ActionScopeWindow;
-  static stopReprocessingMailRules = ActionScopeWindow;
+  static addMailRule = ActionScopeWindow
+  static reorderMailRule = ActionScopeWindow
+  static updateMailRule = ActionScopeWindow
+  static deleteMailRule = ActionScopeWindow
+  static disableMailRule = ActionScopeWindow
+  static startReprocessingMailRules = ActionScopeWindow
+  static stopReprocessingMailRules = ActionScopeWindow
 
-  static openPopover = ActionScopeWindow;
-  static closePopover = ActionScopeWindow;
+  static openPopover = ActionScopeWindow
+  static closePopover = ActionScopeWindow
 
-  static openModal = ActionScopeWindow;
-  static closeModal = ActionScopeWindow;
+  static openModal = ActionScopeWindow
+  static closeModal = ActionScopeWindow
 
-  static draftParticipantsChanged = ActionScopeWindow;
+  static draftParticipantsChanged = ActionScopeWindow
 
-  static findInThread = ActionScopeWindow;
-  static nextSearchResult = ActionScopeWindow;
-  static previousSearchResult = ActionScopeWindow;
+  static findInThread = ActionScopeWindow
+  static nextSearchResult = ActionScopeWindow
+  static previousSearchResult = ActionScopeWindow
 
   // Actions for the signature preferences and shared with the composer
-  static upsertSignature = ActionScopeWindow;
-  static removeSignature = ActionScopeWindow;
-  static selectSignature = ActionScopeWindow;
-  static toggleAccount = ActionScopeWindow;
+  static upsertSignature = ActionScopeWindow
+  static removeSignature = ActionScopeWindow
+  static selectSignature = ActionScopeWindow
+  static toggleAccount = ActionScopeWindow
 
-  static expandSyncState = ActionScopeWindow;
+  static expandSyncState = ActionScopeWindow
 
-  static searchQuerySubmitted = ActionScopeWindow;
-  static searchQueryChanged = ActionScopeWindow;
-  static searchCompleted = ActionScopeWindow;
+  static searchQuerySubmitted = ActionScopeWindow
+  static searchQueryChanged = ActionScopeWindow
+  static searchCompleted = ActionScopeWindow
 
-  static updateChatPanelHeight = ActionScopeMainWindow;
-  static expandChatPanelFiller = ActionScopeMainWindow;
-  static debugFakeNativeMessage = ActionScopeWindow;
-  static updateLastSystemInfoCheck = ActionScopeMainWindow;
-  static goToMostRecentChat = ActionScopeMainWindow;
-  static setCurrentWindowTitle = ActionScopeWindow;
+  static updateChatPanelHeight = ActionScopeMainWindow
+  static expandChatPanelFiller = ActionScopeMainWindow
+  static debugFakeNativeMessage = ActionScopeWindow
+  static updateLastSystemInfoCheck = ActionScopeMainWindow
+  static goToMostRecentChat = ActionScopeMainWindow
+  static setCurrentWindowTitle = ActionScopeWindow
 
   // Block
-  static changeBlockSucceeded = ActionScopeMainWindow;
+  static changeBlockSucceeded = ActionScopeMainWindow
 
   // App Message actions
-  static pushAppMessage = ActionScopeWindow;
-  static pushAppMessages = ActionScopeWindow;
-  static removeAppMessage = ActionScopeWindow;
-  static removeAppMessages = ActionScopeWindow;
+  static pushAppMessage = ActionScopeWindow
+  static pushAppMessages = ActionScopeWindow
+  static removeAppMessage = ActionScopeWindow
+  static removeAppMessages = ActionScopeWindow
 
-  static hideEmptyMessageList = ActionScopeWindow;
+  static hideEmptyMessageList = ActionScopeWindow
 
-  static forceKillAllClients = ActionScopeWindow;
+  static forceKillAllClients = ActionScopeWindow
 
-  static forceDatabaseTrigger = ActionScopeWindow;
+  static forceDatabaseTrigger = ActionScopeWindow
 
-  static dataShareOptions = ActionScopeMainWindow;
-  static expungeUserData = ActionScopeMainWindow;
-  static exportUserData = ActionScopeMainWindow;
+  static dataShareOptions = ActionScopeMainWindow
+  static expungeUserData = ActionScopeMainWindow
+  static exportUserData = ActionScopeMainWindow
 
-  static remoteSearch = ActionScopeWindow;
+  static remoteSearch = ActionScopeWindow
 }
 
 // Read the actions we declared on the dummy Actions object above
@@ -611,16 +612,16 @@ class Actions {
 // This helper method exists to trick the Donna lexer so it doesn't
 // try to understand what we're doing to the Actions object.
 const create = (obj, name, scope) => {
-  obj[name] = Reflux.createAction(name);
-  obj[name].scope = scope;
-  obj[name].sync = true;
-};
+  obj[name] = Reflux.createAction(name)
+  obj[name].scope = scope
+  obj[name].sync = true
+}
 
 const scopes = {
   window: [],
   global: [],
   main: [],
-};
+}
 
 for (const name of Object.getOwnPropertyNames(Actions)) {
   if (
@@ -630,18 +631,18 @@ for (const name of Object.getOwnPropertyNames(Actions)) {
     name === 'caller' ||
     name === 'prototype'
   ) {
-    continue;
+    continue
   }
   if (Actions[name] !== 'window' && Actions[name] !== 'global' && Actions[name] !== 'main') {
-    continue;
+    continue
   }
-  const scope = Actions[name];
-  scopes[scope].push(name);
-  create(Actions, name, scope);
+  const scope = Actions[name]
+  scopes[scope].push(name)
+  create(Actions, name, scope)
 }
 
-Actions.windowActions = scopes.window;
-Actions.mainWindowActions = scopes.main;
-Actions.globalActions = scopes.global;
+Actions.windowActions = scopes.window
+Actions.mainWindowActions = scopes.main
+Actions.globalActions = scopes.global
 
-export default Actions;
+export default Actions

@@ -1,8 +1,7 @@
 /* eslint global-require: 0 */
 import { shell, ipcRenderer, remote } from 'electron'
 import url from 'url'
-import _ from './add-global'
-import { DraftStore } from 'mailspring-exports'
+import Actions from './flux/actions'
 
 let ComponentRegistry = null
 let Spellchecker = null
@@ -158,7 +157,7 @@ export default class WindowEventHandler {
       'core:paste-and-match-style': () => webContents.pasteAndMatchStyle(),
       'core:undo': e => (isTextInput(e.target) ? webContents.undo() : getUndoStore().undo()),
       'core:redo': e => (isTextInput(e.target) ? webContents.redo() : getUndoStore().redo()),
-      'core:select-all': e => (isTextInput(e.target) ? webContents.selectAll() : null)
+      'core:select-all': e => (isTextInput(e.target) ? webContents.selectAll() : null),
     })
 
     // "Pinch to zoom" on the Mac gets translated by the system into a
@@ -298,7 +297,7 @@ export default class WindowEventHandler {
 
     if (resolved.includes('edisonmail://teamedit.edison.tech')) {
       const padInfo = parsePadInfoFromUrl(resolved)
-      DraftStore.popoutTeamEditor(padInfo)
+      Actions.popoutTeamEditor(padInfo)
     } else if (['mailto:', 'edisonmail:'].includes(protocol)) {
       // We sometimes get mailto URIs that are not escaped properly, or have been only partially escaped.
       // (T1927) Be sure to escape them once, and completely, before we try to open them. This logic
@@ -341,7 +340,7 @@ export default class WindowEventHandler {
         const insertionPoint = wordStart + correction.length
         event.target.value = event.target.value.replace(word, correction)
         event.target.setSelectionRange(insertionPoint, insertionPoint)
-      }
+      },
     })
   }
 
@@ -356,14 +355,14 @@ export default class WindowEventHandler {
       new MenuItem({
         label: 'Cut',
         enabled: hasSelectedText,
-        click: () => AppEnv.commands.dispatch('core:cut')
+        click: () => AppEnv.commands.dispatch('core:cut'),
       })
     )
     menu.append(
       new MenuItem({
         label: 'Copy',
         enabled: hasSelectedText,
-        click: () => AppEnv.commands.dispatch('core:copy')
+        click: () => AppEnv.commands.dispatch('core:copy'),
       })
     )
     menu.append(
@@ -372,7 +371,7 @@ export default class WindowEventHandler {
         click: () => {
           onRestoreSelection()
           AppEnv.commands.dispatch('core:paste')
-        }
+        },
       })
     )
     menu.append(
@@ -381,7 +380,7 @@ export default class WindowEventHandler {
         click: () => {
           onRestoreSelection()
           AppEnv.commands.dispatch('core:paste-and-match-style')
-        }
+        },
       })
     )
     menu.popup({})

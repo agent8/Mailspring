@@ -632,6 +632,7 @@ export default class ComposerView extends React.Component {
     console.log(' createPadOptions: ', createPadOptions)
     if (!padId) {
       const apiPath = window.teamPadConfig.teamEditAPIUrl + 'createPad'
+      console.log(' createPad: apiPath: ', apiPath)
       let res = await postAsync(apiPath, createPadOptions, {
         headers: {
           Accept: 'application/json',
@@ -643,6 +644,7 @@ export default class ComposerView extends React.Component {
       if (typeof res === 'string') {
         res = JSON.parse(res)
       }
+      console.log(' createPad: res: ', res)
       if (res && res.code === 0 && res.data && res.data && res.data.padId) {
         padId = res.data.padId
         draftPadMap[draft.threadId] = padId

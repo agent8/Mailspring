@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import path from 'path'
+import fs from 'fs'
 import keyMannager from '../../../src/key-manager'
 import InvitePadMember from './InvitePadMember'
 import { loadPadInfo, savePadInfo } from './app-pad-data'
@@ -49,10 +50,22 @@ export default class TeamreplyEditor extends Component {
       return <div> Can not get AND create proper edit pad for this email!</div>
     }
     const cwd = process.cwd()
-    const htmlPath = path.join(
+    console.log(' render: app cwd: ', cwd)
+    let htmlPath = path.join(
       cwd,
       'app/internal_packages/composer/teamreply-client/src/html/pad.html'
     )
+    const { resourcePath } = AppEnv.getLoadSettings()
+    console.log(' resourcePath: ', resourcePath)
+    console.log(' render: app htmlPath: ', htmlPath)
+    if (!fs.existsSync(htmlPath)) {
+      htmlPath = path.join(
+        resourcePath,
+        './internal_packages/composer/teamreply-client/src/html/pad.html'
+      )
+      console.log('exist pad.html: ', fs.existsSync(htmlPath))
+    }
+
     return (
       <div className='teamreply-editor-container'>
         <iframe

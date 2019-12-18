@@ -75,7 +75,6 @@
     "etherpad-lite": "./node/server.js"
   },
   "devDependencies": {
-    "electron": "file:electron",
     "mocha": "5.2.0",
     "nyc": "14.1.0",
     "supertest": "3.0.0",

@@ -60,6 +60,7 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.composeNewBlankDraft, this._onPopoutBlankDraft)
       this.listenTo(Actions.composeNewDraftToRecipient, this._onPopoutNewDraftToRecipient)
       this.listenTo(Actions.composeFeedBackDraft, this._onPopoutFeedbackDraft)
+      this.listenTo(Actions.popoutTeamEditor, this.popoutTeamEditor)
       this.listenTo(Actions.sendQuickReply, this._onSendQuickReply)
       this.listenTo(Actions.sendDraft, this._onSendDraft)
       this.listenTo(Actions.failingDraft, this._startDraftFailingTimeout)
@@ -739,7 +740,9 @@ class DraftStore extends MailspringStore {
       threadId: '',
     })
     await this._finalizeAndPersistNewMessage(draft)
+    console.log(' createAndSendMessage: draft: ', draft)
     const task = SendDraftTask.forSending(draft)
+    console.log(' createAndSendMessage: task: ', task)
     Actions.queueTask(task)
   }
 
