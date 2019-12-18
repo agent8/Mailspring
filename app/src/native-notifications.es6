@@ -20,7 +20,7 @@ class NativeNotifications {
     }
     notif = remote.getGlobal('application').getNotification({
       title,
-      // bundleId: 'com.edisonmail.edisonmail',
+      // bundleId: 'com.easilydo.mac',
       hasReply: canReply,
       subtitle: subtitle,
       body: body,

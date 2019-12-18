@@ -40,7 +40,7 @@ class SystemStartServiceDarwin extends SystemStartServiceBase {
   }
 
   doesLaunchOnSystemStart() {
-    return new Promise( resolve => {
+    return new Promise(resolve => {
       const ret = app.getLoginItemSettings();
       resolve(ret.openAtLogin);
     });
@@ -79,7 +79,7 @@ class SystemStartServiceDarwin extends SystemStartServiceBase {
 
   _launchdPlist() {
     return {
-      Label: 'com.edisonmail.edisonmail',
+      Label: 'com.easilydo.mac',
       Program: this._launcherPath(),
       ProgramArguments: ['--background'],
       RunAtLoad: true,
