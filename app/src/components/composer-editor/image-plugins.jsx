@@ -1,14 +1,51 @@
 import React from 'react';
 import { Inline } from 'slate';
-import { RetinaImg } from 'mailspring-component-kit';
+import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
-const IMAGE_TYPE = 'inline_image';
+const IMAGE_TYPE = 'inline_resizable_image';
 
 function ImageNode(props) {
-  const { node } = props;
-  const src = node.data.get ? node.data.get('src') : node.data.src;
+  const { node, targetIsHTML, editor } = props;
+  const data = node.data;
+  const src = data.get ? data.get('src') : data.src;
+  const height = data.get ? data.get('height') : data.height;
+  const width = data.get ? data.get('width') : data.width;
+  const style = {};
+  if (height) {
+    style.height = height;
+  }
+  if (width) {
+    style.width = width;
+  }
 
-  return <img alt="" src={src} />;
+  if (targetIsHTML) {
+    return <img alt="" src={src} style={style} resizable={'true'} />;
+  }
+  return (
+    <ResizableImg
+      src={src}
+      style={style}
+      callback={value => {
+        editor.change(change => {
+          const inline = Inline.create({
+            isVoid: true,
+            type: IMAGE_TYPE,
+            data: {
+              src: src,
+              height: value.height,
+              width: value.width,
+            },
+          });
+          return change
+            .removeNodeByKey(node.key)
+            .insertInline(inline)
+            .collapseToStartOfNextText()
+            .focus();
+        });
+      }}
+      lockAspectRatio
+    />
+  );
 }
 
 function renderNode(props) {
@@ -22,15 +59,15 @@ const ToolbarAttachmentButton = ({ value, onChange }) => {
     if (paths == null) {
       return;
     }
-    let pathsToOpen = paths;
-    if (typeof pathsToOpen === 'string') {
-      pathsToOpen = [pathsToOpen];
+    let pathsTmp = paths;
+    if (typeof pathsTmp === 'string') {
+      pathsTmp = [pathsTmp];
     }
     const inline = Inline.create({
       isVoid: true,
       type: IMAGE_TYPE,
       data: {
-        src: pathsToOpen[0],
+        src: pathsTmp[0],
       },
     });
 
@@ -65,14 +102,27 @@ const ToolbarAttachmentButton = ({ value, onChange }) => {
 const rules = [
   {
     deserialize(el, next) {
-      if (el.tagName.toLowerCase() === 'img' && el.getAttribute('src')) {
+      if (
+        el.tagName.toLowerCase() === 'img' &&
+        el.getAttribute('src') &&
+        el.getAttribute('resizable') === 'true'
+      ) {
+        const data = {
+          src: el.getAttribute('src'),
+        };
+        const style = el.style;
+        if (style.height) {
+          data.height = ~~`${style.height}`.replace('px', '');
+        }
+        if (style.width) {
+          data.width = ~~`${style.width}`.replace('px', '');
+        }
+
         return {
           object: 'inline',
           isVoid: true,
           type: IMAGE_TYPE,
-          data: {
-            src: el.getAttribute('src'),
-          },
+          data,
         };
       }
     },
