@@ -5,6 +5,7 @@ import ResizableBox from './resizable-box';
 export default class ResizableImg extends Component {
   static propTypes = {
     src: PropTypes.string.isRequired,
+    style: PropTypes.object,
     callback: PropTypes.func,
     lockAspectRatio: PropTypes.bool,
     disableOrientation: PropTypes.arrayOf(PropTypes.string),
@@ -22,8 +23,18 @@ export default class ResizableImg extends Component {
   }
 
   componentDidMount() {
+    const { style, src } = this.props;
+    if (style && style.height && style.width) {
+      this.setState({
+        boxHeight: style.height,
+        imgHeight: style.height,
+        boxWidth: style.width,
+        imgWidth: style.width,
+      });
+      return;
+    }
     const image = new Image();
-    image.src = this.props.src;
+    image.src = src;
     image.onload = () => {
       this.setState({
         boxHeight: image.height,
@@ -64,16 +75,16 @@ export default class ResizableImg extends Component {
         onResize={value => {
           const valueTemp = this._processingValue(value);
           this.setState({
-            boxHeight: imgHeight + valueTemp.y,
-            boxWidth: imgWidth + valueTemp.x,
+            boxHeight: ~~imgHeight + ~~valueTemp.y,
+            boxWidth: ~~imgWidth + ~~valueTemp.x,
           });
         }}
         onComplateResize={value => {
           const valueTemp = this._processingValue(value);
           this.setState(
             {
-              imgHeight: imgHeight + valueTemp.y,
-              imgWidth: imgWidth + valueTemp.x,
+              imgHeight: ~~imgHeight + ~~valueTemp.y,
+              imgWidth: ~~imgWidth + ~~valueTemp.x,
             },
             () => {
               if (callback && typeof callback === 'function') {
