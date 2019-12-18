@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import { remote, shell } from 'electron';
 
-const bundleIdentifier = 'com.edisonmail.edisonmail';
+const bundleIdentifier = 'com.easilydo.mac';
 
 class Windows {
   available() {

@@ -15,6 +15,11 @@ module.exports = grunt => {
     }
 
     const orig = process.cwd();
+    const isMas = grunt.option('is-mas');
+    if (isMas) {
+      console.log('mas version no need to build zip');
+      return;
+    }
     process.chdir(path.join(grunt.config('outputDir'), 'Edison Mail-darwin-x64'));
 
     spawn(
