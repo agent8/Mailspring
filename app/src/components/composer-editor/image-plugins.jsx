@@ -32,6 +32,7 @@ function ImageNode(props) {
             type: IMAGE_TYPE,
             data: {
               src: src,
+              draggerDisable: true,
               height: value.height,
               width: value.width,
             },
@@ -67,6 +68,7 @@ const ToolbarAttachmentButton = ({ value, onChange }) => {
       isVoid: true,
       type: IMAGE_TYPE,
       data: {
+        draggerDisable: true,
         src: pathsTmp[0],
       },
     });
@@ -109,6 +111,7 @@ const rules = [
       ) {
         const data = {
           src: el.getAttribute('src'),
+          draggerDisable: true,
         };
         const style = el.style;
         if (style.height) {
