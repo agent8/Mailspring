@@ -12,13 +12,15 @@ export function currentSignatureId(body) {
 }
 
 export function applySignature(body, signature) {
-  let additionalWhitespace = '<br/>';
+  let additionalWhitespace = '<div><br/>';
+  let additionalClosingWhitespace = '<br/></div>';
 
   // Remove any existing signature in the body
   let newBody = body;
   if (currentSignatureId(body)) {
     newBody = newBody.replace(RegExpUtils.mailspringSignatureRegex(), '');
     additionalWhitespace = '';
+    additionalClosingWhitespace = '';
   }
 
   // http://www.regexpal.com/?fam=94390
@@ -34,7 +36,7 @@ export function applySignature(body, signature) {
     const contentAfter = newBody.slice(insertionPoint);
     return `${contentBefore}${additionalWhitespace}<signature id="${signature.id}">${
       signature.body
-    }</signature>${contentAfter}`;
+    }</signature>${additionalClosingWhitespace}${contentAfter}`;
   } else {
     return newBody;
   }

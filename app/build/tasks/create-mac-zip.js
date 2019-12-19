@@ -7,6 +7,11 @@ module.exports = grunt => {
   const { spawn } = grunt.config('taskHelpers');
 
   grunt.registerTask('create-mac-zip', 'Zip up EdisonMail', function pack() {
+    const isMas = grunt.option('is-mas');
+    if (isMas) {
+      console.log('mas version no need to build zip');
+      return;
+    }
     const done = this.async();
     const zipPath = path.join(grunt.config('outputDir'), 'EdisonMail.zip');
 

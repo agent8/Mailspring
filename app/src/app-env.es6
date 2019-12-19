@@ -165,10 +165,18 @@ export default class AppEnvConstructor {
     this.initTaskErrorCounter();
 
     // subscribe event of dark mode change
-    if (this.isMainWindow() && process.platform === 'darwin') {
-      ipcRenderer.on('system-theme-changed', (e, isDarkMode) => {
-        AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
-      });
+    if (this.isMainWindow()) {
+      if (process.platform === 'darwin') {
+        if (this.config.get('core.themeMode') === 'auto') {
+          const isDark = remote.systemPreferences.isDarkMode();
+          AppEnv.themes.setActiveTheme(isDark ? 'ui-dark' : 'ui-light');
+        }
+        ipcRenderer.on('system-theme-changed', (e, isDarkMode) => {
+          if (this.config.get('core.themeMode') === 'auto') {
+            AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
+          }
+        });
+      }
       this.mailsyncBridge.startSift('Main window started');
     }
   }
@@ -1366,15 +1374,15 @@ export default class AppEnvConstructor {
             const pass = new stream.PassThrough();
             pass.end(img.toPNG());
             pass.pipe(output);
-            output.on('close', function() {
+            output.on('close', function () {
               output.close();
               resolve(outputPath);
             });
-            output.on('end', function() {
+            output.on('end', function () {
               output.close();
               reject();
             });
-            output.on('error', function() {
+            output.on('error', function () {
               output.close();
               reject();
             });
@@ -1563,12 +1571,12 @@ export default class AppEnvConstructor {
     try {
       response = await fetch(
         WebServerRoot +
-          'registerBetaUser?type=' +
-          type +
-          '&apiKey=' +
-          WebServerApiKey +
-          '&email=' +
-          email
+        'registerBetaUser?type=' +
+        type +
+        '&apiKey=' +
+        WebServerApiKey +
+        '&email=' +
+        email
       );
       response = await response.json();
       if (response.status === 200) {
@@ -1589,24 +1597,24 @@ export default class AppEnvConstructor {
       // This is used for the mac app to get the user invite email copy. It will require an email address to get the correct share link
       response = await fetch(
         WebServerRoot +
-          'getUserInviteEmailBody?type=' +
-          type +
-          '&apiKey=' +
-          WebServerApiKey +
-          '&email=' +
-          email
+        'getUserInviteEmailBody?type=' +
+        type +
+        '&apiKey=' +
+        WebServerApiKey +
+        '&email=' +
+        email
       );
       response = await response.json();
       if (response.error === 'email is invalid') {
         await this.registerBetaUser(email);
         response = await fetch(
           WebServerRoot +
-            'getUserInviteEmailBody?type=' +
-            type +
-            '&apiKey=' +
-            WebServerApiKey +
-            '&email=' +
-            email
+          'getUserInviteEmailBody?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email
         );
         response = await response.json();
       }
@@ -1628,13 +1636,13 @@ export default class AppEnvConstructor {
     try {
       response = await fetch(
         WebServerRoot +
-          'unlock?type=' +
-          type +
-          '&apiKey=' +
-          WebServerApiKey +
-          '&email=' +
-          email +
-          (force ? '&force=true' : '')
+        'unlock?type=' +
+        type +
+        '&apiKey=' +
+        WebServerApiKey +
+        '&email=' +
+        email +
+        (force ? '&force=true' : '')
       );
       if (response.status === 200) {
         response = {
