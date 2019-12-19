@@ -75,7 +75,6 @@ class SignatureEditor extends React.Component {
             propsForPlugins={{}}
             onChange={change => {
               const changeHtml = convertToHTML(change.value);
-              console.error(changeHtml);
               if (changeHtml) {
                 this.setState({ editorState: change.value });
               } else {
