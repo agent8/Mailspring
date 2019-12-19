@@ -48,11 +48,9 @@ class SignatureEditor extends React.Component {
     let signature = this.props.signature;
     let empty = false;
     if (!signature) {
-      signature = { data: { templateName: Templates[0].name } };
+      signature = {};
       empty = true;
     }
-    const data = signature.data || {};
-    const resolvedData = ResolveSignatureData(data);
 
     return (
       <div className={`signature-wrap ${empty && 'empty'}`}>
@@ -142,7 +140,6 @@ export default class PreferencesSignatures extends React.Component {
         id,
         title: 'Untitled',
         body: defaultTemplate.body,
-        data: defaultTemplate.data,
       },
       id
     );
