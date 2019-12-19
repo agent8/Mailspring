@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import Utils from './flux/models/utils';
-import sharp from 'sharp';
 
 export function atomicWriteFileSync(filepath, content) {
   const randomId = Utils.generateTempId();
