@@ -10,6 +10,7 @@ export default class ResizableBox extends Component {
     onComplateResize: PropTypes.func,
     children: PropTypes.node,
     style: PropTypes.object,
+    showMask: PropTypes.bool,
   };
 
   constructor(props) {
@@ -17,7 +18,6 @@ export default class ResizableBox extends Component {
     this.state = {
       disX: 0,
       disY: 0,
-      showMask: false,
     };
   }
 
@@ -82,8 +82,7 @@ export default class ResizableBox extends Component {
   };
 
   render() {
-    const { children, style } = this.props;
-    const { showMask } = this.state;
+    const { children, style, showMask } = this.props;
     return (
       <div className={`resizable-box${showMask ? ` showMask` : ''}`} style={style ? style : {}}>
         <div
@@ -93,12 +92,6 @@ export default class ResizableBox extends Component {
           onKeyDown={e => {
             e.stopPropagation();
             e.preventDefault();
-          }}
-          onFocus={() => {
-            this.setState({ showMask: true });
-          }}
-          onBlur={() => {
-            this.setState({ showMask: false });
           }}
         >
           {this.renderHandles()}

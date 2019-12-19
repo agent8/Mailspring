@@ -5,7 +5,7 @@ import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 const IMAGE_TYPE = 'inline_resizable_image';
 
 function ImageNode(props) {
-  const { node, targetIsHTML, editor } = props;
+  const { attributes, node, targetIsHTML, editor } = props;
   const data = node.data;
   const src = data.get ? data.get('src') : data.src;
   const height = data.get ? data.get('height') : data.height;
@@ -21,31 +21,45 @@ function ImageNode(props) {
   if (targetIsHTML) {
     return <img alt="" src={src} style={style} resizable={'true'} />;
   }
+
+  let isSelect = false;
+  const selectNow = editor.value.focusKey;
+  if (selectNow) {
+    const ancestorsNode = editor.value.document.getAncestors(selectNow);
+    const selectNowAncestors = ancestorsNode.find(el => el.key === node.key);
+    if (selectNowAncestors && selectNowAncestors.key === node.key) {
+      isSelect = true;
+    }
+  }
+
   return (
-    <ResizableImg
-      src={src}
-      style={style}
-      callback={value => {
-        editor.change(change => {
-          const inline = Inline.create({
-            isVoid: true,
-            type: IMAGE_TYPE,
-            data: {
-              src: src,
-              draggerDisable: true,
-              height: value.height,
-              width: value.width,
-            },
+    <span {...attributes}>
+      <ResizableImg
+        src={src}
+        style={style}
+        showMask={isSelect}
+        callback={value => {
+          editor.change(change => {
+            const inline = Inline.create({
+              isVoid: true,
+              type: IMAGE_TYPE,
+              data: {
+                src: src,
+                draggerDisable: true,
+                height: value.height,
+                width: value.width,
+              },
+            });
+            return change
+              .removeNodeByKey(node.key)
+              .insertInline(inline)
+              .collapseToStartOfNextText()
+              .focus();
           });
-          return change
-            .removeNodeByKey(node.key)
-            .insertInline(inline)
-            .collapseToStartOfNextText()
-            .focus();
-        });
-      }}
-      lockAspectRatio
-    />
+        }}
+        lockAspectRatio
+      />
+    </span>
   );
 }
 
