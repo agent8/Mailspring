@@ -11,9 +11,72 @@
     width: 100%;
     top: 0;
     left: 0;
-    z-index: 10;
+    z-index: 1;
     caret-color: transparent;
     cursor: default;
+
+    .resizable-handle {
+      position: absolute;
+      display: none;
+      background: @blue;
+
+      &.resizable-handle-n {
+        cursor: row-resize;
+        width: 6px;
+        height: 6px;
+        top: -3px;
+        left: 50%;
+      }
+      &.resizable-handle-s {
+        cursor: row-resize;
+        width: 6px;
+        height: 6px;
+        bottom: -3px;
+        left: 50%;
+      }
+      &.resizable-handle-w {
+        cursor: col-resize;
+        width: 6px;
+        height: 6px;
+        top: 50%;
+        left: -3px;
+      }
+      &.resizable-handle-e {
+        cursor: col-resize;
+        width: 6px;
+        height: 6px;
+        top: 50%;
+        right: -3px;
+      }
+      &.resizable-handle-ne {
+        cursor: ne-resize;
+        width: 6px;
+        height: 6px;
+        top: -3px;
+        right: -3px;
+      }
+      &.resizable-handle-nw {
+        cursor: nw-resize;
+        width: 6px;
+        height: 6px;
+        top: -3px;
+        left: -3px;
+      }
+      &.resizable-handle-se {
+        cursor: se-resize;
+        width: 6px;
+        height: 6px;
+        bottom: -3px;
+        right: -3px;
+      }
+      &.resizable-handle-sw {
+        cursor: sw-resize;
+        width: 6px;
+        height: 6px;
+        bottom: -3px;
+        left: -3px;
+      }
+    }
   }
 
   &.showMask .resizable-box-mask {
@@ -21,70 +84,6 @@
     border: 2px solid fade(@blue, 50%);
     .resizable-handle {
       display: block;
-    }
-  }
-
-  .resizable-handle {
-    position: absolute;
-    display: none;
-    background: @blue;
-    z-index: 5;
-
-    &.resizable-handle-n {
-      cursor: row-resize;
-      width: 6px;
-      height: 6px;
-      top: -3px;
-      left: 50%;
-    }
-    &.resizable-handle-s {
-      cursor: row-resize;
-      width: 6px;
-      height: 6px;
-      bottom: -3px;
-      left: 50%;
-    }
-    &.resizable-handle-w {
-      cursor: col-resize;
-      width: 6px;
-      height: 6px;
-      top: 50%;
-      left: -3px;
-    }
-    &.resizable-handle-e {
-      cursor: col-resize;
-      width: 6px;
-      height: 6px;
-      top: 50%;
-      right: -3px;
-    }
-    &.resizable-handle-ne {
-      cursor: ne-resize;
-      width: 6px;
-      height: 6px;
-      top: -3px;
-      right: -3px;
-    }
-    &.resizable-handle-nw {
-      cursor: nw-resize;
-      width: 6px;
-      height: 6px;
-      top: -3px;
-      left: -3px;
-    }
-    &.resizable-handle-se {
-      cursor: se-resize;
-      width: 6px;
-      height: 6px;
-      bottom: -3px;
-      right: -3px;
-    }
-    &.resizable-handle-sw {
-      cursor: sw-resize;
-      width: 6px;
-      height: 6px;
-      bottom: -3px;
-      left: -3px;
     }
   }
 }
