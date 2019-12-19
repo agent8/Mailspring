@@ -40,7 +40,7 @@ function ImageNode(props) {
         showMask={isSelect}
         callback={value => {
           editor.change(change => {
-            const inline = Inline.create({
+            const newValue = {
               isVoid: true,
               type: IMAGE_TYPE,
               data: {
@@ -49,12 +49,8 @@ function ImageNode(props) {
                 height: value.height,
                 width: value.width,
               },
-            });
-            return change
-              .removeNodeByKey(node.key)
-              .insertInline(inline)
-              .collapseToStartOfNextText()
-              .focus();
+            };
+            return change.setValue(newValue);
           });
         }}
         lockAspectRatio
