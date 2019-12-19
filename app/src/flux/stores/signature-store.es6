@@ -6,10 +6,6 @@ const sigDefaultTemplate = {
   id: 'initial',
   title: 'Default',
   body: `<div><div>Sent from <a href="https://www.edison.tech/">EdisonMail</a>, the best free email app for work</div></div>`,
-  data: {
-    title: 'Sent from Edison Mail, the best free email app for work',
-    templateName: 'SignatureB',
-  },
 };
 
 class SignatureStore extends MailspringStore {
@@ -33,9 +29,6 @@ class SignatureStore extends MailspringStore {
         this.defaultSignatures[a.emailAddress] = null;
       });
     }
-
-    // migrate signatures that didn't have a `data` property
-    Object.values(this.signatures).forEach(sig => (sig.data = sig.data || {}));
 
     this._autoselectSignatureId();
 
