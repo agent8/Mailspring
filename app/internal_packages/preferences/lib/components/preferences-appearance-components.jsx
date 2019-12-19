@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
 import ModeSwitch from './mode-switch';
+import { remote } from 'electron';
 
 export class AppearanceScaleSlider extends React.Component {
   static displayName = 'AppearanceScaleSlider';
@@ -100,6 +101,7 @@ export function AppearancePanelOptions(props) {
   );
 }
 
+const THEME_MODE_KEY = 'core.themeMode';
 export class AppearanceThemeSwitch extends React.Component {
   static displayName = 'AppearanceThemeSwitch';
 
@@ -126,8 +128,16 @@ export class AppearanceThemeSwitch extends React.Component {
   _getState() {
     return {
       themes: this.themes.getAvailableThemes(),
-      activeTheme: this.themes.getActiveTheme().name,
+      activeTheme: this.props.config.get(THEME_MODE_KEY) || this.themes.getActiveTheme().name,
     };
+  }
+
+  switchTheme = value => {
+    this.props.config.set(THEME_MODE_KEY, value);
+    if (value === 'auto') {
+      value = remote.systemPreferences.isDarkMode() ? 'ui-dark' : 'ui-light';
+    }
+    this.themes.setActiveTheme(value);
   }
 
   render() {
@@ -150,15 +160,18 @@ export class AppearanceThemeSwitch extends React.Component {
         imgsrc: `prefs-appearance-${mode}.png`,
       };
     });
+    modeSwitchList.push({
+      value: 'auto',
+      label: 'Use System Settings',
+      imgsrc: `prefs-appearance-system.png`,
+    });
     return (
       <ModeSwitch
         className="theme-switch"
         modeSwitch={modeSwitchList}
         config={this.props.config}
         activeValue={this.state.activeTheme}
-        onSwitchOption={value => {
-          this.themes.setActiveTheme(value);
-        }}
+        onSwitchOption={this.switchTheme}
       />
     );
   }
