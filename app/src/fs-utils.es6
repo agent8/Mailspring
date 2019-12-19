@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Utils from './flux/models/utils';
+import sharp from 'sharp';
 
 export function atomicWriteFileSync(filepath, content) {
   const randomId = Utils.generateTempId();
@@ -44,4 +45,11 @@ function findMinNotInArr(arr) {
     }
   }
   return sortList.length + 1;
+}
+
+export function transfornImgToBase64(filePath) {
+  const bitmap = fs.readFileSync(filePath);
+  const extname = path.extname(filePath);
+  const base64str = Buffer.from(bitmap, 'binary').toString('base64');
+  return `data:image/${extname};base64,${base64str}`;
 }
