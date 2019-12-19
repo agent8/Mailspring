@@ -701,34 +701,6 @@
 
   </div>
 
-  <div id="chaticon" onclick="chat.show();return false;" title="Chat (Alt C)" style="display: block;">
-    <span id="chatlabel" data-l10n-id="pad.chat" aria-label="Chat">Chat</span>
-    <span class="buttonicon buttonicon-chat"></span>
-    <span id="chatcounter">0</span>
-  </div>
-
-  <div id="chatbox">
-    <div id="titlebar"><span id="titlelabel" data-l10n-id="pad.chat" aria-label="Chat">Chat</span>
-      <a id="titlecross" onclick="chat.hide();return false;">-&nbsp;</a>
-      <a id="titlesticky"
-        onclick="chat.stickToScreen(true);$('#options-stickychat').prop('checked', true);return false;"
-        data-l10n-id="pad.chat.stick.title" title="Stick chat to screen"
-        aria-label="Stick chat to screen">█&nbsp;&nbsp;</a>
-    </div>
-    <div id="chattext" class="authorColors" aria-live="polite" aria-relevant="additions removals text" role="log"
-      aria-atomic="false">
-      <div alt="loading.." id="chatloadmessagesball" class="chatloadmessages loadingAnimation" align="top"></div>
-      <button id="chatloadmessagesbutton" class="chatloadmessages" data-l10n-id="pad.chat.loadmessages"
-        aria-label="Load more messages" style="display: none;">Load more messages</button>
-    </div>
-    <div id="chatinputbox">
-      <form>
-        <input id="chatinput" type="text" maxlength="999" data-l10n-id="pad.chat.writeMessage.placeholder"
-          placeholder="Write your message here" aria-label="Write your message here">
-      </form>
-    </div>
-  </div>
-
   <div id="focusprotector">&nbsp;</div>
   <div id="imageUploadModalError" class="popup" style="top: 38px;">
     <h2 class="error"></h2>
@@ -757,6 +729,7 @@
     })();
       // @license-end
   </script>
+  <script type="text/javascript" src="../static/js/teampad-config.js"></script>
   <script type="text/javascript" src="../static/js/require-kernel.js"></script>
   <!-- <script type="text/javascript" src="http://127.0.0.1:8087/socket.io/socket.io.js"></script> -->
   <script type="text/javascript" src="https://cs.stag.easilydo.cc/tr/socket.io/socket.io.js"></script>
