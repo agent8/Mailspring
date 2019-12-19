@@ -101,13 +101,15 @@ module.exports = grunt => {
   }
 
   const platform = grunt.option('platform');
+  const isMas = grunt.option('is-mas');
   const arch = process.arch;
 
   // See: https://github.com/electron-userland/electron-packager/blob/master/usage.txt
   grunt.config.merge({
     packager: {
       appVersion: packageJSON.version,
-      platform: platform,
+      buildVersion: packageJSON.version,
+      platform: isMas ? 'mas' : platform,
       protocols: [
         {
           name: 'EdisonMail Protocol',
@@ -234,7 +236,8 @@ module.exports = grunt => {
       // Electron.app/Contents/Info.plist. A majority of the defaults are
       // left in the Electron Info.plist file
       extendInfo: path.resolve(grunt.config('appDir'), 'build', 'resources', 'mac', 'extra.plist'),
-      appBundleId: 'com.edisonmail.edisonmail',
+      appBundleId: 'com.easilydo.mac',
+      // helperBundleId: 'com.easilydo.mac',
       afterCopy: [
         runCopyPlatformSpecificResources,
         runWriteCommitHashIntoPackage,

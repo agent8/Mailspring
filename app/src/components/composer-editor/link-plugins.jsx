@@ -120,10 +120,14 @@ function renderMark({ mark, children, targetIsHTML }) {
   if (mark.type !== LINK_TYPE) {
     return;
   }
-  const href = mark.data.href || mark.data.get('href');
+  let href = mark.data.href || mark.data.get('href');
+  const title = href;
   if (targetIsHTML) {
+    if (!href.includes('://')) {
+      href = 'http://' + href;
+    }
     return (
-      <a href={href} title={href}>
+      <a href={href} title={title}>
         {children}
       </a>
     );
