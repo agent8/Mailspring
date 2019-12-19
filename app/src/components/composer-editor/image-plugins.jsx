@@ -3,6 +3,7 @@ import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
 const IMAGE_TYPE = 'inline_resizable_image';
+const maxImgSize = 50 * 1000;
 
 function ImageNode(props) {
   const { attributes, node, targetIsHTML, editor } = props;
@@ -63,20 +64,17 @@ function renderNode(props) {
 }
 
 const ToolbarAttachmentButton = ({ value, onChange }) => {
-  const cb = paths => {
-    if (paths == null) {
+  const cb = base64Str => {
+    if (!base64Str) {
       return;
     }
-    let pathsTmp = paths;
-    if (typeof pathsTmp === 'string') {
-      pathsTmp = [pathsTmp];
-    }
+
     const inline = Inline.create({
       isVoid: true,
       type: IMAGE_TYPE,
       data: {
         draggerDisable: true,
-        src: pathsTmp[0],
+        src: base64Str,
       },
     });
 
@@ -94,7 +92,7 @@ const ToolbarAttachmentButton = ({ value, onChange }) => {
   return (
     <button
       onClick={() => {
-        AppEnv.showImageSelectionDialog(cb);
+        AppEnv.showBase64ImageTransformDialog(cb, maxImgSize);
       }}
       className={'hide show-in-signature'}
     >
