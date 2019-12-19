@@ -6,6 +6,7 @@ export default class ResizableImg extends Component {
   static propTypes = {
     src: PropTypes.string.isRequired,
     style: PropTypes.object,
+    showMask: PropTypes.bool,
     callback: PropTypes.func,
     lockAspectRatio: PropTypes.bool,
     disableOrientation: PropTypes.arrayOf(PropTypes.string),
@@ -23,6 +24,8 @@ export default class ResizableImg extends Component {
   }
 
   componentDidMount() {
+    this._mounted = true;
+
     const { style, src } = this.props;
     if (style && style.height && style.width) {
       this.setState({
@@ -36,6 +39,9 @@ export default class ResizableImg extends Component {
     const image = new Image();
     image.src = src;
     image.onload = () => {
+      if (!this._mounted) {
+        return;
+      }
       this.setState({
         boxHeight: image.height,
         imgHeight: image.height,
@@ -43,6 +49,10 @@ export default class ResizableImg extends Component {
         imgWidth: image.width,
       });
     };
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   _processingValue = value => {
@@ -66,13 +76,16 @@ export default class ResizableImg extends Component {
 
   render() {
     const { boxHeight, boxWidth, imgHeight, imgWidth } = this.state;
-    const { lockAspectRatio, callback, disableOrientation } = this.props;
+    const { lockAspectRatio, callback, disableOrientation, showMask } = this.props;
     const disableOrientationTmp =
       disableOrientation || (lockAspectRatio ? ['n', 's', 'w', 'e'] : []);
 
     return (
       <ResizableBox
         onResize={value => {
+          if (!this._mounted) {
+            return;
+          }
           const valueTemp = this._processingValue(value);
           this.setState({
             boxHeight: ~~imgHeight + ~~valueTemp.y,
@@ -80,6 +93,9 @@ export default class ResizableImg extends Component {
           });
         }}
         onComplateResize={value => {
+          if (!this._mounted) {
+            return;
+          }
           const valueTemp = this._processingValue(value);
           this.setState(
             {
@@ -97,6 +113,7 @@ export default class ResizableImg extends Component {
           );
         }}
         disableOrientation={disableOrientationTmp}
+        showMask={showMask}
         style={{ height: boxHeight, width: boxWidth }}
       >
         <img alt="" src={this.props.src} style={{ height: imgHeight, width: imgWidth }} />
