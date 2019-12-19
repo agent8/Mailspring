@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
 import ModeSwitch from './mode-switch';
@@ -21,6 +22,11 @@ export class AppearanceScaleSlider extends React.Component {
     this.setState({ value: nextProps.config.get(this.kp) });
   }
 
+  _onChangeConfig = () => {
+    this.props.config.set(this.kp, this.state.value);
+    setTimeout(() => ReactDOM.findDOMNode(this).scrollIntoView(false), 1);
+  };
+
   render() {
     return (
       <div className="appearance-scale-slider">
@@ -39,7 +45,8 @@ export class AppearanceScaleSlider extends React.Component {
           max={1.4}
           step={0.05}
           value={this.state.value}
-          onChange={e => this.props.config.set(this.kp, e.target.value)}
+          onMouseUp={this._onChangeConfig}
+          onChange={e => this.setState({ value: e.target.value })}
         />
       </div>
     );
@@ -138,7 +145,7 @@ export class AppearanceThemeSwitch extends React.Component {
       value = remote.systemPreferences.isDarkMode() ? 'ui-dark' : 'ui-light';
     }
     this.themes.setActiveTheme(value);
-  }
+  };
 
   render() {
     const internalThemes = ['ui-dark', 'ui-light'];
