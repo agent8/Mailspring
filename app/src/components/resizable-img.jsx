@@ -2,6 +2,16 @@ import React, { Component } from 'react';
 import { PropTypes } from 'mailspring-exports';
 import ResizableBox from './resizable-box';
 
+function formatHeightWidthToNum(val) {
+  if (typeof val === 'number') {
+    return val;
+  } else if (typeof val === 'string') {
+    const valTmp = Number(val.replace('px', ''));
+    return valTmp ? valTmp : 0;
+  }
+  return 0;
+}
+
 export default class ResizableImg extends Component {
   static propTypes = {
     src: PropTypes.string.isRequired,
@@ -29,10 +39,10 @@ export default class ResizableImg extends Component {
     const { style, src } = this.props;
     if (style && style.height && style.width) {
       this.setState({
-        boxHeight: style.height,
-        imgHeight: style.height,
-        boxWidth: style.width,
-        imgWidth: style.width,
+        boxHeight: formatHeightWidthToNum(style.height),
+        imgHeight: formatHeightWidthToNum(style.height),
+        boxWidth: formatHeightWidthToNum(style.width),
+        imgWidth: formatHeightWidthToNum(style.width),
       });
       return;
     }
@@ -43,10 +53,10 @@ export default class ResizableImg extends Component {
         return;
       }
       this.setState({
-        boxHeight: image.height,
-        imgHeight: image.height,
-        boxWidth: image.width,
-        imgWidth: image.width,
+        boxHeight: formatHeightWidthToNum(image.height),
+        imgHeight: formatHeightWidthToNum(image.height),
+        boxWidth: formatHeightWidthToNum(image.width),
+        imgWidth: formatHeightWidthToNum(image.width),
       });
     };
   }
@@ -88,8 +98,8 @@ export default class ResizableImg extends Component {
           }
           const valueTemp = this._processingValue(value);
           this.setState({
-            boxHeight: ~~imgHeight + ~~valueTemp.y,
-            boxWidth: ~~imgWidth + ~~valueTemp.x,
+            boxHeight: imgHeight + valueTemp.y,
+            boxWidth: imgWidth + valueTemp.x,
           });
         }}
         onComplateResize={value => {
@@ -99,8 +109,8 @@ export default class ResizableImg extends Component {
           const valueTemp = this._processingValue(value);
           this.setState(
             {
-              imgHeight: ~~imgHeight + ~~valueTemp.y,
-              imgWidth: ~~imgWidth + ~~valueTemp.x,
+              imgHeight: imgHeight + valueTemp.y,
+              imgWidth: imgWidth + valueTemp.x,
             },
             () => {
               if (callback && typeof callback === 'function') {
