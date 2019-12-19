@@ -495,7 +495,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
   const { access_token, refresh_token, xoauth_yahoo_guid } = json;
 
   // get the user's email address
-  const meResp = await fetch('https://social.yahooapis.com/v1/user/me/profile?format=json', {
+  const meResp = await fetch('https://api.login.yahoo.com/openid/v1/userinfo?format=json', {
     method: 'GET',
     headers: { Authorization: `Bearer ${access_token}` },
   });
@@ -503,24 +503,22 @@ export async function buildYahooAccountFromAuthResponse(code) {
   const me = await meResp.json();
   if (!meResp.ok) {
     AppEnv.reportError(new Error(`Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`));
-    me.profile = {
-      givenName: '',
-      familyName: '',
-      emails: []
+    me = {
+      given_name: '',
+      family_name: ''
     }
-    debugger;
   }
 
-  const { givenName, familyName } = me.profile;
+  const { given_name, family_name } = me;
 
-  let fullName = givenName;
-  if (familyName) {
-    fullName += ` ${familyName}`;
+  let fullName = given_name;
+  if (family_name) {
+    fullName += ` ${family_name}`;
   }
 
   let email = fullName ? fullName + '/Yahoo' : 'Yahoo';
-  if (me.profile.emails[0] && me.profile.emails[0].handle) {
-    email = me.profile.emails[0].handle;
+  if (me.email) {
+    email = me.email;
   }
 
   const account = await expandAccountWithCommonSettings(
