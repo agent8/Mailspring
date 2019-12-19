@@ -118,6 +118,7 @@ lazyLoad('CodeSnippet', 'code-snippet');
 lazyLoad('ComposerEditor', 'composer-editor/composer-editor');
 lazyLoad('ComposerSupport', 'composer-editor/composer-support');
 lazyLoad('EmojiToolbarPopover', 'composer-editor/emoji-toolbar-popover');
+lazyLoad('OutboxSender', 'outbox-sender');
 
 lazyLoad('ScrollRegion', 'scroll-region');
 lazyLoad('ResizableRegion', 'resizable-region');
