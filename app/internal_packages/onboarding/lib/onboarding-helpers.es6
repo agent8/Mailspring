@@ -502,6 +502,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
 
   const me = await meResp.json();
   if (!meResp.ok) {
+    AppEnv.trackingEvent('oauth-yahoo-profile-failed');
     AppEnv.reportError(new Error(`Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`));
     me = {
       given_name: '',
