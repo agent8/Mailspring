@@ -281,6 +281,7 @@ require.define({
       var composerOnPadSocketHandler = window.parent.composerOnPadSocketHandler
       var composerOnPadConnect = window.parent.composerOnPadConnect
       const query = parseQuery(document.location.search)
+      console.log(' pad.js: composerOnPadConnect: ', query, pad)
       composerOnPadConnect &&
         composerOnPadConnect({
           pad: pad,

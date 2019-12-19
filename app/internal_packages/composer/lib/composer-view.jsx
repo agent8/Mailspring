@@ -41,6 +41,7 @@ import { loadDraftPadMap, saveDraftPadMap, loadPadInfo, savePadInfo } from './ap
 import { downloadPadFile } from './pad-utils'
 import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
 import delay from '../../edison-beijing-chat/utils/delay'
+import { sendEmailExtra } from './draft-pad-utils.es6'
 
 const {
   hasBlockquote,
@@ -102,6 +103,8 @@ export default class ComposerView extends React.Component {
   async componentWillMount () {
     Actions.addedAttachment.listen(this.onAddedAttachment)
     Actions.addedAttachments.listen(this.onAddedAttachments)
+    window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
+    window.composerOnPadConnect = this.composerOnPadConnect
     const windowProps = AppEnv.getWindowProps()
     let { padInfo } = windowProps
     console.log(' componentWillMount: padInfo: ', padInfo)
@@ -109,8 +112,6 @@ export default class ComposerView extends React.Component {
     draft.session = session
     draft.padInfo = padInfo
     this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
-    window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
-    window.composerOnPadConnect = this.composerOnPadConnect
   }
 
   composerOnPadConnect = data => {
@@ -127,21 +128,37 @@ export default class ComposerView extends React.Component {
     if (data.type === 'CLIENT_VARS') {
       console.log(' composerOnPadSocketHandler: CLIENT_VARS: ', data)
       data = data.data || {}
+      const email = data.emailExtr || {}
+      this.processPadEmailFields(email)
       const attachments = (data.emailExtr && data.emailExtr.attachments) || []
       await this.processPadAttachments(attachments)
       console.log(' composerOnPadSocketHandler: CLIENT_VARS: padInfo: ', padInfo)
       this.updatePadInfo(padInfo)
     } else if (data.type === 'COLLABROOM' && data.data && data.data.type === 'EMAIL_EXTR') {
       console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
-      const email = data.data.email
+      const email = data.data.email || {}
+      await this.processPadEmailFields(email)
       await this.processPadAttachments(email.attachments)
       await delay(1000)
       this.updatePadInfo(padInfo)
     }
   }
+  processPadEmailFields = async email => {
+    console.log(' processPadEmailFields, email: ', email)
+    const { draft, session } = this.props
+    draft.subject = email.subject
+    const from = await DraftStore.getContactsFromEmails(email.from)
+    const to = await DraftStore.getContactsFromEmails(email.to)
+    const cc = await DraftStore.getContactsFromEmails(email.cc)
+    const bcc = await DraftStore.getContactsFromEmails(email.bcc)
+    draft.from = from
+    draft.to = to
+    draft.cc = cc
+    draft.bcc = bcc
+    await session.changes.commit()
+  }
 
   processPadAttachments = async attachments => {
-    // await this.clearDraftAttachments()
     console.log(' processPadAttachments: ', attachments)
     const fileMap = {}
     for (const item of attachments) {
@@ -179,30 +196,6 @@ export default class ComposerView extends React.Component {
     savePadInfo(padInfo)
   }
 
-  sendEmailExtra = (padInfo, draft) => {
-    const files = Object.values(padInfo.files)
-    console.log(' sendEmailExtra: before send pad json: draft, files: ', draft, files)
-    const { padId } = padInfo
-    const pad = window.padMap[padId]
-    const to = draft.to.map(x => x.email)
-    const cc = draft.cc.map(x => x.email)
-    const bcc = draft.bcc.map(x => x.email)
-    pad.socket.json.send({
-      type: 'COLLABROOM',
-      component: 'pad',
-      data: {
-        type: 'EMAIL_EXTR',
-        email: {
-          subject: draft.subject,
-          to,
-          cc,
-          bcc,
-          attachments: files,
-        },
-      },
-    })
-  }
-
   removeAttachment = (headerMessageId, file) => {
     Actions.removeAttachment(headerMessageId, file)
     this.removePadAttachment(file)
@@ -218,7 +211,7 @@ export default class ComposerView extends React.Component {
     let files = padInfo.files || {}
     padInfo.files = files
     delete files[file.awsKey]
-    this.sendEmailExtra(padInfo, draft)
+    sendEmailExtra(padInfo, draft)
   }
 
   onAddedAttachments = async ({ headerMessageId, filePaths, inline }) => {
@@ -236,7 +229,7 @@ export default class ComposerView extends React.Component {
       console.log(' uploadFileAsync: ', res)
       files[res.awsKey] = res
     }
-    this.sendEmailExtra(padInfo, draft)
+    sendEmailExtra(padInfo, draft)
   }
 
   onAddedAttachment = async ({ headerMessageId, filePath, inline }) => {
@@ -261,7 +254,7 @@ export default class ComposerView extends React.Component {
     let files = padInfo.files || {}
     padInfo.files = files
     files[res.awsKey] = res
-    this.sendEmailExtra(padInfo, draft)
+    sendEmailExtra(padInfo, draft)
   }
 
   componentDidMount () {
@@ -287,6 +280,13 @@ export default class ComposerView extends React.Component {
     window.addEventListener('resize', this._onResize, true)
     this._onResize()
     this._isDraftMissingAttachments(this.props)
+
+    const { padInfo, inTeamEditMode } = this.state
+    if (inTeamEditMode) {
+      window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
+      window.composerOnPadConnect = this.composerOnPadConnect
+      sendEmailExtra(padInfo, draft)
+    }
   }
   _getToName (participants) {
     if (!participants || !Array.isArray(participants.to) || participants.to.length === 0) {
@@ -659,13 +659,27 @@ export default class ComposerView extends React.Component {
     const { draft } = this.props
     if (!inTeamEditMode && (!padInfo || !padInfo.padId)) {
       padInfo = await this.createTeamEditPad()
+      draft.padInfo = padInfo
+      this.needSendIntialPadInfo = true
+    } else {
+      draft.padInfo = null
     }
     console.log(' toggleTeamEdit: ', padInfo)
     this.setState({ inTeamEditMode: !inTeamEditMode, padInfo })
   }
+  componentDidUpdate () {
+    const { padInfo } = this.state
+    const { draft } = this.props
+    if (this.needSendIntialPadInfo) {
+      this.needSendIntialPadInfo = false
+      setTimeout(() => {
+        sendEmailExtra(padInfo, draft)
+      }, 100)
+    }
+  }
 
   _renderEditor () {
-    const draft = this.props
+    const { draft } = this.props
     if (this.state.inTeamEditMode) {
       const { padInfo } = this.state
       return <TeamreplyEditor draft={draft} padInfo={padInfo} updatePadInfo={this.updatePadInfo} />
