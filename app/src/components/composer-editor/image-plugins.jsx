@@ -40,17 +40,14 @@ function ImageNode(props) {
         showMask={isSelect}
         callback={value => {
           editor.change(change => {
-            const newValue = {
-              isVoid: true,
-              type: IMAGE_TYPE,
+            return change.setNodeByKey(node.key, {
               data: {
                 src: src,
                 draggerDisable: true,
                 height: value.height,
                 width: value.width,
               },
-            };
-            return change.setValue(newValue);
+            });
           });
         }}
         lockAspectRatio
