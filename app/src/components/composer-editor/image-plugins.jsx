@@ -122,10 +122,10 @@ const rules = [
         };
         const style = el.style;
         if (style.height) {
-          data.height = ~~`${style.height}`.replace('px', '');
+          data.height = style.height;
         }
         if (style.width) {
-          data.width = ~~`${style.width}`.replace('px', '');
+          data.width = style.width;
         }
 
         return {
