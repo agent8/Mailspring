@@ -18,16 +18,30 @@ import DOMUtils from '../../dom-utils';
 let DraftStore = null;
 
 async function prepareBodyForQuoting(body) {
-  // TODO: Fix inline images
-  const cidRE = MessageUtils.cidRegexString;
+  // const cidRE = MessageUtils.cidRegexString;
 
   // Be sure to match over multiple lines with [\s\S]*
   // Regex explanation here: https://regex101.com/r/vO6eN2/1
-  let transformed = (body || '').replace(new RegExp(`<img.*${cidRE}[\\s\\S]*?>`, 'igm'), '');
+  // let transformed = (body || '').replace(new RegExp(`<img.*${cidRE}[\\s\\S]*?>`, 'igm'), '');
+  // We no longer remove inline attachments from quoted body
+  let transformed = body;
   transformed = await SanitizeTransformer.run(transformed, SanitizeTransformer.Preset.UnsafeOnly);
   transformed = await InlineStyleTransformer.run(transformed);
   return transformed;
 }
+const removeAttachmentWithNoContentId = files => {
+  if (!Array.isArray(files)) {
+    return [];
+  }
+  const ret = [];
+  files.forEach(file => {
+    // Because in the end, we use contentId to id which attachment goes where
+    if (file && (typeof file.contentId === 'string') && file.contentId.length > 0) {
+      ret.push(file);
+    }
+  });
+  return ret;
+};
 const mergeDefaultBccAndCCs = async (message, account) => {
   const mergeContacts = (field = 'cc', contacts) => {
     if (!Array.isArray(message[field])) {
@@ -303,6 +317,7 @@ class DraftFactory {
       to: participants.to,
       cc: participants.cc,
       from: [this._fromContactForReply(message)],
+      files: removeAttachmentWithNoContentId(message.files),
       threadId: thread.id,
       accountId: message.accountId,
       replyOrForward: Message.draftType.reply,
