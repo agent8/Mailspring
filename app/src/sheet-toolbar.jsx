@@ -9,6 +9,7 @@ import { Actions, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
 import Flexbox from './components/flexbox';
 import RetinaImg from './components/retina-img';
 import Utils from './flux/models/utils';
+import _ from 'underscore';
 
 let Category = null;
 let FocusedPerspectiveStore = null;
@@ -216,15 +217,15 @@ export default class Toolbar extends React.Component {
     }
   }
 
-  recomputeLayout() {
+  recomputeLayout = () => {
     // Yes this really happens - do not remove!
     if (!this.mounted) {
       return;
     }
 
     // Find our item containers that are tied to specific columns
-    const el = ReactDOM.findDOMNode(this);
-    const columnToolbarEls = el.querySelectorAll('[data-column]');
+    const el = this.toolbarEl;
+    const columnToolbarEls = el.children;
 
     // Find the top sheet in the stack
     const sheetList = document.querySelectorAll("[name='Sheet']") || [];
@@ -246,6 +247,11 @@ export default class Toolbar extends React.Component {
       columnToolbarEl.style.width = `${columnEl.offsetWidth}px`;
       // calc the left conversation panel's width
       if (column === '0' && columnEl.className === 'column-RootSidebar') {
+        if (columnEl.offsetWidth < 187) {
+          columnEl.setAttribute('sidebar-narrow', true);
+        } else {
+          columnEl.removeAttribute('sidebar-narrow');
+        }
         const leftChatPanel = document.querySelector('.chat-left-panel-container');
         if (leftChatPanel) {
           leftChatPanel.style.width = `${columnEl.offsetWidth - 1}px`;
@@ -264,8 +270,10 @@ export default class Toolbar extends React.Component {
     }
 
     // Record our overall height for sheets
-    remote.getCurrentWindow().setSheetOffset(el.clientHeight);
+    this._setSheetOffset(el.clientHeight);
   }
+
+  _setSheetOffset = _.debounce(posY => remote.getCurrentWindow().setSheetOffset(posY), 100);
 
   _onWindowResize = () => {
     this.recomputeLayout();
@@ -369,6 +377,7 @@ export default class Toolbar extends React.Component {
 
     return (
       <div
+        ref={el => this.toolbarEl = el}
         style={style}
         className={`sheet-toolbar-container mode-${this.state.mode}`}
         data-id={this.props.data.id}

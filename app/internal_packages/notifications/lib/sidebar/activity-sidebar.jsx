@@ -18,7 +18,7 @@ export default class ActivitySidebar extends React.Component {
   static containerRequired = false;
 
   static containerStyles = {
-    minWidth: 165,
+    minWidth: 125,
     maxWidth: 400,
   };
 

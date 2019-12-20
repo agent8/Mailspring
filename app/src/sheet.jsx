@@ -19,7 +19,7 @@ export default class Sheet extends React.Component {
   };
 
   static defaultProps = {
-    onColumnSizeChanged: () => {},
+    onColumnSizeChanged: () => { },
   };
 
   static childContextTypes = {
@@ -84,6 +84,10 @@ export default class Sheet extends React.Component {
     const { maxWidth, minWidth, handle, location, width } = column;
     const mode = isPrevious ? this.state.previousMode : this.state.mode;
     const dataId = isPrevious ? this.state.previousData.id : this.props.data.id;
+    const otherProps = {};
+    if (location.id === 'RootSidebar' && width < 187) {
+      otherProps['sidebar-narrow'] = 'true';
+    }
     if (minWidth !== maxWidth && maxWidth < FLEX) {
       return (
         <ResizableRegion
@@ -97,6 +101,7 @@ export default class Sheet extends React.Component {
           minWidth={minWidth}
           maxWidth={maxWidth}
           handle={handle}
+          {...otherProps}
         >
           <InjectedComponentSet direction="column" matching={{ location: location, mode: mode }} />
         </ResizableRegion>
