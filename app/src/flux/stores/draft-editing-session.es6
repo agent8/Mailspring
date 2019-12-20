@@ -54,7 +54,6 @@ class DraftChangeSet extends EventEmitter {
   }
 
   add (changes, { skipSaving = false } = {}) {
-    console.log(' draft.add changes: ', changes)
     if (!skipSaving) {
       changes.pristine = false
       changes.needUpload = true
@@ -84,9 +83,7 @@ class DraftChangeSet extends EventEmitter {
   }
 
   dirtyFields () {
-    return Object.keys(this._lastModifiedTimes).filter(
-      key => this._lastModifiedTimes[key] > this._lastCommitTime
-    )
+    return Object.keys(this._lastModifiedTimes).filter(key => this._lastModifiedTimes[key] > this._lastCommitTime)
   }
 
   debounceCommit () {
@@ -150,7 +147,7 @@ function hotwireDraftBodyState (draft) {
       }
       draft.bodyEditorState = nextValue
       _bodyHTMLCache = inHTML
-    },
+    }
   }
 
   draft.__bodyEditorStatePropDescriptor = {
@@ -163,7 +160,7 @@ function hotwireDraftBodyState (draft) {
         _bodyHTMLCache = null
       }
       _bodyEditorState = next
-    },
+    }
   }
 
   Object.defineProperty(draft, 'body', draft.__bodyPropDescriptor)
@@ -234,7 +231,7 @@ export default class DraftEditingSession extends MailspringStore {
     this.headerMessageId = headerMessageId
     this.changes = new DraftChangeSet({
       onAddChanges: changes => this.changeSetApplyChanges(changes),
-      onCommit: arg => this.changeSetCommit(arg), // for specs
+      onCommit: arg => this.changeSetCommit(arg) // for specs
     })
 
     this._registerListeners()
@@ -250,30 +247,30 @@ export default class DraftEditingSession extends MailspringStore {
         Actions.draftOpenCount({
           headerMessageId,
           windowLevel: currentWindowLevel,
-          source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
+          source: `draft-editing-session, with draft level: ${currentWindowLevel}`
         })
       } else if (draft.replyOrForward !== Message.draftType.new) {
         if (currentWindowLevel === 2) {
           Actions.draftOpenCount({
             headerMessageId,
             windowLevel: currentWindowLevel,
-            source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
+            source: `draft-editing-session, with draft level: ${currentWindowLevel}`
           })
         } else if (currentWindowLevel === 1 && inFocusedThread) {
           Actions.draftOpenCount({
             headerMessageId,
             windowLevel: currentWindowLevel,
-            source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
+            source: `draft-editing-session, with draft level: ${currentWindowLevel}`
           })
         }
       }
     } else {
       let localPromise = DraftStore.findByHeaderMessageIdWithBody({
-        headerMessageId: this.headerMessageId,
+        headerMessageId: this.headerMessageId
       }).limit(1)
       if (options.showFailed) {
         localPromise = DraftStore.findFailedByHeaderMessageIdWithBody({
-          headerMessageId: this.headerMessageId,
+          headerMessageId: this.headerMessageId
         }).limit(1)
       }
       this._draftPromise = localPromise.then(draft => {
@@ -313,7 +310,7 @@ export default class DraftEditingSession extends MailspringStore {
           Actions.draftOpenCount({
             headerMessageId,
             windowLevel: currentWindowLevel,
-            source: `draft editing session, no draft ${currentWindowLevel}`,
+            source: `draft editing session, no draft ${currentWindowLevel}`
           })
         }
         this.trigger()
@@ -396,9 +393,7 @@ export default class DraftEditingSession extends MailspringStore {
         this.changeSetCommit('unload')
       }
     }
-    AppEnv.logDebug(
-      `closing session of ${this.headerMessageId} for ${reason} windowLevel: ${this.currentWindowLevel}`
-    )
+    AppEnv.logDebug(`closing session of ${this.headerMessageId} for ${reason} windowLevel: ${this.currentWindowLevel}`)
     this.teardown()
   }
 
@@ -428,9 +423,7 @@ export default class DraftEditingSession extends MailspringStore {
 
     for (const contact of allRecipients) {
       if (!ContactStore.isValidContact(contact)) {
-        errors.push(
-          `${contact.email} is not a valid email address - please remove or edit it before sending.`
-        )
+        errors.push(`${contact.email} is not a valid email address - please remove or edit it before sending.`)
       }
       const name = contact.fullName()
       if (name && name.length && name !== contact.email) {
@@ -481,9 +474,7 @@ export default class DraftEditingSession extends MailspringStore {
       if (match) {
         const salutation = (match[1] || '').toLowerCase()
         if (!allNames.find(n => n === salutation || (n.length > 1 && salutation.includes(n)))) {
-          warnings.push(
-            `addressed to a name that doesn't appear to be a recipient ("${salutation}")`
-          )
+          warnings.push(`addressed to a name that doesn't appear to be a recipient ("${salutation}")`)
         }
       }
     }
@@ -512,9 +503,7 @@ export default class DraftEditingSession extends MailspringStore {
     const draft = this.draft()
     const account = AccountStore.accountForEmail(draft.from[0].email)
     if (!account) {
-      throw new Error(
-        'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.'
-      )
+      throw new Error('DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.')
     }
 
     if (account.id !== draft.accountId) {
@@ -546,15 +535,15 @@ export default class DraftEditingSession extends MailspringStore {
           msgOrigin: draft.msgOrigin,
           unread: false,
           starred: false,
-          draft: true,
-        }),
+          draft: true
+        })
       })
 
       const destroy =
         draft.id &&
         new DestroyDraftTask({
           messageIds: [draft.id],
-          accountId: draft.accountId,
+          accountId: draft.accountId
         })
       // console.log('syncback draft from ensure account');
       Actions.queueTask(create)
@@ -599,9 +588,7 @@ export default class DraftEditingSession extends MailspringStore {
       return
     }
 
-    const nextDraft = change.objects
-      .filter(obj => obj.headerMessageId === this._draft.headerMessageId)
-      .pop()
+    const nextDraft = change.objects.filter(obj => obj.headerMessageId === this._draft.headerMessageId).pop()
 
     if (!nextDraft) {
       return
@@ -615,13 +602,13 @@ export default class DraftEditingSession extends MailspringStore {
         newMessageId: this._draft.id,
         referenceMessageId: this._draft.referenceMessageId,
         threadId: this._draft.threadId,
-        windowLevel: this.currentWindowLevel,
+        windowLevel: this.currentWindowLevel
       })
       changed = true
     }
     if (this._draft.waitingForBody || !this._draft.body) {
       DraftStore.findByHeaderMessageIdWithBody({
-        headerMessageId: this.headerMessageId,
+        headerMessageId: this.headerMessageId
       })
         .limit(1)
         .then(draft => {
@@ -713,9 +700,7 @@ export default class DraftEditingSession extends MailspringStore {
     }
     // if id is empty, we assign uuid to id;
     if (!this._draft.id || this._draft.id === '') {
-      AppEnv.reportError(
-        new Error(`Draft id is empty assigning new id for draft ${JSON.stringify(this._draft)}`)
-      )
+      AppEnv.reportError(new Error(`Draft id is empty assigning new id for draft ${JSON.stringify(this._draft)}`))
       this._draft.id = uuid()
     }
     // if (
@@ -760,10 +745,7 @@ export default class DraftEditingSession extends MailspringStore {
       AppEnv.grabLogs()
         .then(filename => {
           if (typeof filename === 'string' && filename.length > 0) {
-            AppEnv.reportError(new Error('SyncbackDraft Task not returned'), {
-              errorData: task,
-              files: [filename],
-            })
+            AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: task, files: [filename] })
           }
         })
         .catch(e => {
@@ -780,7 +762,6 @@ export default class DraftEditingSession extends MailspringStore {
   }
 
   changeSetApplyChanges = changes => {
-    console.log(' changeSetApplyChanges: ', this, changes)
     if (this._destroyed) {
       return
     }

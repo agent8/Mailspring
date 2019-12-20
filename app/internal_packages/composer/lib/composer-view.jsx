@@ -147,14 +147,12 @@ export default class ComposerView extends React.Component {
     console.log(' processPadEmailFields, email: ', email)
     const { draft, session } = this.props
     draft.subject = email.subject
-    const from = await DraftStore.getContactsFromEmails(email.from)
-    const to = await DraftStore.getContactsFromEmails(email.to)
-    const cc = await DraftStore.getContactsFromEmails(email.cc)
-    const bcc = await DraftStore.getContactsFromEmails(email.bcc)
-    draft.from = from
-    draft.to = to
-    draft.cc = cc
-    draft.bcc = bcc
+    for (let key of ['from', 'to', 'cc', 'bcc']) {
+      const emails = email[key] || []
+      const contacts = await DraftStore.getContactsFromEmails(emails)
+      draft[key] = contacts
+    }
+    console.log(' processPadEmailFields commit: draft: ', draft)
     await session.changes.commit()
   }
 
@@ -196,6 +194,30 @@ export default class ComposerView extends React.Component {
     savePadInfo(padInfo)
   }
 
+  sendEmailExtra = (padInfo, draft) => {
+    const files = Object.values(padInfo.files)
+    console.log(' sendEmailExtra: before send pad json: draft, files: ', draft, files)
+    const { padId } = padInfo
+    const pad = window.padMap[padId]
+    const to = draft.to.map(x => x.email)
+    const cc = draft.cc.map(x => x.email)
+    const bcc = draft.bcc.map(x => x.email)
+    pad.socket.json.send({
+      type: 'COLLABROOM',
+      component: 'pad',
+      data: {
+        type: 'EMAIL_EXTR',
+        email: {
+          subject: draft.subject,
+          to,
+          cc,
+          bcc,
+          attachments: files,
+        },
+      },
+    })
+  }
+
   removeAttachment = (headerMessageId, file) => {
     Actions.removeAttachment(headerMessageId, file)
     this.removePadAttachment(file)
@@ -211,7 +233,7 @@ export default class ComposerView extends React.Component {
     let files = padInfo.files || {}
     padInfo.files = files
     delete files[file.awsKey]
-    sendEmailExtra(padInfo, draft)
+    this.sendEmailExtra(padInfo, draft)
   }
 
   onAddedAttachments = async ({ headerMessageId, filePaths, inline }) => {
@@ -229,7 +251,7 @@ export default class ComposerView extends React.Component {
       console.log(' uploadFileAsync: ', res)
       files[res.awsKey] = res
     }
-    sendEmailExtra(padInfo, draft)
+    this.sendEmailExtra(padInfo, draft)
   }
 
   onAddedAttachment = async ({ headerMessageId, filePath, inline }) => {
@@ -254,7 +276,7 @@ export default class ComposerView extends React.Component {
     let files = padInfo.files || {}
     padInfo.files = files
     files[res.awsKey] = res
-    sendEmailExtra(padInfo, draft)
+    this.sendEmailExtra(padInfo, draft)
   }
 
   componentDidMount () {
@@ -283,8 +305,6 @@ export default class ComposerView extends React.Component {
 
     const { padInfo, inTeamEditMode } = this.state
     if (inTeamEditMode) {
-      window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
-      window.composerOnPadConnect = this.composerOnPadConnect
       sendEmailExtra(padInfo, draft)
     }
   }
