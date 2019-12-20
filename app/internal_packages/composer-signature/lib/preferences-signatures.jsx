@@ -6,9 +6,7 @@ import {
   ComposerEditor,
   ComposerSupport,
 } from 'mailspring-component-kit';
-import { ResolveSignatureData } from './constants';
 import SignatureAccountDefaultPicker from './signature-account-default-picker';
-import Templates from './templates';
 
 const {
   Conversion: { convertFromHTML, convertToHTML },
@@ -17,7 +15,8 @@ const {
 class SignatureEditor extends React.Component {
   constructor(props) {
     super(props);
-    const body = props.signature ? props.signature.body : '';
+    const signatureId = this.props.signature ? this.props.signature.id : '';
+    const body = SignatureStore.getBodyById(signatureId);
     this.state = {
       editorState: convertFromHTML(body),
     };
