@@ -144,7 +144,7 @@ class SignatureStore extends MailspringStore {
   _onRemoveSignatureBody = id => {
     const bodyFilePath = path.join(this._signaturesDir, `${id}.html`);
     if (fs.existsSync(bodyFilePath)) {
-      fs.unlink(bodyFilePath, e => {});
+      fs.unlinkSync(bodyFilePath);
     }
 
     // updata cache
