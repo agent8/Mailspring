@@ -159,6 +159,10 @@ class SignatureStore extends MailspringStore {
   };
 
   _onUpsertSignatureBody = (id, body) => {
+    const oldBody = this.signaturesBody.get(id);
+    if (typeof body === 'undefined' || body === oldBody) {
+      return;
+    }
     const bodyFilePath = path.join(this._signaturesDir, `${id}.html`);
     fs.writeFileSync(bodyFilePath, body);
     // updata cache
