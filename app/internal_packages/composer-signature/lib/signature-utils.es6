@@ -1,4 +1,5 @@
 import { RegExpUtils } from 'mailspring-exports';
+import { SignatureStore } from 'mailspring-exports';
 
 export function currentSignatureId(body) {
   let replyEnd = body.search(RegExpUtils.nativeQuoteStartRegex());
@@ -34,9 +35,11 @@ export function applySignature(body, signature) {
   if (signature) {
     const contentBefore = newBody.slice(0, insertionPoint);
     const contentAfter = newBody.slice(insertionPoint);
-    return `${contentBefore}${additionalWhitespace}<signature id="${signature.id}">${
-      signature.body
-    }</signature>${additionalClosingWhitespace}${contentAfter}`;
+    return `${contentBefore}${additionalWhitespace}<signature id="${
+      signature.id
+    }">${SignatureStore.getBodyById(
+      signature.id
+    )}</signature>${additionalClosingWhitespace}${contentAfter}`;
   } else {
     return newBody;
   }
