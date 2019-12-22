@@ -142,9 +142,9 @@ class SendActionButton extends React.Component {
         SoundRegistry.playSound('hit-send');
       }
       if (noDelay) {
-        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, delay: 0 });
+        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, delay: 0, source: 'No Delay' });
       } else {
-        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey });
+        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, source: 'User Trigger' });
       }
     }
   };

@@ -3,15 +3,15 @@ import { remote } from 'electron';
 class NativeNotifications {
   constructor() {
     this._notificationsByTag = {};
-    AppEnv.onBeforeUnload(() => {
-      Object.keys(this._notificationsByTag).forEach(key => {
-        const notif = this._notificationsByTag[key];
-        if (notif && !notif.isDestroyed()) {
-          notif.close();
-        }
-      });
-      return true;
-    });
+    // AppEnv.onBeforeUnload(() => {
+    //   Object.keys(this._notificationsByTag).forEach(key => {
+    //     const notif = this._notificationsByTag[key];
+    //     if (notif && !notif.isDestroyed()) {
+    //       notif.close();
+    //     }
+    //   });
+    //   return true;
+    // });
   }
   displayNotification({ title, subtitle, body, tag, canReply, onActivate = () => { } } = {}) {
     let notif = null;
@@ -20,7 +20,7 @@ class NativeNotifications {
     }
     notif = remote.getGlobal('application').getNotification({
       title,
-      // bundleId: 'com.edisonmail.edisonmail',
+      // bundleId: 'com.easilydo.mac',
       hasReply: canReply,
       subtitle: subtitle,
       body: body,

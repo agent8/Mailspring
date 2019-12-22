@@ -1,7 +1,9 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
 import ModeSwitch from './mode-switch';
+import { remote } from 'electron';
 
 export class AppearanceScaleSlider extends React.Component {
   static displayName = 'AppearanceScaleSlider';
@@ -19,6 +21,11 @@ export class AppearanceScaleSlider extends React.Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({ value: nextProps.config.get(this.kp) });
   }
+
+  _onChangeConfig = () => {
+    this.props.config.set(this.kp, this.state.value);
+    setTimeout(() => ReactDOM.findDOMNode(this).scrollIntoView(false), 1);
+  };
 
   render() {
     return (
@@ -38,7 +45,8 @@ export class AppearanceScaleSlider extends React.Component {
           max={1.4}
           step={0.05}
           value={this.state.value}
-          onChange={e => this.props.config.set(this.kp, e.target.value)}
+          onMouseUp={this._onChangeConfig}
+          onChange={e => this.setState({ value: e.target.value })}
         />
       </div>
     );
@@ -100,6 +108,7 @@ export function AppearancePanelOptions(props) {
   );
 }
 
+const THEME_MODE_KEY = 'core.themeMode';
 export class AppearanceThemeSwitch extends React.Component {
   static displayName = 'AppearanceThemeSwitch';
 
@@ -126,9 +135,17 @@ export class AppearanceThemeSwitch extends React.Component {
   _getState() {
     return {
       themes: this.themes.getAvailableThemes(),
-      activeTheme: this.themes.getActiveTheme().name,
+      activeTheme: this.props.config.get(THEME_MODE_KEY) || this.themes.getActiveTheme().name,
     };
   }
+
+  switchTheme = value => {
+    this.props.config.set(THEME_MODE_KEY, value);
+    if (value === 'auto') {
+      value = remote.systemPreferences.isDarkMode() ? 'ui-dark' : 'ui-light';
+    }
+    this.themes.setActiveTheme(value);
+  };
 
   render() {
     const internalThemes = ['ui-dark', 'ui-light'];
@@ -150,15 +167,18 @@ export class AppearanceThemeSwitch extends React.Component {
         imgsrc: `prefs-appearance-${mode}.png`,
       };
     });
+    modeSwitchList.push({
+      value: 'auto',
+      label: 'Use System Settings',
+      imgsrc: `prefs-appearance-system.png`,
+    });
     return (
       <ModeSwitch
         className="theme-switch"
         modeSwitch={modeSwitchList}
         config={this.props.config}
         activeValue={this.state.activeTheme}
-        onSwitchOption={value => {
-          this.themes.setActiveTheme(value);
-        }}
+        onSwitchOption={this.switchTheme}
       />
     );
   }

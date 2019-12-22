@@ -68,6 +68,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Show labels (Gmail only)',
+              configSchema: configSchema =>
+                configSchema.properties.workspace.properties.showLabels,
+              keyPath: 'core.workspace.showLabels',
+              keywords: [],
+            },
+            {
               label: 'Show unread count for all folders',
               configSchema: configSchema =>
                 configSchema.properties.workspace.properties.showUnreadForAllCategories,

@@ -28,6 +28,28 @@ async function prepareBodyForQuoting(body) {
   transformed = await InlineStyleTransformer.run(transformed);
   return transformed;
 }
+const mergeDefaultBccAndCCs = async (message, account) => {
+  const mergeContacts = (field = 'cc', contacts) => {
+    if (!Array.isArray(message[field])) {
+      message[field] = [];
+    }
+    contacts.forEach(contact => {
+      const exist = message[field].find(tmp => {
+        return tmp.email === contact.email;
+      });
+      if (!exist) {
+        message[field].push(contact);
+      }
+    });
+  };
+  const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
+  if (account.autoaddress.type === 'cc') {
+    mergeContacts('cc', autoContacts);
+  }
+  if (account.autoaddress.type === 'bcc') {
+    mergeContacts('bcc', autoContacts);
+  }
+};
 
 class DraftFactory {
   async createDraft(fields = {}) {
@@ -59,14 +81,14 @@ class DraftFactory {
     } else {
       merged.referenceMessageId = merged.replyToHeaderMessageId;
     }
-
-    const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
-    if (account.autoaddress.type === 'cc') {
-      merged.cc = (merged.cc || []).concat(autoContacts);
-    }
-    if (account.autoaddress.type === 'bcc') {
-      merged.bcc = (merged.bcc || []).concat(autoContacts);
-    }
+    await mergeDefaultBccAndCCs(merged, account);
+    // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
+    // if (account.autoaddress.type === 'cc') {
+    //   merged.cc = (merged.cc || []).concat(autoContacts);
+    // }
+    // if (account.autoaddress.type === 'bcc') {
+    //   merged.bcc = (merged.bcc || []).concat(autoContacts);
+    // }
 
     return new Message(merged);
   }
@@ -139,13 +161,14 @@ class DraftFactory {
       hasNewID: false,
       accountId: account.id
     });
-    const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
-    if (account.autoaddress.type === 'cc') {
-      defaults.cc = (defaults.cc || []).concat(autoContacts);
-    }
-    if (account.autoaddress.type === 'bcc') {
-      defaults.bcc = (defaults.bcc || []).concat(autoContacts);
-    }
+    await mergeDefaultBccAndCCs(defaults, account);
+    // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
+    // if (account.autoaddress.type === 'cc') {
+    //   defaults.cc = (defaults.cc || []).concat(autoContacts);
+    // }
+    // if (account.autoaddress.type === 'bcc') {
+    //   defaults.bcc = (defaults.bcc || []).concat(autoContacts);
+    // }
     return new Message(defaults);
   }
 
@@ -177,13 +200,7 @@ class DraftFactory {
       hasNewID: false,
       accountId: account.id,
     });
-    const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
-    if (account.autoaddress.type === 'cc') {
-      defaults.cc = (defaults.cc || []).concat(autoContacts);
-    }
-    if (account.autoaddress.type === 'bcc') {
-      defaults.bcc = (defaults.bcc || []).concat(autoContacts);
-    }
+    await mergeDefaultBccAndCCs(defaults, account);
     return new Message(defaults);
   }
 

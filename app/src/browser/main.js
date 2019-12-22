@@ -25,7 +25,7 @@ if (process.env.HTTP_PROXY) {
   app.commandLine.appendSwitch('proxy-server', process.env.HTTP_PROXY);
   app.commandLine.appendSwitch('proxy-bypass-list', '<local>;');
 }
-if (process.env.HTTPS_PROXY){
+if (process.env.HTTPS_PROXY) {
   app.commandLine.appendSwitch('proxy-server', process.env.HTTPS_PROXY);
   app.commandLine.appendSwitch('proxy-bypass-list', '<local>;');
 }
@@ -244,6 +244,10 @@ const handleStartupEventWithSquirrel = () => {
   }
 };
 
+function isRunningInSandbox() {
+  return !!process.env.APP_SANDBOX_CONTAINER_ID;
+}
+
 const start = () => {
   app.setAppUserModelId('com.squirrel.edisonmail.edisonmail');
   if (handleStartupEventWithSquirrel()) {
@@ -255,7 +259,7 @@ const start = () => {
   const configDirPath = setupConfigDir(options);
   options.configDirPath = configDirPath;
 
-  if (!options.devMode) {
+  if (!options.devMode && !isRunningInSandbox()) {
     // for single instance check
     const otherInstanceRunning = !app.requestSingleInstanceLock();
     if (otherInstanceRunning) {
