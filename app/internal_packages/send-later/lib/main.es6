@@ -52,7 +52,7 @@ function handleMetadataExpiration(change) {
 
     // send the draft
     const actionKey = metadata.actionKey || SendActionsStore.DefaultSendActionKey;
-    Actions.sendDraft(message.headerMessageId, { actionKey, delay: 0 });
+    Actions.sendDraft(message.headerMessageId, { actionKey, delay: 0, source: 'handleMetadataExpiration' });
   });
 }
 

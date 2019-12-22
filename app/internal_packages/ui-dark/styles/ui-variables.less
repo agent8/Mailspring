@@ -83,5 +83,9 @@ img.content-light {
 .thread-list .list-item:not(.unread):not(.selected):not(.focused) {
   background-color: @cards;
 }
+.fixed-popover-container .fixed-popover .label-picker-popover img.check-img,
+.fixed-popover-container .fixed-popover .category-picker-popover img.check-img {
+  filter: invert(100%);
+}
 
 @input-search-bg: @cards;

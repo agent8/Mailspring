@@ -87,7 +87,7 @@ class DraftStore extends MailspringStore {
 
       // send mail Immediately
       ipcRenderer.on('action-send-now', (event, headerMessageId, actionKey) => {
-        Actions.sendDraft(headerMessageId, { actionKey, delay: 0 });
+        Actions.sendDraft(headerMessageId, { actionKey, delay: 0, source: 'Undo timeout' });
       });
     }
     ipcRenderer.on('action-send-cancelled', (event, headerMessageId, actionKey) => {
@@ -695,7 +695,7 @@ class DraftStore extends MailspringStore {
         // TaskQueue.waitForPerformLocal(t)
 
         this._finalizeAndPersistNewMessage(draft).then(() => {
-          Actions.sendDraft(draft.headerMessageId);
+          Actions.sendDraft(draft.headerMessageId, {source: 'SendQuickReply'});
         }).catch(e => {
           AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e }, { grabLogs: true });
         });
@@ -1230,6 +1230,7 @@ class DraftStore extends MailspringStore {
             deleting: this._draftsDeleting,
             deleted: this._draftsDeleted,
             openCount: this._draftsOpenCount,
+            options: options
           },
         },
         { grabLogs: true }
@@ -1246,6 +1247,7 @@ class DraftStore extends MailspringStore {
               deleting: this._draftsDeleting,
               deleted: this._draftsDeleted,
               openCount: this._draftsOpenCount,
+              options: options
             },
           },
           { grabLogs: true }
@@ -1279,6 +1281,7 @@ class DraftStore extends MailspringStore {
             deleting: this._draftsDeleting,
             deleted: this._draftsDeleted,
             openCount: this._draftsOpenCount,
+            options: options
           },
         },
         { grabLogs: true }
@@ -1351,7 +1354,9 @@ class DraftStore extends MailspringStore {
           this._onSendDraftCancelled({ headerMessageId });
         },
       });
-      AppEnv.logDebug(`Sending draft to undo queue ${headerMessageId}`);
+      AppEnv.logDebug(
+        `Sending draft to undo queue ${headerMessageId} from source: ${options && options.source}`
+      );
       Actions.queueUndoOnlyTask(undoTask);
       // ipcRenderer.send('send-later-manager', 'send-later', headerMessageId, delay, actionKey, draft.threadId);
     } else {

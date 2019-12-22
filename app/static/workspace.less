@@ -273,7 +273,7 @@ body.is-blurred {
   .toolbar-OutboxMessage,
   .toolbar-MessageList {
     height: @search-bar-height;
-    border-bottom: 1px solid @border-color-primary;
+    // border-bottom: 1px solid @border-color-primary;
   }
   .toolbar-MessageList {
     &.has-shadow {
@@ -718,6 +718,14 @@ body.platform-win32 {
   flex-shrink: 0;
   box-shadow: 0 1px 20px 0 rgba(0, 0, 0, 0.1);
   z-index: 2;
+  &[sidebar-narrow] {
+    .btn-toolbar.item-compose {
+      span {
+        padding: 0 !important;
+        width: 0 !important;
+      }
+    }
+  }
 }
 .column-SiftList,
 .column-Outbox,
@@ -727,6 +735,7 @@ body.platform-win32 {
   margin-top: @search-bar-height;
   padding-bottom: @search-bar-height;
   -webkit-app-region: no-drag;
+  border-top: 1px solid @border-color-primary;
   div {
     // This is for DC-182 reduce height because of thread-list-empty-bar
     div:nth-child(2).key-commands-region.thread-list,
@@ -768,6 +777,7 @@ body.platform-win32 {
   margin-top: @search-bar-height;
   padding-bottom: @search-bar-height;
   -webkit-app-region: no-drag;
+  border-top: 1px solid @border-color-primary;
 }
 .mode-list .column-SiftList,
 .mode-list .column-Outbox,
