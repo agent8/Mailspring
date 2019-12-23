@@ -79,7 +79,7 @@
       background: @icon-hover-bg-color;
       display: block;
       position: absolute;
-      .grow-up-animation-mixin()
+      .grow-up-animation-mixin();
     }
     img.content-mask {
       background-color: @gray-light;
@@ -286,6 +286,9 @@
     img.content-mask {
       background-color: @medium-grey;
     }
+    &.hide {
+      display: none;
+    }
   }
 
   button.active {
@@ -431,12 +434,12 @@ body.platform-win32 {
         height: 36px;
         width: 36px;
         border-radius: 50%;
-        background: @icon-hover-bg-color;
+        background: @off-white;
         display: block;
         position: absolute;
         top: -6px;
         left: 3px;
-        .grow-up-animation-mixin()
+        .grow-up-animation-mixin();
       }
       img.content-mask {
         background-color: @medium-grey;

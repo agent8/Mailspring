@@ -6,9 +6,7 @@ import {
   ComposerEditor,
   ComposerSupport,
 } from 'mailspring-component-kit';
-import { ResolveSignatureData } from './constants';
 import SignatureAccountDefaultPicker from './signature-account-default-picker';
-import Templates from './templates';
 
 const {
   Conversion: { convertFromHTML, convertToHTML },
@@ -17,7 +15,8 @@ const {
 class SignatureEditor extends React.Component {
   constructor(props) {
     super(props);
-    const body = props.signature ? props.signature.body : '';
+    const signatureId = this.props.signature ? this.props.signature.id : '';
+    const body = SignatureStore.getBodyById(signatureId);
     this.state = {
       editorState: convertFromHTML(body),
     };
@@ -48,11 +47,9 @@ class SignatureEditor extends React.Component {
     let signature = this.props.signature;
     let empty = false;
     if (!signature) {
-      signature = { data: { templateName: Templates[0].name } };
+      signature = {};
       empty = true;
     }
-    const data = signature.data || {};
-    const resolvedData = ResolveSignatureData(data);
 
     return (
       <div className={`signature-wrap ${empty && 'empty'}`}>
@@ -142,7 +139,6 @@ export default class PreferencesSignatures extends React.Component {
         id,
         title: 'Untitled',
         body: defaultTemplate.body,
-        data: defaultTemplate.data,
       },
       id
     );
