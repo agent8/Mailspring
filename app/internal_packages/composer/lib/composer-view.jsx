@@ -150,24 +150,33 @@ export default class ComposerView extends React.Component {
   composerOnDownloadPadImg = async ({ context, id, $ }) => {
     console.log(' composerOnDownloadPadImg: context: ', context)
     //context.cls: author-400376 img:<img src="../../download-inline-images/400376/b74f23f3-dbf2-4bbe-8151-2503f00e329c--$_@_$--avatar.png"> lineAttribMarker
+    const el = $(`#${id}`)
+    const img = el.find('img')
+    if (img.attr('flag')) {
+      return
+    }
     let s = context.cls
     let mark1 = '/download-inline-images/'
-    let mark2 = '"> lineAttribMarker'
+    let mark2 = '"'
     let i = s.indexOf(mark1) + mark1.length
-    let j = s.indexOf(mark2)
+    let j = s.indexOf(mark2, i)
     let awsKey = s.substring(i, j)
     console.log(' composerOnDownloadPadImg: awsKey: ', awsKey)
     await downloadPadInlineImage(awsKey, null)
-    const el = $(`#${id}`)
     console.log(' composerOnDownloadPadImg: img-span: ', el)
-    const img = el.find('img')
-    el.empty()
     mark1 = '<img src="'
     i = s.indexOf(mark1) + mark1.length
     const src = s.substring(i, j)
     console.log(' composerOnDownloadPadImg: img: ', img, img[0], s, i, j, src)
-    img.attr('src', src)
-    el.prepend(img)
+    const cwd = process.cwd()
+    const filePath = path.join(cwd, 'app/interanl_packages/composer/teamreply-client/src/html', src)
+    if (fs.existsSync(filePath)) {
+      console.log(' in file exist: ')
+      el.empty()
+      img.attr('src', src)
+      img.attr('flag', 1)
+      el.prepend(img)
+    }
   }
 
   composerOnPadConnect = data => {

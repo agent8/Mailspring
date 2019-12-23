@@ -805,6 +805,7 @@ class AttachmentStore extends MailspringStore {
       if (!fromPad) {
         Actions.addedAttachment({ headerMessageId, filePath, inline })
       }
+      return file
     } catch (err) {
       AppEnv.showErrorDialog(err.message)
     }
