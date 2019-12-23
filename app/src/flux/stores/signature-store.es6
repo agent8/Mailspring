@@ -98,11 +98,15 @@ class SignatureStore extends MailspringStore {
     }
 
     const bodyFilePath = path.join(this._signaturesDir, `${id}.html`);
-    let bodyInFile = sigDefaultTemplate.body;
+    // Backward compatibility
+    let bodyInFile =
+      this.signatures[id] && this.signatures[id].body
+        ? this.signatures[id].body
+        : sigDefaultTemplate.body;
     if (fs.existsSync(bodyFilePath)) {
       bodyInFile = fs.readFileSync(bodyFilePath).toString();
     } else {
-      fs.writeFileSync(bodyFilePath, sigDefaultTemplate.body);
+      fs.writeFileSync(bodyFilePath, bodyInFile);
     }
 
     // add to cache
