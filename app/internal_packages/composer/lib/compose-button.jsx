@@ -83,10 +83,10 @@ export default class ComposeButton extends React.Component {
       >
         {this.state.showLoading ?
           <LottieImg name='loading-spinner-blue'
-            size={{ width: 24, height: 24 }}
+            size={{ width: 20, height: 20 }}
             style={{ margin: 'none' }} /> :
           <RetinaImg name='pencil.svg'
-            style={{ width: 24 }}
+            style={{ width: 20 }}
             isIcon={true}
             mode={RetinaImg.Mode.ContentIsMask} />
         }
