@@ -521,8 +521,28 @@ export default class Message extends ModelWithMetadata {
   // Public: Returns true if this message === from the current user's email
   // address. In the future, this method will take into account all of the
   // user's email addresses && accounts.
-  isFromMe() {
-    return this.from[0] ? this.from[0].isMe() : false;
+  isFromMe({ ignoreOtherAccounts = false } = {}) {
+    if (!this.from[0]) {
+      return false;
+    }
+    if (ignoreOtherAccounts) {
+      const account = AccountStore.accountForEmail(this.from[0].email);
+      if (account) {
+        return account.id === this.accountId;
+      }
+    }
+    return this.from[0].isMe();
+  }
+
+  isFromMyOtherAccounts() {
+    if (!this.from[0]) {
+      return false;
+    }
+    const account = AccountStore.accountForEmail(this.from[0].email);
+    if (account) {
+      return account.id !== this.accountId;
+    }
+    return false;
   }
 
   isForwarded() {
