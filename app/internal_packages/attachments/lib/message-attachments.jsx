@@ -23,7 +23,11 @@ class MessageAttachments extends Component {
 
   onOpenAttachment = file => {
     if (MessageStore.isAttachmentMissing(file.id)) {
-      Actions.fetchAttachments({ accountId: file.accountId, missingItems: [file.id] });
+      Actions.fetchAttachments({
+        accountId: file.accountId,
+        missingItems: [file.id],
+        needProcess: true,
+      });
     } else {
       Actions.fetchAndOpenFile(file);
     }
