@@ -10,6 +10,8 @@ import Actions from '../actions';
 import File from '../models/file';
 import Utils from '../models/utils';
 import mime from 'mime-types';
+import DatabaseStore from './database-store';
+import AttachmentProgress from '../models/attachment-progress';
 
 Promise.promisifyAll(fs);
 
@@ -239,7 +241,14 @@ class AttachmentStore extends MailspringStore {
 
     this._filePreviewPaths = {};
     this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
+    this._fileProcess = new Map();
     mkdirp(this._filesDirectory);
+
+    DatabaseStore.listen(change => {
+      if (change.objectClass === AttachmentProgress.name) {
+        this._onPresentChange(change.objects);
+      }
+    });
   }
 
   // Returns a path on disk for saving the file. Note that we must account
@@ -290,11 +299,9 @@ class AttachmentStore extends MailspringStore {
     return extName === 'video';
   }
 
-  getDownloadDataForFile() {
-    // fileId
-    // if we ever support downloads again, put this back
-    return null;
-  }
+  getDownloadDataForFile = fileId => {
+    return this._fileProcess.get(fileId);
+  };
 
   // Returns a hash of download objects keyed by fileId
   getDownloadDataForFiles(fileIds = []) {
@@ -533,6 +540,24 @@ class AttachmentStore extends MailspringStore {
     const downloadDir = this._defaultSaveDir();
     return path.join(downloadDir, file.safeDisplayName());
   }
+
+  _onPresentChange = changes => {
+    if (changes && changes.length) {
+      changes.forEach(obj => {
+        if (obj) {
+          const id = obj.id;
+          const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
+          if (id && percent) {
+            this._fileProcess.set(id, {
+              state: percent >= 1 ? 'done' : 'downloading',
+              percent: parseInt(percent * 100),
+            });
+          }
+        }
+      });
+      this.trigger();
+    }
+  };
 
   _presentError({ file, error } = {}) {
     const name = file ? file.displayName() : 'one or more files';
