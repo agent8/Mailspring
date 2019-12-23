@@ -336,14 +336,15 @@ export default class Contact extends Model {
 
   static fromString(string, { accountId } = {}) {
     const emailRegex = RegExpUtils.emailRegex();
-    const match = emailRegex.exec(string);
-    if (!match || emailRegex.exec(string)) {
-      const errMsg = `Error while calling Contact.fromString: string didn't contains only one email:${string}`;
+    const matches = Array.from(string.matchAll(emailRegex), m => m );
+    if (!matches || matches.length === 0) {
+      const errMsg = `Error while calling Contact.fromString: string does not contain any email:${string}`;
       console.error(errMsg);
       const e = new Error(errMsg);
       AppEnv.logDebug(e);
       return null;
     }
+    const match = matches[matches.length - 1];
     const email = match[0];
     let name = string.substr(0, match.index - 1);
     if (name.endsWith('<') || name.endsWith('(')) {
