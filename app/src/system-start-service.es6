@@ -79,7 +79,7 @@ class SystemStartServiceDarwin extends SystemStartServiceBase {
 
   _launchdPlist() {
     return {
-      Label: 'com.easilydo.mac',
+      Label: 'com.edisonmail.edisonmail',
       Program: this._launcherPath(),
       ProgramArguments: ['--background'],
       RunAtLoad: true,
