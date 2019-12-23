@@ -45,3 +45,10 @@ function findMinNotInArr(arr) {
   }
   return sortList.length + 1;
 }
+
+export function transfornImgToBase64(filePath) {
+  const bitmap = fs.readFileSync(filePath);
+  const extname = path.extname(filePath);
+  const base64str = Buffer.from(bitmap, 'binary').toString('base64');
+  return `data:image/${extname};base64,${base64str}`;
+}
