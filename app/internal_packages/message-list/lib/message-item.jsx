@@ -113,14 +113,6 @@ export default class MessageItem extends React.Component {
 
   _onDownloadAll = () => {
     if (MessageStore.isMessageMissingAttachment(this.props.message)) {
-      const newDownload = {};
-      Object.keys(this.state.downloads).forEach(fileId => {
-        newDownload[fileId] = {
-          state: 'downloading',
-          percent: 0,
-        };
-      });
-      this.setState({ downloads: newDownload });
       Actions.fetchAttachmentsByMessage({ messageId: this.props.message.id });
     } else {
       Actions.fetchAndSaveAllFiles(this.props.message.files);

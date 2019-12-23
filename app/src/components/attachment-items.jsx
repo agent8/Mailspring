@@ -176,7 +176,6 @@ export class AttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      this.setState({ isDownloading: true, percent: 0 });
       MessageStore.fetchMissingAttachmentsByFileIds({ fileIds: [this.props.fileId] });
     } else {
       if (fs.existsSync(this.props.filePath)) {
@@ -373,7 +372,6 @@ export class ImageAttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      this.setState({ isDownloading: true, percent: 0 });
       MessageStore.fetchMissingAttachmentsByFileIds({ filedIds: [this.props.fileId] });
     }
     const { onOpenAttachment } = this.props;

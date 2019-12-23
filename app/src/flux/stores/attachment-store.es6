@@ -232,6 +232,7 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.fetchAndSaveFile, this._fetchAndSave);
     this.listenTo(Actions.fetchAndSaveAllFiles, this._fetchAndSaveAll);
     this.listenTo(Actions.abortFetchFile, this._abortFetchFile);
+    this.listenTo(Actions.fetchAttachments, this._onFetchAttachments);
 
     // sending
     this.listenTo(Actions.addAttachment, this._onAddAttachment);
@@ -540,6 +541,26 @@ class AttachmentStore extends MailspringStore {
     const downloadDir = this._defaultSaveDir();
     return path.join(downloadDir, file.safeDisplayName());
   }
+
+  _onFetchAttachments = ({ missingItems, needProgress }) => {
+    if (!needProgress) {
+      return;
+    }
+    this._onPresentStart(missingItems);
+  };
+
+  _onPresentStart = ids => {
+    const fileIds = ids || [];
+    if (fileIds.length) {
+      fileIds.forEach(id => {
+        this._fileProcess.set(id, {
+          state: 'downloading',
+          percent: 0,
+        });
+      });
+      this.trigger();
+    }
+  };
 
   _onPresentChange = changes => {
     if (changes && changes.length) {
