@@ -538,7 +538,11 @@ class MessageStore extends MailspringStore {
         return this._missingAttachmentIds.includes(id);
       })
     ) {
-      Actions.fetchAttachments({ accountId: this._items[0].accountId, missingItems: fileIds });
+      Actions.fetchAttachments({
+        accountId: this._items[0].accountId,
+        missingItems: fileIds,
+        needProcess: true,
+      });
     }
   }
 
@@ -568,7 +572,11 @@ class MessageStore extends MailspringStore {
                 processed++;
                 if (processed === total) {
                   if (missing.length > 0) {
-                    Actions.fetchAttachments({ accountId: this._items[i].accountId, missingItems: missing });
+                    Actions.fetchAttachments({
+                      accountId: this._items[i].accountId,
+                      missingItems: missing,
+                      needProcess: true,
+                    });
                   }
                   if (change) {
                     this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
@@ -587,7 +595,11 @@ class MessageStore extends MailspringStore {
             }
             if (processed === total) {
               if (missing.length > 0) {
-                Actions.fetchAttachments({ accountId: this._items[i].accountId, missingItems: missing });
+                Actions.fetchAttachments({
+                  accountId: this._items[i].accountId,
+                  missingItems: missing,
+                  needProcess: true,
+                });
               }
               if (change) {
                 this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
