@@ -210,10 +210,11 @@ class SidebarSection {
   static accountUserCategories(account, { title, collapsible } = {}) {
     const items = [];
     const seenItems = {};
+    const missingCategory = [];
+    const re = RegExpUtils.subcategorySplitRegex();
     for (let category of CategoryStore.userCategories(account)) {
       // https://regex101.com/r/jK8cC2/1
       var item, parentKey;
-      const re = RegExpUtils.subcategorySplitRegex();
       const itemKey = category.displayName.replace(re, '/');
       if (itemKey.toLocaleLowerCase().includes('inbox/')) {
         continue;
@@ -233,6 +234,7 @@ class SidebarSection {
           item = SidebarItem.forCategories([category]);
           items.push(item);
         } else {
+          missingCategory.push(category);
           item = null;
         }
       }
@@ -240,6 +242,15 @@ class SidebarSection {
         seenItems[itemKey.toLocaleLowerCase()] = item;
       }
     }
+    missingCategory.forEach(category => {
+      const catKey = category.displayName.replace(re, '/');
+      if (!seenItems[catKey.toLocaleLowerCase()]) {
+        const item = SidebarItem.forCategories([category]);
+        if (item) {
+          items.push(item);
+        }
+      }
+    });
     return items;
   }
 

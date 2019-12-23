@@ -129,6 +129,13 @@ class EditableList extends Component {
       editingIndex: -1,
       creatingItem: false,
     };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   // Helpers
@@ -188,6 +195,12 @@ class EditableList extends Component {
   _scrollTo = idx => {
     if (!idx) return;
     const wrapperNode = ReactDOM.findDOMNode(this._itemsWrapperEl);
+    if (!wrapperNode) {
+      AppEnv.reportError(
+        new Error(`WrapperNode cannot be found in scrollTo, component is mounted: ${this._mounted}`)
+      );
+      return;
+    }
     const nodes = wrapperNode.querySelectorAll('.list-item');
     this._itemsWrapperEl.scrollTo(nodes[idx]);
   };
@@ -326,7 +339,12 @@ class EditableList extends Component {
 
   _onDragOver = event => {
     const wrapperNode = ReactDOM.findDOMNode(this._itemsWrapperEl);
-
+    if (!wrapperNode) {
+      AppEnv.reportError(
+        new Error(`WrapperNode cannot be found in DragOver, component is mounted: ${this._mounted}`)
+      );
+      return;
+    }
     // As of Chromium 53, we cannot access the contents of the drag pasteboard
     // until the user drops for security reasons. Pull the list id from the
     // drag datatype itself.

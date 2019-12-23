@@ -215,7 +215,17 @@ export default class ComposerView extends React.Component {
       // DC-997
       this.scrollBodyInView(this._els.header);
     } else {
-      this._els[Fields.Body].focus();
+      // Sometimes, we the component is mounted but bodyContent is not.
+      if (this._els[Fields.Body]) {
+        this._els[Fields.Body].focus();
+      } else {
+        // We retry once at next interval.
+        setImmediate(() => {
+          if (this._mounted && this._els[Fields.Body]) {
+            this._els[Fields.Body].focus();
+          }
+        });
+      }
     }
   }
 

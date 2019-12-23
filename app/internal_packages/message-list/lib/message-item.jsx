@@ -9,10 +9,10 @@ import {
   EmailAvatar,
   CalendarStore,
   FocusedPerspectiveStore,
-  Message,
   TrashFromSenderTask,
+  OutboxStore,
 } from 'mailspring-exports';
-import { RetinaImg, InjectedComponentSet, InjectedComponent } from 'mailspring-component-kit';
+import { RetinaImg, InjectedComponentSet, InjectedComponent, OutboxSender } from 'mailspring-component-kit';
 
 import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
@@ -329,8 +329,20 @@ export default class MessageItem extends React.Component {
     return null;
   }
 
+  _renderEmailAvatar() {
+    if (this.props.isOutboxDraft) {
+      return <OutboxSender draft={this.props.message} lottieStyle={{margin: "-45px auto 0px -5px"}} />;
+    } else {
+      return <EmailAvatar
+        key="thread-avatar"
+        message={this.props.message}
+        messagePending={this.props.pending}
+      />;
+    }
+  }
+
   _renderHeader() {
-    const { message, thread, messages, pending } = this.props;
+    const { message, thread, messages} = this.props;
     const { trackers } = this.state;
     return (
       <header
@@ -374,13 +386,7 @@ export default class MessageItem extends React.Component {
         </div>
         {this._renderBlockBtn()}
         <div className="row">
-          <EmailAvatar
-            key="thread-avatar"
-            message={message}
-            messagePending={
-              pending || Message.compareMessageState(message.state, Message.messageState.failing)
-            }
-          />
+          {this._renderEmailAvatar()}
           <div>
             <MessageParticipants
               from={message.from}

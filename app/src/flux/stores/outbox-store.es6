@@ -15,6 +15,7 @@ import {
   AccountStore,
 } from 'mailspring-exports';
 
+const resendIndicatorTimeoutMS = 3000;
 class OutboxStore extends MailspringStore {
   static findAll() {
     return DatabaseStore.findAll(Message, { draft: true }).where([
@@ -41,6 +42,8 @@ class OutboxStore extends MailspringStore {
     this._totalInOutbox = 0;
     this._totalFailedDrafts = 0;
     this._selectedDraft = null;
+    this._resendingDrafts = {};
+    this._resendDraftCheckTimer = null;
     if (AppEnv.isMainWindow()) {
       this.listenTo(TaskQueue, this._populate);
       this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
@@ -49,6 +52,7 @@ class OutboxStore extends MailspringStore {
       this.listenTo(Actions.gotoOutbox, this._gotoOutbox);
       this.listenTo(Actions.cancelOutboxDrafts, this._onCancelOutboxDraft);
       this.listenTo(Actions.editOutboxDraft, this._onEditOutboxDraft);
+      this.listenTo(Actions.resendDrafts, this._appendToResendDraft);
       this._createListDataSource();
     }
   }
@@ -71,10 +75,58 @@ class OutboxStore extends MailspringStore {
   selectionObservable = () => {
     return Rx.Observable.fromListSelection(this);
   };
+
+  draftNeedsToDisplaySending = draft => {
+    if (this._resendingDrafts[draft.headerMessageId]) {
+      return true;
+    }
+    return Message.compareMessageState(draft.state, Message.messageState.failing);
+  };
+  _clearResendIndicators = () => {
+    this._resendDraftCheckTimer = null;
+    const headerMessageIds = Object.keys(this._resendingDrafts);
+    if (headerMessageIds.length > 0) {
+      let shouldTrigger = false;
+      headerMessageIds.forEach(headerMessageId => {
+        const now = Date.now();
+        if (now - this._resendingDrafts[headerMessageId] >= resendIndicatorTimeoutMS) {
+          delete this._resendingDrafts[headerMessageId];
+          shouldTrigger = true;
+        }
+      });
+      this._triggerTimerCheck();
+      if (shouldTrigger) {
+        this.trigger();
+      }
+    }
+  };
+  _triggerTimerCheck = () => {
+    const headerMessageIds = Object.keys(this._resendingDrafts);
+    if (headerMessageIds.length > 0) {
+      if (!this._resendDraftCheckTimer) {
+        this._resendDraftCheckTimer = setTimeout(
+          this._clearResendIndicators,
+          resendIndicatorTimeoutMS
+        );
+      }
+    }
+  };
+  _appendToResendDraft = ({ messages = [], source = '' } = {}) =>{
+    let shouldTrigger = false;
+    messages.forEach(message => {
+      if (!this._resendingDrafts[message.headerMessageId]) {
+        this._resendingDrafts[message.headerMessageId] = Date.now();
+        shouldTrigger = true;
+      }
+    });
+    this._triggerTimerCheck();
+    if (shouldTrigger){
+      this.trigger();
+    }
+  };
   _onEditOutboxDraft = (headerMessageId) =>{
     if(this._selectedDraft && headerMessageId === this._selectedDraft.headerMessageId){
       this._selectedDraft = null;
-      console.log('draft edited');
       this.trigger();
     }
   };

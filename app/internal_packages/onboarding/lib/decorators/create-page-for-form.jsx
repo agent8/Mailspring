@@ -18,7 +18,6 @@ const CreatePageForForm = FormComponent => {
 
     constructor(props) {
       super(props);
-
       this.state = Object.assign(
         {
           account: this.props.account.clone(),
@@ -27,10 +26,16 @@ const CreatePageForForm = FormComponent => {
         },
         FormComponent.validateAccount(this.props.account)
       );
+      this._mounted = false;
     }
 
     componentDidMount() {
+      this._mounted = true;
       this._applyFocus();
+    }
+
+    componentWillUnmount() {
+      this._mounted = false;
     }
 
     _applyFocus() {
@@ -81,14 +86,15 @@ const CreatePageForForm = FormComponent => {
       }
 
       const { errorFieldNames, errorMessage, populated } = FormComponent.validateAccount(next);
-
-      this.setState({
-        account: next,
-        errorFieldNames,
-        errorMessage,
-        populated,
-        errorStatusCode: null,
-      });
+      if(this._mounted){
+        this.setState({
+          account: next,
+          errorFieldNames,
+          errorMessage,
+          populated,
+          errorStatusCode: null,
+        });
+      }
     };
 
     onSubmit = () => {
@@ -118,8 +124,9 @@ const CreatePageForForm = FormComponent => {
     onConnect = updatedAccount => {
       const account = updatedAccount || this.state.account;
       const proceedWithAccount = () => {
-        this.setState({ submitting: true });
-
+        if(this._mounted){
+          this.setState({ submitting: true });
+        }
         finalizeAndValidateAccount(account)
           .then(validated => {
             OnboardingActions.moveToPage('account-onboarding-success');
@@ -159,9 +166,11 @@ const CreatePageForForm = FormComponent => {
                   if (response === 1 && this.state.account && this.state.account.settings) {
                     account.settings.imap_allow_insecure_ssl = true;
                     account.settings.smtp_allow_insecure_ssl = true;
-                    this.setState({ account, submitting: true }, () => {
-                      this.onConnect(this.state.account);
-                    });
+                    if(this._mounted){
+                      this.setState({ account, submitting: true }, () => {
+                        this.onConnect(this.state.account);
+                      });
+                    }
                   } else {
                     account.settings.imap_allow_insecure_ssl = false;
                     account.settings.smtp_allow_insecure_ssl = false;
@@ -174,14 +183,16 @@ const CreatePageForForm = FormComponent => {
                     AppEnv.reportError(err, {
                       account: AccountStore.stripAccountData(errorAccount),
                     });
-                    this.setState({
-                      errorMessage: err.message,
-                      errorStatusCode: err.statusCode,
-                      errorLog: err.rawLog,
-                      errorFieldNames,
-                      account,
-                      submitting: false,
-                    });
+                    if(this._mounted){
+                      this.setState({
+                        errorMessage: err.message,
+                        errorStatusCode: err.statusCode,
+                        errorLog: err.rawLog,
+                        errorFieldNames,
+                        account,
+                        submitting: false,
+                      });
+                    }
                   }
                 });
               return;
@@ -195,14 +206,16 @@ const CreatePageForForm = FormComponent => {
             AppEnv.reportError(err, {
               account: AccountStore.stripAccountData(errorAccount),
             });
-            this.setState({
-              errorMessage: err.message,
-              errorStatusCode: err.statusCode,
-              errorLog: err.rawLog,
-              errorFieldNames,
-              account,
-              submitting: false,
-            });
+            if(this._mounted){
+              this.setState({
+                errorMessage: err.message,
+                errorStatusCode: err.statusCode,
+                errorLog: err.rawLog,
+                errorFieldNames,
+                account,
+                submitting: false,
+              });
+            }
           });
       };
       // warn users about authenticating a Gmail or Google Apps account via IMAP
