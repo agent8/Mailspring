@@ -186,6 +186,7 @@ class SendActionButton extends React.Component {
       body = email.body
     }
     console.log(' setTeamEditPadContent: ', body)
+    alert('setTeamEditPadContent: ' + body)
     draft.body = body
     await session.changes.commit()
     await this.clearDraftAttachments(draft)

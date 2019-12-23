@@ -12,6 +12,7 @@
 #**/app/src/error-logger-extensions
 **/internal_packages/composer-mail-merge
 **/internal_packages/composer-scheduler
+download-inline-images/
 
 ##### Node modules
 node_modules

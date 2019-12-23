@@ -32,7 +32,7 @@ import ActionBarPlugins from './action-bar-plugins'
 import Fields from './fields'
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
-import { uploadPadFile } from './pad-utils'
+import { uploadPadFile, downloadPadInlineImage } from './pad-utils'
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
@@ -103,6 +103,8 @@ export default class ComposerView extends React.Component {
   async componentWillMount () {
     Actions.addedAttachment.listen(this.onAddedAttachment)
     Actions.addedAttachments.listen(this.onAddedAttachments)
+    window.composerOnAddImage = this.composerOnAddImage
+    window.composerOnDownloadPadImg = this.composerOnDownloadPadImg
     window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
     window.composerOnPadConnect = this.composerOnPadConnect
     const windowProps = AppEnv.getWindowProps()
@@ -112,6 +114,60 @@ export default class ComposerView extends React.Component {
     draft.session = session
     draft.padInfo = padInfo
     this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
+  }
+
+  composerOnAddImage = async options => {
+    console.log(' composerOnAddImage: options: ', options)
+    const { context, handleNewLines, file, $ } = options
+    try {
+      const { padInfo } = this.state
+      const jidLocal = padInfo.userId
+      const res = await uploadPadFile(file.path, jidLocal)
+      console.log(' uploadPadFile: res: ', res)
+      const downloadPath = await downloadPadInlineImage(res.awsKey, res.aes)
+      console.log(' why no next: ')
+      const i = downloadPath.indexOf('download-inline-images')
+      const imgPath = '../../' + downloadPath.substring(i)
+      console.log(' composerOnAddImage: imgPath: ', imgPath)
+      context.ace.callWithAce(
+        function (ace) {
+          $('#imageUploadModalLoader').hide()
+          var imageLineNr = handleNewLines(ace)
+          console.log(' addImage success: ', imageLineNr)
+          ace.ace_addImage(imageLineNr, imgPath)
+          ace.ace_doReturnKey()
+        },
+        'img',
+        true
+      )
+    } catch (e) {
+      $('#imageUploadModalLoader').hide()
+      $('#imageUploadModalError .error').html(e.message)
+      $('#imageUploadModalError').show()
+    }
+  }
+
+  composerOnDownloadPadImg = async ({ context, id, $ }) => {
+    console.log(' composerOnDownloadPadImg: context: ', context)
+    //context.cls: author-400376 img:<img src="../../download-inline-images/400376/b74f23f3-dbf2-4bbe-8151-2503f00e329c--$_@_$--avatar.png"> lineAttribMarker
+    let s = context.cls
+    let mark1 = '/download-inline-images/'
+    let mark2 = '"> lineAttribMarker'
+    let i = s.indexOf(mark1) + mark1.length
+    let j = s.indexOf(mark2)
+    let awsKey = s.substring(i, j)
+    console.log(' composerOnDownloadPadImg: awsKey: ', awsKey)
+    await downloadPadInlineImage(awsKey, null)
+    const el = $(`#${id}`)
+    console.log(' composerOnDownloadPadImg: img-span: ', el)
+    const img = el.find('img')
+    el.empty()
+    mark1 = '<img src="'
+    i = s.indexOf(mark1) + mark1.length
+    const src = s.substring(i, j)
+    console.log(' composerOnDownloadPadImg: img: ', img, img[0], s, i, j, src)
+    img.attr('src', src)
+    el.prepend(img)
   }
 
   composerOnPadConnect = data => {
@@ -149,7 +205,10 @@ export default class ComposerView extends React.Component {
     draft.subject = email.subject
     for (let key of ['from', 'to', 'cc', 'bcc']) {
       const emails = email[key] || []
-      const contacts = await DraftStore.getContactsFromEmails(emails)
+      let contacts = await DraftStore.getContactsFromEmails(emails)
+      if (key == 'from' && !contacts.length) {
+        contacts = draft[key]
+      }
       draft[key] = contacts
     }
     console.log(' processPadEmailFields commit: draft: ', draft)

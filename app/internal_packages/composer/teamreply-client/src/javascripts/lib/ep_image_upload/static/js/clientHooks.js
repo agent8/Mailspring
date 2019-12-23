@@ -62,50 +62,53 @@ require.define({
             // add assoc key values, this will be posts values
             formData.append('file', file, file.name)
             $('#imageUploadModalLoader').show()
-            $.ajax({
-              type: 'POST', // yazz
-              url:
-                'http://127.0.0.1:8087/p/' + clientVars.padId + '/pluginfw/ep_image_upload/upload',
-              xhr: function () {
-                var myXhr = $.ajaxSettings.xhr()
+            var options = { context: context, handleNewLines: _handleNewLines, file: file, $: $ }
+            console.log(' ace image change file: ', options)
+            window.parent.composerOnAddImage(options)
+            // $.ajax({
+            //   type: 'POST', // yazz
+            //   url:
+            //     'http://127.0.0.1:8087/p/' + clientVars.padId + '/pluginfw/ep_image_upload/upload',
+            //   xhr: function () {
+            //     var myXhr = $.ajaxSettings.xhr()
 
-                return myXhr
-              },
-              success: function (data) {
-                $('#imageUploadModalLoader').hide()
-                context.ace.callWithAce(
-                  function (ace) {
-                    var imageLineNr = _handleNewLines(ace)
-                    console.log(' addImage success: ', imageLineNr)
-                    ace.ace_addImage(imageLineNr, data)
-                    ace.ace_doReturnKey()
-                  },
-                  'img',
-                  true
-                )
-              },
-              error: function (error) {
-                var errorResponse
-                try {
-                  errorResponse = JSON.parse(error.responseText.trim())
-                  if (errorResponse.type) {
-                    errorResponse.message = window._('ep_image_upload.error.' + errorResponse.type)
-                  }
-                } catch (err) {
-                  errorResponse = { message: error.responseText }
-                }
+            //     return myXhr
+            //   },
+            //   success: function (data) {
+            //     $('#imageUploadModalLoader').hide()
+            //     context.ace.callWithAce(
+            //       function (ace) {
+            //         var imageLineNr = _handleNewLines(ace)
+            //         console.log(' addImage success: ', imageLineNr)
+            //         ace.ace_addImage(imageLineNr, data)
+            //         ace.ace_doReturnKey()
+            //       },
+            //       'img',
+            //       true
+            //     )
+            //   },
+            //   error: function (error) {
+            //     var errorResponse
+            //     try {
+            //       errorResponse = JSON.parse(error.responseText.trim())
+            //       if (errorResponse.type) {
+            //         errorResponse.message = window._('ep_image_upload.error.' + errorResponse.type)
+            //       }
+            //     } catch (err) {
+            //       errorResponse = { message: error.responseText }
+            //     }
 
-                $('#imageUploadModalLoader').hide()
-                $('#imageUploadModalError .error').html(errorResponse.message)
-                $('#imageUploadModalError').show()
-              },
-              async: true,
-              data: formData,
-              cache: false,
-              contentType: false,
-              processData: false,
-              timeout: 60000,
-            })
+            //     $('#imageUploadModalLoader').hide()
+            //     $('#imageUploadModalError .error').html(errorResponse.message)
+            //     $('#imageUploadModalError').show()
+            //   },
+            //   async: true,
+            //   data: formData,
+            //   cache: false,
+            //   contentType: false,
+            //   processData: false,
+            //   timeout: 60000,
+            // })
           })
         $(document)
           .find('body')
@@ -122,14 +125,20 @@ require.define({
 
     // Rewrite the DOM contents when an IMG attribute is discovered
     exports.aceDomLineProcessLineAttributes = function (name, context) {
+      console.log(' aceDomLineProcessLineAttributes: ', window, context)
       var cls = context.cls
       var exp = /(?:^| )img:([^>]*)/
       var imgType = exp.exec(cls)
 
       if (!imgType) return []
       // console.log('yazz.img',imgType, context);
+      var composerOnDownloadPadImg =
+        window.parent.composerOnDownloadPadImg ||
+        window.parent.parent.composerOnDownloadPadImg ||
+        window.parent.parent.parent.composerOnDownloadPadImg
       var randomId = Math.floor(Math.random() * 100000 + 1)
       var template = '<span id="' + randomId + '" class="image">'
+      composerOnDownloadPadImg({ context, id: randomId, $ })
       if (imgType[1]) {
         var preHtml = template + imgType[1] + ' >'
         var postHtml = '</span>'
