@@ -541,7 +541,7 @@ class MessageStore extends MailspringStore {
       Actions.fetchAttachments({
         accountId: this._items[0].accountId,
         missingItems: fileIds,
-        needProcess: true,
+        needProgress: true,
       });
     }
   }
@@ -575,7 +575,7 @@ class MessageStore extends MailspringStore {
                     Actions.fetchAttachments({
                       accountId: this._items[i].accountId,
                       missingItems: missing,
-                      needProcess: true,
+                      needProgress: true,
                     });
                   }
                   if (change) {
@@ -598,7 +598,7 @@ class MessageStore extends MailspringStore {
                 Actions.fetchAttachments({
                   accountId: this._items[i].accountId,
                   missingItems: missing,
-                  needProcess: true,
+                  needProgress: true,
                 });
               }
               if (change) {

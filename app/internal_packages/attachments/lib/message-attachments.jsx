@@ -26,7 +26,7 @@ class MessageAttachments extends Component {
       Actions.fetchAttachments({
         accountId: file.accountId,
         missingItems: [file.id],
-        needProcess: true,
+        needProgress: true,
       });
     } else {
       Actions.fetchAndOpenFile(file);

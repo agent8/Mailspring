@@ -911,13 +911,13 @@ export default class MailsyncBridge {
     }
   }
 
-  _onFetchAttachments({ accountId, missingItems, needProcess }) {
+  _onFetchAttachments({ accountId, missingItems, needProgress }) {
     const ids = this._fetchAttachmentCacheFilter({ accountId, missingItems });
     if (ids.length > 0) {
       this.sendMessageToAccount(accountId, {
         type: 'need-attachments',
         ids: ids,
-        needProcess: !!needProcess,
+        needProgress: !!needProgress,
       });
     }
   }
