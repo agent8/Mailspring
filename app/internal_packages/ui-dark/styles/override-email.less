@@ -41,6 +41,19 @@
       background-color: @active;
     }
   }
+  .item-container {
+    &.selected:hover,
+    &:hover {
+      background-color: @active;
+      &:before {
+        background-color: @active;
+      }
+      .item.selected,
+      .item {
+        background-color: @active;
+      }
+    }
+  }
 }
 
 .column-OutboxMessage,

@@ -2,6 +2,7 @@
 @import "ui-mixins";
 
 @count-color: @gray-light;
+@source-list-active-bg: @gray-lighter;
 
 .nylas-outline-view {
   order: 1;
@@ -99,13 +100,13 @@
     }
     &.selected:hover,
     &:hover {
-      background-color: @active;
+      background-color: @source-list-active-bg;
       &:before {
-        .missing-shadow-patch(@active);
+        .missing-shadow-patch(@source-list-active-bg);
       }
       .item.selected,
       .item {
-        background-color: @active;
+        background-color: @source-list-active-bg;
       }
     }
 
