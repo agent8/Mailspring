@@ -19,8 +19,8 @@ const mkdirpAsync = Promise.promisify(mkdirp);
 
 const fileAcessibleAtPath = async filePath => {
   try {
-    await fs.accessAsync(filePath, fs.F_OK);
-    return true;
+    const result = fs.existsSync(filePath);
+    return result;
   } catch (ex) {
     return false;
   }
@@ -328,7 +328,7 @@ class AttachmentStore extends MailspringStore {
   async _prepareAndResolveFilePath(file) {
     let filePath = this.pathForFile(file);
 
-    if (await fileAcessibleAtPath(filePath)) {
+    if (fileAcessibleAtPath(filePath)) {
       this._generatePreview(file);
     } else {
       // try to find the file in the directory (it should be the only file)
@@ -361,7 +361,7 @@ class AttachmentStore extends MailspringStore {
     const filePath = this.pathForFile(file);
     const previewPath = `${filePath}.png`;
 
-    if (await fileAcessibleAtPath(previewPath)) {
+    if (fileAcessibleAtPath(previewPath)) {
       // If the preview file already exists, set our state and bail
       this._filePreviewPaths[file.id] = previewPath;
       this.trigger();
