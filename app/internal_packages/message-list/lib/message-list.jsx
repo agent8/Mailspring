@@ -13,7 +13,8 @@ import {
   WorkspaceStore,
   OnlineStatusStore,
   OutboxStore,
-  SearchStore
+  SearchStore,
+  FocusedPerspectiveStore,
 } from 'mailspring-exports';
 
 import {
@@ -581,6 +582,36 @@ class MessageList extends React.Component {
     }
     menu.popup({});
   };
+  _onLabelsRemoved = removedCategories => {
+    if (!AppEnv.isMainWindow()) {
+      return;
+    }
+    if (Array.isArray(removedCategories)) {
+      const currentPerspective = FocusedPerspectiveStore.current();
+      if (currentPerspective && Array.isArray(currentPerspective.categories())) {
+        const currentCategories = currentPerspective.categories();
+        for (let removedCat of removedCategories) {
+          for (let cat of currentCategories) {
+            if (cat.id === removedCat.id) {
+              Actions.setFocus({ collection: 'thread', item: null });
+              break;
+            }
+          }
+        }
+      }
+    }
+  };
+  _onCategoriesChange = ({ type, data }) => {
+    if (type === 'labelChange' && data) {
+      if (Array.isArray(data.removedLabels)) {
+        this._onLabelsRemoved(data.removedLabels);
+      }
+    } else if (type === 'folderChange' && data){
+      if (AppEnv.isThreadWindow()) {
+        AppEnv.close();
+      }
+    }
+  };
 
   _renderSubject() {
     let subject = '';
@@ -598,19 +629,21 @@ class MessageList extends React.Component {
       <div className="message-subject-wrap">
         <div style={{ flex: 1, flexWrap: 'wrap' }}>
           <span className="message-subject"
-            onClick={this._onSelectText}
-            onContextMenu={this._onContactContextMenu.bind(this, subject)}
-          >
-            {subject}
+              onClick={this._onSelectText}
+              onContextMenu={this._onContactContextMenu.bind(this, subject)}
+            >
+              {subject}
+            </span>
             {!this.state.inOutbox && <MailImportantIcon thread={this.state.currentThread} />}
             {!this.state.inOutbox && <MailLabelSet
               noWrapper
               removable
               includeCurrentCategories
               messages={this.state.messages}
-              thread={this.state.currentThread} />
+              thread={this.state.currentThread}
+              onLabelRemoved={this._onLabelsRemoved}
+            />
             }
-          </span>
         </div>
         {/* {this._renderIcons()} */}
       </div>
@@ -839,7 +872,12 @@ class MessageList extends React.Component {
           <InjectedComponentSet
             className="item-container"
             matching={{ role: 'MessageListToolbar' }}
-            exposedProps={{ thread: currentThread, messages: messages, position: 'messageList' }}
+            exposedProps={{
+              thread: currentThread,
+              messages: messages,
+              position: 'messageList',
+              onActionCallback: this._onCategoriesChange,
+            }}
           />
         </div>
         <div className={messageListClass} id="message-list">
