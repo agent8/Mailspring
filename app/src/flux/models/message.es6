@@ -485,35 +485,33 @@ export default class Message extends ModelWithMetadata {
       let processed = 0;
       this.files.forEach(f => {
         const path = AttachmentStore.pathForFile(f);
-        fs.access(path, fs.constants.R_OK, err => {
-          if (err) {
-            processed++;
-            fs.access(`${path}.part`, fs.constants.R_OK, err => {
-              processed++;
-              if (err) {
-                if (f.isInline) {
-                  ret.inline.needToDownload.push(f);
-                } else {
-                  ret.normal.needToDownload.push(f);
-                }
-              } else {
-                if (f.isInline) {
-                  ret.inline.downloading.push(f);
-                } else {
-                  ret.normal.downloading.push(f);
-                }
-              }
-              if (processed === total) {
-                resolve(ret);
-              }
-            });
+        const exists = fs.existsSync(path);
+        if (!exists) {
+          processed++;
+          const partExists = fs.existsSync(`${path}.part`);
+          processed++;
+          if (!partExists) {
+            if (f.isInline) {
+              ret.inline.needToDownload.push(f);
+            } else {
+              ret.normal.needToDownload.push(f);
+            }
           } else {
-            processed += 2;
-            if (processed === total) {
-              resolve(ret);
+            if (f.isInline) {
+              ret.inline.downloading.push(f);
+            } else {
+              ret.normal.downloading.push(f);
             }
           }
-        });
+          if (processed === total) {
+            resolve(ret);
+          }
+        } else {
+          processed += 2;
+          if (processed === total) {
+            resolve(ret);
+          }
+        }
       });
     });
   }
@@ -597,7 +595,7 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() {}
+  isActiveDraft() { }
 
   isDeleted() {
     //DC-269

@@ -61,6 +61,7 @@
     "underscore": "1.8.x"
   },
   "scripts": {
+    "build-native": "sh scripts/build-native.sh",
     "uploaddmg": "node scripts/upload_dmg.js",
     "ndmg": "sh scripts/notarize_dmg.sh",
     "nzip": "sh scripts/notarize_zip.sh",
