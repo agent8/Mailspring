@@ -59,6 +59,7 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.composeNewBlankDraft, this._onPopoutBlankDraft);
       this.listenTo(Actions.composeNewDraftToRecipient, this._onPopoutNewDraftToRecipient);
       this.listenTo(Actions.composeInviteDraft, this._onPopoutInviteDraft);
+      this.listenTo(Actions.sendBugDraft, this._sendBugDraft);
       this.listenTo(Actions.composeFeedBackDraft, this._onPopoutFeedbackDraft);
       this.listenTo(Actions.sendQuickReply, this._onSendQuickReply);
       this.listenTo(Actions.sendDraft, this._onSendDraft);
@@ -804,6 +805,16 @@ class DraftStore extends MailspringStore {
     this._draftSessions[headerMessageId] = new DraftEditingSession(headerMessageId, draft, options);
     return this._draftSessions[headerMessageId];
   }
+
+  _sendBugDraft = async ({ logId, userFeedback }) => {
+    const draft = await DraftFactory.createReportBugDraft(logId, userFeedback);
+    if (draft) {
+      const task = SendDraftTask.forSending(draft);
+      if (task) {
+        Actions.queueTask(task);
+      }
+    }
+  };
 
   _onPopoutInviteDraft = async ({ to, subject = '', body } = {}) => {
     const draftData = {
