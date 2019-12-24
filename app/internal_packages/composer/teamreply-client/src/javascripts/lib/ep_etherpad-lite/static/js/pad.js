@@ -25,7 +25,6 @@ require.define({
     /* global $, window */
 
     var socket
-
     // These jQuery things should create local references, but for now `require()`
     // assigns to the global `$` and augments it with plugins.
     require('./jquery')
@@ -282,6 +281,7 @@ require.define({
       var composerOnPadSocketHandler = window.parent.composerOnPadSocketHandler
       var composerOnPadConnect = window.parent.composerOnPadConnect
       const query = parseQuery(document.location.search)
+      console.log(' pad.js: composerOnPadConnect: ', query, pad)
       composerOnPadConnect &&
         composerOnPadConnect({
           pad: pad,
@@ -381,7 +381,6 @@ require.define({
             chat.hide()
             $('#myusernameedit').attr('disabled', true)
             $('#chatinput').attr('disabled', true)
-
             $('#options-chatandusers')
               .parent()
               .hide()
@@ -922,14 +921,11 @@ require.define({
     })()
 
     function init () {
-      const x = pad.init()
-      console.log(window.parent)
-      window.parent.pad = pad
-      console.log(' pad.init: window.pad: ', window.parent.pad)
-      return x
+      return pad.init()
     }
 
     var settings = {
+      LineNumbersDisabled: false,
       noColors: false,
       useMonospaceFontGlobal: false,
       globalUserName: false,
@@ -2851,6 +2847,7 @@ require.define({
       // accordingly.
       editor.prepareUserChangeset = function () {
         if (!loaded) return null
+        console.log('yazz.prepareUserChangeset')
         return info.ace_prepareUserChangeset()
       }
 
@@ -2884,23 +2881,12 @@ require.define({
 
           var outerFrame = document.getElementById('ace_outer')
           outerFrame.src = 'frame1.html'
-          // outerFrame.name = "ace_outer";
-          // outerFrame.frameBorder = 0; // for IE
-          // outerFrame.title = "Ether";
           info.frame = outerFrame
-          // document.getElementById(containerId).appendChild(outerFrame);
-
-          var editorDocument = outerFrame.contentWindow.document
-
-          // editorDocument.open();
-          // editorDocument.write(outerHTML.join(''));
-          // editorDocument.close();
         })()
       }
 
       return editor
     }
-
     exports.Ace2Editor = Ace2Editor
     Ace2Editor.EMBEDED = Ace2Editor.EMBEDED || {}
   },
@@ -2938,11 +2924,12 @@ require.define({
     }
 
     /** Call this when the document is ready, and a new Ace2Editor() has been created and inited.
-    ACE's ready callback does not need to have fired yet.
-    "serverVars" are from calling doc.getCollabClientVars() on the server. */
+        ACE's ready callback does not need to have fired yet.
+        "serverVars" are from calling doc.getCollabClientVars() on the server. */
     function getCollabClient (ace2editor, serverVars, initialUserInfo, options, _pad) {
-      var editor = ace2editor
-      pad = _pad // Inject pad to avoid a circular dependency.
+      // yazz 下两个量很重要
+      var editor = ace2editor //获取变更，应用变更
+      pad = _pad // yazz 含有socket实例 Inject pad to avoid a circular dependency.
 
       var rev = serverVars.rev
       var padId = serverVars.padId
@@ -3044,6 +3031,7 @@ require.define({
           return
         }
 
+        console.log('yazz.handleUserChanges')
         // apply msgQueue changeset.
         if (msgQueue.length != 0) {
           var msg
@@ -3113,17 +3101,11 @@ require.define({
       var hiccupCount = 0
 
       function sendMessage (msg) {
-        window.console.log(' pad.sendMessage: ', msg)
         getSocket().json.send({
           type: 'COLLABROOM',
           component: 'pad',
           data: msg,
         })
-      }
-
-      function sendJson (msg) {
-        console.log(' sendJson: ', msg)
-        getSocket().json.send(msg)
       }
 
       function wrapRecordingErrors (catcher, func) {
@@ -3149,8 +3131,9 @@ require.define({
       }
 
       function handleMessageFromServer (evt) {
-        if (window.console) console.log(' handleMessageFromServer: ', evt)
-
+        if (window.console) {
+          console.log('yazz.handleMessageFromServer', evt)
+        }
         if (!getSocket()) return
         if (!evt.data) return
         var wrapper = evt
@@ -5313,7 +5296,6 @@ require.define({
          * Bring everything to a halt
          * @param {Object} params A list of callback functions to pass when all notifications are removed
          */
-
         stop: function (params) {
           // callbacks (if passed)
           var before_close = $.isFunction(params.before_close)
@@ -5336,7 +5318,6 @@ require.define({
          * @param {String/Array} replace A list of things to replace the searches with
          * @return {String} sa The output
          */
-
         _str_replace: function (search, replace, subject, count) {
           var i = 0,
             j = 0,
@@ -5378,7 +5359,6 @@ require.define({
          * A check to make sure we have something to wrap our notices with
          * @private
          */
-
         _verifyWrapper: function () {
           if ($('#gritter-notice-wrapper').length == 0) {
             $('body').append(this._tpl_wrap)
@@ -6937,42 +6917,4 @@ require.define({
       }
     })(jQuery)
   },
-  'ep_etherpad-lite/static/js/pad': null,
-  'ep_etherpad-lite/static/js/pad_utils': null,
-  'ep_etherpad-lite/static/js/browser': null,
-  'ep_etherpad-lite/static/js/pad_cookie': null,
-  'ep_etherpad-lite/static/js/pad_editor': null,
-  'ep_etherpad-lite/static/js/pad_editbar': null,
-  'ep_etherpad-lite/static/js/pad_docbar': null,
-  'ep_etherpad-lite/static/js/pad_modals': null,
-  'ep_etherpad-lite/static/js/ace': null,
-  'ep_etherpad-lite/static/js/collab_client': null,
-  'ep_etherpad-lite/static/js/pad_userlist': null,
-  'ep_etherpad-lite/static/js/pad_impexp': null,
-  'ep_etherpad-lite/static/js/pad_savedrevs': null,
-  'ep_etherpad-lite/static/js/pad_connectionstatus': null,
-  'ep_etherpad-lite/static/js/chat': null,
-  'ep_etherpad-lite/static/js/gritter': null,
-  'tinycon/tinycon': null,
-  'ep_etherpad-lite/static/js/excanvas': null,
-  'ep_etherpad-lite/static/js/farbtastic': null,
-  'ep_etherpad-lite/static/js/pad/index.js': null,
-  'ep_etherpad-lite/static/js/pad_utils/index.js': null,
-  'ep_etherpad-lite/static/js/browser/index.js': null,
-  'ep_etherpad-lite/static/js/pad_cookie/index.js': null,
-  'ep_etherpad-lite/static/js/pad_editor/index.js': null,
-  'ep_etherpad-lite/static/js/pad_editbar/index.js': null,
-  'ep_etherpad-lite/static/js/pad_docbar/index.js': null,
-  'ep_etherpad-lite/static/js/pad_modals/index.js': null,
-  'ep_etherpad-lite/static/js/ace/index.js': null,
-  'ep_etherpad-lite/static/js/collab_client/index.js': null,
-  'ep_etherpad-lite/static/js/pad_userlist/index.js': null,
-  'ep_etherpad-lite/static/js/pad_impexp/index.js': null,
-  'ep_etherpad-lite/static/js/pad_savedrevs/index.js': null,
-  'ep_etherpad-lite/static/js/pad_connectionstatus/index.js': null,
-  'ep_etherpad-lite/static/js/chat/index.js': null,
-  'ep_etherpad-lite/static/js/gritter/index.js': null,
-  'tinycon/tinycon/index.js': null,
-  'ep_etherpad-lite/static/js/excanvas/index.js': null,
-  'ep_etherpad-lite/static/js/farbtastic/index.js': null,
 })

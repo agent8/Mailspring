@@ -573,7 +573,7 @@
       vertical-align: middle
     }
 
-    a,
+    #chaticon a,
     #chatlabel,
     #titlecross,
     #titlesticky,
@@ -773,6 +773,7 @@
       background: linear-gradient(#EEE, #F0F0F0) !important
     }
 
+    #chaticon,
     #chattext {
       background-color: #fff
     }
@@ -1088,7 +1089,7 @@
 
     .usertdname {
       font-size: 0.8em;
-      color: #88f
+      color: #444
     }
 
     .usertdstatus {
@@ -1160,7 +1161,8 @@
       left: 0
     }
 
-    #chatbox {
+    #chatbox,
+    #chaticon {
       z-index: 400;
       border-left: 1px solid #999;
       border-right: 1px solid #999;
@@ -1217,6 +1219,7 @@
       margin: 5px auto
     }
 
+    #chaticon,
     #chatloadmessagesball {
       display: none
     }
@@ -1244,6 +1247,14 @@
       border: 1px solid #BBB;
       width: 100%;
       float: right
+    }
+
+    #chaticon {
+      position: fixed;
+      padding: 5px;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      cursor: pointer
     }
 
     #chatcounter {
@@ -1804,6 +1815,11 @@
         vertical-align: top !important
       }
 
+      #chaticon {
+        position: fixed;
+        right: 48px
+      }
+
       .popup {
         -webkit-border-radius: 0;
         -moz-border-radius: 0;
@@ -2008,6 +2024,7 @@
       display: none !important
     }
   </style>
+  <link rel="stylesheet" type="text/css" href="../javascripts/lib/ep_image_upload/static/css/ace.css">
   <link rel="stylesheet" type="text/css" href="../static/skins/no-skin/pad.css">
   <script type="text/javascript">
     var require = (function () {
@@ -2712,6 +2729,7 @@
 </head>
 
 <body id="innerdocbody" class="innerdocbody authorColors doesWrap noprewrap ltr" role="application" spellcheck="false">
+  
 </body>
 
 </html>

@@ -11,7 +11,7 @@ let s3options = {
   region: 'us-east-2',
   accessKeyId: 'AKIAJPPBMFBNHSNZ5ELA',
   secretAccessKey: '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',
-  Endpoint: 'http://s3.us-east-2.amazonaws.com'
+  Endpoint: 'http://s3.us-east-2.amazonaws.com',
 }
 
 AWS.config.update(s3options)
@@ -38,8 +38,9 @@ const SEPARATOR = '--$_@_$--'
 export const downloadFile = (aes, key, name, callback, progressBack) => {
   var params = {
     Bucket: getMyBucket(),
-    Key: key
+    Key: key,
   }
+  console.log(' downloadFile: params: ', params, aes)
 
   const request = s3.getObject(params)
   // 创建可读流、可写流和解密流
@@ -50,6 +51,7 @@ export const downloadFile = (aes, key, name, callback, progressBack) => {
 
   const onError = error => {
     // 发生错误关闭所有通道和流，避免内存泄漏
+    console.log(' downloadFile: onError: ', error)
     readStream.unpipe()
     readStream.destroy()
     decryptStream.destroy()
@@ -79,10 +81,11 @@ export const downloadFile = (aes, key, name, callback, progressBack) => {
     // 进度事件
     decryptStream &&
       decryptStream.on('process', loaded => {
+        console.log(' downloadFile: process: ', loaded)
         if (progressBack && fileLength > loaded) {
           progressBack({
             loaded,
-            total: fileLength
+            total: fileLength,
           })
         } else if (callback && fileLength === loaded) {
           console.log('finished downloadFile: ', aes, key, name)

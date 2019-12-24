@@ -15,7 +15,7 @@ export default class InvitePadMember extends Component {
     this.state = {
       members: [],
       contacts: [],
-      loading: true
+      loading: true,
     }
     this._mounted = false
   }
@@ -70,7 +70,8 @@ export default class InvitePadMember extends Component {
     const container = document.querySelector('#contact-select')
     const ulList = document.querySelector('#contact-select ul')
     if (container && ulList) {
-      const widthDiff = ulList.getBoundingClientRect().width - container.getBoundingClientRect().width
+      const widthDiff =
+        ulList.getBoundingClientRect().width - container.getBoundingClientRect().width
       if (widthDiff <= 0) {
         ulList.setAttribute('style', 'margin-left: 0')
       } else {
@@ -92,11 +93,11 @@ export default class InvitePadMember extends Component {
       name: item.props.label,
       jid: item.props.jid,
       curJid: item.props.curjid,
-      email: item.props.email
+      email: item.props.email,
     }))
     this.setState(
       {
-        members
+        members,
       },
       () => {
         document.querySelector('#contact-select input').focus()
@@ -123,14 +124,16 @@ export default class InvitePadMember extends Component {
       userId: padInfo.userId,
       token,
       padID: padInfo.padId,
-      add: coworkers
+      add: coworkers,
     }
     console.log(' editMembersOptions: ', editMembersOptions)
     const apiPath = window.teamPadConfig.teamEditAPIUrl + 'editMembers'
+    console.log(' InvitePadMember, apiPath, editMembersOptions: ', apiPath, editMembersOptions)
     let res = await postAsync(apiPath, editMembersOptions)
     if (typeof res === 'string') {
       res = JSON.parse(res)
     }
+    console.log(' InvitePadMember, res: ', res)
     if (!res || res.code !== 0) {
       alert('fail to add edit members for the pad.')
       return
@@ -143,9 +146,7 @@ export default class InvitePadMember extends Component {
       }
       const at = jid.indexOf('@')
       const userId = jid.substring(0, at)
-      const url = `edisonmail://teamedit.edison.tech/${
-        draft.headerMessageId
-      }?padId=${padId}&inviterEmail=${from}&userId=${userId}&userName=${member.name}&email=${member.email}`
+      const url = `edisonmail://teamedit.edison.tech/${draft.headerMessageId}?padId=${padId}&inviterEmail=${from}&userId=${userId}&userName=${member.name}&email=${member.email}`
       const to = [member.email]
       const cc = []
       await DraftStore.createAndSendMessage({
@@ -156,7 +157,7 @@ export default class InvitePadMember extends Component {
         to,
         cc,
         from,
-        draft
+        draft,
       })
     }
 
@@ -206,7 +207,12 @@ export default class InvitePadMember extends Component {
     ))
     return (
       <div className='invite-member-popup'>
-        <div className='invite-member-panel' onKeyUp={this.onKeyUp} onKeyDown={this.onKeyUp} onKeyPress={this.onKeyUp}>
+        <div
+          className='invite-member-panel'
+          onKeyUp={this.onKeyUp}
+          onKeyDown={this.onKeyUp}
+          onKeyPress={this.onKeyUp}
+        >
           <div className='to'>
             <span className='close' onClick={this._close}>
               <RetinaImg
@@ -243,7 +249,10 @@ export default class InvitePadMember extends Component {
             >
               {children}
             </Select>
-            <Button className={`btn go ${members.length === 0 ? 'btn-disabled' : ''}`} onClick={this.InvitePadMember}>
+            <Button
+              className={`btn go ${members.length === 0 ? 'btn-disabled' : ''}`}
+              onClick={this.InvitePadMember}
+            >
               Go
             </Button>
           </div>

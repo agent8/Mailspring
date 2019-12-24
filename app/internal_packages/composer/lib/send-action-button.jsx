@@ -10,6 +10,7 @@ import {
   DraftStore,
   AttachmentStore,
 } from 'mailspring-exports'
+import path from 'path'
 import { delay } from 'chat-exports'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
 import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
@@ -185,12 +186,59 @@ class SendActionButton extends React.Component {
       const { email } = res.data
       body = email.body
     }
-    console.log(' setTeamEditPadContent: ', body)
+    console.log(' setTeamEditPadContent: body: ', body)
+    let i = body.indexOf('<body>') + '<body>'.length
+    let j = body.lastIndexOf('</body>')
+    body = '<div>' + body.substring(i, j) + '</div>'
+    const el = document.createElement('div')
+    el.innerHTML = body
+    const imgs = el.querySelectorAll('img')
+    console.log(' setTeamEditPadContent: el, imgs: ', el, imgs)
+    i = 0
+    const cwd = process.cwd()
+    console.log(' setTeamEditPadContent: cwd: ', cwd)
+    const { headerMessageId } = draft
+    while (i < imgs.length) {
+      const img = imgs[i]
+      const src = img.src
+      console.log(' setTeamEditPadContent: img: ', img, img.src)
+      console.log(' setTeamEditPadContent: src: ', src)
+      let filePath = null
+      if (src.startsWith('file://')) {
+        console.log('in file://')
+        filePath = src.substring(7)
+      } else if (src.startsWith('./')) {
+        console.log('in ./')
+        filePath = path.join(cwd, 'internal_packages/composer/teamreply-client/src/html', src)
+      }
+      // meet some crazy behavior on src of <img> element
+      // rel path is different beteen in pad.html and in this jsx file
+      filePath = filePath.replace(
+        'mailspring/download-inline-images',
+        'mailspring/app/internal_packages/composer/teamreply-client/download-inline-images'
+      )
+      const filename = getAwsOriginalFilename(src)
+      console.log(' setTeamEditPadContent: filePath: ', filePath)
+      const file = await AttachmentStore._onAddAttachment({
+        headerMessageId,
+        filePath,
+        filename,
+        inline: true,
+        onCreated: () => {},
+        fromPad: true,
+      })
+      console.log(' setTeamEditPadContent: file: ', file)
+      img.src = `cid:${file.contentId}`
+      i++
+    }
+    body = el.innerHTML
+    console.log(' setTeamEditPadContent: sent body: ', body)
     draft.body = body
+    session.changes.add({ body })
     await session.changes.commit()
     await this.clearDraftAttachments(draft)
     await this.addPadAttachmentsToDraft()
-    await delay(500)
+    await delay(60000000)
   }
   _onSendWithAction = async (sendAction, disableDraftCheck = false) => {
     console.log(' send: _onSendWithAction: ')

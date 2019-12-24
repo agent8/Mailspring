@@ -32,7 +32,7 @@ import ActionBarPlugins from './action-bar-plugins'
 import Fields from './fields'
 import InjectedComponentErrorBoundary from '../../../src/components/injected-component-error-boundary'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
-import { uploadPadFile } from './pad-utils'
+import { uploadPadFile, downloadPadInlineImage } from './pad-utils'
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
@@ -41,6 +41,7 @@ import { loadDraftPadMap, saveDraftPadMap, loadPadInfo, savePadInfo } from './ap
 import { downloadPadFile } from './pad-utils'
 import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
 import delay from '../../edison-beijing-chat/utils/delay'
+import { sendEmailExtra } from './draft-pad-utils.es6'
 
 const {
   hasBlockquote,
@@ -55,6 +56,8 @@ const draftPadMap = loadDraftPadMap()
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
+
+window.fsExistsSync = fs.existsSync
 export default class ComposerView extends React.Component {
   static displayName = 'ComposerView'
 
@@ -102,6 +105,10 @@ export default class ComposerView extends React.Component {
   async componentWillMount () {
     Actions.addedAttachment.listen(this.onAddedAttachment)
     Actions.addedAttachments.listen(this.onAddedAttachments)
+    window.composerOnAddImage = this.composerOnAddImage
+    window.composerOnDownloadPadImg = this.composerOnDownloadPadImg
+    window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
+    window.composerOnPadConnect = this.composerOnPadConnect
     const windowProps = AppEnv.getWindowProps()
     let { padInfo } = windowProps
     console.log(' componentWillMount: padInfo: ', padInfo)
@@ -109,8 +116,69 @@ export default class ComposerView extends React.Component {
     draft.session = session
     draft.padInfo = padInfo
     this.setState({ padInfo, inTeamEditMode: !!padInfo, openFromInvitation: !!padInfo })
-    window.composerOnPadSocketHandler = this.composerOnPadSocketHandler
-    window.composerOnPadConnect = this.composerOnPadConnect
+  }
+
+  composerOnAddImage = async options => {
+    console.log(' composerOnAddImage: options: ', options)
+    const { context, handleNewLines, file, $ } = options
+    try {
+      const { padInfo } = this.state
+      const jidLocal = padInfo.userId
+      const res = await uploadPadFile(file.path, jidLocal)
+      console.log(' uploadPadFile: res: ', res)
+      const downloadPath = await downloadPadInlineImage(res.awsKey, res.aes)
+      console.log(' why no next: ')
+      const i = downloadPath.indexOf('download-inline-images')
+      const imgPath = '../../' + downloadPath.substring(i)
+      console.log(' composerOnAddImage: imgPath: ', imgPath)
+      context.ace.callWithAce(
+        function (ace) {
+          $('#imageUploadModalLoader').hide()
+          var imageLineNr = handleNewLines(ace)
+          console.log(' addImage success: ', imageLineNr)
+          ace.ace_addImage(imageLineNr, imgPath)
+          ace.ace_doReturnKey()
+        },
+        'img',
+        true
+      )
+    } catch (e) {
+      $('#imageUploadModalLoader').hide()
+      $('#imageUploadModalError .error').html(e.message)
+      $('#imageUploadModalError').show()
+    }
+  }
+
+  composerOnDownloadPadImg = async options => {
+    const win = options.window
+    let { src, id } = options
+    console.log(' composerOnDownloadPadImg: src: ', src)
+    const cwd = process.cwd()
+    const filePath = path.join(cwd, 'app/internal_packages/composer/teamreply-client/src/html', src)
+    let s = src
+    let mark1 = '/download-inline-images/'
+    let i = s.indexOf(mark1) + mark1.length
+    let awsKey = s.substring(i)
+    console.log(' composerOnDownloadPadImg: s, i, awsKey: ', s, i, awsKey)
+    await downloadPadInlineImage(awsKey, null)
+    console.log(' composerOnDownloadPadImg: filePath: ', filePath, fs.existsSync(filePath))
+    if (fs.existsSync(filePath)) {
+      const el = win.document.getElementById(id)
+      console.log(' querySelector id: ', id, el, src)
+      if (el) {
+        const img = el.querySelector('img')
+        el.removeChild(img)
+        img.src = src
+        const br = el.querySelector('br')
+        el.insertBefore(img, br)
+      } else {
+        await delay(100)
+        await this.composerOnDownloadPadImg(options)
+      }
+    } else {
+      await delay(100)
+      await this.composerOnDownloadPadImg(options)
+    }
   }
 
   composerOnPadConnect = data => {
@@ -127,21 +195,38 @@ export default class ComposerView extends React.Component {
     if (data.type === 'CLIENT_VARS') {
       console.log(' composerOnPadSocketHandler: CLIENT_VARS: ', data)
       data = data.data || {}
+      const email = data.emailExtr || {}
+      this.processPadEmailFields(email)
       const attachments = (data.emailExtr && data.emailExtr.attachments) || []
       await this.processPadAttachments(attachments)
       console.log(' composerOnPadSocketHandler: CLIENT_VARS: padInfo: ', padInfo)
       this.updatePadInfo(padInfo)
     } else if (data.type === 'COLLABROOM' && data.data && data.data.type === 'EMAIL_EXTR') {
       console.log(' composerOnPadSocketHandler: COLLABROOM: EMAIL_EXTR: ', data)
-      const email = data.data.email
+      const email = data.data.email || {}
+      await this.processPadEmailFields(email)
       await this.processPadAttachments(email.attachments)
       await delay(1000)
       this.updatePadInfo(padInfo)
     }
   }
+  processPadEmailFields = async email => {
+    console.log(' processPadEmailFields, email: ', email)
+    const { draft, session } = this.props
+    draft.subject = email.subject
+    for (let key of ['from', 'to', 'cc', 'bcc']) {
+      const emails = email[key] || []
+      let contacts = await DraftStore.getContactsFromEmails(emails)
+      if (key == 'from' && !contacts.length) {
+        contacts = draft[key]
+      }
+      draft[key] = contacts
+    }
+    console.log(' processPadEmailFields commit: draft: ', draft)
+    await session.changes.commit()
+  }
 
   processPadAttachments = async attachments => {
-    // await this.clearDraftAttachments()
     console.log(' processPadAttachments: ', attachments)
     const fileMap = {}
     for (const item of attachments) {
@@ -287,6 +372,11 @@ export default class ComposerView extends React.Component {
     window.addEventListener('resize', this._onResize, true)
     this._onResize()
     this._isDraftMissingAttachments(this.props)
+
+    const { padInfo, inTeamEditMode } = this.state
+    if (inTeamEditMode) {
+      sendEmailExtra(padInfo, draft)
+    }
   }
   _getToName (participants) {
     if (!participants || !Array.isArray(participants.to) || participants.to.length === 0) {
@@ -629,10 +719,9 @@ export default class ComposerView extends React.Component {
       },
       coWorkers: [],
     }
-    console.log(' createPadOptions: ', createPadOptions)
     if (!padId) {
       const apiPath = window.teamPadConfig.teamEditAPIUrl + 'createPad'
-      console.log(' createPad: apiPath: ', apiPath)
+      console.log(' createTeamEditPad: apiPath, options: ', apiPath, createPadOptions)
       let res = await postAsync(apiPath, createPadOptions, {
         headers: {
           Accept: 'application/json',
@@ -641,6 +730,7 @@ export default class ComposerView extends React.Component {
           'Sec-Fetch-Site': 'cross-site',
         },
       })
+      console.log(' createTeamEditPad: res: ', res)
       if (typeof res === 'string') {
         res = JSON.parse(res)
       }
@@ -659,13 +749,27 @@ export default class ComposerView extends React.Component {
     const { draft } = this.props
     if (!inTeamEditMode && (!padInfo || !padInfo.padId)) {
       padInfo = await this.createTeamEditPad()
+      draft.padInfo = padInfo
+      this.needSendIntialPadInfo = true
+    } else {
+      draft.padInfo = null
     }
     console.log(' toggleTeamEdit: ', padInfo)
     this.setState({ inTeamEditMode: !inTeamEditMode, padInfo })
   }
+  componentDidUpdate () {
+    const { padInfo } = this.state
+    const { draft } = this.props
+    if (this.needSendIntialPadInfo) {
+      this.needSendIntialPadInfo = false
+      setTimeout(() => {
+        sendEmailExtra(padInfo, draft)
+      }, 100)
+    }
+  }
 
   _renderEditor () {
-    const draft = this.props
+    const { draft } = this.props
     if (this.state.inTeamEditMode) {
       const { padInfo } = this.state
       return <TeamreplyEditor draft={draft} padInfo={padInfo} updatePadInfo={this.updatePadInfo} />

@@ -1,33 +1,27 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('path')
-
-const url = require('url')
-var fs = require('fs')
-// const requestEx = require('./js/requestEx.js');
-// 主进程
-const ipc = ipcMain
+const {app, BrowserWindow, ipcMain} = require('electron');
+const path = require('path');
+const url = require('url');
+var fs = require('fs');
+//const requestEx = require('./js/requestEx.js');
+//主进程
+const ipc = ipcMain;
 let win
 function createWindow () {
   // Create the browser window.
-  win = new BrowserWindow({
-    webPreferences: {
-      webSecurity: false,
-      nodeIntegration: true
-      // allowRunningInsecureContent: true,
-      // enableBlinkFeatures: ['ExecCommandInJavaScript']
-    }
-  })
-
-  // console.log(__dirname);
+  win = new BrowserWindow({webPreferences: {
+    webSecurity: false,
+    // nodeIntegration: true
+    // allowRunningInsecureContent: true,
+    // enableBlinkFeatures: ['ExecCommandInJavaScript']
+  }})
+  
+  //console.log(__dirname);
   // and load the index.html of the app.
-  win.loadURL(
-    url.format({
-      // pathname: path.join(__dirname, '/src/html/pad.html'),
-      pathname: path.join(__dirname, '/src/html/out-iframe.html'),
-      protocol: 'file:',
-      slashes: true
-    })
-  )
+  win.loadURL(url.format({
+    pathname: path.join(__dirname, '/src/html/pad.html'),
+    protocol: 'file:',
+    slashes: true
+  }))
   // Open the DevTools.
   win.webContents.openDevTools()
 
@@ -38,6 +32,7 @@ function createWindow () {
     // when you should delete the corresponding element.
     win = null
   })
+
 }
 
 // This method will be called when Electron has finished

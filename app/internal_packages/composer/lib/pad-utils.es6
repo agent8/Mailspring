@@ -20,6 +20,25 @@ export const downloadPadFile = async (awsKey, aes) => {
   await downloadFileAsync(awsKey, downloadFilePath, aes)
   return downloadFilePath
 }
+export const downloadPadInlineImage = async (awsKey, aes) => {
+  const cwd = process.cwd()
+  console.log(' downloadPadInlineImage: cwd: ', cwd)
+  const downloadDir = path.join(
+    cwd,
+    'app/internal_packages/composer/teamreply-client/download-inline-images'
+  )
+  const downloadFilePath = path.join(downloadDir, awsKey)
+  if (fs.existsSync(downloadFilePath)) {
+    return downloadFilePath
+  }
+  const dir = path.dirname(downloadFilePath)
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+  }
+  console.log(' downloadPadInlineImage: ', downloadFilePath)
+  await downloadFileAsync(awsKey, downloadFilePath, aes)
+  return downloadFilePath
+}
 
 // const getAesFromIpc = conv => {
 //   return new Promise(function (resolve) {
