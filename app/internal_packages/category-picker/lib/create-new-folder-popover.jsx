@@ -19,6 +19,7 @@ export default class CreateNewFolderPopover extends Component {
     top: PropTypes.number,
     defaultValue: PropTypes.string,
     currentPerspective: PropTypes.object,
+    onActionCallback: PropTypes.func,
   };
   static defaultProps = {
     left: 490,
@@ -137,6 +138,11 @@ export default class CreateNewFolderPopover extends Component {
       );
       this.onCancel();
       this._onResultReturned();
+    }
+  };
+  _onActionCallback = data => {
+    if (typeof this.props.onActionCallback === 'function') {
+      this.props.onActionCallback(data);
     }
   };
   _onNameChange = (e) => {
