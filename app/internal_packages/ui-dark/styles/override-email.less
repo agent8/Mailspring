@@ -41,6 +41,19 @@
       background-color: @active;
     }
   }
+  .item-container {
+    &.selected:hover,
+    &:hover {
+      background-color: @active;
+      &:before {
+        background-color: @active;
+      }
+      .item.selected,
+      .item {
+        background-color: @active;
+      }
+    }
+  }
 }
 
 .column-OutboxMessage,
@@ -119,7 +132,7 @@
         background-image: -webkit-linear-gradient(
           left,
           fade(@list-bg, 0%) 0%,
-          @list-bg 50%,
+          @list-bg 38%,
           @list-bg 100%
         );
       }
@@ -129,7 +142,7 @@
         background-image: -webkit-linear-gradient(
           left,
           fade(@white, 0%) 0%,
-          @white 50%,
+          @white 38%,
           @white 100%
         );
       }
