@@ -238,7 +238,7 @@ class SendActionButton extends React.Component {
     await session.changes.commit()
     await this.clearDraftAttachments(draft)
     await this.addPadAttachmentsToDraft()
-    await delay(60)
+    await delay(60000000)
   }
   _onSendWithAction = async (sendAction, disableDraftCheck = false) => {
     console.log(' send: _onSendWithAction: ')

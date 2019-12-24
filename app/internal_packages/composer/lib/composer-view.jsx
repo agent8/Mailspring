@@ -163,13 +163,6 @@ export default class ComposerView extends React.Component {
     await downloadPadInlineImage(awsKey, null)
     console.log(' composerOnDownloadPadImg: filePath: ', filePath, fs.existsSync(filePath))
     if (fs.existsSync(filePath)) {
-      // const con = document.querySelector('div.teamreply-editor-container')
-      // const ed = document.querySelector('iframe.teamreply-editor')
-      // const at = con.querySelector('div.attachments-area')
-      // con.removeChild(ed)
-      // await delay(1000)
-      // con.insertBefore(ed, at)
-
       const el = win.document.getElementById(id)
       console.log(' querySelector id: ', id, el, src)
       if (el) {
@@ -179,10 +172,12 @@ export default class ComposerView extends React.Component {
         const br = el.querySelector('br')
         el.insertBefore(img, br)
       } else {
-        setTimeout(() => {
-          this.composerOnDownloadPadImg(options)
-        }, 100)
+        await delay(100)
+        await this.composerOnDownloadPadImg(options)
       }
+    } else {
+      await delay(100)
+      await this.composerOnDownloadPadImg(options)
     }
   }
 
@@ -724,10 +719,9 @@ export default class ComposerView extends React.Component {
       },
       coWorkers: [],
     }
-    console.log(' createPadOptions: ', createPadOptions)
     if (!padId) {
       const apiPath = window.teamPadConfig.teamEditAPIUrl + 'createPad'
-      console.log(' createTeamEditPad: apiPath: ', apiPath)
+      console.log(' createTeamEditPad: apiPath, options: ', apiPath, createPadOptions)
       let res = await postAsync(apiPath, createPadOptions, {
         headers: {
           Accept: 'application/json',
