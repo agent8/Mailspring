@@ -244,6 +244,7 @@ class AttachmentStore extends MailspringStore {
     this._filePreviewPaths = {};
     this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
     this._fileProcess = new Map();
+    this._fileSaveSuccess = new Map();
     mkdirp(this._filesDirectory);
 
     DatabaseStore.listen(change => {
@@ -457,6 +458,7 @@ class AttachmentStore extends MailspringStore {
               remote.shell.showItemInFolder(actualSavePath);
             }
           }
+          this._onSaveSuccess([file]);
         })
         .catch(this._catchFSErrors)
         .catch(error => {
@@ -512,11 +514,40 @@ class AttachmentStore extends MailspringStore {
         ) {
           remote.shell.showItemInFolder(lastSavePaths[0]);
         }
+        this._onSaveSuccess(files);
       })
       .catch(this._catchFSErrors)
       .catch(error => {
         return this._presentError({ error });
       });
+  };
+
+  _onSaveSuccess = files => {
+    if (files && files.length) {
+      files.forEach(file => {
+        this._onToggleSaveSuccessState(file.id);
+      });
+    }
+  };
+
+  _onToggleSaveSuccessState = fileId => {
+    if (this._fileSaveSuccess.get(fileId)) {
+      this._fileSaveSuccess.delete(fileId);
+    } else {
+      this._fileSaveSuccess.set(fileId, true);
+      setTimeout(() => {
+        this._onToggleSaveSuccessState(fileId);
+      }, 1600);
+    }
+    this.trigger();
+  };
+
+  getSaveSuccessState = fileId => {
+    if (this._fileSaveSuccess.get(fileId)) {
+      return true;
+    } else {
+      return false;
+    }
   };
 
   _abortFetchFile = () => {
