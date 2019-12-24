@@ -77,7 +77,9 @@ class DraftStore extends MailspringStore {
         if (account) {
           data.subject += 'from ' + account.name;
         }
-        data.body = `<br/><br/><br/>[MacOS] ${AppEnv.getVersion()}`;
+        data.body = `<br/><br/><br/>
+                    [MacOS] ${AppEnv.getVersion()}<br/>
+                    SupportId: ${AppEnv.config.get('core.support.id')}`;
         Actions.composeFeedBackDraft(data);
       });
 
@@ -695,7 +697,7 @@ class DraftStore extends MailspringStore {
         // TaskQueue.waitForPerformLocal(t)
 
         this._finalizeAndPersistNewMessage(draft).then(() => {
-          Actions.sendDraft(draft.headerMessageId, {source: 'SendQuickReply'});
+          Actions.sendDraft(draft.headerMessageId, { source: 'SendQuickReply' });
         }).catch(e => {
           AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e }, { grabLogs: true });
         });

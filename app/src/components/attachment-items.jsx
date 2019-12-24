@@ -262,7 +262,7 @@ export class AttachmentItem extends Component {
     const classes = classnames({
       'nylas-attachment-item': true,
       'file-attachment-item': true,
-      'has-preview': filePreviewPath,
+      // 'has-preview': filePreviewPath,
       [className]: className,
     });
     let { iconName, color } = AttachmentStore.getExtIconName(displayName);
@@ -271,6 +271,8 @@ export class AttachmentItem extends Component {
         filePreviewPath = filePath;
       }
       iconName = 'attachment-img.svg';
+    } else {
+      filePreviewPath = null;
     }
     const style = draggable ? { WebkitUserDrag: 'element' } : null;
     const tabIndex = focusable ? 0 : null;
@@ -319,18 +321,18 @@ export class AttachmentItem extends Component {
                     draggable={false}
                   ></div>
                 ) : (
-                  <RetinaImg
-                    ref={cm => {
-                      this._fileIconComponent = cm;
-                    }}
-                    style={{ backgroundColor: color }}
-                    className="file-icon"
-                    fallback="drafts.svg"
-                    name={iconName}
-                    isIcon
-                    mode={RetinaImg.Mode.ContentIsMask}
-                  />
-                )}
+                    <RetinaImg
+                      ref={cm => {
+                        this._fileIconComponent = cm;
+                      }}
+                      style={{ backgroundColor: color }}
+                      className="file-icon"
+                      fallback="drafts.svg"
+                      name={iconName}
+                      isIcon
+                      mode={RetinaImg.Mode.ContentIsMask}
+                    />
+                  )}
               </div>
               <div className="attachment-info">
                 <div className="attachment-name" title={displayName}>
