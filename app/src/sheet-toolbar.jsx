@@ -247,7 +247,7 @@ export default class Toolbar extends React.Component {
       columnToolbarEl.style.width = `${columnEl.offsetWidth}px`;
       // calc the left conversation panel's width
       if (column === '0' && columnEl.className === 'column-RootSidebar') {
-        if (columnEl.offsetWidth < 187) {
+        if (columnEl.offsetWidth < 175) {
           columnEl.setAttribute('sidebar-narrow', true);
         } else {
           columnEl.removeAttribute('sidebar-narrow');

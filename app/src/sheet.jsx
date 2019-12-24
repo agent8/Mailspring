@@ -85,7 +85,7 @@ export default class Sheet extends React.Component {
     const mode = isPrevious ? this.state.previousMode : this.state.mode;
     const dataId = isPrevious ? this.state.previousData.id : this.props.data.id;
     const otherProps = {};
-    if (location.id === 'RootSidebar' && width < 187) {
+    if (location.id === 'RootSidebar' && width < 175) {
       otherProps['sidebar-narrow'] = 'true';
     }
     if (minWidth !== maxWidth && maxWidth < FLEX) {

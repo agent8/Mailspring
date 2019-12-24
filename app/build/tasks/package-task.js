@@ -236,8 +236,8 @@ module.exports = grunt => {
       // Electron.app/Contents/Info.plist. A majority of the defaults are
       // left in the Electron Info.plist file
       extendInfo: path.resolve(grunt.config('appDir'), 'build', 'resources', 'mac', 'extra.plist'),
-      appBundleId: 'com.easilydo.mac',
-      // helperBundleId: 'com.easilydo.mac',
+      appBundleId: 'com.edisonmail.edisonmail',
+      // helperBundleId: 'com.edisonmail.edisonmail',
       afterCopy: [
         runCopyPlatformSpecificResources,
         runWriteCommitHashIntoPackage,

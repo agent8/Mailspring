@@ -20,6 +20,7 @@ export class Notifier {
 
     this.activeNotifications = {};
     this.unlisteners = [DatabaseStore.listen(this._onDatabaseChanged, this)];
+    this.notifiedMessageIds = {};
   }
 
   unlisten() {
@@ -134,6 +135,14 @@ export class Notifier {
       body = null;
     }
 
+    if (this.notifiedMessageIds[message.id]) {
+      AppEnv.reportError(
+        new Error(`Notifier._notifyOne duplicated message id: ${message.id}`)
+      );
+      return;
+    }
+
+    this.notifiedMessageIds[message.id] = 1;
     const notification = NativeNotifications.displayNotification({
       title: title,
       subtitle: subtitle,
