@@ -412,8 +412,26 @@ export default class Contact extends Model {
   // Public: Returns true if the contact is the current user, false otherwise.
   // You should use this method instead of comparing the user's email address to
   // the account email, since it is case-insensitive and future-proof.
-  isMe() {
+  isMe({ meAccountId = null } = {}) {
+    if (meAccountId) {
+      const account = AccountStore.accountForEmail(this.email);
+      if (account) {
+        return account.id === meAccountId;
+      }
+      return false;
+    }
     return !!AccountStore.accountForEmail(this.email);
+  }
+
+  isMyOtherAccount({ meAccountId = null } = {}) {
+    if (meAccountId) {
+      const account = AccountStore.accountForEmail(this.email);
+      if (account) {
+        return account.id !== meAccountId;
+      }
+      return false;
+    }
+    return false;
   }
 
   hasSameDomainAsMe() {
@@ -431,14 +449,14 @@ export default class Contact extends Model {
       return null;
     }
 
-    if (includeAccountLabel) {
+    if (includeAccountLabel || forceAccountLabel) {
       FocusedPerspectiveStore =
         FocusedPerspectiveStore || require('../stores/focused-perspective-store').default;
       if (
         account &&
         (FocusedPerspectiveStore.current().accountIds.length > 1 || forceAccountLabel)
       ) {
-        return `Me (${account.label})`;
+        return `${account.label} (Me)`;
       }
     }
     return 'Me';

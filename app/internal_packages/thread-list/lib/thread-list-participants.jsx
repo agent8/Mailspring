@@ -62,7 +62,7 @@ class ThreadListParticipants extends React.Component {
       accumulatedUnread = false;
     };
 
-    const accumulate = function (text, unread) {
+    const accumulate = function(text, unread) {
       if (accumulated && unread && accumulatedUnread !== unread) {
         flush();
       }
@@ -75,16 +75,23 @@ class ThreadListParticipants extends React.Component {
     };
 
     for (let idx = 0; idx < items.length; idx++) {
-      const { spacer, contact, unread } = items[idx];
+      const { spacer, contact, unread, fromOtherAccounts } = items[idx];
       if (spacer) {
         accumulate(' ...');
       } else {
         var short;
         if (contact.name && contact.name.length > 0) {
           if (items.length > 1) {
-            short = contact.displayName({ includeAccountLabel: false, compact: true });
+            short = contact.displayName({
+              includeAccountLabel: false,
+              compact: true,
+              forceAccountLabel: fromOtherAccounts,
+            });
           } else {
-            short = contact.displayName({ includeAccountLabel: false });
+            short = contact.displayName({
+              includeAccountLabel: false,
+              forceAccountLabel: fromOtherAccounts,
+            });
           }
         } else {
           short = contact.email;
@@ -121,7 +128,7 @@ class ThreadListParticipants extends React.Component {
     const tokens = [];
 
     let field = 'from';
-    if (messages.every(message => message.isFromMe())) {
+    if (messages.every(message => message.isFromMe({ ignoreOtherAccounts: true }))) {
       field = 'to';
     }
 
@@ -137,7 +144,11 @@ class ThreadListParticipants extends React.Component {
 
       for (let contact of message[field]) {
         if (tokens.length === 0) {
-          tokens.push({ contact, unread: message.unread });
+          tokens.push({
+            contact,
+            unread: message.unread,
+            fromOtherAccounts: contact.isMyOtherAccount({ meAccountId: message.accountId }),
+          });
         } else {
           const lastToken = tokens[tokens.length - 1];
           const lastContact = lastToken.contact;
@@ -149,7 +160,11 @@ class ThreadListParticipants extends React.Component {
               lastToken.unread = message.unread;
             }
           } else {
-            tokens.push({ contact, unread: message.unread });
+            tokens.push({
+              contact,
+              unread: message.unread,
+              fromOtherAccounts: contact.isMyOtherAccount({ meAccountId: message.accountId }),
+            });
           }
         }
       }
@@ -160,8 +175,10 @@ class ThreadListParticipants extends React.Component {
 
   getTokensFromParticipants = () => {
     let contacts = this.props.thread.participants != null ? this.props.thread.participants : [];
-    contacts = contacts.filter(contact => !contact.isMe());
-    return contacts.map(contact => ({ contact, unread: false }));
+    contacts = contacts.filter(
+      contact => !contact.isMe({ meAccountId: this.props.thread.accountId })
+    );
+    return contacts.map(contact => ({ contact, unread: false, fromOtherAccounts:  contact.isMyOtherAccount({ meAccountId: this.props.thread.accountId })}));
   };
 
   getTokens = () => {
