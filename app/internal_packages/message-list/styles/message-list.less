@@ -222,6 +222,37 @@ body.platform-win32 {
     & > div {
       display: flex;
       align-items: center;
+
+      .mail-important-icon {
+        height: 18px;
+        margin-right: 6px;
+        margin-left: 6px;
+        position: relative;
+        top: 4px;
+      }
+      .mail-label {
+        position: relative;
+        top: 3px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row;
+        height: 18px;
+        &.removable {
+          .inner {
+            -webkit-font-smoothing: subpixel-antialiased;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          img.x {
+            display: inline-block;
+            opacity: 0.4;
+            cursor: pointer;
+            background-color: @gray;
+          }
+        }
+      }
     }
   }
   .mail-important-icon {
@@ -235,32 +266,6 @@ body.platform-win32 {
     font-weight: bold;
     color: @text-color;
     margin-right: @spacing-half;
-    .mail-important-icon {
-      height: 18px;
-      margin-right: 6px;
-      margin-left: 6px;
-      position: relative;
-      top: 4px;
-    }
-    .mail-label {
-      position: relative;
-      top: 3px;
-      &.removable {
-        padding-left: 15px;
-        padding-right: 1px;
-        .inner {
-          left: -3px;
-          -webkit-font-smoothing: subpixel-antialiased;
-        }
-        img.x {
-          display: inline-block;
-          opacity: 0.4;
-          left: -4px;
-          cursor: pointer;
-          background-color: @gray;
-        }
-      }
-    }
   }
   .message-icons-wrap {
     flex-shrink: 0;
