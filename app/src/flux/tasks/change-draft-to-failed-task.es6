@@ -5,6 +5,10 @@ export default class ChangeDraftToFailedTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
     headerMessageIds: Attributes.Collection({
       modelKey: 'headerMessageIds',
+    }),
+    sendDraftTaskIds: Attributes.Collection({
+      modelKey: 'sendDraftTaskIds',
+      jsonKey: 'refSendDraftTaskIds',
     })
   });
 
