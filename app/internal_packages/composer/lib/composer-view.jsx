@@ -56,6 +56,8 @@ const draftPadMap = loadDraftPadMap()
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
+
+window.fsExistsSync = fs.existsSync
 export default class ComposerView extends React.Component {
   static displayName = 'ComposerView'
 
@@ -147,35 +149,40 @@ export default class ComposerView extends React.Component {
     }
   }
 
-  composerOnDownloadPadImg = async ({ context, id, $ }) => {
-    console.log(' composerOnDownloadPadImg: context: ', context)
-    //context.cls: author-400376 img:<img src="../../download-inline-images/400376/b74f23f3-dbf2-4bbe-8151-2503f00e329c--$_@_$--avatar.png"> lineAttribMarker
-    const el = $(`#${id}`)
-    const img = el.find('img')
-    if (img.attr('flag')) {
-      return
-    }
-    let s = context.cls
-    let mark1 = '/download-inline-images/'
-    let mark2 = '"'
-    let i = s.indexOf(mark1) + mark1.length
-    let j = s.indexOf(mark2, i)
-    let awsKey = s.substring(i, j)
-    console.log(' composerOnDownloadPadImg: awsKey: ', awsKey)
-    await downloadPadInlineImage(awsKey, null)
-    console.log(' composerOnDownloadPadImg: img-span: ', el)
-    mark1 = '<img src="'
-    i = s.indexOf(mark1) + mark1.length
-    const src = s.substring(i, j)
-    console.log(' composerOnDownloadPadImg: img: ', img, img[0], s, i, j, src)
+  composerOnDownloadPadImg = async options => {
+    const win = options.window
+    let { src, id } = options
+    console.log(' composerOnDownloadPadImg: src: ', src)
     const cwd = process.cwd()
-    const filePath = path.join(cwd, 'app/interanl_packages/composer/teamreply-client/src/html', src)
+    const filePath = path.join(cwd, 'app/internal_packages/composer/teamreply-client/src/html', src)
+    let s = src
+    let mark1 = '/download-inline-images/'
+    let i = s.indexOf(mark1) + mark1.length
+    let awsKey = s.substring(i)
+    console.log(' composerOnDownloadPadImg: s, i, awsKey: ', s, i, awsKey)
+    await downloadPadInlineImage(awsKey, null)
+    console.log(' composerOnDownloadPadImg: filePath: ', filePath, fs.existsSync(filePath))
     if (fs.existsSync(filePath)) {
-      console.log(' in file exist: ')
-      el.empty()
-      img.attr('src', src)
-      img.attr('flag', 1)
-      el.prepend(img)
+      // const con = document.querySelector('div.teamreply-editor-container')
+      // const ed = document.querySelector('iframe.teamreply-editor')
+      // const at = con.querySelector('div.attachments-area')
+      // con.removeChild(ed)
+      // await delay(1000)
+      // con.insertBefore(ed, at)
+
+      const el = win.document.getElementById(id)
+      console.log(' querySelector id: ', id, el, src)
+      if (el) {
+        const img = el.querySelector('img')
+        el.removeChild(img)
+        img.src = src
+        const br = el.querySelector('br')
+        el.insertBefore(img, br)
+      } else {
+        setTimeout(() => {
+          this.composerOnDownloadPadImg(options)
+        }, 100)
+      }
     }
   }
 

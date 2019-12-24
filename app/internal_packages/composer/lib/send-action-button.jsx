@@ -212,6 +212,7 @@ class SendActionButton extends React.Component {
         filePath = path.join(cwd, 'internal_packages/composer/teamreply-client/src/html', src)
       }
       // meet some crazy behavior on src of <img> element
+      // rel path is different beteen in pad.html and in this jsx file
       filePath = filePath.replace(
         'mailspring/download-inline-images',
         'mailspring/app/internal_packages/composer/teamreply-client/download-inline-images'
@@ -237,7 +238,7 @@ class SendActionButton extends React.Component {
     await session.changes.commit()
     await this.clearDraftAttachments(draft)
     await this.addPadAttachmentsToDraft()
-    await delay(6000000)
+    await delay(60)
   }
   _onSendWithAction = async (sendAction, disableDraftCheck = false) => {
     console.log(' send: _onSendWithAction: ')

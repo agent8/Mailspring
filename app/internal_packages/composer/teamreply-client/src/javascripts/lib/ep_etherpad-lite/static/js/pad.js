@@ -262,7 +262,7 @@ require.define({
       //connect
       socket = pad.socket = io.connect(url, {
         // Allow deployers to host Etherpad on a non-root path
-        path: '/socket.io', //exports.baseURL + "socket.io",
+        path: '/tr/socket.io', //exports.baseURL + "socket.io",
         resource: resource,
         reconnectionAttempts: 5,
         reconnection: true,
@@ -2872,7 +2872,6 @@ require.define({
           doActionsPendingInit()
           doneFunc()
         }
-
         ;(function () {
           // Expose myself to global for my child frame.
           var thisFunctionsName = 'ChildAccessibleAce2Editor'

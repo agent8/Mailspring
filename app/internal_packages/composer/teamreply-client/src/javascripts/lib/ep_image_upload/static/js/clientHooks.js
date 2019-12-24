@@ -12,7 +12,7 @@ require.define({
       addImage: function (lineNumber, src) {
         var documentAttributeManager = this.documentAttributeManager
         // src = '<img src="' + src + '" l-src="' + src + '" />';
-        src = '<img src="' + src + '">'
+        src = '<img src="' + src + '" />'
         documentAttributeManager.setAttributeOnLine(lineNumber, 'img', src) // make the line a task list
       },
     }
@@ -131,23 +131,46 @@ require.define({
       var imgType = exp.exec(cls)
 
       if (!imgType) return []
+      let start = imgType[0].indexOf('src="') + 5
+      let end = imgType[0].indexOf('"', start)
+      let src = imgType[0].substring(start, end)
+      var ret
+      //let src = imgType[0]
       // console.log('yazz.img',imgType, context);
       var composerOnDownloadPadImg =
         window.parent.composerOnDownloadPadImg ||
         window.parent.parent.composerOnDownloadPadImg ||
         window.parent.parent.parent.composerOnDownloadPadImg
-      var randomId = Math.floor(Math.random() * 100000 + 1)
+      var fsExistsSync =
+        window.parent.fsExistsSync ||
+        window.parent.parent.fsExistsSync ||
+        window.parent.parent.parent.fsExistsSync
+      if (!src) {
+        console.log(' imgType: ', imgType[0])
+      }
+      console.log(' fsExistsSync: ', src)
+      let s = src
+      let mark1 = '/download-inline-images/'
+      let i = s.indexOf(mark1) + mark1.length
+      let awsKey = s.substring(i)
+      awsKey = awsKey.replace('/', '')
+      var randomId = awsKey // Math.floor(Math.random() * 100000 + 1)
+      if (fsExistsSync(src)) {
+        ret = '<img src="' + src + '" />'
+      } else {
+        composerOnDownloadPadImg({ src, id: randomId, $, window })
+        ret = '<img src="' + src + '" aaa/>'
+        // ret = '<img src="' + src + '" download="false"/>'
+      }
       var template = '<span id="' + randomId + '" class="image">'
-      composerOnDownloadPadImg({ context, id: randomId, $ })
       if (imgType[1]) {
-        var preHtml = template + imgType[1] + ' >'
+        var preHtml = template + ret
         var postHtml = '</span>'
         var modifier = {
           preHtml: preHtml,
           postHtml: postHtml,
           processedMarker: true,
         }
-
         return [modifier]
       }
 
