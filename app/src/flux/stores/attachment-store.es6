@@ -12,6 +12,7 @@ import Utils from '../models/utils';
 import mime from 'mime-types';
 import DatabaseStore from './database-store';
 import AttachmentProgress from '../models/attachment-progress';
+import { autoGenerateFileName } from '../../fs-utils';
 
 Promise.promisifyAll(fs);
 
@@ -243,6 +244,7 @@ class AttachmentStore extends MailspringStore {
     this._filePreviewPaths = {};
     this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
     this._fileProcess = new Map();
+    this._fileSaveSuccess = new Map();
     mkdirp(this._filesDirectory);
 
     DatabaseStore.listen(change => {
@@ -403,7 +405,7 @@ class AttachmentStore extends MailspringStore {
       this._prepareAndResolveFilePath(file)
         .catch(this._catchFSErrors)
         // Passively ignore
-        .catch(() => { })
+        .catch(() => {})
     );
   };
 
@@ -426,7 +428,7 @@ class AttachmentStore extends MailspringStore {
   };
 
   _fetchAndSave = file => {
-    const defaultPath = this._defaultSavePath(file);
+    const defaultPath = file.safeDisplayName();
     const defaultExtension = path.extname(defaultPath);
 
     AppEnv.showSaveDialog({ defaultPath }, savePath => {
@@ -456,6 +458,7 @@ class AttachmentStore extends MailspringStore {
               remote.shell.showItemInFolder(actualSavePath);
             }
           }
+          this._onSaveSuccess([file]);
         })
         .catch(this._catchFSErrors)
         .catch(error => {
@@ -465,15 +468,18 @@ class AttachmentStore extends MailspringStore {
   };
 
   _fetchAndSaveAll = files => {
-    const defaultPath = this._defaultSaveDir();
-    const options = {
-      defaultPath,
-      title: 'Save Into...',
-      buttonLabel: 'Download All',
-      properties: ['openDirectory', 'createDirectory'],
-    };
+    const configDownloadDir = AppEnv.getSaveDirPath();
+    if (configDownloadDir) {
+      this._saveAllFilesToDir(files, configDownloadDir);
+    } else {
+      const defaultPath = this._defaultSaveDir();
+      const options = {
+        defaultPath,
+        title: 'Save Into...',
+        buttonLabel: 'Download All',
+        properties: ['openDirectory', 'createDirectory'],
+      };
 
-    return new Promise(resolve => {
       AppEnv.showOpenDialog(options, selected => {
         if (!selected) {
           return;
@@ -482,33 +488,66 @@ class AttachmentStore extends MailspringStore {
         if (!dirPath) {
           return;
         }
-        this._lastDownloadDirectory = dirPath;
-        AppEnv.savedState.lastDownloadDirectory = dirPath;
-
-        const lastSavePaths = [];
-        const savePromises = files.map(file => {
-          const savePath = path.join(dirPath, file.safeDisplayName());
-          return this._prepareAndResolveFilePath(file)
-            .then(filePath => this._writeToExternalPath(filePath, savePath))
-            .then(() => lastSavePaths.push(savePath));
-        });
-
-        Promise.all(savePromises)
-          .then(() => {
-            if (
-              lastSavePaths.length > 0 &&
-              AppEnv.config.get('core.attachments.openFolderAfterDownload')
-            ) {
-              remote.shell.showItemInFolder(lastSavePaths[0]);
-            }
-            return resolve(lastSavePaths);
-          })
-          .catch(this._catchFSErrors)
-          .catch(error => {
-            return this._presentError({ error });
-          });
+        this._saveAllFilesToDir(files, dirPath);
       });
+    }
+  };
+
+  _saveAllFilesToDir = (files, dirPath) => {
+    this._lastDownloadDirectory = dirPath;
+    AppEnv.savedState.lastDownloadDirectory = dirPath;
+
+    const lastSavePaths = [];
+    const savePromises = files.map(file => {
+      const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName());
+      const savePath = path.join(dirPath, fileSaveName);
+      return this._prepareAndResolveFilePath(file)
+        .then(filePath => this._writeToExternalPath(filePath, savePath))
+        .then(() => lastSavePaths.push(savePath));
     });
+
+    Promise.all(savePromises)
+      .then(() => {
+        if (
+          lastSavePaths.length > 0 &&
+          AppEnv.config.get('core.attachments.openFolderAfterDownload')
+        ) {
+          remote.shell.showItemInFolder(lastSavePaths[0]);
+        }
+        this._onSaveSuccess(files);
+      })
+      .catch(this._catchFSErrors)
+      .catch(error => {
+        return this._presentError({ error });
+      });
+  };
+
+  _onSaveSuccess = files => {
+    if (files && files.length) {
+      files.forEach(file => {
+        this._onToggleSaveSuccessState(file.id);
+      });
+    }
+  };
+
+  _onToggleSaveSuccessState = fileId => {
+    if (this._fileSaveSuccess.get(fileId)) {
+      this._fileSaveSuccess.delete(fileId);
+    } else {
+      this._fileSaveSuccess.set(fileId, true);
+      setTimeout(() => {
+        this._onToggleSaveSuccessState(fileId);
+      }, 1600);
+    }
+    this.trigger();
+  };
+
+  getSaveSuccessState = fileId => {
+    if (this._fileSaveSuccess.get(fileId)) {
+      return true;
+    } else {
+      return false;
+    }
   };
 
   _abortFetchFile = () => {
@@ -518,12 +557,8 @@ class AttachmentStore extends MailspringStore {
   };
 
   _defaultSaveDir() {
-    let downloadDir = AppEnv.getSaveDirPath();
-    if (downloadDir) {
-      return downloadDir;
-    }
     const home = AppEnv.getUserDirPath();
-    downloadDir = path.join(home, 'Downloads');
+    let downloadDir = path.join(home, 'Downloads');
     if (!fs.existsSync(downloadDir)) {
       downloadDir = os.tmpdir();
     }
@@ -535,11 +570,6 @@ class AttachmentStore extends MailspringStore {
     }
 
     return downloadDir;
-  }
-
-  _defaultSavePath(file) {
-    const downloadDir = this._defaultSaveDir();
-    return path.join(downloadDir, file.safeDisplayName());
   }
 
   _onFetchAttachments = ({ missingItems, needProgress }) => {
@@ -730,7 +760,7 @@ class AttachmentStore extends MailspringStore {
 
   // Handlers
 
-  _onSelectAttachment = ({ headerMessageId, onCreated = () => { }, type = '*' }) => {
+  _onSelectAttachment = ({ headerMessageId, onCreated = () => {}, type = '*' }) => {
     this._assertIdPresent(headerMessageId);
 
     // When the dialog closes, it triggers `Actions.addAttachment`
@@ -757,7 +787,7 @@ class AttachmentStore extends MailspringStore {
     headerMessageId,
     inline = false,
     filePaths = [],
-    onCreated = () => { },
+    onCreated = () => {},
   }) => {
     if (!Array.isArray(filePaths) || filePaths.length === 0) {
       throw new Error('_onAddAttachments must have an array of filePaths');
@@ -807,7 +837,7 @@ class AttachmentStore extends MailspringStore {
     headerMessageId,
     filePath,
     inline = false,
-    onCreated = () => { },
+    onCreated = () => {},
   }) => {
     this._assertIdPresent(headerMessageId);
 
