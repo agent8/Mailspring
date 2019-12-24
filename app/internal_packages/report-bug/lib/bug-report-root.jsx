@@ -2,6 +2,7 @@ import React from 'react';
 import { ipcRenderer } from 'electron';
 import uuid from 'uuid';
 import { LottieImg } from 'mailspring-component-kit';
+import { Actions } from 'mailspring-exports';
 export default class BugReportRoot extends React.PureComponent {
   static displayName = 'BugReportRoot';
   static containerRequired = false;
@@ -85,6 +86,7 @@ export default class BugReportRoot extends React.PureComponent {
       { errorData: this.state.description, logID: this.logID },
       { grabLogs: this.state.uploadLogs }
     );
+    Actions.sendBugDraft({ logId: this.logID, userFeedback: this.state.description});
     clearTimeout(this.minimizeTimeout);
     this.minimizeTimeout = setTimeout(() => {
       if (this.mounted) {
