@@ -15,6 +15,7 @@ export default class LabelPickerPopover extends Component {
   static propTypes = {
     threads: PropTypes.array.isRequired,
     account: PropTypes.object.isRequired,
+    onActionCallback: PropTypes.func,
   };
 
   constructor(props) {
@@ -137,15 +138,18 @@ export default class LabelPickerPopover extends Component {
   _onApplyChanges = () => {
     if (Object.keys(this.tasks)) {
       const addTasks = [];
+      const addedLabels = [];
       const removeTasks = [];
+      const removedLabels = [];
       const tasks = this.tasks;
       // get remove label tasks and add label tasks
       for (const k in tasks) {
         if (tasks[k].action === 'Add') {
+          addedLabels.push(...tasks[k].task.labelsToAdd);
           addTasks.push(tasks[k].task);
-        }
-        else if (tasks[k].action === 'Remove') {
+        } else if (tasks[k].action === 'Remove') {
           removeTasks.push(tasks[k].task);
+          removedLabels.push(...tasks[k].task.labelsToRemove);
         }
       }
       if (removeTasks.length) {
@@ -154,9 +158,15 @@ export default class LabelPickerPopover extends Component {
       if (addTasks.length) {
         Actions.queueTasks(addTasks);
       }
+      this._actionCallBack(addedLabels, removedLabels);
     }
     Actions.closePopover();
   };
+  _actionCallBack = (addedLabels, removedLabels) => {
+    if (typeof this.props.onActionCallback === 'function') {
+      this.props.onActionCallback({ addedLabels, removedLabels });
+    }
+  }
 
   _onSearchValueChange = event => {
     this.setState(this._recalculateState(this.props, { searchValue: event.target.value }));
