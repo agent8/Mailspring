@@ -11,6 +11,27 @@ class MutedNotif extends React.Component {
     };
   }
 
+  // componentDidMount() {
+  //   this.setState({
+  //     contacts: [
+  //       {
+  //         id: 'fbe7bcaf-160e-42c8-8543-e7d2ea36deba',
+  //         accountId: '3a812d81',
+  //         email: 'yn_chn@163.com',
+  //         name: '',
+  //         state: 2,
+  //       },
+  //       {
+  //         id: '7c3f9afb-9070-4453-aaff-7c36e3d338d8',
+  //         accountId: '3a812d81',
+  //         email: 'notifications@github.com',
+  //         name: '',
+  //         state: 2,
+  //       },
+  //     ],
+  //   });
+  // }
+
   _unmuteSelect = select => {
     const emails = typeof select === 'string' ? [select] : select;
     // to do
