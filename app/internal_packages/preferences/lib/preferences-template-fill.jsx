@@ -7,6 +7,7 @@ import {
   SupportId,
   TaskDelay,
 } from './components/preferences-general-components';
+import PreferencesMutedNotif from './components/preferences-notifications';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
   AppearanceScaleSlider,
@@ -69,8 +70,7 @@ const preferencesTemplateFill = {
             },
             {
               label: 'Show labels (Gmail only)',
-              configSchema: configSchema =>
-                configSchema.properties.workspace.properties.showLabels,
+              configSchema: configSchema => configSchema.properties.workspace.properties.showLabels,
               keyPath: 'core.workspace.showLabels',
               keywords: [],
             },
@@ -239,6 +239,15 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.notifications.properties.countBadge,
               keyPath: 'core.notifications.countBadge',
+              keywords: [],
+            },
+          ],
+        },
+        {
+          groupItem: [
+            {
+              label: 'MutedNotifications',
+              component: PreferencesMutedNotif,
               keywords: [],
             },
           ],
