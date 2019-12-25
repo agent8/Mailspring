@@ -324,7 +324,7 @@ export default class ComposerView extends React.Component {
   }
 
   _draftNotReady() {
-    return this.state.missingAttachments || (this.props.draft && this.props.draft.waitingForBody);
+    return this.props.draft && this.props.draft.waitingForBody;
   }
 
   _renderBodyRegions() {
@@ -628,7 +628,11 @@ export default class ComposerView extends React.Component {
   // start and end target are both not in the contenteditable. This ensures
   // that this behavior doesn't interfear with a click and drag selection.
   _onMouseDownComposerBody = event => {
-    if (ReactDOM.findDOMNode(this._els[Fields.Body]).contains(event.target)) {
+    if (
+      this._els[Fields.Body] &&
+      ReactDOM.findDOMNode(this._els[Fields.Body]) &&
+      ReactDOM.findDOMNode(this._els[Fields.Body]).contains(event.target)
+    ) {
       this._mouseDownTarget = null;
     } else {
       this._mouseDownTarget = event.target;
@@ -640,13 +644,18 @@ export default class ComposerView extends React.Component {
   }
 
   _onMouseUpComposerBody = event => {
-    if (event.target === this._mouseDownTarget && !this._inFooterRegion(event.target)) {
+    if (
+      event.target === this._mouseDownTarget &&
+      !this._inFooterRegion(event.target) &&
+      this._els[Fields.Body] &&
+      ReactDOM.findDOMNode(this._els[Fields.Body])
+    ) {
       // We don't set state directly here because we want the native
       // contenteditable focus behavior. When the contenteditable gets focused
       const bodyRect = ReactDOM.findDOMNode(this._els[Fields.Body]).getBoundingClientRect();
       if (event.pageY < bodyRect.top) {
         this._els[Fields.Body].focus();
-      } else {
+      } else if (this._els[Fields.Body]) {
         if (this.state.quotedTextHidden) {
           this._els[Fields.Body].focusEndReplyText();
         } else {
@@ -721,7 +730,9 @@ export default class ComposerView extends React.Component {
         });
       }
     }
-    this._els[Fields.Body].insertInlineAttachments(fileObjs);
+    if (this._els[Fields.Body]) {
+      this._els[Fields.Body].insertInlineAttachments(fileObjs);
+    }
     session.changes.commit();
   };
 
@@ -738,7 +749,9 @@ export default class ComposerView extends React.Component {
       session.changes.add({
         files: [].concat(draft.files),
       });
-      this._els[Fields.Body].insertInlineAttachment(fileObj);
+      if (this._els[Fields.Body]) {
+        this._els[Fields.Body].insertInlineAttachment(fileObj);
+      }
       session.changes.commit();
     }
   };
