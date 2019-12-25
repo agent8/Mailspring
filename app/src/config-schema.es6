@@ -171,7 +171,7 @@ export default {
           },
           displayFilePreview: {
             type: 'boolean',
-            default: true,
+            default: false,
             title: 'Display thumbnails for attachments when available (Mac only)',
           },
           downloadFolder: {
