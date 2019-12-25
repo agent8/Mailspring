@@ -130,7 +130,20 @@ export class AttachmentItem extends Component {
     this.state = {
       isDownloading: false,
       percent: 0,
+      displaySupportPopup: false,
     };
+  }
+
+  componentDidMount() {
+    this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+  }
+
+  componentWillUnmount() {
+    if (this._storeUnlisten) {
+      for (let un of this._storeUnlisten) {
+        un();
+      }
+    }
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -139,6 +152,13 @@ export class AttachmentItem extends Component {
       this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
     }
   }
+
+  _onDownloadStoreChange = () => {
+    const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);
+    if (saveState !== this.state.displaySupportPopup) {
+      this.setState({ displaySupportPopup: saveState });
+    }
+  };
 
   _canPreview() {
     const { filePath, previewable } = this.props;
@@ -279,6 +299,14 @@ export class AttachmentItem extends Component {
         {...pickHTMLProps(extraProps)}
       >
         <div className="inner">
+          <div
+            className="popup"
+            style={{
+              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
+            }}
+          >
+            Download Success
+          </div>
           <ProgressBar
             isDownloading={this.state.isDownloading || this.props.isDownloading}
             percent={this.state.percent}
@@ -360,8 +388,29 @@ export class ImageAttachmentItem extends Component {
     this.state = {
       isDownloading: false,
       percent: 0,
+      displaySupportPopup: false,
     };
   }
+
+  componentDidMount() {
+    this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+  }
+
+  componentWillUnmount() {
+    if (this._storeUnlisten) {
+      for (let un of this._storeUnlisten) {
+        un();
+      }
+    }
+  }
+
+  _onDownloadStoreChange = () => {
+    const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);
+    if (saveState !== this.state.displaySupportPopup) {
+      this.setState({ displaySupportPopup: saveState });
+    }
+  };
+
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.download) {
       const download = nextProps.download;
@@ -412,6 +461,14 @@ export class ImageAttachmentItem extends Component {
     return (
       <div className={classes} {...pickHTMLProps(extraProps)}>
         <div>
+          <div
+            className="popup"
+            style={{
+              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
+            }}
+          >
+            Download Success
+          </div>
           <ProgressBar
             isDownloading={this.state.isDownloading || this.props.isDownloading}
             percent={this.state.percent}
