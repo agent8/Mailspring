@@ -117,50 +117,52 @@ class ContactList extends React.Component {
     const selectAllStatus = this.checkAllStatus();
     const { checkmarkNote = 'select', handleName } = this.props;
     return (
-      <ul className="contact-list">
-        <div className="header">
-          <div className={`checkmark ${selectAllStatus}`} onClick={this.onToggleSelectAll}></div>
-          <div className="checkmark-note">{`${
-            filterList && filterList.length ? filterList.length : 0
-          } ${checkmarkNote}`}</div>
-          <span
-            className={`handleBtn${selectAllStatus ? ' show' : ''}`}
-            onClick={() => this._handleSelect()}
-          >
-            {`${handleName} Selected`}
-          </span>
-          <div style={{ flex: 1 }}></div>
-          <div className="search-box">
-            <InputSearch
-              showPreIcon
-              showClearIcon
-              placeholder="Find a contact"
-              onChange={this.onInputChange}
-            />
-          </div>
-        </div>
-        {filterList.map(contact => {
-          const selectStatus = this.checkStatus(contact.id);
-
-          return (
-            <li key={contact.id} className={`${selectStatus}`}>
-              <div
-                className={`checkmark ${selectStatus}`}
-                onClick={() => this.onToggleSelect(contact.id)}
-              ></div>
-              <EmailAvatar
-                key="email-avatar"
-                account={{ name: contact.name, email: contact.email }}
+      <div className="contact-list">
+        <ul>
+          <div className="header">
+            <div className={`checkmark ${selectAllStatus}`} onClick={this.onToggleSelectAll}></div>
+            <div className="checkmark-note">{`${
+              filterList && filterList.length ? filterList.length : 0
+            } ${checkmarkNote}`}</div>
+            <span
+              className={`handleBtn${selectAllStatus ? ' show' : ''}`}
+              onClick={() => this._handleSelect()}
+            >
+              {`${handleName} Selected`}
+            </span>
+            <div style={{ flex: 1 }}></div>
+            <div className="search-box">
+              <InputSearch
+                showPreIcon
+                showClearIcon
+                placeholder="Find a contact"
+                onChange={this.onInputChange}
               />
-              {contact.name ? <span>{contact.name}</span> : null}
-              {contact.email}
-              <span className="handleBtn" onClick={() => this._handleItem(contact.email)}>
-                {handleName}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+            </div>
+          </div>
+          {filterList.map(contact => {
+            const selectStatus = this.checkStatus(contact.id);
+
+            return (
+              <li key={contact.id} className={`${selectStatus}`}>
+                <div
+                  className={`checkmark ${selectStatus}`}
+                  onClick={() => this.onToggleSelect(contact.id)}
+                ></div>
+                <EmailAvatar
+                  key="email-avatar"
+                  account={{ name: contact.name, email: contact.email }}
+                />
+                {contact.name ? <span>{contact.name}</span> : null}
+                {contact.email}
+                <span className="handleBtn" onClick={() => this._handleItem(contact.email)}>
+                  {handleName}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     );
   }
 }
