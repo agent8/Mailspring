@@ -133,6 +133,45 @@ class DraftFactory {
     });
     return new Message(defaults);
   }
+
+  async createReportBugDraft(logId, userFeedBack) {
+    try {
+      const account = this._accountForNewDraft();
+      if (!account) {
+        return null;
+      }
+      const body = `<div>
+            <div>
+            User bug report:</br>
+            ${userFeedBack.replace(/[\r|\n]/g, '</br>')}
+            -----User bug report end-----</br>
+            </div>
+            <div>
+            [MacOS] ${AppEnv.config.get('core.support.native')}
+            </div></br>
+            <div>
+            SupportId: ${AppEnv.config.get('core.support.id')}
+            </div></br>
+            <div>
+            [LogID]${logId}
+            </div>
+</div>`;
+      const subject = `[Email-macOS] Feedback from ${account.emailAddress}`;
+      const draft = await this.createDraft({
+        body,
+        subject,
+        to: [Contact.fromObject({ email: 'mailsupport@edison.tech', name: 'Mac Feedback' })],
+      });
+      if (draft) {
+        draft.bcc = [];
+        draft.cc = [];
+        return draft;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
   duplicateDraftBecauseOfNewId(draft){
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
