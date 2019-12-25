@@ -237,7 +237,7 @@ class DraftStore extends MailspringStore {
       if (t && t.draft) {
         AppEnv.logDebug(`Restarted SendDraft for draft: ${t.draft.headerMessageId}`);
         this._draftsSending[t.draft.headerMessageId] = true;
-        this._startSendingDraftTimeouts({ draft: t.draft, source: 'Restart SendDraft' });
+        this._startSendingDraftTimeouts({ draft: t.draft, taskId: t.id, source: 'Restart SendDraft' });
       }
     });
   }
@@ -1135,11 +1135,11 @@ class DraftStore extends MailspringStore {
       this.trigger({ headerMessageId });
     }
   };
-  _startSendingDraftTimeouts = ({ draft, source = '' }) => {
-    this._startSendingDraftFailedTimeout({ draft, source });
+  _startSendingDraftTimeouts = ({ draft, taskId, source = '' }) => {
+    this._startSendingDraftFailedTimeout({ draft, taskId, source });
     this._startDraftFailingTimeout({ messages: [draft] });
   };
-  _startSendingDraftFailedTimeout = ({ draft, source = '' }) => {
+  _startSendingDraftFailedTimeout = ({ draft, taskId = '', source = '' }) => {
     if (this._draftSendindTimeouts[draft.headerMessageId]) {
       clearTimeout(this._draftSendindTimeouts[draft.headerMessageId]);
     }
@@ -1150,7 +1150,11 @@ class DraftStore extends MailspringStore {
         changeSendStatus: false,
         source,
       });
-      const task = new ChangeDraftToFailedTask({ headerMessageIds: [draft.headerMessageId], accountId: draft.accountId });
+      const task = new ChangeDraftToFailedTask({
+        headerMessageIds: [draft.headerMessageId],
+        accountId: draft.accountId,
+        sendDraftTaskIds: [taskId],
+      });
       Actions.queueTask(task);
     }, SendDraftTimeout);
   };
@@ -1352,6 +1356,7 @@ class DraftStore extends MailspringStore {
     // want a separate SyncbackMetadataTask to be queued because a stray SyncbackDraftTask
     // could overwrite the metadata value back to null.
     if (sendLaterMetadataValue) {
+      const sendDraftTask = SendDraftTask.forSending(draft);
       const undoTask = SyncbackMetadataTask.forSaving({
         pluginId: 'send-later',
         model: draft,
@@ -1359,9 +1364,9 @@ class DraftStore extends MailspringStore {
         undoValue: { expiration: null, isUndoSend: true },
         lingerAfterTimeout: true,
         priority: UndoRedoStore.priority.critical,
-        delayedTasks: [SendDraftTask.forSending(draft)],
+        delayedTasks: [sendDraftTask],
         delayTimeoutCallback: () => {
-          this._startSendingDraftTimeouts({ draft, source: 'Send draft wait time expired' });
+          this._startSendingDraftTimeouts({ draft, taskId: sendDraftTask.id, source: 'Send draft wait time expired' });
         },
         taskPurged: () => {
           this._onSendDraftCancelled({ headerMessageId });
