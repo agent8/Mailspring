@@ -4,7 +4,7 @@ const ReactDOM = require('react-dom');
 const PropTypes = require('prop-types');
 const classNames = require('classnames');
 const RetinaImg = require('./retina-img').default;
-const { FolderSyncProgressStore, FocusedPerspectiveStore } = require('mailspring-exports');
+const { FolderSyncProgressStore, FocusedPerspectiveStore, CategoryStore } = require('mailspring-exports');
 const { SyncingListState, LottieImg } = require('mailspring-component-kit');
 
 const INBOX_ZERO_ANIMATIONS = ['gem', 'oasis', 'tron', 'airstrip', 'galaxy'];
@@ -88,6 +88,10 @@ class EmptyInboxState extends React.Component {
     const animationName = this._getAnimationName();
     const factor = this._getScalingFactor();
     const style = factor ? { transform: `scale(${factor})` } : {};
+    let message = '';
+    if (!this.props.syncing) {
+      message = 'Hooray! You’re done.';
+    }
 
     return (
       <div className="inbox-zero-animation">
@@ -98,7 +102,7 @@ class EmptyInboxState extends React.Component {
           />
           <div className="message">Hooray! You’re done.</div> */}
           <RetinaImg name={`ic-emptystate-.png`} fallback={`nomail.png`} mode={RetinaImg.Mode.ContentPreserve} />
-          <div className="message">{/*Hooray! You’re done.*/}</div>
+          <div className="message">{message}</div>
         </div>
       </div>
     );
@@ -107,7 +111,7 @@ class EmptyInboxState extends React.Component {
 
 class EmptyListState extends React.Component {
   static displayName = 'EmptyListState';
-  static propTypes = { visible: PropTypes.bool.isRequired };
+  static propTypes = { visible: PropTypes.bool.isRequired, loaded: PropTypes.bool.isRequired };
 
   constructor(props) {
     super(props);
@@ -123,12 +127,14 @@ class EmptyListState extends React.Component {
 
   componentDidMount() {
     this._mounted = true;
+    this._notSyncingTimer = null;
+    this._syncingTimer = null;
     this._unlisteners = [];
     this._unlisteners.push(
-      FolderSyncProgressStore.listen(() => this.setState(this._getStateFromStores()), this)
+      CategoryStore.listen(this._updateSyncingState, this),
     );
     this._unlisteners.push(
-      FocusedPerspectiveStore.listen(() => this.setState(this._getStateFromStores()), this)
+      FocusedPerspectiveStore.listen(this._updateSyncingState.bind(this, true), this)
     );
     window.addEventListener('resize', this._onResize);
     if (this.props.visible && !this.state.active) {
@@ -136,6 +142,44 @@ class EmptyListState extends React.Component {
       this.setState({ active: true, rect });
     }
   }
+
+  _updateSyncingState = forceSyncing => {
+    if (!this._mounted) {
+      return;
+    }
+    if (forceSyncing) {
+      this.setState({ syncing: true });
+    }
+    const state = this._getStateFromStores();
+    if (!state.syncing) {
+      if (this._syncingTimer) {
+        clearTimeout(this._syncingTimer);
+        this._syncingTimer = null;
+      }
+      if (!this._notSyncingTimer) {
+        this._notSyncingTimer = setTimeout(() => {
+          if (this._mounted) {
+            this.setState(state);
+          }
+          this._notSyncingTimer = null;
+        }, 2500);
+      }
+    } else {
+      if (this._notSyncingTimer) {
+        clearTimeout(this._notSyncingTimer);
+        this._notSyncingTimer = null;
+      }
+      this.setState(state);
+      if (!this._syncingTimer) {
+        this._syncingTimer = setTimeout(() => {
+          this._syncingTimer = null;
+          if (this._mounted) {
+            this._updateSyncingState();
+          }
+        }, 5000);
+      }
+    }
+  };
 
   shouldComponentUpdate(nextProps, nextState) {
     if (nextProps.visible !== this.props.visible) {
@@ -150,6 +194,14 @@ class EmptyListState extends React.Component {
       unlisten();
     }
     window.removeEventListener('resize', this._onResize);
+    if (this._notSyncingTimer) {
+      clearTimeout(this._notSyncingTimer);
+      this._notSyncingTimer = null;
+    }
+    if (this._syncingTimer) {
+      clearTimeout(this._syncingTimer);
+      this._syncingTimer = null;
+    }
   }
 
   componentDidUpdate() {
@@ -172,7 +224,10 @@ class EmptyListState extends React.Component {
     let ContentComponent = EmptyPerspectiveState;
     const current = FocusedPerspectiveStore.current();
 
-    let messageContent = current.emptyMessage();
+    let messageContent = '';
+    if (!this.state.syncing) {
+      messageContent = current.emptyMessage();
+    }
 
     // DC-1141: do not display syncing status
     // if (this.state.syncing) {
@@ -193,6 +248,7 @@ class EmptyListState extends React.Component {
       <div className={classes}>
         <ContentComponent
           perspective={current}
+          syncing={this.state.syncing}
           containerRect={this.state.rect}
           messageContent={messageContent}
         />
