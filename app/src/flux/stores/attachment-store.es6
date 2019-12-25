@@ -18,7 +18,7 @@ Promise.promisifyAll(fs);
 
 const mkdirpAsync = Promise.promisify(mkdirp);
 
-const fileAcessibleAtPath = async filePath => {
+const fileAcessibleAtPath = filePath => {
   try {
     const result = fs.existsSync(filePath);
     return result;
@@ -271,6 +271,22 @@ class AttachmentStore extends MailspringStore {
       file.safeDisplayName()
     );
   }
+
+  filterOutMissingAttachments = files => {
+    if (!Array.isArray(files)) {
+      return [];
+    }
+    const ret = [];
+    files.forEach(file => {
+      const filePath = this.pathForFile(file);
+      if (filePath) {
+        if (fileAcessibleAtPath(filePath)) {
+          ret.push(file);
+        }
+      }
+    });
+    return ret;
+  };
 
   getExtIconName(filePath) {
     const contentType = mime.lookup(filePath);

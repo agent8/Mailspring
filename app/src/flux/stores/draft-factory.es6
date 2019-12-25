@@ -1,15 +1,14 @@
 import _ from 'underscore';
 import Actions from '../actions';
-import DatabaseStore from './database-store';
 import AccountStore from './account-store';
 import ContactStore from './contact-store';
 import MessageStore from './message-store';
+import AttachmentStore from './attachment-store';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import uuid from 'uuid';
 
 import Contact from '../models/contact';
 import Message from '../models/message';
-import MessageUtils from '../models/message-utils';
 import Utils from '../models/utils';
 import InlineStyleTransformer from '../../services/inline-style-transformer';
 import SanitizeTransformer from '../../services/sanitize-transformer';
@@ -40,7 +39,10 @@ const removeAttachmentWithNoContentId = files => {
       ret.push(file);
     }
   });
-  return ret;
+  return filterMissingAttachments(ret);
+};
+const filterMissingAttachments = files => {
+  return AttachmentStore.filterOutMissingAttachments(files);
 };
 const mergeDefaultBccAndCCs = async (message, account) => {
   const mergeContacts = (field = 'cc', contacts) => {
@@ -408,7 +410,7 @@ class DraftFactory {
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Fwd:'),
       from: [this._fromContactForReply(message)],
-      files: message.files,
+      files: filterMissingAttachments(message.files),
       threadId: thread.id,
       accountId: message.accountId,
       forwardedHeaderMessageId: message.id,
