@@ -105,6 +105,19 @@ class MovePicker extends React.Component {
     }
     this._onOpenLabelsPopover(event);
   };
+  _onActionCallBack = ({ type = '', data }) => {
+    if (typeof this.props.onActionCallback === 'function') {
+      this.props.onActionCallback({ type, data });
+    }
+  };
+
+  _onLabelsChange = data => {
+    this._onActionCallBack({ type: 'labelChange', data });
+  };
+
+  _onFolderChange = data => {
+    this._onActionCallBack({ type: 'folderChange', data });
+  };
 
   _onOpenLabelsPopover = (event, anchorEl, threads) => {
     if (!threads && !(this.props.items.length > 0)) {
@@ -143,6 +156,7 @@ class MovePicker extends React.Component {
         threads={Array.isArray(threads) ? threads : this.props.items}
         account={this._account}
         onCreate={this._onCreateLabel}
+        onActionCallback={this._onLabelsChange}
       />,
       {
         originRect,
@@ -160,6 +174,7 @@ class MovePicker extends React.Component {
         name={data}
         isMoveAction={isMoveAction}
         onCancel={this._onCancelCreate}
+        onActionCallback={this._onLabelsChange}
       />,
       {
         isFixedToWindow: true,
@@ -177,6 +192,7 @@ class MovePicker extends React.Component {
         currentPerspective={this.props.currentPerspective}
         defaultValue={data}
         onCancel={this._onCancelCreate}
+        onActionCallback={this._onFolderChange}
       />,
       {
         isFixedToWindow: true,
@@ -256,6 +272,7 @@ class MovePicker extends React.Component {
         account={this._account}
         onClose={this._onCloseMoveFolderPopout}
         onCreate={onCreate}
+        onActionCallback={this._onFolderChange}
       />,
       {
         originRect: originRect,

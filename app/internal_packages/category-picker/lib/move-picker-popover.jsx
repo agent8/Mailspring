@@ -21,6 +21,7 @@ export default class MovePickerPopover extends Component {
     threads: PropTypes.array.isRequired,
     account: PropTypes.object.isRequired,
     onCreate: PropTypes.func.isRequired,
+    onActionCallback: PropTypes.func,
   };
 
   constructor(props) {
@@ -55,6 +56,11 @@ export default class MovePickerPopover extends Component {
     const rect = this.container.getBoundingClientRect();
     if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
       this.onCancel();
+    }
+  };
+  _onActionCallback = data => {
+    if (typeof this.props.onActionCallback === 'function') {
+      this.props.onActionCallback(data);
     }
   };
 
@@ -213,6 +219,7 @@ export default class MovePickerPopover extends Component {
       }
       Actions.queueTasks(tasks);
     }
+    this._onActionCallback(category);
   };
 
   _onSearchValueChange = event => {

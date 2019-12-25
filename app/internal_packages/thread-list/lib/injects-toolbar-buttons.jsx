@@ -39,6 +39,7 @@ function InjectsToolbarButtons(
         dataSource,
         currentPerspective: FocusedPerspectiveStore.current(),
         position: this.props.position ? this.props.position : 'unknown',
+        onActionCallback: this.props.onActionCallback
       };
       const injectedButtons = (
         <InjectedComponentSet

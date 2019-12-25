@@ -20,6 +20,7 @@ export default class MailLabelSet extends React.Component {
     includeCurrentCategories: PropTypes.bool,
     removable: PropTypes.bool,
     noWrapper: PropTypes.bool,
+    onLabelRemoved: PropTypes.func,
   };
 
   _onRemoveLabel(label) {
@@ -30,6 +31,9 @@ export default class MailLabelSet extends React.Component {
       labelsToRemove: [label],
     });
     Actions.queueTask(task);
+    if (typeof this.props.onLabelRemoved === 'function') {
+      this.props.onLabelRemoved([label]);
+    }
   }
 
   render() {
