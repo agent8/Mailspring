@@ -286,11 +286,10 @@ export default class Message extends ModelWithMetadata {
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
     }),
-    calendarFileId: Attributes.String({
-      modelKey: 'calFileId',
-    }),
     hasCalendar: Attributes.Boolean({
       modelKey: 'hasCalendar',
+      queryable: true,
+      loadFromColumn: true,
     }),
     siftCategory: Attributes.Collection({
       queryable: true,
@@ -317,6 +316,7 @@ export default class Message extends ModelWithMetadata {
     this.files = this.files || [];
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
+    this.hasCalendar = this.hasCalendar || false;
   }
 
   toJSON(options) {
