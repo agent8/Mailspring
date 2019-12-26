@@ -48,6 +48,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.destroyDraftSucceeded, this._onDestroyDraftSuccess);
     this.listenTo(Actions.destroyDraft, this._onDestroyDrafts);
     this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChange);
+    this.listenTo(Actions.sendDraft, this._onSendDraft);
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.composeReply, this._onComposeReply);
       this.listenTo(Actions.composeForward, this._onComposeForward);
@@ -62,7 +63,6 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.sendBugDraft, this._sendBugDraft);
       this.listenTo(Actions.composeFeedBackDraft, this._onPopoutFeedbackDraft);
       this.listenTo(Actions.sendQuickReply, this._onSendQuickReply);
-      this.listenTo(Actions.sendDraft, this._onSendDraft);
       this.listenTo(Actions.failingDraft, this._startDraftFailingTimeout);
       this.listenTo(Actions.draftOpenCount, this._onDraftOpenCount);
       this.listenTo(Actions.draftWindowClosing, this._onDraftWindowClosing);
