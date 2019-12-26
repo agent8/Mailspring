@@ -389,6 +389,7 @@ class DraftFactory {
       body: `${me.name} have replied with a status of ${replyStatus.label}`,
       files: [file],
       calTarStat: replyStatus.code,
+      hasCalendar: true,
       calendarReply: true
     });
   }
