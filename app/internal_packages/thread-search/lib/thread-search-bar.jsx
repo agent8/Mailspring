@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ListensToFluxStore, RetinaImg, KeyCommandsRegion } from 'mailspring-component-kit';
-import { Actions, FocusedPerspectiveStore, WorkspaceStore } from 'mailspring-exports';
+import { Actions, FocusedPerspectiveStore, WorkspaceStore, EmailAvatar } from 'mailspring-exports';
 import SearchStore from './search-store';
 import TokenizingContenteditable from './tokenizing-contenteditable';
 
@@ -125,10 +125,11 @@ class ThreadSearchBar extends Component {
               term: wrapInQuotes(t.subject),
               description: t.subject,
               thread: t,
+              role: 'email'
             })),
           ),
           contacts: getContactSuggestions(query, accountIds).then(results =>
-            results.map(term => ({ token: null, term: wrapInQuotes(term), description: term })),
+            results.map(term => ({ token: null, term: wrapInQuotes(term), description: term, role: 'contact' })),
           ),
         }).then(({ contacts, subjects }) => {
           suggestions = [...contacts, ...subjects].sort((a, b) => {
@@ -202,7 +203,7 @@ class ThreadSearchBar extends Component {
       if (selected) {
         this._onChooseSuggestion(selected);
       } else {
-        this._onSubmitSearchQuery(this.props.query);
+        this._onSubmitSearchQuery(this.props.query, true);
       }
     }
   };
@@ -236,7 +237,7 @@ class ThreadSearchBar extends Component {
       nextQuery = nextQuery + ' ';
     }
     if (suggestion.term) {
-      this._onSubmitSearchQuery(nextQuery);
+      this._onSubmitSearchQuery(nextQuery, true);
     } else {
       this._onSearchQueryChanged(nextQuery);
     }
@@ -270,7 +271,7 @@ class ThreadSearchBar extends Component {
     });
   };
 
-  _onSubmitSearchQuery = nextQuery => {
+  _onSubmitSearchQuery = (nextQuery, forceQuery) => {
     const SPACE = ' ';
     // for the chinese folder name
     const input = nextQuery.split(SPACE).map(item => {
@@ -280,13 +281,13 @@ class ThreadSearchBar extends Component {
       return item;
     });
     nextQuery = input.join(SPACE);
-    Actions.searchQuerySubmitted(nextQuery);
+    Actions.searchQuerySubmitted(nextQuery, forceQuery);
     this._fieldEl.blur();
   };
 
   _onClearSearchQuery = e => {
     if (this.props.query !== '') {
-      Actions.searchQuerySubmitted('');
+      Actions.searchQuerySubmitted('', true);
     } else {
       this._fieldEl.blur();
     }
@@ -305,10 +306,10 @@ class ThreadSearchBar extends Component {
 
   render() {
     const { query, isSearching, perspective } = this.props;
-    const { suggestions, selectedIdx } = this.state;
+    const { suggestions, selectedIdx, focused } = this.state;
 
-    const showPlaceholder = !this.state.focused && !query;
-    const showX = this.state.focused || !!perspective.searchQuery;
+    const showPlaceholder = !focused && !query;
+    const showX = focused || !!perspective.searchQuery;
 
     return (
       <KeyCommandsRegion
@@ -357,7 +358,7 @@ class ThreadSearchBar extends Component {
             onMouseDown={this._onClearSearchQuery}
           />
         )}
-        {this.state.suggestions.length > 0 &&
+        {suggestions.length > 0 &&
           this.state.focused && (
             <div className="suggestions">
               {suggestions.map((s, idx) => (
@@ -369,6 +370,19 @@ class ThreadSearchBar extends Component {
                   className={`suggestion ${selectedIdx === idx ? 'selected' : ''}`}
                   key={`${idx}`}
                 >
+                  {s.role === 'contact' ? (
+                    <EmailAvatar
+                      name={s.description}
+                      email={s.description}
+                    />
+                  ) : null}
+                  {s.role === 'email' ? (
+                    <RetinaImg
+                      name="unread.svg"
+                      isIcon
+                      mode={RetinaImg.Mode.ContentIsMask}
+                    />
+                  ) : null}
                   {s.token && <span className="suggestion-token">{s.token}: </span>}
                   {s.description}
                 </div>
