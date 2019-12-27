@@ -588,6 +588,9 @@ class Actions {
   // Block
   static changeBlockSucceeded = ActionScopeMainWindow;
 
+  // Mute
+  static changeMuteSucceeded = ActionScopeMainWindow;
+
   // App Message actions
   static pushAppMessage = ActionScopeWindow;
   static pushAppMessages = ActionScopeWindow;
