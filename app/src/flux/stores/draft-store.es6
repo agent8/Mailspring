@@ -134,6 +134,7 @@ class DraftStore extends MailspringStore {
     return DatabaseStore.findBy(Message, {
       headerMessageId: headerMessageId,
       draft: true,
+      hasCalendar: false,
     }).where([
       Message.attributes.state.in([
         Message.messageState.normal,
@@ -154,7 +155,7 @@ class DraftStore extends MailspringStore {
   }
 
   findAllWithBodyInDescendingOrder() {
-    return MessageStore.findAllWithBodyInDescendingOrder().where({ draft: true });
+    return MessageStore.findAllWithBodyInDescendingOrder().where({ draft: true, hasCalendar: false });
   }
 
   /**

@@ -18,7 +18,7 @@ import {
 const resendIndicatorTimeoutMS = 3000;
 class OutboxStore extends MailspringStore {
   static findAll() {
-    return DatabaseStore.findAll(Message, { draft: true }).where([
+    return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false }).where([
       Message.attributes.state.in([Message.messageState.failed, Message.messageState.failing]),
     ]);
   }
