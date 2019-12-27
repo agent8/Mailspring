@@ -73,6 +73,8 @@
     padding-top: @padding-small-vertical;
 
     .suggestion {
+      display: flex;
+      align-items: center;
       color: @text-color-very-subtle;
       padding: @padding-small-vertical @padding-small-horizontal;
 
@@ -89,6 +91,23 @@
       .suggestion-token {
         color: @token-color;
         font-weight: 500;
+      }
+      .avatar-icon {
+        height: 28px;
+        width: 28px;
+        line-height: 28px;
+        text-align: center;
+        font-size: 14px;
+        color: @text-color-inverse;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+      }
+      img.content-mask {
+        height: 28px;
+        width: 28px;
+        background: @gray-light;
+        margin-right: 6px;
       }
     }
 
