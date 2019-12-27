@@ -1,47 +1,47 @@
 import React from 'react';
+import { MuteNotifacationsStore } from 'mailspring-exports';
 import ContactList from './contact-list';
 
-class MutedNotif extends React.Component {
-  static displayName = 'PreferencesMutedNotif';
+class MutedNotifacations extends React.Component {
+  static displayName = 'PreferencesMutedNotifacations';
 
   constructor() {
     super();
     this.state = {
-      contacts: [],
+      mutes: [],
     };
   }
 
-  // componentDidMount() {
-  //   this.setState({
-  //     contacts: [
-  //       {
-  //         id: 'fbe7bcaf-160e-42c8-8543-e7d2ea36deba',
-  //         accountId: '3a812d81',
-  //         email: 'yn_chn@163.com',
-  //         name: '',
-  //         state: 2,
-  //       },
-  //       {
-  //         id: '7c3f9afb-9070-4453-aaff-7c36e3d338d8',
-  //         accountId: '3a812d81',
-  //         email: 'notifications@github.com',
-  //         name: '',
-  //         state: 2,
-  //       },
-  //     ],
-  //   });
-  // }
+  componentDidMount() {
+    this.unsubscribe = MuteNotifacationsStore.listen(this._onMutedChanged);
+    MuteNotifacationsStore.syncMuteNotifacations();
+    const mutes = this._getStateFromStores();
+    this.setState({ mutes: mutes });
+  }
+
+  componentWillUnmount() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  }
+
+  _getStateFromStores() {
+    const mutes = MuteNotifacationsStore.getMuteNotifacations();
+    return mutes;
+  }
+
+  _onMutedChanged = () => {
+    const mutes = this._getStateFromStores();
+    this.setState({ mutes });
+  };
 
   _unmuteSelect = select => {
     const emails = typeof select === 'string' ? [select] : select;
-    // to do
-    console.log('^^^^^^^^^^^^^^^^');
-    console.log(emails);
-    console.log('^^^^^^^^^^^^^^^^');
+    MuteNotifacationsStore.unMuteNotifacationEmails(emails);
   };
 
   render() {
-    const { contacts } = this.state;
+    const { mutes } = this.state;
     return (
       <div className="container-mute">
         <div className="config-group">
@@ -52,7 +52,7 @@ class MutedNotif extends React.Component {
           </div>
         </div>
         <ContactList
-          contacts={contacts}
+          contacts={mutes}
           checkmarkNote={'muted senders'}
           handleName={'Unmute'}
           handleSelect={this._unmuteSelect}
@@ -62,4 +62,4 @@ class MutedNotif extends React.Component {
   }
 }
 
-export default MutedNotif;
+export default MutedNotifacations;

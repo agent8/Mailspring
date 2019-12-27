@@ -7,7 +7,7 @@ import {
   SupportId,
   TaskDelay,
 } from './components/preferences-general-components';
-import PreferencesMutedNotif from './components/preferences-notifications';
+import PreferencesMutedNotifacations from './components/preferences-notifications';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
   AppearanceScaleSlider,
@@ -247,7 +247,7 @@ const preferencesTemplateFill = {
           groupItem: [
             {
               label: 'MutedNotifications',
-              component: PreferencesMutedNotif,
+              component: PreferencesMutedNotifacations,
               keywords: [],
             },
           ],
