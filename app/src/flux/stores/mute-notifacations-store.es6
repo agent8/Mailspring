@@ -7,7 +7,7 @@ import {
   AccountStore,
 } from 'mailspring-exports';
 import DatabaseStore from './database-store';
-import MuteNotifacations from '../models/mute-notifacations';
+import MuteNotifacation from '../models/mute-notifacation';
 
 class MuteNotifacationsStore extends MailspringStore {
   constructor() {
@@ -18,7 +18,7 @@ class MuteNotifacationsStore extends MailspringStore {
     this.listenTo(Actions.changeMuteSucceeded, this.refreshMuteNotifacations);
 
     DatabaseStore.listen(change => {
-      if (change.objectClass === MuteNotifacations.name) {
+      if (change.objectClass === MuteNotifacation.name) {
         this.refreshMuteNotifacations();
       }
     });
@@ -26,9 +26,9 @@ class MuteNotifacationsStore extends MailspringStore {
 
   refreshMuteNotifacations = async () => {
     // status is 1 or 3 mean this data is deleted
-    const mutes = await DatabaseStore.findAll(MuteNotifacations).where([
-      MuteNotifacations.attributes.state.not(1),
-      MuteNotifacations.attributes.state.not(3),
+    const mutes = await DatabaseStore.findAll(MuteNotifacation).where([
+      MuteNotifacation.attributes.state.not(1),
+      MuteNotifacation.attributes.state.not(3),
     ]);
     const muteNotifacationsSet = new Set();
     const muteDeDuplication = [];
