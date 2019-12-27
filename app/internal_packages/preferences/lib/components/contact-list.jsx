@@ -11,6 +11,8 @@ class ContactList extends React.Component {
     checkmarkNote: PropTypes.string,
     handleName: PropTypes.string.isRequired,
     handleSelect: PropTypes.func.isRequired,
+    showAddContext: PropTypes.bool,
+    onAddContext: PropTypes.func,
   };
 
   constructor() {
