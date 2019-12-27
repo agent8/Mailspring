@@ -72,6 +72,16 @@ class MuteNotifacationsStore extends MailspringStore {
     Actions.queueTask(new UnMuteNotifacationsTask({ accountId: accountId, email: email }));
   };
 
+  muteNotifacationEmails = emails => {
+    const muteTaskList = [];
+    AccountStore.accounts().forEach(account => {
+      emails.forEach(email => {
+        muteTaskList.push(new MuteNotifacationsTask({ accountId: account.id, email: email }));
+      });
+    });
+    Actions.queueTasks(muteTaskList);
+  };
+
   unMuteNotifacationEmails = emails => {
     const unMuteTaskList = [];
     AccountStore.accounts().forEach(account => {
