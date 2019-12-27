@@ -22,13 +22,17 @@ class ContactList extends React.Component {
       selections: [],
       searchValue: '',
       filterList: [],
+      showAddContext: false,
     };
   }
 
   UNSAFE_componentWillReceiveProps(next) {
-    const { contacts } = next;
-    this.setState({ contacts }, () => {
+    const { contacts, showAddContext } = next;
+    this.setState({ contacts, showAddContext }, () => {
       this._filterContactsBySearchValue();
+      if (this._addContextInput) {
+        this._addContextInput.focus();
+      }
     });
   }
 
@@ -98,6 +102,12 @@ class ContactList extends React.Component {
     });
   };
 
+  _onAddContextInputBlur = () => {
+    if (this.props.onAddContext && typeof this.props.onAddContext === 'function') {
+      this.props.onAddContext();
+    }
+  };
+
   _handleSelect = () => {
     const { handleSelect } = this.props;
     const { selections } = this.state;
@@ -115,9 +125,9 @@ class ContactList extends React.Component {
   };
 
   render() {
-    const { filterList } = this.state;
+    const { filterList, showAddContext } = this.state;
     const selectAllStatus = this.checkAllStatus();
-    const { checkmarkNote = 'select', handleName } = this.props;
+    const { checkmarkNote = 'select', handleName, onAddContext } = this.props;
     return (
       <div className="contact-list">
         <ul>
@@ -142,6 +152,14 @@ class ContactList extends React.Component {
               />
             </div>
           </div>
+          {showAddContext ? (
+            <li>
+              <input
+                ref={el => (this._addContextInput = el)}
+                onBlur={this._onAddContextInputBlur}
+              />
+            </li>
+          ) : null}
           {filterList.map(contact => {
             const selectStatus = this.checkStatus(contact.id);
 
