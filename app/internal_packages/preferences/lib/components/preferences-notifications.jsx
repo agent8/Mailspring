@@ -1,5 +1,6 @@
 import React from 'react';
 import { MuteNotifacationsStore } from 'mailspring-exports';
+import { RetinaImg } from 'mailspring-component-kit';
 import ContactList from './contact-list';
 
 class MutedNotifacations extends React.Component {
@@ -9,6 +10,7 @@ class MutedNotifacations extends React.Component {
     super();
     this.state = {
       mutes: [],
+      showAddContext: false,
     };
   }
 
@@ -35,13 +37,18 @@ class MutedNotifacations extends React.Component {
     this.setState({ mutes });
   };
 
+  _onMuteContext = email => {
+    this.setState({ showAddContext: false });
+    MuteNotifacationsStore.muteNotifacationEmails([email]);
+  };
+
   _unmuteSelect = select => {
     const emails = typeof select === 'string' ? [select] : select;
     MuteNotifacationsStore.unMuteNotifacationEmails(emails);
   };
 
   render() {
-    const { mutes } = this.state;
+    const { mutes, showAddContext } = this.state;
     return (
       <div className="container-mute">
         <div className="config-group">
@@ -50,9 +57,23 @@ class MutedNotifacations extends React.Component {
             Contacts you have muted will appear here. You will not receive notifications for mail
             from these senders.
           </div>
+          <div
+            className="btn-primary buttons-add"
+            onClick={() => this.setState({ showAddContext: true })}
+          >
+            <RetinaImg
+              name={`add.svg`}
+              style={{ width: 19, height: 19 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+            Mute Sender
+          </div>
         </div>
         <ContactList
           contacts={mutes}
+          showAddContext={showAddContext}
+          onAddContext={this._onMuteContext}
           checkmarkNote={'muted senders'}
           handleName={'Unmute'}
           handleSelect={this._unmuteSelect}
