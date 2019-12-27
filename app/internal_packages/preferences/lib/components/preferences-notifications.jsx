@@ -39,7 +39,9 @@ class MutedNotifacations extends React.Component {
 
   _onMuteContext = email => {
     this.setState({ showAddContext: false });
-    MuteNotifacationsStore.muteNotifacationEmails([email]);
+    if (email) {
+      MuteNotifacationsStore.muteNotifacationEmails([email]);
+    }
   };
 
   _unmuteSelect = select => {
