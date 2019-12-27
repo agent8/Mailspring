@@ -1,7 +1,7 @@
 import Attributes from '../attributes';
 import Model from './model';
 
-export default class MuteNotifacations extends Model {
+export default class MuteNotifacation extends Model {
   static attributes = Object.assign(
     {},
     {
