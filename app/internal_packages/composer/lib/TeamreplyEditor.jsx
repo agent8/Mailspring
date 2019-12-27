@@ -68,10 +68,10 @@ export default class TeamreplyEditor extends Component {
 
     return (
       <div className='teamreply-editor-container'>
-        <iframe
+        {/* <iframe
           className='teamreply-editor'
           src={`${htmlPath}?padId=${padId}&userId=${userId}&userName=${userName}&token=${token}`}
-        />
+        /> */}
         <div className='teamreply-editor-invite-btn' onClick={this.showInvitePadMember}>
           Invite
         </div>

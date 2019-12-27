@@ -162,6 +162,7 @@ module.exports = grunt => {
             '**/src/scripts/**',
             '**/node_modules/spellchecker/**',
             '**/node_modules/windows-shortcuts/**',
+            '**/teamreply-client/**',
           ].join(',') +
           '}',
       },
