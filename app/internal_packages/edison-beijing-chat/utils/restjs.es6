@@ -11,11 +11,11 @@ let logoDirPath = path.join(configDirPath, 'logo_cache')
 
 const domain = {
   dev: {
-    rest: 'https://restxmpp.stag.easilydo.cc'
+    rest: 'https://cp.stag.easilydo.cc/api',
   },
   prod: {
-    rest: 'https://restxmpp.edison.tech' // _prod
-  }
+    rest: 'https://restxmpp.edison.tech', // _prod
+  },
 }
 function getBaseDomain (kind) {
   let chatObj = {}
@@ -54,7 +54,7 @@ export const register = (email, pwd, name, type, provider, setting) => {
           e2eeKeys: [{ id: '1', key: pubKey }],
           emailAddress: email,
           emailPassword: pwd,
-          autoLogin: 'true'
+          autoLogin: 'true',
         }
         post(urlPre + 'register', data, (err, res) => resolve({ err, res }))
       } else {
@@ -125,7 +125,7 @@ export function checkToken (accessToken) {
     accessToken: accessToken,
     deviceType: 'desktop',
     deviceModel: process.platform,
-    pushToken: ''
+    pushToken: '',
   }
   return new Promise(resolve => {
     post(urlPre + 'checkToken', arg, (err, res) => {
@@ -229,7 +229,7 @@ export const login = (email, password, cb) => {
       deviceType: 'desktop',
       deviceModel: 'mac',
       password: password,
-      emailAddress: email
+      emailAddress: email,
       // otherAccounts: []
     },
     cb
@@ -240,7 +240,7 @@ export const uploadContacts = (accessToken, contacts, cb) => {
     urlPre + 'uploadContacts',
     {
       accessToken: accessToken,
-      contacts: contacts
+      contacts: contacts,
     },
     cb
   )
@@ -336,5 +336,5 @@ export default {
   sendCmd2App,
   sendCmd2App2,
   getAvatarPromise,
-  getLogo
+  getLogo,
 }

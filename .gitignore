@@ -64,6 +64,7 @@ scripts/venv
 
 # OAuth client secret for talking to Google Sheets
 client_secret.json
+yarn-error.log
 /app/mailsync
 /logfile.txt
 /app/dist-docs
