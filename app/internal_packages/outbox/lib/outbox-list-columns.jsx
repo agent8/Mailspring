@@ -1,12 +1,11 @@
 import React from 'react';
-import { Utils, Message, DateUtils, AccountStore } from 'mailspring-exports';
-import { InjectedComponentSet, ListTabular, InjectedComponent } from 'mailspring-component-kit';
+import { Utils, Message, DateUtils} from 'mailspring-exports';
+import { InjectedComponentSet, ListTabular, InjectedComponent, OutboxSender } from 'mailspring-component-kit';
 import {
   OutboxResendQuickAction,
   OutboxTrashQuickAction,
   OutboxEditQuickAction,
 } from './outbox-list-quick-actions';
-import RetinaImg from '../../../src/components/retina-img';
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -28,22 +27,8 @@ function subject(subj) {
 const SenderColumn = new ListTabular.Column({
   name: 'Sender',
   resolver: draft => {
-    const account = AccountStore.accountForId(draft.accountId);
-    let accountLogo = 'account-logo-other.png';
-    if (account && account.provider !== 'imap') {
-      accountLogo = `account-logo-${account.provider}.png`;
-    }
-    const styles = {
-      backgroundPosition: 'center',
-      backgroundSize: 'cover',
-    };
-    return <div className="avatar-icon" style={styles}>
-      <RetinaImg mode={RetinaImg.Mode.ContentPreserve}
-        name={accountLogo}
-        style={{ width: 40, height: 40 }}
-      />
-    </div>
-  }
+    return <OutboxSender draft={draft} lottieStyle={{ left: 10, top: 10 }} />;
+  },
 });
 
 const ParticipantsColumn = new ListTabular.Column({

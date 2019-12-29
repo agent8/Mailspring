@@ -99,13 +99,13 @@
     }
     &.selected:hover,
     &:hover {
-      background-color: @active;
+      background-color: @source-list-active-bg;
       &:before {
-        .missing-shadow-patch(@active);
+        .missing-shadow-patch(@source-list-active-bg);
       }
       .item.selected,
       .item {
-        background-color: @active;
+        background-color: @source-list-active-bg;
       }
     }
 
@@ -248,7 +248,7 @@
     &.selected {
       background: @source-list-active-bg;
       color: @source-list-active-color;
-      img.content-mask { background-color: @source-list-active-color; }
+      img.content-mask { background-color: @text-color; }
       .name {
         font-weight: bold;
         opacity: 1;

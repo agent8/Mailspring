@@ -176,13 +176,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.attachments.openFolderAfterDownload',
               keywords: [],
             },
-            {
-              label: 'Display thumbnails for attachments when available (Mac only)',
-              configSchema: configSchema =>
-                configSchema.properties.attachments.properties.displayFilePreview,
-              keyPath: 'core.attachments.displayFilePreview',
-              keywords: [],
-            },
+            // {
+            //   label: 'Display thumbnails for attachments when available (Mac only)',
+            //   configSchema: configSchema =>
+            //     configSchema.properties.attachments.properties.displayFilePreview,
+            //   keyPath: 'core.attachments.displayFilePreview',
+            //   keywords: [],
+            // },
             {
               label: 'Save downloaded files to',
               component: DownloadSelection,

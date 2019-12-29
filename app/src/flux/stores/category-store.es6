@@ -4,6 +4,7 @@ import MailspringStore from 'mailspring-store';
 import AccountStore from './account-store';
 import Account from '../models/account';
 import Category from '../models/category';
+import Actions from '../actions';
 
 const asAccount = a => {
   if (!a) {
@@ -19,6 +20,8 @@ const asAccountId = a => {
   return a instanceof Account ? a.id : a;
 };
 
+const categoryUpdatingTimeout = 60000;
+
 class CategoryStore extends MailspringStore {
   constructor() {
     super();
@@ -26,6 +29,7 @@ class CategoryStore extends MailspringStore {
     this._standardCategories = {};
     this._userCategories = {};
     this._hiddenCategories = {};
+    this._categorySyncState = {};
 
     AppEnv.config.onDidChange('core.workspace.showImportant', () => {
       if (this._categoryResult) {
@@ -36,6 +40,7 @@ class CategoryStore extends MailspringStore {
     Categories.forAllAccounts()
       .sort()
       .subscribe(this._onCategoriesChanged);
+    Actions.syncFolders.listen(this._onSyncCategory, this);
   }
   decodePath(pathString) {
     return Category.pathToDisplayName(pathString);
@@ -164,6 +169,46 @@ class CategoryStore extends MailspringStore {
     return this.getCategoryByRole(accountOrId, 'spam');
   }
 
+  isCategorySyncing = categoryId => {
+    if (!categoryId || typeof categoryId !== 'string' || (categoryId.length === 0)) {
+      return false;
+    }
+    const now = Date.now();
+    if (!this._categorySyncState[categoryId]) {
+      this._categorySyncState[categoryId] = { syncing: false, lastUpdate: now };
+    } else {
+      const lastUpdate = this._categorySyncState[categoryId].lastUpdate;
+      if (
+        now - lastUpdate > categoryUpdatingTimeout &&
+        this._categorySyncState[categoryId].syncing
+      ) {
+        this._categorySyncState[categoryId] = { syncing: false, lastUpdate: now };
+      }
+    }
+    return this._categorySyncState[categoryId].syncing;
+  };
+
+  _onSyncCategory = data => {
+    if (!Array.isArray(data.foldersIds)) {
+      return;
+    }
+    const categoryIds = data.foldersIds;
+    const now = Date.now();
+    categoryIds.forEach(id => {
+      this._categorySyncState[id] = { syncing: true, lastUpdate: now };
+    });
+    this.trigger();
+  };
+
+  // We assume when we got message for particular category, that category have finished syncing.
+  _onCategoryFinishedSyncing = (category, trigger = true) => {
+    const now = Date.now();
+    this._categorySyncState[category.id] = { syncing: false, lastUpdate: now };
+    if (trigger) {
+      this.trigger();
+    }
+  };
+
   _onCategoriesChanged = categories => {
     this._categoryResult = categories;
     const categoryCache = {};
@@ -175,6 +220,7 @@ class CategoryStore extends MailspringStore {
         cat.bgColor = oldCat.bgColor;
       }
       categoryCache[cat.accountId][cat.id] = cat;
+      this._onCategoryFinishedSyncing(cat, false);
     }
     this._categoryCache = categoryCache;
 

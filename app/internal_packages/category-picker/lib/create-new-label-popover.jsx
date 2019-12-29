@@ -15,6 +15,7 @@ export default class CreateNewFolderPopover extends Component {
     onCancel: PropTypes.func,
     left: PropTypes.number,
     top: PropTypes.number,
+    onActionCallback: PropTypes.func,
   };
   static defaultProps = {
     left: 490,
@@ -71,6 +72,11 @@ export default class CreateNewFolderPopover extends Component {
       }, this.props.buttonTimeout * 2);
     }
   };
+  _onActionCallback = data => {
+    if (typeof this.props.onActionCallback === 'function') {
+      this.props.onActionCallback(data);
+    }
+  };
   _onResultReturned = () => {
     if (!this._mounted) {
       return;
@@ -112,8 +118,7 @@ export default class CreateNewFolderPopover extends Component {
       }
       if (this.props.isMoveAction) {
         this._onMoveToCategory(finishedTask.created);
-      }
-      else {
+      } else {
         Actions.queueTask(
           new ChangeLabelsTask({
             source: 'Category Picker: New Category',
@@ -122,6 +127,7 @@ export default class CreateNewFolderPopover extends Component {
             labelsToAdd: [finishedTask.created],
           })
         );
+        this._onActionCallback({addedLabels: [finishedTask.created]});
       }
     });
     Actions.closePopover();
@@ -146,6 +152,7 @@ export default class CreateNewFolderPopover extends Component {
         threads: threads,
       }),
     ]);
+    this._onActionCallback({ addedLabels: [category], removedLabels: all });
   };
 
   _onNameChange = (e) => {

@@ -328,7 +328,7 @@ class MessageStore extends MailspringStore {
   };
 
   _onFocusChanged(change) {
-    if (change.impactsCollection('sift')){
+    if (change.impactsCollection('sift')) {
       this._expandItemsToDefault();
       this.trigger();
     }
@@ -538,7 +538,11 @@ class MessageStore extends MailspringStore {
         return this._missingAttachmentIds.includes(id);
       })
     ) {
-      Actions.fetchAttachments({ accountId: this._items[0].accountId, missingItems: fileIds });
+      Actions.fetchAttachments({
+        accountId: this._items[0].accountId,
+        missingItems: fileIds,
+        needProgress: true,
+      });
     }
   }
 
@@ -552,42 +556,27 @@ class MessageStore extends MailspringStore {
         let total = this._items[i].files.length * 2;
         this._items[i].files.forEach((f, fileIndex) => {
           const tmpPath = AttachmentStore.pathForFile(f);
-          fs.access(tmpPath, fs.constants.R_OK, (err) => {
-            if (err) {
-              missing.push(f.id);
-              if (!this.isAttachmentMissing(f.id)) {
-                this._missingAttachmentIds.push(f.id);
-                change = true;
-              }
-              processed++;
-              fs.access(`${tmpPath}.part`, fs.constants.R_OK, (err) => {
-                if (err) {
-                  change = true;
-                }
-                this._items[i].files[fileIndex].isDownloading = !!err;
-                processed++;
-                if (processed === total) {
-                  if (missing.length > 0) {
-                    Actions.fetchAttachments({ accountId: this._items[i].accountId, missingItems: missing });
-                  }
-                  if (change) {
-                    this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
-                      return !noLongerMissing.includes(id);
-                    });
-                    this.trigger();
-                  }
-                }
-              });
-            } else {
-              if (this.isAttachmentMissing(f.id)) {
-                noLongerMissing.push(f.id);
-                change = true;
-              }
-              processed += 2;
+          const tempExists = fs.existsSync(tmpPath);
+          if (!tempExists) {
+            missing.push(f.id);
+            if (!this.isAttachmentMissing(f.id)) {
+              this._missingAttachmentIds.push(f.id);
+              change = true;
             }
+            processed++;
+            const partExists = fs.existsSync(`${tmpPath}.part`);
+            if (!partExists) {
+              change = true;
+            }
+            this._items[i].files[fileIndex].isDownloading = partExists;
+            processed++;
             if (processed === total) {
               if (missing.length > 0) {
-                Actions.fetchAttachments({ accountId: this._items[i].accountId, missingItems: missing });
+                Actions.fetchAttachments({
+                  accountId: this._items[i].accountId,
+                  missingItems: missing,
+                  needProgress: true,
+                });
               }
               if (change) {
                 this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
@@ -596,8 +585,30 @@ class MessageStore extends MailspringStore {
                 this.trigger();
               }
             }
-          });
+          } else {
+            if (this.isAttachmentMissing(f.id)) {
+              noLongerMissing.push(f.id);
+              change = true;
+            }
+            processed += 2;
+          }
+          if (processed === total) {
+            if (missing.length > 0) {
+              Actions.fetchAttachments({
+                accountId: this._items[i].accountId,
+                missingItems: missing,
+                needProgress: true,
+              });
+            }
+            if (change) {
+              this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
+                return !noLongerMissing.includes(id);
+              });
+              this.trigger();
+            }
+          }
         });
+        // });
         return;
       }
     }
@@ -617,54 +628,53 @@ class MessageStore extends MailspringStore {
     items.forEach((i, itemIndex) => {
       i.files.forEach((f, fileIndex) => {
         const tmpPath = AttachmentStore.pathForFile(f);
-        fs.access(tmpPath, fs.constants.R_OK, (err) => {
-          if (err) {
-            if (f.isInline) {
-              inLineMissing.push(f.id);
-            } else {
-              normalMissing.push(f.id);
-            }
-            if (!this.isAttachmentMissing(f.id)) {
-              change = true;
-            }
-            processed++;
-            fs.access(`${tmpPath}.part`, fs.constants.R_OK, (err) => {
-              items[itemIndex].files[fileIndex].isDownloading = !err;
-              processed++;
-              if (processed === total) {
-                if (change) {
-                  if (inLineMissing.length > 0) {
-                    Actions.fetchAttachments({
-                      accountId: i.accountId,
-                      missingItems: inLineMissing,
-                    });
-                  } else if (normalMissing.length > 0) {
-                    Actions.fetchAttachments({
-                      accountId: i.accountId,
-                      missingItems: normalMissing,
-                    });
-                  }
-                  this._missingAttachmentIds = [...inLineMissing, ...normalMissing];
-                  this.trigger();
-                }
-              }
-            });
+        const tempExists = fs.existsSync(tmpPath);
+        if (!tempExists) {
+          if (f.isInline) {
+            inLineMissing.push(f.id);
           } else {
-            if (this.isAttachmentMissing(f.id)) {
-              change = true;
-            }
-            processed += 2;
+            normalMissing.push(f.id);
           }
+          if (!this.isAttachmentMissing(f.id)) {
+            change = true;
+          }
+          processed++;
+          const partExists = fs.existsSync(`${tmpPath}.part`);
+          items[itemIndex].files[fileIndex].isDownloading = partExists;
+          processed++;
           if (processed === total) {
             if (change) {
               if (inLineMissing.length > 0) {
-                Actions.fetchAttachments({ accountId: i.accountId, missingItems: inLineMissing });
+                Actions.fetchAttachments({
+                  accountId: i.accountId,
+                  missingItems: inLineMissing,
+                });
+              } else if (normalMissing.length > 0) {
+                Actions.fetchAttachments({
+                  accountId: i.accountId,
+                  missingItems: normalMissing,
+                });
               }
               this._missingAttachmentIds = [...inLineMissing, ...normalMissing];
               this.trigger();
             }
           }
-        });
+        } else {
+          if (this.isAttachmentMissing(f.id)) {
+            change = true;
+          }
+          processed += 2;
+        }
+        if (processed === total) {
+          if (change) {
+            if (inLineMissing.length > 0) {
+              Actions.fetchAttachments({ accountId: i.accountId, missingItems: inLineMissing });
+            }
+            this._missingAttachmentIds = [...inLineMissing, ...normalMissing];
+            this.trigger();
+          }
+        }
+        // });
       });
     });
   }

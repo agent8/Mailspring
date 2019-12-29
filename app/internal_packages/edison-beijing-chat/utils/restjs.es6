@@ -11,13 +11,13 @@ let logoDirPath = path.join(configDirPath, 'logo_cache')
 
 const domain = {
   dev: {
-    rest: 'https://restxmpp.stag.easilydo.cc'
+    rest: 'https://cp.stag.easilydo.cc/api'
   },
   prod: {
     rest: 'https://restxmpp.edison.tech' // _prod
   }
 }
-function getBaseDomain (kind) {
+function getBaseDomain(kind) {
   let chatObj = {}
   if (AppEnv.config.get(`chatProdEnv`)) {
     chatObj = domain.prod
@@ -120,7 +120,7 @@ export const queryProfile = (data, cb) => {
   })
 }
 
-export function checkToken (accessToken) {
+export function checkToken(accessToken) {
   let arg = {
     accessToken: accessToken,
     deviceType: 'desktop',
@@ -141,7 +141,7 @@ export function checkToken (accessToken) {
   })
 }
 
-export async function refreshChatAccountTokens (cb) {
+export async function refreshChatAccountTokens(cb) {
   let accounts = AppEnv.config.get('accounts')
   let chatAccounts = AppEnv.config.get('chatAccounts') || {}
   for (let acc of accounts) {
@@ -277,7 +277,7 @@ export const getAvatarFromCache = email => {
 }
 
 const isDownloading = {}
-async function downloadImage (url, logoPath, domain) {
+async function downloadImage(url, logoPath, domain) {
   if (isDownloading[domain]) {
     return
   }

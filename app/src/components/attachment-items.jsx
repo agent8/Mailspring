@@ -43,18 +43,19 @@ const defaultProps = {
 const SPACE = ' ';
 
 function ProgressBar(props) {
-  const { isDownloading } = props;
+  const { isDownloading, percent } = props;
+
   if (!isDownloading) {
     return <span />;
   }
-  // const { state: downloadState, percent: downloadPercent } = download;
-  // const downloadProgressStyle = {
-  //   width: `${Math.min(downloadPercent, 97.5)}%`,
-  // };
+
+  const downloadProgressStyle = {
+    width: `${Math.min(Math.max(percent, 2.5), 97.5)}%`,
+  };
   return (
     <span className={`progress-bar-wrap state-downloading`}>
       <span className="progress-background" />
-      <span className="progress-foreground " />
+      <span className="progress-foreground " style={downloadProgressStyle} />
     </span>
   );
 }
@@ -73,10 +74,10 @@ function AttachmentActionIcon(props) {
     onDownloadAttachment,
     disabled,
     isIcon,
-    style
+    style,
   } = props;
 
-  const isRemovable = (onRemoveAttachment != null) && !disabled;
+  const isRemovable = onRemoveAttachment != null && !disabled;
   const actionIconName = isRemovable || isDownloading ? removeIcon : downloadIcon;
 
   const onClickActionIcon = event => {
@@ -101,9 +102,9 @@ function AttachmentActionIcon(props) {
 
   return (
     <div className="file-action-icon" onClick={onClickActionIcon} style={fileActionIconStyle}>
-      {!isDownloading ?
-        <RetinaImg isIcon={isIcon} style={style} name={actionIconName} mode={retinaImgMode} /> : null
-      }
+      {!isDownloading ? (
+        <RetinaImg isIcon={isIcon} style={style} name={actionIconName} mode={retinaImgMode} />
+      ) : null}
     </div>
   );
 }
@@ -128,15 +129,36 @@ export class AttachmentItem extends Component {
     super(props);
     this.state = {
       isDownloading: false,
-      download: { state: 'done', percent: 100 },
+      percent: 0,
+      displaySupportPopup: false,
     };
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
-    if (this.props.missing && !nextProps.missing) {
-      this.setState({ isDownloading: false, download: { state: 'done', percent: 100 } });
+  componentDidMount() {
+    this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+  }
+
+  componentWillUnmount() {
+    if (this._storeUnlisten) {
+      for (let un of this._storeUnlisten) {
+        un();
+      }
     }
   }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    if (nextProps.download) {
+      const download = nextProps.download;
+      this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
+    }
+  }
+
+  _onDownloadStoreChange = () => {
+    const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);
+    if (saveState !== this.state.displaySupportPopup) {
+      this.setState({ displaySupportPopup: saveState });
+    }
+  };
 
   _canPreview() {
     const { filePath, previewable } = this.props;
@@ -169,12 +191,11 @@ export class AttachmentItem extends Component {
       event.preventDefault();
     }
   };
-  _onClick = (e) => {
+  _onClick = e => {
     if (this.state.isDownloading || this.props.isDownloading) {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      this.setState({ isDownloading: true, download: { state: 'downloading', percent: 100 } });
       MessageStore.fetchMissingAttachmentsByFileIds({ fileIds: [this.props.fileId] });
     } else {
       if (fs.existsSync(this.props.filePath)) {
@@ -190,7 +211,6 @@ export class AttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      this.setState({ isDownloading: true, download: { state: 'downloading', percent: 100 } });
       MessageStore.fetchMissingAttachmentsByFileIds({ filedIds: [this.props.fileId] });
     }
     const { onOpenAttachment } = this.props;
@@ -226,7 +246,6 @@ export class AttachmentItem extends Component {
 
   render() {
     let {
-      download,
       className,
       focusable,
       draggable,
@@ -243,7 +262,7 @@ export class AttachmentItem extends Component {
     const classes = classnames({
       'nylas-attachment-item': true,
       'file-attachment-item': true,
-      'has-preview': filePreviewPath,
+      // 'has-preview': filePreviewPath,
       [className]: className,
     });
     let { iconName, color } = AttachmentStore.getExtIconName(displayName);
@@ -252,6 +271,8 @@ export class AttachmentItem extends Component {
         filePreviewPath = filePath;
       }
       iconName = 'attachment-img.svg';
+    } else {
+      filePreviewPath = null;
     }
     const style = draggable ? { WebkitUserDrag: 'element' } : null;
     const tabIndex = focusable ? 0 : null;
@@ -261,8 +282,8 @@ export class AttachmentItem extends Component {
     if (filePreviewPath) {
       previewStyle = {
         background: `url(file://${encodeURI(filePreviewPath)}) no-repeat center center`,
-        backgroundSize: 'cover'
-      }
+        backgroundSize: 'cover',
+      };
     }
 
     return (
@@ -278,12 +299,27 @@ export class AttachmentItem extends Component {
         {...pickHTMLProps(extraProps)}
       >
         <div className="inner">
-          <ProgressBar isDownloading={this.state.isDownloading || this.props.isDownloading} />
+          <div
+            className="popup"
+            style={{
+              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
+            }}
+          >
+            Download Success
+          </div>
+          <ProgressBar
+            isDownloading={this.state.isDownloading || this.props.isDownloading}
+            percent={this.state.percent}
+          />
           <Flexbox direction="row" style={{ alignItems: 'center' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
                 {filePreviewPath ? (
-                  <div className="file-thumbnail-preview" style={previewStyle} draggable={false}></div>
+                  <div
+                    className="file-thumbnail-preview"
+                    style={previewStyle}
+                    draggable={false}
+                  ></div>
                 ) : (
                     <RetinaImg
                       ref={cm => {
@@ -351,11 +387,34 @@ export class ImageAttachmentItem extends Component {
     super(props);
     this.state = {
       isDownloading: false,
+      percent: 0,
+      displaySupportPopup: false,
     };
   }
-  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
-    if (this.props.missing && !nextProps.missing) {
-      this.setState({ isDownloading: false });
+
+  componentDidMount() {
+    this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+  }
+
+  componentWillUnmount() {
+    if (this._storeUnlisten) {
+      for (let un of this._storeUnlisten) {
+        un();
+      }
+    }
+  }
+
+  _onDownloadStoreChange = () => {
+    const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);
+    if (saveState !== this.state.displaySupportPopup) {
+      this.setState({ displaySupportPopup: saveState });
+    }
+  };
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    if (nextProps.download) {
+      const download = nextProps.download;
+      this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
     }
   }
 
@@ -364,7 +423,6 @@ export class ImageAttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      this.setState({ isDownloading: true, download: { state: 'downloading', percent: 100 } });
       MessageStore.fetchMissingAttachmentsByFileIds({ filedIds: [this.props.fileId] });
     }
     const { onOpenAttachment } = this.props;
@@ -398,12 +456,23 @@ export class ImageAttachmentItem extends Component {
   }
 
   render() {
-    const { className, displayName, download, disabled, ...extraProps } = this.props;
+    const { className, displayName, disabled, ...extraProps } = this.props;
     const classes = `nylas-attachment-item image-attachment-item ${className || ''}`;
     return (
       <div className={classes} {...pickHTMLProps(extraProps)}>
         <div>
-          <ProgressBar isDownloading={this.state.isDownloading || this.props.isDownloading} />
+          <div
+            className="popup"
+            style={{
+              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
+            }}
+          >
+            Download Success
+          </div>
+          <ProgressBar
+            isDownloading={this.state.isDownloading || this.props.isDownloading}
+            percent={this.state.percent}
+          />
           <AttachmentActionIcon
             {...this.props}
             removeIcon="image-cancel-button.png"

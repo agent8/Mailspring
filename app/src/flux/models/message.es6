@@ -286,11 +286,10 @@ export default class Message extends ModelWithMetadata {
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
     }),
-    calendarFileId: Attributes.String({
-      modelKey: 'calFileId',
-    }),
     hasCalendar: Attributes.Boolean({
       modelKey: 'hasCalendar',
+      queryable: true,
+      loadFromColumn: true,
     }),
     siftCategory: Attributes.Collection({
       queryable: true,
@@ -317,6 +316,7 @@ export default class Message extends ModelWithMetadata {
     this.files = this.files || [];
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
+    this.hasCalendar = this.hasCalendar || false;
   }
 
   toJSON(options) {
@@ -485,35 +485,33 @@ export default class Message extends ModelWithMetadata {
       let processed = 0;
       this.files.forEach(f => {
         const path = AttachmentStore.pathForFile(f);
-        fs.access(path, fs.constants.R_OK, err => {
-          if (err) {
-            processed++;
-            fs.access(`${path}.part`, fs.constants.R_OK, err => {
-              processed++;
-              if (err) {
-                if (f.isInline) {
-                  ret.inline.needToDownload.push(f);
-                } else {
-                  ret.normal.needToDownload.push(f);
-                }
-              } else {
-                if (f.isInline) {
-                  ret.inline.downloading.push(f);
-                } else {
-                  ret.normal.downloading.push(f);
-                }
-              }
-              if (processed === total) {
-                resolve(ret);
-              }
-            });
+        const exists = fs.existsSync(path);
+        if (!exists) {
+          processed++;
+          const partExists = fs.existsSync(`${path}.part`);
+          processed++;
+          if (!partExists) {
+            if (f.isInline) {
+              ret.inline.needToDownload.push(f);
+            } else {
+              ret.normal.needToDownload.push(f);
+            }
           } else {
-            processed += 2;
-            if (processed === total) {
-              resolve(ret);
+            if (f.isInline) {
+              ret.inline.downloading.push(f);
+            } else {
+              ret.normal.downloading.push(f);
             }
           }
-        });
+          if (processed === total) {
+            resolve(ret);
+          }
+        } else {
+          processed += 2;
+          if (processed === total) {
+            resolve(ret);
+          }
+        }
       });
     });
   }
@@ -521,8 +519,28 @@ export default class Message extends ModelWithMetadata {
   // Public: Returns true if this message === from the current user's email
   // address. In the future, this method will take into account all of the
   // user's email addresses && accounts.
-  isFromMe() {
-    return this.from[0] ? this.from[0].isMe() : false;
+  isFromMe({ ignoreOtherAccounts = false } = {}) {
+    if (!this.from[0]) {
+      return false;
+    }
+    if (ignoreOtherAccounts) {
+      const account = AccountStore.accountForEmail(this.from[0].email);
+      if (account) {
+        return account.id === this.accountId;
+      }
+    }
+    return this.from[0].isMe();
+  }
+
+  isFromMyOtherAccounts() {
+    if (!this.from[0]) {
+      return false;
+    }
+    const account = AccountStore.accountForEmail(this.from[0].email);
+    if (account) {
+      return account.id !== this.accountId;
+    }
+    return false;
   }
 
   isForwarded() {
@@ -577,7 +595,7 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() {}
+  isActiveDraft() { }
 
   isDeleted() {
     //DC-269

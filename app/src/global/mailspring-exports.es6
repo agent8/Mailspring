@@ -85,7 +85,8 @@ lazyLoadAndRegisterModel(`Calendar`, 'calendar');
 lazyLoadAndRegisterModel('JoinTable', 'join-table');
 lazyLoadAndRegisterModel('BlockContact', 'block-contact');
 lazyLoadAndRegisterModel(`ProviderSyncbackRequest`, 'provider-syncback-request');
-lazyLoadAndRegisterTask('SetObservableRangeTask', 'set-observable-range-task');
+lazyLoadAndRegisterModel('SetObservableRange', 'set-observable-range');
+lazyLoadAndRegisterModel('AttachmentProgress', 'attachment-progress');
 
 // Search Query Interfaces
 lazyLoad(`SearchQueryAST`, 'services/search/search-query-ast');

@@ -71,19 +71,32 @@ class PreferencesAccountDetails extends Component {
    * @param {object} [account=this.props.account] - The account object
    */
   _makeAlias(str, account = this.props.account) {
+    let lastCloseStrIndex = str.lastIndexOf('>');
+    let lastBeginStrIndex = str.lastIndexOf('<');
+    let emailStr = str;
+    if (
+      lastCloseStrIndex !== -1 &&
+      lastBeginStrIndex !== -1 &&
+      lastBeginStrIndex + 1 < lastCloseStrIndex
+    ) {
+      emailStr = str.slice(lastBeginStrIndex, lastCloseStrIndex);
+    }
     const emailRegex = RegExpUtils.emailRegex();
-    const match = emailRegex.exec(str);
+    const match = emailRegex.exec(emailStr);
     if (!match) {
       return `${str || account.name} <${account.emailAddress}>`;
     }
     const email = match[0];
     let name = str.slice(0, Math.max(0, match.index - 1));
+    if (emailStr !== str) {
+      name = str.slice(0, lastBeginStrIndex);
+    }
     if (!name) {
       name = account.name || 'No name provided';
     }
     name = name.trim();
     // TODO Sanitize the name string
-    return `${name} <${email}>`;
+    return `${name} <${email.trim()}>`;
   }
 
   _saveChanges = () => {
@@ -112,21 +125,67 @@ class PreferencesAccountDetails extends Component {
     this._setState({ name: event.target.value });
   };
 
+  _findAlias = alias => {
+    if (!Array.isArray(this.state.account.aliases)) {
+      return -1;
+    }
+    if (this.state.account.aliases.length === 0) {
+      return -1;
+    }
+    return this.state.account.aliases.findIndex(str => {
+      let lastCloseStrIndex = str.lastIndexOf('>');
+      let lastBeginStrIndex = str.lastIndexOf('<');
+      if (
+        lastCloseStrIndex !== -1 &&
+        lastBeginStrIndex !== -1 &&
+        lastBeginStrIndex + 1 < lastCloseStrIndex
+      ) {
+        const email = str.slice(lastBeginStrIndex+1, lastCloseStrIndex);
+        lastCloseStrIndex = alias.lastIndexOf('>');
+        lastBeginStrIndex = alias.lastIndexOf('<');
+        if (
+          lastCloseStrIndex !== -1 &&
+          lastBeginStrIndex !== -1 &&
+          lastBeginStrIndex + 1 < lastCloseStrIndex
+        ) {
+          const aliasEmail = alias.slice(lastBeginStrIndex+1, lastCloseStrIndex);
+          return aliasEmail === email;
+        }
+      }
+      return false;
+    });
+  };
+
   _onAccountAliasCreated = newAlias => {
     const coercedAlias = this._makeAlias(newAlias);
-    const aliases = this.state.account.aliases.concat([coercedAlias]);
-    this._setStateAndSave({ aliases });
+    if (this._findAlias(coercedAlias) === -1) {
+      const aliases = this.state.account.aliases.concat([coercedAlias]);
+      this._setStateAndSave({ aliases });
+    } else {
+      AppEnv.showErrorDialog({
+        title: 'Cannot create alias',
+        message: `Alias: ${coercedAlias} already exist`,
+      });
+    }
   };
 
   _onAccountAliasUpdated = (newAlias, alias, idx) => {
     const coercedAlias = this._makeAlias(newAlias);
-    const aliases = this.state.account.aliases.slice();
-    let defaultAlias = this.state.account.defaultAlias;
-    if (defaultAlias === alias) {
-      defaultAlias = coercedAlias;
+    const conflictIndex = this._findAlias(coercedAlias);
+    if (conflictIndex === -1 || conflictIndex === idx) {
+      const aliases = this.state.account.aliases.slice();
+      let defaultAlias = this.state.account.defaultAlias;
+      if (defaultAlias === alias) {
+        defaultAlias = coercedAlias;
+      }
+      aliases[idx] = coercedAlias;
+      this._setStateAndSave({ aliases, defaultAlias });
+    } else {
+      AppEnv.showErrorDialog({
+        title: 'Cannot create alias',
+        message: `Alias: ${coercedAlias} already exist`,
+      });
     }
-    aliases[idx] = coercedAlias;
-    this._setStateAndSave({ aliases, defaultAlias });
   };
 
   _onAccountAliasRemoved = (alias, idx) => {
@@ -355,7 +414,7 @@ class PreferencesAccountDetails extends Component {
 
   render() {
     const { account } = this.state;
-    const aliasPlaceholder = this._makeAlias(`alias@${account.emailAddress.split('@')[1]}`);
+    const aliasPlaceholder = this._makeAlias(`Your Alias <alias@${account.emailAddress.split('@')[1]}>`);
 
     return (
       <div className="account-details">

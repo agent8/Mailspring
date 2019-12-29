@@ -10,7 +10,7 @@ import stream from 'stream';
 import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
-import { autoGenerateFileName } from './fs-utils';
+import { autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
 const LOG = require('electron-log');
 // const archiver = require('archiver');
 // let getOSInfo = null;
@@ -1134,6 +1134,43 @@ export default class AppEnvConstructor {
           cb(null);
         } else {
           cb(filePaths);
+        }
+      });
+  }
+
+  showBase64ImageTransformDialog(cb, maxSize = 0) {
+    return remote.dialog
+      .showOpenDialog(this.getCurrentWindow(), {
+        properties: ['openFile'],
+        filters: [
+          {
+            name: 'Images',
+            extensions: ['jpg', 'bmp', 'gif', 'png', 'jpeg'],
+          },
+        ],
+      })
+      .then(({ canceled, filePaths }) => {
+        if (canceled) {
+          cb(null);
+        } else {
+          const filePath = typeof filePaths === 'string' ? filePaths : filePaths[0];
+          try {
+            const stats = fs.statSync(filePath);
+            const filename = path.basename(filePath);
+            if (stats.isDirectory()) {
+              throw new Error(
+                `${filename} is a directory. Try compressing it and attaching it again.`
+              );
+            } else if (maxSize && stats.size > maxSize) {
+              throw new Error(
+                `${filename} cannot be attached because it is larger than ${maxSize / 1000}k.`
+              );
+            }
+            const base64Str = transfornImgToBase64(filePath);
+            cb(base64Str);
+          } catch (err) {
+            this.showErrorDialog(err.message);
+          }
         }
       });
   }

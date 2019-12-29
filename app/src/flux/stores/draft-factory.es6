@@ -1,15 +1,13 @@
 import _ from 'underscore';
 import Actions from '../actions';
-import DatabaseStore from './database-store';
 import AccountStore from './account-store';
 import ContactStore from './contact-store';
 import MessageStore from './message-store';
+import AttachmentStore from './attachment-store';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import uuid from 'uuid';
-
 import Contact from '../models/contact';
 import Message from '../models/message';
-import MessageUtils from '../models/message-utils';
 import Utils from '../models/utils';
 import InlineStyleTransformer from '../../services/inline-style-transformer';
 import SanitizeTransformer from '../../services/sanitize-transformer';
@@ -17,17 +15,71 @@ import DOMUtils from '../../dom-utils';
 
 let DraftStore = null;
 
+const findAccountIdFrom = (message, thread) => {
+  const validAccountId = id => {
+    return typeof id === 'string' && id.length > 0;
+  };
+  if (!message && !thread) {
+    AppEnv.reportError(new Error('Both message and thread is empty'));
+    return '';
+  }
+  let accountId = (message || {}).accountId;
+  let reportBug = false;
+  let errorStr = '';
+  if (!validAccountId(accountId)) {
+    errorStr = 'Message doesnt have account id';
+    reportBug = true;
+    if (message && message.folder && message.folder.accountId) {
+      accountId = message.folder.accountId;
+    }
+    if (!validAccountId(accountId)) {
+      errorStr = errorStr + ' nor does folder/folder.accountId';
+      if (thread) {
+        accountId = thread.accountId;
+        if (!validAccountId(accountId)) {
+          errorStr = errorStr + ' nor does Thread have account Id';
+        }
+      }
+    }
+  }
+  if (reportBug) {
+    AppEnv.reportError(
+      new Error(errorStr),
+      { errorData: { message: message, thread: thread } },
+      { grabLogs: true }
+    );
+  }
+  return accountId;
+};
+
 async function prepareBodyForQuoting(body) {
-  // TODO: Fix inline images
-  const cidRE = MessageUtils.cidRegexString;
+  // const cidRE = MessageUtils.cidRegexString;
 
   // Be sure to match over multiple lines with [\s\S]*
   // Regex explanation here: https://regex101.com/r/vO6eN2/1
-  let transformed = (body || '').replace(new RegExp(`<img.*${cidRE}[\\s\\S]*?>`, 'igm'), '');
+  // let transformed = (body || '').replace(new RegExp(`<img.*${cidRE}[\\s\\S]*?>`, 'igm'), '');
+  // We no longer remove inline attachments from quoted body
+  let transformed = body;
   transformed = await SanitizeTransformer.run(transformed, SanitizeTransformer.Preset.UnsafeOnly);
   transformed = await InlineStyleTransformer.run(transformed);
   return transformed;
 }
+const removeAttachmentWithNoContentId = files => {
+  if (!Array.isArray(files)) {
+    return [];
+  }
+  const ret = [];
+  files.forEach(file => {
+    // Because in the end, we use contentId to id which attachment goes where
+    if (file && (typeof file.contentId === 'string') && file.contentId.length > 0) {
+      ret.push(file);
+    }
+  });
+  return filterMissingAttachments(ret);
+};
+const filterMissingAttachments = files => {
+  return AttachmentStore.filterOutMissingAttachments(files);
+};
 const mergeDefaultBccAndCCs = async (message, account) => {
   const mergeContacts = (field = 'cc', contacts) => {
     if (!Array.isArray(message[field])) {
@@ -118,6 +170,45 @@ class DraftFactory {
       refOldDraftHeaderMessageId: draft.headerMessageId
     });
     return new Message(defaults);
+  }
+
+  async createReportBugDraft(logId, userFeedBack) {
+    try {
+      const account = this._accountForNewDraft();
+      if (!account) {
+        return null;
+      }
+      const body = `<div>
+            <div>
+            User bug report:</br>
+            ${userFeedBack.replace(/[\r|\n]/g, '</br>')}
+            -----User bug report end-----</br>
+            </div>
+            <div>
+            [MacOS] ${AppEnv.config.get('core.support.native')}
+            </div></br>
+            <div>
+            SupportId: ${AppEnv.config.get('core.support.id')}
+            </div></br>
+            <div>
+            [LogID]${logId}
+            </div>
+</div>`;
+      const subject = `[Email-macOS] Feedback from ${account.emailAddress}`;
+      const draft = await this.createDraft({
+        body,
+        subject,
+        to: [Contact.fromObject({ email: 'mailsupport@edison.tech', name: 'Mac Feedback' })],
+      });
+      if (draft) {
+        draft.bcc = [];
+        draft.cc = [];
+        return draft;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
   duplicateDraftBecauseOfNewId(draft){
     const uniqueId = uuid();
@@ -297,14 +388,16 @@ class DraftFactory {
     } else if (type === 'reply-all') {
       participants = message.participantsForReplyAll();
     }
+    const accountId = findAccountIdFrom(message, thread);
 
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
       to: participants.to,
       cc: participants.cc,
       from: [this._fromContactForReply(message)],
+      files: removeAttachmentWithNoContentId(message.files),
       threadId: thread.id,
-      accountId: message.accountId,
+      accountId: accountId,
       replyOrForward: Message.draftType.reply,
       replyToHeaderMessageId: message.headerMessageId,
       msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
@@ -333,6 +426,7 @@ class DraftFactory {
       body: `${me.name} have replied with a status of ${replyStatus.label}`,
       files: [file],
       calTarStat: replyStatus.code,
+      hasCalendar: true,
       calendarReply: true
     });
   }
@@ -350,13 +444,13 @@ class DraftFactory {
     if (message.cc.length > 0) fields.push(`Cc: ${contactsAsHtml(message.cc)}`);
 
     const body = await prepareBodyForQuoting(message.body);
-
+    const accountId = findAccountIdFrom(message, thread);
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Fwd:'),
       from: [this._fromContactForReply(message)],
-      files: message.files,
+      files: filterMissingAttachments(message.files),
       threadId: thread.id,
-      accountId: message.accountId,
+      accountId: accountId,
       forwardedHeaderMessageId: message.id,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
