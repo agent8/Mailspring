@@ -418,6 +418,7 @@ class Actions {
 
   static composeFeedBackDraft = ActionScopeMainWindow;
   static composeInviteDraft = ActionScopeMainWindow;
+  static sendBugDraft = ActionScopeMainWindow;
 
   /*
   Public: Open a new composer window for a new draft addressed to the given recipient

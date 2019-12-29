@@ -48,6 +48,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.destroyDraftSucceeded, this._onDestroyDraftSuccess);
     this.listenTo(Actions.destroyDraft, this._onDestroyDrafts);
     this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChange);
+    this.listenTo(Actions.sendDraft, this._onSendDraft);
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.composeReply, this._onComposeReply);
       this.listenTo(Actions.composeForward, this._onComposeForward);
@@ -59,9 +60,9 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.composeNewBlankDraft, this._onPopoutBlankDraft);
       this.listenTo(Actions.composeNewDraftToRecipient, this._onPopoutNewDraftToRecipient);
       this.listenTo(Actions.composeInviteDraft, this._onPopoutInviteDraft);
+      this.listenTo(Actions.sendBugDraft, this._sendBugDraft);
       this.listenTo(Actions.composeFeedBackDraft, this._onPopoutFeedbackDraft);
       this.listenTo(Actions.sendQuickReply, this._onSendQuickReply);
-      this.listenTo(Actions.sendDraft, this._onSendDraft);
       this.listenTo(Actions.failingDraft, this._startDraftFailingTimeout);
       this.listenTo(Actions.draftOpenCount, this._onDraftOpenCount);
       this.listenTo(Actions.draftWindowClosing, this._onDraftWindowClosing);
@@ -77,7 +78,9 @@ class DraftStore extends MailspringStore {
         if (account) {
           data.subject += 'from ' + account.name;
         }
-        data.body = `<br/><br/><br/>[MacOS] ${AppEnv.getVersion()}`;
+        data.body = `<br/><br/><br/>
+                    [MacOS] ${AppEnv.getVersion()}<br/>
+                    SupportId: ${AppEnv.config.get('core.support.id')}`;
         Actions.composeFeedBackDraft(data);
       });
 
@@ -131,6 +134,7 @@ class DraftStore extends MailspringStore {
     return DatabaseStore.findBy(Message, {
       headerMessageId: headerMessageId,
       draft: true,
+      hasCalendar: false,
     }).where([
       Message.attributes.state.in([
         Message.messageState.normal,
@@ -151,7 +155,7 @@ class DraftStore extends MailspringStore {
   }
 
   findAllWithBodyInDescendingOrder() {
-    return MessageStore.findAllWithBodyInDescendingOrder().where({ draft: true });
+    return MessageStore.findAllWithBodyInDescendingOrder().where({ draft: true, hasCalendar: false });
   }
 
   /**
@@ -234,7 +238,7 @@ class DraftStore extends MailspringStore {
       if (t && t.draft) {
         AppEnv.logDebug(`Restarted SendDraft for draft: ${t.draft.headerMessageId}`);
         this._draftsSending[t.draft.headerMessageId] = true;
-        this._startSendingDraftTimeouts({ draft: t.draft, source: 'Restart SendDraft' });
+        this._startSendingDraftTimeouts({ draft: t.draft, taskId: t.id, source: 'Restart SendDraft' });
       }
     });
   }
@@ -695,7 +699,7 @@ class DraftStore extends MailspringStore {
         // TaskQueue.waitForPerformLocal(t)
 
         this._finalizeAndPersistNewMessage(draft).then(() => {
-          Actions.sendDraft(draft.headerMessageId, {source: 'SendQuickReply'});
+          Actions.sendDraft(draft.headerMessageId, { source: 'SendQuickReply' });
         }).catch(e => {
           AppEnv.reportError(new Error('SyncbackDraft Task not returned'), { errorData: e }, { grabLogs: true });
         });
@@ -802,6 +806,16 @@ class DraftStore extends MailspringStore {
     this._draftSessions[headerMessageId] = new DraftEditingSession(headerMessageId, draft, options);
     return this._draftSessions[headerMessageId];
   }
+
+  _sendBugDraft = async ({ logId, userFeedback }) => {
+    const draft = await DraftFactory.createReportBugDraft(logId, userFeedback);
+    if (draft) {
+      const task = SendDraftTask.forSending(draft);
+      if (task) {
+        Actions.queueTask(task);
+      }
+    }
+  };
 
   _onPopoutInviteDraft = async ({ to, subject = '', body } = {}) => {
     const draftData = {
@@ -1122,11 +1136,11 @@ class DraftStore extends MailspringStore {
       this.trigger({ headerMessageId });
     }
   };
-  _startSendingDraftTimeouts = ({ draft, source = '' }) => {
-    this._startSendingDraftFailedTimeout({ draft, source });
+  _startSendingDraftTimeouts = ({ draft, taskId, source = '' }) => {
+    this._startSendingDraftFailedTimeout({ draft, taskId, source });
     this._startDraftFailingTimeout({ messages: [draft] });
   };
-  _startSendingDraftFailedTimeout = ({ draft, source = '' }) => {
+  _startSendingDraftFailedTimeout = ({ draft, taskId = '', source = '' }) => {
     if (this._draftSendindTimeouts[draft.headerMessageId]) {
       clearTimeout(this._draftSendindTimeouts[draft.headerMessageId]);
     }
@@ -1137,7 +1151,11 @@ class DraftStore extends MailspringStore {
         changeSendStatus: false,
         source,
       });
-      const task = new ChangeDraftToFailedTask({ headerMessageIds: [draft.headerMessageId], accountId: draft.accountId });
+      const task = new ChangeDraftToFailedTask({
+        headerMessageIds: [draft.headerMessageId],
+        accountId: draft.accountId,
+        sendDraftTaskIds: [taskId],
+      });
       Actions.queueTask(task);
     }, SendDraftTimeout);
   };
@@ -1339,6 +1357,7 @@ class DraftStore extends MailspringStore {
     // want a separate SyncbackMetadataTask to be queued because a stray SyncbackDraftTask
     // could overwrite the metadata value back to null.
     if (sendLaterMetadataValue) {
+      const sendDraftTask = SendDraftTask.forSending(draft);
       const undoTask = SyncbackMetadataTask.forSaving({
         pluginId: 'send-later',
         model: draft,
@@ -1346,9 +1365,9 @@ class DraftStore extends MailspringStore {
         undoValue: { expiration: null, isUndoSend: true },
         lingerAfterTimeout: true,
         priority: UndoRedoStore.priority.critical,
-        delayedTasks: [SendDraftTask.forSending(draft)],
+        delayedTasks: [sendDraftTask],
         delayTimeoutCallback: () => {
-          this._startSendingDraftTimeouts({ draft, source: 'Send draft wait time expired' });
+          this._startSendingDraftTimeouts({ draft, taskId: sendDraftTask.id, source: 'Send draft wait time expired' });
         },
         taskPurged: () => {
           this._onSendDraftCancelled({ headerMessageId });

@@ -161,8 +161,6 @@ class OnboardingStore extends MailspringStore {
 
     AppEnv.displayWindow();
 
-    // await connectChat(account);
-
     const { addingAccount } = AppEnv.getWindowProps();
     const isOnboarding = !addingAccount;
     if (isOnboarding) {

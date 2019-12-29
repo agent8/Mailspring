@@ -22,7 +22,7 @@
   left: 15px;
   //top: 39px;
   // width: 129px;
-  height: 40px;
+  height: 33px;
   border-radius: 20px;
   margin: 0;
   font-weight: bold;
@@ -40,9 +40,11 @@
   span {
     overflow: hidden;
     transition: 0.4s;
-    width: 80px;
-    padding-left: 12px;
+    width: 70px;
+    padding-left: 7px;
     float: left;
+    font-size: 13px;
+    line-height: 20px;
   }
   img.content-mask {
     float: left;
@@ -55,8 +57,8 @@
 
 .btn.item-refresh {
   position: absolute;
-  top: 40px;
-  right: 12px;
+  top: 37px;
+  right: 8px;
   width: 40px;
   height: 40px;
   box-shadow: none;
@@ -79,7 +81,7 @@
       background: @icon-hover-bg-color;
       display: block;
       position: absolute;
-      .grow-up-animation-mixin()
+      .grow-up-animation-mixin();
     }
     img.content-mask {
       background-color: @gray-light;
@@ -286,6 +288,9 @@
     img.content-mask {
       background-color: @medium-grey;
     }
+    &.hide {
+      display: none;
+    }
   }
 
   button.active {
@@ -366,7 +371,7 @@ body.platform-win32 {
 .sendbar-for-dock {
   background: @white;
   position: sticky;
-  bottom: 18px;
+  bottom: 21px;
   height: 46px;
   z-index: 4;
   border-bottom-left-radius: 10px;
@@ -391,7 +396,7 @@ body.platform-win32 {
     }
   }
   .wrapper-space {
-    height: 100%;
+    height: calc(~'100% + 1px');
     background: @white;
     width: calc(~'100% + 40px');
     margin-left: -20px;
@@ -431,12 +436,12 @@ body.platform-win32 {
         height: 36px;
         width: 36px;
         border-radius: 50%;
-        background: @icon-hover-bg-color;
+        background: @off-white;
         display: block;
         position: absolute;
         top: -6px;
         left: 3px;
-        .grow-up-animation-mixin()
+        .grow-up-animation-mixin();
       }
       img.content-mask {
         background-color: @medium-grey;

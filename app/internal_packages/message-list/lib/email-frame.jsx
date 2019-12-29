@@ -214,21 +214,19 @@ export default class EmailFrame extends React.Component {
     const newFilePath = filePath.replace(/\.tiff$/, '.png');
     try {
       // has new .png file, return new path
-      fs.accessSync(newFilePath, fs.constants.R_OK);
-      return newFilePath;
-    } catch (err) {
-      // dont has new .png file, transform old file
-      try {
-        fs.accessSync(filePath, fs.constants.R_OK);
+      if (fs.existsSync(newFilePath)) {
+        return newFilePath;
+      } else if (fs.existsSync(filePath)) {
+        // dont has new .png file, transform old file
         const fileBuffer = await sharp(filePath)
           .png()
           .toBuffer();
         fs.writeFileSync(newFilePath, fileBuffer);
-        fs.accessSync(newFilePath, fs.constants.R_OK);
         return newFilePath;
-      } catch (err) {
-        return '';
       }
+      return '';
+    } catch (err) {
+      return '';
     }
   };
 

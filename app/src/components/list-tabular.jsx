@@ -227,7 +227,9 @@ class ListTabular extends Component {
   setupDataSource(dataSource) {
     this._unlisten();
     this._unlisten = dataSource.listen(() => {
-      this._safeSetState(this.buildStateForRange());
+      if (this.mounted) {
+        this._safeSetState(this.buildStateForRange());
+      }
     });
     this._safeSetState(this.buildStateForRange({ start: -1, end: -1, dataSource }));
   }

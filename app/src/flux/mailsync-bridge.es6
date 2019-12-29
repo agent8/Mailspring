@@ -4,7 +4,7 @@ import { ipcRenderer, remote } from 'electron';
 import _ from 'underscore';
 
 import Task from './tasks/task';
-import SetObservableRangeTask from './models/set-observable-range-task';
+import SetObservableRange from './models/set-observable-range';
 import TaskQueue from './stores/task-queue';
 import IdentityStore from './stores/identity-store';
 import Account from './models/account';
@@ -774,7 +774,7 @@ export default class MailsyncBridge {
     // Note: cannot use `record.objectClass` because of subclass names
     if (record.type === 'persist' && record.objects[0] instanceof Task) {
       for (const task of record.objects) {
-        if (task.error != null) {
+        if (task.error != null && task.status !== 'remote') {
           task.onError(task.error);
           this._recordErrorToConsole(task);
         }
@@ -911,12 +911,13 @@ export default class MailsyncBridge {
     }
   }
 
-  _onFetchAttachments({ accountId, missingItems }) {
+  _onFetchAttachments({ accountId, missingItems, needProgress }) {
     const ids = this._fetchAttachmentCacheFilter({ accountId, missingItems });
     if (ids.length > 0) {
       this.sendMessageToAccount(accountId, {
         type: 'need-attachments',
         ids: ids,
+        needProgress: !!needProgress,
       });
     }
   }
@@ -1036,7 +1037,7 @@ export default class MailsyncBridge {
         if (threadIds.length === 0 && messageIds.length === 0) {
           return;
         }
-        const tmpTask = new SetObservableRangeTask({ accountId, threadIds, messageIds });
+        const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds });
         this._setObservableRangeTimer[accountId].timestamp = Date.now();
         // DC-46
         // We call sendMessageToAccount last on the off chance that mailsync have died,
@@ -1059,7 +1060,7 @@ export default class MailsyncBridge {
             if (threadIds.length === 0 && messageIds.length === 0) {
               return;
             }
-            const tmpTask = new SetObservableRangeTask({ accountId, threadIds, messageIds });
+            const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds });
             this.sendMessageToAccount(accountId, tmpTask.toJSON());
           }, 1000),
           timestamp: Date.now(),
@@ -1081,7 +1082,7 @@ export default class MailsyncBridge {
           if (threadIds.length === 0 && messageIds.length === 0) {
             return;
           }
-          const tmpTask = new SetObservableRangeTask({ accountId, threadIds, messageIds });
+          const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds });
           this.sendMessageToAccount(accountId, tmpTask.toJSON());
         }, 1000),
         timestamp: Date.now(),

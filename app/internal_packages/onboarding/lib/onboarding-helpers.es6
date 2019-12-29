@@ -46,32 +46,6 @@ const OUTLOOK_CLIENT_ID = '000000004818114B';
 const OUTLOOK_CLIENT_SECRET = 'jXRAIb5CxLHI5MsVy9kb5okP9mGDZaqw';
 const OUTLOOK_SCOPES = ['wl.basic', 'wl.emails', 'wl.imap', 'wl.offline_access'];
 
-const EDISON_CHAT_REST_URL = 'https://restxmpp.stag.easilydo.cc';
-const EDISON_CHAT_REST_PORT = 443;
-const EDISON_CHAT_REST_BASE_URL = `${EDISON_CHAT_REST_URL}:${EDISON_CHAT_REST_PORT}`;
-const EDISON_CHAT_REST_ENDPOINTS = {
-  config: 'config',
-  register: 'client/register',
-  unregister: 'client/unregister',
-  unregisterV2: 'client/unregisterV2',
-
-  login: 'client/login',
-  logout: 'client/logout',
-
-  updateToken: 'client/updateToken',
-  uploadContacts: 'client/uploadContacts',
-  queryProfile: 'client/queryProfile',
-
-  autoLogin: 'user/login/auto',
-  outTime: 'user/outtime',
-  userSearch: 'user/query',
-  userGet: 'user/get',
-  userUpdate: 'user/update',
-  updatePushToken: 'user/uploadinfo',
-
-  badgeSetting: 'client/badgeSetting',
-};
-
 function idForAccount(emailAddress, connectionSettings) {
   // changing your connection security settings / ports shouldn't blow
   // away everything and trash your metadata. Just look at critiical fields.
@@ -429,40 +403,6 @@ export async function buildGmailAccountFromAuthResponse(code) {
   // test the account locally to ensure the All Mail folder is enabled
   // and the refresh token can be exchanged for an account token.
   return await finalizeAndValidateAccount(account);
-}
-
-export async function connectChat(account) {
-  AppEnv.showErrorDialog({
-    title: 'debug',
-    message: 'test',
-  });
-
-  const body = {
-    name: account.emailAddress,
-    emailType: 0,
-    emailProvider: 'gmail',
-    emailHost: 'imap.gmail.com',
-    emailSSL: true,
-    emailPort: 993,
-    emailAddress: account.emailAddress,
-    emailPassword: account.settings.refresh_token,
-    deviceType: 'iPhone', // iPhone, iPad, APhone(AndroidPhone), APad(AndroidPad), MAC, etc
-    deviceModel: 'iPhone 7',
-  };
-
-  const query = queryStringify(body, true);
-  const registerUrl = `${EDISON_CHAT_REST_BASE_URL}/${EDISON_CHAT_REST_ENDPOINTS.register}`;
-
-  console.log(query);
-  console.log(registerUrl);
-
-  const resp = await fetch(registerUrl, {
-    method: 'POST',
-    body: query,
-  });
-  console.log(resp);
-  const json = (await resp.json()) || {};
-  console.log(json);
 }
 
 export async function buildYahooAccountFromAuthResponse(code) {

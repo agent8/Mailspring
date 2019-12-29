@@ -160,11 +160,11 @@ class EventHeader extends React.Component {
   }, 500);
 
   _openCalenderExternally = _.throttle(() => {
-    const file = this.props.message.files.filter(file => {
-      return file.id === this.props.message.calendarFileId;
+    const file = this.props.message.files.find(file => {
+      return CalendarStore.isFileCalendarType(file);
     });
-    if (file.length > 0) {
-      const filePath = AttachmentStore.pathForFile(file[0]);
+    if (file) {
+      const filePath = AttachmentStore.pathForFile(file);
       if (filePath) {
         remote.shell.openItem(filePath);
       }

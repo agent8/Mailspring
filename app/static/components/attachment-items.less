@@ -13,6 +13,35 @@
   min-width: 320px;
   overflow: hidden;
 
+  .popup {
+    padding: 0 0.8em;
+    border-radius: 10px;
+    border: 0;
+    cursor: default;
+    color: @black;
+    background: @gray-light;
+    box-shadow: 0 0.5px 0 rgba(0, 0, 0, 0.15), 0 -0.5px 0 rgba(0, 0, 0, 0.15),
+      0.5px 0 0 rgba(0, 0, 0, 0.15), -0.5px 0 0 rgba(0, 0, 0, 0.15), 0 0.5px 1px rgba(0, 0, 0, 0.15);
+    height: 1.9em;
+    line-height: 1.9em;
+    font-size: 12.09px;
+    position: absolute;
+    top: 25px;
+    left: 40%;
+    animation: popupFrames 1.6s linear;
+  }
+  @keyframes popupFrames {
+    0% {
+      opacity: 0.1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+    100% {
+      opacity: 0.1;
+    }
+  }
+
   &.file-attachment-item:focus {
     .file-info-wrap,
     .file-action-icon {
@@ -233,6 +262,7 @@
       background-size: 50px 50px;
       animation: move-progress-gradient 1s linear infinite;
       border-bottom-left-radius: 4px;
+      transition: width 0.3s;
     }
     .progress-background {
       position: absolute;

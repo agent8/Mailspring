@@ -12,6 +12,11 @@ import CalendarTask from '../tasks/calendar-task';
 import Actions from '../actions';
 import fs from 'fs';
 
+const calendarType = [
+  'application/ics'.toUpperCase(),
+  'text/CALENDAR'.toUpperCase(),
+];
+
 class CalendarStore extends MailspringStore {
   static replyTemplate = ({
                             eventString = '',
@@ -32,6 +37,14 @@ class CalendarStore extends MailspringStore {
     this.listenTo(DatabaseStore, this._onMessageDataChange);
     Actions.RSVPEventFailed.listen(this._rsvpEventFailed, this);
     Actions.RSVPEvent.listen(this.replyToCalendarEventByMessage, this);
+  }
+
+  isFileCalendarType(file) {
+    return (
+      file &&
+      typeof file.contentType === 'string' &&
+      calendarType.includes(file.contentType.toUpperCase())
+    );
   }
 
   getCalendarByMessageId(messageId) {
@@ -208,7 +221,7 @@ class CalendarStore extends MailspringStore {
     if (!this._isMessageInCache(message.id)) {
       let file = null;
       for (const f of message.files) {
-        if (f.id === message.calendarFileId) {
+        if (this.isFileCalendarType(f)) {
           file = f;
           break;
         }
