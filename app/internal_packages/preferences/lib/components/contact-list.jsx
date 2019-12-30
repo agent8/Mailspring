@@ -42,7 +42,7 @@ class ContactList extends React.Component {
     this.setState({ contacts }, () => {
       this._filterContactsBySearchValue();
       if (showAddContact !== this.state.showAddContact) {
-        this._onToggleAddContactShow();
+        this._onToggleAddContactShow(showAddContact);
       }
     });
   }
@@ -129,10 +129,10 @@ class ContactList extends React.Component {
     handleSelect(email);
   };
 
-  _onToggleAddContactShow = () => {
+  _onToggleAddContactShow = showAddContact => {
     this.setState(
       {
-        showAddContact: !this.state.showAddContact,
+        showAddContact: showAddContact,
         addContactInputValue: '',
         completions: [],
       },
@@ -144,8 +144,8 @@ class ContactList extends React.Component {
     );
   };
 
-  _onAddContactInputChange = value => {
-    this.setState({ addContactInputValue: value }, () => this._refreshCompletions());
+  _onAddContactInputChange = e => {
+    this.setState({ addContactInputValue: e.target.value }, () => this._refreshCompletions());
   };
 
   _onAddContactInputBlur = () => {
@@ -180,19 +180,23 @@ class ContactList extends React.Component {
     }
   };
 
-  _renderContactItem = p => {
-    const CustomComponent = p.customComponent;
-    if (CustomComponent) return <CustomComponent token={p} />;
-    return <Menu.NameEmailItem name={p.name} email={p.email} key={p.id} />;
+  _renderContactItem = contact => {
+    return (
+      <div key={contact.id}>
+        <EmailAvatar key="email-avatar" account={{ name: contact.name, email: contact.email }} />
+        {contact.name ? <span>{contact.name}</span> : null}
+        {contact.email}
+      </div>
+    );
   };
 
   _renderAddContactInput = () => {
     return (
       <div key="add-contact-to-mute-input">
-        <InputSearch
+        <input
+          className="choose-contact-search"
           ref={el => (this._addContactInput = el)}
           onBlur={this._onAddContactInputBlur}
-          showClearIcon
           placeholder="Find a contact"
           onChange={this._onAddContactInputChange}
         />
@@ -230,14 +234,17 @@ class ContactList extends React.Component {
           </div>
           {showAddContact ? (
             <li className="add-contact-list">
-              <Menu
-                items={this.state.completions}
-                itemKey={item => item.id}
-                itemContent={this._renderContactItem}
-                headerComponents={[this._renderAddContactInput()]}
-                onBlur={this._onAddContactInputBlur}
-                onSelect={this._onSelectContact}
-              />
+              <div className="checkmark"></div>
+              <div className="choose-contact">
+                <Menu
+                  items={this.state.completions}
+                  itemKey={item => item.id}
+                  itemContent={this._renderContactItem}
+                  headerComponents={[this._renderAddContactInput()]}
+                  onBlur={this._onAddContactInputBlur}
+                  onSelect={this._onSelectContact}
+                />
+              </div>
             </li>
           ) : null}
           {filterList.map(contact => {
