@@ -214,7 +214,7 @@ export default class InvitePadMember extends Component {
           onKeyPress={this.onKeyUp}
         >
           <div className='to'>
-            <span className='close' onClick={this._close}>
+            <span className='close' onClick={this.props.hideInvitePadMember}>
               <RetinaImg
                 name={'close_1.svg'}
                 style={{ width: 24, height: 24 }}

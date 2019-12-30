@@ -39,6 +39,10 @@ export default class TeamreplyEditor extends Component {
     this.setState({ inviteVisible: true })
   }
 
+  hideInvitePadMember = () => {
+    this.setState({ inviteVisible: false })
+  }
+
   render () {
     const { padInfo, inviteVisible } = this.state
     const { draft } = this.props
@@ -76,7 +80,12 @@ export default class TeamreplyEditor extends Component {
         <div className='teamreply-editor-invite-btn' onClick={this.showInvitePadMember}>
           Invite
         </div>
-        <InvitePadMember visible={inviteVisible} padInfo={padInfo} draft={draft} />
+        <InvitePadMember
+          visible={this.state.inviteVisible}
+          padInfo={padInfo}
+          draft={draft}
+          hideInvitePadMember={this.hideInvitePadMember}
+        />
       </div>
     )
   }

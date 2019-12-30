@@ -139,6 +139,7 @@
     "utf7": "^1.0.2",
     "uuid": "^3.3.2",
     "wildemitter": "^1.0.1",
+    "windows-shortcuts": "^0.1.6",
     "xhr": "^2.0.1",
     "xmpp-constants": "^2.3.0",
     "xmpp-jid": "^1.0.0"
