@@ -1180,7 +1180,9 @@ export default class ComposerView extends React.Component {
       session.changes.add({
         files: [].concat(draft.files),
       })
-      this._els[Fields.Body].insertInlineAttachment(fileObj)
+      if (this._els[Fields.Body]) {
+        this._els[Fields.Body].insertInlineAttachment(fileObj)
+      }
       session.changes.commit()
     }
   }
