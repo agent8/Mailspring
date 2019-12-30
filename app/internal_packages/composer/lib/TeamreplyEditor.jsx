@@ -49,12 +49,13 @@ export default class TeamreplyEditor extends Component {
     if (!padId) {
       return <div> Can not get AND create proper edit pad for this email!</div>
     }
-    const cwd = process.cwd()
+    const cwd = AppEnv.getLoadSettings().resourcePath
     console.log(' render: app cwd: ', cwd)
-    let htmlPath = path.join(
-      cwd,
-      'app/internal_packages/composer/teamreply-client/src/html/pad.html'
-    )
+    let relPath = 'internal_packages/composer/teamreply-client/src/html/pad.html'
+    if (cwd.endsWith('/Resources/app.asar')) {
+      relPath = '../app.asar.unpacked/' + relPath
+    }
+    let htmlPath = path.join(cwd, relPath)
     const { resourcePath } = AppEnv.getLoadSettings()
     console.log(' resourcePath: ', resourcePath)
     console.log(' render: app htmlPath: ', htmlPath)
@@ -68,10 +69,10 @@ export default class TeamreplyEditor extends Component {
 
     return (
       <div className='teamreply-editor-container'>
-        {/* <iframe
+        <iframe
           className='teamreply-editor'
           src={`${htmlPath}?padId=${padId}&userId=${userId}&userName=${userName}&token=${token}`}
-        /> */}
+        />
         <div className='teamreply-editor-invite-btn' onClick={this.showInvitePadMember}>
           Invite
         </div>

@@ -21,13 +21,15 @@ export const downloadPadFile = async (awsKey, aes) => {
   return downloadFilePath
 }
 export const downloadPadInlineImage = async (awsKey, aes) => {
-  const cwd = process.cwd()
+  const cwd = AppEnv.getLoadSettings().resourcePath
   console.log(' downloadPadInlineImage: cwd: ', cwd)
-  const downloadDir = path.join(
-    cwd,
-    'app/internal_packages/composer/teamreply-client/download-inline-images'
-  )
+  let relPath = 'internal_packages/composer/teamreply-client/download-inline-images'
+  if (cwd.endsWith('/Resources/app.asar')) {
+    relPath = '../app.asar.unpacked/' + relPath
+  }
+  const downloadDir = path.join(cwd, relPath)
   const downloadFilePath = path.join(downloadDir, awsKey)
+  console.log(' downloadPadFile: downloadFilePath: ', fs.existsSync(downloadFilePath))
   if (fs.existsSync(downloadFilePath)) {
     return downloadFilePath
   }

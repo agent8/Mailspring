@@ -7,7 +7,7 @@ import {
 import AccountContactField from './account-contact-field'
 import ComposerHeaderActions from './composer-header-actions'
 import Fields from './fields'
-import { sendDraftChangeToPad } from './draft-pad-utils.es6'
+import { sendDraftChangeToPad } from './draft-pad-utils'
 
 const ScopedFromField = ListensToFluxStore(AccountContactField, {
   stores: [AccountStore],

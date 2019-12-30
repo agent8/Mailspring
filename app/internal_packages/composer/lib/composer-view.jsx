@@ -36,12 +36,12 @@ import { uploadPadFile, downloadPadInlineImage } from './pad-utils'
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
-import _ from '../teamreply-client/src/static/js/teampad-config.js'
+import _ from './teampad-config'
 import { loadDraftPadMap, saveDraftPadMap, loadPadInfo, savePadInfo } from './app-pad-data'
 import { downloadPadFile } from './pad-utils'
 import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'
 import delay from '../../edison-beijing-chat/utils/delay'
-import { sendEmailExtra } from './draft-pad-utils.es6'
+import { sendEmailExtra } from './draft-pad-utils'
 
 const {
   hasBlockquote,
@@ -153,8 +153,12 @@ export default class ComposerView extends React.Component {
     const win = options.window
     let { src, id } = options
     console.log(' composerOnDownloadPadImg: src: ', src)
-    const cwd = process.cwd()
-    const filePath = path.join(cwd, 'app/internal_packages/composer/teamreply-client/src/html', src)
+    const cwd = AppEnv.getLoadSettings().resourcePath
+    let relPath = 'internal_packages/composer/teamreply-client/src/html/pad.html'
+    if (cwd.endsWith('/Resources/app.asar')) {
+      relPath = '../app.asar.unpacked/' + relPath
+    }
+    const filePath = path.join(cwd, relPath, src)
     let s = src
     let mark1 = '/download-inline-images/'
     let i = s.indexOf(mark1) + mark1.length

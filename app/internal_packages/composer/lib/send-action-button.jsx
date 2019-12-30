@@ -195,7 +195,7 @@ class SendActionButton extends React.Component {
     const imgs = el.querySelectorAll('img')
     console.log(' setTeamEditPadContent: el, imgs: ', el, imgs)
     i = 0
-    const cwd = process.cwd()
+    const cwd = AppEnv.getLoadSettings().resourcePath
     console.log(' setTeamEditPadContent: cwd: ', cwd)
     const { headerMessageId } = draft
     while (i < imgs.length) {
@@ -209,13 +209,25 @@ class SendActionButton extends React.Component {
         filePath = src.substring(7)
       } else if (src.startsWith('./')) {
         console.log('in ./')
-        filePath = path.join(cwd, 'internal_packages/composer/teamreply-client/src/html', src)
+        let relPath = 'internal_packages/composer/teamreply-client/src/html/pad.html'
+        if (cwd.endsWith('/Resources/app.asar')) {
+          relPath = '../app.asar.unpacked/' + relPath
+        }
+        filePath = path.join(cwd, relPath, src)
       }
       // meet some crazy behavior on src of <img> element
       // rel path is different beteen in pad.html and in this jsx file
       filePath = filePath.replace(
         'mailspring/download-inline-images',
         'mailspring/app/internal_packages/composer/teamreply-client/download-inline-images'
+      )
+      filePath = filePath.replace(
+        '/Applications/Edison%20Mail.app/',
+        '/Applications/Edison Mail.app/'
+      )
+      filePath = filePath.replace(
+        '/Edison Mail.app/Contents/Resources/download-inline-images/',
+        '/Edison Mail.app/Contents/Resources/app.asar.unpacked/internal_packages/composer/teamreply-client/download-inline-images/'
       )
       const filename = getAwsOriginalFilename(src)
       console.log(' setTeamEditPadContent: filePath: ', filePath)
