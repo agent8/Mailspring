@@ -1021,3 +1021,68 @@ body.platform-win32 {
     width: 1px;
   }
 }
+
+.mute-email-popup {
+  height: 100%;
+  width: 100%;
+  padding: 30px 30px 0;
+  position: relative;
+
+  .close-icon {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background-color: @gray;
+    cursor: pointer;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.01px;
+    line-height: 24px;
+    font-family: 'SF UI Text';
+    margin: 0;
+  }
+
+  p {
+    margin: 15px 0;
+    font-family: 'SF UI Display';
+    color: @text-color-very-subtle;
+    font-weight: @font-weight-medium;
+    letter-spacing: 0.22px;
+    line-height: 16px;
+  }
+
+  .btn-list {
+    display: flex;
+
+    .btn {
+      flex: 1;
+      box-sizing: border-box;
+      height: 35px;
+      opacity: 0.98;
+      border-radius: 20px;
+      border: 1px solid @blue;
+      line-height: 33px;
+      text-align: center;
+      font-family: 'SF UI Text';
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+
+      &:first-child {
+        margin-right: 20px;
+      }
+
+      &.cancel {
+        color: @blue;
+      }
+
+      &.confirm {
+        color: @text-color-inverse;
+        background: @blue;
+      }
+    }
+  }
+}

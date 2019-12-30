@@ -64,7 +64,7 @@ class MuteNotifacationsStore extends MailspringStore {
     return mutedEmailList.length > 0;
   };
 
-  MuteNotifacationByAccount = (accountId, email) => {
+  muteNotifacationByAccount = (accountId, email) => {
     Actions.queueTask(new MuteNotifacationsTask({ accountId: accountId, email: email }));
   };
 
