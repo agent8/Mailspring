@@ -10,7 +10,7 @@ class MutedNotifacations extends React.Component {
     super();
     this.state = {
       mutes: [],
-      showAddContext: false,
+      showAddContact: false,
     };
   }
 
@@ -37,8 +37,8 @@ class MutedNotifacations extends React.Component {
     this.setState({ mutes });
   };
 
-  _onMuteContext = email => {
-    this.setState({ showAddContext: false });
+  _onMuteContact = email => {
+    this.setState({ showAddContact: false });
     if (email) {
       MuteNotifacationsStore.muteNotifacationEmails([email]);
     }
@@ -50,7 +50,7 @@ class MutedNotifacations extends React.Component {
   };
 
   render() {
-    const { mutes, showAddContext } = this.state;
+    const { mutes, showAddContact } = this.state;
     return (
       <div className="container-mute">
         <div className="config-group">
@@ -61,7 +61,7 @@ class MutedNotifacations extends React.Component {
           </div>
           <div
             className="btn-primary buttons-add"
-            onClick={() => this.setState({ showAddContext: true })}
+            onClick={() => this.setState({ showAddContact: true })}
           >
             <RetinaImg
               name={`add.svg`}
@@ -74,8 +74,8 @@ class MutedNotifacations extends React.Component {
         </div>
         <ContactList
           contacts={mutes}
-          showAddContext={showAddContext}
-          onAddContext={this._onMuteContext}
+          showAddContact={showAddContact}
+          onAddContact={this._onMuteContact}
           checkmarkNote={'muted senders'}
           handleName={'Unmute'}
           handleSelect={this._unmuteSelect}

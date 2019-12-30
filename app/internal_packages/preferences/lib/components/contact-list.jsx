@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { EmailAvatar } from 'mailspring-exports';
-import { InputSearch } from 'mailspring-component-kit';
+import _ from 'underscore';
+import { EmailAvatar, ContactStore } from 'mailspring-exports';
+import { InputSearch, Menu } from 'mailspring-component-kit';
 
 class ContactList extends React.Component {
   static displayName = 'ContactList';
@@ -11,8 +12,8 @@ class ContactList extends React.Component {
     checkmarkNote: PropTypes.string,
     handleName: PropTypes.string.isRequired,
     handleSelect: PropTypes.func.isRequired,
-    showAddContext: PropTypes.bool,
-    onAddContext: PropTypes.func,
+    showAddContact: PropTypes.bool,
+    onAddContact: PropTypes.func,
   };
 
   constructor() {
@@ -22,16 +23,26 @@ class ContactList extends React.Component {
       selections: [],
       searchValue: '',
       filterList: [],
-      showAddContext: false,
+      showAddContact: false,
+      addContactInputValue: '',
+      completions: [],
     };
   }
 
+  componentDidMount() {
+    this._mounted = true;
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+
   UNSAFE_componentWillReceiveProps(next) {
-    const { contacts, showAddContext } = next;
-    this.setState({ contacts, showAddContext }, () => {
+    const { contacts, showAddContact } = next;
+    this.setState({ contacts }, () => {
       this._filterContactsBySearchValue();
-      if (this._addContextInput) {
-        this._addContextInput.focus();
+      if (showAddContact !== this.state.showAddContact) {
+        this._onToggleAddContactShow();
       }
     });
   }
@@ -46,7 +57,7 @@ class ContactList extends React.Component {
     this.setState({ filterList, selections: newSelections });
   }
 
-  checkAllStatus = () => {
+  _checkAllStatus = () => {
     const { filterList, selections } = this.state;
     const selectionCount = selections.length;
     const isSelectAll = filterList && filterList.length && selectionCount === filterList.length;
@@ -58,7 +69,7 @@ class ContactList extends React.Component {
     return '';
   };
 
-  checkStatus = id => {
+  _checkStatus = id => {
     const { selections } = this.state;
     if (selections.indexOf(id) >= 0) {
       return 'selected';
@@ -67,19 +78,19 @@ class ContactList extends React.Component {
     }
   };
 
-  onToggleSelectAll = () => {
-    const checkStatus = this.checkAllStatus();
-    if (!checkStatus) {
+  _onToggleSelectAll = () => {
+    const _checkStatus = this._checkAllStatus();
+    if (!_checkStatus) {
       this._selectAll();
     } else {
       this._clearSelection();
     }
   };
 
-  onToggleSelect = id => {
-    const checkStatus = this.checkStatus(id);
+  _onToggleSelect = id => {
+    const _checkStatus = this._checkStatus(id);
     let newSelections;
-    if (checkStatus) {
+    if (_checkStatus) {
       newSelections = this.state.selections.filter(selectionId => selectionId !== id);
     } else {
       newSelections = [id, ...this.state.selections];
@@ -96,16 +107,10 @@ class ContactList extends React.Component {
     this.setState({ selections: [] });
   }
 
-  onInputChange = value => {
+  _onSearchInputChange = value => {
     this.setState({ searchValue: value }, () => {
       this._filterContactsBySearchValue();
     });
-  };
-
-  _onAddContextInputBlur = () => {
-    if (this.props.onAddContext && typeof this.props.onAddContext === 'function') {
-      this.props.onAddContext();
-    }
   };
 
   _handleSelect = () => {
@@ -124,15 +129,84 @@ class ContactList extends React.Component {
     handleSelect(email);
   };
 
+  _onToggleAddContactShow = () => {
+    this.setState(
+      {
+        showAddContact: !this.state.showAddContact,
+        addContactInputValue: '',
+        completions: [],
+      },
+      () => {
+        if (this._addContactInput) {
+          this._addContactInput.focus();
+        }
+      }
+    );
+  };
+
+  _onAddContactInputChange = e => {
+    this.setState({ addContactInputValue: e.target.value }, () => this._refreshCompletions());
+  };
+
+  _onAddContactInputBlur = () => {
+    if (this.props.onAddContact && typeof this.props.onAddContact === 'function') {
+      this.props.onAddContact();
+    }
+  };
+
+  _onSelectContact = contact => {
+    if (this.props.onAddContact && typeof this.props.onAddContact === 'function') {
+      this.props.onAddContact(contact.email);
+    }
+  };
+
+  _refreshCompletions = () => {
+    const { addContactInputValue } = this.state;
+    const tokensOrPromise = ContactStore.searchContacts(addContactInputValue);
+    if (_.isArray(tokensOrPromise)) {
+      this.setState({ completions: tokensOrPromise });
+    } else if (tokensOrPromise instanceof Promise) {
+      tokensOrPromise.then(tokens => {
+        if (!this._mounted) {
+          return;
+        }
+        this.setState({ completions: tokens });
+      });
+    } else {
+      console.warn(
+        'onRequestCompletions returned an invalid type. It must return an Array of tokens or a Promise that resolves to an array of tokens'
+      );
+      this.setState({ completions: [] });
+    }
+  };
+
+  _renderContactItem = p => {
+    const CustomComponent = p.customComponent;
+    if (CustomComponent) return <CustomComponent token={p} />;
+    return <Menu.NameEmailItem name={p.name} email={p.email} key={p.id} />;
+  };
+
+  _renderAddContactInput = () => {
+    return (
+      <div key="add-contact-to-mute-input">
+        <input
+          ref={el => (this._addContactInput = el)}
+          onBlur={this._onAddContactInputBlur}
+          onChange={this._onAddContactInputChange}
+        />
+      </div>
+    );
+  };
+
   render() {
-    const { filterList, showAddContext } = this.state;
-    const selectAllStatus = this.checkAllStatus();
-    const { checkmarkNote = 'select', handleName, onAddContext } = this.props;
+    const { filterList, showAddContact } = this.state;
+    const selectAllStatus = this._checkAllStatus();
+    const { checkmarkNote = 'select', handleName } = this.props;
     return (
       <div className="contact-list">
         <ul>
           <div className="header">
-            <div className={`checkmark ${selectAllStatus}`} onClick={this.onToggleSelectAll}></div>
+            <div className={`checkmark ${selectAllStatus}`} onClick={this._onToggleSelectAll}></div>
             <div className="checkmark-note">{`${
               filterList && filterList.length ? filterList.length : 0
             } ${checkmarkNote}`}</div>
@@ -148,26 +222,30 @@ class ContactList extends React.Component {
                 showPreIcon
                 showClearIcon
                 placeholder="Find a contact"
-                onChange={this.onInputChange}
+                onChange={this._onSearchInputChange}
               />
             </div>
           </div>
-          {showAddContext ? (
+          {showAddContact ? (
             <li>
-              <input
-                ref={el => (this._addContextInput = el)}
-                onBlur={this._onAddContextInputBlur}
+              <Menu
+                items={this.state.completions}
+                itemKey={item => item.id}
+                itemContent={this._renderContactItem}
+                headerComponents={[this._renderAddContactInput()]}
+                onBlur={this._onAddContactInputBlur}
+                onSelect={this._onSelectContact}
               />
             </li>
           ) : null}
           {filterList.map(contact => {
-            const selectStatus = this.checkStatus(contact.id);
+            const selectStatus = this._checkStatus(contact.id);
 
             return (
               <li key={contact.id} className={`${selectStatus}`}>
                 <div
                   className={`checkmark ${selectStatus}`}
-                  onClick={() => this.onToggleSelect(contact.id)}
+                  onClick={() => this._onToggleSelect(contact.id)}
                 ></div>
                 <EmailAvatar
                   key="email-avatar"
