@@ -361,8 +361,9 @@ class Actions {
     newParticipants: {from, cc, bcc} , required
   }
    */
-
-  static changeDraftAccount = ActionScopeMainWindow;
+  static changeDraftAccount = ActionScopeWindow;
+  static notMainChangeDraftAccount = ActionScopeWindow;
+  static toMainChangeDraftAccount = ActionScopeMainWindow;
 
   /*
   Change the account of current draft complete.
@@ -443,7 +444,8 @@ class Actions {
   Actions.sendDraft('123', {actionKey})
   ```
   */
-  static sendDraft = ActionScopeMainWindow;
+  static sendDraft = ActionScopeWindow;
+  static toMainSendDraft = ActionScopeMainWindow;
   static sendingDraft = ActionScopeGlobal;
   static failingDraft = ActionScopeMainWindow;
   /*
