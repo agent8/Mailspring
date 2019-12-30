@@ -144,8 +144,8 @@ class ContactList extends React.Component {
     );
   };
 
-  _onAddContactInputChange = e => {
-    this.setState({ addContactInputValue: e.target.value }, () => this._refreshCompletions());
+  _onAddContactInputChange = value => {
+    this.setState({ addContactInputValue: value }, () => this._refreshCompletions());
   };
 
   _onAddContactInputBlur = () => {
@@ -189,9 +189,11 @@ class ContactList extends React.Component {
   _renderAddContactInput = () => {
     return (
       <div key="add-contact-to-mute-input">
-        <input
+        <InputSearch
           ref={el => (this._addContactInput = el)}
           onBlur={this._onAddContactInputBlur}
+          showClearIcon
+          placeholder="Find a contact"
           onChange={this._onAddContactInputChange}
         />
       </div>
@@ -227,7 +229,7 @@ class ContactList extends React.Component {
             </div>
           </div>
           {showAddContact ? (
-            <li>
+            <li className="add-contact-list">
               <Menu
                 items={this.state.completions}
                 itemKey={item => item.id}

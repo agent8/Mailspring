@@ -344,6 +344,21 @@
       letter-spacing: -0.31px;
       line-height: 15px;
 
+      &.add-contact-list {
+        position: relative;
+        display: block;
+        padding: 0 69px;
+
+        .menu {
+          .header-container {
+            height: 40px;
+            background: none;
+            border: none;
+            padding: 7px 0;
+          }
+        }
+      }
+
       span {
         color: @text-color;
         margin-right: 15px;
@@ -365,7 +380,7 @@
         color: @text-color-inverse;
         border-radius: 50%;
       }
-      &:hover {
+      &:not(.add-contact-list):hover {
         background: @off-white-light;
         .checkmark {
           display: inline-block;
