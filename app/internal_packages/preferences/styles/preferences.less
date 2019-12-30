@@ -346,15 +346,46 @@
 
       &.add-contact-list {
         position: relative;
-        display: block;
-        padding: 0 69px;
+
+        .checkmark {
+          display: inline-block;
+        }
+
+        .choose-contact {
+          height: 100%;
+          margin-left: -69px;
+
+          .choose-contact-search {
+            border: none;
+            outline: none;
+            background: none;
+            line-height: 40px;
+            padding: 0;
+            margin-left: 69px;
+          }
+        }
 
         .menu {
           .header-container {
-            height: 40px;
             background: none;
             border: none;
-            padding: 7px 0;
+            padding: 0;
+          }
+
+          .content-container {
+            z-index: 10;
+
+            .item {
+              padding: 0 30px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              cursor: pointer;
+              color: @gray;
+              font-size: 14px;
+              letter-spacing: -0.31px;
+              line-height: 15px;
+            }
           }
         }
       }
