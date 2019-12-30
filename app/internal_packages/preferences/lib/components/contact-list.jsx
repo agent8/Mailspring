@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'underscore';
 import { EmailAvatar, ContactStore } from 'mailspring-exports';
-import { InputSearch, Menu } from 'mailspring-component-kit';
+import { InputSearch, Menu, RetinaImg } from 'mailspring-component-kit';
 
 class ContactList extends React.Component {
   static displayName = 'ContactList';
@@ -182,7 +182,7 @@ class ContactList extends React.Component {
 
   _renderContactItem = contact => {
     return (
-      <div key={contact.id}>
+      <div key={contact.id} className="contact-item">
         <EmailAvatar key="email-avatar" account={{ name: contact.name, email: contact.email }} />
         {contact.name ? <span>{contact.name}</span> : null}
         {contact.email}
@@ -197,7 +197,7 @@ class ContactList extends React.Component {
           className="choose-contact-search"
           ref={el => (this._addContactInput = el)}
           onBlur={this._onAddContactInputBlur}
-          placeholder="Find a contact"
+          placeholder="Enter a contact name or email"
           onChange={this._onAddContactInputChange}
         />
       </div>
@@ -234,7 +234,14 @@ class ContactList extends React.Component {
           </div>
           {showAddContact ? (
             <li className="add-contact-list">
-              <div className="checkmark"></div>
+              <div className="avatar-icon">
+                <RetinaImg
+                  isIcon
+                  style={{ width: 24 }}
+                  name="contacts.svg"
+                  mode={RetinaImg.Mode.ContentIsMask}
+                />
+              </div>
               <div className="choose-contact">
                 <Menu
                   items={this.state.completions}
