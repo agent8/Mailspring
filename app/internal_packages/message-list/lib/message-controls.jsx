@@ -9,8 +9,15 @@ import {
   GetMessageRFC2822Task,
   TaskFactory,
   FocusedPerspectiveStore,
+  MuteNotifacationsStore,
 } from 'mailspring-exports';
-import { RetinaImg, ButtonDropdown, Menu, FixedPopover } from 'mailspring-component-kit';
+import {
+  RetinaImg,
+  ButtonDropdown,
+  Menu,
+  FixedPopover,
+  FullScreenModal,
+} from 'mailspring-component-kit';
 import MessageTimestamp from './message-timestamp';
 
 const buttonTimeout = 700;
@@ -33,6 +40,7 @@ export default class MessageControls extends React.Component {
       isReplying: false,
       isReplyAlling: false,
       isForwarding: false,
+      showMuteEmailModal: false,
     };
     this._mounted = false;
     this._replyTimer = null;
@@ -142,6 +150,16 @@ export default class MessageControls extends React.Component {
     Actions.printThread(this.props.thread, printNode.outerHTML);
   };
 
+  _onToggleMuteEmail = () => {
+    this.setState({ showMuteEmailModal: !this.state.showMuteEmailModal });
+  };
+
+  _onMuteEmail = email => {
+    const { message } = this.props;
+    this._onToggleMuteEmail();
+    MuteNotifacationsStore.muteNotifacationByAccount(message.accountId, email);
+  };
+
   _items() {
     const reply = {
       name: 'Reply',
@@ -182,6 +200,13 @@ export default class MessageControls extends React.Component {
       select: this._onPrintEmail,
     };
 
+    const muteEmail = {
+      name: 'Mute notifications',
+      image: 'preview.svg',
+      iconHidden: true,
+      select: this._onToggleMuteEmail,
+    };
+
     if (!this.props.message.canReplyAll()) {
       const noReplyAll = [reply, forward];
       if (!this.props.message.draft) {
@@ -190,7 +215,7 @@ export default class MessageControls extends React.Component {
       if (AppEnv.isDarkTheme()) {
         noReplyAll.push(viewOriginalEmail);
       }
-      noReplyAll.push(printEmail);
+      noReplyAll.push(printEmail, muteEmail);
       return noReplyAll;
     }
     const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
@@ -202,7 +227,7 @@ export default class MessageControls extends React.Component {
     if (AppEnv.isDarkTheme()) {
       ret.push(viewOriginalEmail);
     }
-    ret.push(printEmail);
+    ret.push(printEmail, muteEmail);
     return ret;
   }
 
@@ -400,6 +425,41 @@ export default class MessageControls extends React.Component {
     clipboard.writeText(data);
   };
 
+  _renderMuteEmailPopup = () => {
+    const { message } = this.props;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+
+    return (
+      <div className="mute-email-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onToggleMuteEmail}
+        />
+        <h1>
+          Mute notifications from
+          <br />
+          {email}
+        </h1>
+        <p>
+          Are you sure you want to mute all notifications from "{email}"? You can manage your muted
+          senders in preferences.
+        </p>
+        <div className="btn-list">
+          <div className="btn cancel" onClick={this._onToggleMuteEmail}>
+            Cancel
+          </div>
+          <div className="btn confirm" onClick={() => this._onMuteEmail(email)}>
+            Mute Notifications
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   render() {
     const items = this._items();
     const { trackers } = this.props;
@@ -462,6 +522,13 @@ export default class MessageControls extends React.Component {
             <RetinaImg name={'message-actions-ellipsis.png'} mode={RetinaImg.Mode.ContentIsMask} />
           </div>
         ) : null}
+
+        <FullScreenModal
+          visible={this.state.showMuteEmailModal}
+          style={{ height: '223px', width: '400px', top: '265px', bottom: 'auto' }}
+        >
+          {this._renderMuteEmailPopup()}
+        </FullScreenModal>
       </div>
     );
   }
