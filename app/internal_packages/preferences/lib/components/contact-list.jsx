@@ -161,16 +161,20 @@ class ContactList extends React.Component {
   };
 
   _refreshCompletions = () => {
-    const { addContactInputValue } = this.state;
+    const { addContactInputValue, contacts } = this.state;
+    const mutedContactEmails = contacts.map(contact => contact.email);
+    const filterHasMutedContact = list => {
+      return list.filter(contact => mutedContactEmails.indexOf(contact.email) < 0);
+    };
     const tokensOrPromise = ContactStore.searchContacts(addContactInputValue);
     if (_.isArray(tokensOrPromise)) {
-      this.setState({ completions: tokensOrPromise });
+      this.setState({ completions: filterHasMutedContact(tokensOrPromise) });
     } else if (tokensOrPromise instanceof Promise) {
       tokensOrPromise.then(tokens => {
         if (!this._mounted) {
           return;
         }
-        this.setState({ completions: tokens });
+        this.setState({ completions: filterHasMutedContact(tokens) });
       });
     } else {
       console.warn(
