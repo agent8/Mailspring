@@ -37,6 +37,10 @@ export default class FullScreenModal extends React.Component {
     }
   }
 
+  componentWillUnmount() {
+    this.renderToContainer(false);
+  }
+
   _onClickWrap = () => {
     const { mask, maskClosable, onCancel } = this.props;
     if (!mask || !maskClosable || !onCancel || typeof onCancel !== 'function') {
