@@ -1,78 +1,84 @@
-import React, { Component } from 'react';
-import ContactAvatar from '../../common/ContactAvatar';
-import Button from '../../common/Button';
-import { ContactStore, MemberProfileStore, BlockStore, MessageStore, LocalStorage } from 'chat-exports';
-import { uploadContacts } from '../../../utils/restjs';
-import { remote } from 'electron';
-import { checkToken, refreshChatAccountTokens, queryProfile } from '../../../utils/restjs';
-import { isJsonStr } from '../../../utils/stringUtils';
-import { Actions } from 'mailspring-exports';
-import Contact from '../../../../../src/flux/models/contact';
-import keyMannager from '../../../../../src/key-manager';
-import { RetinaImg } from 'mailspring-component-kit';
-import { ConversationStore } from 'chat-exports';
-import { nickname, name } from '../../../utils/name';
+import React, { Component } from 'react'
+import ContactAvatar from '../../common/ContactAvatar'
+import Button from '../../common/Button'
+import {
+  ContactStore,
+  MemberProfileStore,
+  BlockStore,
+  MessageStore,
+  LocalStorage,
+} from 'chat-exports'
+import { uploadContacts } from '../../../utils/restjs'
+import { remote } from 'electron'
+import { checkToken, refreshChatAccountTokens, queryProfile } from '../../../utils/restjs'
+import { isJsonStr } from '../../../utils/stringUtils'
+import { Actions } from 'mailspring-exports'
+import Contact from '../../../../../src/flux/models/contact'
+import keyMannager from '../../../../../src/key-manager'
+import { RetinaImg } from 'mailspring-component-kit'
+import { ConversationStore } from 'chat-exports'
+import { nickname, name } from '../../../utils/name'
 
 export default class MemberProfile extends Component {
-  static timer;
+  static timer
 
-  constructor(props) {
-    super(props);
+  constructor (props) {
+    super(props)
     this.state = {
       member: null,
       visible: true,
-    };
+    }
   }
 
   componentDidMount = () => {
-    this.mounted = true;
+    this.mounted = true
 
-    this.queryProfile();
-    const rect = this.panelElement.getBoundingClientRect();
-    this.panelRect = rect;
-    document.body.addEventListener('click', this.onClickWithProfile);
-    this._unsub = MemberProfileStore.listen(() => this.setMember(MemberProfileStore.member));
-    this.setMember(null);
-  };
+    this.queryProfile()
+    const rect = this.panelElement.getBoundingClientRect()
+    this.panelRect = rect
+    document.body.addEventListener('click', this.onClickWithProfile)
+    this._unsub = MemberProfileStore.listen(() => this.setMember(MemberProfileStore.member))
+    this.setMember(null)
+  }
 
   componentWillUnmount = () => {
-    document.body.removeEventListener('click', this.onClickWithProfile);
-    this._unsub();
-  };
+    document.body.removeEventListener('click', this.onClickWithProfile)
+    this._unsub()
+  }
   queryProfile = async () => {
-    const { member } = this.state;
+    const { member } = this.state
     if (!member) {
-      return;
+      return
     }
-    const chatAccounts = AppEnv.config.get('chatAccounts') || {};
-    const userId = member.jid.local || member.jid.split('@')[0];
-    const email = Object.keys(chatAccounts)[0];
-    let accessToken = keyMannager.getAccessTokenByEmail(email);
-    const { err, res } = await checkToken(accessToken);
+    const chatAccounts = AppEnv.config.get('chatAccounts') || {}
+    const userId = member.jid.local || member.jid.split('@')[0]
+    let email = Object.keys(chatAccounts)[0]
+    let accessToken = keyMannager.getAccessTokenByEmail(email)
+    const { err, res } = await checkToken(accessToken)
     if (err || !res || res.resultCode !== 1) {
-      await refreshChatAccountTokens();
-      accessToken = keyMannager.getAccessTokenByEmail(email);
+      await refreshChatAccountTokens()
+      accessToken = keyMannager.getAccessTokenByEmail(email)
     }
     queryProfile({ accessToken, userId }, (err, res) => {
       if (!res) {
-        console.log('fail to queryProfile');
-        return;
+        console.log('fail to queryProfile')
+        return
       }
       if (isJsonStr(res)) {
-        res = JSON.parse(res);
+        res = JSON.parse(res)
       }
       if (!this.state.member) {
-        return;
+        return
       }
-      Object.assign(this.state.member, res.data);
-      const state = Object.assign({}, this.state);
+      Object.assign(this.state.member, res.data)
+      const state = Object.assign({}, this.state)
       if (this.mounted) {
-        this.setState(state);
+        this.setState(state)
       } else {
-        this.state = state;
+        this.state = state
       }
-    });
-  };
+    })
+  }
 
   onClickWithProfile = e => {
     //  cxm:
@@ -80,138 +86,138 @@ export default class MemberProfile extends Component {
     // so it's necessary to use this as a workaround
     setTimeout(() => {
       if (this.clickSame) {
-        this.clickSame = false;
-        return;
+        this.clickSame = false
+        return
       }
-      const rect = this.panelRect;
+      const rect = this.panelRect
       if (
         e.clientX < rect.left ||
         e.clientX > rect.right ||
         e.clientY < rect.top ||
         e.clientY > rect.bottom
       ) {
-        this.exitProfile(this.state.member);
+        this.exitProfile(this.state.member)
       }
-    }, 5);
-  };
+    }, 5)
+  }
 
   setMember = member => {
-    this.clickSame = member && member === this.state.member;
+    this.clickSame = member && member === this.state.member
     if (this.clickSame) {
-      return;
+      return
     }
     if (member && (!this.state.member || member.email !== this.state.member.email)) {
-      this.queryProfile();
+      this.queryProfile()
     }
     if (member) {
-      member.nickname = nickname(member.jid);
-      member.name = name(member.jid);
+      member.nickname = nickname(member.jid)
+      member.name = name(member.jid)
     }
-    this.setState({ member, visible: !!member });
-  };
+    this.setState({ member, visible: !!member })
+  }
 
   startPrivateChat = e => {
-    this.exitProfile(this.state.member);
-    let member = Object.assign({}, this.state.member);
-    member = member.dataValues || member;
-    member.jid = (member.jid && member.jid.bare) || member.jid;
-    member.name = member.name || (member.jid && member.jid.split('^at^')[0]);
-    member.curJid = member.curJid || this.props.conversation.curJid;
-    ConversationStore.createPrivateConversation(member);
-  };
+    this.exitProfile(this.state.member)
+    let member = Object.assign({}, this.state.member)
+    member = member.dataValues || member
+    member.jid = (member.jid && member.jid.bare) || member.jid
+    member.name = member.name || (member.jid && member.jid.split('^at^')[0])
+    member.curJid = member.curJid || this.props.conversation.curJid
+    ConversationStore.createPrivateConversation(member)
+  }
 
   composeEmail = e => {
-    const member = this.state.member;
-    this.exitProfile(member);
+    const member = this.state.member
+    this.exitProfile(member)
     const contact = new Contact({
       id: member.id,
       accountId: member.accountId,
       name: member.name,
       email: member.email,
-    });
-    Actions.composeNewDraftToRecipient(contact);
-  };
+    })
+    Actions.composeNewDraftToRecipient(contact)
+  }
 
   exitProfile = async member => {
     if (!member) {
-      return;
+      return
     }
-    const jid = member.jid.bare || member.jid;
-    const nicknames = chatLocalStorage.nicknames;
+    const jid = member.jid.bare || member.jid
+    const nicknames = chatLocalStorage.nicknames
     if (nicknames[jid] != member.nickname) {
-      nicknames[jid] = member.nickname;
-      LocalStorage.saveToLocalStorage();
+      nicknames[jid] = member.nickname
+      LocalStorage.saveToLocalStorage()
     }
-    MemberProfileStore.setMember(null);
-    MessageStore.saveMessagesAndRefresh([]);
-    LocalStorage.trigger();
-  };
+    MemberProfileStore.setMember(null)
+    MessageStore.saveMessagesAndRefresh([])
+    LocalStorage.trigger()
+  }
 
   showMenu = async e => {
-    const { member } = this.state;
-    const jid = member.jid.bare || member.jid;
-    const curJid = this.props.conversation.curJid;
-    const isBlocked = await BlockStore.isBlocked(jid, curJid);
+    const { member } = this.state
+    const jid = member.jid.bare || member.jid
+    const curJid = this.props.conversation.curJid
+    const isBlocked = await BlockStore.isBlocked(jid, curJid)
     const menus = [
       {
         label: `Add to Contacts`,
         click: () => {
-          const moreBtnEl = document.querySelector('.more');
-          this.addToContacts();
+          const moreBtnEl = document.querySelector('.more')
+          this.addToContacts()
         },
       },
-    ];
+    ]
 
     menus.push(
       isBlocked
         ? {
-          label: `Unblock this Contact`,
-          click: () => {
-            this.unblockContact();
-          },
-        }
+            label: `Unblock this Contact`,
+            click: () => {
+              this.unblockContact()
+            },
+          }
         : {
-          label: `Block this Contact`,
-          click: () => {
-            this.blockContact();
-          },
-        }
-    );
+            label: `Block this Contact`,
+            click: () => {
+              this.blockContact()
+            },
+          }
+    )
 
-    remote.Menu.buildFromTemplate(menus).popup(remote.getCurrentWindow());
-  };
+    remote.Menu.buildFromTemplate(menus).popup(remote.getCurrentWindow())
+  }
 
   blockContact = async () => {
-    const member = this.state.member;
-    const jid = member.jid.bare || member.jid;
-    const curJid = this.props.conversation.curJid;
-    await BlockStore.block(jid, curJid);
-    alert(`You have blocked ${member.nickname || member.name}`);
-  };
+    const member = this.state.member
+    const jid = member.jid.bare || member.jid
+    const curJid = this.props.conversation.curJid
+    await BlockStore.block(jid, curJid)
+    alert(`You have blocked ${member.nickname || member.name}`)
+  }
   unblockContact = async () => {
-    const member = this.state.member;
-    const jid = member.jid.bare || member.jid;
-    const curJid = this.props.conversation.curJid;
-    await BlockStore.unblock(jid, curJid);
-    alert(`You have unblocked ${member.nickname || member.name}`);
-  };
+    const member = this.state.member
+    const jid = member.jid.bare || member.jid
+    const curJid = this.props.conversation.curJid
+    await BlockStore.unblock(jid, curJid)
+    alert(`You have unblocked ${member.nickname || member.name}`)
+  }
   addToContacts = async () => {
-    const member = this.state.member;
-    const jid = member.jid.bare || member.jid;
-    let contacts = await ContactStore.getContacts();
+    const member = this.state.member
+    const jid = member.jid.bare || member.jid
+    let contacts = await ContactStore.getContacts()
     if (contacts.some(item => item.email === member.email)) {
-      alert(`This contact(${member.nickname || member.name}) has been in the contacts.`);
-      return;
+      alert(`This contact(${member.nickname || member.name}) has been in the contacts.`)
+      return
     }
-    contacts = contacts.map(item => ({ email: item.email, displayName: item.name }));
-    contacts.push({ email: member.email, displayName: member.name || member.nickname });
-    const chatAccounts = AppEnv.config.get('chatAccounts') || {};
-    const email = Object.keys(chatAccounts)[0];
-    let accessToken = await keyMannager.getAccessTokenByEmail(email);
-    const { err, res } = await checkToken(accessToken);
+    contacts = contacts.map(item => ({ email: item.email, displayName: item.name }))
+    contacts.push({ email: member.email, displayName: member.name || member.nickname })
+    const chatAccounts = AppEnv.config.get('chatAccounts') || {}
+    let email = Object.keys(chatAccounts)[0]
+    let accessToken = await keyMannager.getAccessTokenByEmail(email)
+    const { err, res } = await checkToken(accessToken)
     if (err || !res || res.resultCode !== 1) {
-      await refreshChatAccountTokens();
-      accessToken = await keyMannager.getAccessTokenByEmail(email);
+      await refreshChatAccountTokens()
+      accessToken = await keyMannager.getAccessTokenByEmail(email)
     }
     ContactStore.saveContacts(
       [
@@ -224,53 +230,48 @@ export default class MemberProfile extends Component {
         },
       ],
       member.curJid
-    );
+    )
     uploadContacts(accessToken, contacts, () => {
-      alert(`This contact(${member.nickname || member.name}) has been added into the contacts.`);
-    });
-  };
+      alert(`This contact(${member.nickname || member.name}) has been added into the contacts.`)
+    })
+  }
 
   onChangeNickname = e => {
-    const { member } = this.state;
-    member.nickname = e.target.value;
-    const state = Object({}, this.state, { member });
-    this.setState(state);
-    return;
-  };
+    const { member } = this.state
+    member.nickname = e.target.value
+    const state = Object({}, this.state, { member })
+    this.setState(state)
+    return
+  }
 
   onKeyPressEvent = e => {
-    const { nativeEvent, currentTarget } = e;
+    const { nativeEvent, currentTarget } = e
     if (nativeEvent.keyCode === 13 && !nativeEvent.shiftKey) {
-      currentTarget.blur();
-      e.preventDefault();
-      return false;
+      currentTarget.blur()
+      e.preventDefault()
+      return false
     }
-    return true;
-  };
+    return true
+  }
 
   render = () => {
     if (!this.state.visible) {
-      return null;
+      return null
     }
 
-    const member = this.state.member || {};
-    const jid = member.jid && typeof member.jid != 'string' ? member.jid.bare : member.jid || '';
+    const member = this.state.member || {}
+    const jid = member.jid && typeof member.jid != 'string' ? member.jid.bare : member.jid || ''
 
     return (
-      <div className="member-profile-panel" ref={el => (this.panelElement = el)} tabIndex={1}>
-        <Button className="more" onClick={this.showMenu}></Button>
-        <div className="avatar-area">
-          <ContactAvatar
-            jid={jid}
-            name={member.name}
-            email={member.email}
-            size={140}
-          />
-          <div className="name-buttons">
-            <h2 className="member-name">{member.name}</h2>
+      <div className='member-profile-panel' ref={el => (this.panelElement = el)} tabIndex={1}>
+        <Button className='more' onClick={this.showMenu}></Button>
+        <div className='avatar-area'>
+          <ContactAvatar jid={jid} name={member.name} email={member.email} size={140} />
+          <div className='name-buttons'>
+            <h2 className='member-name'>{member.name}</h2>
             <button
-              className="btn btn-toolbar command-button"
-              title="Start a private chat"
+              className='btn btn-toolbar command-button'
+              title='Start a private chat'
               onClick={this.startPrivateChat}
             >
               <RetinaImg
@@ -282,8 +283,8 @@ export default class MemberProfile extends Component {
               <span>Messages</span>
             </button>
             <button
-              className="btn btn-toolbar command-button"
-              title="Compose new message"
+              className='btn btn-toolbar command-button'
+              title='Compose new message'
               onClick={this.composeEmail}
             >
               <RetinaImg
@@ -296,16 +297,16 @@ export default class MemberProfile extends Component {
             </button>
           </div>
         </div>
-        <div className="email">
-          <div className="email-label">email</div>
-          <div className="member-email">{member.email}</div>
+        <div className='email'>
+          <div className='email-label'>email</div>
+          <div className='member-email'>{member.email}</div>
         </div>
-        <div className="nickname">
-          <div className="nickname-label">nickname</div>
+        <div className='nickname'>
+          <div className='nickname-label'>nickname</div>
           <input
-            className="nickname-input"
-            type="text"
-            placeholder="input nickname here"
+            className='nickname-input'
+            type='text'
+            placeholder='input nickname here'
             value={member.nickname}
             onChange={this.onChangeNickname}
             onKeyPress={this.onKeyPressEvent}
@@ -313,6 +314,6 @@ export default class MemberProfile extends Component {
           ></input>
         </div>
       </div>
-    );
-  };
+    )
+  }
 }

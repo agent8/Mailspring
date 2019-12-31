@@ -77,7 +77,8 @@ export const getProfile = async jid => {
   const chatAccounts = AppEnv.config.get('chatAccounts') || {}
   if (Object.keys(chatAccounts).length > 0) {
     if (!accessToken) {
-      accessToken = await keyMannager.getAccessTokenByEmail(Object.keys(chatAccounts)[0])
+      let email = Object.keys(chatAccounts)[0]
+      accessToken = await keyMannager.getAccessTokenByEmail(email)
     }
     return await new Promise((resolve, reject) => {
       queryProfile({ accessToken, userId }, (error, data) => {

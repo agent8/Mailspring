@@ -679,7 +679,7 @@ export default class ComposerView extends React.Component {
   createTeamEditPad = async () => {
     const chatAccounts = AppEnv.config.get('chatAccounts') || {}
     const emails = Object.keys(chatAccounts)
-    const email = emails[0]
+    let email = emails[0]
     const token = await keyMannager.getAccessTokenByEmail(email)
     const chatAccountList = Object.values(chatAccounts)
     console.log('tm-editor.render: chatAccounts: ', chatAccounts)

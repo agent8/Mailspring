@@ -217,5 +217,5 @@ export default {
   getMyAppByShortName,
   getMyAppById,
   getAppByJid,
-  getMyApps
+  getMyApps,
 }
