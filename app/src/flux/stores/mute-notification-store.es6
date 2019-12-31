@@ -1,15 +1,15 @@
 import MailspringStore from 'mailspring-store';
 import {
   Actions,
-  MuteNotifacationsTask,
-  UnMuteNotifacationsTask,
+  MuteNotificationTask,
+  UnMuteNotificationTask,
   GetMuteListTask,
   AccountStore,
 } from 'mailspring-exports';
 import DatabaseStore from './database-store';
 import MuteNotifacation from '../models/mute-notifacation';
 
-class MuteNotifacationsStore extends MailspringStore {
+class MuteNotificationStore extends MailspringStore {
   constructor() {
     super();
     this.basicData = [];
@@ -65,18 +65,18 @@ class MuteNotifacationsStore extends MailspringStore {
   };
 
   muteNotifacationByAccount = (accountId, email) => {
-    Actions.queueTask(new MuteNotifacationsTask({ accountId: accountId, email: email }));
+    Actions.queueTask(new MuteNotificationTask({ accountId: accountId, email: email }));
   };
 
   unMuteNotifacationByAccount = (accountId, email) => {
-    Actions.queueTask(new UnMuteNotifacationsTask({ accountId: accountId, email: email }));
+    Actions.queueTask(new UnMuteNotificationTask({ accountId: accountId, email: email }));
   };
 
   muteNotifacationEmails = emails => {
     const muteTaskList = [];
     AccountStore.accounts().forEach(account => {
       emails.forEach(email => {
-        muteTaskList.push(new MuteNotifacationsTask({ accountId: account.id, email: email }));
+        muteTaskList.push(new MuteNotificationTask({ accountId: account.id, email: email }));
       });
     });
     Actions.queueTasks(muteTaskList);
@@ -86,11 +86,11 @@ class MuteNotifacationsStore extends MailspringStore {
     const unMuteTaskList = [];
     AccountStore.accounts().forEach(account => {
       emails.forEach(email => {
-        unMuteTaskList.push(new UnMuteNotifacationsTask({ accountId: account.id, email: email }));
+        unMuteTaskList.push(new UnMuteNotificationTask({ accountId: account.id, email: email }));
       });
     });
     Actions.queueTasks(unMuteTaskList);
   };
 }
 
-module.exports = new MuteNotifacationsStore();
+module.exports = new MuteNotificationStore();

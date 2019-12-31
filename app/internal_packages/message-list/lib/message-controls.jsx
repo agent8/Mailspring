@@ -9,7 +9,7 @@ import {
   GetMessageRFC2822Task,
   TaskFactory,
   FocusedPerspectiveStore,
-  MuteNotifacationsStore,
+  MuteNotificationStore,
 } from 'mailspring-exports';
 import {
   RetinaImg,
@@ -157,7 +157,7 @@ export default class MessageControls extends React.Component {
   _onMuteEmail = email => {
     const { message } = this.props;
     this._onToggleMuteEmail();
-    MuteNotifacationsStore.muteNotifacationByAccount(message.accountId, email);
+    MuteNotificationStore.muteNotifacationByAccount(message.accountId, email);
   };
 
   _items() {

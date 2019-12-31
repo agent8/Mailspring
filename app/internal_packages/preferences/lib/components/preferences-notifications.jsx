@@ -1,5 +1,5 @@
 import React from 'react';
-import { MuteNotifacationsStore } from 'mailspring-exports';
+import { MuteNotificationStore } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import ContactList from './contact-list';
 
@@ -15,8 +15,8 @@ class MutedNotifacations extends React.Component {
   }
 
   componentDidMount() {
-    this.unsubscribe = MuteNotifacationsStore.listen(this._onMutedChanged);
-    MuteNotifacationsStore.syncMuteNotifacations();
+    this.unsubscribe = MuteNotificationStore.listen(this._onMutedChanged);
+    MuteNotificationStore.syncMuteNotifacations();
     const mutes = this._getStateFromStores();
     this.setState({ mutes: mutes });
   }
@@ -28,7 +28,7 @@ class MutedNotifacations extends React.Component {
   }
 
   _getStateFromStores() {
-    const mutes = MuteNotifacationsStore.getMuteNotifacations();
+    const mutes = MuteNotificationStore.getMuteNotifacations();
     return mutes;
   }
 
@@ -40,13 +40,13 @@ class MutedNotifacations extends React.Component {
   _onMuteContact = email => {
     this.setState({ showAddContact: false });
     if (email) {
-      MuteNotifacationsStore.muteNotifacationEmails([email]);
+      MuteNotificationStore.muteNotifacationEmails([email]);
     }
   };
 
   _unmuteSelect = select => {
     const emails = typeof select === 'string' ? [select] : select;
-    MuteNotifacationsStore.unMuteNotifacationEmails(emails);
+    MuteNotificationStore.unMuteNotifacationEmails(emails);
   };
 
   render() {

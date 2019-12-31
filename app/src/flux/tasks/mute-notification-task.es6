@@ -2,7 +2,7 @@ import SiftTask from './sift-task';
 import Attributes from '../attributes';
 import Actions from '../actions';
 
-export default class UnMuteNotifacationsTask extends SiftTask {
+export default class MuteNotificationTask extends SiftTask {
   static attributes = Object.assign({}, SiftTask.attributes, {
     aid: Attributes.String({
       modelKey: 'aid',
@@ -18,7 +18,7 @@ export default class UnMuteNotifacationsTask extends SiftTask {
   }
 
   label() {
-    return `unmute notifacations`;
+    return `mute notifacations`;
   }
 
   onError(err) {
