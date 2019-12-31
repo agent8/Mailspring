@@ -497,7 +497,13 @@ export default class ComposerView extends React.Component {
     const nonInlineWithContentIdImageFiles = files
       .filter(f => Utils.shouldDisplayAsImage(f))
       .filter(f => f.contentId)
-      .filter(f => !this.props.draft.body.includes(`cid:${f.contentId}`))
+      .filter(f => {
+        if(!this.props.draft || (typeof this.props.draft.body !== 'string')){
+          AppEnv.reportError(new Error(`draft data incorrect`), {errorData: this.props.draft});
+          return false;
+        }
+        return this.props.draft && this.props.draft.body && !this.props.draft.body.includes(`cid:${f.contentId}`);
+      })
       .map(file => (
         <AttachmentItem
           key={file.id}
@@ -670,14 +676,14 @@ export default class ComposerView extends React.Component {
     // Ensure that you can't pick up a file and drop it on the same draft
     const nonNativeFilePath = this._nonNativeFilePathForDrop(event);
 
-    const hasNativeFile = event.dataTransfer.types.includes('Files');
+    const hasNativeFile = event.dataTransfer.types && event.dataTransfer.types.includes('Files');
     const hasNonNativeFilePath = nonNativeFilePath !== null;
 
     return hasNativeFile || hasNonNativeFilePath;
   };
 
   _nonNativeFilePathForDrop = event => {
-    if (event.dataTransfer.types.includes('text/nylas-file-url')) {
+    if (event.dataTransfer.types && event.dataTransfer.types.includes('text/nylas-file-url')) {
       const downloadURL = event.dataTransfer.getData('text/nylas-file-url');
       const downloadFilePath = downloadURL.split('file://')[1];
       if (downloadFilePath) {
@@ -686,7 +692,7 @@ export default class ComposerView extends React.Component {
     }
 
     // Accept drops of images from within the app
-    if (event.dataTransfer.types.includes('text/uri-list')) {
+    if (event.dataTransfer.types && event.dataTransfer.types.includes('text/uri-list')) {
       const uri = event.dataTransfer.getData('text/uri-list');
       if (uri.indexOf('file://') === 0) {
         return decodeURI(uri.split('file://')[1]);
