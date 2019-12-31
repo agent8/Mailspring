@@ -84,7 +84,7 @@ lazyLoadAndRegisterModel(`Category`, 'category');
 lazyLoadAndRegisterModel(`Calendar`, 'calendar');
 lazyLoadAndRegisterModel('JoinTable', 'join-table');
 lazyLoadAndRegisterModel('BlockContact', 'block-contact');
-lazyLoadAndRegisterModel('MuteNotifacation', 'mute-notifacation');
+lazyLoadAndRegisterModel('MuteNotification', 'mute-notification');
 lazyLoadAndRegisterModel(`ProviderSyncbackRequest`, 'provider-syncback-request');
 lazyLoadAndRegisterTask('SetObservableRangeTask', 'set-observable-range-task');
 lazyLoadAndRegisterModel('AttachmentProgress', 'attachment-progress');
