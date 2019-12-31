@@ -299,6 +299,10 @@ export default class Message extends ModelWithMetadata {
       joinOnWhere: { state: 0 },
       itemClass: Sift,
     }),
+    lastSync: Attributes.Number({
+      modelKey: 'lastSync',
+      queryable: false
+    })
   });
 
   static naturalSortOrder() {
