@@ -19,13 +19,13 @@ const resendIndicatorTimeoutMS = 3000;
 class OutboxStore extends MailspringStore {
   static findAll() {
     return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false }).where([
-      Message.attributes.state.in([Message.messageState.failed, Message.messageState.failing]),
+      Message.attributes.syncState.in([Message.messageSyncState.failed, Message.messageSyncState.failing]),
     ]);
   }
 
   static findAllInDescendingOrder() {
     return OutboxStore.findAll().order([
-      Message.attributes.state.descending(),
+      Message.attributes.syncState.descending(),
       Message.attributes.date.descending(),
     ]);
   }
@@ -80,7 +80,7 @@ class OutboxStore extends MailspringStore {
     if (this._resendingDrafts[draft.headerMessageId]) {
       return true;
     }
-    return Message.compareMessageState(draft.state, Message.messageState.failing);
+    return Message.compareMessageState(draft.state, Message.messageSyncState.failing);
   };
   _clearResendIndicators = () => {
     this._resendDraftCheckTimer = null;
@@ -155,7 +155,7 @@ class OutboxStore extends MailspringStore {
       if (change.objectClass === Message.name) {
         let needUpdate = false;
         change.objects.forEach(obj => {
-          if (obj.draft && [Message.messageState.failing, Message.messageState.failed].includes(obj.state)) {
+          if (obj.draft && [Message.messageSyncState.failing, Message.messageSyncState.failed].includes(obj.state)) {
             if (this._selectedDraft && this._selectedDraft.id === obj.id) {
               if (change.type === 'persist') {
                 this._selectedDraft = obj;
@@ -182,7 +182,7 @@ class OutboxStore extends MailspringStore {
       }
     } else if (
       focused.draft &&
-      [Message.messageState.failed, Message.messageState.failing].includes(focused.state.toString())
+      [Message.messageSyncState.failed, Message.messageSyncState.failing].includes(focused.state.toString())
     ) {
       if (!this._selectedDraft) {
         this._selectedDraft = focused;

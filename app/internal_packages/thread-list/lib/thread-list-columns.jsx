@@ -16,12 +16,13 @@ const ThreadListIcon = require('./thread-list-icon');
 
 // Get and format either last sent or last received timestamp depending on thread-list being viewed
 const ThreadListTimestamp = function ({ thread }) {
-  let rawTimestamp = FocusedPerspectiveStore.current().isSent()
-    ? thread.lastMessageSentTimestamp
-    : thread.lastMessageReceivedTimestamp;
-  if (!rawTimestamp) {
-    rawTimestamp = thread.lastMessageSentTimestamp;
-  }
+  // let rawTimestamp = FocusedPerspectiveStore.current().isSent()
+  //   ? thread.lastMessageSentTimestamp
+  //   : thread.lastMessageReceivedTimestamp;
+  const rawTimestamp = thread.lastMessageTimestamp;
+  // if (!rawTimestamp) {
+  //   rawTimestamp = thread.lastMessageSentTimestamp;
+  // }
   const timestamp = rawTimestamp ? DateUtils.shortTimeStringForThreadList(rawTimestamp) : 'No Date';
   return <span className="timestamp">{timestamp}</span>;
 };

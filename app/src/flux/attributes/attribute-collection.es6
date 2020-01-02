@@ -34,20 +34,24 @@ export default class AttributeCollection extends Attribute {
     modelKey,
     jsonKey,
     itemClass,
-    joinOnField,
+    joinTableOnField,
+    joinModelOnField,
     joinQueryableBy,
     joinTableName,
+    joinTableColumn,
     joinOnWhere,
     queryable,
     loadFromColumn,
   }) {
     super({ modelKey, jsonKey, queryable });
     this.itemClass = itemClass;
-    this.joinOnField = joinOnField;
+    this.joinTableOnField = joinTableOnField;
     this.joinTableName = joinTableName;
     this.joinQueryableBy = joinQueryableBy || [];
     this.joinOnWhere = joinOnWhere || {};
     this.loadFromColumn = loadFromColumn;
+    this.joinTableColumn = joinTableColumn;
+    this.joinModelOnField = joinModelOnField;
   }
 
   toJSON(vals) {
@@ -61,11 +65,13 @@ export default class AttributeCollection extends Attribute {
 
     return vals.map(val => {
       if (this.itemClass && !(val instanceof this.itemClass)) {
-        throw new Error(
-          `AttributeCollection::toJSON: Value \`${val}\` in ${this.modelKey} is not an ${
-          this.itemClass.name
-          }`
-        );
+        if(this.itemClass !== 'Label'){
+          throw new Error(
+            `AttributeCollection::toJSON: Value \`${val}\` in ${this.modelKey} is not an ${
+              this.itemClass.name
+            }`
+          );
+        }
       }
       return val.toJSON !== undefined ? val.toJSON() : val;
     });

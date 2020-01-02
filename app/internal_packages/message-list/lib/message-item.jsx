@@ -454,24 +454,6 @@ export default class MessageItem extends React.Component {
     );
   }
 
-  _renderFolder() {
-    if (!this.state.detailedHeaders) {
-      return false;
-    }
-
-    const folder = this.props.message.folder;
-    if (!folder || folder.role === 'al') {
-      return false;
-    }
-
-    return (
-      <div className="header-row">
-        <div className="header-label">Folder:&nbsp;</div>
-        <div className="header-name">{folder.displayName}</div>
-      </div>
-    );
-  }
-
   _renderCollapsed() {
     const {
       message: { snippet, from, files, date, draft },

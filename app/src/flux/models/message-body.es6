@@ -5,25 +5,22 @@ import { AuxDBs } from '../stores/database-store';
 export default class MessageBody extends CrossDBModel {
   static attributes = Object.assign({}, CrossDBModel.attributes, {
     id: Attributes.String({
-      modelKey: 'id',
+      modelKey: 'pid',
       loadFromColumn: true,
       queryable: true,
+      isPseudoPrimary: true
     }),
     value: Attributes.String({
-      modelKey: 'value',
-      loadFromColumn: true,
-      queryable: true,
-    }),
-    type: Attributes.Number({
-      modelKey: 'type',
+      modelKey: 'htmlBody',
       loadFromColumn: true,
       queryable: true,
     }),
     fetchedAt: Attributes.DateTime({
-      modelKey: 'fetchedAt',
+      modelKey: 'lastUpdate',
       loadFromColumn: true,
       queryable: true,
     }),
+    data: Attributes.Ignore({}),
   });
   static db = AuxDBs.MessageBody;
   constructor(data) {

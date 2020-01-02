@@ -55,7 +55,7 @@ lazyLoad(`MailspringAPIRequest`, 'flux/mailspring-api-request');
 lazyLoad(`MailsyncProcess`, 'mailsync-process');
 // The Database
 lazyLoad(`Matcher`, 'flux/attributes/matcher');
-lazyLoad(`DatabaseStore`, 'flux/stores/database-store');
+load(`DatabaseStore`, 'flux/stores/database-store');
 lazyLoad(`QueryResultSet`, 'flux/models/query-result-set');
 lazyLoad(`QuerySubscription`, 'flux/models/query-subscription');
 lazyLoad(`MutableQueryResultSet`, 'flux/models/mutable-query-result-set');

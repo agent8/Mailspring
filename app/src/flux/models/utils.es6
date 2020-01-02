@@ -52,7 +52,79 @@ const aggregation = (baseClass, ...mixins) => {
   });
   return base;
 };
+class CircularCache {
+  static LRU = (cacheArray, currentNextAvailableIndex)=>{
+    let newIndex = currentNextAvailableIndex;
+    let previousLastAccess = cacheArray[currentNextAvailableIndex].lastAccess;
+    for(let i=0; i < cacheArray.length; i++){
+      if(cacheArray[i].lastAccess === 0){
+        return i;
+      } else if( cacheArray[i].lastAccess < previousLastAccess ){
+        newIndex = i;
+        previousLastAccess = cacheArray[i].lastAccess;
+      }
+    }
+    return newIndex;
+  };
+  constructor(maxItems = 1, cacheMethod = 'LRU') {
+    if (typeof maxItems !== 'number') {
+      maxItems = 1;
+    }
+    if (maxItems < 1) {
+      maxItems = 1;
+    }
+    maxItems = Math.floor(maxItems);
+    this.cacheLength = maxItems;
+    this.cacheMethod = cacheMethod;
+    this.cacheContents = [];
+    this.nextAvailableCacheIndex = 0;
+    for (let i = 0; i < maxItems; i++) {
+      this.cacheContents.push({ val: null, lastAccess: 0, key: '' });
+    }
+  }
+  get(cacheKey = ''){
+    if(typeof cacheKey !== 'string' || cacheKey.length === 0){
+      return null;
+    }
+    return this._findCacheByKey(cacheKey);
+  }
+  _findCacheByKey = cacheKey=>{
+    for(let i=0; i < this.cacheLength; i++){
+      if( cacheKey === this.cacheContents[i].key){
+        this.cacheContents[i].lastAccess = Date.now();
+        return this.cacheContents[i];
+      }
+    }
+    return null;
+  };
+
+  set(cacheKey, cacheContent){
+    if(typeof cacheKey !== 'string' || cacheKey.length === 0){
+      return ;
+    }
+    const index = this._findNextAvailableCacheIndex();
+    this.cacheContents[index] = {
+      val: cacheContent,
+      lastAccess: Date.now(),
+      key: cacheKey
+    };
+  }
+
+  _findNextAvailableCacheIndex() {
+    if(this.cacheMethod === 'LRU'){
+      this.nextAvailableCacheIndex = CircularCache.LRU(this.cacheContents, this.nextAvailableCacheIndex);
+    }else{
+      // Currently Only LRU is supported;
+      this.nextAvailableCacheIndex = CircularCache.LRU(this.cacheContents, this.nextAvailableCacheIndex);
+    }
+    console.log(`New Cache next Index ${this.nextAvailableCacheIndex}`);
+    return this.nextAvailableCacheIndex;
+  }
+};
 module.exports = Utils = {
+  createCircularBuffer: maxItems =>{
+    return new CircularCache(maxItems);
+  },
   multipleInheritance: (...classes) => aggregation(...classes),
   waitFor(latch, options = {}) {
     const timeout = options.timeout || 400;

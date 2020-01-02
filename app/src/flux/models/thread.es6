@@ -1,10 +1,12 @@
 import Message from './message';
 import Contact from './contact';
-import Folder from './folder';
-import Label from './label';
+// import Folder from './folder';
+import File from './file';
+// import Label from './label';
 import Category from './category';
 import Attributes from '../attributes';
 import DatabaseStore from '../stores/database-store';
+import CategoryStore from '../stores/category-store';
 import ModelWithMetadata from './model-with-metadata';
 
 /*
@@ -35,15 +37,23 @@ This class also inherits attributes from {Model}
 Section: Models
 @class Thread
 */
+
+const threadInboxCategory = {
+  'primary': 0,
+  'others': 1
+};
+
 export default class Thread extends ModelWithMetadata {
   static attributes = Object.assign({}, ModelWithMetadata.attributes, {
     snippet: Attributes.String({
-      // TODO NONFUNCTIONAL
       modelKey: 'snippet',
+      queryable: true,
+      loadFromColumn: true,
     }),
 
     subject: Attributes.String({
       queryable: true,
+      loadFromColumn: true,
       modelKey: 'subject',
     }),
 
@@ -57,102 +67,122 @@ export default class Thread extends ModelWithMetadata {
 
     starred: Attributes.Boolean({
       queryable: true,
+      loadFromColumn: true,
       modelKey: 'starred',
     }),
 
-    version: Attributes.Number({
+    // version: Attributes.Number({
+    //   queryable: true,
+    //   jsonKey: 'v',
+    //   modelKey: 'version',
+    // }),
+    inboxCategory: Attributes.Number({
       queryable: true,
-      jsonKey: 'v',
-      modelKey: 'version',
+      loadFromColumn: true,
+      modelKey: 'category',
+      jsModelKey: 'inboxCategory',
     }),
 
     categories: Attributes.Collection({
-      queryable: true,
       modelKey: 'categories',
-      joinOnField: 'id',
+      joinTableOnField: 'threadId',
+      joinModelOnField: 'pid',
+      joinTableColumn: 'categoryId',
       joinTableName: 'ThreadCategory',
       joinOnWhere: { state: 0 },
       joinQueryableBy: [
         'inAllMail',
-        'lastMessageReceivedTimestamp',
-        'lastMessageSentTimestamp',
+        'lastDate',
         'unread',
       ],
       itemClass: Category,
+      queryable: true,
     }),
 
-    folders: Attributes.Collection({
-      modelKey: 'folders',
-      itemClass: Folder,
+    // folders: Attributes.Collection({
+    //   modelKey: 'folders',
+    //   itemClass: Folder,
+    // }),
+    labelIds: Attributes.Collection({
+      modelKey: 'labelIds',
+      queryable: true,
+      loadFromColumn: true,
     }),
 
-    labels: Attributes.Collection({
-      modelKey: 'labels',
-      joinOnField: 'id',
-      joinTableName: 'ThreadCategory',
-      joinQueryableBy: [
-        'inAllMail',
-        'lastMessageReceivedTimestamp',
-        'lastMessageSentTimestamp',
-        'unread',
-      ],
-      itemClass: Label,
-    }),
+    // labels: Attributes.Collection({
+    //   modelKey: 'labels',
+    //   joinTableOnField: 'id',
+    //   joinTableName: 'ThreadCategory',
+    //   joinQueryableBy: [
+    //     'inAllMail',
+    //     'lastMessageReceivedTimestamp',
+    //     'lastMessageSentTimestamp',
+    //     'unread',
+    //   ],
+    //   itemClass: Label,
+    // }),
 
     participants: Attributes.Collection({
       modelKey: 'participants',
       itemClass: Contact,
+      queryable: true,
+      loadFromColumn: true,
     }),
 
-    attachmentCount: Attributes.Number({
-      modelKey: 'attachmentCount',
+    files: Attributes.Collection({
+      modelKey: 'files',
+      itemClass: File,
     }),
 
     hasAttachments: Attributes.Boolean({
       modelKey: 'hasAttachments',
       queryable: true,
+      loadFromColumn: true,
     }),
 
-    lastMessageReceivedTimestamp: Attributes.DateTime({
-      queryable: true,
-      jsonKey: 'lmrt',
-      modelKey: 'lastMessageReceivedTimestamp',
-      modelTable: 'ThreadCategory',
-      loadFromColumn: true
-    }),
-
-    lastMessageSentTimestamp: Attributes.DateTime({
-      queryable: true,
-      jsonKey: 'lmst',
-      modelKey: 'lastMessageSentTimestamp',
-      modelTable: 'ThreadCategory',
-      loadFromColumn: true
-    }),
+    // lastMessageReceivedTimestamp: Attributes.DateTime({
+    //   queryable: true,
+    //   jsonKey: 'lmrt',
+    //   modelKey: 'lastMessageReceivedTimestamp',
+    //   modelTable: 'ThreadCategory',
+    //   loadFromColumn: true
+    // }),
+    //
+    // lastMessageSentTimestamp: Attributes.DateTime({
+    //   queryable: true,
+    //   jsonKey: 'lmst',
+    //   modelKey: 'lastMessageSentTimestamp',
+    //   modelTable: 'ThreadCategory',
+    //   loadFromColumn: true
+    // }),
     lastMessageTimestamp: Attributes.DateTime({
       queryable: true,
-      jsonKey: 'lmt',
-      modelKey: 'lastMessageTimestamp',
-      loadFromColumn: true
+      jsModelKey: 'lastMessageTimestamp',
+      jsonKey: 'lastDate',
+      modelKey: 'lastDate',
+      loadFromColumn: true,
+      modelTable: 'ThreadCategory',
     }),
 
     inAllMail: Attributes.Boolean({
-      queryable: true,
       modelKey: 'inAllMail',
+      queryable: true,
+      loadFromColumn: true,
     }),
     state: Attributes.Number({
       modelKey: 'state',
       queryable: true,
+      loadFromColumn: true,
     }),
     hasCalendar: Attributes.Number({
       modelKey: 'hasCalendar',
-      jsonKey: 'hasCalendar',
       queryable: true,
-      loadFromColumn: true
+      loadFromColumn: true,
     }),
   });
 
   static sortOrderAttribute = () => {
-    return Thread.attributes.lastMessageReceivedTimestamp;
+    return Thread.attributes.lastMessageTimestamp;
   };
 
   static naturalSortOrder = () => {
@@ -161,7 +191,7 @@ export default class Thread extends ModelWithMetadata {
 
   async messages({ includeHidden } = {}) {
     const messages = await DatabaseStore.findAll(Message)
-      .where({ threadId: this.id }).where([Message.attributes.state.in([Message.messageState.saving, Message.messageState.normal])]);
+      .where({ threadId: this.id, deleted: false }).where([Message.attributes.syncState.in([Message.messageSyncState.saving, Message.messageSyncState.normal])]);
 
     if (!includeHidden) {
       return messages.filter(message => !message.isHidden());
@@ -170,11 +200,26 @@ export default class Thread extends ModelWithMetadata {
   }
 
   get categories() {
-    return [].concat(this.folders || [], this.labels || []);
+    return [].concat(this.labels || []);
   }
 
   set categories(c) {
     // noop
+  }
+
+  get attachmentCount(){
+    return (this.files || []).length;
+  }
+  get labels(){
+    return this.labelIds.map(labelId => {
+      if(typeof labelId === 'string'){
+        return CategoryStore.byFolderId(labelId);
+      }
+    })
+  }
+
+  get folders(){
+    return this.labels;
   }
 
   /**

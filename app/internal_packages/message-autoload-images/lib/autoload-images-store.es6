@@ -29,12 +29,12 @@ class AutoloadImagesStore extends MailspringStore {
   }
 
   shouldBlockImagesIn = message => {
-    const spamFolderId = (CategoryStore.getSpamCategory(message.accountId) || {}).id;
-    // draft has no folder info
-    if (!message.folder) {
-      return false;
-    }
-    if (AppEnv.config.get('core.reading.autoloadImages') && message.folder && message.folder.id !== spamFolderId) {
+    // const spamFolderId = (CategoryStore.getSpamCategory(message.accountId) || {}).id;
+    // // draft has no folder info
+    // if (!message.folder) {
+    //   return false;
+    // }
+    if (AppEnv.config.get('core.reading.autoloadImages') && message.isInSpam()) {
       return false;
     }
     if (this._whitelistEmails[Utils.toEquivalentEmailForm(message.fromContact().email)]) {

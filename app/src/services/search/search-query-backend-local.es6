@@ -245,7 +245,7 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
     this._result = `(\`${
       this._className
-      }\`.\`id\` IN (SELECT \`content_id\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
+      }\`.\`pid\` IN (SELECT \`content_id\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
   }
 }
 

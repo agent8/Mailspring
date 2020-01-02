@@ -191,11 +191,11 @@ class MailRulesStore extends MailspringStore {
     // running mail rules can move things out of the inbox!
     const query = DatabaseStore.findAll(Thread, { accountId })
       .where(Thread.attributes.categories.contains(inboxCategoryId))
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
+      .order(Thread.attributes.lastMessageTimestamp.descending())
       .limit(50);
 
     if (lastTimestamp !== null) {
-      query.where(Thread.attributes.lastMessageReceivedTimestamp.lessThan(lastTimestamp));
+      query.where(Thread.attributes.lastMessageTimestamp.lessThan(lastTimestamp));
     }
 
     query.then(threads => {
@@ -219,7 +219,7 @@ class MailRulesStore extends MailspringStore {
           if (this._reprocessing[accountId]) {
             this._reprocessing[accountId] = Object.assign({}, this._reprocessing[accountId], {
               count: this._reprocessing[accountId].count + messages.length,
-              lastTimestamp: threads.pop().lastMessageReceivedTimestamp,
+              lastTimestamp: threads.pop().lastMessageTimestamp,
             });
             this.trigger();
             setTimeout(() => {

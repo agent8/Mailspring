@@ -131,7 +131,7 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
       if (isItemsThread) {
         if (item.__messages) {
           item.__messages.forEach(message => {
-            if (message.snippet.length === 0) {
+            if (!message.snippet || message.snippet.length === 0) {
               missingBodyMessages.push(message);
             }
           });
@@ -139,7 +139,7 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
           console.warn('thread missing __messages, bodies not pre fetched');
         }
       } else {
-        if (item.snippet.length === 0) {
+        if (!item.snippet || item.snippet.length === 0) {
           missingBodyMessages.push(item);
         }
       }

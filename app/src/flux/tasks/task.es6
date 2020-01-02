@@ -6,40 +6,52 @@ import { generateTempId } from '../models/utils';
 import { PermanentErrorCodes } from '../mailspring-api-request';
 
 const Status = {
-  Local: 'local',
-  Remote: 'remote',
-  Complete: 'complete',
-  Cancelled: 'cancelled',
+  Local: 0,
+  Remote: 1,
+  Complete: 2,
+  Cancelled: 3,
 };
 
 export default class Task extends Model {
   static Status = Status;
   static SubclassesUseModelTable = Task;
+  static mappingFunc={
+
+  };
 
   static attributes = Object.assign({}, Model.attributes, {
-    version: Attributes.String({
-      queryable: true,
-      jsonKey: 'v',
-      modelKey: 'version',
-    }),
-    status: Attributes.String({
-      queryable: true,
-      modelKey: 'status',
+    // version: Attributes.String({
+    //   queryable: false,
+    //   jsonKey: 'v',
+    //   modelKey: 'version',
+    // }),
+    status: Attributes.Number({
+      modelKey: 'state',
     }),
     source: Attributes.String({
       modelKey: 'source',
+      queryable: false,
+      loadFromColumn: false,
     }),
     error: Attributes.Object({
       modelKey: 'error',
+      queryable: false,
+      loadFromColumn: false,
     }),
     needToBroadcastBeforeSendTask: Attributes.Object({
       modelKey: 'needToBroadcastBeforeSendTask',
+      queryable: false,
+      loadFromColumn: false,
     }),
     lingerAfterTimeout: Attributes.Boolean({
       modelKey: 'lingerAfterTimeout',
+      queryable: false,
+      loadFromColumn: false,
     }),
     priority: Attributes.Number({
       modelKey: 'priority',
+      queryable: false,
+      loadFromColumn: false,
     }),
     createdAt: Attributes.DateTime({
       modelKey: 'createdAt',
@@ -48,6 +60,8 @@ export default class Task extends Model {
     }),
     undoDelay: Attributes.Number({
       modelKey: 'undoDelay',
+      queryable: false,
+      loadFromColumn: false,
     })
   });
 

@@ -10,11 +10,8 @@ String attributes can be queries using `equal`, `not`, and `startsWith`. Matchin
 Section: Database
 */
 export default class AttributeString extends Attribute {
-  toJSON(val) {
-    return val;
-  }
-
   fromJSON(val) {
+    val = super.fromJSON(val);
     return val === null || val === undefined || val === false ? null : `${val}`;
   }
 

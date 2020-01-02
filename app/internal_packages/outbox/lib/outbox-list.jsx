@@ -106,11 +106,11 @@ class OutboxList extends React.Component {
   }
 
   _itemCheckProvider = (draft, onClick) => {
-    if (Message.compareMessageState(draft.state, Message.messageState.failing)) {
+    if (Message.compareMessageState(draft.state, Message.messageSyncState.failing)) {
       return null;
     }
     const toggle = event => {
-      if (draft.state !== parseInt(Message.messageState.failing)) {
+      if (draft.state !== parseInt(Message.messageSyncState.failing)) {
         onClick(event);
       }
       event.stopPropagation();
@@ -124,7 +124,7 @@ class OutboxList extends React.Component {
 
   _itemPropsProvider = draft => {
     const props = {};
-    if (draft.state === parseInt(Message.messageState.failing)) {
+    if (draft.state === parseInt(Message.messageSyncState.failing)) {
       props.className = 'sending';
     }
     return props;

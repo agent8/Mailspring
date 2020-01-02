@@ -8,10 +8,16 @@ Section: Database
 */
 export default class AttributeNumber extends Attribute {
   toJSON(val) {
+    if(this.toJSONMapping){
+      return this.toJSONMapping(val);
+    }
     return val;
   }
 
   fromJSON(val) {
+    if(this.fromJSONMapping){
+      return this.fromJSONMapping(val);
+    }
     return isNaN(val) ? null : Number(val);
   }
 

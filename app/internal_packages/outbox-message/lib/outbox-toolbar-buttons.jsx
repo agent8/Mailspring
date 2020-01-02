@@ -29,7 +29,7 @@ export class ResendButton extends React.Component {
 
   render() {
     const draft = OutboxStore.selectedDraft();
-    if (draft && Message.compareMessageState(draft.state, Message.messageState.failed)) {
+    if (draft && Message.compareMessageState(draft.state, Message.messageSyncState.failed)) {
       return <button tabIndex={-1} className="btn btn-toolbar" title="Resend" onClick={this._onResend}>
         <RetinaImg name={'refresh.svg'}
                    style={{ width: 24, height: 24 }}
@@ -64,7 +64,7 @@ export class TrashButton extends React.Component {
 
   render() {
     const draft = OutboxStore.selectedDraft();
-    if (draft && Message.compareMessageState(draft.state, Message.messageState.failed)) {
+    if (draft && Message.compareMessageState(draft.state, Message.messageSyncState.failed)) {
       return <button
         tabIndex={-1}
         className="btn btn-toolbar"
@@ -94,7 +94,7 @@ export class EditButton extends React.Component {
 
   render() {
     const draft = OutboxStore.selectedDraft();
-    if (draft && Message.compareMessageState(draft.state, Message.messageState.failed)) {
+    if (draft && Message.compareMessageState(draft.state, Message.messageSyncState.failed)) {
       return <button tabIndex={-1} className="btn btn-toolbar" title="Edit" onClick={this._onEditOutboxDraft}>
         <RetinaImg name={'pencil.svg'}
                    style={{ width: 24, height: 24 }}

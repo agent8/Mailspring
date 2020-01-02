@@ -9,6 +9,7 @@ import AttributeCollection from './attributes/attribute-collection';
 import AttributeJoinedData from './attributes/attribute-joined-data';
 import AttributeCrossDBString from './attributes/attribute-cross-db-string';
 import AttributeCrossDBNumber from './attributes/attribute-cross-db-number';
+import AttributeIgnore from './attributes/attribute-null';
 
 export default {
   Matcher: Matcher,
@@ -23,6 +24,7 @@ export default {
   JoinedData: (...args) => new AttributeJoinedData(...args),
   CrossDBString: (...args) => new AttributeCrossDBString(...args),
   CrossDBNumber: (...args) => new AttributeCrossDBNumber(...args),
+  Ignore: (...args) => new AttributeIgnore(...args),
 
   AttributeNumber: AttributeNumber,
   AttributeString: AttributeString,
@@ -31,4 +33,5 @@ export default {
   AttributeDateTime: AttributeDateTime,
   AttributeCollection: AttributeCollection,
   AttributeJoinedData: AttributeJoinedData,
+  AttributeIgnore: AttributeIgnore
 };

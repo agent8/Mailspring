@@ -94,7 +94,7 @@ TestModel.configureWithCollectionAttribute = () =>
       queryable: true,
       modelKey: 'categories',
       itemClass: Category,
-      joinOnField: 'id',
+      joinTableOnField: 'id',
       joinQueryableBy: ['other'],
     }),
   });

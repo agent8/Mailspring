@@ -35,7 +35,7 @@ export default class SendRemindersPopoverButton extends Component {
             expiration,
             shouldNotify: false,
             sentHeaderMessageId: lastSent ? lastSent.headerMessageId : null,
-            lastReplyTimestamp: new Date(thread.lastMessageReceivedTimestamp).getTime() / 1000,
+            lastReplyTimestamp: new Date(thread.lastMessageTimestamp).getTime() / 1000,
           }
         : {};
 
