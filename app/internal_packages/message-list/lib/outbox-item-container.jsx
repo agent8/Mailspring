@@ -24,7 +24,7 @@ export default class OutboxItemContainer extends React.Component {
 
   _classNames() {
     return classNames({
-      sending: Message.compareMessageState(this.props.message.state, Message.messageState.failing),
+      sending: Message.compareMessageState(this.props.message.state, Message.messageSyncState.failing),
       'message-item-wrap': true,
       'before-reply-area': true,
     });

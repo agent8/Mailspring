@@ -100,8 +100,9 @@ export default class EmailFrame extends React.Component {
     if (!doc) {
       return;
     }
-    const { isPlainText = 0 } = this.props.message;
-    const isPlainBody = isPlainText === 1;
+    // const { isPlainText = 0 } = this.props.message;
+    // All email body from native is in html format now.
+    const isPlainBody = false;
     // const isPlainBody = body && body.trim().replace(/(\r\n|\r|\n)/g, ' ').substr(0, 20) == snippet.trim().substr(0, 20);
     doc.open();
 
@@ -116,15 +117,15 @@ export default class EmailFrame extends React.Component {
       doc.write(`<style>${styles}</style>`);
     }
     doc.write(`<style> body {display: block!important; visibility: visible!important;} </style>`);
-    if (isPlainBody) {
-      doc.write(`
-      <style>
-        #inbox-html-wrapper {
-          white-space: pre-wrap;
-        }
-      </style>
-      `);
-    }
+    // if (isPlainBody) {
+    //   doc.write(`
+    //   <style>
+    //     #inbox-html-wrapper {
+    //       white-space: pre-wrap;
+    //     }
+    //   </style>
+    //   `);
+    // }
     doc.write(
       `<div id='inbox-html-wrapper' class="${process.platform} ${
         this.props.viewOriginalEmail ? 'original' : ''

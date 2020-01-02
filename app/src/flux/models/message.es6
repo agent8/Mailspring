@@ -11,6 +11,7 @@ import Attributes from '../attributes';
 import ModelWithMetadata from './model-with-metadata';
 import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
+import CategoryStore from '../stores/category-store';
 let AttachmentStore = null;
 
 /*
@@ -67,6 +68,24 @@ This class also inherits attributes from {Model}
 Section: Models
 */
 export default class Message extends ModelWithMetadata {
+  static fieldsNotInDB=[
+    'calendarReply',
+    'listUnsubscribe',
+    'pristine',
+    'replyToHeaderMessageId',
+    'forwardedHeaderMessageId',
+    'refOldDraftHeaderMessageId',
+    'savedOnRemote',
+    'hasRefOldDraftOnRemote',
+    'folder',
+    'replyOrForward',
+    'msgOrigin',
+    'hasNewID',
+    'noSave',
+    'waitingForBody',
+    'calCurStat',
+    'calTarStat',
+  ];
   static NewDraft = 1;
   static EditExistingDraft = 2;
   static ReplyDraft = 3;
@@ -77,9 +96,8 @@ export default class Message extends ModelWithMetadata {
     reply: 1,
     forward: 2,
   };
-  static messageState = {
+  static messageSyncState = {
     normal: '0',
-    deleted: '1',
     saving: '2',
     sending: '3',
     updatingNoUID: '4', // Updating data from server
@@ -105,14 +123,6 @@ export default class Message extends ModelWithMetadata {
     }
   }
   static attributes = Object.assign({}, ModelWithMetadata.attributes, {
-    // load id column into json
-    id: Attributes.String({
-      queryable: true,
-      jsonKey: 'id',
-      modelKey: 'id',
-      loadFromColumn: true,
-    }),
-
     to: Attributes.Collection({
       modelKey: 'to',
       jsonKey: 'to',
@@ -147,28 +157,48 @@ export default class Message extends ModelWithMetadata {
 
     replyTo: Attributes.Collection({
       modelKey: 'replyTo',
+      queryable: false,
       itemClass: Contact,
+    }),
+    data: Attributes.Object({
+      modelKey: 'data',
+      queryable: true,
+      loadFromColumn: true,
+      mergeIntoModel: true
+    }),
+    msgData: Attributes.Object({
+      modelKey: 'msgData',
+      queryable: true,
+      loadFromColumn: true,
+      mergeIntoModel: true
     }),
 
     date: Attributes.DateTime({
       queryable: true,
+      loadFromColumn: true,
       modelKey: 'date',
     }),
 
     body: Attributes.CrossDBString({
       itemClass: MessageBody,
-      joinModelKey: 'id',
-      joinTableKey: 'id',
-      joinTableColumn: 'value',
+      joinModelJsonKey: 'id',
+      joinModelKey: 'pid',
+      joinTableKey: 'pid',
+      joinTableColumn: 'htmlBody',
       modelKey: 'body',
     }),
 
-    isPlainText: Attributes.CrossDBNumber({
-      itemClass: MessageBody,
-      modelKey: 'isPlainText',
-      joinTableColumn: 'type',
+    // All message body from native is in html format
+    // isPlainText: Attributes.CrossDBNumber({
+    //   itemClass: MessageBody,
+    //   modelKey: 'isPlainText',
+    //   joinTableColumn: 'type',
+    // }),
+    labelIds: Attributes.Collection({
+      modelKey: 'labelIds',
+      queryable: true,
+      loadFromColumn: true,
     }),
-
     files: Attributes.Collection({
       modelKey: 'files',
       itemClass: File,
@@ -176,48 +206,59 @@ export default class Message extends ModelWithMetadata {
 
     unread: Attributes.Boolean({
       queryable: true,
+      loadFromColumn: true,
       modelKey: 'unread',
     }),
 
-    events: Attributes.Collection({
-      modelKey: 'events',
-      itemClass: Event,
-    }),
+    // events: Attributes.Collection({
+    //   modelKey: 'events',
+    //   itemClass: Event,
+    // }),
 
     starred: Attributes.Boolean({
       queryable: true,
       modelKey: 'starred',
+      loadFromColumn: true,
     }),
 
     snippet: Attributes.String({
       modelKey: 'snippet',
+      queryable: true,
+      loadFromColumn: true,
     }),
 
     threadId: Attributes.String({
       queryable: true,
+      loadFromColumn: true,
       modelKey: 'threadId',
     }),
 
     headerMessageId: Attributes.String({
       queryable: true,
-      modelKey: 'headerMessageId',
+      loadFromColumn: true,
+      modelKey: 'headerMsgId',
     }),
 
     subject: Attributes.String({
       modelKey: 'subject',
+      queryable: true,
+      loadFromColumn: true,
     }),
 
     draft: Attributes.Boolean({
-      modelKey: 'draft',
+      modelKey: 'isDraft',
       queryable: true,
+      loadFromColumn: true
     }),
 
     calendarReply: Attributes.Boolean({
       modelKey: 'calendarReply',
+      queryable: false
     }),
 
     listUnsubscribe: Attributes.String({
       modelKey: 'listUnsubscribe',
+      queryable: false
     }),
 
     pristine: Attributes.Boolean({
@@ -226,55 +267,59 @@ export default class Message extends ModelWithMetadata {
     }),
 
     version: Attributes.Number({
-      jsonKey: 'v',
       modelKey: 'version',
       queryable: true,
+      loadFromColumn: true,
     }),
 
     replyToHeaderMessageId: Attributes.String({
       modelKey: 'replyToHeaderMessageId',
+      queryable: false
     }),
 
     forwardedHeaderMessageId: Attributes.String({
       modelKey: 'forwardedHeaderMessageId',
+      queryable: false
     }),
 
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
+      queryable: false
     }),
     savedOnRemote: Attributes.Boolean({
       modelKey: 'savedOnRemote',
+      queryable: false
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
+      queryable: false
     }),
     folder: Attributes.Object({
       queryable: false,
       modelKey: 'folder',
       itemClass: Folder,
     }),
-    //DC-265 State attributes must be Number, but actual value must be string, otherwise all kinds of error
-    state: Attributes.Number({
-      modelKey: 'state',
-      jsonKey: 'state',
-      loadFromColumn: true,
-      queryable: true,
-    }),
     replyOrForward: Attributes.Number({
       modelKey: 'replyOrForward',
+      queryable: false
     }),
     msgOrigin: Attributes.Number({
       modelKey: 'msgOrigin',
-      queryable: true,
+      queryable: false,
     }),
-    remoteUID: Attributes.Number({
-      modelKey: 'remoteUID',
-    }),
+    // Use savedOnRemote instead for draft.
+    // Not checked otherwise
+    // remoteUID: Attributes.Number({
+    //   modelKey: 'remoteUID',
+    //   queryable: false,
+    // }),
     hasNewID: Attributes.Boolean({
       modelKey: 'hasNewID',
+      queryable: false,
     }),
     noSave: Attributes.Boolean({
       noSave: 'noSave',
+      queryable: false,
     }),
     waitingForBody: Attributes.Boolean({
       modelKey: 'waitingForBody',
@@ -282,9 +327,11 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
+      queryable: false
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
+      queryable: false
     }),
     hasCalendar: Attributes.Boolean({
       modelKey: 'hasCalendar',
@@ -294,14 +341,21 @@ export default class Message extends ModelWithMetadata {
     siftCategory: Attributes.Collection({
       queryable: true,
       modelKey: 'siftCategory',
-      joinOnField: 'msgId',
+      joinTableOnField: 'msgId',
       joinTableName: 'SiftData',
+      joinTableColumn: 'category',
       joinOnWhere: { state: 0 },
       itemClass: Sift,
     }),
-    lastSync: Attributes.Number({
-      modelKey: 'lastSync',
-      queryable: false
+    deleted: Attributes.Boolean({
+      modelKey: 'deleted',
+      loadFromColumn: true,
+      queryable: true,
+    }),
+    syncState: Attributes.Number({
+      modelKey: 'syncState',
+      loadFromColumn: true,
+      queryable: true,
     })
   });
 
@@ -459,6 +513,14 @@ export default class Message extends ModelWithMetadata {
     return this.files.map(file => file.id);
   }
 
+  get labels(){
+    return this.labelIds.map(labelId => {
+      if(typeof labelId === 'string'){
+        return CategoryStore.byFolderId(labelId);
+      }
+    })
+  }
+
   missingAttachments() {
     AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
     return new Promise(resolve => {
@@ -584,10 +646,16 @@ export default class Message extends ModelWithMetadata {
   }
 
   isInTrash() {
-    if (!this.folder || !this.folder.role) {
+    if (!this.labels) {
       return false;
     }
-    return this.folder.role.toLowerCase().includes('trash');
+    return this.labels.some(folder => folder.role.toLowerCase().includes('trash'));
+  }
+  isInSpam(){
+    if (!this.labels) {
+      return false;
+    }
+    return this.labels.some(folder => folder.role.toLowerCase().includes('spam'));
   }
 
   fromContact() {
@@ -618,15 +686,14 @@ export default class Message extends ModelWithMetadata {
   isActiveDraft() { }
 
   isDeleted() {
-    //DC-269
-    return this.state == Message.messageState.deleted; // eslint-ignore-line
+    return this.deleted;
   }
   isDraftSending() {
-    return this.draft && Message.compareMessageState(this.state === Message.messageState.sending);
+    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState === Message.messageSyncState.sending);
   }
 
   isDraftSaving() {
-    return Message.compareMessageState(this.state == Message.messageState.saving) && this.draft; // eslint-ignore-line
+    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState == Message.messageSyncState.saving); // eslint-ignore-line
   }
   isCalendarReply() {
     return this.calendarReply;
@@ -638,7 +705,7 @@ export default class Message extends ModelWithMetadata {
       this.from.length === 1 &&
       this.to[0].email === this.from[0].email &&
       (this.from[0].name || '').endsWith('via Mailspring');
-    const isDraftBeingDeleted = this.id.startsWith('deleted-') || this.isDeleted();
+    const isDraftBeingDeleted = this.id.startsWith('deleted-');
 
     return isReminder || isDraftBeingDeleted || this.isCalendarReply();
   }

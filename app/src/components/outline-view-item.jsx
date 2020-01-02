@@ -138,7 +138,6 @@ class OutlineViewItem extends Component {
       onEdited: PropTypes.func,
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
-      className: PropTypes.string,
     }).isRequired,
   };
 

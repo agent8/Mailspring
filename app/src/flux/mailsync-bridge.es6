@@ -637,7 +637,7 @@ export default class MailsyncBridge {
 
     task.willBeQueued();
 
-    task.status = 'local';
+    task.status = Task.Status.Local;
     task.origin = new Error().stack
       .split('\n')
       .slice(2)
@@ -774,11 +774,11 @@ export default class MailsyncBridge {
     // Note: cannot use `record.objectClass` because of subclass names
     if (record.type === 'persist' && record.objects[0] instanceof Task) {
       for (const task of record.objects) {
-        if (task.error != null && task.status !== 'remote') {
+        if (task.error != null && task.status !== Task.Status.Remote) {
           task.onError(task.error);
           this._recordErrorToConsole(task);
         }
-        if (task.status !== 'complete') {
+        if (task.status !== Task.Status.Complete) {
           continue;
         }
         if (task.error != null) {

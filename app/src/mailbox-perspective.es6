@@ -544,7 +544,7 @@ class SiftMailboxPerspective extends MailboxPerspective {
     const siftCategory = Sift.categoryStringToIntString(this.siftCategory);
     const query = DatabaseStore.findAll(Message)
       .where([Message.attributes.siftCategory.containsAnyAtColumn('category', [siftCategory])])
-      .where({ state: 0, draft: false })
+      .where({ deleted: false, draft: false })
       .order([Message.attributes.date.descending()])
       .page(0, 1).distinct();
     return new MutableQuerySubscription(query, { emitResultSet: true });
@@ -690,7 +690,7 @@ class EmptyMailboxPerspective extends MailboxPerspective {
     // index so this returns zero items nearly instantly. In the future, we might
     // want to make a Query.forNothing() to go along with MailboxPerspective.forNothing()
     const query = DatabaseStore.findAll(Thread)
-      .where({ lastMessageReceivedTimestamp: -1 })
+      .where({ lastMessageTimestamp: -1 })
       .limit(0);
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
@@ -715,7 +715,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     if (this._categories[0].role) {
       this.iconName = `${this._categories[0].role}.svg`;
     } else {
-      this.iconName = this._categories[0] instanceof Label ? 'label.svg' : 'folder.svg';
+      this.iconName = this._categories[0].isLabel() ? 'label.svg' : 'folder.svg';
       if (this.iconName === 'label.svg') {
         const bgColor = LabelColorizer.backgroundColor(this._categories[0]);
         this.bgColor = bgColor;
@@ -749,7 +749,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       .limit(0);
 
     if (this.isSent()) {
-      query.order(Thread.attributes.lastMessageSentTimestamp.descending());
+      query.order(Thread.attributes.lastMessageTimestamp.descending());
     }
 
     if (!['spam', 'trash', 'inbox'].includes(this.categoriesSharedRole())) {
@@ -830,7 +830,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       return [];
     }
     const previousFolder = TaskFactory.findPreviousFolder(current, accountId);
-    if (myCat.role === 'all' && currentCat && currentCat instanceof Label) {
+    if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
       // dragging from a label into All Mail? Make this an "archive" by removing the
       // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
       return [
@@ -843,7 +843,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         }),
       ];
     }
-    if (myCat instanceof Folder) {
+    if (myCat.isFolder()) {
       // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
       return [
         new ChangeFolderTask({
@@ -855,7 +855,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       ];
     }
 
-    if (myCat instanceof Label && currentCat && currentCat instanceof Folder) {
+    if (myCat.isLabel() && currentCat && currentCat.isFolder()) {
       // dragging from trash or spam into a label? We need to both apply the label and
       // move to the "All Mail" folder.
       if (currentCat.role === 'all') {
@@ -930,7 +930,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       const cat = this.categories().find(c => c.accountId === accountId);
       const currentPerspective = FocusedPerspectiveStore.current();
       const previousFolder = TaskFactory.findPreviousFolder(currentPerspective, accountId);
-      if (cat instanceof Label && preferred && preferred.role !== 'trash') {
+      if (cat.isLabel() && preferred && preferred.role !== 'trash') {
         const inboxCat = CategoryStore.getInboxCategory(accountId);
         return new ChangeLabelsTask({
           threads: accountThreads,

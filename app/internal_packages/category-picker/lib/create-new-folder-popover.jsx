@@ -127,7 +127,7 @@ export default class CreateNewFolderPopover extends Component {
 
   _onMoveToCategory = ({ category }) => {
     const { threads } = this.props;
-    if (category instanceof Folder) {
+    if (category.isFolder()) {
       Actions.queueTasks(
         TaskFactory.tasksForChangeFolder({
           source: 'Category Picker: New Category',

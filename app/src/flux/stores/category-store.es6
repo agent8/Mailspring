@@ -1,11 +1,12 @@
 import _ from 'underscore';
-import { Categories } from 'mailspring-observables';
+let Categories = require('../../global/mailspring-observables').Categories;
 import MailspringStore from 'mailspring-store';
+import DatabaseStore from './database-store';
 import AccountStore from './account-store';
 import Account from '../models/account';
 import Category from '../models/category';
 import Actions from '../actions';
-
+import FolderState from '../models/folder-state';
 const asAccount = a => {
   if (!a) {
     throw new Error('You must pass an Account or Account Id');
@@ -36,14 +37,41 @@ class CategoryStore extends MailspringStore {
         this._onCategoriesChanged(this._categoryResult);
       }
     });
-
-    Categories.forAllAccounts()
-      .sort()
-      .subscribe(this._onCategoriesChanged);
+    // If the computer is slow enough, we could be getting undefined for Categories exports
+    // Thus we wait for 300ms and try again.
+    if(Categories){
+      Categories.forAllAccounts()
+        .sort()
+        .subscribe(this._onCategoriesChanged);
+    }else {
+      console.log(`Categories still not loaded yet, wait until next cycle to attach listener`);
+      setTimeout(()=>{
+        Categories = require('../../global/mailspring-observables').Categories;
+        if(Categories){
+          console.log('adding Categories listener');
+          Categories.forAllAccounts()
+            .sort()
+            .subscribe(this._onCategoriesChanged);
+        }else {
+          console.log(`Error: categories still not loaded Categories ${Categories}`);
+        }
+      }, 300)
+    }
     Actions.syncFolders.listen(this._onSyncCategory, this);
+    this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
   decodePath(pathString) {
     return Category.pathToDisplayName(pathString);
+  }
+  byFolderId(categoryId){
+    const accountIds = Object.keys(this._categoryCache);
+    for(let accountId of accountIds){
+      const category = this.byId(accountId, categoryId);
+      if(category){
+        return category;
+      }
+    }
+    return null;
   }
 
   byId(accountOrId, categoryId) {
@@ -187,6 +215,22 @@ class CategoryStore extends MailspringStore {
     }
     return this._categorySyncState[categoryId].syncing;
   };
+  _onFolderStateChange = ({ objectClass, objects }) => {
+    if (objectClass !== FolderState.name) {
+      return;
+    }
+    let updated = false;
+    objects.forEach(folderState => {
+      const folder = this.byId(folderState.accountId, folderState.id);
+      if (folder) {
+        updated = true;
+        folder.updatedAt = folderState.lastSynced;
+      }
+    });
+    if (updated) {
+      this.trigger();
+    }
+  };
 
   _onSyncCategory = data => {
     if (!Array.isArray(data.foldersIds)) {
@@ -210,6 +254,7 @@ class CategoryStore extends MailspringStore {
   };
 
   _onCategoriesChanged = categories => {
+    console.log('On Categories change');
     this._categoryResult = categories;
     const categoryCache = {};
     for (const cat of categories) {

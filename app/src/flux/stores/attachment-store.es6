@@ -240,7 +240,7 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.addAttachments, this._onAddAttachments);
     this.listenTo(Actions.selectAttachment, this._onSelectAttachment);
     this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
-
+    this._attachementCache = Utils.createCircularBuffer(200);
     this._filePreviewPaths = {};
     this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
     this._fileProcess = new Map();
@@ -252,6 +252,16 @@ class AttachmentStore extends MailspringStore {
         this._onPresentChange(change.objects);
       }
     });
+  }
+  findAll(){
+    return DatabaseStore.findAll(File);
+  }
+  findAllByFileIds(fileIds){
+    return this.findAll().where([File.attributes.id.in(fileIds)]);
+  }
+
+  getAttachment(fileItem){
+
   }
 
   // Returns a path on disk for saving the file. Note that we must account

@@ -186,7 +186,7 @@ class Matcher {
             andSql = ` AND ( ${wheres.join(' AND ')} ) `;
           }
         }
-        return `INNER JOIN \`${joinTable}\` AS \`${joinTableRef}\` ON \`${joinTableRef}\`.\`${this.attr.joinOnField}\` = \`${klass.name}\`.\`id\`${andSql}`;
+        return `INNER JOIN \`${joinTable}\` AS \`${joinTableRef}\` ON \`${joinTableRef}\`.\`${this.attr.joinTableOnField}\` = \`${klass.name}\`.\`${this.attr.joinModelOnField}\`${andSql}`;
       }
       default:
         return false;
@@ -291,11 +291,11 @@ class Matcher {
         case 'startsWith':
           return ' RAISE `TODO`; ';
         case 'contains':
-          return `\`${this.joinTableRef()}\`.\`value\` = ${escaped}`;
+          return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` = ${escaped}`;
         case 'containsAny':
-          return `\`${this.joinTableRef()}\`.\`value\` IN ${escaped} ${andSql}`;
+          return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
         case 'containsAnyAtCategory':
-          return `\`${this.joinTableRef()}\`.\`category\` IN ${escaped} ${andSql}`;
+          return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
         default:
           return `\`${this.joinTableRef()}\`.\`${this.attr.tableColumn}\` ${this.comparator} ${escaped}`;
       }
@@ -316,11 +316,11 @@ class Matcher {
       case 'startsWith':
         return ' RAISE `TODO`; ';
       case 'contains':
-        return `\`${this.joinTableRef()}\`.\`value\` = ${escaped}`;
+        return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` = ${escaped}`;
       case 'containsAny':
-        return `\`${this.joinTableRef()}\`.\`value\` IN ${escaped} ${andSql}`;
+        return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
       case 'containsAnyAtCategory':
-        return `\`${this.joinTableRef()}\`.\`category\` IN ${escaped} ${andSql}`;
+        return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
       default:
         return `\`${klass.name}\`.\`${this.attr.tableColumn}\` ${this.comparator} ${escaped}`;
     }
@@ -512,7 +512,7 @@ class SearchMatcher extends Matcher {
     const searchTable = `${klass.name}Search`;
     return `\`${
       klass.name
-      }\`.\`id\` IN (SELECT \`content_id\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '"${
+      }\`.\`pid\` IN (SELECT \`threadId\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '"${
       this.searchQuery
       }"*' LIMIT 1000)`;
   }

@@ -25,7 +25,8 @@ class MessageStore extends MailspringStore {
 
   findAll() {
     return DatabaseStore.findAll(Message)
-      .where([Message.attributes.state.in([Message.messageState.normal, Message.messageState.saving, Message.messageState.sending, Message.messageState.updatingHasUID, Message.messageState.updatingNoUID, Message.messageState.failing])]);
+      .where({deleted: false})
+      .where([Message.attributes.syncState.in([Message.messageSyncState.normal, Message.messageSyncState.saving, Message.messageSyncState.sending, Message.messageSyncState.updatingHasUID, Message.messageSyncState.updatingNoUID, Message.messageSyncState.failing])]);
   }
 
   findAllInDescendingOrder() {
@@ -49,7 +50,7 @@ class MessageStore extends MailspringStore {
   }
 
   findByThreadId({ threadId }) {
-    return DatabaseStore.findBy(Message, { threadId }).where([Message.attributes.state.in([Message.messageState.normal, Message.messageState.saving, Message.messageState.sending, Message.messageState.updatingHasUID, Message.messageState.updatingNoUID, Message.messageState.failing])]);
+    return DatabaseStore.findBy(Message, { threadId, deleted: false }).where([Message.attributes.syncState.in([Message.messageSyncState.normal, Message.messageSyncState.saving, Message.messageSyncState.sending, Message.messageSyncState.updatingHasUID, Message.messageSyncState.updatingNoUID, Message.messageSyncState.failing])]);
   }
 
   findByThreadIdAndAccountId({ threadId, accountId }) {
@@ -65,7 +66,7 @@ class MessageStore extends MailspringStore {
   }
 
   findByMessageId({ messageId }) {
-    return DatabaseStore.find(Message, messageId).where([Message.attributes.state.in([Message.messageState.normal, Message.messageState.saving, Message.messageState.sending, Message.messageState.updatingHasUID, Message.messageState.updatingNoUID, Message.messageState.failing])]);
+    return DatabaseStore.find(Message, messageId).where([Message.attributes.syncState.in([Message.messageSyncState.normal, Message.messageSyncState.saving, Message.messageSyncState.sending, Message.messageSyncState.updatingHasUID, Message.messageSyncState.updatingNoUID, Message.messageSyncState.failing])]);
   }
 
   findByMessageIdWithBody({ messageId }) {
@@ -81,7 +82,7 @@ class MessageStore extends MailspringStore {
     const viewingHiddenCategory = FolderNamesHiddenByDefault.includes(viewing);
 
     return this._items.filter(item => {
-      const inHidden = FolderNamesHiddenByDefault.includes(item.folder.role) || item.isHidden();
+      const inHidden = item.labels.some(label => FolderNamesHiddenByDefault.includes(label.role)) || item.isHidden();
       return viewingHiddenCategory ? inHidden || item.draft : !inHidden;
     });
   }
@@ -275,7 +276,7 @@ class MessageStore extends MailspringStore {
         const item = change.objects[0];
         const itemIndex = this._items.findIndex(msg => msg.id === item.id);
 
-        if (change.type === 'persist' && itemIndex === -1 && !Message.compareMessageState(item.state, Message.messageState.failed)) {
+        if (change.type === 'persist' && itemIndex === -1 && !Message.compareMessageState(item.state, Message.messageSyncState.failed)) {
           this._items = [].concat(this._items, [item]).filter(m => !m.isHidden()).filter(this.filterOutDuplicateDraftHeaderMessage);
           this._items = this._sortItemsForDisplay(this._items);
           this._expandItemsToDefault();

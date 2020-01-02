@@ -50,7 +50,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     dbQuery = dbQuery
       .background()
       .where({state: 0})
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending())
+      .order(Thread.attributes.lastMessageTimestamp.descending())
       .limit(1000);
     this._performRemoteSearch({accountIds: this._accountIds, parsedQuery, searchQuery: this._searchQuery});
     this.replaceQuery(dbQuery);
@@ -99,7 +99,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     }
     const dbQuery = DatabaseStore.findAll(Thread)
       .where({ id: searchIds, state: 0 })
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+      .order(Thread.attributes.lastMessageTimestamp.descending());
     this.replaceQuery(dbQuery);
   }
 

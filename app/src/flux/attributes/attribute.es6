@@ -10,8 +10,9 @@ The Attribute class also exposes convenience methods for generating {Matcher} ob
 Section: Database
 */
 export default class Attribute {
-  constructor({ modelKey, queryable, jsonKey, loadFromColumn, isJoinTable = false, modelTable }) {
+  constructor({mergeIntoModel = false, isPseudoPrimary = false, modelKey, jsModelKey = false, queryable = false, jsonKey, loadFromColumn = false, isJoinTable = false, modelTable, toJSONMapping = false, fromJSONMapping = false }) {
     this.modelKey = modelKey;
+    this.jsModelKey = jsModelKey || modelKey;
     this.tableColumn = modelKey;
     this.jsonKey = jsonKey || modelKey;
     this.queryable = queryable;
@@ -20,7 +21,16 @@ export default class Attribute {
     }
     this.loadFromColumn = loadFromColumn;
     this.isJoinTable = isJoinTable;
-    this.modelTable = modelTable
+    this.modelTable = modelTable;
+    this.toJSONMapping = toJSONMapping;
+    this.fromJSONMapping = fromJSONMapping;
+    this.isPseudoPrimary = isPseudoPrimary && queryable;
+    // Use to indicate if field must be in the select sql.
+    if(mergeIntoModel && !loadFromColumn){
+      throw new Error(`mergeIntoModel requires loadFromColumn`);
+    }
+    this.mergeIntoModel = mergeIntoModel && loadFromColumn;
+
   }
 
   _assertPresentAndQueryable(fnName, val) {
@@ -83,10 +93,16 @@ export default class Attribute {
   }
 
   toJSON(val) {
+    if (typeof this.toJSONMapping === 'function') {
+      return this.toJSONMapping(val);
+    }
     return val;
   }
 
   fromJSON(val) {
+    if (typeof this.fromJSONMapping === 'function'){
+      return this.fromJSONMapping(val);
+    }
     return val || null;
   }
 

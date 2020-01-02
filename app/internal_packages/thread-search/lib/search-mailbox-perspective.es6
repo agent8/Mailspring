@@ -50,7 +50,7 @@ class SearchMailboxPerspective extends MailboxPerspective {
       }
       const dest = account.preferredRemovalDestination();
 
-      if (dest instanceof Folder) {
+      if (dest.isFolder()) {
         return new ChangeFolderTask({
           threads: accountThreads,
           source: 'Dragged out of list',

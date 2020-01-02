@@ -150,8 +150,10 @@ class SidebarStore extends MailspringStore {
       .filter(a => !!a);
 
     if (accounts.length === 0) {
+      console.warn(`accounts is []`);
       return;
     }
+    console.log('sidebar store change');
     // const multiAccount = accounts.length > 1;
 
     this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts);

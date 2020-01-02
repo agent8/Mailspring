@@ -119,8 +119,8 @@ export default class MovePickerPopover extends Component {
   };
 
   _onCategoriesChanged = categories => {
-    this._standardFolders = categories.filter(c => c.role && c instanceof Folder);
-    this._userCategories = categories.filter(c => !c.role || !(c instanceof Folder));
+    this._standardFolders = categories.filter(c => c.isStandardCategory());
+    this._userCategories = categories.filter(c => !c.isStandardCategory());
     this.setState(this._recalculateState());
   };
 
@@ -173,7 +173,7 @@ export default class MovePickerPopover extends Component {
         cat => cat.accountId === threads[0].accountId
       );
     }
-    if (category instanceof Folder) {
+    if (category.isFolder()) {
       Actions.queueTasks(
         TaskFactory.tasksForChangeFolder({
           source: 'Category Picker: New Category',
@@ -227,7 +227,7 @@ export default class MovePickerPopover extends Component {
   };
 
   _renderCreateNewItem = ({ searchValue }) => {
-    const isFolder = CategoryStore.getInboxCategory(this.props.account) instanceof Folder;
+    const isFolder = CategoryStore.getInboxCategory(this.props.account) && CategoryStore.getInboxCategory(this.props.account).isFolder();
     let displayText = isFolder ? 'New Folder' : 'New Label';
     if (searchValue.length > 0) {
       displayText = `"${searchValue}" (create new)`;

@@ -47,7 +47,7 @@ export default class ModelWithMetadata extends Model {
     pluginMetadata: Attributes.Collection({
       queryable: true,
       itemClass: PluginMetadata,
-      joinOnField: 'pluginId',
+      joinTableOnField: 'pluginId',
       joinTableName: 'ModelPluginMetadata',
       modelKey: 'pluginMetadata',
       jsonKey: 'metadata',

@@ -103,7 +103,7 @@ export async function transferReminderMetadataFromDraftToThread({ accountId, hea
   updateReminderMetadata(thread, {
     expiration: metadata.expiration,
     sentHeaderMessageId: metadata.sentHeaderMessageId,
-    lastReplyTimestamp: new Date(thread.lastMessageReceivedTimestamp).getTime() / 1000,
+    lastReplyTimestamp: new Date(thread.lastMessageTimestamp).getTime() / 1000,
     shouldNotify: false,
   });
 }

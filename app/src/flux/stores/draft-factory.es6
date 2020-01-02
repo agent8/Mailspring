@@ -29,8 +29,8 @@ const findAccountIdFrom = (message, thread) => {
   if (!validAccountId(accountId)) {
     errorStr = 'Message doesnt have account id';
     reportBug = true;
-    if (message && message.folder && message.folder.accountId) {
-      accountId = message.folder.accountId;
+    if (message && message.labels && message.labels[0] && message.labels[0].accountId) {
+      accountId = message.labels[0].accountId;
     }
     if (!validAccountId(accountId)) {
       errorStr = errorStr + ' nor does folder/folder.accountId';
