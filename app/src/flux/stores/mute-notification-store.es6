@@ -7,7 +7,7 @@ import {
   AccountStore,
 } from 'mailspring-exports';
 import DatabaseStore from './database-store';
-import MuteNotification from '../models/mute-notifacation';
+import MuteNotification from '../models/mute-notification';
 
 class MuteNotificationStore extends MailspringStore {
   constructor() {
