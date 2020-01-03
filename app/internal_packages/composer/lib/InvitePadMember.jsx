@@ -165,7 +165,7 @@ export default class InvitePadMember extends Component {
   }
 
   _close = () => {
-    this.setState({ visible: false })
+    this.props.hideInvitePadMember()
   }
 
   onKeyUp = event => {
@@ -206,13 +206,10 @@ export default class InvitePadMember extends Component {
       </Option>
     ))
     return (
-      <div className='invite-member-popup'>
-        <div
-          className='invite-member-panel'
-          onKeyUp={this.onKeyUp}
-          onKeyDown={this.onKeyUp}
-          onKeyPress={this.onKeyUp}
-        >
+      <div className='invite-member-popup'
+        tabIndex={1}
+        onKeyUp={this.onKeyUp}>
+        <div  className='invite-member-panel'>
           <div className='to'>
             <span className='close' onClick={this.props.hideInvitePadMember}>
               <RetinaImg
