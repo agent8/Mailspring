@@ -2,7 +2,7 @@ import React from 'react';
 import WindowManager from './browser/window-manager';
 import { ipcRenderer, remote } from 'electron';
 import { CSSTransitionGroup } from 'react-transition-group';
-import { WorkspaceStore, BlockedSendersStore } from 'mailspring-exports';
+import { WorkspaceStore, BlockedSendersStore, MuteNotificationStore } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import Sheet from './sheet';
 import Toolbar from './sheet-toolbar';
@@ -68,6 +68,7 @@ export default class SheetContainer extends React.Component {
 
   _onAppActive = () => {
     BlockedSendersStore.syncBlockedSenders();
+    MuteNotificationStore.syncMuteNotifacations();
   };
 
   toggleMaximize = (e) => {
