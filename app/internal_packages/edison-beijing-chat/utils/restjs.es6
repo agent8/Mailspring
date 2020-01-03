@@ -68,13 +68,13 @@ export const unregister = (userId, password, cb) => {
   post(urlPre + 'unregisterV2', { IMAccounts: [{ userId: userId, password: password }] }, cb)
 }
 
-let accessToken
 export const getProfile = async jid => {
   const userId = jid.split('@')[0]
   if (profileCache[userId]) {
     return profileCache[userId]
   }
   const chatAccounts = AppEnv.config.get('chatAccounts') || {}
+  let accessToken
   if (Object.keys(chatAccounts).length > 0) {
     if (!accessToken) {
       let email = Object.keys(chatAccounts)[0]
