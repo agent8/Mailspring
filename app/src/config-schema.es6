@@ -542,6 +542,11 @@ export default {
             default: true,
             title: 'Show profile pictures',
           },
+          viewOriginalEmail: {
+            type: 'boolean',
+            default: false,
+            title: 'View original email',
+          },
         },
       },
       privacy: {

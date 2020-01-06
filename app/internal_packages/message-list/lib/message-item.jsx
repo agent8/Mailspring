@@ -55,7 +55,8 @@ export default class MessageItem extends React.Component {
       fromEmail,
       isBlocked: BlockedSendersStore.isBlockedByAccount(accountId, fromEmail),
       trackers: [],
-      viewOriginalEmail: false,
+      viewOriginalEmail:
+        AppEnv.isDarkTheme() && AppEnv.config.get('core.appearance.viewOriginalEmail'),
     };
     this.markAsReadTimer = null;
     this.mounted = false;
