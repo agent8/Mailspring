@@ -13,6 +13,7 @@ import {
   AppearanceProfileOptions,
   AppearancePanelOptions,
   AppearanceThemeSwitch,
+  AppearanceViewOriginalEmail,
 } from './components/preferences-appearance-components';
 import {
   CustomizeQuickActions,
@@ -301,6 +302,14 @@ const preferencesTemplateFill = {
               label: 'Theme',
               component: AppearanceThemeSwitch,
               keywords: ['Light Mode', 'Dark Mode', 'background'],
+            },
+            {
+              label: 'View original email',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.viewOriginalEmail,
+              keyPath: 'core.appearance.viewOriginalEmail',
+              component: AppearanceViewOriginalEmail,
+              keywords: [],
             },
           ],
         },

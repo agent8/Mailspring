@@ -182,12 +182,15 @@ export default class MessageControls extends React.Component {
       select: this._onPrintEmail,
     };
 
+    const showViewOriginalEmail =
+      AppEnv.isDarkTheme() && !AppEnv.config.get('core.appearance.viewOriginalEmail');
+
     if (!this.props.message.canReplyAll()) {
       const noReplyAll = [reply, forward];
       if (!this.props.message.draft) {
         noReplyAll.push(trash);
       }
-      if (AppEnv.isDarkTheme()) {
+      if (showViewOriginalEmail) {
         noReplyAll.push(viewOriginalEmail);
       }
       noReplyAll.push(printEmail);
@@ -199,7 +202,7 @@ export default class MessageControls extends React.Component {
     if (!this.props.message.draft) {
       ret.push(trash);
     }
-    if (AppEnv.isDarkTheme()) {
+    if (showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
     ret.push(printEmail);
