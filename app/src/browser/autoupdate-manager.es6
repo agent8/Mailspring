@@ -156,10 +156,8 @@ export default class AutoUpdateManager extends EventEmitter {
     const res = await axios.get(await this.getFeedUrl());
     if (res && res.data && res.data.pckVersion) {
       if (!forceCheck && res.data.pckVersion === this.config.get(SKIP_VERSION_KEY)) {
-        console.log('****skip');
         return;
       }
-      console.log('*****pckVersion', res.data.pckVersion);
       dialog.showMessageBox({
         type: 'info',
         buttons: ['Update', 'Cancel', 'Skip this version'],
@@ -168,7 +166,6 @@ export default class AutoUpdateManager extends EventEmitter {
         title: 'Update Available',
         detail: `New EdisonMail available. Version (${res.data.pckVersion}).`,
       }).then(async ({ response: choice }) => {
-        console.log('****choice', choice);
         // Update
         if (choice === 0) {
           await this.updateFeedURL();
