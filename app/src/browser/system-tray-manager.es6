@@ -189,6 +189,7 @@ class SystemTrayManager {
     if (this._unreadString !== unreadString) {
       this._unreadString = unreadString;
       if (this._tray) this._tray.setToolTip(_getTooltip(unreadString));
+      if (this._tray) this._tray.setTitle(unreadString);
     }
   }
 
@@ -221,7 +222,17 @@ class SystemTrayManager {
   };
 
   updateTrayChatUnreadCount(count) {
-    if (this._trayChat && count !== undefined) {
+    if (count !== undefined) {
+      count = this._formatCount(count);
+      this.unread = count;
+      if (this._trayChat) {
+        this._trayChat.setTitle(count);
+      }
+    }
+  }
+
+  _formatCount = count => {
+    if (count !== undefined) {
       if (count > 99) {
         count = '99+';
       } else if (count == 0) {
@@ -229,8 +240,8 @@ class SystemTrayManager {
       } else {
         count = count + '';
       }
-      this._trayChat.setTitle(count);
     }
+    return count;
   }
 
   destroyTray() {
