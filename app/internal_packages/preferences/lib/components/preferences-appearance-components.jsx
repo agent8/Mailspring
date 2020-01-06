@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
 import ModeSwitch from './mode-switch';
 import { remote } from 'electron';
+import ConfigSchemaItem from './config-schema-item';
 
 export class AppearanceScaleSlider extends React.Component {
   static displayName = 'AppearanceScaleSlider';
@@ -180,6 +181,59 @@ export class AppearanceThemeSwitch extends React.Component {
         activeValue={this.state.activeTheme}
         onSwitchOption={this.switchTheme}
       />
+    );
+  }
+}
+
+export class AppearanceViewOriginalEmail extends React.Component {
+  static displayName = 'AppearanceViewOriginalEmail';
+
+  static propTypes = {
+    config: PropTypes.object,
+    configSchema: PropTypes.object,
+    label: PropTypes.string,
+    keyPath: PropTypes.string,
+  };
+
+  constructor(props) {
+    super(props);
+    this.themes = AppEnv.themes;
+    this.state = this._getState();
+  }
+
+  componentDidMount() {
+    this.disposable = this.themes.onDidChangeActiveThemes(() => {
+      this.setState(this._getState());
+    });
+  }
+
+  componentWillUnmount() {
+    this.disposable.dispose();
+  }
+
+  _getState() {
+    return {
+      activeTheme: this.props.config.get(THEME_MODE_KEY) || this.themes.getActiveTheme().name,
+    };
+  }
+
+  render() {
+    const { activeTheme } = this.state;
+    if (activeTheme !== 'ui-dark') {
+      return null;
+    }
+
+    const { config, configSchema, label, keyPath } = this.props;
+    return (
+      <div className="view-origin-email">
+        <ConfigSchemaItem
+          key={label}
+          configSchema={configSchema}
+          keyPath={keyPath}
+          config={config}
+          label={label}
+        />
+      </div>
     );
   }
 }
