@@ -395,7 +395,8 @@ export async function buildGmailAccountFromAuthResponse(code) {
         refresh_client_id: GMAIL_CLIENT_ID,
         refresh_token: refresh_token,
       },
-    })
+    }),
+    'gmail.com'
   );
 
   account.id = idForAccount(me.email, account.settings);
