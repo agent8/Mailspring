@@ -307,10 +307,7 @@ export class AttachmentItem extends Component {
           >
             Download Success
           </div>
-          <ProgressBar
-            isDownloading={this.state.isDownloading || this.props.isDownloading}
-            percent={this.state.percent}
-          />
+          <ProgressBar isDownloading={this.state.isDownloading} percent={this.state.percent} />
           <Flexbox direction="row" style={{ alignItems: 'center' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
@@ -321,18 +318,18 @@ export class AttachmentItem extends Component {
                     draggable={false}
                   ></div>
                 ) : (
-                    <RetinaImg
-                      ref={cm => {
-                        this._fileIconComponent = cm;
-                      }}
-                      style={{ backgroundColor: color }}
-                      className="file-icon"
-                      fallback="drafts.svg"
-                      name={iconName}
-                      isIcon
-                      mode={RetinaImg.Mode.ContentIsMask}
-                    />
-                  )}
+                  <RetinaImg
+                    ref={cm => {
+                      this._fileIconComponent = cm;
+                    }}
+                    style={{ backgroundColor: color }}
+                    className="file-icon"
+                    fallback="drafts.svg"
+                    name={iconName}
+                    isIcon
+                    mode={RetinaImg.Mode.ContentIsMask}
+                  />
+                )}
               </div>
               <div className="attachment-info">
                 <div className="attachment-name" title={displayName}>
@@ -469,10 +466,7 @@ export class ImageAttachmentItem extends Component {
           >
             Download Success
           </div>
-          <ProgressBar
-            isDownloading={this.state.isDownloading || this.props.isDownloading}
-            percent={this.state.percent}
-          />
+          <ProgressBar isDownloading={this.state.isDownloading} percent={this.state.percent} />
           <AttachmentActionIcon
             {...this.props}
             removeIcon="image-cancel-button.png"

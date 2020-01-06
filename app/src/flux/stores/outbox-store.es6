@@ -228,9 +228,7 @@ class OutboxStore extends MailspringStore {
       this._dataSource = null;
     }
     const query = OutboxStore.findAllWithBodyInDescendingOrder().page(0, 1);
-    console.log('query not send');
     const subscription = new MutableQuerySubscription(query, { emitResultSet: true });
-    console.log('query send');
     let $resultSet = Rx.Observable.fromNamedQuerySubscription('outbox-list', subscription);
     $resultSet = Rx.Observable.combineLatest(
       [$resultSet],
@@ -238,7 +236,6 @@ class OutboxStore extends MailspringStore {
         // Generate a new result set that includes additional information on
         // the draft objects. This is similar to what we do in the thread-list,
         // where we set thread.__messages to the message array.
-        console.log('results are in');
         const resultSetWithTasks = new MutableQueryResultSet(resultSet);
         return resultSetWithTasks.immutableClone();
       },
@@ -258,7 +255,10 @@ class OutboxStore extends MailspringStore {
         this._totalFailedDrafts = failed;
         if(total === 0){
           AppEnv.logDebug('Outbox no longer have data');
-          Actions.focusDefaultMailboxPerspectiveForAccounts(AccountStore.accounts());
+          const currentPerspective = FocusedPerspectiveStore.current();
+          if (currentPerspective && currentPerspective.outbox) {
+            Actions.focusDefaultMailboxPerspectiveForAccounts(AccountStore.accounts());
+          }
         }
         this.trigger();
       }
