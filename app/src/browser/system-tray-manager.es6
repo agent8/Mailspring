@@ -189,7 +189,7 @@ class SystemTrayManager {
     if (this._unreadString !== unreadString) {
       this._unreadString = unreadString;
       if (this._tray) this._tray.setToolTip(_getTooltip(unreadString));
-      if (this._tray) this._tray.setTitle(unreadString);
+      // if (this._tray) this._tray.setTitle(unreadString);
     }
   }
 
