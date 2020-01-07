@@ -32,6 +32,24 @@ internals.defineMessage = function (JXT, name, namespace) {
             appType: Utils.subAttribute(namespace, 'appext', 'type'),
             appId: Utils.subAttribute('app-event', 'app-event', 'appId'),
             appEvent: Utils.subAttribute('app-event', 'app-event', 'event'),
+            eventData: {
+                get: function getData() {
+                    let eData = false;
+                    for (let i = 0; i < this.xml.children.length; i++) {
+                        if (this.xml.children[i].name == 'app-event') {
+                            eData = this.xml.children[i]; break;
+                        }
+                    }
+                    if (!eData) { return null }
+                    let custom = eData.children[0];
+                    let data = {};
+                    data['members'] = JSON.parse(custom.attrs['members']);
+                    data['padID'] = custom.attrs['padID'];
+                    data['type'] = custom.attrs['type'];
+                    console.log('yazz.data', data);
+                    return data;
+                }
+            },
             htmlBody: Utils.textSub(namespace, 'bodyhtml'),
             ctxCmds: Utils.textSub(namespace, 'ctxcmds'),
             $body: {
@@ -169,6 +187,9 @@ internals.defineMessage = function (JXT, name, namespace) {
                     try {
                         if (this.xml.children.length == 1) {
                             return this.xml.children[0].attrs.ts;
+                        }
+                        else if (!bext[0]) {
+                            return null;
                         }
                         return Utils.getAttribute(bext[0], 'ts');
                     } catch (e) {
