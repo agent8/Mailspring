@@ -112,9 +112,9 @@ function Client(opts) {
                 memberschange.from = json.from;
                 self.emit('memberschange', memberschange);
             } else if (json.appEvent) {
-                if (json.appEvent == 'app_custom_event') {
-                    console.log('yazz.appEvent', json.eventData);
-                }
+                // if (json.appEvent == 'app_custom_event') {
+                //     console.log('yazz.appEvent', json);
+                // }
                 self.emit('app-event', json);
             } else if (json.error) {
                 self.emit('message:error', json);
