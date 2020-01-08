@@ -25,10 +25,12 @@ class MuteNotificationStore extends MailspringStore {
   }
 
   refreshMuteNotifacations = async () => {
+    const accountIds = AccountStore.accounts().map(account => account.id);
     // status is 1 or 3 mean this data is deleted
     const mutes = await DatabaseStore.findAll(MuteNotification).where([
       MuteNotification.attributes.state.not(1),
       MuteNotification.attributes.state.not(3),
+      MuteNotification.attributes.accountId.in(accountIds),
     ]);
     const muteNotifacationsSet = new Set();
     const muteDeDuplication = [];
