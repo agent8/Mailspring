@@ -18,13 +18,14 @@ const ErrorState = 'error';
 const preferredChannel = 'stable';
 
 export default class AutoUpdateManager extends EventEmitter {
-  constructor(version, config, specMode) {
+  constructor(version, config, specMode, devMode) {
     super();
 
     this.state = IdleState;
     this.version = version;
     this.config = config;
     this.specMode = specMode;
+    this.devMode = devMode;
     this.preferredChannel = preferredChannel;
     this.supportId = syncGetDeviceHash();
 
@@ -117,7 +118,7 @@ export default class AutoUpdateManager extends EventEmitter {
         return;
       }
       this.check({ hidePopups: true });
-    }, 1000 * 60 * 30);
+    }, 1000 * 60 * 60);
     console.log(`\n------->\nupdater set feedURL ${this.feedURL}`);
   }
 
@@ -156,6 +157,9 @@ export default class AutoUpdateManager extends EventEmitter {
     const res = await axios.get(await this.getFeedUrl());
     if (res && res.data && res.data.pckVersion) {
       if (!forceCheck && res.data.pckVersion === this.config.get(SKIP_VERSION_KEY)) {
+        return;
+      }
+      if (this.devMode || this.getState() === DownloadingState) {
         return;
       }
       dialog.showMessageBox({

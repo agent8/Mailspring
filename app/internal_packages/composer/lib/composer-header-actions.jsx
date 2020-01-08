@@ -19,8 +19,9 @@ export default class ComposerHeaderActions extends React.Component {
 
   render() {
     const items = [];
+    const enabledFields = this.props.enabledFields || [];
 
-    if (!this.props.enabledFields.includes(Fields.Cc)) {
+    if (!enabledFields.includes(Fields.Cc)) {
       items.push(
         <span
           className="action show-cc"
@@ -32,7 +33,7 @@ export default class ComposerHeaderActions extends React.Component {
       );
     }
 
-    if (!this.props.enabledFields.includes(Fields.Bcc)) {
+    if (!enabledFields.includes(Fields.Bcc)) {
       items.push(
         <span
           className="action show-bcc"
@@ -44,7 +45,7 @@ export default class ComposerHeaderActions extends React.Component {
       );
     }
 
-    if (!this.props.enabledFields.includes(Fields.Subject)) {
+    if (!enabledFields.includes(Fields.Subject)) {
       items.push(
         <span
           className="action show-subject"
