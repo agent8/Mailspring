@@ -10,7 +10,7 @@ import TemplateActions from './template-actions';
 
 // Support accented characters in template names
 // https://regex101.com/r/nD3eY8/1
-const INVALID_TEMPLATE_NAME_REGEX = /[^a-zA-Z\u00C0-\u017F0-9_\- ]+/g;
+const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
 
 class TemplateStore extends MailspringStore {
   constructor() {
@@ -21,7 +21,7 @@ class TemplateStore extends MailspringStore {
     this.listenTo(TemplateActions.showTemplates, this._onShowTemplates);
     this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
     this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
-    if(AppEnv.isMainWindow()){
+    if (AppEnv.isMainWindow()) {
       Actions.resetSettings.listen(this.onAppSettingsReset, this);
     }
 
@@ -269,7 +269,7 @@ class TemplateStore extends MailspringStore {
         proceed = await this._displayDialog(
           'Replace draft contents?',
           'It looks like your draft already has some content. Loading this template will ' +
-          'overwrite all draft contents.',
+            'overwrite all draft contents.',
           ['Replace contents', 'Cancel']
         );
       }
