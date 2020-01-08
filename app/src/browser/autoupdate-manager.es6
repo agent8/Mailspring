@@ -184,6 +184,10 @@ export default class AutoUpdateManager extends EventEmitter {
           this.config.set(SKIP_VERSION_KEY, res.data.pckVersion);
         }
       })
+    } else if (!res.data) {
+      if (forceCheck) {
+        this.onUpdateNotAvailable();
+      }
     }
   }
 
