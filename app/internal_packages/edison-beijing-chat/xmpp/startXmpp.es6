@@ -10,8 +10,8 @@ import {
 } from 'chat-exports'
 import { getName } from '../utils/name'
 import { registerLoginEmailAccountForChat } from '../utils/register-login-chat'
-import { getChatAccountByUserId, getTokenByUserId } from '../utils/chat-account.es6'
 import { postAsync } from '../utils/httpex'
+import { getChatAccountByUserId, getTokenByUserId } from '../utils/chat-account'
 
 /**
  * Creates a middleware for the XMPP class to dispatch actions to a redux store whenever any events
@@ -81,7 +81,6 @@ const startXmpp = xmpp => {
     MessageStore.receivePrivateChat(data)
   })
   xmpp.on('message:received', data => {
-    // console.log('yazz.groupchat', data.ts, data.appEvent, data.id)
     saveLastTs(data)
   })
   // user online
@@ -171,7 +170,7 @@ const startXmpp = xmpp => {
     MessageStore.saveMessagesAndRefresh([msg])
   })
 
-  xmpp.on('message:failed', async message => { })
+  xmpp.on('message:failed', async message => {})
 
   xmpp.on('auth:failed', async data => {
     const account = OnlineUserStore.getSelfAccountById(data.curJid)
@@ -200,7 +199,6 @@ const startXmpp = xmpp => {
 
   xmpp.on('app-event', async (data) => {
     console.log(' xmpp.on app-event: data: ', data);
-    const apiPath = window.teamPadConfig.teamEditAPIUrl + 'listPadsOfAuthor'
     if (!data || !data.eventData) {
       return
     }
@@ -218,6 +216,7 @@ const startXmpp = xmpp => {
     const padActionMembers = data.eventData.members
     const padActionType = data.eventData.type
     const options = { userId, token }
+    const apiPath = window.teamPadConfig.teamEditAPIUrl + 'listPadsOfAuthor'
     console.log(' listPadsOfAuthor: apiPath, options: ', apiPath, options)
     let res = await postAsync(apiPath, options, {
       headers: {
