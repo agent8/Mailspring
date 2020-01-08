@@ -22,7 +22,19 @@ export const getTokenByUserId = async userId => {
   }
 }
 
+export const isChatAccountUserId = userId => {
+  const chatAccounts = AppEnv.config.get('chatAccounts') || {}
+  for (const email in chatAccounts) {
+    const acc = chatAccounts[email]
+    if (acc.userId === userId) {
+      return true
+    }
+  }
+  return false
+}
+
 export default {
   getChatAccountByUserId,
-  getTokenByUserId
+  getTokenByUserId,
+  isChatAccountUserId
 }

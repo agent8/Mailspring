@@ -15,6 +15,7 @@ import {
 } from 'chat-exports';
 import delay from '../utils/delay';
 import { getNameByUserId } from'../utils/name';
+import { isChatAccountUserId } from'../utils/chat-account';
 
 const ROOM_MEMBER_VER = 'room_member_ver_';
 const ROOM_LIST_VER = 'room_list_ver_';
@@ -269,10 +270,23 @@ class RoomStore extends MailspringStore {
   };
 
   onPadMemberChange = async payload => {
-    // You are being invited to edit an email together. To open the team editor for the email,
-    // please click the link below:
     console.log(' onPadMemberChange: payload: ', payload)
-    let { padId, userId, name, email, convJid, padActionType,  padActionMembers} = payload
+
+    const savePadMessage = async body => {
+      const messageId = uuid()
+      const msg = {
+        id: messageId,
+        conversationJid: convJid,
+        sender: convJid,
+        body: JSON.stringify(body),
+        sentTime: new Date().getTime(),
+        status: MESSAGE_STATUS_RECEIVED,
+      };
+      await MessageStore.saveMessagesAndRefresh([msg]);
+      this.trigger();
+    }
+
+    let { padId, userId, name, email, convJid, padActionType,  padActionMembers } = payload
     let padActionNames = []
     for (let userId of padActionMembers) {
       name = await getNameByUserId(userId)
@@ -283,12 +297,13 @@ class RoomStore extends MailspringStore {
     if (padActionType === 'add') {
       if (padActionMembers.includes(userId)) {
         body = {
-          content: 'You are being invited to edit this email together. Please click:',
+          content: `You(${email}) are being invited to edit this email together. Please click:`,
           url,
           type: 'pad-add-member'
         };
+        savePadMessage(body)
       }
-      const others = padActionMembers.filter(member => userId != member)
+      const others = padActionMembers.filter(member => !isChatAccountUserId(member))
       if (others.length) {
         let padActionNames = []
         for (let userId of others) {
@@ -296,38 +311,19 @@ class RoomStore extends MailspringStore {
           padActionNames.push(name)
         }
         body = {
-          content: `${padActionNames.join(', ')} are being invited to edit an email together. `,
+          content: `${padActionNames.join(', ')} are being invited to edit this email together. `,
           type: 'pad-add-member'
         };
-        const messageId = uuid()
-        const msg = {
-          id: messageId,
-          conversationJid: convJid,
-          sender: convJid,
-          body: JSON.stringify(body),
-          sentTime: new Date().getTime(),
-          status: MESSAGE_STATUS_RECEIVED,
-        };
-        await MessageStore.saveMessagesAndRefresh([msg]);
+        savePadMessage(body)
       }
     } else if (padActionType === 'del') {
       body = {
         content: `${padActionNames.join(', ')} are being removed from this email edit pad.`,
         type: 'pad-remove-member'
       }
+      savePadMessage(body)
     }
 
-    const messageId = uuid()
-    const msg = {
-      id: messageId,
-      conversationJid: convJid,
-      sender: convJid,
-      body: JSON.stringify(body),
-      sentTime: new Date().getTime(),
-      status: MESSAGE_STATUS_RECEIVED,
-    };
-    await MessageStore.saveMessagesAndRefresh([msg]);
-    this.trigger();
   }
 
   updateConversationCurJid = async (removedJid, conversationJid) => {

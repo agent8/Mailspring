@@ -185,10 +185,12 @@ internals.defineMessage = function (JXT, name, namespace) {
                     if (!type || (type != 'chat' && type != 'groupchat')) { return ''; }
                     const bext = Utils.getElements(this.xml, 'jabber:client', 'bodyext');
                     try {
-                        if (this.xml.children.length == 1) {
-                            return this.xml.children[0].attrs.ts;
+                        for (let i = 0; i < this.xml.children.length; i++) {
+                            if (this.xml.children[i].attrs && this.xml.children[i].attrs.ts) {
+                                return this.xml.children[i].attrs.ts;
+                            }
                         }
-                        else if (!bext[0]) {
+                        if (!bext[0]) {
                             return null;
                         }
                         return Utils.getAttribute(bext[0], 'ts');

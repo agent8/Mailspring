@@ -35,6 +35,11 @@ const startXmpp = xmpp => {
         pullMessage(data.edipull.since, jid)
       } else {
         xmpp.tmpData[jidLocal + '_tmp_message_state'] = false
+        let tmpTs = xmpp.tmpData[jidLocal + '_tmp_message_ts']
+        let ts = AppEnv.config.get(jidLocal + '_message_ts')
+        if (!ts || (tmpTs && ts < tmpTs)) {
+          AppEnv.config.set(jidLocal + '_message_ts', tmpTs)
+        }
       }
     })
   }
@@ -76,6 +81,7 @@ const startXmpp = xmpp => {
     MessageStore.receivePrivateChat(data)
   })
   xmpp.on('message:received', data => {
+    // console.log('yazz.groupchat', data.ts, data.appEvent, data.id)
     saveLastTs(data)
   })
   // user online
@@ -165,7 +171,7 @@ const startXmpp = xmpp => {
     MessageStore.saveMessagesAndRefresh([msg])
   })
 
-  xmpp.on('message:failed', async message => {})
+  xmpp.on('message:failed', async message => { })
 
   xmpp.on('auth:failed', async data => {
     const account = OnlineUserStore.getSelfAccountById(data.curJid)
@@ -178,7 +184,9 @@ const startXmpp = xmpp => {
       }
     }
     let accounts = AppEnv.config.get('chatAccounts')
-    delete accounts[account.email]
+    if (accounts && account.email && accounts[account.email]) {
+      delete accounts[account.email]
+    }
     AppEnv.config.set('chatAccounts', accounts)
     registerLoginEmailAccountForChat(emailAccount)
   })
