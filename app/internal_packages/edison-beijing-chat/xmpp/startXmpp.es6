@@ -10,6 +10,8 @@ import {
 } from 'chat-exports'
 import { getName } from '../utils/name'
 import { registerLoginEmailAccountForChat } from '../utils/register-login-chat'
+import { getChatAccountByUserId, getTokenByUserId } from '../utils/chat-account.es6'
+import { postAsync } from '../utils/httpex'
 
 /**
  * Creates a middleware for the XMPP class to dispatch actions to a redux store whenever any events
@@ -186,6 +188,88 @@ const startXmpp = xmpp => {
   })
   xmpp.on('unblock', async ({ curJid }) => {
     await BlockStore.refreshBlocksFromXmpp(curJid)
+  })
+
+  xmpp.on('app-event', async (data) => {
+    console.log(' xmpp.on app-event: data: ', data);
+    const apiPath = window.teamPadConfig.teamEditAPIUrl + 'listPadsOfAuthor'
+    if (!data || !data.eventData) {
+      return
+    }
+    const userId = data && data.to && data.to.local
+    const fromjid = data.from.bare
+    const padId = data.eventData.padID
+    const curJid = data.curJid
+    if (!userId || !padId) {
+      return
+    }
+    const token = await getTokenByUserId(userId)
+    if (!token) {
+      return
+    }
+    const padActionMembers = data.eventData.members
+    const padActionType = data.eventData.type
+    const options = { userId, token }
+    console.log(' listPadsOfAuthor: apiPath, options: ', apiPath, options)
+    let res = await postAsync(apiPath, options, {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+      },
+    })
+    console.log(' listPadsOfAuthor: res: ', res)
+    if (!res) {
+      return
+    }
+    if (typeof res === 'string') {
+      res = JSON.parse(res)
+    }
+    if (!res.data) {
+      return
+    }
+    const apidata = res.data
+    const pads = apidata.padIDs
+    let pad
+    for (pad of pads) {
+      if (pad.id === padId) {
+        break
+      }
+    }
+    if (!pad) {
+      return
+    }
+    const convJid = data.from.bare // pad.chatRoomId + '@muc.im.edison.tech'
+    const conv = await ConversationStore.getConversationByJid(convJid)
+    if (!conv) {
+      const name = pad.name
+      const roomId = convJid
+      const curJid = userId + '@im.edison.tech'
+      const contacts = []
+      const isExistedAppRoom = true
+      const payload = {
+        contacts, roomId, name, curJid, isExistedAppRoom
+      }
+      await ConversationStore.createGroupConversation(payload)
+      console.log('create pad conv: ', payload)
+    }
+    const chatAccount = getChatAccountByUserId(userId)
+    // const url = `edisonmail://teamedit.edison.tech/${draft.headerMessageId}?padId=${padId}&inviterEmail=${from}
+    // &userId=${userId}&userName=${member.name}&email=${member.email}`
+    const padMemberChangeData = {
+      curJid,
+      padId,
+      fromjid,
+      convJid,
+      userId,
+      name: chatAccount.name,
+      email: chatAccount.email,
+      padActionMembers,
+      padActionType
+    }
+    console.log('create pad msg: ', padMemberChangeData)
+    await RoomStore.onPadMemberChange(padMemberChangeData)
   })
 
   return next => action => next(action)

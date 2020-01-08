@@ -243,6 +243,7 @@ class ConversationStore extends MailspringStore {
   }
 
   createGroupConversation = async payload => {
+    console.log(' createGroupConversation: payload: ', payload)
     await RoomStore.createGroupChatRoom(payload)
     const { contacts, roomId, name, curJid } = payload
     const content = ''

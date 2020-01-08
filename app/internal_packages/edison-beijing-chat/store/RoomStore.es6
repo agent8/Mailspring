@@ -4,6 +4,7 @@ import RoomModel from '../model/Room';
 import xmpp from '../xmpp';
 import { jidlocal } from '../utils/jid';
 import { MESSAGE_STATUS_RECEIVED } from '../model/Message';
+import uuid from 'uuid/v4';
 import {
   MessageStore,
   ContactStore,
@@ -13,6 +14,7 @@ import {
   ChatActions,
 } from 'chat-exports';
 import delay from '../utils/delay';
+import { getNameByUserId } from'../utils/name';
 
 const ROOM_MEMBER_VER = 'room_member_ver_';
 const ROOM_LIST_VER = 'room_list_ver_';
@@ -34,7 +36,7 @@ class RoomStore extends MailspringStore {
   };
 
   createGroupChatRoom = async payload => {
-    const { contacts, roomId, name, curJid } = payload;
+    const { contacts, roomId, name, curJid, isExistedAppRoom } = payload;
     const jidArr = contacts.map(contact => contact.jid).sort();
     const opt = {
       type: 'create',
@@ -45,7 +47,9 @@ class RoomStore extends MailspringStore {
         jid: jidArr,
       },
     };
-    await xmpp.createRoom(roomId, opt, curJid);
+    if (!isExistedAppRoom){
+      await xmpp.createRoom(roomId, opt, curJid);
+    }
     RoomModel.upsert({
       jid: roomId,
       name,
@@ -260,9 +264,71 @@ class RoomStore extends MailspringStore {
       sentTime: new Date().getTime(),
       status: MESSAGE_STATUS_RECEIVED,
     };
-    MessageStore.saveMessagesAndRefresh([msg]);
+    await MessageStore.saveMessagesAndRefresh([msg]);
     this.trigger();
   };
+
+  onPadMemberChange = async payload => {
+    // You are being invited to edit an email together. To open the team editor for the email,
+    // please click the link below:
+    console.log(' onPadMemberChange: payload: ', payload)
+    let { padId, userId, name, email, convJid, padActionType,  padActionMembers} = payload
+    let padActionNames = []
+    for (let userId of padActionMembers) {
+      name = await getNameByUserId(userId)
+      padActionNames.push(name)
+    }
+    const url = `edisonmail://teamedit.edison.tech/?padId=${padId}&userId=${userId}&userName=${name}&email=${email}`
+    let body
+    if (padActionType === 'add') {
+      if (padActionMembers.includes(userId)) {
+        body = {
+          content: 'You are being invited to edit this email together. Please click:',
+          url,
+          type: 'pad-add-member'
+        };
+      }
+      const others = padActionMembers.filter(member => userId != member)
+      if (others.length) {
+        let padActionNames = []
+        for (let userId of others) {
+          name = await getNameByUserId(userId)
+          padActionNames.push(name)
+        }
+        body = {
+          content: `${padActionNames.join(', ')} are being invited to edit an email together. `,
+          type: 'pad-add-member'
+        };
+        const messageId = uuid()
+        const msg = {
+          id: messageId,
+          conversationJid: convJid,
+          sender: convJid,
+          body: JSON.stringify(body),
+          sentTime: new Date().getTime(),
+          status: MESSAGE_STATUS_RECEIVED,
+        };
+        await MessageStore.saveMessagesAndRefresh([msg]);
+      }
+    } else if (padActionType === 'del') {
+      body = {
+        content: `${padActionNames.join(', ')} are being removed from this email edit pad.`,
+        type: 'pad-remove-member'
+      }
+    }
+
+    const messageId = uuid()
+    const msg = {
+      id: messageId,
+      conversationJid: convJid,
+      sender: convJid,
+      body: JSON.stringify(body),
+      sentTime: new Date().getTime(),
+      status: MESSAGE_STATUS_RECEIVED,
+    };
+    await MessageStore.saveMessagesAndRefresh([msg]);
+    this.trigger();
+  }
 
   updateConversationCurJid = async (removedJid, conversationJid) => {
     // curJid user is removed, and other self account is still in this group

@@ -475,6 +475,15 @@ export default class Msg extends PureComponent {
       } else {
         return this.renderFile();
       }
+    } else if (msgBody.type==='pad-add-member') {
+      return (
+        <div className="text-content">
+          <div className="text" ref={el => (this.contentEl = el)}>
+            <MessageText text={textContent} />
+            { msgBody.url ? <a href={msgBody.url}> this link to open the email team edit pad. </a> : null }
+          </div>
+        </div>
+      );
     } else {
       return (
         <div className="text-content">
@@ -523,7 +532,7 @@ export default class Msg extends PureComponent {
         />
       );
     } else {
-      const isSystemEvent = ['error403', 'memberschange', 'change-group-name'].includes(
+      const isSystemEvent = ['error403', 'memberschange', 'change-group-name', 'pad-add-member', 'pad-remove-member'].includes(
         msgBody.type
       );
       return (

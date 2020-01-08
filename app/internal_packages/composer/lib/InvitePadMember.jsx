@@ -138,28 +138,8 @@ export default class InvitePadMember extends Component {
       alert('fail to add edit members for the pad.')
       return
     }
-    const { padId } = padInfo
-    for (let member of members) {
-      const jid = member.jid
-      if (!jid) {
-        continue
-      }
-      const at = jid.indexOf('@')
-      const userId = jid.substring(0, at)
-      const url = `edisonmail://teamedit.edison.tech/${draft.headerMessageId}?padId=${padId}&inviterEmail=${from}&userId=${userId}&userName=${member.name}&email=${member.email}`
-      const to = [member.email]
-      const cc = []
-      await DraftStore.createAndSendMessage({
-        subject: 'invitation to write email together',
-        body: `I want to invite you to edit an email together. To open the team editor for the email,
-        please open this message in EdisonMail App,
-        and then click the link to <a href="${url}">the team editor for the email</a>`,
-        to,
-        cc,
-        from,
-        draft,
-      })
-    }
+
+    alert(' the invite messages will be sent to the chat room for this email team edit pad')
 
     this._close()
   }

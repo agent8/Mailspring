@@ -699,10 +699,11 @@ export default class ComposerView extends React.Component {
     const files = draft.files.map(file => ({
       name: file.filename,
     }))
+    const padName = `email pad for ${subject}`
     const createPadOptions = {
       userId,
       email,
-      name,
+      name: padName,
       token,
       text: '',
       emailOri: {

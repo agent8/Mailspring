@@ -32,8 +32,13 @@ export async function getName(jid) {
   return contact.name || contact.email && contact.email.split('@')[0] || ''
 }
 
+export async function getNameByUserId(userId) {
+  return await getName(userId + '@im.edison.tech')
+}
+
 export default {
   nickname,
   name,
-  getName
+  getName,
+  getNameByUserId
 }
