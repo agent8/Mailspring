@@ -12,7 +12,12 @@ import {
   TrashFromSenderTask,
   OutboxStore,
 } from 'mailspring-exports';
-import { RetinaImg, InjectedComponentSet, InjectedComponent, OutboxSender } from 'mailspring-component-kit';
+import {
+  RetinaImg,
+  InjectedComponentSet,
+  InjectedComponent,
+  OutboxSender,
+} from 'mailspring-component-kit';
 
 import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
@@ -56,7 +61,7 @@ export default class MessageItem extends React.Component {
       isBlocked: BlockedSendersStore.isBlockedByAccount(accountId, fromEmail),
       trackers: [],
       viewOriginalEmail:
-        AppEnv.isDarkTheme() && AppEnv.config.get('core.appearance.viewOriginalEmail'),
+        AppEnv.isDarkTheme() && !AppEnv.config.get('core.appearance.adaptiveEmailColor'),
     };
     this.markAsReadTimer = null;
     this.mounted = false;
@@ -332,18 +337,22 @@ export default class MessageItem extends React.Component {
 
   _renderEmailAvatar() {
     if (this.props.isOutboxDraft) {
-      return <OutboxSender draft={this.props.message} lottieStyle={{margin: "-45px auto 0px -5px"}} />;
+      return (
+        <OutboxSender draft={this.props.message} lottieStyle={{ margin: '-45px auto 0px -5px' }} />
+      );
     } else {
-      return <EmailAvatar
-        key="thread-avatar"
-        message={this.props.message}
-        messagePending={this.props.pending}
-      />;
+      return (
+        <EmailAvatar
+          key="thread-avatar"
+          message={this.props.message}
+          messagePending={this.props.pending}
+        />
+      );
     }
   }
 
   _renderHeader() {
-    const { message, thread, messages} = this.props;
+    const { message, thread, messages } = this.props;
     const { trackers } = this.state;
     return (
       <header

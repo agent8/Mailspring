@@ -183,7 +183,7 @@ export default class MessageControls extends React.Component {
     };
 
     const showViewOriginalEmail =
-      AppEnv.isDarkTheme() && !AppEnv.config.get('core.appearance.viewOriginalEmail');
+      AppEnv.isDarkTheme() && AppEnv.config.get('core.appearance.adaptiveEmailColor');
 
     if (!this.props.message.canReplyAll()) {
       const noReplyAll = [reply, forward];
