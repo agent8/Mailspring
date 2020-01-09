@@ -219,6 +219,9 @@ function Client(opts) {
                 //console.log("yazz-on-message:", msg);
             }
         }
+        if (msg.type === 'groupchat') {
+            self.emit('message:received', msg);
+        }
         if (msg.type === 'normal' && msg.$e2ee) {
             self.emit('message:ext-e2ee', msg.$e2ee);
         }
