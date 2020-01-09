@@ -13,7 +13,6 @@ import {
   AppearanceProfileOptions,
   AppearancePanelOptions,
   AppearanceThemeSwitch,
-  AppearanceViewOriginalEmail,
 } from './components/preferences-appearance-components';
 import {
   CustomizeQuickActions,
@@ -70,8 +69,7 @@ const preferencesTemplateFill = {
             },
             {
               label: 'Show labels (Gmail only)',
-              configSchema: configSchema =>
-                configSchema.properties.workspace.properties.showLabels,
+              configSchema: configSchema => configSchema.properties.workspace.properties.showLabels,
               keyPath: 'core.workspace.showLabels',
               keywords: [],
             },
@@ -278,6 +276,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.appearance.sidebaricons',
               keywords: ['sidebar', 'left', 'icons', 'avatar'],
             },
+            {
+              label: 'Enable Adaptive Coloring for emails.',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.adaptiveEmailColor,
+              keyPath: 'core.appearance.adaptiveEmailColor',
+              keywords: [],
+            },
           ],
         },
         {
@@ -302,14 +307,6 @@ const preferencesTemplateFill = {
               label: 'Theme',
               component: AppearanceThemeSwitch,
               keywords: ['Light Mode', 'Dark Mode', 'background'],
-            },
-            {
-              label: 'View original email',
-              configSchema: configSchema =>
-                configSchema.properties.appearance.properties.viewOriginalEmail,
-              keyPath: 'core.appearance.viewOriginalEmail',
-              component: AppearanceViewOriginalEmail,
-              keywords: [],
             },
           ],
         },
