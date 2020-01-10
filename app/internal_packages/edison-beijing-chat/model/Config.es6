@@ -1,8 +1,8 @@
-const Sequelize = require('sequelize');
-const Model = Sequelize.Model;
-const { getdb } = require('../db/index');
-const db = getdb();
-const { tableCompletedSync } = require('../utils/databaseCompleteInt');
+const Sequelize = require('sequelize')
+const Model = Sequelize.Model
+const { getdb } = require('../db/index')
+const db = getdb()
+const { tableCompletedSync } = require('../utils/databaseCompleteInt')
 
 export default class Config extends Model {}
 Config.init(
@@ -23,6 +23,6 @@ Config.init(
     sequelize: db,
     modelName: 'configs',
   }
-);
-Config.sync().then(tableCompletedSync);
-db.configs = Config;
+)
+Config.sync().then(tableCompletedSync)
+db.configs = Config

@@ -14,13 +14,8 @@ import { postAsync } from '../utils/httpex'
 import { getChatAccountByUserId, getTokenByUserId } from '../utils/chat-account'
 
 /**
- * Creates a middleware for the XMPP class to dispatch actions to a redux store whenever any events
- * are received
  * @param   {Xmpp}    xmpp            An instance of the Xmpp class
- * @param   {Object}  eventActionMap  An object with keys being the string value of the xmpp event
- *                                    and values being functions that return redux actions
  * @throws  {Error}                   Throws an error if xmpp is not an instance of Xmpp
- * @returns {Middleware}              The redux middleware function
  */
 const startXmpp = xmpp => {
   if (!(xmpp instanceof Xmpp)) {
