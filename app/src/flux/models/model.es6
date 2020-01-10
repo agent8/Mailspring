@@ -19,6 +19,7 @@ Section: Models
  */
 
 export default class Model {
+  static pseudoPrimaryJsKey='id';
   static attributes = {
     id: Attributes.String({
       queryable: true,

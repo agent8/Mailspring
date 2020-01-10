@@ -2,6 +2,7 @@ import Attributes from '../attributes';
 import Model from './model';
 
 export default class BlockContact extends Model {
+  static passAsIs = true;
   static attributes = Object.assign(
     {},
     {
