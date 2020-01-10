@@ -40,6 +40,24 @@ class AccountStore extends MailspringStore {
     this.listenTo(DatabaseStore, this._onDataChange);
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.siftUpdateAccount, this._onSiftUpdateAccount);
+      ipcRenderer.on('after-add-account', async (event, account) => {
+        AppEnv.config.set('chatNeedAddIntialConversations', true)
+        // refresh thread list
+        FocusedPerspectiveStore.trigger();
+        // add chat account
+        if (AppEnv.config.get(`core.workspace.enableChat`)) {
+          AppEnv.config.set('chatNeedAddIntialConversations', true)
+          let chatConversationsInitialized = AppEnv.config.get('chatConversationsInitialized') || ''
+          chatConversationsInitialized = chatConversationsInitialized.replace(account.emailAddress, '')
+          AppEnv.config.set('chatConversationsInitialized', chatConversationsInitialized)
+          // wait nativesync to pull emails
+          await delay(30000);
+          await registerLoginEmailAccountForChat(account);
+          await AppStore.refreshAppsEmailContacts();
+          await ConversationStore.createInitialPrivateConversationsFromAllContactsOfEmail(account.emailAddress);
+          await MessageStore.saveMessagesAndRefresh([]);
+        }
+      });
     }
 
     AppEnv.config.onDidChange(configVersionKey, async change => {
@@ -53,27 +71,6 @@ class AccountStore extends MailspringStore {
       this._loadAccounts();
       const accountIds = this._accounts.map(a => a.id);
       const newAccountIds = _.difference(accountIds, oldAccountIds);
-
-      if (AppEnv.isMainWindow()) {
-        ipcRenderer.on('after-add-account', async (event, account) => {
-          AppEnv.config.set('chatNeedAddIntialConversations', true)
-          // refresh thread list
-          FocusedPerspectiveStore.trigger();
-          // add chat account
-          if (AppEnv.config.get(`core.workspace.enableChat`)) {
-            AppEnv.config.set('chatNeedAddIntialConversations', true)
-            let chatConversationsInitialized = AppEnv.config.get('chatConversationsInitialized') || ''
-            chatConversationsInitialized = chatConversationsInitialized.replace(account.emailAddress,  '')
-            AppEnv.config.set('chatConversationsInitialized', chatConversationsInitialized)
-            // wait nativesync to pull emails
-            await delay(30000);
-            await registerLoginEmailAccountForChat(account);
-            await AppStore.refreshAppsEmailContacts();
-            await ConversationStore.createInitialPrivateConversationsFromAllContactsOfEmail(account.emailAddress);
-            await MessageStore.saveMessagesAndRefresh([]);
-          }
-        });
-      }
 
       if (AppEnv.isMainWindow() && newAccountIds.length > 0) {
         const newId = newAccountIds[0];
@@ -117,7 +114,9 @@ class AccountStore extends MailspringStore {
           if (account && obj.key === 'ErrorAuthentication' && account.syncState !== Account.SYNC_STATE_AUTH_FAILED) {
             Actions.updateAccount(account.id, { syncState: Account.SYNC_STATE_AUTH_FAILED })
           } else if (account && obj.key === Account.INSUFFICIENT_PERMISSION && account.syncState !== Account.INSUFFICIENT_PERMISSION){
-            Actions.updateAccount(account.id, { syncState: Account.INSUFFICIENT_PERMISSION })
+            AppEnv.reportWarning(new Error(`Account.INSUFFICIENT_PERMISSION`), {errorData: account});
+            // Comment out until native fix issue with false negative with gmail permission issue.
+            // Actions.updateAccount(account.id, { syncState: Account.INSUFFICIENT_PERMISSION })
           }
         }
       });
@@ -282,7 +281,7 @@ class AccountStore extends MailspringStore {
   _parseErrorAccount() {
     const erroredAccounts = this._accounts.filter(a => a.hasSyncStateError());
     const okAccounts = this._accounts.filter(a => !a.hasSyncStateError());
-    if(erroredAccounts.length !== 0 && okAccounts.length !== 0){
+    if (erroredAccounts.length !== 0 && okAccounts.length !== 0) {
       const okAccountMessages = [];
       okAccounts.forEach(acct => {
         if (acct) {
@@ -292,7 +291,7 @@ class AccountStore extends MailspringStore {
       Actions.removeAppMessages(okAccountMessages);
     }
     if (erroredAccounts.length === 0) {
-      const message = {id: `account-error`, level: 0};
+      const message = { id: `account-error`, level: 0 };
       Actions.removeAppMessage(message);
       return;
     } else if (erroredAccounts.length > 1) {
@@ -385,7 +384,7 @@ class AccountStore extends MailspringStore {
         ConversationStore.refreshConversations();
         // all valid contacts will be add back in AppStore.refreshAppsEmailContacts()
         await ContactModel.destroy({
-          where: {curJid: jid},
+          where: { curJid: jid },
           truncate: true,
           force: true
         });
@@ -438,7 +437,7 @@ class AccountStore extends MailspringStore {
   };
 
   _onSiftUpdateAccount = (fullAccount) => {
-    Actions.queueTask(new SiftUpdateAccountTask({account: fullAccount}));
+    Actions.queueTask(new SiftUpdateAccountTask({ account: fullAccount }));
   };
 
   addAccount = async account => {

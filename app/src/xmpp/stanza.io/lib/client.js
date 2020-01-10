@@ -112,6 +112,9 @@ function Client(opts) {
                 memberschange.from = json.from;
                 self.emit('memberschange', memberschange);
             } else if (json.appEvent) {
+                // if (json.appEvent == 'app_custom_event') {
+                //     console.log('yazz.appEvent', json);
+                // }
                 self.emit('app-event', json);
             } else if (json.error) {
                 self.emit('message:error', json);
@@ -215,6 +218,9 @@ function Client(opts) {
                 self.emit('groupchat', msg);
                 //console.log("yazz-on-message:", msg);
             }
+        }
+        if (msg.type === 'groupchat') {
+            self.emit('message:received', msg);
         }
         if (msg.type === 'normal' && msg.$e2ee) {
             self.emit('message:ext-e2ee', msg.$e2ee);

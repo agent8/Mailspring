@@ -111,7 +111,7 @@ class EmptyInboxState extends React.Component {
 
 class EmptyListState extends React.Component {
   static displayName = 'EmptyListState';
-  static propTypes = { visible: PropTypes.bool.isRequired, loaded: PropTypes.bool.isRequired };
+  static propTypes = { visible: PropTypes.bool.isRequired };
 
   constructor(props) {
     super(props);

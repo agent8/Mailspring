@@ -69,8 +69,7 @@ const preferencesTemplateFill = {
             },
             {
               label: 'Show labels (Gmail only)',
-              configSchema: configSchema =>
-                configSchema.properties.workspace.properties.showLabels,
+              configSchema: configSchema => configSchema.properties.workspace.properties.showLabels,
               keyPath: 'core.workspace.showLabels',
               keywords: [],
             },
@@ -276,6 +275,13 @@ const preferencesTemplateFill = {
                 configSchema.properties.appearance.properties.sidebaricons,
               keyPath: 'core.appearance.sidebaricons',
               keywords: ['sidebar', 'left', 'icons', 'avatar'],
+            },
+            {
+              label: 'Enable Adaptive Coloring for emails.',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.adaptiveEmailColor,
+              keyPath: 'core.appearance.adaptiveEmailColor',
+              keywords: [],
             },
           ],
         },

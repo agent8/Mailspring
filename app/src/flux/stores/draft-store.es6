@@ -1,6 +1,6 @@
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
-import DraftEditingSession from './draft-editing-session';
+import DraftEditingSession, { cloneForSyncDraftData } from './draft-editing-session';
 import DraftFactory from './draft-factory';
 import DatabaseStore from './database-store';
 import SendActionsStore from './send-actions-store';
@@ -47,9 +47,11 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.destroyDraftFailed, this._onDestroyDraftFailed);
     this.listenTo(Actions.destroyDraftSucceeded, this._onDestroyDraftSuccess);
     this.listenTo(Actions.destroyDraft, this._onDestroyDrafts);
-    this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChange);
-    this.listenTo(Actions.sendDraft, this._onSendDraft);
+    this.listenTo(Actions.sendDraft, this._onSendDraftAction);
+    this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChangeAction);
     if (AppEnv.isMainWindow()) {
+      this.listenTo(Actions.toMainSendDraft, this._onSendDraft);
+      this.listenTo(Actions.toMainChangeDraftAccount, this._onDraftAccountChange);
       this.listenTo(Actions.composeReply, this._onComposeReply);
       this.listenTo(Actions.composeForward, this._onComposeForward);
       this.listenTo(Actions.cancelOutboxDrafts, this._onOutboxCancelDraft);
@@ -243,7 +245,15 @@ class DraftStore extends MailspringStore {
     });
   }
 
-  _onDraftAccountChange = async ({
+  _onDraftAccountChangeAction = (data) => {
+    if (AppEnv.isMainWindow()) {
+      this._onDraftAccountChange(data);
+    } else {
+      this._onDraftAccountChanged_NotMainWindow(data);
+    }
+  };
+
+  _onDraftAccountChanged_NotMainWindow = ({
     originalMessageId,
     originalHeaderMessageId,
     newParticipants,
@@ -251,10 +261,20 @@ class DraftStore extends MailspringStore {
     const session = this._draftSessions[originalHeaderMessageId];
     if (AppEnv.isComposerWindow() || AppEnv.isThreadWindow()) {
       if (session) {
+        session.syncDraftDataToMainNow();
         this._doneWithSession(session, 'draft account change');
       }
+      Actions.toMainChangeDraftAccount({originalHeaderMessageId, originalMessageId, newParticipants});
       return;
     }
+  };
+
+  _onDraftAccountChange = async ({
+    originalMessageId,
+    originalHeaderMessageId,
+    newParticipants,
+  }) => {
+    const session = this._draftSessions[originalHeaderMessageId];
     await session.changes.commit();
     session.freezeSession();
     const oldDraft = session.draft();
@@ -528,6 +548,18 @@ class DraftStore extends MailspringStore {
     session.closeSession({ cancelCommits, reason: 'onLastOpenDraftClosed' });
     this._doneWithDraft(headerMessageId, 'onLastOpenDraftClosed');
   };
+  _syncSessionDataToMain = ()=>{
+    if(!AppEnv.isMainWindow()){
+      for(let key of Object.keys(this._draftSessions)){
+        if(!this.isSendingDraft(key) && !this._draftsDeleting[key] && !this._draftsDeleted[key]){
+          const session = this._draftSessions[key];
+          if(session){
+            session.syncDraftDataToMainNow();
+          }
+        }
+      }
+    }
+  };
 
   _onBeforeUnload = readyToUnload => {
     if (AppEnv.isOnboardingWindow() || AppEnv.isEmptyWindow() || AppEnv.isBugReportingWindow()) {
@@ -537,6 +569,7 @@ class DraftStore extends MailspringStore {
     const promises = [];
     if (!AppEnv.isMainWindow()) {
       AppEnv.debugLog('closing none main window');
+      this._syncSessionDataToMain();
       if (AppEnv.isComposerWindow()) {
         const keys = Object.keys(this._draftSessions);
         if (keys.length > 1) {
@@ -1228,13 +1261,32 @@ class DraftStore extends MailspringStore {
       this.trigger({ headerMessageId });
     }
   };
-
-  _onSendDraft = async (headerMessageId, options = {}) => {
-    if (!AppEnv.isMainWindow()) {
-      AppEnv.logDebug('send draft, not main window');
+  _onSendDraftAction = (headerMessageId, options = {}) => {
+    if(AppEnv.isMainWindow()){
+      this._onSendDraft(headerMessageId, options);
+    }else{
+      this._notMainSendDraft(headerMessageId, options);
+    }
+  };
+  _notMainSendDraft = (headerMessageId, options = {}) => {
+    if (AppEnv.isMainWindow()){
+      return;
+    }
+    const session = this._draftSessions[headerMessageId];
+    if(session && session.draft()){
+      AppEnv.logInfo('syncing draft data to main window');
+      const syncData = cloneForSyncDraftData(session.draft());
+      Actions.toMainSendDraft(headerMessageId, options, syncData);
       if (AppEnv.isComposerWindow()) {
         AppEnv.hide();
       }
+    }
+    return;
+  };
+
+  _onSendDraft = async (headerMessageId, options = {}, syncData) => {
+    if (!AppEnv.isMainWindow()) {
+      AppEnv.logDebug('send draft, not main window');
       return;
     }
     if (this._draftsSending[headerMessageId]) {
@@ -1305,6 +1357,10 @@ class DraftStore extends MailspringStore {
         { grabLogs: true }
       );
       return;
+    }
+    if(syncData){
+        AppEnv.logInfo('We have syncData from none main window and main window draft data is not updated yet');
+        session.localApplySyncDraftData({syncData});
     }
     session.cancelCommit();
 

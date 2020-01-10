@@ -16,17 +16,23 @@ export default class ActionBarPlugins extends React.Component {
   constructor(props) {
     super(props);
     this.state = this._getStateFromStores();
+    this._mounted = false;
   }
 
   componentDidMount() {
+    this._mounted = true;
     this._usub = ComponentRegistry.listen(this._onComponentsChange);
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     this._usub();
   }
 
   _onComponentsChange = () => {
+    if(!this._mounted){
+      return;
+    }
     if (this._getPluginsLength() > 0) {
       // The `InjectedComponentSet` also listens to the ComponentRegistry.
       // Since we can't guarantee the order the listeners are fired in and
@@ -36,7 +42,9 @@ export default class ActionBarPlugins extends React.Component {
       // It also takes 2 frames to reliably get all of the icons painted.
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
-          this.setState(this._getStateFromStores());
+          if(this._mounted){
+            this.setState(this._getStateFromStores());
+          }
         });
       });
     }

@@ -39,7 +39,7 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
     this._result = `(${lhs} OR ${rhs})`;
   }
 
-  visitDate(node) {}
+  visitDate(node) { }
 
   visitFrom(node) {
     const text = this.visitAndGetResult(node.text);
@@ -223,7 +223,7 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitHasAttachment(/* node */) {
-    this._result = `(\`${this._className}\`.\`data\` LIKE '%"has_attachments":true%')`;
+    this._result = `(\`${this._className}\`.\`hasAttachments\` = 1)`;
   }
 
   visitDate(node) {
@@ -245,7 +245,7 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
     this._result = `(\`${
       this._className
-    }\`.\`id\` IN (SELECT \`content_id\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
+      }\`.\`id\` IN (SELECT \`content_id\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
   }
 }
 
