@@ -19,6 +19,7 @@ Section: Models
  */
 
 export default class Model {
+  static passAsIs = false; // This is to indicate whether we need to re query DB on message from native
   static pseudoPrimaryJsKey='id';
   static attributes = {
     id: Attributes.String({
