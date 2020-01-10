@@ -752,7 +752,6 @@ export default class MailsyncBridge {
       });
       if(promises.length > 0) {
         Promise.all(promises).then(models => {
-          console.log('models: ', models);
           // dispatch the message to other windows
           ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models });
           this._onIncomingChangeRecord(
