@@ -87,7 +87,7 @@ lazyLoadAndRegisterModel('BlockContact', 'block-contact');
 lazyLoadAndRegisterModel(`ProviderSyncbackRequest`, 'provider-syncback-request');
 lazyLoadAndRegisterModel('SetObservableRange', 'set-observable-range');
 lazyLoadAndRegisterModel('AttachmentProgress', 'attachment-progress');
-
+lazyLoadAndRegisterModel('FolderState', 'folder-state');
 // Search Query Interfaces
 lazyLoad(`SearchQueryAST`, 'services/search/search-query-ast');
 lazyLoad(`SearchQueryParser`, 'services/search/search-query-parser');

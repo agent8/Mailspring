@@ -712,22 +712,58 @@ export default class MailsyncBridge {
         }
         return true;
       });
-
-      // dispatch the message to other windows
-      ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', msg);
       if (AppEnv.enabledFromNativeLog) {
         console.log('----------------From native-------------------');
         AppEnv.logDebug(`from native : ${msg}`);
         console.log('---------------------From native END------------------------');
       }
-      const models = modelJSONs.map(Utils.convertToModel);
-      this._onIncomingChangeRecord(
-        new DatabaseChangeRecord({
-          type, // TODO BG move to "model" naming style, finding all uses might be tricky
-          objectClass: modelClass,
-          objects: models,
-        })
-      );
+      const promises = [];
+      const tmpModels = modelJSONs.map(Utils.convertToModel);
+      let passAsIs = false;
+      if(tmpModels.length > 0){
+        if (tmpModels[0].constructor.name === modelClass && tmpModels[0].constructor.passAsIs){
+          passAsIs = true;
+        }
+      }
+      if (passAsIs){
+        console.log('passing data from native to UI without going through db');
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels });
+        this._onIncomingChangeRecord(
+          new DatabaseChangeRecord({
+            type, // TODO BG move to "model" naming style, finding all uses might be tricky
+            objectClass: modelClass,
+            objects: tmpModels,
+          })
+        );
+        return;
+      }
+      tmpModels.forEach(m=>{
+        if(m.constructor.name !== modelClass){
+          return;
+        }
+        const where = {};
+        where[m.constructor.pseudoPrimaryJsKey] = m[m.constructor.pseudoPrimaryJsKey];
+        const klass = m.constructor;
+        if(where[m.constructor.pseudoPrimaryJsKey]){
+          promises.push(DatabaseStore.findBy(klass, where))
+        }else{
+          console.error(`Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`);
+        }
+      });
+      if(promises.length > 0) {
+        Promise.all(promises).then(models => {
+          console.log('models: ', models);
+          // dispatch the message to other windows
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models });
+          this._onIncomingChangeRecord(
+            new DatabaseChangeRecord({
+              type, // TODO BG move to "model" naming style, finding all uses might be tricky
+              objectClass: modelClass,
+              objects: models,
+            })
+          );
+        });
+      }
     }
   };
   _recordErrorToConsole = task => {
@@ -791,9 +827,10 @@ export default class MailsyncBridge {
     }
   };
 
-  _onIncomingRebroadcastMessage = (event, msg) => {
-    const { type, modelJSONs, modelClass } = JSON.parse(msg);
-    const models = modelJSONs.map(Utils.convertToModel);
+  _onIncomingRebroadcastMessage = (event, data) => {
+    const { type, models, modelClass } = data;
+    console.log(`type: ${type}, modelClass: ${modelClass}`, models);
+    // const models = modelJSONs.map(Utils.convertToModel);
     DatabaseStore.trigger(
       new DatabaseChangeRecord({
         type,
