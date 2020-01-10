@@ -1,7 +1,7 @@
 {
   "name": "edisonmail",
   "productName": "EdisonMail",
-  "version": "0.4.38",
+  "version": "0.4.45",
   "commitHash": "COMMIT_INSERTED_DURING_PACKAGING",
   "description": "The best email app for people and teams at work",
   "license": "GPL-3.0",
@@ -15,6 +15,7 @@
     "archiver": "^3.1.1",
     "async": "^2.5.0",
     "aws-sdk": "^2.568.0",
+    "axios": "^0.19.0",
     "babel-core": "^6.26.3",
     "babel-preset-electron": "^1.4.15",
     "babel-preset-react": "^6.24.1",

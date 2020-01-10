@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import path from 'path';
 import fs from 'fs';
 import { getDeviceHash, syncGetDeviceHash } from '../system-utils';
+import axios from 'axios';
 
 let autoUpdater = null;
 
@@ -17,13 +18,14 @@ const ErrorState = 'error';
 const preferredChannel = 'stable';
 
 export default class AutoUpdateManager extends EventEmitter {
-  constructor(version, config, specMode) {
+  constructor(version, config, specMode, devMode) {
     super();
 
     this.state = IdleState;
     this.version = version;
     this.config = config;
     this.specMode = specMode;
+    this.devMode = devMode;
     this.preferredChannel = preferredChannel;
     this.supportId = syncGetDeviceHash();
 
@@ -33,7 +35,7 @@ export default class AutoUpdateManager extends EventEmitter {
     this.config.onDidChange('identity.id', this.updateFeedURL);
   }
 
-  updateFeedURL = () => {
+  getFeedUrl = async () => {
     const params = {
       platform: process.platform,
       arch: process.arch,
@@ -45,34 +47,22 @@ export default class AutoUpdateManager extends EventEmitter {
       params.platform = 'mac';
     }
     const host = process.env.updateServer || `https://cp.edison.tech/api/ota/checkUpdate`;
-    return new Promise(resolve => {
-      if (this.supportId === '') {
-        getDeviceHash()
-          .then(
-            hash => {
-              this.supportId = hash;
-              return Promise.resolve();
-            },
-            e => {
-              this.supportId = '';
-              return Promise.resolve();
-            },
-          )
-          .then(() => {
-            this.feedURL = `${host}?platform=desktop-${params.platform}-full&clientVersion=${this.version}&supportId=${this.supportId}`;
-            if (autoUpdater) {
-              autoUpdater.setFeedURL(this.feedURL);
-            }
-            resolve();
-          });
-      } else {
-        this.feedURL = `${host}?platform=desktop-${params.platform}-full&clientVersion=${this.version}&supportId=${this.supportId}`;
-        if (autoUpdater) {
-          autoUpdater.setFeedURL(this.feedURL);
-        }
-        resolve();
+    if (this.supportId === '') {
+      try {
+        this.supportId = await getDeviceHash();
+      } catch (err) {
+        this.supportId = '';
       }
-    });
+    }
+    this.feedURL = `${host}?platform=desktop-${params.platform}-full&clientVersion=${params.version}&supportId=${this.supportId}`;
+    return this.feedURL;
+  }
+
+  updateFeedURL = async () => {
+    this.feedURL = await this.getFeedUrl();
+    if (autoUpdater) {
+      autoUpdater.setFeedURL(this.feedURL);
+    }
   };
 
   setupAutoUpdater() {
@@ -92,7 +82,7 @@ export default class AutoUpdateManager extends EventEmitter {
       this.setState(ErrorState);
     });
 
-    autoUpdater.setFeedURL(this.feedURL);
+    // autoUpdater.setFeedURL(this.feedURL);
 
     autoUpdater.on('checking-for-update', () => {
       this.setState(CheckingState);
@@ -119,7 +109,7 @@ export default class AutoUpdateManager extends EventEmitter {
     }
 
     //check immediately at startup
-    this.check({ hidePopups: true });
+    setTimeout(() => this.check({ hidePopups: true }), 20 * 1000);
 
     //check every 30 minutes
     setInterval(() => {
@@ -128,7 +118,7 @@ export default class AutoUpdateManager extends EventEmitter {
         return;
       }
       this.check({ hidePopups: true });
-    }, 1000 * 60 * 30);
+    }, 1000 * 60 * 60);
     console.log(`\n------->\nupdater set feedURL ${this.feedURL}`);
   }
 
@@ -162,14 +152,43 @@ export default class AutoUpdateManager extends EventEmitter {
     };
   }
 
-  check({ hidePopups } = {}) {
-    this.updateFeedURL().then(() => {
-      if (!hidePopups) {
-        autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
-        autoUpdater.once('error', this.onUpdateError);
+  check = async ({ hidePopups, forceCheck = false } = {}) => {
+    const SKIP_VERSION_KEY = 'skip_version';
+    const res = await axios.get(await this.getFeedUrl());
+    if (res && res.data && res.data.pckVersion) {
+      if (!forceCheck && res.data.pckVersion === this.config.get(SKIP_VERSION_KEY)) {
+        return;
       }
-      autoUpdater.checkForUpdates();
-    });
+      if (this.devMode || this.getState() === DownloadingState) {
+        return;
+      }
+      dialog.showMessageBox({
+        type: 'info',
+        buttons: ['Update', 'Cancel', 'Skip this version'],
+        icon: this.iconURL(),
+        message: `Update available.`,
+        title: 'Update Available',
+        detail: `New EdisonMail available. Version (${res.data.pckVersion}).`,
+      }).then(async ({ response: choice }) => {
+        // Update
+        if (choice === 0) {
+          await this.updateFeedURL();
+          if (!hidePopups) {
+            autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
+            autoUpdater.once('error', this.onUpdateError);
+          }
+          autoUpdater.checkForUpdates();
+        }
+        // Skip this version
+        else if (choice === 2) {
+          this.config.set(SKIP_VERSION_KEY, res.data.pckVersion);
+        }
+      })
+    } else if (!res.data) {
+      if (forceCheck) {
+        this.onUpdateNotAvailable();
+      }
+    }
   }
 
   install() {

@@ -36,11 +36,12 @@ export default class AccountContactField extends React.Component {
     });
     // session.ensureCorrectAccount();
     this._changeSignature(contact);
-    Actions.changeDraftAccount({
+    const changeDraftData = {
       originalHeaderMessageId: draft.headerMessageId,
       originalMessageId: draft.id,
       newParticipants: { from, cc, bcc },
-    });
+    };
+    Actions.changeDraftAccount(changeDraftData);
   };
 
   _changeSignature = account => {

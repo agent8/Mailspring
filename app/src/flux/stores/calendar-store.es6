@@ -15,6 +15,8 @@ import fs from 'fs';
 const calendarType = [
   'application/ics'.toUpperCase(),
   'text/CALENDAR'.toUpperCase(),
+  'text/ics'.toUpperCase(),
+  'application/calendar'.toUpperCase(),
 ];
 
 class CalendarStore extends MailspringStore {
@@ -88,7 +90,7 @@ class CalendarStore extends MailspringStore {
     if (!e.organizer || e.organizer.email === '') {
       return false;
     }
-    return e.needToRsvpByEmail(account.emailAddress);
+    return account.getAllEmails().map(email=>e.needToRsvpByEmail(email)).some(ret => ret);
   }
   _rsvpEventFailed(task) {
     AppEnv.showErrorDialog({ title: 'RSVP Event failed', message: `${task.source} failed.` });
@@ -102,7 +104,6 @@ class CalendarStore extends MailspringStore {
     if (!account) {
       return false;
     }
-    const email = account.emailAddress;
     const messageId = message.id;
     const cal = this.getCalendarByMessageId(messageId);
     if (!cal) {
@@ -112,6 +113,7 @@ class CalendarStore extends MailspringStore {
     if (!e) {
       return null;
     }
+    const email = account.getAllEmails.find(emailAddress => e.needToRsvpByEmail(emailAddress));
     try {
       const newCal = Calender.parse(
         CalendarStore.replyTemplate({
