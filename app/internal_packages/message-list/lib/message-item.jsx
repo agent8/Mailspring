@@ -48,6 +48,7 @@ export default class MessageItem extends React.Component {
     const accountId = message.accountId;
     const fromEmail = message.from && message.from[0] ? message.from[0].email : '';
 
+    this.CONFIG_KEY = 'core.appearance.adaptiveEmailColor';
     this.state = {
       // Holds the downloadData (if any) for all of our files. It's a hash
       // keyed by a fileId. The value is the downloadData.
@@ -60,8 +61,7 @@ export default class MessageItem extends React.Component {
       fromEmail,
       isBlocked: BlockedSendersStore.isBlockedByAccount(accountId, fromEmail),
       trackers: [],
-      viewOriginalEmail:
-        AppEnv.isDarkTheme() && !AppEnv.config.get('core.appearance.adaptiveEmailColor'),
+      viewOriginalEmail: AppEnv.isDarkTheme() && !AppEnv.config.get(this.CONFIG_KEY),
     };
     this.markAsReadTimer = null;
     this.mounted = false;
@@ -74,6 +74,13 @@ export default class MessageItem extends React.Component {
       CalendarStore.listen(this._onCalendarStoreChange),
       BlockedSendersStore.listen(this._onBlockStoreChange),
     ];
+    this.disposable = AppEnv.config.onDidChange(this.CONFIG_KEY, () => {
+      if (this.mounted) {
+        this.setState({
+          viewOriginalEmail: AppEnv.isDarkTheme() && !AppEnv.config.get(this.CONFIG_KEY),
+        });
+      }
+    });
     this.mounted = true;
   }
 
@@ -89,6 +96,7 @@ export default class MessageItem extends React.Component {
         un();
       }
     }
+    this.disposable.dispose();
   }
 
   _onClickBlockBtn = e => {
