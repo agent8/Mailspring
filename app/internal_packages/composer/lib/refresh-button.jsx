@@ -107,7 +107,7 @@ class RefreshButton extends Component {
   refreshPerspective = () => {
     if (!this.state.refreshingMessages) {
       const current = FocusedPerspectiveStore.current();
-      const accounts = FocusedPerspectiveStore.refreshPerspectiveMessages();
+      const accounts = FocusedPerspectiveStore.refreshPerspectiveMessages({source: 'folderList'});
       this.setState({ refreshingMessages: true, cachedSyncFolderData: accounts });
       this.stopRefreshingTimer = setTimeout(this.stopRefreshing, STOP_REFRESHING_DELAY);
 
@@ -118,7 +118,7 @@ class RefreshButton extends Component {
   };
 
   _syncSiftData = _.throttle(categories => {
-    Actions.syncSiftFolder({ categories });
+    Actions.syncSiftFolder({ categories, source: 'folderList' });
   }, 500);
 
   siftRefresh = () => {

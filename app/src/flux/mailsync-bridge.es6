@@ -1090,17 +1090,18 @@ export default class MailsyncBridge {
     }
   };
 
-  _onSyncFolders({ accountId, foldersIds } = {}) {
+  _onSyncFolders({ accountId, foldersIds, source = 'folderItem' } = {}) {
     if (Array.isArray(foldersIds) && accountId) {
       this.sendMessageToAccount(accountId, {
         type: 'sync-folders',
         aid: accountId,
         ids: foldersIds,
+        source,
       });
     }
   }
 
-  _onSyncSiftFolder({ categories = [Sift.categories.Entertainment, Sift.categories.Packages, Sift.categories.Travel, Sift.categories.Bill] } = {}) {
+  _onSyncSiftFolder({ categories = [Sift.categories.Entertainment, Sift.categories.Packages, Sift.categories.Travel, Sift.categories.Bill], source = '' } = {}) {
     if (Array.isArray(categories)) {
       this.sendMessageToAccount(
         null,
