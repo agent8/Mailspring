@@ -258,7 +258,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     this._setPerspective(MailboxPerspective.forCategories(categories));
   }
 
-  refreshPerspectiveMessages({ perspective = null } = {}) {
+  refreshPerspectiveMessages({ perspective = null, source = 'folderItem' } = {}) {
     if (!perspective) {
       perspective = this.current();
     }
@@ -274,7 +274,7 @@ class FocusedPerspectiveStore extends MailspringStore {
         accounts[cat.accountId].push(cat.id);
       });
       for (let key of Object.keys(accounts)) {
-        Actions.syncFolders({ accountId: key, foldersIds: accounts[key] });
+        Actions.syncFolders({ accountId: key, foldersIds: accounts[key], source });
       }
     } else if (
       perspective.categoryIds &&
@@ -285,6 +285,7 @@ class FocusedPerspectiveStore extends MailspringStore {
         Actions.syncFolders({
           accountId: perspective.accountIds[i],
           foldersIds: [perspective.categoryIds[i]],
+          source
         });
       }
     }
