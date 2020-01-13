@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { getDeviceHash, syncGetDeviceHash } from '../system-utils';
 import axios from 'axios';
+import moment from 'moment';
 
 let autoUpdater = null;
 
@@ -118,7 +119,7 @@ export default class AutoUpdateManager extends EventEmitter {
         return;
       }
       this.check({ hidePopups: true });
-    }, 1000 * 60 * 60);
+    }, 1000 * 60 * 60 * 6);
     console.log(`\n------->\nupdater set feedURL ${this.feedURL}`);
   }
 
@@ -153,10 +154,11 @@ export default class AutoUpdateManager extends EventEmitter {
   }
 
   check = async ({ hidePopups, forceCheck = false } = {}) => {
-    const SKIP_VERSION_KEY = 'skip_version';
+    const REMINDER_LATER_KEY = 'reminder_later_date';
     const res = await axios.get(await this.getFeedUrl());
+    const today = moment().format('YYYYMMDD');
     if (res && res.data && res.data.pckVersion) {
-      if (!forceCheck && res.data.pckVersion === this.config.get(SKIP_VERSION_KEY)) {
+      if (!forceCheck && today === this.config.get(REMINDER_LATER_KEY)) {
         return;
       }
       if (this.devMode || this.getState() === DownloadingState) {
@@ -164,7 +166,7 @@ export default class AutoUpdateManager extends EventEmitter {
       }
       dialog.showMessageBox({
         type: 'info',
-        buttons: ['Update', 'Cancel', 'Skip this version'],
+        buttons: ['Update', 'Remind Me Later'],
         icon: this.iconURL(),
         message: `Update available.`,
         title: 'Update Available',
@@ -179,9 +181,9 @@ export default class AutoUpdateManager extends EventEmitter {
           }
           autoUpdater.checkForUpdates();
         }
-        // Skip this version
-        else if (choice === 2) {
-          this.config.set(SKIP_VERSION_KEY, res.data.pckVersion);
+        // Remind Me Later
+        else if (choice === 1) {
+          this.config.set(REMINDER_LATER_KEY, today);
         }
       })
     } else if (!res.data) {
