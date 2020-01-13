@@ -29,10 +29,12 @@ export default class MessageControls extends React.Component {
 
   constructor(props) {
     super(props);
+    this.CONFIG_KEY = 'core.appearance.adaptiveEmailColor';
     this.state = {
       isReplying: false,
       isReplyAlling: false,
       isForwarding: false,
+      showViewOriginalEmail: AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
     };
     this._mounted = false;
     this._replyTimer = null;
@@ -43,11 +45,20 @@ export default class MessageControls extends React.Component {
 
   componentDidMount() {
     this._mounted = true;
+    this.disposable = AppEnv.config.onDidChange(this.CONFIG_KEY, () => {
+      if (this._mounted) {
+        this.setState({
+          showViewOriginalEmail:
+            AppEnv.isDarkTheme() && AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
+        });
+      }
+    });
   }
 
   componentWillUnmount() {
     this._mounted = false;
     this._unlisten();
+    this.disposable.dispose();
     clearTimeout(this._forwardTimer);
     clearTimeout(this._replyAllTimer);
     clearTimeout(this._replyTimer);
@@ -182,15 +193,12 @@ export default class MessageControls extends React.Component {
       select: this._onPrintEmail,
     };
 
-    const showViewOriginalEmail =
-      AppEnv.isDarkTheme() && AppEnv.config.get('core.appearance.adaptiveEmailColor');
-
     if (!this.props.message.canReplyAll()) {
       const noReplyAll = [reply, forward];
       if (!this.props.message.draft) {
         noReplyAll.push(trash);
       }
-      if (showViewOriginalEmail) {
+      if (this.state.showViewOriginalEmail) {
         noReplyAll.push(viewOriginalEmail);
       }
       noReplyAll.push(printEmail);
@@ -202,7 +210,7 @@ export default class MessageControls extends React.Component {
     if (!this.props.message.draft) {
       ret.push(trash);
     }
-    if (showViewOriginalEmail) {
+    if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
     ret.push(printEmail);
