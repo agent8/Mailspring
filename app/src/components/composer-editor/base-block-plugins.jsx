@@ -2,6 +2,7 @@ import React from 'react';
 import SoftBreak from 'slate-soft-break';
 import EditList from 'slate-edit-list';
 import AutoReplace from 'slate-auto-replace';
+const Handlers = require('./slate-edit-code/handlers');
 
 import { BuildToggleButton } from './toolbar-component-factories';
 const TABKey = 9;
@@ -64,10 +65,10 @@ function shouldBeRemoved(value) {
   }
   return listTypes.includes(parentNode.type);
 }
-function toggleList(value, activated, type){
-  if(activated){
+function toggleList(value, activated, type) {
+  if (activated) {
     return EditListPlugin.changes.unwrapList(value.change());
-  }else{
+  } else {
     let changes = EditListPlugin.changes.unwrapList(value.change());
     return EditListPlugin.changes.wrapInList(changes, type);
   }
@@ -359,13 +360,13 @@ export default [
       'contenteditable:indent': (event, value) => {
         const focusBlock = value.focusBlock;
         if (focusBlock && focusBlock.type === BLOCK_CONFIG.div.type) {
-          return value.change().setBlock(BLOCK_CONFIG.blockquote.type);
+          return Handlers.onTab({ lineType: 'div' }, event, value.change());
         }
       },
       'contenteditable:outdent': (event, value) => {
         const focusBlock = value.focusBlock;
-        if (focusBlock && focusBlock.type === BLOCK_CONFIG.blockquote.type) {
-          return value.change().setBlock(BLOCK_CONFIG.div.type);
+        if (focusBlock && focusBlock.type === BLOCK_CONFIG.div.type) {
+          return Handlers.onShiftTab({ lineType: 'div' }, event, value.change());
         }
       },
     },
@@ -418,12 +419,12 @@ export default [
 
   // Normal Tab
   {
-    onKeyDown: function onKeyDown(event, change){
-      if(event.keyCode !== TABKey || event.shiftKey || event.metaKey || event.optionKey){
+    onKeyDown: function onKeyDown(event, change) {
+      if (event.keyCode !== TABKey) {
         return;
       }
       const startOffset = change.value.startOffset;
-      if(startOffset === 0){
+      if (startOffset === 0) {
         if (isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ol_list.type)) {
           return;
         }
@@ -432,8 +433,10 @@ export default [
         }
       }
       event.preventDefault();
-      change.insertText('\u00A0\u00A0\u00A0 ');
-      return change;
+      if (event.shiftKey || event.metaKey || event.optionKey) {
+        return Handlers.onShiftTab({ lineType: 'div' }, event, change);
+      }
+      return Handlers.onTab({ lineType: 'div' }, event, change);
     }
   },
 
