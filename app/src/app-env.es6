@@ -214,7 +214,7 @@ export default class AppEnvConstructor {
     // https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
     window.onerror = (message, url, line, column, originalError) => {
       if (!this.inDevMode()) {
-        return this.reportError(originalError, { url, line, column });
+        return this.reportError(originalError, { url, line, column, originalError });
       }
       try {
         const { line: newLine, column: newColumn } = mapSourcePosition({
@@ -222,11 +222,11 @@ export default class AppEnvConstructor {
           line,
           column,
         });
-        return this.reportError(originalError, { url, line: newLine, column: newColumn });
+        return this.reportError(originalError, { url, line: newLine, column: newColumn, originalError });
       } catch (e) {
         console.error(e);
       }
-      return this.reportError(originalError, { url, line, column });
+      return this.reportError(originalError, { url, line, column, originalError });
     };
 
     process.on('uncaughtException', e => {
@@ -1502,80 +1502,80 @@ export default class AppEnvConstructor {
       }
     }
   }
-  mockCal(){
-     const calData = 'BEGIN:VCALENDAR\n' +
-       'PRODID:-//Google Inc//Google Calendar 70.9054//EN\n' +
-       'VERSION:2.0\n' +
-       'CALSCALE:GREGORIAN\n' +
-       'METHOD:REQUEST\n' +
-       'BEGIN:VEVENT\n' +
-       'DTSTART:20200116T000000Z\n' +
-       'DTEND:20200116T020000Z\n' +
-       'DTSTAMP:20200107T205109Z\n' +
-       'ORGANIZER;CN=bonnie@edison.tech:mailto:bonnie@edison.tech\n' +
-       'UID:1n4ttnp9gmvfv3nfjvdg2jlra6@google.com\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=john@edison.tech;X-NUM-GUESTS=0:mailto:john@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=alec@edison.tech;X-NUM-GUESTS=0:mailto:alec@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=alison@edison.tech;X-NUM-GUESTS=0:mailto:alison@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=Hetal Pandya;X-NUM-GUESTS=0:mailto:hetal@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=sarah@edison.tech;X-NUM-GUESTS=0:mailto:sarah@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=megan@edison.tech;X-NUM-GUESTS=0:mailto:megan@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE\n' +
-       ' ;CN=bonnie@edison.tech;X-NUM-GUESTS=0:mailto:bonnie@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=Jessica Cooper;X-NUM-GUESTS=0:mailto:jessica@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=marcus@edison.tech;X-NUM-GUESTS=0:mailto:marcus@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=richard@edison.tech;X-NUM-GUESTS=0:mailto:richard@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=daniel@edison.tech;X-NUM-GUESTS=0:mailto:daniel@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=steve@edison.tech;X-NUM-GUESTS=0:mailto:steve@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=evelyn@edison.tech;X-NUM-GUESTS=0:mailto:evelyn@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=noble@edison.tech;X-NUM-GUESTS=0:mailto:noble@edison.tech\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=Mikael Berner;X-NUM-GUESTS=0:mailto:mikael@edison.tech\n' +
-       'ATTENDEE;CUTYPE=RESOURCE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TR\n' +
-       ' UE;CN=Edison Conference 1;X-NUM-GUESTS=0:mailto:edison.tech_2d3631323939393\n' +
-       ' 530393936@resource.calendar.google.com\n' +
-       'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
-       ' TRUE;CN=john.vanvooren@edison.tech;X-NUM-GUESTS=0:mailto:john.vanvooren@edi\n' +
-       ' son.tech\n' +
-       'X-MICROSOFT-CDO-OWNERAPPTID:-1014549078\n' +
-       'CREATED:20200107T204854Z\n' +
-       'DESCRIPTION:-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~\n' +
-       ' :~:~:~:~:~:~:~:~::~:~::-\\nPlease do not edit this section of the descriptio\n' +
-       ' n.\\n\\nView your event at https://www.google.com/calendar/event?action=VIEW&\n' +
-       ' eid=MW40dHRucDlnbXZmdjNuZmp2ZGcyamxyYTYgZXZlbHluQGVkaXNvbi50ZWNo&tok=MTgjYm\n' +
-       ' 9ubmllQGVkaXNvbi50ZWNoYjk2YTU2YjU4ZWY2NjA2YjZjMmQ1ZGQ5OTVjOTAxODE5YTgwNWUxZ\n' +
-       ' Q&ctz=America%2FLos_Angeles&hl=en&es=1.\\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:\n' +
-       ' ~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-\n' +
-       'LAST-MODIFIED:20200107T205107Z\n' +
-       'LOCATION: Edison Conference 1\\, Edison Conference 1\n' +
-       'SEQUENCE:0\n' +
-       'STATUS:CONFIRMED\n' +
-       'SUMMARY:Edison Sales Summit - Data Science Presentation\n' +
-       'TRANSP:OPAQUE\n' +
-       'END:VEVENT\n' +
-       'END:VCALENDAR\n';
-     const Calendar = require('./flux/models/calendar').default;
-     const repeat = 300;
-     const start = Date.now();
-     for (let i =0; i< repeat; i++){
-       const calendar = Calendar.parse(calData);
-       const Event = calendar.getFirstEvent();
-       console.log(Event.organizer);
-     }
-     console.log(`used ${Date.now() - start}ms`);
+  mockCal() {
+    const calData = 'BEGIN:VCALENDAR\n' +
+      'PRODID:-//Google Inc//Google Calendar 70.9054//EN\n' +
+      'VERSION:2.0\n' +
+      'CALSCALE:GREGORIAN\n' +
+      'METHOD:REQUEST\n' +
+      'BEGIN:VEVENT\n' +
+      'DTSTART:20200116T000000Z\n' +
+      'DTEND:20200116T020000Z\n' +
+      'DTSTAMP:20200107T205109Z\n' +
+      'ORGANIZER;CN=bonnie@edison.tech:mailto:bonnie@edison.tech\n' +
+      'UID:1n4ttnp9gmvfv3nfjvdg2jlra6@google.com\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=john@edison.tech;X-NUM-GUESTS=0:mailto:john@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=alec@edison.tech;X-NUM-GUESTS=0:mailto:alec@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=alison@edison.tech;X-NUM-GUESTS=0:mailto:alison@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=Hetal Pandya;X-NUM-GUESTS=0:mailto:hetal@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=sarah@edison.tech;X-NUM-GUESTS=0:mailto:sarah@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=megan@edison.tech;X-NUM-GUESTS=0:mailto:megan@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE\n' +
+      ' ;CN=bonnie@edison.tech;X-NUM-GUESTS=0:mailto:bonnie@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=Jessica Cooper;X-NUM-GUESTS=0:mailto:jessica@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=marcus@edison.tech;X-NUM-GUESTS=0:mailto:marcus@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=richard@edison.tech;X-NUM-GUESTS=0:mailto:richard@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=daniel@edison.tech;X-NUM-GUESTS=0:mailto:daniel@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=steve@edison.tech;X-NUM-GUESTS=0:mailto:steve@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=evelyn@edison.tech;X-NUM-GUESTS=0:mailto:evelyn@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=noble@edison.tech;X-NUM-GUESTS=0:mailto:noble@edison.tech\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=Mikael Berner;X-NUM-GUESTS=0:mailto:mikael@edison.tech\n' +
+      'ATTENDEE;CUTYPE=RESOURCE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TR\n' +
+      ' UE;CN=Edison Conference 1;X-NUM-GUESTS=0:mailto:edison.tech_2d3631323939393\n' +
+      ' 530393936@resource.calendar.google.com\n' +
+      'ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=\n' +
+      ' TRUE;CN=john.vanvooren@edison.tech;X-NUM-GUESTS=0:mailto:john.vanvooren@edi\n' +
+      ' son.tech\n' +
+      'X-MICROSOFT-CDO-OWNERAPPTID:-1014549078\n' +
+      'CREATED:20200107T204854Z\n' +
+      'DESCRIPTION:-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~\n' +
+      ' :~:~:~:~:~:~:~:~::~:~::-\\nPlease do not edit this section of the descriptio\n' +
+      ' n.\\n\\nView your event at https://www.google.com/calendar/event?action=VIEW&\n' +
+      ' eid=MW40dHRucDlnbXZmdjNuZmp2ZGcyamxyYTYgZXZlbHluQGVkaXNvbi50ZWNo&tok=MTgjYm\n' +
+      ' 9ubmllQGVkaXNvbi50ZWNoYjk2YTU2YjU4ZWY2NjA2YjZjMmQ1ZGQ5OTVjOTAxODE5YTgwNWUxZ\n' +
+      ' Q&ctz=America%2FLos_Angeles&hl=en&es=1.\\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:\n' +
+      ' ~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-\n' +
+      'LAST-MODIFIED:20200107T205107Z\n' +
+      'LOCATION: Edison Conference 1\\, Edison Conference 1\n' +
+      'SEQUENCE:0\n' +
+      'STATUS:CONFIRMED\n' +
+      'SUMMARY:Edison Sales Summit - Data Science Presentation\n' +
+      'TRANSP:OPAQUE\n' +
+      'END:VEVENT\n' +
+      'END:VCALENDAR\n';
+    const Calendar = require('./flux/models/calendar').default;
+    const repeat = 300;
+    const start = Date.now();
+    for (let i = 0; i < repeat; i++) {
+      const calendar = Calendar.parse(calData);
+      const Event = calendar.getFirstEvent();
+      console.log(Event.organizer);
+    }
+    console.log(`used ${Date.now() - start}ms`);
   }
   printChromeVersion() {
     console.log(process.versions['chrome']);
