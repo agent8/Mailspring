@@ -557,9 +557,11 @@ class MessageList extends React.Component {
     }
   }
   _onSelectText = e => {
-
     e.preventDefault();
     e.stopPropagation();
+    if (e.target.className && e.target.className.indexOf("message-subject") === -1) {
+      return;
+    }
 
     const textNode = e.currentTarget.childNodes[0];
     const range = document.createRange();
@@ -633,17 +635,16 @@ class MessageList extends React.Component {
             onContextMenu={this._onContactContextMenu.bind(this, subject)}
           >
             {subject}
+            {!this.state.inOutbox && <MailImportantIcon thread={this.state.currentThread} />}
+            {!this.state.inOutbox && <MailLabelSet
+              noWrapper
+              removable
+              includeCurrentCategories
+              messages={this.state.messages}
+              thread={this.state.currentThread}
+              onLabelRemoved={this._onLabelsRemoved}
+            />}
           </span>
-          {!this.state.inOutbox && <MailImportantIcon thread={this.state.currentThread} />}
-          {!this.state.inOutbox && <MailLabelSet
-            noWrapper
-            removable
-            includeCurrentCategories
-            messages={this.state.messages}
-            thread={this.state.currentThread}
-            onLabelRemoved={this._onLabelsRemoved}
-          />
-          }
         </div>
         {/* {this._renderIcons()} */}
       </div>
