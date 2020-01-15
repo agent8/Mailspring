@@ -269,9 +269,7 @@ export default class MessageItem extends React.Component {
     const { files = [], body, id } = this.props.message;
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
-      return (
-        (!f.contentId || !(body || '').includes(`cid:${f.contentId}`))
-      );
+      return !f.contentId || !(body || '').includes(`cid:${f.contentId}`);
     });
 
     return (
@@ -309,24 +307,6 @@ export default class MessageItem extends React.Component {
     );
   }
 
-  _renderBlockBtn() {
-    const { message } = this.props;
-    const { isBlocked } = this.state;
-    let btnText = '';
-
-    if (message.listUnsubscribe) {
-      btnText = isBlocked ? 'Resubscribe' : 'Unsubscribe';
-    } else {
-      btnText = isBlocked ? 'Unblock' : 'Block';
-    }
-
-    return (
-      <div className="blockBtn" onClick={this._onClickBlockBtn}>
-        {btnText}
-      </div>
-    );
-  }
-
   _renderBlockNote() {
     if (this.state.isBlocked) {
       const { message } = this.props;
@@ -360,7 +340,7 @@ export default class MessageItem extends React.Component {
 
   _renderHeader() {
     const { message, thread, messages } = this.props;
-    const { trackers } = this.state;
+    const { trackers, isBlocked } = this.state;
     return (
       <header
         ref={el => (this._headerEl = el)}
@@ -392,6 +372,8 @@ export default class MessageItem extends React.Component {
             thread={thread}
             message={message}
             messages={messages}
+            isBlocked={isBlocked}
+            onBlock={this._onClickBlockBtn}
             threadPopedOut={this.props.threadPopedOut}
             hideControls={this.props.isOutboxDraft}
             trackers={trackers}
@@ -401,7 +383,6 @@ export default class MessageItem extends React.Component {
             }}
           />
         </div>
-        {this._renderBlockBtn()}
         <div className="row">
           {this._renderEmailAvatar()}
           <div>
