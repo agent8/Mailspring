@@ -38,7 +38,8 @@ const fromJSONMapping = val => {
     return undefined;
   }
   const keys = Object.keys(mappings);
-  return keys[parseInt(val)];
+  const role = keys[parseInt(val)];
+  return role === 'none' ? null : role;
 };
 
 const StandardRoleMap = ToObject([

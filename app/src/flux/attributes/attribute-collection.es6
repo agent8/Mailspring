@@ -69,13 +69,13 @@ export default class AttributeCollection extends Attribute {
 
     return vals.map(val => {
       if (this.itemClass && !(val instanceof this.itemClass)) {
-        if(this.itemClass !== 'Label'){
-          throw new Error(
+        // if(this.itemClass !== 'Label'){
+          console.warn( new Error(
             `AttributeCollection::toJSON: Value \`${val}\` in ${this.modelKey} is not an ${
               this.itemClass.name
             }`
-          );
-        }
+          ));
+        // }
       }
       return val.toJSON !== undefined ? val.toJSON() : val;
     });

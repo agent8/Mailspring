@@ -136,7 +136,6 @@ export class AttachmentItem extends Component {
 
   componentDidMount() {
     this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
-    this._attachmentDBDataListener = AttachmentStore.listen(this._onAttachmentDataUpdated);
   }
 
   componentWillUnmount() {
@@ -153,10 +152,6 @@ export class AttachmentItem extends Component {
       this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
     }
   }
-
-  _onAttachmentDataUpdated = () => {
-
-  };
 
   _onDownloadStoreChange = () => {
     const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);

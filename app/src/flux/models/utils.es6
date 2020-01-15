@@ -202,6 +202,16 @@ module.exports = Utils = {
 
     return v;
   },
+  populateWithModel: (json, className) => {
+    if(!json || (typeof className !== 'string' || className.length === 0)){
+      return null;
+    }
+    const model = Utils.getEmptyModel(className);
+    if(!model){
+      return null;
+    }
+    return Object.assign(model, json);
+  },
 
   convertToModel(json) {
     if (!json) {

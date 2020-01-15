@@ -21,7 +21,8 @@ import Utils from './models/utils';
 import AnalyzeDBTask from './tasks/analyze-db-task';
 import SiftChangeSharingOptTask from './tasks/sift-change-sharing-opt-task';
 import Message from './models/message';
-
+let FocusedPerspectiveStore = null;
+let Thread = null;
 const MAX_CRASH_HISTORY = 10;
 
 const VERBOSE_UNTIL_KEY = 'core.sync.verboseUntil';
@@ -726,7 +727,7 @@ export default class MailsyncBridge {
           passAsIs = true;
         }
       }
-      if (passAsIs){
+      if (passAsIs || type === 'unpersist'){
         console.log('passing data from native to UI without going through db');
         ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels });
         this._onIncomingChangeRecord(
@@ -738,6 +739,9 @@ export default class MailsyncBridge {
         );
         return;
       }
+      let threadIndex = -1;
+      let threadCategories = [];
+      let messsageindex = -1;
       tmpModels.forEach(m=>{
         if(m.constructor.name !== modelClass){
           return;
@@ -748,7 +752,22 @@ export default class MailsyncBridge {
         if(where[m.constructor.pseudoPrimaryJsKey]){
           let tmp = DatabaseStore.findBy(klass, where);
           if (m.constructor.name === 'Message') {
-            tmp.where([]).linkDB(Message.attributes.body);
+            tmp.linkDB(Message.attributes.body);
+          }else if (m.constructor.name === 'Thread'){
+            FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+            const perspective = FocusedPerspectiveStore.current();
+            if(perspective){
+              const categoryIds = perspective.categoryIds;
+              if(Array.isArray(categoryIds) && categoryIds.length > 0){
+                console.log(`adding category constrain, ${categoryIds}`);
+                Thread = Thread || require('./models/thread').default;
+                const thread = DatabaseStore.findBy(Thread, where)
+                  .where([Thread.attributes.categories.containsAny(categoryIds)]);
+                promises.push(thread);
+                threadIndex = promises.length -1;
+                threadCategories = categoryIds;
+              }
+            }
           }
           promises.push(tmp)
         }else{
@@ -757,13 +776,44 @@ export default class MailsyncBridge {
       });
       if(promises.length > 0) {
         Promise.all(promises).then(models => {
+          const parsedModels = [];
+          models.forEach((model, index) => {
+            if(!model){
+              return;
+            }
+            const pseudoPrimaryKey = model.constructor.pseudoPrimaryJsKey || 'id';
+            let duplicate = false;
+            for (let m of parsedModels ) {
+              if(!m){
+                AppEnv.reportError(new Error(`There is an null is the parsed change record models send to UI`));
+                continue;
+              }
+              if(m[pseudoPrimaryKey] === model[pseudoPrimaryKey]){
+                duplicate = true;
+                // if(index === threadIndex){
+                //   model.categories = threadCategories;
+                // }
+                Object.assign(m, model);
+                break;
+              }
+            }
+            if(!duplicate){
+              // if(index === threadIndex){
+              //   model.categories = threadCategories;
+              // }
+              parsedModels.push(model);
+            }
+          });
+          if(parsedModels.length === 0){
+            return;
+          }
           // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models });
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels });
           this._onIncomingChangeRecord(
             new DatabaseChangeRecord({
-              type, // TODO BG move to "model" naming style, finding all uses might be tricky
+              type,
               objectClass: modelClass,
-              objects: models,
+              objects: parsedModels,
             })
           );
         });
@@ -839,7 +889,9 @@ export default class MailsyncBridge {
       new DatabaseChangeRecord({
         type,
         objectClass: modelClass,
-        objects: models,
+        objects: models.map(model => {
+          return Utils.populateWithModel(model, modelClass);
+        }),
       })
     );
   };
