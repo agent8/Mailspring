@@ -18,6 +18,8 @@ export default class MessageControls extends React.Component {
   static displayName = 'MessageControls';
   static propTypes = {
     thread: PropTypes.object,
+    isBlocked: PropTypes.bool,
+    onBlock: PropTypes.func,
     message: PropTypes.object.isRequired,
     messages: PropTypes.array,
     threadPopedOut: PropTypes.bool,
@@ -411,6 +413,30 @@ export default class MessageControls extends React.Component {
     clipboard.writeText(data);
   };
 
+  _renderBlockBtn() {
+    const { message, isBlocked, onBlock } = this.props;
+    let btnText = '';
+
+    if (message.listUnsubscribe) {
+      btnText = isBlocked ? 'Resubscribe' : 'Unsubscribe';
+    } else {
+      btnText = isBlocked ? 'Unblock' : 'Block';
+    }
+
+    return (
+      <div
+        className="blockBtn"
+        onClick={e => {
+          if (onBlock && typeof onBlock === 'function') {
+            onBlock(e);
+          }
+        }}
+      >
+        {btnText}
+      </div>
+    );
+  }
+
   render() {
     const items = this._items();
     const { trackers } = this.props;
@@ -453,17 +479,19 @@ export default class MessageControls extends React.Component {
         ) : null}
         <MessageTimestamp className="message-time" isDetailed date={this.props.message.date} />
         {!this.props.hideControls ? (
+          <div className="replyBtn" title={items[0].name} onClick={items[0].select}>
+            <RetinaImg
+              name={items[0].image}
+              style={{ width: 24, height: 24 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+          </div>
+        ) : null}
+        {this._renderBlockBtn()}
+        {!this.props.hideControls ? (
           <ButtonDropdown
-            primaryItem={
-              <RetinaImg
-                name={items[0].image}
-                style={{ width: 24, height: 24 }}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-              />
-            }
-            primaryTitle={items[0].name}
-            primaryClick={items[0].select}
+            primaryClick={() => {}}
             closeOnMenuClick
             menu={this._dropdownMenu(items.slice(1))}
           />
