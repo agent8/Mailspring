@@ -96,7 +96,6 @@ const c2 = new ListTabular.Column({
   name: 'Participants',
   maxWidth: 200,
   resolver: thread => {
-    const messages = thread.__messages || [];
     let calendar = null;
     const hasCalendar = thread.hasCalendar;
     if (hasCalendar) {
@@ -104,9 +103,7 @@ const c2 = new ListTabular.Column({
     }
 
     let attachment = null;
-    const haveAttachments =
-      thread.attachmentCount > 0 && messages.find(m => Utils.showIconForAttachments(m.files));
-    if (haveAttachments) {
+    if (thread.hasAttachments) {
       attachment = <div className="thread-icon thread-icon-attachment" />;
     }
     return (

@@ -20,6 +20,7 @@ import Actions from './actions';
 import Utils from './models/utils';
 import AnalyzeDBTask from './tasks/analyze-db-task';
 import SiftChangeSharingOptTask from './tasks/sift-change-sharing-opt-task';
+import Message from './models/message';
 
 const MAX_CRASH_HISTORY = 10;
 
@@ -745,7 +746,11 @@ export default class MailsyncBridge {
         where[m.constructor.pseudoPrimaryJsKey] = m[m.constructor.pseudoPrimaryJsKey];
         const klass = m.constructor;
         if(where[m.constructor.pseudoPrimaryJsKey]){
-          promises.push(DatabaseStore.findBy(klass, where))
+          let tmp = DatabaseStore.findBy(klass, where);
+          if (m.constructor.name === 'Message') {
+            tmp.where([]).linkDB(Message.attributes.body);
+          }
+          promises.push(tmp)
         }else{
           console.error(`Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`);
         }

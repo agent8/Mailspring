@@ -84,14 +84,20 @@ class CircularCache {
   }
   get(cacheKey = ''){
     if(typeof cacheKey !== 'string' || cacheKey.length === 0){
+      console.error(`No cacheKey set ${cacheKey}`);
       return null;
     }
-    return this._findCacheByKey(cacheKey);
+    const tmp = this._findCacheByKey(cacheKey);
+    if(tmp){
+      return tmp.val;
+    }
+    return null;
   }
   _findCacheByKey = cacheKey=>{
     for(let i=0; i < this.cacheLength; i++){
       if( cacheKey === this.cacheContents[i].key){
         this.cacheContents[i].lastAccess = Date.now();
+        console.log(`cache found at index ${i}`);
         return this.cacheContents[i];
       }
     }
@@ -100,7 +106,13 @@ class CircularCache {
 
   set(cacheKey, cacheContent){
     if(typeof cacheKey !== 'string' || cacheKey.length === 0){
+      console.error(`No cacheKey set ${cacheKey}`);
       return ;
+    }
+    const currentCache = this._findCacheByKey(cacheKey);
+    if(currentCache){
+      currentCache.val = cacheContent;
+      return;
     }
     const index = this._findNextAvailableCacheIndex();
     this.cacheContents[index] = {
@@ -108,6 +120,7 @@ class CircularCache {
       lastAccess: Date.now(),
       key: cacheKey
     };
+    console.log(`cache set at index ${index}`);
   }
 
   _findNextAvailableCacheIndex() {
@@ -120,7 +133,7 @@ class CircularCache {
     console.log(`New Cache next Index ${this.nextAvailableCacheIndex}`);
     return this.nextAvailableCacheIndex;
   }
-};
+}
 module.exports = Utils = {
   createCircularBuffer: maxItems =>{
     return new CircularCache(maxItems);
