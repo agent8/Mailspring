@@ -14,59 +14,17 @@ import MessageBody from './message-body';
 import CategoryStore from '../stores/category-store';
 let AttachmentStore = null;
 
-/*
-Public: The Message model represents an email message or draft.
+const mapping = {
+  attachmentIdsFromJSON: json =>{
+    if(!Array.isArray(json)){
+      return [];
+    }
+    return json.map(attachment => {
+      return File.fromPartialData(attachment);
+    })
+  }
+}
 
-Messages are a sub-object of threads. The content of a message === immutable (with the
-exception being drafts). Nylas does not support operations such as move || delete on
-individual messages; those operations should be performed on the message’s thread.
-All messages are part of a thread, even if that thread has only one message.
-
-## Attributes
-
-`to`: {AttributeCollection} A collection of {Contact} objects
-
-`cc`: {AttributeCollection} A collection of {Contact} objects
-
-`bcc`: {AttributeCollection} A collection of {Contact} objects
-
-`from`: {AttributeCollection} A collection of {Contact} objects.
-
-`replyTo`: {AttributeCollection} A collection of {Contact} objects.
-
-`date`: {AttributeDateTime} When the message was delivered. Queryable.
-
-`subject`: {AttributeString} The subject of the thread. Queryable.
-
-`snippet`: {AttributeString} A short, 140-character plain-text summary of the message body.
-
-`unread`: {AttributeBoolean} True if the message === unread. Queryable.
-
-`starred`: {AttributeBoolean} True if the message === starred. Queryable.
-
-`draft`: {AttributeBoolean} True if the message === a draft. Queryable.
-
-`version`: {AttributeNumber} The version number of the message. Message
-   versions are used for drafts, && increment when attributes are changed.
-
-`files`: {AttributeCollection} A set of {File} models representing
-   the attachments on this thread.
-
-`body`: {AttributeJoinedData} The HTML body of the message. You must specifically
- request this attribute when querying for a Message using the {{AttributeJoinedData::include}}
- method.
-
-`pristine`: {AttributeBoolean} True if the message === a draft which has not been
- edited since it was created.
-
-`threadId`: {AttributeString} The ID of the Message's parent {Thread}. Queryable.
-
-`replyToHeaderMessageId`: {AttributeString} The headerMessageID of a {Message} that this message is in reply to.
-
-This class also inherits attributes from {Model}
-
-Section: Models
-*/
 export default class Message extends ModelWithMetadata {
   static fieldsNotInDB=[
     'calendarReply',
@@ -199,9 +157,12 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
-    files: Attributes.Collection({
+    attachmentIds: Attributes.Collection({
+      jsModelKey: 'attachmentIds',
       modelKey: 'files',
-      itemClass: File,
+      queryable: true,
+      loadFromColumn: true,
+      fromJSONMapping: mapping.attachmentIdsFromJSON
     }),
 
     unread: Attributes.Boolean({
@@ -371,7 +332,7 @@ export default class Message extends ModelWithMetadata {
     this.bcc = this.bcc || [];
     this.from = this.from || [];
     this.replyTo = this.replyTo || [];
-    this.files = this.files || [];
+    // this.files = this.files || [];
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
@@ -507,6 +468,30 @@ export default class Message extends ModelWithMetadata {
     }
     return false;
   }
+  get files(){
+    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+    if(!Array.isArray(this.attachmentIds)){
+      console.error(`attachmentIds is not array`, this.attachmentIds);
+      return [];
+    }
+    const rets = [];
+    this.attachmentIds.forEach(partialAttachmentData => {
+      const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
+      if(fileData){
+        rets.push(fileData);
+      }
+    });
+    return rets;
+  }
+  // set files(attachments){
+  //   AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+  //   if(!Array.isArray(attachments)){
+  //     return;
+  //   }
+  //   attachments.forEach(attachment => {
+  //    AttachmentStore.setAttachmentData(attachment);
+  //   })
+  // }
 
   // Public: Returns an {Array} of {File} IDs
   fileIds() {

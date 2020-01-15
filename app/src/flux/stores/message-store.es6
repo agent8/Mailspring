@@ -191,6 +191,7 @@ class MessageStore extends MailspringStore {
     this.listenTo(Actions.popoutThread, this._onPopoutThread);
     this.listenTo(Actions.fetchAttachmentsByMessage, this.fetchMissingAttachmentsByMessage);
     this.listenTo(Actions.setCurrentWindowTitle, this.setWindowTitle);
+    this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
     return this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
   }
 
@@ -485,6 +486,24 @@ class MessageStore extends MailspringStore {
   _collapseItem(item) {
     delete this._itemsExpanded[item.id];
   }
+
+  _onAttachmentCacheChange = ({attachmentChange = []} = {}) => {
+    let dataChange = false;
+    for (let k = 0; k < attachmentChange.length; k++){
+      const change = attachmentChange[k];
+     for (let i = 0; i < this._items.length; i++){
+        if(this._items[i].id === change.messageId){
+          dataChange = true;
+          break;
+        }
+      }
+     if(dataChange){
+       console.warn(`attachment cache updated`);
+       this._fetchFromCache();
+       return;
+     }
+    }
+  };
 
   _fetchFromCache(options) {
     if (options == null) options = {};

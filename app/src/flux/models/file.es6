@@ -24,26 +24,56 @@ Section: Models
 */
 export default class File extends Model {
   static attributes = Object.assign({}, Model.attributes, {
+    data: Attributes.Ignore(),
     filename: Attributes.String({
       modelKey: 'filename',
       queryable: true,
+      loadFromColumn: true,
     }),
     size: Attributes.Number({
       modelKey: 'size',
+      queryable: true,
+      loadFromColumn: true,
     }),
     contentType: Attributes.String({
       modelKey: 'contentType',
+      queryable: true,
+      loadFromColumn: true,
     }),
     messageId: Attributes.String({
       modelKey: 'messageId',
+      queryable: true,
+      loadFromColumn: true,
     }),
     contentId: Attributes.String({
       modelKey: 'contentId',
+      queryable: true,
+      loadFromColumn: true,
     }),
     isInline: Attributes.Boolean({
       modelKey: 'isInline',
+      queryable: true,
+      loadFromColumn: true,
     }),
+    missingData: Attributes.Boolean({
+      modelKey: 'missingData'
+    })
   });
+  static fromPartialData(data){
+    const tmp = new File();
+    tmp.fromJSON(data);
+    if(!tmp.id && data.id){
+      tmp.id = data.id;
+    }
+    tmp.missingData = true;
+    return tmp;
+  }
+  constructor({mimeType = '', ...extra} = {}) {
+    super(extra);
+    if (mimeType) {
+      this.contentType = mimeType;
+    }
+  }
 
   // Public: Files can have empty names, or no name. `displayName` returns the file's
   // name if one is present, and falls back to appropriate default name based on

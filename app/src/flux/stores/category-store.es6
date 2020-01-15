@@ -221,7 +221,7 @@ class CategoryStore extends MailspringStore {
     }
     let updated = false;
     objects.forEach(folderState => {
-      const folder = this.byId(folderState.accountId, folderState.id);
+      const folder = this.byFolderId(folderState.accountId, folderState.id);
       if (folder) {
         updated = true;
         folder.updatedAt = folderState.lastSynced;
