@@ -113,6 +113,11 @@ export default class QuerySubscription {
       }
       if (record.type === 'unpersist') {
         for (const item of record.objects) {
+          if(!item){
+            unknownImpacts += 1;
+            console.error(`unpersist record obj is null, ${record.objectClass}`);
+            continue;
+          }
           const offset = this._set.offsetOfId(item.id);
           if (offset !== -1) {
             this._set.removeModelAtOffset(item, offset);
@@ -121,6 +126,11 @@ export default class QuerySubscription {
         }
       } else if (record.type === 'persist') {
         for (const item of record.objects) {
+          if(!item){
+            unknownImpacts += 1;
+            console.error(`persist record obj is null, ${record.objectClass}`);
+            continue;
+          }
           const offset = this._set.offsetOfId(item.id);
           const itemIsInSet = offset !== -1;
           const itemShouldBeInSet = item.matches(this._query.matchers());

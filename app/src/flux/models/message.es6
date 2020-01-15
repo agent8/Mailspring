@@ -327,15 +327,18 @@ export default class Message extends ModelWithMetadata {
   constructor(data = {}) {
     super(data);
     this.subject = this.subject || '';
+    console.warn(`subject is: ${this.subject}`);
     this.to = this.to || [];
     this.cc = this.cc || [];
     this.bcc = this.bcc || [];
     this.from = this.from || [];
     this.replyTo = this.replyTo || [];
-    // this.files = this.files || [];
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
+    if(Array.isArray(data.files)){
+      this.attachmentIds = data.files
+    }
   }
 
   toJSON(options) {
@@ -483,15 +486,9 @@ export default class Message extends ModelWithMetadata {
     });
     return rets;
   }
-  // set files(attachments){
-  //   AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-  //   if(!Array.isArray(attachments)){
-  //     return;
-  //   }
-  //   attachments.forEach(attachment => {
-  //    AttachmentStore.setAttachmentData(attachment);
-  //   })
-  // }
+  set files(attachments){
+    this.attachmentIds = attachments;
+  }
 
   // Public: Returns an {Array} of {File} IDs
   fileIds() {
@@ -611,6 +608,10 @@ export default class Message extends ModelWithMetadata {
   }
 
   isForwarded() {
+    if(!this.subject){
+      console.error(`subject is ${this.subject}`);
+      return false;
+    }
     if (this.subject.toLowerCase().startsWith('fwd:')) {
       return true;
     }

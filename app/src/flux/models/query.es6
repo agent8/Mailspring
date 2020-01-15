@@ -583,12 +583,13 @@ export default class ModelQuery {
     const distinct = this._distinct[dbKey] ? ' DISTINCT' : '';
 
     const joins = allMatchers.filter(matcher => matcher.attr instanceof AttributeCollection);
-
+    //
     if (joins.length === 1 && this._canSubselectForJoin(joins[0], allMatchers, dbKey)) {
-      const subSql = this._subselectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
-      return `SELECT ${distinct} ${selectSql} FROM \`${
-        this._klass[dbKey].name
-        }\` WHERE \`${this._pseudoPrimaryKey[dbKey]}\` IN (${subSql}) ${order}`;
+      console.error(`They used to use subselect sql`);
+    //   const subSql = this._subselectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
+    //   return `SELECT ${distinct} ${selectSql} FROM \`${
+    //     this._klass[dbKey].name
+    //     }\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
     }
 
 
@@ -631,7 +632,7 @@ export default class ModelQuery {
     const table = returningAttribute.tableNameForJoinAgainst(this._klass[dbKey]);
     const wheres = subselectMatchers.map(c => c.whereSQL(this._klass[dbKey])).filter(c => !!c);
 
-    let innerSQL = `SELECT \`id\` FROM \`${table}\` WHERE ${wheres.join(
+    let innerSQL = `SELECT \`pid\` FROM \`${table}\` WHERE ${wheres.join(
       ' AND '
     )} ${order} ${limit}`;
     innerSQL = innerSQL.replace(new RegExp(`\`${this._klass[dbKey].name}\``, 'g'), `\`${table}\``);
