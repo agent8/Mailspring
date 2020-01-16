@@ -232,7 +232,9 @@ class FocusedPerspectiveStore extends MailspringStore {
     } else {
       // if this perspective not a tab, judge if current sidebar need to update
 
-      if (!perspective.isEqual(this._currentSidebar)) {
+      if (perspective.isEqual(this._currentSidebar)) {
+        return;
+      } else {
         this._currentSidebar = perspective;
         AppEnv.savedState.perspective = perspective.toJSON();
       }
