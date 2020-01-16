@@ -223,6 +223,8 @@ class FocusedPerspectiveStore extends MailspringStore {
   }
 
   _setPerspective(perspective, sidebarAccountIds, forceTrigger = false) {
+    let shouldTrigger = forceTrigger;
+
     if (perspective.isTab) {
       // if this perspective is a tab, it must be a tab of this current sidebar
 
@@ -237,6 +239,7 @@ class FocusedPerspectiveStore extends MailspringStore {
       } else {
         this._currentSidebar = perspective;
         AppEnv.savedState.perspective = perspective.toJSON();
+        shouldTrigger = true;
       }
     }
 
@@ -246,8 +249,6 @@ class FocusedPerspectiveStore extends MailspringStore {
     } else {
       focusPerspective = perspective;
     }
-
-    let shouldTrigger = forceTrigger;
 
     if (!focusPerspective.isEqual(this._current)) {
       this._current = focusPerspective;

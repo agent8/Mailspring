@@ -72,7 +72,7 @@ class TitleSearchBar extends Component {
           {perspective.tab.map(tab => {
             return (
               <div
-                className={`tab-item${current === tab ? ' select' : ''}`}
+                className={`tab-item${current.isEqual(tab) ? ' select' : ''}`}
                 onClick={() => {
                   Actions.focusMailboxPerspective(tab);
                 }}
