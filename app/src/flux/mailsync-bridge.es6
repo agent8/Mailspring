@@ -723,7 +723,7 @@ export default class MailsyncBridge {
       const tmpModels = modelJSONs.map(Utils.convertToModel);
       let passAsIs = false;
       if(tmpModels.length > 0){
-        if (tmpModels[0].constructor.name === modelClass && tmpModels[0].constructor.passAsIs){
+        if (tmpModels[0].constructor.passAsIs){
           passAsIs = true;
         }
       }

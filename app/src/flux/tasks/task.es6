@@ -15,6 +15,7 @@ const Status = {
 export default class Task extends Model {
   static Status = Status;
   static SubclassesUseModelTable = Task;
+  static passAsIs = true;
   static mappingFunc={
 
   };
