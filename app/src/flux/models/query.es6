@@ -438,7 +438,19 @@ export default class ModelQuery {
             continue;
           }
           if (attr.mergeIntoModel) {
-            const tmp = attr.fromColumn(row[attr.tableColumn]);
+            const dataString = row[attr.tableColumn];
+            if(typeof dataString !== 'string' || dataString.length === 0){
+              console.log(`column ${attr.tableColumn} is not string, ${typeof dataString}, ${dataString}`);
+              continue;
+            }
+            let tmp;
+            try {
+              tmp = JSON.parse(dataString);
+            } catch (e) {
+              console.log(`${dataString} for ${attr.tableColumn} is not json string`);
+              continue;
+            }
+            tmp = attr.fromColumn(tmp);
             if (tmp) {
               Object.assign(object, tmp);
             }

@@ -23,7 +23,7 @@ const mapping = {
       return File.fromPartialData(attachment);
     })
   }
-}
+};
 
 export default class Message extends ModelWithMetadata {
   static fieldsNotInDB=[
@@ -207,9 +207,10 @@ export default class Message extends ModelWithMetadata {
     }),
 
     draft: Attributes.Boolean({
+      jsModelKey: 'draft',
       modelKey: 'isDraft',
       queryable: true,
-      loadFromColumn: true
+      loadFromColumn: true,
     }),
 
     calendarReply: Attributes.Boolean({
@@ -343,9 +344,9 @@ export default class Message extends ModelWithMetadata {
   toJSON(options) {
     const json = super.toJSON(options);
     json.file_ids = this.fileIds();
-    // if (this.draft) {
-    //   json.object = 'draft';
-    // }
+    if (this.draft) {
+      json.draft= true;
+    }
 
     if (this.events && this.events.length) {
       json.event_id = this.events[0].id;
