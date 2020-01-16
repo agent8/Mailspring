@@ -366,7 +366,8 @@ export default class MailboxPerspective {
       threads.every(thread => {
         const account = AccountStore.accountForId(thread.accountId);
         if (account && account.provider === 'gmail') {
-          if (this.isInbox()) { // make sure inbox label can archive
+          if (this.isInbox()) {
+            // make sure inbox label can archive
             // if (!thread.labels.some(label => label.role === 'inbox')) {
             //   console.error(`The thread in inbox, but do not have inbox label. Thread id is ${thread.id}. subject is [${thread.subject}]`);
             //   AppEnv.reportError(
@@ -392,7 +393,7 @@ export default class MailboxPerspective {
       return false;
     }
     return AccountStore.accountsForItems(threads).every(
-      acc => CategoryStore.getCategoryByRole(acc, standardCategoryName) !== null,
+      acc => CategoryStore.getCategoryByRole(acc, standardCategoryName) !== null
     );
   }
 
@@ -417,7 +418,6 @@ class SingleAccountMailboxPerspective extends MailboxPerspective {
   }
 }
 
-
 class OutboxMailboxPerspective extends MailboxPerspective {
   constructor(accountIds) {
     super(accountIds);
@@ -426,7 +426,6 @@ class OutboxMailboxPerspective extends MailboxPerspective {
     this.outbox = true; // The OutboxStore looks for this
     this._categories = [];
   }
-
 
   categories() {
     return this._categories;
@@ -546,7 +545,8 @@ class SiftMailboxPerspective extends MailboxPerspective {
       .where([Message.attributes.siftCategory.containsAnyAtColumn('category', [siftCategory])])
       .where({ deleted: false, draft: false })
       .order([Message.attributes.date.descending()])
-      .page(0, 1).distinct();
+      .page(0, 1)
+      .distinct();
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
 
@@ -669,7 +669,10 @@ class AttachementMailboxPerspective extends MailboxPerspective {
 
   threads() {
     const query = DatabaseStore.findAll(Thread)
-      .where([Thread.attributes.hasAttachments.equal(true)], Thread.attributes.inAllMail.equal(true))
+      .where(
+        [Thread.attributes.hasAttachments.equal(true)],
+        Thread.attributes.inAllMail.equal(true)
+      )
       .limit(0);
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
@@ -721,6 +724,12 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         this.bgColor = bgColor;
       }
     }
+    if (this.isInbox()) {
+      this.tab = [
+        new InboxMailboxFocusedPerspective(this._categories),
+        new InboxMailboxOtherPerspective(this._categories),
+      ];
+    }
   }
 
   toJSON() {
@@ -732,7 +741,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
+      _.isEqual(
+        this.categories().map(c => c.id),
+        other.categories().map(c => c.id)
+      )
     );
   }
 
@@ -757,7 +769,6 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     } else {
       query.where({ state: 0 });
     }
-
 
     // if (['spam', 'trash'].includes(this.categoriesSharedRole())) {
     //   query.where(new Matcher.Not([
@@ -866,7 +877,8 @@ class CategoryMailboxPerspective extends MailboxPerspective {
             labelsToAdd: [myCat],
             labelsToRemove: [],
             previousFolder,
-          })];
+          }),
+        ];
       }
       return [
         new ChangeFolderTask({
@@ -924,7 +936,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       const acct = AccountStore.accountForId(accountId);
       const preferred = acct.preferredRemovalDestination();
       if (!preferred) {
-        AppEnv.reportError(new Error('We cannot find our preferred removal destination'), { errorData: { account: acct, errorCode: 'folderNotAvailable' } });
+        AppEnv.reportError(new Error('We cannot find our preferred removal destination'), {
+          errorData: { account: acct, errorCode: 'folderNotAvailable' },
+        });
         return;
       }
       const cat = this.categories().find(c => c.accountId === accountId);
@@ -978,6 +992,7 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
     this.unread = true;
     this.name = 'Unread';
     this.iconName = 'unread.svg';
+    this.tab = null;
   }
 
   threads() {
@@ -1000,7 +1015,7 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
         threads: threads,
         unread: true,
         source: 'Dragged Into List',
-      }),
+      })
     );
     return tasks;
   }
@@ -1010,8 +1025,86 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
 
     const tasks = super.tasksForRemovingItems(threads, ruleset, source);
     tasks.push(
-      new ChangeUnreadTask({ threads, unread: false, source: source || 'Removed From List' }),
+      new ChangeUnreadTask({ threads, unread: false, source: source || 'Removed From List' })
     );
     return tasks;
+  }
+}
+
+class InboxMailboxFocusedPerspective extends MailboxPerspective {
+  constructor(_categories) {
+    super(_.uniq(_categories.map(c => c.accountId)));
+    this._categories = _categories;
+    const isAllInbox = _categories && _categories.length > 1;
+    this.name = `${isAllInbox ? 'All ' : ''}Focused`;
+    this.isTab = true;
+  }
+
+  categories() {
+    return this._categories;
+  }
+
+  threads() {
+    const categoryIds = [];
+    this.categories().forEach(c => {
+      if (!c.state) {
+        //In case Category will also add state in future versions
+        categoryIds.push(c.id);
+      }
+    });
+
+    const query = DatabaseStore.findAll(Thread)
+      .where([Thread.attributes.categories.containsAny(categoryIds)])
+      .where({ state: 0, inboxCategory: ['1', '2'] })
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class InboxMailboxOtherPerspective extends MailboxPerspective {
+  constructor(_categories) {
+    super(_.uniq(_categories.map(c => c.accountId)));
+    this._categories = _categories;
+    const isAllInbox = _categories && _categories.length > 1;
+    this.name = `${isAllInbox ? 'All ' : ''}Other`;
+    this.isTab = true;
+  }
+
+  categories() {
+    return this._categories;
+  }
+
+  threads() {
+    const categoryIds = [];
+    this.categories().forEach(c => {
+      if (!c.state) {
+        //In case Category will also add state in future versions
+        categoryIds.push(c.id);
+      }
+    });
+
+    const query = DatabaseStore.findAll(Thread)
+      .where([Thread.attributes.categories.containsAny(categoryIds)])
+      .where({ state: 0, inboxCategory: 0 })
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
   }
 }
