@@ -273,14 +273,19 @@ class AttachmentStore extends MailspringStore {
       this.findAllByFileIds(fileIds).then(files => {
         const attachmentChange = [];
         files.forEach(file => {
+          if(!file){
+            return;
+          }
           file.missingData = false;
           if (file.messageId) {
             attachmentChange.push({ fileId: file.id, messageId: file.messageId });
           }
           this._attachementCache.set(file.id, file);
         });
-        console.warn(`Attachment cache updated`);
-        this.trigger({ attachmentChange });
+        if(attachmentChange.length > 0){
+          console.log(`Attachment cache updated`);
+          this.trigger({ attachmentChange });
+        }
       })
     }
   };

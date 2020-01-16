@@ -83,7 +83,11 @@ export default class AttributeCollection extends Attribute {
 
   fromJSON(json) {
     if (typeof json === 'string') {
-      json = JSON.parse(json);
+      if(json.length === 0){
+        json = [];
+      }else{
+        json = JSON.parse(json);
+      }
     }
     if(typeof  this.fromJSONMapping === 'function'){
       return this.fromJSONMapping(json);
