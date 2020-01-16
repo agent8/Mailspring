@@ -1044,6 +1044,14 @@ class InboxMailboxFocusedPerspective extends MailboxPerspective {
     return this._categories;
   }
 
+  isTabOfPerspective(other) {
+    const tab = other.tab || [];
+    const equalTab = tab.filter(per => {
+      return this.isEqual(per);
+    });
+    return equalTab.length > 0;
+  }
+
   threads() {
     const categoryIds = [];
     this.categories().forEach(c => {
@@ -1081,6 +1089,14 @@ class InboxMailboxOtherPerspective extends MailboxPerspective {
 
   categories() {
     return this._categories;
+  }
+
+  isTabOfPerspective(other) {
+    const tab = other.tab || [];
+    const equalTab = tab.filter(per => {
+      return this.isEqual(per);
+    });
+    return equalTab.length > 0;
   }
 
   threads() {

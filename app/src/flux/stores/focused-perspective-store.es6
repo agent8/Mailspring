@@ -211,24 +211,13 @@ class FocusedPerspectiveStore extends MailspringStore {
     return perspective;
   }
 
-  _isTabOfCurrentSidebar(perspective) {
-    if (!perspective.isTab) {
-      return false;
-    }
-    const tab = this._currentSidebar.tab || [];
-    const equalTab = tab.filter(per => {
-      return perspective.isEqual(per);
-    });
-    return equalTab.length > 0;
-  }
-
   _setPerspective(perspective, sidebarAccountIds, forceTrigger = false) {
     let shouldTrigger = forceTrigger;
 
     if (perspective.isTab) {
       // if this perspective is a tab, it must be a tab of this current sidebar
 
-      if (!this._isTabOfCurrentSidebar(perspective)) {
+      if (!perspective.isTabOfPerspective(this._currentSidebar)) {
         return;
       }
     } else {
@@ -241,6 +230,10 @@ class FocusedPerspectiveStore extends MailspringStore {
         AppEnv.savedState.perspective = perspective.toJSON();
         shouldTrigger = true;
       }
+    }
+
+    if (this._current.isTab && this._current.isTabOfPerspective(perspective)) {
+      return;
     }
 
     let focusPerspective;
