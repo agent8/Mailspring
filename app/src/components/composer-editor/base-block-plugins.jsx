@@ -102,6 +102,32 @@ export const BLOCK_CONFIG = {
       );
     },
   },
+  increaseIndent: {
+    type: 'increase indent',
+    tagNames: ['increase-indent'],
+    render: props => <strong>{props.children}</strong>,
+    button: {
+      hideWhenCrowded: true,
+      iconClass: 'dt-icon dt-icon-increase-indent',
+      isActive: value => false,
+      onToggle: (value, active) => {
+        return Handlers.onTab({ lineType: 'div' }, event, value.change());
+      },
+    },
+  },
+  decreaseIndent: {
+    type: 'decrease indent',
+    tagNames: ['decrease-indent'],
+    render: props => <strong>{props.children}</strong>,
+    button: {
+      hideWhenCrowded: true,
+      iconClass: 'dt-icon dt-icon-decrease-indent',
+      isActive: value => false,
+      onToggle: (value, active) => {
+        return Handlers.onShiftTab({ lineType: 'div' }, event, value.change());
+      },
+    },
+  },
   blockquote: {
     type: 'blockquote',
     tagNames: ['blockquote'],
