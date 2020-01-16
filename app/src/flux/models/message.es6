@@ -327,7 +327,6 @@ export default class Message extends ModelWithMetadata {
   constructor(data = {}) {
     super(data);
     this.subject = this.subject || '';
-    console.warn(`subject is: ${this.subject}`);
     this.to = this.to || [];
     this.cc = this.cc || [];
     this.bcc = this.bcc || [];
@@ -479,6 +478,9 @@ export default class Message extends ModelWithMetadata {
     }
     const rets = [];
     this.attachmentIds.forEach(partialAttachmentData => {
+      if(!(partialAttachmentData instanceof File)){
+        partialAttachmentData = File.fromPartialData(partialAttachmentData)
+      }
       const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
       if(fileData){
         rets.push(fileData);
@@ -496,11 +498,16 @@ export default class Message extends ModelWithMetadata {
   }
 
   get labels(){
-    return this.labelIds.map(labelId => {
+    const ret = [];
+    this.labelIds.forEach(labelId => {
       if(typeof labelId === 'string'){
-        return CategoryStore.byFolderId(labelId);
+        const tmp = CategoryStore.byFolderId(labelId);
+        if(tmp){
+          ret.push(tmp);
+        }
       }
-    })
+    });
+    return ret;
   }
 
   missingAttachments() {
@@ -635,13 +642,13 @@ export default class Message extends ModelWithMetadata {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder.role.toLowerCase().includes('trash'));
+    return this.labels.some(folder => folder && folder.role.toLowerCase().includes('trash'));
   }
   isInSpam(){
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder.role.toLowerCase().includes('spam'));
+    return this.labels.some(folder => folder && folder.role.toLowerCase().includes('spam'));
   }
 
   fromContact() {
