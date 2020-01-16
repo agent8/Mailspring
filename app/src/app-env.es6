@@ -1179,7 +1179,7 @@ export default class AppEnvConstructor {
     const downloadPath = this.getSaveDirPath();
 
     if (downloadPath) {
-      const fileName = path.basename(options.defaultPath || '未命名');
+      const fileName = path.basename(options.defaultPath || 'untitled');
       const fileNewName = autoGenerateFileName(downloadPath, fileName);
       callback(path.join(downloadPath, fileNewName));
     } else {
