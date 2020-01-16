@@ -1,5 +1,5 @@
 import React from 'react';
-import { Utils, Message, DateUtils} from 'mailspring-exports';
+import { Utils, Message, DateUtils } from 'mailspring-exports';
 import { InjectedComponentSet, ListTabular, InjectedComponent, OutboxSender } from 'mailspring-component-kit';
 import {
   OutboxResendQuickAction,
@@ -27,7 +27,11 @@ function subject(subj) {
 const SenderColumn = new ListTabular.Column({
   name: 'Sender',
   resolver: draft => {
-    return <OutboxSender draft={draft} lottieStyle={{ left: 10, top: 10 }} />;
+    return <OutboxSender
+      draft={draft}
+      lottieStyle={{ left: 10, top: 11, width: 45, height: 45 }}
+      avatarStyle={{ width: 35, height: 35 }}
+    />;
   },
 });
 

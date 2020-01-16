@@ -241,7 +241,7 @@ const cNarrow = new ListTabular.Column({
             <div className="snippet">{Utils.superTrim(getSnippet(thread))}&nbsp;</div>
             {/* <div style={{ flex: 1, flexShrink: 1 }} /> */}
             {/* <MailLabelSet thread={thread} /> */}
-            <div className="icons">
+            {/* <div className="icons">
               <InjectedComponentSet
                 inline={true}
                 matchLimit={1}
@@ -252,8 +252,8 @@ const cNarrow = new ListTabular.Column({
                 matching={{ role: 'ThreadListIcon' }}
                 className="thread-injected-icons"
               />
-              {/* <MailImportantIcon thread={thread} showIfAvailableForAnyAccount={true} /> */}
-            </div>
+              <MailImportantIcon thread={thread} showIfAvailableForAnyAccount={true} />
+            </div> */}
           </div>
         </div>
       </div>
