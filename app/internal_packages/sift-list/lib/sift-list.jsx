@@ -12,6 +12,7 @@ import {
 import SiftListColumns from './sift-list-columns';
 
 const buttonTimer = 500;
+const PREVIEW_LINES_KEY = 'core.appearance.previewLines';
 
 class SiftList extends React.Component {
   static displayName = 'SiftList';
@@ -26,6 +27,7 @@ class SiftList extends React.Component {
     super(props);
     this.state = {
       isDeleting: false,
+      previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
     };
     this._mounted = false;
     this._deletingTimer = false;
@@ -34,12 +36,18 @@ class SiftList extends React.Component {
   componentDidMount() {
     this._mounted = true;
     window.addEventListener('resize', this._onResize, true);
+    this.disposable = AppEnv.config.onDidChange(PREVIEW_LINES_KEY, () => {
+      this.setState({
+        previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
+      });
+    });
     this._onResize();
   }
 
   componentWillUnmount() {
     this._mounted = false;
     window.removeEventListener('resize', this._onResize, true);
+    this.disposable.dispose();
     clearTimeout(this._deletingTimer);
   }
 
@@ -92,6 +100,7 @@ class SiftList extends React.Component {
     });
   };
   render() {
+    const { previewLines } = this.state;
     const layoutMode = WorkspaceStore.layoutMode();
     let columns;
     let additionalClassName;
@@ -102,8 +111,8 @@ class SiftList extends React.Component {
       itemHeight = 55;
     } else {
       columns = SiftListColumns.Narrow;
-      additionalClassName = 'sift-list-narrow';
-      itemHeight = 108;
+      additionalClassName = `sift-list-narrow preview-${previewLines}`;
+      itemHeight = 72 + previewLines * 18;
     }
     return (
       <FluxContainer
