@@ -599,7 +599,7 @@ export default class AppEnvConstructor {
     if (process.platform === 'win32') {
       home = process.env.USERPROFILE;
     } else {
-      home = process.env.HOME;
+      home = `/Users/${process.env.USER}`;
     }
     return home;
   }
