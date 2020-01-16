@@ -21,11 +21,11 @@ const calendarType = [
 
 class CalendarStore extends MailspringStore {
   static replyTemplate = ({
-                            eventString = '',
-                            timezoneString = '',
-                            todoString = '',
-                            journalString = '',
-                          }) => {
+    eventString = '',
+    timezoneString = '',
+    todoString = '',
+    journalString = '',
+  }) => {
     return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nMETHOD:REPLY\r\nPRODID:-//EdisonMail\r\n${timezoneString}\r\n${eventString}\r\n${todoString}\r\n${journalString}\r\nEND:VCALENDAR`;
   };
 
@@ -90,7 +90,7 @@ class CalendarStore extends MailspringStore {
     if (!e.organizer || e.organizer.email === '') {
       return false;
     }
-    return account.getAllEmails().map(email=>e.needToRsvpByEmail(email)).some(ret => ret);
+    return account.getAllEmails().map(email => e.needToRsvpByEmail(email)).some(ret => ret);
   }
   _rsvpEventFailed(task) {
     AppEnv.showErrorDialog({ title: 'RSVP Event failed', message: `${task.source} failed.` });
@@ -113,7 +113,7 @@ class CalendarStore extends MailspringStore {
     if (!e) {
       return null;
     }
-    const email = account.getAllEmails.find(emailAddress => e.needToRsvpByEmail(emailAddress));
+    const email = account.getAllEmails().find(emailAddress => e.needToRsvpByEmail(emailAddress));
     try {
       const newCal = Calender.parse(
         CalendarStore.replyTemplate({
@@ -321,7 +321,7 @@ class CalendarStore extends MailspringStore {
           try {
             iCal = Calender.parse(data);
           } catch (e) {
-            AppEnv.reportError(e, {icalData: data});
+            AppEnv.reportError(e, { icalData: data });
           } finally {
             resolve(iCal);
           }
