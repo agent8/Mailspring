@@ -277,6 +277,13 @@ const preferencesTemplateFill = {
               keywords: ['sidebar', 'left', 'icons', 'avatar'],
             },
             {
+              label: 'Preview lines (two panel view only)',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.previewLines,
+              keyPath: 'core.appearance.previewLines',
+              keywords: [],
+            },
+            {
               label: 'Enable Adaptive Coloring for emails.',
               configSchema: configSchema =>
                 configSchema.properties.appearance.properties.adaptiveEmailColor,
