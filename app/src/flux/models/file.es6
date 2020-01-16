@@ -56,14 +56,15 @@ export default class File extends Model {
       loadFromColumn: true,
     }),
     missingData: Attributes.Boolean({
-      modelKey: 'missingData'
+      modelKey: 'missingData',
+      queryable: false
     })
   });
   static fromPartialData(data){
     const tmp = new File();
     tmp.fromJSON(data);
-    if(!tmp.id && data.id){
-      tmp.id = data.id;
+    if(!tmp.id && (data.id || data.pid)){
+      tmp.id = data.id || data.pid;
     }
     tmp.missingData = true;
     return tmp;
