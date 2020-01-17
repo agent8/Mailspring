@@ -971,7 +971,7 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:check-for-update', () => {
-      this.autoUpdateManager.check({ forceCheck: true });
+      this.autoUpdateManager.check({ manuallyCheck: true });
     });
 
     this.on('application:install-update', () => {

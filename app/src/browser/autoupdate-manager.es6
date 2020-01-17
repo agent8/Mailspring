@@ -119,7 +119,7 @@ export default class AutoUpdateManager extends EventEmitter {
         return;
       }
       this.check({ hidePopups: true });
-    }, 1000 * 60 * 60 * 6);
+    }, 1000 * 60 * 60 * 1);
     console.log(`\n------->\nupdater set feedURL ${this.feedURL}`);
   }
 
@@ -153,27 +153,30 @@ export default class AutoUpdateManager extends EventEmitter {
     };
   }
 
-  check = async ({ hidePopups, forceCheck = false } = {}) => {
+  check = async ({ hidePopups, manuallyCheck = false } = {}) => {
     const REMINDER_LATER_KEY = 'reminder_later_date';
     const res = await axios.get(await this.getFeedUrl());
     const today = moment().format('YYYYMMDD');
     if (res && res.data && res.data.pckVersion) {
-      if (!forceCheck && today === this.config.get(REMINDER_LATER_KEY)) {
-        return;
-      }
       if (this.devMode || this.getState() === DownloadingState) {
         return;
       }
-      dialog.showMessageBox({
-        type: 'info',
-        buttons: ['Update', 'Remind Me Later'],
-        icon: this.iconURL(),
-        message: `Update available.`,
-        title: 'Update Available',
-        detail: `New EdisonMail available. Version (${res.data.pckVersion}).`,
-      }).then(async ({ response: choice }) => {
+      let choice = 0;
+      if (manuallyCheck) {
+        choice = dialog.showMessageBoxSync({
+          type: 'info',
+          buttons: ['Update', 'Remind Me Later'],
+          icon: this.iconURL(),
+          message: `Update available.`,
+          title: 'Update Available',
+          detail: `New EdisonMail available. Version (${res.data.pckVersion}).`,
+        });
+        // Remind Me Later
+        if (choice === 1) {
+          this.config.set(REMINDER_LATER_KEY, today);
+        }
         // Update
-        if (choice === 0) {
+        else {
           await this.updateFeedURL();
           if (!hidePopups) {
             autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
@@ -181,13 +184,17 @@ export default class AutoUpdateManager extends EventEmitter {
           }
           autoUpdater.checkForUpdates();
         }
-        // Remind Me Later
-        else if (choice === 1) {
-          this.config.set(REMINDER_LATER_KEY, today);
+      } else {
+        // Update
+        await this.updateFeedURL();
+        if (!hidePopups) {
+          autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
+          autoUpdater.once('error', this.onUpdateError);
         }
-      })
+        autoUpdater.checkForUpdates();
+      }
     } else if (!res.data) {
-      if (forceCheck) {
+      if (manuallyCheck) {
         this.onUpdateNotAvailable();
       }
     }
