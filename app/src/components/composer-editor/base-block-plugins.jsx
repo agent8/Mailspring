@@ -110,7 +110,7 @@ export const BLOCK_CONFIG = {
       hideWhenCrowded: true,
       iconClass: 'dt-icon dt-icon-increase-indent',
       isActive: value => false,
-      onToggle: (value, active) => {
+      onToggle: (value, active, event) => {
         return Handlers.onTab({ lineType: 'div' }, event, value.change());
       },
     },
@@ -123,7 +123,7 @@ export const BLOCK_CONFIG = {
       hideWhenCrowded: true,
       iconClass: 'dt-icon dt-icon-decrease-indent',
       isActive: value => false,
-      onToggle: (value, active) => {
+      onToggle: (value, active, event) => {
         return Handlers.onShiftTab({ lineType: 'div' }, event, value.change());
       },
     },
