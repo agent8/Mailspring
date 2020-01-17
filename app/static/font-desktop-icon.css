@@ -1,12 +1,13 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?eate35');
-  src:  url('fonts/icomoon.eot?eate35#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?eate35') format('truetype'),
-    url('fonts/icomoon.woff?eate35') format('woff'),
-    url('fonts/icomoon.svg?eate35#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?mmgjy3');
+  src:  url('fonts/icomoon.eot?mmgjy3#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?mmgjy3') format('truetype'),
+    url('fonts/icomoon.woff?mmgjy3') format('woff'),
+    url('fonts/icomoon.svg?mmgjy3#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
+  font-display: block;
 }
 
 [class^="dt-icon-"], [class*=" dt-icon-"] {
@@ -24,6 +25,262 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dt-icon-alert-2:before {
+  content: "\e960";
+}
+.dt-icon-attachment-audio:before {
+  content: "\e961";
+}
+.dt-icon-attachment-book:before {
+  content: "\e962";
+}
+.dt-icon-attachment-font:before {
+  content: "\e963";
+}
+.dt-icon-attachment-other:before {
+  content: "\e964";
+}
+.dt-icon-check-alone:before {
+  content: "\e965";
+}
+.dt-icon-collapse:before {
+  content: "\e966";
+}
+.dt-icon-decrease-indent:before {
+  content: "\e967";
+}
+.dt-icon-down-arrow:before {
+  content: "\e968";
+}
+.dt-icon-download:before {
+  content: "\e969";
+}
+.dt-icon-expand:before {
+  content: "\e96a";
+}
+.dt-icon-history-search:before {
+  content: "\e96b";
+}
+.dt-icon-important-empty:before {
+  content: "\e96c";
+}
+.dt-icon-increase-indent:before {
+  content: "\e96d";
+}
+.dt-icon-inline-image:before {
+  content: "\e96e";
+}
+.dt-icon-none:before {
+  content: "\e96f";
+}
+.dt-icon-not-spam:before {
+  content: "\e970";
+}
+.dt-icon-other-mail:before {
+  content: "\e971";
+}
+.dt-icon-pop-in:before {
+  content: "\e972";
+}
+.dt-icon-popover-activity:before {
+  content: "\e973";
+}
+.dt-icon-popover-animals:before {
+  content: "\e974";
+}
+.dt-icon-popover-flags:before {
+  content: "\e975";
+}
+.dt-icon-popover-food-and-drink:before {
+  content: "\e976";
+}
+.dt-icon-popover-food:before {
+  content: "\e977";
+}
+.dt-icon-popover-nature:before {
+  content: "\e978";
+}
+.dt-icon-popover-objects:before {
+  content: "\e979";
+}
+.dt-icon-popover-people:before {
+  content: "\e97a";
+}
+.dt-icon-popover-smile:before {
+  content: "\e97b";
+}
+.dt-icon-popover-symbols:before {
+  content: "\e97c";
+}
+.dt-icon-popover-travel-and-places:before {
+  content: "\e97d";
+}
+.dt-icon-popover-travel:before {
+  content: "\e97e";
+}
+.dt-icon-preference-accounts .path1:before {
+  content: "\e97f";
+}
+.dt-icon-preference-accounts .path2:before {
+  content: "\e980";
+  margin-left: -1em;
+}
+.dt-icon-preference-accounts .path3:before {
+  content: "\e981";
+  margin-left: -1em;
+}
+.dt-icon-preference-accounts .path4:before {
+  content: "\e982";
+  margin-left: -1em;
+}
+.dt-icon-preference-appearance .path1:before {
+  content: "\e983";
+}
+.dt-icon-preference-appearance .path2:before {
+  content: "\e984";
+  margin-left: -1em;
+}
+.dt-icon-preference-appearance .path3:before {
+  content: "\e985";
+  margin-left: -1em;
+}
+.dt-icon-preference-folders .path1:before {
+  content: "\e986";
+}
+.dt-icon-preference-folders .path2:before {
+  content: "\e987";
+  margin-left: -1em;
+}
+.dt-icon-preference-folders .path3:before {
+  content: "\e988";
+  margin-left: -1em;
+}
+.dt-icon-preference-general .path1:before {
+  content: "\e989";
+}
+.dt-icon-preference-general .path2:before {
+  content: "\e98a";
+  margin-left: -1em;
+}
+.dt-icon-preference-general .path3:before {
+  content: "\e98b";
+  margin-left: -1em;
+}
+.dt-icon-preference-mail-rules .path1:before {
+  content: "\e98c";
+}
+.dt-icon-preference-mail-rules .path2:before {
+  content: "\e98d";
+  margin-left: -1em;
+}
+.dt-icon-preference-mail-rules .path3:before {
+  content: "\e98e";
+  margin-left: -1em;
+}
+.dt-icon-preference-mail-rules .path4:before {
+  content: "\e98f";
+  margin-left: -1em;
+}
+.dt-icon-preference-mail-rules .path5:before {
+  content: "\e990";
+  margin-left: -1em;
+}
+.dt-icon-preference-mail-rules .path6:before {
+  content: "\e991";
+  margin-left: -1em;
+}
+.dt-icon-preference-shortcuts .path1:before {
+  content: "\e992";
+}
+.dt-icon-preference-shortcuts .path2:before {
+  content: "\e993";
+  margin-left: -1em;
+}
+.dt-icon-preference-signatures .path1:before {
+  content: "\e994";
+}
+.dt-icon-preference-signatures .path2:before {
+  content: "\e995";
+  margin-left: -1em;
+}
+.dt-icon-preference-signatures .path3:before {
+  content: "\e996";
+  margin-left: -1em;
+}
+.dt-icon-preference-signatures .path4:before {
+  content: "\e997";
+  margin-left: -1em;
+}
+.dt-icon-preference-signatures .path5:before {
+  content: "\e998";
+  margin-left: -1em;
+}
+.dt-icon-preference-templates .path1:before {
+  content: "\e999";
+}
+.dt-icon-preference-templates .path2:before {
+  content: "\e99a";
+  margin-left: -1em;
+}
+.dt-icon-preference-templates .path3:before {
+  content: "\e99b";
+  margin-left: -1em;
+}
+.dt-icon-preference-templates .path4:before {
+  content: "\e99c";
+  margin-left: -1em;
+}
+.dt-icon-preference-templates .path5:before {
+  content: "\e99d";
+  margin-left: -1em;
+}
+.dt-icon-preference-templates .path6:before {
+  content: "\e99e";
+  margin-left: -1em;
+}
+.dt-icon-preference-templates .path7:before {
+  content: "\e99f";
+  margin-left: -1em;
+}
+.dt-icon-preview:before {
+  content: "\e9a0";
+}
+.dt-icon-primary-mail:before {
+  content: "\e9a1";
+}
+.dt-icon-print:before {
+  content: "\e9a2";
+}
+.dt-icon-quick-reply:before {
+  content: "\e9a3";
+}
+.dt-icon-refresh:before {
+  content: "\e9a4";
+}
+.dt-icon-show-password:before {
+  content: "\e9a5";
+}
+.dt-icon-signature:before {
+  content: "\e9a6";
+}
+.dt-icon-smart-assistant:before {
+  content: "\e9a7";
+}
+.dt-icon-some-selected:before {
+  content: "\e9a8";
+}
+.dt-icon-status-bar-icon:before {
+  content: "\e9a9";
+}
+.dt-icon-system-collapse:before {
+  content: "\e9aa";
+}
+.dt-icon-translate:before {
+  content: "\e9ab";
+}
+.dt-icon-upload:before {
+  content: "\e9ac";
+}
 .dt-icon-add:before {
   content: "\e900";
 }

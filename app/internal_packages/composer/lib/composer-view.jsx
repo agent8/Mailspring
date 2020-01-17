@@ -38,7 +38,7 @@ const {
 } = ComposerSupport.BaseBlockPlugins;
 const buttonTimer = 700;
 const newDraftTimeDiff = 3000;
-const TOOLBAR_MIN_WIDTH = 540;
+const TOOLBAR_MIN_WIDTH = 628;
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
@@ -63,7 +63,7 @@ export default class ComposerView extends React.Component {
       'composer:show-and-focus-bcc': () => this._els.header.showAndFocusField(Fields.Bcc),
       'composer:show-and-focus-cc': () => this._els.header.showAndFocusField(Fields.Cc),
       'composer:focus-to': () => this._els.header.showAndFocusField(Fields.To),
-      'composer:show-and-focus-from': () => {},
+      'composer:show-and-focus-from': () => { },
       'composer:select-attachment': () => this._onSelectAttachment(),
     };
 
@@ -498,8 +498,8 @@ export default class ComposerView extends React.Component {
       .filter(f => Utils.shouldDisplayAsImage(f))
       .filter(f => f.contentId)
       .filter(f => {
-        if(!this.props.draft || (typeof this.props.draft.body !== 'string')){
-          AppEnv.reportError(new Error(`draft data incorrect`), {errorData: this.props.draft});
+        if (!this.props.draft || (typeof this.props.draft.body !== 'string')) {
+          AppEnv.reportError(new Error(`draft data incorrect`), { errorData: this.props.draft });
           return false;
         }
         return this.props.draft && this.props.draft.body && !this.props.draft.body.includes(`cid:${f.contentId}`);
@@ -608,13 +608,13 @@ export default class ComposerView extends React.Component {
                 {this.state.isDeleting ? (
                   <LottieImg name={'loading-spinner-blue'} size={{ width: 24, height: 24 }} />
                 ) : (
-                  <RetinaImg
-                    name={'trash.svg'}
-                    style={{ width: 24, height: 24 }}
-                    isIcon
-                    mode={RetinaImg.Mode.ContentIsMask}
-                  />
-                )}
+                    <RetinaImg
+                      name={'trash.svg'}
+                      style={{ width: 24, height: 24 }}
+                      isIcon
+                      mode={RetinaImg.Mode.ContentIsMask}
+                    />
+                  )}
                 <span>Delete</span>
               </button>
             </div>

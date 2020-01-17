@@ -31,9 +31,9 @@ export default class ComposerEditorToolbar extends React.Component {
           this._bottomClip = 0;
         }
 
-        this._el.style.height = `${this._floatingEl.clientHeight}px`;
+        // this._el.style.height = `${this._floatingEl.clientHeight}px`;
       });
-    }, 400);
+    }, 10);
   }
 
   // _resetRectClip = () => {
@@ -47,7 +47,7 @@ export default class ComposerEditorToolbar extends React.Component {
 
   componentDidUpdate() {
     if (this._el) {
-      this._el.style.height = `${this._floatingEl.clientHeight}px`;
+      // this._el.style.height = `${this._floatingEl.clientHeight}px`;
       this._onScroll();
     }
   }
@@ -138,7 +138,7 @@ export default class ComposerEditorToolbar extends React.Component {
     return (
       <div ref={el => (this._el = el)} className="RichEditor-toolbar">
         <div ref={el => (this._floatingEl = el)} className="floating-container">
-          <div className={'inner display-deferrable ' + (isCrowded ? 'active-crowded-state' : '')}>
+          <div className={'inner ' + (isCrowded ? 'active-crowded-state' : '')}>
             {sectionItems}
           </div>
         </div>
