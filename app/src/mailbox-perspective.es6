@@ -724,7 +724,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         this.bgColor = bgColor;
       }
     }
-    if (this.isInbox()) {
+    if (this.isInbox() && this.constructor === CategoryMailboxPerspective) {
       this.tab = [
         new InboxMailboxFocusedPerspective(this._categories),
         new InboxMailboxOtherPerspective(this._categories),
@@ -992,7 +992,6 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
     this.unread = true;
     this.name = 'Unread';
     this.iconName = 'unread.svg';
-    this.tab = null;
   }
 
   threads() {
@@ -1031,17 +1030,12 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 
-class InboxMailboxFocusedPerspective extends MailboxPerspective {
-  constructor(_categories) {
-    super(_.uniq(_categories.map(c => c.accountId)));
-    this._categories = _categories;
-    const isAllInbox = _categories && _categories.length > 1;
+class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
+  constructor(categories) {
+    super(categories);
+    const isAllInbox = categories && categories.length > 1;
     this.name = `${isAllInbox ? 'All ' : ''}Focused`;
     this.isTab = true;
-  }
-
-  categories() {
-    return this._categories;
   }
 
   isTabOfPerspective(other) {
@@ -1078,17 +1072,12 @@ class InboxMailboxFocusedPerspective extends MailboxPerspective {
   }
 }
 
-class InboxMailboxOtherPerspective extends MailboxPerspective {
-  constructor(_categories) {
-    super(_.uniq(_categories.map(c => c.accountId)));
-    this._categories = _categories;
-    const isAllInbox = _categories && _categories.length > 1;
+class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
+  constructor(categories) {
+    super(categories);
+    const isAllInbox = categories && categories.length > 1;
     this.name = `${isAllInbox ? 'All ' : ''}Other`;
     this.isTab = true;
-  }
-
-  categories() {
-    return this._categories;
   }
 
   isTabOfPerspective(other) {
