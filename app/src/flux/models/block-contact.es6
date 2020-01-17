@@ -46,4 +46,8 @@ export default class BlockContact extends Model {
       })
     }
   );
+  constructor(data) {
+    super(data);
+    this.name = this.name || '';
+  }
 }
