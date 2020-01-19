@@ -45,6 +45,7 @@ const fromJSONMapping = val => {
 const StandardRoleMap = ToObject([
   'inbox',
   'important',
+  'flagged',
   'snoozed',
   'sent',
   'drafts',
