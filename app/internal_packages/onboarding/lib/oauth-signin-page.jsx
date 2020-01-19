@@ -77,33 +77,35 @@ export default class OAuthSignInPage extends React.Component {
       this.setState({ showAlternative: true });
     }, 1500);
 
-    // launch a web server
-    this._server = http.createServer((request, response) => {
-      if (!this._mounted) return;
-      const { query } = url.parse(request.url, { querystring: true });
-      if (query.code) {
-        this._onReceivedCode(query.code);
-        // when oauth succeed, display Edison homepage
-        response.writeHead(302, { Location: 'http://email.easilydo.com' });
-        response.end();
-      }
-      else if (query.error === 'access_denied') {
-        OnboardingActions.moveToPage('account-choose');
-        return;
-      }
-      else {
-        response.end('Unknown Request');
-      }
-    });
-    this._server.listen(LOCAL_SERVER_PORT, err => {
-      if (err) {
-        AppEnv.showErrorDialog({
-          title: 'Unable to Start Local Server',
-          message: `To listen for the Oauth response, Edison Mail needs to start a webserver on port ${LOCAL_SERVER_PORT}. Please go back and try linking your account again. If this error persists, use the IMAP/SMTP option with an App Password.\n\n${err}`,
-        });
-        return;
-      }
-    });
+    // if not running in mas mode, launch a web server
+    if (!process.mas) {
+      this._server = http.createServer((request, response) => {
+        if (!this._mounted) return;
+        const { query } = url.parse(request.url, { querystring: true });
+        if (query.code) {
+          this._onReceivedCode(query.code);
+          // when oauth succeed, display Edison homepage
+          response.writeHead(302, { Location: 'http://email.easilydo.com' });
+          response.end();
+        }
+        else if (query.error === 'access_denied') {
+          OnboardingActions.moveToPage('account-choose');
+          return;
+        }
+        else {
+          response.end('Unknown Request');
+        }
+      });
+      this._server.listen(LOCAL_SERVER_PORT, err => {
+        if (err) {
+          AppEnv.showErrorDialog({
+            title: 'Unable to Start Local Server',
+            message: `To listen for the Oauth response, Edison Mail needs to start a webserver on port ${LOCAL_SERVER_PORT}. Please go back and try linking your account again. If this error persists, use the IMAP/SMTP option with an App Password.\n\n${err}`,
+          });
+          return;
+        }
+      });
+    }
   }
 
   componentWillUnmount() {
@@ -232,6 +234,19 @@ export default class OAuthSignInPage extends React.Component {
     // For some reason, yahoo oauth page will cause webview to throw load-did-fail with errorCode of -3 when
     // navigating to permission granting view. Thus we want to capture that and ignore it.
     if (event && event.errorCode === -3) {
+      return;
+    }
+    // if running in mas mode
+    if (process.mas && event.validatedURL && event.validatedURL.indexOf('127.0.0.1') !== -1) {
+      if (!this._mounted) return;
+      const { query } = url.parse(event.validatedURL, { querystring: true });
+      if (query.code) {
+        this._onReceivedCode(query.code);
+      }
+      else if (query.error === 'access_denied') {
+        OnboardingActions.moveToPage('account-choose');
+        return;
+      }
       return;
     }
     this.setState({
