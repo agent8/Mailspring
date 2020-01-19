@@ -591,7 +591,7 @@ class StarredMailboxPerspective extends MailboxPerspective {
   gmailThreads() {
     const categoryIds = [];
     this.accountIds.forEach(accountId => {
-      const cat = CategoryStore.categories(accountId).filter(cat => cat.role === 'starred');
+      const cat = CategoryStore.categories(accountId).filter(cat => cat.role === 'flagged');
       if (Array.isArray(cat) && cat[0]) {
         categoryIds.push(cat[0].id);
       } else {

@@ -597,7 +597,7 @@ export default class ModelQuery {
     const joins = allMatchers.filter(matcher => matcher.attr instanceof AttributeCollection);
     //
     if (joins.length === 1 && this._canSubselectForJoin(joins[0], allMatchers, dbKey)) {
-      console.error(`They used to use subselect sql`);
+      console.warn(`They used to use subselect sql`);
     //   const subSql = this._subselectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
     //   return `SELECT ${distinct} ${selectSql} FROM \`${
     //     this._klass[dbKey].name
