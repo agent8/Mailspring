@@ -29,11 +29,20 @@ const commandCb = (event, cb, cbArgs) => {
 };
 const threadSelectionScope = (props, selection) => {
   let threads = props.items;
-  if (selection && WorkspaceStore.layoutMode() !== 'list') {
+  const focusedThread = FocusedContentStore.focused('thread');
+  const workspaceMode = WorkspaceStore.layoutMode();
+  if (selection &&  workspaceMode!== 'list') {
     const selectionThreads = selection.items();
-    if (selectionThreads && selectionThreads.length > 0) {
+    if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
       threads = selectionThreads;
     }
+  } else if (selection && !focusedThread && workspaceMode === 'list'){
+    const selectionThreads = selection.items();
+    if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
+      threads = selectionThreads;
+    }
+  } else if (focusedThread && workspaceMode === 'list'){
+    threads = [focusedThread];
   }
   return threads;
 };
