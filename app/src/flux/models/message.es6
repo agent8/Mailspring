@@ -198,6 +198,7 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
       modelKey: 'headerMsgId',
+      jsModelKey: 'headerMessageId'
     }),
 
     subject: Attributes.String({
@@ -329,6 +330,7 @@ export default class Message extends ModelWithMetadata {
   constructor(data = {}) {
     super(data);
     this.subject = this.subject || '';
+    this.snippet = this.snippet || '';
     this.to = this.to || [];
     this.cc = this.cc || [];
     this.bcc = this.bcc || [];
@@ -644,13 +646,13 @@ export default class Message extends ModelWithMetadata {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder && folder.role.toLowerCase().includes('trash'));
+    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
   }
   isInSpam(){
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder && folder.role.toLowerCase().includes('spam'));
+    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
   }
 
   fromContact() {
