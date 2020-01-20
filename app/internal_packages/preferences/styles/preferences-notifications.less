@@ -1,6 +1,100 @@
 @import 'ui-variables';
 
+.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 15px) {
+  -webkit-mask-image: url(@svg-url);
+  -webkit-mask-size: @bgSize;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  background-color: @bgColor;
+}
+
 .preferences-wrap {
+  .account-notifacations {
+    display: flex;
+    .account-list {
+      width: 270px;
+      height: 260px;
+      flex: 0 0 auto;
+      padding: 10px 0;
+      overflow-y: auto;
+
+      .items-wrapper {
+        flex: 1;
+      }
+
+      .list-item {
+        padding: 10px 15px;
+        border-radius: 10px 0 0 10px;
+      }
+
+      .list-item:not(.selected) .sync-error {
+        color: @color-error;
+      }
+
+      .account {
+        .account-item {
+          flex: 1;
+          margin: 0 10px 0 20px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+          .account-name {
+            font-size: @font-size-large;
+            cursor: default;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+          }
+
+          .account-subtext {
+            font-size: @font-size-small;
+            cursor: default;
+          }
+        }
+      }
+    }
+    .account-notifacations-config {
+      flex: 1;
+      border-left: 1px solid @border-color-divider;
+      .config-group {
+        padding: 0 20px;
+
+        .account-notifacations-note {
+          font-family: 'SF UI Text';
+          color: @text-color-very-subtle;
+          line-height: 18px;
+          margin: 5px 0;
+        }
+
+        .checkmark {
+          margin: 10px 0 3.5px;
+          line-height: 16px;
+          .inner {
+            display: inline-block;
+            vertical-align: top;
+            width: 16px;
+            height: 16px;
+            .icon-mixin('../static/icons/check-empty.svg', #afbec9, 20px);
+            border: none;
+            margin-right: 9px;
+          }
+        }
+
+        .config-sound {
+          padding-top: 26.5px;
+          line-height: 16px;
+          input {
+            display: inline-block;
+            vertical-align: top;
+            height: 14px;
+            width: 14px;
+          }
+        }
+      }
+    }
+  }
+
   .container-mute {
     max-width: 700px;
     padding-bottom: 33.5px;
