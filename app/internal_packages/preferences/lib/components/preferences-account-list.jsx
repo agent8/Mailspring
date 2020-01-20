@@ -76,9 +76,10 @@ class PreferencesAccountList extends Component {
       <EditableList
         className="account-list"
         showDelIcon
+        showFooter
         getConfirmMessage={account => ({
           message: 'Are you sure?',
-          detail: `Delete this account ${account.emailAddress}`
+          detail: `Delete this account ${account.emailAddress}`,
         })}
         items={this.props.accounts}
         itemContent={this._renderAccount}
