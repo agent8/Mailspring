@@ -815,9 +815,8 @@ class DraftStore extends MailspringStore {
     // doesn't need to do a query for it a second from now when the composer wants it.
     this._createSession(draft.headerMessageId, draft);
     const task = new SyncbackDraftTask({ draft });
-    Actions.queueTask(task);
 
-    return TaskQueue.waitForPerformLocal(task)
+    return TaskQueue.waitForPerformLocal(task, {sendTask: true})
       .then(() => {
         if (popout) {
           console.log('\n-------\n draft popout\n');

@@ -591,9 +591,8 @@ export default class DraftEditingSession extends MailspringStore {
           accountId: draft.accountId,
         });
       // console.log('syncback draft from ensure account');
-      Actions.queueTask(create);
       try {
-        await TaskQueue.waitForPerformLocal(create);
+        await TaskQueue.waitForPerformLocal(create, {sendTask: true});
         if (destroy) {
           // console.log('destroyed');
           Actions.destroyDraft([draft], { switchingAccount: true });
@@ -734,9 +733,8 @@ export default class DraftEditingSession extends MailspringStore {
     }
     const task = new SyncbackDraftTask({ draft: this._draft, source: reason });
     task.saveOnRemote = reason === 'unload';
-    Actions.queueTask(task);
     try {
-      await TaskQueue.waitForPerformLocal(task);
+      await TaskQueue.waitForPerformLocal(task, {sendTask: true});
     } catch (e) {
       AppEnv.reportError(
         new Error('SyncbackDraft Task not returned'),

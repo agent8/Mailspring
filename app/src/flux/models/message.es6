@@ -339,6 +339,8 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
+    this.deleted = this.deleted || false;
+    this.syncState = this.syncState || 0;
     if(Array.isArray(data.files)){
       this.attachmentIds = data.files
     }

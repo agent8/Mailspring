@@ -681,6 +681,7 @@ export default class MailsyncBridge {
   _onIncomingMessages = msgs => {
     for (const msg of msgs) {
       if (msg.length === 0) {
+        AppEnv.logWarning(`Sync worker sent message with length as 0: ${msg}`);
         continue;
       }
       if (msg[0] !== '{') {
@@ -737,11 +738,10 @@ export default class MailsyncBridge {
             objects: tmpModels,
           })
         );
-        return;
+        continue;
       }
       let threadIndex = -1;
       let threadCategories = [];
-      let messsageindex = -1;
       tmpModels.forEach(m=>{
         if(m.constructor.name !== modelClass){
           return;
