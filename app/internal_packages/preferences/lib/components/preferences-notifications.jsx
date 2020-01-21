@@ -1,11 +1,24 @@
 import React from 'react';
-import { MuteNotificationStore } from 'mailspring-exports';
+import { MuteNotificationStore, Actions } from 'mailspring-exports';
 import { RetinaImg, EditableList, Flexbox } from 'mailspring-component-kit';
 import classnames from 'classnames';
 import ContactList from './contact-list';
-import { AccountStore, Actions } from 'mailspring-exports';
-import PreferencesAccountList from './preferences-account-list';
+import { AccountStore } from 'mailspring-exports';
 
+const noticeTypeEnum = [
+  {
+    id: 'NoneMute',
+    title: 'None/Mute',
+  },
+  {
+    id: 'AllMail',
+    title: 'All mail',
+  },
+  {
+    id: 'Important',
+    title: 'Marked as Important',
+  },
+];
 export class PreferencesMutedNotifacations extends React.Component {
   static displayName = 'PreferencesMutedNotifacations';
 
@@ -133,6 +146,35 @@ export class PreferencesAccountNotifacations extends React.Component {
     this.setState({ selected: account });
   };
 
+  _onAccountUpdated = (accountId, updates) => {
+    Actions.updateAccount(accountId, updates);
+  };
+
+  _onChangeNoticeType = typeId => {
+    const { selected } = this.state;
+    const { id, notifacation } = selected;
+    const updateAccount = {
+      ...selected,
+      notifacation: {
+        ...notifacation,
+        noticeType: typeId,
+      },
+    };
+    this._onAccountUpdated(id, updateAccount);
+  };
+  _onChangeNoticeSound = () => {
+    const { selected } = this.state;
+    const { id, notifacation } = selected;
+    const updateAccount = {
+      ...selected,
+      notifacation: {
+        ...notifacation,
+        sound: !notifacation.sound,
+      },
+    };
+    this._onAccountUpdated(id, updateAccount);
+  };
+
   _renderAccount = account => {
     const label = account.label;
     // const accountSub = `${account.name || 'No name provided'} <${account.emailAddress}>`;
@@ -163,6 +205,7 @@ export class PreferencesAccountNotifacations extends React.Component {
 
   render() {
     const { accounts, selected } = this.state;
+    const { noticeType, sound } = selected.notifacation;
     return (
       <div className="account-notifacations">
         <EditableList
@@ -178,21 +221,23 @@ export class PreferencesAccountNotifacations extends React.Component {
             <div className="account-notifacations-note">
               Notifications will be sent for all emails for this account.
             </div>
-            <div className="checkmark">
-              <div className="inner"></div>
-              None/Mute
-            </div>
-            <div className="checkmark">
-              <div className="inner"></div>
-              All mail
-            </div>
-            <div className="checkmark">
-              <div className="inner"></div>
-              Marked as Important
-            </div>
+            {noticeTypeEnum.map(type => {
+              return (
+                <div
+                  className="checkmark"
+                  key={type.id}
+                  onClick={() => {
+                    this._onChangeNoticeType(type.id);
+                  }}
+                >
+                  <div className={`inner${noticeType === type.id ? ' selected' : ''}`}></div>
+                  {type.title}
+                </div>
+              );
+            })}
             <div className="config-sound">
               <label>
-                <input type="checkbox" checked={true} />
+                <input type="checkbox" checked={sound} onChange={this._onChangeNoticeSound} />
                 New mail notification sound
               </label>
             </div>
