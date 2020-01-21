@@ -118,6 +118,77 @@ export default class Message extends ModelWithMetadata {
       queryable: false,
       itemClass: Contact,
     }),
+    calendarReply: Attributes.Boolean({
+      modelKey: 'calendarReply',
+      queryable: false
+    }),
+
+    listUnsubscribe: Attributes.String({
+      modelKey: 'listUnsubscribe',
+      queryable: false
+    }),
+
+    pristine: Attributes.Boolean({
+      modelKey: 'pristine',
+      queryable: false,
+    }),
+    replyToHeaderMessageId: Attributes.String({
+      modelKey: 'replyToHeaderMessageId',
+      jsonKey: 'replyToHeaderMsgId',
+      queryable: false
+    }),
+
+    forwardedHeaderMessageId: Attributes.String({
+      modelKey: 'forwardedHeaderMessageId',
+      queryable: false
+    }),
+
+    refOldDraftHeaderMessageId: Attributes.String({
+      modelKey: 'refOldDraftHeaderMessageId',
+      queryable: false
+    }),
+    savedOnRemote: Attributes.Boolean({
+      modelKey: 'savedOnRemote',
+      queryable: false
+    }),
+    hasRefOldDraftOnRemote: Attributes.Boolean({
+      modelKey: 'hasRefOldDraftOnRemote',
+      queryable: false
+    }),
+    folder: Attributes.Object({
+      queryable: false,
+      modelKey: 'folder',
+      itemClass: Folder,
+    }),
+    replyOrForward: Attributes.Number({
+      modelKey: 'replyOrForward',
+      queryable: false
+    }),
+    msgOrigin: Attributes.Number({
+      modelKey: 'msgOrigin',
+      queryable: false,
+    }),
+    hasNewID: Attributes.Boolean({
+      modelKey: 'hasNewID',
+      queryable: false,
+    }),
+    noSave: Attributes.Boolean({
+      noSave: 'noSave',
+      queryable: false,
+    }),
+    waitingForBody: Attributes.Boolean({
+      modelKey: 'waitingForBody',
+      queryable: false,
+    }),
+    calendarCurrentStatus: Attributes.Number({
+      modelKey: 'calCurStat',
+      queryable: false
+    }),
+    calendarTargetStatus: Attributes.Number({
+      modelKey: 'calTarStat',
+      queryable: false
+    }),
+
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
@@ -197,6 +268,7 @@ export default class Message extends ModelWithMetadata {
     headerMessageId: Attributes.String({
       queryable: true,
       loadFromColumn: true,
+      jsonKey: 'headerMsgId',
       modelKey: 'headerMsgId',
       jsModelKey: 'headerMessageId'
     }),
@@ -214,88 +286,12 @@ export default class Message extends ModelWithMetadata {
       loadFromColumn: true,
     }),
 
-    calendarReply: Attributes.Boolean({
-      modelKey: 'calendarReply',
-      queryable: false
-    }),
-
-    listUnsubscribe: Attributes.String({
-      modelKey: 'listUnsubscribe',
-      queryable: false
-    }),
-
-    pristine: Attributes.Boolean({
-      modelKey: 'pristine',
-      queryable: false,
-    }),
-
     version: Attributes.Number({
       modelKey: 'version',
       queryable: true,
       loadFromColumn: true,
     }),
 
-    replyToHeaderMessageId: Attributes.String({
-      modelKey: 'replyToHeaderMessageId',
-      queryable: false
-    }),
-
-    forwardedHeaderMessageId: Attributes.String({
-      modelKey: 'forwardedHeaderMessageId',
-      queryable: false
-    }),
-
-    refOldDraftHeaderMessageId: Attributes.String({
-      modelKey: 'refOldDraftHeaderMessageId',
-      queryable: false
-    }),
-    savedOnRemote: Attributes.Boolean({
-      modelKey: 'savedOnRemote',
-      queryable: false
-    }),
-    hasRefOldDraftOnRemote: Attributes.Boolean({
-      modelKey: 'hasRefOldDraftOnRemote',
-      queryable: false
-    }),
-    folder: Attributes.Object({
-      queryable: false,
-      modelKey: 'folder',
-      itemClass: Folder,
-    }),
-    replyOrForward: Attributes.Number({
-      modelKey: 'replyOrForward',
-      queryable: false
-    }),
-    msgOrigin: Attributes.Number({
-      modelKey: 'msgOrigin',
-      queryable: false,
-    }),
-    // Use savedOnRemote instead for draft.
-    // Not checked otherwise
-    // remoteUID: Attributes.Number({
-    //   modelKey: 'remoteUID',
-    //   queryable: false,
-    // }),
-    hasNewID: Attributes.Boolean({
-      modelKey: 'hasNewID',
-      queryable: false,
-    }),
-    noSave: Attributes.Boolean({
-      noSave: 'noSave',
-      queryable: false,
-    }),
-    waitingForBody: Attributes.Boolean({
-      modelKey: 'waitingForBody',
-      queryable: false,
-    }),
-    calendarCurrentStatus: Attributes.Number({
-      modelKey: 'calCurStat',
-      queryable: false
-    }),
-    calendarTargetStatus: Attributes.Number({
-      modelKey: 'calTarStat',
-      queryable: false
-    }),
     hasCalendar: Attributes.Boolean({
       modelKey: 'hasCalendar',
       queryable: true,
@@ -339,8 +335,6 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
-    this.deleted = this.deleted || false;
-    this.syncState = this.syncState || 0;
     if(Array.isArray(data.files)){
       this.attachmentIds = data.files
     }
@@ -348,6 +342,7 @@ export default class Message extends ModelWithMetadata {
 
   toJSON(options) {
     const json = super.toJSON(options);
+    json.headerMessageId = this.headerMessageId || '';
     json.file_ids = this.fileIds();
     if (this.draft) {
       json.draft= true;
