@@ -744,6 +744,25 @@ body.platform-win32 {
       }
     }
   }
+  // preview lines
+  .loopPreview(@counter) when (@counter >= 0) {
+    &.preview-@{counter} {
+      .snippet-and-labels {
+        .snippet {
+          height: (18px * @counter);
+          -webkit-line-clamp: @counter;
+        }
+      }
+    }
+    .loopPreview((@counter - 1));
+  }
+  .loopPreview(4);
+  &.preview-0 {
+    .showAvatar .list-column.list-column-Check {
+      top: 33px;
+    }
+  }
+
   .list-tabular .selection-bar .multiselect-toolbar-root {
     .inner {
       .btn-toolbar:hover {
@@ -807,6 +826,7 @@ body.platform-win32 {
   .list-tabular-item {
     line-height: 21px;
     box-shadow: none;
+    overflow: hidden;
   }
 
   // .list-tabular-item:not(.selected):not(.focused):not(.next-is-selected):after {

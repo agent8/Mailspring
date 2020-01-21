@@ -52,6 +52,10 @@ export default class OutboxSender extends React.Component {
       backgroundPosition: 'center',
       backgroundSize: 'cover',
     };
+    const avatarStyle = { width: 40, height: 40 };
+    if (this.props.avatarStyle) {
+      Object.assign(avatarStyle, this.props.avatarStyle);
+    }
     if (this.state.sending) {
       const lottieStyle = { position: 'absolute' };
       if (this.props.lottieStyle) {
@@ -62,7 +66,7 @@ export default class OutboxSender extends React.Component {
           <RetinaImg
             mode={RetinaImg.Mode.ContentPreserve}
             name={accountLogo}
-            style={{ width: 40, height: 40 }}
+            style={avatarStyle}
           />
           <LottieImg
             name={'loading-spinner-blue'}
@@ -75,8 +79,8 @@ export default class OutboxSender extends React.Component {
     }
     return <div className="avatar-icon" style={styles}>
       <RetinaImg mode={RetinaImg.Mode.ContentPreserve}
-                 name={accountLogo}
-                 style={{ width: 40, height: 40 }}
+        name={accountLogo}
+        style={avatarStyle}
       />
     </div>;
   }

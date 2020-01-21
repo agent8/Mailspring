@@ -537,6 +537,13 @@ export default {
             default: true,
             title: 'Show icons in the left-hand menu.',
           },
+          previewLines: {
+            type: 'number',
+            default: '2',
+            enum: [0, 1, 2, 3, 4],
+            enumLabels: ['None', '1 line', '2 lines', '3 lines', '4 lines'],
+            title: 'Preview lines (two panel view only)',
+          },
           profile: {
             type: 'boolean',
             default: true,

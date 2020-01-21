@@ -109,13 +109,13 @@ export function applyValueForMark(value, type, markValue) {
 // React Component Factories
 
 export function BuildToggleButton({ type, button: { iconClass, isActive, onToggle, svgName = '', isVisible = () => true, hideWhenCrowded = false } }) {
-  return ({ value, onChange, className }) => {
+  return ({ value, onChange, className = '' }) => {
     if (!isVisible()) {
       return null;
     }
     const active = isActive(value);
     const onMouseDown = e => {
-      onChange(onToggle(value, active));
+      onChange(onToggle(value, active, e));
       e.preventDefault();
     };
     if (svgName) {
