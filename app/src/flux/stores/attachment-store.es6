@@ -421,7 +421,7 @@ class AttachmentStore extends MailspringStore {
       this._prepareAndResolveFilePath(file)
         .catch(this._catchFSErrors)
         // Passively ignore
-        .catch(() => {})
+        .catch(() => { })
     );
   };
 
@@ -780,7 +780,7 @@ class AttachmentStore extends MailspringStore {
 
   // Handlers
 
-  _onSelectAttachment = ({ headerMessageId, onCreated = () => {}, type = '*' }) => {
+  _onSelectAttachment = ({ headerMessageId, onCreated = () => { }, type = '*' }) => {
     this._assertIdPresent(headerMessageId);
 
     // When the dialog closes, it triggers `Actions.addAttachment`
@@ -807,7 +807,7 @@ class AttachmentStore extends MailspringStore {
     headerMessageId,
     inline = false,
     filePaths = [],
-    onCreated = () => {},
+    onCreated = () => { },
   }) => {
     if (!Array.isArray(filePaths) || filePaths.length === 0) {
       throw new Error('_onAddAttachments must have an array of filePaths');
@@ -822,6 +822,7 @@ class AttachmentStore extends MailspringStore {
         if (stats.isDirectory()) {
           throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`);
         } else if (stats.size > 25 * 1000000) {
+          AppEnv.trackingEvent('largeAttachmentSize');
           throw new Error(`${filename} cannot be attached because it is larger than 25MB.`);
         }
 
@@ -839,6 +840,7 @@ class AttachmentStore extends MailspringStore {
 
         await this._applySessionChanges(headerMessageId, files => {
           if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
+            AppEnv.trackingEvent('largeAttachmentSize');
             throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
           }
           createdFiles.push(file);
@@ -857,7 +859,7 @@ class AttachmentStore extends MailspringStore {
     headerMessageId,
     filePath,
     inline = false,
-    onCreated = () => {},
+    onCreated = () => { },
   }) => {
     this._assertIdPresent(headerMessageId);
 
@@ -867,6 +869,7 @@ class AttachmentStore extends MailspringStore {
       if (stats.isDirectory()) {
         throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`);
       } else if (stats.size > 25 * 1000000) {
+        AppEnv.trackingEvent('largeAttachmentSize');
         throw new Error(`${filename} cannot be attached because it is larger than 25MB.`);
       }
 
@@ -884,6 +887,7 @@ class AttachmentStore extends MailspringStore {
 
       await this._applySessionChanges(headerMessageId, files => {
         if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
+          AppEnv.trackingEvent('largeAttachmentSize');
           throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
         }
         return files.concat([file]);

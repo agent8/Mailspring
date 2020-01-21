@@ -11,6 +11,7 @@ import {
 import OutboxListColumns from './outbox-list-columns';
 
 const buttonTimer = 500;
+const PREVIEW_LINES_KEY = 'core.appearance.previewLines';
 
 class OutboxList extends React.Component {
   static displayName = 'OutboxList';
@@ -25,6 +26,7 @@ class OutboxList extends React.Component {
     super(props);
     this.state = {
       isDeleting: false,
+      previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
     };
     this._mounted = false;
     this._deletingTimer = false;
@@ -34,12 +36,18 @@ class OutboxList extends React.Component {
     this._mounted = true;
     window.addEventListener('resize', this._onResize, true);
     this._onResize();
+    this.disposable = AppEnv.config.onDidChange(PREVIEW_LINES_KEY, () => {
+      this.setState({
+        previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
+      });
+    });
   }
 
   componentWillUnmount() {
     this._mounted = false;
     window.removeEventListener('resize', this._onResize, true);
     clearTimeout(this._deletingTimer);
+    this.disposable.dispose();
   }
 
   _calcScrollPosition = _.throttle(scrollTop => {
@@ -72,7 +80,8 @@ class OutboxList extends React.Component {
     }
   };
   render() {
-    const itemHeight = 108;
+    const { previewLines } = this.state;
+    const itemHeight = 72 + previewLines * 18;
     return (
       <FluxContainer
         stores={[OutboxStore]}
@@ -82,7 +91,7 @@ class OutboxList extends React.Component {
       >
         <FocusContainer collection="outbox">
           <MultiselectList
-            className="outbox-list outbox-list-narrow"
+            className={`outbox-list outbox-list-narrow preview-${previewLines}`}
             columns={OutboxListColumns.Narrow}
             itemHeight={itemHeight}
             EmptyComponent={EmptyListState}

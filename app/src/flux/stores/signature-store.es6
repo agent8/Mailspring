@@ -7,7 +7,7 @@ import fs from 'fs';
 const sigDefaultTemplate = {
   id: 'initial',
   title: 'Default',
-  body: `<div><div>Sent from <a href="https://www.edison.tech/">EdisonMail</a>, the best free email app for work</div></div>`,
+  body: `<div>Sent from <a href="https://www.edison.tech/">EdisonMail</a>, the best free email app for work</div>`,
 };
 
 class SignatureStore extends MailspringStore {
@@ -43,7 +43,7 @@ class SignatureStore extends MailspringStore {
           fs.writeFile(
             path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),
             sigDefaultTemplate.body,
-            () => {}
+            () => { }
           );
         });
       }
