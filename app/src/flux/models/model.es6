@@ -132,4 +132,20 @@ export default class Model {
     }
     return true;
   }
+
+  mergeFromColumn(val){
+      const allKeys = Object.keys(this.constructor.attributes);
+      const neededKeys = [];
+      allKeys.forEach(key => {
+        if(!this.constructor.attributes[key].loadFromColumn && !this.constructor.attributes[key].mergeIntoModel){
+          neededKeys.push(key);
+        }
+      });
+    neededKeys.forEach(key=>{
+      const jsKey = this.constructor.attributes[key].jsonKey || this.constructor.attributes[key].modelKey || key;
+        if(val && val.hasOwnProperty(jsKey)){
+          this[key] = this.constructor.attributes[key].fromColumn(val[jsKey]);
+        }
+      });
+    }
 }

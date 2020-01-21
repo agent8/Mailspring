@@ -443,16 +443,12 @@ export default class ModelQuery {
               console.log(`column ${attr.tableColumn} is not string, ${typeof dataString}, ${dataString}`);
               continue;
             }
-            let tmp;
             try {
-              tmp = JSON.parse(dataString);
+              const tmp = JSON.parse(dataString);
+              object.mergeFromColumn(tmp);
             } catch (e) {
               console.log(`${dataString} for ${attr.tableColumn} is not json string`);
               continue;
-            }
-            tmp = attr.fromColumn(tmp);
-            if (tmp) {
-              Object.assign(object, tmp);
             }
           } else {
             object[attr.jsModelKey] = attr.fromColumn(row[attr.tableColumn]);
