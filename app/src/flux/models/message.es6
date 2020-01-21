@@ -140,11 +140,13 @@ export default class Message extends ModelWithMetadata {
 
     forwardedHeaderMessageId: Attributes.String({
       modelKey: 'forwardedHeaderMessageId',
+      jsonKey: 'forwardHeaderMsgId',
       queryable: false
     }),
 
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
+      jsonKey: 'refDraftHeaderMsgId',
       queryable: false
     }),
     savedOnRemote: Attributes.Boolean({
@@ -153,6 +155,7 @@ export default class Message extends ModelWithMetadata {
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
+      jsonKey: 'hasRefDraft',
       queryable: false
     }),
     folder: Attributes.Object({
