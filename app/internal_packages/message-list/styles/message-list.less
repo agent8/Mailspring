@@ -1043,15 +1043,26 @@ body.platform-win32 {
     line-height: 24px;
     font-family: 'SF UI Text';
     margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   p {
-    margin: 15px 0;
+    margin: 13px 0 20px;
     font-family: 'SF UI Display';
     color: @text-color-very-subtle;
     font-weight: @font-weight-medium;
     letter-spacing: 0.22px;
     line-height: 16px;
+
+    span {
+      display: inline-block;
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
 
   .btn-list {
