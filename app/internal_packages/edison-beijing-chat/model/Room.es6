@@ -1,4 +1,3 @@
-import Message from './Message';
 import { tableCompletedSync } from '../utils/databaseCompleteInt';
 
 const Sequelize = require('sequelize');
@@ -6,7 +5,7 @@ const Model = Sequelize.Model;
 const { getdb } = require('../db/index');
 const db = getdb();
 
-export default class Room extends Model {}
+export default class Room extends Model { }
 Room.init(
   {
     // attributes
