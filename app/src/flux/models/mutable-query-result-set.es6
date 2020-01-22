@@ -100,8 +100,8 @@ export default class MutableQueryResultSet extends QueryResultSet {
       }
       for (const key of Object.keys(attrs)) {
         const attr = attrs[key];
-        if (attr instanceof AttributeJoinedData && item[attr.modelKey] === undefined) {
-          item[attr.modelKey] = existing[attr.modelKey];
+        if (attr instanceof AttributeJoinedData && item[attr.jsModelKey || attr.modelKey] === undefined) {
+          item[attr.jsModelKey || attr.modelKey] = existing[attr.jsModelKey || attr.modelKey];
         }
       }
     }

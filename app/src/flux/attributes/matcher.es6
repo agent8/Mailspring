@@ -70,7 +70,7 @@ class Matcher {
   }
 
   evaluate(model) {
-    let modelValue = model[this.attr.modelKey];
+    let modelValue = model[this.attr.jsModelKey || this.attr.modelKey];
     if (modelValue instanceof Function) {
       modelValue = modelValue();
     }
