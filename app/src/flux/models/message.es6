@@ -360,15 +360,6 @@ export default class Message extends ModelWithMetadata {
 
   fromJSON(json = {}) {
     super.fromJSON(json);
-
-    // Only change the `draft` bit if the incoming json has an `object`
-    // property. Because of `DraftChangeSet`, it's common for incoming json
-    // to be an empty hash. In this case we want to leave the pre-existing
-    // draft bit alone.
-    // if (json.object) {
-    //   this.draft = json.object === 'draft';
-    // }
-
     return this;
   }
 

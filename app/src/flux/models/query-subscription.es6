@@ -180,8 +180,8 @@ export default class QuerySubscription {
 
   _itemSortOrderHasChanged(old, updated) {
     for (const descriptor of this._query.orderSortDescriptors()) {
-      const oldSortValue = old[descriptor.attr.modelKey];
-      const updatedSortValue = updated[descriptor.attr.modelKey];
+      const oldSortValue = old[descriptor.attr.jsModelKey || descriptor.attr.modelKey];
+      const updatedSortValue = updated[descriptor.attr.jsModelKey || descriptor.attr.modelKey];
 
       // http://stackoverflow.com/questions/4587060/determining-date-equality-in-javascript
       if (!(oldSortValue >= updatedSortValue && oldSortValue <= updatedSortValue)) {
