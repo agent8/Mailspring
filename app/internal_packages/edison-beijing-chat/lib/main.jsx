@@ -1,11 +1,9 @@
 import ChatButton from './chat-button'
-import ChatView from './chat-view'
+let ChatView;
 import NewConversation from '../components/chat/messages/NewConversation'
 import ChatViewLeft from './chat-view-left'
 import ChatAccountSidebarFiller from '../components/chat/chat-account-sidebar-filler'
 import { LocalStorage } from 'chat-exports'
-import { ContactModel, AppStore } from 'chat-exports'
-import '../model/'
 import startXmpp from '../xmpp/startXmpp'
 import Mousetrap from 'mousetrap'
 import bindMousetrap from '../shortcuts/bindMousetrap'
@@ -30,6 +28,8 @@ module.exports = {
     if (!AppEnv.config.get(`core.workspace.enableChat`)) {
       return
     }
+    require('../model/'); // init all tables
+    ChatView = require('./chat-view').default;
     startXmpp(xmpp)
     bindMousetrap(Mousetrap)
     WorkspaceStore.defineSheet(
@@ -74,6 +74,7 @@ module.exports = {
       //   });
       // }
     }
+    const { ContactModel, AppStore } = require('chat-exports');
     ContactModel.destroy({
       where: {},
       truncate: true,
