@@ -1,5 +1,4 @@
 // For messages from current user
-import Conversation from './Conversation';
 import { tableCompletedSync } from '../utils/databaseCompleteInt';
 
 export const MESSAGE_STATUS_FILE_UPLOADING = 'MESSAGE_STATUS_FILE_UPLOADING';
@@ -28,7 +27,7 @@ const db = getdb();
 
 export const getStatusWeight = status => STATUS_WEIGHTS[status];
 
-export default class Message extends Model {}
+export default class Message extends Model { }
 Message.init(
   {
     // attributes
