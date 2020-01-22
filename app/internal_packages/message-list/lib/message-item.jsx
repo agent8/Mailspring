@@ -269,7 +269,7 @@ export default class MessageItem extends React.Component {
     const { files = [], body, id } = this.props.message;
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
-      return !f.contentId || !(body || '').includes(`cid:${f.contentId}`);
+      return !f.contentId || !(body || '').includes(`cid:${f.contentId}`) || (f.contentId && !Utils.shouldDisplayAsImage(f));
     });
 
     return (
