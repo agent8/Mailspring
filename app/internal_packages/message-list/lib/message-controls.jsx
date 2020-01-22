@@ -444,16 +444,13 @@ export default class MessageControls extends React.Component {
           <br />
           {email}
         </h1>
-        <p>
-          Are you sure you want to mute all notifications from "{email}"? You can manage your muted
-          senders in preferences.
-        </p>
+        <p>You won't be notified about new mail from this sender.</p>
         <div className="btn-list">
           <div className="btn cancel" onClick={this._onToggleMuteEmail}>
             Cancel
           </div>
           <div className="btn confirm" onClick={() => this._onMuteEmail(email)}>
-            Mute Notifications
+            Mute
           </div>
         </div>
       </div>
@@ -525,7 +522,14 @@ export default class MessageControls extends React.Component {
 
         <FullScreenModal
           visible={this.state.showMuteEmailModal}
-          style={{ height: '223px', width: '400px', top: '265px', bottom: 'auto' }}
+          style={{
+            height: '192px',
+            width: '400px',
+            top: '165px',
+            right: '255px',
+            left: 'auto',
+            bottom: 'auto',
+          }}
         >
           {this._renderMuteEmailPopup()}
         </FullScreenModal>

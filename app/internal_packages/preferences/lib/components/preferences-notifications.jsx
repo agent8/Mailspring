@@ -1,8 +1,9 @@
 import React from 'react';
 import { MuteNotificationStore, Actions } from 'mailspring-exports';
-import { RetinaImg, EditableList, Flexbox } from 'mailspring-component-kit';
+import { RetinaImg, EditableList, Flexbox, FullScreenModal } from 'mailspring-component-kit';
 import classnames from 'classnames';
 import ContactList from './contact-list';
+import ContactSearch from './contact-search';
 import { AccountStore } from 'mailspring-exports';
 
 const noticeTypeEnum = [
@@ -27,6 +28,7 @@ export class PreferencesMutedNotifacations extends React.Component {
     this.state = {
       mutes: [],
       showAddContact: false,
+      selectContact: [],
     };
   }
 
@@ -53,8 +55,14 @@ export class PreferencesMutedNotifacations extends React.Component {
     this.setState({ mutes });
   };
 
+  _onSelectContact = contact => {
+    if (contact) {
+      this.setState({ selectContact: [contact] });
+    }
+  };
+
   _onMuteContact = email => {
-    this.setState({ showAddContact: false });
+    this._onToggleMutePopup();
     if (email) {
       MuteNotificationStore.muteNotifacationEmails([email]);
     }
@@ -65,8 +73,12 @@ export class PreferencesMutedNotifacations extends React.Component {
     MuteNotificationStore.unMuteNotifacationEmails(emails);
   };
 
+  _onToggleMutePopup = () => {
+    this.setState({ showAddContact: !this.state.showAddContact, selectContact: [] });
+  };
+
   render() {
-    const { mutes, showAddContact } = this.state;
+    const { mutes, showAddContact, selectContact } = this.state;
     return (
       <div className="container-mute">
         <div className="config-group">
@@ -75,10 +87,7 @@ export class PreferencesMutedNotifacations extends React.Component {
             Contacts you have muted will appear here. You will not receive notifications for mail
             from these senders.
           </div>
-          <div
-            className="btn-primary buttons-add"
-            onClick={() => this.setState({ showAddContact: true })}
-          >
+          <div className="btn-primary buttons-add" onClick={this._onToggleMutePopup}>
             <RetinaImg
               name={`add.svg`}
               style={{ width: 19, height: 19 }}
@@ -90,12 +99,40 @@ export class PreferencesMutedNotifacations extends React.Component {
         </div>
         <ContactList
           contacts={mutes}
-          showAddContact={showAddContact}
-          onAddContact={this._onMuteContact}
           checkmarkNote={'muted senders'}
           handleName={'Unmute'}
           handleSelect={this._unmuteSelect}
         />
+        <FullScreenModal
+          visible={showAddContact}
+          onCancel={this._onCloseExportDataModal}
+          className="add-mute-contact"
+        >
+          <div className="add-mute-contact-popup">
+            <RetinaImg
+              isIcon
+              className="close-icon"
+              style={{ width: '20', height: '20' }}
+              name="close.svg"
+              mode={RetinaImg.Mode.ContentIsMask}
+              onClick={this._onToggleMutePopup}
+            />
+            <h1>Who do you want to mute?</h1>
+            <p>You won't receive notifications from this sender.</p>
+            <ContactSearch filterContacts={mutes} onSelectContact={this._onSelectContact} />
+            <div className="btn-group">
+              <button onClick={this._onToggleMutePopup}>Cancel</button>
+              <button
+                className={classnames({
+                  confirm: true,
+                  disable: selectContact.length === 0,
+                })}
+              >
+                Mute
+              </button>
+            </div>
+          </div>
+        </FullScreenModal>
       </div>
     );
   }
@@ -223,15 +260,17 @@ export class PreferencesAccountNotifacations extends React.Component {
             </div>
             {noticeTypeEnum.map(type => {
               return (
-                <div
-                  className="checkmark"
-                  key={type.id}
-                  onClick={() => {
-                    this._onChangeNoticeType(type.id);
-                  }}
-                >
-                  <div className={`inner${noticeType === type.id ? ' selected' : ''}`}></div>
-                  {type.title}
+                <div className="checkmark" key={type.id}>
+                  <label>
+                    <input
+                      type="radio"
+                      checked={noticeType === type.id}
+                      onChange={() => {
+                        this._onChangeNoticeType(type.id);
+                      }}
+                    />
+                    {type.title}
+                  </label>
                 </div>
               );
             })}
