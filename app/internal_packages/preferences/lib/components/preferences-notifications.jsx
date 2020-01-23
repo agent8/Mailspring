@@ -57,7 +57,7 @@ export class PreferencesMutedNotifacations extends React.Component {
 
   _onSelectContact = contact => {
     if (contact) {
-      this.setState({ selectContact: [contact] });
+      this.setState({ selectContact: [...this.state.selectContact, contact] });
     }
   };
 
@@ -77,8 +77,38 @@ export class PreferencesMutedNotifacations extends React.Component {
     this.setState({ showAddContact: !this.state.showAddContact, selectContact: [] });
   };
 
+  _renderMuteContactPop = () => {
+    const { mutes, selectContact } = this.state;
+    return (
+      <div className="add-mute-contact-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onToggleMutePopup}
+        />
+        <h1>Who do you want to mute?</h1>
+        <p>You won't receive notifications from this sender.</p>
+        <ContactSearch filterContacts={mutes} onSelectContact={this._onSelectContact} />
+        <div className="btn-group">
+          <button onClick={this._onToggleMutePopup}>Cancel</button>
+          <button
+            className={classnames({
+              confirm: true,
+              disable: selectContact.length === 0,
+            })}
+          >
+            Mute
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   render() {
-    const { mutes, showAddContact, selectContact } = this.state;
+    const { mutes, showAddContact } = this.state;
     return (
       <div className="container-mute">
         <div className="config-group">
@@ -108,30 +138,7 @@ export class PreferencesMutedNotifacations extends React.Component {
           onCancel={this._onCloseExportDataModal}
           className="add-mute-contact"
         >
-          <div className="add-mute-contact-popup">
-            <RetinaImg
-              isIcon
-              className="close-icon"
-              style={{ width: '20', height: '20' }}
-              name="close.svg"
-              mode={RetinaImg.Mode.ContentIsMask}
-              onClick={this._onToggleMutePopup}
-            />
-            <h1>Who do you want to mute?</h1>
-            <p>You won't receive notifications from this sender.</p>
-            <ContactSearch filterContacts={mutes} onSelectContact={this._onSelectContact} />
-            <div className="btn-group">
-              <button onClick={this._onToggleMutePopup}>Cancel</button>
-              <button
-                className={classnames({
-                  confirm: true,
-                  disable: selectContact.length === 0,
-                })}
-              >
-                Mute
-              </button>
-            </div>
-          </div>
+          {this._renderMuteContactPop()}
         </FullScreenModal>
       </div>
     );

@@ -37,6 +37,10 @@ export default class FullScreenModal extends React.Component {
     }
   }
 
+  componentDidUpdate() {
+    this.renderToContainer(this.props.visible);
+  }
+
   componentWillUnmount() {
     this.renderToContainer(false);
   }

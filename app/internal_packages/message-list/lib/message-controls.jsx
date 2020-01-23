@@ -41,25 +41,38 @@ export default class MessageControls extends React.Component {
       isReplyAlling: false,
       isForwarding: false,
       showMuteEmailModal: false,
+      isMuted: false,
     };
     this._mounted = false;
     this._replyTimer = null;
     this._replyAllTimer = null;
     this._forwardTimer = null;
-    this._unlisten = Actions.draftReplyForwardCreated.listen(this._onDraftCreated, this);
+    this._unlisten = [
+      Actions.draftReplyForwardCreated.listen(this._onDraftCreated, this),
+      MuteNotificationStore.listen(this._onMuteChange),
+    ];
   }
 
   componentDidMount() {
     this._mounted = true;
+    this._onMuteChange();
   }
 
   componentWillUnmount() {
     this._mounted = false;
-    this._unlisten();
+    this._unlisten.forEach(un => un());
     clearTimeout(this._forwardTimer);
     clearTimeout(this._replyAllTimer);
     clearTimeout(this._replyTimer);
   }
+
+  _onMuteChange = () => {
+    const { message } = this.props;
+    const accoundId = message.accountId;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+    const isMuted = MuteNotificationStore.isMuteByAccount(accoundId, email);
+    this.setState({ isMuted });
+  };
 
   _timeoutButton = type => {
     if (type === 'reply') {
@@ -154,6 +167,13 @@ export default class MessageControls extends React.Component {
     this.setState({ showMuteEmailModal: !this.state.showMuteEmailModal });
   };
 
+  _onUnmuteNotification = () => {
+    const { message } = this.props;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+
+    MuteNotificationStore.unMuteNotifacationByAccount(message.accountId, email);
+  };
+
   _onMuteEmail = email => {
     const { message } = this.props;
     this._onToggleMuteEmail();
@@ -161,6 +181,7 @@ export default class MessageControls extends React.Component {
   };
 
   _items() {
+    const { isMuted } = this.state;
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
@@ -201,10 +222,10 @@ export default class MessageControls extends React.Component {
     };
 
     const muteEmail = {
-      name: 'Mute notifications',
+      name: `${isMuted ? 'Unmute' : 'Mute'} notifications`,
       image: 'preview.svg',
       iconHidden: true,
-      select: this._onToggleMuteEmail,
+      select: isMuted ? this._onUnmuteNotification : this._onToggleMuteEmail,
     };
 
     if (!this.props.message.canReplyAll()) {
