@@ -229,19 +229,6 @@ const preferencesTemplateFill = {
               component: PreferencesAccountNotifacations,
               keywords: [],
             },
-            // {
-            //   label: 'Show notifications for new unread emails',
-            //   configSchema: configSchema =>
-            //     configSchema.properties.notifications.properties.enabled,
-            //   keyPath: 'core.notifications.enabled',
-            //   keywords: [],
-            // },
-            // {
-            //   label: 'New mail notification sound',
-            //   configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
-            //   keyPath: 'core.notifications.sounds',
-            //   keywords: [],
-            // },
           ],
         },
         {
