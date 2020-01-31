@@ -22,6 +22,9 @@ class ContactSearch extends React.Component {
 
   componentDidMount() {
     this._mounted = true;
+    if (this._inputSearch) {
+      this._inputSearch.focus();
+    }
   }
 
   componentWillUnmount() {

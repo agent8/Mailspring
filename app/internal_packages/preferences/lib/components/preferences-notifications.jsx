@@ -1,10 +1,9 @@
 import React from 'react';
-import { MuteNotificationStore, Actions } from 'mailspring-exports';
+import { MuteNotificationStore, Actions, EmailAvatar, AccountStore } from 'mailspring-exports';
 import { RetinaImg, EditableList, Flexbox, FullScreenModal } from 'mailspring-component-kit';
 import classnames from 'classnames';
 import ContactList from './contact-list';
 import ContactSearch from './contact-search';
-import { AccountStore } from 'mailspring-exports';
 
 const noticeTypeEnum = [
   {
@@ -20,6 +19,63 @@ const noticeTypeEnum = [
     title: 'Marked as Important',
   },
 ];
+
+class CoutactSelectShow extends React.Component {
+  static displayName = 'CoutactSelectShow';
+  constructor() {
+    super();
+    this.state = {};
+  }
+
+  componentDidMount() {
+    this._fieldElFocus();
+  }
+
+  _fieldElFocus() {
+    if (this._input) {
+      this._input.focus();
+    }
+  }
+
+  _inputOnKeyDown = e => {
+    if (e.keyCode === 8) {
+      this.props.delSelectContact();
+    }
+  };
+
+  render() {
+    const { contact } = this.props;
+    return (
+      <div className="contact-select-show nylas-input-search">
+        <RetinaImg
+          isIcon
+          name="search.svg"
+          className="search-accessory search"
+          mode={RetinaImg.Mode.ContentIsMask}
+          style={{ height: 20, width: 20 }}
+          onClick={() => this._fieldElFocus()}
+        />
+        <div className="cover-contact">
+          <div className="contact-item">
+            <EmailAvatar
+              key="email-avatar"
+              account={{ name: contact.name, email: contact.email }}
+            />
+            {contact.name ? <span>{contact.name}</span> : null}
+            {contact.email}
+          </div>
+          <input
+            ref={el => (this._input = el)}
+            onKeyDown={this._inputOnKeyDown}
+            value=""
+            onChange={() => {}}
+          />
+        </div>
+      </div>
+    );
+  }
+}
+
 export class PreferencesMutedNotifacations extends React.Component {
   static displayName = 'PreferencesMutedNotifacations';
 
@@ -28,7 +84,7 @@ export class PreferencesMutedNotifacations extends React.Component {
     this.state = {
       mutes: [],
       showAddContact: false,
-      selectContact: [],
+      selectContact: null,
     };
   }
 
@@ -57,15 +113,21 @@ export class PreferencesMutedNotifacations extends React.Component {
 
   _onSelectContact = contact => {
     if (contact) {
-      this.setState({ selectContact: [...this.state.selectContact, contact] });
+      this.setState({ selectContact: contact });
     }
   };
 
-  _onMuteContact = email => {
-    this._onToggleMutePopup();
+  _onDelSelectContact = () => {
+    this.setState({ selectContact: null });
+  };
+
+  _onMuteContact = () => {
+    const { selectContact } = this.state;
+    const email = selectContact.email;
     if (email) {
       MuteNotificationStore.muteNotifacationEmails([email]);
     }
+    this._onToggleMutePopup();
   };
 
   _unmuteSelect = select => {
@@ -74,7 +136,7 @@ export class PreferencesMutedNotifacations extends React.Component {
   };
 
   _onToggleMutePopup = () => {
-    this.setState({ showAddContact: !this.state.showAddContact, selectContact: [] });
+    this.setState({ showAddContact: !this.state.showAddContact, selectContact: null });
   };
 
   _renderMuteContactPop = () => {
@@ -91,14 +153,19 @@ export class PreferencesMutedNotifacations extends React.Component {
         />
         <h1>Who do you want to mute?</h1>
         <p>You won't receive notifications from this sender.</p>
-        <ContactSearch filterContacts={mutes} onSelectContact={this._onSelectContact} />
+        {selectContact ? (
+          <CoutactSelectShow contact={selectContact} delSelectContact={this._onDelSelectContact} />
+        ) : (
+          <ContactSearch filterContacts={mutes} onSelectContact={this._onSelectContact} />
+        )}
         <div className="btn-group">
           <button onClick={this._onToggleMutePopup}>Cancel</button>
           <button
             className={classnames({
               confirm: true,
-              disable: selectContact.length === 0,
+              disable: !selectContact,
             })}
+            onClick={this._onMuteContact}
           >
             Mute
           </button>
