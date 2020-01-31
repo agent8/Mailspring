@@ -127,6 +127,35 @@
       background-color: @gray;
       cursor: pointer;
     }
+    .contact-item {
+      padding: 0 21px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      color: @gray;
+      font-size: 14px;
+      letter-spacing: -0.31px;
+      line-height: 15px;
+
+      .avatar-icon {
+        height: 20px;
+        width: 20px;
+        border: none;
+        margin-right: 19px;
+        display: inline-block;
+        vertical-align: top;
+        line-height: 20px;
+        text-align: center;
+        color: @text-color-inverse;
+        border-radius: 50%;
+      }
+      span {
+        color: @text-color;
+        margin-right: 15px;
+        white-space: nowrap;
+      }
+    }
     .menu {
       position: relative;
 
@@ -152,35 +181,37 @@
           &.select {
             background-color: @off-white-light;
           }
+        }
+      }
+    }
 
-          .contact-item {
-            padding: 0 21px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            color: @gray;
-            font-size: 14px;
-            letter-spacing: -0.31px;
-            line-height: 15px;
+    .contact-select-show {
+      position: relative;
+      overflow: hidden;
 
-            .avatar-icon {
-              height: 20px;
-              width: 20px;
-              border: none;
-              margin-right: 19px;
-              display: inline-block;
-              vertical-align: top;
-              line-height: 20px;
-              text-align: center;
-              color: @text-color-inverse;
-              border-radius: 50%;
-            }
-            span {
-              color: @text-color;
-              margin-right: 15px;
-            }
+      .cover-contact {
+        position: absolute;
+        top: 5px;
+        left: 55px;
+        height: 28px;
+        overflow: hidden;
+        display: flex;
+
+        .contact-item {
+          height: 100%;
+          border-radius: 15px;
+          background-color: @gray-lightest;
+          padding: 0 12px 0 4px;
+          font-family: 'SF UI Text';
+
+          span,
+          .avatar-icon {
+            margin-right: 7px;
           }
+        }
+
+        input {
+          font-size: 26px;
         }
       }
     }
@@ -207,6 +238,13 @@
       border: 1px solid #e1e4e6;
       border-radius: 10px !important;
       background: none;
+      padding-left: 15px !important;
+
+      img {
+        height: 26px !important;
+        width: 26px !important;
+        margin-right: 11px;
+      }
     }
     .btn-group {
       padding-top: 35px;
