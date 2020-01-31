@@ -12,7 +12,12 @@ import {
   TrashFromSenderTask,
   OutboxStore,
 } from 'mailspring-exports';
-import { RetinaImg, InjectedComponentSet, InjectedComponent, OutboxSender } from 'mailspring-component-kit';
+import {
+  RetinaImg,
+  InjectedComponentSet,
+  InjectedComponent,
+  OutboxSender,
+} from 'mailspring-component-kit';
 
 import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
@@ -43,6 +48,7 @@ export default class MessageItem extends React.Component {
     const accountId = message.accountId;
     const fromEmail = message.from && message.from[0] ? message.from[0].email : '';
 
+    this.CONFIG_KEY = 'core.appearance.adaptiveEmailColor';
     this.state = {
       // Holds the downloadData (if any) for all of our files. It's a hash
       // keyed by a fileId. The value is the downloadData.
@@ -55,7 +61,7 @@ export default class MessageItem extends React.Component {
       fromEmail,
       isBlocked: BlockedSendersStore.isBlockedByAccount(accountId, fromEmail),
       trackers: [],
-      viewOriginalEmail: false,
+      viewOriginalEmail: AppEnv.isDarkTheme() && !AppEnv.config.get(this.CONFIG_KEY),
     };
     this.markAsReadTimer = null;
     this.mounted = false;
@@ -68,6 +74,13 @@ export default class MessageItem extends React.Component {
       CalendarStore.listen(this._onCalendarStoreChange),
       BlockedSendersStore.listen(this._onBlockStoreChange),
     ];
+    this.disposable = AppEnv.config.onDidChange(this.CONFIG_KEY, () => {
+      if (this.mounted) {
+        this.setState({
+          viewOriginalEmail: AppEnv.isDarkTheme() && !AppEnv.config.get(this.CONFIG_KEY),
+        });
+      }
+    });
     this.mounted = true;
   }
 
@@ -83,6 +96,7 @@ export default class MessageItem extends React.Component {
         un();
       }
     }
+    this.disposable.dispose();
   }
 
   _onClickBlockBtn = e => {
@@ -255,10 +269,7 @@ export default class MessageItem extends React.Component {
     const { files = [], body, id } = this.props.message;
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
-      return (
-        (!f.contentId || !(body || '').includes(`cid:${f.contentId}`)) &&
-        !(f.contentType || '').toLocaleLowerCase().includes('text/calendar')
-      );
+      return !f.contentId || !(body || '').includes(`cid:${f.contentId}`) || (f.contentId && !Utils.shouldDisplayAsImage(f));
     });
 
     return (
@@ -296,24 +307,6 @@ export default class MessageItem extends React.Component {
     );
   }
 
-  _renderBlockBtn() {
-    const { message } = this.props;
-    const { isBlocked } = this.state;
-    let btnText = '';
-
-    if (message.listUnsubscribe) {
-      btnText = isBlocked ? 'Resubscribe' : 'Unsubscribe';
-    } else {
-      btnText = isBlocked ? 'Unblock' : 'Block';
-    }
-
-    return (
-      <div className="blockBtn" onClick={this._onClickBlockBtn}>
-        {btnText}
-      </div>
-    );
-  }
-
   _renderBlockNote() {
     if (this.state.isBlocked) {
       const { message } = this.props;
@@ -331,19 +324,23 @@ export default class MessageItem extends React.Component {
 
   _renderEmailAvatar() {
     if (this.props.isOutboxDraft) {
-      return <OutboxSender draft={this.props.message} lottieStyle={{margin: "-45px auto 0px -5px"}} />;
+      return (
+        <OutboxSender draft={this.props.message} lottieStyle={{ margin: '-45px auto 0px -5px' }} />
+      );
     } else {
-      return <EmailAvatar
-        key="thread-avatar"
-        message={this.props.message}
-        messagePending={this.props.pending}
-      />;
+      return (
+        <EmailAvatar
+          key="thread-avatar"
+          message={this.props.message}
+          messagePending={this.props.pending}
+        />
+      );
     }
   }
 
   _renderHeader() {
-    const { message, thread, messages} = this.props;
-    const { trackers } = this.state;
+    const { message, thread, messages } = this.props;
+    const { trackers, isBlocked } = this.state;
     return (
       <header
         ref={el => (this._headerEl = el)}
@@ -375,6 +372,8 @@ export default class MessageItem extends React.Component {
             thread={thread}
             message={message}
             messages={messages}
+            isBlocked={isBlocked}
+            onBlock={this._onClickBlockBtn}
             threadPopedOut={this.props.threadPopedOut}
             hideControls={this.props.isOutboxDraft}
             trackers={trackers}
@@ -384,7 +383,6 @@ export default class MessageItem extends React.Component {
             }}
           />
         </div>
-        {this._renderBlockBtn()}
         <div className="row">
           {this._renderEmailAvatar()}
           <div>

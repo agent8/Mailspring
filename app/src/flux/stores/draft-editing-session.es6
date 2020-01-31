@@ -15,6 +15,7 @@ import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import DestroyDraftTask from '../tasks/destroy-draft-task';
 import uuid from 'uuid';
 import { ipcRenderer } from 'electron';
+import _ from 'underscore';
 
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
@@ -212,7 +213,7 @@ function fastCloneDraft(draft) {
   Object.defineProperty(next, 'bodyEditorState', next.__bodyEditorStatePropDescriptor);
   return next;
 }
-function cloneForSyncDraftData(draft){
+export function cloneForSyncDraftData(draft){
   const next = new Message();
   for (const key of Object.getOwnPropertyNames(draft)) {
     if (key === 'body' || key === 'bodyEditorState') {
@@ -221,6 +222,7 @@ function cloneForSyncDraftData(draft){
     next[key] = draft[key];
   }
   next['body'] = draft.body;
+  next['lastSync'] = Date.now();
   return next;
 }
 
@@ -246,6 +248,8 @@ export default class DraftEditingSession extends MailspringStore {
     this._draft = false;
     this._destroyed = false;
     this._popedOut = false;
+    this._needsSyncWithMain = false;
+    this.lastSync = Date.now();
     let currentWindowLevel = 3;
     if (AppEnv.isMainWindow()) {
       currentWindowLevel = 1;
@@ -702,34 +706,6 @@ export default class DraftEditingSession extends MailspringStore {
       // console.log('no changes');
     }
   };
-
-  // We assume that when thread changes, we are switching view
-  // onThreadChange = options => {
-  //   // console.log(`on thread change listener: ${this._threadId}`, options);
-  //   if (
-  //     this._draft &&
-  //     options.threadId &&
-  //     this._draft.threadId === options.threadId &&
-  //     !this._inView &&
-  //     !this._destroyed
-  //   ) {
-  //     this._inView = true;
-  //     this._registerListeners();
-  //   } else if (
-  //     this._draft &&
-  //     options.threadId &&
-  //     this._draft.threadId !== options.threadId &&
-  //     this._inView &&
-  //     !this.isPopout() &&
-  //     !this._destroyed
-  //   ) {
-  //     if (this.needUpload()) {
-  //       this.changeSetCommit('unload');
-  //     }
-  //     this._removeListeners();
-  //     this._inView = false;
-  //   }
-  // };
   cancelCommit(){
     this.changes.cancelCommit();
   }
@@ -748,31 +724,6 @@ export default class DraftEditingSession extends MailspringStore {
       );
       this._draft.id = uuid();
     }
-    // if (
-    //   this._draft.remoteUID &&
-    //   (!this._draft.msgOrigin ||
-    //     (this._draft.msgOrigin === Message.EditExistingDraft && !this._draft.hasNewID)) &&
-    //   reason === 'unload'
-    // ) {
-    //   this._draft.setOrigin(Message.EditExistingDraft);
-    //   this._draft.referenceMessageId = this._draft.id;
-    //   // this._draft.id = uuid();
-    //   const oldHMsgId = this._draft.headerMessageId;
-    //   // this._draft.headerMessageId = this._draft.id;
-    //   this.headerMessageId = this._draft.headerMessageId;
-    //   this._draft.hasNewID = true;
-    //   ipcRenderer.send('draft-got-new-id', {
-    //     newHeaderMessageId: this._draft.headerMessageId,
-    //     oldHeaderMessageId: oldHMsgId,
-    //     newMessageId: this._draft.id,
-    //     referenceMessageId: this._draft.referenceMessageId,
-    //     threadId: this._draft.threadId,
-    //     windowLevel: this.currentWindowLevel,
-    //   });
-    // } else if (this._draft.remoteUID && this._draft.msgOrigin !== Message.EditExistingDraft) {
-    //   // console.error('Message with remoteUID but origin is not edit existing draft');
-    //   this._draft.setOrigin(Message.EditExistingDraft);
-    // }
     if (reason === 'unload') {
       this._draft.hasNewID = false;
       this.needUpload = false;
@@ -801,6 +752,16 @@ export default class DraftEditingSession extends MailspringStore {
   get needUpload() {
     return this._draft.needUpload;
   }
+  set needsSyncToMain(val) {
+    if (!AppEnv.isMainWindow()){
+      this._needsSyncWithMain = val;
+    } else {
+      this._needsSyncWithMain = false;
+    }
+  }
+  get needsSyncToMain(){
+    return !AppEnv.isMainWindow() && this._needsSyncWithMain;
+  }
 
   changeSetApplyChanges = changes => {
     if (this._destroyed) {
@@ -819,11 +780,19 @@ export default class DraftEditingSession extends MailspringStore {
         this._draft[key] = val;
       }
     }
-    this._syncDraftDataToMain();
     this.trigger();
+    this.needsSyncToMain = true;
+    this._syncDraftDataToMain();
+  };
+  localApplySyncDraftData = ({syncData = {}} = {} ) => {
+    if(syncData && (typeof  syncData.lastSync === 'number') && syncData.lastSync > this.lastSync){
+      this._applySyncDraftData({syncData, sourceLevel: 0, broadcastDraftData: false});
+    } else {
+      AppEnv.logInfo(`syncData.lastSync ${syncData.lastSync}, local lastSync ${this.lastSync}`);
+    }
   };
 
-  _applySyncDraftData({ syncData = {}, sourceLevel = 0 } = {}) {
+  _applySyncDraftData({ syncData = {}, sourceLevel = 0, broadcastDraftData = true, trigger = true } = {}) {
     if (sourceLevel !== this.currentWindowLevel && syncData.id === this._draft.id) {
       AppEnv.logDebug('apply sync draft data');
       const nothingChanged =
@@ -841,9 +810,14 @@ export default class DraftEditingSession extends MailspringStore {
         this._draft[key] = syncData[key];
       }
       this._draft['body'] = syncData.body;
-      this.trigger();
+      this.lastSync = syncData.lastSync;
+      if (trigger) {
+        this.trigger();
+      }
       if (AppEnv.isMainWindow()) {
-        Actions.broadcastDraftData({ syncData, sourceLevel });
+        if(broadcastDraftData){
+          Actions.broadcastDraftData({ syncData, sourceLevel });
+        }
         if(!nothingChanged){
           AppEnv.logDebug('things changed');
           this.needUpload = true;
@@ -853,13 +827,17 @@ export default class DraftEditingSession extends MailspringStore {
     }
   }
 
-  _syncDraftDataToMain = () => {
-    if (!AppEnv.isMainWindow()) {
+  syncDraftDataToMainNow = ()=>{
+    if (this.needsSyncToMain) {
       AppEnv.logDebug('sync draft to main');
+      this.needsSyncToMain = false;
       const syncData = cloneForSyncDraftData(this._draft);
       Actions.syncDraftDataToMain({ syncData, sourceLevel: this.currentWindowLevel });
     }
   };
+
+  _syncDraftDataToMain = _.debounce(this.syncDraftDataToMainNow, 1500);
+
   onDraftOpenCountChange = ({ headerMessageId, data = {} }) => {
     AppEnv.logDebug(`draft open count change ${headerMessageId}`);
     if (this._draft && headerMessageId === this._draft.headerMessageId) {

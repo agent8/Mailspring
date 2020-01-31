@@ -41,7 +41,7 @@ class SignatureEditor extends React.Component {
   };
 
   render() {
-    const { accountsAndAliases, defaults } = this.props;
+    const { accounts, defaults } = this.props;
     const { editorState } = this.state;
 
     let signature = this.props.signature;
@@ -86,7 +86,7 @@ class SignatureEditor extends React.Component {
         </div>
         <SignatureAccountDefaultPicker
           signature={signature}
-          accountsAndAliases={accountsAndAliases}
+          accounts={accounts}
           defaults={defaults}
         />
         {/*TODO: edison feature disabled*/}
@@ -126,7 +126,7 @@ export default class PreferencesSignatures extends React.Component {
       signatures: SignatureStore.getSignatures(),
       selectedSignature: SignatureStore.selectedSignature(),
       defaults: SignatureStore.getDefaults(),
-      accountsAndAliases: AccountStore.aliases(),
+      accounts: AccountStore.accounts(),
     };
   }
 
@@ -159,8 +159,8 @@ export default class PreferencesSignatures extends React.Component {
   };
 
   _renderSig = sig => {
-    const checkedList = this.state.accountsAndAliases.filter(
-      account => this.state.defaults[account.email] === sig.id
+    const checkedList = this.state.accounts.filter(
+      account => this.state.defaults[account.emailAddress] === sig.id
     );
     const checkedListLen = checkedList && checkedList.length ? checkedList.length : 0;
 
@@ -217,7 +217,7 @@ export default class PreferencesSignatures extends React.Component {
             signature={this.state.selectedSignature}
             defaults={this.state.defaults}
             key={this.state.selectedSignature ? this.state.selectedSignature.id : 'empty'}
-            accountsAndAliases={this.state.accountsAndAliases}
+            accounts={this.state.accounts}
           />
         </Flexbox>
       </div>

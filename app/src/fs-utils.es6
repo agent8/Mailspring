@@ -10,9 +10,14 @@ export function atomicWriteFileSync(filepath, content) {
 }
 
 export function autoGenerateFileName(dirPath, fileName) {
-  const files = fs.readdirSync(dirPath);
+  let files;
+  try {
+    files = fs.readdirSync(dirPath);
+  } catch (error) {
+    console.error(`autoGenerateFileName error: readdir "${dirPath}" fail`);
+  }
 
-  if (files.indexOf(fileName) < 0) {
+  if (!files || files.indexOf(fileName) < 0) {
     return fileName;
   }
 

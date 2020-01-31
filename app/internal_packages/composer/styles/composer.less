@@ -396,11 +396,12 @@ body.platform-win32 {
     }
   }
   .wrapper-space {
-    height: 100%;
+    height: calc(~'100% + 1px');
     background: @white;
-    width: 100%;
+    width: calc(~'100% + 40px');
+    margin-left: -20px;
     position: relative;
-    top: 21px;
+    top: @shadow-offset-top;
   }
 }
 .composer-action-bar-wrap {

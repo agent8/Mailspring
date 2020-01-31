@@ -30,6 +30,7 @@ const ThreadListColumns = require('./thread-list-columns');
 const ThreadListScrollTooltip = require('./thread-list-scroll-tooltip');
 const ThreadListStore = require('./thread-list-store');
 const ThreadListContextMenu = require('./thread-list-context-menu').default;
+const PREVIEW_LINES_KEY = 'core.appearance.previewLines';
 
 class ThreadList extends React.Component {
   static displayName = 'ThreadList';
@@ -44,6 +45,7 @@ class ThreadList extends React.Component {
     this.state = {
       style: 'unknown',
       syncing: false,
+      previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
     };
   }
 
@@ -53,6 +55,12 @@ class ThreadList extends React.Component {
         syncing: FocusedPerspectiveStore.current().hasSyncingCategories(),
       })
     );
+    this.disposable = AppEnv.config.onDidChange(PREVIEW_LINES_KEY, () => {
+      this.setState({
+        previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
+      });
+    });
+
     window.addEventListener('resize', this._onResize, true);
     ReactDOM.findDOMNode(this).addEventListener('contextmenu', this._onShowContextMenu);
     this._onResize();
@@ -66,6 +74,7 @@ class ThreadList extends React.Component {
     this.unsub();
     window.removeEventListener('resize', this._onResize, true);
     ReactDOM.findDOMNode(this).removeEventListener('contextmenu', this._onShowContextMenu);
+    this.disposable.dispose();
   }
 
   _getFooter() {
@@ -100,6 +109,7 @@ class ThreadList extends React.Component {
   // };
 
   render() {
+    const { previewLines } = this.state;
     let columns, itemHeight;
     const layoutMode = WorkspaceStore.layoutMode();
     if (this.state.style === 'wide' || layoutMode === 'list') {
@@ -107,7 +117,7 @@ class ThreadList extends React.Component {
       itemHeight = 55;
     } else {
       columns = ThreadListColumns.Narrow;
-      itemHeight = 108;
+      itemHeight = 72 + previewLines * 18;
     }
 
     return (
@@ -125,7 +135,7 @@ class ThreadList extends React.Component {
             columns={columns}
             itemPropsProvider={this._threadPropsProvider}
             itemHeight={itemHeight}
-            className={`thread-list thread-list-${this.state.style}`}
+            className={`thread-list thread-list-${this.state.style} preview-${previewLines}`}
             scrollTooltipComponent={ThreadListScrollTooltip}
             EmptyComponent={EmptyListState}
             keymapHandlers={{

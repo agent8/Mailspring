@@ -12,13 +12,20 @@ import CalendarTask from '../tasks/calendar-task';
 import Actions from '../actions';
 import fs from 'fs';
 
+const calendarType = [
+  'application/ics'.toUpperCase(),
+  'text/CALENDAR'.toUpperCase(),
+  'text/ics'.toUpperCase(),
+  'application/calendar'.toUpperCase(),
+];
+
 class CalendarStore extends MailspringStore {
   static replyTemplate = ({
-                            eventString = '',
-                            timezoneString = '',
-                            todoString = '',
-                            journalString = '',
-                          }) => {
+    eventString = '',
+    timezoneString = '',
+    todoString = '',
+    journalString = '',
+  }) => {
     return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nMETHOD:REPLY\r\nPRODID:-//EdisonMail\r\n${timezoneString}\r\n${eventString}\r\n${todoString}\r\n${journalString}\r\nEND:VCALENDAR`;
   };
 
@@ -32,6 +39,14 @@ class CalendarStore extends MailspringStore {
     this.listenTo(DatabaseStore, this._onMessageDataChange);
     Actions.RSVPEventFailed.listen(this._rsvpEventFailed, this);
     Actions.RSVPEvent.listen(this.replyToCalendarEventByMessage, this);
+  }
+
+  isFileCalendarType(file) {
+    return (
+      file &&
+      typeof file.contentType === 'string' &&
+      calendarType.includes(file.contentType.toUpperCase())
+    );
   }
 
   getCalendarByMessageId(messageId) {
@@ -75,7 +90,7 @@ class CalendarStore extends MailspringStore {
     if (!e.organizer || e.organizer.email === '') {
       return false;
     }
-    return e.needToRsvpByEmail(account.emailAddress);
+    return account.getAllEmails().map(email => e.needToRsvpByEmail(email)).some(ret => ret);
   }
   _rsvpEventFailed(task) {
     AppEnv.showErrorDialog({ title: 'RSVP Event failed', message: `${task.source} failed.` });
@@ -89,7 +104,6 @@ class CalendarStore extends MailspringStore {
     if (!account) {
       return false;
     }
-    const email = account.emailAddress;
     const messageId = message.id;
     const cal = this.getCalendarByMessageId(messageId);
     if (!cal) {
@@ -99,6 +113,7 @@ class CalendarStore extends MailspringStore {
     if (!e) {
       return null;
     }
+    const email = account.getAllEmails().find(emailAddress => e.needToRsvpByEmail(emailAddress));
     try {
       const newCal = Calender.parse(
         CalendarStore.replyTemplate({
@@ -208,7 +223,7 @@ class CalendarStore extends MailspringStore {
     if (!this._isMessageInCache(message.id)) {
       let file = null;
       for (const f of message.files) {
-        if (f.id === message.calendarFileId) {
+        if (this.isFileCalendarType(f)) {
           file = f;
           break;
         }
@@ -306,7 +321,7 @@ class CalendarStore extends MailspringStore {
           try {
             iCal = Calender.parse(data);
           } catch (e) {
-            AppEnv.reportError(e, {icalData: data});
+            AppEnv.reportError(e, { icalData: data });
           } finally {
             resolve(iCal);
           }

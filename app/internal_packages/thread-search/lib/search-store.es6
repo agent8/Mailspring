@@ -59,7 +59,10 @@ class SearchStore extends MailspringStore {
     }
   };
 
-  _processAndSubmitQuery = _.throttle(() => {
+  _processAndSubmitQuery = _.throttle((flag) => {
+    if (!flag) {
+      return;
+    }
     const current = FocusedPerspectiveStore.current();
 
     if (this.queryPopulated()) {
@@ -79,11 +82,11 @@ class SearchStore extends MailspringStore {
     }
   }, 500);
 
-  _onQuerySubmitted = query => {
-    if (query !== this._searchQuery) {
+  _onQuerySubmitted = (query, forceQuery) => {
+    if (query !== this._searchQuery || forceQuery) {
       this._searchQuery = query;
       this.trigger();
-      this._processAndSubmitQuery();
+      this._processAndSubmitQuery(forceQuery);
     }
   };
 }

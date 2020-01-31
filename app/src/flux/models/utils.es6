@@ -82,7 +82,7 @@ module.exports = Utils = {
     if (!(files instanceof Array)) {
       return false;
     }
-    return files.find(f => (!f.contentId || f.size > 12 * 1024) && !CALENDAR_TYPES.includes(f.contentType));
+    return files.find(f => (!f.contentId || (f.contentId && !Utils.shouldDisplayAsImage(f))) && !CALENDAR_TYPES.includes(f.contentType));
   },
 
   superTrim(text) {
@@ -230,9 +230,11 @@ module.exports = Utils = {
     const name = file.filename || file.fileName || file.name || '';
     const size = file.size || file.fileSize || 0;
     const ext = path.extname(name).toLowerCase();
+    const contentType = (file.contentType || '').toUpperCase();
+    const contentTypes = ['IMAGE/JPG', 'IMAGE/BMP', 'IMAGE/GIF', 'IMAGE/PNG', 'IMAGE/JPEG'];
     const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg'];
 
-    return extensions.includes(ext) && size > 512 && size < 1024 * 1024 * 5;
+    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256 && size < 1024 * 1024 * 5;
   },
 
   // Escapes potentially dangerous html characters

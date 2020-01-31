@@ -1,7 +1,7 @@
 import Model from './model';
 import Attributes from '../attributes';
 
-export default class SetObservableRangeTask extends Model {
+export default class SetObservableRange extends Model {
   static attributes = Object.assign({}, Model.attributes, {
     threadIds: Attributes.Collection({
       modelKey: 'threadIds',

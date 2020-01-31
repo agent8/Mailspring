@@ -87,17 +87,17 @@ class MovePicker extends React.Component {
   _onThreadListOpenLabelsPopover = event => {
     const inThreadList = this.props.position === 'threadList';
     const threadListAnchor = document.querySelector('#moreButtonthreadList');
-    if(!threadListAnchor || !inThreadList){
+    if (!threadListAnchor || !inThreadList) {
       return;
     }
     this._onOpenLabelsPopover(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
   };
   _onMessageListOpenLabelsPopover = event => {
     const inMessageList = this.props.position === 'messageList';
-    if(!inMessageList){
+    if (!inMessageList) {
       return;
     }
-    if (event.preventDefault){
+    if (event.preventDefault) {
       event.preventDefault();
     }
     if (event.stopPropagation) {
@@ -178,7 +178,7 @@ class MovePicker extends React.Component {
       />,
       {
         isFixedToWindow: true,
-        originRect: this._labelEl.getBoundingClientRect(),
+        originRect: this._labelEl ? this._labelEl.getBoundingClientRect() : {},
         position: { top: '13%', left: '49%' },
         disablePointer: true,
       }
@@ -207,7 +207,7 @@ class MovePicker extends React.Component {
   };
 
   _onMessageListOpenMovePopover = event => {
-    if (event.preventDefault){
+    if (event.preventDefault) {
       event.preventDefault();
     }
     if (event.stopPropagation) {

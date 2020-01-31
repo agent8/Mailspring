@@ -38,7 +38,7 @@ const {
 } = ComposerSupport.BaseBlockPlugins;
 const buttonTimer = 700;
 const newDraftTimeDiff = 3000;
-const TOOLBAR_MIN_WIDTH = 540;
+const TOOLBAR_MIN_WIDTH = 628;
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
@@ -63,7 +63,7 @@ export default class ComposerView extends React.Component {
       'composer:show-and-focus-bcc': () => this._els.header.showAndFocusField(Fields.Bcc),
       'composer:show-and-focus-cc': () => this._els.header.showAndFocusField(Fields.Cc),
       'composer:focus-to': () => this._els.header.showAndFocusField(Fields.To),
-      'composer:show-and-focus-from': () => {},
+      'composer:show-and-focus-from': () => { },
       'composer:select-attachment': () => this._onSelectAttachment(),
     };
 
@@ -324,7 +324,7 @@ export default class ComposerView extends React.Component {
   }
 
   _draftNotReady() {
-    return this.state.missingAttachments || (this.props.draft && this.props.draft.waitingForBody);
+    return this.props.draft && this.props.draft.waitingForBody;
   }
 
   _renderBodyRegions() {
@@ -497,7 +497,13 @@ export default class ComposerView extends React.Component {
     const nonInlineWithContentIdImageFiles = files
       .filter(f => Utils.shouldDisplayAsImage(f))
       .filter(f => f.contentId)
-      .filter(f => !this.props.draft.body.includes(`cid:${f.contentId}`))
+      .filter(f => {
+        if (!this.props.draft || (typeof this.props.draft.body !== 'string')) {
+          AppEnv.reportError(new Error(`draft data incorrect`), { errorData: this.props.draft });
+          return false;
+        }
+        return this.props.draft && this.props.draft.body && !this.props.draft.body.includes(`cid:${f.contentId}`);
+      })
       .map(file => (
         <AttachmentItem
           key={file.id}
@@ -602,13 +608,13 @@ export default class ComposerView extends React.Component {
                 {this.state.isDeleting ? (
                   <LottieImg name={'loading-spinner-blue'} size={{ width: 24, height: 24 }} />
                 ) : (
-                  <RetinaImg
-                    name={'trash.svg'}
-                    style={{ width: 24, height: 24 }}
-                    isIcon
-                    mode={RetinaImg.Mode.ContentIsMask}
-                  />
-                )}
+                    <RetinaImg
+                      name={'trash.svg'}
+                      style={{ width: 24, height: 24 }}
+                      isIcon
+                      mode={RetinaImg.Mode.ContentIsMask}
+                    />
+                  )}
                 <span>Delete</span>
               </button>
             </div>
@@ -628,7 +634,11 @@ export default class ComposerView extends React.Component {
   // start and end target are both not in the contenteditable. This ensures
   // that this behavior doesn't interfear with a click and drag selection.
   _onMouseDownComposerBody = event => {
-    if (ReactDOM.findDOMNode(this._els[Fields.Body]).contains(event.target)) {
+    if (
+      this._els[Fields.Body] &&
+      ReactDOM.findDOMNode(this._els[Fields.Body]) &&
+      ReactDOM.findDOMNode(this._els[Fields.Body]).contains(event.target)
+    ) {
       this._mouseDownTarget = null;
     } else {
       this._mouseDownTarget = event.target;
@@ -640,13 +650,18 @@ export default class ComposerView extends React.Component {
   }
 
   _onMouseUpComposerBody = event => {
-    if (event.target === this._mouseDownTarget && !this._inFooterRegion(event.target)) {
+    if (
+      event.target === this._mouseDownTarget &&
+      !this._inFooterRegion(event.target) &&
+      this._els[Fields.Body] &&
+      ReactDOM.findDOMNode(this._els[Fields.Body])
+    ) {
       // We don't set state directly here because we want the native
       // contenteditable focus behavior. When the contenteditable gets focused
       const bodyRect = ReactDOM.findDOMNode(this._els[Fields.Body]).getBoundingClientRect();
       if (event.pageY < bodyRect.top) {
         this._els[Fields.Body].focus();
-      } else {
+      } else if (this._els[Fields.Body]) {
         if (this.state.quotedTextHidden) {
           this._els[Fields.Body].focusEndReplyText();
         } else {
@@ -661,14 +676,14 @@ export default class ComposerView extends React.Component {
     // Ensure that you can't pick up a file and drop it on the same draft
     const nonNativeFilePath = this._nonNativeFilePathForDrop(event);
 
-    const hasNativeFile = event.dataTransfer.types.includes('Files');
+    const hasNativeFile = event.dataTransfer.types && event.dataTransfer.types.includes('Files');
     const hasNonNativeFilePath = nonNativeFilePath !== null;
 
     return hasNativeFile || hasNonNativeFilePath;
   };
 
   _nonNativeFilePathForDrop = event => {
-    if (event.dataTransfer.types.includes('text/nylas-file-url')) {
+    if (event.dataTransfer.types && event.dataTransfer.types.includes('text/nylas-file-url')) {
       const downloadURL = event.dataTransfer.getData('text/nylas-file-url');
       const downloadFilePath = downloadURL.split('file://')[1];
       if (downloadFilePath) {
@@ -677,7 +692,7 @@ export default class ComposerView extends React.Component {
     }
 
     // Accept drops of images from within the app
-    if (event.dataTransfer.types.includes('text/uri-list')) {
+    if (event.dataTransfer.types && event.dataTransfer.types.includes('text/uri-list')) {
       const uri = event.dataTransfer.getData('text/uri-list');
       if (uri.indexOf('file://') === 0) {
         return decodeURI(uri.split('file://')[1]);
@@ -721,7 +736,9 @@ export default class ComposerView extends React.Component {
         });
       }
     }
-    this._els[Fields.Body].insertInlineAttachments(fileObjs);
+    if (this._els[Fields.Body]) {
+      this._els[Fields.Body].insertInlineAttachments(fileObjs);
+    }
     session.changes.commit();
   };
 
@@ -738,7 +755,9 @@ export default class ComposerView extends React.Component {
       session.changes.add({
         files: [].concat(draft.files),
       });
-      this._els[Fields.Body].insertInlineAttachment(fileObj);
+      if (this._els[Fields.Body]) {
+        this._els[Fields.Body].insertInlineAttachment(fileObj);
+      }
       session.changes.commit();
     }
   };

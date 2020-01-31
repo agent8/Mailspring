@@ -1,21 +1,56 @@
 import _ from 'underscore';
 import Actions from '../actions';
-import DatabaseStore from './database-store';
 import AccountStore from './account-store';
 import ContactStore from './contact-store';
 import MessageStore from './message-store';
+import AttachmentStore from './attachment-store';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import uuid from 'uuid';
-
 import Contact from '../models/contact';
 import Message from '../models/message';
-import MessageUtils from '../models/message-utils';
 import Utils from '../models/utils';
 import InlineStyleTransformer from '../../services/inline-style-transformer';
 import SanitizeTransformer from '../../services/sanitize-transformer';
 import DOMUtils from '../../dom-utils';
 
 let DraftStore = null;
+
+const findAccountIdFrom = (message, thread) => {
+  const validAccountId = id => {
+    return typeof id === 'string' && id.length > 0;
+  };
+  if (!message && !thread) {
+    AppEnv.reportError(new Error('Both message and thread is empty'));
+    return '';
+  }
+  let accountId = (message || {}).accountId;
+  let reportBug = false;
+  let errorStr = '';
+  if (!validAccountId(accountId)) {
+    errorStr = 'Message doesnt have account id';
+    reportBug = true;
+    if (message && message.folder && message.folder.accountId) {
+      accountId = message.folder.accountId;
+    }
+    if (!validAccountId(accountId)) {
+      errorStr = errorStr + ' nor does folder/folder.accountId';
+      if (thread) {
+        accountId = thread.accountId;
+        if (!validAccountId(accountId)) {
+          errorStr = errorStr + ' nor does Thread have account Id';
+        }
+      }
+    }
+  }
+  if (reportBug) {
+    AppEnv.reportError(
+      new Error(errorStr),
+      { errorData: { message: message, thread: thread } },
+      { grabLogs: true }
+    );
+  }
+  return accountId;
+};
 
 async function prepareBodyForQuoting(body) {
   // const cidRE = MessageUtils.cidRegexString;
@@ -40,7 +75,10 @@ const removeAttachmentWithNoContentId = files => {
       ret.push(file);
     }
   });
-  return ret;
+  return filterMissingAttachments(ret);
+};
+const filterMissingAttachments = files => {
+  return AttachmentStore.filterOutMissingAttachments(files);
 };
 const mergeDefaultBccAndCCs = async (message, account) => {
   const mergeContacts = (field = 'cc', contacts) => {
@@ -350,6 +388,7 @@ class DraftFactory {
     } else if (type === 'reply-all') {
       participants = message.participantsForReplyAll();
     }
+    const accountId = findAccountIdFrom(message, thread);
 
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
@@ -358,7 +397,7 @@ class DraftFactory {
       from: [this._fromContactForReply(message)],
       files: removeAttachmentWithNoContentId(message.files),
       threadId: thread.id,
-      accountId: message.accountId,
+      accountId: accountId,
       replyOrForward: Message.draftType.reply,
       replyToHeaderMessageId: message.headerMessageId,
       msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
@@ -387,6 +426,7 @@ class DraftFactory {
       body: `${me.name} have replied with a status of ${replyStatus.label}`,
       files: [file],
       calTarStat: replyStatus.code,
+      hasCalendar: true,
       calendarReply: true
     });
   }
@@ -404,13 +444,13 @@ class DraftFactory {
     if (message.cc.length > 0) fields.push(`Cc: ${contactsAsHtml(message.cc)}`);
 
     const body = await prepareBodyForQuoting(message.body);
-
+    const accountId = findAccountIdFrom(message, thread);
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Fwd:'),
       from: [this._fromContactForReply(message)],
-      files: message.files,
+      files: filterMissingAttachments(message.files),
       threadId: thread.id,
-      accountId: message.accountId,
+      accountId: accountId,
       forwardedHeaderMessageId: message.id,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,

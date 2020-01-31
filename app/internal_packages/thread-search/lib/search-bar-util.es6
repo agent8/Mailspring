@@ -110,12 +110,12 @@ export const TokenSuggestions = [
     description: 'an email subject',
     termSuggestions: [],
   },
-  // {
-  //   token: 'has',
-  //   term: '',
-  //   description: 'attachment',
-  //   termSuggestions: ['attachment'],
-  // },
+  {
+    token: 'has',
+    term: '',
+    description: 'attachment',
+    termSuggestions: ['attachment'],
+  },
 ];
 
 export const TokenSuggestionsForEmpty = TokenSuggestions.filter(t => !t.hidden);

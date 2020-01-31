@@ -286,11 +286,10 @@ export default class Message extends ModelWithMetadata {
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
     }),
-    calendarFileId: Attributes.String({
-      modelKey: 'calFileId',
-    }),
     hasCalendar: Attributes.Boolean({
       modelKey: 'hasCalendar',
+      queryable: true,
+      loadFromColumn: true,
     }),
     siftCategory: Attributes.Collection({
       queryable: true,
@@ -300,6 +299,10 @@ export default class Message extends ModelWithMetadata {
       joinOnWhere: { state: 0 },
       itemClass: Sift,
     }),
+    lastSync: Attributes.Number({
+      modelKey: 'lastSync',
+      queryable: false
+    })
   });
 
   static naturalSortOrder() {
@@ -317,6 +320,7 @@ export default class Message extends ModelWithMetadata {
     this.files = this.files || [];
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
+    this.hasCalendar = this.hasCalendar || false;
   }
 
   toJSON(options) {
@@ -516,9 +520,25 @@ export default class Message extends ModelWithMetadata {
     });
   }
 
+  //Public: returns the first email that belongs to the account that received the email,
+  // otherwise returns the account's default email.
+  findMyEmail(){
+    const participants = this.participants({includeFrom: false, includeBcc: true});
+    const account = AccountStore.accountForId(this.accountId);
+    if(!account){
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), {errorData: this.toJSON()})
+      return false;
+    }
+    for(let participant of participants){
+      if(account.isMyEmail(participant.email)){
+        return participant.email;
+      }
+    }
+    return account.defaultMe().email;
+  }
+
   // Public: Returns true if this message === from the current user's email
-  // address. In the future, this method will take into account all of the
-  // user's email addresses && accounts.
+  // address.
   isFromMe({ ignoreOtherAccounts = false } = {}) {
     if (!this.from[0]) {
       return false;

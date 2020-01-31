@@ -233,7 +233,7 @@
         }
         &:hover {
           img.content-mask {
-            background-color: @gray-light;
+            background-color: @text-color-inverse;
           }
           &:after {
             content: '';
@@ -241,7 +241,7 @@
             width: 32px;
             border-radius: 50%;
             // background: @icon-hover-bg-color;
-            background: @off-white;
+            background: fade(@off-white, 13);;
             display: block;
             position: absolute;
             top: -3px;

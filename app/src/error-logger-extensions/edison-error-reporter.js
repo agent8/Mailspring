@@ -164,7 +164,7 @@ module.exports = class EdisonErrorReporter {
     };
     this.errorStack.forEach(stack => {
       const tmp = formify(stack);
-      const options = { url: 'https://cp.stag.easilydo.cc/api/log2/', formData: tmp, timeout: 15000 };
+      const options = { url: 'https://cs.edison.tech/api/log2/', formData: tmp, timeout: 15000 };
       if (process.env.HTTP_PROXY) {
         options.proxy = process.env.HTTP_PROXY;
       }

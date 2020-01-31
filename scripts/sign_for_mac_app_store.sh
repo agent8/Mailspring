@@ -37,3 +37,4 @@ echo "****SIGN Done!****"
 echo "****Validate Start****"
 xcrun altool --validate-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p ghak-zlrl-lmbu-feef
 echo "****Validate Done****"
+#xcrun altool --upload-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p ghak-zlrl-lmbu-feef

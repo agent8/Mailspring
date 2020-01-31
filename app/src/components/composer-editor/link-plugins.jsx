@@ -7,7 +7,7 @@ import { BLOCK_CONFIG } from './base-block-plugins';
 import { BuildMarkButtonWithValuePicker, getMarkOfType } from './toolbar-component-factories';
 
 export const LINK_TYPE = 'link';
-function _insertMiddleText(text, change){
+function _insertMiddleText(text, change) {
   const texts = text.split(/\n/g);
   if (texts.length > 1) {
     for (let i = 0; i < texts.length; i++) {
@@ -21,7 +21,7 @@ function _insertMiddleText(text, change){
     change.insertText(texts[0]);
   }
 }
-function _parseLinks(links, originalText, change){
+function _parseLinks(links, originalText, change) {
   let leftOverText = originalText;
   for (let i = 0; i < links.length; i++) {
     const link = links[i];
@@ -78,7 +78,7 @@ function onPaste(event, change, editor) {
 }
 
 function buildAutoReplaceHandler({ hrefPrefix = '' } = {}) {
-  return function(transform, e, matches, editor) {
+  return function (transform, e, matches, editor) {
     if (transform.value.activeMarks.find(m => m.type === LINK_TYPE)) {
       if (['Return', 'Enter'].includes(e.key)) {
         e.preventDefault();
@@ -107,10 +107,10 @@ function buildAutoReplaceHandler({ hrefPrefix = '' } = {}) {
       console.log('replaced removed');
     }
     console.log(`bulidAutoReplaceHandler ${originalText} ${JSON.stringify(matches)}`);
-    if(['Return', 'Enter'].includes(e.key)){
+    if (['Return', 'Enter'].includes(e.key)) {
       e.preventDefault();
       return transform.splitBlock();
-    }else{
+    } else {
       return transform.insertText(TriggerKeyValues[e.key]);
     }
   };
@@ -120,10 +120,10 @@ function renderMark({ mark, children, targetIsHTML }) {
   if (mark.type !== LINK_TYPE) {
     return;
   }
-  let href = mark.data.href || mark.data.get('href');
+  let href = mark.data.href || mark.data.get('href') || '';
   const title = href;
   if (targetIsHTML) {
-    if (!href.includes('://')) {
+    if (href && !href.includes('://')) {
       href = 'http://' + href;
     }
     return (
@@ -197,7 +197,7 @@ export default [
         const isAtEndLink = newEndOffset === oldEndOffset;
         change.moveEndOffsetTo(oldEndOffset);
         if (['Space', ' '].includes(event.key)) {
-          if(isAtEndLink){
+          if (isAtEndLink) {
             change.removeMark(mark);
           }
           return;

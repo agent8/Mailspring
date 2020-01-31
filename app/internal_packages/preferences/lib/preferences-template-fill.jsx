@@ -179,13 +179,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.attachments.openFolderAfterDownload',
               keywords: [],
             },
-            {
-              label: 'Display thumbnails for attachments when available (Mac only)',
-              configSchema: configSchema =>
-                configSchema.properties.attachments.properties.displayFilePreview,
-              keyPath: 'core.attachments.displayFilePreview',
-              keywords: [],
-            },
+            // {
+            //   label: 'Display thumbnails for attachments when available (Mac only)',
+            //   configSchema: configSchema =>
+            //     configSchema.properties.attachments.properties.displayFilePreview,
+            //   keyPath: 'core.attachments.displayFilePreview',
+            //   keywords: [],
+            // },
             {
               label: 'Save downloaded files to',
               component: DownloadSelection,
@@ -298,6 +298,20 @@ const preferencesTemplateFill = {
                 configSchema.properties.appearance.properties.sidebaricons,
               keyPath: 'core.appearance.sidebaricons',
               keywords: ['sidebar', 'left', 'icons', 'avatar'],
+            },
+            {
+              label: 'Preview lines (two panel view only)',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.previewLines,
+              keyPath: 'core.appearance.previewLines',
+              keywords: [],
+            },
+            {
+              label: 'Enable Adaptive Coloring for emails.',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.adaptiveEmailColor,
+              keyPath: 'core.appearance.adaptiveEmailColor',
+              keywords: [],
             },
           ],
         },
