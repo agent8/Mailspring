@@ -38,11 +38,11 @@ export default class ComposerHeader extends React.Component {
     this.state.missingAttachements = false;
     this._mounted = false;
   }
-  componentDidMount(){
+  componentDidMount() {
     this._mounted = true;
     this._isDraftMissingAttachments(this.props);
   }
-  componentWillUnmount(){
+  componentWillUnmount() {
     this._mounted = false;
   }
 
@@ -51,13 +51,13 @@ export default class ComposerHeader extends React.Component {
     this._isDraftMissingAttachments(nextProps);
   }
 
-  _isDraftMissingAttachments = props=>{
+  _isDraftMissingAttachments = props => {
     if (!props.draft) {
       this.setState({ missingAttachments: false });
       return;
     }
-    props.draft.missingAttachments().then(ret=>{
-      if(!this._mounted){
+    props.draft.missingAttachments().then(ret => {
+      if (!this._mounted) {
         return;
       }
       const missing = ret.totalMissing();
@@ -164,7 +164,8 @@ export default class ComposerHeader extends React.Component {
   }
 
   _renderSubject = () => {
-    if (!this.state.enabledFields.includes(Fields.Subject)) {
+    const enabledFields = this.state.enabledFields || [];
+    if (!enabledFields.includes(Fields.Subject)) {
       return false;
     }
     return (
@@ -192,6 +193,7 @@ export default class ComposerHeader extends React.Component {
     // Note: We need to physically add and remove these elements, not just hide them.
     // If they're hidden, shift-tab between fields breaks.
     const fields = [];
+    const enabledFields = this.state.enabledFields || [];
     fields.push(
       <ParticipantsTextField
         ref={el => {
@@ -210,7 +212,7 @@ export default class ComposerHeader extends React.Component {
       />
     );
 
-    if (this.state.enabledFields.includes(Fields.Cc)) {
+    if (enabledFields.includes(Fields.Cc)) {
       fields.push(
         <ParticipantsTextField
           ref={el => {
@@ -231,7 +233,7 @@ export default class ComposerHeader extends React.Component {
       );
     }
 
-    if (this.state.enabledFields.includes(Fields.Bcc)) {
+    if (enabledFields.includes(Fields.Bcc)) {
       fields.push(
         <ParticipantsTextField
           ref={el => {
@@ -252,7 +254,7 @@ export default class ComposerHeader extends React.Component {
       );
     }
 
-    if (this.state.enabledFields.includes(Fields.From)) {
+    if (enabledFields.includes(Fields.From)) {
       fields.push(
         <ScopedFromField
           key="from"

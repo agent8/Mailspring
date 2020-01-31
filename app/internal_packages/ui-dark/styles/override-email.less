@@ -77,7 +77,6 @@
   }
 }
 
-
 .skeleton div {
   background-color: lighten(@cards, 10%) !important;
 }
@@ -131,7 +130,8 @@
   }
 }
 
-.tokenizing-field.focused .token {
+.tokenizing-field.focused .token,
+.tokenizing-field .token.invalid {
   background: @active;
 }
 
@@ -191,6 +191,10 @@
     .signature-button-dropdown
     .only-item {
     background-color: @cards;
+  }
+
+  .sendbar-for-dock .wrapper-space {
+    background: @cards;
   }
 }
 .message-item-white-wrap.composer-outer-wrap.focused

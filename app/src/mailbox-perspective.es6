@@ -264,7 +264,7 @@ export default class MailboxPerspective {
   }
 
   emptyMessage() {
-    return '   ';
+    return 'No Message';
   }
 
   emptyListIcon() {
@@ -790,12 +790,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
 
   hasSyncingCategories() {
     return this._categories.some(cat => {
-      const representedFolder =
-        cat instanceof Folder ? cat : CategoryStore.getAllMailCategory(cat.accountId);
-      return (
-        representedFolder &&
-        FolderSyncProgressStore.isSyncingAccount(cat.accountId, representedFolder.path)
-      );
+      return CategoryStore.isCategorySyncing(cat.id);
     });
   }
 

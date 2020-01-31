@@ -103,7 +103,7 @@ export default class Application extends EventEmitter {
     await this.oneTimeAddToDock();
     this.autoStartRestore();
 
-    this.autoUpdateManager = new AutoUpdateManager(version, config, specMode);
+    this.autoUpdateManager = new AutoUpdateManager(version, config, specMode, devMode);
     this.applicationMenu = new ApplicationMenu(version);
     this.windowManager = new WindowManager({
       resourcePath: this.resourcePath,
@@ -971,7 +971,7 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:check-for-update', () => {
-      this.autoUpdateManager.check();
+      this.autoUpdateManager.check({ manuallyCheck: true });
     });
 
     this.on('application:install-update', () => {

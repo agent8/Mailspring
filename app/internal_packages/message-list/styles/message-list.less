@@ -1,5 +1,6 @@
 @import 'ui-variables';
 @import 'ui-mixins';
+@import 'buttons';
 
 @message-max-width: 1800px;
 @message-spacing: 6px;
@@ -232,7 +233,7 @@ body.platform-win32 {
       }
       .mail-label {
         position: relative;
-        top: 3px;
+        top: -1px;
         display: inline-flex;
         align-items: center;
         justify-content: space-between;
@@ -622,12 +623,47 @@ body.platform-win32 {
       align-items: baseline;
       height: 1em;
     }
+    .replyBtn {
+      display: inline-block;
+      position: relative;
+      cursor: pointer;
+      padding: 0 0.8em;
+      border-radius: @border-radius-base;
+      border: 0;
+      background: @background-primary;
+
+      img.content-mask {
+        background-color: @gray-light;
+        z-index: 2;
+        position: relative;
+      }
+
+      &:hover {
+        &:after {
+          content: '';
+          height: 36px;
+          width: 36px;
+          border-radius: 50%;
+          background: @icon-hover-bg-color;
+          display: block;
+          position: absolute;
+          top: -6px;
+          left: 2px;
+          .grow-up-animation-mixin();
+        }
+      }
+      &:active {
+        background: none;
+        &:after {
+          background: @extra-light-grey;
+        }
+        img {
+          background-color: @light-grey;
+        }
+      }
+    }
     .blockBtn {
-      z-index: 3;
-      position: absolute;
-      top: 47px;
-      right: 0;
-      display: flex;
+      display: inline-block;
       height: 24px;
       padding: 6px 17px;
       color: @text-color-link;
@@ -639,7 +675,11 @@ body.platform-win32 {
       text-align: center;
       border-radius: 15px;
       background-color: @gray-lightest;
+      margin-right: 4px;
       cursor: pointer;
+    }
+    .button-dropdown .primary-item {
+      display: none;
     }
     .row {
       display: flex;

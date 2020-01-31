@@ -84,7 +84,7 @@ class MessageListScrollTooltip extends React.Component {
 class MessageList extends React.Component {
   static displayName = 'MessageList';
   static containerStyles = {
-    minWidth: 500,
+    minWidth: 200,
     maxWidth: 999999,
   };
 
@@ -557,9 +557,11 @@ class MessageList extends React.Component {
     }
   }
   _onSelectText = e => {
-
     e.preventDefault();
     e.stopPropagation();
+    if (e.target.className && e.target.className.indexOf("message-subject") === -1) {
+      return;
+    }
 
     const textNode = e.currentTarget.childNodes[0];
     const range = document.createRange();
@@ -606,7 +608,7 @@ class MessageList extends React.Component {
       if (Array.isArray(data.removedLabels)) {
         this._onLabelsRemoved(data.removedLabels);
       }
-    } else if (type === 'folderChange' && data){
+    } else if (type === 'folderChange' && data) {
       if (AppEnv.isThreadWindow()) {
         AppEnv.close();
       }
@@ -629,11 +631,10 @@ class MessageList extends React.Component {
       <div className="message-subject-wrap">
         <div style={{ flex: 1, flexWrap: 'wrap' }}>
           <span className="message-subject"
-              onClick={this._onSelectText}
-              onContextMenu={this._onContactContextMenu.bind(this, subject)}
-            >
-              {subject}
-            </span>
+            onClick={this._onSelectText}
+            onContextMenu={this._onContactContextMenu.bind(this, subject)}
+          >
+            {subject}
             {!this.state.inOutbox && <MailImportantIcon thread={this.state.currentThread} />}
             {!this.state.inOutbox && <MailLabelSet
               noWrapper
@@ -642,8 +643,8 @@ class MessageList extends React.Component {
               messages={this.state.messages}
               thread={this.state.currentThread}
               onLabelRemoved={this._onLabelsRemoved}
-            />
-            }
+            />}
+          </span>
         </div>
         {/* {this._renderIcons()} */}
       </div>

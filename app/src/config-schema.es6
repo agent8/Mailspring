@@ -171,7 +171,7 @@ export default {
           },
           displayFilePreview: {
             type: 'boolean',
-            default: true,
+            default: false,
             title: 'Display thumbnails for attachments when available (Mac only)',
           },
           downloadFolder: {
@@ -537,10 +537,24 @@ export default {
             default: true,
             title: 'Show icons in the left-hand menu.',
           },
+          previewLines: {
+            type: 'number',
+            default: '2',
+            enum: [0, 1, 2, 3, 4],
+            enumLabels: ['None', '1 line', '2 lines', '3 lines', '4 lines'],
+            title: 'Preview lines (two panel view only)',
+          },
           profile: {
             type: 'boolean',
             default: true,
             title: 'Show profile pictures',
+          },
+          adaptiveEmailColor: {
+            type: 'boolean',
+            default: true,
+            title: 'Enable Adaptive Coloring for emails.',
+            note:
+              'Email content automatically adapts to the background color of the theme to preserve screen brightness. This can alter the original background and text color of emails in dark mode vs light mode.',
           },
         },
       },

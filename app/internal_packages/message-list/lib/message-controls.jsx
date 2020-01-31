@@ -25,6 +25,8 @@ export default class MessageControls extends React.Component {
   static displayName = 'MessageControls';
   static propTypes = {
     thread: PropTypes.object,
+    isBlocked: PropTypes.bool,
+    onBlock: PropTypes.func,
     message: PropTypes.object.isRequired,
     messages: PropTypes.array,
     threadPopedOut: PropTypes.bool,
@@ -36,12 +38,13 @@ export default class MessageControls extends React.Component {
 
   constructor(props) {
     super(props);
+    this.CONFIG_KEY = 'core.appearance.adaptiveEmailColor';
     this.state = {
       isReplying: false,
       isReplyAlling: false,
       isForwarding: false,
-      showMuteEmailModal: false,
       isMuted: false,
+      showViewOriginalEmail: AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
     };
     this._mounted = false;
     this._replyTimer = null;
@@ -56,11 +59,20 @@ export default class MessageControls extends React.Component {
   componentDidMount() {
     this._mounted = true;
     this._onMuteChange();
+    this.disposable = AppEnv.config.onDidChange(this.CONFIG_KEY, () => {
+      if (this._mounted) {
+        this.setState({
+          showViewOriginalEmail:
+            AppEnv.isDarkTheme() && AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
+        });
+      }
+    });
   }
 
   componentWillUnmount() {
     this._mounted = false;
     this._unlisten.forEach(un => un());
+    this.disposable.dispose();
     clearTimeout(this._forwardTimer);
     clearTimeout(this._replyAllTimer);
     clearTimeout(this._replyTimer);
@@ -233,7 +245,7 @@ export default class MessageControls extends React.Component {
       if (!this.props.message.draft) {
         noReplyAll.push(trash);
       }
-      if (AppEnv.isDarkTheme()) {
+      if (this.state.showViewOriginalEmail) {
         noReplyAll.push(viewOriginalEmail);
       }
       noReplyAll.push(printEmail, muteEmail);
@@ -245,7 +257,7 @@ export default class MessageControls extends React.Component {
     if (!this.props.message.draft) {
       ret.push(trash);
     }
-    if (AppEnv.isDarkTheme()) {
+    if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
     ret.push(printEmail, muteEmail);
@@ -478,6 +490,30 @@ export default class MessageControls extends React.Component {
     );
   };
 
+  _renderBlockBtn() {
+    const { message, isBlocked, onBlock } = this.props;
+    let btnText = '';
+
+    if (message.listUnsubscribe) {
+      btnText = isBlocked ? 'Resubscribe' : 'Unsubscribe';
+    } else {
+      btnText = isBlocked ? 'Unblock' : 'Block';
+    }
+
+    return (
+      <div
+        className="blockBtn"
+        onClick={e => {
+          if (onBlock && typeof onBlock === 'function') {
+            onBlock(e);
+          }
+        }}
+      >
+        {btnText}
+      </div>
+    );
+  }
+
   render() {
     const items = this._items();
     const { trackers } = this.props;
@@ -520,17 +556,19 @@ export default class MessageControls extends React.Component {
         ) : null}
         <MessageTimestamp className="message-time" isDetailed date={this.props.message.date} />
         {!this.props.hideControls ? (
+          <div className="replyBtn" title={items[0].name} onClick={items[0].select}>
+            <RetinaImg
+              name={items[0].image}
+              style={{ width: 24, height: 24 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+          </div>
+        ) : null}
+        {this._renderBlockBtn()}
+        {!this.props.hideControls ? (
           <ButtonDropdown
-            primaryItem={
-              <RetinaImg
-                name={items[0].image}
-                style={{ width: 24, height: 24 }}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-              />
-            }
-            primaryTitle={items[0].name}
-            primaryClick={items[0].select}
+            primaryClick={() => {}}
             closeOnMenuClick
             menu={this._dropdownMenu(items.slice(1))}
           />

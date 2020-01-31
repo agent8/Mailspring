@@ -12,6 +12,7 @@ import LinkPlugins from './link-plugins';
 import EmojiPlugins from './emoji-plugins';
 import ImagePlugins from './image-plugins';
 import CrowdedButtons from './crowded-buttons';
+import SystemTextReplacementsPlugins from './system-text-replacements-plugins';
 
 // Note: order is important here because we deserialize HTML with rules
 // in this order. <code class="var"> before <code>, etc.
@@ -28,6 +29,9 @@ export const plugins = [
   ...SpellcheckPlugins,
   ...CrowdedButtons,
 ];
+// if (process.platform === 'darwin') {
+//   plugins.push(...SystemTextReplacementsPlugins);
+// }
 const TEXT_RULE_IMPROVED = {
   deserialize: el => {
     if (el.tagName && el.tagName.toLowerCase() === 'br') {
@@ -200,7 +204,7 @@ const HtmlSerializer = new Html({
 /* Patch: The HTML Serializer doesn't properly handle nested marks
 because when it discovers another mark it fails to call applyMark
 on the result. */
-HtmlSerializer.deserializeMark = function(mark) {
+HtmlSerializer.deserializeMark = function (mark) {
   const type = mark.type;
   const data = mark.data;
 
@@ -213,7 +217,7 @@ HtmlSerializer.deserializeMark = function(mark) {
       }
       return result;
     } else if (node.object === 'text') {
-      node.leaves = node.leaves.map(function(leaf) {
+      node.leaves = node.leaves.map(function (leaf) {
         leaf.marks = leaf.marks || [];
         leaf.marks.push({ type: type, data: data });
         return leaf;
@@ -227,7 +231,7 @@ HtmlSerializer.deserializeMark = function(mark) {
     return node;
   };
 
-  return mark.nodes.reduce(function(nodes, node) {
+  return mark.nodes.reduce(function (nodes, node) {
     var ret = applyMark(node);
     if (Array.isArray(ret)) return nodes.concat(ret);
     nodes.push(ret);

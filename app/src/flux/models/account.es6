@@ -147,6 +147,22 @@ export default class Account extends ModelWithMetadata {
     return this.me();
   }
 
+  getAllEmails() {
+    const ret = [this.me().email];
+    if (this.aliases.length > 0) {
+      for (let alias of this.aliases) {
+        const meAlias = Contact.fromString(alias, { accountId: this.id });
+        if (meAlias) {
+          ret.push(meAlias.email);
+        }
+      }
+    }
+    return ret;
+  }
+  isMyEmail(emailAddress) {
+    return this.getAllEmails().includes(emailAddress);
+  }
+
   usesLabels() {
     return this.provider === 'gmail';
   }

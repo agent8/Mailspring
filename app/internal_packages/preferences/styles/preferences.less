@@ -96,7 +96,22 @@
     z-index: 9999;
     cursor: pointer;
     img.content-mask {
-      background-color: @gray;
+      position: relative;
+      z-index: 2;
+      background-color: @gray-light;
+    }
+
+    &:hover:after {
+      content: '';
+      height: 36px;
+      width: 36px;
+      border-radius: 50%;
+      background: @icon-hover-bg-color;
+      display: block;
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      .grow-up-animation-mixin();
     }
   }
   .item-back-title {

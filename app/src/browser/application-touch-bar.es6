@@ -123,7 +123,7 @@ export default class ApplicationTouchBar {
 
     const flushGroupIfPresent = () => {
       if (!group.length) return;
-      final.push(new TouchBarGroup({ items: new TouchBar(group) }));
+      final.push(new TouchBarGroup({ items: new TouchBar({ items: group }) }));
       groupName = null;
       group = [];
     };
@@ -145,6 +145,6 @@ export default class ApplicationTouchBar {
 
     const win = global.application.getMainWindow();
     if (!win) return;
-    win.setTouchBar(new TouchBar(final));
+    win.setTouchBar(new TouchBar({ items: final }));
   }
 }
