@@ -13,7 +13,15 @@ class NativeNotifications {
     //   return true;
     // });
   }
-  displayNotification({ title, subtitle, body, tag, canReply, onActivate = () => { } } = {}) {
+  displayNotification({
+    title,
+    subtitle,
+    body,
+    tag,
+    canReply,
+    silent = false,
+    onActivate = () => {},
+  } = {}) {
     let notif = null;
     if (tag && this._notificationsByTag[tag]) {
       this._notificationsByTag[tag].close();
@@ -24,7 +32,7 @@ class NativeNotifications {
       hasReply: canReply,
       subtitle: subtitle,
       body: body,
-      silent: !AppEnv.config.get('core.notifications.sounds'),
+      silent: silent,
     });
     notif.show();
     notif.on('reply', (event, response) => {
