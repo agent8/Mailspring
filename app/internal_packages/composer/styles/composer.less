@@ -61,6 +61,7 @@
   right: 8px;
   width: 40px;
   height: 40px;
+  border-radius: 50%;
   box-shadow: none;
   display: flex;
   align-items: center;
@@ -75,8 +76,8 @@
   &:hover {
     &:after {
       content: '';
-      height: 36px;
-      width: 36px;
+      height: 40px;
+      width: 40px;
       border-radius: 50%;
       background: @icon-hover-bg-color;
       display: block;
@@ -86,6 +87,12 @@
     img.content-mask {
       background-color: @gray-light;
     }
+  }
+  &:active {
+    background: unset;
+    // &:after {
+    //   background: darken(@btn-default-bg-color, 9%);
+    // }
   }
 }
 
