@@ -84,8 +84,8 @@ class ContactSearch extends React.Component {
     return (
       <div key={contact.id} className="contact-item">
         <EmailAvatar key="email-avatar" account={{ name: contact.name, email: contact.email }} />
-        {contact.name ? <span>{contact.name}</span> : null}
-        {contact.email}
+        {contact.name ? <span className="contact-name">{contact.name}</span> : null}
+        <span className="contact-email">{contact.email}</span>
       </div>
     );
   };

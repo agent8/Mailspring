@@ -142,6 +142,7 @@
         height: 20px;
         width: 20px;
         border: none;
+        flex: 0 0 auto;
         margin-right: 19px;
         display: inline-block;
         vertical-align: top;
@@ -150,10 +151,20 @@
         color: @text-color-inverse;
         border-radius: 50%;
       }
+
       span {
-        color: @text-color;
-        margin-right: 15px;
-        white-space: nowrap;
+        &.contact-name {
+          flex: 0 0 auto;
+          color: @text-color;
+          margin-right: 15px;
+          white-space: nowrap;
+        }
+        &.contact-email {
+          flex: 1;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
       }
     }
     .menu {
@@ -186,19 +197,15 @@
     }
 
     .contact-select-show {
-      position: relative;
-      overflow: hidden;
-
       .cover-contact {
-        position: absolute;
-        top: 5px;
-        left: 55px;
         height: 28px;
         overflow: hidden;
         display: flex;
+        flex-wrap: nowrap;
 
         .contact-item {
           height: 100%;
+          max-width: calc(~'100% - 10px');
           border-radius: 15px;
           background-color: @gray-lightest;
           padding: 0 12px 0 4px;
@@ -212,6 +219,7 @@
 
         input {
           font-size: 26px;
+          width: 10px;
         }
       }
     }
@@ -243,7 +251,7 @@
       img {
         height: 26px !important;
         width: 26px !important;
-        margin-right: 11px;
+        margin-right: 14px;
       }
     }
     .btn-group {
@@ -262,7 +270,7 @@
         line-height: 33px;
         text-align: center;
         font-family: 'SF UI Text';
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         letter-spacing: 0.2px;
         margin: 0 10px;

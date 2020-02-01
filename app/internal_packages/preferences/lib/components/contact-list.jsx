@@ -50,7 +50,9 @@ class ContactList extends React.Component {
   _filterContactsBySearchValue() {
     const { searchValue, contacts, selections } = this.state;
     const filterList = contacts.filter(contact => {
-      return contact.name.indexOf(searchValue) >= 0 || contact.email.indexOf(searchValue) >= 0;
+      const name = contact.name || '';
+      const email = contact.email || '';
+      return name.indexOf(searchValue) >= 0 || email.indexOf(searchValue) >= 0;
     });
     const filterIdList = filterList.map(contact => contact.id);
     const newSelections = selections.filter(id => filterIdList.indexOf(id) >= 0);
@@ -188,8 +190,8 @@ class ContactList extends React.Component {
     return (
       <div key={contact.id} className="contact-item">
         <EmailAvatar key="email-avatar" account={{ name: contact.name, email: contact.email }} />
-        {contact.name ? <span>{contact.name}</span> : null}
-        {contact.email}
+        {contact.name ? <span className="contact-name">{contact.name}</span> : null}
+        <span className="contact-email">{contact.email}</span>
       </div>
     );
   };
