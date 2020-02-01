@@ -140,7 +140,7 @@ class PreferencesAccountDetails extends Component {
         lastBeginStrIndex !== -1 &&
         lastBeginStrIndex + 1 < lastCloseStrIndex
       ) {
-        const email = str.slice(lastBeginStrIndex + 1, lastCloseStrIndex);
+        const email = str.slice(lastBeginStrIndex+1, lastCloseStrIndex);
         lastCloseStrIndex = alias.lastIndexOf('>');
         lastBeginStrIndex = alias.lastIndexOf('<');
         if (
@@ -148,7 +148,7 @@ class PreferencesAccountDetails extends Component {
           lastBeginStrIndex !== -1 &&
           lastBeginStrIndex + 1 < lastCloseStrIndex
         ) {
-          const aliasEmail = alias.slice(lastBeginStrIndex + 1, lastCloseStrIndex);
+          const aliasEmail = alias.slice(lastBeginStrIndex+1, lastCloseStrIndex);
           return aliasEmail === email;
         }
       }
@@ -414,9 +414,7 @@ class PreferencesAccountDetails extends Component {
 
   render() {
     const { account } = this.state;
-    const aliasPlaceholder = this._makeAlias(
-      `Your Alias <alias@${account.emailAddress.split('@')[1]}>`
-    );
+    const aliasPlaceholder = this._makeAlias(`Your Alias <alias@${account.emailAddress.split('@')[1]}>`);
 
     return (
       <div className="account-details">
@@ -457,7 +455,6 @@ class PreferencesAccountDetails extends Component {
           <div className="aliases-edit">
             <EditableList
               showEditIcon
-              showFooter
               needScroll
               items={account.aliases}
               createInputProps={{ placeholder: aliasPlaceholder }}
