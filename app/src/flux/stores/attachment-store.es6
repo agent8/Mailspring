@@ -13,6 +13,7 @@ import mime from 'mime-types';
 import DatabaseStore from './database-store';
 import AttachmentProgress from '../models/attachment-progress';
 import { autoGenerateFileName } from '../../fs-utils';
+import ca from 'moment/locale/ca';
 
 Promise.promisifyAll(fs);
 
@@ -240,7 +241,9 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.addAttachments, this._onAddAttachments);
     this.listenTo(Actions.selectAttachment, this._onSelectAttachment);
     this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
-
+    this._attachementCache = Utils.createCircularBuffer(200);
+    this._missingDataAttachmentIds = new Set();
+    this._queryFileDBTimer = null;
     this._filePreviewPaths = {};
     this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
     this._fileProcess = new Map();
@@ -252,6 +255,86 @@ class AttachmentStore extends MailspringStore {
         this._onPresentChange(change.objects);
       }
     });
+  }
+  _queryFilesFromDB = ()=>{
+    if(this._queryFileDBTimer){
+      this._queryFileDBTimer = null;
+    }
+    if(this._missingDataAttachmentIds.size === 0){
+      return;
+    }
+    const fileIds = [];
+    for( let id of this._missingDataAttachmentIds.values()) {
+      fileIds.push(id);
+    }
+    if(fileIds.length > 0) {
+      this._missingDataAttachmentIds.clear();
+      // console.log(`Querying db for file ids ${fileIds}`);
+      this.findAllByFileIds(fileIds).then(files => {
+        const attachmentChange = [];
+        files.forEach(file => {
+          if(!file){
+            return;
+          }
+          file.missingData = false;
+          if (file.messageId) {
+            attachmentChange.push({ fileId: file.id, messageId: file.messageId });
+          }
+          this._attachementCache.set(file.id, file);
+        });
+        if(attachmentChange.length > 0){
+          console.log(`Attachment cache updated`);
+          this.trigger({ attachmentChange });
+        }
+      })
+    }
+  };
+
+  _addToMissingDataAttachmentIds = fileId => {
+    this._missingDataAttachmentIds.add(fileId);
+    if(!this._queryFileDBTimer){
+      this._queryFileDBTimer = setImmediate(this._queryFilesFromDB);
+    }
+  };
+
+  findAll(){
+    return DatabaseStore.findAll(File);
+  }
+  findAllByFileIds(fileIds){
+    return this.findAll().where([File.attributes.id.in(fileIds)]);
+  }
+
+  getAttachment(fileId){
+    const ret = this._attachementCache.get(fileId);
+    if(ret){
+      return ret;
+    }
+    this._addToMissingDataAttachmentIds(fileId);
+    return null;
+  }
+  setAttachmentData(attachmentData){
+    if(attachmentData.mimeType){
+      return this.addAttachmentPartialData(attachmentData);
+    } else if (attachmentData.missingData) {
+      const cachedAttachment = this._attachementCache.get(attachmentData.id);
+      if(cachedAttachment){
+        return;
+      }
+    }
+    this._attachementCache.set(attachmentData.id, attachmentData);
+  }
+  addAttachmentPartialData(partialFileData){
+    let fileData = this._attachementCache.get(partialFileData.id);
+    if(!fileData){
+      console.log(`file id already not in cache ${partialFileData.id}`);
+      fileData = File.fromPartialData(partialFileData);
+      this._attachementCache.set(fileData.id, fileData);
+    }
+    if(fileData.missingData){
+      console.log(`file missing data, queue db ${fileData.id}`);
+      this._addToMissingDataAttachmentIds(fileData.id);
+    }
+    return fileData;
   }
 
   // Returns a path on disk for saving the file. Note that we must account

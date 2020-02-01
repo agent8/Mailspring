@@ -84,7 +84,7 @@ export default class LabelPickerPopover extends Component {
 
   _onLabelsChanged = categories => {
     this._labels = categories.filter(c => {
-      return c instanceof Label && !c.role;
+      return c.isLabel() && !c.role;
     });
     this.setState(this._recalculateState());
   };

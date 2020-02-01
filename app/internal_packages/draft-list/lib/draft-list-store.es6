@@ -49,7 +49,7 @@ class DraftListStore extends MailspringStore {
       // const query = DatabaseStore.findAll(Message)
       //   .include(Message.attributes.body)
       //   .order(Message.attributes.date.descending())
-      //   .where([Message.attributes.state.in(['0', '2'])])
+      //   .where([Message.attributes.syncState.in(['0', '2'])])
       //   .where({ draft: true})
       //   .page(0, 1);
 

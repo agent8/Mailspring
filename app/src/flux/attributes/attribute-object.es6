@@ -6,8 +6,8 @@ Public: An object that can be cast to `itemClass`
 Section: Database
 */
 export default class AttributeObject extends Attribute {
-  constructor({ modelKey, jsonKey, itemClass, queryable }) {
-    super({ modelKey, jsonKey, queryable });
+  constructor({ modelKey, jsonKey, itemClass, queryable, ...extra }) {
+    super({ modelKey, jsonKey, queryable, ...extra });
     this.itemClass = itemClass;
   }
 

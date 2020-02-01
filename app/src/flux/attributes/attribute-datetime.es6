@@ -11,17 +11,22 @@ export default class AttributeDateTime extends Attribute {
     if (!val) {
       return null;
     }
-    if (!(val instanceof Date) && isFinite(val)){
+    if (!(val instanceof Date) && isFinite(val)) {
       console.warn('converting val from integer to Date');
       val = new Date(val);
     }
     if (!(val instanceof Date)) {
-      AppEnv.reportError(
-        new Error(
-          `Attempting to toJSON AttributeDateTime which is not a date: ${this.modelKey} = ${val}`
-        )
-      );
-      return null;
+      console.warn('converting val from string to Date');
+      val = Date.parse(val);
+      if (!isFinite(val)) {
+        AppEnv.reportError(
+          new Error(
+            `Attempting to toJSON AttributeDateTime which is not a date: ${this.modelKey} = ${val}`,
+          ),
+        );
+        return null;
+      }
+      val = new Date(val);
     }
     return Math.floor(val.getTime() / 1000);
   }
@@ -30,7 +35,12 @@ export default class AttributeDateTime extends Attribute {
     if (!val || val instanceof Date) {
       return val;
     }
-    return new Date(val * 1000);
+    const d = new Date(val * 1000);
+    d.toJSON = tmp => {
+      console.log(`returing tmp`);
+      return Math.floor(tmp.getTime() / 1000);
+    };
+    return d;
   }
 
   columnSQL() {

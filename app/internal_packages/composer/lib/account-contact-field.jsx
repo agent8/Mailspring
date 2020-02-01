@@ -60,6 +60,7 @@ export default class AccountContactField extends React.Component {
     if (this.props.draft && this.props.draft.accountId) {
       const account = AccountStore.accountForId(this.props.draft.accountId);
       if (account) {
+        console.log('account label', account.label);
         return this._renderAccountSpan(account.label);
       }
     }

@@ -55,7 +55,7 @@ lazyLoad(`MailspringAPIRequest`, 'flux/mailspring-api-request');
 lazyLoad(`MailsyncProcess`, 'mailsync-process');
 // The Database
 lazyLoad(`Matcher`, 'flux/attributes/matcher');
-lazyLoad(`DatabaseStore`, 'flux/stores/database-store');
+load(`DatabaseStore`, 'flux/stores/database-store');
 lazyLoad(`QueryResultSet`, 'flux/models/query-result-set');
 lazyLoad(`QuerySubscription`, 'flux/models/query-subscription');
 lazyLoad(`MutableQueryResultSet`, 'flux/models/mutable-query-result-set');
@@ -88,7 +88,7 @@ lazyLoadAndRegisterModel('MuteNotification', 'mute-notification');
 lazyLoadAndRegisterModel(`ProviderSyncbackRequest`, 'provider-syncback-request');
 lazyLoadAndRegisterModel('SetObservableRange', 'set-observable-range');
 lazyLoadAndRegisterModel('AttachmentProgress', 'attachment-progress');
-
+lazyLoadAndRegisterModel('FolderState', 'folder-state');
 // Search Query Interfaces
 lazyLoad(`SearchQueryAST`, 'services/search/search-query-ast');
 lazyLoad(`SearchQueryParser`, 'services/search/search-query-parser');

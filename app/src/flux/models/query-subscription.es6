@@ -113,6 +113,11 @@ export default class QuerySubscription {
       }
       if (record.type === 'unpersist') {
         for (const item of record.objects) {
+          if(!item){
+            unknownImpacts += 1;
+            console.error(`unpersist record obj is null, ${record.objectClass}`);
+            continue;
+          }
           const offset = this._set.offsetOfId(item.id);
           if (offset !== -1) {
             this._set.removeModelAtOffset(item, offset);
@@ -121,6 +126,11 @@ export default class QuerySubscription {
         }
       } else if (record.type === 'persist') {
         for (const item of record.objects) {
+          if(!item){
+            unknownImpacts += 1;
+            console.error(`persist record obj is null, ${record.objectClass}`);
+            continue;
+          }
           const offset = this._set.offsetOfId(item.id);
           const itemIsInSet = offset !== -1;
           const itemShouldBeInSet = item.matches(this._query.matchers());
@@ -170,8 +180,8 @@ export default class QuerySubscription {
 
   _itemSortOrderHasChanged(old, updated) {
     for (const descriptor of this._query.orderSortDescriptors()) {
-      const oldSortValue = old[descriptor.attr.modelKey];
-      const updatedSortValue = updated[descriptor.attr.modelKey];
+      const oldSortValue = old[descriptor.attr.jsModelKey || descriptor.attr.modelKey];
+      const updatedSortValue = updated[descriptor.attr.jsModelKey || descriptor.attr.modelKey];
 
       // http://stackoverflow.com/questions/4587060/determining-date-equality-in-javascript
       if (!(oldSortValue >= updatedSortValue && oldSortValue <= updatedSortValue)) {

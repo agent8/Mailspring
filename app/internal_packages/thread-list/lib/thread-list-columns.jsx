@@ -16,12 +16,13 @@ const ThreadListIcon = require('./thread-list-icon');
 
 // Get and format either last sent or last received timestamp depending on thread-list being viewed
 const ThreadListTimestamp = function ({ thread }) {
-  let rawTimestamp = FocusedPerspectiveStore.current().isSent()
-    ? thread.lastMessageSentTimestamp
-    : thread.lastMessageReceivedTimestamp;
-  if (!rawTimestamp) {
-    rawTimestamp = thread.lastMessageSentTimestamp;
-  }
+  // let rawTimestamp = FocusedPerspectiveStore.current().isSent()
+  //   ? thread.lastMessageSentTimestamp
+  //   : thread.lastMessageReceivedTimestamp;
+  const rawTimestamp = thread.lastMessageTimestamp;
+  // if (!rawTimestamp) {
+  //   rawTimestamp = thread.lastMessageSentTimestamp;
+  // }
   const timestamp = rawTimestamp ? DateUtils.shortTimeStringForThreadList(rawTimestamp) : 'No Date';
   return <span className="timestamp">{timestamp}</span>;
 };
@@ -95,7 +96,6 @@ const c2 = new ListTabular.Column({
   name: 'Participants',
   maxWidth: 200,
   resolver: thread => {
-    const messages = thread.__messages || [];
     let calendar = null;
     const hasCalendar = thread.hasCalendar;
     if (hasCalendar) {
@@ -103,9 +103,7 @@ const c2 = new ListTabular.Column({
     }
 
     let attachment = null;
-    const haveAttachments =
-      thread.attachmentCount > 0 && messages.find(m => Utils.showIconForAttachments(m.files));
-    if (haveAttachments) {
+    if (thread.hasAttachments) {
       attachment = <div className="thread-icon thread-icon-attachment" />;
     }
     return (

@@ -59,7 +59,7 @@ export default class CategorySelection extends React.Component {
       icon = (
         <RetinaImg
           name={`${item.name}.png`}
-          fallback={item instanceof Label ? 'tag.png' : 'folder.png'}
+          fallback={item.isLabel() ? 'tag.png' : 'folder.png'}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       );

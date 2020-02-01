@@ -119,7 +119,7 @@ class TaskQueue extends MailspringStore {
     return matches;
   }
 
-  waitForPerformLocal = (task, timeout = 2800) => {
+  waitForPerformLocal = (task, {timeout = 2800, sendTask = false} = {}) => {
     const upToDateTask = [].concat(this._queue, this._completed).find(t => t.id === task.id);
     if (upToDateTask && upToDateTask.status !== Task.Status.Local) {
       return Promise.resolve(upToDateTask);
@@ -146,6 +146,9 @@ class TaskQueue extends MailspringStore {
         }, timeout);
       }
       this._waitingForLocal.push({ task, resolve, timer });
+      if(sendTask){
+        Actions.queueTask(task);
+      }
     });
   };
 

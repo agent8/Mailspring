@@ -157,7 +157,7 @@ export default class MailsyncProcess extends EventEmitter {
       args.push('--verbose');
     }
     if (this.account) {
-      args.push('--info', this.account.id);
+      args.push('--info', this.account.pid);
     } else {
       args.push('--info', mode);
     }
@@ -421,7 +421,7 @@ export default class MailsyncProcess extends EventEmitter {
     for (let i = 0; i < this._sendMessageQueue.length; i++) {
       if (AppEnv.enabledToNativeLog) {
         console.log('--------------------To native ---------------');
-        AppEnv.logDebug(`to native: flushing queue: ${this.account ? this.account.id : 'no account'} - ${this._sendMessageQueue[i]}`);
+        AppEnv.logDebug(`to native: flushing queue: ${this.account ? this.account.pid : 'no account'} - ${this._sendMessageQueue[i]}`);
         console.log('-----------------------------To native END-----------------------');
       }
       this.sendMessage(this._sendMessageQueue[i]);
@@ -442,7 +442,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-        this.account ? this.account.id : 'no account'
+        this.account ? this.account.pid : 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');

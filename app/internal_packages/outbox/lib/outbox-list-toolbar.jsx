@@ -29,7 +29,7 @@ class OutboxListToolbar extends Component {
     OutboxStore.dataSource().selection.clear();
   };
   selectAllFilter = item => {
-    return Message.compareMessageState(item.state, Message.messageState.failed);
+    return Message.compareMessageState(item.state, Message.messageSyncState.failed);
   };
 
   render() {

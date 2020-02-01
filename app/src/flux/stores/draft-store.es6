@@ -126,8 +126,8 @@ class DraftStore extends MailspringStore {
       headerMessageId: headerMessageId,
       draft: true,
     }).where([
-      Message.attributes.state.in([
-        Message.messageState.failed,
+      Message.attributes.syncState.in([
+        Message.messageSyncState.failed,
       ]),
     ]);
   }
@@ -138,13 +138,13 @@ class DraftStore extends MailspringStore {
       draft: true,
       hasCalendar: false,
     }).where([
-      Message.attributes.state.in([
-        Message.messageState.normal,
-        Message.messageState.saving,
-        Message.messageState.sending,
-        Message.messageState.updatingNoUID,
-        Message.messageState.updatingHasUID,
-        Message.messageState.failing,
+      Message.attributes.syncState.in([
+        Message.messageSyncState.normal,
+        Message.messageSyncState.saving,
+        Message.messageSyncState.sending,
+        Message.messageSyncState.updatingNoUID,
+        Message.messageSyncState.updatingHasUID,
+        Message.messageSyncState.failing,
       ]),
     ]);
   }
@@ -605,10 +605,10 @@ class DraftStore extends MailspringStore {
           return;
         }
 
-        // Only delete pristine drafts and is not from server, aka remoteUID=0.
+        // Only delete pristine drafts and is not from server, aka savedOnRemote=0.
         // Because we are moving all actions to main window,
         // thus if main window is closed, we should be closing all other windows.
-        if (draft.pristine && !draft.remoteUID) {
+        if (draft.pristine && !draft.savedOnRemote) {
           if (!this._draftsDeleting[draft.id]) {
             promises.push(Actions.destroyDraft([draft], { canBeUndone: false }));
           }
@@ -815,9 +815,8 @@ class DraftStore extends MailspringStore {
     // doesn't need to do a query for it a second from now when the composer wants it.
     this._createSession(draft.headerMessageId, draft);
     const task = new SyncbackDraftTask({ draft });
-    Actions.queueTask(task);
 
-    return TaskQueue.waitForPerformLocal(task)
+    return TaskQueue.waitForPerformLocal(task, {sendTask: true})
       .then(() => {
         if (popout) {
           console.log('\n-------\n draft popout\n');

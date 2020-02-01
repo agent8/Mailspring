@@ -19,17 +19,30 @@ Section: Models
  */
 
 export default class Model {
+  static passAsIs = false; // This is to indicate whether we need to re query DB on message from native
+  static pseudoPrimaryJsKey='id';
   static attributes = {
     id: Attributes.String({
       queryable: true,
-      modelKey: 'id',
+      loadFromColumn: true,
+      modelKey: 'pid',
+      jsModelKey: 'id',
+      isPseudoPrimary: true
     }),
 
     accountId: Attributes.String({
       queryable: true,
+      loadFromColumn: true,
       jsonKey: 'aid',
-      modelKey: 'accountId',
+      modelKey: 'aid',
+      jsModelKey: 'accountId',
     }),
+    data: Attributes.Object({
+      modelKey: 'data',
+      mergeIntoModel: true,
+      queryable: true,
+      loadFromColumn: true,
+    })
   };
 
   static naturalSortOrder = () => null;
@@ -61,9 +74,16 @@ export default class Model {
   fromJSON(json) {
     for (const key of Object.keys(this.constructor.attributes)) {
       const attr = this.constructor.attributes[key];
-      const attrValue = json[attr.jsonKey || key];
+      if (attr.ignore) {
+        continue;
+      }
+      const attrValue = json[attr.jsonKey || attr.modelKey || key];
       if (attrValue !== undefined) {
-        this[key] = attr.fromJSON(attrValue);
+        if(attr.mergeIntoModel){
+          Object.assign(this, attr.fromJSON(attrValue));
+        }else{
+          this[key] = attr.fromJSON(attrValue);
+        }
       }
     }
     return this;
@@ -78,11 +98,14 @@ export default class Model {
     const json = {};
     for (const key of Object.keys(this.constructor.attributes)) {
       const attr = this.constructor.attributes[key];
+      if(attr.mergeIntoModel){
+        continue;
+      }
       const attrValue = this[key];
       if (attrValue === undefined) {
         continue;
       }
-      json[attr.jsonKey || key] = attr.toJSON(attrValue);
+      json[attr.jsonKey || attr.modelKey || key] = attr.toJSON(attrValue);
     }
     json.__cls = this.constructor.name;
     return json;
@@ -109,4 +132,20 @@ export default class Model {
     }
     return true;
   }
+
+  mergeFromColumn(val){
+      const allKeys = Object.keys(this.constructor.attributes);
+      const neededKeys = [];
+      allKeys.forEach(key => {
+        if(!this.constructor.attributes[key].loadFromColumn && !this.constructor.attributes[key].mergeIntoModel){
+          neededKeys.push(key);
+        }
+      });
+    neededKeys.forEach(key=>{
+      const jsKey = this.constructor.attributes[key].jsonKey || this.constructor.attributes[key].modelKey || key;
+        if(val && val.hasOwnProperty(jsKey)){
+          this[key] = this.constructor.attributes[key].fromColumn(val[jsKey]);
+        }
+      });
+    }
 }
