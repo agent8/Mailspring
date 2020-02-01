@@ -8,6 +8,7 @@ import {
   NativeNotifications,
   DatabaseStore,
   ThreadStore,
+  MuteNotificationStore,
 } from 'mailspring-exports';
 
 const WAIT_FOR_CHANGES_DELAY = 400;
@@ -31,10 +32,6 @@ export class Notifier {
 
   // async for testing
   async _onDatabaseChanged({ objectClass, objects }) {
-    if (AppEnv.config.get('core.notifications.enabled') === false) {
-      return;
-    }
-
     if (objectClass === Thread.name) {
       return this._onThreadsChanged(objects);
     }
@@ -60,6 +57,8 @@ export class Notifier {
       if (msg.accountId === (account || {}).id) continue;
       // // if snippet is empty, that means body is not pull over
       if (!msg.snippet) continue;
+      // filter the message that dont should note by account config
+      if (!this._msgShouldNotify(msg)) continue;
 
       notifworthy[msg.id] = msg;
     }
@@ -111,10 +110,46 @@ export class Notifier {
     });
   }
 
+  _msgShouldNotify(msg) {
+    const myAccountId = msg.accountId;
+    const myAccount = AccountStore.accountForId(myAccountId);
+    const { noticeType } = myAccount.notifacation;
+
+    switch (noticeType) {
+      case 'NoneMute':
+        const fromEmail = (msg.from[0] && msg.from[0].email) || '';
+        const isMuted = MuteNotificationStore.isMuteByAccount(myAccountId, fromEmail);
+        return !isMuted;
+      case 'AllMail':
+        return true;
+      case 'Important':
+        const isImportant = msg.labels.some(label => label.role === 'important');
+        return isImportant;
+      default:
+        return true;
+    }
+  }
+
+  _msgsSomeHasNoteSound(msgs) {
+    const accountIds = new Set();
+    msgs.forEach(msg => {
+      accountIds.add(msg.accountId);
+    });
+    const msgsSomeHasNoteSound = [...accountIds].some(id => {
+      const account = AccountStore.accountForId(id);
+      const { sound } = account.notifacation;
+      return sound;
+    });
+    return msgsSomeHasNoteSound;
+  }
+
   _notifyAll() {
+    const messageList = this.unnotifiedQueue.map(queue => queue.message);
+    const msgsSomeHasNoteSound = this._msgsSomeHasNoteSound(messageList);
     NativeNotifications.displayNotification({
       title: `${this.unnotifiedQueue.length} Unread Messages`,
       tag: 'unread-update',
+      silent: !msgsSomeHasNoteSound,
       onActivate: () => {
         AppEnv.displayWindow();
       },
@@ -136,19 +171,19 @@ export class Notifier {
     }
 
     if (this.notifiedMessageIds[message.id]) {
-      AppEnv.reportError(
-        new Error(`Notifier._notifyOne duplicated message id: ${message.id}`)
-      );
+      AppEnv.reportError(new Error(`Notifier._notifyOne duplicated message id: ${message.id}`));
       return;
     }
 
     this.notifiedMessageIds[message.id] = 1;
+    const msgsSomeHasNoteSound = this._msgsSomeHasNoteSound([message]);
     const notification = NativeNotifications.displayNotification({
       title: title,
       subtitle: subtitle,
       body: body,
       canReply: true,
       tag: 'unread-update',
+      silent: !msgsSomeHasNoteSound,
       onActivate: ({ response, activationType }) => {
         if (activationType === 'replied' && response && typeof response === 'string') {
           Actions.sendQuickReply({ thread, message }, response);
@@ -222,8 +257,11 @@ export class Notifier {
         for (const msg of newMessagesInInbox) {
           this.unnotifiedQueue.push({ message: msg, thread: threads[msg.threadId] });
         }
+
+        const msgsSomeHasNoteSound = this._msgsSomeHasNoteSound(newMessagesInInbox);
+
         if (!this.hasScheduledNotify) {
-          if (AppEnv.config.get('core.notifications.sounds')) {
+          if (msgsSomeHasNoteSound) {
             this._playNewMailSound =
               this._playNewMailSound ||
               _.debounce(() => SoundRegistry.playSound('new-mail'), 5000, true);
