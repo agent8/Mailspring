@@ -37,6 +37,7 @@ export default class AttributeCrossDB extends Attribute {
     modelKey,
     jsonKey,
     joinTableColumn = null,
+    joinModelJsonKey = null,
     joinTableKey = 'id',
     joinModelKey = 'id',
     itemClass = null,
@@ -51,6 +52,7 @@ export default class AttributeCrossDB extends Attribute {
     this.tableColumn = joinTableColumn;
     this.joinTableKey = joinTableKey;
     this.joinModelKey = joinModelKey;
+    this.joinModelJsonKey = joinModelJsonKey || this.joinModelKey;
   }
   joinDBName() {
     return this.joinDB;

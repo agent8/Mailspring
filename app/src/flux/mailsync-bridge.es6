@@ -20,7 +20,9 @@ import Actions from './actions';
 import Utils from './models/utils';
 import AnalyzeDBTask from './tasks/analyze-db-task';
 import SiftChangeSharingOptTask from './tasks/sift-change-sharing-opt-task';
-
+import Message from './models/message';
+let FocusedPerspectiveStore = null;
+let Thread = null;
 const MAX_CRASH_HISTORY = 10;
 
 const VERBOSE_UNTIL_KEY = 'core.sync.verboseUntil';
@@ -637,7 +639,7 @@ export default class MailsyncBridge {
 
     task.willBeQueued();
 
-    task.status = 'local';
+    task.status = Task.Status.Local;
     task.origin = new Error().stack
       .split('\n')
       .slice(2)
@@ -679,6 +681,7 @@ export default class MailsyncBridge {
   _onIncomingMessages = msgs => {
     for (const msg of msgs) {
       if (msg.length === 0) {
+        AppEnv.logWarning(`Sync worker sent message with length as 0: ${msg}`);
         continue;
       }
       if (msg[0] !== '{') {
@@ -712,22 +715,109 @@ export default class MailsyncBridge {
         }
         return true;
       });
-
-      // dispatch the message to other windows
-      ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', msg);
       if (AppEnv.enabledFromNativeLog) {
         console.log('----------------From native-------------------');
         AppEnv.logDebug(`from native : ${msg}`);
         console.log('---------------------From native END------------------------');
       }
-      const models = modelJSONs.map(Utils.convertToModel);
-      this._onIncomingChangeRecord(
-        new DatabaseChangeRecord({
-          type, // TODO BG move to "model" naming style, finding all uses might be tricky
-          objectClass: modelClass,
-          objects: models,
-        })
-      );
+      const promises = [];
+      const tmpModels = modelJSONs.map(Utils.convertToModel);
+      let passAsIs = false;
+      if(tmpModels.length > 0){
+        if (tmpModels[0].constructor.passAsIs){
+          passAsIs = true;
+        }
+      }
+      if (passAsIs || type === 'unpersist'){
+        console.log('passing data from native to UI without going through db');
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels });
+        this._onIncomingChangeRecord(
+          new DatabaseChangeRecord({
+            type, // TODO BG move to "model" naming style, finding all uses might be tricky
+            objectClass: modelClass,
+            objects: tmpModels,
+          })
+        );
+        continue;
+      }
+      let threadIndex = -1;
+      let threadCategories = [];
+      tmpModels.forEach(m=>{
+        if(m.constructor.name !== modelClass){
+          return;
+        }
+        const where = {};
+        where[m.constructor.pseudoPrimaryJsKey] = m[m.constructor.pseudoPrimaryJsKey];
+        const klass = m.constructor;
+        if(where[m.constructor.pseudoPrimaryJsKey]){
+          let tmp = DatabaseStore.findBy(klass, where);
+          if (m.constructor.name === 'Message') {
+            tmp.linkDB(Message.attributes.body);
+          }else if (m.constructor.name === 'Thread'){
+            FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+            const perspective = FocusedPerspectiveStore.current();
+            if(perspective){
+              const categoryIds = perspective.categoryIds;
+              if(Array.isArray(categoryIds) && categoryIds.length > 0){
+                console.log(`adding category constrain, ${categoryIds}`);
+                Thread = Thread || require('./models/thread').default;
+                const thread = DatabaseStore.findBy(Thread, where)
+                  .where([Thread.attributes.categories.containsAny(categoryIds)]);
+                promises.push(thread);
+                threadIndex = promises.length -1;
+                threadCategories = categoryIds;
+              }
+            }
+          }
+          promises.push(tmp)
+        }else{
+          console.error(`Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`);
+        }
+      });
+      if(promises.length > 0) {
+        Promise.all(promises).then(models => {
+          const parsedModels = [];
+          models.forEach((model, index) => {
+            if(!model){
+              return;
+            }
+            const pseudoPrimaryKey = model.constructor.pseudoPrimaryJsKey || 'id';
+            let duplicate = false;
+            for (let m of parsedModels ) {
+              if(!m){
+                AppEnv.reportError(new Error(`There is an null is the parsed change record models send to UI`));
+                continue;
+              }
+              if(m[pseudoPrimaryKey] === model[pseudoPrimaryKey]){
+                duplicate = true;
+                // if(index === threadIndex){
+                //   model.categories = threadCategories;
+                // }
+                Object.assign(m, model);
+                break;
+              }
+            }
+            if(!duplicate){
+              // if(index === threadIndex){
+              //   model.categories = threadCategories;
+              // }
+              parsedModels.push(model);
+            }
+          });
+          if(parsedModels.length === 0){
+            return;
+          }
+          // dispatch the message to other windows
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels });
+          this._onIncomingChangeRecord(
+            new DatabaseChangeRecord({
+              type,
+              objectClass: modelClass,
+              objects: parsedModels,
+            })
+          );
+        });
+      }
     }
   };
   _recordErrorToConsole = task => {
@@ -774,11 +864,11 @@ export default class MailsyncBridge {
     // Note: cannot use `record.objectClass` because of subclass names
     if (record.type === 'persist' && record.objects[0] instanceof Task) {
       for (const task of record.objects) {
-        if (task.error != null && task.status !== 'remote') {
+        if (task.error != null && task.status !== Task.Status.Remote) {
           task.onError(task.error);
           this._recordErrorToConsole(task);
         }
-        if (task.status !== 'complete') {
+        if (task.status !== Task.Status.Complete) {
           continue;
         }
         if (task.error != null) {
@@ -791,14 +881,17 @@ export default class MailsyncBridge {
     }
   };
 
-  _onIncomingRebroadcastMessage = (event, msg) => {
-    const { type, modelJSONs, modelClass } = JSON.parse(msg);
-    const models = modelJSONs.map(Utils.convertToModel);
+  _onIncomingRebroadcastMessage = (event, data) => {
+    const { type, models, modelClass } = data;
+    console.log(`type: ${type}, modelClass: ${modelClass}`, models);
+    // const models = modelJSONs.map(Utils.convertToModel);
     DatabaseStore.trigger(
       new DatabaseChangeRecord({
         type,
         objectClass: modelClass,
-        objects: models,
+        objects: models.map(model => {
+          return Utils.populateWithModel(model, modelClass);
+        }),
       })
     );
   };

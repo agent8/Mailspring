@@ -3,16 +3,19 @@ import Model from './model';
 export default class ThreadCategory extends Model {
   static attributes = Object.assign({}, {
     unread: Attributes.Number({
-      modelkey: 'unread',
+      modelKey: 'unread',
     }),
     value: Attributes.String({
-      modelKey: 'value',
+      modelKey: 'categoryId',
     }),
     inAllMail: Attributes.Number({
       modelKey: 'inAllMail'
     }),
     state: Attributes.Number({
       modelKey: 'state'
+    }),
+    lastMessageTimestamp: Attributes.DateTime({
+      modelKey: 'lastDate',
     })
   })
 }

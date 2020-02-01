@@ -1,16 +1,35 @@
 import Category from './category';
 import Attributes from '../attributes';
 
+
+const FolderType = {
+  Folder: 0,
+  Label: 1,
+};
+
 export default class Folder extends Category {
   static attributes = Object.assign({}, Category.attributes, {
     updatedAt: Attributes.DateTime({
-      queryable: true,
       modelKey: 'updatedAt',
-      jsonKey: 'updatedAt',
-      loadFromColumn: true
+      queryable: false,
+    }),
+    bgColor: Attributes.Number({
+      modelKey: 'bgColor',
+      queryable: true,
+      loadFromColumn: true,
     }),
   });
   displayType() {
-    return 'folder';
+    if(this.type === FolderType.Folder){
+      return 'folder';
+    } else {
+      return 'label';
+    }
+  }
+  isLabel(){
+    return this.type === FolderType.Label;
+  }
+  isFolder(){
+    return this.type === FolderType.Folder;
   }
 }

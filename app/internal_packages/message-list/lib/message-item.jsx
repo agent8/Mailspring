@@ -70,7 +70,7 @@ export default class MessageItem extends React.Component {
   componentDidMount() {
     this._storeUnlisten = [
       AttachmentStore.listen(this._onDownloadStoreChange),
-      MessageStore.listen(this._onDownloadStoreChange),
+      MessageStore.listen(this._onMessageStoreChange),
       CalendarStore.listen(this._onCalendarStoreChange),
       BlockedSendersStore.listen(this._onBlockStoreChange),
     ];
@@ -143,6 +143,24 @@ export default class MessageItem extends React.Component {
 
   _onCalendarStoreChange = () => {
     this.setState({ calendar: CalendarStore.getCalendarByMessageId(this.props.message.id) });
+  };
+
+  _onMessageStoreChange = () => {
+    const fileIds = this.props.message.fileIds();
+    const ret = [];
+    for(let fileId of fileIds){
+      const attachment = AttachmentStore.getAttachment(fileId);
+      if(!attachment || attachment.missingData){
+        ret.push(fileId);
+      }
+    }
+    console.log(`attachments missing data ids`);
+    this.setState({
+      attachmentsMissingData: ret,
+      downloads: AttachmentStore.getDownloadDataForFiles(fileIds),
+      filePreviewPaths: AttachmentStore.previewPathsForFiles(fileIds),
+      missingFileIds: MessageStore.getMissingFileIds(),
+    });
   };
 
   _onDownloadStoreChange = () => {
@@ -450,24 +468,6 @@ export default class MessageItem extends React.Component {
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
-      </div>
-    );
-  }
-
-  _renderFolder() {
-    if (!this.state.detailedHeaders) {
-      return false;
-    }
-
-    const folder = this.props.message.folder;
-    if (!folder || folder.role === 'al') {
-      return false;
-    }
-
-    return (
-      <div className="header-row">
-        <div className="header-label">Folder:&nbsp;</div>
-        <div className="header-name">{folder.displayName}</div>
       </div>
     );
   }

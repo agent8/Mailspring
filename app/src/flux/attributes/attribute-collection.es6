@@ -34,23 +34,31 @@ export default class AttributeCollection extends Attribute {
     modelKey,
     jsonKey,
     itemClass,
-    joinOnField,
+    joinTableOnField,
+    joinModelOnField,
     joinQueryableBy,
     joinTableName,
+    joinTableColumn,
     joinOnWhere,
     queryable,
     loadFromColumn,
+    ...extra
   }) {
-    super({ modelKey, jsonKey, queryable });
+    super({ modelKey, jsonKey, queryable, ...extra });
     this.itemClass = itemClass;
-    this.joinOnField = joinOnField;
+    this.joinTableOnField = joinTableOnField;
     this.joinTableName = joinTableName;
     this.joinQueryableBy = joinQueryableBy || [];
     this.joinOnWhere = joinOnWhere || {};
     this.loadFromColumn = loadFromColumn;
+    this.joinTableColumn = joinTableColumn;
+    this.joinModelOnField = joinModelOnField;
   }
 
   toJSON(vals) {
+    if(typeof this.toJSONMapping === 'function'){
+      return this.toJSONMapping(vals);
+    }
     if (!vals) {
       return [];
     }
@@ -61,11 +69,15 @@ export default class AttributeCollection extends Attribute {
 
     return vals.map(val => {
       if (this.itemClass && !(val instanceof this.itemClass)) {
-        throw new Error(
-          `AttributeCollection::toJSON: Value \`${val}\` in ${this.modelKey} is not an ${
-          this.itemClass.name
-          }`
-        );
+        // if(this.itemClass !== 'Label'){
+          console.warn( new Error(
+            `AttributeCollection::toJSON: Value \`${val}\` in ${this.modelKey} is not an ${
+              this.itemClass.name
+            }`
+          ));
+          const Klass = this.itemClass;
+          val = new Klass(val);
+        // }
       }
       return val.toJSON !== undefined ? val.toJSON() : val;
     });
@@ -73,7 +85,14 @@ export default class AttributeCollection extends Attribute {
 
   fromJSON(json) {
     if (typeof json === 'string') {
-      json = JSON.parse(json);
+      if(json.length === 0){
+        json = [];
+      }else{
+        json = JSON.parse(json);
+      }
+    }
+    if(typeof  this.fromJSONMapping === 'function'){
+      return this.fromJSONMapping(json);
     }
     const Klass = this.itemClass;
 

@@ -33,7 +33,7 @@ class ThreadListScrollTooltip extends React.Component {
   render() {
     let content;
     if (this.state.item) {
-      content = DateUtils.shortTimeString(this.state.item.lastMessageReceivedTimestamp);
+      content = DateUtils.shortTimeString(this.state.item.lastMessageTimestamp);
     } else {
       content = 'Loading...';
     }

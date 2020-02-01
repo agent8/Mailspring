@@ -38,7 +38,7 @@ class MovePicker extends React.Component {
     this.state = {
       createFolderPopoverVisible: false,
       moveFolderPopoutVisible: false,
-      isFolder: CategoryStore.getInboxCategory(this._account) instanceof Folder,
+      isFolder: CategoryStore.getInboxCategory(this._account) ? CategoryStore.getInboxCategory(this._account).isFolder() : false,
     };
   }
 

@@ -222,19 +222,26 @@ class CalendarStore extends MailspringStore {
   _processMessage(message) {
     if (!this._isMessageInCache(message.id)) {
       let file = null;
+      let appendToCache = false;
       for (const f of message.files) {
-        if (this.isFileCalendarType(f)) {
+        if (!f.missingData && this.isFileCalendarType(f)) {
+          appendToCache = true;
           file = f;
           break;
         }
       }
-      this._calendarCache[message.id] = {
-        processing: false,
-        file,
-        currentStatus: message.calendarCurrentStatus,
-        targetStatus: message.calendarTargetStatus,
-        calendar: null,
-      };
+      if(appendToCache) {
+        this._calendarCache[message.id] = {
+          processing: false,
+          file,
+          currentStatus: message.calendarCurrentStatus,
+          targetStatus: message.calendarTargetStatus,
+          calendar: null,
+        };
+      }
+    }
+    if(!this._calendarCache[message.id]){
+      return;
     }
     if (
       !this._calendarCache[message.id].processing &&

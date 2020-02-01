@@ -12,10 +12,40 @@ const ToObject = arr => {
     return o;
   }, {});
 };
+const mappings = {
+  'none': 0,
+  'inbox': 1,
+  'sent': 2,
+  'drafts': 3,
+  'flagged': 4,
+  'important': 5,
+  'spam': 6,
+  'archive': 7,
+  'trash': 8,
+  'all': 9,
+  'snoozed': 10,
+  '[Mailspring]': 11,
+};
+
+const toJSONMapping = val => {
+  if (!val){
+    return 0
+  }
+  return mappings[val];
+};
+const fromJSONMapping = val => {
+  if( val === -1){
+    return undefined;
+  }
+  const keys = Object.keys(mappings);
+  const role = keys[parseInt(val)];
+  return role === 'none' ? null : role;
+};
 
 const StandardRoleMap = ToObject([
   'inbox',
   'important',
+  'flagged',
   'snoozed',
   'sent',
   'drafts',
@@ -89,15 +119,25 @@ export default class Category extends Model {
     role: Attributes.String({
       queryable: true,
       modelKey: 'role',
+      loadFromColumn: true,
+      toJSONMapping,
+      fromJSONMapping
     }),
     path: Attributes.String({
       queryable: true,
+      loadFromColumn: true,
       modelKey: 'path',
     }),
     state: Attributes.Number({
       modelKey: 'state',
       queryable: true,
+      loadFromColumn: true,
     }),
+    type: Attributes.Number({
+      modelKey: 'type',
+      queryable: true,
+      loadFromColumn: true,
+    })
   });
 
   static Types = {

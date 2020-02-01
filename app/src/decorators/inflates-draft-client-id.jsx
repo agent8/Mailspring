@@ -43,15 +43,15 @@ function InflatesDraftClientId(ComposedComponent) {
       if (
         this.props.draft &&
         this.props.draft.savedOnRemote &&
-        !Message.compareMessageState(this.props.draft.state, Message.messageState.sending) &&
-        !Message.compareMessageState(this.props.draft.state, Message.messageState.failing)
+        !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.sending) &&
+        !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failing)
       ) {
         this._prepareServerDraftForEdit(this.props.draft);
       } else {
         if (
           this.props.draft &&
-          (Message.compareMessageState(this.props.draft.state, Message.messageState.sending) ||
-          Message.compareMessageState(this.props.draft.state, Message.messageState.failing))
+          (Message.compareMessageState(this.props.draft.state, Message.messageSyncState.sending) ||
+          Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failing))
         ) {
           AppEnv.reportError(
             new Error('Draft editing session should not have sending/failing state drafts'),
@@ -79,8 +79,8 @@ function InflatesDraftClientId(ComposedComponent) {
         if (
           newProps.draft &&
           newProps.draft.savedOnRemote &&
-          !Message.compareMessageState(newProps.draft.state, Message.messageState.sending) &&
-          !Message.compareMessageState(newProps.draft.state, Message.messageState.failing)) {
+          !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.sending) &&
+          !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.failing)) {
           this._prepareServerDraftForEdit(newProps.draft);
         } else {
           this._prepareForDraft(newProps.headerMessageId, newProps.messageId);
@@ -215,7 +215,7 @@ function InflatesDraftClientId(ComposedComponent) {
       if (!this.state.draft) {
         return;
       }
-      if (this.state.draft.pristine && !this.state.draft.remoteUID) {
+      if (this.state.draft.pristine && !this.state.draft.savedOnRemote) {
         //making sure draft is not from remote
         Actions.destroyDraft([this.state.draft], { canBeUndone: false });
       }

@@ -64,7 +64,7 @@ class SendRemindersStore extends MailspringStore {
       }
 
       // has a new message arrived on the thread? if so, clear the metadata completely
-      const currentReplyTimestamp = new Date(thread.lastMessageReceivedTimestamp).getTime() / 1000;
+      const currentReplyTimestamp = new Date(thread.lastMessageTimestamp).getTime() / 1000;
       if (metadata.lastReplyTimestamp !== currentReplyTimestamp) {
         updateReminderMetadata(thread, {});
         continue;

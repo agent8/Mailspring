@@ -11,62 +11,39 @@ import Attributes from '../attributes';
 import ModelWithMetadata from './model-with-metadata';
 import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
+import CategoryStore from '../stores/category-store';
 let AttachmentStore = null;
 
-/*
-Public: The Message model represents an email message or draft.
+const mapping = {
+  attachmentIdsFromJSON: json =>{
+    if(!Array.isArray(json)){
+      return [];
+    }
+    return json.map(attachment => {
+      return File.fromPartialData(attachment);
+    })
+  }
+};
 
-Messages are a sub-object of threads. The content of a message === immutable (with the
-exception being drafts). Nylas does not support operations such as move || delete on
-individual messages; those operations should be performed on the message’s thread.
-All messages are part of a thread, even if that thread has only one message.
-
-## Attributes
-
-`to`: {AttributeCollection} A collection of {Contact} objects
-
-`cc`: {AttributeCollection} A collection of {Contact} objects
-
-`bcc`: {AttributeCollection} A collection of {Contact} objects
-
-`from`: {AttributeCollection} A collection of {Contact} objects.
-
-`replyTo`: {AttributeCollection} A collection of {Contact} objects.
-
-`date`: {AttributeDateTime} When the message was delivered. Queryable.
-
-`subject`: {AttributeString} The subject of the thread. Queryable.
-
-`snippet`: {AttributeString} A short, 140-character plain-text summary of the message body.
-
-`unread`: {AttributeBoolean} True if the message === unread. Queryable.
-
-`starred`: {AttributeBoolean} True if the message === starred. Queryable.
-
-`draft`: {AttributeBoolean} True if the message === a draft. Queryable.
-
-`version`: {AttributeNumber} The version number of the message. Message
-   versions are used for drafts, && increment when attributes are changed.
-
-`files`: {AttributeCollection} A set of {File} models representing
-   the attachments on this thread.
-
-`body`: {AttributeJoinedData} The HTML body of the message. You must specifically
- request this attribute when querying for a Message using the {{AttributeJoinedData::include}}
- method.
-
-`pristine`: {AttributeBoolean} True if the message === a draft which has not been
- edited since it was created.
-
-`threadId`: {AttributeString} The ID of the Message's parent {Thread}. Queryable.
-
-`replyToHeaderMessageId`: {AttributeString} The headerMessageID of a {Message} that this message is in reply to.
-
-This class also inherits attributes from {Model}
-
-Section: Models
-*/
 export default class Message extends ModelWithMetadata {
+  static fieldsNotInDB=[
+    'calendarReply',
+    'listUnsubscribe',
+    'pristine',
+    'replyToHeaderMessageId',
+    'forwardedHeaderMessageId',
+    'refOldDraftHeaderMessageId',
+    'savedOnRemote',
+    'hasRefOldDraftOnRemote',
+    'folder',
+    'replyOrForward',
+    'msgOrigin',
+    'hasNewID',
+    'noSave',
+    'waitingForBody',
+    'calCurStat',
+    'calTarStat',
+  ];
   static NewDraft = 1;
   static EditExistingDraft = 2;
   static ReplyDraft = 3;
@@ -77,9 +54,8 @@ export default class Message extends ModelWithMetadata {
     reply: 1,
     forward: 2,
   };
-  static messageState = {
+  static messageSyncState = {
     normal: '0',
-    deleted: '1',
     saving: '2',
     sending: '3',
     updatingNoUID: '4', // Updating data from server
@@ -105,14 +81,6 @@ export default class Message extends ModelWithMetadata {
     }
   }
   static attributes = Object.assign({}, ModelWithMetadata.attributes, {
-    // load id column into json
-    id: Attributes.String({
-      queryable: true,
-      jsonKey: 'id',
-      modelKey: 'id',
-      loadFromColumn: true,
-    }),
-
     to: Attributes.Collection({
       modelKey: 'to',
       jsonKey: 'to',
@@ -147,134 +115,69 @@ export default class Message extends ModelWithMetadata {
 
     replyTo: Attributes.Collection({
       modelKey: 'replyTo',
+      queryable: false,
       itemClass: Contact,
     }),
-
-    date: Attributes.DateTime({
-      queryable: true,
-      modelKey: 'date',
-    }),
-
-    body: Attributes.CrossDBString({
-      itemClass: MessageBody,
-      joinModelKey: 'id',
-      joinTableKey: 'id',
-      joinTableColumn: 'value',
-      modelKey: 'body',
-    }),
-
-    isPlainText: Attributes.CrossDBNumber({
-      itemClass: MessageBody,
-      modelKey: 'isPlainText',
-      joinTableColumn: 'type',
-    }),
-
-    files: Attributes.Collection({
-      modelKey: 'files',
-      itemClass: File,
-    }),
-
-    unread: Attributes.Boolean({
-      queryable: true,
-      modelKey: 'unread',
-    }),
-
-    events: Attributes.Collection({
-      modelKey: 'events',
-      itemClass: Event,
-    }),
-
-    starred: Attributes.Boolean({
-      queryable: true,
-      modelKey: 'starred',
-    }),
-
-    snippet: Attributes.String({
-      modelKey: 'snippet',
-    }),
-
-    threadId: Attributes.String({
-      queryable: true,
-      modelKey: 'threadId',
-    }),
-
-    headerMessageId: Attributes.String({
-      queryable: true,
-      modelKey: 'headerMessageId',
-    }),
-
-    subject: Attributes.String({
-      modelKey: 'subject',
-    }),
-
-    draft: Attributes.Boolean({
-      modelKey: 'draft',
-      queryable: true,
-    }),
-
     calendarReply: Attributes.Boolean({
       modelKey: 'calendarReply',
+      queryable: false
     }),
 
     listUnsubscribe: Attributes.String({
       modelKey: 'listUnsubscribe',
+      queryable: false
     }),
 
     pristine: Attributes.Boolean({
       modelKey: 'pristine',
       queryable: false,
     }),
-
-    version: Attributes.Number({
-      jsonKey: 'v',
-      modelKey: 'version',
-      queryable: true,
-    }),
-
     replyToHeaderMessageId: Attributes.String({
       modelKey: 'replyToHeaderMessageId',
+      jsonKey: 'replyToHeaderMsgId',
+      queryable: false
     }),
 
     forwardedHeaderMessageId: Attributes.String({
       modelKey: 'forwardedHeaderMessageId',
+      jsonKey: 'forwardHeaderMsgId',
+      queryable: false
     }),
 
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
+      jsonKey: 'refDraftHeaderMsgId',
+      queryable: false
     }),
     savedOnRemote: Attributes.Boolean({
       modelKey: 'savedOnRemote',
+      queryable: false
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
+      jsonKey: 'hasRefDraft',
+      queryable: false
     }),
     folder: Attributes.Object({
       queryable: false,
       modelKey: 'folder',
       itemClass: Folder,
     }),
-    //DC-265 State attributes must be Number, but actual value must be string, otherwise all kinds of error
-    state: Attributes.Number({
-      modelKey: 'state',
-      jsonKey: 'state',
-      loadFromColumn: true,
-      queryable: true,
-    }),
     replyOrForward: Attributes.Number({
       modelKey: 'replyOrForward',
+      queryable: false
     }),
     msgOrigin: Attributes.Number({
       modelKey: 'msgOrigin',
-      queryable: true,
-    }),
-    remoteUID: Attributes.Number({
-      modelKey: 'remoteUID',
+      queryable: false,
     }),
     hasNewID: Attributes.Boolean({
       modelKey: 'hasNewID',
+      queryable: false,
     }),
     noSave: Attributes.Boolean({
       noSave: 'noSave',
+      queryable: false,
     }),
     waitingForBody: Attributes.Boolean({
       modelKey: 'waitingForBody',
@@ -282,10 +185,116 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
+      queryable: false
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
+      queryable: false
     }),
+
+    data: Attributes.Object({
+      modelKey: 'data',
+      queryable: true,
+      loadFromColumn: true,
+      mergeIntoModel: true
+    }),
+    msgData: Attributes.Object({
+      modelKey: 'msgData',
+      queryable: true,
+      loadFromColumn: true,
+      mergeIntoModel: true
+    }),
+
+    date: Attributes.DateTime({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'date',
+    }),
+
+    body: Attributes.CrossDBString({
+      itemClass: MessageBody,
+      joinModelJsonKey: 'id',
+      joinModelKey: 'pid',
+      joinTableKey: 'pid',
+      joinTableColumn: 'htmlBody',
+      modelKey: 'body',
+    }),
+
+    // All message body from native is in html format
+    // isPlainText: Attributes.CrossDBNumber({
+    //   itemClass: MessageBody,
+    //   modelKey: 'isPlainText',
+    //   joinTableColumn: 'type',
+    // }),
+    labelIds: Attributes.Collection({
+      modelKey: 'labelIds',
+      queryable: true,
+      loadFromColumn: true,
+    }),
+    attachmentIds: Attributes.Collection({
+      jsModelKey: 'attachmentIds',
+      modelKey: 'files',
+      queryable: true,
+      loadFromColumn: true,
+      fromJSONMapping: mapping.attachmentIdsFromJSON
+    }),
+
+    unread: Attributes.Boolean({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'unread',
+    }),
+
+    // events: Attributes.Collection({
+    //   modelKey: 'events',
+    //   itemClass: Event,
+    // }),
+
+    starred: Attributes.Boolean({
+      queryable: true,
+      modelKey: 'starred',
+      loadFromColumn: true,
+    }),
+
+    snippet: Attributes.String({
+      modelKey: 'snippet',
+      queryable: true,
+      loadFromColumn: true,
+    }),
+
+    threadId: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'threadId',
+    }),
+
+    headerMessageId: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      jsonKey: 'headerMsgId',
+      modelKey: 'headerMsgId',
+      jsModelKey: 'headerMessageId'
+    }),
+
+    subject: Attributes.String({
+      modelKey: 'subject',
+      queryable: true,
+      loadFromColumn: true,
+    }),
+
+    draft: Attributes.Boolean({
+      jsModelKey: 'draft',
+      modelKey: 'isDraft',
+      queryable: true,
+      loadFromColumn: true,
+    }),
+
+    version: Attributes.Number({
+      modelKey: 'version',
+      queryable: true,
+      loadFromColumn: true,
+    }),
+
     hasCalendar: Attributes.Boolean({
       modelKey: 'hasCalendar',
       queryable: true,
@@ -294,14 +303,22 @@ export default class Message extends ModelWithMetadata {
     siftCategory: Attributes.Collection({
       queryable: true,
       modelKey: 'siftCategory',
-      joinOnField: 'msgId',
+      joinModelOnField: 'pid',
+      joinTableOnField: 'msgId',
       joinTableName: 'SiftData',
+      joinTableColumn: 'category',
       joinOnWhere: { state: 0 },
       itemClass: Sift,
     }),
-    lastSync: Attributes.Number({
-      modelKey: 'lastSync',
-      queryable: false
+    deleted: Attributes.Boolean({
+      modelKey: 'deleted',
+      loadFromColumn: true,
+      queryable: true,
+    }),
+    syncState: Attributes.Number({
+      modelKey: 'syncState',
+      loadFromColumn: true,
+      queryable: true,
     })
   });
 
@@ -312,23 +329,27 @@ export default class Message extends ModelWithMetadata {
   constructor(data = {}) {
     super(data);
     this.subject = this.subject || '';
+    this.snippet = this.snippet || '';
     this.to = this.to || [];
     this.cc = this.cc || [];
     this.bcc = this.bcc || [];
     this.from = this.from || [];
     this.replyTo = this.replyTo || [];
-    this.files = this.files || [];
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
+    if(Array.isArray(data.files)){
+      this.attachmentIds = data.files
+    }
   }
 
   toJSON(options) {
     const json = super.toJSON(options);
+    json.headerMessageId = this.headerMessageId || '';
     json.file_ids = this.fileIds();
-    // if (this.draft) {
-    //   json.object = 'draft';
-    // }
+    if (this.draft) {
+      json.draft= true;
+    }
 
     if (this.events && this.events.length) {
       json.event_id = this.events[0].id;
@@ -339,15 +360,6 @@ export default class Message extends ModelWithMetadata {
 
   fromJSON(json = {}) {
     super.fromJSON(json);
-
-    // Only change the `draft` bit if the incoming json has an `object`
-    // property. Because of `DraftChangeSet`, it's common for incoming json
-    // to be an empty hash. In this case we want to leave the pre-existing
-    // draft bit alone.
-    // if (json.object) {
-    //   this.draft = json.object === 'draft';
-    // }
-
     return this;
   }
 
@@ -453,10 +465,44 @@ export default class Message extends ModelWithMetadata {
     }
     return false;
   }
+  get files(){
+    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+    if(!Array.isArray(this.attachmentIds)){
+      console.error(`attachmentIds is not array`, this.attachmentIds);
+      return [];
+    }
+    const rets = [];
+    this.attachmentIds.forEach(partialAttachmentData => {
+      if(!(partialAttachmentData instanceof File)){
+        partialAttachmentData = File.fromPartialData(partialAttachmentData)
+      }
+      const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
+      if(fileData){
+        rets.push(fileData);
+      }
+    });
+    return rets;
+  }
+  set files(attachments){
+    this.attachmentIds = attachments;
+  }
 
   // Public: Returns an {Array} of {File} IDs
   fileIds() {
     return this.files.map(file => file.id);
+  }
+
+  get labels(){
+    const ret = [];
+    this.labelIds.forEach(labelId => {
+      if(typeof labelId === 'string'){
+        const tmp = CategoryStore.byFolderId(labelId);
+        if(tmp){
+          ret.push(tmp);
+        }
+      }
+    });
+    return ret;
   }
 
   missingAttachments() {
@@ -564,6 +610,10 @@ export default class Message extends ModelWithMetadata {
   }
 
   isForwarded() {
+    if(!this.subject){
+      console.error(`subject is ${this.subject}`);
+      return false;
+    }
     if (this.subject.toLowerCase().startsWith('fwd:')) {
       return true;
     }
@@ -584,10 +634,16 @@ export default class Message extends ModelWithMetadata {
   }
 
   isInTrash() {
-    if (!this.folder || !this.folder.role) {
+    if (!this.labels) {
       return false;
     }
-    return this.folder.role.toLowerCase().includes('trash');
+    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
+  }
+  isInSpam(){
+    if (!this.labels) {
+      return false;
+    }
+    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
   }
 
   fromContact() {
@@ -618,15 +674,14 @@ export default class Message extends ModelWithMetadata {
   isActiveDraft() { }
 
   isDeleted() {
-    //DC-269
-    return this.state == Message.messageState.deleted; // eslint-ignore-line
+    return this.deleted;
   }
   isDraftSending() {
-    return this.draft && Message.compareMessageState(this.state === Message.messageState.sending);
+    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState === Message.messageSyncState.sending);
   }
 
   isDraftSaving() {
-    return Message.compareMessageState(this.state == Message.messageState.saving) && this.draft; // eslint-ignore-line
+    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState == Message.messageSyncState.saving); // eslint-ignore-line
   }
   isCalendarReply() {
     return this.calendarReply;
@@ -638,7 +693,7 @@ export default class Message extends ModelWithMetadata {
       this.from.length === 1 &&
       this.to[0].email === this.from[0].email &&
       (this.from[0].name || '').endsWith('via Mailspring');
-    const isDraftBeingDeleted = this.id.startsWith('deleted-') || this.isDeleted();
+    const isDraftBeingDeleted = this.id.startsWith('deleted-');
 
     return isReminder || isDraftBeingDeleted || this.isCalendarReply();
   }

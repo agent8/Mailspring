@@ -2,6 +2,7 @@ import Attributes from '../attributes';
 import Model from './model';
 
 export default class BlockContact extends Model {
+  static passAsIs = true;
   static attributes = Object.assign(
     {},
     {
@@ -9,6 +10,7 @@ export default class BlockContact extends Model {
         modelKey: 'id',
         queryable: true,
         loadFromColumn: true,
+        isPseudoPrimary: true,
       }),
       accountId: Attributes.String({
         modelKey: 'accountId',
@@ -36,6 +38,16 @@ export default class BlockContact extends Model {
       type: Attributes.Number({
         modelKey: 'type',
       }),
+      data: Attributes.Object({
+        modelKey: 'data',
+        mergeIntoModel: true,
+        queryable: true,
+        loadFromColumn: true,
+      })
     }
   );
+  constructor(data) {
+    super(data);
+    this.name = this.name || '';
+  }
 }

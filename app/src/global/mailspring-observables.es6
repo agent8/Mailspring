@@ -33,21 +33,21 @@ const CategoryOperators = {
 
 const CategoryObservables = {
   forAllAccounts() {
-    const folders = Rx.Observable.fromQuery(DatabaseStore.findAll(Folder));
-    const labels = Rx.Observable.fromQuery(DatabaseStore.findAll(Label));
-    const joined = Rx.Observable.combineLatest(folders, labels, (f, l) => [].concat(f, l));
-    Object.assign(joined, CategoryOperators);
-    return joined;
+    const folders = Rx.Observable.fromQuery(DatabaseStore.findAll(Folder).where({state: 0}));
+    // const labels = Rx.Observable.fromQuery(DatabaseStore.findAll(Label));
+    // const joined = Rx.Observable.combineLatest(folders, labels, (f, l) => [].concat(f, l));
+    Object.assign(folders, CategoryOperators);
+    return folders;
   },
 
   forAccount(account) {
     const scoped = account ? q => q.where({ accountId: account.id }) : q => q;
 
-    const folders = Rx.Observable.fromQuery(scoped(DatabaseStore.findAll(Folder)));
-    const labels = Rx.Observable.fromQuery(scoped(DatabaseStore.findAll(Label)));
-    const joined = Rx.Observable.combineLatest(folders, labels, (f, l) => [].concat(f, l));
-    Object.assign(joined, CategoryOperators);
-    return joined;
+    const folders = Rx.Observable.fromQuery(scoped(DatabaseStore.findAll(Folder).where({state: 0})));
+    // const labels = Rx.Observable.fromQuery(scoped(DatabaseStore.findAll(Label)));
+    // const joined = Rx.Observable.combineLatest(folders, labels, (f, l) => [].concat(f, l));
+    Object.assign(folders, CategoryOperators);
+    return folders;
   },
 
   standard(account) {
@@ -74,7 +74,7 @@ const CategoryObservables = {
       .categoryFilter(cat => cat.isHiddenCategory());
   },
 };
-
+console.log(`generating Categories`);
 module.exports = {
   Categories: CategoryObservables,
 };

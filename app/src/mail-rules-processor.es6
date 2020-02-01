@@ -75,7 +75,7 @@ const MailRulesActions = {
       throw new Error('A folder is required.');
     }
     const folder = CategoryStore.byId(thread.accountId, value);
-    if (!folder || !(folder instanceof Folder)) {
+    if (!folder || !(folder.isFolder())) {
       throw new Error('The folder could not be found.');
     }
     return new ChangeFolderTask({
@@ -90,7 +90,7 @@ const MailRulesActions = {
       throw new Error('A label is required.');
     }
     const label = CategoryStore.byId(thread.accountId, value);
-    if (!label || !(label instanceof Label)) {
+    if (!label || !(label.isLabel())) {
       throw new Error('The label could not be found.');
     }
     return new ChangeLabelsTask({
@@ -119,7 +119,7 @@ const MailRulesActions = {
       c => c.id === roleOrId || c.role === roleOrId
     );
 
-    if (!label || !(label instanceof Label)) {
+    if (!label || !(label.isLabel())) {
       throw new Error('The label could not be found.');
     }
     return new ChangeLabelsTask({

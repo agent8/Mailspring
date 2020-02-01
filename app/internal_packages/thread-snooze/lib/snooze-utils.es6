@@ -35,7 +35,7 @@ export function moveThreads(threads, { snooze, description } = {}) {
     const snoozeCat = CategoryStore.getCategoryByRole(accountId, 'snoozed');
     const inboxCat = CategoryStore.getInboxCategory(accountId);
 
-    if (snoozeCat instanceof Label) {
+    if (snoozeCat.isLabel()) {
       return [
         new ChangeLabelsTask({
           source: 'Snooze Move',

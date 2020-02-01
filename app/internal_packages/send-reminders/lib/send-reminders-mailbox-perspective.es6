@@ -26,7 +26,7 @@ class SendRemindersMailboxPerspective extends MailboxPerspective {
   threads() {
     let query = DatabaseStore.findAll(Thread)
       .where(Thread.attributes.pluginMetadata.contains(PLUGIN_ID))
-      .order(Thread.attributes.lastMessageReceivedTimestamp.descending());
+      .order(Thread.attributes.lastMessageTimestamp.descending());
 
     if (this.accountIds.length === 1) {
       query = query.where({ accountId: this.accountIds[0] });

@@ -125,8 +125,8 @@ export default class MessageItemContainer extends React.Component {
     }
     return (
       message.draft &&
-      (Message.compareMessageState(message.state, Message.messageState.sending) ||
-        Message.compareMessageState(message.state, Message.messageState.failing))
+      (Message.compareMessageState(message.state, Message.messageSyncState.sending) ||
+        Message.compareMessageState(message.state, Message.messageSyncState.failing))
     );
   }
 

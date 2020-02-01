@@ -102,7 +102,7 @@ const TaskFactory = {
     return this.tasksForThreadsByAccountId(threads, (accountThreads, accountId) => {
       const inbox = CategoryStore.getInboxCategory(accountId);
       const previousFolder = this.findPreviousFolder(currentPerspective, accountId);
-      if (inbox instanceof Label) {
+      if (inbox.isLabel()) {
         return new ChangeLabelsTask({
           previousFolder,
           labelsToRemove: [inbox],
