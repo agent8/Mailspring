@@ -46,14 +46,13 @@ class CoutactSelectShow extends React.Component {
   render() {
     const { contact } = this.props;
     return (
-      <div className="contact-select-show nylas-input-search">
+      <div className="contact-select-show nylas-input-search" onClick={() => this._fieldElFocus()}>
         <RetinaImg
           isIcon
           name="search.svg"
           className="search-accessory search"
           mode={RetinaImg.Mode.ContentIsMask}
           style={{ height: 20, width: 20 }}
-          onClick={() => this._fieldElFocus()}
         />
         <div className="cover-contact">
           <div className="contact-item">
@@ -61,8 +60,8 @@ class CoutactSelectShow extends React.Component {
               key="email-avatar"
               account={{ name: contact.name, email: contact.email }}
             />
-            {contact.name ? <span>{contact.name}</span> : null}
-            {contact.email}
+            {contact.name ? <span className="contact-name">{contact.name}</span> : null}
+            <span className="contact-email">{contact.email}</span>
           </div>
           <input
             ref={el => (this._input = el)}
