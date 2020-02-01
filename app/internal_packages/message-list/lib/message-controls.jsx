@@ -9,8 +9,15 @@ import {
   GetMessageRFC2822Task,
   TaskFactory,
   FocusedPerspectiveStore,
+  MuteNotificationStore,
 } from 'mailspring-exports';
-import { RetinaImg, ButtonDropdown, Menu, FixedPopover } from 'mailspring-component-kit';
+import {
+  RetinaImg,
+  ButtonDropdown,
+  Menu,
+  FixedPopover,
+  FullScreenModal,
+} from 'mailspring-component-kit';
 import MessageTimestamp from './message-timestamp';
 
 const buttonTimeout = 700;
@@ -36,17 +43,22 @@ export default class MessageControls extends React.Component {
       isReplying: false,
       isReplyAlling: false,
       isForwarding: false,
+      isMuted: false,
       showViewOriginalEmail: AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
     };
     this._mounted = false;
     this._replyTimer = null;
     this._replyAllTimer = null;
     this._forwardTimer = null;
-    this._unlisten = Actions.draftReplyForwardCreated.listen(this._onDraftCreated, this);
+    this._unlisten = [
+      Actions.draftReplyForwardCreated.listen(this._onDraftCreated, this),
+      MuteNotificationStore.listen(this._onMuteChange),
+    ];
   }
 
   componentDidMount() {
     this._mounted = true;
+    this._onMuteChange();
     this.disposable = AppEnv.config.onDidChange(this.CONFIG_KEY, () => {
       if (this._mounted) {
         this.setState({
@@ -59,12 +71,20 @@ export default class MessageControls extends React.Component {
 
   componentWillUnmount() {
     this._mounted = false;
-    this._unlisten();
+    this._unlisten.forEach(un => un());
     this.disposable.dispose();
     clearTimeout(this._forwardTimer);
     clearTimeout(this._replyAllTimer);
     clearTimeout(this._replyTimer);
   }
+
+  _onMuteChange = () => {
+    const { message } = this.props;
+    const accoundId = message.accountId;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+    const isMuted = MuteNotificationStore.isMuteByAccount(accoundId, email);
+    this.setState({ isMuted });
+  };
 
   _timeoutButton = type => {
     if (type === 'reply') {
@@ -155,7 +175,25 @@ export default class MessageControls extends React.Component {
     Actions.printThread(this.props.thread, printNode.outerHTML);
   };
 
+  _onToggleMuteEmail = () => {
+    this.setState({ showMuteEmailModal: !this.state.showMuteEmailModal });
+  };
+
+  _onUnmuteNotification = () => {
+    const { message } = this.props;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+
+    MuteNotificationStore.unMuteNotifacationByAccount(message.accountId, email);
+  };
+
+  _onMuteEmail = email => {
+    const { message } = this.props;
+    this._onToggleMuteEmail();
+    MuteNotificationStore.muteNotifacationByAccount(message.accountId, email);
+  };
+
   _items() {
+    const { isMuted } = this.state;
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
@@ -195,6 +233,13 @@ export default class MessageControls extends React.Component {
       select: this._onPrintEmail,
     };
 
+    const muteEmail = {
+      name: `${isMuted ? 'Unmute' : 'Mute'} notifications`,
+      image: 'preview.svg',
+      iconHidden: true,
+      select: isMuted ? this._onUnmuteNotification : this._onToggleMuteEmail,
+    };
+
     if (!this.props.message.canReplyAll()) {
       const noReplyAll = [reply, forward];
       if (!this.props.message.draft) {
@@ -203,7 +248,7 @@ export default class MessageControls extends React.Component {
       if (this.state.showViewOriginalEmail) {
         noReplyAll.push(viewOriginalEmail);
       }
-      noReplyAll.push(printEmail);
+      noReplyAll.push(printEmail, muteEmail);
       return noReplyAll;
     }
     const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
@@ -215,7 +260,7 @@ export default class MessageControls extends React.Component {
     if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
-    ret.push(printEmail);
+    ret.push(printEmail, muteEmail);
     return ret;
   }
 
@@ -413,6 +458,38 @@ export default class MessageControls extends React.Component {
     clipboard.writeText(data);
   };
 
+  _renderMuteEmailPopup = () => {
+    const { message } = this.props;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+
+    return (
+      <div className="mute-email-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onToggleMuteEmail}
+        />
+        <h1>
+          Mute notifications from
+          <br />
+          {email}
+        </h1>
+        <p>You won't be notified about new mail from this sender.</p>
+        <div className="btn-list">
+          <div className="btn cancel" onClick={this._onToggleMuteEmail}>
+            Cancel
+          </div>
+          <div className="btn confirm" onClick={() => this._onMuteEmail(email)}>
+            Mute
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   _renderBlockBtn() {
     const { message, isBlocked, onBlock } = this.props;
     let btnText = '';
@@ -501,6 +578,20 @@ export default class MessageControls extends React.Component {
             <RetinaImg name={'message-actions-ellipsis.png'} mode={RetinaImg.Mode.ContentIsMask} />
           </div>
         ) : null}
+
+        <FullScreenModal
+          visible={this.state.showMuteEmailModal}
+          style={{
+            height: '192px',
+            width: '400px',
+            top: '165px',
+            right: '255px',
+            left: 'auto',
+            bottom: 'auto',
+          }}
+        >
+          {this._renderMuteEmailPopup()}
+        </FullScreenModal>
       </div>
     );
   }

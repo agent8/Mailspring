@@ -1,0 +1,282 @@
+@import 'ui-variables';
+
+.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 15px) {
+  -webkit-mask-image: url(@svg-url);
+  -webkit-mask-size: @bgSize;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  background-color: @bgColor;
+}
+
+.preferences-wrap {
+  .account-notifacations {
+    display: flex;
+    .account-list {
+      width: 270px;
+      height: 260px;
+      flex: 0 0 auto;
+      padding: 10px 0;
+      overflow-y: auto;
+
+      .items-wrapper {
+        flex: 1;
+      }
+
+      .list-item {
+        padding: 10px 15px;
+        border-radius: 10px 0 0 10px;
+      }
+
+      .list-item:not(.selected) .sync-error {
+        color: @color-error;
+      }
+
+      .account {
+        .account-item {
+          flex: 1;
+          margin: 0 10px 0 20px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+          .account-name {
+            font-size: @font-size-large;
+            cursor: default;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+          }
+
+          .account-subtext {
+            font-size: @font-size-small;
+            cursor: default;
+          }
+        }
+      }
+    }
+    .account-notifacations-config {
+      flex: 1;
+      border-left: 1px solid @border-color-divider;
+      .config-group {
+        padding: 0 20px;
+
+        .account-notifacations-note {
+          font-family: 'SF UI Text';
+          color: @text-color-very-subtle;
+          line-height: 18px;
+          margin: 5px 0;
+        }
+
+        .checkmark {
+          margin: 10px 0 3.5px;
+          line-height: 16px;
+        }
+
+        .config-sound {
+          padding-top: 26.5px;
+          line-height: 16px;
+          input {
+            display: inline-block;
+            vertical-align: top;
+            height: 14px;
+            width: 14px;
+          }
+        }
+      }
+    }
+  }
+
+  .container-mute {
+    max-width: 700px;
+    padding-bottom: 33.5px;
+
+    .mute-note {
+      font-family: 'SF UI Text';
+      max-width: 600px;
+      color: @text-color-very-subtle;
+      line-height: 18px;
+    }
+    .config-group {
+      border: none;
+      padding-bottom: 20px;
+
+      .buttons-add {
+        width: 132px;
+        margin-top: 10px;
+        font-family: 'SF UI Text';
+        font-size: 11px;
+        font-weight: 600;
+
+        img {
+          margin-right: 6.5px;
+        }
+      }
+    }
+  }
+}
+
+.modal_content.add-mute-contact {
+  height: 240px;
+  width: 520px;
+  .add-mute-contact-popup {
+    padding: 30px;
+    .close-icon {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background-color: @gray;
+      cursor: pointer;
+    }
+    .contact-item {
+      padding: 0 21px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      color: @gray;
+      font-size: 14px;
+      letter-spacing: -0.31px;
+      line-height: 15px;
+
+      .avatar-icon {
+        height: 20px;
+        width: 20px;
+        border: none;
+        margin-right: 19px;
+        display: inline-block;
+        vertical-align: top;
+        line-height: 20px;
+        text-align: center;
+        color: @text-color-inverse;
+        border-radius: 50%;
+      }
+      span {
+        color: @text-color;
+        margin-right: 15px;
+        white-space: nowrap;
+      }
+    }
+    .menu {
+      position: relative;
+
+      .header-container {
+        border: none;
+        background: none;
+        padding: 0;
+      }
+
+      .content-container {
+        position: absolute;
+        top: 40px;
+        left: 0;
+        margin: 0;
+        z-index: 10;
+        border-radius: 0 0 10px 10px;
+        background-color: @background-primary;
+        box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.25);
+
+        .item {
+          padding: 0;
+
+          &.select {
+            background-color: @off-white-light;
+          }
+        }
+      }
+    }
+
+    .contact-select-show {
+      position: relative;
+      overflow: hidden;
+
+      .cover-contact {
+        position: absolute;
+        top: 5px;
+        left: 55px;
+        height: 28px;
+        overflow: hidden;
+        display: flex;
+
+        .contact-item {
+          height: 100%;
+          border-radius: 15px;
+          background-color: @gray-lightest;
+          padding: 0 12px 0 4px;
+          font-family: 'SF UI Text';
+
+          span,
+          .avatar-icon {
+            margin-right: 7px;
+          }
+        }
+
+        input {
+          font-size: 26px;
+        }
+      }
+    }
+
+    h1 {
+      font-family: 'SF UI Text';
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.01px;
+      line-height: 24px;
+      margin: 0;
+    }
+    p {
+      color: @text-color-very-subtle;
+      font-family: 'SF UI Display';
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.18px;
+      line-height: 16px;
+      margin: 10px 0 20px;
+    }
+    .nylas-input-search {
+      height: 40px !important;
+      border: 1px solid #e1e4e6;
+      border-radius: 10px !important;
+      background: none;
+      padding-left: 15px !important;
+
+      img {
+        height: 26px !important;
+        width: 26px !important;
+        margin-right: 11px;
+      }
+    }
+    .btn-group {
+      padding-top: 35px;
+      display: flex;
+      justify-content: center;
+
+      button {
+        width: 160px;
+        height: 35px;
+        box-sizing: border-box;
+        opacity: 0.98;
+        border-radius: 20px;
+        color: @blue;
+        border: 1px solid @blue;
+        line-height: 33px;
+        text-align: center;
+        font-family: 'SF UI Text';
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        margin: 0 10px;
+
+        &.confirm {
+          color: @text-color-inverse;
+          background: @blue;
+          border: none;
+
+          &.disable {
+            background-color: @disabled-bg-color;
+          }
+        }
+      }
+    }
+  }
+}
