@@ -31,7 +31,7 @@ class PreferencesAccountList extends Component {
   _renderAccount = account => {
     const label = account.label;
     // const accountSub = `${account.name || 'No name provided'} <${account.emailAddress}>`;
-    const accountSub = `<${account.emailAddress}>`;
+    const accountSub = `${account.emailAddress}`;
     const syncError = account.hasSyncStateError();
 
     return (
@@ -48,7 +48,7 @@ class PreferencesAccountList extends Component {
           <div className="account-item">
             <div className="account-name">{label}</div>
             <div className="account-subtext">
-              {accountSub} ({account.displayProvider()})
+              {accountSub}
             </div>
           </div>
         </Flexbox>
