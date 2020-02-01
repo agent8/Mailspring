@@ -95,7 +95,6 @@ class EditableList extends Component {
     itemContent: PropTypes.func,
     className: PropTypes.string,
     showEditIcon: PropTypes.bool,
-    showFooter: PropTypes.bool,
     showDelIcon: PropTypes.bool,
     createInputProps: PropTypes.object,
     onCreateItem: PropTypes.func,
@@ -117,9 +116,9 @@ class EditableList extends Component {
     className: '',
     createInputProps: {},
     showEditIcon: false,
-    onDeleteItem: () => {},
-    onItemEdited: () => {},
-    onItemCreated: () => {},
+    onDeleteItem: () => { },
+    onItemEdited: () => { },
+    onItemCreated: () => { },
   };
 
   constructor(props) {
@@ -178,7 +177,7 @@ class EditableList extends Component {
     this._setStateAndFocus({ creatingItem: false }, callback);
   };
 
-  _setStateAndFocus = (state, callback = () => {}) => {
+  _setStateAndFocus = (state, callback = () => { }) => {
     this.setState(state, () => {
       this._focusSelf();
       callback();
@@ -300,7 +299,7 @@ class EditableList extends Component {
           type: 'info',
           message: message,
           detail: detail,
-          buttons: ['Delete', 'Cancel'],
+          buttons: ['Delete', 'Cancel']
         });
         if (chosen === 0) {
           this.props.onDeleteItem(selectedItem, index);
@@ -496,10 +495,7 @@ class EditableList extends Component {
   };
 
   _renderButtons = () => {
-    const { showFooter, footer } = this.props;
-    if (!showFooter) {
-      return;
-    }
+    const { footer } = this.props;
     if (footer) {
       return footer;
     }
@@ -558,8 +554,8 @@ class EditableList extends Component {
             {items}
           </ScrollRegion>
         ) : (
-          <div>{items}</div>
-        )}
+            <div>{items}</div>
+          )}
         {this._renderButtons()}
       </KeyCommandsRegion>
     );
