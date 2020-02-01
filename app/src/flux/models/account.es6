@@ -78,6 +78,9 @@ export default class Account extends ModelWithMetadata {
     lastVerified: Attributes.Number({
       modelkey: 'lastVerified',
     }),
+    picture: Attributes.String({
+      modelKey: 'picture',
+    }),
   });
 
   constructor(args) {
