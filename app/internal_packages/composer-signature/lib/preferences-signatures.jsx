@@ -168,7 +168,7 @@ export default class PreferencesSignatures extends React.Component {
     return (
       <div className="signatures">
         <div className="title">{sig.title}</div>
-        <div className="use-account">
+        <div className={`use-account ${checkedListLen ? 'inuse' : ''}`}>
           {checkedListLen
             ? `${checkedListLen} account${checkedListLen > 1 ? 's' : ''}`
             : 'Not currently in use'}
