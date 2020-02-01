@@ -55,6 +55,7 @@ class SignatureEditor extends React.Component {
       <div className={`signature-wrap ${empty && 'empty'}`}>
         <div className="section basic-info">
           <input
+            className={signature.title && signature.title !== 'Untitled' ? 'black' : null}
             key="signatureName"
             type="text"
             id="title"
