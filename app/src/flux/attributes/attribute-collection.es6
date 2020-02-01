@@ -75,6 +75,8 @@ export default class AttributeCollection extends Attribute {
               this.itemClass.name
             }`
           ));
+          const Klass = this.itemClass;
+          val = new Klass(val);
         // }
       }
       return val.toJSON !== undefined ? val.toJSON() : val;
