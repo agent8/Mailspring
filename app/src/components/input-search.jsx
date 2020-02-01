@@ -46,14 +46,6 @@ export default class InputSearch extends React.Component {
     }
   };
 
-  focus = () => {
-    this._fieldElFocus();
-  };
-
-  clear = () => {
-    this._clearInput();
-  };
-
   render() {
     const {
       className,

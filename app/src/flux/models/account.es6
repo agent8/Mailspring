@@ -78,9 +78,6 @@ export default class Account extends ModelWithMetadata {
     lastVerified: Attributes.Number({
       modelkey: 'lastVerified',
     }),
-    notifacation: Attributes.Object({
-      modelKey: 'notifacation',
-    }),
   });
 
   constructor(args) {
@@ -93,10 +90,6 @@ export default class Account extends ModelWithMetadata {
       value: '',
     };
     this.lastVerified = this.lastVerified || 0;
-    this.notifacation = this.notifacation || {
-      noticeType: 'AllMail',
-      sound: false,
-    };
   }
 
   toJSON(...args) {
