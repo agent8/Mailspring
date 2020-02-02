@@ -246,8 +246,13 @@ export class Notifier {
         }
 
         // Filter new messages to just the ones in the inbox
-        const newMessagesInInbox = newMessages.filter(({ folder }) => {
-          return folder.role === 'inbox' || folder.role === 'all';
+        const newMessagesInInbox = newMessages.filter(({ labels }) => {
+          if (!labels || !labels.length) {
+            return false;
+          }
+          return labels.some(
+            folder => folder && folder.role && (folder.role === 'inbox' || folder.role === 'all')
+          );
         });
 
         if (newMessagesInInbox.length === 0) {
