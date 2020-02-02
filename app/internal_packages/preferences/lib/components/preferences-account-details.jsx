@@ -434,7 +434,7 @@ class PreferencesAccountDetails extends Component {
             <label htmlFor={'Sender Name'}>Sender Name</label>
             <input
               type="text"
-              value={account.name || account.label}
+              value={account.name}
               onBlur={this._saveChanges}
               placeholder="e.g. John Smith"
               onChange={this._onAccountNameUpdated}
