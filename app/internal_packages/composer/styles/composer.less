@@ -131,17 +131,23 @@
   text-decoration: underline;
 }
 .RichEditor-root .custom-block-selected,
-.RichEditor-root .uneditable.custom-block-selected {
+.RichEditor-root .uneditable.custom-block-selected,
+.RichEditor-root .editable-box.custom-block-selected {
   border: 1px dashed @text-color;
 }
 
-.RichEditor-root .uneditable {
-  -webkit-user-modify: read-only;
+.RichEditor-root .uneditable,
+.editable-box {
   display: inline-block;
   border: 1px solid transparent;
   position: relative;
   white-space: normal;
   min-width: 30px;
+
+  &.uneditable {
+    -webkit-user-modify: read-only;
+  }
+
   .uneditable-remove {
     position: absolute;
     display: none;
