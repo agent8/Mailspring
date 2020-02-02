@@ -1,18 +1,17 @@
 import React from 'react';
 import { RetinaImg } from 'mailspring-component-kit';
+import { BLOCK_CONFIG } from './base-block-plugins';
 
-export const UNEDITABLE_TYPE = 'uneditable';
-export const UNEDITABLE_TAGS = ['table', 'center'];
+const SIGNATURE_TYPE = 'signature';
 
-function UneditableNode(props) {
+function SignatureNode(props) {
   const { attributes, node, editor, targetIsHTML, isSelected } = props;
-  const __html = node.data.get ? node.data.get('html') : node.data.html;
 
   if (targetIsHTML) {
-    return <div dangerouslySetInnerHTML={{ __html }} />;
+    return BLOCK_CONFIG.div.render(props);
   }
   return (
-    <div {...attributes} className={`uneditable ${isSelected && 'custom-block-selected'}`}>
+    <div {...attributes} className={`editable-box ${isSelected && 'custom-block-selected'}`}>
       <a
         onClick={e => {
           e.stopPropagation();
@@ -29,29 +28,25 @@ function UneditableNode(props) {
           mode={RetinaImg.Mode.ContentPreserve}
         />
       </a>
-      <div dangerouslySetInnerHTML={{ __html }} />
+      {BLOCK_CONFIG.div.render(props)}
     </div>
   );
 }
 
 function renderNode(props) {
-  if (props.node.type === UNEDITABLE_TYPE) {
-    return UneditableNode(props);
+  if (props.node.type === SIGNATURE_TYPE) {
+    return SignatureNode(props);
   }
 }
 
 const rules = [
   {
     deserialize(el, next) {
-      const tagName = el.tagName.toLowerCase();
-
-      if (UNEDITABLE_TAGS.includes(tagName)) {
+      if (el.tagName.toLowerCase() === 'signature') {
         return {
           object: 'block',
-          type: UNEDITABLE_TYPE,
-          data: { html: el.outerHTML },
-          nodes: [],
-          isVoid: true,
+          type: SIGNATURE_TYPE,
+          nodes: next(el.childNodes),
         };
       }
     },
