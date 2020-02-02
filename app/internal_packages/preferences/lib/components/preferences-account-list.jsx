@@ -37,9 +37,9 @@ class PreferencesAccountList extends Component {
     return (
       <div className={classnames({ account: true, 'sync-error': syncError })} key={account.id}>
         <Flexbox direction="row" style={{ alignItems: 'middle' }}>
-          <div style={{ textAlign: 'center' }}>
+          <div className="account-picture">
             <RetinaImg
-              style={{ width: 40, height: 40 }}
+              url={account.picture}
               name={`account-logo-${account.provider}.png`}
               fallback="account-logo-other.png"
               mode={RetinaImg.Mode.ContentPreserve}
