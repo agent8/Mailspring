@@ -25,10 +25,12 @@ class BlockedSendersStore extends MailspringStore {
   }
 
   refreshBlockedSenders = async () => {
+    const accountIds = AccountStore.accounts().map(account => account.id);
     // status is 1 or 3 mean this data is deleted
     const blocks = await DatabaseStore.findAll(BlockContact).where([
       BlockContact.attributes.state.not(1),
       BlockContact.attributes.state.not(3),
+      BlockContact.attributes.accountId.in(accountIds),
     ]);
     const blockEmailSet = new Set();
     const blockDeDuplication = [];
