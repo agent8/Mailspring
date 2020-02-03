@@ -197,26 +197,15 @@ export default class MovePickerPopover extends Component {
           })
         );
       }
-      if (category.role === 'inbox') {
-        tasks.push(
-          ...TaskFactory.tasksForChangeFolder({
-            source: 'Category Picker: New Category',
-            threads: threads,
-            folder: category,
-            currentPerspective,
-          })
-        );
-      } else {
-        tasks.push(
-          new ChangeLabelsTask({
-            source: 'Category Picker: New Category',
-            labelsToRemove: [],
-            labelsToAdd: [category],
-            threads: threads,
-            previousFolder,
-          })
-        );
-      }
+      tasks.push(
+        new ChangeLabelsTask({
+          source: 'Category Picker: New Category',
+          labelsToRemove: [],
+          labelsToAdd: [category],
+          threads: threads,
+          previousFolder,
+        })
+      );
       Actions.queueTasks(tasks);
     }
     this._onActionCallback(category);
