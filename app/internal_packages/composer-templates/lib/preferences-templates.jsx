@@ -78,6 +78,9 @@ class TemplateEditor extends React.Component {
               }
             }}
             onBlur={this._onSave}
+            onFileReceived={() => {
+              // This method ensures that HTML can be pasted.
+            }}
           />
         </div>
         <div className="section note">

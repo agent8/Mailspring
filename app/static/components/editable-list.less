@@ -1,35 +1,64 @@
 @import 'ui-variables';
+@import 'ui-mixins';
 
 .nylas-editable-list {
   .list-item.selected {
-    background: @list-selected-bg;
+    background: @source-list-active-bg;
   }
 
-  &:focus .selected {
-    background: @list-focused-bg;
-  }
+  // &:focus .selected {
+  //   background: @list-focused-bg;
+  // }
 
   .list-item {
     position: relative;
+    cursor: pointer;
     .icon-list {
       position: absolute;
       top: 0;
-      right: 20px;
+      right: 12px;
       height: 100%;
       display: flex;
       align-items: center;
-      img {
-        display: inline-block;
-        background-color: @gray-light;
+
+      .icon-item {
+        position: relative;
+        height: 16px;
+        width: 12px;
         margin-left: 4px;
+        img {
+          position: absolute;
+          left: 0;
+          top: 2px;
+          z-index: 100;
+          background-color: @gray-light;
+        }
+
+        &:hover:after {
+          content: '';
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: @gray-lighter;
+          display: block;
+          position: absolute;
+          top: 0px;
+          left: -2px;
+          .grow-up-animation-mixin();
+        }
       }
+
       .close-icon {
         display: none;
       }
     }
 
-    &:hover .close-icon {
-      display: inline-block;
+    &:hover {
+      background: @source-list-active-bg;
+
+      .close-icon {
+        display: inline-block;
+      }
     }
   }
 
