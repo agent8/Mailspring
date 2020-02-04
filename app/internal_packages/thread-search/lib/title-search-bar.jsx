@@ -31,13 +31,13 @@ class TitleSearchBar extends Component {
   }
 
   componentDidMount() {
-    if (this.titleEl) {
-      setTimeout(() => {
+    setTimeout(() => {
+      if (this.titleEl) {
         const container = this.titleEl.closest('.item-container');
         this.containerWidth = container ? container.clientWidth : 0;
         this.adjustFontSize();
-      }, 200);
-    }
+      }
+    }, 200);
   }
 
   componentDidUpdate() {
