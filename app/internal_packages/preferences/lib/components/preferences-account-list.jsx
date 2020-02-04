@@ -31,15 +31,15 @@ class PreferencesAccountList extends Component {
   _renderAccount = account => {
     const label = account.label;
     // const accountSub = `${account.name || 'No name provided'} <${account.emailAddress}>`;
-    const accountSub = `<${account.emailAddress}>`;
+    const accountSub = `${account.emailAddress}`;
     const syncError = account.hasSyncStateError();
 
     return (
       <div className={classnames({ account: true, 'sync-error': syncError })} key={account.id}>
         <Flexbox direction="row" style={{ alignItems: 'middle' }}>
-          <div style={{ textAlign: 'center' }}>
+          <div className="account-picture">
             <RetinaImg
-              style={{ width: 40, height: 40 }}
+              url={account.picture}
               name={`account-logo-${account.provider}.png`}
               fallback="account-logo-other.png"
               mode={RetinaImg.Mode.ContentPreserve}
@@ -48,7 +48,7 @@ class PreferencesAccountList extends Component {
           <div className="account-item">
             <div className="account-name">{label}</div>
             <div className="account-subtext">
-              {accountSub} ({account.displayProvider()})
+              {accountSub}
             </div>
           </div>
         </Flexbox>

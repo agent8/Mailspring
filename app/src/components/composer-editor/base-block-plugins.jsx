@@ -438,8 +438,8 @@ export default [
         return;
       }
       // toggleBlockTypeWithBreakout(change.value, change, BLOCK_CONFIG.blockquote.type);
-      event.preventDefault(); // since this inserts a newline
-      return change;
+      // event.preventDefault(); // since this inserts a newline
+      return;
     },
   },
 

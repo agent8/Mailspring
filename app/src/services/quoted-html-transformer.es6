@@ -88,21 +88,22 @@ class QuotedHTMLTransformer {
       return;
     }
 
+    // quanzs: Should not replace <br><br> to <br>, so comment it out
     // Find back-to-back <br><br> at the top level and de-duplicate them
-    const { children } = doc.body;
-    const extraTailBrTags = [];
-    for (let i = children.length - 1; i >= 0; i--) {
-      const curr = children[i];
-      const next = children[i - 1];
-      if (curr && curr.nodeName === 'BR' && next && next.nodeName === 'BR') {
-        extraTailBrTags.push(curr);
-      } else {
-        break;
-      }
-    }
-    for (const el of extraTailBrTags) {
-      el.remove();
-    }
+    // const { children } = doc.body;
+    // const extraTailBrTags = [];
+    // for (let i = children.length - 1; i >= 0; i--) {
+    //   const curr = children[i];
+    //   const next = children[i - 1];
+    //   if (curr && curr.nodeName === 'BR' && next && next.nodeName === 'BR') {
+    //     extraTailBrTags.push(curr);
+    //   } else {
+    //     break;
+    //   }
+    // }
+    // for (const el of extraTailBrTags) {
+    //   el.remove();
+    // }
 
     // Traverse down the tree of "last child" nodes to get the last child of the last child.
     // The deepest node at the end of the document.

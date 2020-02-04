@@ -8,6 +8,7 @@ import ComposerEditorToolbar from './composer-editor-toolbar';
 import { plugins, convertFromHTML, convertToHTML } from './conversion';
 import { lastUnquotedNode } from './base-block-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
+import { shortCutsUtils } from './system-text-replacements-plugins';
 
 export default class ComposerEditor extends React.Component {
   static propTypes = {
@@ -41,6 +42,7 @@ export default class ComposerEditor extends React.Component {
   }
 
   componentDidMount() {
+    shortCutsUtils.refreshTextShortCuts();
     this._mounted = true;
   }
 
