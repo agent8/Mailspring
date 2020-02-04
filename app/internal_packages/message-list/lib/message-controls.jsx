@@ -7,6 +7,8 @@ import {
   Actions,
   TaskQueue,
   GetMessageRFC2822Task,
+  MakePrimaryTask,
+  MakeOtherTask,
   TaskFactory,
   FocusedPerspectiveStore,
   MuteNotificationStore,
@@ -192,6 +194,16 @@ export default class MessageControls extends React.Component {
     MuteNotificationStore.muteNotifacationByAccount(message.accountId, email);
   };
 
+  _onMoveToFocused = () => {
+    const { accountId, id } = this.props.message;
+    Actions.queueTask(new MakePrimaryTask({ accountId: accountId, messageIds: [id] }));
+  };
+
+  _onMoveToOther = () => {
+    const { accountId, id } = this.props.message;
+    Actions.queueTask(new MakeOtherTask({ accountId: accountId, messageIds: [id] }));
+  };
+
   _items() {
     const { isMuted } = this.state;
     const reply = {
@@ -240,6 +252,20 @@ export default class MessageControls extends React.Component {
       select: isMuted ? this._onUnmuteNotification : this._onToggleMuteEmail,
     };
 
+    const moveToFocused = {
+      name: 'Move to Focused',
+      image: 'preview.svg',
+      iconHidden: true,
+      select: this._onMoveToFocused,
+    };
+
+    const moveToOther = {
+      name: 'Move to Other',
+      image: 'preview.svg',
+      iconHidden: true,
+      select: this._onMoveToOther,
+    };
+
     const ret = [];
 
     if (!this.props.message.canReplyAll()) {
@@ -260,7 +286,15 @@ export default class MessageControls extends React.Component {
     if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
-    ret.push(printEmail, muteEmail);
+    ret.push(muteEmail);
+    if (this.props.message.isInInboxFocused()) {
+      ret.push(moveToOther);
+    }
+    if (this.props.message.isInInboxOther()) {
+      ret.push(moveToFocused);
+    }
+    ret.push(printEmail);
+
     return ret;
   }
 
