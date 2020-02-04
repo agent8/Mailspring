@@ -472,23 +472,25 @@ class EditableList extends Component {
         {itemContent}
         <div className="icon-list">
           {editable ? (
-            <RetinaImg
-              className="edit-icon"
-              name="edit-icon.png"
-              title="Edit Item"
-              mode={RetinaImg.Mode.ContentIsMask}
-              onClick={_.partial(onEdit, _, item, idx)}
-            />
+            <div className="icon-item edit-icon">
+              <RetinaImg
+                name="edit-icon.png"
+                title="Edit Item"
+                mode={RetinaImg.Mode.ContentIsMask}
+                onClick={_.partial(onEdit, _, item, idx)}
+              />
+            </div>
           ) : null}
           {delateable ? (
-            <RetinaImg
-              isIcon
-              name="close.svg"
-              className="close-icon"
-              style={{ width: 20, height: 20 }}
-              mode={RetinaImg.Mode.ContentIsMask}
-              onClick={_.partial(onDelete, _, item, idx)}
-            />
+            <div className="icon-item close-icon">
+              <RetinaImg
+                isIcon
+                name="close.svg"
+                style={{ width: 12, height: 12 }}
+                mode={RetinaImg.Mode.ContentIsMask}
+                onClick={_.partial(onDelete, _, item, idx)}
+              />
+            </div>
           ) : null}
         </div>
       </div>
