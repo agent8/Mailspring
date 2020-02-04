@@ -56,6 +56,9 @@
         font-size: 11px;
         font-style: italic;
         line-height: 13px;
+        &.inuse {
+          font-style: normal;
+        }
       }
     }
 
@@ -93,6 +96,9 @@
         background: none;
         &::placeholder {
           color: @gray-lighter;
+        }
+        &.black {
+          color: @text-color;
         }
       }
     }
