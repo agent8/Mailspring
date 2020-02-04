@@ -251,16 +251,16 @@ export default class MessageItem extends React.Component {
             />
           </div>
         ) : (
-          <div className="download-all-action" onClick={this._onDownloadAll}>
-            <RetinaImg
-              name="download.svg"
-              isIcon
-              style={{ width: 18, height: 18 }}
-              mode={RetinaImg.Mode.ContentIsMask}
-            />
-            <span>Download all</span>
-          </div>
-        )}
+            <div className="download-all-action" onClick={this._onDownloadAll}>
+              <RetinaImg
+                name="download.svg"
+                isIcon
+                style={{ width: 18, height: 18 }}
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
+              <span>Download all</span>
+            </div>
+          )}
       </div>
     );
   }
@@ -356,43 +356,45 @@ export default class MessageItem extends React.Component {
         {/*<div className="pending-spinner" style={{ position: 'absolute', marginTop: -2, left: 55 }}>*/}
         {/*  <RetinaImg width={18} name="sending-spinner.gif" mode={RetinaImg.Mode.ContentPreserve} />*/}
         {/*</div>*/}
-        <div className="message-header-right">
-          {!this.props.isOutboxDraft ? (
-            <InjectedComponentSet
-              className="message-header-status"
-              matching={{ role: 'MessageHeaderStatus' }}
-              exposedProps={{
-                message: message,
-                thread: thread,
-                detailedHeaders: this.state.detailedHeaders,
-              }}
-            />
-          ) : null}
-          <MessageControls
-            thread={thread}
-            message={message}
-            messages={messages}
-            isBlocked={isBlocked}
-            onBlock={this._onClickBlockBtn}
-            threadPopedOut={this.props.threadPopedOut}
-            hideControls={this.props.isOutboxDraft}
-            trackers={trackers}
-            viewOriginalEmail={this.state.viewOriginalEmail}
-            setViewOriginalEmail={value => {
-              this.setState({ viewOriginalEmail: !!value });
-            }}
-          />
-        </div>
         <div className="row">
           {this._renderEmailAvatar()}
-          <div>
-            <MessageParticipants
-              from={message.from}
-              onClick={this._onClickParticipants}
-              isDetailed={this.state.detailedHeaders}
-            >
-              {this._renderHeaderDetailToggle()}
-            </MessageParticipants>
+          <div style={{ flex: 1 }}>
+            <div className="participants-to">
+              <MessageParticipants
+                from={message.from}
+                onClick={this._onClickParticipants}
+                isDetailed={this.state.detailedHeaders}
+              >
+                {this._renderHeaderDetailToggle()}
+              </MessageParticipants>
+              <div className="message-header-right">
+                {!this.props.isOutboxDraft ? (
+                  <InjectedComponentSet
+                    className="message-header-status"
+                    matching={{ role: 'MessageHeaderStatus' }}
+                    exposedProps={{
+                      message: message,
+                      thread: thread,
+                      detailedHeaders: this.state.detailedHeaders,
+                    }}
+                  />
+                ) : null}
+                <MessageControls
+                  thread={thread}
+                  message={message}
+                  messages={messages}
+                  isBlocked={isBlocked}
+                  onBlock={this._onClickBlockBtn}
+                  threadPopedOut={this.props.threadPopedOut}
+                  hideControls={this.props.isOutboxDraft}
+                  trackers={trackers}
+                  viewOriginalEmail={this.state.viewOriginalEmail}
+                  setViewOriginalEmail={value => {
+                    this.setState({ viewOriginalEmail: !!value });
+                  }}
+                />
+              </div>
+            </div>
             <MessageParticipants
               detailFrom={message.from}
               to={message.to}
@@ -407,7 +409,7 @@ export default class MessageItem extends React.Component {
           </div>
         </div>
         {/* {this._renderFolder()} */}
-      </header>
+      </header >
     );
   }
 
