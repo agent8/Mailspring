@@ -78,11 +78,13 @@ class TemplateEditor extends React.Component {
               }
             }}
             onBlur={this._onSave}
+            onFileReceived={() => {
+              // This method ensures that HTML can be pasted.
+            }}
           />
         </div>
         <div className="section note">
-          Changes are saved automatically.
-          View the{' '}
+          Changes are saved automatically. View the{' '}
           <a href="https://mailsupport.edison.tech/hc/en-us/articles/360037710531">
             Templates Guide
           </a>{' '}
@@ -172,7 +174,8 @@ export default class PreferencesTemplates extends React.Component {
           <h6>TEMPLATES</h6>
           <Flexbox>
             <div className="template-note">
-              Welcome to templates! A way to quickly reuse frequently sent replies in email. (Changes are saved automatically.)
+              Welcome to templates! A way to quickly reuse frequently sent replies in email.
+              (Changes are saved automatically.)
             </div>
             <div
               className="btn-primary template-folder-btn"
@@ -187,7 +190,7 @@ export default class PreferencesTemplates extends React.Component {
             showDelIcon
             getConfirmMessage={() => ({
               message: 'Delete this template?',
-              detail: `The template and its file will be permanently deleted.`
+              detail: `The template and its file will be permanently deleted.`,
             })}
             className="template-list"
             items={this.state.templates}
