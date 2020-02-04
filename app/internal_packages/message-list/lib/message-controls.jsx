@@ -240,20 +240,20 @@ export default class MessageControls extends React.Component {
       select: isMuted ? this._onUnmuteNotification : this._onToggleMuteEmail,
     };
 
+    const ret = [];
+
     if (!this.props.message.canReplyAll()) {
-      const noReplyAll = [reply, forward];
-      if (!this.props.message.draft) {
-        noReplyAll.push(trash);
+      ret.push(reply);
+    } else {
+      const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
+      if (defaultReplyType === 'reply-all') {
+        ret.push(replyAll, reply);
+      } else {
+        ret.push(reply, replyAll);
       }
-      if (this.state.showViewOriginalEmail) {
-        noReplyAll.push(viewOriginalEmail);
-      }
-      noReplyAll.push(printEmail, muteEmail);
-      return noReplyAll;
     }
-    const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
-    const ret =
-      defaultReplyType === 'reply-all' ? [replyAll, reply, forward] : [reply, replyAll, forward];
+    ret.push(forward);
+
     if (!this.props.message.draft) {
       ret.push(trash);
     }
