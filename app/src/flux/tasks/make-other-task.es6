@@ -20,6 +20,14 @@ export default class MakeOtherTask extends Task {
     this.messageIds = messageIds || [];
   }
 
+  get accountId() {
+    return this.aid;
+  }
+
+  set accountId(a) {
+    // no-op
+  }
+
   label() {
     if (this.messageIds.length > 1) {
       return `make ${this.messageIds.length} messages to other`;
