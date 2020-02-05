@@ -3,7 +3,7 @@ import ThreadSearchBar from './thread-search-bar';
 import { HasTutorialTip } from 'mailspring-component-kit';
 import SearchStore from './search-store';
 import { ListensToFluxStore } from 'mailspring-component-kit';
-import { Actions, FocusedPerspectiveStore } from 'mailspring-exports';
+import { Actions, FocusedPerspectiveStore, ThreadCountsStore } from 'mailspring-exports';
 
 const ThreadSearchBarWithTip = HasTutorialTip(ThreadSearchBar, {
   title: 'Search with ease',
@@ -120,7 +120,7 @@ class TitleSearchBar extends Component {
 }
 
 export default ListensToFluxStore(TitleSearchBar, {
-  stores: [SearchStore, FocusedPerspectiveStore],
+  stores: [SearchStore, FocusedPerspectiveStore, ThreadCountsStore],
   getStateFromStores() {
     return {
       query: SearchStore.query(),
