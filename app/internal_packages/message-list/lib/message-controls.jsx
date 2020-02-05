@@ -194,14 +194,31 @@ export default class MessageControls extends React.Component {
     MuteNotificationStore.muteNotifacationByAccount(message.accountId, email);
   };
 
-  _onMoveToFocused = () => {
+  _onMoveToFocused = event => {
     const { accountId, id } = this.props.message;
     Actions.queueTask(new MakePrimaryTask({ accountId: accountId, messageIds: [id] }));
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (this.props.selection) {
+      this.props.selection.clear();
+    }
+
+    Actions.popSheet({ reason: 'MessageControls:_onRemove' });
   };
 
-  _onMoveToOther = () => {
+  _onMoveToOther = event => {
     const { accountId, id } = this.props.message;
     Actions.queueTask(new MakeOtherTask({ accountId: accountId, messageIds: [id] }));
+    if (event) {
+      event.stopPropagation();
+    }
+    if (this.props.selection) {
+      this.props.selection.clear();
+    }
+
+    Actions.popSheet({ reason: 'MessageControls:_onRemove' });
   };
 
   _items() {
