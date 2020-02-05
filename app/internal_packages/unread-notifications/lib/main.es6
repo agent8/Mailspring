@@ -154,6 +154,9 @@ export class Notifier {
         AppEnv.displayWindow();
       },
     });
+    // if (msgsSomeHasNoteSound) {
+    //   this._playNewMailSound();
+    // }
     this.unnotifiedQueue = [];
   }
 
@@ -199,6 +202,9 @@ export class Notifier {
         Actions.setFocus({ collection: 'thread', item: thread });
       },
     });
+    // if (msgsSomeHasNoteSound) {
+    //   this._playNewMailSound();
+    // }
 
     if (!this.activeNotifications[thread.id]) {
       this.activeNotifications[thread.id] = [notification];
@@ -220,6 +226,8 @@ export class Notifier {
       this.hasScheduledNotify = true;
     }
   }
+
+  _playNewMailSound = _.debounce(() => SoundRegistry.playSound('new-mail'), 5000, true);
 
   _onNewMessagesReceived(newMessages) {
     if (newMessages.length === 0) {
@@ -263,15 +271,7 @@ export class Notifier {
           this.unnotifiedQueue.push({ message: msg, thread: threads[msg.threadId] });
         }
 
-        const msgsSomeHasNoteSound = this._msgsSomeHasNoteSound(newMessagesInInbox);
-
         if (!this.hasScheduledNotify) {
-          if (msgsSomeHasNoteSound) {
-            this._playNewMailSound =
-              this._playNewMailSound ||
-              _.debounce(() => SoundRegistry.playSound('new-mail'), 5000, true);
-            this._playNewMailSound();
-          }
           this._notifyMessages();
         }
       }

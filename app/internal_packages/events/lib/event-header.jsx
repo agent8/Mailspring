@@ -19,7 +19,12 @@ class EventHeader extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { event: this.props.calendar ? this.props.calendar.getFirstEvent() : null };
+    this.state = {
+      event: this.props.calendar ? this.props.calendar.getFirstEvent() : null,
+      expandParticipant: false,
+      expandParticipantNumber: 0,
+    };
+    this._mounted = false;
   }
 
   _onChange() {
@@ -34,11 +39,28 @@ class EventHeader extends React.Component {
     this.setState({ event: nextProps.calendar ? nextProps.calendar.getFirstEvent() : null });
     // this._onChange();
   }
+  componentDidUpdate(prevProps, prevState, snapshot){
+    if(!prevState.event && this.state.event){
+      this.setState({expandParticipantNumber: this._calculateShownParticipantNumber()});
+    }
+  }
+  componentDidMount(){
+    this._mounted = true;
+    this.setState({expandParticipantNumber: this._calculateShownParticipantNumber()});
+    window.addEventListener('resize', this._onWindowResize);
+  }
+  _onWindowResize = () => {
+    if(!this._mounted){
+      return;
+    }
+    this.setState({expandParticipantNumber: this._calculateShownParticipantNumber()});
+  };
 
   componentWillUnmount() {
     if (this._unlisten) {
       this._unlisten();
     }
+    window.removeEventListener('resize', this._onWindowResize);
   }
   renderWhen() {
     const recurrence = Object.keys(this.state.event.getRecurrenceTypes());
@@ -85,7 +107,7 @@ class EventHeader extends React.Component {
         <div className="event-wrapper">
           <div className="event-header">
             <span className="event-title" onContextMenu={this._onContextMenu}>{this.state.event.summary || 'Event'}</span>
-            <RetinaImg name={'feed-calendar.svg'} style={{ width: 20 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+            {/*<RetinaImg name={'feed-calendar.svg'} style={{ width: 20 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />*/}
           </div>
           <div className="event-body">
             <div className="event-data">
@@ -94,10 +116,7 @@ class EventHeader extends React.Component {
                 {this.renderWhen()}
               </div>
               {this._renderLocation()}
-              <div className="event-organizer">
-                <span className="event-key-name">Organizer</span>
-                {this.state.event.organizer ? this.state.event.organizer.name : 'Unknown'}
-              </div>
+              {this._renderParticipants()}
             </div>
             {this._renderEventActions()}
           </div>
@@ -129,10 +148,81 @@ class EventHeader extends React.Component {
             </div>
           );
         })}</div>
-        <div className="open-external" onClick={this._openCalenderExternally}>more details</div>
+        {/*<div className="open-external" onClick={this._openCalenderExternally}>more details</div>*/}
       </div>
     );
   }
+  _renderParticipants = () => {
+    if(!this.state.event){
+      return null;
+    }
+    const humanAttendees = this.state.event.filterAttendeesBy({criteria: 'type', values: ['INDIVIDUAL', 'GROUP']});
+    let organizerStr ;
+    if(this.state.event.organizer){
+      organizerStr = <div className="participant-name">{this.state.event.organizer.name} <span className="organizer-label">(organizer)</span>,</div>
+    } else {
+      organizerStr = null;
+    }
+    let participantsStr = humanAttendees.map(this._renderParticipant);
+    participantsStr.unshift(organizerStr);
+    participantsStr= participantsStr.filter(i => !!i);
+    let expandStr = '';
+    let expandClass = '';
+    if(this.state.expandParticipantNumber > 0 && !this.state.expandParticipant){
+      expandStr = `+${this.state.expandParticipantNumber} more`;
+    }else if(this.state.expandParticipantNumber > 0 && this.state.expandParticipant){
+      expandStr = 'less';
+      expandClass='expand'
+    }
+    let expandElement = null;
+    if(this.state.expandParticipantNumber > 0){
+      expandElement = <div className="expand-element" onClick={this._toggleExpandNames}>{expandStr}</div>;
+    }
+    if(humanAttendees.length > 0){
+      return <div className="event-participants">
+        <span className="event-key-name">{humanAttendees.length} Guests</span>
+        <div className={`participant-names ${expandClass}`} ref={ref => this._partNames = ref}>{participantsStr}</div>
+        {expandElement}
+      </div>;
+    }
+  };
+  _calculateShownParticipantNumber(){
+    if(!this._partNames){
+      return 0
+    }
+    const namesElements = this._partNames.children;
+    if(namesElements.length === 0){
+      return 0;
+    }
+    const total = namesElements.length;
+    let shown = 0;
+    const top = namesElements[0].getBoundingClientRect().y;
+    for(let el of namesElements){
+      if(top !== el.getBoundingClientRect().y){
+        break;
+      }
+      shown++;
+    }
+    return `${total - shown}`;
+  }
+  _toggleExpandNames = () => {
+    this.setState({expandParticipant: !this.state.expandParticipant});
+  };
+  _renderParticipant = (participant, index, all) => {
+    if(!participant || participant.role === 'CHAIR'){
+      return null;
+    }
+    if(this.state.event.organizer){
+      if(participant.name === this.state.event.organizer.name || participant.email === this.state.event.organizer.name){
+        return null;
+      }
+    }
+    if(index < all.length -1){
+      return <div className="participant-name">{participant.name || participant.email}, </div>;
+    } else {
+      return <div className="participant-name">{participant.name || participant.email}</div>;
+    }
+  };
 
   _renderLocation = () => {
     let locationString = 'Unknown';

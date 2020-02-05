@@ -55,6 +55,7 @@ class SignatureEditor extends React.Component {
       <div className={`signature-wrap ${empty && 'empty'}`}>
         <div className="section basic-info">
           <input
+            className={signature.title && signature.title !== 'Untitled' ? 'black' : null}
             key="signatureName"
             type="text"
             id="title"
@@ -167,7 +168,7 @@ export default class PreferencesSignatures extends React.Component {
     return (
       <div className="signatures">
         <div className="title">{sig.title}</div>
-        <div className="use-account">
+        <div className={`use-account ${checkedListLen ? 'inuse' : ''}`}>
           {checkedListLen
             ? `${checkedListLen} account${checkedListLen > 1 ? 's' : ''}`
             : 'Not currently in use'}
