@@ -205,7 +205,7 @@ export default class MessageControls extends React.Component {
       this.props.selection.clear();
     }
 
-    Actions.popSheet({ reason: 'MessageControls:_onRemove' });
+    Actions.popSheet({ reason: 'MessageControls:_onMoveFocused' });
   };
 
   _onMoveToOther = event => {
@@ -218,7 +218,7 @@ export default class MessageControls extends React.Component {
       this.props.selection.clear();
     }
 
-    Actions.popSheet({ reason: 'MessageControls:_onRemove' });
+    Actions.popSheet({ reason: 'MessageControls:_onMoveOther' });
   };
 
   _items() {
