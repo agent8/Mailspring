@@ -878,6 +878,17 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       ];
     }
     // label to label
+    if(myCat.role === 'inbox'){
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source: 'Dragged into list',
+          labelsToAdd: [myCat],
+          labelsToRemove: [],
+          previousFolder,
+        }),
+      ];
+    }
     return [
       new ChangeLabelsTask({
         threads,
