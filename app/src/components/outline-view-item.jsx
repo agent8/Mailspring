@@ -329,6 +329,7 @@ class OutlineViewItem extends Component {
     return (
       <div className={`icon ${classNames}`}>
         <RetinaImg
+          url={item.url}
           name={item.iconName}
           isIcon={true}
           style={styles}

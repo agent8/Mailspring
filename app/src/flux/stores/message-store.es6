@@ -669,7 +669,8 @@ class MessageStore extends MailspringStore {
                   accountId: i.accountId,
                   missingItems: inLineMissing,
                 });
-              } else if (normalMissing.length > 0) {
+              }
+              if (normalMissing.length > 0) {
                 Actions.fetchAttachments({
                   accountId: i.accountId,
                   missingItems: normalMissing,
@@ -689,6 +690,12 @@ class MessageStore extends MailspringStore {
           if (change) {
             if (inLineMissing.length > 0) {
               Actions.fetchAttachments({ accountId: i.accountId, missingItems: inLineMissing });
+            }
+            if (normalMissing.length > 0) {
+              Actions.fetchAttachments({
+                accountId: i.accountId,
+                missingItems: normalMissing,
+              });
             }
             this._missingAttachmentIds = [...inLineMissing, ...normalMissing];
             this.trigger();

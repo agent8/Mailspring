@@ -161,7 +161,7 @@ export class Privacy extends React.Component {
       });
       Actions.queueTask(task);
       TaskQueue.waitForPerformRemote(task)
-        .then(() => {})
+        .then(() => { })
         .catch(() => {
           AppEnv.showErrorDialog({
             title: 'Export data failed.',
@@ -187,7 +187,7 @@ export class Privacy extends React.Component {
     if (AppEnv.config.get('core.privacy.dataShare.optOut')) {
       return (
         <div className="btn-primary privacys-button" onClick={() => this.toggleDataShare(false)}>
-          Opt-in of Data Sharing
+          Opt-in to Data Sharing
         </div>
       );
     } else {
