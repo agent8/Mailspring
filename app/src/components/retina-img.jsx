@@ -119,6 +119,11 @@ class RetinaImg extends React.Component {
     return Utils.imageNamed(pathName, this.props.resourcePath);
   };
 
+  onError = (e) => {
+    const path = this._pathFor(this.props.name) || this._pathFor(this.props.fallback) || '';
+    e.target.src = path;
+  }
+
   render() {
     const path =
       this.props.url || this._pathFor(this.props.name) || this._pathFor(this.props.fallback) || '';
@@ -156,7 +161,7 @@ class RetinaImg extends React.Component {
       return null;
     }
     return (
-      <img alt={this.props.name} className={className} src={path} style={style} {...otherProps} />
+      <img onError={this.onError} alt={this.props.name} className={className} src={path} style={style} {...otherProps} />
     );
   }
 }
