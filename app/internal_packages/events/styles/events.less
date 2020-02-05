@@ -55,6 +55,9 @@
     justify-content: space-around;
     align-items: flex-start;
     .event-key-name {
+      display: inline-block;
+      min-width: 80px;
+      max-width: 80px;
       font-size: @font-size-base;
       font-style: normal;
       padding-right: 14px;
@@ -85,9 +88,44 @@
           margin-top: -24px;
         }
       }
-      .event-organizer{
-        display: inline-block;
+      .event-participants{
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
         padding-bottom: @padding-small-horizontal;
+        white-space: nowrap;
+        overflow: hidden;
+        max-width: 100%;
+        .event-key-name {
+          flex: 80px 0 0;
+        }
+        .organizer-label{
+          font-size: @font-size-base;
+          font-style: normal;
+          color: @text-color-very-subtle;
+        }
+        .expand-element {
+          flex: 40px 0 0;
+          text-align: left;
+          color: @accent-primary;
+          cursor: pointer;
+        }
+        .participant-names{
+          display: flex;
+          flex-direction: row;
+          max-height: 20px;
+          height: max-content;
+          overflow: hidden;
+          flex-wrap: wrap;
+          transition: max-height 500ms;
+          .participant-name {
+            padding-right: 2px;
+          }
+        }
+        .expand {
+          overflow: scroll;
+          max-height: 100px;
+        }
       }
     }
 
@@ -124,20 +162,20 @@
         }
 
         &.no {
-          background: @color-error;
-          border-color: @color-error;
+          background: @accent-primary;
+          border-color: @accent-primary;
           color: @white;
         }
 
         &.yes {
-          background: @color-success;
-          border-color: @color-success;
+          background: @accent-primary;
+          border-color: @accent-primary;
           color: @white;
         }
 
         &.maybe {
-          background: @gray-light;
-          border-color: @gray-light;
+          background: @accent-primary;
+          border-color: @accent-primary;
           color: @white;
         }
       }

@@ -83,7 +83,7 @@ class AccountBasicSettingsForm extends React.Component {
       settings: { imap_password, exchangeServer },
     } = this.props.account;
     let account = new Account({
-      name,
+      name: '', // imap sender name default empty
       emailAddress,
       provider,
       settings: { imap_password, exchangeServer },

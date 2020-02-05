@@ -167,18 +167,18 @@ export default class ParticipantsTextField extends React.Component {
     const MenuItem = remote.MenuItem;
 
     const menu = new MenuClass();
-    if(participants.length === 1){
+    if (participants.length === 1) {
       menu.append(
         new MenuItem({
           label: `Copy ${participants[0].email}`,
           click: () => clipboard.writeText(participants[0].email),
         })
       );
-    }else {
+    } else {
       menu.append(
         new MenuItem({
           label: `Copy`,
-          click: () => clipboard.writeText(participants.map( t => t.email).join(', ')),
+          click: () => clipboard.writeText(participants.map(t => t.email).join(', ')),
         })
       );
     }
@@ -225,7 +225,7 @@ export default class ParticipantsTextField extends React.Component {
             this._textfieldEl = el;
           }}
           tokens={this.props.participants[this.props.field]}
-          tokenKey={p => p.email}
+          tokenKey={p => p ? p.email : ''}
           tokenIsValid={p => ContactStore.isValidContact(p)}
           tokenRenderer={TokenRenderer}
           onRequestCompletions={input => ContactStore.searchContacts(input)}
