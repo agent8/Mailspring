@@ -347,6 +347,7 @@ class SidebarItem {
     const id = [accountId].join('-');
     const account = AccountStore.accountForId(accountId);
     if (account) {
+      opts.url = account.picture;
       opts.iconName = `account-logo-${account.provider}.png`;
       opts.fallback = `account-logo-other.png`;
       opts.mode = RetinaImg.Mode.ContentPreserve;

@@ -47,7 +47,7 @@ export default class ComposerEditorToolbar extends React.Component {
 
   componentDidUpdate() {
     if (this._el) {
-      // this._el.style.height = `${this._floatingEl.clientHeight}px`;
+      this._el.style.height = `${this._floatingEl.clientHeight}px`;
       this._onScroll();
     }
   }

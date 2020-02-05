@@ -32,6 +32,7 @@ const GMAIL_SCOPES = [
   'https://www.google.com/m8/feeds',
   'email',
   'https://www.googleapis.com/auth/gmail.settings.basic',
+  'profile',
 ];
 
 const YAHOO_CLIENT_ID =
@@ -45,6 +46,7 @@ const OFFICE365_SCOPES = ['user.read', 'mail.read'];
 const OUTLOOK_CLIENT_ID = '000000004818114B';
 const OUTLOOK_CLIENT_SECRET = 'jXRAIb5CxLHI5MsVy9kb5okP9mGDZaqw';
 const OUTLOOK_SCOPES = ['wl.basic', 'wl.emails', 'wl.imap', 'wl.offline_access'];
+// const OUTLOOK_SCOPES = ['Contacts.Read', 'Mail.ReadWrite', 'Mail.Send', 'offline_access', 'openid'];
 
 function idForAccount(emailAddress, connectionSettings) {
   // changing your connection security settings / ports shouldn't blow
@@ -162,14 +164,19 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
         return true;
       }
     }
-    for (const test of p['mx-match'] || []) {
-      const reg = new RegExp(`^${test}$`);
-      if (mxRecords.some(record => reg.test(record))) {
-        return true;
-      }
-    }
     return false;
   });
+  if (!template) {
+    template = Object.values(MailcoreProviderSettings).find(p => {
+      for (const test of p['mx-match'] || []) {
+        const reg = new RegExp(`^${test}$`);
+        if (mxRecords.some(record => reg.test(record))) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
 
   if (template) {
     console.log(`Using Mailcore Template: ${JSON.stringify(template, null, 2)}`);
@@ -299,6 +306,7 @@ export async function buildOutlookAccountFromAuthResponse(code) {
   body.push(`redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
+  // const resp = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
   const resp = await fetch('https://login.live.com/oauth20_token.srf', {
     method: 'POST',
     body: body.join('&'),
@@ -318,6 +326,7 @@ export async function buildOutlookAccountFromAuthResponse(code) {
   const { access_token, refresh_token } = json;
 
   // get the user's email address
+  // const meResp = await fetch('https://graph.microsoft.com/v1.0/me', {
   const meResp = await fetch('https://apis.live.net/v5.0/me', {
     method: 'GET',
     headers: {
@@ -330,6 +339,16 @@ export async function buildOutlookAccountFromAuthResponse(code) {
       `Outlook profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
     );
   }
+
+  // const meResp2 = await fetch('https://apis.live.net/v5.0/me/picture', {
+  //   method: 'GET',
+  //   headers: {
+  //     Authorization: `Bearer ${access_token}`,
+  //   },
+  // });
+  // const me2 = await meResp2.json();
+  // debugger;
+
   const account = await expandAccountWithCommonSettings(
     new Account({
       name: me.name,
@@ -343,6 +362,7 @@ export async function buildOutlookAccountFromAuthResponse(code) {
   );
 
   account.id = idForAccount(me.email, account.settings);
+  account.picture = me.picture;
 
   // test the account locally to ensure the All Mail folder is enabled
   // and the refresh token can be exchanged for an account token.
@@ -400,6 +420,7 @@ export async function buildGmailAccountFromAuthResponse(code) {
   );
 
   account.id = idForAccount(me.email, account.settings);
+  account.picture = me.picture;
 
   // test the account locally to ensure the All Mail folder is enabled
   // and the refresh token can be exchanged for an account token.
@@ -478,6 +499,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
   account.settings.imap_username = account.settings.smtp_username = xoauth_yahoo_guid;
 
   account.id = idForAccount(email, account.settings);
+  account.picture = me.picture;
 
   // test the account locally to ensure the All Mail folder is enabled
   // and the refresh token can be exchanged for an account token.
@@ -498,6 +520,7 @@ export function buildOffice365AuthURL() {
 
 export function buildOutlookAuthURL() {
   return (
+    // `https://login.microsoftonline.com/common/oauth2/v2.0/authorize` +
     `https://login.live.com/oauth20_authorize.srf` +
     `?` +
     `client_id=${OUTLOOK_CLIENT_ID}` +
@@ -568,5 +591,7 @@ export async function finalizeAndValidateAccount(account) {
   Actions.siftUpdateAccount(newAccount);
   // preload mail data
   proc.sync();
-  return new Account(newAccount);
+  const acc = new Account(newAccount);
+  acc.picture = account.picture;
+  return acc;
 }
