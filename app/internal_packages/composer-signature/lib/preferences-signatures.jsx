@@ -204,6 +204,7 @@ export default class PreferencesSignatures extends React.Component {
           <EditableList
             className="signature-list"
             items={sigArr}
+            showFooter
             itemContent={this._renderSig}
             onCreateItem={this._onAddSignature}
             onDeleteItem={this._onDeleteSignature}

@@ -7,6 +7,10 @@ import {
   SupportId,
   TaskDelay,
 } from './components/preferences-general-components';
+import {
+  PreferencesMutedNotifacations,
+  PreferencesAccountNotifacations,
+} from './components/preferences-notifications';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
   AppearanceScaleSlider,
@@ -221,18 +225,24 @@ const preferencesTemplateFill = {
           groupName: 'EMAIL NOTIFICATIONS',
           groupItem: [
             {
-              label: 'Show notifications for new unread emails',
-              configSchema: configSchema =>
-                configSchema.properties.notifications.properties.enabled,
-              keyPath: 'core.notifications.enabled',
+              label: 'AccountNotifications',
+              component: PreferencesAccountNotifacations,
               keywords: [],
             },
+          ],
+        },
+        {
+          groupItem: [
             {
-              label: 'New mail notification sound',
-              configSchema: configSchema => configSchema.properties.notifications.properties.sounds,
-              keyPath: 'core.notifications.sounds',
+              label: 'MutedNotifications',
+              component: PreferencesMutedNotifacations,
               keywords: [],
             },
+          ],
+        },
+        {
+          groupName: 'BADGE COUNT',
+          groupItem: [
             {
               label: 'Dock badge count',
               configSchema: configSchema =>

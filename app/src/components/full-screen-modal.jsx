@@ -13,6 +13,7 @@ export default class FullScreenModal extends React.Component {
     maskClosable: PropTypes.bool,
     zIndex: PropTypes.number,
     onCancel: PropTypes.func,
+    style: PropTypes.object,
   };
 
   constructor(props) {
@@ -34,6 +35,14 @@ export default class FullScreenModal extends React.Component {
     if (this.props.visible !== nextProps.visible) {
       this.renderToContainer(nextProps.visible);
     }
+  }
+
+  componentDidUpdate() {
+    this.renderToContainer(this.props.visible);
+  }
+
+  componentWillUnmount() {
+    this.renderToContainer(false);
   }
 
   _onClickWrap = () => {
@@ -64,7 +73,7 @@ export default class FullScreenModal extends React.Component {
   }
 
   retContent() {
-    const { className, children, mask, closable } = this.props;
+    const { className, children, mask, closable, style } = this.props;
     return (
       <div className={mask ? 'component_modal_wrap' : ''} onClick={this._onClickWrap}>
         <div
@@ -72,6 +81,7 @@ export default class FullScreenModal extends React.Component {
           onClick={e => {
             e.stopPropagation();
           }}
+          style={style}
         >
           {closable ? (
             <RetinaImg
