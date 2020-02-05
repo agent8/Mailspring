@@ -154,7 +154,7 @@ export class Notifier {
         AppEnv.displayWindow();
       },
     });
-    if (AppEnv.config.get('core.notifications.sounds')) {
+    if (msgsSomeHasNoteSound) {
       this._playNewMailSound();
     }
     this.unnotifiedQueue = [];
@@ -202,7 +202,7 @@ export class Notifier {
         Actions.setFocus({ collection: 'thread', item: thread });
       },
     });
-    if (AppEnv.config.get('core.notifications.sounds')) {
+    if (msgsSomeHasNoteSound) {
       this._playNewMailSound();
     }
 
@@ -270,8 +270,6 @@ export class Notifier {
         for (const msg of newMessagesInInbox) {
           this.unnotifiedQueue.push({ message: msg, thread: threads[msg.threadId] });
         }
-
-        const msgsSomeHasNoteSound = this._msgsSomeHasNoteSound(newMessagesInInbox);
 
         if (!this.hasScheduledNotify) {
           this._notifyMessages();
