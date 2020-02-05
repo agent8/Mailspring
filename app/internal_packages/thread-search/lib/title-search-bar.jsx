@@ -70,6 +70,8 @@ class TitleSearchBar extends Component {
       TitleComponent = (
         <div className="title-tabs">
           {perspective.tab.map(tab => {
+            const unreadCount = tab.unreadCount();
+
             return (
               <div
                 className={`tab-item${current.isEqual(tab) ? ' select' : ''}`}
@@ -78,7 +80,12 @@ class TitleSearchBar extends Component {
                 }}
                 key={tab.name}
               >
-                <h1>{tab.name}</h1>
+                <h1>
+                  {tab.name}
+                  {unreadCount > 0 ? (
+                    <span>({new Intl.NumberFormat().format(unreadCount)})</span>
+                  ) : null}
+                </h1>
               </div>
             );
           })}
