@@ -368,7 +368,7 @@ class ThreadSearchBar extends Component {
                     e.preventDefault();
                   }}
                   className={`suggestion ${selectedIdx === idx ? 'selected' : ''}`}
-                  key={`${idx}`}
+                  key={`${idx + s.description}`}
                 >
                   {s.role === 'contact' ? (
                     <EmailAvatar
