@@ -109,54 +109,55 @@ export default class LabelPickerPopover extends Component {
       }
       this.onCancel();
     } else if (item.usage === threads.length) {
-      const task = new ChangeLabelsTask({
-        source: 'Category Picker: Existing Category',
-        threads: threads,
-        labelsToRemove: [item.category],
-        labelsToAdd: [],
-      });
+      // const task = new ChangeLabelsTask({
+      //   source: 'Category Picker: Existing Category',
+      //   threads: threads,
+      //   labelsToRemove: [item.category],
+      //   labelsToAdd: [],
+      // });
       this.tasks[item.category.path] = {
-        task,
+        label: item.category,
         action: 'Remove'
       };
       item.usage = 0;
     } else {
-      const task = new ChangeLabelsTask({
-        source: 'Category Picker: Existing Category',
-        threads: threads,
-        labelsToRemove: [],
-        labelsToAdd: [item.category],
-      });
+      // const task = new ChangeLabelsTask({
+      //   source: 'Category Picker: Existing Category',
+      //   threads: threads,
+      //   labelsToRemove: [],
+      //   labelsToAdd: [item.category],
+      // });
       this.tasks[item.category.path] = {
-        task,
+        label: item.category,
         action: 'Add'
-      }
+      };
       item.usage = threads.length;
     }
   };
 
   _onApplyChanges = () => {
     if (Object.keys(this.tasks)) {
-      const addTasks = [];
+      // const addTasks = [];
       const addedLabels = [];
-      const removeTasks = [];
+      // const removeTasks = [];
       const removedLabels = [];
       const tasks = this.tasks;
       // get remove label tasks and add label tasks
       for (const k in tasks) {
         if (tasks[k].action === 'Add') {
-          addedLabels.push(...tasks[k].task.labelsToAdd);
-          addTasks.push(tasks[k].task);
+          addedLabels.push(tasks[k].label);
         } else if (tasks[k].action === 'Remove') {
-          removeTasks.push(tasks[k].task);
-          removedLabels.push(...tasks[k].task.labelsToRemove);
+          removedLabels.push(tasks[k].label);
         }
       }
-      if (removeTasks.length) {
-        Actions.queueTasks(removeTasks);
-      }
-      if (addTasks.length) {
-        Actions.queueTasks(addTasks);
+      if(addedLabels.length > 0 || removedLabels.length > 0){
+        const task = new ChangeLabelsTask({
+          source: 'Category Picker: Existing Category',
+            threads: this.props.threads,
+            labelsToRemove: removedLabels,
+            labelsToAdd: addedLabels,
+        });
+        Actions.queueTask(task);
       }
       this._actionCallBack(addedLabels, removedLabels);
     }
