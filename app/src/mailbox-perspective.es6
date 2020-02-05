@@ -1046,6 +1046,16 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     return equalTab.length > 0;
   }
 
+  unreadCount() {
+    let sum = 0;
+
+    for (const accountId of this.accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${accountId}_Focused`);
+    }
+
+    return sum;
+  }
+
   threads() {
     const categoryIds = [];
     this.categories().forEach(c => {
@@ -1086,6 +1096,15 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
       return this.isEqual(per);
     });
     return equalTab.length > 0;
+  }
+
+  unreadCount() {
+    let sum = 0;
+
+    for (const accountId of this.accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${accountId}_Other`);
+    }
+    return sum;
   }
 
   threads() {
