@@ -564,7 +564,9 @@ body.platform-win32 {
     .message-actions-ellipsis {
       opacity: 0;
       display: block;
-      float: left;
+      position: absolute;
+      right: 226px;
+      top: 0;
     }
 
     .message-actions {
@@ -614,14 +616,16 @@ body.platform-win32 {
     }
 
     .message-header-right {
-      z-index: 4;
       position: relative;
-      top: -2px;
+      top: -1px;
       float: right;
       text-align: right;
       display: flex;
-      align-items: baseline;
-      height: 1em;
+      align-items: start;
+      justify-content: flex-end;
+      height: 24px;
+      min-width: 244px;
+      flex: 1;
     }
     .replyBtn {
       display: inline-block;
@@ -683,6 +687,10 @@ body.platform-win32 {
     }
     .row {
       display: flex;
+      width: 100%;
+      .participants-to {
+        display: flex;
+      }
     }
   }
 
@@ -899,7 +907,7 @@ body.platform-win32 {
   }
 
   &.to-participants {
-    width: calc(~'100% + 180px');
+    width: 100%;
     position: relative;
     .collapsed-participants {
       width: 100%;

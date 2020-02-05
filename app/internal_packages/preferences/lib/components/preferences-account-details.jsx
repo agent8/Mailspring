@@ -103,7 +103,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => {}) => {
+  _setState = (updates, callback = () => { }) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -422,7 +422,7 @@ class PreferencesAccountDetails extends Component {
       <div className="account-details">
         {this._renderSyncErrorDetails()}
         <div className="config-group">
-          <h6>ACCOUNT DETAILS</h6>
+          <h6>{account && account.displayProvider().toUpperCase()} ACCOUNT</h6>
           <div className="item">
             <label htmlFor={'Account Label'}>Description</label>
             <input
@@ -433,11 +433,12 @@ class PreferencesAccountDetails extends Component {
             />
           </div>
           <div className="item">
-            <label htmlFor={'Account Name'}>Account Name</label>
+            <label htmlFor={'Sender Name'}>Sender Name</label>
             <input
               type="text"
-              value={account.name || account.label}
+              value={account.name}
               onBlur={this._saveChanges}
+              placeholder="e.g. John Smith"
               onChange={this._onAccountNameUpdated}
             />
           </div>
