@@ -119,9 +119,9 @@ export class Notifier {
         AppEnv.displayWindow();
       },
     });
-    if (AppEnv.config.get('core.notifications.sounds')) {
-      this._playNewMailSound();
-    }
+    // if (AppEnv.config.get('core.notifications.sounds')) {
+    //   this._playNewMailSound();
+    // }
     this.unnotifiedQueue = [];
   }
 
@@ -167,9 +167,9 @@ export class Notifier {
         Actions.setFocus({ collection: 'thread', item: thread });
       },
     });
-    if (AppEnv.config.get('core.notifications.sounds')) {
-      this._playNewMailSound();
-    }
+    // if (AppEnv.config.get('core.notifications.sounds')) {
+    //   this._playNewMailSound();
+    // }
 
     if (!this.activeNotifications[thread.id]) {
       this.activeNotifications[thread.id] = [notification];
