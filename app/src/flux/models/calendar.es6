@@ -705,9 +705,12 @@ class VEvent extends ICAL.Event {
     return this.attendees.filter(i => i.email === email);
   }
 
-  filterAttendeesBy({ criteria = '', value = '' } = {}) {
+  filterAttendeesBy({ criteria = '', value = '', values = [] } = {}) {
     if (!['role', 'type', 'participationStatus', 'rsvp'].includes(criteria)) {
       return this.attendees;
+    }
+    if(Array.isArray(values) && values.length > 0){
+      return this.attendees.filter(attendees => values.includes(attendees[criteria]));
     }
     return this.attendees.filter(attendees => attendees[criteria] === value);
   }
