@@ -164,14 +164,19 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
         return true;
       }
     }
-    for (const test of p['mx-match'] || []) {
-      const reg = new RegExp(`^${test}$`);
-      if (mxRecords.some(record => reg.test(record))) {
-        return true;
-      }
-    }
     return false;
   });
+  if (!template) {
+    template = Object.values(MailcoreProviderSettings).find(p => {
+      for (const test of p['mx-match'] || []) {
+        const reg = new RegExp(`^${test}$`);
+        if (mxRecords.some(record => reg.test(record))) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
 
   if (template) {
     console.log(`Using Mailcore Template: ${JSON.stringify(template, null, 2)}`);
