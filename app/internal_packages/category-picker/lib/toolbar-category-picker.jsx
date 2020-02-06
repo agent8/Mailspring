@@ -234,6 +234,9 @@ class MovePicker extends React.Component {
   };
 
   _onOpenMovePopover = (event, anchorEl, threads) => {
+    if (event && event.stopPropagation) {
+      event.stopPropagation();
+    }
     if (!(this.props.items.length > 0)) {
       return;
     }
