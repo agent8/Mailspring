@@ -659,10 +659,10 @@ class AttachmentStore extends MailspringStore {
     if (changes && changes.length) {
       changes.forEach(obj => {
         if (obj) {
-          const id = obj.id;
+          const pid = obj.pid;
           const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
-          if (id && percent) {
-            this._fileProcess.set(id, {
+          if (pid && percent) {
+            this._fileProcess.set(pid, {
               state: percent >= 1 ? 'done' : 'downloading',
               percent: parseInt(percent * 100),
             });
