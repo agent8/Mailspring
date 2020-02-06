@@ -121,7 +121,7 @@ export default class CreateNewFolderPopover extends Component {
       } else {
         Actions.queueTask(
           new ChangeLabelsTask({
-            source: 'Category Picker: New Category',
+            source: 'Category Picker: New Label',
             threads: this.props.threads,
             labelsToRemove: [],
             labelsToAdd: [finishedTask.created],
@@ -134,23 +134,18 @@ export default class CreateNewFolderPopover extends Component {
   };
 
   _onMoveToCategory = (category) => {
+    // This is currently not used, replaced by moveFolder
     const { threads } = this.props;
     const all = [];
     threads.forEach(({ labels }) => all.push(...labels));
 
     Actions.queueTasks([
       new ChangeLabelsTask({
-        source: 'Category Picker: New Category',
+        source: 'Category Picker: Move to Label, deleting previous labels',
         labelsToRemove: all,
-        labelsToAdd: [],
-        threads: threads,
-      }),
-      new ChangeLabelsTask({
-        source: 'Category Picker: New Category',
-        labelsToRemove: [],
         labelsToAdd: [category],
         threads: threads,
-      }),
+      })
     ]);
     this._onActionCallback({ addedLabels: [category], removedLabels: all });
   };
