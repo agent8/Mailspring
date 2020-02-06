@@ -2,9 +2,10 @@ import Model from './model';
 import Attributes from '../attributes';
 
 export default class AttachmentProgress extends Model {
+  static passAsIs = true;
   static attributes = Object.assign({}, Model.attributes, {
-    id: Attributes.String({
-      modelKey: 'id',
+    pid: Attributes.String({
+      modelKey: 'pid',
     }),
     cursize: Attributes.Number({
       modelKey: 'cursize',
