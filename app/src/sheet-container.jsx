@@ -1,8 +1,7 @@
 import React from 'react';
 import WindowManager from './browser/window-manager';
 import { ipcRenderer, remote } from 'electron';
-import { CSSTransitionGroup } from 'react-transition-group';
-import { WorkspaceStore, BlockedSendersStore, MuteNotificationStore } from 'mailspring-exports';
+import { WorkspaceStore, BlockedSendersStore, MuteNotificationStore, Version, DatabaseStore, Actions } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import Sheet from './sheet';
 import Toolbar from './sheet-toolbar';
@@ -21,6 +20,30 @@ export default class SheetContainer extends React.Component {
   componentDidMount() {
     ipcRenderer.on('application-activate', this._onAppActive);
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
+    if (AppEnv.isMainWindow()) {
+      this._checkDBVersion();
+    }
+  }
+
+  _checkDBVersion() {
+    DatabaseStore.findAll(Version).then(rst => {
+      if (rst) {
+        for (const v of rst) {
+          if (v.version === '6') {
+            const message = `In order to use new Edison Mail, \nplease click Rebuild to reset your local cache.`;
+            const buttons = ['Quit', 'Rebuild'];
+            remote.dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
+              if (response === 0) {
+                AppEnv.quit();
+              } else {
+                Actions.forceKillAllClients();
+              }
+            });
+            break;
+          }
+        }
+      }
+    })
   }
 
   openOnboarding() {

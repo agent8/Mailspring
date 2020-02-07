@@ -67,6 +67,7 @@ lazyLoad(`MutableQuerySubscription`, 'flux/models/mutable-query-subscription');
 exports.DatabaseObjectRegistry = DatabaseObjectRegistry;
 lazyLoad(`Model`, 'flux/models/model');
 lazyLoad(`Attributes`, 'flux/attributes');
+lazyLoadAndRegisterModel(`Version`, 'version');
 lazyLoadAndRegisterModel(`File`, 'file');
 lazyLoadAndRegisterModel(`Event`, 'event');
 lazyLoadAndRegisterModel(`Label`, 'label');
