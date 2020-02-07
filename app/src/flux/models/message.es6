@@ -345,7 +345,7 @@ export default class Message extends ModelWithMetadata {
 
   toJSON(options) {
     const json = super.toJSON(options);
-    json.headerMessageId = this.headerMessageId || '';
+    // json.headerMessageId = this.headerMessageId || '';
     json.file_ids = this.fileIds();
     if (this.draft) {
       json.draft= true;

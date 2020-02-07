@@ -12,7 +12,7 @@ Section: Database
 export default class AttributeString extends Attribute {
   fromJSON(val) {
     val = super.fromJSON(val);
-    return val === null || val === undefined || val === false ? null : `${val}`;
+    return val === null || val === undefined || val === false ? '' : `${val}`;
   }
 
   // Public: Returns a {Matcher} for objects starting with the provided value.
