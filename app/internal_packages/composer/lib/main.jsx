@@ -58,7 +58,8 @@ class ComposerWithWindowProps extends React.Component {
   }
 
   _onDraftChangeAccountComplete = ({ newDraftJSON }) => {
-    const draft = new Message().fromJSON(newDraftJSON);
+    // Because we transform in action-bridge, this is actually message model.
+    const draft = new Message(newDraftJSON);
     if (draft.savedOnRemote) {
       DraftStore.sessionForServerDraft(draft).then(session => {
         const newDraft = session.draft();

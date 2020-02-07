@@ -210,6 +210,10 @@ module.exports = Utils = {
     if(!model){
       return null;
     }
+    if(model.fromJSON){
+      return model.fromJSON(json);
+    }
+    console.warn(`model doesn't have fromJSON`);
     return Object.assign(model, json);
   },
 

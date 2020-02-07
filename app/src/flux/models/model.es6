@@ -53,8 +53,11 @@ export default class Model {
         this.fromJSON(data);
       } else {
         for (const key of Object.keys(this.constructor.attributes)) {
+          const jsonKey = this.constructor.attributes[key].jsonKey || this.constructor.attributes[key].modelKey;
           if (data[key] !== undefined) {
             this[key] = data[key];
+          } else if (jsonKey && data[jsonKey] !== undefined && data[jsonKey] !== null){
+            this[key] = data[jsonKey];
           }
         }
       }
