@@ -191,6 +191,23 @@ export class AttachmentItem extends Component {
       event.preventDefault();
     }
   };
+
+  // Avoid double click events triggering two single click events
+  _onClickCoordinate = e => {
+    e.persist();
+    this._clickTime = (this._clickTime || 0) + 1;
+    setTimeout(() => {
+      if (this._clickTime === 1) {
+        // single click
+        this._onClick(e);
+      } else if (this._clickTime >= 2) {
+        // double click
+        this._onOpenAttachment(e);
+      }
+      this._clickTime = 0;
+    }, 300);
+  };
+
   _onClick = e => {
     if (this.state.isDownloading || this.props.isDownloading) {
       return;
@@ -293,8 +310,7 @@ export class AttachmentItem extends Component {
         tabIndex={tabIndex}
         onKeyDown={focusable && !disabled ? this._onAttachmentKeyDown : null}
         draggable={draggable && !disabled}
-        onDoubleClick={!disabled ? this._onOpenAttachment : null}
-        onClick={!disabled ? this._onClick : null}
+        onClick={!disabled ? this._onClickCoordinate : null}
         onDragStart={!disabled ? this._onDragStart : null}
         {...pickHTMLProps(extraProps)}
       >
