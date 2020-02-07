@@ -214,7 +214,11 @@ module.exports = grunt => {
        * runs the `security find-identity` command. Note that
        * setup-mac-keychain-task needs to be run first
        */
-      osxSign: !!process.env.SIGN_BUILD,
+      osxSign: !!process.env.SIGN_BUILD ? {
+        hardenedRuntime: true,
+        entitlements: '../scripts/osx_plist/parent.plist',
+        'entitlements-inherit': '../scripts/osx_plist/parent.plist'
+      } : false,
       win32metadata: {
         CompanyName: 'Edison Software Inc',
         FileDescription: 'Edison Mail',
