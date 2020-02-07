@@ -154,9 +154,7 @@ export class Notifier {
         AppEnv.displayWindow();
       },
     });
-    // if (msgsSomeHasNoteSound) {
-    //   this._playNewMailSound();
-    // }
+
     this.unnotifiedQueue = [];
   }
 
@@ -202,9 +200,6 @@ export class Notifier {
         Actions.setFocus({ collection: 'thread', item: thread });
       },
     });
-    // if (msgsSomeHasNoteSound) {
-    //   this._playNewMailSound();
-    // }
 
     if (!this.activeNotifications[thread.id]) {
       this.activeNotifications[thread.id] = [notification];
