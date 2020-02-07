@@ -72,8 +72,8 @@ mailspring-workspace {
 }
 .sheet-container {
   height: 100%;
-  &>.not-valid {
-    &>.sheet-toolbar .sheet-toolbar-container::after {
+  & > .not-valid {
+    & > .sheet-toolbar .sheet-toolbar-container::after {
       content: '';
       display: block;
       position: fixed;
@@ -176,7 +176,7 @@ img.icon-small {
 
 .toolbar-window-controls {
   margin-top: 9px;
-  margin-left: @spacing-half;
+  margin-left: 15px;
   order: -1000;
   min-width: 72px;
   width: 72px;
@@ -191,7 +191,7 @@ img.icon-small {
     padding: 0;
     width: 12px;
     height: 12px;
-    margin: 4px;
+    margin-right: 8px;
     float: left;
     background-color: transparent;
     background-repeat: no-repeat;
@@ -320,7 +320,7 @@ body.is-blurred {
             position: absolute;
             top: -5px;
             left: 7px;
-            .grow-up-animation-mixin()
+            .grow-up-animation-mixin();
           }
         }
         &:active {
@@ -871,7 +871,7 @@ body.platform-win32 {
           position: absolute;
           top: -5px;
           left: 7px;
-          .grow-up-animation-mixin()
+          .grow-up-animation-mixin();
         }
       }
       &:active {
