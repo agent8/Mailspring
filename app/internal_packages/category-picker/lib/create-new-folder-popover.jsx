@@ -130,7 +130,7 @@ export default class CreateNewFolderPopover extends Component {
     if (category.isFolder()) {
       Actions.queueTasks(
         TaskFactory.tasksForChangeFolder({
-          source: 'Category Picker: New Category',
+          source: 'Category Picker: New Folder',
           threads: threads,
           folder: category,
           currentPerspective: FocusedPerspectiveStore.current()

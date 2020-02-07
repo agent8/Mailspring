@@ -166,6 +166,9 @@ class AccountStore extends MailspringStore {
       this._version = AppEnv.config.get(configVersionKey) || 0;
       this._accounts = [];
       for (const json of AppEnv.config.get(configAccountsKey) || []) {
+        if (!json.pid && json.id) {
+          json.pid = json.id;
+        }
         this._accounts.push(new Account().fromJSON(json));
         let fetchEmailInterval = 60000;
         if (json.mailsync && json.mailsync.fetchEmailInterval) {

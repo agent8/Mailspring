@@ -1,7 +1,7 @@
 /* eslint jsx-a11y/tabindex-no-positive: 0 */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Menu, RetinaImg, LabelColorizer, BoldedSearchResult, ScrollRegion } from 'mailspring-component-kit';
+import { Menu, LabelColorizer, BoldedSearchResult } from 'mailspring-component-kit';
 import {
   Utils,
   Actions,
@@ -14,7 +14,6 @@ import {
   TaskFactory,
 } from 'mailspring-exports';
 import { Categories } from 'mailspring-observables';
-import ChangeFolderTask from '../../../src/flux/tasks/change-folder-task';
 
 export default class MovePickerPopover extends Component {
   static propTypes = {
@@ -176,7 +175,7 @@ export default class MovePickerPopover extends Component {
     if (category.isFolder()) {
       Actions.queueTasks(
         TaskFactory.tasksForChangeFolder({
-          source: 'Category Picker: New Category',
+          source: 'Category Picker: Move to Category',
           threads: threads,
           folder: category,
           currentPerspective,
@@ -184,28 +183,39 @@ export default class MovePickerPopover extends Component {
       );
     } else {
       const all = [];
-      threads.forEach(({ labels }) => all.push(...labels));
+      let moveFromInbox = false;
+      if(currentPerspective){
+        moveFromInbox = currentPerspective.isInbox();
+      }
+      threads.forEach(({ labels }) => {
+        if(moveFromInbox){
+          all.push(...labels)
+        }else {
+          all.push(...labels.filter(label=> label.role !== 'inbox'))
+        }
+      });
       const tasks = [];
       if (all.length > 0 && category.role !== 'inbox') {
         tasks.push(
           new ChangeLabelsTask({
-            source: 'Category Picker: New Category',
+            source: 'Category Picker: Move to Label',
             labelsToRemove: all,
-            labelsToAdd: [],
+            labelsToAdd: [category],
+            threads: threads,
+            previousFolder,
+          })
+        );
+      }else {
+        tasks.push(
+          new ChangeLabelsTask({
+            source: 'Category Picker: Add Inbox Label',
+            labelsToRemove: [],
+            labelsToAdd: [category],
             threads: threads,
             previousFolder,
           })
         );
       }
-      tasks.push(
-        new ChangeLabelsTask({
-          source: 'Category Picker: New Category',
-          labelsToRemove: [],
-          labelsToAdd: [category],
-          threads: threads,
-          previousFolder,
-        })
-      );
       Actions.queueTasks(tasks);
     }
     this._onActionCallback(category);
