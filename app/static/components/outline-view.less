@@ -1,5 +1,5 @@
-@import "ui-variables";
-@import "ui-mixins";
+@import 'ui-variables';
+@import 'ui-mixins';
 
 @count-color: @gray-light;
 
@@ -53,7 +53,9 @@
       margin-left: @padding-small-horizontal;
       margin-right: @padding-small-horizontal;
       cursor: pointer;
-      img {background: @text-color-very-subtle; }
+      img {
+        background: @text-color-very-subtle;
+      }
       display: none;
     }
 
@@ -68,7 +70,8 @@
 
   &:hover {
     .heading {
-      .collapse-button,.add-item-button {
+      .collapse-button,
+      .add-item-button {
         display: inherit;
       }
     }
@@ -121,7 +124,7 @@
         visibility: hidden;
       }
     }
-  
+
     &:hover {
       .disclosure-triangle {
         &.visible {
@@ -135,7 +138,7 @@
     color: @text-color-subtle;
     flex: 1;
     display: flex;
-    height: 35px;
+    height: 36px;
     align-items: center;
     font-size: @font-size-base;
     font-weight: 400;
@@ -199,8 +202,7 @@
       padding-left: 12px;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: @text-color;
-      opacity: 0.62;
+      color: @text-color-very-subtle;
       font-size: 14px;
       letter-spacing: 0.17px;
       line-height: 28px;
@@ -230,7 +232,7 @@
         }
       }
     }
-    .item-count-box.critical-count{
+    .item-count-box.critical-count {
       line-height: initial;
       color: @outbox-failed;
     }
@@ -249,16 +251,21 @@
     &.selected {
       background: @source-list-active-bg;
       color: @source-list-active-color;
-      img.content-mask { background-color: @text-color; }
+      img.content-mask {
+        background-color: @text-color;
+      }
       .name {
         font-weight: bold;
-        opacity: 1;
+        color: @text-color;
+        opacity: 0.87;
       }
     }
     &.dropping {
       background-color: lighten(@source-list-bg, 20%);
       color: @source-list-active-color;
-      img.content-mask { background-color: @source-list-active-color; }
+      img.content-mask {
+        background-color: @source-list-active-color;
+      }
     }
     &.editing {
       align-items: center;

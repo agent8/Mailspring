@@ -72,26 +72,36 @@ export default class ComposeButton extends React.Component {
   };
 
   render() {
-    return <div className='sheet-toolbar' style={{ position: 'unset', height: 'unset', padddingLeft: 15, paddingTop: 40 }}>
-      <button
-        className={`btn btn-toolbar item-compose ${
-          this.state.creatingNewDraft ? 'btn-disabled' : ''
-          }`}
-        title="Compose new message"
-        disabled={this.state.creatingNewDraft}
-        onClick={this._onNewCompose}
+    return (
+      <div
+        className="sheet-toolbar"
+        style={{ position: 'unset', height: 'unset', padddingLeft: 15, paddingTop: 30 }}
       >
-        {this.state.showLoading ?
-          <LottieImg name='loading-spinner-blue'
-            size={{ width: 20, height: 20 }}
-            style={{ margin: 'none' }} /> :
-          <RetinaImg name='pencil.svg'
-            style={{ width: 20 }}
-            isIcon={true}
-            mode={RetinaImg.Mode.ContentIsMask} />
-        }
-        <span>Compose</span>
-      </button>
-    </div>;
+        <button
+          className={`btn btn-toolbar item-compose ${
+            this.state.creatingNewDraft ? 'btn-disabled' : ''
+          }`}
+          title="Compose new message"
+          disabled={this.state.creatingNewDraft}
+          onClick={this._onNewCompose}
+        >
+          {this.state.showLoading ? (
+            <LottieImg
+              name="loading-spinner-blue"
+              size={{ width: 20, height: 20 }}
+              style={{ margin: 'none' }}
+            />
+          ) : (
+            <RetinaImg
+              name="pencil.svg"
+              style={{ width: 20 }}
+              isIcon={true}
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+          )}
+          <span>Compose</span>
+        </button>
+      </div>
+    );
   }
 }

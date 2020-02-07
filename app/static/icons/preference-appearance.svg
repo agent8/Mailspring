@@ -1,1 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500"><title>preference-icon-appearance</title><rect x="66" y="73.78" width="375" height="96.74" rx="11.86" fill="#39f"/><rect x="66" y="207.48" width="138.04" height="221.74" rx="10.89" fill="#5b83e2"/><rect x="235.57" y="207.48" width="205.43" height="221.74" rx="13.29" fill="#94cff9"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <title>preference-appearance</title>
+  <path d="M0,0H96V96H0Z" fill="none"/>
+  <path d="M19.5,77h12a4,4,0,0,0,4-4V44a4,4,0,0,0-4-4h-12a4,4,0,0,0-4,4V73A4,4,0,0,0,19.5,77Zm26,0h31a4,4,0,0,0,4-4V44a4,4,0,0,0-4-4h-31a4,4,0,0,0-4,4V73A4,4,0,0,0,45.5,77Zm-29-54v7a4,4,0,0,0,4,4h56a4,4,0,0,0,4-4V23a4,4,0,0,0-4-4h-56A4,4,0,0,0,16.5,23Z" fill="#fff"/>
+</svg>
