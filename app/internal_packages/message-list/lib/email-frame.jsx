@@ -26,6 +26,14 @@ export default class EmailFrame extends React.Component {
     viewOriginalEmail: PropTypes.bool,
   };
 
+  background = {
+    r: 17,
+    g: 17,
+    b: 18,
+  };
+
+  colorNearThreshold = 50;
+
   componentDidMount() {
     this._mounted = true;
     this._writeContent();
@@ -322,6 +330,15 @@ export default class EmailFrame extends React.Component {
     }
   };
 
+  ifColorsIsNearToBackground(r, g, b) {
+    const nearScore = Math.sqrt(
+      (this.background.r - r) * (this.background.r - r) +
+        (this.background.g - g) * (this.background.g - g) +
+        (this.background.b - b) * (this.background.b - b)
+    );
+    return nearScore < this.colorNearThreshold;
+  }
+
   desatruate = (r, g, b) => {
     var gray = r * 0.3086 + g * 0.6094 + b * 0.082;
     var sat = 0.8; //80%
@@ -344,7 +361,9 @@ export default class EmailFrame extends React.Component {
 
           const [r, g, b, a] = this.RGBColor(style[prop]);
           if (a == 0) continue; //transparent;
-
+          // if (!this.ifColorsIsNearToBackground(r, g, b)) {
+          //   continue;
+          // }
           node.style.setProperty(prop, this.reversedColor(r, g, b, prop), 'important');
         }
       });

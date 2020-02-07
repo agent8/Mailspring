@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { Actions, PreferencesUIStore } from 'mailspring-exports';
+import { RetinaImg } from 'mailspring-component-kit';
 
 class PreferencesTabItem extends React.Component {
   static displayName = 'PreferencesTabItem';
@@ -12,6 +13,7 @@ class PreferencesTabItem extends React.Component {
       tabId: PropTypes.string,
     }).isRequired,
     tabItem: PropTypes.instanceOf(PreferencesUIStore.TabItem).isRequired,
+    sidebaricons: PropTypes.bool,
   };
 
   _onClick = () => {
@@ -25,15 +27,23 @@ class PreferencesTabItem extends React.Component {
   };
 
   render() {
-    const { selection, tabItem } = this.props;
+    const { selection, tabItem, sidebaricons } = this.props;
     const { tabId, displayName } = tabItem;
     const classes = classNames({
       item: true,
       active: tabId === selection.tabId,
+      'name-only': !sidebaricons,
     });
 
     return (
       <div className={classes} onClick={this._onClick}>
+        <RetinaImg
+          isIcon
+          name={`preference-${displayName.replace(/\s/g, '').toLocaleLowerCase()}.svg`}
+          className="preferences-icon"
+          mode={RetinaImg.Mode.ContentIsMask}
+          style={{ height: 17, width: 17 }}
+        />
         <div className="name">{displayName}</div>
       </div>
     );
@@ -51,9 +61,38 @@ class PreferencesTabsBar extends React.Component {
     }).isRequired,
   };
 
+  constructor() {
+    super();
+    this.CONFIG_KEY = 'core.appearance.sidebaricons';
+    this.state = {
+      sidebaricons: AppEnv.config.get(this.CONFIG_KEY),
+    };
+  }
+
+  componentDidMount() {
+    this._mounted = true;
+    this.disposable = AppEnv.config.onDidChange(this.CONFIG_KEY, () => {
+      if (this._mounted) {
+        this.setState({
+          sidebaricons: AppEnv.config.get(this.CONFIG_KEY),
+        });
+      }
+    });
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
+    this.disposable.dispose();
+  }
+
   renderTabs() {
     return this.props.tabs.map(tabItem => (
-      <PreferencesTabItem key={tabItem.tabId} tabItem={tabItem} selection={this.props.selection} />
+      <PreferencesTabItem
+        key={tabItem.tabId}
+        tabItem={tabItem}
+        selection={this.props.selection}
+        sidebaricons={this.state.sidebaricons}
+      />
     ));
   }
 
