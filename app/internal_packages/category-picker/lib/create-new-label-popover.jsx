@@ -135,6 +135,7 @@ export default class CreateNewFolderPopover extends Component {
 
   _onMoveToCategory = (category) => {
     // This is currently not used, replaced by moveFolder
+    AppEnv.logError(`Should not have been used, use moveFolder flow instead`);
     const { threads } = this.props;
     const all = [];
     threads.forEach(({ labels }) => all.push(...labels));
