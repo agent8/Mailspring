@@ -39,7 +39,7 @@ class TemplatePopover extends React.Component {
     }
 
     return templates.filter(t => {
-      return t.name.toLowerCase().indexOf(searchValue.toLowerCase()) === 0;
+      return t.name.toLowerCase().indexOf(searchValue.toLowerCase()) >= 0;
     });
   }
 
