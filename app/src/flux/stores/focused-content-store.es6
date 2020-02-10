@@ -179,7 +179,7 @@ class FocusedContentStore extends MailspringStore {
     }
 
     if (touched.length > 0) {
-      this.trigger({ impactsCollection: c => c in touched });
+      this.trigger({ impactsCollection: c => touched.includes(c) });
     }
   };
 
