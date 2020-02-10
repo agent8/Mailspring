@@ -164,7 +164,11 @@ export class PreferencesMutedNotifacations extends React.Component {
               confirm: true,
               disable: !selectContact,
             })}
-            onClick={this._onMuteContact}
+            onClick={() => {
+              if (selectContact) {
+                this._onMuteContact();
+              }
+            }}
           >
             Mute
           </button>
