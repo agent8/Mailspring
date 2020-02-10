@@ -874,6 +874,9 @@ export default class MailsyncBridge {
         if (task.error != null) {
           task.onError(task.error);
           this._recordErrorToConsole(task);
+        } else if (task.result !== 0 && task.result !== undefined){
+          task.onError('task.error==null');
+          this._recordErrorToConsole(task);
         } else {
           task.onSuccess();
         }
