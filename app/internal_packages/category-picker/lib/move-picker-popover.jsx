@@ -189,9 +189,9 @@ export default class MovePickerPopover extends Component {
       }
       threads.forEach(({ labels }) => {
         if(moveFromInbox){
-          all.push(...labels)
+          all.push(...labels.filter(label=> label.isLabel()))
         }else {
-          all.push(...labels.filter(label=> label.role !== 'inbox'))
+          all.push(...labels.filter(label=> label.role !== 'inbox' && label.isLabel()))
         }
       });
       const tasks = [];
