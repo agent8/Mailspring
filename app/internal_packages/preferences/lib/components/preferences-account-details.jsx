@@ -310,7 +310,7 @@ class PreferencesAccountDetails extends Component {
       tmp[key] = value;
       const newSettings = Object.assign({}, mailsyncSettings, tmp);
       const data = {};
-      data[this.state.account.id] = newSettings;
+      data[this.state.account.id || this.state.account.pid] = newSettings;
       ipcRenderer.send('mailsync-config', data);
       return newSettings;
     } catch (e) {
@@ -335,7 +335,7 @@ class PreferencesAccountDetails extends Component {
   _onFetchEmailRangeUpdate = event => {
     try {
       const fetchRange = parseInt(event.target.value, 10);
-      const newSettings = this._onUpdateMailSyncSettings({
+      const newSettings = this. _onUpdateMailSyncSettings({
         value: fetchRange,
         key: 'fetchEmailRange',
         defaultData: { fetchEmailRange: 365 },

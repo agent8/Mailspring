@@ -442,7 +442,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-        this.account ? this.account.pid : 'no account'
+        this.account ? this.account.pid || this.account.id: 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');
