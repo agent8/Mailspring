@@ -345,7 +345,7 @@ export default class MailsyncBridge {
         const fullAccountJSON = (await KeyManager.insertAccountSecrets(account)).toJSON();
         if (this._crashTracker.tooManyFailures(fullAccountJSON)) {
           delete this._clientsStartTime[account.id];
-          Actions.updateAccount(account.id, {
+          Actions.updateAccount(account.pid || account.id, {
             syncState: Account.SYNC_STATE_ERROR,
             syncError: null,
           });
@@ -874,6 +874,9 @@ export default class MailsyncBridge {
         if (task.error != null) {
           task.onError(task.error);
           this._recordErrorToConsole(task);
+        } else if (task.result !== 0 && task.result !== undefined){
+          task.onError('task.error==null');
+          this._recordErrorToConsole(task);
         } else {
           task.onSuccess();
         }
@@ -1059,9 +1062,9 @@ export default class MailsyncBridge {
       for (let account of accounts) {
         if (account.mailsync) {
           delete account.mailsync.taskDelay;
-          mailsyncConfig[account.id] = Object.assign({}, defaultSettings, account.mailsync);
+          mailsyncConfig[account.pid || account.id] = Object.assign({}, defaultSettings, account.mailsync);
         } else {
-          mailsyncConfig[account.id] = Object.assign({}, defaultSettings);
+          mailsyncConfig[account.pid || account.id] = Object.assign({}, defaultSettings);
         }
       }
     }

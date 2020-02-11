@@ -29,6 +29,9 @@ export default class Task extends Model {
     status: Attributes.Number({
       modelKey: 'state',
     }),
+    result: Attributes.Number({
+      modelKey: 'result',
+    }),
     source: Attributes.String({
       modelKey: 'source',
       queryable: false,

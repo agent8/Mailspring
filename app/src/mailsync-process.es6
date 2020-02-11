@@ -64,7 +64,7 @@ export default class MailsyncProcess extends EventEmitter {
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
     this.binaryPath = path.join(resourcePath, 'mailsync').replace('app.asar', 'app.asar.unpacked');
-    // this.binaryPath = path.join('/Users/zsq/Library/Developer/Xcode/DerivedData/EdisonMailSync-gnxarlbpnlszfmgdglqxwrawejbo/Build/Products/Debug', 'mailsync').replace('app.asar', 'app.asar.unpacked');
+    // this.binaryPath = path.join('/Users/bumblebee/Library/Developer/Xcode/DerivedData/EdisonMailSync-azgzmucfxprjdgbzddxewvyuqyfa/Build/Products/Debug', 'mailsync').replace('app.asar', 'app.asar.unpacked');
     this.killNativeScript = path.join(resourcePath, 'src', 'scripts', process.platform === 'darwin' ? 'mac' : process.platform, 'killNative').replace('app.asar', 'app.asar.unpacked');
     this._proc = null;
     this.isRemoving = false;
@@ -157,7 +157,7 @@ export default class MailsyncProcess extends EventEmitter {
       args.push('--verbose');
     }
     if (this.account) {
-      args.push('--info', this.account.pid);
+      args.push('--info', this.account.pid || this.account.id);
     } else {
       args.push('--info', mode);
     }
@@ -442,7 +442,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-        this.account ? this.account.pid : 'no account'
+        this.account ? this.account.pid || this.account.id: 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');
