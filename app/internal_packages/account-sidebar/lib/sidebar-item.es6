@@ -465,17 +465,17 @@ class SidebarItem {
       // https://regex101.com/r/jK8cC2/1
       var item, parentKey;
       const re = RegExpUtils.subcategorySplitRegex();
-      const itemKey = category.displayName.replace(re, '/');
+      const itemKey = category.displayName;
 
       let parent = null;
-      const parentComponents = itemKey.split('/');
+      const parentComponents = itemKey.split(category.delimiter);
       if ((parentComponents[0].toLocaleLowerCase() !== CategoryStore.decodePath(path).toLocaleLowerCase()) ||
         parentComponents.length === 1
       ) {
         continue;
       }
       for (let i = parentComponents.length; i >= 1; i--) {
-        parentKey = parentComponents.slice(0, i).join('/');
+        parentKey = parentComponents.slice(0, i).join(category.delimiter);
         parent = seenItems[parentKey.toLocaleLowerCase()];
         if (parent) {
           break;
