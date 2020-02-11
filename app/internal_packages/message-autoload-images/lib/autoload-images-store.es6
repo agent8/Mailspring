@@ -34,7 +34,7 @@ class AutoloadImagesStore extends MailspringStore {
     // if (!message.folder) {
     //   return false;
     // }
-    if (AppEnv.config.get('core.reading.autoloadImages') && message.isInSpam()) {
+    if (AppEnv.config.get('core.reading.autoloadImages') && !message.isInSpam()) {
       return false;
     }
     if (this._whitelistEmails[Utils.toEquivalentEmailForm(message.fromContact().email)]) {
@@ -75,7 +75,9 @@ class AutoloadImagesStore extends MailspringStore {
     const data = Object.keys(this._whitelistEmails).join('\n');
     fs.writeFile(this._whitelistEmailsPath, data, err => {
       if (err) {
-        AppEnv.reportError(new Error(`AutoloadImagesStore could not save whitelist: ${err.toString()}`));
+        AppEnv.reportError(
+          new Error(`AutoloadImagesStore could not save whitelist: ${err.toString()}`)
+        );
       }
     });
   };
