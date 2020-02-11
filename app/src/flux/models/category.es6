@@ -86,6 +86,15 @@ Folders and Labels have different semantics. The `Category` class only exists to
 
 Section: Models
 */
+const fromDelimiterJsonMappings = val => {
+  return String.fromCharCode(val);
+};
+const toDelimiterJSONMappings = val => {
+  if(typeof val !== 'string' || val.length === 0){
+    return 47;
+  }
+  return val.charCodeAt(0);
+};
 export default class Category extends Model {
   get displayName() {
     return Category.pathToDisplayName(this.path);
@@ -137,6 +146,13 @@ export default class Category extends Model {
       modelKey: 'type',
       queryable: true,
       loadFromColumn: true,
+    }),
+    delimiter: Attributes.String({
+      modelKey: 'delimiter',
+      queryable: true,
+      loadFromColumn: true,
+      fromJSONMapping: fromDelimiterJsonMappings,
+      toJSONMapping: toDelimiterJSONMappings,
     })
   });
 
