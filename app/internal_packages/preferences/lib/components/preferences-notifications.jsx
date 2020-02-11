@@ -1,24 +1,15 @@
 import React from 'react';
-import { MuteNotificationStore, Actions, EmailAvatar, AccountStore } from 'mailspring-exports';
+import {
+  MuteNotificationStore,
+  Actions,
+  EmailAvatar,
+  AccountStore,
+  Account,
+} from 'mailspring-exports';
 import { RetinaImg, EditableList, Flexbox, FullScreenModal } from 'mailspring-component-kit';
 import classnames from 'classnames';
 import ContactList from './contact-list';
 import ContactSearch from './contact-search';
-
-const noticeTypeEnum = [
-  {
-    id: 'NoneMute',
-    title: 'None/Mute',
-  },
-  {
-    id: 'AllMail',
-    title: 'All mail',
-  },
-  {
-    id: 'Important',
-    title: 'Marked as Important',
-  },
-];
 
 class CoutactSelectShow extends React.Component {
   static displayName = 'CoutactSelectShow';
@@ -333,20 +324,22 @@ export class PreferencesAccountNotifacations extends React.Component {
           <div className="config-group">
             <h6>{(selected.emailAddress || '').toUpperCase()}</h6>
             <div className="account-notifacations-note">
-              Notifications will be sent for all emails for this account.
+              {noticeType === 'None'
+                ? 'Notifications are disabled for this account.'
+                : `Notifications will be sent for ${noticeType.toLocaleLowerCase()} emails for this account.`}
             </div>
-            {noticeTypeEnum.map(type => {
+            {Object.keys(Account.noticeTypeEnum).map(type => {
               return (
-                <div className="checkmark" key={type.id}>
+                <div className="checkmark" key={type}>
                   <label>
                     <input
                       type="radio"
-                      checked={noticeType === type.id}
+                      checked={noticeType === type}
                       onChange={() => {
-                        this._onChangeNoticeType(type.id);
+                        this._onChangeNoticeType(type);
                       }}
                     />
-                    {type.title}
+                    {Account.noticeTypeEnum[type]}
                   </label>
                 </div>
               );
