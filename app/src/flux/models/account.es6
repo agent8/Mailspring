@@ -30,6 +30,12 @@ export default class Account extends ModelWithMetadata {
   static INSUFFICIENT_PERMISSION = 'ErrorInsufficientPermission';
   static SYNC_STATE_ERROR = 'sync_error';
 
+  static noticeTypeEnum = {
+    None: 'None/Mute',
+    All: 'All mail',
+    Important: 'Marked as Important',
+  };
+
   static attributes = Object.assign({}, ModelWithMetadata.attributes, {
     name: Attributes.String({
       modelKey: 'name',
@@ -97,9 +103,13 @@ export default class Account extends ModelWithMetadata {
     };
     this.lastVerified = this.lastVerified || 0;
     this.notifacation = this.notifacation || {
-      noticeType: 'AllMail',
+      noticeType: 'All',
       sound: false,
     };
+
+    if (Object.keys(Account.noticeTypeEnum).indexOf(this.notifacation.noticeType) < 0) {
+      this.notifacation.noticeType = 'All';
+    }
   }
 
   toJSON(...args) {
