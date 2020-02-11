@@ -113,18 +113,18 @@ export class Notifier {
   _msgShouldNotify(msg) {
     const myAccountId = msg.accountId;
     const myAccount = AccountStore.accountForId(myAccountId);
+    const fromEmail = (msg.from[0] && msg.from[0].email) || '';
+    const isMuted = MuteNotificationStore.isMuteByAccount(myAccountId, fromEmail);
     const { noticeType } = myAccount.notifacation;
 
     switch (noticeType) {
-      case 'NoneMute':
-        const fromEmail = (msg.from[0] && msg.from[0].email) || '';
-        const isMuted = MuteNotificationStore.isMuteByAccount(myAccountId, fromEmail);
+      case 'None':
+        return false;
+      case 'All':
         return !isMuted;
-      case 'AllMail':
-        return true;
       case 'Important':
         const isImportant = msg.labels.some(label => label.role === 'important');
-        return isImportant;
+        return isImportant && !isMuted;
       default:
         return true;
     }
