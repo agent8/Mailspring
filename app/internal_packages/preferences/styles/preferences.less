@@ -187,9 +187,24 @@
         background-color: @source-list-active-bg;
       }
 
-      &.name-only {
+      .transition-box {
+        height: 17px;
+        width: 17px;
+        overflow: hidden;
+        transition: width 600ms linear;
         img {
-          display: none;
+          vertical-align: top;
+          transform-origin: left center;
+          transition: transform 600ms linear;
+        }
+      }
+
+      &.name-only {
+        .transition-box {
+          width: 0;
+          img {
+            transform: scale(0.01);
+          }
         }
       }
 
