@@ -2,7 +2,10 @@ import { Account, React, PropTypes, RegExpUtils } from 'mailspring-exports';
 
 import OnboardingActions from './onboarding-actions';
 import CreatePageForForm from './decorators/create-page-for-form';
-import { expandAccountWithCommonSettings, validateEmailAddressForProvider } from './onboarding-helpers';
+import {
+  expandAccountWithCommonSettings,
+  validateEmailAddressForProvider,
+} from './onboarding-helpers';
 import FormField from './form-field';
 import AccountProviders from './account-providers';
 
@@ -44,7 +47,7 @@ class AccountBasicSettingsForm extends React.Component {
     const errorFieldNames = [];
     let errorMessage = null;
 
-    if (!account.emailAddress || !account.settings.imap_password || !account.name) {
+    if (!account.emailAddress || !account.settings.imap_password) {
       return { errorMessage, errorFieldNames, populated: false };
     }
 
@@ -53,10 +56,7 @@ class AccountBasicSettingsForm extends React.Component {
       errorMessage = 'Please provide a valid email address.';
     }
     if (providerConfig && providerConfig.provider === 'icloud') {
-      const emailValidate = validateEmailAddressForProvider(
-        account.emailAddress,
-        providerConfig
-      );
+      const emailValidate = validateEmailAddressForProvider(account.emailAddress, providerConfig);
       if (!emailValidate.ret) {
         errorFieldNames.push('email');
         errorMessage = emailValidate.message;
@@ -121,7 +121,9 @@ class AccountBasicSettingsForm extends React.Component {
           type="password"
           {...this.props}
         />
-        {provider === 'exchange' ? <FormField field="settings.exchangeServer" title="Exchange Server" {...this.props} /> : null}
+        {provider === 'exchange' ? (
+          <FormField field="settings.exchangeServer" title="Exchange Server" {...this.props} />
+        ) : null}
       </form>
     );
   }
