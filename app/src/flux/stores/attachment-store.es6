@@ -661,10 +661,13 @@ class AttachmentStore extends MailspringStore {
         if (obj) {
           const pid = obj.pid;
           const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
-          if (pid && percent) {
+          const nowState = this.getDownloadDataForFile(pid);
+          const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
+          const maxPercent = Math.max(parseInt(percent * 100), nowPercent);
+          if (pid && maxPercent) {
             this._fileProcess.set(pid, {
-              state: percent >= 1 ? 'done' : 'downloading',
-              percent: parseInt(percent * 100),
+              state: maxPercent >= 100 ? 'done' : 'downloading',
+              percent: maxPercent,
             });
           }
         }
