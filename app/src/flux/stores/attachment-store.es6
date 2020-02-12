@@ -625,6 +625,14 @@ class AttachmentStore extends MailspringStore {
     }
   };
 
+  refreshAttachmentsState = fileId => {
+    const file = this.getAttachment(fileId);
+    const filePath = this.pathForFile(file);
+    if (filePath && fs.existsSync(filePath)) {
+      this._onPresentSuccess([fileId]);
+    }
+  };
+
   _abortFetchFile = () => {
     // file
     // put this back if we ever support downloading individual files again
@@ -671,6 +679,19 @@ class AttachmentStore extends MailspringStore {
             });
           }
         }
+      });
+      this.trigger();
+    }
+  };
+
+  _onPresentSuccess = ids => {
+    const fileIds = ids || [];
+    if (fileIds.length) {
+      fileIds.forEach(id => {
+        this._fileProcess.set(id, {
+          state: 'done',
+          percent: 100,
+        });
       });
       this.trigger();
     }
