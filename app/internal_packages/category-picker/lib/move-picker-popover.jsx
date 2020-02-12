@@ -183,19 +183,15 @@ export default class MovePickerPopover extends Component {
       );
     } else {
       const all = [];
-      let moveFromInbox = false;
-      if(currentPerspective){
-        moveFromInbox = currentPerspective.isInbox();
+      // let moveFromInbox = false;
+      // if(currentPerspective){
+      //   moveFromInbox = currentPerspective.isInbox();
+      // }
+      if(previousFolder.isLabel()){
+        all.push(previousFolder);
       }
-      threads.forEach(({ labels }) => {
-        if(moveFromInbox){
-          all.push(...labels.filter(label=> label.isLabel()))
-        }else {
-          all.push(...labels.filter(label=> label.role !== 'inbox' && label.isLabel()))
-        }
-      });
       const tasks = [];
-      if (all.length > 0 && category.role !== 'inbox') {
+      // if (all.length > 0 && category.role !== 'inbox') {
         tasks.push(
           new ChangeLabelsTask({
             source: 'Category Picker: Move to Label',
@@ -205,17 +201,17 @@ export default class MovePickerPopover extends Component {
             previousFolder,
           })
         );
-      }else {
-        tasks.push(
-          new ChangeLabelsTask({
-            source: 'Category Picker: Add Inbox Label',
-            labelsToRemove: [],
-            labelsToAdd: [category],
-            threads: threads,
-            previousFolder,
-          })
-        );
-      }
+      // }else {
+      //   tasks.push(
+      //     new ChangeLabelsTask({
+      //       source: 'Category Picker: Add Inbox Label',
+      //       labelsToRemove: [],
+      //       labelsToAdd: [category],
+      //       threads: threads,
+      //       previousFolder,
+      //     })
+      //   );
+      // }
       Actions.queueTasks(tasks);
     }
     this._onActionCallback(category);
