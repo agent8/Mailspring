@@ -25,7 +25,8 @@ import {
   MailImportantIcon,
   KeyCommandsRegion,
   InjectedComponentSet,
-  LottieImg
+  LottieImg,
+  ResizableRegion
 } from 'mailspring-component-kit';
 
 import FindInThread from './find-in-thread';
@@ -904,6 +905,16 @@ class MessageList extends React.Component {
             {this._messageElements()}
           </ScrollRegion>
           <Spinner visible={loading} />
+
+          {/* <ResizableRegion
+            handle={ResizableRegion.Handle.Left}
+          >
+            <InjectedComponentSet
+              className="message-plugin"
+              matching={{ role: 'plugins' }}
+              exposedProps={{ thread: currentThread, messages: messages }}
+            />
+          </ResizableRegion> */}
         </div>
       </KeyCommandsRegion>
     );

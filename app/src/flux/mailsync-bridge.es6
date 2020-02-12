@@ -864,18 +864,11 @@ export default class MailsyncBridge {
     // Note: cannot use `record.objectClass` because of subclass names
     if (record.type === 'persist' && record.objects[0] instanceof Task) {
       for (const task of record.objects) {
-        if (task.error != null && task.status !== Task.Status.Remote) {
-          task.onError(task.error);
-          this._recordErrorToConsole(task);
-        }
         if (task.status !== Task.Status.Complete) {
           continue;
         }
         if (task.error != null) {
           task.onError(task.error);
-          this._recordErrorToConsole(task);
-        } else if (task.result !== 0 && task.result !== undefined){
-          task.onError('task.error==null');
           this._recordErrorToConsole(task);
         } else {
           task.onSuccess();
