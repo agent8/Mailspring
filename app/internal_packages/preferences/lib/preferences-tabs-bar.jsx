@@ -37,13 +37,15 @@ class PreferencesTabItem extends React.Component {
 
     return (
       <div className={classes} onClick={this._onClick}>
-        <RetinaImg
-          isIcon
-          name={`preference-${displayName.replace(/\s/g, '').toLocaleLowerCase()}.svg`}
-          className="preferences-icon"
-          mode={RetinaImg.Mode.ContentIsMask}
-          style={{ height: 17, width: 17 }}
-        />
+        <div className="transition-box">
+          <RetinaImg
+            isIcon
+            name={`preference-${displayName.replace(/\s/g, '').toLocaleLowerCase()}.svg`}
+            className="preferences-icon"
+            mode={RetinaImg.Mode.ContentIsMask}
+            style={{ height: 17, width: 17 }}
+          />
+        </div>
         <div className="name">{displayName}</div>
       </div>
     );
