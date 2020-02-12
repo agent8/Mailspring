@@ -5,6 +5,11 @@ import ModelWithMetadata from './model-with-metadata';
 let CategoryStore = null;
 let Contact = null;
 
+const noticeTypeEnum = [
+  { type: 'None', title: 'None/Mute' },
+  { type: 'All', title: 'All mail' },
+];
+const noticeTypeImportant = [{ type: 'Important', title: 'Marked as Important' }];
 /*
  * Public: The Account model represents a Account served by the Nylas Platform API.
  * Every object on the Nylas platform exists within a Account, which typically represents
@@ -29,12 +34,6 @@ export default class Account extends ModelWithMetadata {
   static SYNC_STATE_AUTH_FAILED = 'invalid';
   static INSUFFICIENT_PERMISSION = 'ErrorInsufficientPermission';
   static SYNC_STATE_ERROR = 'sync_error';
-
-  static noticeTypeEnum = {
-    None: 'None/Mute',
-    All: 'All mail',
-    Important: 'Marked as Important',
-  };
 
   static attributes = Object.assign({}, ModelWithMetadata.attributes, {
     name: Attributes.String({
@@ -107,7 +106,11 @@ export default class Account extends ModelWithMetadata {
       sound: false,
     };
 
-    if (Object.keys(Account.noticeTypeEnum).indexOf(this.notifacation.noticeType) < 0) {
+    if (
+      this.getNoticeTypeEnum()
+        .map(item => item.type)
+        .indexOf(this.notifacation.noticeType) < 0
+    ) {
       this.notifacation.noticeType = 'All';
     }
   }
@@ -178,6 +181,14 @@ export default class Account extends ModelWithMetadata {
 
   usesLabels() {
     return this.provider === 'gmail';
+  }
+
+  getNoticeTypeEnum() {
+    const tmp = [...noticeTypeEnum];
+    if (this.provider === 'gmail') {
+      tmp.push(...noticeTypeImportant);
+    }
+    return tmp;
   }
 
   // Public: Returns the localized, properly capitalized provider name,

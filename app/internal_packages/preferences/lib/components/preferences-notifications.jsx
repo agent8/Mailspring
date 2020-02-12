@@ -328,18 +328,18 @@ export class PreferencesAccountNotifacations extends React.Component {
                 ? 'Notifications are disabled for this account.'
                 : `Notifications will be sent for ${noticeType.toLocaleLowerCase()} emails for this account.`}
             </div>
-            {Object.keys(Account.noticeTypeEnum).map(type => {
+            {selected.getNoticeTypeEnum().map(item => {
               return (
-                <div className="checkmark" key={type}>
+                <div className="checkmark" key={item.type}>
                   <label>
                     <input
                       type="radio"
-                      checked={noticeType === type}
+                      checked={noticeType === item.type}
                       onChange={() => {
-                        this._onChangeNoticeType(type);
+                        this._onChangeNoticeType(item.type);
                       }}
                     />
-                    {Account.noticeTypeEnum[type]}
+                    {item.title}
                   </label>
                 </div>
               );
