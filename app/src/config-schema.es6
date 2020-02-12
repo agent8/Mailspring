@@ -534,7 +534,7 @@ export default {
         properties: {
           sidebaricons: {
             type: 'boolean',
-            default: true,
+            default: false,
             title: 'Show icons in the left-hand menu.',
           },
           previewLines: {
