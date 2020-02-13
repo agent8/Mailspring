@@ -13,6 +13,7 @@ class SearchStore extends MailspringStore {
     super();
 
     this._searchQuery = FocusedPerspectiveStore.current().searchQuery || '';
+    this._preSearchQuery = this._searchQuery;
     this._isSearching = false;
 
     this.listenTo(WorkspaceStore, this._onWorkspaceChange);
@@ -59,7 +60,7 @@ class SearchStore extends MailspringStore {
     }
   };
 
-  _processAndSubmitQuery = _.throttle((flag) => {
+  _processAndSubmitQuery = _.throttle(flag => {
     if (!flag) {
       return;
     }
@@ -83,7 +84,9 @@ class SearchStore extends MailspringStore {
   }, 500);
 
   _onQuerySubmitted = (query, forceQuery) => {
-    if (query !== this._searchQuery || forceQuery) {
+    this._preSearchQuery;
+    if ((query !== this._searchQuery || forceQuery) && query !== this._preSearchQuery) {
+      this._preSearchQuery = query;
       this._searchQuery = query;
       this.trigger();
       this._processAndSubmitQuery(forceQuery);
