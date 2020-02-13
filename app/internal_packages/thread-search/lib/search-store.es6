@@ -81,6 +81,7 @@ class SearchStore extends MailspringStore {
         Actions.focusDefaultMailboxPerspectiveForAccounts(AccountStore.accounts());
       }
     }
+    this.trigger();
   }, 500);
 
   _onQuerySubmitted = (query, forceQuery) => {
