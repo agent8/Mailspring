@@ -1,0 +1,20 @@
+{
+  "name": "team-edit",
+  "version": "0.1.0",
+  "main": "./lib/main",
+  "description": "team edit for email",
+  "license": "GPL-3.0",
+  "private": true,
+  "syncInit": true,
+  "scripts": {
+  },
+  "engines": {
+    "mailspring": "*"
+  },
+  "windowTypes": {
+    "default": true,
+    "composer": true,
+    "team-edit": true,
+    "thread-popout": true
+  }
+}

@@ -1,0 +1,137 @@
+@import '../node_modules/rc-editor-mention/assets/index.css';
+@import '../node_modules/rc-editor-mention/assets/animation.css';
+@import 'ui-variables';
+
+.chat-view-container {
+  .editing {
+    .sendBar {
+      padding-bottom: 40px;
+    }
+    .edit-button-group {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      display: flex;
+      width: 300px;
+      justify-content: flex-start;
+      .button {
+        border-radius: 10px;
+        margin-left: 10px;
+        height: 34px;
+        line-height: 34px;
+        padding: 0 16px;
+        font-size: 11px;
+        &.cancel {
+          color: @red;
+        }
+      }
+      .emoji {
+        background: transparent;
+        border: none;
+        margin: 0;
+        padding: 0;
+        img.content-mask {
+          background-color: @gray;
+        }
+      }
+      .emoji:hover {
+        img.content-mask {
+          background-color: @blue;
+        }
+      }
+    }
+  }
+  .sendBar {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    padding: 40px 21px 15px 20px;
+    height: auto;
+    background: @white;
+    -webkit-app-region: no-drag;
+    .plugin-prompt-container {
+      position: absolute;
+      overflow: visible;
+      background-color: #ededed;
+      border: 1px solid @black;
+      border-radius: 5px;
+      padding: 4px;
+      box-shadow: 0 2px 7px 2px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .chat-tool-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding-left: 26px;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding-top: 6px;
+    box-shadow: 0 -10px 20px @white;
+    img.content-mask {
+      background-color: @gray;
+      transition-duration: 0.2s;
+    }
+    .button {
+      border: none;
+      box-shadow: none;
+      float: left;
+      margin-right: 12px;
+    }
+
+    .button:hover {
+      img.content-mask {
+        background-color: @blue;
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  #remove-file {
+    display: inline-block;
+  }
+
+  #remove-file-inner {
+    display: inline-block;
+    border: solid 1px @gray;
+    background-color: @gray-light;
+    width: 15px;
+    height: 15px;
+    text-align: center;
+    position: relative;
+    top: 10px;
+    left: -20px;
+  }
+  #clear-all-files {
+    display: inline-block;
+    border: solid 2px @gray;
+    background-color: @gray-light;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+  }
+
+  .messageTextField {
+    width: 100%;
+    border: none;
+    box-shadow: -1px 1.5px 6px rgba(0, 0, 0, 0.15);
+    padding: 9px 13px;
+    border-radius: 10px;
+    resize: none;
+    position: relative;
+    transition: all 0.5s;
+  }
+  .messageTextField:focus {
+    box-shadow: -2px 2.5px 10px rgba(0, 0, 0, 0.35);
+    // left: 1px;
+    // top: -1px;
+  }
+
+  .chat-message-filelist {
+    display: block;
+    align-self: left;
+  }
+}

@@ -1,0 +1,86 @@
+@import 'ui-variables';
+
+@chatHeight: 100%;
+@infoPanelWidth: 300px;
+.chat-view-container {
+  .panel {
+    height: @chatHeight;
+    width: 100%;
+  }
+
+  .chat {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .unselectedHint {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    vertical-align: middle;
+    img {
+      width: 250px;
+    }
+  }
+
+  .split-panel {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  .chatPanel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .infoPanel {
+    background: @white;
+    flex-shrink: 0;
+    overflow-x: hidden;
+  }
+
+  .infoPanel > div {
+    width: @infoPanelWidth;
+    overflow-x: hidden;
+  }
+
+  .transition-slide-enter {
+    opacity: 0.01;
+    width: 0;
+    transition: all 0.25s ease-out;
+  }
+
+  .transition-slide-enter.transition-slide-enter-active {
+    opacity: 1;
+    width: @infoPanelWidth;
+  }
+  .transition-slide-leave {
+    opacity: 1;
+    width: @infoPanelWidth;
+    transition: all 0.25s ease-in;
+  }
+
+  .transition-slide-leave.transition-slide-leave-active {
+    opacity: 0.01;
+    width: 0;
+  }
+  #message-dragdrop-override {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background: url(images/chat/dragover_upload.png) no-repeat center center
+      rgba(255, 255, 255, 0.9);
+    background-size: 250px auto;
+  }
+}

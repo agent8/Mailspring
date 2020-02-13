@@ -1,0 +1,619 @@
+@import 'ui-variables';
+
+@border-radius: 4px;
+@timeColor: #8a8a8f;
+.chat-view-container {
+  .divider {
+    background-color: @border-color-divider;
+  }
+  .secure-private {
+    margin: 110px 0 40px 20px;
+    display: flex;
+    .lock-icon {
+      height: 34px;
+      width: 34px;
+      border-radius: 50%;
+      background: @gray-lightest;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      img.content-mask {
+        background-color: @gray;
+      }
+    }
+    .secure-detail {
+      flex: 1;
+      font-size: 14px;
+      line-height: 18px;
+      .subtitle {
+        font-weight: bold;
+      }
+      .private-detail {
+        color: @gray-dark;
+      }
+    }
+  }
+
+  .panel.offline {
+    .messages {
+      background: url(images/chat/no-connection.png) no-repeat center center;
+      background-size: 250px auto;
+    }
+  }
+
+  .messages {
+    flex-grow: 1;
+    -webkit-app-region: no-drag;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    .messages-wrap {
+      width: 100%;
+      max-height: 100%;
+      overflow-y: auto;
+      &:hover {
+        &::-webkit-scrollbar-thumb {
+          visibility: visible;
+          // opacity: 1;
+        }
+      }
+      &::-webkit-scrollbar {
+        background: @white;
+        color: #000;
+        width: 10px;
+      }
+      &::-webkit-scrollbar-thumb {
+        visibility: hidden;
+        opacity: 0;
+        -webkit-border-radius: 2px;
+        background: rgba(150, 150, 150, 0.33);
+      }
+    }
+    .loading {
+      img {
+        display: block;
+        margin: 0px auto 6px;
+        height: 14px;
+        width: 14px;
+      }
+    }
+  }
+
+  .upload-error {
+    color: @red;
+    img.content-mask {
+      vertical-align: bottom;
+      background-color: @red;
+    }
+  }
+
+  .message-group {
+    padding-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    .day-label {
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      label {
+        display: block;
+        margin: 0 auto;
+        .divider {
+          position: relative;
+          top: -5px;
+          margin: 0 15px;
+          z-index: -1;
+        }
+        span {
+          margin: 0 auto;
+          background: @white;
+          display: inline-block;
+          padding: 0 14px;
+          border-radius: 20px;
+          text-align: center;
+          font-size: 10px;
+          color: @timeColor;
+        }
+      }
+      .day-label-text {
+        display: inline-block;
+        position: relative;
+        padding: 0 11px;
+        height: 20px;
+        line-height: 20px;
+        margin: -10px auto 0;
+        font-size: 8px;
+        background-color: @gray-lightest;
+        border-radius: 20px;
+        span {
+          color: @gray;
+        }
+        .weekday {
+          padding: 0;
+          margin: 0 2px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.07px;
+          line-height: 12px;
+          text-align: center;
+          background-color: @gray-lightest;
+        }
+        .date {
+          padding: 0;
+          margin: 0 2px;
+          font-size: 10px;
+          letter-spacing: 0.07px;
+          line-height: 12px;
+          text-align: center;
+          background-color: @gray-lightest;
+        }
+      }
+    }
+  }
+  .message-group.time-label-fix {
+    .day-label label {
+      position: absolute;
+      z-index: 8;
+      top: 72px;
+      left: 0px;
+      right: 0px;
+    }
+  }
+
+  .message {
+    padding: 1px 0 30px 20px;
+    display: flex;
+    flex-direction: column;
+    border-width: 2px;
+    font-size: 12px;
+  }
+
+  .message.system-event {
+    padding-left: 0;
+    text-align: center;
+    .username {
+      display: none;
+    }
+    .time {
+      float: initial;
+    }
+    .text-content {
+      margin: 0 auto;
+      text-align: center;
+      color: @gray;
+    }
+  }
+  .message.message-fail {
+    background-color: rgba(255, 72, 95, 5%);
+  }
+
+  .message.currentUser,
+  .message.otherUser {
+    align-self: flex-start;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .message.editing {
+    padding-top: 15px;
+    padding-bottom: 0;
+    .sendBar {
+      background: transparent;
+      padding: 5px 0 40px 20px;
+      margin-bottom: 15px;
+    }
+  }
+
+  .message.currentUser,
+  .message.otherUser {
+    .messageIcons {
+      display: block;
+      .messageFailed {
+        width: 32px;
+        height: 32px;
+        position: relative;
+        top: 10px;
+        background-image: url(icons/alert-2.svg);
+        display: inline-block;
+        &:hover {
+          border-radius: 16px 16px 16px 16px;
+          background-color: rgba(255, 72, 95, 10%);
+        }
+      }
+      .messageSender {
+        display: inline-block;
+      }
+    }
+  }
+
+  .messageSender {
+    padding: 2px 10px 4px 0;
+  }
+
+  .message-content {
+    flex: 1;
+    flex-flow: row wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    overflow-x: hidden;
+    user-select: text;
+    font-size: 13px;
+    line-height: 18px;
+    .message-header {
+      overflow: hidden;
+      span {
+        float: left;
+      }
+      .username {
+        font-weight: bold;
+        margin-right: 10px;
+        font-weight: bold;
+        margin-right: 10px;
+        max-width: 50%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .time {
+        font-size: 10px;
+        color: @timeColor;
+      }
+    }
+  }
+
+  .message-content {
+    padding-right: 10px;
+    font-size: 14px;
+  }
+
+  .messageBody {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-self: flex-start;
+    flex-direction: row;
+    text-align: left;
+    white-space: pre-line;
+    word-break: break-word;
+
+    .message-image {
+      display: inline-block;
+      padding-right: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      & > img {
+        height: 220px;
+        cursor: zoom-in;
+      }
+    }
+
+    .message-image,
+    .message-file {
+      position: relative;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    .video-wrapper {
+      height: 330px;
+      video {
+        height: 100%;
+      }
+    }
+
+    .file-info {
+      display: flex;
+      flex-direction: row;
+      background: @gray-lightest;
+      padding: 15px 120px 15px 15px;
+      border-radius: 15px;
+      .file-icon {
+        height: 50px;
+        width: 50px;
+        border-radius: 50%;
+        background: @white;
+        margin-right: 15px;
+        img.content-mask {
+          width: 56%;
+          margin: 22%;
+          background-color: @orange;
+          border-radius: 50%;
+        }
+      }
+      .file-name {
+        font-size: 15px;
+        font-weight: bold;
+        line-height: 26px;
+      }
+      .ext {
+        font-size: 13px;
+        color: @gray;
+        line-height: 20px;
+      }
+    }
+
+    .text-content {
+      display: inline-block;
+      line-height: 22px;
+      min-height: 35px;
+      .text {
+        line-height: 26px;
+      }
+      .msg-text-with-at {
+        line-height: 26px;
+        .at {
+          background-color: #d3e7f8;
+          color: @blue;
+          font-weight: bold;
+        }
+      }
+      .fail-message-text {
+        color: @red;
+        font-weight: bold;
+      }
+    }
+    &:hover .message-toolbar {
+      display: inline-block;
+      top: 0px;
+    }
+  }
+
+  .messageMeta {
+    align-self: flex-end;
+    font-size: 0.7em;
+    position: relative;
+    display: flex;
+    max-width: 90%;
+    & > div {
+      width: 100%;
+      overflow: hidden;
+    }
+  }
+
+  .messageFailed {
+    position: relative;
+  }
+
+  .file-info {
+    overflow: hidden;
+  }
+
+  .messageStatus {
+    margin-left: 5px;
+    color: @red;
+  }
+  .message-retry {
+    cursor: pointer;
+    position: absolute;
+    top: 35%;
+    right: 20px;
+    font-weight: bold;
+    color: @red;
+    text-align: right;
+  }
+  .message-toolbar {
+    display: none;
+    z-index: 8;
+    opacity: 1;
+  }
+  .download-img,
+  .inplace-edit-img {
+    margin-right: 6px;
+    display: inline-block;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    &:hover {
+      background-color: @off-white;
+      img.content-mask {
+        background-color: @blue;
+      }
+    }
+  }
+  .download-img {
+    cursor: pointer;
+    border-radius: @border-radius;
+    background: rgba(255, 255, 255, 0.9);
+    img.content-mask {
+      background-color: @gray;
+    }
+    &:hover {
+      img.content-mask {
+        background-color: @blue;
+      }
+    }
+  }
+  .inplace-edit-img {
+    cursor: pointer;
+    img.content-mask {
+      background-color: @gray;
+    }
+  }
+  .cancel-zoomin-button {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+  }
+  .float-right {
+    float: right;
+  }
+  .inline-block {
+    display: inline-block;
+  }
+  .message.editing {
+    width: 100%;
+    background: @off-white;
+    &:after {
+      display: none !important;
+    }
+    .message-content > div {
+      width: 100%;
+    }
+    textarea {
+      color: #000;
+    }
+  }
+
+  .progress-container {
+    position: fixed;
+    left: 10px;
+    bottom: 20px;
+    width: 700px;
+    height: 50px;
+    overflow: hidden;
+    opacity: 0.97;
+    border-radius: 10px;
+    background-color: @blue;
+    box-shadow: 0 2px 7px 0 rgba(0, 0, 0, 0.2);
+    color: @text-color-inverse;
+    z-index: 9;
+
+    .progress-banner {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 8px 15px;
+      display: flex;
+      font-size: 14px;
+
+      .download-btn {
+        cursor: pointer;
+        display: inline-block;
+        flex: 0 0 auto;
+        width: 34px;
+        height: 34px;
+        background-color: @text-color-inverse !important;
+      }
+
+      .load-info {
+        flex: 1;
+        height: 100%;
+        width: 525px;
+        margin: 0 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        .progress-prompt {
+          line-height: 25px;
+          width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .msg-progress-bar-wrap {
+          position: relative;
+          height: 4px;
+          width: 525px;
+          border-radius: 3px;
+          overflow: hidden;
+          margin-bottom: 5px;
+          flex: 0 0 auto;
+
+          .progress-background,
+          .progress-foreground {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: @white;
+            transition: width 0.3s;
+          }
+
+          .progress-background {
+            width: 100%;
+            opacity: 0.15;
+          }
+        }
+      }
+
+      .progressButtons {
+        flex: 0 0 auto;
+        height: 34px;
+        display: flex;
+        flex-direction: row;
+        line-height: 34px;
+        font-weight: bold;
+        .minimizeButton {
+          display: inline-block;
+          margin: 0 0px 0 10px;
+          cursor: pointer;
+        }
+        .cancelButton {
+          cursor: pointer;
+        }
+
+        svg {
+          cursor: pointer;
+          width: 16px;
+          height: 16px;
+          margin: 9px 0 0 13.5px;
+        }
+      }
+    }
+  }
+  .progress-container.minimized {
+    width: 125px;
+  }
+
+  .fail-alert-container {
+    position: fixed;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    left: 20px;
+    bottom: 20px;
+    width: 400px;
+    height: 30px;
+    background-color: @red;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 0 0 0 20px;
+    z-index: 9;
+    .view-btn {
+      cursor: pointer;
+      position: absolute;
+      right: 35px;
+      height: 30px;
+      width: 48px;
+      background-color: @red;
+      color: @text-color-inverse;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.43px;
+      line-height: 17px;
+      text-align: right;
+      border: none;
+    }
+    .hide-btn {
+      cursor: pointer;
+      position: absolute;
+      right: 5px;
+      width: 15px;
+      height: 15px;
+    }
+  }
+  .messageCommand {
+    display: inline-block;
+    background-color: #e5e5e5;
+    margin: 0 20px 10px 0;
+    padding: 2px;
+    border: solid black 1px;
+  }
+  .show-command-btn {
+    display: inline-block;
+    background-color: @light-grey;
+    border: solid 1px @gray;
+    border-radius: 4px;
+  }
+}
