@@ -1,9 +1,9 @@
-import keyMannager from '../../../src/key-manager';
-import { getPubKey } from './e2ee';
-import { isJsonStr } from './stringUtils';
-import path from 'path';
-import fs from 'fs';
-import { AccountStore } from 'mailspring-exports';
+import keyMannager from '../../../src/key-manager'
+import { getPubKey } from './e2ee'
+import { isJsonStr } from './stringUtils'
+import path from 'path'
+import fs from 'fs'
+import { AccountStore } from 'mailspring-exports'
 
 const { get, post } = require('./httpex')
 const download = require('download')
@@ -12,18 +12,18 @@ let logoDirPath = path.join(configDirPath, 'logo_cache')
 
 const domain = {
   dev: {
-    rest: 'https://cp.stag.easilydo.cc/api'
+    rest: 'https://cp.stag.easilydo.cc/api',
   },
   prod: {
-    rest: 'https://restxmpp.edison.tech' // _prod
-  }
+    rest: 'https://restxmpp.edison.tech', // _prod
+  },
 }
-function getBaseDomain(kind) {
+function getBaseDomain (kind) {
   let chatObj = {}
   if (AppEnv.config.get(`chatProdEnv`)) {
-    chatObj = domain.prod
+    chatObj = domain.dev
   } else {
-    chatObj = domain.prod
+    chatObj = domain.dev
   }
   return chatObj[kind]
 }
@@ -55,7 +55,7 @@ export const register = (email, pwd, name, type, provider, setting) => {
           e2eeKeys: [{ id: '1', key: pubKey }],
           emailAddress: email,
           emailPassword: pwd,
-          autoLogin: 'true'
+          autoLogin: 'true',
         }
         post(urlPre + 'register', data, (err, res) => resolve({ err, res }))
       } else {
@@ -121,12 +121,12 @@ export const queryProfile = (data, cb) => {
   })
 }
 
-export function checkToken(accessToken) {
+export function checkToken (accessToken) {
   let arg = {
     accessToken: accessToken,
     deviceType: 'desktop',
     deviceModel: process.platform,
-    pushToken: ''
+    pushToken: '',
   }
   return new Promise(resolve => {
     post(urlPre + 'checkToken', arg, (err, res) => {
@@ -142,7 +142,7 @@ export function checkToken(accessToken) {
   })
 }
 
-export async function refreshChatAccountTokens(cb) {
+export async function refreshChatAccountTokens (cb) {
   let accounts = AppEnv.config.get('accounts')
   let chatAccounts = AppEnv.config.get('chatAccounts') || {}
   for (let acc of accounts) {
@@ -230,7 +230,7 @@ export const login = (email, password, cb) => {
       deviceType: 'desktop',
       deviceModel: 'mac',
       password: password,
-      emailAddress: email
+      emailAddress: email,
       // otherAccounts: []
     },
     cb
@@ -241,7 +241,7 @@ export const uploadContacts = (accessToken, contacts, cb) => {
     urlPre + 'uploadContacts',
     {
       accessToken: accessToken,
-      contacts: contacts
+      contacts: contacts,
     },
     cb
   )
@@ -278,7 +278,7 @@ export const getAvatarFromCache = email => {
 }
 
 const isDownloading = {}
-async function downloadImage(url, logoPath, domain) {
+async function downloadImage (url, logoPath, domain) {
   if (isDownloading[domain]) {
     return
   }
@@ -295,9 +295,9 @@ async function downloadImage(url, logoPath, domain) {
 const logoCache = {}
 export const getLogo = async email => {
   if (email) {
-    const account = AccountStore.accountForEmail(email);
+    const account = AccountStore.accountForEmail(email)
     if (account && account.picture) {
-      return account.picture;
+      return account.picture
     }
     let domain = email.split('@')[1]
     // domain = /\w+\.\w+$/g.exec(domain);
@@ -341,5 +341,5 @@ export default {
   sendCmd2App,
   sendCmd2App2,
   getAvatarPromise,
-  getLogo
+  getLogo,
 }

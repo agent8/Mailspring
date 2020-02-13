@@ -1,58 +1,58 @@
-const https = require('https');
-const http = require('http');
-const url = require('url');
+const https = require('https')
+const http = require('http')
+const url = require('url')
 
 const getContent = (h, options, encode, data, cb) => {
-  let arr = [];
-  var req = h.request(options, (res) => {
-    res.setEncoding(encode);
-    res.on('data', (chunk) => {
-      arr.push(chunk);
-    });
+  let arr = []
+  var req = h.request(options, res => {
+    res.setEncoding(encode)
+    res.on('data', chunk => {
+      arr.push(chunk)
+    })
     res.on('end', () => {
-      cb(null, arr.join(''), res);
-    });
-  });
+      cb(null, arr.join(''), res)
+    })
+  })
 
   req.on('error', function (e) {
-    cb(e);
-  });
+    cb(e)
+  })
   if (data) {
-    req.write(data);
+    req.write(data)
   }
 
-  req.end();
+  req.end()
 }
 
 export const get = (u, cb, headers) => {
-  const encode = 'utf8';
-  const srvUrl = url.parse(u);
+  const encode = 'utf8'
+  const srvUrl = url.parse(u)
   let options = {
     hostname: srvUrl.hostname,
     port: srvUrl.port,
     path: srvUrl.path,
-    method: 'GET'
-  };
+    method: 'GET',
+  }
   if (headers) {
-    options.headers = headers;
+    options.headers = headers
   }
-  let h;
+  let h
   if (srvUrl.protocol == 'https:') {
-    options.requestCert = false;
-    options.rejectUnauthorized = true;
-    h = https;
+    options.requestCert = false
+    options.rejectUnauthorized = true
+    h = https
   } else {
-    h = http;
+    h = http
   }
-  getContent(h, options, encode, '', cb);
+  getContent(h, options, encode, '', cb)
 }
 
 export const post = (u, data, cb, headers) => {
-  const encode = 'utf8';
-  if (data && typeof (data) !== 'string') {
-    data = JSON.stringify(data);
+  const encode = 'utf8'
+  if (data && typeof data !== 'string') {
+    data = JSON.stringify(data)
   }
-  const srvUrl = url.parse(u);
+  const srvUrl = url.parse(u)
   let options = {
     hostname: srvUrl.hostname,
     port: srvUrl.port,
@@ -60,24 +60,65 @@ export const post = (u, data, cb, headers) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json; charset=UTF-8',
-      'Content-Length': data ? Buffer.byteLength(data) : 0
-    }
-  };
+      'Content-Length': data ? Buffer.byteLength(data) : 0,
+    },
+  }
   if (headers) {
-    options.headers = Object.assign(options.headers, headers);
+    options.headers = Object.assign(options.headers, headers)
   }
 
-  let h;
+  let h
   if (srvUrl.protocol == 'https:') {
-    options.requestCert = false;
-    options.rejectUnauthorized = true;
-    h = https;
+    options.requestCert = false
+    options.rejectUnauthorized = true
+    h = https
   } else {
-    h = http;
+    h = http
   }
-  getContent(h, options, encode, data, cb);
+  getContent(h, options, encode, data, cb)
+}
+
+export const postAsync = async (u, data, headers) => {
+  const encode = 'utf8'
+  if (data && typeof data !== 'string') {
+    data = JSON.stringify(data)
+  }
+  const srvUrl = url.parse(u)
+  let options = {
+    hostname: srvUrl.hostname,
+    port: srvUrl.port,
+    path: srvUrl.path,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Content-Length': data ? Buffer.byteLength(data) : 0,
+    },
+  }
+  if (headers) {
+    options.headers = Object.assign(options.headers, headers)
+  }
+
+  let h
+  if (srvUrl.protocol == 'https:') {
+    options.requestCert = false
+    options.rejectUnauthorized = true
+    h = https
+  } else {
+    h = http
+  }
+  return new Promise((resolve, reject) => {
+    getContent(h, options, encode, data, function (err, data, res) {
+      if (err) {
+        resolve(null)
+      } else {
+        resolve(data, res)
+      }
+    })
+  })
 }
 
 export default {
-  get, post
+  get,
+  post,
+  postAsync,
 }

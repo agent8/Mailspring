@@ -692,6 +692,11 @@ export default class ComposerView extends React.Component {
     }
     if (!padId) {
       const apiPath = window.teamPadConfig.teamEditAPIUrl + 'createPad'
+      console.log(
+        ' createTeamEditPad postAsync apiPath, createPadOptions:',
+        apiPath,
+        createPadOptions
+      )
       let res = await postAsync(apiPath, createPadOptions, {
         headers: {
           Accept: 'application/json',
@@ -700,6 +705,7 @@ export default class ComposerView extends React.Component {
           'Sec-Fetch-Site': 'cross-site',
         },
       })
+      console.log(' createTeamEditPad postAsync apiPath, createPadOptions:', res)
       if (typeof res === 'string') {
         res = JSON.parse(res)
       }
