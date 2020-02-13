@@ -60,6 +60,16 @@ export default class ComposerEditor extends React.Component {
         .focus()
     );
   };
+  unfocus = () => {
+    const { onChange, value } = this.props;
+    onChange(
+      value
+        .change()
+        .selectAll()
+        .collapseToStart()
+        .blur()
+    );
+  }
 
   focusEndReplyText = () => {
     window.requestAnimationFrame(() => {
