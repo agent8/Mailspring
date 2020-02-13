@@ -1,5 +1,5 @@
 import ChatButton from './chat-button'
-let ChatView;
+let ChatView
 import NewConversation from '../components/chat/messages/NewConversation'
 import ChatViewLeft from './chat-view-left'
 import ChatAccountSidebarFiller from '../components/chat/chat-account-sidebar-filler'
@@ -12,7 +12,7 @@ const { ComponentRegistry, WorkspaceStore } = require('mailspring-exports')
 const osLocale = require('os-locale')
 
 const CHAT_COUNTRIES = ['CN']
-function isChatTestUser() {
+function isChatTestUser () {
   // let locale = osLocale.sync();
   // if (locale.indexOf('_') !== -1) {
   //   locale = locale.split('_')[1];
@@ -24,12 +24,12 @@ function isChatTestUser() {
 const isChatTest = isChatTestUser()
 
 module.exports = {
-  activate() {
-    if (!AppEnv.config.get(`core.workspace.enableChat`)) {
-      return
-    }
-    require('../model/'); // init all tables
-    ChatView = require('./chat-view').default;
+  activate () {
+    // if (!AppEnv.config.get(`core.workspace.enableChat`)) {
+    //   return
+    // }
+    require('../model/') // init all tables
+    ChatView = require('./chat-view').default
     startXmpp(xmpp)
     bindMousetrap(Mousetrap)
     WorkspaceStore.defineSheet(
@@ -37,7 +37,7 @@ module.exports = {
       { root: true },
       {
         list: ['RootSidebar', 'ChatView'],
-        split: ['RootSidebar', 'ChatView']
+        split: ['RootSidebar', 'ChatView'],
       }
     )
     WorkspaceStore.defineSheet(
@@ -45,7 +45,7 @@ module.exports = {
       {},
       {
         split: ['NewConversation'],
-        list: ['NewConversation']
+        list: ['NewConversation'],
       }
     )
     const { devMode } = AppEnv.getLoadSettings()
@@ -54,17 +54,17 @@ module.exports = {
     if (true || devMode || isChatTest) {
       ComponentRegistry.register(ChatView, { location: WorkspaceStore.Location.ChatView })
       ComponentRegistry.register(NewConversation, {
-        location: WorkspaceStore.Location.NewConversation
+        location: WorkspaceStore.Location.NewConversation,
       })
       if (AppEnv.isMainWindow()) {
         ComponentRegistry.register(ChatButton, {
-          location: WorkspaceStore.Location.RootSidebar.Toolbar
+          location: WorkspaceStore.Location.RootSidebar.Toolbar,
         })
         ComponentRegistry.register(ChatViewLeft, {
-          location: WorkspaceStore.Sheet.Global.Footer
+          location: WorkspaceStore.Sheet.Global.Footer,
         })
         ComponentRegistry.register(ChatAccountSidebarFiller, {
-          location: WorkspaceStore.Location.RootSidebar
+          location: WorkspaceStore.Location.RootSidebar,
         })
       }
       // else {
@@ -74,17 +74,17 @@ module.exports = {
       //   });
       // }
     }
-    const { ContactModel, AppStore } = require('chat-exports');
+    const { ContactModel, AppStore } = require('chat-exports')
     ContactModel.destroy({
       where: {},
       truncate: true,
-      force: true
+      force: true,
     }).then(() => {
       AppStore.refreshAppsEmailContacts()
     })
   },
 
-  deactivate() {
+  deactivate () {
     if (AppEnv.config.get(`core.workspace.enableChat`)) {
       const { devMode } = AppEnv.getLoadSettings()
       if (true || devMode || isChatTest) {
@@ -98,5 +98,5 @@ module.exports = {
         }
       }
     }
-  }
+  },
 }

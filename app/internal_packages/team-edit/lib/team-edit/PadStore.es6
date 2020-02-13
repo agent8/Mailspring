@@ -1,10 +1,9 @@
-
-import MailspringStore from 'mailspring-store';
-import {ConversationStore} from 'chat-exports'
-import PadModel from './PadModel';
+import MailspringStore from 'mailspring-store'
+import { ConversationStore } from 'chat-exports'
+import PadModel from './PadModel'
 import { postAsync } from '../../../edison-beijing-chat/utils/httpex'
 import { getTokenByUserId } from '../../../edison-beijing-chat/utils/chat-account'
-import {Thumbnail} from 'react-bootstrap';
+import { Thumbnail } from 'react-bootstrap'
 
 const MeStarted = 'MeStarted'
 const OtherStarted = 'OtherStarted'
@@ -12,53 +11,56 @@ const Finished = 'Finished'
 const All = 'All'
 
 class PadStore extends MailspringStore {
-  constructor() {
-    super();
+  constructor () {
+    super()
     this.kind = All
     this.updated = false
-    this.pads = null;
+    this.pads = null
     this.refreshPads()
     ConversationStore.listen(this.refreshPads)
   }
 
-  setKind = (kind) => {
+  setKind = kind => {
     this.kind = kind
     this.refreshPads()
   }
   refreshPads = async () => {
-    console.trace( 'PadStore.refreshPads:')
-    let condition;
+    console.log(' PadStore.refreshPads:')
+    let condition
     if (this.kind == MeStarted) {
-      condition = {permission:'owner'}
-    } else if (this.kind == MeStarted){
-      condition = {permission:{ne:'owner'}}
-    } else if  (this.kind == Finished){
-      condition = {status:1}
-    } else { //All
+      condition = { permission: 'owner' }
+    } else if (this.kind == MeStarted) {
+      condition = { permission: { ne: 'owner' } }
+    } else if (this.kind == Finished) {
+      condition = { status: 1 }
+    } else {
+      //All
       condition = {}
     }
-    let data = await PadModel.findAll({where:condition});
+    let data = await PadModel.findAll({ where: condition })
+    console.log(' PadStore.refreshPads: this.updated, data', this.updated, data)
     if (!this.updated || !data.length) {
       await this.updateFromServer()
       this.updated = true
-      data = await PadModel.findAll({where:condition});
+      data = await PadModel.findAll({ where: condition })
     }
-    console.log( 'refreshPads PadModel.findAll:', data)
+    console.log('refreshPads PadModel.findAll:', data)
     this.pads = data
     if (data && !this.pad) {
       this.pad = this.pads[0]
     }
-    this.trigger();
+    this.trigger()
   }
 
   setPad = pad => {
-    console.trace( 'setPad, pad:', pad)
+    console.trace('setPad, pad:', pad)
     this.pad = pad
     this.trigger()
   }
 
-  updateFromServer =  async () => {
+  updateFromServer = async () => {
     const chatAccounts = AppEnv.config.get('chatAccounts') || {}
+    console.log(' PadStore.updateFromServer chatAccounts:', chatAccounts)
     const acc = Object.values(chatAccounts)[0]
     if (!acc) {
       return
@@ -67,12 +69,18 @@ class PadStore extends MailspringStore {
     this.email = acc.email
     this.userId = userId
     const token = await getTokenByUserId(userId)
+    console.log(' PadStore.updateFromServer acc, userId, token:', acc, userId, token)
     if (!token) {
       return
     }
     this.token = token
     const apiPath = window.teamPadConfig.teamEditAPIUrl + 'listPadsOfAuthor'
     const options = { userId, token }
+    console.log(
+      ' PadStore.updateFromServer postAsync listPadsOfAuthor apiPath, options: ',
+      apiPath,
+      options
+    )
     let res = await postAsync(apiPath, options, {
       headers: {
         Accept: 'application/json',
@@ -81,11 +89,13 @@ class PadStore extends MailspringStore {
         'Sec-Fetch-Site': 'cross-site',
       },
     })
+    console.log(' PadStore.updateFromServer postAsync listPadsOfAuthor res: ', res)
     if (!res) {
       return
     }
     if (typeof res === 'string') {
-      try { res = JSON.parse(res)
+      try {
+        res = JSON.parse(res)
       } catch (e) {
         console.error('error in parsing listPadsOfAuthor response:', res, e)
       }
@@ -119,5 +129,5 @@ class PadStore extends MailspringStore {
     }
   }
 }
-Object.assign(PadStore, {MeStarted, OtherStarted, Finished, All})
-module.exports = new PadStore();
+Object.assign(PadStore, { MeStarted, OtherStarted, Finished, All })
+module.exports = new PadStore()
