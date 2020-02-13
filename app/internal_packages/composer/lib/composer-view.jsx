@@ -176,6 +176,15 @@ export default class ComposerView extends React.Component {
     }
   }
 
+  _onHeaderClicked = () => {
+    if(!this._mounted){
+      return;
+    }
+    if(this._els && this._els[Fields.Body]){
+      this._els[Fields.Body].unfocus();
+    }
+  };
+
   _isDraftMissingAttachments = props => {
     if (!props.draft) {
       this.setState({ missingAttachments: false });
@@ -302,6 +311,7 @@ export default class ComposerView extends React.Component {
             draft={this.props.draft}
             session={this.props.session}
             initiallyFocused={this.props.draft.to.length === 0}
+            onClick={this._onHeaderClicked}
           />
           <div
             className="compose-body"
