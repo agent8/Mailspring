@@ -11,9 +11,5 @@
   "engines": {
     "mailspring": "*"
   },
-  "windowTypes": {
-    "default": true,
-    "composer": true,
-    "thread-popout": true
-  }
+  "windowTypes": {}
 }

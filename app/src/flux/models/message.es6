@@ -1,32 +1,32 @@
-import _ from 'underscore';
-import moment from 'moment';
-import fs from 'fs';
-import File from './file';
-import Utils from './utils';
-import Event from './event';
-import Contact from './contact';
-import Folder from './folder';
-import Sift from './sift';
-import Attributes from '../attributes';
-import ModelWithMetadata from './model-with-metadata';
-import AccountStore from '../stores/account-store';
-import MessageBody from './message-body';
-import CategoryStore from '../stores/category-store';
-let AttachmentStore = null;
+import _ from 'underscore'
+import moment from 'moment'
+import fs from 'fs'
+import File from './file'
+import Utils from './utils'
+import Event from './event'
+import Contact from './contact'
+import Folder from './folder'
+import Sift from './sift'
+import Attributes from '../attributes'
+import ModelWithMetadata from './model-with-metadata'
+import AccountStore from '../stores/account-store'
+import MessageBody from './message-body'
+import CategoryStore from '../stores/category-store'
+let AttachmentStore = null
 
 const mapping = {
-  attachmentIdsFromJSON: json =>{
-    if(!Array.isArray(json)){
-      return [];
+  attachmentIdsFromJSON: json => {
+    if (!Array.isArray(json)) {
+      return []
     }
     return json.map(attachment => {
-      return File.fromPartialData(attachment);
+      return File.fromPartialData(attachment)
     })
-  }
-};
+  },
+}
 
 export default class Message extends ModelWithMetadata {
-  static fieldsNotInDB=[
+  static fieldsNotInDB = [
     'calendarReply',
     'listUnsubscribe',
     'pristine',
@@ -43,17 +43,17 @@ export default class Message extends ModelWithMetadata {
     'waitingForBody',
     'calCurStat',
     'calTarStat',
-  ];
-  static NewDraft = 1;
-  static EditExistingDraft = 2;
-  static ReplyDraft = 3;
-  static ForwardDraft = 4;
-  static ReplyAllDraft = 5;
+  ]
+  static NewDraft = 1
+  static EditExistingDraft = 2
+  static ReplyDraft = 3
+  static ForwardDraft = 4
+  static ReplyAllDraft = 5
   static draftType = {
     new: 0,
     reply: 1,
     forward: 2,
-  };
+  }
   static messageSyncState = {
     normal: '0',
     saving: '2',
@@ -64,20 +64,20 @@ export default class Message extends ModelWithMetadata {
     // display in
     // outbox
     failed: '-1', // This state indicates that draft have failed to send.
-  };
-  static compareMessageState(currentState, targetState) {
+  }
+  static compareMessageState (currentState, targetState) {
     try {
-      const current = parseInt(currentState);
-      const target = parseInt(targetState);
-      return current === target;
+      const current = parseInt(currentState)
+      const target = parseInt(targetState)
+      return current === target
     } catch (e) {
       AppEnv.reportError(new Error('currentState or targetState cannot be converted to int'), {
         errorData: {
           current: currentState,
           target: targetState,
         },
-      });
-      return false;
+      })
+      return false
     }
   }
   static attributes = Object.assign({}, ModelWithMetadata.attributes, {
@@ -120,12 +120,12 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarReply: Attributes.Boolean({
       modelKey: 'calendarReply',
-      queryable: false
+      queryable: false,
     }),
 
     listUnsubscribe: Attributes.String({
       modelKey: 'listUnsubscribe',
-      queryable: false
+      queryable: false,
     }),
 
     pristine: Attributes.Boolean({
@@ -135,28 +135,28 @@ export default class Message extends ModelWithMetadata {
     replyToHeaderMessageId: Attributes.String({
       modelKey: 'replyToHeaderMessageId',
       jsonKey: 'replyToHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
 
     forwardedHeaderMessageId: Attributes.String({
       modelKey: 'forwardedHeaderMessageId',
       jsonKey: 'forwardHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
 
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
       jsonKey: 'refDraftHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
     savedOnRemote: Attributes.Boolean({
       modelKey: 'savedOnRemote',
-      queryable: false
+      queryable: false,
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
       jsonKey: 'hasRefDraft',
-      queryable: false
+      queryable: false,
     }),
     folder: Attributes.Object({
       queryable: false,
@@ -165,7 +165,7 @@ export default class Message extends ModelWithMetadata {
     }),
     replyOrForward: Attributes.Number({
       modelKey: 'replyOrForward',
-      queryable: false
+      queryable: false,
     }),
     msgOrigin: Attributes.Number({
       modelKey: 'msgOrigin',
@@ -185,24 +185,24 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
-      queryable: false
+      queryable: false,
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
-      queryable: false
+      queryable: false,
     }),
 
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true
+      mergeIntoModel: true,
     }),
     msgData: Attributes.Object({
       modelKey: 'msgData',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true
+      mergeIntoModel: true,
     }),
 
     date: Attributes.DateTime({
@@ -236,7 +236,7 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'files',
       queryable: true,
       loadFromColumn: true,
-      fromJSONMapping: mapping.attachmentIdsFromJSON
+      fromJSONMapping: mapping.attachmentIdsFromJSON,
     }),
 
     unread: Attributes.Boolean({
@@ -273,7 +273,7 @@ export default class Message extends ModelWithMetadata {
       loadFromColumn: true,
       jsonKey: 'headerMsgId',
       modelKey: 'headerMsgId',
-      jsModelKey: 'headerMessageId'
+      jsModelKey: 'headerMessageId',
     }),
 
     subject: Attributes.String({
@@ -319,194 +319,191 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'syncState',
       loadFromColumn: true,
       queryable: true,
-    })
-  });
+    }),
+  })
 
-  static naturalSortOrder() {
-    return Message.attributes.date.ascending();
+  static naturalSortOrder () {
+    return Message.attributes.date.ascending()
   }
 
-  constructor(data = {}) {
-    super(data);
-    this.subject = this.subject || '';
-    this.snippet = this.snippet || '';
-    this.to = this.to || [];
-    this.cc = this.cc || [];
-    this.bcc = this.bcc || [];
-    this.from = this.from || [];
-    this.replyTo = this.replyTo || [];
-    this.events = this.events || [];
-    this.waitingForBody = data.waitingForBody || false;
-    this.hasCalendar = this.hasCalendar || false;
-    if(Array.isArray(data.files)){
+  constructor (data = {}) {
+    super(data)
+    this.subject = this.subject || ''
+    this.snippet = this.snippet || ''
+    this.to = this.to || []
+    this.cc = this.cc || []
+    this.bcc = this.bcc || []
+    this.from = this.from || []
+    this.replyTo = this.replyTo || []
+    this.events = this.events || []
+    this.waitingForBody = data.waitingForBody || false
+    this.hasCalendar = this.hasCalendar || false
+    if (Array.isArray(data.files)) {
       this.attachmentIds = data.files
     }
   }
 
-  toJSON(options) {
-    const json = super.toJSON(options);
+  toJSON (options) {
+    const json = super.toJSON(options)
     // json.headerMessageId = this.headerMessageId || '';
-    json.file_ids = this.fileIds();
+    json.file_ids = this.fileIds()
     if (this.draft) {
-      json.draft= true;
+      json.draft = true
     }
 
     if (this.events && this.events.length) {
-      json.event_id = this.events[0].id;
+      json.event_id = this.events[0].id
     }
 
-    return json;
+    return json
   }
 
-  fromJSON(json = {}) {
-    super.fromJSON(json);
-    return this;
+  fromJSON (json = {}) {
+    super.fromJSON(json)
+    return this
   }
 
-  canReplyAll() {
-    const { to, cc } = this.participantsForReplyAll();
-    return to.length > 1 || cc.length > 0;
+  canReplyAll () {
+    const { to, cc } = this.participantsForReplyAll()
+    return to.length > 1 || cc.length > 0
   }
 
   // Public: Returns a set of uniqued message participants by combining the
   // `to`, `cc`, `bcc` && (optionally) `from` fields.
-  participants({ includeFrom = true, includeBcc = false } = {}) {
-    const seen = {};
-    const all = [];
-    let contacts = [].concat(this.to, this.cc);
+  participants ({ includeFrom = true, includeBcc = false } = {}) {
+    const seen = {}
+    const all = []
+    let contacts = [].concat(this.to, this.cc)
     if (includeFrom) {
-      contacts = _.union(contacts, this.from || []);
+      contacts = _.union(contacts, this.from || [])
     }
     if (includeBcc) {
-      contacts = _.union(contacts, this.bcc || []);
+      contacts = _.union(contacts, this.bcc || [])
     }
     for (const contact of contacts) {
       if (!contact.email) {
-        continue;
+        continue
       }
       const key = contact
         .toString()
         .trim()
-        .toLowerCase();
+        .toLowerCase()
       if (seen[key]) {
-        continue;
+        continue
       }
-      seen[key] = true;
-      all.push(contact);
+      seen[key] = true
+      all.push(contact)
     }
-    return all;
+    return all
   }
 
   // Public: Returns a hash with `to` && `cc` keys for authoring a new draft in
   // "reply all" to this message. This method takes into account whether the
   // message is from the current user, && also looks at the replyTo field.
-  participantsForReplyAll() {
-    const excludedFroms = this.from.map(c => Utils.toEquivalentEmailForm(c.email));
+  participantsForReplyAll () {
+    const excludedFroms = this.from.map(c => Utils.toEquivalentEmailForm(c.email))
 
     const excludeMeAndFroms = cc =>
-      _.reject(
-        cc,
-        p => p.isMe() || _.contains(excludedFroms, Utils.toEquivalentEmailForm(p.email))
-      );
+      _.reject(cc, p => p.isMe() || _.contains(excludedFroms, Utils.toEquivalentEmailForm(p.email)))
 
-    let to = null;
-    let cc = null;
+    let to = null
+    let cc = null
 
     if (this.replyTo.length && !this.replyTo[0].isMe()) {
       // If a replyTo is specified and that replyTo would not result in you
       // sending the message to yourself, use it.
-      to = this.replyTo;
-      cc = excludeMeAndFroms([].concat(this.to, this.cc));
+      to = this.replyTo
+      cc = excludeMeAndFroms([].concat(this.to, this.cc))
     } else if (this.isFromMe()) {
       // If the message is from you to others, reply-all should send to the
       // same people.
-      to = this.to;
-      cc = excludeMeAndFroms(this.cc);
+      to = this.to
+      cc = excludeMeAndFroms(this.cc)
     } else {
       // ... otherwise, address the reply to the sender of the email and cc
       // everyone else.
-      to = this.from;
-      cc = excludeMeAndFroms([].concat(this.to, this.cc));
+      to = this.from
+      cc = excludeMeAndFroms([].concat(this.to, this.cc))
     }
 
-    to = _.uniq(to, p => Utils.toEquivalentEmailForm(p.email));
-    cc = _.uniq(cc, p => Utils.toEquivalentEmailForm(p.email));
-    return { to, cc };
+    to = _.uniq(to, p => Utils.toEquivalentEmailForm(p.email))
+    cc = _.uniq(cc, p => Utils.toEquivalentEmailForm(p.email))
+    return { to, cc }
   }
 
   // Public: Returns a hash with `to` && `cc` keys for authoring a new draft in
   // "reply" to this message. This method takes into account whether the
   // message is from the current user, && also looks at the replyTo field.
-  participantsForReply() {
-    let to = [];
-    const cc = [];
+  participantsForReply () {
+    let to = []
+    const cc = []
     if (this.replyTo.length && !this.replyTo[0].isMe()) {
       // If a replyTo is specified and that replyTo would not result in you
       // sending the message to yourself, use it.
-      to = this.replyTo;
+      to = this.replyTo
     } else if (this.isExactFromMe()) {
       // If you sent the previous email, a "reply" should go to the same recipient.
-      to = this.to;
+      to = this.to
     } else {
       // ... otherwise, address the reply to the sender.
-      to = this.from;
+      to = this.from
     }
 
-    to = _.uniq(to, p => Utils.toEquivalentEmailForm(p.email));
-    return { to, cc };
+    to = _.uniq(to, p => Utils.toEquivalentEmailForm(p.email))
+    return { to, cc }
   }
 
-  isExactFromMe() {
+  isExactFromMe () {
     if (this.from[0]) {
-      const me = AccountStore.accountForId(this.accountId);
+      const me = AccountStore.accountForId(this.accountId)
       if (me && me.emailAddress === this.from[0].email) {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
-  get files(){
-    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-    if(!Array.isArray(this.attachmentIds)){
-      console.error(`attachmentIds is not array`, this.attachmentIds);
-      return [];
+  get files () {
+    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default
+    if (!Array.isArray(this.attachmentIds)) {
+      console.error(`attachmentIds is not array`, this.attachmentIds)
+      return []
     }
-    const rets = [];
+    const rets = []
     this.attachmentIds.forEach(partialAttachmentData => {
-      if(!(partialAttachmentData instanceof File)){
+      if (!(partialAttachmentData instanceof File)) {
         partialAttachmentData = File.fromPartialData(partialAttachmentData)
       }
-      const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
-      if(fileData){
-        rets.push(fileData);
+      const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData)
+      if (fileData) {
+        rets.push(fileData)
       }
-    });
-    return rets;
+    })
+    return rets
   }
-  set files(attachments){
-    this.attachmentIds = attachments;
+  set files (attachments) {
+    this.attachmentIds = attachments
   }
 
   // Public: Returns an {Array} of {File} IDs
-  fileIds() {
-    return this.files.map(file => file.id);
+  fileIds () {
+    return this.files.map(file => file.id)
   }
 
-  get labels(){
-    const ret = [];
+  get labels () {
+    const ret = []
     this.labelIds.forEach(labelId => {
-      if(typeof labelId === 'string'){
-        const tmp = CategoryStore.byFolderId(labelId);
-        if(tmp){
-          ret.push(tmp);
+      if (typeof labelId === 'string') {
+        const tmp = CategoryStore.byFolderId(labelId)
+        if (tmp) {
+          ret.push(tmp)
         }
       }
-    });
-    return ret;
+    })
+    return ret
   }
 
-  missingAttachments() {
-    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+  missingAttachments () {
+    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default
     return new Promise(resolve => {
       const totalMissing = () => {
         return [
@@ -514,8 +511,8 @@ export default class Message extends ModelWithMetadata {
           ...ret.inline.needToDownload,
           ...ret.normal.downloading,
           ...ret.normal.needToDownload,
-        ];
-      };
+        ]
+      }
       const ret = {
         totalMissing: totalMissing,
         inline: {
@@ -526,87 +523,89 @@ export default class Message extends ModelWithMetadata {
           downloading: [],
           needToDownload: [],
         },
-      };
-      const total = this.files.length * 2;
-      if (total === 0) {
-        resolve(ret);
-        return;
       }
-      let processed = 0;
+      const total = this.files.length * 2
+      if (total === 0) {
+        resolve(ret)
+        return
+      }
+      let processed = 0
       this.files.forEach(f => {
-        const path = AttachmentStore.pathForFile(f);
-        const exists = fs.existsSync(path);
+        const path = AttachmentStore.pathForFile(f)
+        const exists = fs.existsSync(path)
         if (!exists) {
-          processed++;
-          const partExists = fs.existsSync(`${path}.part`);
-          processed++;
+          processed++
+          const partExists = fs.existsSync(`${path}.part`)
+          processed++
           if (!partExists) {
             if (f.isInline) {
-              ret.inline.needToDownload.push(f);
+              ret.inline.needToDownload.push(f)
             } else {
-              ret.normal.needToDownload.push(f);
+              ret.normal.needToDownload.push(f)
             }
           } else {
             if (f.isInline) {
-              ret.inline.downloading.push(f);
+              ret.inline.downloading.push(f)
             } else {
-              ret.normal.downloading.push(f);
+              ret.normal.downloading.push(f)
             }
           }
           if (processed === total) {
-            resolve(ret);
+            resolve(ret)
           }
         } else {
-          processed += 2;
+          processed += 2
           if (processed === total) {
-            resolve(ret);
+            resolve(ret)
           }
         }
-      });
-    });
+      })
+    })
   }
 
   //Public: returns the first email that belongs to the account that received the email,
   // otherwise returns the account's default email.
-  findMyEmail(){
-    const participants = this.participants({includeFrom: false, includeBcc: true});
-    const account = AccountStore.accountForId(this.accountId);
-    if(!account){
-      AppEnv.reportError(new Error('Message accountId is not part of any account'), {errorData: this.toJSON()})
-      return false;
+  findMyEmail () {
+    const participants = this.participants({ includeFrom: false, includeBcc: true })
+    const account = AccountStore.accountForId(this.accountId)
+    if (!account) {
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), {
+        errorData: this.toJSON(),
+      })
+      return false
     }
-    for(let participant of participants){
-      if(account.isMyEmail(participant.email)){
-        return participant.email;
+    for (let participant of participants) {
+      if (account.isMyEmail(participant.email)) {
+        return participant.email
       }
     }
-    return account.defaultMe().email;
+    return account.defaultMe().email
   }
 
   // Public: Returns true if this message === from the current user's email
   // address.
-  isFromMe({ ignoreOtherAccounts = false } = {}) {
+  isFromMe ({ ignoreOtherAccounts = false } = {}) {
     if (!this.from[0]) {
-      return false;
+      return false
     }
     if (ignoreOtherAccounts) {
-      const account = AccountStore.accountForEmail(this.from[0].email);
+      const account = AccountStore.accountForEmail(this.from[0].email)
       if (account) {
-        return account.id === this.accountId;
+        return account.id === this.accountId
       }
     }
-    return this.from[0].isMe();
+    return this.from[0].isMe()
   }
 
-  isFromMyOtherAccounts() {
+  isFromMyOtherAccounts () {
     if (!this.from[0]) {
-      return false;
+      return false
     }
-    const account = AccountStore.accountForEmail(this.from[0].email);
+    const account = AccountStore.accountForEmail(this.from[0].email)
     if (account) {
-      return account.id !== this.accountId;
+      return account.id !== this.accountId
     }
-    return false;
+    return false
   }
 
   isForwarded() {
@@ -615,101 +614,113 @@ export default class Message extends ModelWithMetadata {
       return false;
     }
     if (this.subject.toLowerCase().startsWith('fwd:')) {
-      return true;
+      return true
     }
     if (this.subject.toLowerCase().startsWith('re:')) {
-      return false;
+      return false
     }
     if (this.body) {
-      const indexForwarded = this.body.search(/forwarded/i);
+      const indexForwarded = this.body.search(/forwarded/i)
       if (indexForwarded >= 0 && indexForwarded < 250) {
-        return true;
+        return true
       }
-      const indexFwd = this.body.search(/fwd/i);
+      const indexFwd = this.body.search(/fwd/i)
       if (indexFwd >= 0 && indexFwd < 250) {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  isInTrash() {
+  isInTrash () {
     if (!this.labels) {
-      return false;
+      return false
     }
-    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('trash')
+    )
   }
-  isInSpam(){
+  isInSpam () {
     if (!this.labels) {
-      return false;
+      return false
     }
-    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('spam')
+    )
   }
 
-  fromContact() {
-    return (this.from || [])[0] || new Contact({ name: 'Unknown', email: 'Unknown' });
+  fromContact () {
+    return (this.from || [])[0] || new Contact({ name: 'Unknown', email: 'Unknown' })
   }
 
   // Public: Returns the standard attribution line for this message,
   // localized for the current user.
   // ie "On Dec. 12th, 2015 at 4:00PM, Ben Gotow wrote:"
-  replyAttributionLine() {
-    return `On ${this.formattedDate()}, ${this.fromContact().toString()} wrote:`;
+  replyAttributionLine () {
+    return `On ${this.formattedDate()}, ${this.fromContact().toString()} wrote:`
   }
 
-  formattedDate() {
-    return moment(this.date).format('MMM D YYYY, [at] h:mm a');
+  formattedDate () {
+    return moment(this.date).format('MMM D YYYY, [at] h:mm a')
   }
 
-  hasEmptyBody() {
+  hasEmptyBody () {
     if (!this.body) {
-      return true;
+      return true
     }
 
     // https://regex101.com/r/hR7zN3/1
-    const re = /(?:<signature>.*<\/signature>)|(?:<.+?>)|\s/gim;
-    return this.body.replace(re, '').length === 0;
+    const re = /(?:<signature>.*<\/signature>)|(?:<.+?>)|\s/gim
+    return this.body.replace(re, '').length === 0
   }
 
-  isActiveDraft() { }
+  isActiveDraft () {}
 
-  isDeleted() {
-    return this.deleted;
+  isDeleted () {
+    return this.deleted
   }
-  isDraftSending() {
-    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState === Message.messageSyncState.sending);
-  }
-
-  isDraftSaving() {
-    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState == Message.messageSyncState.saving); // eslint-ignore-line
-  }
-  isCalendarReply() {
-    return this.calendarReply;
+  isDraftSending () {
+    return (
+      !this.isDeleted() &&
+      this.draft &&
+      Message.compareMessageState(this.syncState === Message.messageSyncState.sending)
+    )
   }
 
-  isHidden() {
+  isDraftSaving () {
+    return (
+      !this.isDeleted() &&
+      this.draft &&
+      Message.compareMessageState(this.syncState == Message.messageSyncState.saving)
+    ) // eslint-ignore-line
+  }
+  isCalendarReply () {
+    return this.calendarReply
+  }
+
+  isHidden () {
     const isReminder =
       this.to.length === 1 &&
       this.from.length === 1 &&
       this.to[0].email === this.from[0].email &&
-      (this.from[0].name || '').endsWith('via Mailspring');
-    const isDraftBeingDeleted = this.id.startsWith('deleted-');
+      (this.from[0].name || '').endsWith('via Mailspring')
+    const isDraftBeingDeleted = this.id.startsWith('deleted-')
 
-    return isReminder || isDraftBeingDeleted || this.isCalendarReply();
+    return isReminder || isDraftBeingDeleted || this.isCalendarReply()
   }
 
-  setOrigin(val) {
-    this.msgOrigin = val;
+  setOrigin (val) {
+    this.msgOrigin = val
   }
 
-  isNewDraft() {
-    return this.msgOrigin === Message.NewDraft;
+  isNewDraft () {
+    return this.msgOrigin === Message.NewDraft
   }
 
-  calendarStatus() {
+  calendarStatus () {
     if (this.calendarTargetStatus >= 0) {
-      return this.calendarTargetStatus;
+      return this.calendarTargetStatus
     }
-    return this.calendarCurrentStatus;
+    return this.calendarCurrentStatus
   }
 }

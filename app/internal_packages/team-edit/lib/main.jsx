@@ -8,7 +8,7 @@ import {
   WorkspaceStore,
   ComponentRegistry,
   InflatesDraftClientId,
-  Actions
+  Actions,
 } from 'mailspring-exports'
 import ComposeButton from './compose-button'
 import RefreshButton from './refresh-button'
@@ -21,7 +21,7 @@ const { spawnSync, execSync, exec } = require('child_process')
 const ComposerViewForDraftClientId = InflatesDraftClientId(ComposerView)
 
 class ComposerWithWindowProps extends React.Component {
-  static displayName = 'ComposerWithWindowProps'
+  static displayName = 'TeamEditComposerWithWindowProps'
   static containerRequired = false
 
   constructor (props) {
@@ -36,7 +36,10 @@ class ComposerWithWindowProps extends React.Component {
     const draft = new Message().fromJSON(draftJSON)
     this.state = windowProps
     this._mounted = false
-    this._unlisten = Actions.changeDraftAccountComplete.listen(this._onDraftChangeAccountComplete, this)
+    this._unlisten = Actions.changeDraftAccountComplete.listen(
+      this._onDraftChangeAccountComplete,
+      this
+    )
     if (draft.savedOnRemote) {
       console.log('savedOnRemote')
       DraftStore.sessionForServerDraft(draft).then(session => {
@@ -85,7 +88,7 @@ class ComposerWithWindowProps extends React.Component {
     ) {
       this.setState({
         headerMessageId: options.newHeaderMessageId,
-        messageId: options.newMessageId
+        messageId: options.newMessageId,
       })
     }
   }
@@ -138,31 +141,32 @@ class ComposerWithWindowProps extends React.Component {
 }
 
 export function activate () {
+  ComposerViewForDraftClientId.displayName = 'TeamEditComposer'
   if (AppEnv.isMainWindow()) {
-    // ComponentRegistry.register(ComposerViewForDraftClientId, {
-    //   role: 'Composer'
-    // })
-    // ComponentRegistry.register(ComposeButton, {
-    //   location: WorkspaceStore.Location.RootSidebar
-    // })
-    // ComponentRegistry.register(RefreshButton, {
-    //   location: WorkspaceStore.Location.RootSidebar
-    // })
+    ComponentRegistry.register(ComposerViewForDraftClientId, {
+      role: 'Composer',
+    })
+    ComponentRegistry.register(ComposeButton, {
+      location: WorkspaceStore.Location.RootSidebar,
+    })
+    ComponentRegistry.register(RefreshButton, {
+      location: WorkspaceStore.Location.RootSidebar,
+    })
     ComponentRegistry.register(TeamEditButton, {
-      location: WorkspaceStore.Location.RootSidebar
+      location: WorkspaceStore.Location.RootSidebar,
     })
   } else if (AppEnv.isThreadWindow()) {
-    // ComponentRegistry.register(ComposerViewForDraftClientId, {
-    //   role: 'Composer'
-    // })
+    ComponentRegistry.register(ComposerViewForDraftClientId, {
+      role: 'Composer',
+    })
   } else if (AppEnv.isTeamEditWindow()) {
     ComponentRegistry.register(TeamEditContainer, {
-      location: WorkspaceStore.Location.Center
+      location: WorkspaceStore.Location.Center,
     })
   } else {
     AppEnv.getCurrentWindow().setMinimumSize(480, 250)
     ComponentRegistry.register(ComposerWithWindowProps, {
-      location: WorkspaceStore.Location.Center
+      location: WorkspaceStore.Location.Center,
     })
   }
 
