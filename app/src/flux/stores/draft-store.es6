@@ -1278,7 +1278,11 @@ class DraftStore extends MailspringStore {
       const syncData = cloneForSyncDraftData(session.draft());
       Actions.toMainSendDraft(headerMessageId, options, syncData);
       if (AppEnv.isComposerWindow()) {
-        AppEnv.hide();
+        if(AppEnv.isFullScreen()){
+          AppEnv.minimize();
+        }else{
+          AppEnv.hide();
+        }
       }
     }
     return;
