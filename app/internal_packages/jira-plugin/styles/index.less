@@ -1,0 +1,63 @@
+.rc-select-dropdown.jira-dropdown {
+    max-height: 300px;
+    li.rc-select-dropdown-menu-item {
+        height: 46px;
+        line-height: 46px;
+    }
+    li.rc-select-dropdown-menu-item-active {
+        color: unset;
+        background-image: none;
+    }
+    .jira-user {
+        display: flex;
+        align-items: center;
+        img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    }
+}
+
+
+.jira-plugin {
+    .assign-users {
+        width: 200px;
+        &.rc-select-focused {
+        }
+        .rc-select-selection__rendered .rc-select-search__field {
+            height: 100%;
+        }
+    }
+    .jira-user {
+        display: flex;
+        align-items: center;
+        img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    }
+    .jira-detail {
+        header {
+            &>div {
+                overflow: hidden;
+                padding-bottom: 6px;
+            }
+            &>div>span{
+               float: left; 
+            }
+            .label {
+                width: 64px;
+            }
+            .content {
+                width: 210px;
+            }
+        }
+        .label {
+            font-weight: 600;
+        }
+    }
+}
