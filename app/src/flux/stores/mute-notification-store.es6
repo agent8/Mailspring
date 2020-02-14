@@ -5,6 +5,7 @@ import {
   UnMuteNotificationTask,
   GetMuteListTask,
   AccountStore,
+  RegExpUtils,
 } from 'mailspring-exports';
 import DatabaseStore from './database-store';
 import MuteNotification from '../models/mute-notification';
@@ -63,6 +64,34 @@ class MuteNotificationStore extends MailspringStore {
 
   isMuteded = email => {
     const mutedEmailList = this.muteNotifacations.filter(mute => mute.email === email);
+    return mutedEmailList.length > 0;
+  };
+
+  isMutedDomainByAccount = (accountId, email) => {
+    const mutedEmailList = this.basicData.filter(mute => {
+      if (mute.accountId !== accountId) {
+        return false;
+      }
+
+      const isValidDomain = RegExpUtils.domainRegex(true).test(mute.email);
+      if (!isValidDomain) {
+        return false;
+      }
+
+      return email.indexOf(mute.email) >= 0;
+    });
+    return mutedEmailList.length > 0;
+  };
+
+  isMutedDomain = email => {
+    const mutedEmailList = this.muteNotifacations.filter(mute => {
+      const isValidDomain = RegExpUtils.domainRegex(true).test(mute.email);
+      if (!isValidDomain) {
+        return false;
+      }
+
+      return email.indexOf(mute.email) >= 0;
+    });
     return mutedEmailList.length > 0;
   };
 
