@@ -17,7 +17,9 @@ export default class JiraToolbarButton extends Component {
         })
     }
     render() {
-        console.log('*****props', this.props);
+        if (!this.props.thread || !this.props.thread.isJIRA) {
+            return null;
+        }
         return (
             <div className="button-group" style={{ order: -1 }}>
                 <div

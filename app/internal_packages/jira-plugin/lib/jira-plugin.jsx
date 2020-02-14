@@ -61,7 +61,7 @@ export default class JiraPlugin extends Component {
     }, 200);
 
     render() {
-        if (!this.state.active) {
+        if (!this.state.active || !this.props.thread || !this.props.thread.isJIRA) {
             return null;
         }
         return (
