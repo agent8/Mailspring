@@ -25,6 +25,7 @@ export default class ComposerHeader extends React.Component {
   static propTypes = {
     draft: PropTypes.object.isRequired,
     session: PropTypes.object.isRequired,
+    onClick: PropTypes.func.isRequired,
   };
 
   static contextTypes = {
@@ -146,6 +147,11 @@ export default class ComposerHeader extends React.Component {
     }
     return participants.to[0].name;
   }
+  _onHeaderClicked = () => {
+    if(this.props.onClick){
+      this.props.onClick();
+    }
+  };
 
   _onChangeParticipants = changes => {
     this.props.session.changes.add(changes);
@@ -161,7 +167,7 @@ export default class ComposerHeader extends React.Component {
 
   _draftNotReady = () => {
     return this.props.session.isPopout() || this.state.missingAttachments;
-  }
+  };
 
   _renderSubject = () => {
     const enabledFields = this.state.enabledFields || [];
@@ -277,7 +283,7 @@ export default class ComposerHeader extends React.Component {
 
   render() {
     return (
-      <div className="composer-header">
+      <div className="composer-header" onClick={this._onHeaderClicked}>
         <ComposerHeaderActions
           headerMessageId={this.props.draft.headerMessageId}
           enabledFields={this.state.enabledFields}

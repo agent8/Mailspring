@@ -146,7 +146,7 @@ export default class ConfigPersistenceManager {
       if (Array.isArray(this.settings.accounts)) {
         mailsyncSettings.accounts = {};
         for (let account of this.settings.accounts) {
-          mailsyncSettings.accounts[account.id] = account.mailsync ? account.mailsync : {};
+          mailsyncSettings.accounts[account.id || account.pid] = account.mailsync ? account.mailsync : {};
         }
       }
     }

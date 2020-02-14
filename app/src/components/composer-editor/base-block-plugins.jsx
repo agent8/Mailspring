@@ -404,7 +404,6 @@ export default [
     onlyIn: [BLOCK_CONFIG.code.type, BLOCK_CONFIG.blockquote.type],
   }),
 
-  // Pressing backspace when you're at the top of the document should not delete down
   {
     onKeyDown: function onKeyDown(event, change) {
       if (event.key !== 'Backspace' || event.shiftKey || event.metaKey || event.optionKey) {
@@ -420,7 +419,9 @@ export default [
           return;
         }
         event.preventDefault();
-        return true;
+        return;
+        // Pressing backspace when you're at the top of the document should not delete down
+        // return true;
       }
     },
   },
