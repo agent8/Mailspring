@@ -5,6 +5,7 @@ import ChatViewLeft from './chat-view-left'
 import ChatAccountSidebarFiller from '../components/chat/chat-account-sidebar-filler'
 import { LocalStorage } from 'chat-exports'
 import startXmpp from '../xmpp/startXmpp'
+import registerLoginChat from '../utils/register-login-chat'
 import Mousetrap from 'mousetrap'
 import bindMousetrap from '../shortcuts/bindMousetrap'
 const { ComponentRegistry, WorkspaceStore } = require('mailspring-exports')
@@ -30,7 +31,9 @@ module.exports = {
     // }
     require('../model/') // init all tables
     ChatView = require('./chat-view').default
+    console.log(' edison-beijing-chat activate:')
     startXmpp(xmpp)
+    registerLoginChat()
     bindMousetrap(Mousetrap)
     WorkspaceStore.defineSheet(
       'ChatView',

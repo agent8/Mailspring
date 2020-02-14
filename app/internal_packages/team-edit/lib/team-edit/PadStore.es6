@@ -115,8 +115,7 @@ class PadStore extends MailspringStore {
 
   getPadByPadId = async padId => {
     // await this.setKind(All)
-    console.log('getPadByPadId, this, this.pads, padId:', this, this.pads, padId)
-    debugger
+    console.log(' getPadByPadId, this, this.pads, padId:', this, this.pads, padId)
     if (!this.pads) {
       return
     }

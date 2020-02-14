@@ -499,6 +499,8 @@ class Actions {
   static addAttachments = ActionScopeWindow
   static addedAttachment = ActionScopeWindow
   static addedAttachments = ActionScopeWindow
+  static popoutTeamEditor = ActionScopeWindow
+
   static selectAttachment = ActionScopeWindow
   static removeAttachment = ActionScopeWindow
 
