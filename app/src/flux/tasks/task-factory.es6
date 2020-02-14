@@ -287,6 +287,110 @@ const TaskFactory = {
       });
     });
   },
+  tasksForGeneralMoveFolder({ threads, source, targetCategory, sourceCategory, previousFolder }) {
+    if (!Array.isArray(threads) || threads.length === 0) {
+      AppEnv.reportError(new Error(`Move task by ${source} failed, no threads`), { errorData: threads }, { grabLogs: true });
+      return [];
+    }
+    if (!targetCategory) {
+      AppEnv.reportError(new Error(`Move task by ${source} failed, no target category`), { errorData: targetCategory }, { grabLogs: true });
+      return [];
+    }
+    if (!previousFolder) {
+      AppEnv.reportError(new Error(`Move task by ${source} failed, no previous folder`), { errorData: previousFolder }, { grabLogs: true });
+      return [];
+    }
+    if (targetCategory.role === 'all' && sourceCategory && sourceCategory.isLabel()) {
+      // dragging from a label into All Mail? Make this an "archive" by removing the
+      // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [],
+          labelsToRemove: [targetCategory],
+          previousFolder,
+        }),
+      ];
+    }
+    if (targetCategory.isLabel() && sourceCategory && sourceCategory.isLabel() && (sourceCategory.role === 'important' || sourceCategory.role === 'flagged')) {
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [targetCategory],
+          labelsToRemove: [],
+          previousFolder,
+        }),
+      ];
+    }
+    if (targetCategory.isFolder()) {
+      // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
+      return [
+        new ChangeFolderTask({
+          threads,
+          source,
+          folder: targetCategory,
+          previousFolder,
+        }),
+      ];
+    }
+
+    if (targetCategory.isLabel() && sourceCategory && sourceCategory.isFolder()) {
+      // dragging from trash or spam into a label? We need to both apply the label and
+      // move to the "All Mail" folder.
+      if (sourceCategory.role === 'all') {
+        return [
+          new ChangeLabelsTask({
+            threads,
+            source,
+            labelsToAdd: [targetCategory],
+            labelsToRemove: [],
+            previousFolder,
+          })];
+      }
+      return [
+        new ChangeFolderTask({
+          threads,
+          source,
+          folder: targetCategory,
+          previousFolder,
+        }),
+      ];
+    }
+    // label to label
+    if (targetCategory.role === 'inbox') {
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [targetCategory],
+          labelsToRemove: [],
+          previousFolder,
+        }),
+      ];
+    }
+    if(sourceCategory && sourceCategory.isLabel() && (sourceCategory.role === 'sent' || sourceCategory.role === 'drafts')){
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [targetCategory],
+          labelsToRemove: [],
+          previousFolder,
+        }),
+      ];
+    }
+    return [
+      new ChangeLabelsTask({
+        threads,
+        source,
+        labelsToAdd: [targetCategory],
+        labelsToRemove: sourceCategory ? [sourceCategory] : [],
+        previousFolder,
+      }),
+    ];
+  },
 
   taskForUndo({ task }) {
     if (!task.id || !task.accountId) {

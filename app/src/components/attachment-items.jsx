@@ -209,10 +209,11 @@ export class AttachmentItem extends Component {
   };
 
   _onClick = e => {
-    if (this.state.isDownloading || this.props.isDownloading) {
+    if (this.state.isDownloading) {
+      AttachmentStore.refreshAttachmentsState(this.props.fileId);
       return;
     }
-    if (this.props.missing && !this.state.isDownloading) {
+    if (this.props.isDownloading || this.props.missing) {
       MessageStore.fetchMissingAttachmentsByFileIds({ fileIds: [this.props.fileId] });
     } else {
       if (fs.existsSync(this.props.filePath)) {
