@@ -25,7 +25,7 @@ class MessageStore extends MailspringStore {
 
   findAll() {
     return DatabaseStore.findAll(Message)
-      .where({deleted: false})
+      .where({ deleted: false })
       .where([Message.attributes.syncState.in([Message.messageSyncState.normal, Message.messageSyncState.saving, Message.messageSyncState.sending, Message.messageSyncState.updatingHasUID, Message.messageSyncState.updatingNoUID, Message.messageSyncState.failing])]);
   }
 
@@ -160,6 +160,7 @@ class MessageStore extends MailspringStore {
     // console.log('set store default');
     this._items = [];
     this._itemsExpanded = {};
+    console.log('*****_setStoreDefaults', false);
     this._itemsLoading = false;
     this._showingHiddenItems = false;
     this._thread = null;
@@ -376,6 +377,7 @@ class MessageStore extends MailspringStore {
     this._updateThread(focused);
     // this._thread = focused;
     // this._items = [];
+    console.log('*****_onApplyFocusChange', true);
     this._itemsLoading = true;
     // this._showingHiddenItems = false;
     // this._itemsExpanded = {};
@@ -487,21 +489,21 @@ class MessageStore extends MailspringStore {
     delete this._itemsExpanded[item.id];
   }
 
-  _onAttachmentCacheChange = ({attachmentChange = []} = {}) => {
+  _onAttachmentCacheChange = ({ attachmentChange = [] } = {}) => {
     let dataChange = false;
-    for (let k = 0; k < attachmentChange.length; k++){
+    for (let k = 0; k < attachmentChange.length; k++) {
       const change = attachmentChange[k];
-     for (let i = 0; i < this._items.length; i++){
-        if(this._items[i].id === change.messageId){
+      for (let i = 0; i < this._items.length; i++) {
+        if (this._items[i].id === change.messageId) {
           dataChange = true;
           break;
         }
       }
-     if(dataChange){
-       console.warn(`attachment cache updated`);
-       this._fetchFromCache();
-       return;
-     }
+      if (dataChange) {
+        console.warn(`attachment cache updated`);
+        this._fetchFromCache();
+        return;
+      }
     }
   };
 
@@ -535,6 +537,7 @@ class MessageStore extends MailspringStore {
       // know we're not ready, don't even bother.  Trigger once at start
       // and once when ready. Many third-party stores will observe
       // MessageStore and they'll be stupid and re-render constantly.
+      console.log('*****_fetchFromCache', false);
       this._itemsLoading = false;
       this._markAsRead();
       this.trigger(this);

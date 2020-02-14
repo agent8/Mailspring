@@ -3,7 +3,10 @@ import { ResizableRegion } from 'mailspring-component-kit';
 import JiraDetail from './jira-detail';
 import JiraApi from './jira-api';
 import Login from './jira-login';
-const CONFIG_KEY = 'core.plugins.jira';
+import _ from 'underscore';
+const CONFIG_KEY = 'plugin.jira.config';
+const WIDTH_KEY = 'plugin.jira.width';
+const JIRA_SHOW_KEY = 'plugin.jira.show';
 
 export default class JiraPlugin extends Component {
     static displayName = 'JiraPlugin';
@@ -21,8 +24,23 @@ export default class JiraPlugin extends Component {
             });
         }
         this.state = {
-            config: config ? config : {}
+            config: config ? config : {},
+            width: AppEnv.config.get(WIDTH_KEY),
+            active: !!AppEnv.config.get(JIRA_SHOW_KEY)
         }
+    }
+    componentDidMount() {
+        this.disposable = AppEnv.config.onDidChange(
+            JIRA_SHOW_KEY,
+            () => {
+                this.setState({
+                    active: !!AppEnv.config.get(JIRA_SHOW_KEY)
+                })
+            }
+        );
+    }
+    componentWillUnmount() {
+        this.disposable.dispose();
     }
     saveConfig = config => {
         this.jira = new JiraApi({
@@ -38,10 +56,22 @@ export default class JiraPlugin extends Component {
             config
         })
     }
+    _onColumnResize = _.debounce((w) => {
+        AppEnv.config.set(WIDTH_KEY, w);
+    }, 200);
 
     render() {
+        if (!this.state.active) {
+            return null;
+        }
         return (
-            <ResizableRegion className="jira-plugin" handle={ResizableRegion.Handle.Left} style={{ overflowY: 'auto' }}>
+            <ResizableRegion
+                className="jira-plugin"
+                handle={ResizableRegion.Handle.Left}
+                style={{ overflowY: 'auto' }}
+                onResize={this._onColumnResize}
+                initialWidth={this.state.width || 200}
+            >
                 {
                     !this.jira ?
                         <Login {...this.props} config={this.state.config} saveConfig={this.saveConfig} />

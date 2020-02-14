@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import Select, { Option } from 'rc-select';
 import { remote } from 'electron';
+import { DateUtils } from 'mailspring-exports';
 const configDirPath = AppEnv.getConfigDirPath();
 const jiraDirPath = path.join(configDirPath, 'jira_cache');
 
@@ -14,7 +15,16 @@ export default class JiraDetail extends Component {
         this.state = { allUsers: [] };
     }
     componentDidMount = async () => {
+        this.mounted = true;
         this.findIssue(this.props);
+    }
+    componentWillUnmount() {
+        this.mounted = false;
+    }
+    safeSetState = (data) => {
+        if (this.mounted) {
+            this.setState(data)
+        }
     }
     componentWillReceiveProps(nextProps) {
         this.findIssue(this.props);
@@ -32,7 +42,7 @@ export default class JiraDetail extends Component {
             }
             this.state
             let issue = null;
-            this.setState({
+            this.safeSetState({
                 issueKey,
                 loading: true,
                 attachments: {},
@@ -43,11 +53,9 @@ export default class JiraDetail extends Component {
             this.issueKey = issueKey;
             issue = await props.jira.findIssue(issueKey, `renderedFields`);
             console.log('*****issue', issue);
-            const status = await this.props.jira.listStatus();
-            console.log('*****status', status);
-            this.setState({
+            this.safeSetState({
                 loading: false,
-                issue,
+                issue
             })
             // download attachments
             if (issue && issue.fields.attachment) {
@@ -59,16 +67,20 @@ export default class JiraDetail extends Component {
             // get users
             if (this.state.allUsers.length === 0) {
                 const users = await this.props.jira.searchAssignableUsers({ issueKey: issueKey, maxResults: 500 });
-                this.setState({
+                this.safeSetState({
                     allUsers: users
                 })
             }
+            const { transitions } = await this.props.jira.listTransitions(issueKey);
+            console.log('****transitions', transitions);
+            this.safeSetState({
+                transitions
+            })
         }
     }
     findComments = async (issueKey) => {
         let rst = await this.props.jira.findComments(issueKey);
-        console.log('*****rst.comments', rst.comments);
-        this.setState({
+        this.safeSetState({
             comments: rst.comments
         })
     }
@@ -90,7 +102,7 @@ export default class JiraDetail extends Component {
             } else {
                 originalFiles[attachment.id] = localPath;
             }
-            this.setState({
+            this.safeSetState({
                 attachments,
                 originalFiles
             });
@@ -101,9 +113,6 @@ export default class JiraDetail extends Component {
             return '';
         }
         const { attachments, issue } = this.state;
-        // all attachments download is over
-        // console.log('****attachments', attachments, attachments.length);
-        console.log('****issue.fields.attachment.length', issue.fields.attachment, issue.fields.attachment.length);
         if (attachments && issue.fields.attachment && Object.keys(attachments).length === issue.fields.attachment.length) {
             return html.replace(/<img src="\/secure\/attachment\/.+?\//g, `<img src="${jiraDirPath}/`);
         }
@@ -114,8 +123,11 @@ export default class JiraDetail extends Component {
             <div>
                 {
                     comments.map(item => (
-                        <div key={item.id}>
-                            <span>{this.renderUserNode(item.author)}</span>
+                        <div key={item.id} className="row">
+                            <div className="comment-header">
+                                {this.renderUserNode(item.author)}
+                                <span className="datetime">{DateUtils.mediumTimeString(item.created)}</span>
+                            </div>
                             <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(item.renderedBody) }}></div>
                         </div>
                     ))
@@ -127,12 +139,12 @@ export default class JiraDetail extends Component {
         return option.props.displayname.toLocaleLowerCase().indexOf(inputVal.toLocaleLowerCase()) !== -1;
     }
     renderUserNode(userInfo) {
-        return <div className="jira-user">
+        return <span className="jira-user">
             <img src={userInfo.avatarUrls['24x24']} />
             <span>{userInfo.displayName}</span>
-        </div>
+        </span>
     }
-    onSelectChange = async item => {
+    onAssigneeChange = async item => {
         try {
             await this.props.jira.updateAssignee(this.issueKey, item.key);
             remote.dialog.showMessageBox({
@@ -147,79 +159,160 @@ export default class JiraDetail extends Component {
             });
         }
     }
+    onStatusChange = async item => {
+        console.log('****onStatusChange', item);
+        try {
+            let { transitions: oldTransitions, issue } = this.state;
+            for (const t of oldTransitions) {
+                if (t.id === item.key) {
+                    issue.fields.status = t.to;
+                    this.safeSetState({
+                        issue
+                    })
+                    break;
+                }
+            }
+            await this.props.jira.transitionIssue(this.issueKey, {
+                transition: {
+                    id: item.key
+                }
+            });
+            let { transitions } = await this.props.jira.listTransitions(this.issueKey);
+            this.safeSetState({
+                transitions
+            })
+            remote.dialog.showMessageBox({
+                buttons: ['OK'],
+                message: 'Change status successful.'
+            });
+        } catch (err) {
+            console.error('****err', err);
+            remote.dialog.showMessageBox({
+                type: 'error',
+                buttons: ['OK'],
+                message: 'Change status failed.'
+            });
+        }
+    }
     openAttachment = id => {
         const { attachments, originalFiles } = this.state;
         const path = originalFiles[id] || attachments[id];
         const currentWin = AppEnv.getCurrentWindow();
         currentWin.previewFile(path);
     }
+    addComment = async () => {
+        const comment = this.commentInput.value;
+        if (!comment) {
+            return;
+        }
+        try {
+            await this.props.jira.addComment(this.issueKey, comment);
+            this.findComments(this.issueKey);
+            remote.dialog.showMessageBox({
+                buttons: ['OK'],
+                message: 'Add comment successful.'
+            });
+        } catch (err) {
+            console.error('****err', err);
+            remote.dialog.showMessageBox({
+                type: 'error',
+                buttons: ['OK'],
+                message: 'Add comment failed.'
+            });
+        }
+    }
     render() {
-        const { issue, loading, attachments = {}, comments = [], allUsers, issueKey } = this.state;
+        const { issue, loading, attachments = {}, comments = [], allUsers, issueKey, transitions = [] } = this.state;
         if (loading) {
             return <div>loading</div>
         }
         if (!issue) {
             return <div>not exists</div>;
         }
+        const status = issue.fields.status;
         const { renderedFields, fields } = issue;
-        const children = allUsers
+        const assgineeOptions = allUsers
             .filter(item => item.accountType === "atlassian")
-            .map((item, idx) => {
-                return (
-                    <Option key={item.accountId} displayname={item.displayName} value={item.accountId}>{this.renderUserNode(item)}</Option>
-                )
-            });
-        if (children.length === 0) {
-            children.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
+            .map((item, idx) => (
+                <Option key={item.accountId} displayname={item.displayName} value={item.accountId}>{this.renderUserNode(item)}</Option>
+            ));
+        if (assgineeOptions.length === 0) {
+            assgineeOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
         }
+        const transitionOptions = transitions
+            .map(item => (
+                <Option key={item.id} value={item.id}>{item.name}</Option>
+            ));
+        const statusKey = 'status:' + status.id;
+        transitionOptions.push(
+            <Option key={statusKey} value={statusKey}>{status.name}</Option>
+        );
+        const { protocol, host } = this.props.jira
         return (
             <div className="jira-detail">
-                <header>
-                    <h1>{issueKey}</h1>
-                    <div>
-                        <span className="label">Assignee</span>
-                        <Select
-                            className="content assign-users"
-                            defaultValue={{ key: fields.assignee.accountId, value: this.renderUserNode(fields.assignee) }}
-                            optionLabelProp="children"
-                            filterOption={this.selectFilter}
-                            labelInValue={true}
-                            notFoundContent=""
-                            showSearch={true}
-                            onChange={this.onSelectChange}
-                            dropdownClassName="jira-dropdown"
-                        >{children}</Select>
+                <div className="jira-title"><a href={`${protocol}://${host}/browse/${issueKey}`}>{issueKey}</a></div>
+                <div className="wrapper">
+                    <header>
+                        <div>
+                            <span className="label">Assignee</span>
+                            <Select
+                                className="assign-users"
+                                defaultValue={{ key: fields.assignee.accountId, value: this.renderUserNode(fields.assignee) }}
+                                optionLabelProp="children"
+                                filterOption={this.selectFilter}
+                                labelInValue={true}
+                                notFoundContent=""
+                                showSearch={true}
+                                onChange={this.onAssigneeChange}
+                                dropdownClassName="jira-dropdown"
+                            >{assgineeOptions}</Select>
+                        </div>
+                        <div>
+                            <span className="label">Reporter</span>
+                            <span className="content">{this.renderUserNode(fields.reporter)}</span>
+                        </div>
+                        <div>
+                            <span className="label">Priority</span>
+                            <span className="content">{fields.priority.name}</span>
+                        </div>
+                        <div>
+                            <span className="label">Status</span>
+                            <Select
+                                className="jira-status"
+                                value={{ key: statusKey, value: status.name }}
+                                optionLabelProp="children"
+                                labelInValue={true}
+                                notFoundContent=""
+                                showSearch={false}
+                                onChange={this.onStatusChange}
+                                dropdownClassName="jira-dropdown"
+                            >{transitionOptions}</Select>
+                        </div>
+                    </header>
+                    <div className="jira-description">
+                        <span className="label">Description</span>
+                        <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(renderedFields.description) }}></div>
                     </div>
-                    <div>
-                        <span className="label">Reporter</span>
-                        <span className="content">{this.renderUserNode(fields.reporter)}</span>
+                    <div className="jira-comments">
+                        <span className="label">Comments</span>
+                        {this._renderComments(comments)}
                     </div>
-                    <div>
-                        <span className="label">Priority</span>
-                        <span className="content">{fields.priority.name}</span>
+                    <div className="jira-attachments">
+                        <span className="label">Attachments</span>
+                        <div className="attachments">
+                            {
+                                fields.attachment.map(item => (
+                                    <div title={item.filename} key={item.id} onClick={() => this.openAttachment(item.id)}>
+                                        {attachments[item.id] ? <img src={attachments[item.id]} /> : 'downloading'}
+                                    </div>
+                                ))
+                            }
+                        </div>
                     </div>
-                    <div>
-                        <span className="label">Status</span>
-                        <span className="content">{fields.status.name}</span>
-                    </div>
-                </header>
-                <div>
-                    <span className="label">Description</span>
-                    <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(renderedFields.description) }}></div>
                 </div>
-                <div>
-                    <span className="label">Comments</span>
-                    {this._renderComments(comments)}
-                </div>
-                <div>
-                    <span>Attachments</span>
-                    {
-                        fields.attachment.map(item => (
-                            <div key={item.id} onClick={() => this.openAttachment(item.id)}>
-                                {attachments[item.id] ? <img src={attachments[item.id]} /> : 'downloading'}
-                            </div>
-                        ))
-                    }
+                <div className="jira-submit-comment">
+                    <textarea ref={el => this.commentInput = el}></textarea>
+                    <button className="btn btn-jira" onClick={this.addComment}>Add Comment</button>
                 </div>
             </div >
         )
