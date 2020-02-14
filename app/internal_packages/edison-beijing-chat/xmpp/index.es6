@@ -1,16 +1,30 @@
 import Stanza, { Client } from '../../../src/xmpp/stanza.io'
 import EventEmitter3 from 'eventemitter3'
 import { Observable } from 'rxjs/Observable'
+import { ipcRenderer } from 'electron'
 
 /**
  * The interval between requests to join rooms
  */
 const JOIN_INTERVAL = 5
+const onceMsgMap = {}
 export class Xmpp extends EventEmitter3 {
   tmpData = {}
   xmppMap = {}
   init (credentials) {
     console.log(' Xmpp init credentials:', credentials)
+    // xmpp-send-message will be received 3 times for one mesage in one millisecond
+    // _.debounce can not process it
+    // so use onceMsgMap to prevent it send multiple times by xmpp
+    ipcRenderer.on('xmpp-send-message', (event, { msg, curJid }) => {
+      console.log('on xmpp-send-message:', curJid, msg)
+      const payload = msg.ediEncrypted && msg.ediEncrypted.payload
+      const key = `${msg.id}, ${payload}`
+      if (!onceMsgMap[key]) {
+        onceMsgMap[key] = true
+        this.sendMessage(msg, curJid)
+      }
+    })
     let jid = credentials.jid
     if (jid.indexOf('/') > 0) {
       jid = jid.substring(0, jid.indexOf('/'))
@@ -173,13 +187,18 @@ export class Xmpp extends EventEmitter3 {
       })
     })
   }
-  sendMessage (message, curJid) {
-    let xmpp = this.getXmpp(curJid)
-    if (!xmpp) {
-      console.warn('xmpp is null', curJid)
-      return
+  sendMessage = (message, curJid) => {
+    if (AppEnv.isMainWindow()) {
+      let xmpp = this.getXmpp(curJid)
+      if (!xmpp) {
+        console.warn('xmpp is null', curJid)
+        return
+      }
+      xmpp.sendMessage(message)
+    } else {
+      console.log('ipcRenderer.send: xmpp-send-message: ', message, curJid)
+      ipcRenderer.send('command', 'application:xmpp-send-message', message, curJid)
     }
-    xmpp.sendMessage(message)
   }
 }
 
