@@ -38,13 +38,13 @@ class PadStore extends MailspringStore {
       condition = {}
     }
     let data = await PadModel.findAll({ where: condition })
-    console.log(' PadStore.refreshPads: this.updated, data', this.updated, data)
+    // console.log(' PadStore.refreshPads: this.updated, data', this.updated, data)
     if (!this.updated || !data.length) {
       await this.updateFromServer()
       this.updated = true
       data = await PadModel.findAll({ where: condition })
     }
-    console.log('refreshPads PadModel.findAll:', data)
+    // console.log('refreshPads PadModel.findAll:', data)
     this.pads = data
     if (data && !this.pad) {
       this.pad = this.pads[0]
@@ -115,13 +115,12 @@ class PadStore extends MailspringStore {
 
   getPadByPadId = async padId => {
     // await this.setKind(All)
-    console.log(' getPadByPadId, this, this.pads, padId:', this, this.pads, padId)
+    // console.log(' getPadByPadId, this, this.pads, padId:', this, this.pads, padId)
     if (!this.pads) {
       return
     }
-    console.log('getPadByPadId, this, padId 2:', this, padId)
+    // console.log('getPadByPadId, this, padId 2:', this, padId)
     for (const pad of this.pads) {
-      console.log('getPadByPadId, pad.id', pad.id)
       if (pad.id === padId) {
         return pad
       }

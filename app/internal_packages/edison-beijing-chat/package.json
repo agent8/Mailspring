@@ -10,9 +10,6 @@
     "mailspring": "*"
   },
   "windowTypes": {
-    "default": true,
-    "thread-popout": true,
-    "team-edit": true,
-    "edison-beijing-chat": true
+    "default": true
   }
 }

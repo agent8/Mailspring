@@ -43,7 +43,10 @@ export async function registerLoginEmailAccountForChat (account) {
     )
     if (account.settings && !account.settings.imap_password && !account.settings.refresh_token) {
       console.error('email account passwords in keychain lost! ', account)
-      log('register-login', `registerLoginEmailAccountForChat: email account passwords in keychain lost!`)
+      log(
+        'register-login',
+        `registerLoginEmailAccountForChat: email account passwords in keychain lost!`
+      )
       return
     }
     let type
@@ -63,6 +66,7 @@ export async function registerLoginEmailAccountForChat (account) {
         account.provider,
         account.settings
       )
+      console.log(' register chat result: ', result)
       err = result.err
       res = result.res
     } catch (e) {

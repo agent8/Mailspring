@@ -649,9 +649,9 @@ export default class ComposerView extends React.Component {
     let email = emails[0]
     const token = await keyMannager.getAccessTokenByEmail(email)
     const chatAccountList = Object.values(chatAccounts)
-    console.log('tm-editor.render: chatAccounts: ', chatAccounts)
+    // console.log('tm-editor.render: chatAccounts: ', chatAccounts)
     const chatAccount = chatAccountList[0] || {}
-    console.log('tm-editor.render: chatAccount: ', chatAccount)
+    // console.log('tm-editor.render: chatAccount: ', chatAccount)
     const userId = chatAccount.userId || '100007'
     const name = chatAccount.name
     const userName = name
