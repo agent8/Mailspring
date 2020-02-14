@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import JiraApi from './jira-api';
+const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 
 export default class Login extends Component {
     constructor(props) {
@@ -56,27 +57,41 @@ export default class Login extends Component {
     }
     render() {
         const { host, username, password } = this.props.config;
-        const { error } = this.state;
+        const { error, loading } = this.state;
         return (
-            <div>
+            <div className="jira-login">
+                <div className="jira-logo">
+                    <RetinaImg
+                        name={'jira.svg'}
+                        isIcon
+                        mode={RetinaImg.Mode.ContentIsMask}
+                    />
+                </div>
                 {
                     error && <div className="error">{error}</div>
                 }
                 <div className="row">
-                    <label htmlFor="jira-email">Jira workspace domain</label>
+                    <span className="label">Jira workspace domain</span>
                     <input type="text" defaultValue={'easilydo.atlassian.net'} ref={el => this.host = el} placeholder="eg. https://your-workspace.atlassian.net" />
                 </div>
                 <div className="row">
-                    <label htmlFor="jira-email">Email</label>
-                    <input type="text" defaultValue={'zhansheng@edison.tech'} ref={el => this.email = el} />
+                    <span className="label">Email</span>
+                    <input type="text" defaultValue={username} ref={el => this.email = el} />
                 </div>
                 <div className="row">
-                    <label htmlFor="jira-password">Api token</label>
-                    <input type="password" defaultValue={'q8N9fUofBVHWnl7YwWha775D'} ref={el => this.password = el} />
-                    <span>Get API token from <a href="https://id.atlassian.com/manage/api-tokens">here</a></span>
+                    <span className="label">API token</span>
+                    <input type="password" defaultValue={password} ref={el => this.password = el} />
+                    <span><a href="https://id.atlassian.com/manage/api-tokens">Get API token from here.</a></span>
                 </div>
                 <div className="row">
-                    <button onClick={this.submit}>Login</button>
+                    {loading ?
+                        <LottieImg
+                            name="loading-spinner-blue"
+                            size={{ width: 20, height: 20 }}
+                            style={{ margin: 'none' }}
+                        />
+                        : <button className="btn btn-jira btn-jira-login" onClick={this.submit}>Login</button>
+                    }
                 </div>
             </div>
         )

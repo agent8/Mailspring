@@ -4,6 +4,7 @@ import path from 'path';
 import Select, { Option } from 'rc-select';
 import { remote } from 'electron';
 import { DateUtils } from 'mailspring-exports';
+const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
 const jiraDirPath = path.join(configDirPath, 'jira_cache');
 
@@ -45,6 +46,8 @@ export default class JiraDetail extends Component {
             this.safeSetState({
                 issueKey,
                 loading: true,
+                assignProgress: null,
+                statusProgress: null,
                 attachments: {},
                 originalFiles: {},
                 issue: null,
@@ -81,7 +84,8 @@ export default class JiraDetail extends Component {
     findComments = async (issueKey) => {
         let rst = await this.props.jira.findComments(issueKey);
         this.safeSetState({
-            comments: rst.comments
+            comments: rst.comments,
+            commentLoading: false
         })
     }
     downloadUri = async (attachments, isThumbnail = true) => {
@@ -116,7 +120,7 @@ export default class JiraDetail extends Component {
         if (attachments && issue.fields.attachment && Object.keys(attachments).length === issue.fields.attachment.length) {
             return html.replace(/<img src="\/secure\/attachment\/.+?\//g, `<img src="${jiraDirPath}/`);
         }
-        return html.replace(/<img src="\/secure\/attachment\/.+?\//g, `<img style='visibility: hidden;' src="${jiraDirPath}/`);
+        return html.replace(/<img src="\/secure\/attachment\/.+?\//g, `<img style='display: none;' src="${jiraDirPath}/`);
     }
     _renderComments = comments => {
         return (
@@ -146,28 +150,30 @@ export default class JiraDetail extends Component {
     }
     onAssigneeChange = async item => {
         try {
+            this.safeSetState({
+                assignProgress: 'loading'
+            })
             await this.props.jira.updateAssignee(this.issueKey, item.key);
-            remote.dialog.showMessageBox({
-                buttons: ['OK'],
-                message: 'Change assignee successful.'
-            });
+            this.safeSetState({
+                assignProgress: 'success'
+            })
+            // this._showDialog('Change assignee successful.');
         } catch (err) {
-            remote.dialog.showMessageBox({
-                type: 'error',
-                buttons: ['OK'],
-                message: 'Change assignee failed.'
-            });
+            this.safeSetState({
+                assignProgress: ''
+            })
+            this._showDialog('Change assignee failed.');
         }
     }
     onStatusChange = async item => {
-        console.log('****onStatusChange', item);
         try {
             let { transitions: oldTransitions, issue } = this.state;
             for (const t of oldTransitions) {
                 if (t.id === item.key) {
                     issue.fields.status = t.to;
                     this.safeSetState({
-                        issue
+                        issue,
+                        statusProgress: 'loading'
                     })
                     break;
                 }
@@ -179,19 +185,16 @@ export default class JiraDetail extends Component {
             });
             let { transitions } = await this.props.jira.listTransitions(this.issueKey);
             this.safeSetState({
-                transitions
+                transitions,
+                statusProgress: 'success'
             })
-            remote.dialog.showMessageBox({
-                buttons: ['OK'],
-                message: 'Change status successful.'
-            });
+            // this._showDialog('Change status successful.');
         } catch (err) {
             console.error('****err', err);
-            remote.dialog.showMessageBox({
-                type: 'error',
-                buttons: ['OK'],
-                message: 'Change status failed.'
-            });
+            this.safeSetState({
+                statusProgress: ''
+            })
+            this._showDialog('Change status failed.');
         }
     }
     openAttachment = id => {
@@ -206,25 +209,63 @@ export default class JiraDetail extends Component {
             return;
         }
         try {
+            this.safeSetState({
+                commentLoading: true
+            });
             await this.props.jira.addComment(this.issueKey, comment);
             this.findComments(this.issueKey);
-            remote.dialog.showMessageBox({
-                buttons: ['OK'],
-                message: 'Add comment successful.'
-            });
+            this._showDialog('Add comment successful.');
         } catch (err) {
             console.error('****err', err);
-            remote.dialog.showMessageBox({
-                type: 'error',
-                buttons: ['OK'],
-                message: 'Add comment failed.'
-            });
+            this._showDialog('Add comment failed.');
         }
     }
+    _showDialog(message, type = 'info') {
+        remote.dialog.showMessageBox({
+            type,
+            buttons: ['OK'],
+            message
+        });
+    }
+    _renderLoading(width) {
+        return <LottieImg
+            name="loading-spinner-blue"
+            size={{ width, height: width }}
+            style={{ margin: 'none', display: 'inline-block' }}
+        />
+    }
+    _renderProgress(progress) {
+        let p = null;
+        if (progress === 'loading') {
+            p = this._renderLoading(20);
+        }
+        else if (progress === 'success') {
+            p = <RetinaImg
+                className="jira-success"
+                style={{ width: 24 }}
+                name={'check-alone.svg'}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+            />
+        }
+        return <span className="jira-progress">{p}</span>;
+    }
     render() {
-        const { issue, loading, attachments = {}, comments = [], allUsers, issueKey, transitions = [] } = this.state;
+        const { issue,
+            loading,
+            commentLoading,
+            assignProgress,
+            statusProgress,
+            attachments = {},
+            comments = [],
+            allUsers,
+            issueKey,
+            transitions = []
+        } = this.state;
         if (loading) {
-            return <div>loading</div>
+            return <div className="large-loading">
+                {this._renderLoading(40)}
+            </div>
         }
         if (!issue) {
             return <div>not exists</div>;
@@ -255,17 +296,20 @@ export default class JiraDetail extends Component {
                     <header>
                         <div>
                             <span className="label">Assignee</span>
-                            <Select
-                                className="assign-users"
-                                defaultValue={{ key: fields.assignee.accountId, value: this.renderUserNode(fields.assignee) }}
-                                optionLabelProp="children"
-                                filterOption={this.selectFilter}
-                                labelInValue={true}
-                                notFoundContent=""
-                                showSearch={true}
-                                onChange={this.onAssigneeChange}
-                                dropdownClassName="jira-dropdown"
-                            >{assgineeOptions}</Select>
+                            <div className="content with-progress">
+                                <Select
+                                    className="assign-users"
+                                    defaultValue={{ key: fields.assignee.accountId, value: this.renderUserNode(fields.assignee) }}
+                                    optionLabelProp="children"
+                                    filterOption={this.selectFilter}
+                                    labelInValue={true}
+                                    notFoundContent=""
+                                    showSearch={true}
+                                    onChange={this.onAssigneeChange}
+                                    dropdownClassName="jira-dropdown"
+                                >{assgineeOptions}</Select>
+                                {this._renderProgress(assignProgress)}
+                            </div>
                         </div>
                         <div>
                             <span className="label">Reporter</span>
@@ -277,16 +321,19 @@ export default class JiraDetail extends Component {
                         </div>
                         <div>
                             <span className="label">Status</span>
-                            <Select
-                                className="jira-status"
-                                value={{ key: statusKey, value: status.name }}
-                                optionLabelProp="children"
-                                labelInValue={true}
-                                notFoundContent=""
-                                showSearch={false}
-                                onChange={this.onStatusChange}
-                                dropdownClassName="jira-dropdown"
-                            >{transitionOptions}</Select>
+                            <div className="content with-progress">
+                                <Select
+                                    className="jira-status"
+                                    value={{ key: statusKey, value: status.name }}
+                                    optionLabelProp="children"
+                                    labelInValue={true}
+                                    notFoundContent=""
+                                    showSearch={false}
+                                    onChange={this.onStatusChange}
+                                    dropdownClassName="jira-dropdown"
+                                >{transitionOptions}</Select>
+                                {this._renderProgress(statusProgress)}
+                            </div>
                         </div>
                     </header>
                     <div className="jira-description">
@@ -312,7 +359,11 @@ export default class JiraDetail extends Component {
                 </div>
                 <div className="jira-submit-comment">
                     <textarea ref={el => this.commentInput = el}></textarea>
-                    <button className="btn btn-jira" onClick={this.addComment}>Add Comment</button>
+                    {
+                        commentLoading ?
+                            this._renderLoading(20)
+                            : <button className="btn btn-jira" onClick={this.addComment}>Add Comment</button>
+                    }
                 </div>
             </div >
         )

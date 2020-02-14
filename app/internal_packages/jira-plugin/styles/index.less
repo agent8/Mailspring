@@ -1,4 +1,5 @@
 @import 'ui-variables';
+@jiraColor : rgb(0, 82, 204);
 
 .rc-select-dropdown.jira-dropdown {
     max-height: 300px;
@@ -29,12 +30,40 @@
 .jira-plugin {
     border-left: 1px solid @border-color-divider;
     border-top: 1px solid @border-color-divider;
-    padding: 4px 10px 20px;
+    padding: 8px 18px 20px;
     background: @background-primary;
     color: @text-color;
+    .jira-login {
+        max-width: 300px;
+        margin: 0 auto;
+        .jira-logo {
+            text-align: center;
+            margin: 30px 0 15px;
+            img.content-mask {
+                width: 108px;
+                background: @jiraColor;
+            }
+        }
+        .row {
+            margin-bottom: 16px;
+            .label {
+                font-weight: 600;
+                font-size: 14px;
+            }
+            input {
+                height: 32px;
+                line-height: 32px;
+                padding-left: 6px;
+            }
+        }
+        .btn-jira-login {
+            width: 200px;
+        }
+    }
+
     .jira-status,
     .assign-users {
-        width: 200px;
+        width: 170px;
         .rc-select-selection {
             &:hover {
                 box-shadow: none;
@@ -73,6 +102,15 @@
             margin-right: 8px;
         }
     }
+    .large-loading {
+        margin-top: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .jira-progress {
+        display: flex;
+    }
     .jira-detail {
         display: flex;
         flex-direction: column;
@@ -96,6 +134,11 @@
                 line-height: 28px;
                 width: 200px;
                 padding-left: 10px;
+                &.with-progress {
+                    align-items: center;
+                    padding: 0;
+                    display: flex;
+                }
             }
         }
         .label {
@@ -128,11 +171,12 @@
                 font-size: 16px;
                 color: @text-color;
                 &:hover {
-                    color: @blue;
+                    color: @jiraColor;
                     text-decoration: underline;
                 }
             }
         }
+        .jira-attachments,
         .jira-description,
         .jira-comments {
             margin-top: 15px;
@@ -165,7 +209,6 @@
             } 
         }
         .jira-attachments {
-            margin-top: 15px;
             .attachments > div {
                 position: relative;
                 width: 100px;
@@ -202,11 +245,13 @@
             height: 200px
         }
     }
+    .jira-success {
+        background: @green;
+    }
     .btn-jira {
         -webkit-box-align: baseline;
         align-items: baseline;
         box-sizing: border-box;
-        display: inline-flex;
         font-size: inherit;
         font-style: normal;
         font-weight: normal;
@@ -231,6 +276,6 @@
 
 .btn-toolbar.message-toolbar-jira.active {
     img.content-mask {
-        background: @blue;
+        background: @jiraColor;
     }
 }
