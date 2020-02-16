@@ -161,11 +161,11 @@ class SidebarSection {
     // if (folderItem) {
     //   items.push(folderItem);
     // }
-    folderItem = SidebarItem.forSpam(accountIds, { dispalyName: 'Spam' });
+    folderItem = SidebarItem.forSpam(accountIds, { displayName: 'Spam' });
     if (folderItem) {
       items.push(folderItem);
     }
-    folderItem = SidebarItem.forAllTrash(accountIds, { dispalyName: 'Trash' });
+    folderItem = SidebarItem.forAllTrash(accountIds, { displayName: 'Trash' });
     if (folderItem) {
       items.push(folderItem);
     }
@@ -174,7 +174,7 @@ class SidebarSection {
     if (folderItem) {
       items.push(folderItem);
     }
-    folderItem = SidebarItem.forSentMails(accountIds, { dispalyName: 'All Sent' });
+    folderItem = SidebarItem.forSentMails(accountIds, { displayName: 'All Sent' });
     if (folderItem) {
       items.push(folderItem);
     }
