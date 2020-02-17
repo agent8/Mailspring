@@ -65,7 +65,7 @@ function InflatesDraftClientId(ComposedComponent) {
 
     componentWillUnmount() {
       this._mounted = false;
-      this._teardownForDraft();
+      this._teardownForDraft({headerMessageId: this.props.headerMessageId});
       // this._deleteDraftIfEmpty();
     }
 
@@ -75,7 +75,7 @@ function InflatesDraftClientId(ComposedComponent) {
         newProps.messageId !== this.props.messageId
       ) {
         // console.log(`new props: ${JSON.stringify(newProps)}`);
-        this._teardownForDraft();
+        this._teardownForDraft({headerMessageId: this.props.headerMessageId});
         if (
           newProps.draft &&
           newProps.draft.savedOnRemote &&
@@ -123,9 +123,9 @@ function InflatesDraftClientId(ComposedComponent) {
           this._sessionUnlisten = session.listen(() => {
             // console.log('inflates, data change');
             if (!shouldSetState()) {
-              // console.log('-------------------inflate-draft-cilent-id--------------- ');
-              // console.log('did not update state')
-              // console.log('------------------------------------- ');
+              console.log('-------------------inflate-draft-cilent-id--------------- ');
+              console.log('did not update state')
+              console.log('------------------------------------- ');
               return;
             }
             if(this._mounted){
@@ -164,9 +164,9 @@ function InflatesDraftClientId(ComposedComponent) {
           );
         };
         if (!shouldSetState()) {
-          // console.log('-------------------inflate-draft-cilent-id--------------- ');
-          // console.log('did not update state')
-          // console.log('------------------------------------- ');
+          console.log('-------------------inflate-draft-cilent-id--------------- ');
+          console.log('did not update state')
+          console.log('------------------------------------- ');
           return;
         }
         // if (this._sessionUnlisten) {
@@ -175,9 +175,9 @@ function InflatesDraftClientId(ComposedComponent) {
         this._sessionUnlisten = session.listen(() => {
           // console.log('inflates, data change');
           if (!shouldSetState()) {
-            // console.log('-------------------inflate-draft-cilent-id--------------- ');
-            // console.log('did not update state')
-            // console.log('------------------------------------- ');
+            console.log('-------------------inflate-draft-cilent-id--------------- ');
+            console.log('did not update state')
+            console.log('------------------------------------- ');
             return;
           }
           if(this._mounted){
@@ -198,13 +198,20 @@ function InflatesDraftClientId(ComposedComponent) {
       });
     }
 
-    _teardownForDraft() {
+    _teardownForDraft({headerMessageId} = {}) {
+      if(!headerMessageId){
+        AppEnv.logError('headerMessageId is null');
+        return;
+      }
       if (this._sessionUnlisten) {
         this._sessionUnlisten();
       }
       if (this.state.draft) {
+        if(headerMessageId !== this.state.headerMessageId){
+          AppEnv.logWarning(`HeaderMessageId is inconsisstent, input: ${headerMessageId}, state: ${this.state.headerMessageId}`);
+        }
         Actions.draftWindowClosing({
-          headerMessageIds: [this.state.draft.headerMessageId],
+          headerMessageIds: [headerMessageId],
           windowLevel: this._windowLevel,
           source: 'componentWillUnmount',
         });
