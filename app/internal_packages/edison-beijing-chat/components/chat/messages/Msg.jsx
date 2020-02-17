@@ -534,9 +534,13 @@ export default class Msg extends PureComponent {
         />
       )
     } else {
-      const isSystemEvent = ['error403', 'memberschange', 'change-group-name'].includes(
-        msgBody.type
-      )
+      const isSystemEvent = [
+        'error403',
+        'memberschange',
+        'change-group-name',
+        'pad-add-member',
+        'pad-remove-member',
+      ].includes(msgBody.type)
       return (
         <div
           key={msg.id}

@@ -6,10 +6,12 @@ import {
   ConversationStore,
   RoomStore,
   E2eeStore,
-  BlockStore
+  BlockStore,
 } from 'chat-exports'
 import { getName } from '../utils/name'
 import { registerLoginEmailAccountForChat } from '../utils/register-login-chat'
+import { postAsync } from '../utils/httpex'
+import { getChatAccountByUserId, getTokenByUserId } from '../utils/chat-account'
 
 /**
  * Creates a middleware for the XMPP class to dispatch actions to a redux store whenever any events
@@ -169,7 +171,7 @@ const startXmpp = xmpp => {
     MessageStore.saveMessagesAndRefresh([msg])
   })
 
-  xmpp.on('message:failed', async message => { })
+  xmpp.on('message:failed', async message => {})
 
   xmpp.on('auth:failed', async data => {
     const account = OnlineUserStore.getSelfAccountById(data.curJid)
@@ -196,7 +198,89 @@ const startXmpp = xmpp => {
     await BlockStore.refreshBlocksFromXmpp(curJid)
   })
 
-  return next => action => next(action)
+  xmpp.on('app-event', async data => {
+    if (!data || !data.eventData) {
+      return
+    }
+    const userId = data && data.to && data.to.local
+    const from = data.from
+    const fromjid = data.from.bare
+    const padId = data.eventData.padID
+    const curJid = data.curJid
+    if (!userId || !padId) {
+      return
+    }
+    const token = await getTokenByUserId(userId)
+    if (!token) {
+      return
+    }
+    const padActionMembers = data.eventData.members
+    const padActionType = data.eventData.type
+    const options = { userId, token }
+    const apiPath = window.teamPadConfig.teamEditAPIUrl + 'listPadsOfAuthor'
+    let res = await postAsync(apiPath, options, {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+      },
+    })
+    if (!res) {
+      return
+    }
+    if (typeof res === 'string') {
+      res = JSON.parse(res)
+    }
+    if (!res.data) {
+      return
+    }
+    const apidata = res.data
+    const pads = apidata.padIDs
+    let pad
+    for (pad of pads) {
+      if (pad.id === padId) {
+        break
+      }
+    }
+    if (!pad) {
+      return
+    }
+    const convJid = data.from.bare // pad.chatRoomId + '@muc.im.edison.tech'
+    console.log(' app-event: convJid, pad.chatRoomId: ', convJid, pad.chatRoomId)
+    const conv = await ConversationStore.getConversationByJid(convJid)
+    if (!conv) {
+      const name = `Pad: ${pad.name}`
+      const roomId = convJid
+      const curJid = userId + '@im.edison.tech'
+      const contacts = []
+      const isExistedAppRoom = true
+      const payload = {
+        contacts,
+        roomId,
+        name,
+        curJid,
+        isExistedAppRoom,
+      }
+      await ConversationStore.createGroupConversation(payload)
+    }
+    const chatAccount = getChatAccountByUserId(userId)
+    // const url = `edisonmail://teamedit.edison.tech/${draft.headerMessageId}?padId=${padId}&inviterEmail=${from}
+    // &userId=${userId}&userName=${member.name}&email=${member.email}`
+    const padMemberChangeData = {
+      from,
+      curJid,
+      padId,
+      fromjid,
+      convJid,
+      userId,
+      name: chatAccount.name,
+      email: chatAccount.email,
+      padActionMembers,
+      padActionType,
+    }
+    await RoomStore.onPadMemberChange(padMemberChangeData)
+  })
 }
 
 export default startXmpp

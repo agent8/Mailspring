@@ -1,6 +1,13 @@
+import { ipcRenderer } from 'electron'
 import MailspringStore from 'mailspring-store'
 import { Actions, WorkspaceStore } from 'mailspring-exports'
-import { ChatActions, RoomStore, ConversationStore, ContactStore, FailMessageStore } from 'chat-exports'
+import {
+  ChatActions,
+  RoomStore,
+  ConversationStore,
+  ContactStore,
+  FailMessageStore,
+} from 'chat-exports'
 import { decrypte } from '../utils/rsa'
 import { decryptByAES } from '../utils/aes'
 import { downloadFile } from '../utils/awss3'
@@ -21,7 +28,7 @@ export const RECEIVE_GROUPCHAT = 'RECEIVE_GROUPCHAT'
 export const RECEIVE_PRIVATECHAT = 'RECEIVE_PRIVATECHAT'
 
 class MessageStore extends MailspringStore {
-  constructor() {
+  constructor () {
     super()
     this.groupedMessages = []
     this.conversationJid
@@ -29,13 +36,13 @@ class MessageStore extends MailspringStore {
     this._triggerDebounced = _.debounce(() => this.trigger(), 20)
   }
 
-  _registerListeners() { }
+  _registerListeners () {}
   getMessageById = async (id, conversationJid) => {
     return await MessageModel.findOne({
       where: {
         id,
-        conversationJid
-      }
+        conversationJid,
+      },
     })
   }
 
@@ -79,11 +86,29 @@ class MessageStore extends MailspringStore {
     this.showNotification(message)
   }
 
+  saveProcessGroupMessage = async message => {
+    await this.prepareForSaveMessage(message, RECEIVE_GROUPCHAT)
+    const conv = await this.processGroupMessage(message)
+    console.log('saveProcessGroupMessage:', message, conv)
+    const convJid = message.conversationJid
+    if (convJid && convJid.startsWith('app-')) {
+      console.log('saveProcessGroupMessage: ipcRenderer.send:', convJid)
+      ipcRenderer.send('command', 'application:update-padroom-message', convJid)
+    }
+    if (!conv) {
+      return
+    }
+    if (conv.jid === this.conversationJid) {
+      this.retrieveSelectedConversationMessages(conv.jid)
+    }
+    this.showNotification(message)
+  }
+
   removeMessagesByConversationJid = async jid => {
     await MessageModel.destroy({
       where: {
-        conversationJid: jid
-      }
+        conversationJid: jid,
+      },
     })
     if (this.conversationJid === jid) {
       this.groupedMessages = []
@@ -122,7 +147,7 @@ class MessageStore extends MailspringStore {
       lastMessageTime: refreshConv.lastMessageTime || parseInt(payload.ts),
       lastMessageText: refreshConv.lastMessageText || getMessageContent(payload),
       lastMessageSender: refreshConv.sender || payload.from.bare,
-      at: false
+      at: false,
     }
 
     await ConversationStore.saveConversations([coversation])
@@ -158,7 +183,7 @@ class MessageStore extends MailspringStore {
     const bodyJson = this.downloadAndTagImageFileInMessage({
       id: message.id,
       conversationJid: getConversationJidFromMessagePayload(message),
-      body: bodyStr
+      body: bodyStr,
     })
     if (!bodyJson) {
       return
@@ -211,7 +236,11 @@ class MessageStore extends MailspringStore {
       msgBody.aes = aes
     }
 
-    if (isImage(msgBody.type) && msgBody.mediaObjectId && !msgBody.mediaObjectId.match(/^https?:\/\//)) {
+    if (
+      isImage(msgBody.type) &&
+      msgBody.mediaObjectId &&
+      !msgBody.mediaObjectId.match(/^https?:\/\//)
+    ) {
       // 原图路径
       const originalPath = msgBody.path && msgBody.path.replace('file://', '')
       // 缩略图路径
@@ -274,12 +303,12 @@ class MessageStore extends MailspringStore {
   retrieveSelectedConversationMessages = async (jid, limit, offset) => {
     const condistion = {
       where: {
-        conversationJid: jid
+        conversationJid: jid,
       },
-      order: [['sentTime', 'ASC']]
+      order: [['sentTime', 'ASC']],
     }
     if (limit) {
-      console.log(`messageStore`);
+      console.log(`messageStore`)
       condistion.limit = limit
     }
     if (offset) {
@@ -342,7 +371,7 @@ class MessageStore extends MailspringStore {
       lastMessageTime: refreshConv.lastMessageTime || parseInt(payload.ts),
       lastMessageText: refreshConv.lastMessageText || getMessageContent(payload),
       lastMessageSender: refreshConv.sender || payload.from.resource + '@im.edison.tech',
-      at
+      at,
     }
 
     // if conversation's curJid is not equal to payload's curJid, skip it.
@@ -350,7 +379,11 @@ class MessageStore extends MailspringStore {
       return
     }
 
-    const { contact, roomMembers } = await RoomStore.getMemeberInfo(conv.jid, conv.curJid, conv.lastMessageSender)
+    const { contact, roomMembers } = await RoomStore.getMemeberInfo(
+      conv.jid,
+      conv.curJid,
+      conv.lastMessageSender
+    )
     // if avatar members is empty, set the value
     if (!conv.avatarMembers || conv.avatarMembers.length === 0) {
       conv.avatarMembers = roomMembers.slice(0, 2)
@@ -370,8 +403,8 @@ class MessageStore extends MailspringStore {
         contactNameList.length > 4
           ? contactNameList.slice(0, 3).join(', ') + ' & ' + `${contactNameList.length - 3} others`
           : contactNameList.slice(0, contactNameList.length - 1).join(', ') +
-          ' & ' +
-          contactNameList[contactNameList.length - 1]
+            ' & ' +
+            contactNameList[contactNameList.length - 1]
       conv.name = fallbackName
     }
     await ConversationStore.saveConversations([conv])
@@ -390,7 +423,7 @@ class MessageStore extends MailspringStore {
       memberName = await RoomStore.getMemberName({
         roomJid: payload.from.bare,
         curJid: payload.curJid,
-        memberJid: msgFrom
+        memberJid: msgFrom,
       })
     }
     const contact = ContactStore.findContactByJid(msgFrom)
@@ -466,7 +499,7 @@ class MessageStore extends MailspringStore {
       sentTime: new Date(timeSend).getTime(),
       status: MESSAGE_STATUS_RECEIVED,
       ts: payload.ts,
-      curJid: payload.curJid
+      curJid: payload.curJid,
     }
     await this.saveMessages([message])
   }
@@ -489,8 +522,8 @@ class MessageStore extends MailspringStore {
       const messageInDb = await MessageModel.findOne({
         where: {
           id: msg.id,
-          conversationJid: msg.conversationJid
-        }
+          conversationJid: msg.conversationJid,
+        },
       })
       if (messageInDb) {
         // because sending message in group chat will be overrided by the same RECEIVE_GROUPCHAT message overrided
@@ -531,8 +564,8 @@ class MessageStore extends MailspringStore {
         const messageInDb = await MessageModel.findOne({
           where: {
             id: msg.id,
-            conversationJid: msg.conversationJid
-          }
+            conversationJid: msg.conversationJid,
+          },
         })
         if (messageInDb && messageInDb.status === 'MESSAGE_STATUS_SENDING') {
           messageInDb.status = 'MESSAGE_STATUS_TRANSFER_FAILED'
@@ -555,7 +588,7 @@ class MessageStore extends MailspringStore {
       sender: null,
       lastMessageTime: null,
       lastMessageText: '',
-      avatarMembers: []
+      avatarMembers: [],
     }
     const convInDb = await ConversationStore.getConversationByJid(jid)
     const selectedConversation = await ConversationStore.getSelectedConversation()
@@ -572,9 +605,9 @@ class MessageStore extends MailspringStore {
 
     const lastMessage = await MessageModel.findOne({
       where: {
-        conversationJid: jid
+        conversationJid: jid,
       },
-      order: [['sentTime', 'DESC']]
+      order: [['sentTime', 'DESC']],
     })
     if (lastMessage) {
       let lastMessageText = getMessageContent(lastMessage)
@@ -624,8 +657,8 @@ const saveGroupMessages = async groupedMessages => {
             { readTime },
             {
               where: {
-                id: msg.id
-              }
+                id: msg.id,
+              },
             }
           )
         }
@@ -668,7 +701,7 @@ const getMessageContent = message => {
   }
 }
 
-function getConversationJidFromMessagePayload(payload) {
+function getConversationJidFromMessagePayload (payload) {
   return payload.curJid === payload.from.bare ? payload.to.bare : payload.from.bare
 }
 
