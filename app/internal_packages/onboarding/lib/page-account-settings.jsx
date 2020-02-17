@@ -95,6 +95,11 @@ class AccountBasicSettingsForm extends React.Component {
     OnboardingActions.setAccount(account);
 
     if ((account.settings.imap_host && account.settings.smtp_host) || provider === 'exchange') {
+      if (provider === 'exchange') {
+        account.settings.ews_host = exchangeServer;
+        account.settings.ews_password = imap_password;
+        account.settings.ews_username = emailAddress;
+      }
       // expanding the account settings succeeded - try to authenticate
       this.props.onConnect(account);
     } else {
