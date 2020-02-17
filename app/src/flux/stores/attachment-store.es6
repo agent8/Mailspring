@@ -1,32 +1,32 @@
-import os from 'os';
-import fs from 'fs';
-import path from 'path';
-import { exec } from 'child_process';
-import { remote } from 'electron';
-import mkdirp from 'mkdirp';
-import MailspringStore from 'mailspring-store';
-import DraftStore from './draft-store';
-import Actions from '../actions';
-import File from '../models/file';
-import Utils from '../models/utils';
-import mime from 'mime-types';
-import DatabaseStore from './database-store';
-import AttachmentProgress from '../models/attachment-progress';
-import { autoGenerateFileName } from '../../fs-utils';
-import ca from 'moment/locale/ca';
+import os from 'os'
+import fs from 'fs'
+import path from 'path'
+import { exec } from 'child_process'
+import { remote } from 'electron'
+import mkdirp from 'mkdirp'
+import MailspringStore from 'mailspring-store'
+import DraftStore from './draft-store'
+import Actions from '../actions'
+import File from '../models/file'
+import Utils from '../models/utils'
+import mime from 'mime-types'
+import DatabaseStore from './database-store'
+import AttachmentProgress from '../models/attachment-progress'
+import { autoGenerateFileName } from '../../fs-utils'
+import ca from 'moment/locale/ca'
 
-Promise.promisifyAll(fs);
+Promise.promisifyAll(fs)
 
-const mkdirpAsync = Promise.promisify(mkdirp);
+const mkdirpAsync = Promise.promisify(mkdirp)
 
 const fileAcessibleAtPath = filePath => {
   try {
-    const result = fs.existsSync(filePath);
-    return result;
+    const result = fs.existsSync(filePath)
+    return result
   } catch (ex) {
-    return false;
+    return false
   }
-};
+}
 
 // TODO make this list more exhaustive
 const NonPreviewableExtensions = [
@@ -42,7 +42,7 @@ const NonPreviewableExtensions = [
   'dmg',
   'exe',
   'ics',
-];
+]
 
 const attachmentCategoryMap = {
   audio: {
@@ -169,7 +169,7 @@ const attachmentCategoryMap = {
   //     'application/vnd.google-apps.folder',
   //   ],
   // },
-};
+}
 
 const extMapping = {
   pdf: 'pdf',
@@ -204,7 +204,7 @@ const extMapping = {
   ics: 'calendar',
   ifb: 'calendar',
   pkpass: 'pass',
-};
+}
 
 const colorMapping = {
   xls: '#2AC941', // Spreadsheet
@@ -219,282 +219,282 @@ const colorMapping = {
   audio: '#648096',
   font: '#b6bdc2',
   other: '#b6bdc2', // Other
-};
+}
 
-const PREVIEW_FILE_SIZE_LIMIT = 2000000; // 2mb
-const THUMBNAIL_WIDTH = 320;
+const PREVIEW_FILE_SIZE_LIMIT = 2000000 // 2mb
+const THUMBNAIL_WIDTH = 320
 
 class AttachmentStore extends MailspringStore {
-  constructor() {
-    super();
+  constructor () {
+    super()
 
     // viewing messages
-    this.listenTo(Actions.fetchFile, this._fetch);
-    this.listenTo(Actions.fetchAndOpenFile, this._fetchAndOpen);
-    this.listenTo(Actions.fetchAndSaveFile, this._fetchAndSave);
-    this.listenTo(Actions.fetchAndSaveAllFiles, this._fetchAndSaveAll);
-    this.listenTo(Actions.abortFetchFile, this._abortFetchFile);
-    this.listenTo(Actions.fetchAttachments, this._onFetchAttachments);
+    this.listenTo(Actions.fetchFile, this._fetch)
+    this.listenTo(Actions.fetchAndOpenFile, this._fetchAndOpen)
+    this.listenTo(Actions.fetchAndSaveFile, this._fetchAndSave)
+    this.listenTo(Actions.fetchAndSaveAllFiles, this._fetchAndSaveAll)
+    this.listenTo(Actions.abortFetchFile, this._abortFetchFile)
+    this.listenTo(Actions.fetchAttachments, this._onFetchAttachments)
 
     // sending
-    this.listenTo(Actions.addAttachment, this._onAddAttachment);
-    this.listenTo(Actions.addAttachments, this._onAddAttachments);
-    this.listenTo(Actions.selectAttachment, this._onSelectAttachment);
-    this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
-    this._attachementCache = Utils.createCircularBuffer(200);
-    this._missingDataAttachmentIds = new Set();
-    this._queryFileDBTimer = null;
-    this._filePreviewPaths = {};
-    this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
-    this._fileProcess = new Map();
-    this._fileSaveSuccess = new Map();
-    mkdirp(this._filesDirectory);
+    this.listenTo(Actions.addAttachment, this._onAddAttachment)
+    this.listenTo(Actions.addAttachments, this._onAddAttachments)
+    this.listenTo(Actions.selectAttachment, this._onSelectAttachment)
+    this.listenTo(Actions.removeAttachment, this._onRemoveAttachment)
+    this._attachementCache = Utils.createCircularBuffer(200)
+    this._missingDataAttachmentIds = new Set()
+    this._queryFileDBTimer = null
+    this._filePreviewPaths = {}
+    this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files')
+    this._fileProcess = new Map()
+    this._fileSaveSuccess = new Map()
+    mkdirp(this._filesDirectory)
 
     DatabaseStore.listen(change => {
       if (change.objectClass === AttachmentProgress.name) {
-        this._onPresentChange(change.objects);
+        this._onPresentChange(change.objects)
       }
-    });
+    })
   }
   _queryFilesFromDB = () => {
     if (this._queryFileDBTimer) {
-      this._queryFileDBTimer = null;
+      this._queryFileDBTimer = null
     }
     if (this._missingDataAttachmentIds.size === 0) {
-      return;
+      return
     }
-    const fileIds = [];
+    const fileIds = []
     for (let id of this._missingDataAttachmentIds.values()) {
-      fileIds.push(id);
+      fileIds.push(id)
     }
     if (fileIds.length > 0) {
-      this._missingDataAttachmentIds.clear();
+      this._missingDataAttachmentIds.clear()
       // console.log(`Querying db for file ids ${fileIds}`);
       this.findAllByFileIds(fileIds).then(files => {
-        const attachmentChange = [];
+        const attachmentChange = []
         files.forEach(file => {
           if (!file) {
-            return;
+            return
           }
-          file.missingData = false;
+          file.missingData = false
           if (file.messageId) {
-            attachmentChange.push({ fileId: file.id, messageId: file.messageId });
+            attachmentChange.push({ fileId: file.id, messageId: file.messageId })
           }
-          this._attachementCache.set(file.id, file);
-        });
+          this._attachementCache.set(file.id, file)
+        })
         if (attachmentChange.length > 0) {
-          console.log(`Attachment cache updated`);
-          this.trigger({ attachmentChange });
+          console.log(`Attachment cache updated`)
+          this.trigger({ attachmentChange })
         }
-      });
+      })
     }
-  };
+  }
 
   _addToMissingDataAttachmentIds = fileId => {
-    this._missingDataAttachmentIds.add(fileId);
+    this._missingDataAttachmentIds.add(fileId)
     if (!this._queryFileDBTimer) {
-      this._queryFileDBTimer = setImmediate(this._queryFilesFromDB);
+      this._queryFileDBTimer = setImmediate(this._queryFilesFromDB)
     }
-  };
-
-  findAll() {
-    return DatabaseStore.findAll(File);
-  }
-  findAllByFileIds(fileIds) {
-    return this.findAll().where([File.attributes.id.in(fileIds)]);
   }
 
-  getAttachment(fileId) {
-    const ret = this._attachementCache.get(fileId);
+  findAll () {
+    return DatabaseStore.findAll(File)
+  }
+  findAllByFileIds (fileIds) {
+    return this.findAll().where([File.attributes.id.in(fileIds)])
+  }
+
+  getAttachment (fileId) {
+    const ret = this._attachementCache.get(fileId)
     if (ret) {
-      return ret;
+      return ret
     }
-    this._addToMissingDataAttachmentIds(fileId);
-    return null;
+    this._addToMissingDataAttachmentIds(fileId)
+    return null
   }
-  setAttachmentData(attachmentData) {
+  setAttachmentData (attachmentData) {
     if (attachmentData.mimeType) {
-      return this.addAttachmentPartialData(attachmentData);
+      return this.addAttachmentPartialData(attachmentData)
     } else if (attachmentData.missingData) {
-      const cachedAttachment = this._attachementCache.get(attachmentData.id);
+      const cachedAttachment = this._attachementCache.get(attachmentData.id)
       if (cachedAttachment) {
-        return;
+        return
       }
     }
-    this._attachementCache.set(attachmentData.id, attachmentData);
+    this._attachementCache.set(attachmentData.id, attachmentData)
   }
-  addAttachmentPartialData(partialFileData) {
-    let fileData = this._attachementCache.get(partialFileData.id);
+  addAttachmentPartialData (partialFileData) {
+    let fileData = this._attachementCache.get(partialFileData.id)
     if (!fileData) {
-      console.log(`file id already not in cache ${partialFileData.id}`);
-      fileData = File.fromPartialData(partialFileData);
-      this._attachementCache.set(fileData.id, fileData);
+      console.log(`file id already not in cache ${partialFileData.id}`)
+      fileData = File.fromPartialData(partialFileData)
+      this._attachementCache.set(fileData.id, fileData)
     }
     if (fileData.missingData) {
-      console.log(`file missing data, queue db ${fileData.id}`);
-      this._addToMissingDataAttachmentIds(fileData.id);
+      console.log(`file missing data, queue db ${fileData.id}`)
+      this._addToMissingDataAttachmentIds(fileData.id)
     }
-    return fileData;
+    return fileData
   }
 
   // Returns a path on disk for saving the file. Note that we must account
   // for files that don't have a name and avoid returning <downloads/dir/"">
   // which causes operations to happen on the directory (badness!)
   //
-  pathForFile(file) {
+  pathForFile (file) {
     if (!file) {
-      return null;
+      return null
     }
-    const id = file.id.toLowerCase();
+    const id = file.id.toLowerCase()
     return path.join(
       this._filesDirectory,
       id.substr(0, 2),
       id.substr(2, 2),
       id,
       file.safeDisplayName()
-    );
+    )
   }
 
   filterOutMissingAttachments = files => {
     if (!Array.isArray(files)) {
-      return [];
+      return []
     }
-    const ret = [];
+    const ret = []
     files.forEach(file => {
-      const filePath = this.pathForFile(file);
+      const filePath = this.pathForFile(file)
       if (filePath) {
         if (fileAcessibleAtPath(filePath)) {
-          ret.push(file);
+          ret.push(file)
         }
       }
-    });
-    return ret;
-  };
-
-  getExtIconName(filePath) {
-    const contentType = mime.lookup(filePath);
-    return this.getExtIconNameByContentType(contentType);
+    })
+    return ret
   }
 
-  getExtIconNameByContentType(contentType) {
-    contentType = contentType && contentType.toLowerCase();
-    let extName = 'other';
+  getExtIconName (filePath) {
+    const contentType = mime.lookup(filePath)
+    return this.getExtIconNameByContentType(contentType)
+  }
+
+  getExtIconNameByContentType (contentType) {
+    contentType = contentType && contentType.toLowerCase()
+    let extName = 'other'
     for (let key in attachmentCategoryMap) {
       if (attachmentCategoryMap[key].extensions.includes(contentType)) {
-        extName = key;
-        break;
+        extName = key
+        break
       }
     }
-    const color = colorMapping[extName];
+    const color = colorMapping[extName]
     return {
       iconName: `attachment-${extName}.svg`,
       color,
-    };
+    }
   }
 
-  isVideo(filePath) {
+  isVideo (filePath) {
     if (!filePath) {
-      return false;
+      return false
     }
-    let extName = path.extname(filePath).slice(1);
-    extName = extMapping[extName && extName.toLowerCase()];
-    return extName === 'video';
+    let extName = path.extname(filePath).slice(1)
+    extName = extMapping[extName && extName.toLowerCase()]
+    return extName === 'video'
   }
 
   getDownloadDataForFile = fileId => {
-    return this._fileProcess.get(fileId);
-  };
+    return this._fileProcess.get(fileId)
+  }
 
   // Returns a hash of download objects keyed by fileId
-  getDownloadDataForFiles(fileIds = []) {
-    const downloadData = {};
+  getDownloadDataForFiles (fileIds = []) {
+    const downloadData = {}
     fileIds.forEach(fileId => {
-      downloadData[fileId] = this.getDownloadDataForFile(fileId);
-    });
-    return downloadData;
+      downloadData[fileId] = this.getDownloadDataForFile(fileId)
+    })
+    return downloadData
   }
 
-  previewPathsForFiles(fileIds = []) {
-    const previewPaths = {};
+  previewPathsForFiles (fileIds = []) {
+    const previewPaths = {}
     fileIds.forEach(fileId => {
-      previewPaths[fileId] = this.previewPathForFile(fileId);
-    });
-    return previewPaths;
+      previewPaths[fileId] = this.previewPathForFile(fileId)
+    })
+    return previewPaths
   }
 
-  previewPathForFile(fileId) {
-    return this._filePreviewPaths[fileId];
+  previewPathForFile (fileId) {
+    return this._filePreviewPaths[fileId]
   }
 
-  async _prepareAndResolveFilePath(file) {
-    let filePath = this.pathForFile(file);
+  async _prepareAndResolveFilePath (file) {
+    let filePath = this.pathForFile(file)
 
     if (fileAcessibleAtPath(filePath)) {
-      this._generatePreview(file);
+      this._generatePreview(file)
     } else {
       // try to find the file in the directory (it should be the only file)
       // this allows us to handle obscure edge cases where the sync engine
       // the file with an altered name.
-      const dir = path.dirname(filePath);
-      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store');
+      const dir = path.dirname(filePath)
+      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store')
       if (items.length === 1) {
-        filePath = path.join(dir, items[0]);
+        filePath = path.join(dir, items[0])
       }
     }
 
-    return filePath;
+    return filePath
   }
 
-  async _generatePreview(file) {
+  async _generatePreview (file) {
     if (process.platform !== 'darwin') {
-      return Promise.resolve();
+      return Promise.resolve()
     }
     if (!AppEnv.config.get('core.attachments.displayFilePreview')) {
-      return Promise.resolve();
+      return Promise.resolve()
     }
     if (NonPreviewableExtensions.includes(file.displayExtension())) {
-      return Promise.resolve();
+      return Promise.resolve()
     }
     if (file.size > PREVIEW_FILE_SIZE_LIMIT) {
-      return Promise.resolve();
+      return Promise.resolve()
     }
 
-    const filePath = this.pathForFile(file);
-    const previewPath = `${filePath}.png`;
+    const filePath = this.pathForFile(file)
+    const previewPath = `${filePath}.png`
 
     if (fileAcessibleAtPath(previewPath)) {
       // If the preview file already exists, set our state and bail
-      this._filePreviewPaths[file.id] = previewPath;
-      this.trigger();
-      return Promise.resolve();
+      this._filePreviewPaths[file.id] = previewPath
+      this.trigger()
+      return Promise.resolve()
     }
 
     // If the preview file doesn't exist yet, generate it
-    const fileDir = `"${path.dirname(filePath)}"`;
-    const escapedPath = `"${filePath}"`;
+    const fileDir = `"${path.dirname(filePath)}"`
+    const escapedPath = `"${filePath}"`
 
     return new Promise(resolve => {
-      const previewSize = THUMBNAIL_WIDTH * (11 / 8.5);
+      const previewSize = THUMBNAIL_WIDTH * (11 / 8.5)
       exec(
         `qlmanage -t -f ${window.devicePixelRatio} -s ${previewSize} -o ${fileDir} ${escapedPath}`,
         (error, stdout, stderr) => {
           if (error) {
             // Ignore errors, we don't really mind if we can't generate a preview
             // for a file
-            AppEnv.reportError(error);
-            resolve();
-            return;
+            AppEnv.reportError(error)
+            resolve()
+            return
           }
           if (stdout.match(/No thumbnail created/i) || stderr) {
-            resolve();
-            return;
+            resolve()
+            return
           }
-          this._filePreviewPaths[file.id] = previewPath;
-          this.trigger();
-          resolve();
+          this._filePreviewPaths[file.id] = previewPath
+          this.trigger()
+          resolve()
         }
-      );
-    });
+      )
+    })
   }
 
   // Section: Retrieval of Files
@@ -505,81 +505,81 @@ class AttachmentStore extends MailspringStore {
         .catch(this._catchFSErrors)
         // Passively ignore
         .catch(() => {})
-    );
-  };
+    )
+  }
 
   _fetchAndOpen = file => {
     return this._prepareAndResolveFilePath(file)
       .then(filePath => remote.shell.openItem(filePath))
       .catch(this._catchFSErrors)
       .catch(error => {
-        return this._presentError({ file, error });
-      });
-  };
+        return this._presentError({ file, error })
+      })
+  }
 
   _writeToExternalPath = (filePath, savePath) => {
     return new Promise((resolve, reject) => {
-      const stream = fs.createReadStream(filePath);
-      stream.pipe(fs.createWriteStream(savePath));
-      stream.on('error', err => reject(err));
-      stream.on('end', () => resolve());
-    });
-  };
+      const stream = fs.createReadStream(filePath)
+      stream.pipe(fs.createWriteStream(savePath))
+      stream.on('error', err => reject(err))
+      stream.on('end', () => resolve())
+    })
+  }
 
   _fetchAndSave = file => {
-    const defaultPath = file.safeDisplayName();
-    const defaultExtension = path.extname(defaultPath);
+    const defaultPath = file.safeDisplayName()
+    const defaultExtension = path.extname(defaultPath)
 
     AppEnv.showSaveDialog({ defaultPath }, savePath => {
       if (!savePath) {
-        return;
+        return
       }
 
-      const saveExtension = path.extname(savePath);
-      const newDownloadDirectory = path.dirname(savePath);
-      const didLoseExtension = defaultExtension !== '' && saveExtension === '';
-      let actualSavePath = savePath;
+      const saveExtension = path.extname(savePath)
+      const newDownloadDirectory = path.dirname(savePath)
+      const didLoseExtension = defaultExtension !== '' && saveExtension === ''
+      let actualSavePath = savePath
       if (didLoseExtension) {
-        actualSavePath += defaultExtension;
+        actualSavePath += defaultExtension
       }
 
       this._prepareAndResolveFilePath(file)
         .then(filePath => this._writeToExternalPath(filePath, actualSavePath))
         .then(() => {
           if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
-            remote.shell.showItemInFolder(actualSavePath);
+            remote.shell.showItemInFolder(actualSavePath)
           }
-          this._onSaveSuccess([file]);
+          this._onSaveSuccess([file])
         })
         .catch(this._catchFSErrors)
         .catch(error => {
-          this._presentError({ file, error });
-        });
-    });
-  };
+          this._presentError({ file, error })
+        })
+    })
+  }
 
   _fetchAndSaveAll = files => {
     const options = {
       title: 'Save Into...',
       buttonLabel: 'Download All',
-    };
+    }
     AppEnv.showSaveDirDialog(options, dirPath => {
       if (!dirPath) {
-        return;
+        return
       }
-      this._saveAllFilesToDir(files, dirPath);
-    });
-  };
+      this._saveAllFilesToDir(files, dirPath)
+    })
+  }
 
   _saveAllFilesToDir = (files, dirPath) => {
-    const lastSavePaths = [];
+    const lastSavePaths = []
     const savePromises = files.map(file => {
-      const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName());
-      const savePath = path.join(dirPath, fileSaveName);
+      const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName())
+      const savePath = path.join(dirPath, fileSaveName)
       return this._prepareAndResolveFilePath(file)
         .then(filePath => this._writeToExternalPath(filePath, savePath))
-        .then(() => lastSavePaths.push(savePath));
-    });
+        .then(() => lastSavePaths.push(savePath))
+    })
 
     Promise.all(savePromises)
       .then(() => {
@@ -587,136 +587,136 @@ class AttachmentStore extends MailspringStore {
           lastSavePaths.length > 0 &&
           AppEnv.config.get('core.attachments.openFolderAfterDownload')
         ) {
-          remote.shell.showItemInFolder(lastSavePaths[0]);
+          remote.shell.showItemInFolder(lastSavePaths[0])
         }
-        this._onSaveSuccess(files);
+        this._onSaveSuccess(files)
       })
       .catch(this._catchFSErrors)
       .catch(error => {
-        return this._presentError({ error });
-      });
-  };
+        return this._presentError({ error })
+      })
+  }
 
   _onSaveSuccess = files => {
     if (files && files.length) {
       files.forEach(file => {
-        this._onToggleSaveSuccessState(file.id);
-      });
+        this._onToggleSaveSuccessState(file.id)
+      })
     }
-  };
+  }
 
   _onToggleSaveSuccessState = fileId => {
     if (this._fileSaveSuccess.get(fileId)) {
-      this._fileSaveSuccess.delete(fileId);
+      this._fileSaveSuccess.delete(fileId)
     } else {
-      this._fileSaveSuccess.set(fileId, true);
+      this._fileSaveSuccess.set(fileId, true)
       setTimeout(() => {
-        this._onToggleSaveSuccessState(fileId);
-      }, 1600);
+        this._onToggleSaveSuccessState(fileId)
+      }, 1600)
     }
-    this.trigger();
-  };
+    this.trigger()
+  }
 
   getSaveSuccessState = fileId => {
     if (this._fileSaveSuccess.get(fileId)) {
-      return true;
+      return true
     } else {
-      return false;
+      return false
     }
-  };
+  }
 
   refreshAttachmentsState = fileId => {
-    const file = this.getAttachment(fileId);
-    const filePath = this.pathForFile(file);
+    const file = this.getAttachment(fileId)
+    const filePath = this.pathForFile(file)
     if (filePath && fs.existsSync(filePath)) {
-      this._onPresentSuccess([fileId]);
+      this._onPresentSuccess([fileId])
     }
-  };
+  }
 
   _abortFetchFile = () => {
     // file
     // put this back if we ever support downloading individual files again
-    return;
-  };
+    return
+  }
 
   _onFetchAttachments = ({ missingItems, needProgress }) => {
     if (!needProgress) {
-      return;
+      return
     }
-    this._onPresentStart(missingItems);
-  };
+    this._onPresentStart(missingItems)
+  }
 
   _onPresentStart = ids => {
-    const fileIds = ids || [];
+    const fileIds = ids || []
     if (fileIds.length) {
       fileIds.forEach(id => {
-        const oldProcess = this._fileProcess.get(id);
+        const oldProcess = this._fileProcess.get(id)
         if (oldProcess && oldProcess.state === 'downloading') {
-          return;
+          return
         }
         this._fileProcess.set(id, {
           state: 'downloading',
           percent: 0,
-        });
-      });
-      this.trigger();
+        })
+      })
+      this.trigger()
     }
-  };
+  }
 
   _onPresentChange = changes => {
     if (changes && changes.length) {
       changes.forEach(obj => {
         if (obj) {
-          const pid = obj.pid;
-          const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
-          const nowState = this.getDownloadDataForFile(pid);
-          const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
-          const maxPercent = Math.max(parseInt(percent * 100), nowPercent);
+          const pid = obj.pid
+          const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0
+          const nowState = this.getDownloadDataForFile(pid)
+          const nowPercent = nowState && nowState.percent ? nowState.percent : 0
+          const maxPercent = Math.max(parseInt(percent * 100), nowPercent)
           if (pid && maxPercent) {
             this._fileProcess.set(pid, {
               state: maxPercent >= 100 ? 'done' : 'downloading',
               percent: maxPercent,
-            });
+            })
           }
         }
-      });
-      this.trigger();
+      })
+      this.trigger()
     }
-  };
+  }
 
   _onPresentSuccess = ids => {
-    const fileIds = ids || [];
+    const fileIds = ids || []
     if (fileIds.length) {
       fileIds.forEach(id => {
         this._fileProcess.set(id, {
           state: 'done',
           percent: 100,
-        });
-      });
-      this.trigger();
+        })
+      })
+      this.trigger()
     }
-  };
+  }
 
-  _presentError({ file, error } = {}) {
-    const name = file ? file.displayName() : 'one or more files';
-    const errorString = error ? error.toString() : '';
+  _presentError ({ file, error } = {}) {
+    const name = file ? file.displayName() : 'one or more files'
+    const errorString = error ? error.toString() : ''
 
     return remote.dialog.showMessageBox({
       type: 'warning',
       message: 'Download Failed',
       detail: `Unable to download ${name}. Check your network connection and try again. ${errorString}`,
       buttons: ['OK'],
-    });
+    })
   }
 
-  _catchFSErrors(error) {
-    let message = null;
+  _catchFSErrors (error) {
+    let message = null
     if (['EPERM', 'EMFILE', 'EACCES'].includes(error.code)) {
       message =
-        'EdisonMail could not save an attachment. Check that permissions are set correctly and try restarting EdisonMail if the issue persists.';
+        'EdisonMail could not save an attachment. Check that permissions are set correctly and try restarting EdisonMail if the issue persists.'
     }
     if (['ENOSPC'].includes(error.code)) {
-      message = 'EdisonMail could not save an attachment because you have run out of disk space.';
+      message = 'EdisonMail could not save an attachment because you have run out of disk space.'
     }
 
     if (message) {
@@ -725,32 +725,32 @@ class AttachmentStore extends MailspringStore {
         message: 'Download Failed',
         detail: `${message}\n\n${error.message}`,
         buttons: ['OK'],
-      });
-      return Promise.resolve();
+      })
+      return Promise.resolve()
     }
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
 
   // Section: Adding Files
 
-  _assertIdPresent(headerMessageId) {
+  _assertIdPresent (headerMessageId) {
     if (!headerMessageId) {
-      throw new Error('You need to pass the headerID of the message (draft) this Action refers to');
+      throw new Error('You need to pass the headerID of the message (draft) this Action refers to')
     }
   }
 
-  _getFileStats(filepath) {
+  _getFileStats (filepath) {
     return fs
       .statAsync(filepath)
       .catch(() =>
         Promise.reject(
           new Error(`${filepath} could not be found, or has invalid file permissions.`)
         )
-      );
+      )
   }
 
-  createNewFile({ data, inline = false, filename = null, contentType = null, extension = null }) {
-    const id = extension ? `${Utils.generateTempId()}.${extension}` : Utils.generateTempId();
+  createNewFile ({ data, inline = false, filename = null, contentType = null, extension = null }) {
+    const id = extension ? `${Utils.generateTempId()}.${extension}` : Utils.generateTempId()
     const file = new File({
       id: id,
       filename: filename || id,
@@ -758,118 +758,118 @@ class AttachmentStore extends MailspringStore {
       messageId: null,
       contentId: inline ? Utils.generateContentId() : null,
       isInline: inline,
-    });
+    })
     return this._writeToInternalPath(data, this.pathForFile(file)).then(stats => {
-      file.size = stats.size;
-      return Promise.resolve(file);
-    });
+      file.size = stats.size
+      return Promise.resolve(file)
+    })
   }
 
-  _writeToInternalPath(data, targetPath) {
-    const buffer = new Uint8Array(Buffer.from(data));
-    const parentPath = path.dirname(targetPath);
+  _writeToInternalPath (data, targetPath) {
+    const buffer = new Uint8Array(Buffer.from(data))
+    const parentPath = path.dirname(targetPath)
     return new Promise((resolve, reject) => {
       mkdirpAsync(parentPath).then(() => {
         fs.writeFile(targetPath, buffer, err => {
           if (err) {
-            reject(err);
+            reject(err)
           } else {
             fs.stat(targetPath, (error, stats) => {
               if (error) {
-                reject(error);
+                reject(error)
               } else {
-                resolve(stats);
+                resolve(stats)
               }
-            });
+            })
           }
-        });
-      });
-    });
+        })
+      })
+    })
   }
 
-  _copyToInternalPath(originPath, targetPath) {
+  _copyToInternalPath (originPath, targetPath) {
     return new Promise((resolve, reject) => {
-      const readStream = fs.createReadStream(originPath);
-      const writeStream = fs.createWriteStream(targetPath);
+      const readStream = fs.createReadStream(originPath)
+      const writeStream = fs.createWriteStream(targetPath)
 
-      readStream.on('error', () => reject(new Error(`Could not read file at path: ${originPath}`)));
+      readStream.on('error', () => reject(new Error(`Could not read file at path: ${originPath}`)))
       writeStream.on('error', () =>
         reject(new Error(`Could not write ${path.basename(targetPath)} to files directory.`))
-      );
-      readStream.on('end', () => resolve());
-      readStream.pipe(writeStream);
-    });
+      )
+      readStream.on('end', () => resolve())
+      readStream.pipe(writeStream)
+    })
   }
 
-  async _deleteFile(file) {
+  async _deleteFile (file) {
     try {
       // Delete the file and it's containing folder. Todo: possibly other empty dirs?
-      let removeFinishedCount = 0;
+      let removeFinishedCount = 0
       fs.unlink(this.pathForFile(file), err => {
         if (err) {
-          AppEnv.reportError('Delete attachment failed: ', err);
+          AppEnv.reportError('Delete attachment failed: ', err)
         }
-        removeFinishedCount++;
+        removeFinishedCount++
         if (removeFinishedCount === 2) {
           fs.rmdir(path.dirname(this.pathForFile(file)), err => {
             if (err) {
-              AppEnv.reportError('Delete attachment failed: ', err);
+              AppEnv.reportError('Delete attachment failed: ', err)
             }
-          });
+          })
         }
-      });
+      })
       fs.unlink(this.pathForFile(file) + '.png', err => {
         if (err) {
           if (err.code !== 'ENOENT') {
-            AppEnv.reportError('Delete attachment failed: ', err);
+            AppEnv.reportError('Delete attachment failed: ', err)
           }
         }
-        removeFinishedCount++;
+        removeFinishedCount++
         if (removeFinishedCount === 2) {
           fs.rmdir(path.dirname(this.pathForFile(file)), err => {
             if (err) {
-              AppEnv.reportError('Delete attachment failed: ', err);
+              AppEnv.reportError('Delete attachment failed: ', err)
             }
-          });
+          })
         }
-      });
+      })
     } catch (err) {
-      throw new Error(`Error deleting file file ${file.filename}:\n\n${err.message}`);
+      throw new Error(`Error deleting file file ${file.filename}:\n\n${err.message}`)
     }
   }
 
-  async _applySessionChanges(headerMessageId, changeFunction) {
-    const session = await DraftStore.sessionForClientId(headerMessageId);
-    const files = changeFunction(session.draft().files);
-    session.changes.add({ files });
-    session.changes.commit();
+  async _applySessionChanges (headerMessageId, changeFunction) {
+    const session = await DraftStore.sessionForClientId(headerMessageId)
+    const files = changeFunction(session.draft().files)
+    session.changes.add({ files })
+    session.changes.commit()
   }
 
   // Handlers
 
   _onSelectAttachment = ({ headerMessageId, onCreated = () => {}, type = '*' }) => {
-    this._assertIdPresent(headerMessageId);
+    this._assertIdPresent(headerMessageId)
 
     // When the dialog closes, it triggers `Actions.addAttachment`
     const cb = paths => {
       if (paths == null) {
-        return;
+        return
       }
-      let pathsToOpen = paths;
+      let pathsToOpen = paths
       if (typeof pathsToOpen === 'string') {
-        pathsToOpen = [pathsToOpen];
+        pathsToOpen = [pathsToOpen]
       }
       if (pathsToOpen.length > 1) {
-        Actions.addAttachments({ headerMessageId, filePaths: pathsToOpen, onCreated });
+        Actions.addAttachments({ headerMessageId, filePaths: pathsToOpen, onCreated })
       } else {
-        Actions.addAttachment({ headerMessageId, filePath: pathsToOpen[0], onCreated });
+        Actions.addAttachment({ headerMessageId, filePath: pathsToOpen[0], onCreated })
       }
-    };
-    if (type === 'image') {
-      return AppEnv.showImageSelectionDialog(cb);
     }
-    return AppEnv.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, cb);
-  };
+    if (type === 'image') {
+      return AppEnv.showImageSelectionDialog(cb)
+    }
+    return AppEnv.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, cb)
+  }
   _onAddAttachments = async ({
     headerMessageId,
     inline = false,
@@ -877,20 +877,20 @@ class AttachmentStore extends MailspringStore {
     onCreated = () => {},
   }) => {
     if (!Array.isArray(filePaths) || filePaths.length === 0) {
-      throw new Error('_onAddAttachments must have an array of filePaths');
+      throw new Error('_onAddAttachments must have an array of filePaths')
     }
-    this._assertIdPresent(headerMessageId);
+    this._assertIdPresent(headerMessageId)
     try {
-      const total = filePaths.length;
-      const createdFiles = [];
+      const total = filePaths.length
+      const createdFiles = []
       filePaths.forEach(async filePath => {
-        const filename = path.basename(filePath);
-        const stats = await this._getFileStats(filePath);
+        const filename = path.basename(filePath)
+        const stats = await this._getFileStats(filePath)
         if (stats.isDirectory()) {
-          throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`);
+          throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`)
         } else if (stats.size > 25 * 1000000) {
-          AppEnv.trackingEvent('largeAttachmentSize');
-          throw new Error(`${filename} cannot be attached because it is larger than 25MB.`);
+          AppEnv.trackingEvent('largeAttachmentSize')
+          throw new Error(`${filename} cannot be attached because it is larger than 25MB.`)
         }
 
         const file = new File({
@@ -900,44 +900,46 @@ class AttachmentStore extends MailspringStore {
           contentType: null,
           messageId: null,
           contentId: inline ? Utils.generateContentId() : null,
-        });
+        })
 
-        await mkdirpAsync(path.dirname(this.pathForFile(file)));
-        await this._copyToInternalPath(filePath, this.pathForFile(file));
+        await mkdirpAsync(path.dirname(this.pathForFile(file)))
+        await this._copyToInternalPath(filePath, this.pathForFile(file))
 
         await this._applySessionChanges(headerMessageId, files => {
           if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
-            AppEnv.trackingEvent('largeAttachmentSize');
-            throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
+            AppEnv.trackingEvent('largeAttachmentSize')
+            throw new Error(`Sorry, you can't attach more than 25MB of attachments`)
           }
-          createdFiles.push(file);
-          return files.concat([file]);
-        });
+          createdFiles.push(file)
+          return files.concat([file])
+        })
         if (createdFiles.length >= total) {
-          onCreated(createdFiles);
+          onCreated(createdFiles)
         }
-      });
+        Actions.addedAttachments({ headerMessageId, inline, filePaths })
+      })
     } catch (err) {
-      AppEnv.showErrorDialog(err.message);
+      AppEnv.showErrorDialog(err.message)
     }
-  };
+  }
 
   _onAddAttachment = async ({
     headerMessageId,
     filePath,
     inline = false,
     onCreated = () => {},
+    fromPad = false,
   }) => {
-    this._assertIdPresent(headerMessageId);
+    this._assertIdPresent(headerMessageId)
 
     try {
-      const filename = path.basename(filePath);
-      const stats = await this._getFileStats(filePath);
+      const filename = path.basename(filePath)
+      const stats = await this._getFileStats(filePath)
       if (stats.isDirectory()) {
-        throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`);
+        throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`)
       } else if (stats.size > 25 * 1000000) {
-        AppEnv.trackingEvent('largeAttachmentSize');
-        throw new Error(`${filename} cannot be attached because it is larger than 25MB.`);
+        AppEnv.trackingEvent('largeAttachmentSize')
+        throw new Error(`${filename} cannot be attached because it is larger than 25MB.`)
       }
 
       const file = new File({
@@ -947,39 +949,42 @@ class AttachmentStore extends MailspringStore {
         contentType: null,
         messageId: null,
         contentId: inline ? Utils.generateContentId() : null,
-      });
+      })
 
-      await mkdirpAsync(path.dirname(this.pathForFile(file)));
-      await this._copyToInternalPath(filePath, this.pathForFile(file));
+      await mkdirpAsync(path.dirname(this.pathForFile(file)))
+      await this._copyToInternalPath(filePath, this.pathForFile(file))
 
       await this._applySessionChanges(headerMessageId, files => {
         if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
-          AppEnv.trackingEvent('largeAttachmentSize');
-          throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
+          AppEnv.trackingEvent('largeAttachmentSize')
+          throw new Error(`Sorry, you can't attach more than 25MB of attachments`)
         }
-        return files.concat([file]);
-      });
-      onCreated(file);
+        return files.concat([file])
+      })
+      onCreated(file)
+      if (!fromPad) {
+        Actions.addedAttachment({ headerMessageId, filePath, inline })
+      }
     } catch (err) {
-      AppEnv.showErrorDialog(err.message);
+      AppEnv.showErrorDialog(err.message)
     }
-  };
+  }
 
   _onRemoveAttachment = async (headerMessageId, fileToRemove) => {
     if (!fileToRemove) {
-      return;
+      return
     }
 
     await this._applySessionChanges(headerMessageId, files =>
       files.filter(({ id }) => id !== fileToRemove.id)
-    );
+    )
 
     try {
-      await this._deleteFile(fileToRemove);
+      await this._deleteFile(fileToRemove)
     } catch (err) {
-      AppEnv.showErrorDialog(err.message);
+      AppEnv.showErrorDialog(err.message)
     }
-  };
+  }
 }
 
-export default new AttachmentStore();
+export default new AttachmentStore()
