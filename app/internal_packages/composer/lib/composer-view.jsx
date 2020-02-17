@@ -38,7 +38,6 @@ const {
 } = ComposerSupport.BaseBlockPlugins;
 const buttonTimer = 700;
 const newDraftTimeDiff = 3000;
-const TOOLBAR_MIN_WIDTH = 628;
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
@@ -63,7 +62,7 @@ export default class ComposerView extends React.Component {
       'composer:show-and-focus-bcc': () => this._els.header.showAndFocusField(Fields.Bcc),
       'composer:show-and-focus-cc': () => this._els.header.showAndFocusField(Fields.Cc),
       'composer:focus-to': () => this._els.header.showAndFocusField(Fields.To),
-      'composer:show-and-focus-from': () => { },
+      'composer:show-and-focus-from': () => {},
       'composer:select-attachment': () => this._onSelectAttachment(),
     };
 
@@ -75,7 +74,6 @@ export default class ComposerView extends React.Component {
       isDeleting: false,
       editorSelection: null,
       editorSelectedText: '',
-      isCrowded: false,
       missingAttachments: true,
     };
     this._deleteTimer = null;
@@ -83,7 +81,6 @@ export default class ComposerView extends React.Component {
       Actions.destroyDraftFailed.listen(this._onDestroyedDraftProcessed, this),
       Actions.destroyDraftSucceeded.listen(this._onDestroyedDraftProcessed, this),
       Actions.removeQuoteText.listen(this._onQuoteRemoved, this),
-      WorkspaceStore.listen(this._onResize),
     ];
     this._scrollToMessageBody = null;
   }
@@ -106,8 +103,7 @@ export default class ComposerView extends React.Component {
     if (AppEnv.isComposerWindow()) {
       Actions.setCurrentWindowTitle(this._getToName(this.props.draft));
     }
-    window.addEventListener('resize', this._onResize, true);
-    this._onResize();
+
     this._isDraftMissingAttachments(this.props);
   }
   _getToName(participants) {
@@ -148,27 +144,12 @@ export default class ComposerView extends React.Component {
     for (let unlisten of this._unlisten) {
       unlisten();
     }
-    window.removeEventListener('resize', this._onResize, true);
     // In the future, we should clean up the draft session entirely, or give it
     // the same lifecycle as the composer view. For now, just make sure we free
     // up all the memory used for undo/redo.
     // const { draft, session } = this.props;
     // session.changes.add({ bodyEditorState: draft.bodyEditorState.set('history', new History()) });
   }
-
-  _onResize = () => {
-    const container = document.querySelector('.RichEditor-toolbar');
-    if (!container) {
-      return;
-    }
-    let isCrowded = false;
-    if (container.clientWidth <= TOOLBAR_MIN_WIDTH) {
-      isCrowded = true;
-    }
-    if (isCrowded !== this.state.isCrowded) {
-      this.setState({ isCrowded });
-    }
-  };
 
   _onQuoteRemoved({ headerMessageId = '' } = {}) {
     if (this._mounted && this.props.draft && this.props.draft.headerMessageId === headerMessageId) {
@@ -177,10 +158,10 @@ export default class ComposerView extends React.Component {
   }
 
   _onHeaderClicked = () => {
-    if(!this._mounted){
+    if (!this._mounted) {
       return;
     }
-    if(this._els && this._els[Fields.Body]){
+    if (this._els && this._els[Fields.Body]) {
       this._els[Fields.Body].unfocus();
     }
   };
@@ -449,7 +430,6 @@ export default class ComposerView extends React.Component {
         onBlur={this._onEditorBlur}
         readOnly={this.props.session ? this.props.session.isPopout() : true}
         onChange={this._onEditorChange}
-        isCrowded={this.state.isCrowded}
       />
     );
   }
@@ -508,11 +488,15 @@ export default class ComposerView extends React.Component {
       .filter(f => Utils.shouldDisplayAsImage(f))
       .filter(f => f.contentId)
       .filter(f => {
-        if (!this.props.draft || (typeof this.props.draft.body !== 'string')) {
+        if (!this.props.draft || typeof this.props.draft.body !== 'string') {
           AppEnv.reportError(new Error(`draft data incorrect`), { errorData: this.props.draft });
           return false;
         }
-        return this.props.draft && this.props.draft.body && !this.props.draft.body.includes(`cid:${f.contentId}`);
+        return (
+          this.props.draft &&
+          this.props.draft.body &&
+          !this.props.draft.body.includes(`cid:${f.contentId}`)
+        );
       })
       .map(file => (
         <AttachmentItem
@@ -618,13 +602,13 @@ export default class ComposerView extends React.Component {
                 {this.state.isDeleting ? (
                   <LottieImg name={'loading-spinner-blue'} size={{ width: 24, height: 24 }} />
                 ) : (
-                    <RetinaImg
-                      name={'trash.svg'}
-                      style={{ width: 24, height: 24 }}
-                      isIcon
-                      mode={RetinaImg.Mode.ContentIsMask}
-                    />
-                  )}
+                  <RetinaImg
+                    name={'trash.svg'}
+                    style={{ width: 24, height: 24 }}
+                    isIcon
+                    mode={RetinaImg.Mode.ContentIsMask}
+                  />
+                )}
                 <span>Delete</span>
               </button>
             </div>
