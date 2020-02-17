@@ -30,8 +30,7 @@ export default class TeamreplyEditor extends Component {
   }
   componentDidMount = async () => {
     const pad = window.pad
-    setTimeout(() => {
-    }, 10)
+    setTimeout(() => {}, 10)
   }
 
   showInvitePadMember = () => {
@@ -53,7 +52,7 @@ export default class TeamreplyEditor extends Component {
       return <div> Can not get AND create proper edit pad for this email!</div>
     }
     const cwd = AppEnv.getLoadSettings().resourcePath
-    let relPath = 'internal_packages/composer/teamreply-client/src/html/pad.html'
+    let relPath = 'internal_packages/team-edit/teamreply-client/src/html/pad.html'
     if (cwd.endsWith('/Resources/app.asar')) {
       relPath = '../app.asar.unpacked/' + relPath
     }

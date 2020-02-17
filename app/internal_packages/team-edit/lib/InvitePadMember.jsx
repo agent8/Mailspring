@@ -165,6 +165,7 @@ export default class InvitePadMember extends Component {
     if (!visible) {
       return null
     }
+    console.log(' InvitePadMember.render, Option, Select, Button:', Option, Select, Button)
 
     const children = contacts.map((contact, index) => (
       <Option
@@ -183,10 +184,8 @@ export default class InvitePadMember extends Component {
       </Option>
     ))
     return (
-      <div className='invite-member-popup'
-        tabIndex={1}
-        onKeyUp={this.onKeyUp}>
-        <div  className='invite-member-panel'>
+      <div className='invite-member-popup' tabIndex={1} onKeyUp={this.onKeyUp}>
+        <div className='invite-member-panel'>
           <div className='to'>
             <span className='close' onClick={this.props.hideInvitePadMember}>
               <RetinaImg
