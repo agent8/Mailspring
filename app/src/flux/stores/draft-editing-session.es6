@@ -387,17 +387,6 @@ export default class DraftEditingSession extends MailspringStore {
   isDestroyed() {
     return this._destroyed;
   }
-  // updateDraftId(id) {
-  //   this._draft.id = id;
-  //   ipcRenderer.send('draft-got-new-id', {
-  //     newHeaderMessageId: this._draft.headerMessageId,
-  //     oldHeaderMessageId: this._draft.headerMessageId,
-  //     newMessageId: this._draft.id,
-  //     threadId: this._draft.threadId,
-  //     windowLevel: this.currentWindowLevel,
-  //   });
-  //   this.trigger();
-  // }
 
   setPopout(val) {
     if (val !== this._popedOut) {
@@ -442,8 +431,10 @@ export default class DraftEditingSession extends MailspringStore {
     this.listenTo(Actions.draftOpenCountBroadcast, this.onDraftOpenCountChange);
     if (!AppEnv.isMainWindow()) {
       this.listenTo(Actions.broadcastDraftData, this._applySyncDraftData);
+      this.listenTo(Actions.syncDraftAttachments, this._onSyncAttachmentData);
     } else {
       this.listenTo(Actions.syncDraftDataToMain, this._applySyncDraftData);
+      this.listenTo(Actions.updateDraftAttachments, this.updateAttachments);
     }
   };
   _removeListeners = () => {
@@ -760,6 +751,16 @@ export default class DraftEditingSession extends MailspringStore {
   get needsSyncToMain(){
     return !AppEnv.isMainWindow() && this._needsSyncWithMain;
   }
+  updateAttachments(files){
+    if(this._draft && Array.isArray(files)){
+      this._draft.files = files;
+      this.needUpload = true;
+      this.changeSetCommit(`attachments change`);
+      this._syncAttachmentData();
+    } else {
+      console.error(`either draft or files data incorrect, attachments for draft not updated`);
+    }
+  }
 
   changeSetApplyChanges = changes => {
     if (this._destroyed) {
@@ -782,6 +783,38 @@ export default class DraftEditingSession extends MailspringStore {
     this.needsSyncToMain = true;
     this._syncDraftDataToMain();
   };
+  _syncAttachmentData = () => {
+    if(!this._draft){
+      AppEnv.reportError(new Error(`Draft is null, cannot trigger attachment sync`), {}, {grabLogs: true});
+      return;
+    }
+    if(AppEnv.isMainWindow()){
+      console.log(`syncing attachments ${this._draft.headerMessageId} to none main window`);
+      Actions.syncDraftAttachments({headerMessageId: this._draft.headerMessageId, files: this._draft.files});
+    } else {
+      AppEnv.logWarning('called in none main window, sync ignored');
+    }
+  };
+  _onSyncAttachmentData = ({headerMessageId, files}) => {
+    if(!this._draft){
+      AppEnv.reportError(new Error(`Draft is null, cannot trigger attachment sync`), {}, {grabLogs: true});
+      return;
+    }
+    if(AppEnv.isMainWindow()){
+      AppEnv.logWarning('called in none main window, sync ignored');
+      return;
+    }
+    if(!headerMessageId || !Array.isArray(files)){
+      AppEnv.reportError(new Error(`headerMessageId or files incorrect, igonring`), {errorData: {headerMessageId, files}}, {grabLogs: true});
+      return;
+    }
+    if(headerMessageId === this._draft.headerMessageId){
+      this._draft.files = files;
+      this.needUpload = true;
+      console.log(`non main window attachment updated`);
+      this.trigger()
+    }
+  };
   localApplySyncDraftData = ({syncData = {}} = {} ) => {
     if(syncData && (typeof  syncData.lastSync === 'number') && syncData.lastSync > this.lastSync){
       this._applySyncDraftData({syncData, sourceLevel: 0, broadcastDraftData: false});
@@ -799,10 +832,9 @@ export default class DraftEditingSession extends MailspringStore {
         JSON.stringify(this._draft.to) === JSON.stringify(syncData.to) &&
         JSON.stringify(this._draft.bcc) === JSON.stringify(syncData.bcc) &&
         JSON.stringify(this._draft.cc) === JSON.stringify(syncData.cc) &&
-        JSON.stringify(this._draft.files) === JSON.stringify(syncData.files) &&
         this._draft.subject === syncData.subject;
       for (const key of Object.getOwnPropertyNames(syncData)) {
-        if (key === 'body' || key === 'bodyEditorState') {
+        if (key === 'body' || key === 'bodyEditorState' || key === 'files') {
           continue;
         }
         this._draft[key] = syncData[key];

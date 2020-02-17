@@ -63,11 +63,13 @@ export default class ComposerHeader extends React.Component {
       }
       const missing = ret.totalMissing();
       if (missing.length !== 0) {
-        this.setState({ missingAttachments: true });
-        Actions.fetchAttachments({
-          accountId: props.draft.accountId,
-          missingItems: missing.map(f => f.id),
-        });
+        if(!this.state.missingAttachments){
+          this.setState({ missingAttachments: true });
+          Actions.fetchAttachments({
+            accountId: props.draft.accountId,
+            missingItems: missing.map(f => f.id),
+          });
+        }
       } else {
         this.setState({ missingAttachments: false });
       }

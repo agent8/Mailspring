@@ -13,7 +13,6 @@ import mime from 'mime-types';
 import DatabaseStore from './database-store';
 import AttachmentProgress from '../models/attachment-progress';
 import { autoGenerateFileName } from '../../fs-utils';
-import ca from 'moment/locale/ca';
 
 Promise.promisifyAll(fs);
 
@@ -326,7 +325,7 @@ class AttachmentStore extends MailspringStore {
   addAttachmentPartialData(partialFileData) {
     let fileData = this._attachementCache.get(partialFileData.id);
     if (!fileData) {
-      console.log(`file id already not in cache ${partialFileData.id}`);
+      console.log(`file id not in cache ${partialFileData.id}`);
       fileData = File.fromPartialData(partialFileData);
       this._attachementCache.set(fileData.id, fileData);
     }
@@ -841,8 +840,10 @@ class AttachmentStore extends MailspringStore {
   async _applySessionChanges(headerMessageId, changeFunction) {
     const session = await DraftStore.sessionForClientId(headerMessageId);
     const files = changeFunction(session.draft().files);
-    session.changes.add({ files });
-    session.changes.commit();
+    console.log(`update attachments with applySession changes`);
+    session.updateAttachments(files);
+    // session.changes.add({ files });
+    // session.changes.commit();
   }
 
   // Handlers
@@ -860,9 +861,9 @@ class AttachmentStore extends MailspringStore {
         pathsToOpen = [pathsToOpen];
       }
       if (pathsToOpen.length > 1) {
-        Actions.addAttachments({ headerMessageId, filePaths: pathsToOpen, onCreated });
+        Actions.addAttachments({ headerMessageId, filePaths: pathsToOpen, onCreated, inline: type === 'image' });
       } else {
-        Actions.addAttachment({ headerMessageId, filePath: pathsToOpen[0], onCreated });
+        Actions.addAttachment({ headerMessageId, filePath: pathsToOpen[0], onCreated, inline: type === 'image' });
       }
     };
     if (type === 'image') {
