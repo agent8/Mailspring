@@ -6,9 +6,10 @@ const SIGNATURE_TYPE = 'signature';
 
 function SignatureNode(props) {
   const { attributes, node, editor, targetIsHTML, isSelected } = props;
+  const id = node.data.get ? node.data.get('id') : node.data.id;
 
   if (targetIsHTML) {
-    return BLOCK_CONFIG.div.render(props);
+    return <signature id={id}>{BLOCK_CONFIG.div.render(props)}</signature>;
   }
   return (
     <div {...attributes} className={`editable-box ${isSelected && 'custom-block-selected'}`}>
@@ -28,7 +29,7 @@ function SignatureNode(props) {
           mode={RetinaImg.Mode.ContentPreserve}
         />
       </a>
-      {BLOCK_CONFIG.div.render(props)}
+      <signature id={id}>{BLOCK_CONFIG.div.render(props)}</signature>
     </div>
   );
 }
@@ -46,6 +47,7 @@ const rules = [
         return {
           object: 'block',
           type: SIGNATURE_TYPE,
+          data: { id: el.id },
           nodes: next(el.childNodes),
         };
       }
