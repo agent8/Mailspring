@@ -3,6 +3,7 @@ import MailspringStore from 'mailspring-store'
 import DraftEditingSession, { cloneForSyncDraftData } from './draft-editing-session'
 import DraftFactory from './draft-factory'
 import DatabaseStore from './database-store'
+import ContactStore from './contact-store'
 import SendActionsStore from './send-actions-store'
 import SyncbackDraftTask from '../tasks/syncback-draft-task'
 import SyncbackMetadataTask from '../tasks/syncback-metadata-task'
@@ -719,6 +720,44 @@ class DraftStore extends MailspringStore {
     this.trigger(change)
     // update drafts that are not in view;
     // this._onDraftIdChange(change);
+  }
+
+  getContactsFromEmails = async emails => {
+    let contacts = []
+    if (!Array.isArray(emails)) {
+      emails = [emails]
+    }
+    for (let email of emails) {
+      const result = await ContactStore.parseContactsInString(email)
+      if (Array.isArray(result)) {
+        contacts.push.apply(contacts, result)
+      } else if (result) {
+        contacts.push(result)
+      }
+    }
+    return contacts
+  }
+
+  createAndSendMessage = async ({ subject, body, to, cc, from, draft }) => {
+    from = await this.getContactsFromEmails(from)
+    to = await this.getContactsFromEmails(to)
+    cc = await this.getContactsFromEmails(cc)
+    const accounts = AppEnv.config.get('accounts') || []
+    const account = accounts[0] || {}
+    const accountId = account.id
+    draft = await DraftFactory.createDraft({
+      subject,
+      body,
+      from,
+      to,
+      cc,
+      files: [],
+      accountId,
+      threadId: '',
+    })
+    await this._finalizeAndPersistNewMessage(draft)
+    const task = SendDraftTask.forSending(draft)
+    Actions.queueTask(task)
   }
 
   _onSendQuickReply = async ({ thread, threadId, message, messageId }, body) => {
