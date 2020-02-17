@@ -27,7 +27,7 @@ export const rankOfRole = role => {
 export const wrapInQuotes = s => `"${s.replace(/"/g, '')}"`;
 
 export const getThreadSuggestions = async (term, accountIds) => {
-  let dbQuery = DatabaseStore.findAll(Thread)
+  let dbQuery = DatabaseStore.findAll(Thread).where({state: 0})
     .structuredSearch(SearchQueryParser.parse(`subject:${wrapInQuotes(term)}`))
     .order(Thread.attributes.lastMessageTimestamp.descending())
     .limit(10);
