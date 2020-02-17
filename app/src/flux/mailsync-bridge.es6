@@ -757,16 +757,17 @@ export default class MailsyncBridge {
             FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
             const perspective = FocusedPerspectiveStore.current();
             if(perspective){
-              const categoryIds = perspective.categoryIds;
+              const categoryIds = Array.isArray(perspective.categories()) ? perspective.categories().map(cat=> cat.id) : [];
               if(Array.isArray(categoryIds) && categoryIds.length > 0){
                 console.log(`adding category constrain, ${categoryIds}`);
                 Thread = Thread || require('./models/thread').default;
-                const thread = DatabaseStore.findBy(Thread, where)
+                tmp = DatabaseStore.findBy(Thread, where)
                   .where([Thread.attributes.categories.containsAny(categoryIds)]);
-                promises.push(thread);
-                threadIndex = promises.length -1;
-                threadCategories = categoryIds;
+              } else {
+                console.log(`Cannot get category Ids, using data purely from thread`);
               }
+            } else {
+              console.log(`No current perspective, using data purely from thread`);
             }
           }
           promises.push(tmp)
