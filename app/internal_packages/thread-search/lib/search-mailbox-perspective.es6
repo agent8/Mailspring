@@ -22,8 +22,14 @@ class SearchMailboxPerspective extends MailboxPerspective {
     } else {
       this.sourcePerspective = sourcePerspective;
     }
+    let folderOrLabel = 'All';
 
-    this.name = `Searching All`;
+    const hasFolderOrLabel = searchQuery.match(/in:"([A-Za-z]+)"/);
+    if (hasFolderOrLabel && hasFolderOrLabel[1]) {
+      folderOrLabel = hasFolderOrLabel[1];
+    }
+
+    this.name = `Searching ${folderOrLabel}`;
   }
 
   emptyMessage() {
