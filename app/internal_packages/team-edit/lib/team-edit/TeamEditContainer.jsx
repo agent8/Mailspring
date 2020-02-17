@@ -1,6 +1,7 @@
-import React, {Component} from 'react'
-import { Flexbox } from 'mailspring-component-kit';
-import {ConversationStore} from 'chat-exports'
+import React, { Component } from 'react'
+import { Flexbox } from 'mailspring-component-kit'
+import _ from '../teampad-config'
+import { ConversationStore } from 'chat-exports'
 import PadStore from './PadStore'
 import TeamEditSideBar from './TeamEditSideBar'
 import TeamEditPadList from './TeamEditPadList'
@@ -8,13 +9,13 @@ import PadMessagePanel from './PadMessagePanel'
 import ResizableRegion from '../../../../src/components/resizable-region'
 
 class TeamEditContainer extends Component {
-  static displayName = 'TeamEditContainer';
+  static displayName = 'TeamEditContainer'
   state = {}
 
-  enterPadChatRoom = async (pad) => {
+  enterPadChatRoom = async pad => {
     const convJid = pad.chatRoomId + '@muc.im.edison.tech'
     const conv = await ConversationStore.getConversationByJid(convJid)
-    let {userId, email, token} = PadStore
+    let { userId, email, token } = PadStore
     if (!conv) {
       const name = 'Pad: ' + pad.name
       const roomId = convJid
@@ -31,7 +32,7 @@ class TeamEditContainer extends Component {
       await ConversationStore.createGroupConversation(payload)
     }
     PadStore.setPad(pad)
-    if (!userId){
+    if (!userId) {
       const chatAccounts = AppEnv.config.get('chatAccounts') || {}
       const acc = Object.values(chatAccounts)[0]
       if (!acc) {
@@ -42,26 +43,27 @@ class TeamEditContainer extends Component {
       token = await getTokenByUserId(userId)
     }
     const padId = pad.id
-    const padInfo = {padId, userId, token, email}
+    const padInfo = { padId, userId, token, email }
     const chatRoomVisible = true
-    this.setState({chatRoomVisible, padInfo})
+    this.setState({ chatRoomVisible, padInfo })
   }
 
   hidePadChatRoom = () => {
-    this.setState({chatRoomVisible: false})
+    this.setState({ chatRoomVisible: false })
   }
 
   render = () => {
-    const {chatRoomVisible, padInfo} = this.state
-    return (<div className="pad-edit-container">
-      <TeamEditSideBar></TeamEditSideBar>
-      <TeamEditPadList
-        enterPadChatRoom = {this.enterPadChatRoom}
-        hidePadChatRoom = {this.hidePadChatRoom}
-        >
-      </TeamEditPadList>
-      {chatRoomVisible? <PadMessagePanel padInfo={padInfo}></PadMessagePanel>: null}
-    </div>)
+    const { chatRoomVisible, padInfo } = this.state
+    return (
+      <div className='pad-edit-container'>
+        <TeamEditSideBar></TeamEditSideBar>
+        <TeamEditPadList
+          enterPadChatRoom={this.enterPadChatRoom}
+          hidePadChatRoom={this.hidePadChatRoom}
+        ></TeamEditPadList>
+        {chatRoomVisible ? <PadMessagePanel padInfo={padInfo}></PadMessagePanel> : null}
+      </div>
+    )
   }
 }
 

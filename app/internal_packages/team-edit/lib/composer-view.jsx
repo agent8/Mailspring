@@ -26,6 +26,7 @@ import {
   Spinner,
   LottieImg,
 } from 'mailspring-component-kit'
+import _ from './teampad-config'
 import ComposerHeader from './composer-header'
 import SendActionButton from './send-action-button'
 import ActionBarPlugins from './action-bar-plugins'
@@ -36,7 +37,6 @@ import { uploadPadFile, downloadPadInlineImage } from './pad-utils'
 
 import keyMannager from '../../../src/key-manager'
 import TeamreplyEditor from './TeamreplyEditor'
-import _ from './teampad-config'
 import { loadDraftPadMap, saveDraftPadMap, loadPadInfo, savePadInfo } from './app-pad-data'
 import { downloadPadFile } from './pad-utils'
 import { getAwsOriginalFilename } from '../../edison-beijing-chat/utils/awss3'

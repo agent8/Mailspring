@@ -506,10 +506,14 @@ class MessageStore extends MailspringStore {
 
   saveMessagesAndRefresh = async messages => {
     await this.saveMessages(messages)
-    if (this.conversationJid) {
-      this.retrieveSelectedConversationMessages(this.conversationJid)
-    }
+    await this.refreshMessages()
     return messages
+  }
+
+  refreshMessages = async () => {
+    if (this.conversationJid) {
+      await this.retrieveSelectedConversationMessages(this.conversationJid)
+    }
   }
 
   saveMessages = async messages => {

@@ -217,6 +217,9 @@ const startXmpp = xmpp => {
     const padActionMembers = data.eventData.members
     const padActionType = data.eventData.type
     const options = { userId, token }
+    if (!window.teamPadConfig) {
+      return
+    }
     const apiPath = window.teamPadConfig.teamEditAPIUrl + 'listPadsOfAuthor'
     let res = await postAsync(apiPath, options, {
       headers: {
