@@ -70,6 +70,7 @@ class ConfigSchemaItem extends React.Component {
         return this._renderMenuItem(item);
       }
     }
+    this.props.config.set(this.props.keyPath, this.props.configSchema.default);
     return null;
   }
 
