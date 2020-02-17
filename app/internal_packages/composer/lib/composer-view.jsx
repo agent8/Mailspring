@@ -725,9 +725,11 @@ export default class ComposerView extends React.Component {
         }
         match.contentId = Utils.generateContentId();
         match.isInline = true;
-        session.changes.add({
-          files: [].concat(draft.files),
-        });
+        console.log(`update attachment in _onAttachmentsCreated`);
+        session.updateAttachments([].concat(draft.files));
+        // session.changes.add({
+        //   files: [].concat(draft.files),
+        // });
       }
     }
     if (this._els[Fields.Body]) {
@@ -746,9 +748,11 @@ export default class ComposerView extends React.Component {
       }
       match.contentId = Utils.generateContentId();
       match.isInline = true;
-      session.changes.add({
-        files: [].concat(draft.files),
-      });
+      console.log(`update attachment in _onAttachmentCreated`);
+      session.updateAttachments([].concat(draft.files));
+      // session.changes.add({
+      //   files: [].concat(draft.files),
+      // });
       if (this._els[Fields.Body]) {
         this._els[Fields.Body].insertInlineAttachment(fileObj);
       }

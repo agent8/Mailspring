@@ -338,15 +338,16 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
-    if(Array.isArray(data.files)){
-      this.attachmentIds = data.files
-    }
+    // if(Array.isArray(data.files)){
+    //   this.attachmentIds = data.files
+    // }
   }
 
   toJSON(options) {
     const json = super.toJSON(options);
     // json.headerMessageId = this.headerMessageId || '';
     json.file_ids = this.fileIds();
+    json.files = this.files.map(f => f.toJSON());
     if (this.draft) {
       json.draft= true;
     }
@@ -484,7 +485,17 @@ export default class Message extends ModelWithMetadata {
     return rets;
   }
   set files(attachments){
-    this.attachmentIds = attachments;
+    this.attachmentIds = attachments.map(attachment => {
+      if(!(attachment instanceof File)){
+        attachment = File.fromPartialData(attachment)
+      }
+      if(!attachment.missingData){
+        AttachmentStore.setAttachmentData(attachment);
+      } else {
+        attachment = AttachmentStore.addAttachmentPartialData(attachment);
+      }
+      return attachment;
+    });
   }
 
   // Public: Returns an {Array} of {File} IDs

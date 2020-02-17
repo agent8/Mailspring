@@ -66,7 +66,7 @@ export default class File extends Model {
     if(!tmp.id && (data.id || data.pid)){
       tmp.id = data.id || data.pid;
     }
-    tmp.missingData = true;
+    tmp.missingData = !tmp.hasOwnProperty('size');
     return tmp;
   }
   constructor({mimeType = '', ...extra} = {}) {
