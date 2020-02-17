@@ -755,6 +755,7 @@ export default class DraftEditingSession extends MailspringStore {
     if(this._draft && Array.isArray(files)){
       this._draft.files = files;
       this.needUpload = true;
+      this._draft.pristine = false;
       this.changeSetCommit(`attachments change`);
       this._syncAttachmentData();
     } else {
@@ -811,6 +812,7 @@ export default class DraftEditingSession extends MailspringStore {
     if(headerMessageId === this._draft.headerMessageId){
       this._draft.files = files;
       this.needUpload = true;
+      this._draft.pristine = false;
       console.log(`non main window attachment updated`);
       this.trigger()
     }
