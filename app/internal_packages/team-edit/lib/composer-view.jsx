@@ -147,7 +147,7 @@ export default class ComposerView extends React.Component {
     const win = options.window
     let { src, id } = options
     const cwd = AppEnv.getLoadSettings().resourcePath
-    let relPath = 'internal_packages/composer/teamreply-client/src/html/pad.html'
+    let relPath = 'internal_packages/team-edit/teamreply-client/src/html/pad.html'
     if (cwd.endsWith('/Resources/app.asar')) {
       relPath = '../app.asar.unpacked/' + relPath
     }

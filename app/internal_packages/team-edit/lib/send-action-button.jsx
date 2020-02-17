@@ -199,7 +199,7 @@ class SendActionButton extends React.Component {
         filePath = src.substring(7)
       } else if (src.startsWith('./')) {
         console.log('in ./')
-        let relPath = 'internal_packages/composer/teamreply-client/src/html/pad.html'
+        let relPath = 'internal_packages/team-edit/teamreply-client/src/html/pad.html'
         if (cwd.endsWith('/Resources/app.asar')) {
           relPath = '../app.asar.unpacked/' + relPath
         }
@@ -209,7 +209,7 @@ class SendActionButton extends React.Component {
       // rel path is different beteen in pad.html and in this jsx file
       filePath = filePath.replace(
         'mailspring/download-inline-images',
-        'mailspring/app/internal_packages/composer/teamreply-client/download-inline-images'
+        'mailspring/app/internal_packages/team-edit/teamreply-client/download-inline-images'
       )
       filePath = filePath.replace(
         '/Applications/Edison%20Mail.app/',
@@ -217,7 +217,7 @@ class SendActionButton extends React.Component {
       )
       filePath = filePath.replace(
         '/Edison Mail.app/Contents/Resources/download-inline-images/',
-        '/Edison Mail.app/Contents/Resources/app.asar.unpacked/internal_packages/composer/teamreply-client/download-inline-images/'
+        '/Edison Mail.app/Contents/Resources/app.asar.unpacked/internal_packages/team-edit/teamreply-client/download-inline-images/'
       )
       const filename = getAwsOriginalFilename(src)
       const file = await AttachmentStore._onAddAttachment({

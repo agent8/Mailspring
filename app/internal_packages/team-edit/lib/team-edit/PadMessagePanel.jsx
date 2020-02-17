@@ -157,7 +157,6 @@ export default class MessagesPanel extends Component {
 
   updatePad = async () => {
     const { pad } = PadStore
-    console.trace('updatePad, pad:', pad)
     if (!pad) {
       this.setState({
         selectedConversation: null,

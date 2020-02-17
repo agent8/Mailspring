@@ -61,7 +61,7 @@ export default class TeamreplyEditor extends Component {
     if (!fs.existsSync(htmlPath)) {
       htmlPath = path.join(
         resourcePath,
-        './internal_packages/composer/teamreply-client/src/html/pad.html'
+        './internal_packages/team-edit/teamreply-client/src/html/pad.html'
       )
       console.log('exist pad.html: ', fs.existsSync(htmlPath))
     }

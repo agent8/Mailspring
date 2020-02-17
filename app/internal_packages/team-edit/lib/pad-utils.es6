@@ -21,7 +21,7 @@ export const downloadPadFile = async (awsKey, aes) => {
 }
 export const downloadPadInlineImage = async (awsKey, aes) => {
   const cwd = AppEnv.getLoadSettings().resourcePath
-  let relPath = 'internal_packages/composer/teamreply-client/download-inline-images'
+  let relPath = 'internal_packages/team-edit/teamreply-client/download-inline-images'
   if (cwd.endsWith('/Resources/app.asar')) {
     relPath = '../app.asar.unpacked/' + relPath
   }
