@@ -125,6 +125,7 @@ class DraftStore extends MailspringStore {
     return DatabaseStore.findBy(Message, {
       headerMessageId: headerMessageId,
       draft: true,
+      deleted: false,
     }).where([
       Message.attributes.syncState.in([
         Message.messageSyncState.failed,
@@ -137,6 +138,7 @@ class DraftStore extends MailspringStore {
       headerMessageId: headerMessageId,
       draft: true,
       hasCalendar: false,
+      deleted: false,
     }).where([
       Message.attributes.syncState.in([
         Message.messageSyncState.normal,
