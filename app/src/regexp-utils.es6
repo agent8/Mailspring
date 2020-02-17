@@ -48,9 +48,11 @@ const RegExpUtils = {
   // http://stackoverflow.com/a/16463966
   // http://www.regexpal.com/?fam=93928
   // NOTE: This does not match full urls with `http` protocol components.
-  domainRegex() {
+  domainRegex(hasAt = false) {
     return new RegExp(
-      `^(?!:\\/\\/)([a-zA-Z${UnicodeEmailChars}0-9-_]+\\.)*[a-zA-Z${UnicodeEmailChars}0-9][a-zA-Z${UnicodeEmailChars}0-9-_]+\\.[a-zA-Z]{2,11}?`,
+      `^${
+        hasAt ? '@' : ''
+      }(?!:\\/\\/)([a-zA-Z${UnicodeEmailChars}0-9-_]+\\.)*[a-zA-Z${UnicodeEmailChars}0-9][a-zA-Z${UnicodeEmailChars}0-9-_]+\\.[a-zA-Z]{2,11}?`,
       'i'
     );
   },

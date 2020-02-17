@@ -5,6 +5,7 @@ import {
   EmailAvatar,
   AccountStore,
   Account,
+  RegExpUtils,
 } from 'mailspring-exports';
 import { RetinaImg, EditableList, Flexbox, FullScreenModal } from 'mailspring-component-kit';
 import classnames from 'classnames';
@@ -75,6 +76,8 @@ export class PreferencesMutedNotifacations extends React.Component {
       mutes: [],
       showAddContact: false,
       selectContact: null,
+      muteInputValue: '',
+      inputIsValid: false,
     };
   }
 
@@ -112,12 +115,18 @@ export class PreferencesMutedNotifacations extends React.Component {
   };
 
   _onMuteContact = () => {
-    const { selectContact } = this.state;
-    const email = selectContact.email;
-    if (email) {
-      MuteNotificationStore.muteNotifacationEmails([email]);
+    const { selectContact, muteInputValue, inputIsValid } = this.state;
+    let muteEmail = '';
+    if (selectContact) {
+      muteEmail = selectContact.email;
+    } else if (muteInputValue && inputIsValid) {
+      muteEmail = muteInputValue;
     }
-    this._onToggleMutePopup();
+
+    if (muteEmail) {
+      MuteNotificationStore.muteNotifacationEmails([muteEmail]);
+      this._onToggleMutePopup();
+    }
   };
 
   _unmuteSelect = select => {
@@ -129,8 +138,14 @@ export class PreferencesMutedNotifacations extends React.Component {
     this.setState({ showAddContact: !this.state.showAddContact, selectContact: null });
   };
 
+  _onInputChange = value => {
+    const isValidDomain = RegExpUtils.domainRegex(true).test(value);
+    const isValidEmail = RegExpUtils.emailRegex().test(value);
+    this.setState({ muteInputValue: value, inputIsValid: isValidDomain || isValidEmail });
+  };
+
   _renderMuteContactPop = () => {
-    const { mutes, selectContact } = this.state;
+    const { mutes, selectContact, inputIsValid } = this.state;
     return (
       <div className="add-mute-contact-popup">
         <RetinaImg
@@ -146,19 +161,21 @@ export class PreferencesMutedNotifacations extends React.Component {
         {selectContact ? (
           <CoutactSelectShow contact={selectContact} delSelectContact={this._onDelSelectContact} />
         ) : (
-          <ContactSearch filterContacts={mutes} onSelectContact={this._onSelectContact} />
+          <ContactSearch
+            filterContacts={mutes}
+            onSelectContact={this._onSelectContact}
+            onChange={this._onInputChange}
+          />
         )}
         <div className="btn-group">
           <button onClick={this._onToggleMutePopup}>Cancel</button>
           <button
             className={classnames({
               confirm: true,
-              disable: !selectContact,
+              disable: !selectContact && !inputIsValid,
             })}
             onClick={() => {
-              if (selectContact) {
-                this._onMuteContact();
-              }
+              this._onMuteContact();
             }}
           >
             Mute
