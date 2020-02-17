@@ -43,7 +43,7 @@ class OutboxDeleteButton extends React.Component {
 
   render() {
     if(!this.props.selection.items().every(selection => {
-      return Message.compareMessageState(selection.state, Message.messageSyncState.failed);
+      return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
     })){
       return null;
     }
@@ -116,7 +116,7 @@ class ReSendButton extends React.Component {
   render() {
     const items = this.props.selection.items();
     if(!items.every(selection => {
-      return Message.compareMessageState(selection.state, Message.messageSyncState.failed);
+      return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
     })){
       return null;
     }

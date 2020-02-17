@@ -18,7 +18,7 @@ import {
 const resendIndicatorTimeoutMS = 3000;
 class OutboxStore extends MailspringStore {
   static findAll() {
-    return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false }).where([
+    return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false, deleted: false }).where([
       Message.attributes.syncState.in([Message.messageSyncState.failed, Message.messageSyncState.failing]),
     ]);
   }
@@ -80,7 +80,7 @@ class OutboxStore extends MailspringStore {
     if (this._resendingDrafts[draft.headerMessageId]) {
       return true;
     }
-    return Message.compareMessageState(draft.state, Message.messageSyncState.failing);
+    return Message.compareMessageState(draft.syncState, Message.messageSyncState.failing);
   };
   _clearResendIndicators = () => {
     this._resendDraftCheckTimer = null;
@@ -155,7 +155,7 @@ class OutboxStore extends MailspringStore {
       if (change.objectClass === Message.name) {
         let needUpdate = false;
         change.objects.forEach(obj => {
-          if (obj.draft && [Message.messageSyncState.failing, Message.messageSyncState.failed].includes(obj.state)) {
+          if (obj.draft && [Message.messageSyncState.failing, Message.messageSyncState.failed].includes(obj.syncState)) {
             if (this._selectedDraft && this._selectedDraft.id === obj.id) {
               if (change.type === 'persist') {
                 this._selectedDraft = obj;
@@ -182,7 +182,7 @@ class OutboxStore extends MailspringStore {
       }
     } else if (
       focused.draft &&
-      [Message.messageSyncState.failed, Message.messageSyncState.failing].includes(focused.state.toString())
+      [Message.messageSyncState.failed, Message.messageSyncState.failing].includes(focused.syncState.toString())
     ) {
       if (!this._selectedDraft) {
         this._selectedDraft = focused;
@@ -192,7 +192,7 @@ class OutboxStore extends MailspringStore {
         this.trigger();
       } else if (
         focused.id === this._selectedDraft.id &&
-        focused.state !== this._selectedDraft.state
+        focused.syncState !== this._selectedDraft.syncState
       ) {
         this._selectedDraft = focused;
         this.trigger();
@@ -293,7 +293,7 @@ class OutboxStore extends MailspringStore {
     let ret = 0;
     if (Array.isArray(drafts)) {
       drafts.forEach(item => {
-        ret += parseInt(item.state) === -1;
+        ret += Message.compareMessageState(item.syncState, Message.messageSyncState.failed);
       });
     }
     return ret;
