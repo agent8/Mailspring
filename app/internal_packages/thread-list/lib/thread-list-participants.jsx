@@ -27,7 +27,7 @@ class ThreadListParticipants extends React.Component {
     const messages =
       this.props.thread.__messages != null
         ? this.props.thread.__messages.filter(message => {
-          return message.state !== 1;
+          return !message.deleted;
         }) : [];
     if (messages.length > 1) {
       return <div className='messages-count'>({messages.length})</div>;
