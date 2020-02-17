@@ -114,10 +114,17 @@ export class Notifier {
     const myAccountId = msg.accountId;
     const myAccount = AccountStore.accountForId(myAccountId);
     const fromEmail = (msg.from[0] && msg.from[0].email) || '';
+
+    const isMutedDomain = MuteNotificationStore.isMutedDomainByAccount(myAccountId, fromEmail);
+    if (isMutedDomain) {
+      return false;
+    }
+
     const isMuted = MuteNotificationStore.isMuteByAccount(myAccountId, fromEmail);
     if (isMuted) {
       return false;
     }
+
     const { noticeType } = myAccount.notifacation;
 
     switch (noticeType) {
