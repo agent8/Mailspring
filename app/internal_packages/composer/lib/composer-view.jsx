@@ -103,8 +103,7 @@ export default class ComposerView extends React.Component {
     if (AppEnv.isComposerWindow()) {
       Actions.setCurrentWindowTitle(this._getToName(this.props.draft));
     }
-
-    this._isDraftMissingAttachments(this.props);
+    // this._isDraftMissingAttachments(this.props);
   }
   _getToName(participants) {
     if (!participants || !Array.isArray(participants.to) || participants.to.length === 0) {
@@ -113,7 +112,7 @@ export default class ComposerView extends React.Component {
     return participants.to[0].name || '';
   }
   UNSAFE_componentWillReceiveProps(newProps) {
-    this._isDraftMissingAttachments(newProps);
+    // this._isDraftMissingAttachments(newProps);
   }
 
   componentDidUpdate() {
@@ -177,13 +176,21 @@ export default class ComposerView extends React.Component {
       }
       const missing = ret.totalMissing();
       if (missing.length !== 0) {
-        this.setState({ missingAttachments: true });
-        Actions.fetchAttachments({
-          accountId: props.draft.accountId,
-          missingItems: missing.map(f => f.id),
-        });
+        if(!this.state.missingAttachments){
+          this.setState({ missingAttachments: true });
+          Actions.fetchAttachments({
+            accountId: props.draft.accountId,
+            missingItems: missing.map(f => f.id),
+          });
+        } else {
+          console.warn('state already missing attachments');
+        }
       } else {
-        this.setState({ missingAttachments: false });
+        if(this.state.missingAttachments){
+          this.setState({ missingAttachments: false });
+        } else {
+          console.warn('state already not missing attachments');
+        }
       }
     });
   };
@@ -725,9 +732,11 @@ export default class ComposerView extends React.Component {
         }
         match.contentId = Utils.generateContentId();
         match.isInline = true;
-        session.changes.add({
-          files: [].concat(draft.files),
-        });
+        console.log(`update attachment in _onAttachmentsCreated`);
+        session.updateAttachments([].concat(draft.files));
+        // session.changes.add({
+        //   files: [].concat(draft.files),
+        // });
       }
     }
     if (this._els[Fields.Body]) {
@@ -746,9 +755,11 @@ export default class ComposerView extends React.Component {
       }
       match.contentId = Utils.generateContentId();
       match.isInline = true;
-      session.changes.add({
-        files: [].concat(draft.files),
-      });
+      console.log(`update attachment in _onAttachmentCreated`);
+      session.updateAttachments([].concat(draft.files));
+      // session.changes.add({
+      //   files: [].concat(draft.files),
+      // });
       if (this._els[Fields.Body]) {
         this._els[Fields.Body].insertInlineAttachment(fileObj);
       }

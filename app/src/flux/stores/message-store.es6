@@ -497,11 +497,11 @@ class MessageStore extends MailspringStore {
           break;
         }
       }
-     if(dataChange){
-       console.warn(`attachment cache updated`);
-       this._fetchFromCache();
-       return;
-     }
+    }
+    if(dataChange){
+      console.warn(`attachment cache updated`);
+      this._fetchFromCache();
+      return;
     }
   };
 
