@@ -85,12 +85,13 @@ class SearchStore extends MailspringStore {
   }, 500);
 
   _onQuerySubmitted = (query, forceQuery) => {
-    this._preSearchQuery;
-    if ((query !== this._searchQuery || forceQuery) && query !== this._preSearchQuery) {
-      this._preSearchQuery = query;
-      this._searchQuery = query;
-      this.trigger();
-      this._processAndSubmitQuery(forceQuery);
+    if (query !== this._searchQuery || forceQuery) {
+      if (query !== this._preSearchQuery || !query) {
+        this._preSearchQuery = query;
+        this._searchQuery = query;
+        this.trigger();
+        this._processAndSubmitQuery(forceQuery);
+      }
     }
   };
 }
