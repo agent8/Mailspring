@@ -58,6 +58,7 @@ const draftPadMap = loadDraftPadMap()
 // Composer with new props.
 
 window.fsExistsSync = fs.existsSync
+window.path = path
 export default class ComposerView extends React.Component {
   static displayName = 'ComposerView'
 
@@ -151,7 +152,7 @@ export default class ComposerView extends React.Component {
     if (cwd.endsWith('/Resources/app.asar')) {
       relPath = '../app.asar.unpacked/' + relPath
     }
-    const filePath = path.join(cwd, relPath, src)
+    const filePath = path.join(cwd, relPath, '../' + src)
     let s = src
     let mark1 = '/download-inline-images/'
     let i = s.indexOf(mark1) + mark1.length

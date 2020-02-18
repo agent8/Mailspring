@@ -58,6 +58,8 @@ scripts/sqlite
 scripts/toolbox
 scripts/venv
 
+download-inline-images/
+
 # Python
 *.pyc
 

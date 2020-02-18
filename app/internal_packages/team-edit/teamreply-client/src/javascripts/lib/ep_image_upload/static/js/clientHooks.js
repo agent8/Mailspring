@@ -80,17 +80,6 @@ require.define({
 
     // Rewrite the DOM contents when an IMG attribute is discovered
     exports.aceDomLineProcessLineAttributes = function (name, context) {
-      var cls = context.cls
-      var exp = /(?:^| )img:([^>]*)/
-      var imgType = exp.exec(cls)
-
-      if (!imgType) return []
-      let start = imgType[0].indexOf('src="') + 5
-      let end = imgType[0].indexOf('"', start)
-      let src = imgType[0].substring(start, end)
-      var ret
-      //let src = imgType[0]
-      // console.log('yazz.img',imgType, context);
       var composerOnDownloadPadImg =
         window.parent.composerOnDownloadPadImg ||
         window.parent.parent.composerOnDownloadPadImg ||
@@ -99,18 +88,37 @@ require.define({
         window.parent.fsExistsSync ||
         window.parent.parent.fsExistsSync ||
         window.parent.parent.parent.fsExistsSync
-      let s = src
+      var path = window.parent.path || window.parent.parent.path || window.parent.parent.parent.path
+      var AppEnv =
+        window.parent.AppEnv || window.parent.parent.AppEnv || window.parent.parent.parent.AppEnv
+
+      var cls = context.cls
+      var exp = /(?:^| )img:([^>]*)/
+      var imgType = exp.exec(cls)
+      console.log(' aceDomLineProcessLineAttributes:name, context:', name, context)
+      if (!imgType) return []
+      var ret
+      //let src = imgType[0]
+      // console.log('yazz.img',imgType, context);
+      var i = cls.indexOf('../../download-inline-images/')
+      var j = cls.indexOf('">')
+      var src = cls.substring(i, j)
       let mark1 = '/download-inline-images/'
-      let i = s.indexOf(mark1) + mark1.length
-      let awsKey = s.substring(i)
+      i = src.indexOf(mark1) + mark1.length
+      let awsKey = src.substring(i)
       awsKey = awsKey.replace('/', '')
-      var randomId = awsKey // Math.floor(Math.random() * 100000 + 1)
-      if (fsExistsSync(src)) {
+      var randomId = awsKey
+      const cwd = AppEnv.getLoadSettings().resourcePath
+      let relPath = 'internal_packages/team-edit/teamreply-client/src/html/pad.html'
+      if (cwd.endsWith('/Resources/app.asar')) {
+        relPath = '../app.asar.unpacked/' + relPath
+      }
+      const filePath = path.join(cwd, relPath, '..' + src)
+      if (fsExistsSync(filePath)) {
         ret = '<img src="' + src + '" />'
       } else {
         composerOnDownloadPadImg({ src, id: randomId, $, window })
         ret = '<img src="' + src + '" aaa/>'
-        // ret = '<img src="' + src + '" download="false"/>'
       }
       var template = '<span id="' + randomId + '" class="image">'
       if (imgType[1]) {
@@ -135,13 +143,41 @@ require.define({
 
     // Rewrite the DOM contents when an IMG attribute is discovered
     exports.aceDomLineProcessLineAttributes = function (name, context) {
+      var composerOnDownloadPadImg =
+        window.parent.composerOnDownloadPadImg ||
+        window.parent.parent.composerOnDownloadPadImg ||
+        window.parent.parent.parent.composerOnDownloadPadImg
+      var fsExistsSync =
+        window.parent.fsExistsSync ||
+        window.parent.parent.fsExistsSync ||
+        window.parent.parent.parent.fsExistsSync
+      var path = window.parent.path || window.parent.parent.path || window.parent.parent.parent.path
+      var AppEnv =
+        window.parent.AppEnv || window.parent.parent.AppEnv || window.parent.parent.parent.AppEnv
+
       var cls = context.cls
       var exp = /(?:^| )img:([^>]*)/
       var imgType = exp.exec(cls)
-
       if (!imgType) return []
-      // console.log('yazz.img',imgType, context);
-      var randomId = Math.floor(Math.random() * 100000 + 1)
+
+      // author-400376 img:<img src="../../download-inline-images/400376/e3d97855-e333-4149-aebb-a859b7bfd802--$_@_$--avatar.png"> lineAttribMarker
+      var i = cls.indexOf('../../download-inline-images/')
+      var j = cls.indexOf('">')
+      var src = cls.substring(i, j)
+      let mark1 = '/download-inline-images/'
+      i = src.indexOf(mark1) + mark1.length
+      let awsKey = src.substring(i)
+      awsKey = awsKey.replace('/', '')
+      var randomId = awsKey
+      const cwd = AppEnv.getLoadSettings().resourcePath
+      let relPath = 'internal_packages/team-edit/teamreply-client/src/html/pad.html'
+      if (cwd.endsWith('/Resources/app.asar')) {
+        relPath = '../app.asar.unpacked/' + relPath
+      }
+      const filePath = path.join(cwd, relPath, '../' + src)
+      if (!fsExistsSync(filePath)) {
+        composerOnDownloadPadImg({ src, id: randomId, $, window })
+      }
       var template = '<span id="' + randomId + '" class="image">'
       if (imgType[1]) {
         var preHtml = template + imgType[1] + ' >'
