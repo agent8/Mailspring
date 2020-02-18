@@ -509,6 +509,8 @@ class Actions {
   static fetchAndSaveFile = ActionScopeWindow;
   static fetchAndSaveAllFiles = ActionScopeWindow;
   static fetchFile = ActionScopeWindow;
+  static updateDraftAttachments = ActionScopeMainWindow;
+  static syncDraftAttachments = ActionScopeGlobal;
   static abortFetchFile = ActionScopeWindow;
 
   /*

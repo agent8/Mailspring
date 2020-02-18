@@ -105,7 +105,7 @@ const HoverActions = new ListTabular.Column({
   name: 'HoverActions',
   resolver: draft => {
     const actions = [];
-    if (Message.compareMessageState(draft.state, Message.messageSyncState.failed)) {
+    if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
       actions.unshift(<OutboxTrashQuickAction draft={draft} key='outbox-trash-quick-action' />);
       actions.unshift(<OutboxEditQuickAction draft={draft} key='outbox-edit-quick-action' />);
       actions.unshift(<OutboxResendQuickAction draft={draft} key='outbox-resend-quick-action' />)
@@ -159,7 +159,7 @@ const cNarrow = new ListTabular.Column({
       attachment = <div className="thread-icon thread-icon-attachment" />;
     }
     const actions = [];
-    if (Message.compareMessageState(draft.state, Message.messageSyncState.failed)) {
+    if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
       actions.unshift(<OutboxTrashQuickAction draft={draft} key='outbox-trash-quick-action' />);
       actions.unshift(<OutboxEditQuickAction draft={draft} key='outbox-edit-quick-action' />);
       actions.unshift(<OutboxResendQuickAction draft={draft} key='outbox-resend-quick-action' />)
