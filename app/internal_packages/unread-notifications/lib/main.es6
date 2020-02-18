@@ -182,7 +182,8 @@ export class Notifier {
     }
 
     if (this.notifiedMessageIds[message.id]) {
-      AppEnv.reportError(new Error(`Notifier._notifyOne duplicated message id: ${message.id}`));
+      console.warn(`Notifier._notifyOne duplicated message id: ${message.id}`);
+      // AppEnv.reportError(new Error(`Notifier._notifyOne duplicated message id: ${message.id}`));
       return;
     }
 
