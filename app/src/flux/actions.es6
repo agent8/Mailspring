@@ -498,7 +498,8 @@ class Actions {
   static addAttachment = ActionScopeWindow;
   static addAttachments = ActionScopeWindow;
   static selectAttachment = ActionScopeWindow;
-  static removeAttachment = ActionScopeWindow;
+  static removeAttachment = ActionScopeMainWindow;
+  static broadcastDraftAttachmentState = ActionScopeGlobal;
 
   static syncFolders = ActionScopeMainWindow;
   static syncSiftFolder = ActionScopeMainWindow;
@@ -511,6 +512,7 @@ class Actions {
   static fetchFile = ActionScopeWindow;
   static updateDraftAttachments = ActionScopeMainWindow;
   static syncDraftAttachments = ActionScopeGlobal;
+  static syncAttachmentToMain = ActionScopeMainWindow;
   static abortFetchFile = ActionScopeWindow;
 
   /*

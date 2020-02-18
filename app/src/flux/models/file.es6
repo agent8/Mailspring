@@ -58,6 +58,14 @@ export default class File extends Model {
     missingData: Attributes.Boolean({
       modelKey: 'missingData',
       queryable: false
+    }),
+    originFilePath: Attributes.String({
+      modelKey: 'originFilePath',
+      queryable: false
+    }),
+    filePath: Attributes.String({
+      modelKey: 'filePath',
+      queryable: false
     })
   });
   static fromPartialData(data){
@@ -65,6 +73,9 @@ export default class File extends Model {
     tmp.fromJSON(data);
     if(!tmp.id && (data.id || data.pid)){
       tmp.id = data.id || data.pid;
+    }
+    if(!tmp.contentType && tmp.mimeType){
+      tmp.contentType = tmp.mimeType;
     }
     tmp.missingData = !tmp.hasOwnProperty('size');
     return tmp;
