@@ -1,5 +1,5 @@
-import _ from 'underscore';
-import MailspringStore from 'mailspring-store';
+import _ from 'underscore'
+import MailspringStore from 'mailspring-store'
 
 /**
 Public: The ComponentRegistry maintains an index of React components registered
@@ -9,11 +9,11 @@ to dynamically render components registered with the ComponentRegistry.
 Section: Stores
 */
 class ComponentRegistry extends MailspringStore {
-  constructor() {
-    super();
-    this._registry = {};
-    this._cache = {};
-    this._showComponentRegions = false;
+  constructor () {
+    super()
+    this._registry = {}
+    this._cache = {}
+    this._showComponentRegions = false
   }
 
   // Public: Register a new component with the Component Registry.
@@ -40,30 +40,30 @@ class ComponentRegistry extends MailspringStore {
   //
   // This method is chainable.
   //
-  register(component, options) {
+  register (component, options) {
     if (component.view) {
       return console.warn(
         'Ignoring component trying to register with old CommandRegistry.register syntax'
-      );
+      )
     }
 
     if (!options) {
-      throw new Error(
-        'ComponentRegistry.register() requires `options` that describe the component'
-      );
+      throw new Error('ComponentRegistry.register() requires `options` that describe the component')
     }
     if (!component) {
-      throw new Error('ComponentRegistry.register() requires `component`, a React component');
+      throw new Error('ComponentRegistry.register() requires `component`, a React component')
     }
     if (!component.displayName) {
       throw new Error(
         'ComponentRegistry.register() requires that your React Component defines a `displayName`'
-      );
+      )
     }
 
-    const { locations, modes, roles } = this._pluralizeDescriptor(options);
+    const { locations, modes, roles } = this._pluralizeDescriptor(options)
     if (!roles && !locations) {
-      throw new Error(`ComponentRegistry.register() for ${component.displayName} requires 'role' or 'location'`);
+      throw new Error(
+        `ComponentRegistry.register() for ${component.displayName} requires 'role' or 'location'`
+      )
     }
 
     if (
@@ -71,31 +71,35 @@ class ComponentRegistry extends MailspringStore {
       this._registry[component.displayName].component !== component
     ) {
       throw new Error(
-        `ComponentRegistry.register(): A different component was already registered with the name ${
-          component.displayName
-        }`
-      );
+        `ComponentRegistry.register(): A different component was already registered with the name ${component.displayName}`
+      )
     }
 
-    this._cache = {};
-    this._registry[component.displayName] = { component, locations, modes, roles };
+    this._cache = {}
+    this._registry[component.displayName] = { component, locations, modes, roles }
 
     // Trigger listeners. It's very important the component registry is debounced.
     // During app launch packages register tons of components and if we re-rendered
     // the entire UI after each registration it takes forever to load the UI.
-    this.triggerDebounced();
+    this.triggerDebounced()
 
     // Return `this` for chaining
-    return this;
+    return this
   }
 
-  unregister(component) {
+  unregister (component) {
     if (typeof component === 'string') {
-      throw new Error('ComponentRegistry.unregister() must be called with a component.');
+      throw new Error('ComponentRegistry.unregister() must be called with a component.')
     }
-    this._cache = {};
-    delete this._registry[component.displayName];
-    this.triggerDebounced();
+    this._cache = {}
+    delete this._registry[component.displayName]
+    this.triggerDebounced()
+  }
+
+  unregisterByName (displayName) {
+    this._cache = {}
+    delete this._registry[displayName]
+    this.triggerDebounced()
   }
 
   // Public: Retrieve the registry entry for a given name.
@@ -104,8 +108,8 @@ class ComponentRegistry extends MailspringStore {
   //
   // Returns a {React.Component}
   //
-  findComponentByName(name) {
-    return this._registry[name] && this._registry[name].component;
+  findComponentByName (name) {
+    return this._registry[name] && this._registry[name].component
   }
 
   /**
@@ -138,43 +142,43 @@ class ComponentRegistry extends MailspringStore {
 
   Returns an {Array} of {React.Component} objects
   */
-  findComponentsMatching(descriptor) {
+  findComponentsMatching (descriptor) {
     if (!descriptor) {
-      throw new Error('ComponentRegistry.findComponentsMatching called without descriptor');
+      throw new Error('ComponentRegistry.findComponentsMatching called without descriptor')
     }
 
-    const { locations, modes, roles } = this._pluralizeDescriptor(descriptor);
+    const { locations, modes, roles } = this._pluralizeDescriptor(descriptor)
 
     if (!locations && !modes && !roles) {
-      throw new Error('ComponentRegistry.findComponentsMatching called with an empty descriptor');
+      throw new Error('ComponentRegistry.findComponentsMatching called with an empty descriptor')
     }
 
-    const cacheKey = JSON.stringify({ locations, modes, roles });
+    const cacheKey = JSON.stringify({ locations, modes, roles })
     if (this._cache[cacheKey]) {
-      return [].concat(this._cache[cacheKey]);
+      return [].concat(this._cache[cacheKey])
     }
 
     // Made into a convenience function because default
     // values (`[]`) are necessary and it was getting messy.
-    const overlaps = (entry = [], search = []) => _.intersection(entry, search).length > 0;
+    const overlaps = (entry = [], search = []) => _.intersection(entry, search).length > 0
 
     const entries = Object.values(this._registry).filter(entry => {
       if (modes && entry.modes && !overlaps(modes, entry.modes)) {
-        return false;
+        return false
       }
       if (locations && !overlaps(locations, entry.locations)) {
-        return false;
+        return false
       }
       if (roles && !overlaps(roles, entry.roles)) {
-        return false;
+        return false
       }
-      return true;
-    });
+      return true
+    })
 
-    const results = entries.map(entry => entry.component);
-    this._cache[cacheKey] = results;
+    const results = entries.map(entry => entry.component)
+    this._cache[cacheKey] = results
 
-    return [].concat(results);
+    return [].concat(results)
   }
 
   // We debounce because a single plugin may activate many components in
@@ -190,37 +194,37 @@ class ComponentRegistry extends MailspringStore {
   // We set the debouce interval to 1 "frame" (16ms) to balance
   // responsiveness and efficient batching.
   //
-  triggerDebounced = _.debounce(() => this.trigger(this), 16);
+  triggerDebounced = _.debounce(() => this.trigger(this), 16)
 
-  _pluralizeDescriptor(descriptor) {
-    let { locations, modes, roles } = descriptor;
+  _pluralizeDescriptor (descriptor) {
+    let { locations, modes, roles } = descriptor
     if (descriptor.mode) {
-      modes = [descriptor.mode];
+      modes = [descriptor.mode]
     }
     if (descriptor.role) {
-      roles = [descriptor.role];
+      roles = [descriptor.role]
     }
     if (descriptor.location) {
-      locations = [descriptor.location];
+      locations = [descriptor.location]
     }
-    return { locations, modes, roles };
+    return { locations, modes, roles }
   }
 
-  _clear() {
-    this._cache = {};
-    this._registry = {};
+  _clear () {
+    this._cache = {}
+    this._registry = {}
   }
 
   // Showing Component Regions
 
-  toggleComponentRegions() {
-    this._showComponentRegions = !this._showComponentRegions;
-    this.trigger(this);
+  toggleComponentRegions () {
+    this._showComponentRegions = !this._showComponentRegions
+    this.trigger(this)
   }
 
-  showComponentRegions() {
-    return this._showComponentRegions;
+  showComponentRegions () {
+    return this._showComponentRegions
   }
 }
 
-export default new ComponentRegistry();
+export default new ComponentRegistry()

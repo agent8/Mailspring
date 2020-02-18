@@ -141,6 +141,12 @@ class ComposerWithWindowProps extends React.Component {
 }
 
 export function activate () {
+  ComponentRegistry.unregisterByName('ComposerView-inflate')
+  ComponentRegistry.unregisterByName('ComposeButton')
+  ComponentRegistry.unregisterByName('RefreshButton')
+  ComponentRegistry.unregisterByName('ComposerView-inflate')
+  ComponentRegistry.unregisterByName('ComposerWithWindowProps')
+
   ComposerViewForDraftClientId.displayName = 'TeamEditComposer'
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(ComposerViewForDraftClientId, {
