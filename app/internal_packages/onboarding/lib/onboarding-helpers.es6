@@ -465,11 +465,15 @@ export async function buildYahooAccountFromAuthResponse(code) {
   const me = await meResp.json();
   if (!meResp.ok) {
     AppEnv.trackingEvent('oauth-yahoo-profile-failed');
-    AppEnv.reportError(new Error(`Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`));
+    AppEnv.reportError(
+      new Error(
+        `Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
+      )
+    );
     me = {
       given_name: '',
-      family_name: ''
-    }
+      family_name: '',
+    };
   }
 
   const { given_name, family_name } = me;
@@ -579,7 +583,10 @@ export async function finalizeAndValidateAccount(account) {
   }
 
   // Test connections to IMAP and SMTP
-  const proc = new MailsyncProcess(AppEnv.getLoadSettings());
+  const proc = new MailsyncProcess({
+    ...AppEnv.getLoadSettings(),
+    disableThread: AppEnv.getDisableThread(),
+  });
   proc.identity = IdentityStore.identity();
   proc.account = account;
   const { response } = await proc.test();
