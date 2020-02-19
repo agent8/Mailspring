@@ -774,10 +774,10 @@ export default class ComposerView extends React.Component {
       if (!match) {
         return;
       }
-      match.contentId = Utils.generateContentId();
-      match.isInline = true;
-      console.log(`update attachment in _onAttachmentCreated`);
-      session.updateAttachments([].concat(draft.files));
+      // match.contentId = Utils.generateContentId();
+      // match.isInline = true;
+      // console.log(`update attachment in _onAttachmentCreated`);
+      // session.updateAttachments([].concat(draft.files));
       // session.changes.add({
       //   files: [].concat(draft.files),
       // });
