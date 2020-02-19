@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { ResizableRegion } from 'mailspring-component-kit';
 import JiraDetail from './jira-detail';
-import JiraApi from './jira-api';
 import Login from './jira-login';
 import _ from 'underscore';
 const { AccountStore } = require('mailspring-exports');
@@ -14,16 +13,6 @@ export default class JiraPlugin extends Component {
     constructor(props) {
         super(props);
         const config = AppEnv.config.get(CONFIG_KEY);
-        if (config && Object.keys(config).length > 0) {
-            this.jira = new JiraApi({
-                protocol: 'https',
-                host: config.host,
-                username: config.username,
-                password: config.password,
-                apiVersion: '2',
-                strictSSL: true
-            });
-        }
         this.state = {
             config: config ? config : {},
             width: AppEnv.config.get(WIDTH_KEY),
@@ -31,44 +20,48 @@ export default class JiraPlugin extends Component {
         }
     }
     componentDidMount() {
-        this.disposable = AppEnv.config.onDidChange(
-            JIRA_SHOW_KEY,
-            () => {
-                this.setState({
-                    active: !!AppEnv.config.get(JIRA_SHOW_KEY)
-                })
-            }
-        );
+        this.disposables = [
+            AppEnv.config.onDidChange(
+                JIRA_SHOW_KEY,
+                () => {
+                    this.setState({
+                        active: !!AppEnv.config.get(JIRA_SHOW_KEY)
+                    })
+                }
+            ),
+            AppEnv.config.onDidChange(
+                CONFIG_KEY,
+                () => {
+                    const config = AppEnv.config.get(CONFIG_KEY);
+                    this.setState({
+                        config: AppEnv.config.get(CONFIG_KEY)
+                    })
+                }
+            )
+        ]
     }
     componentWillUnmount() {
-        this.disposable.dispose();
-    }
-    saveConfig = config => {
-        this.jira = new JiraApi({
-            protocol: 'https',
-            host: config.host,
-            username: config.username,
-            password: config.password,
-            apiVersion: '2',
-            strictSSL: true
-        });
-        AppEnv.config.set(CONFIG_KEY, config);
-        this.setState({
-            config
-        })
-    }
-    logout = () => {
-        AppEnv.config.set(CONFIG_KEY, {});
-        this.jira = null;
-        this.setState({
-            config: {}
-        })
+        for (const d of this.disposables) {
+            d.dispose();
+        }
     }
     _onColumnResize = _.debounce((w) => {
         AppEnv.config.set(WIDTH_KEY, w);
     }, 200);
-
+    _isJIRA() {
+        const { thread } = this.props;
+        if (thread && thread.participants) {
+            for (const att of thread.participants) {
+                if (att.email && att.email.split('@')[1].includes('atlassian.net')) {
+                    return true;
+                }
+            }
+        }
+        return false;
+        // return this.props.thread.isJIRA;
+    }
     render() {
+        const { active, config } = this.state;
         const accounts = AccountStore.accounts();
         let isEdisonMail = false;
         for (const acc of accounts) {
@@ -77,9 +70,10 @@ export default class JiraPlugin extends Component {
                 break;
             }
         }
-        if (!this.state.active || !this.props.thread || !this.props.thread.isJIRA || !isEdisonMail) {
+        if (!active || !this.props.thread || !this._isJIRA() || !isEdisonMail) {
             return null;
         }
+        const needLogin = !config || Object.keys(config).length === 0;
         return (
             <ResizableRegion
                 className="jira-plugin"
@@ -89,9 +83,9 @@ export default class JiraPlugin extends Component {
                 initialWidth={this.state.width || 200}
             >
                 {
-                    !this.jira ?
-                        <Login {...this.props} config={this.state.config} saveConfig={this.saveConfig} />
-                        : <JiraDetail {...this.props} jira={this.jira} logout={this.logout} />
+                    needLogin ?
+                        <Login {...this.props} config={this.state.config} />
+                        : <JiraDetail {...this.props} config={this.state.config} />
                 }
             </ResizableRegion>
         )

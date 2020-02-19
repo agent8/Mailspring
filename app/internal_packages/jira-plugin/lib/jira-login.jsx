@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import JiraApi from './jira-api';
+import { remote } from 'electron';
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
-
+const CONFIG_KEY = 'plugin.jira.config';
+const ONBOARDING_WINDOW = 'onboarding';
 export default class Login extends Component {
     constructor(props) {
         super(props);
@@ -40,7 +42,7 @@ export default class Login extends Component {
         try {
             const currentUser = await this.jira.getCurrentUser();
             console.log('****currentUser', currentUser);
-            window.localStorage.setItem('jira-current-user', JSON.stringify(currentUser));
+            config.currentUser = currentUser;
         } catch (err) {
             console.log('****jira login failed', err);
             let message = 'Login failed, please check your Email and Api token.';
@@ -53,7 +55,17 @@ export default class Login extends Component {
             });
             return;
         }
-        this.props.saveConfig(config);
+        AppEnv.config.set(CONFIG_KEY, config);
+    }
+    openOauth() {
+        remote.getGlobal('application').windowManager.ensureWindow(ONBOARDING_WINDOW, {
+            windowProps: {
+                addingAccount: true, existingAccountJSON: {
+                    provider: 'jira-plugin'
+                }
+            },
+            title: '',
+        });
     }
     render() {
         const { host, username, password } = this.props.config;
@@ -93,6 +105,15 @@ export default class Login extends Component {
                         : <button className="btn btn-jira btn-jira-login" onClick={this.submit}>Login</button>
                     }
                 </div>
+                <h1>OR use Oauth</h1>
+                {loading ?
+                    <LottieImg
+                        name="loading-spinner-blue"
+                        size={{ width: 20, height: 20 }}
+                        style={{ margin: 'none' }}
+                    />
+                    : <button className="btn btn-jira btn-jira-login" onClick={this.openOauth}>Connect to Jira</button>
+                }
             </div>
         )
     }
