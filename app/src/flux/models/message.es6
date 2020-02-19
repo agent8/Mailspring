@@ -15,8 +15,8 @@ import CategoryStore from '../stores/category-store';
 let AttachmentStore = null;
 
 const mapping = {
-  attachmentIdsFromJSON: json =>{
-    if(!Array.isArray(json)){
+  attachmentIdsFromJSON: json => {
+    if (!Array.isArray(json)) {
       return [];
     }
     return json.map(attachment => {
@@ -26,7 +26,7 @@ const mapping = {
 };
 
 export default class Message extends ModelWithMetadata {
-  static fieldsNotInDB=[
+  static fieldsNotInDB = [
     'calendarReply',
     'listUnsubscribe',
     'pristine',
@@ -323,7 +323,12 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'syncState',
       loadFromColumn: true,
       queryable: true,
-    })
+    }),
+    isJIRA: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'isJIRA',
+    }),
   });
 
   static naturalSortOrder() {
@@ -353,7 +358,7 @@ export default class Message extends ModelWithMetadata {
     json.file_ids = this.fileIds();
     json.files = this.files.map(f => f.toJSON());
     if (this.draft) {
-      json.draft= true;
+      json.draft = true;
     }
 
     if (this.events && this.events.length) {
@@ -470,30 +475,30 @@ export default class Message extends ModelWithMetadata {
     }
     return false;
   }
-  get files(){
+  get files() {
     AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-    if(!Array.isArray(this.attachmentIds)){
+    if (!Array.isArray(this.attachmentIds)) {
       console.error(`attachmentIds is not array`, this.attachmentIds);
       return [];
     }
     const rets = [];
     this.attachmentIds.forEach(partialAttachmentData => {
-      if(!(partialAttachmentData instanceof File)){
+      if (!(partialAttachmentData instanceof File)) {
         partialAttachmentData = File.fromPartialData(partialAttachmentData)
       }
       const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
-      if(fileData){
+      if (fileData) {
         rets.push(fileData);
       }
     });
     return rets;
   }
-  set files(attachments){
+  set files(attachments) {
     this.attachmentIds = attachments.map(attachment => {
-      if(!(attachment instanceof File)){
+      if (!(attachment instanceof File)) {
         attachment = File.fromPartialData(attachment)
       }
-      if(!attachment.missingData){
+      if (!attachment.missingData) {
         AttachmentStore.setAttachmentData(attachment);
       } else {
         attachment = AttachmentStore.addAttachmentPartialData(attachment);
@@ -507,12 +512,12 @@ export default class Message extends ModelWithMetadata {
     return this.files.map(file => file.id);
   }
 
-  get labels(){
+  get labels() {
     const ret = [];
     this.labelIds.forEach(labelId => {
-      if(typeof labelId === 'string'){
+      if (typeof labelId === 'string') {
         const tmp = CategoryStore.byFolderId(labelId);
-        if(tmp){
+        if (tmp) {
           ret.push(tmp);
         }
       }
@@ -583,15 +588,15 @@ export default class Message extends ModelWithMetadata {
 
   //Public: returns the first email that belongs to the account that received the email,
   // otherwise returns the account's default email.
-  findMyEmail(){
-    const participants = this.participants({includeFrom: false, includeBcc: true});
+  findMyEmail() {
+    const participants = this.participants({ includeFrom: false, includeBcc: true });
     const account = AccountStore.accountForId(this.accountId);
-    if(!account){
-      AppEnv.reportError(new Error('Message accountId is not part of any account'), {errorData: this.toJSON()})
+    if (!account) {
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), { errorData: this.toJSON() })
       return false;
     }
-    for(let participant of participants){
-      if(account.isMyEmail(participant.email)){
+    for (let participant of participants) {
+      if (account.isMyEmail(participant.email)) {
         return participant.email;
       }
     }
@@ -625,7 +630,7 @@ export default class Message extends ModelWithMetadata {
   }
 
   isForwarded() {
-    if(!this.subject){
+    if (!this.subject) {
       console.error(`subject is ${this.subject}`);
       return false;
     }
@@ -654,7 +659,7 @@ export default class Message extends ModelWithMetadata {
     }
     return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
   }
-  isInSpam(){
+  isInSpam() {
     if (!this.labels) {
       return false;
     }

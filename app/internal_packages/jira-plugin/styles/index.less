@@ -1,0 +1,310 @@
+@import 'ui-variables';
+@jiraColor : rgb(0, 82, 204);
+
+.rc-select-dropdown.jira-dropdown {
+    max-height: 300px;
+    box-shadow: -2px 2.5px 10px rgba(0, 0, 0, 0.35);
+    background: @background-primary;
+    li.rc-select-dropdown-menu-item {
+        height: 46px;
+        line-height: 46px;
+        padding-left: 10px;
+    }
+    li.rc-select-dropdown-menu-item-active {
+        color: @text-color;
+        background-image: none;
+    }
+    .jira-user {
+        display: flex;
+        align-items: center;
+        img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    }
+}
+
+
+.jira-plugin {
+    border-left: 1px solid @border-color-divider;
+    border-top: 1px solid @border-color-divider;
+    padding: 8px 18px 20px;
+    background: @background-primary;
+    color: @text-color;
+    .error {
+        color: @red;
+    }
+    .jira-login {
+        max-width: 300px;
+        margin: 0 auto;
+        .jira-logo {
+            text-align: center;
+            margin: 30px 0 15px;
+            img.content-mask {
+                width: 108px;
+                background: @jiraColor;
+            }
+        }
+        .row {
+            margin-bottom: 16px;
+            .label {
+                font-weight: 600;
+                font-size: 14px;
+            }
+            input {
+                height: 32px;
+                line-height: 32px;
+                padding-left: 6px;
+            }
+        }
+        .btn-jira-login {
+            width: 200px;
+        }
+    }
+
+    .jira-status,
+    .assign-users {
+        width: 170px;
+        .rc-select-selection {
+            &:hover {
+                box-shadow: none;
+            }
+            border: none;
+        }
+        &.rc-select-focused {
+        }
+        .rc-select-selection__rendered {
+            font-size: 13px;
+            color: @text-color;
+            .rc-select-search__field {
+                height: 100%;
+            }
+        }
+        .rc-select-arrow {
+            visibility: hidden;
+        }
+        &:hover {
+            .rc-select-selection {
+                background: @list-hover-bg;
+            }
+            .rc-select-arrow {
+                visibility: visible;
+            }
+        }
+    }
+    .jira-user {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+    }
+    .large-loading {
+        margin-top: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .jira-progress {
+        display: flex;
+    }
+    .jira-detail {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        header {
+            &>div {
+                overflow: hidden;
+                padding: 4px 0;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            &>div>span{
+               float: left; 
+            }
+            .label {
+                width: 64px;
+                line-height: 28px;
+            }
+            .content {
+                line-height: 28px;
+                width: 200px;
+                padding-left: 10px;
+                &.with-progress {
+                    align-items: center;
+                    padding: 0;
+                    display: flex;
+                }
+            }
+        }
+        .label {
+            font-weight: 600;
+        }
+        .wrapper {
+            flex: 1;
+            overflow-y: auto;
+            &::-webkit-scrollbar {
+                width: 4px;
+                height: 1px;
+            }
+    
+            &::-webkit-scrollbar-thumb {
+                background-color: @gray-lighter;
+            }
+    
+            &::-webkit-scrollbar-track {
+                background: none;
+                border: none;
+                outline: none;
+            }
+        }
+        .jira-current-user {
+            position: absolute;
+            right: 16px;
+            top: 8px;
+            height: 34px;
+            width: 34px;
+            box-shadow: -1px 1.5px 6px rgba(0, 0, 0, 0.15);
+            border-radius: 50%;
+            overflow: hidden;
+            img {
+                width: 100%;
+                height: 100%;
+                &.content-mask {
+                    background: @jiraColor;
+                }
+            }
+        }
+        .jira-title {
+            line-height: 26px;
+            font-weight: 600;
+            padding-bottom: 6px;
+            a {
+                text-decoration: none;
+                font-size: 16px;
+                color: @text-color;
+                cursor: pointer;
+                &:hover {
+                    color: @jiraColor;
+                    text-decoration: underline;
+                }
+            }
+        }
+        .jira-attachments,
+        .jira-description,
+        .jira-comments {
+            margin-top: 15px;
+            & > div {
+                word-break: break-all;
+                padding: 6px 30px 10px 20px;
+            }
+        }
+        .jira-comments {
+            & > div {
+                .row {
+                    word-break: break-all;
+                    margin-bottom: 10px;
+                    .comment-header {
+                        display: flex;
+                        flex-wrap: wrap;
+                        align-items: center;
+                        padding-bottom: 8px;
+                        .datetime {
+                            flex: 1;
+                            text-align: left;
+                            font-size: 12px;
+                            color: rgba(0, 0, 0, 0.65);
+                            white-space: nowrap;
+                            padding-left: 20px;
+                            color: fade(@text-color, 65);
+                        }
+                    }
+                }
+            } 
+        }
+        .jira-attachments {
+            .attachments > div {
+                position: relative;
+                width: 100px;
+                height: 100px;
+                float: left;
+                margin: 4px 8px 0 0;
+                overflow: hidden;
+                cursor: pointer;
+                &:hover {
+                    &:after {
+                        content: attr(title);
+                        color: @text-color-inverse;
+                        display: block;
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        height: 100%;
+                        width: 100%;
+                        background: fade(@black, 65);
+                    }
+                }
+            }
+        }
+    }
+    .image-wrap {
+        display: inline-block;
+        max-height: 130px;
+        overflow: hidden;
+    }
+    textarea {
+        margin: 20px 0px 10px 0px;
+        width: 100%;
+        resize: none;
+        border-radius: 6px;
+        border-color: @border-color-primary;
+        height: 50px;
+        transition: height 0.3s;
+        &:focus {
+            height: 200px
+        }
+    }
+    .jira-success {
+        background: @green;
+    }
+    .jira-error {
+        background: @red;
+    }
+    .btn-jira {
+        -webkit-box-align: baseline;
+        align-items: baseline;
+        box-sizing: border-box;
+        font-size: inherit;
+        font-style: normal;
+        font-weight: normal;
+        max-width: 100%;
+        text-align: center;
+        white-space: nowrap;
+        cursor: default;
+        height: 2.28571em;
+        line-height: 2.28571em;
+        vertical-align: middle;
+        width: auto;
+        color: rgb(255, 255, 255) !important;
+        border-width: 0px;
+        text-decoration: none;
+        background: @jiraColor;
+        border-radius: 3px;
+        padding: 0px 8px;
+        transition: background 0.1s ease-out 0s, box-shadow 0.15s cubic-bezier(0.47, 0.03, 0.49, 1.38) 0s;
+        outline: none !important;
+    }
+}
+
+.btn-toolbar.message-toolbar-jira.active {
+    img.content-mask {
+        background: @jiraColor;
+    }
+}
