@@ -407,7 +407,9 @@ export class ImageAttachmentItem extends Component {
   }
 
   componentDidMount() {
-    this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+    this._storeUnlisten = [
+      AttachmentStore.listen(this._onDownloadStoreChange)
+    ];
   }
 
   componentWillUnmount() {
@@ -417,6 +419,8 @@ export class ImageAttachmentItem extends Component {
       }
     }
   }
+
+  _onAttachmentState
 
   _onDownloadStoreChange = () => {
     const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);

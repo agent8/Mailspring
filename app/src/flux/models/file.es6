@@ -69,8 +69,8 @@ export default class File extends Model {
     })
   });
   static fromPartialData(data){
-    const tmp = new File();
-    tmp.fromJSON(data);
+    const tmp = new File(data);
+    // tmp.fromJSON(data);
     if(!tmp.id && (data.id || data.pid)){
       tmp.id = data.id || data.pid;
     }
