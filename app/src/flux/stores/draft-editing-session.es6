@@ -16,6 +16,7 @@ import DestroyDraftTask from '../tasks/destroy-draft-task';
 import uuid from 'uuid';
 import { ipcRenderer } from 'electron';
 import _ from 'underscore';
+import {DraftAttachmentState} from './attachment-store';
 
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
@@ -429,6 +430,7 @@ export default class DraftEditingSession extends MailspringStore {
     DraftStore = DraftStore || require('./draft-store').default;
     this.listenTo(DraftStore, this._onDraftChanged);
     this.listenTo(Actions.draftOpenCountBroadcast, this.onDraftOpenCountChange);
+    this.listenTo(Actions.broadcastDraftAttachmentState, this._onDraftAttachmentStateChange);
     if (!AppEnv.isMainWindow()) {
       this.listenTo(Actions.broadcastDraftData, this._applySyncDraftData);
       this.listenTo(Actions.syncDraftAttachments, this._onSyncAttachmentData);
@@ -447,6 +449,9 @@ export default class DraftEditingSession extends MailspringStore {
     const errors = [];
     const allRecipients = [].concat(this._draft.to, this._draft.cc, this._draft.bcc);
     const hasAttachment = this._draft.files && this._draft.files.length > 0;
+    if(this._draft.waitingForAttachment){
+      errors.push(`Attachments are still processing`);
+    }
 
     const allNames = [].concat(Utils.commonlyCapitalizedSalutations);
     let unnamedRecipientPresent = false;
@@ -814,6 +819,21 @@ export default class DraftEditingSession extends MailspringStore {
       this.needUpload = true;
       this._draft.pristine = false;
       console.log(`non main window attachment updated`);
+      this.trigger()
+    }
+  };
+  _onDraftAttachmentStateChange = ({messageId, draftState}) => {
+    if(!this._draft){
+      return;
+    }
+    if(messageId !== this._draft.id){
+      console.log(`${messageId} is not current draft ${this._draft.id}`);
+      return;
+    }
+    const isWaitingForAttachment = draftState === DraftAttachmentState.busy;
+    if(isWaitingForAttachment !== this._draft.waitingForAttachment){
+      this._draft.waitingForAttachment = true;
+      console.log(`Attachment state changed to ${isWaitingForAttachment}`);
       this.trigger()
     }
   };

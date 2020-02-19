@@ -423,7 +423,7 @@ export default class ModelQuery {
       return result[0].count / 1;
     }
     if (this._returnIds[dbKey]) {
-      console.log(`returning only Ids ${dbKey}`);
+      // console.log(`returning only Ids ${dbKey}`);
       return result.map(row => row[(this._pseudoPrimaryKey[dbKey] && this._pseudoPrimaryKey[dbKey].modelKey) || 'id']);
     }
 
@@ -440,14 +440,13 @@ export default class ModelQuery {
           if (attr.mergeIntoModel) {
             const dataString = row[attr.tableColumn];
             if(typeof dataString !== 'string' || dataString.length === 0){
-              console.log(`column ${attr.tableColumn} is not string, ${typeof dataString}, ${dataString}`);
               continue;
             }
             try {
               const tmp = JSON.parse(dataString);
               object.mergeFromColumn(tmp);
             } catch (e) {
-              console.log(`${dataString} for ${attr.tableColumn} is not json string`);
+              console.error(`${dataString} for ${attr.tableColumn} is not json string`);
               continue;
             }
           } else {

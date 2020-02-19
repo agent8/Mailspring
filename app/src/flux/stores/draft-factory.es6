@@ -3,16 +3,16 @@ import Actions from '../actions';
 import AccountStore from './account-store';
 import ContactStore from './contact-store';
 import MessageStore from './message-store';
-import AttachmentStore from './attachment-store';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import uuid from 'uuid';
 import Contact from '../models/contact';
 import Message from '../models/message';
+import File from '../models/file';
 import Utils from '../models/utils';
 import InlineStyleTransformer from '../../services/inline-style-transformer';
 import SanitizeTransformer from '../../services/sanitize-transformer';
 import DOMUtils from '../../dom-utils';
-
+let AttachmentStore = null;
 let DraftStore = null;
 
 const findAccountIdFrom = (message, thread) => {
@@ -78,6 +78,7 @@ const removeAttachmentWithNoContentId = files => {
   return filterMissingAttachments(ret);
 };
 const filterMissingAttachments = files => {
+  AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
   return AttachmentStore.filterOutMissingAttachments(files);
 };
 const mergeDefaultBccAndCCs = async (message, account) => {
@@ -104,6 +105,44 @@ const mergeDefaultBccAndCCs = async (message, account) => {
 };
 
 class DraftFactory {
+  static updateFiles(message, refMessageIsDraft = false){
+    if(!message){
+      return;
+    }
+    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+    if(Array.isArray(message.files) && message.files.length > 0){
+      const attachmentData = [];
+      message.files = message.files.map(f => {
+        const newFile = File.fromPartialData(f);
+        newFile.messageId = message.id;
+        newFile.accountId = message.accountId;
+        newFile.originFile = f;
+        newFile.id = uuid();
+        const originalPath = AttachmentStore.pathForFile(f);
+        if(refMessageIsDraft){
+          attachmentData.push({
+            sourceFile: Object.assign({}, f, {fileId: f.id, filePath: originalPath}),
+            dstFile: {
+              fileId: newFile.id,
+              filePath: AttachmentStore.pathForFile(newFile)
+            }
+          });
+        }else {
+          attachmentData.push({
+            originalPath,
+            dstFile: {
+              fileId: newFile.id,
+              filePath: AttachmentStore.pathForFile(newFile)
+            }
+          });
+        }
+        return newFile;
+      });
+      AttachmentStore.copyAttachmentsToDraft({draft: message, fileData: attachmentData});
+    } else {
+      AttachmentStore.addDraftToAttachmentCache(message);
+    }
+  }
   async createDraft(fields = {}) {
     const account = this._accountForNewDraft();
     // const uniqueId = `${Math.floor(Date.now() / 1000)}.${Utils.generateTempId()}`;
@@ -127,12 +166,12 @@ class DraftFactory {
     };
 
     const merged = Object.assign(defaults, fields);
-    if (merged.forwardedHeaderMessageId) {
-      merged.referenceMessageId = merged.forwardedHeaderMessageId;
-      delete merged.forwardedHeaderMessageId;
-    } else {
-      merged.referenceMessageId = merged.replyToHeaderMessageId;
-    }
+    // if (merged.forwardedHeaderMessageId) {
+    //   merged.referenceMessageId = merged.forwardedHeaderMessageId;
+    //   delete merged.forwardedHeaderMessageId;
+    // } else {
+    //   merged.referenceMessageId = merged.replyToHeaderMessageId;
+    // }
     await mergeDefaultBccAndCCs(merged, account);
     // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
     // if (account.autoaddress.type === 'cc') {
@@ -141,8 +180,9 @@ class DraftFactory {
     // if (account.autoaddress.type === 'bcc') {
     //   merged.bcc = (merged.bcc || []).concat(autoContacts);
     // }
-
-    return new Message(merged);
+    const message = new Message(merged);
+    DraftFactory.updateFiles(message);
+    return message
   }
   async createInviteDraft(draftData){
     const draft = await this.createDraft(draftData);
@@ -169,7 +209,9 @@ class DraftFactory {
       hasRefOldDraftOnRemote: true,
       refOldDraftHeaderMessageId: draft.headerMessageId
     });
-    return new Message(defaults);
+    const message =  new Message(defaults);
+    DraftFactory.updateFiles(message, true);
+    return message;
   }
 
   async createReportBugDraft(logId, userFeedBack) {
@@ -230,38 +272,40 @@ class DraftFactory {
       hasRefOldDraftOnRemote: false,
       refOldDraftHeaderMessageId: ''
     });
-    return new Message(defaults);
+    const message = new Message(defaults);
+    DraftFactory.updateFiles(message, true);
+    return message;
   }
-  async createOutboxDraftForEdit(draft){
-    const uniqueId = uuid();
-    const account = AccountStore.accountForId(draft.accountId);
-    if (!account) {
-      throw new Error(
-        'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.',
-      );
-    }
-    const defaults = Object.assign({}, draft, {
-      body: draft.body,
-      version: 0,
-      unread: false,
-      starred: false,
-      headerMessageId: `${uniqueId}@edison.tech`,
-      id: uniqueId,
-      date: new Date(),
-      pristine: false,
-      hasNewID: false,
-      accountId: account.id
-    });
-    await mergeDefaultBccAndCCs(defaults, account);
-    // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
-    // if (account.autoaddress.type === 'cc') {
-    //   defaults.cc = (defaults.cc || []).concat(autoContacts);
-    // }
-    // if (account.autoaddress.type === 'bcc') {
-    //   defaults.bcc = (defaults.bcc || []).concat(autoContacts);
-    // }
-    return new Message(defaults);
-  }
+  // async createOutboxDraftForEdit(draft){
+  //   const uniqueId = uuid();
+  //   const account = AccountStore.accountForId(draft.accountId);
+  //   if (!account) {
+  //     throw new Error(
+  //       'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.',
+  //     );
+  //   }
+  //   const defaults = Object.assign({}, draft, {
+  //     body: draft.body,
+  //     version: 0,
+  //     unread: false,
+  //     starred: false,
+  //     headerMessageId: `${uniqueId}@edison.tech`,
+  //     id: uniqueId,
+  //     date: new Date(),
+  //     pristine: false,
+  //     hasNewID: false,
+  //     accountId: account.id
+  //   });
+  //   await mergeDefaultBccAndCCs(defaults, account);
+  //   // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
+  //   // if (account.autoaddress.type === 'cc') {
+  //   //   defaults.cc = (defaults.cc || []).concat(autoContacts);
+  //   // }
+  //   // if (account.autoaddress.type === 'bcc') {
+  //   //   defaults.bcc = (defaults.bcc || []).concat(autoContacts);
+  //   // }
+  //   return new Message(defaults);
+  // }
 
   async copyDraftToAccount(draft, from) {
     const uniqueId = uuid();
@@ -292,7 +336,9 @@ class DraftFactory {
       accountId: account.id,
     });
     await mergeDefaultBccAndCCs(defaults, account);
-    return new Message(defaults);
+    const message = new Message(defaults);
+    DraftFactory.updateFiles(message, true);
+    return message;
   }
 
   async createDraftForMailto(urlString) {
