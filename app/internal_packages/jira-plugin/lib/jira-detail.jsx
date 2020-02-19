@@ -7,13 +7,14 @@ import { DateUtils } from 'mailspring-exports';
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
 const jiraDirPath = path.join(configDirPath, 'jira_cache');
+const { Menu, MenuItem } = remote;
 
 export default class JiraDetail extends Component {
     constructor(props) {
         super(props);
-        // let allUsers = window.localStorage.getItem('jira-users');
-        // allUsers = this.allUsers ? JSON.parse(this.allUsers) : [];
-        this.state = { allUsers: [] };
+        let currentUser = window.localStorage.getItem('jira-current-user');
+        currentUser = currentUser ? JSON.parse(currentUser) : {}
+        this.state = { allUsers: [], currentUser };
     }
     componentDidMount = async () => {
         this.mounted = true;
@@ -54,12 +55,24 @@ export default class JiraDetail extends Component {
                 comments: []
             })
             this.issueKey = issueKey;
-            issue = await props.jira.findIssue(issueKey, `renderedFields`);
-            console.log('*****issue', issue);
-            this.safeSetState({
-                loading: false,
-                issue
-            })
+            try {
+                issue = await props.jira.findIssue(issueKey, `renderedFields`);
+                console.log('*****issue', issue);
+                this.safeSetState({
+                    loading: false,
+                    issue
+                })
+            } catch (err) {
+                console.error(`****find issue error ${this.issueKey}`, err);
+                AppEnv.reportError(new Error(`find issue error ${this.issueKey}`), { errorData: err });
+                const errorMessage = err.error.errorMessages && err.error.errorMessages[0];
+                this.safeSetState({
+                    loading: false,
+                    issue: null,
+                    errorMessage
+                })
+                return;
+            }
             // download attachments
             if (issue && issue.fields.attachment) {
                 this.downloadUri(issue.fields.attachment, true);
@@ -116,11 +129,15 @@ export default class JiraDetail extends Component {
         if (!html) {
             return '';
         }
-        const { attachments, issue } = this.state;
-        if (attachments && issue.fields.attachment && Object.keys(attachments).length === issue.fields.attachment.length) {
-            return html.replace(/<img src="\/secure\/attachment\/.+?\//g, `<img src="${jiraDirPath}/`);
-        }
-        return html.replace(/<img src="\/secure\/attachment\/.+?\//g, `<img style='display: none;' src="${jiraDirPath}/`);
+        const { attachments } = this.state;
+        return html.replace(/<img src="\/secure\/attachment\/.+?\//g, function (str) {
+            const matchs = /<img src="\/secure\/attachment\/(.+?)\//g.exec(str);
+            // find if the image is downloaded.
+            if (matchs && matchs[1] && attachments[matchs[1]]) {
+                return `<img src="${jiraDirPath}/`;
+            }
+            return `<img style='display: none;' src="${jiraDirPath}/`;
+        });
     }
     _renderComments = comments => {
         return (
@@ -159,10 +176,11 @@ export default class JiraDetail extends Component {
             })
             // this._showDialog('Change assignee successful.');
         } catch (err) {
+            console.error(`****Change assignee failed ${this.issueKey}`, err, this.assignee);
+            AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
             this.safeSetState({
-                assignProgress: ''
+                assignProgress: 'error'
             })
-            this._showDialog('Change assignee failed.');
         }
     }
     onStatusChange = async item => {
@@ -190,11 +208,11 @@ export default class JiraDetail extends Component {
             })
             // this._showDialog('Change status successful.');
         } catch (err) {
-            console.error('****err', err);
+            console.error(`****Change assignee failed ${this.issueKey}`, err);
+            AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
             this.safeSetState({
-                statusProgress: ''
+                statusProgress: 'error'
             })
-            this._showDialog('Change status failed.');
         }
     }
     openAttachment = id => {
@@ -248,10 +266,48 @@ export default class JiraDetail extends Component {
                 mode={RetinaImg.Mode.ContentIsMask}
             />
         }
+        else if (progress === 'error') {
+            p = <RetinaImg
+                className="jira-error"
+                style={{ width: 24 }}
+                name={'close.svg'}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+            />
+        }
         return <span className="jira-progress">{p}</span>;
     }
+    showMore = () => {
+        this.menu = new Menu();
+
+        let menuItem;
+        menuItem = new MenuItem({
+            label: 'Logout',
+            click: () => {
+                this.props.logout();
+                this.menu.closePopup();
+            },
+        });
+        this.menu.append(menuItem);
+        this.menu.popup({ x: event.clientX, y: event.clientY });
+    }
+    openOrignalImage = e => {
+        const el = e.target;
+        if (el.tagName === 'IMG') {
+            if (el.src.includes('jira_cache')) {
+                const { attachments } = this.state;
+                for (const index in attachments) {
+                    if (el.src.includes(encodeURI(attachments[index]))) {
+                        this.openAttachment(index);
+                        break;
+                    }
+                }
+            }
+        }
+    }
     render() {
-        const { issue,
+        const {
+            issue,
             loading,
             commentLoading,
             assignProgress,
@@ -260,15 +316,33 @@ export default class JiraDetail extends Component {
             comments = [],
             allUsers,
             issueKey,
-            transitions = []
+            transitions = [],
+            currentUser,
+            errorMessage
         } = this.state;
         if (loading) {
             return <div className="large-loading">
                 {this._renderLoading(40)}
             </div>
         }
+        const userLogo = <div className="jira-current-user" onClick={this.showMore}>
+            {
+                currentUser.avatarUrls ?
+                    <img src={currentUser.avatarUrls && currentUser.avatarUrls['48x48']} />
+                    : <RetinaImg
+                        name={'jira.svg'}
+                        isIcon
+                        mode={RetinaImg.Mode.ContentIsMask}
+                    />
+            }
+        </div>;
         if (!issue) {
-            return <div>not exists</div>;
+            return <div className="jira-detail">
+                {userLogo}
+                <div className="error">
+                    {errorMessage}
+                </div>
+            </div>;
         }
         const status = issue.fields.status;
         const { renderedFields, fields } = issue;
@@ -291,6 +365,7 @@ export default class JiraDetail extends Component {
         const { protocol, host } = this.props.jira
         return (
             <div className="jira-detail">
+                {userLogo}
                 <div className="jira-title"><a href={`${protocol}://${host}/browse/${issueKey}`}>{issueKey}</a></div>
                 <div className="wrapper">
                     <header>
@@ -298,6 +373,7 @@ export default class JiraDetail extends Component {
                             <span className="label">Assignee</span>
                             <div className="content with-progress">
                                 <Select
+                                    ref={el => this.assignee = el}
                                     className="assign-users"
                                     defaultValue={{ key: fields.assignee.accountId, value: this.renderUserNode(fields.assignee) }}
                                     optionLabelProp="children"
@@ -336,11 +412,11 @@ export default class JiraDetail extends Component {
                             </div>
                         </div>
                     </header>
-                    <div className="jira-description">
+                    <div className="jira-description" onClick={this.openOrignalImage} >
                         <span className="label">Description</span>
                         <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(renderedFields.description) }}></div>
                     </div>
-                    <div className="jira-comments">
+                    <div className="jira-comments" onClick={this.openOrignalImage} >
                         <span className="label">Comments</span>
                         {this._renderComments(comments)}
                     </div>
