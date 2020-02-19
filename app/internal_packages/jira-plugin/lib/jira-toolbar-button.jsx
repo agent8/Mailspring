@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 const { RetinaImg } = require('mailspring-component-kit');
+const { AccountStore } = require('mailspring-exports');
 const JIRA_SHOW_KEY = 'plugin.jira.show';
 export default class JiraToolbarButton extends Component {
     static displayName = 'JiraToolbarButton';
@@ -17,7 +18,15 @@ export default class JiraToolbarButton extends Component {
         })
     }
     render() {
-        if (!this.props.thread || !this.props.thread.isJIRA) {
+        const accounts = AccountStore.accounts();
+        let isEdisonMail = false;
+        for (const acc of accounts) {
+            if (acc.emailAddress.includes('edison.tech')) {
+                isEdisonMail = true;
+                break;
+            }
+        }
+        if (!this.props.thread || !this.props.thread.isJIRA || !isEdisonMail) {
             return null;
         }
         return (

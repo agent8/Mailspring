@@ -4,6 +4,7 @@ import JiraDetail from './jira-detail';
 import JiraApi from './jira-api';
 import Login from './jira-login';
 import _ from 'underscore';
+const { AccountStore } = require('mailspring-exports');
 const CONFIG_KEY = 'plugin.jira.config';
 const WIDTH_KEY = 'plugin.jira.width';
 const JIRA_SHOW_KEY = 'plugin.jira.show';
@@ -68,7 +69,15 @@ export default class JiraPlugin extends Component {
     }, 200);
 
     render() {
-        if (!this.state.active || !this.props.thread || !this.props.thread.isJIRA) {
+        const accounts = AccountStore.accounts();
+        let isEdisonMail = false;
+        for (const acc of accounts) {
+            if (acc.emailAddress.includes('edison.tech')) {
+                isEdisonMail = true;
+                break;
+            }
+        }
+        if (!this.state.active || !this.props.thread || !this.props.thread.isJIRA || !isEdisonMail) {
             return null;
         }
         return (
