@@ -97,7 +97,6 @@ export default class JiraDetail extends Component {
             return;
         }
 
-
         const { link, issueKey } = this._findIssueKey(messages);
 
         if (issueKey) {
@@ -501,7 +500,7 @@ export default class JiraDetail extends Component {
                             {
                                 fields.attachment.map(item => (
                                     <div title={item.filename} key={item.id} onClick={() => this.openAttachment(item.id)}>
-                                        {attachments[item.id] ? <img src={attachments[item.id]} /> : 'downloading'}
+                                        {attachments[item.id] ? <img src={attachments[item.id]} /> : this._renderLoading(20)}
                                     </div>
                                 ))
                             }
