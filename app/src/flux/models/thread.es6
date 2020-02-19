@@ -179,6 +179,11 @@ export default class Thread extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    isJIRA: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'isJIRA',
+    }),
   });
 
   static sortOrderAttribute = () => {
@@ -207,18 +212,18 @@ export default class Thread extends ModelWithMetadata {
     // noop
   }
 
-  get attachmentCount(){
+  get attachmentCount() {
     return (this.files || []).length;
   }
-  get labels(){
+  get labels() {
     return this.labelIds.map(labelId => {
-      if(typeof labelId === 'string'){
+      if (typeof labelId === 'string') {
         return CategoryStore.byFolderId(labelId);
       }
     })
   }
 
-  get folders(){
+  get folders() {
     return this.labels;
   }
 

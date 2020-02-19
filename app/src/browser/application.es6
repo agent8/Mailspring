@@ -160,6 +160,10 @@ export default class Application extends EventEmitter {
     if (!fs.existsSync(avatarPath)) {
       fs.mkdirSync(avatarPath);
     }
+    let jiraPath = path.join(configDirPath, 'jira_cache');
+    if (!fs.existsSync(jiraPath)) {
+      fs.mkdirSync(jiraPath);
+    }
     this.clearOldLogs();
     this.initSupportInfo();
 
