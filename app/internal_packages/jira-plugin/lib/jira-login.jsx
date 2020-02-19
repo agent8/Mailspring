@@ -38,9 +38,9 @@ export default class Login extends Component {
             strictSSL: true
         });
         try {
-            const users = await this.jira.searchUsers({ maxResults: 500 });
-            console.log('****users', users);
-            window.localStorage.setItem('jira-users', JSON.stringify(users));
+            const currentUser = await this.jira.getCurrentUser();
+            console.log('****currentUser', currentUser);
+            window.localStorage.setItem('jira-current-user', JSON.stringify(currentUser));
         } catch (err) {
             console.log('****jira login failed', err);
             let message = 'Login failed, please check your Email and Api token.';

@@ -13,7 +13,7 @@ export default class JiraPlugin extends Component {
     constructor(props) {
         super(props);
         const config = AppEnv.config.get(CONFIG_KEY);
-        if (config) {
+        if (config && Object.keys(config).length > 0) {
             this.jira = new JiraApi({
                 protocol: 'https',
                 host: config.host,
@@ -56,6 +56,13 @@ export default class JiraPlugin extends Component {
             config
         })
     }
+    logout = () => {
+        AppEnv.config.set(CONFIG_KEY, {});
+        this.jira = null;
+        this.setState({
+            config: {}
+        })
+    }
     _onColumnResize = _.debounce((w) => {
         AppEnv.config.set(WIDTH_KEY, w);
     }, 200);
@@ -75,7 +82,7 @@ export default class JiraPlugin extends Component {
                 {
                     !this.jira ?
                         <Login {...this.props} config={this.state.config} saveConfig={this.saveConfig} />
-                        : <JiraDetail {...this.props} jira={this.jira} />
+                        : <JiraDetail {...this.props} jira={this.jira} logout={this.logout} />
                 }
             </ResizableRegion>
         )
