@@ -22,6 +22,7 @@ import TaskFactory from '../tasks/task-factory';
 import ChangeDraftToFailingTask from '../tasks/change-draft-to-failing-task';
 import ChangeDraftToFailedTask from '../tasks/change-draft-to-failed-task';
 import FocusedContentStore from './focused-content-store';
+let AttachmentStore = null;
 const { DefaultSendActionKey } = SendActionsStore;
 const SendDraftTimeout = 300000;
 const DraftFailingBaseTimeout = 120000;
@@ -206,6 +207,10 @@ class DraftStore extends MailspringStore {
     AppEnv.logDebug(`waiting for ${headerMessageId} session.prepare()`);
     await this._draftSessions[headerMessageId].prepare();
     AppEnv.logDebug(`${headerMessageId} session.prepare() returned`);
+    if(AppEnv.isMainWindow()){
+      AttachmentStore = AttachmentStore || require('./attachment-store').default;
+      AttachmentStore.addDraftToAttachmentCache(this._draftSessions[headerMessageId].draft());
+    }
     return this._draftSessions[headerMessageId];
   }
 
@@ -493,6 +498,8 @@ class DraftStore extends MailspringStore {
       },
         { grabLogs: true }
       );
+      AttachmentStore = AttachmentStore || require('./attachment-store').default;
+      AttachmentStore.removeDraftAttachmentCache(draft);
       return;
     }
     const draft = session.draft();
@@ -549,6 +556,10 @@ class DraftStore extends MailspringStore {
     }
     session.closeSession({ cancelCommits, reason: 'onLastOpenDraftClosed' });
     this._doneWithDraft(headerMessageId, 'onLastOpenDraftClosed');
+    if(!cancelCommits){
+      AttachmentStore = AttachmentStore || require('./attachment-store').default;
+      AttachmentStore.removeDraftAttachmentCache(draft);
+    }
   };
   _syncSessionDataToMain = ()=>{
     if(!AppEnv.isMainWindow()){
@@ -668,23 +679,6 @@ class DraftStore extends MailspringStore {
     // Continue closing
     return true;
   };
-  // _onDraftIdChange = change => {
-  //   const draftsHeaderMessageId = Object.keys(this._draftSessions);
-  //   const nextDraft = change.objects
-  //     .filter(obj => draftsHeaderMessageId.includes(obj.headerMessageId))
-  //     .pop();
-  //
-  //   if (!nextDraft) {
-  //     return;
-  //   }
-  //   if (
-  //     this._draftSessions[nextDraft.headerMessageId] &&
-  //     this._draftSessions[nextDraft.headerMessageId].draft() &&
-  //     !this._draftSessions[nextDraft.headerMessageId].inView()
-  //   ) {
-  //     this._draftSessions[nextDraft.headerMessageId].updateDraftId(nextDraft.id);
-  //   }
-  // };
 
   _onDataChanged = change => {
     if (change.objectClass !== Message.name) {
@@ -937,6 +931,7 @@ class DraftStore extends MailspringStore {
           title: ' ',
           threadId: newSession.draft().threadId,
         });
+        AttachmentStore.deleteDraft({accountId: draft.accountId, messageId: draft.id, reason: 'sessionForServerDraft'});
       });
     } else {
       const messageId = session.draft().id;
@@ -984,7 +979,7 @@ class DraftStore extends MailspringStore {
   _onHandleMailFiles = async (event, paths) => {
     // returned promise is just used for specs
     const draft = await DraftFactory.createDraft();
-    const { headerMessageId } = await this._finalizeAndPersistNewMessage(draft);
+    const { headerMessageId, messageId, accountId } = await this._finalizeAndPersistNewMessage(draft);
 
     let remaining = paths.length;
     const callback = () => {
@@ -998,6 +993,8 @@ class DraftStore extends MailspringStore {
       Actions.addAttachment({
         filePath: path,
         headerMessageId: headerMessageId,
+        accountId,
+        messageId,
         onCreated: callback,
       });
     });
@@ -1115,15 +1112,21 @@ class DraftStore extends MailspringStore {
   //     }
   //   }
   // };
-  _onDestroyDraftSuccess = ({ messageIds }) => {
+  _onDestroyDraftSuccess = ({ messageIds, accountId }) => {
     AppEnv.logDebug('destroy draft succeeded');
     if (Array.isArray(messageIds)) {
       const headerMessageIds = [];
       messageIds.forEach(id => {
         if (id) {
           const headerMessageId = this._draftsDeleting[id];
-          headerMessageIds.push(headerMessageId);
-          delete this._draftsDeleting[headerMessageId];
+          if(headerMessageId){
+            headerMessageIds.push(headerMessageId);
+            delete this._draftsDeleting[headerMessageId];
+            if(AppEnv.isMainWindow()){
+              AttachmentStore = AttachmentStore || require('./attachment-store').default;
+              AttachmentStore.deleteDraft({messageId: id, accountId, reason: 'Destroy Draft success'});
+            }
+          }
           delete this._draftsDeleting[id];
         }
       });
@@ -1136,7 +1139,7 @@ class DraftStore extends MailspringStore {
     }
   };
 
-  _onDestroyDraftFailed = ({ messageIds, key, debuginfo }) => {
+  _onDestroyDraftFailed = ({ messageIds, key, debuginfo, accountId }) => {
     AppEnv.logDebug('destroy draft failed');
     if (Array.isArray(messageIds)) {
       const headerMessageIds = [];
@@ -1146,6 +1149,10 @@ class DraftStore extends MailspringStore {
           headerMessageIds.push(headerMessageId);
           delete this._draftsDeleting[headerMessageId];
           delete this._draftsDeleting[id];
+          if(AppEnv.isMainWindow()){
+            AttachmentStore = AttachmentStore || require('./attachment-store').default;
+            AttachmentStore.deleteDraft({messageId: id, accountId, reason: 'Destroy draft failed'});
+          }
         }
       });
       this.trigger({ headerMessageIds });
@@ -1438,6 +1445,8 @@ class DraftStore extends MailspringStore {
         `Sending draft to undo queue ${headerMessageId} from source: ${options && options.source}`
       );
       Actions.queueUndoOnlyTask(undoTask);
+      AttachmentStore = AttachmentStore || require('./attachment-store').default;
+      AttachmentStore.removeDraftAttachmentCache(draft);
       // ipcRenderer.send('send-later-manager', 'send-later', headerMessageId, delay, actionKey, draft.threadId);
     } else {
       // Immediately send the draft

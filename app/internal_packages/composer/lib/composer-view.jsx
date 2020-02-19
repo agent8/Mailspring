@@ -472,7 +472,14 @@ export default class ComposerView extends React.Component {
           displayName={file.filename}
           displaySize={file.displayFileSize()}
           fileIconName={`file-${file.extension}.png`}
-          onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          onRemoveAttachment={() => {
+            Actions.removeAttachment({
+              headerMessageId: this.props.draft.headerMessageId,
+              messageId: this.props.draft.id,
+              accountId: this.props.draft.accountId,
+              fileToRemove: file,
+            });
+          }}
           onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
       ));
@@ -487,7 +494,14 @@ export default class ComposerView extends React.Component {
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
           isImage={true}
-          onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          onRemoveAttachment={() => {
+            Actions.removeAttachment({
+              headerMessageId: this.props.draft.headerMessageId,
+              messageId: this.props.draft.id,
+              accountId: this.props.draft.accountId,
+              fileToRemove: file,
+            });
+          }}
           onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
       ));
@@ -513,7 +527,14 @@ export default class ComposerView extends React.Component {
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
           isImage={true}
-          onRemoveAttachment={() => Actions.removeAttachment(headerMessageId, file)}
+          onRemoveAttachment={() => {
+            Actions.removeAttachment({
+              headerMessageId: this.props.draft.headerMessageId,
+              messageId: this.props.draft.id,
+              accountId: this.props.draft.accountId,
+              fileToRemove: file,
+            });
+          }}
           onOpenAttachment={() => Actions.fetchAndOpenFile(file)}
         />
       ));
@@ -772,6 +793,8 @@ export default class ComposerView extends React.Component {
     Actions.addAttachment({
       filePath: filePath,
       headerMessageId: this.props.draft.headerMessageId,
+      messageId: this.props.draft.messageId,
+      accountId: this.props.draft.accountId,
       onCreated: this._onAttachmentCreated,
     });
   };
@@ -861,6 +884,8 @@ export default class ComposerView extends React.Component {
     if (type === 'image') {
       Actions.selectAttachment({
         headerMessageId: this.props.draft.headerMessageId,
+        messageId: this.props.draft.id,
+        accountId: this.props.draft.accountId,
         onCreated: fileObjs => {
           if (Array.isArray(fileObjs)) {
             this._onAttachmentsCreated(fileObjs);
@@ -871,7 +896,12 @@ export default class ComposerView extends React.Component {
         type,
       });
     } else {
-      Actions.selectAttachment({ headerMessageId: this.props.draft.headerMessageId, type });
+      Actions.selectAttachment({
+        headerMessageId: this.props.draft.headerMessageId,
+        messageId: this.props.draft.id,
+        accountId: this.props.draft.accountId,
+        type,
+      });
     }
   };
 

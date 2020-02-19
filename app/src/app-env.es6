@@ -180,6 +180,12 @@ export default class AppEnvConstructor {
       this.mailsyncBridge.startSift('Main window started');
     }
   }
+  toggleLogging(){
+    this.enabledToNativeLog = !this.enabledToNativeLog;
+    this.enabledFromNativeLog = !this.enabledFromNativeLog;
+    this.enabledBackgroundQueryLog = !this.enabledBackgroundQueryLog;
+    this.enabledLocalQueryLog = !this.enabledLocalQueryLog;
+  }
   sendSyncMailNow(accountId) {
     if (navigator.onLine) {
       console.log(`sync mail to ${accountId}:` + new Date().toISOString());

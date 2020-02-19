@@ -183,6 +183,10 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'waitingForBody',
       queryable: false,
     }),
+    waitingForAttachment: Attributes.Boolean({
+      modelKey: 'waitingForAttachment',
+      queryable: false,
+    }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
       queryable: false

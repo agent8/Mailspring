@@ -28,7 +28,12 @@ function ImageNode(props) {
       displayName={file.filename}
       onRemoveAttachment={() =>
         editor.change(change => {
-          Actions.removeAttachment(draft.headerMessageId, file);
+          Actions.removeAttachment({
+            headerMessageId: draft.headerMessageId,
+            messageId: draft.id,
+            accountId: draft.accountId,
+            fileToRemove: file,
+          });
           return change.removeNodeByKey(node.key);
         })
       }

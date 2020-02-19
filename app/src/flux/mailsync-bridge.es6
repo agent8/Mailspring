@@ -729,7 +729,7 @@ export default class MailsyncBridge {
         }
       }
       if (passAsIs || type === 'unpersist'){
-        console.log('passing data from native to UI without going through db');
+        // console.log('passing data from native to UI without going through db');
         ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels });
         this._onIncomingChangeRecord(
           new DatabaseChangeRecord({
@@ -759,7 +759,7 @@ export default class MailsyncBridge {
             if(perspective){
               const categoryIds = Array.isArray(perspective.categories()) ? perspective.categories().map(cat=> cat.id) : [];
               if(Array.isArray(categoryIds) && categoryIds.length > 0){
-                console.log(`adding category constrain, ${categoryIds}`);
+                // console.log(`adding category constrain, ${categoryIds}`);
                 Thread = Thread || require('./models/thread').default;
                 tmp = DatabaseStore.findBy(Thread, where)
                   .where([Thread.attributes.categories.containsAny(categoryIds)]);
