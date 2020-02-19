@@ -764,9 +764,10 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.addAttachment, this._onAddAttachment);
     this.listenTo(Actions.addAttachments, this._onAddAttachments);
     this.listenTo(Actions.selectAttachment, this._onSelectAttachment);
+    this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
     if(AppEnv.isMainWindow()){
-      this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
       this.listenTo(Actions.syncAttachmentToMain, this._onAddAttachmentFromNonMainWindow);
+      this.listenTo(Actions.removeAttachmentToMain, this._onRemoveAttachmentMainWindow);
     }
     this._attachementCache = Utils.createCircularBuffer(200);
     this._draftAttachmentProgress = new AccountDrafts({callback: this._onDraftAttachmentStateChanged});
@@ -788,22 +789,22 @@ class AttachmentStore extends MailspringStore {
     console.log(`draft attachment state changed `, data);
     Actions.broadcastDraftAttachmentState(data);
   };
-  isDraftAttachmentBusy(draft){
-    const accountId = draft.accountId;
-    const messageId = draft.id;
-    const headerMessageId = draft.headerMessageId;
-    if(!accountId || !messageId || !headerMessageId){
-      AppEnv.reportError(new Error(`Draft data is incorrect,`), {errorData: draft}, {grabLogs: true});
-      return false;
-    }
-    const item = this.findDraft({accountId, messageId, headerMessageId});
-    if(!item){
-      AppEnv.logWarning(`draft cache ${accountId} ${messageId}, ${headerMessageId} not found, assuming attachments ready`);
-      return true;
-    }
-    Actions.broadcastDraftAttachmentState({accountId, messageId, headerMessageId, busy: item.isBusy()});
-    return item.isBusy();
-  }
+  // isDraftAttachmentBusy(draft){
+  //   const accountId = draft.accountId;
+  //   const messageId = draft.id;
+  //   const headerMessageId = draft.headerMessageId;
+  //   if(!accountId || !messageId || !headerMessageId){
+  //     AppEnv.reportError(new Error(`Draft data is incorrect,`), {errorData: draft}, {grabLogs: true});
+  //     return false;
+  //   }
+  //   const item = this.findDraft({accountId, messageId, headerMessageId});
+  //   if(!item){
+  //     AppEnv.logWarning(`draft cache ${accountId} ${messageId}, ${headerMessageId} not found, assuming attachments ready`);
+  //     return true;
+  //   }
+  //   Actions.broadcastDraftAttachmentState({accountId, messageId, headerMessageId, busy: item.isBusy()});
+  //   return item.isBusy();
+  // }
   copyAttachmentsToDraft({ draft, fileData = [], cb }) {
     if(!draft){
       AppEnv.logError(`Draft is null, add to attachment ignored`);
@@ -1509,9 +1510,9 @@ class AttachmentStore extends MailspringStore {
   async _applySessionChanges(headerMessageId, changeFunction) {
     const session = await DraftStore.sessionForClientId(headerMessageId);
     const files = changeFunction(session.draft().files);
-    console.log(`update attachments with applySession changes`);
+    console.log(`update attachments with applySession changes`, files);
+    session.changes.add({ files });
     session.updateAttachments(files);
-    // session.changes.add({ files });
     // session.changes.commit();
   }
 
@@ -1664,23 +1665,26 @@ class AttachmentStore extends MailspringStore {
   }
 
   _onRemoveAttachment = async ({headerMessageId, accountId, messageId, fileToRemove}) => {
-    if(!AppEnv.isMainWindow()){
-      return;
-    }
     if (!fileToRemove) {
       return;
     }
-    this.deleteDraftAttachment({accountId, messageId, headerMessageId, fileId: fileToRemove.id});
-    await this._applySessionChanges(headerMessageId, files =>
-      files.filter(({ id }) => id !== fileToRemove.id)
-    );
-
-    // try {
-    //   await this._deleteFile(fileToRemove);
-    // } catch (err) {
-    //   AppEnv.showErrorDialog(err.message);
-    // }
+    console.log(`file to remove id: ${fileToRemove.id}`);
+    if(AppEnv.isMainWindow()){
+      this._onRemoveAttachmentMainWindow({headerMessageId, accountId, messageId, fileToRemove});
+      this._applySessionChanges(headerMessageId, files => {
+        return files.filter(({ id }) => id !== fileToRemove.id)
+      });
+    } else {
+      Actions.removeAttachmentToMain({headerMessageId, accountId, messageId, fileToRemove});
+      this._applySessionChanges(headerMessageId, files => {
+        return files.filter(({ id }) => id !== fileToRemove.id)
+      });
+    }
   };
+  _onRemoveAttachmentMainWindow({headerMessageId, accountId, messageId, fileToRemove}){
+    console.log('removing file in main window', fileToRemove.id);
+    this.deleteDraftAttachment({accountId, messageId, headerMessageId, fileId: fileToRemove.id});
+  }
 }
 
 export default new AttachmentStore();

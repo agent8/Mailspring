@@ -433,10 +433,10 @@ export default class DraftEditingSession extends MailspringStore {
     this.listenTo(Actions.broadcastDraftAttachmentState, this._onDraftAttachmentStateChange);
     if (!AppEnv.isMainWindow()) {
       this.listenTo(Actions.broadcastDraftData, this._applySyncDraftData);
-      this.listenTo(Actions.syncDraftAttachments, this._onSyncAttachmentData);
+      // this.listenTo(Actions.syncDraftAttachments, this._onSyncAttachmentData);
     } else {
       this.listenTo(Actions.syncDraftDataToMain, this._applySyncDraftData);
-      this.listenTo(Actions.updateDraftAttachments, this.updateAttachments);
+      // this.listenTo(Actions.updateDraftAttachments, this.updateAttachments);
     }
   };
   _removeListeners = () => {
@@ -663,6 +663,9 @@ export default class DraftEditingSession extends MailspringStore {
             return;
           }
           hotwireDraftBodyState(draft);
+          if(this._draft){
+            draft.waitingForAttachment = this._draft.waitingForAttachment;
+          }
           this._draft = draft;
           this.trigger();
         });
@@ -761,8 +764,14 @@ export default class DraftEditingSession extends MailspringStore {
       this._draft.files = files;
       this.needUpload = true;
       this._draft.pristine = false;
-      this.changeSetCommit(`attachments change`);
-      this._syncAttachmentData();
+      this.needsSyncToMain = true;
+      if(!AppEnv.isMainWindow()){
+        this.syncDraftDataToMainNow({forceCommit: true});
+      } else {
+        this.changeSetCommit(`attachments change`);
+      }
+      //
+      // this._syncAttachmentData();
     } else {
       console.error(`either draft or files data incorrect, attachments for draft not updated`);
     }
@@ -789,39 +798,39 @@ export default class DraftEditingSession extends MailspringStore {
     this.needsSyncToMain = true;
     this._syncDraftDataToMain();
   };
-  _syncAttachmentData = () => {
-    if(!this._draft){
-      AppEnv.reportError(new Error(`Draft is null, cannot trigger attachment sync`), {}, {grabLogs: true});
-      return;
-    }
-    if(AppEnv.isMainWindow()){
-      console.log(`syncing attachments ${this._draft.headerMessageId} to none main window`);
-      Actions.syncDraftAttachments({headerMessageId: this._draft.headerMessageId, files: this._draft.files});
-    } else {
-      AppEnv.logWarning('called in none main window, sync ignored');
-    }
-  };
-  _onSyncAttachmentData = ({headerMessageId, files}) => {
-    if(!this._draft){
-      AppEnv.reportError(new Error(`Draft is null, cannot trigger attachment sync`), {}, {grabLogs: true});
-      return;
-    }
-    if(AppEnv.isMainWindow()){
-      AppEnv.logWarning('called in none main window, sync ignored');
-      return;
-    }
-    if(!headerMessageId || !Array.isArray(files)){
-      AppEnv.reportError(new Error(`headerMessageId or files incorrect, igonring`), {errorData: {headerMessageId, files}}, {grabLogs: true});
-      return;
-    }
-    if(headerMessageId === this._draft.headerMessageId){
-      this._draft.files = files;
-      this.needUpload = true;
-      this._draft.pristine = false;
-      console.log(`non main window attachment updated`);
-      this.trigger()
-    }
-  };
+  // _syncAttachmentData = () => {
+  //   if(!this._draft){
+  //     AppEnv.reportError(new Error(`Draft is null, cannot trigger attachment sync`), {}, {grabLogs: true});
+  //     return;
+  //   }
+  //   if(AppEnv.isMainWindow()){
+  //     console.log(`syncing attachments ${this._draft.headerMessageId} to none main window`);
+  //     Actions.syncDraftAttachments({headerMessageId: this._draft.headerMessageId, files: this._draft.files});
+  //   } else {
+  //     AppEnv.logWarning('called in none main window, sync ignored');
+  //   }
+  // };
+  // _onSyncAttachmentData = ({headerMessageId, files}) => {
+  //   if(!this._draft){
+  //     AppEnv.reportError(new Error(`Draft is null, cannot trigger attachment sync`), {}, {grabLogs: true});
+  //     return;
+  //   }
+  //   if(AppEnv.isMainWindow()){
+  //     AppEnv.logWarning('called in none main window, sync ignored');
+  //     return;
+  //   }
+  //   if(!headerMessageId || !Array.isArray(files)){
+  //     AppEnv.reportError(new Error(`headerMessageId or files incorrect, igonring`), {errorData: {headerMessageId, files}}, {grabLogs: true});
+  //     return;
+  //   }
+  //   if(headerMessageId === this._draft.headerMessageId){
+  //     this._draft.files = files;
+  //     this.needUpload = true;
+  //     this._draft.pristine = false;
+  //     console.log(`non main window attachment updated`);
+  //     this.trigger()
+  //   }
+  // };
   _onDraftAttachmentStateChange = ({messageId, draftState}) => {
     if(!this._draft){
       return;
@@ -832,9 +841,11 @@ export default class DraftEditingSession extends MailspringStore {
     }
     const isWaitingForAttachment = draftState === DraftAttachmentState.busy;
     if(isWaitingForAttachment !== this._draft.waitingForAttachment){
-      this._draft.waitingForAttachment = true;
+      this._draft.waitingForAttachment = isWaitingForAttachment;
       console.log(`Attachment state changed to ${isWaitingForAttachment}`);
       this.trigger()
+    } else {
+      console.log(`Attachment state not changed because target is ${isWaitingForAttachment} current is ${this._draft.waitingForAttachment}`);
     }
   };
   localApplySyncDraftData = ({syncData = {}} = {} ) => {
@@ -845,7 +856,7 @@ export default class DraftEditingSession extends MailspringStore {
     }
   };
 
-  _applySyncDraftData({ syncData = {}, sourceLevel = 0, broadcastDraftData = true, trigger = true } = {}) {
+  _applySyncDraftData({ syncData = {}, sourceLevel = 0, broadcastDraftData = true, trigger = true, forceCommit = false } = {}) {
     if (sourceLevel !== this.currentWindowLevel && syncData.id === this._draft.id) {
       AppEnv.logDebug('apply sync draft data');
       const nothingChanged =
@@ -854,9 +865,10 @@ export default class DraftEditingSession extends MailspringStore {
         JSON.stringify(this._draft.to) === JSON.stringify(syncData.to) &&
         JSON.stringify(this._draft.bcc) === JSON.stringify(syncData.bcc) &&
         JSON.stringify(this._draft.cc) === JSON.stringify(syncData.cc) &&
+        JSON.stringify(this._draft.files) === JSON.stringify(syncData.files) &&
         this._draft.subject === syncData.subject;
       for (const key of Object.getOwnPropertyNames(syncData)) {
-        if (key === 'body' || key === 'bodyEditorState' || key === 'files') {
+        if (key === 'body' || key === 'bodyEditorState' || key === 'waitingForAttachment') {
           continue;
         }
         this._draft[key] = syncData[key];
@@ -870,21 +882,26 @@ export default class DraftEditingSession extends MailspringStore {
         if(broadcastDraftData){
           Actions.broadcastDraftData({ syncData, sourceLevel });
         }
+
         if(!nothingChanged){
           AppEnv.logDebug('things changed');
           this.needUpload = true;
-          this.changes.onNewDraftFromOtherWindow();
+          if(forceCommit){
+            this.changeSetCommit('forced to commit by applySyncDraftData');
+          }else {
+            this.changes.onNewDraftFromOtherWindow();
+          }
         }
       }
     }
   }
 
-  syncDraftDataToMainNow = ()=>{
+  syncDraftDataToMainNow = ({forceCommit = false} = {})=>{
     if (this.needsSyncToMain) {
       AppEnv.logDebug('sync draft to main');
       this.needsSyncToMain = false;
       const syncData = cloneForSyncDraftData(this._draft);
-      Actions.syncDraftDataToMain({ syncData, sourceLevel: this.currentWindowLevel });
+      Actions.syncDraftDataToMain({ syncData, sourceLevel: this.currentWindowLevel, forceCommit });
     }
   };
 
