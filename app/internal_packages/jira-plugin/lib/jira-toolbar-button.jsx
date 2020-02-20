@@ -17,6 +17,18 @@ export default class JiraToolbarButton extends Component {
             active: newStatus
         })
     }
+    _isJIRA() {
+        const { thread } = this.props;
+        if (thread && thread.participants) {
+            for (const att of thread.participants) {
+                if (att.email && att.email.split('@')[1].includes('atlassian.net')) {
+                    return true;
+                }
+            }
+        }
+        return false;
+        // return this.props.thread.isJIRA;
+    }
     render() {
         const accounts = AccountStore.accounts();
         let isEdisonMail = false;
@@ -26,7 +38,7 @@ export default class JiraToolbarButton extends Component {
                 break;
             }
         }
-        if (!this.props.thread || !this.props.thread.isJIRA || !isEdisonMail) {
+        if (!this.props.thread || !this._isJIRA() || !isEdisonMail) {
             return null;
         }
         return (
