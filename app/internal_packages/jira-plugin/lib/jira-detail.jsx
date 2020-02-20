@@ -5,6 +5,7 @@ import Select, { Option } from 'rc-select';
 import { remote } from 'electron';
 import { DateUtils } from 'mailspring-exports';
 import JiraApi from './jira-api';
+import { CSSTransitionGroup } from 'react-transition-group';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -113,7 +114,8 @@ export default class JiraDetail extends Component {
                 attachments: {},
                 originalFiles: {},
                 issue: null,
-                comments: []
+                comments: [],
+                commentLoading: true
             })
             this.issueKey = issueKey;
             try {
@@ -159,10 +161,14 @@ export default class JiraDetail extends Component {
             })
         }
     }
-    findComments = async (issueKey) => {
+    findComments = async (issueKey, shouldTransition) => {
+        this.safeSetState({
+            shouldTransition
+        })
         let rst = await this.jira.findComments(issueKey);
         this.safeSetState({
             comments: rst.comments,
+            commentSaving: false,
             commentLoading: false
         })
     }
@@ -205,8 +211,19 @@ export default class JiraDetail extends Component {
         });
     }
     _renderComments = comments => {
+        const { commentLoading } = this.state;
+        if (commentLoading) {
+            return <div>
+                {this._renderLoading(20)}
+            </div>;
+        }
         return (
-            <div>
+            <CSSTransitionGroup
+                component="div"
+                transitionEnterTimeout={350}
+                transitionLeaveTimeout={350}
+                transitionName={this.state.shouldTransition ? 'transition-slide' : ''}
+            >
                 {
                     comments.map(item => (
                         <div key={item.id} className="row">
@@ -218,7 +235,7 @@ export default class JiraDetail extends Component {
                         </div>
                     ))
                 }
-            </div>
+            </CSSTransitionGroup>
         )
     }
     selectFilter = (inputVal, option) => {
@@ -299,11 +316,12 @@ export default class JiraDetail extends Component {
         }
         try {
             this.safeSetState({
-                commentLoading: true
+                commentSaving: true
             });
             await this.jira.addComment(this.issueKey, comment);
-            this.findComments(this.issueKey);
-            this._showDialog('Add comment successful.');
+            this.findComments(this.issueKey, true);
+            this.commentInput.value = '';
+            // this._showDialog('Add comment successful.');
         } catch (err) {
             console.error('****err', err);
             if (err.message && err.message.includes('invalid refresh token')) {
@@ -383,7 +401,7 @@ export default class JiraDetail extends Component {
         const {
             issue,
             loading,
-            commentLoading,
+            commentSaving,
             assignProgress,
             statusProgress,
             attachments = {},
@@ -436,7 +454,6 @@ export default class JiraDetail extends Component {
         transitionOptions.push(
             <Option key={statusKey} value={statusKey}>{status.name}</Option>
         );
-        const { protocol, host } = this.jira
         return (
             <div className="jira-detail">
                 {userLogo}
@@ -510,7 +527,7 @@ export default class JiraDetail extends Component {
                 <div className="jira-submit-comment">
                     <textarea ref={el => this.commentInput = el}></textarea>
                     {
-                        commentLoading ?
+                        commentSaving ?
                             this._renderLoading(20)
                             : <button className="btn btn-jira" onClick={this.addComment}>Add Comment</button>
                     }

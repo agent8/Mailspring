@@ -102,18 +102,13 @@ export default class Login extends Component {
                             size={{ width: 20, height: 20 }}
                             style={{ margin: 'none' }}
                         />
-                        : <button className="btn btn-jira btn-jira-login" onClick={this.submit}>Login</button>
+                        : <div>
+                            <button className="btn btn-jira btn-jira-login" onClick={this.submit}>Login</button>
+                            <h1>Or use Oauth</h1>
+                            <button className="btn btn-jira btn-jira-login" onClick={this.openOauth}>Connect to Jira</button>
+                        </div>
                     }
                 </div>
-                <h1>OR use Oauth</h1>
-                {loading ?
-                    <LottieImg
-                        name="loading-spinner-blue"
-                        size={{ width: 20, height: 20 }}
-                        style={{ margin: 'none' }}
-                    />
-                    : <button className="btn btn-jira btn-jira-login" onClick={this.openOauth}>Connect to Jira</button>
-                }
             </div>
         )
     }
