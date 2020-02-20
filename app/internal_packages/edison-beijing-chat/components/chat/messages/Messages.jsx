@@ -1,25 +1,26 @@
-import path from 'path';
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import path from 'path'
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 
-import { remote } from 'electron';
-import ContactAvatar from '../../common/ContactAvatar';
-import MessageImagePopup from './MessageImagePopup';
-import Group from './Group';
-import SecurePrivate from './SecurePrivate';
-import _ from 'underscore';
-import { RoomStore, MessageStore, ConversationStore, OnlineUserStore } from 'chat-exports';
-import { NEW_CONVERSATION } from '../../../utils/constant';
+import { remote } from 'electron'
+import ContactAvatar from '../../common/ContactAvatar'
+import MessageImagePopup from './MessageImagePopup'
+import Group from './Group'
+import SecurePrivate from './SecurePrivate'
+import _ from 'underscore'
+import { RoomStore, MessageStore, ConversationStore, OnlineUserStore } from 'chat-exports'
+import { NEW_CONVERSATION } from '../../../utils/constant'
+import { ipcRenderer } from 'electron'
 
 const flattenMsgIds = groupedMessages =>
   groupedMessages
     .map(group => group.messages.map(message => message.id))
     .reduce((acc, curr) => {
-      curr.forEach(id => acc.add(id));
-      return acc;
-    }, new Set());
-const MESSAGE_COUNTS_EACH_PAGE = 25;
-const MAX_COUNTS = 2000;
+      curr.forEach(id => acc.add(id))
+      return acc
+    }, new Set())
+const MESSAGE_COUNTS_EACH_PAGE = 25
+const MAX_COUNTS = 2000
 export default class Messages extends Component {
   static propTypes = {
     currentUserId: PropTypes.string.isRequired,
@@ -28,12 +29,12 @@ export default class Messages extends Component {
       jid: PropTypes.string.isRequired,
       isGroup: PropTypes.bool.isRequired,
     }),
-  };
+  }
 
   static defaultProps = {
     referenceTime: new Date().getTime(),
     selectedConversation: { isGroup: false },
-  };
+  }
 
   state = {
     shouldScrollBottom: true,
@@ -47,152 +48,165 @@ export default class Messages extends Component {
     members: [],
     groupedMessages: [],
     shouldDisplayMessageCounts: MESSAGE_COUNTS_EACH_PAGE,
-  };
+  }
 
-  static timer;
+  static timer
 
   UNSAFE_componentWillReceiveProps = async (nextProps, nextState) => {
-    const { selectedConversation: currentConv = {} } = this.props;
-    const { selectedConversation: nextConv = {} } = nextProps;
-    const { jid: currentJid } = currentConv;
-    const { jid: nextJid } = nextConv;
+    const { selectedConversation: currentConv = {} } = this.props
+    const { selectedConversation: nextConv = {} } = nextProps
+    const { jid: currentJid } = currentConv
+    const { jid: nextJid } = nextConv
 
     if (currentJid !== nextJid) {
       this.setState({
         shouldScrollBottom: true,
         nowIsInBottom: true,
         shouldDisplayMessageCounts: MESSAGE_COUNTS_EACH_PAGE,
-      });
-      await this.getRoomMembers(nextConv);
-      return;
+      })
+      await this.getRoomMembers(nextConv)
+      return
     }
-    const { groupedMessages: currentMsgs = [] } = this.state;
-    const { groupedMessages: nextMsgs = [] } = nextState;
-    const currentIds = flattenMsgIds(currentMsgs);
-    const nextIds = flattenMsgIds(nextMsgs);
-    const areNewMessages = currentIds.size < nextIds.size;
+    const { groupedMessages: currentMsgs = [] } = this.state
+    const { groupedMessages: nextMsgs = [] } = nextState
+    const currentIds = flattenMsgIds(currentMsgs)
+    const nextIds = flattenMsgIds(nextMsgs)
+    const areNewMessages = currentIds.size < nextIds.size
 
     this.setState({
       shouldScrollBottom: areNewMessages,
-    });
-    return true;
-  };
+    })
+    return true
+  }
 
   getRoomMembers = async conv => {
     if (conv.isGroup) {
-      const members = await RoomStore.getRoomMembers(conv.jid, conv.curJid);
-      this.setState({ members });
+      const members = await RoomStore.getRoomMembers(conv.jid, conv.curJid)
+      this.setState({ members })
     }
-  };
+  }
 
   componentDidMount = async () => {
-    this._listenToStore();
-    const { selectedConversation: conv = {} } = this.props;
-    await this.getRoomMembers(conv);
-    this._onDataChanged('message');
+    this._listenToStore()
+    const { selectedConversation: conv = {} } = this.props
+    await this.getRoomMembers(conv)
+    ipcRenderer.on('chat-messages-updated', async () => {
+      console.log(' recv chat-messages-updated')
+      await MessageStore.refreshMessages()
+      this._onDataChanged('message', true)
+    })
+    this._onDataChanged('message')
     setTimeout(() => {
       // setTimeout is a necessary workaround
       //otherwise the code below failed to work as expected
       if (ConversationStore.messagePanelScrollTopBeforeNew) {
-        this.messagesPanel.scrollTo(0, ConversationStore.messagePanelScrollTopBeforeNew);
-        this.messagesPanel.scrollTop = ConversationStore.messagePanelScrollTopBeforeNew;
-        ConversationStore.messagePanelScrollTopBeforeNew = null;
+        this.messagesPanel.scrollTo(0, ConversationStore.messagePanelScrollTopBeforeNew)
+        this.messagesPanel.scrollTop = ConversationStore.messagePanelScrollTopBeforeNew
+        ConversationStore.messagePanelScrollTopBeforeNew = null
       }
-    }, 200);
-  };
+    }, 200)
+  }
 
   _listenToStore = () => {
-    this._unsubs = [];
-    this._unsubs.push(MessageStore.listen(() => this._onDataChanged('message')));
-  };
+    this._unsubs = []
+    this._unsubs.push(MessageStore.listen(() => this._onDataChanged('message')))
+  }
 
-  _onDataChanged = async changedDataName => {
+  _onDataChanged = async (changedDataName, tranWindow) => {
     if (changedDataName === 'message') {
-      let groupedMessages = [];
-      const selectedConversation = await ConversationStore.getSelectedConversation();
+      if (!tranWindow) {
+        const windowKey = AppEnv.getLoadSettings().windowKey
+        console.log('send application:chat-messages-updated: ', windowKey)
+        ipcRenderer.send('command', 'application:chat-messages-updated', windowKey)
+      }
+      let groupedMessages = []
+      const selectedConversation = await ConversationStore.getSelectedConversation()
       if (selectedConversation) {
-        groupedMessages = await MessageStore.getGroupedMessages(selectedConversation.jid);
-        let { groupedMessages: currentMsgs = [], shouldDisplayMessageCounts } = this.state;
-        const currentIds = flattenMsgIds(currentMsgs);
-        const nextIds = flattenMsgIds(groupedMessages);
-        let areNewMessages = currentIds.size < nextIds.size;
+        groupedMessages = await MessageStore.getGroupedMessages(selectedConversation.jid)
+        let { groupedMessages: currentMsgs = [], shouldDisplayMessageCounts } = this.state
+        const currentIds = flattenMsgIds(currentMsgs)
+        const nextIds = flattenMsgIds(groupedMessages)
+        let areNewMessages = currentIds.size < nextIds.size
         // if switched to new conversation
-        if (selectedConversation.jid !== this.props.selectedConversation.jid || currentIds.size === 0) {
-          shouldDisplayMessageCounts = MESSAGE_COUNTS_EACH_PAGE;
-          areNewMessages = true;
+        if (
+          selectedConversation.jid !== this.props.selectedConversation.jid ||
+          currentIds.size === 0
+        ) {
+          shouldDisplayMessageCounts = MESSAGE_COUNTS_EACH_PAGE
+          areNewMessages = true
         } else {
-          shouldDisplayMessageCounts += (nextIds.size - currentIds.size);
+          shouldDisplayMessageCounts += nextIds.size - currentIds.size
         }
         this.setState({
           groupedMessages,
           messageCounts: nextIds.size,
           shouldScrollBottom: areNewMessages,
-          shouldDisplayMessageCounts
-        });
+          shouldDisplayMessageCounts,
+        })
       }
     }
-  };
+  }
 
   componentDidUpdate = async () => {
     // 如果滚动条是在屏幕底部，需要自动滚动，否则当用户手动滚动到某个位置，则新消息来了不自动滚动
     if (this.state.shouldScrollBottom && this.state.nowIsInBottom) {
-      this.scrollToMessagesBottom();
+      this.scrollToMessagesBottom()
     }
-  };
-  componentWillUnmount() {
+  }
+  componentWillUnmount () {
     for (const unsub of this._unsubs) {
-      unsub();
+      unsub()
     }
-    const { groupedMessages } = this.state;
+    const { groupedMessages } = this.state
   }
 
-  messagesTopBar = null;
-  messagesPanel = null;
-  messagePanelEnd = null;
+  messagesTopBar = null
+  messagesPanel = null
+  messagePanelEnd = null
 
-  scrollToMessagesBottom() {
+  scrollToMessagesBottom () {
     if (this.messagePanelEnd) {
       // this.messagePanelEnd.scrollIntoView({ behavior: 'smooth' });
       // dom render spend some time, so add a timeout here.
       setTimeout(() => {
-        this.messagePanelEnd.scrollIntoView();
-      }, 20);
-      this.setState({ shouldScrollBottom: false });
+        this.messagePanelEnd.scrollIntoView()
+      }, 20)
+      this.setState({ shouldScrollBottom: false })
     }
   }
 
   getContactInfoByJid = jid => {
-    const { members } = this.state;
-    const { selectedConversation } = this.props;
+    const { members } = this.state
+    const { selectedConversation } = this.props
     if (selectedConversation.isGroup && members && members.length > 0) {
       for (const member of members) {
-        const memberJid = typeof member.jid === 'object' ? member.jid.bare : member.jid;
+        const memberJid = typeof member.jid === 'object' ? member.jid.bare : member.jid
         if (memberJid === jid) {
-          return member;
+          return member
         }
       }
     }
 
     // get self User info
-    const self = OnlineUserStore.getSelfAccountById(jid);
+    const self = OnlineUserStore.getSelfAccountById(jid)
     if (self) {
       return {
         jid,
         name: self['name'],
         email: self['email'],
-      };
+      }
     }
 
-    const { jid: convJid, name, email } = selectedConversation;
+    const { jid: convJid, name, email } = selectedConversation
     if (convJid === jid) {
-      return { jid, name, email };
+      return { jid, name, email }
     }
-    return { jid, name: '', email: '' };
-  };
+    return { jid, name: '', email: '' }
+  }
 
   getContactAvatar = member => {
     if (member) {
-      const memberJid = typeof member.jid === 'object' ? member.jid.bare : member.jid;
+      const memberJid = typeof member.jid === 'object' ? member.jid.bare : member.jid
       return (
         <ContactAvatar
           jid={memberJid}
@@ -201,94 +215,91 @@ export default class Messages extends Component {
           email={member.email}
           size={32}
         />
-      );
+      )
     }
-    return null;
-  };
+    return null
+  }
   calcTimeLabel = _.throttle(() => {
     if (!this.messagesPanel) {
-      return;
+      return
     }
-    const scrollTop = this.messagesPanel.scrollTop;
+    const scrollTop = this.messagesPanel.scrollTop
 
     if (!this.messagesTopBar) {
-      this.messagesTopBar = document.querySelector('.messages-top-bar');
+      this.messagesTopBar = document.querySelector('.messages-top-bar')
     }
     if (this.messagesTopBar) {
       if (scrollTop > 0) {
         if (this.messagesTopBar.className.indexOf('has-shadow') === -1) {
-          this.messagesTopBar.className += ' has-shadow';
+          this.messagesTopBar.className += ' has-shadow'
         }
       } else {
-        this.messagesTopBar.className = this.messagesTopBar.className.replace(' has-shadow', '');
+        this.messagesTopBar.className = this.messagesTopBar.className.replace(' has-shadow', '')
       }
     }
-    const messageGroups = this.messagesPanel.children;
+    const messageGroups = this.messagesPanel.children
     for (const msgGrp of messageGroups) {
       if (msgGrp.className.indexOf('message-group') !== -1) {
         if (
           msgGrp.offsetTop - 50 < scrollTop &&
           scrollTop < msgGrp.offsetTop + msgGrp.offsetHeight - 70
         ) {
-          msgGrp.className = 'message-group time-label-fix';
+          msgGrp.className = 'message-group time-label-fix'
         } else {
-          msgGrp.className = 'message-group';
+          msgGrp.className = 'message-group'
         }
       }
     }
     if (scrollTop < window.screen.height * 1.5) {
-      let { shouldDisplayMessageCounts, messageCounts } = this.state;
-      let newCounts = shouldDisplayMessageCounts + MESSAGE_COUNTS_EACH_PAGE;
-      newCounts = Math.min(newCounts, messageCounts, MAX_COUNTS);
+      let { shouldDisplayMessageCounts, messageCounts } = this.state
+      let newCounts = shouldDisplayMessageCounts + MESSAGE_COUNTS_EACH_PAGE
+      newCounts = Math.min(newCounts, messageCounts, MAX_COUNTS)
       if (newCounts !== shouldDisplayMessageCounts) {
         this.setState({
           shouldDisplayMessageCounts: newCounts,
-        });
+        })
       }
     }
 
-    const { nowIsInBottom } = this.state;
+    const { nowIsInBottom } = this.state
     if (
       scrollTop + this.messagesPanel.offsetHeight < this.messagesPanel.scrollHeight &&
       nowIsInBottom
     ) {
-      this.setState({ nowIsInBottom: false });
+      this.setState({ nowIsInBottom: false })
     } else if (
       scrollTop + this.messagesPanel.offsetHeight >= this.messagesPanel.scrollHeight &&
       !nowIsInBottom
     ) {
-      this.setState({ nowIsInBottom: true });
+      this.setState({ nowIsInBottom: true })
     }
-  }, 20);
+  }, 20)
 
-  render() {
+  render () {
     const {
       selectedConversation: { jid },
-    } = this.props;
-    const { groupedMessages, members, shouldDisplayMessageCounts } = this.state;
+    } = this.props
+    const { groupedMessages, members, shouldDisplayMessageCounts } = this.state
     groupedMessages.map(group =>
       group.messages.map(message => {
         members.map(member => {
-          const jid = member.jid.bare || member.jid;
+          const jid = member.jid.bare || member.jid
           if (jid === message.sender) {
-            message.senderNickname = member.nickname || message.senderNickname;
+            message.senderNickname = member.nickname || message.senderNickname
           }
-        });
+        })
       })
-    );
+    )
     if (jid === NEW_CONVERSATION) {
-      return null;
+      return null
     }
 
     return (
-      <div
-        className="messages"
-        tabIndex="0"
-      >
+      <div className='messages' tabIndex='0'>
         <div
-          className="messages-wrap"
+          className='messages-wrap'
           ref={element => {
-            this.messagesPanel = element;
+            this.messagesPanel = element
           }}
           onScroll={this.calcTimeLabel}
         >
@@ -312,11 +323,11 @@ export default class Messages extends Component {
           />
           <div
             ref={element => {
-              this.messagePanelEnd = element;
+              this.messagePanelEnd = element
             }}
           />
         </div>
       </div>
-    );
+    )
   }
 }

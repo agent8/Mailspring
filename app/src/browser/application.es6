@@ -904,6 +904,20 @@ export default class Application extends EventEmitter {
       }
     })
 
+    this.on('application:chat-messages-updated', windowKey => {
+      console.log('app-on:chat-messages-updated')
+      const wins = this.windowManager._windows
+      for (let key in wins) {
+        if (key != windowKey) {
+          const win = wins[key]
+          if (win) {
+            console.log('app-send:chat-messages-updated: ', key)
+            win.sendMessage('chat-messages-updated', windowKey)
+          }
+        }
+      }
+    })
+
     this.on('application:select-conversation', jid => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW)
       if (main) {
