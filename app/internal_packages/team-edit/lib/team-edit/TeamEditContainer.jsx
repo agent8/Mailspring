@@ -3,10 +3,8 @@ import { Flexbox } from 'mailspring-component-kit'
 import _ from '../teampad-config'
 import { ConversationStore } from 'chat-exports'
 import PadStore from './PadStore'
-import TeamEditSideBar from './TeamEditSideBar'
 import TeamEditPadList from './TeamEditPadList'
 import PadMessagePanel from './PadMessagePanel'
-import ResizableRegion from '../../../../src/components/resizable-region'
 
 class TeamEditContainer extends Component {
   static displayName = 'TeamEditContainer'
@@ -56,7 +54,6 @@ class TeamEditContainer extends Component {
     const { chatRoomVisible, padInfo } = this.state
     return (
       <div className='pad-edit-container'>
-        <TeamEditSideBar></TeamEditSideBar>
         <TeamEditPadList
           enterPadChatRoom={this.enterPadChatRoom}
           hidePadChatRoom={this.hidePadChatRoom}

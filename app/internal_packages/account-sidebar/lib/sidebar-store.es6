@@ -1,5 +1,5 @@
-const _ = require('underscore');
-const MailspringStore = require('mailspring-store').default;
+const _ = require('underscore')
+const MailspringStore = require('mailspring-store').default
 const {
   Actions,
   AccountStore,
@@ -8,122 +8,122 @@ const {
   OutboxStore,
   FocusedPerspectiveStore,
   CategoryStore,
-} = require('mailspring-exports');
+} = require('mailspring-exports')
 
-const SidebarSection = require('./sidebar-section');
-const SidebarActions = require('./sidebar-actions');
-const AccountCommands = require('./account-commands');
+const SidebarSection = require('./sidebar-section')
+const SidebarActions = require('./sidebar-actions')
+const AccountCommands = require('./account-commands')
 
 const Sections = {
   Standard: 'Standard',
   User: 'User',
-};
+}
 
 class SidebarStore extends MailspringStore {
-  constructor() {
-    super();
+  constructor () {
+    super()
 
     if (AppEnv.savedState.sidebarKeysCollapsed == null) {
-      AppEnv.savedState.sidebarKeysCollapsed = {};
+      AppEnv.savedState.sidebarKeysCollapsed = {}
     }
 
-    this._sections = {};
-    this._sections[Sections.Standard] = {};
-    this._sections[Sections.User] = [];
-    this._registerCommands();
-    this._registerMenuItems();
-    this._registerTrayItems();
-    this._registerListeners();
-    this._updateSections();
+    this._sections = {}
+    this._sections[Sections.Standard] = {}
+    this._sections[Sections.User] = []
+    this._registerCommands()
+    this._registerMenuItems()
+    this._registerTrayItems()
+    this._registerListeners()
+    this._updateSections()
   }
 
-  accounts() {
-    return AccountStore.accounts();
+  accounts () {
+    return AccountStore.accounts()
   }
 
-  sidebarAccountIds() {
-    return FocusedPerspectiveStore.sidebarAccountIds();
+  sidebarAccountIds () {
+    return FocusedPerspectiveStore.sidebarAccountIds()
   }
 
-  standardSection() {
-    return this._sections[Sections.Standard];
+  standardSection () {
+    return this._sections[Sections.Standard]
   }
 
-  userSections() {
-    return this._sections[Sections.User];
+  userSections () {
+    return this._sections[Sections.User]
   }
 
-  _registerListeners() {
-    this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
-    this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
-    this.listenTo(AccountStore, this._onAccountsChanged);
-    this.listenTo(FocusedPerspectiveStore, this._onFocusedPerspectiveChanged);
-    this.listenTo(WorkspaceStore, this._updateSections);
-    this.listenTo(OutboxStore, this._updateSections);
-    this.listenTo(ThreadCountsStore, this._updateSections);
-    this.listenTo(CategoryStore, this._updateSections);
+  _registerListeners () {
+    this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName)
+    this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey)
+    this.listenTo(AccountStore, this._onAccountsChanged)
+    this.listenTo(FocusedPerspectiveStore, this._onFocusedPerspectiveChanged)
+    this.listenTo(WorkspaceStore, this._updateSections)
+    this.listenTo(OutboxStore, this._updateSections)
+    this.listenTo(ThreadCountsStore, this._updateSections)
+    this.listenTo(CategoryStore, this._updateSections)
 
     this.configSubscription = AppEnv.config.onDidChange(
       'core.workspace.showUnreadForAllCategories',
       this._updateSections
-    );
+    )
   }
 
   _onSetCollapsedByKey = (itemKey, collapsed) => {
-    const currentValue = AppEnv.savedState.sidebarKeysCollapsed[itemKey];
+    const currentValue = AppEnv.savedState.sidebarKeysCollapsed[itemKey]
     if (currentValue !== collapsed) {
-      AppEnv.savedState.sidebarKeysCollapsed[itemKey] = collapsed;
-      this._updateSections();
+      AppEnv.savedState.sidebarKeysCollapsed[itemKey] = collapsed
+      this._updateSections()
     }
-  };
+  }
 
   setAllCollapsed = () => {
     FocusedPerspectiveStore.sidebarAccountIds().forEach(id => {
-      this._onSetCollapsedByKey(id, true);
-    });
-  };
+      this._onSetCollapsedByKey(id, true)
+    })
+  }
 
   _onSetCollapsedByName = (itemName, collapsed) => {
-    let item = _.findWhere(this.standardSection().items, { name: itemName });
+    let item = _.findWhere(this.standardSection().items, { name: itemName })
     if (!item) {
       for (let section of this.userSections()) {
-        item = _.findWhere(section.items, { name: itemName });
+        item = _.findWhere(section.items, { name: itemName })
         if (item) {
-          break;
+          break
         }
       }
     }
     if (!item) {
-      return;
+      return
     }
-    this._onSetCollapsedByKey(item.id, collapsed);
-  };
+    this._onSetCollapsedByKey(item.id, collapsed)
+  }
 
   _registerCommands = accounts => {
     if (accounts == null) {
-      accounts = AccountStore.accounts();
+      accounts = AccountStore.accounts()
     }
-    AccountCommands.registerCommands(accounts);
-  };
+    AccountCommands.registerCommands(accounts)
+  }
 
   _registerMenuItems = accounts => {
     if (accounts == null) {
-      accounts = AccountStore.accounts();
+      accounts = AccountStore.accounts()
     }
-    AccountCommands.registerMenuItems(accounts, FocusedPerspectiveStore.sidebarAccountIds());
-  };
+    AccountCommands.registerMenuItems(accounts, FocusedPerspectiveStore.sidebarAccountIds())
+  }
 
   _registerTrayItems = () => {
-    AccountCommands.registerTrayItems();
-  };
+    AccountCommands.registerTrayItems()
+  }
 
   // TODO Refactor this
   // Listen to changes on the account store only for when the account label
   // or order changes. When accounts or added or removed, those changes will
   // come in through the FocusedPerspectiveStore
   _onAccountsChanged = () => {
-    this._updateSections();
-  };
+    this._updateSections()
+  }
 
   // TODO Refactor this
   // The FocusedPerspectiveStore tells this store the accounts that should be
@@ -137,26 +137,26 @@ class SidebarStore extends MailspringStore {
   // sections
   _onFocusedPerspectiveChanged = () => {
     _.defer(() => {
-      this._registerCommands();
-      this._registerMenuItems();
-      this._registerTrayItems();
-      this._updateSections();
-    });
-  };
+      this._registerCommands()
+      this._registerMenuItems()
+      this._registerTrayItems()
+      this._updateSections()
+    })
+  }
 
   _updateSections = () => {
     const accounts = FocusedPerspectiveStore.sidebarAccountIds()
       .map(id => AccountStore.accountForId(id))
-      .filter(a => !!a);
+      .filter(a => !!a)
 
     if (accounts.length === 0) {
-      console.warn(`accounts is []`);
-      return;
+      console.warn(`accounts is []`)
+      return
     }
-    console.log('sidebar store change');
+    console.trace('sidebar store change')
     // const multiAccount = accounts.length > 1;
 
-    this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts);
+    this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts)
     // this._sections[Sections.User] = accounts.map(function(acc) {
     //   const opts = {};
     //   if (multiAccount) {
@@ -165,8 +165,8 @@ class SidebarStore extends MailspringStore {
     //   }
     //   return SidebarSection.forUserCategories(acc, opts);
     // });
-    this.trigger();
-  };
+    this.trigger()
+  }
 }
 
-module.exports = new SidebarStore();
+module.exports = new SidebarStore()

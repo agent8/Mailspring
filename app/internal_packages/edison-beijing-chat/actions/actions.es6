@@ -1,21 +1,21 @@
-import Reflux from 'reflux';
+import Reflux from 'reflux'
 
-const ActionScopeWindow = 'window';
-const ActionScopeGlobal = 'global';
-const ActionScopeMainWindow = 'main';
+const ActionScopeWindow = 'window'
+const ActionScopeGlobal = 'global'
+const ActionScopeMainWindow = 'main'
 
 class Actions {
-  static goToMostRecentConversation = ActionScopeMainWindow;
-  static updateProgress = ActionScopeWindow;
-  static updateImagePopup = ActionScopeWindow;
-  static selectConversation = ActionScopeWindow;
-  static deselectConversation = ActionScopeWindow;
-  static removeConversation = ActionScopeWindow;
-  static goToPreviousConversation = ActionScopeWindow;
-  static goToNextConversation = ActionScopeWindow;
-  static updateDownload = ActionScopeWindow;
-  static userOnlineStatusChanged = ActionScopeWindow;
-  static memberChange = ActionScopeWindow;
+  static goToMostRecentConversation = ActionScopeMainWindow
+  static updateProgress = ActionScopeWindow
+  static updateImagePopup = ActionScopeWindow
+  static selectConversation = ActionScopeWindow
+  static deselectConversation = ActionScopeWindow
+  static removeConversation = ActionScopeWindow
+  static goToPreviousConversation = ActionScopeWindow
+  static goToNextConversation = ActionScopeWindow
+  static updateDownload = ActionScopeWindow
+  static userOnlineStatusChanged = ActionScopeWindow
+  static memberChange = ActionScopeWindow
 }
 
 // Read the actions we declared on the dummy Actions object above
@@ -24,16 +24,16 @@ class Actions {
 // This helper method exists to trick the Donna lexer so it doesn't
 // try to understand what we're doing to the Actions object.
 const create = (obj, name, scope) => {
-  obj[name] = Reflux.createAction(name);
-  obj[name].scope = scope;
-  obj[name].sync = true;
-};
+  obj[name] = Reflux.createAction(name)
+  obj[name].scope = scope
+  obj[name].sync = true
+}
 
 const scopes = {
   window: [],
   global: [],
   main: [],
-};
+}
 
 for (const name of Object.getOwnPropertyNames(Actions)) {
   if (
@@ -43,14 +43,14 @@ for (const name of Object.getOwnPropertyNames(Actions)) {
     name === 'caller' ||
     name === 'prototype'
   ) {
-    continue;
+    continue
   }
   if (Actions[name] !== 'window' && Actions[name] !== 'global' && Actions[name] !== 'main') {
-    continue;
+    continue
   }
-  const scope = Actions[name];
-  scopes[scope].push(name);
-  create(Actions, name, scope);
+  const scope = Actions[name]
+  scopes[scope].push(name)
+  create(Actions, name, scope)
 }
 
-export default Actions;
+export default Actions

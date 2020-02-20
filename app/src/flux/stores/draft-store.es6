@@ -4,6 +4,7 @@ import DraftEditingSession, { cloneForSyncDraftData } from './draft-editing-sess
 import DraftFactory from './draft-factory'
 import DatabaseStore from './database-store'
 import ContactStore from './contact-store'
+import SidebarStore from '../../../internal_packages/account-sidebar/lib/sidebar-store'
 import SendActionsStore from './send-actions-store'
 import SyncbackDraftTask from '../tasks/syncback-draft-task'
 import SyncbackMetadataTask from '../tasks/syncback-metadata-task'
@@ -962,6 +963,7 @@ class DraftStore extends MailspringStore {
   }
 
   popoutTeamEditor = async padInfo => {
+    console.log(' what the fuck!:', SidebarStore)
     const draft = await DraftFactory.createDraft()
     const { headerMessageId } = await this._finalizeAndPersistNewMessage(draft)
     await this._onPopoutDraft(headerMessageId, { padInfo, newDraft: true })

@@ -138,14 +138,6 @@ class ComposerWithWindowProps extends React.Component {
 }
 
 export function activate () {
-  console.log(
-    ' composer.activate ComposerViewForDraftClientId, ComposeButton, RefreshButton, ComposerViewForDraftClientId, ComposerWithWindowProps:',
-    ComposerViewForDraftClientId.displayName,
-    ComposeButton.displayName,
-    RefreshButton.displayName,
-    ComposerViewForDraftClientId.displayName,
-    ComposerWithWindowProps.displayName
-  )
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(ComposerViewForDraftClientId, {
       role: 'Composer',

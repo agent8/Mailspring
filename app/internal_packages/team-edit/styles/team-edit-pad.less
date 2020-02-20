@@ -2,37 +2,29 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 @import 'buttons';
+
+.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 15px) {
+  -webkit-mask-image: url(@svg-url);
+  -webkit-mask-size: @bgSize;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  background-color: @bgColor;
+}
+
 .pad-edit-container {
   position: fixed;
   top: 40px;
-  height: 600px;
-
-  .pad-sidebar {
-    display: inline-block;
-    width:25%;
-    height: 600px;
-    .nylas-outline-view {
-      position:absolute;
-      top:0;
-    }
-  }
+  width: 100%;
+  height: 100%;
 
   .team-edit-pad-list {
     display: inline-block;
-    width:40%;
-
-    .icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 15px) {
-      -webkit-mask-image: url(@svg-url);
-      -webkit-mask-size: @bgSize;
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-position: center;
-      background-color: @bgColor;
-    }
-    height:600px;
+    width: 50%;
+    height: 100%;
     overflow-y: scroll;
     padding: 5px 5px 5px 5px;
-    .team-edit-pad{
-      position:relative;
+    .team-edit-pad {
+      position: relative;
       @more-height: 20px;
       margin: 10px 10px 0px 10px;
       padding: 2px 5px;
@@ -45,20 +37,20 @@
         width: 16px;
         margin: 0 5px 0 0;
         padding: 0 0 0 4px;
-        color:white;
+        color: white;
         overflow: hidden;
         background-color: @black;
       }
       .pad-title {
         display: inline-block;
         width: 40%;
-        color:@white;
-        background-color:@black;
+        color: @white;
+        background-color: @black;
       }
       .pad-badge {
         display: inline-block;
         position: absolute;
-        top:5px;
+        top: 5px;
         right: 34px;
         width: 16px;
         background-color: gray;
@@ -66,7 +58,7 @@
       }
       .button.more {
         position: absolute;
-        top:5px;
+        top: 5px;
         right: 4px;
         width: @more-height;
         height: @more-height;
@@ -80,27 +72,29 @@
   }
   .chat-view-container {
     display: inline-block;
+    position: absolute;
+    top: 0;
     height: 600px;
-    width: 35%;
-    overflow-y:scroll;
+    width: 50%;
+    overflow-y: scroll;
     .panel {
-      overflow-y:scroll;
+      overflow-y: scroll;
       .chatPanel {
         display: inline-block;
-        height:100%;
+        height: 100%;
         .messages {
           height: 510px;
-          overflow-y:scroll;
+          overflow-y: scroll;
         }
         .key-commands-region {
           position: absolute;
-          width:100%;
-          height:130px;
-          bottom:0px;
+          width: 100%;
+          height: 130px;
+          bottom: 0px;
           .sendBar {
             position: absolute;
-            width:260px;
-            top:0px;
+            width: 260px;
+            top: 0px;
           }
         }
       }

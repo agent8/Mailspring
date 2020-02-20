@@ -1,9 +1,9 @@
-import { Utils } from 'mailspring-exports';
-import React, { Component } from 'react';
-import DropZone from './drop-zone';
-import RetinaImg from './retina-img';
-import OutlineViewItem from './outline-view-item';
-import PropTypes from 'prop-types';
+import { Utils } from 'mailspring-exports'
+import React, { Component } from 'react'
+import DropZone from './drop-zone'
+import RetinaImg from './retina-img'
+import OutlineViewItem from './outline-view-item'
+import PropTypes from 'prop-types'
 
 /*
  * Renders a section that contains a list of {@link OutlineViewItem}s. These items can
@@ -31,7 +31,7 @@ import PropTypes from 'prop-types';
  * @class OutlineView
  */
 class OutlineView extends Component {
-  static displayName = 'OutlineView';
+  static displayName = 'OutlineView'
 
   /*
    * If provided, this function will be called when an item has been created.
@@ -51,65 +51,65 @@ class OutlineView extends Component {
     collapsed: PropTypes.bool,
     onItemCreated: PropTypes.func,
     onCollapseToggled: PropTypes.func,
-  };
+  }
 
   static defaultProps = {
     title: '',
     items: [],
-  };
+  }
 
   state = {
     showCreateInput: false,
-  };
-
-  shouldComponentUpdate(nextProps, nextState) {
-    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state);
   }
 
-  componentWillUnmount() {
-    clearTimeout(this._expandTimeout);
+  shouldComponentUpdate (nextProps, nextState) {
+    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state)
+  }
+
+  componentWillUnmount () {
+    clearTimeout(this._expandTimeout)
   }
 
   // Handlers
 
   _onCreateButtonMouseDown = () => {
-    this._clickingCreateButton = true;
-  };
+    this._clickingCreateButton = true
+  }
 
   _onCreateButtonClicked = () => {
-    this._clickingCreateButton = false;
-    this.setState({ showCreateInput: !this.state.showCreateInput });
-  };
+    this._clickingCreateButton = false
+    this.setState({ showCreateInput: !this.state.showCreateInput })
+  }
 
   _onCollapseToggled = () => {
     if (this.props.onCollapseToggled) {
-      this.props.onCollapseToggled(this.props);
+      this.props.onCollapseToggled(this.props)
     }
-  };
+  }
 
   _onDragStateChange = ({ isDropping }) => {
     if (this.props.collapsed && !this._expandTimeout && isDropping) {
-      this._expandTimeout = setTimeout(this._onCollapseToggled, 650);
+      this._expandTimeout = setTimeout(this._onCollapseToggled, 650)
     } else if (this._expandTimeout && !isDropping) {
-      clearTimeout(this._expandTimeout);
-      this._expandTimeout = null;
+      clearTimeout(this._expandTimeout)
+      this._expandTimeout = null
     }
-  };
+  }
 
   _onItemCreated = (item, value) => {
-    this.setState({ showCreateInput: false });
-    this.props.onItemCreated(value);
-  };
+    this.setState({ showCreateInput: false })
+    this.props.onItemCreated(value)
+  }
 
   _onCreateInputCleared = () => {
     if (!this._clickingCreateButton) {
-      this.setState({ showCreateInput: false });
+      this.setState({ showCreateInput: false })
     }
-  };
+  }
 
   // Renderers
 
-  _renderCreateInput(props = this.props) {
+  _renderCreateInput (props = this.props) {
     const item = {
       id: `add-item-${props.title}`,
       name: '',
@@ -119,85 +119,87 @@ class OutlineView extends Component {
       onEdited: this._onItemCreated,
       inputPlaceholder: 'Create new item',
       onInputCleared: this._onCreateInputCleared,
-    };
-    return <OutlineViewItem item={item} />;
+    }
+    return <OutlineViewItem item={item} />
   }
 
-  _renderCreateButton() {
+  _renderCreateButton () {
     return (
       <span
-        className="add-item-button"
+        className='add-item-button'
         onMouseDown={this._onCreateButtonMouseDown}
         onMouseUp={this._onCreateButtonClicked}
       >
         <RetinaImg
-          url="edisonmail://account-sidebar/assets/icon-sidebar-addcategory@2x.png"
+          url='edisonmail://account-sidebar/assets/icon-sidebar-addcategory@2x.png'
           style={{ height: 15, width: 14 }}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       </span>
-    );
+    )
   }
 
-  _renderHeading(allowCreate, collapsed, collapsible) {
-    const collapseLabel = collapsed ? 'Show' : 'Hide';
+  _renderHeading (allowCreate, collapsed, collapsible) {
+    const collapseLabel = collapsed ? 'Show' : 'Hide'
     return (
       <DropZone
-        className="heading"
+        className='heading'
         onDrop={() => true}
         onDragStateChange={this._onDragStateChange}
         shouldAcceptDrop={() => true}
       >
-        <span className="text" title={this.props.title}>
+        <span className='text' title={this.props.title}>
           {this.props.title}
         </span>
         {allowCreate ? this._renderCreateButton() : null}
         {collapsible ? (
-          <span className="collapse-button" onClick={this._onCollapseToggled}>
+          <span className='collapse-button' onClick={this._onCollapseToggled}>
             {collapseLabel}
           </span>
         ) : null}
       </DropZone>
-    );
+    )
   }
 
-  _renderItems() {
-    return this.props.items.map((item, idx) => item.name ? <OutlineViewItem key={item.id} item={item} index={idx} /> : <Divider key={idx} />);
+  _renderItems () {
+    console.log(' outlineview._renderItems:', this.props.items)
+    return this.props.items.map((item, idx) =>
+      item.name ? <OutlineViewItem key={item.id} item={item} index={idx} /> : <Divider key={idx} />
+    )
   }
 
-  _renderOutline(allowCreate, collapsed) {
+  _renderOutline (allowCreate, collapsed) {
     if (collapsed) {
-      return <span />;
+      return <span />
     }
 
-    const showInput = allowCreate && this.state.showCreateInput;
+    const showInput = allowCreate && this.state.showCreateInput
     return (
       <div>
         {showInput ? this._renderCreateInput() : null}
         {this._renderItems()}
       </div>
-    );
+    )
   }
 
-  render() {
-    const collapsible = this.props.onCollapseToggled;
-    const collapsed = this.props.collapsed;
-    const allowCreate = this.props.onItemCreated != null && !collapsed;
-    const avatarClass = AppEnv.config.get('core.appearance.sidebaricons') ? '' : 'name-only';
+  render () {
+    const collapsible = this.props.onCollapseToggled
+    const collapsed = this.props.collapsed
+    const allowCreate = this.props.onItemCreated != null && !collapsed
+    const avatarClass = AppEnv.config.get('core.appearance.sidebaricons') ? '' : 'name-only'
 
     return (
       <section className={`nylas-outline-view ${avatarClass}`}>
         {/* {this._renderHeading(allowCreate, collapsed, collapsible)} */}
         {this._renderOutline(allowCreate, collapsed)}
       </section>
-    );
+    )
   }
 }
 
-export const DIVIDER_KEY = 'divider';
+export const DIVIDER_KEY = 'divider'
 export const Divider = () => {
-  return <div className="sidebar-divider" />;
+  return <div className='sidebar-divider' />
 }
 
-
-export default OutlineView;
+export default OutlineView
