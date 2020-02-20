@@ -514,14 +514,16 @@ export default class Message extends ModelWithMetadata {
 
   get labels() {
     const ret = [];
-    this.labelIds.forEach(labelId => {
-      if (typeof labelId === 'string') {
-        const tmp = CategoryStore.byFolderId(labelId);
-        if (tmp) {
-          ret.push(tmp);
+    if(Array.isArray(this.labelIds)){
+      this.labelIds.forEach(labelId => {
+        if (typeof labelId === 'string') {
+          const tmp = CategoryStore.byFolderId(labelId);
+          if (tmp) {
+            ret.push(tmp);
+          }
         }
-      }
-    });
+      });
+    }
     return ret;
   }
 
