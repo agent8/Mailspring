@@ -999,6 +999,14 @@ class DraftStore extends MailspringStore {
       )
       return
     }
+    let windowKey
+    const { padInfo } = options
+    if (padInfo) {
+      const { userId, padId } = padInfo
+      windowKey = `composer-${userId}-${padId}`
+    } else {
+      windowKey = `composer-${newDraft.headerMessageId}`
+    }
     if (draft.savedOnRemote) {
       this._doneWithSession(session, 'savedOnRemote')
       this.sessionForServerDraft(draft).then(newSession => {
@@ -1010,7 +1018,7 @@ class DraftStore extends MailspringStore {
           hidden: true, // We manually show in ComposerWithWindowProps::onDraftReady
           headerMessageId: newDraft.headerMessageId,
           windowType: 'composer',
-          windowKey: `composer-${newDraft.headerMessageId}`,
+          windowKey,
           windowProps: Object.assign(options, {
             headerMessageId: newDraft.headerMessageId,
             draftJSON,
@@ -1044,7 +1052,7 @@ class DraftStore extends MailspringStore {
         hidden: true, // We manually show in ComposerWithWindowProps::onDraftReady
         headerMessageId: headerMessageId,
         windowType: 'composer',
-        windowKey: `composer-${headerMessageId}`,
+        windowKey,
         windowProps: Object.assign(options, { headerMessageId, draftJSON }),
         title: ' ',
         threadId: session.draft().threadId,
