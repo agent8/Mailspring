@@ -4,24 +4,70 @@ import path from 'path';
 import Select, { Option } from 'rc-select';
 import { remote } from 'electron';
 import { DateUtils } from 'mailspring-exports';
+import JiraApi from './jira-api';
+import { CSSTransitionGroup } from 'react-transition-group';
+const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
 const jiraDirPath = path.join(configDirPath, 'jira_cache');
 const { Menu, MenuItem } = remote;
+const CONFIG_KEY = 'plugin.jira.config';
 
 export default class JiraDetail extends Component {
     constructor(props) {
         super(props);
-        let currentUser = window.localStorage.getItem('jira-current-user');
-        currentUser = currentUser ? JSON.parse(currentUser) : {}
-        this.state = { allUsers: [], currentUser };
+        this.state = { allUsers: [] };
     }
     componentDidMount = async () => {
         this.mounted = true;
+        this.login(this.props.config);
         this.findIssue(this.props);
+        this.getCurrentUserInfo(this.props.config);
     }
     componentWillUnmount() {
         this.mounted = false;
+    }
+    login = config => {
+        if (config && Object.keys(config).length > 0) {
+            const apiVersion = '2';
+            if (config.access_token) {
+                this.jira = new JiraApi({
+                    protocol: 'https',
+                    host: 'api.atlassian.com',
+                    base: `/ex/jira/${config.resource.id}`,
+                    bearer: config.access_token,
+                    refreshToken: config.refresh_token,
+                    method: 'POST',
+                    apiVersion,
+                    strictSSL: true
+                });
+            } else {
+                this.jira = new JiraApi({
+                    protocol: 'https',
+                    host: config.host,
+                    username: config.username,
+                    password: config.password,
+                    apiVersion,
+                    strictSSL: true
+                });
+            }
+        }
+    }
+    logout() {
+        AppEnv.config.set(CONFIG_KEY, {});
+    }
+    getCurrentUserInfo = async (config) => {
+        if (!config.currentUser) {
+            try {
+                const currentUser = await this.jira.getCurrentUser();
+                console.log('****currentUser', currentUser);
+                config.currentUser = currentUser;
+                AppEnv.config.set(CONFIG_KEY, config);
+            } catch (err) {
+                console.log('****getCurrentUserInfo failed', err);
+                return;
+            }
+        }
     }
     safeSetState = (data) => {
         if (this.mounted) {
@@ -29,16 +75,32 @@ export default class JiraDetail extends Component {
         }
     }
     componentWillReceiveProps(nextProps) {
-        this.findIssue(this.props);
+        this.findIssue(nextProps);
+    }
+    _findIssueKey(messages) {
+        for (const m of messages) {
+            const $ = cheerio.load(m.body);
+            let a = $('.breadcrumbs-table a').last();
+            if (a && a.attr('href')) {
+                let href = a.attr('href');
+                href = href.split('?')[0];
+                return {
+                    link: href,
+                    issueKey: href.substr(href.lastIndexOf('/') + 1)
+                }
+            }
+        }
+        return {};
     }
     findIssue = async (props) => {
-        const { thread } = props;
+        const { thread, messages } = props;
         if (!thread) {
             return;
         }
-        const matchs = thread.subject.match(/\((.+?)\)/);
-        if (matchs && matchs[1]) {
-            const issueKey = matchs[1];
+
+        const { link, issueKey } = this._findIssueKey(messages);
+
+        if (issueKey) {
             if (issueKey === this.issueKey) {
                 return;
             }
@@ -52,20 +114,25 @@ export default class JiraDetail extends Component {
                 attachments: {},
                 originalFiles: {},
                 issue: null,
-                comments: []
+                comments: [],
+                commentLoading: true
             })
             this.issueKey = issueKey;
             try {
-                issue = await props.jira.findIssue(issueKey, `renderedFields`);
+                issue = await this.jira.findIssue(issueKey, `renderedFields`);
                 console.log('*****issue', issue);
                 this.safeSetState({
                     loading: false,
-                    issue
+                    issue,
+                    link
                 })
             } catch (err) {
                 console.error(`****find issue error ${this.issueKey}`, err);
                 AppEnv.reportError(new Error(`find issue error ${this.issueKey}`), { errorData: err });
-                const errorMessage = err.error.errorMessages && err.error.errorMessages[0];
+                if (err.message && err.message.includes('invalid refresh token')) {
+                    this.logout();
+                }
+                const errorMessage = err.error && err.error.errorMessages && err.error.errorMessages[0];
                 this.safeSetState({
                     loading: false,
                     issue: null,
@@ -82,27 +149,31 @@ export default class JiraDetail extends Component {
             this.findComments(issueKey);
             // get users
             if (this.state.allUsers.length === 0) {
-                const users = await this.props.jira.searchAssignableUsers({ issueKey: issueKey, maxResults: 500 });
+                const users = await this.jira.searchAssignableUsers({ issueKey: issueKey, maxResults: 500 });
                 this.safeSetState({
                     allUsers: users
                 })
             }
-            const { transitions } = await this.props.jira.listTransitions(issueKey);
+            const { transitions } = await this.jira.listTransitions(issueKey);
             console.log('****transitions', transitions);
             this.safeSetState({
                 transitions
             })
         }
     }
-    findComments = async (issueKey) => {
-        let rst = await this.props.jira.findComments(issueKey);
+    findComments = async (issueKey, shouldTransition) => {
+        this.safeSetState({
+            shouldTransition
+        })
+        let rst = await this.jira.findComments(issueKey);
         this.safeSetState({
             comments: rst.comments,
+            commentSaving: false,
             commentLoading: false
         })
     }
     downloadUri = async (attachments, isThumbnail = true) => {
-        let downloadApi = isThumbnail ? this.props.jira.downloadThumbnail : this.props.jira.downloadAttachment;
+        let downloadApi = isThumbnail ? this.jira.downloadThumbnail : this.jira.downloadAttachment;
         for (const attachment of attachments) {
             // Only download orginal image file
             if (!attachment.mimeType.includes('image') && !isThumbnail) {
@@ -140,8 +211,19 @@ export default class JiraDetail extends Component {
         });
     }
     _renderComments = comments => {
+        const { commentLoading } = this.state;
+        if (commentLoading) {
+            return <div>
+                {this._renderLoading(20)}
+            </div>;
+        }
         return (
-            <div>
+            <CSSTransitionGroup
+                component="div"
+                transitionEnterTimeout={350}
+                transitionLeaveTimeout={350}
+                transitionName={this.state.shouldTransition ? 'transition-slide' : ''}
+            >
                 {
                     comments.map(item => (
                         <div key={item.id} className="row">
@@ -153,7 +235,7 @@ export default class JiraDetail extends Component {
                         </div>
                     ))
                 }
-            </div>
+            </CSSTransitionGroup>
         )
     }
     selectFilter = (inputVal, option) => {
@@ -170,7 +252,7 @@ export default class JiraDetail extends Component {
             this.safeSetState({
                 assignProgress: 'loading'
             })
-            await this.props.jira.updateAssignee(this.issueKey, item.key);
+            await this.jira.updateAssignee(this.issueKey, item.key);
             this.safeSetState({
                 assignProgress: 'success'
             })
@@ -178,6 +260,9 @@ export default class JiraDetail extends Component {
         } catch (err) {
             console.error(`****Change assignee failed ${this.issueKey}`, err, this.assignee);
             AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.logout();
+            }
             this.safeSetState({
                 assignProgress: 'error'
             })
@@ -196,12 +281,12 @@ export default class JiraDetail extends Component {
                     break;
                 }
             }
-            await this.props.jira.transitionIssue(this.issueKey, {
+            await this.jira.transitionIssue(this.issueKey, {
                 transition: {
                     id: item.key
                 }
             });
-            let { transitions } = await this.props.jira.listTransitions(this.issueKey);
+            let { transitions } = await this.jira.listTransitions(this.issueKey);
             this.safeSetState({
                 transitions,
                 statusProgress: 'success'
@@ -210,6 +295,9 @@ export default class JiraDetail extends Component {
         } catch (err) {
             console.error(`****Change assignee failed ${this.issueKey}`, err);
             AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.logout();
+            }
             this.safeSetState({
                 statusProgress: 'error'
             })
@@ -228,13 +316,17 @@ export default class JiraDetail extends Component {
         }
         try {
             this.safeSetState({
-                commentLoading: true
+                commentSaving: true
             });
-            await this.props.jira.addComment(this.issueKey, comment);
-            this.findComments(this.issueKey);
-            this._showDialog('Add comment successful.');
+            await this.jira.addComment(this.issueKey, comment);
+            this.findComments(this.issueKey, true);
+            this.commentInput.value = '';
+            // this._showDialog('Add comment successful.');
         } catch (err) {
             console.error('****err', err);
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.logout();
+            }
             this._showDialog('Add comment failed.');
         }
     }
@@ -284,7 +376,7 @@ export default class JiraDetail extends Component {
         menuItem = new MenuItem({
             label: 'Logout',
             click: () => {
-                this.props.logout();
+                this.logout();
                 this.menu.closePopup();
             },
         });
@@ -309,7 +401,7 @@ export default class JiraDetail extends Component {
         const {
             issue,
             loading,
-            commentLoading,
+            commentSaving,
             assignProgress,
             statusProgress,
             attachments = {},
@@ -317,7 +409,6 @@ export default class JiraDetail extends Component {
             allUsers,
             issueKey,
             transitions = [],
-            currentUser,
             errorMessage
         } = this.state;
         if (loading) {
@@ -325,9 +416,10 @@ export default class JiraDetail extends Component {
                 {this._renderLoading(40)}
             </div>
         }
+        const { currentUser } = this.props.config;
         const userLogo = <div className="jira-current-user" onClick={this.showMore}>
             {
-                currentUser.avatarUrls ?
+                currentUser && currentUser.avatarUrls ?
                     <img src={currentUser.avatarUrls && currentUser.avatarUrls['48x48']} />
                     : <RetinaImg
                         name={'jira.svg'}
@@ -362,11 +454,10 @@ export default class JiraDetail extends Component {
         transitionOptions.push(
             <Option key={statusKey} value={statusKey}>{status.name}</Option>
         );
-        const { protocol, host } = this.props.jira
         return (
             <div className="jira-detail">
                 {userLogo}
-                <div className="jira-title"><a href={`${protocol}://${host}/browse/${issueKey}`}>{issueKey}</a></div>
+                <div className="jira-title"><a href={this.state.link}>{issueKey}</a></div>
                 <div className="wrapper">
                     <header>
                         <div>
@@ -426,7 +517,7 @@ export default class JiraDetail extends Component {
                             {
                                 fields.attachment.map(item => (
                                     <div title={item.filename} key={item.id} onClick={() => this.openAttachment(item.id)}>
-                                        {attachments[item.id] ? <img src={attachments[item.id]} /> : 'downloading'}
+                                        {attachments[item.id] ? <img src={attachments[item.id]} /> : this._renderLoading(20)}
                                     </div>
                                 ))
                             }
@@ -436,7 +527,7 @@ export default class JiraDetail extends Component {
                 <div className="jira-submit-comment">
                     <textarea ref={el => this.commentInput = el}></textarea>
                     {
-                        commentLoading ?
+                        commentSaving ?
                             this._renderLoading(20)
                             : <button className="btn btn-jira" onClick={this.addComment}>Add Comment</button>
                     }

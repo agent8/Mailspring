@@ -33,6 +33,24 @@
     padding: 8px 18px 20px;
     background: @background-primary;
     color: @text-color;
+    .transition-slide-enter {
+        opacity: 0.01;
+        transform: translateY(120px);
+        transition: all 0.35s ease-out;
+    }
+    .transition-slide-enter.transition-slide-enter-active {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    .transition-slide-leave {
+        opacity: 1;
+        transition: all 0.25s ease-in;
+    }
+
+    .transition-slide-leave.transition-slide-leave-active {
+        opacity: 0.01;
+        width: 0;
+    }
     .error {
         color: @red;
     }
@@ -154,15 +172,20 @@
                 width: 4px;
                 height: 1px;
             }
-    
             &::-webkit-scrollbar-thumb {
                 background-color: @gray-lighter;
+                visibility: hidden;
             }
-    
             &::-webkit-scrollbar-track {
                 background: none;
                 border: none;
                 outline: none;
+            }
+            &:hover {
+                &::-webkit-scrollbar-thumb {
+                    background-color: @gray-lighter;
+                    visibility: visible;
+                }
             }
         }
         .jira-current-user {
@@ -267,8 +290,10 @@
         border-color: @border-color-primary;
         height: 50px;
         transition: height 0.3s;
+        color: @text-color;
+        background: @input-bg;
         &:focus {
-            height: 200px
+            height: 150px
         }
     }
     .jira-success {

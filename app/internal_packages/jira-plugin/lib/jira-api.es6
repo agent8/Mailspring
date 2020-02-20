@@ -1,8 +1,75 @@
 import JiraApiBase from 'jira-client';
+const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
+const JIRA_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE';
 
 export default class JiraApi extends JiraApiBase {
+    constructor(props) {
+        super(props);
+        if (props.refreshToken) {
+            this.refreshToken = props.refreshToken;
+        }
+    }
+    refreshAccessToken = async () => {
+        const body = [];
+        body.push(`refresh_token=${encodeURIComponent(this.refreshToken)}`);
+        body.push(`client_id=${encodeURIComponent(JIRA_CLIENT_ID)}`);
+        body.push(`client_secret=${encodeURIComponent(JIRA_CLIENT_SECRET)}`);
+        body.push(`grant_type=${encodeURIComponent('refresh_token')}`);
+
+        const resp = await fetch('https://auth.atlassian.com/oauth/token', {
+            method: 'POST',
+            body: body.join('&'),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            },
+        });
+        const json = (await resp.json()) || {};
+        if (!resp.ok) {
+            throw new Error(`Jira OAuth Code exchange returned ${resp.status} ${resp.statusText}: ${JSON.stringify(
+                json
+            )}`);
+        }
+        const { access_token } = json;
+        console.log('*****this', this);
+        this.baseOptions.auth.bearer = access_token;
+        console.log('******get new token', access_token);
+        AppEnv.config.set('plugin.jira.config.access_token', access_token);
+    }
+    async safeDoRequest(url) {
+        console.log('****safeDoRequest', url);
+        let res = null;
+        try {
+            res = await this.doRequest(...arguments);
+        } catch (err) {
+            console.error('****safeDoProcess - 1', err);
+            // if Oauth, refresh token
+            if (this.baseOptions.auth.bearer && err.error.message === 'Unauthorized') {
+                try {
+                    await this.refreshAccessToken();
+                } catch (refreshError) {
+                    console.error('****safeDoProcess - 2', refreshError.message);
+                    throw refreshError;
+                }
+                res = await this.doRequest(...arguments);
+            } else {
+                throw err;
+            }
+        }
+        return res;
+    }
+    findIssue(issueNumber, expand, fields, properties, fieldsByKeys) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber),
+            query: {
+                expand: expand || '',
+                fields: fields || '*all',
+                properties: properties || '*all',
+                fieldsByKeys: fieldsByKeys || false
+            }
+        })));
+    }
     downloadThumbnail = attachment => {
-        return this.doRequest(this.makeRequestHeader(this.makeUri({
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/thumbnail/".concat(attachment.id, "/").concat(encodeURI(encodeURI(attachment.filename.replace(/ /g, '')))),
             intermediatePath: '/secure'
         }), {
@@ -11,7 +78,7 @@ export default class JiraApi extends JiraApiBase {
         }));
     }
     downloadAttachment = attachment => {
-        return this.doRequest(this.makeRequestHeader(this.makeUri({
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/attachment/".concat(attachment.id, "/").concat(encodeURI(encodeURI(attachment.filename.replace(/ /g, '')))),
             intermediatePath: '/secure'
         }), {
@@ -20,7 +87,7 @@ export default class JiraApi extends JiraApiBase {
         }));
     }
     findComments = (jiraId, expand, startAt, maxResults) => {
-        return this.doRequest(this.makeRequestHeader(this.makeUri({
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(jiraId).concat("/comment"),
             query: {
                 expand: expand || 'renderedBody',
@@ -36,7 +103,7 @@ export default class JiraApi extends JiraApiBase {
             maxResults = data.maxResults,
             includeActive = data.includeActive,
             includeInactive = data.includeInactive;
-        return this.doRequest(this.makeRequestHeader(this.makeUri({
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: '/user/assignable/search',
             query: {
                 issueKey: issueKey,
@@ -51,7 +118,7 @@ export default class JiraApi extends JiraApiBase {
         }));
     }
     updateAssignee(issueKey, accountId) {
-        return this.doRequest(this.makeRequestHeader(this.makeUri({
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueKey, "/assignee")
         }), {
             method: 'PUT',
@@ -59,6 +126,34 @@ export default class JiraApi extends JiraApiBase {
             body: {
                 accountId
             }
+        }));
+    }
+    transitionIssue(issueId, issueTransition) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueId, "/transitions")
+        }), {
+            body: issueTransition,
+            method: 'POST',
+            followAllRedirects: true
+        }));
+    }
+    listTransitions(issueId) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueId, "/transitions"),
+            query: {
+                expand: 'transitions.fields'
+            }
+        })));
+    }
+    addComment(issueId, comment) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueId, "/comment")
+        }), {
+            body: {
+                body: comment
+            },
+            method: 'POST',
+            followAllRedirects: true
         }));
     }
 }
