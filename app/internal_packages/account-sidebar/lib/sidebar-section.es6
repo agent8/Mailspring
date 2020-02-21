@@ -115,68 +115,73 @@ class SidebarSection {
     if (CategoryStore.categories().length === 0) {
       return this.empty('All Accounts');
     }
-    if (accounts.length === 1) {
-      const ret = this.standardSectionForAccount(accounts[0]);
-      if (outboxCount.total > 0) {
-        const inbox = ret.items.shift();
-        ret.items.unshift(inbox);
-        ret.items.unshift(outbox);
-      }
-      SidebarSection.forSiftCategories([accounts[0]], ret.items);
-      return ret;
-    } else {
-      accounts.forEach(acc => {
-        let item = SidebarItem.forSingleInbox([acc.id], {
-          name: acc.label,
-          threadTitleName: 'Inbox',
-          children: this.standardSectionForAccount(acc).items,
-        });
-        items.push(item);
+    // if (accounts.length === 1) {
+    //   const ret = this.standardSectionForAccount(accounts[0]);
+    //   if (outboxCount.total > 0) {
+    //     const inbox = ret.items.shift();
+    //     ret.items.unshift(inbox);
+    //     ret.items.unshift(outbox);
+    //   }
+    //   SidebarSection.forSiftCategories([accounts[0]], ret.items);
+    //   return ret;
+    // } else {
+    accounts.forEach(acc => {
+      let item = SidebarItem.forSingleInbox([acc.id], {
+        name: acc.label,
+        threadTitleName: 'Inbox',
+        children: this.standardSectionForAccount(acc).items,
       });
-    }
+      items.push(item);
+    });
+    // }
 
     const accountIds = _.pluck(accounts, 'id');
-    let folderItem = SidebarItem.forAllInbox(accountIds, { displayName: 'All Inboxes' });
-    if (folderItem) {
-      items.unshift(DIVIDER_OBJECT);
-      items.unshift(folderItem);
+    let folderItem;
+    if (accounts.length > 1) {
+      folderItem = SidebarItem.forAllInbox(accountIds, { displayName: 'All Inboxes' });
+      if (folderItem) {
+        items.unshift(DIVIDER_OBJECT);
+        items.unshift(folderItem);
+      }
     }
     if (outboxCount.total > 0) {
       items.unshift(outbox);
     }
-    items.push(DIVIDER_OBJECT);
-    folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
-    folderItem = SidebarItem.forStarred(accountIds, { displayName: 'Flagged' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
-    folderItem = SidebarItem.forDrafts(accountIds, { displayName: 'All Drafts' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
-    // folderItem = SidebarItem.forSnoozed(accountIds, { displayName: 'Snoozed' });
-    // if (folderItem) {
-    //   items.push(folderItem);
-    // }
-    folderItem = SidebarItem.forSpam(accountIds, { dispalyName: 'Spam' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
-    folderItem = SidebarItem.forAllTrash(accountIds, { dispalyName: 'Trash' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
+    if (accounts.length > 1) {
+      items.push(DIVIDER_OBJECT);
+      folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
+      folderItem = SidebarItem.forStarred(accountIds, { displayName: 'Flagged' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
+      folderItem = SidebarItem.forDrafts(accountIds, { displayName: 'All Drafts' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
+      // folderItem = SidebarItem.forSnoozed(accountIds, { displayName: 'Snoozed' });
+      // if (folderItem) {
+      //   items.push(folderItem);
+      // }
+      folderItem = SidebarItem.forSpam(accountIds, { displayName: 'Spam' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
+      folderItem = SidebarItem.forAllTrash(accountIds, { displayName: 'Trash' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
 
-    folderItem = SidebarItem.forArchived(accountIds, { displayName: 'All Archive', name: 'allArchive' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
-    folderItem = SidebarItem.forSentMails(accountIds, { dispalyName: 'All Sent' });
-    if (folderItem) {
-      items.push(folderItem);
+      folderItem = SidebarItem.forArchived(accountIds, { displayName: 'All Archive', name: 'allArchive' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
+      folderItem = SidebarItem.forSentMails(accountIds, { displayName: 'All Sent' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
     }
     SidebarSection.forSiftCategories(accountIds, items);
 
