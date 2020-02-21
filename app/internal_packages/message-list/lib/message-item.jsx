@@ -358,7 +358,7 @@ export default class MessageItem extends React.Component {
         {/*</div>*/}
         <div className="row">
           {this._renderEmailAvatar()}
-          <div style={{ flex: 1, overflow: 'hidden' }}>
+          <div style={{ flex: 1, width: 0 }}>
             <div className="participants-to">
               <MessageParticipants
                 from={message.from}
