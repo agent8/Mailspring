@@ -282,6 +282,9 @@ class EventedIFrame extends React.Component {
       'keyCode',
       'which',
     ];
+    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+      return;
+    }
     const eventInit = Object.assign({ bubbles: true }, _.pick(event, attrs));
     const eventInParentDoc = new KeyboardEvent(event.type, eventInit);
 
