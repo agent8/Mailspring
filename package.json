@@ -85,6 +85,7 @@
   "dependencies": {
     "appdmg": "^0.5.2",
     "aws-sdk": "^2.336.0",
+    "cheerio": "^1.0.0-rc.3",
     "electron-platform": "^1.2.0",
     "fs-xattr": "^0.3.0",
     "mkdirp": "^0.5.1",
