@@ -71,8 +71,8 @@ class ConversationStore extends MailspringStore {
   removeConversation = async jid => {
     await ConversationModel.destroy({
       where: {
-        jid
-      }
+        jid,
+      },
     })
     this.refreshConversations()
     MessageStore.removeMessagesByConversationJid(jid)
@@ -93,7 +93,7 @@ class ConversationStore extends MailspringStore {
         email: null,
         avatar: null,
         isGroup: false,
-        unreadMessages: 0
+        unreadMessages: 0,
       }
       this._triggerDebounced()
       return
@@ -163,8 +163,8 @@ class ConversationStore extends MailspringStore {
     if (!result) {
       result = await ConversationModel.findOne({
         where: {
-          jid
-        }
+          jid,
+        },
       })
     }
     if (result && result.isGroup) {
@@ -178,13 +178,13 @@ class ConversationStore extends MailspringStore {
 
   findConversationsByCondition = async condition => {
     return await ConversationModel.findAll({
-      where: condition
+      where: condition,
     })
   }
 
   refreshConversations = async () => {
     this.conversations = await ConversationModel.findAll({
-      order: [['lastMessageTime', 'desc']]
+      order: [['lastMessageTime', 'desc']],
     })
     if (this.selectedConversation && this.selectedConversation.jid !== NEW_CONVERSATION) {
       this.selectedConversation = await this.getConversationByJid(this.selectedConversation.jid)
@@ -199,7 +199,7 @@ class ConversationStore extends MailspringStore {
         curJid: item.curJid,
         name: item.name,
         unreadMessages: item.unreadMessages,
-        isGroup: item.isGroup
+        isGroup: item.isGroup,
       })
       // if (item.isGroup) {
       //   const room = RoomStore.rooms && RoomStore.rooms[item.jid];
@@ -219,8 +219,8 @@ class ConversationStore extends MailspringStore {
     for (const conv of convs) {
       const convInDb = await ConversationModel.findOne({
         where: {
-          jid: conv.jid
-        }
+          jid: conv.jid,
+        },
       })
       // if exists in db, don't update curJid
       if (convInDb) {
@@ -235,8 +235,8 @@ class ConversationStore extends MailspringStore {
   updateConversationByJid = async (data, jid) => {
     await ConversationModel.update(data, {
       where: {
-        jid
-      }
+        jid,
+      },
     })
     this.refreshConversations()
   }
@@ -254,18 +254,29 @@ class ConversationStore extends MailspringStore {
       unreadMessages: 0,
       lastMessageTime: new Date(timeSend).getTime(),
       lastMessageText: content,
-      lastMessageSender: curJid
+      lastMessageSender: curJid,
     }
     let avatarMembers = contacts
     avatarMembers = avatarMembers.filter(contact => contact)
     avatarMembers = [
       avatarMembers.find(contact => contact.jid === conversation.curJid),
-      contacts.find(contact => contact.jid !== conversation.curJid)
+      contacts.find(contact => contact.jid !== conversation.curJid),
     ]
     avatarMembers = [avatarMembers[0], avatarMembers[1]]
     conversation.avatarMembers = avatarMembers
     await this.saveConversations([conversation])
     await this.setSelectedConversation(roomId)
+  }
+
+  createPadConversation = async ({ pad, userId }) => {
+    const payload = {
+      contacts: [],
+      roomId: pad.chatRoomId + '@muc.im.edison.tech',
+      name: 'Pad: ' + pad.name,
+      curJid: userId + '@im.edison.tech',
+      isExistedAppRoom: true,
+    }
+    await this.createGroupConversation(payload)
   }
 
   createPrivateConversation = async contact => {
@@ -284,7 +295,7 @@ class ConversationStore extends MailspringStore {
       unreadMessages: 0,
       lastMessageSender: contact.curJid,
       lastMessageText: '',
-      lastMessageTime: new Date().getTime()
+      lastMessageTime: new Date().getTime(),
     }
     await this.saveConversations([conversation])
     await this.setSelectedConversation(jid)
@@ -313,7 +324,8 @@ class ConversationStore extends MailspringStore {
     let conversations = this.conversations
     conversations = conversations.filter(conv => conv.curJid === curjid)
     contacts = contacts.filter(
-      contact => !contact.jid.match(/@app/) && !contact.jid.includes('^at^') && contact.curJid === curjid
+      contact =>
+        !contact.jid.match(/@app/) && !contact.jid.includes('^at^') && contact.curJid === curjid
     )
     for (const contact of contacts) {
       await this.createPrivateConversation(contact)
@@ -337,7 +349,7 @@ class ConversationStore extends MailspringStore {
     const name = (contact && (contact.name || contact.email)) || config.actorJid.split('@')[0]
     const body = {
       content: `${name} changes the group name to ${config.name}`,
-      type: 'change-group-name'
+      type: 'change-group-name',
     }
     const msg = {
       id: data.id,
@@ -345,7 +357,7 @@ class ConversationStore extends MailspringStore {
       sender: config.actorJid,
       body: JSON.stringify(body),
       sentTime: new Date().getTime(),
-      status: MESSAGE_STATUS_RECEIVED
+      status: MESSAGE_STATUS_RECEIVED,
     }
     MessageStore.saveMessagesAndRefresh([msg])
     await this.saveConversationName(convJid, config.name)

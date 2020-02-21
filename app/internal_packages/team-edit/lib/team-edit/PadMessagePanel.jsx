@@ -142,7 +142,11 @@ export default class MessagesPanel extends Component {
     PadStore.pad = pad
     const { chatRoomId } = pad
     const convJid = `${chatRoomId}@muc.im.edison.tech`
-    const selectedConversation = await ConversationStore.getConversationByJid(convJid)
+    let selectedConversation = await ConversationStore.getConversationByJid(convJid)
+    if (!selectedConversation) {
+      await ConversationStore.createPadConversation({ pad, userId })
+      selectedConversation = await ConversationStore.getConversationByJid(convJid)
+    }
     document.body.onclick = this._closePreview
     this.setState({
       online: navigator.onLine,
