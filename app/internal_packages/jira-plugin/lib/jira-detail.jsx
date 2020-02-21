@@ -201,14 +201,23 @@ export default class JiraDetail extends Component {
             return '';
         }
         const { attachments } = this.state;
-        return html.replace(/<img src="\/secure\/attachment\/.+?\//g, function (str) {
-            const matchs = /<img src="\/secure\/attachment\/(.+?)\//g.exec(str);
+        // replace image src
+        html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\//g, function (str) {
+            const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\//g.exec(str);
             // find if the image is downloaded.
-            if (matchs && matchs[1] && attachments[matchs[1]]) {
+            console.log('****matchs', matchs, attachments);
+            const attachmentId = matchs[2];
+            if (matchs && attachmentId && attachments[attachmentId]) {
+                if (matchs[1] === 'thumbnail') {
+                    return `<img src="${jiraDirPath}/${attachmentId}_`;
+                }
                 return `<img src="${jiraDirPath}/`;
             }
             return `<img style='display: none;' src="${jiraDirPath}/`;
         });
+        // replace link href
+        html = html.replace(/href="\/secure/g, `href="https://${this.jira.host}/secure`);
+        return html;
     }
     _renderComments = comments => {
         const { commentLoading } = this.state;
