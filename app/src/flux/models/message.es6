@@ -195,6 +195,10 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'calTarStat',
       queryable: false
     }),
+    lastSync: Attributes.Number({
+      modelKey: 'lastSync',
+      queryable: false
+    }),
 
     data: Attributes.Object({
       modelKey: 'data',
