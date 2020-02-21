@@ -9,6 +9,7 @@ import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
 import { AttachmentStore, MessageStore } from 'mailspring-exports';
+import Actions from '../flux/actions';
 
 const propTypes = {
   className: PropTypes.string,
@@ -403,16 +404,21 @@ export class ImageAttachmentItem extends Component {
       isDownloading: false,
       percent: 0,
       displaySupportPopup: false,
+      notReady: false,
     };
+    this._mounted = false;
   }
 
   componentDidMount() {
     this._storeUnlisten = [
-      AttachmentStore.listen(this._onDownloadStoreChange)
+      AttachmentStore.listen(this._onDownloadStoreChange),
+      Actions.broadcastDraftAttachmentState.listen(this._onAttachmentStateChange, this)
     ];
+    this._mounted = true;
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this._storeUnlisten) {
       for (let un of this._storeUnlisten) {
         un();
@@ -420,7 +426,19 @@ export class ImageAttachmentItem extends Component {
     }
   }
 
-  _onAttachmentState
+  _onAttachmentStateChange = ({fileId, fileState} = {}) => {
+    if(!this._mounted){
+      return;
+    }
+    if(!fileId || !fileState){
+      return;
+    }
+    console.log(`file ${fileId} state changed ${fileState}`);
+    if(fileId === this.props.fileId && fileState === 1 && this.state.notReady){
+      this.setState({notReady: false});
+      this._onImgLoaded();
+    }
+  };
 
   _onDownloadStoreChange = () => {
     const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);
@@ -449,6 +467,12 @@ export class ImageAttachmentItem extends Component {
     }
   };
 
+  _onImageError = () => {
+    if(this._mounted){
+      this.setState({notReady: true});
+    }
+  };
+
   _onImgLoaded = () => {
     // on load, modify our DOM just /slightly/. This causes DOM mutation listeners
     // watching the DOM to trigger. This is a good thing, because the image may
@@ -470,7 +494,7 @@ export class ImageAttachmentItem extends Component {
       );
     }
     // const src =filePath;
-    return <img draggable={draggable} src={filePath} alt="" onLoad={this._onImgLoaded} />;
+    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={filePath} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
   }
 
   render() {
