@@ -282,7 +282,7 @@ class EventedIFrame extends React.Component {
       'keyCode',
       'which',
     ];
-    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) {
       return;
     }
     const eventInit = Object.assign({ bubbles: true }, _.pick(event, attrs));
