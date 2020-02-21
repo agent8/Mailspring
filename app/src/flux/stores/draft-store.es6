@@ -1000,13 +1000,7 @@ class DraftStore extends MailspringStore {
       return
     }
     let windowKey
-    const { padInfo } = options
-    if (padInfo) {
-      const { userId, padId } = padInfo
-      windowKey = `composer-${userId}-${padId}`
-    } else {
-      windowKey = `composer-${newDraft.headerMessageId}`
-    }
+
     if (draft.savedOnRemote) {
       this._doneWithSession(session, 'savedOnRemote')
       this.sessionForServerDraft(draft).then(newSession => {
@@ -1014,6 +1008,13 @@ class DraftStore extends MailspringStore {
         newSession.setPopout(true)
         newSession.needUpload = true
         const draftJSON = newSession.draft().toJSON()
+        const { padInfo } = options
+        if (padInfo) {
+          const { userId, padId } = padInfo
+          windowKey = `composer-${userId}-${padId}`
+        } else {
+          windowKey = `composer-${newDraft.headerMessageId}`
+        }
         AppEnv.newWindow({
           hidden: true, // We manually show in ComposerWithWindowProps::onDraftReady
           headerMessageId: newDraft.headerMessageId,
@@ -1044,6 +1045,13 @@ class DraftStore extends MailspringStore {
       }
       session.setPopout(true)
       const draftJSON = session.draft().toJSON()
+      const { padInfo } = options
+      if (padInfo) {
+        const { userId, padId } = padInfo
+        windowKey = `composer-${userId}-${padId}`
+      } else {
+        windowKey = `composer-${headerMessageId}`
+      }
       // Since we pass a windowKey, if the popout composer draft already
       // exists we'll simply show that one instead of spawning a whole new
       // window.
