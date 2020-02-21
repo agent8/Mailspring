@@ -500,7 +500,7 @@ export default class MessageItem extends React.Component {
                   <MessageTimestamp date={date} />
                 </div>
               </div>
-              <div className="collapsed-snippet">{snippet}</div>
+              <div className="collapsed-snippet">{Utils.superTrim(snippet)}</div>
             </div>
           </div>
         </div>
