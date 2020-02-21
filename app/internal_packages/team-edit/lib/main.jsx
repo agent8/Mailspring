@@ -15,7 +15,6 @@ import SidebarStore from '../../account-sidebar/lib/sidebar-store'
 import ComposeButton from './compose-button'
 import RefreshButton from './refresh-button'
 import ComposerView from './composer-view'
-import TeamEditButton from './team-edit/team-edit-button'
 import TeamEditContainer from './team-edit/TeamEditContainer'
 import TeamEditPadContainer from './team-edit/TeamEditContainer'
 import getTeamEditSideBarItems from './team-edit/team-edit-sidebar-items'
@@ -181,9 +180,6 @@ export function activate () {
       location: WorkspaceStore.Location.RootSidebar,
     })
     ComponentRegistry.register(RefreshButton, {
-      location: WorkspaceStore.Location.RootSidebar,
-    })
-    ComponentRegistry.register(TeamEditButton, {
       location: WorkspaceStore.Location.RootSidebar,
     })
   } else if (AppEnv.isThreadWindow()) {
