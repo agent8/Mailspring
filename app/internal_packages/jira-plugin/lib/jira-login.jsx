@@ -26,6 +26,7 @@ export default class Login extends Component {
         if (hasError) {
             return;
         }
+        AppEnv.trackingEvent('Jira-Login');
         const config = {
             host: this.host.value,
             username: this.email.value,
@@ -55,6 +56,7 @@ export default class Login extends Component {
             });
             return;
         }
+        AppEnv.trackingEvent('Jira-Login-Success');
         AppEnv.config.set(CONFIG_KEY, config);
     }
     openOauth() {
