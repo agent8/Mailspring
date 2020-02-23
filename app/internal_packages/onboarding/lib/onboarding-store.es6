@@ -5,6 +5,7 @@ import OnboardingActions from './onboarding-actions';
 
 const OAUTH_LIST = ['gmail', 'yahoo', 'outlook', 'hotmail'];
 const NEED_INVITE_COUNT = 3;
+const INVITE_COUNT_KEY = 'invite.count';
 class OnboardingStore extends MailspringStore {
   constructor() {
     super();
@@ -146,7 +147,13 @@ class OnboardingStore extends MailspringStore {
 
   _onFinishAndAddAccount = async account => {
     // const isFirstAccount = AccountStore.accounts().length === 0;
-    AppEnv.trackingEvent('AddAccount-Success');
+    const { provider, emailAddress } = account;
+    const domain = emailAddress ? emailAddress.split('@')[1] : '';
+    if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+      AppEnv.trackingEvent('Invite-AddAccount-Success', { provider, domain });
+    } else {
+      AppEnv.trackingEvent('AddAccount-Success', { provider, domain });
+    }
     try {
       await AccountStore.addAccount(account);
     } catch (e) {
