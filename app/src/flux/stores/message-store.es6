@@ -266,7 +266,7 @@ class MessageStore extends MailspringStore {
 
     if (change.objectClass === Message.name) {
       const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
-      if (!inDisplayedThread) return;
+      if (!inDisplayedThread && (change.type === 'persist')) return;
 
       if (
         change.objects.length === 1 &&
