@@ -234,13 +234,16 @@ export default class Thread extends ModelWithMetadata {
    * When loading data from the API, there are `folders` AND `labels` but
    * no `categories` yet.
    */
-  fromJSON(json) {
+    fromJSON(json) {
     super.fromJSON(json);
 
     if (this.participants && this.participants instanceof Array) {
       this.participants.forEach(item => {
         item.accountId = this.accountId;
       });
+    }
+    if(!this.id){
+      this.id = json.id || json.pid;
     }
     return this;
   }
