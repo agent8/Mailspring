@@ -220,7 +220,7 @@ export default class Thread extends ModelWithMetadata {
       if (typeof labelId === 'string') {
         return CategoryStore.byFolderId(labelId);
       }
-    })
+    }).filter(l => l);
   }
 
   get folders() {
