@@ -1,7 +1,7 @@
 {
   "name": "edisonmail",
   "productName": "EdisonMail",
-  "version": "0.4.76",
+  "version": "0.4.79",
   "commitHash": "COMMIT_INSERTED_DURING_PACKAGING",
   "description": "The best email app for people and teams at work",
   "license": "GPL-3.0",
@@ -58,6 +58,7 @@
     "jasmine-reporters": "1.x.x",
     "jasmine-tagged": "^1.1.2",
     "jingle": "^3.0.0",
+    "jira-client": "^6.14.0",
     "juice": "^1.4",
     "jxt-xmpp-types": "^3.0.0",
     "keytar": "^4.4.1",
