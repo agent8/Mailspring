@@ -726,7 +726,7 @@ class MessageStore extends MailspringStore {
     if(!messageId){
       return;
     }
-    console.log(`Setting ${messageId} result: ${val}`);
+    // console.log(`Setting ${messageId} result: ${val}`);
     if(!this._checkingMessageForMissingAttachment[messageId]){
       this._checkingMessageForMissingAttachment[messageId] = 0;
     }
@@ -741,7 +741,7 @@ class MessageStore extends MailspringStore {
     }
     const isChecking = this._checkingMessageForMissingAttachment[messageId] > 0;
     if(prevIsChecking !== isChecking){
-      console.log(`Message ${messageId} checking attachment status changed, trigger`);
+      // console.log(`Message ${messageId} checking attachment status changed, trigger`);
       this.trigger();
     }
   };
@@ -757,14 +757,14 @@ class MessageStore extends MailspringStore {
       return false;
     }
     if(this._checkingMessageForMissingAttachment[msgId]){
-      console.log(`Message ${msgId} is checking for attachment`);
+      // console.log(`Message ${msgId} is checking for attachment`);
       return true;
     }
     if(!Array.isArray(message.files)){
-      console.error(`Missing message ${msgId} files`);
+      // console.error(`Missing message ${msgId} files`);
       return false
     }
-    console.log('getting message missing attachment result');
+    // console.log('getting message missing attachment result');
     return message.files.some(f => {
       return this.isAttachmentMissing(f.id);
     });

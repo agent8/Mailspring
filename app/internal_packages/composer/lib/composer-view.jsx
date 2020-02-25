@@ -751,19 +751,20 @@ export default class ComposerView extends React.Component {
         if (!match) {
           return;
         }
-        match.contentId = Utils.generateContentId();
-        match.isInline = true;
+        // match.contentId = Utils.generateContentId();
+        // match.isInline = true;
         console.log(`update attachment in _onAttachmentsCreated`);
-        session.updateAttachments([].concat(draft.files));
+        // session.updateAttachments([].concat(draft.files));
         // session.changes.add({
         //   files: [].concat(draft.files),
         // });
+      if (this._els[Fields.Body]) {
+        this._els[Fields.Body].insertInlineAttachments(fileObjs);
+      }
+      session.changes.commit();
       }
     }
-    if (this._els[Fields.Body]) {
-      this._els[Fields.Body].insertInlineAttachments(fileObjs);
-    }
-    session.changes.commit();
+
   };
 
   _onAttachmentCreated = fileObj => {
@@ -771,12 +772,12 @@ export default class ComposerView extends React.Component {
     if (Utils.shouldDisplayAsImage(fileObj)) {
       const { draft, session } = this.props;
       const match = draft.files.find(f => f.id === fileObj.id);
+      console.log(`update attachment in _onAttachmentCreated`);
       if (!match) {
         return;
       }
       // match.contentId = Utils.generateContentId();
       // match.isInline = true;
-      // console.log(`update attachment in _onAttachmentCreated`);
       // session.updateAttachments([].concat(draft.files));
       // session.changes.add({
       //   files: [].concat(draft.files),
