@@ -446,43 +446,66 @@ class SidebarItem {
     for (const accountId of accountIds) {
       const paths = parentPerspective.path.filter(p => p.accountId === accountId);
       if (paths.length === 1) {
-        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, paths[0].path);
+        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, paths[0]);
       }
     }
     return parentPerspective;
   }
 
-  static appendSubPathByAccount(accountId, parentItem, path) {
+  static appendSubPathByAccount(accountId, parentPerspective, parentCategory) {
+    const {path} = parentCategory;
     if (!path) {
       throw new Error('path must not be empty');
     }
-    if (!parentItem) {
+    if (!parentPerspective) {
       throw new Error('parentItem must not be empty');
     }
+    if(!accountId){
+      throw new Error('accountId must not be empty');
+    }
+    const account = AccountStore.accountForId(accountId);
+    if(!account){
+      throw new Error(`Cannot find account for ${accountId}`);
+    }
+    const isExchange = account.provider === 'exchange';
     const seenItems = {};
-    seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentItem;
+    seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
       // https://regex101.com/r/jK8cC2/1
       var item, parentKey;
       const re = RegExpUtils.subcategorySplitRegex();
-      const itemKey = category.displayName;
+      let itemKey;
 
       let parent = null;
-      const parentComponents = itemKey.split(category.delimiter);
-      if ((parentComponents[0].toLocaleLowerCase() !== CategoryStore.decodePath(path).toLocaleLowerCase()) ||
-        parentComponents.length === 1
-      ) {
-        continue;
-      }
-      for (let i = parentComponents.length; i >= 1; i--) {
-        parentKey = parentComponents.slice(0, i).join(category.delimiter);
-        parent = seenItems[parentKey.toLocaleLowerCase()];
-        if (parent) {
-          break;
+      if(isExchange){
+        itemKey = CategoryStore.decodePath(category.path);
+        if((category.parentId === path) && (path !== category.path)){
+          parentKey = path;
+          parent = parentPerspective
+        } else {
+          continue;
+        }
+      } else {
+        itemKey  = category.displayName;
+        const parentComponents = itemKey.split(category.delimiter);
+        if ((parentComponents[0].toLocaleLowerCase() !== CategoryStore.decodePath(path).toLocaleLowerCase()) ||
+          parentComponents.length === 1
+        ) {
+          continue;
+        }
+        for (let i = parentComponents.length; i >= 1; i--) {
+          parentKey = parentComponents.slice(0, i).join(category.delimiter);
+          parent = seenItems[parentKey.toLocaleLowerCase()];
+          if (parent) {
+            break;
+          }
         }
       }
       if (parent) {
-        const itemDisplayName = category.displayName.substr(parentKey.length + 1);
+        let itemDisplayName = category.displayName.substr(parentKey.length + 1);
+        if(isExchange){
+          itemDisplayName = category.displayName;
+        }
         item = SidebarItem.forCategories([category], { name: itemDisplayName });
         parent.children.push(item);
         if (item.selected) {
