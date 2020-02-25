@@ -105,7 +105,7 @@ const mergeDefaultBccAndCCs = async (message, account) => {
 };
 
 class DraftFactory {
-  static updateFiles(message, refMessageIsDraft = false){
+  static updateFiles(message, refMessageIsDraft = false, noCopy = false){
     if(!message){
       return;
     }
@@ -117,7 +117,12 @@ class DraftFactory {
         newFile.messageId = message.id;
         newFile.accountId = message.accountId;
         newFile.originFile = f;
-        newFile.id = uuid();
+        if(noCopy){
+          console.log('update attachment cache');
+          AttachmentStore.setAttachmentData(newFile);
+        } else {
+          newFile.id = uuid();
+        }
         const originalPath = AttachmentStore.pathForFile(f);
         if(refMessageIsDraft){
           attachmentData.push({
@@ -127,7 +132,7 @@ class DraftFactory {
               filePath: AttachmentStore.pathForFile(newFile)
             }
           });
-        }else {
+        } else {
           attachmentData.push({
             originalPath,
             dstFile: {
@@ -138,8 +143,15 @@ class DraftFactory {
         }
         return newFile;
       });
-      AttachmentStore.copyAttachmentsToDraft({draft: message, fileData: attachmentData});
+      if(noCopy){
+        console.log('adding draft to draft attachment cache because of noCopy');
+        AttachmentStore.addDraftToAttachmentCache(message);
+      } else {
+        console.log('copying attachments to draft attachment cache');
+        AttachmentStore.copyAttachmentsToDraft({draft: message, fileData: attachmentData});
+      }
     } else {
+      console.log('adding draft to draft attachment cache because of files');
       AttachmentStore.addDraftToAttachmentCache(message);
     }
   }
@@ -181,7 +193,7 @@ class DraftFactory {
     //   merged.bcc = (merged.bcc || []).concat(autoContacts);
     // }
     const message = new Message(merged);
-    DraftFactory.updateFiles(message);
+    DraftFactory.updateFiles(message, false, message.replyOrForward === Message.draftType.forward);
     return message
   }
   async createInviteDraft(draftData){
@@ -197,6 +209,8 @@ class DraftFactory {
         'DraftEditingSession::createNewDraftForEdit - you can only send drafts from a configured account.',
       );
     }
+    const pastMessageIds = Array.isArray(draft.pastMessageIds) ? draft.pastMessageIds.slice() : [];
+    pastMessageIds.push(draft.id);
     const defaults = Object.assign({}, draft, {
       body: draft.body,
       version: 0,
@@ -207,10 +221,11 @@ class DraftFactory {
       accountId: account.id,
       savedOnRemote: false,
       hasRefOldDraftOnRemote: true,
-      refOldDraftHeaderMessageId: draft.headerMessageId
+      refOldDraftHeaderMessageId: draft.headerMessageId,
+      pastMessageIds,
     });
     const message =  new Message(defaults);
-    DraftFactory.updateFiles(message, true);
+    DraftFactory.updateFiles(message, true, true);
     return message;
   }
 
@@ -330,6 +345,7 @@ class DraftFactory {
       replyToHeaderMessageId: '',
       forwardedHeaderMessageId: '',
       refOldDraftHeaderMessageId: '',
+      pastMessageIds: [],
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
       hasNewID: false,
