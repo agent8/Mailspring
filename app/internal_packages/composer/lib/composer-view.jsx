@@ -793,7 +793,7 @@ export default class ComposerView extends React.Component {
     Actions.addAttachment({
       filePath: filePath,
       headerMessageId: this.props.draft.headerMessageId,
-      messageId: this.props.draft.messageId,
+      messageId: this.props.draft.id,
       accountId: this.props.draft.accountId,
       onCreated: this._onAttachmentCreated,
     });
