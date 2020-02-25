@@ -195,6 +195,10 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'calTarStat',
       queryable: false
     }),
+    pastMessageIds: Attributes.Collection({
+      modelKey: 'pastMessageIds',
+      queryable: false
+    }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
       queryable: false
@@ -351,9 +355,9 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
-    // if(Array.isArray(data.files)){
-    //   this.attachmentIds = data.files
-    // }
+    if(!Array.isArray(data.pastMessageIds)){
+      this.pastMessageIds = [];
+    }
   }
 
   toJSON(options) {
@@ -374,6 +378,9 @@ export default class Message extends ModelWithMetadata {
 
   fromJSON(json = {}) {
     super.fromJSON(json);
+    if(!Array.isArray(json.pastMessageIds)){
+      this.pastMessageIds = [];
+    }
     return this;
   }
 

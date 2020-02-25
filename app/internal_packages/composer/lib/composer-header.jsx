@@ -168,7 +168,7 @@ export default class ComposerHeader extends React.Component {
   };
 
   _draftNotReady = () => {
-    return this.props.session.isPopout() || this.state.missingAttachments;
+    return this.props.session.isPopout();
   };
 
   _renderSubject = () => {
