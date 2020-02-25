@@ -201,14 +201,23 @@ export default class JiraDetail extends Component {
             return '';
         }
         const { attachments } = this.state;
-        return html.replace(/<img src="\/secure\/attachment\/.+?\//g, function (str) {
-            const matchs = /<img src="\/secure\/attachment\/(.+?)\//g.exec(str);
+        // replace image src
+        html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\//g, function (str) {
+            const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\//g.exec(str);
             // find if the image is downloaded.
-            if (matchs && matchs[1] && attachments[matchs[1]]) {
+            console.log('****matchs', matchs, attachments);
+            const attachmentId = matchs[2];
+            if (matchs && attachmentId && attachments[attachmentId]) {
+                if (matchs[1] === 'thumbnail') {
+                    return `<img src="${jiraDirPath}/${attachmentId}_`;
+                }
                 return `<img src="${jiraDirPath}/`;
             }
             return `<img style='display: none;' src="${jiraDirPath}/`;
         });
+        // replace link href
+        html = html.replace(/href="\/secure/g, `href="https://${this.jira.host}/secure`);
+        return html;
     }
     _renderComments = comments => {
         const { commentLoading } = this.state;
@@ -248,6 +257,7 @@ export default class JiraDetail extends Component {
         </span>
     }
     onAssigneeChange = async item => {
+        AppEnv.trackingEvent('Jira-Change-Assignee');
         try {
             this.safeSetState({
                 assignProgress: 'loading'
@@ -257,7 +267,9 @@ export default class JiraDetail extends Component {
                 assignProgress: 'success'
             })
             // this._showDialog('Change assignee successful.');
+            AppEnv.trackingEvent('Jira-Change-Assignee-Success');
         } catch (err) {
+            AppEnv.trackingEvent('Jira-Change-Assignee-Failed');
             console.error(`****Change assignee failed ${this.issueKey}`, err, this.assignee);
             AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
             if (err.message && err.message.includes('invalid refresh token')) {
@@ -269,6 +281,7 @@ export default class JiraDetail extends Component {
         }
     }
     onStatusChange = async item => {
+        AppEnv.trackingEvent('Jira-Change-Status');
         try {
             let { transitions: oldTransitions, issue } = this.state;
             for (const t of oldTransitions) {
@@ -291,8 +304,10 @@ export default class JiraDetail extends Component {
                 transitions,
                 statusProgress: 'success'
             })
+            AppEnv.trackingEvent('Jira-Change-Status-Success');
             // this._showDialog('Change status successful.');
         } catch (err) {
+            AppEnv.trackingEvent('Jira-Change-Status-Failed');
             console.error(`****Change assignee failed ${this.issueKey}`, err);
             AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
             if (err.message && err.message.includes('invalid refresh token')) {
@@ -314,6 +329,7 @@ export default class JiraDetail extends Component {
         if (!comment) {
             return;
         }
+        AppEnv.trackingEvent('Jira-AddComment');
         try {
             this.safeSetState({
                 commentSaving: true
@@ -322,8 +338,10 @@ export default class JiraDetail extends Component {
             this.findComments(this.issueKey, true);
             this.commentInput.value = '';
             // this._showDialog('Add comment successful.');
+            AppEnv.trackingEvent('Jira-AddComment-Success');
         } catch (err) {
             console.error('****err', err);
+            AppEnv.trackingEvent('Jira-AddComment-Failed');
             if (err.message && err.message.includes('invalid refresh token')) {
                 this.logout();
             }
