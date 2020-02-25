@@ -277,6 +277,7 @@ export default class DraftEditingSession extends MailspringStore {
       hotwireDraftBodyState(draft);
       this._draft = draft;
       this._draftPromise = Promise.resolve(draft);
+      this._isDraftMissingAttachments();
       const thread = FocusedContentStore.focused('thread');
       const inFocusedThread = thread && thread.id === draft.threadId;
       if (currentWindowLevel === 3) {
@@ -342,6 +343,7 @@ export default class DraftEditingSession extends MailspringStore {
           }
           this._draft = draft;
           this._threadId = draft.threadId;
+          this._isDraftMissingAttachments();
           const thread = FocusedContentStore.focused('thread');
           const inFocusedThread = thread && thread.id === draft.threadId;
           if(currentWindowLevel === 2 || currentWindowLevel ===1 && inFocusedThread){
@@ -444,11 +446,20 @@ export default class DraftEditingSession extends MailspringStore {
     this.changes.cancelCommit();
   };
 
+  validateDraftForChangeAccount(){
+    const warnings = [];
+    const errors = [];
+    if(this._draft.waitingForAttachment){
+      warnings.push(`Attachments are still processing`);
+    }
+    return { errors, warnings };
+  }
+
   validateDraftForSending() {
     const warnings = [];
     const errors = [];
     const allRecipients = [].concat(this._draft.to, this._draft.cc, this._draft.bcc);
-    const hasAttachment = this._draft.files && this._draft.files.length > 0;
+    const hasAttachment = Array.isArray(this._draft.files) && this._draft.files.length > 0;
     if(this._draft.waitingForAttachment){
       errors.push(`Attachments are still processing`);
     }
@@ -600,6 +611,49 @@ export default class DraftEditingSession extends MailspringStore {
     return this;
   }
 
+  _isDraftMissingAttachments = () => {
+    if (typeof this._draft.missingAttachments !== 'function') {
+      console.error('missing attachments is not a function');
+      return;
+    }
+    this._draft.missingAttachments().then(missingAttachments => {
+      if (!this) {
+        return;
+      }
+      if (!this._draft) {
+        return;
+      }
+      if (this._destroyed) {
+        return;
+      }
+      let totalMissing = missingAttachments.inline.needToDownload.length + missingAttachments.inline.downloading.length + missingAttachments.normal.needToDownload.length + missingAttachments.normal.downloading.length;
+      if (totalMissing > 0) {
+        if (!this._draft.waitingForAttachment) {
+          this._draft.waitingForAttachment = true;
+          console.log('attachment state changed');
+          this.trigger();
+        }
+      } else {
+        if (this._draft.waitingForAttachment || this._draft.waitingForAttachment === undefined) {
+          this._draft.waitingForAttachment = false;
+          console.log('attachment state changed to false');
+          this.trigger();
+        }
+      }
+    });
+  };
+  _onPastMessageChange = pastMsgId => {
+    if(!this._draft || !pastMsgId){
+      return;
+    }
+    if((this._draft.pastMessageIds || []).includes(pastMsgId)){
+      console.log(`past draft changed ${pastMsgId}`);
+      this._isDraftMissingAttachments();
+      this.trigger();
+    }
+
+  };
+
   _onDraftChanged = change => {
     if (change === undefined || change.type !== 'persist') {
       return;
@@ -613,11 +667,11 @@ export default class DraftEditingSession extends MailspringStore {
     // Some change events just tell us that the state of the draft (eg sending state)
     // have changed and don't include a payload.
     if (change.headerMessageId) {
-      if (change.headerMessageId === this.draft.headerMessageId) {
+      if (change.headerMessageId === this._draft.headerMessageId) {
         // console.log('triggered data change');
         this.trigger();
       } else {
-        // console.log('header message id not equal');
+        this._onPastMessageChange(change.id);
       }
       return;
     }
@@ -633,6 +687,9 @@ export default class DraftEditingSession extends MailspringStore {
       .pop();
 
     if (!nextDraft) {
+      for(let msg of change.objects){
+        this._onPastMessageChange(msg.id);
+      }
       return;
     }
     let changed = false;
@@ -692,6 +749,10 @@ export default class DraftEditingSession extends MailspringStore {
       }
       if (key === 'body' && nextDraft[key].length === 0) {
         console.log('body is empty, ignoring');
+        continue;
+      }
+      if(key === 'pastMessageIds'){
+        console.log('ignoring pastMessageIds change');
         continue;
       }
       this._draft[key] = nextDraft[key];
@@ -839,14 +900,15 @@ export default class DraftEditingSession extends MailspringStore {
       console.log(`${messageId} is not current draft ${this._draft.id}`);
       return;
     }
-    const isWaitingForAttachment = draftState === DraftAttachmentState.busy;
-    if(isWaitingForAttachment !== this._draft.waitingForAttachment){
-      this._draft.waitingForAttachment = isWaitingForAttachment;
-      console.log(`Attachment state changed to ${isWaitingForAttachment}`);
-      this.trigger()
-    } else {
-      console.log(`Attachment state not changed because target is ${isWaitingForAttachment} current is ${this._draft.waitingForAttachment}`);
-    }
+    this._isDraftMissingAttachments();
+    // const iswaitingForAttachment = draftState === DraftAttachmentState.busy;
+    // if(iswaitingForAttachment !== this._draft.waitingForAttachment){
+    //   this._draft.waitingForAttachment = iswaitingForAttachment;
+    //   console.log(`Attachment state changed to ${iswaitingForAttachment}`);
+    //   this.trigger()
+    // } else {
+    //   console.log(`Attachment state not changed because target is ${iswaitingForAttachment} current is ${this._draft.waitingForAttachment}`);
+    // }
   };
   localApplySyncDraftData = ({syncData = {}} = {} ) => {
     if(syncData && (typeof  syncData.lastSync === 'number') && syncData.lastSync > this.lastSync){
@@ -868,7 +930,7 @@ export default class DraftEditingSession extends MailspringStore {
         JSON.stringify(this._draft.files) === JSON.stringify(syncData.files) &&
         this._draft.subject === syncData.subject;
       for (const key of Object.getOwnPropertyNames(syncData)) {
-        if (key === 'body' || key === 'bodyEditorState' || key === 'waitingForAttachment') {
+        if (key === 'body' || key === 'bodyEditorState' || key === 'waitingForAttachment' ) {
           continue;
         }
         this._draft[key] = syncData[key];
