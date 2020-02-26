@@ -128,11 +128,13 @@ const onEditItem = function (item, value) {
     return;
   }
 
+  const account = AccountStore.accountForId(category.accountId);
   Actions.queueTask(
     SyncbackCategoryTask.forRenaming({
       accountId: category.accountId,
       path: category.path,
       newName: newDisplayName,
+      isExchange: account && account.provider === 'exchange'
     }),
   );
 };
