@@ -1,4 +1,4 @@
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, remote } from 'electron';
 import MailspringStore from 'mailspring-store';
 import DraftEditingSession, { cloneForSyncDraftData } from './draft-editing-session';
 import DraftFactory from './draft-factory';
@@ -252,7 +252,41 @@ class DraftStore extends MailspringStore {
     });
   }
 
-  _onDraftAccountChangeAction = (data) => {
+  _onDraftAccountChangeAction = (data = {}) => {
+    const {originalHeaderMessageId} = data;
+    if(!originalHeaderMessageId){
+      AppEnv.logError(`no originalHeaderMessageId found`);
+      return;
+    }
+    const session = this._draftSessions[originalHeaderMessageId];
+    if(!session){
+      AppEnv.logError(`no originalHeaderMessageId session`);
+      return;
+    }
+    const { errors, warnings } = session.validateDraftForChangeAccount();
+    const dialog = remote.dialog;
+    if (warnings.length > 0) {
+      dialog
+        .showMessageBox(remote.getCurrentWindow(), {
+          type: 'warning',
+          buttons: ['Yes', 'Cancel'],
+          message: 'Draft not ready, change anyways? This will remove all draft attachments.',
+          detail: `${warnings.join(' and ')}?`,
+        })
+        .then(({ response } = {}) => {
+          if (response === 0) {
+            session.changes.add({ files: [] });
+            session.updateAttachments([]);
+            if (AppEnv.isMainWindow()) {
+              this._onDraftAccountChange(data);
+            } else {
+              this._onDraftAccountChanged_NotMainWindow(data);
+            }
+            return true;
+          }
+        });
+      return false;
+    }
     if (AppEnv.isMainWindow()) {
       this._onDraftAccountChange(data);
     } else {

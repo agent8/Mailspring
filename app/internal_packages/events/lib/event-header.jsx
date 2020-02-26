@@ -103,15 +103,16 @@ class EventHeader extends React.Component {
 
   render() {
     if (this.state.event != null) {
+      const reactKey = `event${this.props.message ? this.props.message.id : 'noMessageId'}`;
       return (
-        <div className="event-wrapper">
-          <div className="event-header">
+        <div key={reactKey} className="event-wrapper">
+          <div key={'header'} className="event-header">
             <span className="event-title" onContextMenu={this._onContextMenu}>{this.state.event.summary || 'Event'}</span>
             {/*<RetinaImg name={'feed-calendar.svg'} style={{ width: 20 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />*/}
           </div>
-          <div className="event-body">
+          <div key={'body'} className="event-body">
             <div className="event-data">
-              <div className="event-time">
+              <div key={'time'} className="event-time">
                 <span className="event-key-name">When</span>
                 {this.renderWhen()}
               </div>
@@ -123,7 +124,8 @@ class EventHeader extends React.Component {
         </div>
       );
     } else {
-      return <div />;
+      const reactKey = `noEvent${this.props.message ? this.props.message.id : 'noMessageId'}`;
+      return <div key={reactKey} />;
     }
   }
 
@@ -135,7 +137,7 @@ class EventHeader extends React.Component {
     const actions = [{ status: 1, label: 'Yes', css: 'yes' }, { status: 3, label: 'Maybe', css: 'maybe' }, { status: 2, label: 'No', css: 'no' }];
 
     return (
-      <div className="event-actions">
+      <div key={'actions'} className="event-actions">
         <div>{actions.map(item => {
           const { status, label, css } = item;
           let classes = 'btn btn-rsvp ';
@@ -179,7 +181,7 @@ class EventHeader extends React.Component {
       expandElement = <div className="expand-element" onClick={this._toggleExpandNames}>{expandStr}</div>;
     }
     if(humanAttendees.length > 0){
-      return <div className="event-participants">
+      return <div key={'participants'} className="event-participants">
         <span className="event-key-name">{humanAttendees.length} Guests</span>
         <div className={`participant-names ${expandClass}`} ref={ref => this._partNames = ref}>{participantsStr}</div>
         {expandElement}
@@ -217,10 +219,11 @@ class EventHeader extends React.Component {
         return null;
       }
     }
+    const reactKey = `${index}:${participant.name || participant.email}`;
     if(index < all.length -1){
-      return <div className="participant-name">{participant.name || participant.email}, </div>;
+      return <div key={reactKey} className="participant-name">{participant.name || participant.email}, </div>;
     } else {
-      return <div className="participant-name">{participant.name || participant.email}</div>;
+      return <div key={reactKey} className="participant-name">{participant.name || participant.email}</div>;
     }
   };
 
@@ -230,7 +233,7 @@ class EventHeader extends React.Component {
       locationString = this.state.event.location;
     }
     return (
-      <div className="event-location" onContextMenu={this._onContextMenu}>
+      <div key={'location'} className="event-location" onContextMenu={this._onContextMenu}>
         <span className="event-key-name">Location</span>
         <span>{locationString}</span>
         {this.state.event.location &&

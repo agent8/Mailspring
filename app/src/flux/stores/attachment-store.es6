@@ -1609,7 +1609,7 @@ class AttachmentStore extends MailspringStore {
     accountId,
     messageId,
     filePath,
-    inline = false,
+    inline = undefined,
     onCreated = () => {},
   }) => {
     this._assertIdPresent(headerMessageId);
@@ -1634,6 +1634,11 @@ class AttachmentStore extends MailspringStore {
         contentId: inline ? Utils.generateContentId() : null,
         isInline: inline
       });
+      if(inline === undefined && Utils.shouldDisplayAsImage(file)){
+        console.log('should be image but not set as inline');
+        file.isInline = true;
+        file.contentId = Utils.generateContentId();
+      }
       const dstPath = this.pathForFile(file);
       const tmpData= {accountId, messageId, originalPath: filePath, dstFile: {fileId: file.id, filePath: dstPath,}};
       if(AppEnv.isMainWindow()){

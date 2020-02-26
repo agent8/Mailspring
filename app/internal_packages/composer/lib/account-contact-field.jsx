@@ -41,7 +41,10 @@ export default class AccountContactField extends React.Component {
       originalMessageId: draft.id,
       newParticipants: { from, cc, bcc },
     };
-    Actions.changeDraftAccount(changeDraftData);
+    if(draft.accountId !== contact.accountId){
+      console.log('actual account changed');
+      Actions.changeDraftAccount(changeDraftData);
+    }
   };
 
   _changeSignature = account => {
