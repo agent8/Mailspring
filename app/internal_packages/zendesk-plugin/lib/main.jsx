@@ -1,28 +1,28 @@
-import JiraPlugin from './jira-plugin';
-import JiraToolbarButton from './jira-toolbar-button';
-import fs from 'fs';
-import path from 'path';
-const { ComponentRegistry } = require('mailspring-exports');
+import ZendeskPlugin from './zendesk-plugin'
+import ZendeskToolbarButton from './zendesk-toolbar-button'
+import fs from 'fs'
+import path from 'path'
+const { ComponentRegistry } = require('mailspring-exports')
 
 module.exports = {
-  activate() {
+  activate () {
     if (AppEnv.isMainWindow()) {
-      const configDirPath = AppEnv.getConfigDirPath();
-      const jiraPath = path.join(configDirPath, 'jira_cache');
-      if (!fs.existsSync(jiraPath)) {
-        fs.mkdirSync(jiraPath);
+      const configDirPath = AppEnv.getConfigDirPath()
+      const zendeskPath = path.join(configDirPath, 'zendesk_cache')
+      if (!fs.existsSync(zendeskPath)) {
+        fs.mkdirSync(zendeskPath)
       }
     }
-    ComponentRegistry.register(JiraPlugin, {
-      role: "plugins"
+    ComponentRegistry.register(ZendeskPlugin, {
+      role: 'plugins',
     })
-    ComponentRegistry.register(JiraToolbarButton, {
+    ComponentRegistry.register(ZendeskToolbarButton, {
       role: 'MailActionsToolbarButton',
-    });
+    })
   },
 
-  deactivate() {
-    ComponentRegistry.unregister(JiraPlugin);
-    ComponentRegistry.unregister(JiraToolbarButton);
-  }
+  deactivate () {
+    ComponentRegistry.unregister(ZendeskPlugin)
+    ComponentRegistry.unregister(ZendeskToolbarButton)
+  },
 }

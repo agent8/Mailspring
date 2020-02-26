@@ -1,8 +1,8 @@
-import { React, PropTypes, Utils, ComponentRegistry } from 'mailspring-exports';
+import { React, PropTypes, Utils, ComponentRegistry } from 'mailspring-exports'
 
-import Flexbox from './flexbox';
-import InjectedComponentErrorBoundary from './injected-component-error-boundary';
-import InjectedComponentLabel from './injected-component-label';
+import Flexbox from './flexbox'
+import InjectedComponentErrorBoundary from './injected-component-error-boundary'
+import InjectedComponentLabel from './injected-component-label'
 
 /**
 Public: InjectedComponent makes it easy to include a set of dynamically registered
@@ -30,7 +30,7 @@ If no matching components is found, the InjectedComponent renders an empty span.
 Section: Component Kit
  */
 export default class InjectedComponentSet extends React.Component {
-  static displayName = 'InjectedComponentSet';
+  static displayName = 'InjectedComponentSet'
 
   /*
   Public: React `props` supported by InjectedComponentSet:
@@ -60,94 +60,101 @@ export default class InjectedComponentSet extends React.Component {
     exposedProps: PropTypes.object,
     containersRequired: PropTypes.bool,
     deferred: PropTypes.bool,
-  };
+  }
 
   static defaultProps = {
     direction: 'row',
     className: '',
     exposedProps: {},
     containersRequired: true,
-  };
-
-  constructor(props, context) {
-    super(props, context);
-    this.state = !props.deferred ? this._getStateFromStores() : { components: [], visible: false };
   }
 
-  componentDidMount() {
-    this._mounted = true;
+  constructor (props, context) {
+    super(props, context)
+    this.state = !props.deferred ? this._getStateFromStores() : { components: [], visible: false }
+  }
+
+  componentDidMount () {
+    this._mounted = true
 
     if (!this.props.deferred) {
-      this.listen();
+      this.listen()
     } else {
       setTimeout(() => {
         if (this._mounted) {
-          this.setState(this._getStateFromStores());
-          this.listen();
+          this.setState(this._getStateFromStores())
+          this.listen()
         }
-      }, 400);
+      }, 400)
     }
   }
 
-  listen() {
+  listen () {
     this._componentUnlistener = ComponentRegistry.listen(() =>
       this.setState(this._getStateFromStores())
-    );
+    )
   }
 
-  UNSAFE_componentWillReceiveProps(newProps) {
+  UNSAFE_componentWillReceiveProps (newProps) {
     if (!this.props || !Utils.isEqualReact(newProps.matching, this.props.matching)) {
-      this.setState(this._getStateFromStores(newProps));
+      this.setState(this._getStateFromStores(newProps))
     }
   }
 
-  componentWillUnmount() {
-    this._mounted = false;
+  componentWillUnmount () {
+    this._mounted = false
     if (this._componentUnlistener) {
-      this._componentUnlistener();
+      this._componentUnlistener()
     }
   }
 
   _getStateFromStores = (props = this.props) => {
+    if (props.matching.role == 'MailActionsToolbarButton') {
+      debugger
+    }
+    const components = ComponentRegistry.findComponentsMatching(props.matching).slice(
+      0,
+      props.matchLimit
+    )
+    if (props.matching.role == 'MailActionsToolbarButton') {
+      console.log(' InjectedComponentSet props.matching components:', props.matching, components)
+    }
     return {
-      components: ComponentRegistry.findComponentsMatching(props.matching).slice(
-        0,
-        props.matchLimit
-      ),
+      components,
       visible: ComponentRegistry.showComponentRegions(),
-    };
-  };
+    }
+  }
 
-  render() {
-    const { components, visible } = this.state;
-    const { exposedProps, containersRequired, matching, children } = this.props;
-    let { className } = this.props;
+  render () {
+    const { components, visible } = this.state
+    const { exposedProps, containersRequired, matching, children } = this.props
+    let { className } = this.props
 
-    const flexboxProps = Utils.fastOmit(this.props, Object.keys(this.constructor.propTypes));
+    const flexboxProps = Utils.fastOmit(this.props, Object.keys(this.constructor.propTypes))
 
     const elements = components.map(Component => {
       if (containersRequired === false || Component.containerRequired === false) {
-        return <Component key={Component.displayName} {...exposedProps} />;
+        return <Component key={Component.displayName} {...exposedProps} />
       }
       return (
         <InjectedComponentErrorBoundary key={Component.displayName}>
           <Component {...exposedProps} />
         </InjectedComponentErrorBoundary>
-      );
-    });
+      )
+    })
 
     if (visible) {
-      className += ' injected-region-visible';
+      className += ' injected-region-visible'
       elements.unshift(
-        <InjectedComponentLabel key="_label" matching={matching} {...exposedProps} />
-      );
-      elements.push(<span key="_clear" style={{ clear: 'both' }} />);
+        <InjectedComponentLabel key='_label' matching={matching} {...exposedProps} />
+      )
+      elements.push(<span key='_clear' style={{ clear: 'both' }} />)
     }
 
     if (this.props.deferred) {
-      className += ' display-deferrable';
+      className += ' display-deferrable'
       if (!components.length) {
-        className += ' deferred';
+        className += ' deferred'
       }
     }
 
@@ -156,6 +163,6 @@ export default class InjectedComponentSet extends React.Component {
         {elements}
         {children}
       </Flexbox>
-    );
+    )
   }
 }

@@ -1,5 +1,5 @@
-import classNames from 'classnames';
-import _ from 'underscore';
+import classNames from 'classnames'
+import _ from 'underscore'
 import {
   React,
   ReactDOM,
@@ -15,7 +15,7 @@ import {
   OutboxStore,
   SearchStore,
   FocusedPerspectiveStore,
-} from 'mailspring-exports';
+} from 'mailspring-exports'
 
 import {
   Spinner,
@@ -26,93 +26,93 @@ import {
   KeyCommandsRegion,
   InjectedComponentSet,
   LottieImg,
-} from 'mailspring-component-kit';
+} from 'mailspring-component-kit'
 
-import FindInThread from './find-in-thread';
-import MessageItemContainer from './message-item-container';
-import OutboxItemContainer from './outbox-item-container';
-import { remote } from 'electron';
-const { Menu, MenuItem } = remote;
+import FindInThread from './find-in-thread'
+import MessageItemContainer from './message-item-container'
+import OutboxItemContainer from './outbox-item-container'
+import { remote } from 'electron'
+const { Menu, MenuItem } = remote
 
-const buttonTimeout = 700;
-const TOOLBAR_MIN_WIDTH = 595;
+const buttonTimeout = 700
+const TOOLBAR_MIN_WIDTH = 595
 
 class MessageListScrollTooltip extends React.Component {
-  static displayName = 'MessageListScrollTooltip';
+  static displayName = 'MessageListScrollTooltip'
   static propTypes = {
     viewportCenter: PropTypes.number.isRequired,
     totalHeight: PropTypes.number.isRequired,
-  };
-
-  UNSAFE_componentWillMount() {
-    this.setupForProps(this.props);
   }
 
-  UNSAFE_componentWillReceiveProps(newProps) {
-    this.setupForProps(newProps);
+  UNSAFE_componentWillMount () {
+    this.setupForProps(this.props)
   }
 
-  shouldComponentUpdate(newProps, newState) {
-    return !Utils.isEqualReact(this.state, newState);
+  UNSAFE_componentWillReceiveProps (newProps) {
+    this.setupForProps(newProps)
   }
 
-  setupForProps(props) {
+  shouldComponentUpdate (newProps, newState) {
+    return !Utils.isEqualReact(this.state, newState)
+  }
+
+  setupForProps (props) {
     // Technically, we could have MessageList provide the currently visible
     // item index, but the DOM approach is simple and self-contained.
     //
-    const els = document.querySelectorAll('.message-item-wrap');
-    let idx = Array.from(els).findIndex(el => el.offsetTop > props.viewportCenter);
+    const els = document.querySelectorAll('.message-item-wrap')
+    let idx = Array.from(els).findIndex(el => el.offsetTop > props.viewportCenter)
     if (idx === -1) {
-      idx = els.length;
+      idx = els.length
     }
 
     this.setState({
       idx: idx,
       count: els.length,
-    });
+    })
   }
 
-  render() {
+  render () {
     return (
-      <div className="scroll-tooltip">
+      <div className='scroll-tooltip'>
         {this.state.idx} of {this.state.count}
       </div>
-    );
+    )
   }
 }
 
 class MessageList extends React.Component {
-  static displayName = 'MessageList';
+  static displayName = 'MessageList'
   static containerStyles = {
     minWidth: 200,
     maxWidth: 999999,
-  };
+  }
 
   static default = {
     buttonTimeout: 700, // in milliseconds
-    inOubox: false
-  };
-
-  constructor(props) {
-    super(props);
-    this.state = this._getStateFromStores();
-    this.state.minified = true;
-    this.state.isReplyAlling = false;
-    this.state.isReplying = false;
-    this.state.isForwarding = false;
-    this.state.hideButtons = false;
-    this.state.hideMessageList = false;
-    this._replyTimer = null;
-    this._replyAllTimer = null;
-    this._forwardTimer = null;
-    this._mounted = false;
-    this._draftScrollInProgress = false;
-    this.MINIFY_THRESHOLD = 3;
+    inOubox: false,
   }
 
-  componentDidMount() {
-    this._mounted = true;
-    const configDisposer = AppEnv.config.onDidChange('core.theme', this._onChange);
+  constructor (props) {
+    super(props)
+    this.state = this._getStateFromStores()
+    this.state.minified = true
+    this.state.isReplyAlling = false
+    this.state.isReplying = false
+    this.state.isForwarding = false
+    this.state.hideButtons = false
+    this.state.hideMessageList = false
+    this._replyTimer = null
+    this._replyAllTimer = null
+    this._forwardTimer = null
+    this._mounted = false
+    this._draftScrollInProgress = false
+    this.MINIFY_THRESHOLD = 3
+  }
+
+  componentDidMount () {
+    this._mounted = true
+    const configDisposer = AppEnv.config.onDidChange('core.theme', this._onChange)
     this._unsubscribers = [
       OutboxStore.listen(this._onChange),
       MessageStore.listen(this._onChange),
@@ -122,160 +122,163 @@ class MessageList extends React.Component {
       WorkspaceStore.listen(this._onChange),
       OnlineStatusStore.listen(this._onlineStatusChange),
       configDisposer.dispose,
-    ];
-    window.addEventListener('resize', this._onResize, true);
-    this._onResize();
+    ]
+    window.addEventListener('resize', this._onResize, true)
+    this._onResize()
     // when thread-popout, add a className "thread-popout"
-    const sheetPopoutContainer = document.querySelector('.layout-mode-popout');
+    const sheetPopoutContainer = document.querySelector('.layout-mode-popout')
     if (sheetPopoutContainer) {
-      sheetPopoutContainer.className += ` ${AppEnv.getWindowType()}`;
+      sheetPopoutContainer.className += ` ${AppEnv.getWindowType()}`
     }
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state);
+  shouldComponentUpdate (nextProps, nextState) {
+    return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state)
   }
 
-  componentDidUpdate() {
+  componentDidUpdate () {
     // cannot remove
   }
-  _hideEmptyList = (hide) => {
-    this.safeSetState({ hideMessageList: hide });
+  _hideEmptyList = hide => {
+    this.safeSetState({ hideMessageList: hide })
   }
 
   safeSetState = (data, callback) => {
     if (this._mounted) {
-      this.setState(data, callback);
+      this.setState(data, callback)
     }
   }
 
   _onlineStatusChange = () => {
     if (this.state.isOnline !== OnlineStatusStore.isOnline()) {
       this.safeSetState({
-        isOnline: OnlineStatusStore.isOnline()
+        isOnline: OnlineStatusStore.isOnline(),
       })
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount () {
     for (const unsubscribe of this._unsubscribers) {
-      unsubscribe();
+      unsubscribe()
     }
-    this._mounted = false;
-    window.removeEventListener('resize', this._onResize, true);
-    clearTimeout(this._forwardTimer);
-    clearTimeout(this._replyAllTimer);
-    clearTimeout(this._replyTimer);
+    this._mounted = false
+    window.removeEventListener('resize', this._onResize, true)
+    clearTimeout(this._forwardTimer)
+    clearTimeout(this._replyAllTimer)
+    clearTimeout(this._replyTimer)
   }
 
   _onResize = () => {
-    const container = document.querySelector('#message-list-toolbar .item-container');
+    const container = document.querySelector('#message-list-toolbar .item-container')
     if (!container) {
-      return;
+      return
     }
-    const hideButtons = container.clientWidth <= TOOLBAR_MIN_WIDTH;
+    const hideButtons = container.clientWidth <= TOOLBAR_MIN_WIDTH
     if (this.state.hideButtons !== hideButtons) {
       this.safeSetState({ hideButtons }, () => {
         if (hideButtons) {
-          Actions.hideWorkspaceLocation({ id: 'MessageListMoveButtons' });
+          Actions.hideWorkspaceLocation({ id: 'MessageListMoveButtons' })
         } else {
-          Actions.showWorkspaceLocation({ id: 'MessageListMoveButtons' });
+          Actions.showWorkspaceLocation({ id: 'MessageListMoveButtons' })
         }
-      });
+      })
     }
   }
 
-  _timeoutButton = (type) => {
+  _timeoutButton = type => {
     if (type === 'reply') {
       if (!this._replyTimer) {
         this._replyTimer = setTimeout(() => {
-          this.safeSetState({ isReplying: false });
-          this._replyTimer = null;
-        }, buttonTimeout);
+          this.safeSetState({ isReplying: false })
+          this._replyTimer = null
+        }, buttonTimeout)
       }
     } else if (type === 'reply-all') {
       if (!this._replyAllTimer) {
         this._replyAllTimer = setTimeout(() => {
-          this.safeSetState({ isReplyAlling: false });
-          this._replyAllTimer = null;
-        }, buttonTimeout);
+          this.safeSetState({ isReplyAlling: false })
+          this._replyAllTimer = null
+        }, buttonTimeout)
       }
     } else {
       if (!this._forwardTimer) {
         this._forwardTimer = setTimeout(() => {
-          this.safeSetState({ isForwarding: false });
-          this._forwardTimer = null;
-        }, buttonTimeout);
+          this.safeSetState({ isForwarding: false })
+          this._forwardTimer = null
+        }, buttonTimeout)
       }
     }
-  };
+  }
 
   _onCreatingDraft = ({ message = {}, type = '' }) => {
     if (this._mounted && (!this._lastMessage() || message.id === this._lastMessage().id)) {
       if (type === 'reply') {
-        this.safeSetState({ isReplying: true }, this._timeoutButton.bind(this, 'reply'));
+        this.safeSetState({ isReplying: true }, this._timeoutButton.bind(this, 'reply'))
       } else if (type === 'reply-all') {
-        this.safeSetState({ isReplyAlling: true }, this._timeoutButton.bind(this, 'reply-all'));
+        this.safeSetState({ isReplyAlling: true }, this._timeoutButton.bind(this, 'reply-all'))
       } else {
-        this.safeSetState({ isForwarding: true }, this._timeoutButton.bind(this, 'forward'));
+        this.safeSetState({ isForwarding: true }, this._timeoutButton.bind(this, 'forward'))
       }
     }
-  };
+  }
 
   _onDraftCreated = ({ messageId, type = '' }) => {
-    if (this._mounted && (!this._lastMessage() || messageId && messageId === this._lastMessage().id)) {
+    if (
+      this._mounted &&
+      (!this._lastMessage() || (messageId && messageId === this._lastMessage().id))
+    ) {
       if (type === 'reply') {
         if (this._replyTimer) {
-          return;
+          return
         }
         this._replyTimer = setTimeout(() => {
-          this.safeSetState({ isReplying: false });
-          this._replyTimer = null;
-        }, buttonTimeout);
+          this.safeSetState({ isReplying: false })
+          this._replyTimer = null
+        }, buttonTimeout)
       } else if (type === 'reply-all') {
         if (this._replyAllTimer) {
-          return;
+          return
         }
         this._replyAllTimer = setTimeout(() => {
-          this.safeSetState({ isReplyAlling: false });
-          this._replyAllTimer = null;
-        }, buttonTimeout);
+          this.safeSetState({ isReplyAlling: false })
+          this._replyAllTimer = null
+        }, buttonTimeout)
       } else {
         if (this._forwardTimer) {
-          return;
+          return
         }
         this._forwardTimer = setTimeout(() => {
-          this.safeSetState({ isForwarding: false });
-          this._forwardTimer = null;
-        }, buttonTimeout);
+          this.safeSetState({ isForwarding: false })
+          this._forwardTimer = null
+        }, buttonTimeout)
       }
     }
-  };
+  }
 
-  _globalKeymapHandlers() {
+  _globalKeymapHandlers () {
     const handlers = {
       'core:reply': () => {
         if (this._mounted && !this.state.isReplying && !this._replyTimer) {
-          this._timeoutButton('reply');
-          this.safeSetState({ isReplying: true });
+          this._timeoutButton('reply')
+          this.safeSetState({ isReplying: true })
           Actions.composeReply({
             thread: this.state.currentThread,
             message: this._lastMessage(),
             type: 'reply',
             behavior: 'prefer-existing',
-          });
+          })
         }
       },
       'core:reply-all': () => {
         if (this._mounted && !this.state.isReplyAlling && !this._replyAllTimer) {
-          this._timeoutButton('reply-all');
-          this.safeSetState({ isReplyAlling: true });
+          this._timeoutButton('reply-all')
+          this.safeSetState({ isReplyAlling: true })
           Actions.composeReply({
             thread: this.state.currentThread,
             message: this._lastMessage(),
             type: 'reply-all',
             behavior: 'prefer-existing',
-          });
+          })
         }
       },
       'core:forward': () => this._onForward(),
@@ -283,135 +286,145 @@ class MessageList extends React.Component {
       'core:export-pdf': this._onPdfThread,
       'core:messages-page-up': () => this._onScrollByPage(-1),
       'core:messages-page-down': () => this._onScrollByPage(1),
-    };
-
-    if (this.state.canCollapse) {
-      handlers['message-list:toggle-expanded'] = () => this._onToggleAllMessagesExpanded();
     }
 
-    return handlers;
+    if (this.state.canCollapse) {
+      handlers['message-list:toggle-expanded'] = () => this._onToggleAllMessagesExpanded()
+    }
+
+    return handlers
   }
 
-  _getMessageContainer(headerMessageId) {
-    return this.refs[`message-container-${headerMessageId}`];
+  _getMessageContainer (headerMessageId) {
+    return this.refs[`message-container-${headerMessageId}`]
   }
 
   _onForward = () => {
-    if (!this.state.currentThread || this.state.isForwarding || !this._mounted || this._forwardTimer) {
-      return;
+    if (
+      !this.state.currentThread ||
+      this.state.isForwarding ||
+      !this._mounted ||
+      this._forwardTimer
+    ) {
+      return
     }
-    this._timeoutButton('forward');
-    this.safeSetState({ isForwarding: true });
+    this._timeoutButton('forward')
+    this.safeSetState({ isForwarding: true })
     Actions.composeForward({
       thread: this.state.currentThread,
       message: this._lastMessage(),
-    });
-  };
+    })
+  }
 
-  _lastMessage() {
-    return (this.state.messages || []).filter(m => !m.draft).pop();
+  _lastMessage () {
+    return (this.state.messages || []).filter(m => !m.draft).pop()
   }
 
   // Returns either "reply" or "reply-all"
-  _replyType() {
-    const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
-    const lastMessage = this._lastMessage();
+  _replyType () {
+    const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType')
+    const lastMessage = this._lastMessage()
     if (!lastMessage) {
-      return 'reply';
+      return 'reply'
     }
 
     if (lastMessage.canReplyAll()) {
-      return defaultReplyType === 'reply-all' ? 'reply-all' : 'reply';
+      return defaultReplyType === 'reply-all' ? 'reply-all' : 'reply'
     }
-    return 'reply';
+    return 'reply'
   }
 
-  _canReplyAll() {
-    const lastMessage = this._lastMessage();
-    return lastMessage && lastMessage.canReplyAll();
+  _canReplyAll () {
+    const lastMessage = this._lastMessage()
+    return lastMessage && lastMessage.canReplyAll()
   }
 
   _onToggleAllMessagesExpanded = () => {
-    Actions.toggleAllMessagesExpanded();
-  };
+    Actions.toggleAllMessagesExpanded()
+  }
   _onPdfThread = () => {
-    const node = document.querySelector('#message-list');
-    Actions.pdfThread(this.state.currentThread, node.outerHTML);
-  };
+    const node = document.querySelector('#message-list')
+    Actions.pdfThread(this.state.currentThread, node.outerHTML)
+  }
 
   _onPrintThread = () => {
-    const node = document.querySelector('#message-list');
-    Actions.printThread(this.state.currentThread, node.outerHTML);
-  };
+    const node = document.querySelector('#message-list')
+    Actions.printThread(this.state.currentThread, node.outerHTML)
+  }
 
   _onPopThreadIn = () => {
     if (!this.state.currentThread) {
-      return;
+      return
     }
-    Actions.focusThreadMainWindow(this.state.currentThread);
-    AppEnv.close({ threadId: this.state.currentThread.id });
-  };
+    Actions.focusThreadMainWindow(this.state.currentThread)
+    AppEnv.close({ threadId: this.state.currentThread.id })
+  }
 
   _onPopoutThread = () => {
     if (!this.state.currentThread) {
-      return;
+      return
     }
-    Actions.popoutThread(this.state.currentThread);
+    Actions.popoutThread(this.state.currentThread)
     // This returns the single-pane view to the inbox, and does nothing for
     // double-pane view because we're at the root sheet.
-    Actions.popSheet({ reason: 'MessageList:_onPopoutThread' });
-  };
+    Actions.popSheet({ reason: 'MessageList:_onPopoutThread' })
+  }
 
   _onClickReplyArea = (replyType = 'reply') => {
-    if (!this.state.currentThread || this.state.isReplying || this.state.isReplyAlling || !this._mounted) {
-      return;
+    if (
+      !this.state.currentThread ||
+      this.state.isReplying ||
+      this.state.isReplyAlling ||
+      !this._mounted
+    ) {
+      return
     }
     if (replyType === 'reply-all') {
-      this.safeSetState({ isReplyAlling: true }, this._timeoutButton.bind(this, 'reply-all'));
+      this.safeSetState({ isReplyAlling: true }, this._timeoutButton.bind(this, 'reply-all'))
     } else {
-      this.safeSetState({ isReplying: true }, this._timeoutButton.bind(this, 'reply'));
+      this.safeSetState({ isReplying: true }, this._timeoutButton.bind(this, 'reply'))
     }
     Actions.composeReply({
       thread: this.state.currentThread,
       message: this._lastMessage(),
       type: replyType,
       behavior: 'prefer-existing-if-pristine',
-    });
-  };
+    })
+  }
 
-  _renderDraftElement() {
-    const { selectedDraft } = this.state;
+  _renderDraftElement () {
+    const { selectedDraft } = this.state
     return (
       <OutboxItemContainer
         key={selectedDraft.id}
         ref={`message-container-${selectedDraft.headerMessageId}`}
         message={selectedDraft}
       />
-    );
+    )
   }
 
-  _messageElements() {
-    const { messagesExpandedState, currentThread } = this.state;
-    const elements = [];
+  _messageElements () {
+    const { messagesExpandedState, currentThread } = this.state
+    const elements = []
 
-    let messages = this._messagesWithMinification(this.state.messages);
-    const mostRecentMessage = messages[messages.length - 1];
-    const hasReplyArea = mostRecentMessage && !mostRecentMessage.draft;
+    let messages = this._messagesWithMinification(this.state.messages)
+    const mostRecentMessage = messages[messages.length - 1]
+    const hasReplyArea = mostRecentMessage && !mostRecentMessage.draft
 
     // Invert the message list if the descending option is set
     if (AppEnv.config.get('core.reading.descendingOrderMessageList')) {
-      messages = messages.reverse();
+      messages = messages.reverse()
     }
 
     messages.forEach(message => {
       if (message.type === 'minifiedBundle') {
-        elements.push(this._renderMinifiedBundle(message));
-        return;
+        elements.push(this._renderMinifiedBundle(message))
+        return
       }
 
-      const collapsed = !messagesExpandedState[message.id];
-      const isMostRecent = message === mostRecentMessage;
-      const isBeforeReplyArea = isMostRecent && hasReplyArea;
+      const collapsed = !messagesExpandedState[message.id]
+      const isMostRecent = message === mostRecentMessage
+      const isBeforeReplyArea = isMostRecent && hasReplyArea
 
       elements.push(
         <MessageItemContainer
@@ -425,65 +438,65 @@ class MessageList extends React.Component {
           isBeforeReplyArea={isBeforeReplyArea}
           scrollTo={this._scrollTo}
           threadPopedOut={this.state.popedOut}
-        />,
-      );
+        />
+      )
 
       if (isBeforeReplyArea) {
-        elements.push(this._renderReplyArea());
+        elements.push(this._renderReplyArea())
       }
-    });
+    })
 
-    return elements;
+    return elements
   }
 
-  _messagesWithMinification(allMessages = []) {
+  _messagesWithMinification (allMessages = []) {
     if (!this.state.minified) {
-      return allMessages;
+      return allMessages
     }
 
-    const messages = [].concat(allMessages);
-    const minifyRanges = [];
-    let consecutiveCollapsed = 0;
+    const messages = [].concat(allMessages)
+    const minifyRanges = []
+    let consecutiveCollapsed = 0
 
     messages.forEach((message, idx) => {
       // Never minify the 1st message
       if (idx === 0) {
-        return;
+        return
       }
 
-      const expandState = this.state.messagesExpandedState[message.id];
+      const expandState = this.state.messagesExpandedState[message.id]
 
       if (!expandState) {
-        consecutiveCollapsed += 1;
+        consecutiveCollapsed += 1
       } else {
         // We add a +1 because we don't minify the last collapsed message,
         // but the MINIFY_THRESHOLD refers to the smallest N that can be in
         // the "N older messages" minified block.
-        const minifyOffset = expandState === 'default' ? 1 : 0;
+        const minifyOffset = expandState === 'default' ? 1 : 0
 
         if (consecutiveCollapsed >= this.MINIFY_THRESHOLD + minifyOffset) {
           minifyRanges.push({
             start: idx - consecutiveCollapsed,
             length: consecutiveCollapsed - minifyOffset,
-          });
+          })
         }
-        consecutiveCollapsed = 0;
+        consecutiveCollapsed = 0
       }
-    });
+    })
 
-    let indexOffset = 0;
+    let indexOffset = 0
     for (const range of minifyRanges) {
-      const start = range.start - indexOffset;
+      const start = range.start - indexOffset
       const minified = {
         type: 'minifiedBundle',
         messages: messages.slice(start, start + range.length),
-      };
-      messages.splice(start, range.length, minified);
+      }
+      messages.splice(start, range.length, minified)
 
       // While we removed `range.length` items, we also added 1 back in.
-      indexOffset += range.length - 1;
+      indexOffset += range.length - 1
     }
-    return messages;
+    return messages
   }
 
   // Some child components (like the composer) might request that we scroll
@@ -494,44 +507,44 @@ class MessageList extends React.Component {
   // smoothly to the top of a particular message.
   _scrollTo = ({ headerMessageId, rect, position } = {}) => {
     if (this._draftScrollInProgress) {
-      return;
+      return
     }
     if (headerMessageId) {
-      const messageElement = this._getMessageContainer(headerMessageId);
+      const messageElement = this._getMessageContainer(headerMessageId)
       if (!messageElement) {
-        return;
+        return
       }
       this._messageWrapEl.scrollTo(messageElement, {
         position: position !== undefined ? position : ScrollRegion.ScrollPosition.Visible,
-      });
+      })
     } else if (rect) {
       this._messageWrapEl.scrollToRect(rect, {
         position: ScrollRegion.ScrollPosition.CenterIfInvisible,
-      });
+      })
     } else {
-      throw new Error('onChildScrollRequest: expected id or rect');
+      throw new Error('onChildScrollRequest: expected id or rect')
     }
-  };
+  }
 
   _onScrollByPage = direction => {
-    const height = ReactDOM.findDOMNode(this._messageWrapEl).clientHeight;
-    this._messageWrapEl.scrollTop += height * direction;
-  };
+    const height = ReactDOM.findDOMNode(this._messageWrapEl).clientHeight
+    this._messageWrapEl.scrollTop += height * direction
+  }
 
   _onChange = () => {
-    const newState = this._getStateFromStores();
+    const newState = this._getStateFromStores()
     if (
       !newState.inOutbox &&
       (this.state.currentThread || {}).id !== (newState.currentThread || {}).id
     ) {
-      newState.minified = true;
+      newState.minified = true
     }
-    this._onResize();
-    this.safeSetState(newState);
-  };
+    this._onResize()
+    this.safeSetState(newState)
+  }
 
-  _getStateFromStores() {
-    const sheet = WorkspaceStore.rootSheet();
+  _getStateFromStores () {
+    const sheet = WorkspaceStore.rootSheet()
     if (sheet.id !== 'Outbox') {
       return {
         messages: MessageStore.items() || [],
@@ -546,130 +559,135 @@ class MessageList extends React.Component {
         inOutbox: false,
         query: SearchStore.query(),
         isSearching: SearchStore.isSearching(),
-        theme: AppEnv.config.get('core.theme')
-      };
+        theme: AppEnv.config.get('core.theme'),
+      }
     } else {
       return {
         inOutbox: true,
         selectedDraft: OutboxStore.selectedDraft(),
         isOnline: OnlineStatusStore.isOnline(),
-      };
+      }
     }
   }
   _onSelectText = e => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.target.className && e.target.className.indexOf("message-subject") === -1) {
-      return;
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.target.className && e.target.className.indexOf('message-subject') === -1) {
+      return
     }
 
-    const textNode = e.currentTarget.childNodes[0];
-    const range = document.createRange();
-    range.setStart(textNode, 0);
-    range.setEnd(textNode, textNode.length);
-    const selection = document.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-  };
+    const textNode = e.currentTarget.childNodes[0]
+    const range = document.createRange()
+    range.setStart(textNode, 0)
+    range.setEnd(textNode, textNode.length)
+    const selection = document.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
   _onContactContextMenu = subject => {
-    const menu = new Menu();
-    menu.append(new MenuItem({ role: 'copy' }));
+    const menu = new Menu()
+    menu.append(new MenuItem({ role: 'copy' }))
     if (!this.state.inOutbox) {
       menu.append(
         new MenuItem({
           label: `Search for "${subject}`,
           click: () => Actions.searchQuerySubmitted(`subject:"${subject}"`),
         })
-      );
+      )
     }
-    menu.popup({});
-  };
+    menu.popup({})
+  }
   _onLabelsRemoved = removedCategories => {
     if (!AppEnv.isMainWindow()) {
-      return;
+      return
     }
     if (Array.isArray(removedCategories)) {
-      const currentPerspective = FocusedPerspectiveStore.current();
+      const currentPerspective = FocusedPerspectiveStore.current()
       if (currentPerspective && Array.isArray(currentPerspective.categories())) {
-        const currentCategories = currentPerspective.categories();
+        const currentCategories = currentPerspective.categories()
         for (let removedCat of removedCategories) {
           for (let cat of currentCategories) {
             if (cat.id === removedCat.id) {
-              Actions.setFocus({ collection: 'thread', item: null });
-              break;
+              Actions.setFocus({ collection: 'thread', item: null })
+              break
             }
           }
         }
       }
     }
-  };
+  }
   _onCategoriesChange = ({ type, data }) => {
     if (type === 'labelChange' && data) {
       if (Array.isArray(data.removedLabels)) {
-        this._onLabelsRemoved(data.removedLabels);
+        this._onLabelsRemoved(data.removedLabels)
       }
     } else if (type === 'folderChange' && data) {
       if (AppEnv.isThreadWindow()) {
-        AppEnv.close();
+        AppEnv.close()
       }
     }
-  };
+  }
 
-  _renderSubject() {
-    let subject = '';
+  _renderSubject () {
+    let subject = ''
     if (!this.state.inOutbox) {
-      subject = this.state.currentThread.subject;
+      subject = this.state.currentThread.subject
     } else if (this.state.selectedDraft) {
-      subject = this.state.selectedDraft.subject;
+      subject = this.state.selectedDraft.subject
     }
 
     if (!subject || subject.length === 0) {
-      subject = '(No Subject)';
+      subject = '(No Subject)'
     }
 
     return (
-      <div className="message-subject-wrap">
+      <div className='message-subject-wrap'>
         <div style={{ flex: 1, flexWrap: 'wrap' }}>
-          <span className="message-subject"
+          <span
+            className='message-subject'
             onClick={this._onSelectText}
             onContextMenu={this._onContactContextMenu.bind(this, subject)}
           >
             {subject}
             {!this.state.inOutbox && <MailImportantIcon thread={this.state.currentThread} />}
-            {!this.state.inOutbox && <MailLabelSet
-              noWrapper
-              removable
-              includeCurrentCategories
-              messages={this.state.messages}
-              thread={this.state.currentThread}
-              onLabelRemoved={this._onLabelsRemoved}
-            />}
+            {!this.state.inOutbox && (
+              <MailLabelSet
+                noWrapper
+                removable
+                includeCurrentCategories
+                messages={this.state.messages}
+                thread={this.state.currentThread}
+                onLabelRemoved={this._onLabelsRemoved}
+              />
+            )}
           </span>
         </div>
         {/* {this._renderIcons()} */}
       </div>
-    );
+    )
   }
 
-  _renderIcons() {
+  _renderIcons () {
     return (
-      <div className="message-icons-wrap">
+      <div className='message-icons-wrap'>
         {this._renderExpandToggle()}
         <div onClick={this._onPrintThread}>
-          <RetinaImg name={'print.svg'}
-            title="Print Thread"
+          <RetinaImg
+            name={'print.svg'}
+            title='Print Thread'
             style={{ width: 24, height: 24 }}
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </div>
         {this._renderPopoutToggle()}
       </div>
-    );
+    )
   }
 
-  _renderExpandToggle() {
+  _renderExpandToggle () {
     if (!this.state.canCollapse) {
-      return <span />;
+      return <span />
     }
 
     return (
@@ -682,144 +700,152 @@ class MessageList extends React.Component {
           mode={RetinaImg.Mode.ContentIsMask}
         />
       </div>
-    );
+    )
   }
 
-  _renderPopoutToggle() {
+  _renderPopoutToggle () {
     if (AppEnv.isThreadWindow()) {
       return (
         <div onClick={this._onPopThreadIn}>
-          <RetinaImg name={'pop-in.svg'}
+          <RetinaImg
+            name={'pop-in.svg'}
             style={{ width: 24, height: 24 }}
-            title="Pop thread in"
+            title='Pop thread in'
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </div>
-      );
+      )
     }
     return (
       <div onClick={this._onPopoutThread}>
-        <RetinaImg name={'popout.svg'}
+        <RetinaImg
+          name={'popout.svg'}
           style={{ width: 24, height: 24 }}
-          title="Pop thread out"
+          title='Pop thread out'
           isIcon
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
-    );
+    )
   }
 
-  _renderReplyArea() {
+  _renderReplyArea () {
     return (
-      <div className="footer-reply-area-wrap"
-        onClick={this.state.popedOut ? this._onPopoutThread : null} key="reply-area">
-        <div className="btn" onClick={() => this._onClickReplyArea('reply')}>
+      <div
+        className='footer-reply-area-wrap'
+        onClick={this.state.popedOut ? this._onPopoutThread : null}
+        key='reply-area'
+      >
+        <div className='btn' onClick={() => this._onClickReplyArea('reply')}>
           <RetinaImg
             name={`reply.svg`}
             style={{ width: 24 }}
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
-          <span className="reply-text">Reply</span>
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+          <span className='reply-text'>Reply</span>
         </div>
-        {
-          this._canReplyAll() && (
-            <div className="btn" onClick={() => this._onClickReplyArea('reply-all')}>
-              <RetinaImg
-                name={`reply-all.svg`}
-                style={{ width: 24 }}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask} />
-              <span className="reply-text">Reply All</span>
-            </div>
-          )
-        }
-        <div className="btn" onClick={this._onForward}>
+        {this._canReplyAll() && (
+          <div className='btn' onClick={() => this._onClickReplyArea('reply-all')}>
+            <RetinaImg
+              name={`reply-all.svg`}
+              style={{ width: 24 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+            <span className='reply-text'>Reply All</span>
+          </div>
+        )}
+        <div className='btn' onClick={this._onForward}>
           <RetinaImg
             name={`forward.svg`}
             style={{ width: 24 }}
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
-          <span className="reply-text">Forward</span>
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+          <span className='reply-text'>Forward</span>
         </div>
       </div>
-    );
+    )
   }
 
-  _renderMinifiedBundle(bundle) {
-    const lines = bundle.messages.slice(0, 3);
+  _renderMinifiedBundle (bundle) {
+    const lines = bundle.messages.slice(0, 3)
 
     return (
       <div
-        className="minified-bundle"
+        className='minified-bundle'
         onClick={() => this.safeSetState({ minified: false })}
         key={Utils.generateTempId()}
       >
-        <div className="msg-avatars">
-          {
-            <EmailAvatar
-              key={`thread-avatar`}
-              number={`${bundle.messages.length}`}
-            />
-          }
+        <div className='msg-avatars'>
+          {<EmailAvatar key={`thread-avatar`} number={`${bundle.messages.length}`} />}
         </div>
-        <div className="num-messages">more emails</div>
+        <div className='num-messages'>more emails</div>
       </div>
-    );
+    )
   }
 
-  _calcScrollPosition = _.throttle((scrollTop) => {
-    const toolbar = document.querySelector('#message-list-toolbar');
+  _calcScrollPosition = _.throttle(scrollTop => {
+    const toolbar = document.querySelector('#message-list-toolbar')
     if (toolbar) {
       if (scrollTop > 0) {
         if (toolbar.className.indexOf('has-shadow') === -1) {
-          toolbar.className += ' has-shadow';
+          toolbar.className += ' has-shadow'
         }
       } else {
-        toolbar.className = toolbar.className.replace(' has-shadow', '');
+        toolbar.className = toolbar.className.replace(' has-shadow', '')
       }
     }
   }, 100)
 
   _onScroll = e => {
     if (e.target) {
-      this._calcScrollPosition(e.target.scrollTop);
+      this._calcScrollPosition(e.target.scrollTop)
     }
-  };
-  renderOutboxMessage(wrapClass, messageListClass) {
-    return <KeyCommandsRegion >
-      <div className={'outbox-message-toolbar'} id="outbox-message-toolbar">
-        <InjectedComponentSet
-          className="item-container"
-          matching={{ role: 'OutboxMessageToolbar' }}
-          exposedProps={{ draft: this.state.selectedDraft, hiddenLocations: WorkspaceStore.hiddenLocations() }}
-        />
-      </div>
-      <div className={messageListClass} id="outbox-message">
-        <ScrollRegion
-          tabIndex="-1"
-          className={wrapClass}
-          scrollbarTickProvider={SearchableComponentStore}
-          scrollTooltipComponent={MessageListScrollTooltip}
-          ref={el => {
-            this._messageWrapEl = el;
-          }}
-          onScroll={this._onScroll}
-        >
-          {this._renderSubject()}
-          <div className="headers" style={{ position: 'relative' }}>
-            <InjectedComponentSet
-              className="message-list-headers"
-              matching={{ role: 'MessageListHeaders' }}
-              exposedProps={{ draft: this.state.selectedDraft }}
-              direction="column"
-            />
-          </div>
-          {this._renderDraftElement()}
-        </ScrollRegion>
-      </div>
-    </KeyCommandsRegion>
+  }
+  renderOutboxMessage (wrapClass, messageListClass) {
+    return (
+      <KeyCommandsRegion>
+        <div className={'outbox-message-toolbar'} id='outbox-message-toolbar'>
+          <InjectedComponentSet
+            className='item-container'
+            matching={{ role: 'OutboxMessageToolbar' }}
+            exposedProps={{
+              draft: this.state.selectedDraft,
+              hiddenLocations: WorkspaceStore.hiddenLocations(),
+            }}
+          />
+        </div>
+        <div className={messageListClass} id='outbox-message'>
+          <ScrollRegion
+            tabIndex='-1'
+            className={wrapClass}
+            scrollbarTickProvider={SearchableComponentStore}
+            scrollTooltipComponent={MessageListScrollTooltip}
+            ref={el => {
+              this._messageWrapEl = el
+            }}
+            onScroll={this._onScroll}
+          >
+            {this._renderSubject()}
+            <div className='headers' style={{ position: 'relative' }}>
+              <InjectedComponentSet
+                className='message-list-headers'
+                matching={{ role: 'MessageListHeaders' }}
+                exposedProps={{ draft: this.state.selectedDraft }}
+                direction='column'
+              />
+            </div>
+            {this._renderDraftElement()}
+          </ScrollRegion>
+        </div>
+      </KeyCommandsRegion>
+    )
   }
 
-  render() {
+  render () {
     const {
       currentThread,
       messages,
@@ -829,17 +855,17 @@ class MessageList extends React.Component {
       isSearching,
       query,
       theme,
-      loading
-    } = this.state;
+      loading,
+    } = this.state
     if ((!currentThread && !inOutbox) || (inOutbox && !selectedDraft)) {
       if (hideMessageList) {
-        return <div />;
+        return <div />
       }
       // if is searching
       if (isSearching || query) {
-        const lottieName = theme === 'ui-dark' ? 'search-dark' : 'search';
+        const lottieName = theme === 'ui-dark' ? 'search-dark' : 'search'
         return (
-          <div className="searching">
+          <div className='searching'>
             <LottieImg
               name={lottieName}
               size={{ width: 250, height: 250 }}
@@ -847,31 +873,31 @@ class MessageList extends React.Component {
               isClickToPauseDisabled={true}
             />
           </div>
-        );
+        )
       }
-      return <div className={`empty ${this.state.isOnline ? '' : 'offline'}`} />;
+      return <div className={`empty ${this.state.isOnline ? '' : 'offline'}`} />
     }
 
     const wrapClass = classNames({
       'messages-wrap': true,
       ready: !loading,
-    });
+    })
 
     const messageListClass = classNames({
       'outbox-message': inOutbox,
       'message-list': !inOutbox,
       'height-fix': SearchableComponentStore.searchTerm !== null,
-    });
-    const hideButtons = this.state.hideButtons ? ' hide-btn-when-crowded' : '';
+    })
+    const hideButtons = this.state.hideButtons ? ' hide-btn-when-crowded' : ''
     if (inOutbox) {
-      return this.renderOutboxMessage(wrapClass, messageListClass);
+      return this.renderOutboxMessage(wrapClass, messageListClass)
     }
     return (
       <KeyCommandsRegion globalHandlers={this._globalKeymapHandlers()}>
         <FindInThread />
-        <div className={'message-list-toolbar' + hideButtons} id="message-list-toolbar">
+        <div className={'message-list-toolbar' + hideButtons} id='message-list-toolbar'>
           <InjectedComponentSet
-            className="item-container"
+            className='item-container'
             matching={{ role: 'MessageListToolbar' }}
             exposedProps={{
               thread: currentThread,
@@ -881,38 +907,38 @@ class MessageList extends React.Component {
             }}
           />
         </div>
-        <div className={messageListClass} id="message-list">
+        <div className={messageListClass} id='message-list'>
           <ScrollRegion
-            tabIndex="-1"
+            tabIndex='-1'
             className={wrapClass}
             scrollbarTickProvider={SearchableComponentStore}
             scrollTooltipComponent={MessageListScrollTooltip}
             ref={el => {
-              this._messageWrapEl = el;
+              this._messageWrapEl = el
             }}
             onScroll={this._onScroll}
           >
             {this._renderSubject()}
-            <div className="headers" style={{ position: 'relative' }}>
+            <div className='headers' style={{ position: 'relative' }}>
               <InjectedComponentSet
-                className="message-list-headers"
+                className='message-list-headers'
                 matching={{ role: 'MessageListHeaders' }}
                 exposedProps={{ thread: currentThread, messages: messages }}
-                direction="column"
+                direction='column'
               />
             </div>
             {this._messageElements()}
           </ScrollRegion>
           <Spinner visible={loading} />
           <InjectedComponentSet
-            className="message-plugin"
+            className='message-plugin'
             matching={{ role: 'plugins' }}
             exposedProps={{ thread: currentThread, messages: messages }}
           />
         </div>
       </KeyCommandsRegion>
-    );
+    )
   }
 }
 
-export default SearchableComponentMaker.extend(MessageList);
+export default SearchableComponentMaker.extend(MessageList)
