@@ -202,16 +202,13 @@ export default class JiraDetail extends Component {
         }
         const { attachments } = this.state;
         // replace image src
-        html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\//g, function (str) {
-            const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\//g.exec(str);
+        html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\/.+?"/g, function (str) {
+            const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\/.+?"/g.exec(str);
             // find if the image is downloaded.
             console.log('****matchs', matchs, attachments);
             const attachmentId = matchs[2];
             if (matchs && attachmentId && attachments[attachmentId]) {
-                if (matchs[1] === 'thumbnail') {
-                    return `<img src="${jiraDirPath}/${attachmentId}_`;
-                }
-                return `<img src="${jiraDirPath}/`;
+                return `<img src="${attachments[attachmentId]}"`;
             }
             return `<img style='display: none;' src="${jiraDirPath}/`;
         });
