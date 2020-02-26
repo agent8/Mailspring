@@ -510,7 +510,7 @@ class DraftFactory {
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Fwd:'),
       from: [this._fromContactForReply(message)],
-      files: filterMissingAttachments(message.files),
+      files: [].concat(message.files),
       threadId: thread.id,
       accountId: accountId,
       forwardedHeaderMessageId: message.id,
