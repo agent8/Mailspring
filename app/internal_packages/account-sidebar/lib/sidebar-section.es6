@@ -53,7 +53,7 @@ class SidebarSection {
       return this.empty(account.label);
     }
 
-    const items = _.reject(cats, cat => (cat.role === 'drafts') || (cat.role === 'archive')).map(cat => {
+    const items = _.reject(cats, cat => cat.role && cat.role !== 'all' && cat.role !== 'none').map(cat => {
       if (cat.role === 'all' && account.provider === 'gmail') {
         return SidebarItem.forAllMail(cat, { editable: false, deletable: false });
       } else {
@@ -61,23 +61,43 @@ class SidebarSection {
       }
     }
     );
-    const unreadItem = SidebarItem.forUnread([account.id]);
-    const starredItem = SidebarItem.forStarred([account.id], { displayName: 'Flagged' });
-    const draftsItem = SidebarItem.forDrafts([account.id]);
-    // const attachmentsMail = SidebarItem.forAttachments([account.id]);
-
-    // Order correctly: Inbox, Unread, Starred, rest... , Drafts
-    if (draftsItem) {
-      items.splice(1, 0, unreadItem, starredItem, draftsItem);
-    } else {
-      items.splice(1, 0, unreadItem, starredItem);
+    let standardItem = SidebarItem.forSentMails([account.id]);
+    if(standardItem){
+      items.unshift(standardItem);
     }
     if (account.provider !== 'gmail') {
-      const archiveMail = SidebarItem.forArchived([account.id]);
-      if (archiveMail) {
-        items.push(archiveMail);
+      standardItem = SidebarItem.forArchived([account.id]);
+      if (standardItem) {
+        items.unshift(standardItem);
       }
     }
+    standardItem = SidebarItem.forTrash(account.id);
+    if(standardItem){
+      items.unshift(standardItem);
+    }
+    standardItem = SidebarItem.forSpam([account.id]);
+    if(standardItem){
+      items.unshift(standardItem);
+    }
+    standardItem = SidebarItem.forDrafts([account.id]);
+    if(standardItem){
+      items.unshift(standardItem);
+    }
+    standardItem = SidebarItem.forStarred([account.id], { displayName: 'Flagged' });
+    if(standardItem){
+      items.unshift(standardItem);
+    }
+    standardItem = SidebarItem.forUnread([account.id]);
+    if(standardItem){
+      items.unshift(standardItem);
+    }
+    standardItem = SidebarItem.forInbox([account.id]);
+    if(standardItem){
+      items.unshift(standardItem);
+    }
+    // const attachmentsMail = SidebarItem.forAttachments([account.id]);
+
+
     items.push(...this.accountUserCategories(account));
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)
