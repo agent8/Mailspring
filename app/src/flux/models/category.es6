@@ -97,7 +97,7 @@ const toDelimiterJSONMappings = val => {
 };
 export default class Category extends Model {
   get displayName() {
-    return Category.pathToDisplayName(this.path);
+    return Category.pathToDisplayName(this.name);
   }
   static pathToDisplayName(pathString) {
     if (!pathString) {
@@ -120,9 +120,10 @@ export default class Category extends Model {
   }
 
   /* Available for historical reasons, do not use. */
-  get name() {
-    return this.role;
-  }
+  // get name() {
+  //   console.error('using get name()');
+  //   return this.role;
+  // }
 
   static attributes = Object.assign({}, Model.attributes, {
     role: Attributes.String({
@@ -132,10 +133,20 @@ export default class Category extends Model {
       toJSONMapping,
       fromJSONMapping
     }),
+    name: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'name',
+    }),
     path: Attributes.String({
       queryable: true,
       loadFromColumn: true,
       modelKey: 'path',
+    }),
+    parentId: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'parentId',
     }),
     state: Attributes.Number({
       modelKey: 'state',

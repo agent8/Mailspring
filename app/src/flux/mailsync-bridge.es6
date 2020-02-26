@@ -761,8 +761,10 @@ export default class MailsyncBridge {
               if(Array.isArray(categoryIds) && categoryIds.length > 0){
                 // console.log(`adding category constrain, ${categoryIds}`);
                 Thread = Thread || require('./models/thread').default;
-                tmp = DatabaseStore.findBy(Thread, where)
+                const threadPromise = DatabaseStore.findBy(Thread, where)
                   .where([Thread.attributes.categories.containsAny(categoryIds)]);
+                promises.push(threadPromise);
+                threadIndex = promises.length - 1;
               } else {
                 console.log(`Cannot get category Ids, using data purely from thread`);
               }
@@ -770,7 +772,7 @@ export default class MailsyncBridge {
               console.log(`No current perspective, using data purely from thread`);
             }
           }
-          promises.push(tmp)
+          promises.push(tmp);
         }else{
           console.error(`Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`);
         }
@@ -791,10 +793,14 @@ export default class MailsyncBridge {
               }
               if(m[pseudoPrimaryKey] === model[pseudoPrimaryKey]){
                 duplicate = true;
-                // if(index === threadIndex){
-                //   model.categories = threadCategories;
-                // }
+                let correctLastMessageTimestamp;
+                if(index === threadIndex){
+                  correctLastMessageTimestamp = model.lastMessageTimestamp;
+                } else {
+                  correctLastMessageTimestamp = m.lastMessageTimestamp;
+                }
                 Object.assign(m, model);
+                m.lastMessageTimestamp = correctLastMessageTimestamp;
                 break;
               }
             }
