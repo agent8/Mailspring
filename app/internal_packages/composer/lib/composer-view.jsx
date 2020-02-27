@@ -648,11 +648,14 @@ export default class ComposerView extends React.Component {
   _inFooterRegion(el) {
     return el.closest && el.closest('.composer-footer-region');
   }
+  _inSendBarRegion(el){
+    return el && el.closest && el.closest('.sendbar-for-dock');
+  }
 
   _onMouseUpComposerBody = event => {
     if (
       event.target === this._mouseDownTarget &&
-      !this._inFooterRegion(event.target) &&
+      !this._inSendBarRegion(event.target) &&
       this._els[Fields.Body] &&
       ReactDOM.findDOMNode(this._els[Fields.Body])
     ) {
