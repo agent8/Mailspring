@@ -370,6 +370,13 @@ class MessageStore extends MailspringStore {
     if (!focused) {
       this._lastMarkedAsReadThreadId = null;
     }
+    if(WorkspaceStore.layoutMode() === 'list' && AppEnv.isMainWindow()){
+      const currentSheet = WorkspaceStore.topSheet();
+      if(!focused && this.thread() && currentSheet && currentSheet.id === 'Thread'){
+        console.log('current thread is gone, and no replacement');
+        Actions.popSheet({reason: 'Message-Store, current Thread is no longer available'});
+      }
+    }
 
     // if we already match the desired state, no need to trigger
     if (this.threadId() === (focused || {}).id) return;
