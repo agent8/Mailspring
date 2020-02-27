@@ -85,6 +85,7 @@ const threadAttributes = isMessageView
         joinTableColumn: 'categoryId',
         joinTableName: 'MessageCategory',
         joinOnWhere: { state: 0 },
+        itemClass: Category,
         queryable: true,
       }),
 
