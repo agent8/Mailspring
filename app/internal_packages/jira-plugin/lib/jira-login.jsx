@@ -106,8 +106,8 @@ export default class Login extends Component {
                         />
                         : <div>
                             <button className="btn btn-jira btn-jira-login" onClick={this.submit}>Login</button>
-                            {/* <h1>Or</h1>
-                            <button className="btn btn-jira btn-jira-login" onClick={this.openOauth}>Connect to Jira</button> */}
+                            <h1>Or</h1>
+                            <button className="btn btn-jira btn-jira-login" onClick={this.openOauth}>Connect to Jira</button>
                         </div>
                     }
                 </div>
