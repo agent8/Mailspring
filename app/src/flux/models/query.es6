@@ -810,6 +810,6 @@ export default class ModelQuery {
   }
 
   objectClass(dbKey = 'main') {
-    return this._klass[dbKey].getTableName();
+    return this._klass[dbKey].name;
   }
 }
