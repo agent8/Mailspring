@@ -29,7 +29,7 @@ export default class QuerySubscription {
           new QueryRange({
             limit: this._options.initialModels.length,
             offset: 0,
-          }),
+          })
         );
         this._createResultAndTrigger();
       } else {
@@ -59,7 +59,7 @@ export default class QuerySubscription {
   removeCallback(callback) {
     if (!(callback instanceof Function)) {
       throw new Error(
-        `QuerySubscription:removeCallback - expects a function, received ${callback}`,
+        `QuerySubscription:removeCallback - expects a function, received ${callback}`
       );
     }
     this._callbacks = this._callbacks.filter(c => c !== callback);
@@ -68,8 +68,7 @@ export default class QuerySubscription {
     }
   }
 
-  onLastCallbackRemoved() {
-  }
+  onLastCallbackRemoved() {}
 
   callbackCount = () => {
     return this._callbacks.length;
@@ -113,7 +112,7 @@ export default class QuerySubscription {
       }
       if (record.type === 'unpersist') {
         for (const item of record.objects) {
-          if(!item){
+          if (!item) {
             unknownImpacts += 1;
             console.error(`unpersist record obj is null, ${record.objectClass}`);
             continue;
@@ -126,7 +125,7 @@ export default class QuerySubscription {
         }
       } else if (record.type === 'persist') {
         for (const item of record.objects) {
-          if(!item){
+          if (!item) {
             unknownImpacts += 1;
             console.error(`persist record obj is null, ${record.objectClass}`);
             continue;
@@ -274,7 +273,7 @@ export default class QuerySubscription {
   }
 
   _fetchMissingModels() {
-    if(!Array.isArray(this._set.ids())){
+    if (!Array.isArray(this._set.ids())) {
       console.error(`ids not array`);
       return Promise.resolve([]);
     }
@@ -299,7 +298,7 @@ export default class QuerySubscription {
     }
     if (!allUniqueIds) {
       error = new Error(
-        'QuerySubscription: Applied all changes and result set contains duplicate IDs.',
+        'QuerySubscription: Applied all changes and result set contains duplicate IDs.'
       );
     }
 
