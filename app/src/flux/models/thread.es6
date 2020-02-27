@@ -108,8 +108,8 @@ const threadAttributes = isMessageView
 
       hasAttachments: Attributes.Boolean({
         modelKey: 'hasAttachments',
-        queryable: false,
-        loadFromColumn: false,
+        queryable: true,
+        loadFromColumn: true,
       }),
       lastMessageTimestamp: Attributes.DateTime({
         queryable: true,
@@ -276,8 +276,12 @@ export default class Thread extends ModelWithMetadata {
   constructor(...args) {
     super(...args);
     if (isMessageView) {
-      this.participants = [...this.to, ...this.cc, ...this.bcc, ...this.from];
-      this.hasAttachments = this.files.length > 0;
+      this.participants = [
+        ...(this.to || []),
+        ...(this.cc || []),
+        ...(this.bcc || []),
+        ...(this.from || []),
+      ];
     }
   }
 
