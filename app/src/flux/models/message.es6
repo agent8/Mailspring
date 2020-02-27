@@ -471,7 +471,7 @@ export default class Message extends ModelWithMetadata {
   get files() {
     AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
     if (!Array.isArray(this.attachmentIds)) {
-      // console.error(`attachmentIds is not array`, this.attachmentIds);
+      console.error(`attachmentIds is not array`, this.attachmentIds);
       return [];
     }
     const rets = [];
