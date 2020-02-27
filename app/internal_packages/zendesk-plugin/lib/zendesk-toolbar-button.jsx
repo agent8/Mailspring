@@ -27,7 +27,6 @@ export default class ZendeskToolbarButton extends Component {
       }
     }
     return false
-    // return this.props.thread.isJIRA;
   }
   render () {
     const accounts = AccountStore.accounts()
@@ -45,8 +44,8 @@ export default class ZendeskToolbarButton extends Component {
       <div className='button-group' style={{ order: -1 }}>
         <div
           className={`btn-toolbar message-toolbar-jira ${this.state.active ? 'active' : ''}`}
-          key='jira-plugin'
-          title='jira plugin'
+          key='zendesk-plugin'
+          title='zendesk plugin'
           onClick={this.toggleZendesk}
         >
           <RetinaImg

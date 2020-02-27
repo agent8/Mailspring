@@ -5,6 +5,7 @@ import Select, { Option } from 'rc-select'
 import { remote } from 'electron'
 import { DateUtils } from 'mailspring-exports'
 import ZendeskApi from './zendesk-api'
+const Zendesk = require('zendesk-node')
 import { CSSTransitionGroup } from 'react-transition-group'
 const cheerio = require('cheerio')
 const { RetinaImg, LottieImg } = require('mailspring-component-kit')
@@ -21,8 +22,8 @@ export default class ZendeskDetail extends Component {
   componentDidMount = async () => {
     this.mounted = true
     this.login(this.props.config)
-    this.findIssue(this.props)
-    this.getCurrentUserInfo(this.props.config)
+    this.findTicket(this.props)
+    // this.getCurrentUserInfo(this.props.config)
   }
   componentWillUnmount () {
     this.mounted = false
@@ -31,7 +32,7 @@ export default class ZendeskDetail extends Component {
     if (config && Object.keys(config).length > 0) {
       const apiVersion = '2'
       if (config.access_token) {
-        this.jira = new JiraApi({
+        this.zendesk = new ZendeskApi({
           protocol: 'https',
           host: 'api.atlassian.com',
           base: `/ex/jira/${config.resource.id}`,
@@ -42,13 +43,11 @@ export default class ZendeskDetail extends Component {
           strictSSL: true,
         })
       } else {
-        this.jira = new JiraApi({
-          protocol: 'https',
-          host: config.host,
-          username: config.username,
-          password: config.password,
-          apiVersion,
-          strictSSL: true,
+        this.zendesk = new ZendeskApi({
+          authType: Zendesk.AUTH_TYPES.API_TOKEN,
+          zendeskSubdomain: config.subdomain,
+          email: config.username,
+          zendeskAdminToken: config.password,
         })
       }
     }
@@ -59,7 +58,7 @@ export default class ZendeskDetail extends Component {
   getCurrentUserInfo = async config => {
     if (!config.currentUser) {
       try {
-        const currentUser = await this.jira.getCurrentUser()
+        const currentUser = await this.zendesk.getCurrentUser()
         console.log('****currentUser', currentUser)
         config.currentUser = currentUser
         AppEnv.config.set(CONFIG_KEY, config)
@@ -75,97 +74,96 @@ export default class ZendeskDetail extends Component {
     }
   }
   componentWillReceiveProps (nextProps) {
-    this.findIssue(nextProps)
+    this.findTicket(nextProps)
   }
-  _findIssueKey (messages) {
+  _findTicketKey (messages) {
     for (const m of messages) {
-      const $ = cheerio.load(m.body)
-      let a = $('.breadcrumbs-table a').last()
-      if (a && a.attr('href')) {
-        let href = a.attr('href')
-        href = href.split('?')[0]
-        return {
-          link: href,
-          issueKey: href.substr(href.lastIndexOf('/') + 1),
-        }
+      const match = m.body.match(/href="(https:\/\/edison\.zendesk\.com\/agent\/tickets\/(\d+))">/)
+      console.log(' _findTicketKey match:', match)
+      if (match) {
+        return { ticketLink: match[1], ticketKey: +match[2] }
       }
     }
     return {}
   }
-  findIssue = async props => {
+  findTicket = async props => {
     const { thread, messages } = props
     if (!thread) {
       return
     }
 
-    const { link, issueKey } = this._findIssueKey(messages)
+    const { ticketLink, ticketKey } = this._findTicketKey(messages)
 
-    if (issueKey) {
-      if (issueKey === this.issueKey) {
+    if (ticketLink) {
+      if (ticketLink === this.ticketLink) {
         return
       }
       this.state
-      let issue = null
+      let ticket = null
       this.safeSetState({
-        issueKey,
+        ticketKey,
         loading: true,
         assignProgress: null,
         statusProgress: null,
         attachments: {},
         originalFiles: {},
-        issue: null,
+        ticket: null,
         comments: [],
         commentLoading: true,
       })
-      this.issueKey = issueKey
+      this.ticketLink = ticketLink
       try {
-        issue = await this.jira.findIssue(issueKey, `renderedFields`)
-        console.log('*****issue', issue)
-        this.safeSetState({
-          loading: false,
-          issue,
-          link,
-        })
+        console.log(' findTicket:', ticketKey)
+        ticket = await this.zendesk.findTicket(ticketKey)
+        console.log(' ticket:', ticket)
       } catch (err) {
-        console.error(`****find issue error ${this.issueKey}`, err)
-        AppEnv.reportError(new Error(`find issue error ${this.issueKey}`), { errorData: err })
+        console.log(`****find ticket error ${ticketKey}`, err)
+        AppEnv.reportError(new Error(`find ticket error ${ticketKey}`), { errorData: err })
         if (err.message && err.message.includes('invalid refresh token')) {
           this.logout()
         }
         const errorMessage = err.error && err.error.errorMessages && err.error.errorMessages[0]
         this.safeSetState({
           loading: false,
-          issue: null,
+          ticket: null,
           errorMessage,
         })
         return
       }
       // download attachments
-      if (issue && issue.fields.attachment) {
-        this.downloadUri(issue.fields.attachment, true)
-        this.downloadUri(issue.fields.attachment, false)
+      if (ticket && ticket.fields.attachment) {
+        this.downloadUri(ticket.fields.attachment, true)
+        this.downloadUri(ticket.fields.attachment, false)
       }
       // get comments
-      this.findComments(issueKey)
+      this.findComments(ticketKey)
       // get users
       if (this.state.allUsers.length === 0) {
-        const users = await this.jira.searchAssignableUsers({ issueKey: issueKey, maxResults: 500 })
+        const users = await this.zendesk.searchAssignableUsers({
+          ticketKey: ticketKey,
+          maxResults: 500,
+        })
+        console.log(' searchAssignableUsers:', users)
         this.safeSetState({
           allUsers: users,
         })
+        ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
+        ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
+        console.log(' assignee submitter:', ticket.assignee, ticket.submitter)
+        this.safeSetState({
+          loading: false,
+          ticket,
+          link: ticketLink,
+        })
       }
-      const { transitions } = await this.jira.listTransitions(issueKey)
-      console.log('****transitions', transitions)
-      this.safeSetState({
-        transitions,
-      })
     }
   }
-  findComments = async (issueKey, shouldTransition) => {
+  findComments = async (ticketKey, shouldTransition) => {
     this.safeSetState({
       shouldTransition,
     })
-    let rst = await this.jira.findComments(issueKey)
+    let rst = await this.zendesk.findComments(ticketKey)
+    console.log(' findComments:', rst)
     this.safeSetState({
       comments: rst.comments,
       commentSaving: false,
@@ -173,7 +171,7 @@ export default class ZendeskDetail extends Component {
     })
   }
   downloadUri = async (attachments, isThumbnail = true) => {
-    let downloadApi = isThumbnail ? this.jira.downloadThumbnail : this.jira.downloadAttachment
+    let downloadApi = isThumbnail ? this.zendesk.downloadThumbnail : this.zendesk.downloadAttachment
     for (const attachment of attachments) {
       // Only download orginal image file
       if (!attachment.mimeType.includes('image') && !isThumbnail) {
@@ -219,7 +217,7 @@ export default class ZendeskDetail extends Component {
       return `<img style='display: none;' src="${jiraDirPath}/`
     })
     // replace link href
-    html = html.replace(/href="\/secure/g, `href="https://${this.jira.host}/secure`)
+    html = html.replace(/href="\/secure/g, `href="https://${this.zendesk.host}/secure`)
     return html
   }
   _renderComments = comments => {
@@ -253,28 +251,31 @@ export default class ZendeskDetail extends Component {
   }
   renderUserNode (userInfo) {
     return (
-      <span className='jira-user'>
-        <img src={userInfo.avatarUrls['24x24']} />
-        <span>{userInfo.displayName}</span>
+      <span className='zendesk-user'>
+        {/* <img src={userInfo.avatarUrls['24x24']} /> */}
+        <span>{userInfo.name}</span>
       </span>
     )
   }
   onAssigneeChange = async item => {
-    AppEnv.trackingEvent('Jira-Change-Assignee')
+    AppEnv.trackingEvent('zendesk-Change-Assignee')
     try {
       this.safeSetState({
         assignProgress: 'loading',
       })
-      await this.jira.updateAssignee(this.issueKey, item.key)
+      console.log(' onAssigneeChange:', item)
+      const { ticket } = this.state
+      let res = await this.zendesk.updateTicketAssignee(ticket.id, item.key)
+      console.log(' onAssigneeChange res:', res)
       this.safeSetState({
         assignProgress: 'success',
       })
       // this._showDialog('Change assignee successful.');
-      AppEnv.trackingEvent('Jira-Change-Assignee-Success')
+      AppEnv.trackingEvent('zendesk-Change-Assignee-Success')
     } catch (err) {
-      AppEnv.trackingEvent('Jira-Change-Assignee-Failed')
-      console.error(`****Change assignee failed ${this.issueKey}`, err, this.assignee)
-      AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err })
+      AppEnv.trackingEvent('zendesk-Change-Assignee-Failed')
+      console.error(`****Change assignee failed:`, err, item.name)
+      AppEnv.reportError(new Error(`Change assignee failed ${ticket.id}`), { errorData: err })
       if (err.message && err.message.includes('invalid refresh token')) {
         this.logout()
       }
@@ -284,35 +285,21 @@ export default class ZendeskDetail extends Component {
     }
   }
   onStatusChange = async item => {
-    AppEnv.trackingEvent('Jira-Change-Status')
+    console.log(' onStatusChange:', item)
+    AppEnv.trackingEvent('zendesk-Change-Status')
+    let { ticket } = this.state
     try {
-      let { transitions: oldTransitions, issue } = this.state
-      for (const t of oldTransitions) {
-        if (t.id === item.key) {
-          issue.fields.status = t.to
-          this.safeSetState({
-            issue,
-            statusProgress: 'loading',
-          })
-          break
-        }
-      }
-      await this.jira.transitionIssue(this.issueKey, {
-        transition: {
-          id: item.key,
-        },
-      })
-      let { transitions } = await this.jira.listTransitions(this.issueKey)
+      ticket.status = item.key
+      const res = await this.zendesk.updateTicketStatus(ticket.id, item.key)
+      console.log(' onStatusChange res:', res)
       this.safeSetState({
-        transitions,
         statusProgress: 'success',
       })
-      AppEnv.trackingEvent('Jira-Change-Status-Success')
-      // this._showDialog('Change status successful.');
+      AppEnv.trackingEvent('zendesk-Change-Status-Success')
     } catch (err) {
-      AppEnv.trackingEvent('Jira-Change-Status-Failed')
-      console.error(`****Change assignee failed ${this.issueKey}`, err)
-      AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err })
+      AppEnv.trackingEvent('zendesk-Change-Status-Failed')
+      console.error(`****Change status failed ${ticket.id}`, err)
+      AppEnv.reportError(new Error(`Change status failed ${ticket.id}`), { errorData: err })
       if (err.message && err.message.includes('invalid refresh token')) {
         this.logout()
       }
@@ -332,19 +319,19 @@ export default class ZendeskDetail extends Component {
     if (!comment) {
       return
     }
-    AppEnv.trackingEvent('Jira-AddComment')
+    AppEnv.trackingEvent('zendesk-AddComment')
     try {
       this.safeSetState({
         commentSaving: true,
       })
-      await this.jira.addComment(this.issueKey, comment)
-      this.findComments(this.issueKey, true)
+      await this.zendesk.addComment(this.ticketKey, comment)
+      this.findComments(this.ticketKey, true)
       this.commentInput.value = ''
       // this._showDialog('Add comment successful.');
-      AppEnv.trackingEvent('Jira-AddComment-Success')
+      AppEnv.trackingEvent('zendesk-AddComment-Success')
     } catch (err) {
       console.error('****err', err)
-      AppEnv.trackingEvent('Jira-AddComment-Failed')
+      AppEnv.trackingEvent('zendesk-AddComment-Failed')
       if (err.message && err.message.includes('invalid refresh token')) {
         this.logout()
       }
@@ -374,7 +361,7 @@ export default class ZendeskDetail extends Component {
     } else if (progress === 'success') {
       p = (
         <RetinaImg
-          className='jira-success'
+          className='zendesk-success'
           style={{ width: 24 }}
           name={'check-alone.svg'}
           isIcon
@@ -384,7 +371,7 @@ export default class ZendeskDetail extends Component {
     } else if (progress === 'error') {
       p = (
         <RetinaImg
-          className='jira-error'
+          className='zendesk-error'
           style={{ width: 24 }}
           name={'close.svg'}
           isIcon
@@ -392,7 +379,7 @@ export default class ZendeskDetail extends Component {
         />
       )
     }
-    return <span className='jira-progress'>{p}</span>
+    return <span className='zendesk-progress'>{p}</span>
   }
   showMore = () => {
     this.menu = new Menu()
@@ -424,7 +411,7 @@ export default class ZendeskDetail extends Component {
   }
   render () {
     const {
-      issue,
+      ticket,
       loading,
       commentSaving,
       assignProgress,
@@ -432,16 +419,22 @@ export default class ZendeskDetail extends Component {
       attachments = {},
       comments = [],
       allUsers,
-      issueKey,
-      transitions = [],
+      ticketKey,
+      transitions = ['Open', 'Pending', 'Solved'],
       errorMessage,
     } = this.state
+    console.log(
+      ' zendesk-detail.render:',
+      this.state,
+      ticket && ticket.assignee,
+      ticket && ticket.submitter
+    )
     if (loading) {
       return <div className='large-loading'>{this._renderLoading(40)}</div>
     }
     const { currentUser } = this.props.config
     const userLogo = (
-      <div className='jira-current-user' onClick={this.showMore}>
+      <div className='zendesk-current-user' onClick={this.showMore}>
         {currentUser && currentUser.avatarUrls ? (
           <img src={currentUser.avatarUrls && currentUser.avatarUrls['48x48']} />
         ) : (
@@ -449,50 +442,38 @@ export default class ZendeskDetail extends Component {
         )}
       </div>
     )
-    if (!issue) {
+    if (!ticket || !ticket.assignee || !ticket.submitter) {
       return (
-        <div className='jira-detail'>
+        <div className='zendesk-detail'>
           {userLogo}
           <div className='error'>{errorMessage}</div>
         </div>
       )
     }
-    const status = issue.fields.status
-    const { renderedFields, fields } = issue
-    const assgineeOptions = allUsers
-      .filter(item => item.accountType === 'atlassian')
-      .map((item, idx) => (
-        <Option key={item.accountId} displayname={item.displayName} value={item.accountId}>
-          {this.renderUserNode(item)}
-        </Option>
-      ))
-    if (assgineeOptions.length === 0) {
-      assgineeOptions.push(
-        <Option
-          key={fields.assignee.accountId}
-          displayname={fields.assignee.displayName}
-          value={fields.assignee.accountId}
-        >
-          {this.renderUserNode(fields.assignee)}
-        </Option>
-      )
-    }
-    const transitionOptions = transitions.map(item => (
-      <Option key={item.id} value={item.id}>
-        {item.name}
+    console.log(' zendesk-detail.render 2:', this.state)
+    const status = ticket.status
+    const assgineeOptions = allUsers.map((item, idx) => (
+      <Option key={item.name} displayname={item.name} value={item.id}>
+        {this.renderUserNode(item)}
       </Option>
     ))
-    const statusKey = 'status:' + status.id
+    const transitionOptions = transitions.map(item => (
+      <Option key={item} value={item}>
+        {item}
+      </Option>
+    ))
+    const statusKey = 'status:' + status
     transitionOptions.push(
       <Option key={statusKey} value={statusKey}>
-        {status.name}
+        {status}
       </Option>
     )
+    console.log(' ticket.assignee, ticket.submitter:', ticket.assignee, ticket.submitter)
     return (
-      <div className='jira-detail'>
+      <div className='zendesk-detail'>
         {userLogo}
-        <div className='jira-title'>
-          <a href={this.state.link}>{issueKey}</a>
+        <div className='zendesk-title'>
+          <a href={this.state.link}>{ticketKey}</a>
         </div>
         <div className='wrapper'>
           <header>
@@ -503,8 +484,8 @@ export default class ZendeskDetail extends Component {
                   ref={el => (this.assignee = el)}
                   className='assign-users'
                   defaultValue={{
-                    key: fields.assignee.accountId,
-                    value: this.renderUserNode(fields.assignee),
+                    key: ticket.assignee.name,
+                    value: this.renderUserNode(ticket.assignee),
                   }}
                   optionLabelProp='children'
                   filterOption={this.selectFilter}
@@ -512,7 +493,7 @@ export default class ZendeskDetail extends Component {
                   notFoundContent=''
                   showSearch={true}
                   onChange={this.onAssigneeChange}
-                  dropdownClassName='jira-dropdown'
+                  dropdownClassName='zendesk-dropdown'
                 >
                   {assgineeOptions}
                 </Select>
@@ -520,25 +501,27 @@ export default class ZendeskDetail extends Component {
               </div>
             </div>
             <div>
-              <span className='label'>Reporter</span>
-              <span className='content'>{this.renderUserNode(fields.reporter)}</span>
+              <span className='label'>Submitter</span>
+              <span className='content'>
+                {ticket.submitter && this.renderUserNode(ticket.submitter)}
+              </span>
             </div>
             <div>
               <span className='label'>Priority</span>
-              <span className='content'>{fields.priority.name}</span>
+              <span className='content'>{ticket.priority}</span>
             </div>
             <div>
               <span className='label'>Status</span>
               <div className='content with-progress'>
                 <Select
-                  className='jira-status'
-                  value={{ key: statusKey, value: status.name }}
+                  className='zendesk-status'
+                  value={{ key: statusKey, value: status }}
                   optionLabelProp='children'
                   labelInValue={true}
                   notFoundContent=''
                   showSearch={false}
                   onChange={this.onStatusChange}
-                  dropdownClassName='jira-dropdown'
+                  dropdownClassName='zendesk-dropdown'
                 >
                   {transitionOptions}
                 </Select>
@@ -546,17 +529,17 @@ export default class ZendeskDetail extends Component {
               </div>
             </div>
           </header>
-          <div className='jira-description' onClick={this.openOrignalImage}>
+          <div className='zendesk-description' onClick={this.openOrignalImage}>
             <span className='label'>Description</span>
             <div
-              dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(renderedFields.description) }}
+              dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(ticket.description) }}
             ></div>
           </div>
-          <div className='jira-comments' onClick={this.openOrignalImage}>
+          <div className='zendesk-comments' onClick={this.openOrignalImage}>
             <span className='label'>Comments</span>
             {this._renderComments(comments)}
           </div>
-          <div className='jira-attachments'>
+          {/* <div className='zendesk-attachments'>
             <span className='label'>Attachments</span>
             <div className='attachments'>
               {fields.attachment.map(item => (
@@ -573,9 +556,9 @@ export default class ZendeskDetail extends Component {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
-        <div className='jira-submit-comment'>
+        <div className='zendesk-submit-comment'>
           <textarea ref={el => (this.commentInput = el)}></textarea>
           {commentSaving ? (
             this._renderLoading(20)

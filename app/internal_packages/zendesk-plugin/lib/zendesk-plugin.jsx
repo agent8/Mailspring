@@ -69,7 +69,7 @@ export default class JiraPlugin extends Component {
     const needLogin = !config || Object.keys(config).length === 0
     return (
       <ResizableRegion
-        className='jira-plugin'
+        className='zendesk-plugin'
         handle={ResizableRegion.Handle.Left}
         style={{ overflowY: 'auto' }}
         onResize={this._onColumnResize}

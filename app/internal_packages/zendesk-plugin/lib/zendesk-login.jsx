@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import ZendeskApi from './zendesk-api'
 import { remote } from 'electron'
 const { RetinaImg, LottieImg } = require('mailspring-component-kit')
+const Zendesk = require('zendesk-node')
 const CONFIG_KEY = 'plugin.zendesk.config'
 const ONBOARDING_WINDOW = 'onboarding'
 export default class Login extends Component {
@@ -10,7 +11,7 @@ export default class Login extends Component {
     this.state = {}
   }
   submit = async () => {
-    const fields = [this.host, this.email, this.password]
+    const fields = [this.subdomain, this.email, this.password]
     let hasError = false
     this.setState({
       error: null,
@@ -26,26 +27,24 @@ export default class Login extends Component {
     if (hasError) {
       return
     }
+    const zendeskSubdomain = this.subdomain.value
     AppEnv.trackingEvent('Zendesk-Login')
     const config = {
-      host: this.host.value,
+      subdomain: this.subdomain.value,
       username: this.email.value,
       password: this.password.value,
     }
     this.zendesk = new ZendeskApi({
-      protocol: 'https',
-      host: config.host,
-      username: config.username,
-      password: config.password,
-      apiVersion: '2',
-      strictSSL: true,
+      authType: Zendesk.AUTH_TYPES.API_TOKEN,
+      zendeskSubdomain,
+      email: config.username,
+      zendeskAdminToken: config.password,
     })
     try {
-      const currentUser = await this.zendesk.getCurrentUser()
-      console.log('****currentUser', currentUser)
-      config.currentUser = currentUser
+      const tickets = await this.zendesk.listTickets()
+      console.log('****tickets', tickets)
     } catch (err) {
-      console.log('****jira login failed', err)
+      console.log('****zendesk login failed', err)
       let message = 'Login failed, please check your Email and Api token.'
       if (err.statusCode === 404) {
         message = 'Login failed, please check your Zendesk workspace domain.'
@@ -82,12 +81,12 @@ export default class Login extends Component {
         </div>
         {error && <div className='error'>{error}</div>}
         <div className='row'>
-          <span className='label'>Jira workspace domain</span>
+          <span className='label'>Zendesk subdomain</span>
           <input
             type='text'
-            defaultValue={'edison.zendesk.com'}
-            ref={el => (this.host = el)}
-            placeholder='eg. https://your-workspace.zendesk.com'
+            defaultValue={'edison'}
+            ref={el => (this.subdomain = el)}
+            placeholder='eg. your-subdomain for zendesk'
           />
         </div>
         <div className='row'>
