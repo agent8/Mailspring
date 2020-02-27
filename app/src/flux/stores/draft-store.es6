@@ -287,7 +287,7 @@ class DraftStore extends MailspringStore {
     const newDraft = await DraftFactory.copyDraftToAccount(oldDraft, newParticipants.from);
     const draftCount = this._draftsOpenCount[originalHeaderMessageId];
     await this._finalizeAndPersistNewMessage(newDraft, { popout: !draftCount[3] });
-    Actions.changeDraftAccountComplete({ newDraftJSON: newDraft.toJSON() });
+    Actions.changeDraftAccountComplete({ newDraftJSON: newDraft.toJSON(), originalHeaderMessageId, originalMessageId });
     this._onDestroyDrafts(
       [
         new Message(
