@@ -6,6 +6,7 @@ import { remote } from 'electron';
 import { DateUtils } from 'mailspring-exports';
 import JiraApi from './jira-api';
 import { CSSTransitionGroup } from 'react-transition-group';
+import Watcher from './jira-watcher';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -205,7 +206,6 @@ export default class JiraDetail extends Component {
         html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\/.+?"/g, function (str) {
             const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\/.+?"/g.exec(str);
             // find if the image is downloaded.
-            console.log('****matchs', matchs, attachments);
             const attachmentId = matchs[2];
             if (matchs && attachmentId && attachments[attachmentId]) {
                 return `<img src="${attachments[attachmentId]}"`;
@@ -453,13 +453,13 @@ export default class JiraDetail extends Component {
         }
         const status = issue.fields.status;
         const { renderedFields, fields } = issue;
-        const assgineeOptions = allUsers
+        const userOptions = allUsers
             .filter(item => item.accountType === "atlassian")
             .map((item, idx) => (
                 <Option key={item.accountId} displayname={item.displayName} value={item.accountId}>{this.renderUserNode(item)}</Option>
             ));
-        if (assgineeOptions.length === 0) {
-            assgineeOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
+        if (userOptions.length === 0) {
+            userOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
         }
         const transitionOptions = transitions
             .map(item => (
@@ -469,10 +469,20 @@ export default class JiraDetail extends Component {
         transitionOptions.push(
             <Option key={statusKey} value={statusKey}>{status.name}</Option>
         );
+        const watcerProps = {
+            jira: this.jira,
+            fields: issue.fields,
+            issueKey,
+            currentUser,
+            userOptions
+        }
         return (
             <div className="jira-detail">
                 {userLogo}
-                <div className="jira-title"><a href={this.state.link}>{issueKey}</a></div>
+                <div className="jira-title">
+                    <a href={this.state.link}>{issueKey}</a>
+                    <Watcher {...watcerProps} />
+                </div>
                 <div className="wrapper">
                     <header>
                         <div>
@@ -489,7 +499,7 @@ export default class JiraDetail extends Component {
                                     showSearch={true}
                                     onChange={this.onAssigneeChange}
                                     dropdownClassName="jira-dropdown"
-                                >{assgineeOptions}</Select>
+                                >{userOptions}</Select>
                                 {this._renderProgress(assignProgress)}
                             </div>
                         </div>
