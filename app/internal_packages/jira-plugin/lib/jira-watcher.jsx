@@ -155,7 +155,7 @@ export default class Watcher extends Component {
                     transitionLeaveTimeout={350}
                     transitionName={'transition-fade'}
                 >
-                    {watchers
+                    {watchers ? watchers
                         .sort((item, next) => next.displayName.localeCompare(item.displayName))
                         .map(item => <div className="row" key={item.accountId}>
                             {item.displayName}
@@ -166,7 +166,7 @@ export default class Watcher extends Component {
                                     mode={RetinaImg.Mode.ContentIsMask}
                                 />
                             </span>
-                        </div>)}
+                        </div>) : <div className="empty"></div>}
                 </CSSTransitionGroup>
             </div>
             <div className="row add-watcher">

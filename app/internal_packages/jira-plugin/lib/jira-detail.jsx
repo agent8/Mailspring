@@ -481,7 +481,7 @@ export default class JiraDetail extends Component {
                 {userLogo}
                 <div className="jira-title">
                     <a href={this.state.link}>{issueKey}</a>
-                    <Watcher {...watcerProps} />
+                    {/* <Watcher {...watcerProps} /> */}
                 </div>
                 <div className="wrapper">
                     <header>
