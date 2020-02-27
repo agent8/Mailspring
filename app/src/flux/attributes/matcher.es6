@@ -2,7 +2,7 @@ import LocalSearchQueryBackend from '../../services/search/search-query-backend-
 
 // https://www.sqlite.org/faq.html#q14
 // That's right. Two single quotes in a row…
-const singleQuoteEscapeSequence = '\'\'';
+const singleQuoteEscapeSequence = "''";
 
 // https://www.sqlite.org/fts5.html#section_3
 const doubleQuoteEscapeSequence = '""';
@@ -81,7 +81,7 @@ class Matcher {
     const modelArrayContainsValue = (array, searchItem) => {
       const asId = v => (v && v.id ? v.id : v);
       const search = asId(searchItem);
-      if(!Array.isArray(array)){
+      if (!Array.isArray(array)) {
         console.log(`\nnot array ${array}\n`);
       }
       for (const item of array) {
@@ -97,7 +97,8 @@ class Matcher {
       }
       for (let item of array) {
         // triple-equals would break this, because we have state = 1 while we look for state='1'
-        if (item == searchItem) { // eslint-disable-line
+        if (item == searchItem) {
+          // eslint-disable-line
           return true;
         }
       }
@@ -109,7 +110,8 @@ class Matcher {
       }
       for (let item of array) {
         // triple-equals would break this, because we have state = 1 while we look for state='1'
-        if (item == searchItem) { // eslint-disable-line
+        if (item == searchItem) {
+          // eslint-disable-line
           return false;
         }
       }
@@ -140,7 +142,7 @@ class Matcher {
         return true;
       case 'containsAny':
         return !!matcherValue.find(submatcherValue =>
-          modelArrayContainsValue(modelValue, submatcherValue),
+          modelArrayContainsValue(modelValue, submatcherValue)
         );
       case 'startsWith':
         return modelValue.startsWith(matcherValue);
@@ -148,9 +150,7 @@ class Matcher {
         return modelValue.search(new RegExp(`.*${matcherValue}.*`, 'gi')) >= 0;
       default:
         throw new Error(
-          `Matcher.evaulate() not sure how to evaluate ${this.attr.modelKey} with comparator ${
-          this.comparator
-          }`,
+          `Matcher.evaulate() not sure how to evaluate ${this.attr.modelKey} with comparator ${this.comparator}`
         );
     }
   }
@@ -186,7 +186,9 @@ class Matcher {
             andSql = ` AND ( ${wheres.join(' AND ')} ) `;
           }
         }
-        return `INNER JOIN \`${joinTable}\` AS \`${joinTableRef}\` ON \`${joinTableRef}\`.\`${this.attr.joinTableOnField}\` = \`${klass.name}\`.\`${this.attr.joinModelOnField}\`${andSql}`;
+        return `INNER JOIN \`${joinTable}\` AS \`${joinTableRef}\` ON \`${joinTableRef}\`.\`${
+          this.attr.joinTableOnField
+        }\` = \`${klass.getTableName()}\`.\`${this.attr.joinModelOnField}\`${andSql}`;
       }
       default:
         return false;
@@ -218,15 +220,15 @@ class Matcher {
 
   _safeSQL(keyWord) {
     return keyWord
-      .replace(/\//g, "//")
+      .replace(/\//g, '//')
       .replace(/\'/g, singleQuoteEscapeSequence)
-      .replace(/\[/g, "/[")
-      .replace(/\]/g, "/]")
-      .replace(/\%/g, "/%")
-      .replace(/\&/g, "/&")
-      .replace(/\_/g, "/_")
-      .replace(/\(/g, "/(")
-      .replace(/\)/g, "/)");
+      .replace(/\[/g, '/[')
+      .replace(/\]/g, '/]')
+      .replace(/\%/g, '/%')
+      .replace(/\&/g, '/&')
+      .replace(/\_/g, '/_')
+      .replace(/\(/g, '/(')
+      .replace(/\)/g, '/)');
   }
 
   whereSQL(klass) {
@@ -293,36 +295,48 @@ class Matcher {
         case 'contains':
           return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` = ${escaped}`;
         case 'containsAny':
-          return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
+          return `\`${this.joinTableRef()}\`.\`${
+            this.attr.joinTableColumn
+          }\` IN ${escaped} ${andSql}`;
         case 'containsAnyAtCategory':
-          return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
+          return `\`${this.joinTableRef()}\`.\`${
+            this.attr.joinTableColumn
+          }\` IN ${escaped} ${andSql}`;
         default:
-          return `\`${this.joinTableRef()}\`.\`${this.attr.tableColumn}\` ${this.comparator} ${escaped}`;
+          return `\`${this.joinTableRef()}\`.\`${this.attr.tableColumn}\` ${
+            this.comparator
+          } ${escaped}`;
       }
     }
     switch (this.comparator) {
       case '=': {
         if (escaped === null) {
-          return `\`${klass.name}\`.\`${this.attr.tableColumn}\` IS NULL`;
+          return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` IS NULL`;
         }
-        return `\`${klass.name}\`.\`${this.attr.tableColumn}\` = ${escaped}`;
+        return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` = ${escaped}`;
       }
       case '!=': {
         if (escaped === null) {
-          return `\`${klass.name}\`.\`${this.attr.tableColumn}\` IS NOT NULL`;
+          return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` IS NOT NULL`;
         }
-        return `\`${klass.name}\`.\`${this.attr.tableColumn}\` != ${escaped}`;
+        return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` != ${escaped}`;
       }
       case 'startsWith':
         return ' RAISE `TODO`; ';
       case 'contains':
         return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` = ${escaped}`;
       case 'containsAny':
-        return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
+        return `\`${this.joinTableRef()}\`.\`${
+          this.attr.joinTableColumn
+        }\` IN ${escaped} ${andSql}`;
       case 'containsAnyAtCategory':
-        return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` IN ${escaped} ${andSql}`;
+        return `\`${this.joinTableRef()}\`.\`${
+          this.attr.joinTableColumn
+        }\` IN ${escaped} ${andSql}`;
       default:
-        return `\`${klass.name}\`.\`${this.attr.tableColumn}\` ${this.comparator} ${escaped}`;
+        return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` ${
+          this.comparator
+        } ${escaped}`;
     }
   }
 }
@@ -474,7 +488,7 @@ class StructuredSearchMatcher extends Matcher {
   }
 
   whereSQL(klass) {
-    return new LocalSearchQueryBackend(klass.name).compile(this._searchQuery);
+    return new LocalSearchQueryBackend(klass.getTableName()).compile(this._searchQuery);
   }
 }
 
@@ -509,12 +523,10 @@ class SearchMatcher extends Matcher {
   }
 
   whereSQL(klass) {
-    const searchTable = `${klass.name}Search`;
-    return `\`${
-      klass.name
-      }\`.\`pid\` IN (SELECT \`threadId\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '"${
+    const searchTable = `${klass.getTableName()}Search`;
+    return `\`${klass.getTableName()}\`.\`pid\` IN (SELECT \`threadId\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '"${
       this.searchQuery
-      }"*' LIMIT 1000)`;
+    }"*' LIMIT 1000)`;
   }
 }
 

@@ -40,7 +40,10 @@ export default class MutableQueryResultSet extends QueryResultSet {
       console.error(`rangeModels is no model, sql: ${this._query.sql()}`);
       this.addIdsInRange(rangeModels, range);
     } else {
-      this.addIdsInRange(rangeModels.map(m => m.id), range);
+      this.addIdsInRange(
+        rangeModels.map(m => m.id),
+        range
+      );
       rangeModels.forEach(m => this.updateModel(m));
     }
   }
@@ -100,7 +103,10 @@ export default class MutableQueryResultSet extends QueryResultSet {
       }
       for (const key of Object.keys(attrs)) {
         const attr = attrs[key];
-        if (attr instanceof AttributeJoinedData && item[attr.jsModelKey || attr.modelKey] === undefined) {
+        if (
+          attr instanceof AttributeJoinedData &&
+          item[attr.jsModelKey || attr.modelKey] === undefined
+        ) {
           item[attr.jsModelKey || attr.modelKey] = existing[attr.jsModelKey || attr.modelKey];
         }
       }

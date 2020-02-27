@@ -15,18 +15,20 @@ import CategoryStore from '../stores/category-store';
 let AttachmentStore = null;
 
 const mapping = {
-  attachmentIdsFromJSON: json =>{
-    if(!Array.isArray(json)){
+  attachmentIdsFromJSON: json => {
+    if (!Array.isArray(json)) {
       return [];
     }
     return json.map(attachment => {
       return File.fromPartialData(attachment);
-    })
-  }
+    });
+  },
 };
 
+const isMessageView = AppEnv.getDisableThread();
+
 export default class Message extends ModelWithMetadata {
-  static fieldsNotInDB=[
+  static fieldsNotInDB = [
     'calendarReply',
     'listUnsubscribe',
     'pristine',
@@ -120,12 +122,12 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarReply: Attributes.Boolean({
       modelKey: 'calendarReply',
-      queryable: false
+      queryable: false,
     }),
 
     listUnsubscribe: Attributes.String({
       modelKey: 'listUnsubscribe',
-      queryable: false
+      queryable: false,
     }),
 
     pristine: Attributes.Boolean({
@@ -135,28 +137,28 @@ export default class Message extends ModelWithMetadata {
     replyToHeaderMessageId: Attributes.String({
       modelKey: 'replyToHeaderMessageId',
       jsonKey: 'replyToHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
 
     forwardedHeaderMessageId: Attributes.String({
       modelKey: 'forwardedHeaderMessageId',
       jsonKey: 'forwardHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
 
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
       jsonKey: 'refDraftHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
     savedOnRemote: Attributes.Boolean({
       modelKey: 'savedOnRemote',
-      queryable: false
+      queryable: false,
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
       jsonKey: 'hasRefDraft',
-      queryable: false
+      queryable: false,
     }),
     folder: Attributes.Object({
       queryable: false,
@@ -165,7 +167,7 @@ export default class Message extends ModelWithMetadata {
     }),
     replyOrForward: Attributes.Number({
       modelKey: 'replyOrForward',
-      queryable: false
+      queryable: false,
     }),
     msgOrigin: Attributes.Number({
       modelKey: 'msgOrigin',
@@ -185,24 +187,24 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
-      queryable: false
+      queryable: false,
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
-      queryable: false
+      queryable: false,
     }),
 
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true
+      mergeIntoModel: true,
     }),
     msgData: Attributes.Object({
       modelKey: 'msgData',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true
+      mergeIntoModel: true,
     }),
 
     date: Attributes.DateTime({
@@ -236,7 +238,7 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'files',
       queryable: true,
       loadFromColumn: true,
-      fromJSONMapping: mapping.attachmentIdsFromJSON
+      fromJSONMapping: mapping.attachmentIdsFromJSON,
     }),
 
     unread: Attributes.Boolean({
@@ -265,7 +267,7 @@ export default class Message extends ModelWithMetadata {
     threadId: Attributes.String({
       queryable: true,
       loadFromColumn: true,
-      modelKey: 'threadId',
+      modelKey: isMessageView ? 'pid' : 'threadId',
     }),
 
     headerMessageId: Attributes.String({
@@ -273,7 +275,7 @@ export default class Message extends ModelWithMetadata {
       loadFromColumn: true,
       jsonKey: 'headerMsgId',
       modelKey: 'headerMsgId',
-      jsModelKey: 'headerMessageId'
+      jsModelKey: 'headerMessageId',
     }),
 
     subject: Attributes.String({
@@ -319,7 +321,7 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'syncState',
       loadFromColumn: true,
       queryable: true,
-    })
+    }),
   });
 
   static naturalSortOrder() {
@@ -349,7 +351,7 @@ export default class Message extends ModelWithMetadata {
     json.file_ids = this.fileIds();
     json.files = this.files.map(f => f.toJSON());
     if (this.draft) {
-      json.draft= true;
+      json.draft = true;
     }
 
     if (this.events && this.events.length) {
@@ -466,30 +468,30 @@ export default class Message extends ModelWithMetadata {
     }
     return false;
   }
-  get files(){
+  get files() {
     AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-    if(!Array.isArray(this.attachmentIds)){
-      console.error(`attachmentIds is not array`, this.attachmentIds);
+    if (!Array.isArray(this.attachmentIds)) {
+      // console.error(`attachmentIds is not array`, this.attachmentIds);
       return [];
     }
     const rets = [];
     this.attachmentIds.forEach(partialAttachmentData => {
-      if(!(partialAttachmentData instanceof File)){
-        partialAttachmentData = File.fromPartialData(partialAttachmentData)
+      if (!(partialAttachmentData instanceof File)) {
+        partialAttachmentData = File.fromPartialData(partialAttachmentData);
       }
       const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
-      if(fileData){
+      if (fileData) {
         rets.push(fileData);
       }
     });
     return rets;
   }
-  set files(attachments){
+  set files(attachments) {
     this.attachmentIds = attachments.map(attachment => {
-      if(!(attachment instanceof File)){
-        attachment = File.fromPartialData(attachment)
+      if (!(attachment instanceof File)) {
+        attachment = File.fromPartialData(attachment);
       }
-      if(!attachment.missingData){
+      if (!attachment.missingData) {
         AttachmentStore.setAttachmentData(attachment);
       } else {
         attachment = AttachmentStore.addAttachmentPartialData(attachment);
@@ -503,12 +505,12 @@ export default class Message extends ModelWithMetadata {
     return this.files.map(file => file.id);
   }
 
-  get labels(){
+  get labels() {
     const ret = [];
     this.labelIds.forEach(labelId => {
-      if(typeof labelId === 'string'){
+      if (typeof labelId === 'string') {
         const tmp = CategoryStore.byFolderId(labelId);
-        if(tmp){
+        if (tmp) {
           ret.push(tmp);
         }
       }
@@ -579,15 +581,17 @@ export default class Message extends ModelWithMetadata {
 
   //Public: returns the first email that belongs to the account that received the email,
   // otherwise returns the account's default email.
-  findMyEmail(){
-    const participants = this.participants({includeFrom: false, includeBcc: true});
+  findMyEmail() {
+    const participants = this.participants({ includeFrom: false, includeBcc: true });
     const account = AccountStore.accountForId(this.accountId);
-    if(!account){
-      AppEnv.reportError(new Error('Message accountId is not part of any account'), {errorData: this.toJSON()})
+    if (!account) {
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), {
+        errorData: this.toJSON(),
+      });
       return false;
     }
-    for(let participant of participants){
-      if(account.isMyEmail(participant.email)){
+    for (let participant of participants) {
+      if (account.isMyEmail(participant.email)) {
         return participant.email;
       }
     }
@@ -621,7 +625,7 @@ export default class Message extends ModelWithMetadata {
   }
 
   isForwarded() {
-    if(!this.subject){
+    if (!this.subject) {
       console.error(`subject is ${this.subject}`);
       return false;
     }
@@ -648,13 +652,17 @@ export default class Message extends ModelWithMetadata {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('trash')
+    );
   }
-  isInSpam(){
+  isInSpam() {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('spam')
+    );
   }
 
   fromContact() {
@@ -682,17 +690,25 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() { }
+  isActiveDraft() {}
 
   isDeleted() {
     return this.deleted;
   }
   isDraftSending() {
-    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState === Message.messageSyncState.sending);
+    return (
+      !this.isDeleted() &&
+      this.draft &&
+      Message.compareMessageState(this.syncState === Message.messageSyncState.sending)
+    );
   }
 
   isDraftSaving() {
-    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState == Message.messageSyncState.saving); // eslint-ignore-line
+    return (
+      !this.isDeleted() &&
+      this.draft &&
+      Message.compareMessageState(this.syncState == Message.messageSyncState.saving)
+    ); // eslint-ignore-line
   }
   isCalendarReply() {
     return this.calendarReply;
