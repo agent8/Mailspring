@@ -320,10 +320,22 @@
         background: @red;
     }
     .jira-watcher {
-        display: inline-block;
+        display: inline-flex;
+        margin-left: 26px;
+        padding: 0 10px;
+        align-items: center;
+        color: @jiraColor;
         img.content-mask {
-            width: 24px;
+            width: 22px;
             background: @jiraColor;
+            margin-right: 4px;
+            margin-top: -2px;
+            &.loading {
+                background: @gray-lighter;
+            }
+        }
+        &:hover {
+            background: @list-hover-bg;
         }
     }
     .btn-jira {
@@ -352,25 +364,67 @@
     }
     .jira-watchlist {
         width: 250px;
-        padding: 10px 0;
+        padding: 10px 0 0;
         img.content-mask {
             width: 24px;
             background: @jiraColor;
         }
         .row {
-            &>div{
-                padding: 4px 12px;
-                height: 30px;
-                &:hover {
-                    background: @list-hover-bg;
-                }
+            padding: 4px 12px;
+            height: 36px;
+            &:hover {
+                background: @list-hover-bg;
             }
+        }
+        .toggle-watch {
+            display: flex;
+            align-items: center;
+            img {
+                margin-right: 4px;
+            }
+            margin-bottom: 4px;
         }
         .watch-users {
             width: 100%;
             .rc-select-search__field__wrap > input {
                 height: 100%;
             }
+        }
+        .watcher-list {
+            border-top: 1px solid @border-color-primary;
+            padding-bottom: 4px;
+            .title {
+                color: @gray;
+                text-transform: uppercase;
+                padding: 4px 12px;
+            }
+            .row {
+                display: flex;
+                .jira-user {
+                    flex: 1;
+                    overflow: hidden;
+                    align-items: center;
+                }
+                .remove-icon {
+                    width: 20px;
+                    cursor: pointer;
+                    visibility: hidden;
+                    img.content-mask {
+                        background: @gray;
+                        width: 18px;
+                    }
+                }
+                &:hover {
+                    .remove-icon {
+                        visibility: visible;
+                    }    
+                }
+            }
+        }
+        .add-watcher {
+            color: @blue;
+            border-top: 1px solid @border-color-primary;
+            padding: 4px 0;
         }
         .loading {
             position: absolute;
@@ -379,6 +433,9 @@
             left: 0;
             top: 0;
             background: fade(@black, 15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     }
 }
