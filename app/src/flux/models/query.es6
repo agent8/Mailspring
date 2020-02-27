@@ -433,7 +433,7 @@ export default class ModelQuery {
 
     try {
       const ret = result.map(row => {
-        const className = this._klass[dbKey].getTableName();
+        const className = this._klass[dbKey].name;
         let object = Utils.getEmptyModel(className);
 
         for (const attrName of Object.keys(this._klass[dbKey].attributes)) {
