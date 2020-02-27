@@ -456,7 +456,13 @@ export default class JiraDetail extends Component {
         const userOptions = allUsers
             .filter(item => item.accountType === "atlassian")
             .map((item, idx) => (
-                <Option key={item.accountId} displayname={item.displayName} value={item.accountId}>{this.renderUserNode(item)}</Option>
+                <Option
+                    key={item.accountId}
+                    displayname={item.displayName}
+                    avatarurls={item.avatarUrls}
+                    value={item.accountId}>
+                    {this.renderUserNode(item)}
+                </Option>
             ));
         if (userOptions.length === 0) {
             userOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
@@ -481,7 +487,7 @@ export default class JiraDetail extends Component {
                 {userLogo}
                 <div className="jira-title">
                     <a href={this.state.link}>{issueKey}</a>
-                    {/* <Watcher {...watcerProps} /> */}
+                    <Watcher {...watcerProps} />
                 </div>
                 <div className="wrapper">
                     <header>
