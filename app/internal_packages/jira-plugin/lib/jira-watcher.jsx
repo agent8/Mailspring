@@ -36,6 +36,7 @@ export default class Watcher extends Component {
         }
     }
     toggleWatching = async () => {
+        AppEnv.trackingEvent('Jira-Toggle-Watching');
         let { isWatching, watchCount } = this.state;
         const { jira, currentUser, issueKey } = this.props;
         this.closePopover();
@@ -45,17 +46,31 @@ export default class Watcher extends Component {
             watchCount,
             isWatching: !isWatching
         })
-        if (isWatching) {
-            await jira.deleteWatcher(issueKey, currentUser.accountId);
-        } else {
-            await jira.addWatcher(issueKey, currentUser.accountId);
+        try {
+            if (isWatching) {
+                await jira.deleteWatcher(issueKey, currentUser.accountId);
+            } else {
+                await jira.addWatcher(issueKey, currentUser.accountId);
+            }
+            this.safeSetState({
+                progress: 'success',
+            });
+            AppEnv.trackingEvent('Jira-Toggle-Watching-Success');
+            this._getWatchers();
+        } catch (err) {
+            AppEnv.trackingEvent('Jira-Toggle-Watching-Failed');
+            AppEnv.reportError(new Error(`Toggle watching failed ${issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.props.logout();
+            }
+            this.safeSetState({
+                progress: 'error',
+            })
+            return;
         }
-        this.safeSetState({
-            progress: 'success',
-        })
-        this._getWatchers();
     }
     addWatcher = async (item, option) => {
+        AppEnv.trackingEvent('Jira-Add-Watcher');
         const { jira, issueKey, currentUser } = this.props;
         const { watchers } = this.state;
         const newWatchers = [...watchers, {
@@ -72,17 +87,24 @@ export default class Watcher extends Component {
         })
         try {
             await jira.addWatcher(issueKey, item.key);
+            this.safeSetState({
+                progress: 'success',
+            });
+            AppEnv.trackingEvent('Jira-Add-Watcher-Success');
         } catch (err) {
+            AppEnv.trackingEvent('Jira-Add-Watcher-Failed');
+            AppEnv.reportError(new Error(`Add watcher failed ${issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.props.logout();
+            }
             this.safeSetState({
                 progress: 'error',
             })
             return;
         }
-        this.safeSetState({
-            progress: 'success',
-        })
     }
     removeWatcher = async accountId => {
+        AppEnv.trackingEvent('Jira-Remove-Watcher');
         const { jira, issueKey, currentUser } = this.props;
         const { watchers } = this.state;
         const newWatchers = watchers.filter(item => item.accountId !== accountId);
@@ -94,15 +116,21 @@ export default class Watcher extends Component {
         })
         try {
             await jira.deleteWatcher(issueKey, accountId);
+            this.safeSetState({
+                progress: 'success',
+            })
+            AppEnv.trackingEvent('Jira-Remove-Watcher-Success');
         } catch (err) {
+            AppEnv.trackingEvent('Jira-Remove-Watcher-Failed');
+            AppEnv.reportError(new Error(`Remove watcher failed ${issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.props.logout();
+            }
             this.safeSetState({
                 progress: 'error',
             })
             return;
         }
-        this.safeSetState({
-            progress: 'success',
-        })
     }
     _renderLoading(width) {
         return <LottieImg
