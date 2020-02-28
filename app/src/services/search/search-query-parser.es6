@@ -13,6 +13,9 @@ import {
   InQueryExpression,
   HasAttachmentQueryExpression,
 } from './search-query-ast';
+import { CategoryStore, FocusedPerspectiveStore } from 'mailspring-exports';
+var utf7 = require('utf7').imap;
+
 
 const nextStringToken = text => {
   if (text[0] !== '"') {
@@ -291,12 +294,35 @@ const parseSimpleQuery = text => {
   if (tok.s.toUpperCase() === 'IN') {
     const afterColon = consumeExpectedToken(afterTok, ':');
     const [txt, afterTxt] = parseText(afterColon);
+    if (txt.token && txt.token.s) {
+      txt.token.s = findRoleForPath(txt.token.s);
+    }
     return [new InQueryExpression(txt), afterTxt];
   }
 
   const [txt, afterTxt] = parseText(text);
   return [new GenericQueryExpression(txt), afterTxt];
 };
+
+const findRoleForPath = (path) => {
+  // replace path to role
+  let newPath = path;
+  if (newPath) {
+    newPath = newPath.trim().replace(/(^"|"$)/g, '');
+    const currentPerspective = FocusedPerspectiveStore.current();
+    const accountIds = currentPerspective.accountIds;
+    for (const aid of accountIds) {
+      const standardCategories = CategoryStore.standardCategories(aid);
+      for (const ct of standardCategories) {
+        const names = ct.name.split(ct.delimiter);
+        if (names && names.includes(newPath)) {
+          return ct.role;
+        }
+      }
+    }
+  }
+  return utf7.encode(path);
+}
 
 const parseOrQuery = text => {
   const [lhs, afterLhs] = parseSimpleQuery(text);
