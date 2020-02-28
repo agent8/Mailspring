@@ -66,6 +66,9 @@ const isItemCollapsed = function (id) {
 };
 
 const toggleItemCollapsed = function (item) {
+  if(item.syncFolderList && item.collapsed){
+    Actions.syncFolderList({accountIds: item.accountIds, source: 'onToggleItemCollapsed'});
+  }
   if (!(item.children.length > 0)) {
     return;
   }
@@ -176,6 +179,7 @@ class SidebarItem {
         counterStyle,
         onDelete: opts.deletable ? onDeleteItem : undefined,
         onEdited: opts.editable ? onEditItem : undefined,
+        syncFolderList: opts.syncFolderList,
         onCollapseToggled: toggleItemCollapsed,
 
         onDrop(item, event) {
@@ -353,6 +357,7 @@ class SidebarItem {
       opts.iconName = `account-logo-${account.provider}.png`;
       opts.fallback = `account-logo-other.png`;
       opts.mode = RetinaImg.Mode.ContentPreserve;
+      opts.syncFolderList = true;
     }
     return this.forPerspective(id, perspective, opts);
   }
