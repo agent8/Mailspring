@@ -127,6 +127,7 @@ export default class MailsyncBridge {
     Actions.fetchBodies.listen(this._onFetchBodies, this);
     Actions.fetchAttachments.listen(this._onFetchAttachments, this);
     Actions.syncFolders.listen(this._onSyncFolders, this);
+    Actions.syncFolderList.listen(this._onSyncFolderList, this);
     Actions.syncSiftFolder.listen(this._onSyncSiftFolder, this);
     Actions.setObservableRange.listen(this._onSetObservableRange, this);
     Actions.debugFakeNativeMessage.listen(this.fakeEmit, this);
@@ -1195,6 +1196,19 @@ export default class MailsyncBridge {
         source,
       });
     }
+  }
+  _onSyncFolderList({ accountIds, source='syncFolderList'} = {}) {
+    if(!Array.isArray(accountIds)){
+      console.error('no account');
+      return;
+    }
+    accountIds.forEach(accountId => {
+      this.sendMessageToAccount(accountId, {
+        type: 'sync-folderList',
+        aid: accountId,
+        source
+      });
+    });
   }
 
   _onSyncSiftFolder({ categories = [Sift.categories.Entertainment, Sift.categories.Packages, Sift.categories.Travel, Sift.categories.Bill], source = '' } = {}) {
