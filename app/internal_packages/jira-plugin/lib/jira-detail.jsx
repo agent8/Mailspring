@@ -8,6 +8,7 @@ import JiraApi from './jira-api';
 import { CSSTransitionGroup } from 'react-transition-group';
 import Watcher from './jira-watcher';
 import Status from './jira-status';
+import Priority from './jira-priority';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -459,10 +460,13 @@ export default class JiraDetail extends Component {
                             <span className="label">Reporter</span>
                             <span className="content">{this.renderUserNode(fields.reporter)}</span>
                         </div>
-                        <div>
-                            <span className="label">Priority</span>
-                            <span className="content">{fields.priority.name}</span>
-                        </div>
+                        <Priority
+                            priority={issue.fields.priority}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
                         <Status
                             status={issue.fields.status}
                             jira={this.jira}

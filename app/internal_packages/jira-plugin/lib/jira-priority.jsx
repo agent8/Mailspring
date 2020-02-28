@@ -1,17 +1,17 @@
 import React, { Component } from "react";
 import Select, { Option } from 'rc-select';
 
-export default class JiraStatus extends Component {
+export default class JiraPriority extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            status: props.status
+            priority: props.priority
         };
         this.jira = props.jira;
     }
     componentDidMount = async () => {
         this.mounted = true;
-        this.findTransitions(this.props);
+        this.listPriorities(this.props);
     }
     componentWillUnmount() {
         this.mounted = false;
@@ -19,9 +19,8 @@ export default class JiraStatus extends Component {
     componentWillReceiveProps(nextProps) {
         if (nextProps.issueKey !== this.props.issueKey) {
             this.safeSetState({
-                status: nextProps.status
+                priority: nextProps.priority
             })
-            this.findTransitions(nextProps);
         }
     }
     safeSetState = (data) => {
@@ -29,7 +28,7 @@ export default class JiraStatus extends Component {
             this.setState(data)
         }
     }
-    findTransitions = async (props) => {
+    listPriorities = async (props) => {
         const { issueKey } = props;
         if (!issueKey) {
             return;
@@ -41,39 +40,29 @@ export default class JiraStatus extends Component {
             this.issueKey = issueKey;
             this.safeSetState({
                 issueKey,
-                statusProgress: null,
+                priorityProgress: null,
             })
-            const { transitions } = await this.jira.listTransitions(issueKey);
-            console.log('****transitions', transitions);
+            const priorities = await this.jira.listPriorities(issueKey);
+            console.log('****priorities', priorities);
             this.safeSetState({
-                transitions
+                priorities
             })
         }
     }
-    onStatusChange = async item => {
+    onStatusChange = async (item, option) => {
         AppEnv.trackingEvent('Jira-Change-Status');
+        console.log('*****onStatusChange', item, option);
         try {
-            let { status } = this.props;
-            let { transitions: oldTransitions } = this.state;
-            for (const t of oldTransitions) {
-                if (t.id === item.key) {
-                    status = t.to;
-                    this.safeSetState({
-                        statusProgress: 'loading'
-                    })
-                    break;
-                }
-            }
-            await this.jira.transitionIssue(this.issueKey, {
-                transition: {
-                    id: item.key
-                }
-            });
-            let { transitions } = await this.jira.listTransitions(this.issueKey);
+            let priority = { id: item.key }
             this.safeSetState({
-                status,
-                transitions,
-                statusProgress: 'success'
+                priority,
+                priorityProgress: 'loading'
+            })
+            await this.jira.setIssuePriority(this.issueKey, {
+                id: item.key
+            });
+            this.safeSetState({
+                priorityProgress: 'success'
             })
             AppEnv.trackingEvent('Jira-Change-Status-Success');
         } catch (err) {
@@ -84,39 +73,38 @@ export default class JiraStatus extends Component {
                 this.props.logout();
             }
             this.safeSetState({
-                statusProgress: 'error'
+                priorityProgress: 'error'
             })
         }
     }
+    _renderOption(item) {
+        return <Option key={item.id} value={item.id} data={item}>
+            <span className="jira-priority"><img src={item.iconUrl} />{item.name}</span>
+        </Option>
+    }
     render() {
         const {
-            status,
-            statusProgress,
-            transitions = [],
+            priority,
+            priorityProgress,
+            priorities = [],
         } = this.state;
-        const transitionOptions = transitions
-            .map(item => (
-                <Option key={item.id} value={item.id}>{item.name}</Option>
-            ));
-        const statusKey = 'status:' + status.id;
-        transitionOptions.push(
-            <Option key={statusKey} value={statusKey}>{status.name}</Option>
-        );
+        const priorityOptions = priorities.length > 0 ?
+            priorities.map(this._renderOption) : [this._renderOption(priority)];
         return (
             <div>
-                <span className="label">Status</span>
+                <span className="label">Priority</span>
                 <div className="content with-progress">
                     <Select
-                        className="jira-status"
-                        value={{ key: statusKey, value: status.name }}
+                        className="jira-priority"
+                        value={{ key: priority.id, value: priority.name }}
                         optionLabelProp="children"
                         labelInValue={true}
                         notFoundContent=""
                         showSearch={false}
                         onChange={this.onStatusChange}
                         dropdownClassName="jira-dropdown"
-                    >{transitionOptions}</Select>
-                    {this.props.renderProgress(statusProgress)}
+                    >{priorityOptions}</Select>
+                    {this.props.renderProgress(priorityProgress)}
                 </div>
             </div>
         )

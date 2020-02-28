@@ -181,4 +181,22 @@ export default class JiraApi extends JiraApiBase {
             followAllRedirects: true,
         }));
     }
+    listPriorities() {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/priority'
+        })));
+    }
+    setIssuePriority(issueNumber, priority) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber)
+        }), {
+            method: 'PUT',
+            followAllRedirects: true,
+            body: {
+                fields: {
+                    priority
+                }
+            }
+        }));
+    }
 }
