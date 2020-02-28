@@ -23,7 +23,6 @@ export default class ZendeskDetail extends Component {
     this.mounted = true
     this.login(this.props.config)
     this.findTicket(this.props)
-    // this.getCurrentUserInfo(this.props.config)
   }
   componentWillUnmount () {
     this.mounted = false
@@ -128,16 +127,7 @@ export default class ZendeskDetail extends Component {
           ticket: null,
           errorMessage,
         })
-        return
       }
-      // download attachments
-      if (ticket && ticket.fields.attachment) {
-        this.downloadUri(ticket.fields.attachment, true)
-        this.downloadUri(ticket.fields.attachment, false)
-      }
-      // get comments
-      this.findComments(ticketKey)
-      // get users
       if (this.state.allUsers.length === 0) {
         const users = await this.zendesk.searchAssignableUsers({
           ticketKey: ticketKey,
@@ -156,95 +146,8 @@ export default class ZendeskDetail extends Component {
           link: ticketLink,
         })
       }
+      return
     }
-  }
-  findComments = async (ticketKey, shouldTransition) => {
-    this.safeSetState({
-      shouldTransition,
-    })
-    let rst = await this.zendesk.findComments(ticketKey)
-    console.log(' findComments:', rst)
-    this.safeSetState({
-      comments: rst.comments,
-      commentSaving: false,
-      commentLoading: false,
-    })
-  }
-  downloadUri = async (attachments, isThumbnail = true) => {
-    let downloadApi = isThumbnail ? this.zendesk.downloadThumbnail : this.zendesk.downloadAttachment
-    for (const attachment of attachments) {
-      // Only download orginal image file
-      if (!attachment.mimeType.includes('image') && !isThumbnail) {
-        return
-      }
-      const localPath = path.join(
-        zendeskDirPath,
-        `${isThumbnail ? '' : 'origin_'}${attachment.id}_${attachment.filename}`
-      )
-      if (!fs.existsSync(localPath)) {
-        const downloadAtt = await downloadApi(attachment)
-        fs.writeFileSync(localPath, downloadAtt)
-      }
-      const { attachments = {}, originalFiles = {} } = this.state
-      if (isThumbnail) {
-        attachments[attachment.id] = localPath
-      } else {
-        originalFiles[attachment.id] = localPath
-      }
-      this.safeSetState({
-        attachments,
-        originalFiles,
-      })
-    }
-  }
-  replaceImageSrc = html => {
-    if (!html) {
-      return ''
-    }
-    const { attachments } = this.state
-    // replace image src
-    html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\//g, function (str) {
-      const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\//g.exec(str)
-      // find if the image is downloaded.
-      console.log('****matchs', matchs, attachments)
-      const attachmentId = matchs[2]
-      if (matchs && attachmentId && attachments[attachmentId]) {
-        if (matchs[1] === 'thumbnail') {
-          return `<img src="${zendeskDirPath}/${attachmentId}_`
-        }
-        return `<img src="${zendeskDirPath}/`
-      }
-      return `<img style='display: none;' src="${zendeskDirPath}/`
-    })
-    // replace link href
-    html = html.replace(/href="\/secure/g, `href="https://${this.zendesk.host}/secure`)
-    return html
-  }
-  _renderComments = comments => {
-    const { commentLoading } = this.state
-    if (commentLoading) {
-      return <div>{this._renderLoading(20)}</div>
-    }
-    return (
-      <CSSTransitionGroup
-        component='div'
-        transitionEnterTimeout={350}
-        transitionLeaveTimeout={350}
-        transitionName={this.state.shouldTransition ? 'transition-slide' : ''}
-      >
-        {comments.map(item => (
-          <div key={item.id} className='row'>
-            <div className='comment-header'>
-              {this.renderUserNode(item.author)}
-              <span className='datetime'>{DateUtils.mediumTimeString(item.created)}</span>
-            </div>
-            <div
-              dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(item.renderedBody) }}
-            ></div>
-          </div>
-        ))}
-      </CSSTransitionGroup>
-    )
   }
   selectFilter = (inputVal, option) => {
     return option.props.displayname.toLocaleLowerCase().indexOf(inputVal.toLocaleLowerCase()) !== -1
@@ -413,11 +316,7 @@ export default class ZendeskDetail extends Component {
     const {
       ticket,
       loading,
-      commentSaving,
       assignProgress,
-      statusProgress,
-      attachments = {},
-      comments = [],
       allUsers,
       ticketKey,
       transitions = ['Open', 'Pending', 'Solved'],
@@ -480,23 +379,7 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Assignee</span>
               <div className='content with-progress'>
-                <Select
-                  ref={el => (this.assignee = el)}
-                  className='assign-users'
-                  defaultValue={{
-                    key: ticket.assignee.name,
-                    value: this.renderUserNode(ticket.assignee),
-                  }}
-                  optionLabelProp='children'
-                  filterOption={this.selectFilter}
-                  labelInValue={true}
-                  notFoundContent=''
-                  showSearch={true}
-                  onChange={this.onAssigneeChange}
-                  dropdownClassName='zendesk-dropdown'
-                >
-                  {assgineeOptions}
-                </Select>
+                <span>{ticket.assignee.name}</span>
                 {this._renderProgress(assignProgress)}
               </div>
             </div>
@@ -513,60 +396,14 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Status</span>
               <div className='content with-progress'>
-                <Select
-                  className='zendesk-status'
-                  value={{ key: statusKey, value: status }}
-                  optionLabelProp='children'
-                  labelInValue={true}
-                  notFoundContent=''
-                  showSearch={false}
-                  onChange={this.onStatusChange}
-                  dropdownClassName='zendesk-dropdown'
-                >
-                  {transitionOptions}
-                </Select>
-                {this._renderProgress(statusProgress)}
+                <span>{ticket.status}</span>
               </div>
             </div>
           </header>
           <div className='zendesk-description' onClick={this.openOrignalImage}>
             <span className='label'>Description</span>
-            <div
-              dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(ticket.description) }}
-            ></div>
+            <div dangerouslySetInnerHTML={{ __html: ticket.description }}></div>
           </div>
-          <div className='zendesk-comments' onClick={this.openOrignalImage}>
-            <span className='label'>Comments</span>
-            {this._renderComments(comments)}
-          </div>
-          {/* <div className='zendesk-attachments'>
-            <span className='label'>Attachments</span>
-            <div className='attachments'>
-              {fields.attachment.map(item => (
-                <div
-                  title={item.filename}
-                  key={item.id}
-                  onClick={() => this.openAttachment(item.id)}
-                >
-                  {attachments[item.id] ? (
-                    <img src={attachments[item.id]} />
-                  ) : (
-                    this._renderLoading(20)
-                  )}
-                </div>
-              ))}
-            </div>
-          </div> */}
-        </div>
-        <div className='zendesk-submit-comment'>
-          <textarea ref={el => (this.commentInput = el)}></textarea>
-          {commentSaving ? (
-            this._renderLoading(20)
-          ) : (
-            <button className='btn btn-zendesk' onClick={this.addComment}>
-              Add Comment
-            </button>
-          )}
         </div>
       </div>
     )

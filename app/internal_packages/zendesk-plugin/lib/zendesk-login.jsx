@@ -112,8 +112,6 @@ export default class Login extends Component {
               <button className='btn btn-zendesk btn-zendesk-login' onClick={this.submit}>
                 Login
               </button>
-              {/* <h1>Or</h1>
-                            <button className="btn btn-zendesk btn-zendesk-login" onClick={this.openOauth}>Connect to Zendesk</button> */}
             </div>
           )}
         </div>
