@@ -66,9 +66,6 @@ const isItemCollapsed = function (id) {
 };
 
 const toggleItemCollapsed = function (item) {
-  if(item.syncFolderList && item.collapsed){
-    Actions.syncFolderList({accountIds: item.accountIds, source: 'onToggleItemCollapsed'});
-  }
   if (!(item.children.length > 0)) {
     return;
   }
@@ -216,6 +213,9 @@ class SidebarItem {
         onSelect(item) {
           // FocusedPerspectiveStore.refreshPerspectiveMessages({perspective: item});
           Actions.focusMailboxPerspective(item.perspective);
+          if(item.syncFolderList){
+            Actions.syncFolderList({accountIds: item.accountIds, source: 'onToggleItemCollapsed'});
+          }
         },
       },
       opts,
