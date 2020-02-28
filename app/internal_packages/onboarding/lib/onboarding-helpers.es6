@@ -1,7 +1,7 @@
 /* eslint global-require: 0 */
 
 import crypto from 'crypto';
-import { Account, IdentityStore, MailsyncProcess, Actions } from 'mailspring-exports';
+import { Account, IdentityStore, MailsyncProcess, Actions, AccountStore } from 'mailspring-exports';
 import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
 import dns from 'dns';
@@ -657,7 +657,10 @@ export async function finalizeAndValidateAccount(account) {
   }
   Actions.siftUpdateAccount(newAccount);
   // preload mail data
-  proc.sync();
+  const accounts = AccountStore.accounts();
+  if (accounts && accounts.length === 0) {
+    proc.sync();
+  }
   const acc = new Account(newAccount);
   acc.picture = account.picture;
   return acc;
