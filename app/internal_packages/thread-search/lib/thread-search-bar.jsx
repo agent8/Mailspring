@@ -274,13 +274,13 @@ class ThreadSearchBar extends Component {
   _onSubmitSearchQuery = (nextQuery, forceQuery) => {
     const SPACE = ' ';
     // for the chinese folder name
-    const input = nextQuery.split(SPACE).map(item => {
-      if (item.indexOf('in:') !== -1) {
-        item = utf7.encode(item);
-      }
-      return item;
-    });
-    nextQuery = input.join(SPACE);
+    // const input = nextQuery.split(SPACE).map(item => {
+    //   if (item.indexOf('in:') !== -1) {
+    //     item = utf7.encode(item);
+    //   }
+    //   return item;
+    // });
+    // nextQuery = input.join(SPACE);
     Actions.searchQuerySubmitted(nextQuery, forceQuery);
     this._fieldEl.blur();
   };
