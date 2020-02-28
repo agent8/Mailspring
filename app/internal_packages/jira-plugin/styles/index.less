@@ -9,10 +9,19 @@
         height: 46px;
         line-height: 46px;
         padding-left: 10px;
+        &>span {
+            display: flex;
+        }
     }
     li.rc-select-dropdown-menu-item-active {
         color: @text-color;
         background-image: none;
+    }
+    .jira-priority {
+        img {
+            width: 16px;
+            margin-right: 4px;
+        }
     }
     .jira-user {
         display: flex;
@@ -99,6 +108,7 @@
         }
     }
 
+    .jira-priority,
     .jira-status,
     .assign-users {
         width: 170px;
@@ -116,6 +126,11 @@
             .rc-select-search__field {
                 height: 100%;
             }
+            .rc-select-selection-selected-value {
+                span {
+                    display: flex;
+                }
+            }
         }
         .rc-select-arrow {
             visibility: hidden;
@@ -127,6 +142,12 @@
             .rc-select-arrow {
                 visibility: visible;
             }
+        }
+    }
+    .jira-priority {
+        img {
+            width: 16px;
+            margin-right: 4px;
         }
     }
     .jira-user {
