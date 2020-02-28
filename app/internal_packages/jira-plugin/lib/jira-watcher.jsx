@@ -26,7 +26,6 @@ export default class Watcher extends Component {
     _getWatchers = async () => {
         const { jira, issueKey } = this.props;
         const watchStatus = await jira.getIssueWatchers(issueKey);
-        console.log('*****watchers', watchStatus);
         if (watchStatus) {
             this.safeSetState({
                 loading: false,
@@ -37,6 +36,7 @@ export default class Watcher extends Component {
         }
     }
     toggleWatching = async () => {
+        AppEnv.trackingEvent('Jira-Toggle-Watching');
         let { isWatching, watchCount } = this.state;
         const { jira, currentUser, issueKey } = this.props;
         this.closePopover();
@@ -46,24 +46,37 @@ export default class Watcher extends Component {
             watchCount,
             isWatching: !isWatching
         })
-        if (isWatching) {
-            await jira.deleteWatcher(issueKey, currentUser.accountId);
-        } else {
-            console.log('*****addWatcher - 1', this.select);
-            await jira.addWatcher(issueKey, currentUser.accountId);
+        try {
+            if (isWatching) {
+                await jira.deleteWatcher(issueKey, currentUser.accountId);
+            } else {
+                await jira.addWatcher(issueKey, currentUser.accountId);
+            }
+            this.safeSetState({
+                progress: 'success',
+            });
+            AppEnv.trackingEvent('Jira-Toggle-Watching-Success');
+            this._getWatchers();
+        } catch (err) {
+            AppEnv.trackingEvent('Jira-Toggle-Watching-Failed');
+            AppEnv.reportError(new Error(`Toggle watching failed ${issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.props.logout();
+            }
+            this.safeSetState({
+                progress: 'error',
+            })
+            return;
         }
-        this.safeSetState({
-            progress: 'success',
-        })
-        this._getWatchers();
     }
     addWatcher = async (item, option) => {
-        console.log('*****addWatcher - 2', this.select);
+        AppEnv.trackingEvent('Jira-Add-Watcher');
         const { jira, issueKey, currentUser } = this.props;
         const { watchers } = this.state;
         const newWatchers = [...watchers, {
             accountId: item.key,
-            displayName: option.props.displayname
+            displayName: option.props.displayname,
+            avatarUrls: option.props.avatarurls
         }]
         this.safeSetState({
             progress: 'loading',
@@ -74,17 +87,24 @@ export default class Watcher extends Component {
         })
         try {
             await jira.addWatcher(issueKey, item.key);
+            this.safeSetState({
+                progress: 'success',
+            });
+            AppEnv.trackingEvent('Jira-Add-Watcher-Success');
         } catch (err) {
+            AppEnv.trackingEvent('Jira-Add-Watcher-Failed');
+            AppEnv.reportError(new Error(`Add watcher failed ${issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.props.logout();
+            }
             this.safeSetState({
                 progress: 'error',
             })
             return;
         }
-        this.safeSetState({
-            progress: 'success',
-        })
     }
     removeWatcher = async accountId => {
+        AppEnv.trackingEvent('Jira-Remove-Watcher');
         const { jira, issueKey, currentUser } = this.props;
         const { watchers } = this.state;
         const newWatchers = watchers.filter(item => item.accountId !== accountId);
@@ -96,15 +116,21 @@ export default class Watcher extends Component {
         })
         try {
             await jira.deleteWatcher(issueKey, accountId);
+            this.safeSetState({
+                progress: 'success',
+            })
+            AppEnv.trackingEvent('Jira-Remove-Watcher-Success');
         } catch (err) {
+            AppEnv.trackingEvent('Jira-Remove-Watcher-Failed');
+            AppEnv.reportError(new Error(`Remove watcher failed ${issueKey}`), { errorData: err });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                this.props.logout();
+            }
             this.safeSetState({
                 progress: 'error',
             })
             return;
         }
-        this.safeSetState({
-            progress: 'success',
-        })
     }
     _renderLoading(width) {
         return <LottieImg
@@ -128,7 +154,6 @@ export default class Watcher extends Component {
     _handleClickAddWatcher = () => {
         this.safeSetState({ adding: true });
         setTimeout(() => {
-            console.log("*****select", this.select)
             this.select.openIfHasChildren();
             this.select.inputRef.focus();
             window.sss = this.select;
@@ -137,7 +162,6 @@ export default class Watcher extends Component {
     _renderWatcherList = () => {
         const { watchers, isWatching, adding } = this.state;
         const { userOptions } = this.props;
-        console.log('*****adding', adding);
         return <div className="jira-watchlist">
             {this._renderProgress()}
             <div className="row toggle-watch" onClick={this.toggleWatching}>
@@ -149,33 +173,40 @@ export default class Watcher extends Component {
                 <span>{isWatching ? 'Stop' : 'Start'} watching</span>
             </div>
             <div className="watcher-list">
+                <div className="title">Watching this issue</div>
                 <CSSTransitionGroup
                     component="div"
                     transitionEnterTimeout={350}
                     transitionLeaveTimeout={350}
                     transitionName={'transition-fade'}
                 >
-                    {watchers ? watchers
+                    {watchers && watchers
                         .sort((item, next) => next.displayName.localeCompare(item.displayName))
                         .map(item => <div className="row" key={item.accountId}>
-                            {item.displayName}
-                            <span onClick={() => this.removeWatcher(item.accountId)}>
+                            <span className="jira-user">
+                                <img src={item.avatarUrls['24x24']} />
+                                <span>{item.displayName}</span>
+                            </span>
+                            <span className="remove-icon" onClick={() => this.removeWatcher(item.accountId)}>
                                 <RetinaImg
                                     name="close.svg"
                                     isIcon
                                     mode={RetinaImg.Mode.ContentIsMask}
                                 />
                             </span>
-                        </div>) : <div className="empty"></div>}
+                        </div>)}
                 </CSSTransitionGroup>
-            </div>
-            <div className="row add-watcher">
                 {
-                    !adding ? <button onClick={this._handleClickAddWatcher}>Add watchers</button> :
+                    !watchers && <div className="empty">&nbsp;</div>
+                }
+            </div>
+            <div className="add-watcher">
+                {
+                    !adding ? <div className="row" onClick={this._handleClickAddWatcher}>+ Add watchers</div> :
                         <Select
                             ref={el => this.select = el}
                             placeholder="Add watchers"
-                            className="watch-users"
+                            className="row watch-users"
                             optionLabelProp="children"
                             filterOption={this.selectFilter}
                             labelInValue={true}
@@ -206,18 +237,16 @@ export default class Watcher extends Component {
         const originRect = this.iconRef ? this.iconRef.getBoundingClientRect() : null;
         return (
             <div ref={el => this.iconRef = el} className="jira-watcher">
-                {
-                    !loading &&
-                    <span onClick={this.openPopover}>
-                        <RetinaImg
-                            name={isWatching ? 'jira-watch.svg' : 'jira-not-watch.svg'}
-                            isIcon
-                            mode={RetinaImg.Mode.ContentIsMask}
-                        />
-                        <span>{watchCount > 0 ? watchCount : ''}</span>
-                    </span>
-                }
-                {true && originRect && (
+                <span onClick={this.openPopover}>
+                    <RetinaImg
+                        name={isWatching ? 'jira-watch.svg' : 'jira-not-watch.svg'}
+                        isIcon
+                        className={loading ? 'loading' : ''}
+                        mode={RetinaImg.Mode.ContentIsMask}
+                    />
+                    <span>{watchCount > 0 ? watchCount : ''}</span>
+                </span>
+                {open && originRect && (
                     <FixedPopover {...{
                         className: "jira-watchlist",
                         direction: 'down',

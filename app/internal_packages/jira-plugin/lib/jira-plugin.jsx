@@ -52,7 +52,7 @@ export default class JiraPlugin extends Component {
         const { thread } = this.props;
         if (thread && thread.participants) {
             for (const att of thread.participants) {
-                if (att.email && att.email.split('@')[1].includes('atlassian.net')) {
+                if (att.email && (att.email.split('@')[1] || '').includes('atlassian.net')) {
                     return true;
                 }
             }
