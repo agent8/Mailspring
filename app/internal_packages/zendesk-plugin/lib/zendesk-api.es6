@@ -1,13 +1,27 @@
 const ZENDESK_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn'
 const ZENDESK_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE'
 const Zendesk = require('zendesk-node')
-debugger
+const zendesk = require('node-zendesk')
 export default class ZendeskApi {
   constructor (props) {
-    this.zendesk = Zendesk(props)
+    this.zendesk = zendesk.createClient({
+      username: props.email,
+      token: props.zendeskAdminToken,
+      remoteUri: 'https://edison.zendesk.com/api/v2',
+    })
   }
-  listTickets = async queryParams => {
-    return await this.zendesk.tickets.list(queryParams)
+  listTickets = () => {
+    const client = this.zendesk
+    const promise = new Promise((resolve, reject) => {
+      client.tickets.list(function (err, req, result) {
+        if (err) {
+          return reject(err)
+        } else {
+          return resolve(result)
+        }
+      })
+    })
+    return promise
   }
   refreshAccessToken = async () => {
     const body = []
@@ -59,9 +73,19 @@ export default class ZendeskApi {
     }
     return res
   }
-  findTicket = async ticketNumber => {
-    const ticket = await this.zendesk.tickets.get(ticketNumber)
-    return ticket.body.ticket
+  findTicket = ticketNumber => {
+    const client = this.zendesk
+    const promise = new Promise((resolve, reject) => {
+      client.tickets.show(ticketNumber, function (err, req, result) {
+        if (err) {
+          return reject(err)
+        } else {
+          console.log('findTicket result:', result)
+          return resolve(result)
+        }
+      })
+    })
+    return promise
   }
   downloadThumbnail = attachment => {
     return this.safeDoRequest(
@@ -95,24 +119,79 @@ export default class ZendeskApi {
       )
     )
   }
-  findComments = async ticketKey => {
-    return await this.zendesk.tickets.listComments(ticketKey)
+  findComments = ticketKey => {
+    const client = this.zendesk
+    const promise = new Promise((resolve, reject) => {
+      client.tickets.getComments(ticketKey, function (err, _, result) {
+        if (err) {
+          return reject(err)
+        } else {
+          return resolve(result)
+        }
+      })
+    })
+    return promise
   }
-  searchAssignableUsers = async data => {
-    const res = await this.zendesk.users.list()
-    console.log(' api.searchAssignableUsers:', data, res)
-    return res.body.users
+  searchAssignableUsers = () => {
+    const client = this.zendesk
+    const promise = new Promise((resolve, reject) => {
+      client.users.list(function (err, _, result) {
+        if (err) {
+          return reject(err)
+        } else {
+          return resolve(result)
+        }
+      })
+    })
+    return promise
   }
   getUser = async id => {
-    console.log(' getUser id:', id)
-    const res = await this.zendesk.users.get(id, {})
-    return res.body.user
+    const client = this.zendesk
+    const promise = new Promise((resolve, reject) => {
+      client.users.list(function (err, _, result) {
+        if (err) {
+          return reject(err)
+        } else {
+          for (const user of result) {
+            if (user.id === id) {
+              return resolve(user)
+            }
+          }
+          return reject(new Error(`Got no user with id:${id}`))
+        }
+      })
+    })
+    return promise
   }
-  updateTicketAssignee = async (ticketKey, userId) => {
-    return await this.zendesk.tickets.update(ticketKey, { assignee_id: userId })
+  updateTicketAssignee = async (ticket, userId) => {
+    const { id } = ticket
+    const client = this.zendesk
+    ticket.assignee_id = userId
+    const promise = new Promise((resolve, reject) => {
+      client.tickets.update(id, ticket, function (err, _, result) {
+        if (err) {
+          return reject(err)
+        } else {
+          resolve(result)
+        }
+      })
+    })
+    return promise
   }
-  updateTicketStatus = async (ticketKey, status) => {
-    return await this.zendesk.tickets.update(ticketKey, { status })
+  updateTicketStatus = async (ticket, status) => {
+    const { id } = ticket
+    const client = this.zendesk
+    ticket.status = status
+    const promise = new Promise((resolve, reject) => {
+      client.tickets.update(id, ticket, function (err, _, result) {
+        if (err) {
+          return reject(err)
+        } else {
+          resolve(result)
+        }
+      })
+    })
+    return promise
   }
   transitionIssue (issueId, issueTransition) {
     return this.safeDoRequest(

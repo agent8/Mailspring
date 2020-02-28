@@ -10,7 +10,7 @@ import { CSSTransitionGroup } from 'react-transition-group'
 const cheerio = require('cheerio')
 const { RetinaImg, LottieImg } = require('mailspring-component-kit')
 const configDirPath = AppEnv.getConfigDirPath()
-const jiraDirPath = path.join(configDirPath, 'zendesk_cache')
+const zendeskDirPath = path.join(configDirPath, 'zendesk_cache')
 const { Menu, MenuItem } = remote
 const CONFIG_KEY = 'plugin.zendesk.config'
 
@@ -35,7 +35,7 @@ export default class ZendeskDetail extends Component {
         this.zendesk = new ZendeskApi({
           protocol: 'https',
           host: 'api.atlassian.com',
-          base: `/ex/jira/${config.resource.id}`,
+          base: `/ex/zendesk/${config.resource.id}`,
           bearer: config.access_token,
           refreshToken: config.refresh_token,
           method: 'POST',
@@ -147,8 +147,8 @@ export default class ZendeskDetail extends Component {
         this.safeSetState({
           allUsers: users,
         })
-        ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
-        ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
+        ticket.assignee = await this.zendesk.getUser(ticket.assignee_id)
+        ticket.submitter = await this.zendesk.getUser(ticket.submitter_id)
         console.log(' assignee submitter:', ticket.assignee, ticket.submitter)
         this.safeSetState({
           loading: false,
@@ -178,7 +178,7 @@ export default class ZendeskDetail extends Component {
         return
       }
       const localPath = path.join(
-        jiraDirPath,
+        zendeskDirPath,
         `${isThumbnail ? '' : 'origin_'}${attachment.id}_${attachment.filename}`
       )
       if (!fs.existsSync(localPath)) {
@@ -210,11 +210,11 @@ export default class ZendeskDetail extends Component {
       const attachmentId = matchs[2]
       if (matchs && attachmentId && attachments[attachmentId]) {
         if (matchs[1] === 'thumbnail') {
-          return `<img src="${jiraDirPath}/${attachmentId}_`
+          return `<img src="${zendeskDirPath}/${attachmentId}_`
         }
-        return `<img src="${jiraDirPath}/`
+        return `<img src="${zendeskDirPath}/`
       }
-      return `<img style='display: none;' src="${jiraDirPath}/`
+      return `<img style='display: none;' src="${zendeskDirPath}/`
     })
     // replace link href
     html = html.replace(/href="\/secure/g, `href="https://${this.zendesk.host}/secure`)
@@ -265,7 +265,7 @@ export default class ZendeskDetail extends Component {
       })
       console.log(' onAssigneeChange:', item)
       const { ticket } = this.state
-      let res = await this.zendesk.updateTicketAssignee(ticket.id, item.key)
+      let res = await this.zendesk.updateTicketAssignee(ticket, item.key)
       console.log(' onAssigneeChange res:', res)
       this.safeSetState({
         assignProgress: 'success',
@@ -290,7 +290,7 @@ export default class ZendeskDetail extends Component {
     let { ticket } = this.state
     try {
       ticket.status = item.key
-      const res = await this.zendesk.updateTicketStatus(ticket.id, item.key)
+      const res = await this.zendesk.updateTicketStatus(ticket, item.key)
       console.log(' onStatusChange res:', res)
       this.safeSetState({
         statusProgress: 'success',
@@ -398,7 +398,7 @@ export default class ZendeskDetail extends Component {
   openOrignalImage = e => {
     const el = e.target
     if (el.tagName === 'IMG') {
-      if (el.src.includes('jira_cache')) {
+      if (el.src.includes('zendesk_cache')) {
         const { attachments } = this.state
         for (const index in attachments) {
           if (el.src.includes(encodeURI(attachments[index]))) {
@@ -563,7 +563,7 @@ export default class ZendeskDetail extends Component {
           {commentSaving ? (
             this._renderLoading(20)
           ) : (
-            <button className='btn btn-jira' onClick={this.addComment}>
+            <button className='btn btn-zendesk' onClick={this.addComment}>
               Add Comment
             </button>
           )}

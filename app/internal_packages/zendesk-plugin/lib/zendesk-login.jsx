@@ -75,8 +75,8 @@ export default class Login extends Component {
     const apiSettingsUrl = `${(this.host && this.host.value) ||
       'https://zendesk.com'}/agent/admin/api/settings`
     return (
-      <div className='jira-login'>
-        <div className='jira-logo'>
+      <div className='zendesk-login'>
+        <div className='zendesk-logo'>
           <RetinaImg name={'jira.svg'} isIcon mode={RetinaImg.Mode.ContentIsMask} />
         </div>
         {error && <div className='error'>{error}</div>}
@@ -109,11 +109,11 @@ export default class Login extends Component {
             />
           ) : (
             <div>
-              <button className='btn btn-jira btn-jira-login' onClick={this.submit}>
+              <button className='btn btn-zendesk btn-zendesk-login' onClick={this.submit}>
                 Login
               </button>
               {/* <h1>Or</h1>
-                            <button className="btn btn-jira btn-jira-login" onClick={this.openOauth}>Connect to Jira</button> */}
+                            <button className="btn btn-zendesk btn-zendesk-login" onClick={this.openOauth}>Connect to Zendesk</button> */}
             </div>
           )}
         </div>
