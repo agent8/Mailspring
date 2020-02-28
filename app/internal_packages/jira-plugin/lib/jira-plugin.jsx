@@ -76,9 +76,9 @@ export default class JiraPlugin extends Component {
         const needLogin = !config || Object.keys(config).length === 0;
         return (
             <ResizableRegion
+                minWidth={200}
                 className="jira-plugin"
                 handle={ResizableRegion.Handle.Left}
-                style={{ overflowY: 'auto' }}
                 onResize={this._onColumnResize}
                 initialWidth={this.state.width || 200}
             >
