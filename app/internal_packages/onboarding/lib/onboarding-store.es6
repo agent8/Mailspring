@@ -3,7 +3,7 @@ import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
 
-const OAUTH_LIST = ['gmail', 'yahoo', 'outlook', 'hotmail'];
+const OAUTH_LIST = ['gmail', 'yahoo', 'outlook', 'hotmail', 'jira-plugin'];
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
 class OnboardingStore extends MailspringStore {
