@@ -156,4 +156,47 @@ export default class JiraApi extends JiraApiBase {
             followAllRedirects: true
         }));
     }
+    getIssueWatchers(issueNumber) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber, "/watchers")
+        })));
+    }
+    addWatcher(issueKey, username) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueKey, "/watchers")
+        }), {
+            method: 'POST',
+            followAllRedirects: true,
+            body: username
+        }));
+    }
+    deleteWatcher(issueKey, accountId) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueKey, "/watchers"),
+            query: {
+                accountId
+            }
+        }), {
+            method: 'DELETE',
+            followAllRedirects: true,
+        }));
+    }
+    listPriorities() {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/priority'
+        })));
+    }
+    setIssuePriority(issueNumber, priority) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber)
+        }), {
+            method: 'PUT',
+            followAllRedirects: true,
+            body: {
+                fields: {
+                    priority
+                }
+            }
+        }));
+    }
 }
