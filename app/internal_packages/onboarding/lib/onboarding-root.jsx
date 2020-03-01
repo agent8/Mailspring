@@ -100,6 +100,7 @@ export default class OnboardingRoot extends React.Component {
               'account-add-another',
               'account-choose',
               'login-error',
+              'account-settings-jira-plugin'
             ].includes(this.state.page)
           }
         />
