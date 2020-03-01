@@ -57,7 +57,19 @@ class ComposerWithWindowProps extends React.Component {
     this._mounted = true;
   }
 
-  _onDraftChangeAccountComplete = ({ newDraftJSON }) => {
+  _onDraftChangeAccountComplete = ({ newDraftJSON, originalHeaderMessageId }) => {
+    // Because we transform in action-bridge, this is actually message model.
+    if(!this._mounted){
+      return;
+    }
+    if(!originalHeaderMessageId){
+      AppEnv.logError(`originalHeaderMessageId not found`);
+      return;
+    }
+    if(!this.state.headerMessageId || this.state.headerMessageId !==originalHeaderMessageId){
+      AppEnv.logDebug(`Not for this message ${originalHeaderMessageId}, ${this.state.headerMessageId}`);
+      return;
+    }
     const draft = new Message().fromJSON(newDraftJSON);
     if (draft.savedOnRemote) {
       DraftStore.sessionForServerDraft(draft).then(session => {
