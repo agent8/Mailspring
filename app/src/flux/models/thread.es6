@@ -166,6 +166,11 @@ const threadAttributes = isMessageView
         loadFromColumn: true,
         itemClass: Contact,
       }),
+      isJIRA: Attributes.String({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'isJIRA',
+      }),
     }
   : {
       snippet: Attributes.String({
