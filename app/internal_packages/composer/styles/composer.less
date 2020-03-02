@@ -338,9 +338,16 @@
     .dropdown {
       padding: 5px;
       display: flex;
-      flex-direction: row;
+      align-items: center;
+      input {
+        border: none;
+        outline: none;
+        box-shadow: none;
+        background: @input-search-bg;
+        line-height: 28px;
+      }
       button {
-        max-width: 50px;
+        flex: 0 0 auto;
       }
     }
   }
