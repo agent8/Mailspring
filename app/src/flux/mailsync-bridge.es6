@@ -743,6 +743,18 @@ export default class MailsyncBridge {
         AppEnv.logDebug(`from native : ${msg}`);
         console.log('---------------------From native END------------------------');
       }
+
+      // Under message view, thread has no native notification,
+      // when receive a message model notification, a corresponding thread notification should be generated
+      if (AppEnv.getDisableThread() && modelClass === 'Message') {
+        const threadMsgTmp = {
+          modelClass: 'Thread',
+          modelJSONs: modelJSONs.map(json => ({ ...json, __cls: 'Thread' })),
+          type,
+        };
+        this._onIncomingMessages([JSON.stringify(threadMsgTmp)]);
+      }
+
       const promises = [];
       const tmpModels = modelJSONs.map(Utils.convertToModel);
       let passAsIs = false;
