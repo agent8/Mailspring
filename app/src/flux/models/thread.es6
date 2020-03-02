@@ -194,6 +194,11 @@ const threadAttributes = isMessageView
         modelKey: 'starred',
       }),
 
+      // version: Attributes.Number({
+      //   queryable: true,
+      //   jsonKey: 'v',
+      //   modelKey: 'version',
+      // }),
       inboxCategory: Attributes.Number({
         queryable: true,
         loadFromColumn: true,
@@ -213,11 +218,28 @@ const threadAttributes = isMessageView
         queryable: true,
       }),
 
+      // folders: Attributes.Collection({
+      //   modelKey: 'folders',
+      //   itemClass: Folder,
+      // }),
       labelIds: Attributes.Collection({
         modelKey: 'labelIds',
         queryable: true,
         loadFromColumn: true,
       }),
+
+      // labels: Attributes.Collection({
+      //   modelKey: 'labels',
+      //   joinTableOnField: 'id',
+      //   joinTableName: 'ThreadCategory',
+      //   joinQueryableBy: [
+      //     'inAllMail',
+      //     'lastMessageReceivedTimestamp',
+      //     'lastMessageSentTimestamp',
+      //     'unread',
+      //   ],
+      //   itemClass: Label,
+      // }),
 
       participants: Attributes.Collection({
         modelKey: 'participants',
@@ -237,6 +259,21 @@ const threadAttributes = isMessageView
         loadFromColumn: true,
       }),
 
+      // lastMessageReceivedTimestamp: Attributes.DateTime({
+      //   queryable: true,
+      //   jsonKey: 'lmrt',
+      //   modelKey: 'lastMessageReceivedTimestamp',
+      //   modelTable: 'ThreadCategory',
+      //   loadFromColumn: true
+      // }),
+      //
+      // lastMessageSentTimestamp: Attributes.DateTime({
+      //   queryable: true,
+      //   jsonKey: 'lmst',
+      //   modelKey: 'lastMessageSentTimestamp',
+      //   modelTable: 'ThreadCategory',
+      //   loadFromColumn: true
+      // }),
       lastMessageTimestamp: Attributes.DateTime({
         queryable: true,
         jsModelKey: 'lastMessageTimestamp',
@@ -260,6 +297,11 @@ const threadAttributes = isMessageView
         modelKey: 'hasCalendar',
         queryable: true,
         loadFromColumn: true,
+      }),
+      isJIRA: Attributes.String({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'isJIRA',
       }),
     };
 export default class Thread extends ModelWithMetadata {
@@ -317,11 +359,13 @@ export default class Thread extends ModelWithMetadata {
     return (this.files || []).length;
   }
   get labels() {
-    return this.labelIds.map(labelId => {
-      if (typeof labelId === 'string') {
-        return CategoryStore.byFolderId(labelId);
-      }
-    });
+    return this.labelIds
+      .map(labelId => {
+        if (typeof labelId === 'string') {
+          return CategoryStore.byFolderId(labelId);
+        }
+      })
+      .filter(l => l);
   }
 
   get folders() {
@@ -342,6 +386,9 @@ export default class Thread extends ModelWithMetadata {
       this.participants.forEach(item => {
         item.accountId = this.accountId;
       });
+    }
+    if (!this.id) {
+      this.id = json.id || json.pid;
     }
     return this;
   }

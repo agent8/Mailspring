@@ -127,6 +127,7 @@ export default class MailsyncBridge {
     Actions.fetchBodies.listen(this._onFetchBodies, this);
     Actions.fetchAttachments.listen(this._onFetchAttachments, this);
     Actions.syncFolders.listen(this._onSyncFolders, this);
+    Actions.syncFolderList.listen(this._onSyncFolderList, this);
     Actions.syncSiftFolder.listen(this._onSyncSiftFolder, this);
     Actions.setObservableRange.listen(this._onSetObservableRange, this);
     Actions.debugFakeNativeMessage.listen(this.fakeEmit, this);
@@ -764,7 +765,7 @@ export default class MailsyncBridge {
         }
       }
       if (passAsIs || type === 'unpersist') {
-        console.log('passing data from native to UI without going through db');
+        // console.log('passing data from native to UI without going through db');
         ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
           type,
           modelClass,
@@ -801,11 +802,13 @@ export default class MailsyncBridge {
                 ? perspective.categories().map(cat => cat.id)
                 : [];
               if (Array.isArray(categoryIds) && categoryIds.length > 0) {
-                console.log(`adding category constrain, ${categoryIds}`);
+                // console.log(`adding category constrain, ${categoryIds}`);
                 Thread = Thread || require('./models/thread').default;
-                tmp = DatabaseStore.findBy(Thread, where).where([
+                const threadPromise = DatabaseStore.findBy(Thread, where).where([
                   Thread.attributes.categories.containsAny(categoryIds),
                 ]);
+                promises.push(threadPromise);
+                threadIndex = promises.length - 1;
               } else {
                 console.log(`Cannot get category Ids, using data purely from thread`);
               }
@@ -838,10 +841,14 @@ export default class MailsyncBridge {
               }
               if (m[pseudoPrimaryKey] === model[pseudoPrimaryKey]) {
                 duplicate = true;
-                // if(index === threadIndex){
-                //   model.categories = threadCategories;
-                // }
+                let correctLastMessageTimestamp;
+                if (index === threadIndex) {
+                  correctLastMessageTimestamp = model.lastMessageTimestamp;
+                } else {
+                  correctLastMessageTimestamp = m.lastMessageTimestamp;
+                }
                 Object.assign(m, model);
+                m.lastMessageTimestamp = correctLastMessageTimestamp;
                 break;
               }
             }
@@ -1244,6 +1251,19 @@ export default class MailsyncBridge {
         source,
       });
     }
+  }
+  _onSyncFolderList({ accountIds, source = 'syncFolderList' } = {}) {
+    if (!Array.isArray(accountIds)) {
+      console.error('no account');
+      return;
+    }
+    accountIds.forEach(accountId => {
+      this.sendMessageToAccount(accountId, {
+        type: 'sync-folderList',
+        aid: accountId,
+        source,
+      });
+    });
   }
 
   _onSyncSiftFolder({

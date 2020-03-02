@@ -165,7 +165,10 @@ export default class WindowManager {
     const win = this._windows[windowKey];
 
     if (!win) {
-      this.newWindow(this._coreWindowOpts(windowKey, extraOpts));
+      const w = this.newWindow(this._coreWindowOpts(windowKey, extraOpts));
+      if (windowKey === WindowManager.BUG_REPORT_WINDOW) {
+        w.show();
+      }
       return;
     }
 

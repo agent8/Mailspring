@@ -196,6 +196,7 @@ export default class ComposerEditor extends React.Component {
         const tmpPath = path.join(tmpFolder, `Pasted File${ext}`);
         fs.mkdir(tmpFolder, () => {
           fs.writeFile(tmpPath, buffer, () => {
+            console.log('copying file from clipboard')
             onFileReceived(tmpPath);
           });
         });
@@ -211,6 +212,7 @@ export default class ComposerEditor extends React.Component {
         ''
       );
       if (macCopiedFile.length || winCopiedFile.length) {
+        console.log('coping from clipboard');
         onFileReceived(macCopiedFile || winCopiedFile);
         return true;
       }

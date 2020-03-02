@@ -185,12 +185,24 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'waitingForBody',
       queryable: false,
     }),
+    waitingForAttachment: Attributes.Boolean({
+      modelKey: 'waitingForAttachment',
+      queryable: false,
+    }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
       queryable: false,
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
+      queryable: false,
+    }),
+    pastMessageIds: Attributes.Collection({
+      modelKey: 'pastMessageIds',
+      queryable: false,
+    }),
+    lastSync: Attributes.Number({
+      modelKey: 'lastSync',
       queryable: false,
     }),
 
@@ -322,6 +334,11 @@ export default class Message extends ModelWithMetadata {
       loadFromColumn: true,
       queryable: true,
     }),
+    isJIRA: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'isJIRA',
+    }),
   });
 
   static naturalSortOrder() {
@@ -340,9 +357,9 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
-    // if(Array.isArray(data.files)){
-    //   this.attachmentIds = data.files
-    // }
+    if (!Array.isArray(data.pastMessageIds)) {
+      this.pastMessageIds = [];
+    }
   }
 
   toJSON(options) {
@@ -363,6 +380,9 @@ export default class Message extends ModelWithMetadata {
 
   fromJSON(json = {}) {
     super.fromJSON(json);
+    if (!Array.isArray(json.pastMessageIds)) {
+      this.pastMessageIds = [];
+    }
     return this;
   }
 
@@ -507,14 +527,16 @@ export default class Message extends ModelWithMetadata {
 
   get labels() {
     const ret = [];
-    this.labelIds.forEach(labelId => {
-      if (typeof labelId === 'string') {
-        const tmp = CategoryStore.byFolderId(labelId);
-        if (tmp) {
-          ret.push(tmp);
+    if (Array.isArray(this.labelIds)) {
+      this.labelIds.forEach(labelId => {
+        if (typeof labelId === 'string') {
+          const tmp = CategoryStore.byFolderId(labelId);
+          if (tmp) {
+            ret.push(tmp);
+          }
         }
-      }
-    });
+      });
+    }
     return ret;
   }
 
