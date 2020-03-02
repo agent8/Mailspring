@@ -320,6 +320,7 @@ export default class ZendeskDetail extends Component {
       allUsers,
       ticketKey,
       transitions = ['Open', 'Pending', 'Solved'],
+      statusProgress,
       errorMessage,
     } = this.state
     console.log(
@@ -396,7 +397,19 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Status</span>
               <div className='content with-progress'>
-                <span>{ticket.status}</span>
+                <Select
+                  className='zendesk-status'
+                  value={{ key: statusKey, value: status }}
+                  optionLabelProp='children'
+                  labelInValue={true}
+                  notFoundContent=''
+                  showSearch={false}
+                  onChange={this.onStatusChange}
+                  dropdownClassName='zendesk-dropdown'
+                >
+                  {transitionOptions}
+                </Select>
+                {this._renderProgress(statusProgress)}
               </div>
             </div>
           </header>
