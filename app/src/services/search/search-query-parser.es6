@@ -314,7 +314,7 @@ const findRoleForPath = (path) => {
     for (const aid of accountIds) {
       const standardCategories = CategoryStore.standardCategories(aid);
       for (const ct of standardCategories) {
-        const names = ct.name.split(ct.delimiter);
+        const names = ct.path.split(ct.delimiter || '/');
         if (names && names.includes(newPath)) {
           return ct.role;
         }
