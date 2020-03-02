@@ -7,7 +7,7 @@ import url from 'url';
 
 import FormErrorMessage from './form-error-message';
 import { LOCAL_SERVER_PORT } from './onboarding-helpers';
-
+const INVITE_COUNT_KEY = 'invite.count';
 
 export default class OAuthSignInPage extends React.Component {
   static displayName = 'OAuthSignInPage';
@@ -133,6 +133,11 @@ export default class OAuthSignInPage extends React.Component {
     try {
       account = await this.props.buildAccountFromAuthResponse(code);
     } catch (err) {
+      if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+        AppEnv.trackingEvent('Invite-AddAccount-Failed', { provider: this.props.serviceName });
+      } else {
+        AppEnv.trackingEvent('AddAccount-Failed', { provider: this.props.serviceName });
+      }
       if (!this._mounted) return;
       this._onError(err);
       return;

@@ -303,7 +303,7 @@ export default class MailboxPerspective {
       if (AccountStore.accountForId(category.accountId).provider === 'gmail') {
         ret.push({ accountId: category.accountId, path: category.path.replace('[Gmail]/', '') });
       } else {
-        ret.push({ accountId: category.accountId, path: category.path });
+        ret.push({ accountId: category.accountId, path: category.path, parentId: category.parentId });
       }
     }
     return ret;

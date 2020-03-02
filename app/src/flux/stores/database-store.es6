@@ -593,7 +593,7 @@ class DatabaseStore extends MailspringStore {
         if (options.format !== false) {
           transformed = modelQuery.formatResult(transformed);
         }
-        console.log(`no need for aux db query`);
+        // console.log(`no need for aux db query`);
         return Promise.resolve(transformed);
       } else {
         const promises = [];
@@ -608,7 +608,7 @@ class DatabaseStore extends MailspringStore {
               )
             );
           } else {
-            console.log(`aux db ${auxDBKey} not linked, ignoring`);
+            // console.log(`aux db ${auxDBKey} not linked, ignoring`);
           }
         }
         return new Promise(resolve => {
@@ -621,7 +621,7 @@ class DatabaseStore extends MailspringStore {
             if (options.format !== false) {
               transformed = modelQuery.formatResult(transformed);
             }
-            console.log('aux db quires results returned');
+            // console.log('aux db quires results returned');
             resolve(transformed);
           });
         });

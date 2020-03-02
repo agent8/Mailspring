@@ -36,7 +36,7 @@ export default class ComposerHeader extends React.Component {
     super(props);
     this._els = {};
     this.state = this._initialStateForDraft(this.props.draft, props);
-    this.state.missingAttachements = false;
+    this.state.missingAttachments = false;
     this._mounted = false;
   }
   componentDidMount() {
@@ -168,7 +168,7 @@ export default class ComposerHeader extends React.Component {
   };
 
   _draftNotReady = () => {
-    return this.props.session.isPopout() || this.state.missingAttachments;
+    return this.props.session.isPopout();
   };
 
   _renderSubject = () => {

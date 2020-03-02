@@ -424,7 +424,7 @@ export default class ModelQuery {
       return result[0].count / 1;
     }
     if (this._returnIds[dbKey]) {
-      console.log(`returning only Ids ${dbKey}`);
+      // console.log(`returning only Ids ${dbKey}`);
       return result.map(
         row =>
           row[(this._pseudoPrimaryKey[dbKey] && this._pseudoPrimaryKey[dbKey].modelKey) || 'id']
@@ -444,16 +444,13 @@ export default class ModelQuery {
           if (attr.mergeIntoModel) {
             const dataString = row[attr.tableColumn];
             if (typeof dataString !== 'string' || dataString.length === 0) {
-              console.log(
-                `column ${attr.tableColumn} is not string, ${typeof dataString}, ${dataString}`
-              );
               continue;
             }
             try {
               const tmp = JSON.parse(dataString);
               object.mergeFromColumn(tmp);
             } catch (e) {
-              console.log(`${dataString} for ${attr.tableColumn} is not json string`);
+              console.error(`${dataString} for ${attr.tableColumn} is not json string`);
               continue;
             }
           } else {
@@ -612,10 +609,10 @@ export default class ModelQuery {
     const joins = allMatchers.filter(matcher => matcher.attr instanceof AttributeCollection);
     //
     if (joins.length === 1 && this._canSubselectForJoin(joins[0], allMatchers, dbKey)) {
-      console.warn(`They used to use subselect sql`);
+      // console.warn(`They used to use subselect sql`);
       //   const subSql = this._subselectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
       //   return `SELECT ${distinct} ${selectSql} FROM \`${
-      //     this._klass[dbKey].getTableName()
+      //     this._klass[dbKey].name
       //     }\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
     }
 
@@ -708,7 +705,7 @@ export default class ModelQuery {
         const linkMainDB = `\`${this._klass[dbKey].getTableName()}\`.\`${
           this._crossDB.connections[dbKey].joinTableKey
         }\` in ('${mainDBIds}')`;
-        console.log(`where clause for auxDB: ${linkMainDB}`);
+        // console.log(`where clause for auxDB: ${linkMainDB}`);
         sql += ` WHERE ${linkMainDB} AND ${wheres.join(' AND ')}`;
       }
     } else if (wheres.length === 0 && dbKey !== 'main') {
@@ -717,7 +714,7 @@ export default class ModelQuery {
       const linkMainDB = `\`${this._klass[dbKey].getTableName()}\`.\`${
         this._crossDB.connections[dbKey].joinTableKey
       }\` in ('${mainDBIds}')`;
-      console.log(`single where clause for auxDB: ${linkMainDB}`);
+      // console.log(`single where clause for auxDB: ${linkMainDB}`);
       sql += ` WHERE ${linkMainDB} `;
     }
     return sql;
