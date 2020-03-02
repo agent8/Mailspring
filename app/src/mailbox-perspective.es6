@@ -810,6 +810,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       FocusedPerspectiveStore || require('./flux/stores/focused-perspective-store').default;
     ChangeLabelsTask = ChangeLabelsTask || require('./flux/tasks/change-labels-task').default;
     ChangeFolderTask = ChangeFolderTask || require('./flux/tasks/change-folder-task').default;
+    ChangeStarredTask = ChangeStarredTask || require('./flux/tasks/change-starred-task').default;
 
     const current = FocusedPerspectiveStore.current();
 
@@ -830,63 +831,86 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       return [];
     }
     const previousFolder = TaskFactory.findPreviousFolder(current, accountId);
-    if (myCat.role === 'all' && currentCat && currentCat instanceof Label) {
-      // dragging from a label into All Mail? Make this an "archive" by removing the
-      // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
-      return [
-        new ChangeLabelsTask({
-          threads,
-          source: 'Dragged into list',
-          labelsToAdd: [],
-          labelsToRemove: [currentCat],
-          previousFolder,
-        }),
-      ];
-    }
-    if (myCat instanceof Folder) {
-      // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
-      return [
-        new ChangeFolderTask({
-          threads,
-          source: 'Dragged into list',
-          folder: myCat,
-          previousFolder,
-        }),
-      ];
-    }
-
-    if (myCat instanceof Label && currentCat && currentCat instanceof Folder) {
-      // dragging from trash or spam into a label? We need to both apply the label and
-      // move to the "All Mail" folder.
-      if (currentCat.role === 'all') {
-        return [
-          new ChangeLabelsTask({
-            threads,
-            source: 'Dragged into list',
-            labelsToAdd: [myCat],
-            labelsToRemove: [],
-            previousFolder,
-          })];
-      }
-      return [
-        new ChangeFolderTask({
-          threads,
-          source: 'Dragged into list',
-          folder: myCat,
-          currentPerspective: current,
-        }),
-      ];
-    }
-    // label to label
-    return [
-      new ChangeLabelsTask({
-        threads,
-        source: 'Dragged into list',
-        labelsToAdd: [myCat],
-        labelsToRemove: currentCat ? [currentCat] : [],
-        previousFolder,
-      }),
-    ];
+    return TaskFactory.tasksForGeneralMoveFolder({threads, targetCategory: myCat, sourceCategory: currentCat, previousFolder, source: 'Dragged into List'});
+    // if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
+    //   // dragging from a label into All Mail? Make this an "archive" by removing the
+    //   // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
+    //   return [
+    //     new ChangeLabelsTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       labelsToAdd: [],
+    //       labelsToRemove: [currentCat],
+    //       previousFolder,
+    //     }),
+    //   ];
+    // }
+    // if(myCat.isLabel() && currentCat && currentCat.isLabel() && (currentCat.role === 'important' || currentCat.role === 'flagged')){
+    //   return [
+    //       new ChangeLabelsTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       labelsToAdd: [myCat],
+    //       labelsToRemove: [],
+    //       previousFolder,
+    //     })
+    //     ]
+    // }
+    // if (myCat.isFolder()) {
+    //   // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
+    //   return [
+    //     new ChangeFolderTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       folder: myCat,
+    //       previousFolder,
+    //     }),
+    //   ];
+    // }
+    //
+    // if (myCat.isLabel() && currentCat && currentCat.isFolder()) {
+    //   // dragging from trash or spam into a label? We need to both apply the label and
+    //   // move to the "All Mail" folder.
+    //   if (currentCat.role === 'all') {
+    //     return [
+    //       new ChangeLabelsTask({
+    //         threads,
+    //         source: 'Dragged into list',
+    //         labelsToAdd: [myCat],
+    //         labelsToRemove: [],
+    //         previousFolder,
+    //       })];
+    //   }
+    //   return [
+    //     new ChangeFolderTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       folder: myCat,
+    //       currentPerspective: current,
+    //     }),
+    //   ];
+    // }
+    // // label to label
+    // if(myCat.role === 'inbox'){
+    //   return [
+    //     new ChangeLabelsTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       labelsToAdd: [myCat],
+    //       labelsToRemove: [],
+    //       previousFolder,
+    //     }),
+    //   ];
+    // }
+    // return [
+    //   new ChangeLabelsTask({
+    //     threads,
+    //     source: 'Dragged into list',
+    //     labelsToAdd: [myCat],
+    //     labelsToRemove: currentCat ? [currentCat] : [],
+    //     previousFolder,
+    //   }),
+    // ];
   }
 
   // Public:

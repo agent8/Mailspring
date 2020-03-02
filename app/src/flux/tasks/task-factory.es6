@@ -7,6 +7,7 @@ import CategoryStore from '../stores/category-store';
 import Thread from '../models/thread';
 import Message from '../models/message';
 import Label from '../models/label';
+import Folder from '../models/folder';
 import _ from 'underscore';
 import DeleteThreadsTask from './delete-threads-task';
 import ExpungeAllInFolderTask from './expunge-all-in-folder-task';
@@ -286,6 +287,110 @@ const TaskFactory = {
         source,
       });
     });
+  },
+  tasksForGeneralMoveFolder({ threads, source, targetCategory, sourceCategory, previousFolder }) {
+    if (!Array.isArray(threads) || threads.length === 0) {
+      AppEnv.reportError(new Error(`Move task by ${source} failed, no threads`), { errorData: threads }, { grabLogs: true });
+      return [];
+    }
+    if (!targetCategory) {
+      AppEnv.reportError(new Error(`Move task by ${source} failed, no target category`), { errorData: targetCategory }, { grabLogs: true });
+      return [];
+    }
+    if (!previousFolder) {
+      AppEnv.reportError(new Error(`Move task by ${source} failed, no previous folder`), { errorData: previousFolder }, { grabLogs: true });
+      return [];
+    }
+    if (targetCategory.role === 'all' && sourceCategory && (sourceCategory instanceof Label)) {
+      // dragging from a label into All Mail? Make this an "archive" by removing the
+      // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [],
+          labelsToRemove: [targetCategory],
+          previousFolder,
+        }),
+      ];
+    }
+    if ((targetCategory instanceof Label) && sourceCategory && (sourceCategory instanceof Label) && (sourceCategory.role === 'important' || sourceCategory.role === 'starred')) {
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [targetCategory],
+          labelsToRemove: [],
+          previousFolder,
+        }),
+      ];
+    }
+    if (targetCategory instanceof Folder) {
+      // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
+      return [
+        new ChangeFolderTask({
+          threads,
+          source,
+          folder: targetCategory,
+          previousFolder,
+        }),
+      ];
+    }
+
+    if ((targetCategory instanceof Label) && sourceCategory && (sourceCategory instanceof Folder)) {
+      // dragging from trash or spam into a label? We need to both apply the label and
+      // move to the "All Mail" folder.
+      if (sourceCategory.role === 'all') {
+        return [
+          new ChangeLabelsTask({
+            threads,
+            source,
+            labelsToAdd: [targetCategory],
+            labelsToRemove: [],
+            previousFolder,
+          })];
+      }
+      return [
+        new ChangeFolderTask({
+          threads,
+          source,
+          folder: targetCategory,
+          previousFolder,
+        }),
+      ];
+    }
+    // label to label
+    if (targetCategory.role === 'inbox') {
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [targetCategory],
+          labelsToRemove: [],
+          previousFolder,
+        }),
+      ];
+    }
+    if(sourceCategory && (sourceCategory instanceof Label) && (sourceCategory.role === 'sent' || sourceCategory.role === 'drafts')){
+      return [
+        new ChangeLabelsTask({
+          threads,
+          source,
+          labelsToAdd: [targetCategory],
+          labelsToRemove: [],
+          previousFolder,
+        }),
+      ];
+    }
+    return [
+      new ChangeLabelsTask({
+        threads,
+        source,
+        labelsToAdd: [targetCategory],
+        labelsToRemove: sourceCategory ? [sourceCategory] : [],
+        previousFolder,
+      }),
+    ];
   },
 
   taskForUndo({ task }) {
