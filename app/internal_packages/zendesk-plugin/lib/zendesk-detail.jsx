@@ -137,8 +137,8 @@ export default class ZendeskDetail extends Component {
         this.safeSetState({
           allUsers: users,
         })
-        ticket.assignee = await this.zendesk.getUser(ticket.assignee_id)
-        ticket.submitter = await this.zendesk.getUser(ticket.submitter_id)
+        ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
+        ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
         console.log(' assignee submitter:', ticket.assignee, ticket.submitter)
         this.safeSetState({
           loading: false,
@@ -168,7 +168,7 @@ export default class ZendeskDetail extends Component {
       })
       console.log(' onAssigneeChange:', item)
       const { ticket } = this.state
-      let res = await this.zendesk.updateTicketAssignee(ticket, item.key)
+      let res = await this.zendesk.updateTicketAssignee(ticket.id, item.key)
       console.log(' onAssigneeChange res:', res)
       this.safeSetState({
         assignProgress: 'success',
@@ -187,13 +187,37 @@ export default class ZendeskDetail extends Component {
       })
     }
   }
+  onTypeChange = async item => {
+    console.log(' onStatusChange:', item)
+    AppEnv.trackingEvent('zendesk-Type-Status')
+    let { ticket } = this.state
+    try {
+      ticket.type = item.key
+      const res = await this.zendesk.updateTicketType(ticket.id, item.key)
+      console.log(' onTypeChange res:', res)
+      this.safeSetState({
+        typeProgress: 'success',
+      })
+      AppEnv.trackingEvent('zendesk-Change-Type-Success')
+    } catch (err) {
+      AppEnv.trackingEvent('zendesk-Change-Type-Failed')
+      console.error(`****Change type failed ${ticket.id}`, err)
+      AppEnv.reportError(new Error(`Change type failed ${ticket.id}`), { errorData: err })
+      if (err.message && err.message.includes('invalid refresh token')) {
+        this.logout()
+      }
+      this.safeSetState({
+        typeProgress: 'error',
+      })
+    }
+  }
   onStatusChange = async item => {
     console.log(' onStatusChange:', item)
     AppEnv.trackingEvent('zendesk-Change-Status')
     let { ticket } = this.state
     try {
       ticket.status = item.key
-      const res = await this.zendesk.updateTicketStatus(ticket, item.key)
+      const res = await this.zendesk.updateTicketStatus(ticket.id, item.key)
       console.log(' onStatusChange res:', res)
       this.safeSetState({
         statusProgress: 'success',
@@ -319,7 +343,8 @@ export default class ZendeskDetail extends Component {
       assignProgress,
       allUsers,
       ticketKey,
-      transitions = ['Open', 'Pending', 'Solved'],
+      transitions = ['open', 'pending', 'solved'],
+      typeProgress,
       statusProgress,
       errorMessage,
     } = this.state
@@ -357,6 +382,11 @@ export default class ZendeskDetail extends Component {
         {this.renderUserNode(item)}
       </Option>
     ))
+    const typeOptions = ['question', 'incident', 'problem', 'task'].map(item => (
+      <Option key={item} value={item}>
+        {item}
+      </Option>
+    ))
     const transitionOptions = transitions.map(item => (
       <Option key={item} value={item}>
         {item}
@@ -380,7 +410,23 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Assignee</span>
               <div className='content with-progress'>
-                <span>{ticket.assignee.name}</span>
+                <Select
+                  ref={el => (this.assignee = el)}
+                  className='assign-users'
+                  defaultValue={{
+                    key: ticket.assignee.name,
+                    value: this.renderUserNode(ticket.assignee),
+                  }}
+                  optionLabelProp='children'
+                  filterOption={this.selectFilter}
+                  labelInValue={true}
+                  notFoundContent=''
+                  showSearch={true}
+                  onChange={this.onAssigneeChange}
+                  dropdownClassName='zendesk-dropdown'
+                >
+                  {assgineeOptions}
+                </Select>
                 {this._renderProgress(assignProgress)}
               </div>
             </div>
@@ -393,6 +439,24 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Priority</span>
               <span className='content'>{ticket.priority}</span>
+            </div>
+            <div>
+              <span className='label'>Type</span>
+              <div className='content with-progress'>
+                <Select
+                  className='zendesk-status'
+                  value={{ key: ticket.type, value: ticket.type }}
+                  optionLabelProp='children'
+                  labelInValue={true}
+                  notFoundContent=''
+                  showSearch={false}
+                  onChange={this.onTypeChange}
+                  dropdownClassName='zendesk-dropdown'
+                >
+                  {typeOptions}
+                </Select>
+                {this._renderProgress(typeProgress)}
+              </div>
             </div>
             <div>
               <span className='label'>Status</span>
