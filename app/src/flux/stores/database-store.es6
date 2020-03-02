@@ -116,7 +116,7 @@ const openAuxiliaryDBs = async cache => {
       resolve();
     });
   });
-}
+};
 
 function databasePath(configDirPath, specMode = false) {
   let dbPath = path.join(configDirPath, 'edisonmail.db');
@@ -126,7 +126,7 @@ function databasePath(configDirPath, specMode = false) {
   return dbPath;
 }
 
-function auxiliaryDBPath(configDirPath, auxDBName){
+function auxiliaryDBPath(configDirPath, auxDBName) {
   return path.join(configDirPath, auxDBName);
 }
 
@@ -405,7 +405,7 @@ class DatabaseStore extends MailspringStore {
   }
 
   _executeInBackground(query, values, dbKey = 'main') {
-    if(AppEnv.enabledBackgroundQueryLog){
+    if (AppEnv.enabledBackgroundQueryLog) {
       console.log(`-------------------background query for ${dbKey}----------------`);
       AppEnv.logDebug(`background query - ${query}`);
       console.log(`--------------------background query for ${dbKey} end---------------`);
@@ -426,7 +426,9 @@ class DatabaseStore extends MailspringStore {
         this._agent = null;
       });
       this._agent.on('error', err => {
-        AppEnv.reportError(new Error(`Query Agent: failed to start or receive message: ${err.toString()}`));
+        AppEnv.reportError(
+          new Error(`Query Agent: failed to start or receive message: ${err.toString()}`)
+        );
         this._agent.kill('SIGTERM');
         this._agent = null;
       });
@@ -582,11 +584,7 @@ class DatabaseStore extends MailspringStore {
   //   - resolves with the result of the database query.
   //
   run(modelQuery, options = { format: true }) {
-    return this._query(
-      modelQuery.sql(),
-      [],
-      modelQuery._background,
-    ).then(result => {
+    return this._query(modelQuery.sql(), [], modelQuery._background).then(result => {
       let transformed = modelQuery.inflateResult(result);
       const crossDBs = modelQuery.crossDBs();
       const links = modelQuery.crossDBLink();

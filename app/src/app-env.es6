@@ -594,6 +594,11 @@ export default class AppEnvConstructor {
       : (this.appVersion = this.getLoadSettings().appVersion);
   }
 
+  // thread view or message view
+  getDisableThread() {
+    return this.config.get('core.workspace.disableThread');
+  }
+
   // Public: Determine whether the current version is an official release.
   isReleasedVersion() {
     // Check if the release contains a 7-character SHA prefix

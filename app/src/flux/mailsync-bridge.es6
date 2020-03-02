@@ -134,6 +134,7 @@ export default class MailsyncBridge {
     Actions.setObservableRange.listen(this._onSetObservableRange, this);
     Actions.debugFakeNativeMessage.listen(this.fakeEmit, this);
     Actions.forceKillAllClients.listen(this.forceKillClients, this);
+    Actions.forceRelaunchClients.listen(this.forceRelaunchClients, this);
     Actions.forceDatabaseTrigger.listen(this._onIncomingChangeRecord, this);
     Actions.dataShareOptions.listen(this.onDataShareOptionsChange, this);
     Actions.remoteSearch.listen(this._onRemoteSearch, this);
@@ -201,10 +202,10 @@ export default class MailsyncBridge {
     AppEnv.showErrorDialog({
       title: `Verbose logging is now ${phrase}`,
       message,
-    }).then(()=>{
+    }).then(() => {
       remote.app.relaunch();
       remote.app.quit();
-    })
+    });
   }
 
   clients() {
@@ -247,7 +248,7 @@ export default class MailsyncBridge {
 
   onDataShareOptionsChange({ optOut = false } = {}) {
     if (this._sift) {
-      const task = new SiftChangeSharingOptTask({ sharingOpt: !optOut ? 1 : 0});
+      const task = new SiftChangeSharingOptTask({ sharingOpt: !optOut ? 1 : 0 });
       this._onQueueTask(task);
     }
   }
@@ -267,6 +268,23 @@ export default class MailsyncBridge {
       }
     }
     ipcRenderer.send('command', 'application:reset-database', {});
+  }
+
+  forceRelaunchClients() {
+    if (!AppEnv.isMainWindow()) {
+      return;
+    }
+    this._noRelaunch = true;
+    for (const client of Object.values(this.clients())) {
+      if (client) {
+        if (client._proc && client._proc.pid) {
+          const id = client._proc.pid;
+          AppEnv.logWarning(`\n\n@pid ${id} was forced to die, it shall not re-spawn\n\n`);
+          client.kill();
+        }
+      }
+    }
+    ipcRenderer.send('command', 'application:app-relaunch', {});
   }
 
   forceRelaunchClient(account) {
@@ -328,7 +346,7 @@ export default class MailsyncBridge {
         }
       }
     }
-    this._onSyncSiftFolder()
+    this._onSyncSiftFolder();
   }
 
   async sendMessageToAccount(accountId, json, mailSyncMode = mailSyncModes.SYNC) {
@@ -462,12 +480,13 @@ export default class MailsyncBridge {
 
   _getClientConfiguration(account) {
     const { configDirPath, resourcePath } = AppEnv.getLoadSettings();
+    const disableThread = AppEnv.getDisableThread();
     const verboseUntil = AppEnv.config.get(VERBOSE_UNTIL_KEY) || 0;
     const verbose = verboseUntil && verboseUntil / 1 > Date.now();
     if (verbose) {
       console.warn(`Verbose mailsync logging is enabled until ${new Date(verboseUntil)}`);
     }
-    return { configDirPath, resourcePath, verbose };
+    return { configDirPath, resourcePath, verbose, disableThread };
   }
 
   startSift(reason = 'Unknown') {
@@ -478,7 +497,7 @@ export default class MailsyncBridge {
   sift() {
     return this._sift;
   }
-  killSift(reason = 'Unknown'){
+  killSift(reason = 'Unknown') {
     if (this._sift) {
       this._sift.kill();
       AppEnv.debugLog(`sift killed, triggered by ${reason}`);
@@ -612,12 +631,16 @@ export default class MailsyncBridge {
     }
     if (!task.accountId && task.mailsyncMode !== mailSyncModes.SIFT) {
       try {
-        AppEnv.reportError(new Error(`Task ${task.constructor.name} have no accountId`), {
-          errorData: {
-            task: task.toJSON(),
-            account: JSON.stringify(AccountStore.accountsForErrorLog()),
+        AppEnv.reportError(
+          new Error(`Task ${task.constructor.name} have no accountId`),
+          {
+            errorData: {
+              task: task.toJSON(),
+              account: JSON.stringify(AccountStore.accountsForErrorLog()),
+            },
           },
-        }, { grabLogs: true });
+          { grabLogs: true }
+        );
       } catch (e) {
         console.log(e);
       }
@@ -723,17 +746,33 @@ export default class MailsyncBridge {
         AppEnv.logDebug(`from native : ${msg}`);
         console.log('---------------------From native END------------------------');
       }
+
+      // Under message view, thread has no native notification,
+      // when receive a message model notification, a corresponding thread notification should be generated
+      if (AppEnv.getDisableThread() && modelClass === 'Message') {
+        const threadMsgTmp = {
+          modelClass: 'Thread',
+          modelJSONs: modelJSONs.map(json => ({ ...json, __cls: 'Thread' })),
+          type,
+        };
+        this._onIncomingMessages([JSON.stringify(threadMsgTmp)]);
+      }
+
       const promises = [];
       const tmpModels = modelJSONs.map(Utils.convertToModel);
       let passAsIs = false;
-      if(tmpModels.length > 0){
-        if (tmpModels[0].constructor.passAsIs){
+      if (tmpModels.length > 0) {
+        if (tmpModels[0].constructor.passAsIs) {
           passAsIs = true;
         }
       }
-      if (passAsIs || type === 'unpersist'){
+      if (passAsIs || type === 'unpersist') {
         // console.log('passing data from native to UI without going through db');
-        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels });
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+          type,
+          modelClass,
+          models: tmpModels,
+        });
         this._onIncomingChangeRecord(
           new DatabaseChangeRecord({
             type, // TODO BG move to "model" naming style, finding all uses might be tricky
@@ -745,27 +784,31 @@ export default class MailsyncBridge {
       }
       let threadIndex = -1;
       let threadCategories = [];
-      tmpModels.forEach(m=>{
-        if(m.constructor.name !== modelClass){
+      tmpModels.forEach(m => {
+        if (m.constructor.name !== modelClass) {
           return;
         }
         const where = {};
         where[m.constructor.pseudoPrimaryJsKey] = m[m.constructor.pseudoPrimaryJsKey];
         const klass = m.constructor;
-        if(where[m.constructor.pseudoPrimaryJsKey]){
+        if (where[m.constructor.pseudoPrimaryJsKey]) {
           let tmp = DatabaseStore.findBy(klass, where);
           if (m.constructor.name === 'Message') {
             tmp.linkDB(Message.attributes.body);
-          }else if (m.constructor.name === 'Thread'){
-            FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+          } else if (m.constructor.name === 'Thread') {
+            FocusedPerspectiveStore =
+              FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
             const perspective = FocusedPerspectiveStore.current();
-            if(perspective){
-              const categoryIds = Array.isArray(perspective.categories()) ? perspective.categories().map(cat=> cat.id) : [];
-              if(Array.isArray(categoryIds) && categoryIds.length > 0){
+            if (perspective) {
+              const categoryIds = Array.isArray(perspective.categories())
+                ? perspective.categories().map(cat => cat.id)
+                : [];
+              if (Array.isArray(categoryIds) && categoryIds.length > 0) {
                 // console.log(`adding category constrain, ${categoryIds}`);
                 Thread = Thread || require('./models/thread').default;
-                const threadPromise = DatabaseStore.findBy(Thread, where)
-                  .where([Thread.attributes.categories.containsAny(categoryIds)]);
+                const threadPromise = DatabaseStore.findBy(Thread, where).where([
+                  Thread.attributes.categories.containsAny(categoryIds),
+                ]);
                 promises.push(threadPromise);
                 threadIndex = promises.length - 1;
               } else {
@@ -776,28 +819,32 @@ export default class MailsyncBridge {
             }
           }
           promises.push(tmp);
-        }else{
-          console.error(`Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`);
+        } else {
+          console.error(
+            `Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`
+          );
         }
       });
-      if(promises.length > 0) {
+      if (promises.length > 0) {
         Promise.all(promises).then(models => {
           const parsedModels = [];
           models.forEach((model, index) => {
-            if(!model){
+            if (!model) {
               return;
             }
             const pseudoPrimaryKey = model.constructor.pseudoPrimaryJsKey || 'id';
             let duplicate = false;
-            for (let m of parsedModels ) {
-              if(!m){
-                AppEnv.reportError(new Error(`There is an null is the parsed change record models send to UI`));
+            for (let m of parsedModels) {
+              if (!m) {
+                AppEnv.reportError(
+                  new Error(`There is an null is the parsed change record models send to UI`)
+                );
                 continue;
               }
-              if(m[pseudoPrimaryKey] === model[pseudoPrimaryKey]){
+              if (m[pseudoPrimaryKey] === model[pseudoPrimaryKey]) {
                 duplicate = true;
                 let correctLastMessageTimestamp;
-                if(index === threadIndex){
+                if (index === threadIndex) {
                   correctLastMessageTimestamp = model.lastMessageTimestamp;
                 } else {
                   correctLastMessageTimestamp = m.lastMessageTimestamp;
@@ -807,18 +854,22 @@ export default class MailsyncBridge {
                 break;
               }
             }
-            if(!duplicate){
+            if (!duplicate) {
               // if(index === threadIndex){
               //   model.categories = threadCategories;
               // }
               parsedModels.push(model);
             }
           });
-          if(parsedModels.length === 0){
+          if (parsedModels.length === 0) {
             return;
           }
           // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels });
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+            type,
+            modelClass,
+            models: parsedModels,
+          });
           this._onIncomingChangeRecord(
             new DatabaseChangeRecord({
               type,
@@ -1083,7 +1134,11 @@ export default class MailsyncBridge {
       for (let account of accounts) {
         if (account.mailsync) {
           delete account.mailsync.taskDelay;
-          mailsyncConfig[account.pid || account.id] = Object.assign({}, defaultSettings, account.mailsync);
+          mailsyncConfig[account.pid || account.id] = Object.assign(
+            {},
+            defaultSettings,
+            account.mailsync
+          );
         } else {
           mailsyncConfig[account.pid || account.id] = Object.assign({}, defaultSettings);
         }
@@ -1217,8 +1272,8 @@ export default class MailsyncBridge {
       });
     }
   }
-  _onSyncFolderList({ accountIds, source='syncFolderList'} = {}) {
-    if(!Array.isArray(accountIds)){
+  _onSyncFolderList({ accountIds, source = 'syncFolderList' } = {}) {
+    if (!Array.isArray(accountIds)) {
       console.error('no account');
       return;
     }
@@ -1226,12 +1281,20 @@ export default class MailsyncBridge {
       this.sendMessageToAccount(accountId, {
         type: 'sync-folderList',
         aid: accountId,
-        source
+        source,
       });
     });
   }
 
-  _onSyncSiftFolder({ categories = [Sift.categories.Entertainment, Sift.categories.Packages, Sift.categories.Travel, Sift.categories.Bill], source = '' } = {}) {
+  _onSyncSiftFolder({
+    categories = [
+      Sift.categories.Entertainment,
+      Sift.categories.Packages,
+      Sift.categories.Travel,
+      Sift.categories.Bill,
+    ],
+    source = '',
+  } = {}) {
     if (Array.isArray(categories)) {
       this.sendMessageToAccount(
         null,
@@ -1239,17 +1302,16 @@ export default class MailsyncBridge {
           type: 'sync-sifts',
           categories,
         },
-        mailSyncModes.SIFT,
+        mailSyncModes.SIFT
       );
     }
   }
 
   _onRemoteSearch = _.debounce(tasks => {
-      if (tasks.length > 0) {
-        this._onQueueTasks(tasks);
-      }
-    },
-    1500);
+    if (tasks.length > 0) {
+      this._onQueueTasks(tasks);
+    }
+  }, 1500);
 
   _onBeforeUnload = readyToUnload => {
     // If other windows are open, delay the closing of the main window

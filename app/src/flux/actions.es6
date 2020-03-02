@@ -608,6 +608,8 @@ class Actions {
 
   static forceKillAllClients = ActionScopeWindow;
 
+  static forceRelaunchClients = ActionScopeWindow;
+
   static forceDatabaseTrigger = ActionScopeWindow;
 
   static dataShareOptions = ActionScopeMainWindow;

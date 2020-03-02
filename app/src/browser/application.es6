@@ -1,6 +1,15 @@
 /* eslint global-require: "off" */
 
-import { BrowserWindow, Menu, app, ipcMain, dialog, systemPreferences, Notification, screen } from 'electron';
+import {
+  BrowserWindow,
+  Menu,
+  app,
+  ipcMain,
+  dialog,
+  systemPreferences,
+  Notification,
+  screen,
+} from 'electron';
 
 import fs from 'fs-plus';
 import rimraf from 'rimraf';
@@ -57,8 +66,17 @@ export default class Application extends EventEmitter {
       safeMode,
     });
 
+    const Config = require('../config');
+    const config = new Config();
+    this.config = config;
+    this.configPersistenceManager = new ConfigPersistenceManager({ configDirPath, resourcePath });
+    config.load();
+
     try {
-      const mailsync = new MailsyncProcess(options);
+      const mailsync = new MailsyncProcess({
+        ...options,
+        disableThread: this.config.get('core.workspace.disableThread'),
+      });
       this.nativeVersion = await mailsync.migrate();
     } catch (err) {
       let message = null;
@@ -84,12 +102,6 @@ export default class Application extends EventEmitter {
       });
       return;
     }
-
-    const Config = require('../config');
-    const config = new Config();
-    this.config = config;
-    this.configPersistenceManager = new ConfigPersistenceManager({ configDirPath, resourcePath });
-    config.load();
 
     this.configMigrator = new ConfigMigrator(this.config);
     this.configMigrator.migrate();
@@ -324,7 +336,11 @@ export default class Application extends EventEmitter {
         console.log(e);
       }
     }
-    ipcMain.emit('upload-to-report-server', { status: 'uploading', error: null, payload: { logID: extra.logID || '' } });
+    ipcMain.emit('upload-to-report-server', {
+      status: 'uploading',
+      error: null,
+      payload: { logID: extra.logID || '' },
+    });
     if (type.toLocaleLowerCase() === 'error') {
       global.errorLogger.reportError(error, extra);
     } else if (type.toLocaleLowerCase() === 'warning') {
@@ -339,7 +355,7 @@ export default class Application extends EventEmitter {
       extra.osInfo = getOSInfo();
       extra.native = this.nativeVersion;
       extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
-      if (!!extra.errorData && (typeof extra.errorData !== 'string')) {
+      if (!!extra.errorData && typeof extra.errorData !== 'string') {
         extra.errorData = JSON.stringify(extra.errorData);
       }
     } catch (err) {
@@ -456,16 +472,16 @@ export default class Application extends EventEmitter {
         zlib: { level: 9 }, // Sets the compression level.
       });
 
-      output.on('close', function () {
+      output.on('close', function() {
         console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
         console.log('archiver has been finalized and the output file descriptor has closed.');
         resolve(outputPath);
       });
-      output.on('end', function () {
+      output.on('end', function() {
         console.log('\n----->\nData has been drained');
         resolve(outputPath);
       });
-      archive.on('warning', function (err) {
+      archive.on('warning', function(err) {
         if (err.code === 'ENOENT') {
           console.log(err);
         } else {
@@ -474,7 +490,7 @@ export default class Application extends EventEmitter {
           reject(err);
         }
       });
-      archive.on('error', function (err) {
+      archive.on('error', function(err) {
         output.close();
         console.log(err);
         reject(err);
@@ -592,7 +608,7 @@ export default class Application extends EventEmitter {
   // we close windows and log out, we need to wait for these processes to completely
   // exit and then delete the file. It's hard to tell when this happens, so we just
   // retry the deletion a few times.
-  deleteFileWithRetry(filePath, callback = () => { }, retries = 5) {
+  deleteFileWithRetry(filePath, callback = () => {}, retries = 5) {
     glob(filePath, (err, files) => {
       if (err) {
         return;
@@ -641,7 +657,7 @@ export default class Application extends EventEmitter {
     });
   }
 
-  renameFileWithRetry(filePath, newPath, callback = () => { }, retries = 5) {
+  renameFileWithRetry(filePath, newPath, callback = () => {}, retries = 5) {
     const callbackWithRetry = err => {
       if (err && err.message.indexOf('no such file') === -1) {
         console.log(`File Error: ${err.message} - retrying in 150msec`);
@@ -690,8 +706,7 @@ export default class Application extends EventEmitter {
 
     if (hasAccount && hasIdentity && agree) {
       this.windowManager.ensureWindow(WindowManager.MAIN_WINDOW);
-    }
-    else {
+    } else {
       this.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, {
         title: 'Welcome to EdisonMail',
       });
@@ -748,6 +763,16 @@ export default class Application extends EventEmitter {
     console.log('deleting databases and destroying all windows');
     this.windowManager.destroyAllWindows();
     this._deleteDatabase(done, rebuild);
+  };
+
+  _appRelaunch = () => {
+    if (this._onAppRelaunch) {
+      return;
+    }
+    this._onAppRelaunch = true;
+    this.windowManager.destroyAllWindows();
+    app.relaunch();
+    app.quit();
   };
 
   _relaunch = () => {
@@ -847,6 +872,8 @@ export default class Application extends EventEmitter {
 
     this.on('application:window-relaunch', this._relaunch);
 
+    this.on('application:app-relaunch', this._appRelaunch);
+
     this.on('application:quit', () => {
       app.quit();
     });
@@ -909,7 +936,7 @@ export default class Application extends EventEmitter {
       if (mainWindow) {
         mainWindow.sendMessage('composeInvite', {
           subject,
-          body
+          body,
         });
       }
     });

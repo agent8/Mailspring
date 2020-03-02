@@ -39,152 +39,279 @@ Section: Models
 */
 
 const threadInboxCategory = {
-  'primary': 0,
-  'others': 1
+  primary: 0,
+  others: 1,
 };
 
+const isMessageView = AppEnv.getDisableThread();
+const threadAttributes = isMessageView
+  ? {
+      snippet: Attributes.String({
+        modelKey: 'snippet',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      subject: Attributes.String({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'subject',
+      }),
+
+      unread: Attributes.Boolean({
+        modelKey: 'unread',
+        jsonKey: 'unread',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      starred: Attributes.Boolean({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'starred',
+      }),
+
+      inboxCategory: Attributes.Number({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'category',
+        jsModelKey: 'inboxCategory',
+      }),
+
+      categories: Attributes.Collection({
+        modelKey: 'categories',
+        joinTableOnField: 'messageId',
+        joinModelOnField: 'pid',
+        joinTableColumn: 'categoryId',
+        joinTableName: 'MessageCategory',
+        joinOnWhere: { state: 0 },
+        itemClass: Category,
+        queryable: true,
+      }),
+
+      labelIds: Attributes.Collection({
+        modelKey: 'labelIds',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      participants: Attributes.Collection({
+        modelKey: 'participants',
+        itemClass: Contact,
+        queryable: false,
+        loadFromColumn: false,
+      }),
+
+      files: Attributes.Collection({
+        modelKey: 'files',
+        itemClass: File,
+      }),
+
+      hasAttachments: Attributes.Boolean({
+        modelKey: 'hasAttachments',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+      lastMessageTimestamp: Attributes.DateTime({
+        queryable: true,
+        jsModelKey: 'lastMessageTimestamp',
+        jsonKey: 'date',
+        modelKey: 'date',
+        loadFromColumn: true,
+      }),
+      inAllMail: Attributes.Boolean({
+        modelKey: 'inAllMail',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+      state: Attributes.Number({
+        modelKey: 'deleted',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+      hasCalendar: Attributes.Number({
+        modelKey: 'hasCalendar',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      to: Attributes.Collection({
+        modelKey: 'to',
+        jsonKey: 'to',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
+
+      cc: Attributes.Collection({
+        modelKey: 'cc',
+        jsonKey: 'cc',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
+
+      bcc: Attributes.Collection({
+        modelKey: 'bcc',
+        jsonKey: 'bcc',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
+
+      from: Attributes.Collection({
+        modelKey: 'from',
+        jsonKey: 'from',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
+      isJIRA: Attributes.String({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'isJIRA',
+      }),
+    }
+  : {
+      snippet: Attributes.String({
+        modelKey: 'snippet',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      subject: Attributes.String({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'subject',
+      }),
+
+      unread: Attributes.Boolean({
+        modelKey: 'unread',
+        jsonKey: 'unread',
+        queryable: true,
+        loadFromColumn: true,
+        modelTable: 'ThreadCategory',
+      }),
+
+      starred: Attributes.Boolean({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'starred',
+      }),
+
+      // version: Attributes.Number({
+      //   queryable: true,
+      //   jsonKey: 'v',
+      //   modelKey: 'version',
+      // }),
+      inboxCategory: Attributes.Number({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'category',
+        jsModelKey: 'inboxCategory',
+      }),
+
+      categories: Attributes.Collection({
+        modelKey: 'categories',
+        joinTableOnField: 'threadId',
+        joinModelOnField: 'pid',
+        joinTableColumn: 'categoryId',
+        joinTableName: 'ThreadCategory',
+        joinOnWhere: { state: 0 },
+        joinQueryableBy: ['inAllMail', 'lastDate', 'unread'],
+        itemClass: Category,
+        queryable: true,
+      }),
+
+      // folders: Attributes.Collection({
+      //   modelKey: 'folders',
+      //   itemClass: Folder,
+      // }),
+      labelIds: Attributes.Collection({
+        modelKey: 'labelIds',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      // labels: Attributes.Collection({
+      //   modelKey: 'labels',
+      //   joinTableOnField: 'id',
+      //   joinTableName: 'ThreadCategory',
+      //   joinQueryableBy: [
+      //     'inAllMail',
+      //     'lastMessageReceivedTimestamp',
+      //     'lastMessageSentTimestamp',
+      //     'unread',
+      //   ],
+      //   itemClass: Label,
+      // }),
+
+      participants: Attributes.Collection({
+        modelKey: 'participants',
+        itemClass: Contact,
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      files: Attributes.Collection({
+        modelKey: 'files',
+        itemClass: File,
+      }),
+
+      hasAttachments: Attributes.Boolean({
+        modelKey: 'hasAttachments',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+
+      // lastMessageReceivedTimestamp: Attributes.DateTime({
+      //   queryable: true,
+      //   jsonKey: 'lmrt',
+      //   modelKey: 'lastMessageReceivedTimestamp',
+      //   modelTable: 'ThreadCategory',
+      //   loadFromColumn: true
+      // }),
+      //
+      // lastMessageSentTimestamp: Attributes.DateTime({
+      //   queryable: true,
+      //   jsonKey: 'lmst',
+      //   modelKey: 'lastMessageSentTimestamp',
+      //   modelTable: 'ThreadCategory',
+      //   loadFromColumn: true
+      // }),
+      lastMessageTimestamp: Attributes.DateTime({
+        queryable: true,
+        jsModelKey: 'lastMessageTimestamp',
+        jsonKey: 'lastDate',
+        modelKey: 'lastDate',
+        loadFromColumn: true,
+        modelTable: 'ThreadCategory',
+      }),
+
+      inAllMail: Attributes.Boolean({
+        modelKey: 'inAllMail',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+      state: Attributes.Number({
+        modelKey: 'state',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+      hasCalendar: Attributes.Number({
+        modelKey: 'hasCalendar',
+        queryable: true,
+        loadFromColumn: true,
+      }),
+      isJIRA: Attributes.String({
+        queryable: true,
+        loadFromColumn: true,
+        modelKey: 'isJIRA',
+      }),
+    };
 export default class Thread extends ModelWithMetadata {
-  static attributes = Object.assign({}, ModelWithMetadata.attributes, {
-    snippet: Attributes.String({
-      modelKey: 'snippet',
-      queryable: true,
-      loadFromColumn: true,
-    }),
-
-    subject: Attributes.String({
-      queryable: true,
-      loadFromColumn: true,
-      modelKey: 'subject',
-    }),
-
-    unread: Attributes.Boolean({
-      modelKey: 'unread',
-      jsonKey: 'unread',
-      queryable: true,
-      loadFromColumn: true,
-      modelTable: 'ThreadCategory',
-    }),
-
-    starred: Attributes.Boolean({
-      queryable: true,
-      loadFromColumn: true,
-      modelKey: 'starred',
-    }),
-
-    // version: Attributes.Number({
-    //   queryable: true,
-    //   jsonKey: 'v',
-    //   modelKey: 'version',
-    // }),
-    inboxCategory: Attributes.Number({
-      queryable: true,
-      loadFromColumn: true,
-      modelKey: 'category',
-      jsModelKey: 'inboxCategory',
-    }),
-
-    categories: Attributes.Collection({
-      modelKey: 'categories',
-      joinTableOnField: 'threadId',
-      joinModelOnField: 'pid',
-      joinTableColumn: 'categoryId',
-      joinTableName: 'ThreadCategory',
-      joinOnWhere: { state: 0 },
-      joinQueryableBy: [
-        'inAllMail',
-        'lastDate',
-        'unread',
-      ],
-      itemClass: Category,
-      queryable: true,
-    }),
-
-    // folders: Attributes.Collection({
-    //   modelKey: 'folders',
-    //   itemClass: Folder,
-    // }),
-    labelIds: Attributes.Collection({
-      modelKey: 'labelIds',
-      queryable: true,
-      loadFromColumn: true,
-    }),
-
-    // labels: Attributes.Collection({
-    //   modelKey: 'labels',
-    //   joinTableOnField: 'id',
-    //   joinTableName: 'ThreadCategory',
-    //   joinQueryableBy: [
-    //     'inAllMail',
-    //     'lastMessageReceivedTimestamp',
-    //     'lastMessageSentTimestamp',
-    //     'unread',
-    //   ],
-    //   itemClass: Label,
-    // }),
-
-    participants: Attributes.Collection({
-      modelKey: 'participants',
-      itemClass: Contact,
-      queryable: true,
-      loadFromColumn: true,
-    }),
-
-    files: Attributes.Collection({
-      modelKey: 'files',
-      itemClass: File,
-    }),
-
-    hasAttachments: Attributes.Boolean({
-      modelKey: 'hasAttachments',
-      queryable: true,
-      loadFromColumn: true,
-    }),
-
-    // lastMessageReceivedTimestamp: Attributes.DateTime({
-    //   queryable: true,
-    //   jsonKey: 'lmrt',
-    //   modelKey: 'lastMessageReceivedTimestamp',
-    //   modelTable: 'ThreadCategory',
-    //   loadFromColumn: true
-    // }),
-    //
-    // lastMessageSentTimestamp: Attributes.DateTime({
-    //   queryable: true,
-    //   jsonKey: 'lmst',
-    //   modelKey: 'lastMessageSentTimestamp',
-    //   modelTable: 'ThreadCategory',
-    //   loadFromColumn: true
-    // }),
-    lastMessageTimestamp: Attributes.DateTime({
-      queryable: true,
-      jsModelKey: 'lastMessageTimestamp',
-      jsonKey: 'lastDate',
-      modelKey: 'lastDate',
-      loadFromColumn: true,
-      modelTable: 'ThreadCategory',
-    }),
-
-    inAllMail: Attributes.Boolean({
-      modelKey: 'inAllMail',
-      queryable: true,
-      loadFromColumn: true,
-    }),
-    state: Attributes.Number({
-      modelKey: 'state',
-      queryable: true,
-      loadFromColumn: true,
-    }),
-    hasCalendar: Attributes.Number({
-      modelKey: 'hasCalendar',
-      queryable: true,
-      loadFromColumn: true,
-    }),
-    isJIRA: Attributes.String({
-      queryable: true,
-      loadFromColumn: true,
-      modelKey: 'isJIRA',
-    }),
-  });
+  static tableName = isMessageView ? 'Message' : 'Thread';
+  static attributes = Object.assign({}, ModelWithMetadata.attributes, threadAttributes);
 
   static sortOrderAttribute = () => {
     return Thread.attributes.lastMessageTimestamp;
@@ -194,9 +321,30 @@ export default class Thread extends ModelWithMetadata {
     return Thread.sortOrderAttribute().descending();
   };
 
+  constructor(...args) {
+    super(...args);
+    if (isMessageView) {
+      this.participants = [
+        ...(this.to || []),
+        ...(this.cc || []),
+        ...(this.bcc || []),
+        ...(this.from || []),
+      ];
+    }
+  }
+
   async messages({ includeHidden } = {}) {
+    const where = isMessageView
+      ? { id: this.id, deleted: false }
+      : { threadId: this.id, deleted: false };
     const messages = await DatabaseStore.findAll(Message)
-      .where({ threadId: this.id, deleted: false }).where([Message.attributes.syncState.in([Message.messageSyncState.saving, Message.messageSyncState.normal])]);
+      .where(where)
+      .where([
+        Message.attributes.syncState.in([
+          Message.messageSyncState.saving,
+          Message.messageSyncState.normal,
+        ]),
+      ]);
 
     if (!includeHidden) {
       return messages.filter(message => !message.isHidden());
@@ -216,11 +364,13 @@ export default class Thread extends ModelWithMetadata {
     return (this.files || []).length;
   }
   get labels() {
-    return this.labelIds.map(labelId => {
-      if (typeof labelId === 'string') {
-        return CategoryStore.byFolderId(labelId);
-      }
-    }).filter(l => l);
+    return this.labelIds
+      .map(labelId => {
+        if (typeof labelId === 'string') {
+          return CategoryStore.byFolderId(labelId);
+        }
+      })
+      .filter(l => l);
   }
 
   get folders() {
@@ -234,7 +384,7 @@ export default class Thread extends ModelWithMetadata {
    * When loading data from the API, there are `folders` AND `labels` but
    * no `categories` yet.
    */
-    fromJSON(json) {
+  fromJSON(json) {
     super.fromJSON(json);
 
     if (this.participants && this.participants instanceof Array) {
@@ -242,7 +392,7 @@ export default class Thread extends ModelWithMetadata {
         item.accountId = this.accountId;
       });
     }
-    if(!this.id){
+    if (!this.id) {
       this.id = json.id || json.pid;
     }
     return this;
