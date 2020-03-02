@@ -17,6 +17,7 @@ import {
   AppearanceProfileOptions,
   AppearancePanelOptions,
   AppearanceThemeSwitch,
+  AppearanceViewOptions,
 } from './components/preferences-appearance-components';
 import {
   CustomizeQuickActions,
@@ -314,6 +315,14 @@ const preferencesTemplateFill = {
               label: 'Panel',
               component: AppearancePanelOptions,
               keywords: ['Single Panel', 'Two Panels', 'preview'],
+            },
+            {
+              label: 'Disable thread',
+              configSchema: configSchema =>
+                configSchema.properties.workspace.properties.disableThread,
+              keyPath: 'core.workspace.disableThread',
+              component: AppearanceViewOptions,
+              keywords: [],
             },
           ],
         },

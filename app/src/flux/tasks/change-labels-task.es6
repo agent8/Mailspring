@@ -30,11 +30,7 @@ export default class ChangeLabelsTask extends ChangeMailTask {
     if (this.taskDescription) {
       return this.taskDescription;
     }
-
-    let countString = '';
-    if (this.threadIds.length > 1) {
-      countString = ` ${this.threadIds.length} threads`;
-    }
+    const paramsText = super.description();
 
     const removed = this.labelsToRemove[0];
     const added = this.labelsToAdd[0];
@@ -43,26 +39,26 @@ export default class ChangeLabelsTask extends ChangeMailTask {
     // folders of Gmail. If another folder is involved, we need to decide to
     // return either "Moved to Bla" or "Added Bla".
     if (added && added.name === 'spam') {
-      return `Marked${countString} as Spam`;
+      return `Marked ${paramsText} as Spam`;
     } else if (removed && removed.name === 'spam') {
-      return `Unmarked${countString} as Spam`;
+      return `Unmarked ${paramsText} as Spam`;
     } else if (added && added.name === 'trash') {
-      return `Trashed${countString}`;
+      return `Trashed ${paramsText}`;
     } else if (removed && removed.name === 'trash') {
-      return `Removed${countString} from Trash`;
+      return `Removed ${paramsText} from Trash`;
     }
     if (this.labelsToAdd.length === 0 && this.labelsToRemove.find(l => l.role === 'inbox')) {
-      return `Archived${countString}`;
+      return `Archived ${paramsText}`;
     } else if (this.labelsToRemove.length === 0 && this.labelsToAdd.find(l => l.role === 'inbox')) {
-      return `Unarchived${countString}`;
+      return `Unarchived ${paramsText}`;
     }
     if (this.labelsToAdd.length === 1 && this.labelsToRemove.length === 0) {
-      return `Added ${added.displayName}${countString ? ' to' : ''}${countString}`;
+      return `Added ${added.displayName} to ${paramsText}`;
     }
     if (this.labelsToAdd.length === 0 && this.labelsToRemove.length === 1) {
-      return `Removed ${removed.displayName}${countString ? ' from' : ''}${countString}`;
+      return `Removed ${removed.displayName} from ${paramsText}`;
     }
-    return `Changed labels${countString ? ' on' : ''}${countString}`;
+    return `Changed labels on ${paramsText}`;
   }
 
   _isArchive() {
@@ -71,9 +67,9 @@ export default class ChangeLabelsTask extends ChangeMailTask {
   }
 
   willBeQueued() {
-    if (this.messageIds.length) {
-      throw new Error('ChangeLabelsTask: Changing individual message labels is unsupported');
-    }
+    // if (this.messageIds.length) {
+    //   throw new Error('ChangeLabelsTask: Changing individual message labels is unsupported');
+    // }
     if (!this.labelsToAdd) {
       throw new Error(`Assertion Failure: ChangeLabelsTask requires labelsToAdd`);
     }
@@ -87,7 +83,7 @@ export default class ChangeLabelsTask extends ChangeMailTask {
       //   );
       // }
     }
-    super.willBeQueued();
+    super.willBeQueued('ChangeLabelsTask');
   }
 
   createUndoTask() {

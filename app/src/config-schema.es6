@@ -141,6 +141,10 @@ export default {
             default: 1,
             advanced: true,
           },
+          disableThread: {
+            type: 'boolean',
+            default: false,
+          },
         },
       },
       disabledPackages: {
