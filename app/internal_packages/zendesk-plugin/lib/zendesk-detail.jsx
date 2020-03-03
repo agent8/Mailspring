@@ -159,8 +159,23 @@ export default class ZendeskDetail extends Component {
           link: ticketLink,
         })
       }
+      await this.getComments()
       return
     }
+  }
+  getComments = async () => {
+    const { ticket } = this.state
+    this.safeSetState({
+      commentLoading: true,
+    })
+    const comments = await this.zendesk.getComments(ticket)
+    for (let item of comments) {
+      item.author = await this.zendesk.getUser(item.authorId)
+    }
+    ticket.comments = comments
+    this.safeSetState({
+      commentLoading: false,
+    })
   }
   selectFilter = (inputVal, option) => {
     return option.props.displayname.toLocaleLowerCase().indexOf(inputVal.toLocaleLowerCase()) !== -1
@@ -205,8 +220,8 @@ export default class ZendeskDetail extends Component {
     followerIds.splice(index, 1)
     let followers = ticket.followers
     followers.splice(index, 1)
-    followers = followers.map(item => ({ user_email: item.email }))
-    await this.asyncUpdateField('followers', followers)
+    const submitFollowers = followers.map(item => ({ user_email: item.email }))
+    await this.asyncUpdateField('followers', submitFollowers)
   }
   onAddFollower = async event => {
     const email = this.followerInput.value
@@ -218,14 +233,29 @@ export default class ZendeskDetail extends Component {
       return
     }
     followers.push(follower)
-    followers = followers.map(item => ({ user_email: item.email }))
-    await this.asyncUpdateField('followers', followers)
+    const submitFollowers = followers.map(item => ({ user_email: item.email }))
+    await this.asyncUpdateField('followers', submitFollowers)
+  }
+  addComment = async () => {
+    const commentContent = this.commentInput.value
+    console.log('add comment:', commentContent, this.zendesk)
+    const email = this.zendesk.authEmail
+    const user = this.zendesk.getUserByEmail(email)
+    const comment = { body: commentContent, author_id: user.id }
+    this.asyncUpdateField('comment', comment)
+    const { ticket } = this.state
+    comment.author = await this.zendesk.getUserByEmail(email)
+    comment.createdAt = new Date()
+    comment.htmlBody = commentContent
+    ticket.comments.unshift(comment)
+    this.setState({ ticket })
   }
   asyncUpdateField = async (name, value, field) => {
     field = field || name
     const upperName = name[0].toUpperCase() + name.substring(1)
     AppEnv.trackingEvent(`zendesk-Change-${upperName}`)
     let { ticket } = this.state
+    ticket[name] = value
     try {
       this.safeSetState({
         [`${field}Progress`]: 'loading',
@@ -253,30 +283,6 @@ export default class ZendeskDetail extends Component {
     const path = originalFiles[id] || attachments[id]
     const currentWin = AppEnv.getCurrentWindow()
     currentWin.previewFile(path)
-  }
-  addComment = async () => {
-    const comment = this.commentInput.value
-    if (!comment) {
-      return
-    }
-    AppEnv.trackingEvent('zendesk-AddComment')
-    try {
-      this.safeSetState({
-        commentSaving: true,
-      })
-      await this.zendesk.addComment(this.ticketKey, comment)
-      this.findComments(this.ticketKey, true)
-      this.commentInput.value = ''
-      // this._showDialog('Add comment successful.');
-      AppEnv.trackingEvent('zendesk-AddComment-Success')
-    } catch (err) {
-      console.error('****err', err)
-      AppEnv.trackingEvent('zendesk-AddComment-Failed')
-      if (err.message && err.message.includes('invalid refresh token')) {
-        this.logout()
-      }
-      this._showDialog('Add comment failed.')
-    }
   }
   _showDialog (message, type = 'info') {
     remote.dialog.showMessageBox({
@@ -349,6 +355,33 @@ export default class ZendeskDetail extends Component {
       }
     }
   }
+
+  renderComments = comments => {
+    console.log(' c', comments)
+    const { commentLoading } = this.state
+    if (commentLoading) {
+      return <div>{this._renderLoading(20)}</div>
+    }
+    return (
+      <CSSTransitionGroup
+        component='div'
+        transitionEnterTimeout={350}
+        transitionLeaveTimeout={350}
+        transitionName={this.state.shouldTransition ? 'transition-slide' : ''}
+      >
+        {comments.map(item => (
+          <div key={item.id} className='row'>
+            <div className='comment-header'>
+              {this.renderUserNode(item.author)}
+              <span className='datetime'>{DateUtils.mediumTimeString(item.createdAt)}</span>
+            </div>
+            <div dangerouslySetInnerHTML={{ __html: item.htmlBody }}></div>
+          </div>
+        ))}
+      </CSSTransitionGroup>
+    )
+  }
+
   render () {
     const {
       ticket,
@@ -363,6 +396,7 @@ export default class ZendeskDetail extends Component {
       errorMessage,
       followersProgress,
       followerError,
+      commentSaving,
     } = this.state
     console.log(
       ' zendesk-detail.render:',
@@ -422,7 +456,7 @@ export default class ZendeskDetail extends Component {
     const followers = ticket.followers.map((item, index) => {
       return (
         <span className='piece' key={index}>
-          <span>{item.email}</span>
+          <span>{item.email || item.user_email}</span>
           <RetinaImg
             isIcon
             name='close.svg'
@@ -582,6 +616,20 @@ export default class ZendeskDetail extends Component {
           <div className='zendesk-description' onClick={this.openOrignalImage}>
             <span className='label'>Description</span>
             <div dangerouslySetInnerHTML={{ __html: ticket.description }}></div>
+          </div>
+          <div className='zendesk-comments' onClick={this.openOrignalImage}>
+            <span className='label'>Comments</span>
+            {this.renderComments(ticket.comments)}
+          </div>
+          <div className='zendesk-submit-comment'>
+            <textarea ref={el => (this.commentInput = el)}></textarea>
+            {commentSaving ? (
+              this._renderLoading(20)
+            ) : (
+              <button className='btn btn-zendesk' onClick={this.addComment}>
+                Add Comment
+              </button>
+            )}
           </div>
         </div>
       </div>

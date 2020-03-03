@@ -1,19 +1,19 @@
-const ZENDESK_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn'
-const ZENDESK_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE'
-const Zendesk = require('zendesk-node')
-debugger
-export default class ZendeskApi {
+import JiraApiBase from 'jira-client'
+const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn'
+const JIRA_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE'
+
+export default class JiraApi extends JiraApiBase {
   constructor (props) {
-    this.zendesk = Zendesk(props)
-  }
-  listTickets = async queryParams => {
-    return await this.zendesk.tickets.list(queryParams)
+    super(props)
+    if (props.refreshToken) {
+      this.refreshToken = props.refreshToken
+    }
   }
   refreshAccessToken = async () => {
     const body = []
     body.push(`refresh_token=${encodeURIComponent(this.refreshToken)}`)
-    body.push(`client_id=${encodeURIComponent(ZENDESK_CLIENT_ID)}`)
-    body.push(`client_secret=${encodeURIComponent(ZENDESK_CLIENT_SECRET)}`)
+    body.push(`client_id=${encodeURIComponent(JIRA_CLIENT_ID)}`)
+    body.push(`client_secret=${encodeURIComponent(JIRA_CLIENT_SECRET)}`)
     body.push(`grant_type=${encodeURIComponent('refresh_token')}`)
 
     const resp = await fetch('https://auth.atlassian.com/oauth/token', {
@@ -59,9 +59,20 @@ export default class ZendeskApi {
     }
     return res
   }
-  findTicket = async ticketNumber => {
-    const ticket = await this.zendesk.tickets.get(ticketNumber)
-    return ticket.body.ticket
+  findIssue (issueNumber, expand, fields, properties, fieldsByKeys) {
+    return this.safeDoRequest(
+      this.makeRequestHeader(
+        this.makeUri({
+          pathname: '/issue/'.concat(issueNumber),
+          query: {
+            expand: expand || '',
+            fields: fields || '*all',
+            properties: properties || '*all',
+            fieldsByKeys: fieldsByKeys || false,
+          },
+        })
+      )
+    )
   }
   downloadThumbnail = attachment => {
     return this.safeDoRequest(
@@ -95,24 +106,61 @@ export default class ZendeskApi {
       )
     )
   }
-  findComments = async ticketKey => {
-    return await this.zendesk.tickets.listComments(ticketKey)
+  findComments = (jiraId, expand, startAt, maxResults) => {
+    return this.safeDoRequest(
+      this.makeRequestHeader(
+        this.makeUri({
+          pathname: '/issue/'.concat(jiraId).concat('/comment'),
+          query: {
+            expand: expand || 'renderedBody',
+            startAt: startAt || 0,
+            maxResults: maxResults || 50,
+          },
+        })
+      )
+    )
   }
-  searchAssignableUsers = async data => {
-    const res = await this.zendesk.users.list()
-    console.log(' api.searchAssignableUsers:', data, res)
-    return res.body.users
+  searchAssignableUsers (data) {
+    var issueKey = data.issueKey,
+      username = data.username,
+      startAt = data.startAt,
+      maxResults = data.maxResults,
+      includeActive = data.includeActive,
+      includeInactive = data.includeInactive
+    return this.safeDoRequest(
+      this.makeRequestHeader(
+        this.makeUri({
+          pathname: '/user/assignable/search',
+          query: {
+            issueKey: issueKey,
+            username: username,
+            startAt: startAt || 0,
+            maxResults: maxResults || 50,
+            includeActive: includeActive || true,
+            includeInactive: includeInactive || false,
+          },
+        }),
+        {
+          followAllRedirects: true,
+        }
+      )
+    )
   }
-  getUser = async id => {
-    console.log(' getUser id:', id)
-    const res = await this.zendesk.users.get(id, {})
-    return res.body.user
-  }
-  updateTicketAssignee = async (ticketKey, userId) => {
-    return await this.zendesk.tickets.update(ticketKey, { assignee_id: userId })
-  }
-  updateTicketStatus = async (ticketKey, status) => {
-    return await this.zendesk.tickets.update(ticketKey, { status })
+  updateAssignee (issueKey, accountId) {
+    return this.safeDoRequest(
+      this.makeRequestHeader(
+        this.makeUri({
+          pathname: '/issue/'.concat(issueKey, '/assignee'),
+        }),
+        {
+          method: 'PUT',
+          followAllRedirects: true,
+          body: {
+            accountId,
+          },
+        }
+      )
+    )
   }
   transitionIssue (issueId, issueTransition) {
     return this.safeDoRequest(
