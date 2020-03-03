@@ -503,6 +503,7 @@ class Actions {
   static broadcastDraftAttachmentState = ActionScopeGlobal;
 
   static syncFolders = ActionScopeMainWindow;
+  static syncFolderList = ActionScopeMainWindow;
   static syncSiftFolder = ActionScopeMainWindow;
   static fetchBodies = ActionScopeMainWindow;
   static fetchAttachmentsByMessage = ActionScopeWindow;

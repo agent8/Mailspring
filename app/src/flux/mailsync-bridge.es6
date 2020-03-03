@@ -23,6 +23,8 @@ import SiftChangeSharingOptTask from './tasks/sift-change-sharing-opt-task';
 import Message from './models/message';
 let FocusedPerspectiveStore = null;
 let Thread = null;
+import NativeReportTask from './tasks/native-report-task';
+
 const MAX_CRASH_HISTORY = 10;
 
 const VERBOSE_UNTIL_KEY = 'core.sync.verboseUntil';
@@ -127,6 +129,7 @@ export default class MailsyncBridge {
     Actions.fetchBodies.listen(this._onFetchBodies, this);
     Actions.fetchAttachments.listen(this._onFetchAttachments, this);
     Actions.syncFolders.listen(this._onSyncFolders, this);
+    Actions.syncFolderList.listen(this._onSyncFolderList, this);
     Actions.syncSiftFolder.listen(this._onSyncSiftFolder, this);
     Actions.setObservableRange.listen(this._onSetObservableRange, this);
     Actions.debugFakeNativeMessage.listen(this.fakeEmit, this);
@@ -863,6 +866,20 @@ export default class MailsyncBridge {
       }
     }
   };
+  _uploadNativeReport = nativeReportTask => {
+    if(nativeReportTask instanceof NativeReportTask){
+      if(nativeReportTask.level === NativeReportTask.errorLevel.info){
+        console.log(nativeReportTask);
+        AppEnv.reportLog(new Error(nativeReportTask.key), {errorData: nativeReportTask});
+      } else if(nativeReportTask.level === NativeReportTask.errorLevel.warning){
+        console.warn(nativeReportTask);
+        AppEnv.reportWarning(new Error(nativeReportTask.key), {errorData: nativeReportTask});
+      } else {
+        console.error(nativeReportTask);
+        AppEnv.reportError(new Error(nativeReportTask.key), {errorData: nativeReportTask}, {grabLogs: true});
+      }
+    }
+  };
 
   _onIncomingChangeRecord = record => {
     DatabaseStore.trigger(record);
@@ -871,6 +888,10 @@ export default class MailsyncBridge {
     // Note: cannot use `record.objectClass` because of subclass names
     if (record.type === 'persist' && record.objects[0] instanceof Task) {
       for (const task of record.objects) {
+        if(task && task instanceof NativeReportTask){
+          this._uploadNativeReport(task);
+          continue;
+        }
         if (task.status !== Task.Status.Complete) {
           continue;
         }
@@ -1195,6 +1216,19 @@ export default class MailsyncBridge {
         source,
       });
     }
+  }
+  _onSyncFolderList({ accountIds, source='syncFolderList'} = {}) {
+    if(!Array.isArray(accountIds)){
+      console.error('no account');
+      return;
+    }
+    accountIds.forEach(accountId => {
+      this.sendMessageToAccount(accountId, {
+        type: 'sync-folderList',
+        aid: accountId,
+        source
+      });
+    });
   }
 
   _onSyncSiftFolder({ categories = [Sift.categories.Entertainment, Sift.categories.Packages, Sift.categories.Travel, Sift.categories.Bill], source = '' } = {}) {

@@ -176,6 +176,7 @@ class SidebarItem {
         counterStyle,
         onDelete: opts.deletable ? onDeleteItem : undefined,
         onEdited: opts.editable ? onEditItem : undefined,
+        syncFolderList: opts.syncFolderList,
         onCollapseToggled: toggleItemCollapsed,
 
         onDrop(item, event) {
@@ -212,6 +213,9 @@ class SidebarItem {
         onSelect(item) {
           // FocusedPerspectiveStore.refreshPerspectiveMessages({perspective: item});
           Actions.focusMailboxPerspective(item.perspective);
+          if(item.syncFolderList){
+            Actions.syncFolderList({accountIds: item.accountIds, source: 'onToggleItemCollapsed'});
+          }
         },
       },
       opts,
@@ -353,6 +357,7 @@ class SidebarItem {
       opts.iconName = `account-logo-${account.provider}.png`;
       opts.fallback = `account-logo-other.png`;
       opts.mode = RetinaImg.Mode.ContentPreserve;
+      opts.syncFolderList = true;
     }
     return this.forPerspective(id, perspective, opts);
   }
