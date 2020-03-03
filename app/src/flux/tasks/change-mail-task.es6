@@ -10,9 +10,6 @@ Subclasses implement {ChangeMailTask::changesToModel} and
 they provide, and override {ChangeMailTask::performLocal} to perform
 additional consistency checks.
 */
-
-const isMessageView = AppEnv.getDisableThread();
-
 export default class ChangeMailTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
     taskDescription: Attributes.String({
@@ -36,17 +33,8 @@ export default class ChangeMailTask extends Task {
     super(rest);
 
     // we actually only keep a small bit of data now
-    const threadIds = this.threadIds || threads.map(i => i.id);
-    const messageIds = this.messageIds || messages.map(i => i.id);
-    if (isMessageView) {
-      this.threadIds = [];
-      const messageIdSet = new Set([...threadIds, ...messageIds]);
-      this.messageIds = [...messageIdSet];
-    } else {
-      this.threadIds = threadIds;
-      this.messageIds = messageIds;
-    }
-
+    this.threadIds = this.threadIds || threads.map(i => i.id);
+    this.messageIds = this.messageIds || messages.map(i => i.id);
     this.accountId = this.accountId || (threads[0] || messages[0] || {}).accountId;
     if (this.canBeUndone === undefined) {
       this.canBeUndone = true;
@@ -70,37 +58,6 @@ export default class ChangeMailTask extends Task {
     const task = this.createIdenticalTask();
     task.isUndo = true;
     return task;
-  }
-
-  description() {
-    // If the parames has both messageIds and threadIds, threadIds will not work in native
-    if (this.messageIds.length) {
-      const count = this.messageIds.length;
-      return count > 1 ? `${count} messages` : 'message';
-    }
-    if (this.threadIds.length) {
-      const count = this.threadIds.length;
-      return count > 1 ? `${count} threads` : 'thread';
-    }
-  }
-
-  willBeQueued(taskName) {
-    if (this.threadIds.length > 0 && this.messageIds.length > 0) {
-      throw new Error(
-        `${
-          taskName ? `${taskName}: ` : ''
-        }You can provide \`threads\` or \`messages\` but not both.`
-      );
-    }
-    if (this.threadIds.length === 0 && this.messageIds.length === 0) {
-      throw new Error(
-        `${
-          taskName ? `${taskName}: ` : ''
-        }You must provide a \`threads\` or \`messages\` Array of models or IDs.`
-      );
-    }
-
-    super.willBeQueued();
   }
 
   numberOfImpactedItems() {

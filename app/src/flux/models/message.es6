@@ -21,11 +21,9 @@ const mapping = {
     }
     return json.map(attachment => {
       return File.fromPartialData(attachment);
-    });
-  },
+    })
+  }
 };
-
-const isMessageView = AppEnv.getDisableThread();
 
 export default class Message extends ModelWithMetadata {
   static fieldsNotInDB = [
@@ -122,12 +120,12 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarReply: Attributes.Boolean({
       modelKey: 'calendarReply',
-      queryable: false,
+      queryable: false
     }),
 
     listUnsubscribe: Attributes.String({
       modelKey: 'listUnsubscribe',
-      queryable: false,
+      queryable: false
     }),
 
     pristine: Attributes.Boolean({
@@ -137,28 +135,28 @@ export default class Message extends ModelWithMetadata {
     replyToHeaderMessageId: Attributes.String({
       modelKey: 'replyToHeaderMessageId',
       jsonKey: 'replyToHeaderMsgId',
-      queryable: false,
+      queryable: false
     }),
 
     forwardedHeaderMessageId: Attributes.String({
       modelKey: 'forwardedHeaderMessageId',
       jsonKey: 'forwardHeaderMsgId',
-      queryable: false,
+      queryable: false
     }),
 
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
       jsonKey: 'refDraftHeaderMsgId',
-      queryable: false,
+      queryable: false
     }),
     savedOnRemote: Attributes.Boolean({
       modelKey: 'savedOnRemote',
-      queryable: false,
+      queryable: false
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
       jsonKey: 'hasRefDraft',
-      queryable: false,
+      queryable: false
     }),
     folder: Attributes.Object({
       queryable: false,
@@ -167,7 +165,7 @@ export default class Message extends ModelWithMetadata {
     }),
     replyOrForward: Attributes.Number({
       modelKey: 'replyOrForward',
-      queryable: false,
+      queryable: false
     }),
     msgOrigin: Attributes.Number({
       modelKey: 'msgOrigin',
@@ -191,32 +189,32 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
-      queryable: false,
+      queryable: false
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
-      queryable: false,
+      queryable: false
     }),
     pastMessageIds: Attributes.Collection({
       modelKey: 'pastMessageIds',
-      queryable: false,
+      queryable: false
     }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
-      queryable: false,
+      queryable: false
     }),
 
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true,
+      mergeIntoModel: true
     }),
     msgData: Attributes.Object({
       modelKey: 'msgData',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true,
+      mergeIntoModel: true
     }),
 
     date: Attributes.DateTime({
@@ -250,7 +248,7 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'files',
       queryable: true,
       loadFromColumn: true,
-      fromJSONMapping: mapping.attachmentIdsFromJSON,
+      fromJSONMapping: mapping.attachmentIdsFromJSON
     }),
 
     unread: Attributes.Boolean({
@@ -279,7 +277,7 @@ export default class Message extends ModelWithMetadata {
     threadId: Attributes.String({
       queryable: true,
       loadFromColumn: true,
-      modelKey: isMessageView ? 'pid' : 'threadId',
+      modelKey: 'threadId',
     }),
 
     headerMessageId: Attributes.String({
@@ -287,7 +285,7 @@ export default class Message extends ModelWithMetadata {
       loadFromColumn: true,
       jsonKey: 'headerMsgId',
       modelKey: 'headerMsgId',
-      jsModelKey: 'headerMessageId',
+      jsModelKey: 'headerMessageId'
     }),
 
     subject: Attributes.String({
@@ -357,7 +355,7 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
-    if (!Array.isArray(data.pastMessageIds)) {
+    if(!Array.isArray(data.pastMessageIds)){
       this.pastMessageIds = [];
     }
   }
@@ -380,7 +378,7 @@ export default class Message extends ModelWithMetadata {
 
   fromJSON(json = {}) {
     super.fromJSON(json);
-    if (!Array.isArray(json.pastMessageIds)) {
+    if(!Array.isArray(json.pastMessageIds)){
       this.pastMessageIds = [];
     }
     return this;
@@ -497,7 +495,7 @@ export default class Message extends ModelWithMetadata {
     const rets = [];
     this.attachmentIds.forEach(partialAttachmentData => {
       if (!(partialAttachmentData instanceof File)) {
-        partialAttachmentData = File.fromPartialData(partialAttachmentData);
+        partialAttachmentData = File.fromPartialData(partialAttachmentData)
       }
       const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
       if (fileData) {
@@ -509,7 +507,7 @@ export default class Message extends ModelWithMetadata {
   set files(attachments) {
     this.attachmentIds = attachments.map(attachment => {
       if (!(attachment instanceof File)) {
-        attachment = File.fromPartialData(attachment);
+        attachment = File.fromPartialData(attachment)
       }
       if (!attachment.missingData) {
         AttachmentStore.setAttachmentData(attachment);
@@ -527,7 +525,7 @@ export default class Message extends ModelWithMetadata {
 
   get labels() {
     const ret = [];
-    if (Array.isArray(this.labelIds)) {
+    if(Array.isArray(this.labelIds)){
       this.labelIds.forEach(labelId => {
         if (typeof labelId === 'string') {
           const tmp = CategoryStore.byFolderId(labelId);
@@ -607,9 +605,7 @@ export default class Message extends ModelWithMetadata {
     const participants = this.participants({ includeFrom: false, includeBcc: true });
     const account = AccountStore.accountForId(this.accountId);
     if (!account) {
-      AppEnv.reportError(new Error('Message accountId is not part of any account'), {
-        errorData: this.toJSON(),
-      });
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), { errorData: this.toJSON() })
       return false;
     }
     for (let participant of participants) {
@@ -674,17 +670,13 @@ export default class Message extends ModelWithMetadata {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(
-      folder => folder && folder.role && folder.role.toLowerCase().includes('trash')
-    );
+    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
   }
   isInSpam() {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(
-      folder => folder && folder.role && folder.role.toLowerCase().includes('spam')
-    );
+    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
   }
 
   fromContact() {
@@ -712,25 +704,17 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() {}
+  isActiveDraft() { }
 
   isDeleted() {
     return this.deleted;
   }
   isDraftSending() {
-    return (
-      !this.isDeleted() &&
-      this.draft &&
-      Message.compareMessageState(this.syncState === Message.messageSyncState.sending)
-    );
+    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState === Message.messageSyncState.sending);
   }
 
   isDraftSaving() {
-    return (
-      !this.isDeleted() &&
-      this.draft &&
-      Message.compareMessageState(this.syncState == Message.messageSyncState.saving)
-    ); // eslint-ignore-line
+    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState == Message.messageSyncState.saving); // eslint-ignore-line
   }
   isCalendarReply() {
     return this.calendarReply;

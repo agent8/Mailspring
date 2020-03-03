@@ -42,7 +42,7 @@ export const LocalizedErrorStrings = {
   ErrorSendMessageIllegalAttachment:
     'The message contains an illegial attachment that is not allowed by the server.',
   ErrorYahooSendMessageSpamSuspected:
-    "The message has been blocked by Yahoo's outbound spam filter.",
+    'The message has been blocked by Yahoo\'s outbound spam filter.',
   ErrorYahooSendMessageDailyLimitExceeded:
     'The message has been blocked by Yahoo - you have exceeded your daily sending limit.',
   ErrorNoSender: 'The message has been blocked because no sender is configured.',
@@ -54,31 +54,18 @@ export const LocalizedErrorStrings = {
 export const mailSyncModes = {
   RESET: 'reset',
   SYNC: 'sync',
-  SIFT: 'sift',
-};
-
-export const mailSyncView = {
-  THREAD: 'thread',
-  MESSAGE: 'message',
+  SIFT: 'sift'
 };
 
 export default class MailsyncProcess extends EventEmitter {
-  constructor({ configDirPath, resourcePath, verbose, disableThread }) {
+  constructor({ configDirPath, resourcePath, verbose }) {
     super();
     this.verbose = verbose;
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
     this.binaryPath = path.join(resourcePath, 'mailsync').replace('app.asar', 'app.asar.unpacked');
     // this.binaryPath = path.join('/Users/bumblebee/Library/Developer/Xcode/DerivedData/EdisonMailSync-azgzmucfxprjdgbzddxewvyuqyfa/Build/Products/Debug', 'mailsync').replace('app.asar', 'app.asar.unpacked');
-    this.killNativeScript = path
-      .join(
-        resourcePath,
-        'src',
-        'scripts',
-        process.platform === 'darwin' ? 'mac' : process.platform,
-        'killNative'
-      )
-      .replace('app.asar', 'app.asar.unpacked');
+    this.killNativeScript = path.join(resourcePath, 'src', 'scripts', process.platform === 'darwin' ? 'mac' : process.platform, 'killNative').replace('app.asar', 'app.asar.unpacked');
     this._proc = null;
     this.isRemoving = false;
     this._win = null;
@@ -90,7 +77,6 @@ export default class MailsyncProcess extends EventEmitter {
     this.syncInitilMessageSend = false;
     this._sendMessageQueue = [];
     this._mode = '';
-    this.view = disableThread ? mailSyncView.MESSAGE : mailSyncView.THREAD;
     this.dataPrivacyOptions = { isGDPR: false, optOut: false };
   }
 
@@ -132,20 +118,20 @@ export default class MailsyncProcess extends EventEmitter {
   // -20 - 0: high
   // 0:  normal
   // 0 - 20: low
-  setPriority = priority => {
-    const proc = spawn('renice', [priority, this._proc.pid]);
-    proc.on('exit', function(code) {
+  setPriority = (priority) => {
+    const proc = spawn("renice", [priority, this._proc.pid]);
+    proc.on('exit', function (code) {
       if (code !== 0) {
-        console.log('Process exec failed with code - ' + code);
+        console.log("Process exec failed with code - " + code);
       }
     });
-    proc.stdout.on('data', function(data) {
+    proc.stdout.on('data', function (data) {
       console.log('stdout: ' + data);
     });
-    proc.stderr.on('data', function(data) {
+    proc.stderr.on('data', function (data) {
       console.log('stderr: ' + data);
     });
-  };
+  }
 
   _spawnProcess(mode) {
     const env = {
@@ -175,13 +161,6 @@ export default class MailsyncProcess extends EventEmitter {
     } else {
       args.push('--info', mode);
     }
-    // message view
-    if (this.view === mailSyncView.MESSAGE) {
-      args.push('--view', mailSyncView.MESSAGE);
-    } else {
-      args.push('--view', mailSyncView.THREAD);
-    }
-
     if (mode === mailSyncModes.SIFT) {
       if (this.dataPrivacyOptions.optOut) {
         args.push('--sharingOpt', 0);
@@ -209,20 +188,19 @@ export default class MailsyncProcess extends EventEmitter {
 
     // stdout may not be present if an error occurred. Error handler hasn't been
     // attached yet, but will be by the caller of spawnProcess.
-    if (
-      this.account &&
-      this._proc.stdout &&
-      (mode !== mailSyncModes.RESET || mode !== mailSyncModes.SIFT)
-    ) {
+    if (this.account && this._proc.stdout && (mode !== mailSyncModes.RESET || mode !== mailSyncModes.SIFT)) {
       this._proc.stdout.once('data', () => {
         var rs = new Readable();
         rs.push(`${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`);
         rs.push(null);
-        rs.pipe(this._proc.stdin, { end: false });
+        rs.pipe(
+          this._proc.stdin,
+          { end: false }
+        );
         if (AppEnv.enabledToNativeLog) {
           console.log('--------------------To native---------------');
           AppEnv.logDebug(
-            `to native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`
+            `to native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`,
           );
           console.log('-----------------------------To native END-----------------------');
         }
@@ -238,7 +216,10 @@ export default class MailsyncProcess extends EventEmitter {
         }
         rs.push(siftAccountString);
         rs.push(null);
-        rs.pipe(this._proc.stdin, { end: false });
+        rs.pipe(
+          this._proc.stdin,
+          { end: false }
+        );
         // if (AppEnv.enabledToNativeLog) {
         //   console.log('--------------------To native---------------');
         //   AppEnv.logDebug(`to sift: ${siftAccountString}`);
@@ -360,7 +341,7 @@ export default class MailsyncProcess extends EventEmitter {
         if (added.trim() === 'Waiting for Account JSON:') {
           return;
         }
-        const isIndexOfEnter = added && added.lastIndexOf('\n') === added.length - 1;
+        const isIndexOfEnter = added && added.lastIndexOf('\n') === (added.length - 1);
         outBuffer += added;
 
         if (isIndexOfEnter) {
@@ -440,11 +421,7 @@ export default class MailsyncProcess extends EventEmitter {
     for (let i = 0; i < this._sendMessageQueue.length; i++) {
       if (AppEnv.enabledToNativeLog) {
         console.log('--------------------To native ---------------');
-        AppEnv.logDebug(
-          `to native: flushing queue: ${this.account ? this.account.pid : 'no account'} - ${
-            this._sendMessageQueue[i]
-          }`
-        );
+        AppEnv.logDebug(`to native: flushing queue: ${this.account ? this.account.pid : 'no account'} - ${this._sendMessageQueue[i]}`);
         console.log('-----------------------------To native END-----------------------');
       }
       this.sendMessage(this._sendMessageQueue[i]);
@@ -465,7 +442,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-          this.account ? this.account.pid || this.account.id : 'no account'
+        this.account ? this.account.pid || this.account.id: 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');
@@ -545,7 +522,7 @@ tell application "System Events"
   end tell
   
 end tell
-    `
+    `,
     );
     exec(`osascript ${tmppath}`);
   }
