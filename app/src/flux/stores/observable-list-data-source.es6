@@ -150,10 +150,7 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
     Object.keys(accounts).forEach(accountId => {
       const threadIds = Object.keys(accounts[accountId].threadIds);
       const messageIds = Object.keys(accounts[accountId].messageIds);
-      Actions.setObservableRange(accountId, {
-        missingThreadIds: threadIds,
-        missingMessageIds: messageIds,
-      });
+      Actions.setObservableRange(accountId, { missingThreadIds: threadIds, missingMessageIds: messageIds });
     });
   };
 }
