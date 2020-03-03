@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import fs from 'fs';
 import { remote, shell } from 'electron';
-
+const { app } = remote;
 const bundleIdentifier = 'com.edisonmail.edisonmail';
 
 class Windows {
@@ -34,9 +34,8 @@ class Windows {
   }
 
   resetURLScheme() {
-    remote.dialog.showMessageBox(
-      null,
-      {
+    remote.dialog
+      .showMessageBox(null, {
         type: 'info',
         buttons: ['Learn More'],
         message: 'Visit Windows Settings to change your default mail client',
@@ -49,7 +48,7 @@ class Windows {
       });
   }
 
-  registerForURLScheme(scheme, callback = () => { }) {
+  registerForURLScheme(scheme, callback = () => {}) {
     // Ensure that our registry entires are present
     const WindowsUpdater = remote.require('./windows-updater');
     WindowsUpdater.createRegistryEntries(
@@ -98,22 +97,19 @@ class Linux {
     if (!callback) {
       throw new Error('isRegisteredForURLScheme is async, provide a callback');
     }
-    exec(
-      `xdg-mime query default x-scheme-handler/${scheme}`,
-      (err, stdout) => (err ? callback(err) : callback(stdout.trim() === 'edisonmail.desktop'))
+    exec(`xdg-mime query default x-scheme-handler/${scheme}`, (err, stdout) =>
+      err ? callback(err) : callback(stdout.trim() === 'edisonmail.desktop')
     );
   }
 
-  resetURLScheme(scheme, callback = () => { }) {
-    exec(
-      `xdg-mime default thunderbird.desktop x-scheme-handler/${scheme}`,
-      err => (err ? callback(err) : callback(null, null))
+  resetURLScheme(scheme, callback = () => {}) {
+    exec(`xdg-mime default thunderbird.desktop x-scheme-handler/${scheme}`, err =>
+      err ? callback(err) : callback(null, null)
     );
   }
-  registerForURLScheme(scheme, callback = () => { }) {
-    exec(
-      `xdg-mime default edisonmail.desktop x-scheme-handler/${scheme}`,
-      err => (err ? callback(err) : callback(null, null))
+  registerForURLScheme(scheme, callback = () => {}) {
+    exec(`xdg-mime default edisonmail.desktop x-scheme-handler/${scheme}`, err =>
+      err ? callback(err) : callback(null, null)
     );
   }
 }
@@ -127,115 +123,32 @@ class Mac {
     return true;
   }
 
-  getLaunchServicesPlistPath(callback) {
-    const secure = `${
-      process.env.HOME
-      }/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist`;
-    const insecure = `${process.env.HOME}/Library/Preferences/com.apple.LaunchServices.plist`;
-
-    fs.exists(secure, exists => (exists ? callback(secure) : callback(insecure)));
-  }
-
-  readDefaults(callback = () => { }) {
-    this.getLaunchServicesPlistPath(plistPath => {
-      const tmpPath = `${plistPath}.${Math.random()}`;
-      exec(`plutil -convert json "${plistPath}" -o "${tmpPath}"`, err => {
-        if (err) {
-          callback(err);
-          return;
-        }
-        fs.readFile(tmpPath, (readErr, data) => {
-          if (readErr) {
-            callback(readErr);
-            return;
-          }
-          try {
-            const json = JSON.parse(data);
-            callback(json.LSHandlers, json);
-            fs.unlink(tmpPath, () => { });
-          } catch (e) {
-            callback(e);
-          }
-        });
-      });
-    });
-  }
-
-  writeDefaults(defaults, callback = () => { }) {
-    this.getLaunchServicesPlistPath(plistPath => {
-      const tmpPath = `${plistPath}.${Math.random()}`;
-      exec(`plutil -convert json "${plistPath}" -o "${tmpPath}"`, err => {
-        if (err) {
-          callback(err);
-          return;
-        }
-        try {
-          let data = fs.readFileSync(tmpPath);
-          data = JSON.parse(data);
-          data.LSHandlers = defaults;
-          data = JSON.stringify(data);
-          fs.writeFileSync(tmpPath, data);
-        } catch (e) {
-          callback(e);
-          return;
-        }
-        exec(`plutil -convert binary1 "${tmpPath}" -o "${plistPath}"`, () => {
-          fs.unlink(tmpPath, () => { });
-          exec(
-            '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user',
-            registerErr => {
-              callback(registerErr);
-            }
-          );
-        });
-      });
-    });
-  }
-
   isRegisteredForURLScheme(scheme, callback) {
     if (!callback) {
-      throw new Error('isRegisteredForURLScheme is async, provide a callback');
+      throw new Error(
+        'LSSetDefaultHandlerForURLScheme is async in linux and windows, provide a callback'
+      );
     }
-    this.readDefaults(defaults => {
-      for (const def of defaults) {
-        if (def.LSHandlerURLScheme === scheme) {
-          callback(def.LSHandlerRoleAll === bundleIdentifier);
-          return;
-        }
-      }
-      callback(false);
-    });
+    const isRegisteredForURL = app.isDefaultProtocolClient(scheme);
+    callback(isRegisteredForURL);
   }
 
-  resetURLScheme(scheme, callback) {
-    this.readDefaults(defaults => {
-      // Remove anything already registered for the scheme
-      for (let ii = defaults.length - 1; ii >= 0; ii--) {
-        if (defaults[ii].LSHandlerURLScheme === scheme) {
-          defaults.splice(ii, 1);
-        }
-      }
-      this.writeDefaults(defaults, callback);
-    });
+  resetURLScheme(scheme, callback = () => {}) {
+    const removeSuccess = app.removeAsDefaultProtocolClient(scheme);
+    if (removeSuccess) {
+      callback();
+    } else {
+      callback(new Error('LSSetDefaultHandlerForURLScheme Remove Error!'));
+    }
   }
 
-  registerForURLScheme(scheme, callback) {
-    this.readDefaults(defaults => {
-      // Remove anything already registered for the scheme
-      for (let ii = defaults.length - 1; ii >= 0; ii--) {
-        if (defaults[ii].LSHandlerURLScheme === scheme) {
-          defaults.splice(ii, 1);
-        }
-      }
-
-      // Add our scheme default
-      defaults.push({
-        LSHandlerURLScheme: scheme,
-        LSHandlerRoleAll: bundleIdentifier,
-      });
-
-      this.writeDefaults(defaults, callback);
-    });
+  registerForURLScheme(scheme, callback = () => {}) {
+    const registerSuccess = app.setAsDefaultProtocolClient(scheme);
+    if (registerSuccess) {
+      callback();
+    } else {
+      callback(new Error('LSSetDefaultHandlerForURLScheme Register Error!'));
+    }
   }
 }
 

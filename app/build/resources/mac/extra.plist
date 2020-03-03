@@ -4,16 +4,16 @@
 <dict>
 	<key>ElectronTeamID</key>
 	<string>8QY2MN5UJ9</string>
-    <key>com.apple.security.app-sandbox</key>
-    <true/>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
-    <key>com.apple.security.files.downloads.read-write</key>
-    <true/>
+	<key>com.apple.security.files.downloads.read-write</key>
+	<true/>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>NSPrincipalClass</key>
@@ -34,6 +34,16 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>*</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mailto</string>
+				<string>EdisonMail</string>
 			</array>
 		</dict>
 	</array>
