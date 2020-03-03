@@ -163,7 +163,7 @@ export default class MailsyncProcess extends EventEmitter {
       args.push('--info', mode);
     }
     if ((typeof this.supportId === 'string') && (this.supportId.length > 0)) {
-      args.push('--support-id', this.supportId);
+      args.push('--supportId', this.supportId);
     }
     if (mode === mailSyncModes.SIFT) {
       if (this.dataPrivacyOptions.optOut) {
