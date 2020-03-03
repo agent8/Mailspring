@@ -225,6 +225,9 @@ export default class ZendeskDetail extends Component {
   }
   onAddFollower = async event => {
     const email = this.followerInput.value
+    if (!email) {
+      return
+    }
     const { ticket } = this.state
     var followers = ticket.followers
     let follower = await this.zendesk.getUserByEmail(email)
@@ -425,6 +428,7 @@ export default class ZendeskDetail extends Component {
         </div>
       )
     }
+    const description = ticket.description.replace('\n', '<br/>')
     console.log(' zendesk-detail.render 2:', this.state)
     const status = ticket.status
     const assgineeOptions = allUsers.map((item, idx) => (
@@ -615,7 +619,7 @@ export default class ZendeskDetail extends Component {
           </header>
           <div className='zendesk-description' onClick={this.openOrignalImage}>
             <span className='label'>Description</span>
-            <div dangerouslySetInnerHTML={{ __html: ticket.description }}></div>
+            <div dangerouslySetInnerHTML={{ __html: description }}></div>
           </div>
           <div className='zendesk-comments' onClick={this.openOrignalImage}>
             <span className='label'>Comments</span>
