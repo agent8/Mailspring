@@ -48,7 +48,7 @@ export default class AttributeCrossDB extends Attribute {
     }
     this.itemClass = itemClass;
     this.joinDB = itemClass.db;
-    this.joinTable = itemClass.getTableName();
+    this.joinTable = itemClass.name;
     this.tableColumn = joinTableColumn;
     this.joinTableKey = joinTableKey;
     this.joinModelKey = joinModelKey;

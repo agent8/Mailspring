@@ -23,9 +23,7 @@ export default class SortOrder {
     if (getJoinTableRef) {
       joinTableRef = getJoinTableRef(this.attr);
     }
-    return `\`${joinTableRef ? joinTableRef : klass.getTableName()}\`.\`${
-      this.attr.tableColumn
-    }\` ${this.direction}`;
+    return `\`${joinTableRef ? joinTableRef : klass.name}\`.\`${this.attr.tableColumn}\` ${this.direction}`;
   }
 
   attribute() {

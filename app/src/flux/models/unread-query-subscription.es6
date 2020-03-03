@@ -5,18 +5,14 @@ import Matcher from '../attributes/matcher';
 import Thread from '../models/thread';
 import JoinTable from '../models/join-table';
 
-const isMessageView = AppEnv.getDisableThread();
-
 const buildQuery = categoryIds => {
-  const query = DatabaseStore.findAll(Thread).limit(0);
-  if (isMessageView) {
-    return query.where([Thread.attributes.unread.equal(1)]);
-  }
   const unreadMatchers = new Matcher.JoinAnd([
     Thread.attributes.categories.containsAny(categoryIds),
     JoinTable.useAttribute('unread', 'Number').equal(1),
     Thread.attributes.state.equal(0),
   ]);
+
+  const query = DatabaseStore.findAll(Thread).limit(0);
 
   // The "Unread" view shows all threads which are unread. When you read a thread,
   // it doesn't disappear until you leave the view and come back. This behavior
@@ -38,7 +34,7 @@ const buildQuery = categoryIds => {
             JoinTable.useAttribute('state', 'Number').equal(0),
           ]),
         ]),
-      ])
+      ]),
     );
   }
 

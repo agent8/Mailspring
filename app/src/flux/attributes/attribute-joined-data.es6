@@ -56,7 +56,7 @@ export default class AttributeJoinedData extends Attribute {
   fromJSON(val) {
     return val === null || val === undefined || val === false ? null : `${val}`;
   }
-  tableName() {
+  tableName(){
     return this.modelTable;
   }
 
@@ -68,8 +68,8 @@ export default class AttributeJoinedData extends Attribute {
   }
 
   includeSQL(klass) {
-    return `LEFT OUTER JOIN \`${this.modelTable}\` ON \`${
-      this.modelTable
-    }\`.\`id\` = \`${klass.getTableName()}\`.\`id\``;
+    return `LEFT OUTER JOIN \`${this.modelTable}\` ON \`${this.modelTable}\`.\`id\` = \`${
+      klass.name
+    }\`.\`id\``;
   }
 }

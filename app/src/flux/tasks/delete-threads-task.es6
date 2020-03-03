@@ -1,8 +1,6 @@
 import Task from './task';
 import Attributes from '../attributes';
 
-const isMessageView = AppEnv.getDisableThread();
-
 export default class DeleteThreadsTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
     threadIds: Attributes.Collection({
@@ -22,19 +20,10 @@ export default class DeleteThreadsTask extends Task {
   constructor(data = {}) {
     data.canBeUndone = true;
     super(data);
-    const threadIds = data.threadIds || [];
-    const messageIds = data.messageIds || [];
-    if (isMessageView) {
-      this.threadIds = [];
-      const messageIdSet = new Set([...threadIds, ...messageIds]);
-      this.messageIds = [...messageIdSet];
-    } else {
-      this.threadIds = threadIds;
-      this.messageIds = messageIds;
-    }
+    this.threadIds = data.threadIds || [];
     this.accountId = data.accountId || '';
     this.source = data.source || '';
-    if (this.canBeUndone === undefined) {
+    if (this.canBeUndone === undefined){
       this.canBeUndone = true;
     }
   }
@@ -48,29 +37,18 @@ export default class DeleteThreadsTask extends Task {
       return this.taskDescription;
     }
 
-    let paramesText = '';
-    // If the parames has both messageIds and threadIds, threadIds will not work in native
-    if (this.messageIds.length) {
-      const count = this.messageIds.length;
-      paramesText = count > 1 ? `${count} messages` : 'message';
-    } else if (this.threadIds.length) {
-      const count = this.threadIds.length;
-      paramesText = count > 1 ? `${count} threads` : 'thread';
+    if (this.threadIds.length > 1) {
+      return `Expunged ${this.threadIds.length} threads`;
     }
-
-    return `Expunged ${paramesText}`;
-  }
-
-  willBeQueued() {
-    if (this.threadIds.length > 0 && this.messageIds.length > 0) {
-      throw new Error('DeleteThreadsTask: You can provide `threads` or `messages` but not both.');
+    if (this.threadIds.length === 1) {
+      return `Expunged thread`;
     }
-    if (this.threadIds.length === 0 && this.messageIds.length === 0) {
-      throw new Error(
-        'DeleteThreadsTask: You must provide a `threads` or `messages` Array of models or IDs.'
-      );
+    if (this.messageIds.length > 1) {
+      return `Expunged ${this.messageIds.length} messages`;
     }
-
-    super.willBeQueued();
+    if (this.messageIds.length === 1) {
+      return `Expunged message`;
+    }
+    return `Expunged`;
   }
 }

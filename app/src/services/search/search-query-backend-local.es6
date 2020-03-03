@@ -10,8 +10,6 @@ import {
 } from './search-query-ast';
 import { DateUtils } from 'mailspring-exports';
 
-const isMessageView = AppEnv.getDisableThread();
-
 /*
  * This class visits a match-compatible subtree and condenses it into a single
  * MatchQueryExpression.
@@ -41,7 +39,7 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
     this._result = `(${lhs} OR ${rhs})`;
   }
 
-  visitDate(node) {}
+  visitDate(node) { }
 
   visitFrom(node) {
     const text = this.visitAndGetResult(node.text);
@@ -245,9 +243,9 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
     // in sqlite3, you use '' to escape a '. Weird right?
     const escaped = node.rawQuery.replace(/'/g, "''");
 
-    this._result = `(\`${this._className}\`.\`pid\` IN (SELECT \`${
-      isMessageView ? 'messageId' : 'threadId'
-    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
+    this._result = `(\`${
+      this._className
+      }\`.\`pid\` IN (SELECT \`threadId\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
   }
 }
 
