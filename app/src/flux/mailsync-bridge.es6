@@ -501,6 +501,10 @@ export default class MailsyncBridge {
     this._sift = client;
     client.identity = IdentityStore.identity();
     client.updatePrivacyOptions(AppEnv.config.get('core.privacy'));
+    const supportId = AppEnv.config.get('core.support.id');
+    if(supportId){
+      client.updateSupportId(supportId);
+    }
     const allAccountsJSON = [];
     for (const acct of AccountStore.accounts()) {
       const fullAccountJSON = (await KeyManager.insertAccountSecrets(acct)).toJSON();
@@ -530,6 +534,10 @@ export default class MailsyncBridge {
       return;
     }
     const client = new MailsyncProcess(this._getClientConfiguration());
+    const supportId = AppEnv.config.get('core.support.id');
+    if(supportId){
+      client.updateSupportId(supportId);
+    }
     this._clients[account.id] = client; // set this synchornously so we never spawn two
     this._clientsStartTime[account.id] = Date.now();
     delete this._setObservableRangeTimer[account.id];
