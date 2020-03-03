@@ -78,6 +78,7 @@ export default class MailsyncProcess extends EventEmitter {
     this._sendMessageQueue = [];
     this._mode = '';
     this.dataPrivacyOptions = { isGDPR: false, optOut: false };
+    this.supportId = '';
   }
 
   _showStatusWindow(mode) {
@@ -160,6 +161,9 @@ export default class MailsyncProcess extends EventEmitter {
       args.push('--info', this.account.pid || this.account.id);
     } else {
       args.push('--info', mode);
+    }
+    if ((typeof this.supportId === 'string') && (this.supportId.length > 0)) {
+      args.push('--support-id', this.supportId);
     }
     if (mode === mailSyncModes.SIFT) {
       if (this.dataPrivacyOptions.optOut) {
@@ -328,6 +332,12 @@ export default class MailsyncProcess extends EventEmitter {
     }
     this.dataPrivacyOptions.isGDPR = options.isGDPR;
     this.dataPrivacyOptions.optOut = options.dataShare.optOut;
+  }
+  updateSupportId(supportId){
+    if(!supportId){
+      return;
+    }
+    this.supportId = supportId;
   }
 
   sync(mode = mailSyncModes.SYNC) {
