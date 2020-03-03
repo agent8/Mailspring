@@ -297,10 +297,10 @@ const TaskFactory = {
       AppEnv.reportError(new Error(`Move task by ${source} failed, no target category`), { errorData: targetCategory }, { grabLogs: true });
       return [];
     }
-    if (!previousFolder) {
-      AppEnv.reportError(new Error(`Move task by ${source} failed, no previous folder`), { errorData: previousFolder }, { grabLogs: true });
-      return [];
-    }
+    // if (!previousFolder) {
+    //   AppEnv.reportError(new Error(`Move task by ${source} failed, no previous folder`), { errorData: previousFolder }, { grabLogs: true });
+    //   return [];
+    // }
     if (targetCategory.role === 'all' && sourceCategory && (sourceCategory instanceof Label)) {
       // dragging from a label into All Mail? Make this an "archive" by removing the
       // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
