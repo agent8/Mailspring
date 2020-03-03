@@ -23,18 +23,25 @@ export default class ChangeStarredTask extends ChangeMailTask {
   }
 
   description() {
-    const paramsText = super.description();
+    const count = this.threadIds.length;
+    const type = count > 1 ? 'threads' : 'thread';
 
     if (this.isUndo) {
-      return `Undoing changes to ${paramsText}`;
+      return `Undoing changes to ${count} ${type}`;
     }
 
     const verb = this.starred ? 'Flagged' : 'Unflagged';
-    return `${verb} ${paramsText}`;
+    if (count > 1) {
+      return `${verb} ${count} ${type}`;
+    }
+    return `${verb}`;
   }
 
   willBeQueued() {
-    super.willBeQueued('ChangeStarredTask');
+    if (this.threadIds.length === 0) {
+      throw new Error('ChangeStarredTask: You must provide a `threads` Array of models or IDs.');
+    }
+    super.willBeQueued();
   }
 
   createUndoTask() {
