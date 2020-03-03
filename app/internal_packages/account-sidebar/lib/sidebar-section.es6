@@ -53,7 +53,7 @@ class SidebarSection {
       return this.empty(account.label);
     }
 
-    const items = _.reject(cats, cat => cat.role && cat.role !== 'all' && cat.role !== 'none').map(cat => {
+    const items = _.reject(cats, cat => cat.role && cat.role !== 'all' && cat.role !== 'important').map(cat => {
       if (cat.role === 'all' && account.provider === 'gmail') {
         return SidebarItem.forAllMail(cat, { editable: false, deletable: false });
       } else {
