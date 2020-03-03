@@ -1,10 +1,10 @@
 const ZENDESK_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn'
 const ZENDESK_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE'
 const Zendesk = require('zendesk-node')
-debugger
 export default class ZendeskApi {
   constructor (props) {
     this.zendesk = Zendesk(props)
+    this.cachedUsers = null
   }
   listTickets = async queryParams => {
     return await this.zendesk.tickets.list(queryParams)
@@ -108,8 +108,29 @@ export default class ZendeskApi {
     const res = await this.zendesk.users.get(id, {})
     return res.body.user
   }
+  getUserByEmail = async email => {
+    let users
+    if (this.cachedUsers) {
+      users = this.cachedUsers
+    } else {
+      const res = await this.zendesk.users.list()
+      users = res.body.users
+      this.cachedUsers = users
+    }
+    for (let user of users) {
+      if (user.email === email) {
+        return user
+      }
+    }
+  }
+  updateTicketField = async (ticket, field, value) => {
+    return await this.zendesk.tickets.update(ticket.id, { ticket: { [field]: value } })
+  }
   updateTicketAssignee = async (ticketKey, userId) => {
-    return await this.zendesk.tickets.update(ticketKey, { ticket: { assigneeId: userId } })
+    return await this.zendesk.tickets.update(ticketKey, { ticket: { assignee_id: userId } })
+  }
+  updateTicketPriority = async (ticketKey, priority) => {
+    return await this.zendesk.tickets.update(ticketKey, { ticket: { priority } })
   }
   updateTicketType = async (ticketKey, type) => {
     return await this.zendesk.tickets.update(ticketKey, { ticket: { type } })

@@ -68,6 +68,9 @@ export default class ZendeskDetail extends Component {
     }
   }
   safeSetState = data => {
+    if (!data.followerError) {
+      data.followerError = ''
+    }
     if (this.mounted) {
       this.setState(data)
     }
@@ -139,7 +142,17 @@ export default class ZendeskDetail extends Component {
         })
         ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
         ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
-        console.log(' assignee submitter:', ticket.assignee, ticket.submitter)
+        ticket.followers = []
+        for (let id of ticket.followerIds) {
+          const follower = await this.zendesk.getUser(id)
+          ticket.followers.push(follower)
+        }
+        console.log(
+          ' assignee submitter ticket.followers:',
+          ticket.assignee,
+          ticket.submitter,
+          ticket.followers
+        )
         this.safeSetState({
           loading: false,
           ticket,
@@ -161,80 +174,80 @@ export default class ZendeskDetail extends Component {
     )
   }
   onAssigneeChange = async item => {
-    AppEnv.trackingEvent('zendesk-Change-Assignee')
-    try {
-      this.safeSetState({
-        assignProgress: 'loading',
-      })
-      console.log(' onAssigneeChange:', item)
-      const { ticket } = this.state
-      let res = await this.zendesk.updateTicketAssignee(ticket.id, item.key)
-      console.log(' onAssigneeChange res:', res)
-      this.safeSetState({
-        assignProgress: 'success',
-      })
-      // this._showDialog('Change assignee successful.');
-      AppEnv.trackingEvent('zendesk-Change-Assignee-Success')
-    } catch (err) {
-      AppEnv.trackingEvent('zendesk-Change-Assignee-Failed')
-      console.error(`****Change assignee failed:`, err, item.name)
-      AppEnv.reportError(new Error(`Change assignee failed ${ticket.id}`), { errorData: err })
-      if (err.message && err.message.includes('invalid refresh token')) {
-        this.logout()
-      }
-      this.safeSetState({
-        assignProgress: 'error',
-      })
-    }
+    await this.asyncUpdateField('assignee', item.key, 'assignee_id')
+  }
+  onPriorityChange = async item => {
+    await this.asyncUpdateField('priority', item.key)
   }
   onTypeChange = async item => {
-    console.log(' onStatusChange:', item)
-    AppEnv.trackingEvent('zendesk-Type-Status')
-    let { ticket } = this.state
-    try {
-      ticket.type = item.key
-      const res = await this.zendesk.updateTicketType(ticket.id, item.key)
-      console.log(' onTypeChange res:', res)
-      this.safeSetState({
-        typeProgress: 'success',
-      })
-      AppEnv.trackingEvent('zendesk-Change-Type-Success')
-    } catch (err) {
-      AppEnv.trackingEvent('zendesk-Change-Type-Failed')
-      console.error(`****Change type failed ${ticket.id}`, err)
-      AppEnv.reportError(new Error(`Change type failed ${ticket.id}`), { errorData: err })
-      if (err.message && err.message.includes('invalid refresh token')) {
-        this.logout()
-      }
-      this.safeSetState({
-        typeProgress: 'error',
-      })
-    }
+    await this.asyncUpdateField('type', item.key)
   }
   onStatusChange = async item => {
     console.log(' onStatusChange:', item)
-    AppEnv.trackingEvent('zendesk-Change-Status')
+    await this.asyncUpdateField('status', item.key)
+  }
+  onAddTag = async event => {
+    const tag = this.tagInput.value
+    const { ticket } = this.state
+    var tags = ticket.tags
+    tags.push(tag)
+    await this.asyncUpdateField('tags', tags)
+  }
+  onRemoveTag = async index => {
+    const { ticket } = this.state
+    var tags = ticket.tags
+    tags.splice(index, 1)
+    await this.asyncUpdateField('tags', tags)
+  }
+  onRemoveFollower = async index => {
+    const { ticket } = this.state
+    var followerIds = ticket.followerIds
+    followerIds.splice(index, 1)
+    let followers = ticket.followers
+    followers.splice(index, 1)
+    followers = followers.map(item => ({ user_email: item.email }))
+    await this.asyncUpdateField('followers', followers)
+  }
+  onAddFollower = async event => {
+    const email = this.followerInput.value
+    const { ticket } = this.state
+    var followers = ticket.followers
+    let follower = await this.zendesk.getUserByEmail(email)
+    if (!follower) {
+      this.setState({ followerError: `no user with email: ${email}` })
+      return
+    }
+    followers.push(follower)
+    followers = followers.map(item => ({ user_email: item.email }))
+    await this.asyncUpdateField('followers', followers)
+  }
+  asyncUpdateField = async (name, value, field) => {
+    field = field || name
+    const upperName = name[0].toUpperCase() + name.substring(1)
+    AppEnv.trackingEvent(`zendesk-Change-${upperName}`)
     let { ticket } = this.state
     try {
-      ticket.status = item.key
-      const res = await this.zendesk.updateTicketStatus(ticket.id, item.key)
-      console.log(' onStatusChange res:', res)
       this.safeSetState({
-        statusProgress: 'success',
+        [`${field}Progress`]: 'loading',
       })
-      AppEnv.trackingEvent('zendesk-Change-Status-Success')
+      await this.zendesk.updateTicketField(ticket, field, value)
+      this.safeSetState({
+        [`${field}Progress`]: 'success',
+      })
+      AppEnv.trackingEvent('zendesk-Change-Tags-Success')
     } catch (err) {
-      AppEnv.trackingEvent('zendesk-Change-Status-Failed')
-      console.error(`****Change status failed ${ticket.id}`, err)
-      AppEnv.reportError(new Error(`Change status failed ${ticket.id}`), { errorData: err })
+      AppEnv.trackingEvent(`zendesk-Tags-${upperName}-Failed`)
+      console.error(`****Change tags failed: ${ticket.id}:`, err)
+      AppEnv.reportError(new Error(`Change ${field} failed: ${ticket.id}:`), { errorData: err })
       if (err.message && err.message.includes('invalid refresh token')) {
         this.logout()
       }
       this.safeSetState({
-        statusProgress: 'error',
+        [`${field}Progress`]: 'error',
       })
     }
   }
+
   openAttachment = id => {
     const { attachments, originalFiles } = this.state
     const path = originalFiles[id] || attachments[id]
@@ -343,10 +356,13 @@ export default class ZendeskDetail extends Component {
       assignProgress,
       allUsers,
       ticketKey,
-      transitions = ['open', 'pending', 'solved'],
+      priorityProgress,
       typeProgress,
       statusProgress,
+      tagsProgress,
       errorMessage,
+      followersProgress,
+      followerError,
     } = this.state
     console.log(
       ' zendesk-detail.render:',
@@ -382,22 +398,55 @@ export default class ZendeskDetail extends Component {
         {this.renderUserNode(item)}
       </Option>
     ))
+    const priorityOptions = ['low', 'normal', 'high', 'urgent'].map(item => (
+      <Option key={item} value={item}>
+        {item}
+      </Option>
+    ))
     const typeOptions = ['question', 'incident', 'problem', 'task'].map(item => (
       <Option key={item} value={item}>
         {item}
       </Option>
     ))
-    const transitionOptions = transitions.map(item => (
+    const statusOptions = ['open', 'pending', 'solved'].map(item => (
       <Option key={item} value={item}>
         {item}
       </Option>
     ))
     const statusKey = 'status:' + status
-    transitionOptions.push(
+    statusOptions.push(
       <Option key={statusKey} value={statusKey}>
         {status}
       </Option>
     )
+    const followers = ticket.followers.map((item, index) => {
+      return (
+        <span className='piece' key={index}>
+          <span>{item.email}</span>
+          <RetinaImg
+            isIcon
+            name='close.svg'
+            className='remove-tag'
+            mode={RetinaImg.Mode.ContentIsMask}
+            onClick={() => this.onRemoveFollower(index)}
+          />
+        </span>
+      )
+    })
+    var tags = ticket.tags.map((item, index) => {
+      return (
+        <span className='piece' key={index}>
+          <span>{item}</span>
+          <RetinaImg
+            isIcon
+            name='close.svg'
+            className='remove-tag'
+            mode={RetinaImg.Mode.ContentIsMask}
+            onClick={() => this.onRemoveTag(index)}
+          />
+        </span>
+      )
+    })
     console.log(' ticket.assignee, ticket.submitter:', ticket.assignee, ticket.submitter)
     return (
       <div className='zendesk-detail'>
@@ -437,8 +486,42 @@ export default class ZendeskDetail extends Component {
               </span>
             </div>
             <div>
+              <span className='label'>Followers</span>
+              <div>{followers}</div>
+              <input
+                style={{ width: '60px' }}
+                ref={el => {
+                  this.followerInput = el
+                }}
+              ></input>
+              <RetinaImg
+                className='change-done'
+                style={{ width: 16 }}
+                name={'check-alone.svg'}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+                onClick={this.onAddFollower}
+              />
+              {this._renderProgress(followersProgress)}
+              {followerError ? <span className='follower-error'>{followerError}</span> : null}
+            </div>
+            <div>
               <span className='label'>Priority</span>
-              <span className='content'>{ticket.priority}</span>
+              <div className='content with-progress'>
+                <Select
+                  className='zendesk-status'
+                  value={{ key: ticket.priority, value: ticket.priority }}
+                  optionLabelProp='children'
+                  labelInValue={true}
+                  notFoundContent=''
+                  showSearch={false}
+                  onChange={this.onPriorityChange}
+                  dropdownClassName='zendesk-dropdown'
+                >
+                  {priorityOptions}
+                </Select>
+                {this._renderProgress(priorityProgress)}
+              </div>
             </div>
             <div>
               <span className='label'>Type</span>
@@ -471,10 +554,29 @@ export default class ZendeskDetail extends Component {
                   onChange={this.onStatusChange}
                   dropdownClassName='zendesk-dropdown'
                 >
-                  {transitionOptions}
+                  {statusOptions}
                 </Select>
                 {this._renderProgress(statusProgress)}
               </div>
+            </div>
+            <div>
+              <span className='label'>Tags</span>
+              <div>{tags}</div>
+              <input
+                style={{ width: '60px' }}
+                ref={el => {
+                  this.tagInput = el
+                }}
+              ></input>
+              <RetinaImg
+                className='change-done'
+                style={{ width: 16 }}
+                name={'check-alone.svg'}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+                onClick={this.onAddTag}
+              />
+              {this._renderProgress(tagsProgress)}
             </div>
           </header>
           <div className='zendesk-description' onClick={this.openOrignalImage}>
