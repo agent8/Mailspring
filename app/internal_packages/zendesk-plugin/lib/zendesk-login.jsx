@@ -11,7 +11,7 @@ export default class Login extends Component {
     this.state = {}
   }
   submit = async () => {
-    const fields = [this.subdomain, this.email, this.password]
+    const fields = [this.subdomain, this.email, this.apitoken]
     let hasError = false
     this.setState({
       error: null,
@@ -32,13 +32,13 @@ export default class Login extends Component {
     const config = {
       subdomain: this.subdomain.value,
       username: this.email.value,
-      password: this.password.value,
+      apitoken: this.apitoken.value,
     }
     this.zendesk = new ZendeskApi({
-      authType: Zendesk.AUTH_TYPES.API_TOKEN,
       zendeskSubdomain,
       email: config.username,
-      zendeskAdminToken: config.password,
+      password: config.password,
+      zendeskAdminToken: config.apitoken,
     })
     try {
       const tickets = await this.zendesk.listTickets()
@@ -70,10 +70,8 @@ export default class Login extends Component {
     })
   }
   render () {
-    const { host, username, password } = this.props.config
+    const { host, username, apitoken, password } = this.props.config
     const { error, loading } = this.state
-    const apiSettingsUrl = `${(this.host && this.host.value) ||
-      'https://zendesk.com'}/agent/admin/api/settings`
     return (
       <div className='zendesk-login'>
         <div className='zendesk-logo'>
@@ -95,9 +93,11 @@ export default class Login extends Component {
         </div>
         <div className='row'>
           <span className='label'>API token</span>
-          <input type='password' defaultValue={password} ref={el => (this.password = el)} />
+          <input type='password' defaultValue={apitoken} ref={el => (this.apitoken = el)} />
           <span>
-            <a href={apiSettingsUrl}>Get API token from here.</a>
+            <a href='https://support.zendesk.com/hc/en-us/articles/226022787-Generating-a-new-API-token-'>
+              see here on how to get api token
+            </a>
           </span>
         </div>
         <div className='row'>

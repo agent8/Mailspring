@@ -46,7 +46,7 @@ export default class ZendeskDetail extends Component {
           authType: Zendesk.AUTH_TYPES.API_TOKEN,
           zendeskSubdomain: config.subdomain,
           email: config.username,
-          zendeskAdminToken: config.password,
+          zendeskAdminToken: config.apitoken,
         })
       }
     }

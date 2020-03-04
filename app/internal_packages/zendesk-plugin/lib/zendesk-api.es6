@@ -1,8 +1,14 @@
 const Zendesk = require('zendesk-node')
 export default class ZendeskApi {
-  constructor (props) {
-    this.zendesk = Zendesk(props)
-    this.authEmail = props.email
+  constructor (options) {
+    if (options.password) {
+      options.authType = Zendesk.AUTH_TYPES.BASIC_AUTH
+      this.zendesk = Zendesk(options)
+    } else if (options.zendeskAdminToken) {
+      options.authType = Zendesk.AUTH_TYPES.API_TOKEN
+      this.zendesk = Zendesk(options)
+    }
+    this.authEmail = options.email
     this.cachedUsers = null
   }
   listTickets = async queryParams => {
