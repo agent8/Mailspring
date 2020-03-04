@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { TokenAndTermRegexp } from './search-bar-util';
+import NavbarCollapse from 'react-bootstrap/lib/NavbarCollapse';
 
 export default class TokenizingContenteditable extends Component {
   shouldComponentUpdate(nextProps) {
@@ -78,7 +79,7 @@ export default class TokenizingContenteditable extends Component {
       basicSpan.innerText = after;
       tokens.push(basicSpan.outerHTML);
     }
-    return tokens.join('');
+    return tokens.join('').replace(/\s/g, '&nbsp;');
   };
 
   onPaste = e => {

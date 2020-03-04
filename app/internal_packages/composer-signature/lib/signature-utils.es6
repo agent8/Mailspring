@@ -13,15 +13,21 @@ export function currentSignatureId(body) {
 }
 
 export function applySignature(body, signature) {
-  let additionalWhitespace = '<div><br/>';
-  let additionalClosingWhitespace = '<br/></div>';
+  const additionalWhitespace = '<div><br/>';
+  const additionalClosingWhitespace = '<br/></div>';
 
   // Remove any existing signature in the body
   let newBody = body;
   if (currentSignatureId(body)) {
-    newBody = newBody.replace(RegExpUtils.mailspringSignatureRegex(), '');
-    additionalWhitespace = '';
-    additionalClosingWhitespace = '';
+    const bodyTmpList = newBody.split(RegExpUtils.mailspringSignatureRegex());
+    // should remove additionalWhitespace and additionalClosingWhitespace
+    const additionalWhitespaceReg = new RegExp(`${additionalWhitespace}$`);
+    const additionalClosingWhitespaceReg = new RegExp(`^${additionalClosingWhitespace}`);
+    // remove additionalWhitespace
+    const bodyTmpStart = (bodyTmpList[0] || '').replace(additionalWhitespaceReg, '');
+    // remove additionalClosingWhitespace
+    const bodyTmpEnd = (bodyTmpList[2] || '').replace(additionalClosingWhitespaceReg, '');
+    newBody = bodyTmpStart + bodyTmpEnd;
   }
 
   // http://www.regexpal.com/?fam=94390
