@@ -75,7 +75,7 @@ export default class Login extends Component {
     return (
       <div className='zendesk-login'>
         <div className='zendesk-logo'>
-          <RetinaImg name={'jira.svg'} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+          <RetinaImg name={'zendesk.svg'} isIcon mode={RetinaImg.Mode.ContentIsMask} />
         </div>
         {error && <div className='error'>{error}</div>}
         <div className='row'>

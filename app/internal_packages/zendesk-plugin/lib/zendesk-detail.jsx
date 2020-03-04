@@ -402,7 +402,7 @@ export default class ZendeskDetail extends Component {
         {currentUser && currentUser.avatarUrls ? (
           <img src={currentUser.avatarUrls && currentUser.avatarUrls['48x48']} />
         ) : (
-          <RetinaImg name={'jira.svg'} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+          <RetinaImg name={'zendesk.svg'} isIcon mode={RetinaImg.Mode.ContentIsMask} />
         )}
       </div>
     )

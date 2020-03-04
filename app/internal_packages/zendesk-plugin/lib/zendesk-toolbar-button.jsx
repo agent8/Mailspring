@@ -43,13 +43,13 @@ export default class ZendeskToolbarButton extends Component {
     return (
       <div className='button-group' style={{ order: -1 }}>
         <div
-          className={`btn-toolbar message-toolbar-jira ${this.state.active ? 'active' : ''}`}
+          className={`btn-toolbar message-toolbar-zendesk ${this.state.active ? 'active' : ''}`}
           key='zendesk-plugin'
           title='zendesk plugin'
           onClick={this.toggleZendesk}
         >
           <RetinaImg
-            name={'jira.svg'}
+            name={'zendesk.svg'}
             style={{ width: 24, height: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
