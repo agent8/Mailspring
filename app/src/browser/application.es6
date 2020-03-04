@@ -133,9 +133,8 @@ export default class Application extends EventEmitter {
     this.handleEvents();
     this.handleLaunchOptions(options);
 
-    // ToDo: This should not be in the main process
-    // const helper = new DefaultClientHelper();
-    // helper.registerForURLScheme('EdisonMail');
+    // add 'EdisonMail://' to LSSetDefaultHandlerForURLScheme
+    app.setAsDefaultProtocolClient('EdisonMail');
 
     this._draftsSendLater = {};
 
