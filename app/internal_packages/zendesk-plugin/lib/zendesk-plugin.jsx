@@ -8,7 +8,7 @@ const CONFIG_KEY = 'plugin.zendesk.config'
 const WIDTH_KEY = 'plugin.zendesk.width'
 const ZENDESK_SHOW_KEY = 'plugin.zendesk.show'
 
-export default class JiraPlugin extends Component {
+export default class ZendeskPlugin extends Component {
   static displayName = 'ZendeskPlugin'
   constructor (props) {
     super(props)
@@ -42,7 +42,7 @@ export default class JiraPlugin extends Component {
   _onColumnResize = _.debounce(w => {
     AppEnv.config.set(WIDTH_KEY, w)
   }, 200)
-  _isJIRA () {
+  _isZendesk () {
     const { thread } = this.props
     if (thread && thread.participants) {
       for (const att of thread.participants) {
@@ -63,7 +63,7 @@ export default class JiraPlugin extends Component {
         break
       }
     }
-    if (!active || !this.props.thread || !this._isJIRA() || !isEdisonMail) {
+    if (!active || !this.props.thread || !this._isZendesk() || !isEdisonMail) {
       return null
     }
     const needLogin = !config || Object.keys(config).length === 0
