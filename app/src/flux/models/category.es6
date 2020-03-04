@@ -62,7 +62,7 @@ const HiddenRoleMap = ToObject([
   'drafts',
   'all',
   'archive',
-  'starred',
+  'flagged',
   'important',
   'snoozed',
   '[Mailspring]',

@@ -6,6 +6,9 @@ import { remote } from 'electron';
 import { DateUtils } from 'mailspring-exports';
 import JiraApi from './jira-api';
 import { CSSTransitionGroup } from 'react-transition-group';
+import Watcher from './jira-watcher';
+import Status from './jira-status';
+import Priority from './jira-priority';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -110,7 +113,6 @@ export default class JiraDetail extends Component {
                 issueKey,
                 loading: true,
                 assignProgress: null,
-                statusProgress: null,
                 attachments: {},
                 originalFiles: {},
                 issue: null,
@@ -154,11 +156,6 @@ export default class JiraDetail extends Component {
                     allUsers: users
                 })
             }
-            const { transitions } = await this.jira.listTransitions(issueKey);
-            console.log('****transitions', transitions);
-            this.safeSetState({
-                transitions
-            })
         }
     }
     findComments = async (issueKey, shouldTransition) => {
@@ -202,16 +199,12 @@ export default class JiraDetail extends Component {
         }
         const { attachments } = this.state;
         // replace image src
-        html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\//g, function (str) {
-            const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\//g.exec(str);
+        html = html.replace(/<img\s+src=".*\/secure\/(attachment|thumbnail)\/.+?\/.+?"/g, function (str) {
+            const matchs = /<img\s+src=".*\/secure\/(attachment|thumbnail)\/(.+?)\/.+?"/g.exec(str);
             // find if the image is downloaded.
-            console.log('****matchs', matchs, attachments);
             const attachmentId = matchs[2];
             if (matchs && attachmentId && attachments[attachmentId]) {
-                if (matchs[1] === 'thumbnail') {
-                    return `<img src="${jiraDirPath}/${attachmentId}_`;
-                }
-                return `<img src="${jiraDirPath}/`;
+                return `<img src="${attachments[attachmentId]}"`;
             }
             return `<img style='display: none;' src="${jiraDirPath}/`;
         });
@@ -280,44 +273,6 @@ export default class JiraDetail extends Component {
             })
         }
     }
-    onStatusChange = async item => {
-        AppEnv.trackingEvent('Jira-Change-Status');
-        try {
-            let { transitions: oldTransitions, issue } = this.state;
-            for (const t of oldTransitions) {
-                if (t.id === item.key) {
-                    issue.fields.status = t.to;
-                    this.safeSetState({
-                        issue,
-                        statusProgress: 'loading'
-                    })
-                    break;
-                }
-            }
-            await this.jira.transitionIssue(this.issueKey, {
-                transition: {
-                    id: item.key
-                }
-            });
-            let { transitions } = await this.jira.listTransitions(this.issueKey);
-            this.safeSetState({
-                transitions,
-                statusProgress: 'success'
-            })
-            AppEnv.trackingEvent('Jira-Change-Status-Success');
-            // this._showDialog('Change status successful.');
-        } catch (err) {
-            AppEnv.trackingEvent('Jira-Change-Status-Failed');
-            console.error(`****Change assignee failed ${this.issueKey}`, err);
-            AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
-            if (err.message && err.message.includes('invalid refresh token')) {
-                this.logout();
-            }
-            this.safeSetState({
-                statusProgress: 'error'
-            })
-        }
-    }
     openAttachment = id => {
         const { attachments, originalFiles } = this.state;
         const path = originalFiles[id] || attachments[id];
@@ -355,14 +310,14 @@ export default class JiraDetail extends Component {
             message
         });
     }
-    _renderLoading(width) {
+    _renderLoading = width => {
         return <LottieImg
             name="loading-spinner-blue"
             size={{ width, height: width }}
             style={{ margin: 'none', display: 'inline-block' }}
         />
     }
-    _renderProgress(progress) {
+    _renderProgress = progress => {
         let p = null;
         if (progress === 'loading') {
             p = this._renderLoading(20);
@@ -421,12 +376,10 @@ export default class JiraDetail extends Component {
             loading,
             commentSaving,
             assignProgress,
-            statusProgress,
             attachments = {},
             comments = [],
             allUsers,
             issueKey,
-            transitions = [],
             errorMessage
         } = this.state;
         if (loading) {
@@ -454,28 +407,35 @@ export default class JiraDetail extends Component {
                 </div>
             </div>;
         }
-        const status = issue.fields.status;
         const { renderedFields, fields } = issue;
-        const assgineeOptions = allUsers
+        const userOptions = allUsers
             .filter(item => item.accountType === "atlassian")
             .map((item, idx) => (
-                <Option key={item.accountId} displayname={item.displayName} value={item.accountId}>{this.renderUserNode(item)}</Option>
+                <Option
+                    key={item.accountId}
+                    displayname={item.displayName}
+                    avatarurls={item.avatarUrls}
+                    value={item.accountId}>
+                    {this.renderUserNode(item)}
+                </Option>
             ));
-        if (assgineeOptions.length === 0) {
-            assgineeOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
+        if (userOptions.length === 0) {
+            userOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
         }
-        const transitionOptions = transitions
-            .map(item => (
-                <Option key={item.id} value={item.id}>{item.name}</Option>
-            ));
-        const statusKey = 'status:' + status.id;
-        transitionOptions.push(
-            <Option key={statusKey} value={statusKey}>{status.name}</Option>
-        );
+        const watcerProps = {
+            jira: this.jira,
+            fields: issue.fields,
+            issueKey,
+            currentUser,
+            userOptions
+        }
         return (
             <div className="jira-detail">
                 {userLogo}
-                <div className="jira-title"><a href={this.state.link}>{issueKey}</a></div>
+                <div className="jira-title">
+                    <a href={this.state.link}>{issueKey}</a>
+                    <Watcher {...watcerProps} />
+                </div>
                 <div className="wrapper">
                     <header>
                         <div>
@@ -492,7 +452,7 @@ export default class JiraDetail extends Component {
                                     showSearch={true}
                                     onChange={this.onAssigneeChange}
                                     dropdownClassName="jira-dropdown"
-                                >{assgineeOptions}</Select>
+                                >{userOptions}</Select>
                                 {this._renderProgress(assignProgress)}
                             </div>
                         </div>
@@ -500,26 +460,20 @@ export default class JiraDetail extends Component {
                             <span className="label">Reporter</span>
                             <span className="content">{this.renderUserNode(fields.reporter)}</span>
                         </div>
-                        <div>
-                            <span className="label">Priority</span>
-                            <span className="content">{fields.priority.name}</span>
-                        </div>
-                        <div>
-                            <span className="label">Status</span>
-                            <div className="content with-progress">
-                                <Select
-                                    className="jira-status"
-                                    value={{ key: statusKey, value: status.name }}
-                                    optionLabelProp="children"
-                                    labelInValue={true}
-                                    notFoundContent=""
-                                    showSearch={false}
-                                    onChange={this.onStatusChange}
-                                    dropdownClassName="jira-dropdown"
-                                >{transitionOptions}</Select>
-                                {this._renderProgress(statusProgress)}
-                            </div>
-                        </div>
+                        <Priority
+                            priority={issue.fields.priority}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
+                        <Status
+                            status={issue.fields.status}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
                     </header>
                     <div className="jira-description" onClick={this.openOrignalImage} >
                         <span className="label">Description</span>

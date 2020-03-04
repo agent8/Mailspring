@@ -52,7 +52,7 @@ export default class JiraPlugin extends Component {
         const { thread } = this.props;
         if (thread && thread.participants) {
             for (const att of thread.participants) {
-                if (att.email && att.email.split('@')[1].includes('atlassian.net')) {
+                if (att.email && (att.email.split('@')[1] || '').includes('atlassian.net')) {
                     return true;
                 }
             }
@@ -76,9 +76,9 @@ export default class JiraPlugin extends Component {
         const needLogin = !config || Object.keys(config).length === 0;
         return (
             <ResizableRegion
+                minWidth={200}
                 className="jira-plugin"
                 handle={ResizableRegion.Handle.Left}
-                style={{ overflowY: 'auto' }}
                 onResize={this._onColumnResize}
                 initialWidth={this.state.width || 200}
             >

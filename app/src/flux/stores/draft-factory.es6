@@ -77,6 +77,21 @@ const removeAttachmentWithNoContentId = files => {
   });
   return filterMissingAttachments(ret);
 };
+const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
+  if (!Array.isArray(files)){
+    return [];
+  }
+  if(typeof bodyStr !== 'string'){
+    return [];
+  }
+  const ret = [];
+  files.forEach(file => {
+    if(file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
+      ret.push(file);
+    }
+  });
+  return removeAttachmentWithNoContentId(ret);
+};
 const filterMissingAttachments = files => {
   AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
   return AttachmentStore.filterOutMissingAttachments(files);
@@ -451,30 +466,30 @@ class DraftFactory {
       participants = message.participantsForReplyAll();
     }
     const accountId = findAccountIdFrom(message, thread);
-
-    return this.createDraft({
-      subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
-      to: participants.to,
-      cc: participants.cc,
-      from: [this._fromContactForReply(message)],
-      files: removeAttachmentWithNoContentId(message.files),
-      threadId: thread.id,
-      accountId: accountId,
-      replyOrForward: Message.draftType.reply,
-      replyToHeaderMessageId: message.headerMessageId,
-      msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
-      body: `
+    const body = `
         <br/>
         <br/>
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
-        message.replyAttributionLine(),
-      )}</div>
+      message.replyAttributionLine(),
+    )}</div>
         <blockquote class="gmail_quote" data-edison="true"
           style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
           ${prevBody}
           <br/>
         </blockquote>
-        `,
+        `;
+    return this.createDraft({
+      subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
+      to: participants.to,
+      cc: participants.cc,
+      from: [this._fromContactForReply(message)],
+      files: removeAttachmentNotLinkedInBody(body, message.files),
+      threadId: thread.id,
+      accountId: accountId,
+      replyOrForward: Message.draftType.reply,
+      replyToHeaderMessageId: message.headerMessageId,
+      msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
+      body,
     });
   }
   async createReplyForEvent({ message, file, replyStatus, tos, me, replyEvent }) {
@@ -510,12 +525,13 @@ class DraftFactory {
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Fwd:'),
       from: [this._fromContactForReply(message)],
-      files: filterMissingAttachments(message.files),
+      files: [].concat(message.files),
       threadId: thread.id,
       accountId: accountId,
-      forwardedHeaderMessageId: message.id,
+      forwardedHeaderMessageId: message.headerMessageId,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
+      pastMessageIds: [message.id],
       body: `
         <br/>
         <div class="gmail_quote">

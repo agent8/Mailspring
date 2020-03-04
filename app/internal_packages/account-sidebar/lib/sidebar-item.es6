@@ -128,11 +128,13 @@ const onEditItem = function (item, value) {
     return;
   }
 
+  const account = AccountStore.accountForId(category.accountId);
   Actions.queueTask(
     SyncbackCategoryTask.forRenaming({
       accountId: category.accountId,
       path: category.path,
       newName: newDisplayName,
+      isExchange: account && account.provider === 'exchange'
     }),
   );
 };
@@ -174,6 +176,7 @@ class SidebarItem {
         counterStyle,
         onDelete: opts.deletable ? onDeleteItem : undefined,
         onEdited: opts.editable ? onEditItem : undefined,
+        syncFolderList: opts.syncFolderList,
         onCollapseToggled: toggleItemCollapsed,
 
         onDrop(item, event) {
@@ -210,6 +213,9 @@ class SidebarItem {
         onSelect(item) {
           // FocusedPerspectiveStore.refreshPerspectiveMessages({perspective: item});
           Actions.focusMailboxPerspective(item.perspective);
+          if(item.syncFolderList){
+            Actions.syncFolderList({accountIds: item.accountIds, source: 'onToggleItemCollapsed'});
+          }
         },
       },
       opts,
@@ -351,6 +357,7 @@ class SidebarItem {
       opts.iconName = `account-logo-${account.provider}.png`;
       opts.fallback = `account-logo-other.png`;
       opts.mode = RetinaImg.Mode.ContentPreserve;
+      opts.syncFolderList = true;
     }
     return this.forPerspective(id, perspective, opts);
   }
@@ -438,6 +445,21 @@ class SidebarItem {
     // return this.forPerspective(id, perspective, opts);
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
+      this.forPerspective(id, perspective, opts)
+    );
+  }
+
+  static forTrash(accountId, opts = {}) {
+    opts.iconName = 'trash.svg';
+    const category = CategoryStore.getCategoryByRole(accountId, 'trash');
+    if(!category){
+      return null;
+    }
+    const perspective = MailboxPerspective.forCategory(category);
+    opts.categoryIds = [category.id];
+    const id = `Trash-${accountId}`;
+    return SidebarItem.appendSubPathByAccounts(
+      accountId,
       this.forPerspective(id, perspective, opts)
     );
   }

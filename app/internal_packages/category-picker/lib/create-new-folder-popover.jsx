@@ -8,6 +8,7 @@ import {
   TaskQueue,
   Folder,
   FocusedPerspectiveStore,
+  AccountStore,
 } from 'mailspring-exports';
 
 export default class CreateNewFolderPopover extends Component {
@@ -39,6 +40,7 @@ export default class CreateNewFolderPopover extends Component {
     this._buttonTimer = null;
     this._buttonTimestamp = 0;
   }
+
   UNSAFE_componentWillMount() {
     if (this.props.defaultValue && this.props.defaultValue.length > 0) {
       this.setState({ newName: this.props.defaultValue });
@@ -108,9 +110,11 @@ export default class CreateNewFolderPopover extends Component {
   };
   _onCreateCategory = () => {
     this.setState({ isBusy: true });
+    const account = AccountStore.accountForId(this.props.account.id);
     const syncbackTask = SyncbackCategoryTask.forCreating({
       name: this.state.newName,
       accountId: this.props.account.id,
+      isExchange: account && account.provider === 'exchange'
     });
     this._onResultReturned();
     TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
@@ -127,18 +131,16 @@ export default class CreateNewFolderPopover extends Component {
 
   _onMoveToCategory = ({ category }) => {
     const { threads } = this.props;
-    if (category.isFolder()) {
-      Actions.queueTasks(
-        TaskFactory.tasksForChangeFolder({
-          source: 'Category Picker: New Folder',
-          threads: threads,
-          folder: category,
-          currentPerspective: FocusedPerspectiveStore.current()
-        }),
-      );
-      this.onCancel();
-      this._onResultReturned();
-    }
+    Actions.queueTasks(
+      TaskFactory.tasksForChangeFolder({
+        source: 'Category Picker: New Folder',
+        threads: threads,
+        folder: category,
+        currentPerspective: FocusedPerspectiveStore.current(),
+      }),
+    );
+    this.onCancel();
+    this._onResultReturned();
   };
   _onActionCallback = data => {
     if (typeof this.props.onActionCallback === 'function') {
@@ -157,11 +159,11 @@ export default class CreateNewFolderPopover extends Component {
         <span>Cancel</span>
       </button>
       <button className="create-folder-btn-create" title="Create Folder"
-        disabled={this.state.newName.length === 0} onClick={this._onCreateCategory}>
+              disabled={this.state.newName.length === 0} onClick={this._onCreateCategory}>
         {(this.state.isBusy || this._buttonTimer) ?
           <LottieImg name={'loading-spinner-white'}
-            height={24} width={24}
-            style={{ width: 24, height: 24 }} /> :
+                     height={24} width={24}
+                     style={{ width: 24, height: 24 }}/> :
           <span>Create Folder</span>}
       </button>
     </div>;
@@ -169,7 +171,7 @@ export default class CreateNewFolderPopover extends Component {
 
   render() {
     return <div ref={(el) => this.container = el}
-      className={`create-folder-container ${this.props.visible ? 'hide' : ''}`}>
+                className={`create-folder-container ${this.props.visible ? 'hide' : ''}`}>
       <div className={'header-row'}>
         <span className="close" onClick={this.onCancel}>
           <RetinaImg
@@ -185,9 +187,9 @@ export default class CreateNewFolderPopover extends Component {
         <div className='header-subtext'>What do you want to name it?</div>
       </div>
       <input className='folder-input'
-        value={this.state.newName} placeholder={'Name'}
-        disabled={this.state.isBusy}
-        onChange={this._onNameChange} />
+             value={this.state.newName} placeholder={'Name'}
+             disabled={this.state.isBusy}
+             onChange={this._onNameChange}/>
       {this.renderButtons()}
     </div>;
   }

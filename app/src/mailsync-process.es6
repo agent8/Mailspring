@@ -78,6 +78,7 @@ export default class MailsyncProcess extends EventEmitter {
     this._sendMessageQueue = [];
     this._mode = '';
     this.dataPrivacyOptions = { isGDPR: false, optOut: false };
+    this.supportId = '';
   }
 
   _showStatusWindow(mode) {
@@ -160,6 +161,9 @@ export default class MailsyncProcess extends EventEmitter {
       args.push('--info', this.account.pid || this.account.id);
     } else {
       args.push('--info', mode);
+    }
+    if ((typeof this.supportId === 'string') && (this.supportId.length > 0)) {
+      args.push('--supportId', this.supportId);
     }
     if (mode === mailSyncModes.SIFT) {
       if (this.dataPrivacyOptions.optOut) {
@@ -329,6 +333,12 @@ export default class MailsyncProcess extends EventEmitter {
     this.dataPrivacyOptions.isGDPR = options.isGDPR;
     this.dataPrivacyOptions.optOut = options.dataShare.optOut;
   }
+  updateSupportId(supportId){
+    if(!supportId){
+      return;
+    }
+    this.supportId = supportId;
+  }
 
   sync(mode = mailSyncModes.SYNC) {
     this._spawnProcess(mode);
@@ -347,7 +357,7 @@ export default class MailsyncProcess extends EventEmitter {
         if (isIndexOfEnter) {
           const msgs = this._arrayTrim(outBuffer.split('\n'));
           outBuffer = '';
-          this.emit('deltas', msgs);
+          this.emit('deltas', msgs, this.account ? this.account.id || this.account.pid : '');
         }
       });
     }
@@ -378,7 +388,7 @@ export default class MailsyncProcess extends EventEmitter {
           if (lastJSON.error) {
             error = new Error(lastJSON.error);
           } else {
-            this.emit('deltas', [outBuffer]);
+            this.emit('deltas', [outBuffer], this.account ? this.account.id || this.account.pid : '');
           }
         }
       }
