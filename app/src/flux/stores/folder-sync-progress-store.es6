@@ -47,7 +47,12 @@ class FolderSyncProgressStore extends MailspringStore {
     let totalWeight = 0;
 
     for (const accountId of AccountStore.accountIds()) {
-      const folders = CategoryStore.categories(accountId).filter(cat => cat.isFolder());
+      const folders = CategoryStore.categories(accountId).filter(cat => {
+        if(typeof cat.isFolder !== 'function'){
+          debugger
+        }
+        cat.isFolder()
+      });
       const state = {};
 
       /*

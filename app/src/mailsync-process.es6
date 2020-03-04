@@ -357,7 +357,7 @@ export default class MailsyncProcess extends EventEmitter {
         if (isIndexOfEnter) {
           const msgs = this._arrayTrim(outBuffer.split('\n'));
           outBuffer = '';
-          this.emit('deltas', msgs);
+          this.emit('deltas', msgs, this.account ? this.account.id || this.account.pid : '');
         }
       });
     }
@@ -388,7 +388,7 @@ export default class MailsyncProcess extends EventEmitter {
           if (lastJSON.error) {
             error = new Error(lastJSON.error);
           } else {
-            this.emit('deltas', [outBuffer]);
+            this.emit('deltas', [outBuffer], this.account ? this.account.id || this.account.pid : '');
           }
         }
       }
