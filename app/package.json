@@ -143,7 +143,8 @@
     "windows-shortcuts": "github:ruoxijiang/windows-shortcuts#b0a0fc7",
     "xhr": "^2.0.1",
     "xmpp-constants": "^2.3.0",
-    "xmpp-jid": "^1.0.0"
+    "xmpp-jid": "^1.0.0",
+    "zendesk-node": "^0.8.2"
   },
   "optionalDependencies": {},
   "devDependencies": {
