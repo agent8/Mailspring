@@ -2,6 +2,7 @@ const Zendesk = require('zendesk-node')
 export default class ZendeskApi {
   constructor (options) {
     if (options.password) {
+      // tried, but zendesk return could not authenticate
       options.authType = Zendesk.AUTH_TYPES.BASIC_AUTH
       this.zendesk = Zendesk(options)
     } else if (options.zendeskAdminToken) {

@@ -29,26 +29,12 @@ export default class ZendeskDetail extends Component {
   }
   login = config => {
     if (config && Object.keys(config).length > 0) {
-      const apiVersion = '2'
-      if (config.access_token) {
-        this.zendesk = new ZendeskApi({
-          protocol: 'https',
-          host: 'api.atlassian.com',
-          base: `/ex/zendesk/${config.resource.id}`,
-          bearer: config.access_token,
-          refreshToken: config.refresh_token,
-          method: 'POST',
-          apiVersion,
-          strictSSL: true,
-        })
-      } else {
-        this.zendesk = new ZendeskApi({
-          authType: Zendesk.AUTH_TYPES.API_TOKEN,
-          zendeskSubdomain: config.subdomain,
-          email: config.username,
-          zendeskAdminToken: config.apitoken,
-        })
-      }
+      this.zendesk = new ZendeskApi({
+        authType: Zendesk.AUTH_TYPES.API_TOKEN,
+        zendeskSubdomain: config.subdomain,
+        email: config.username,
+        zendeskAdminToken: config.apitoken,
+      })
     }
   }
   logout () {
