@@ -531,6 +531,7 @@ class DraftFactory {
       forwardedHeaderMessageId: message.headerMessageId,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
+      pastMessageIds: [message.id],
       body: `
         <br/>
         <div class="gmail_quote">
