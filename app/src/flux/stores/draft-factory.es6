@@ -528,7 +528,7 @@ class DraftFactory {
       files: [].concat(message.files),
       threadId: thread.id,
       accountId: accountId,
-      forwardedHeaderMessageId: message.id,
+      forwardedHeaderMessageId: message.headerMessageId,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
       body: `
