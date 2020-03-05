@@ -70,7 +70,12 @@ export default class OAuthSignInPage extends React.Component {
     this._startTimer = setTimeout(() => {
       if (!this._mounted) return;
       // shell.openExternal(this.props.providerAuthPageUrl);
-      this._openInWebView(this.props.providerAuthPageUrl)
+      const serviceName = this.props.serviceName.toLowerCase();
+      if (serviceName === 'jira') {
+        this.openBrowser();
+      } else {
+        this._openInWebView(this.props.providerAuthPageUrl)
+      }
     }, 600);
     this._warnTimer = setTimeout(() => {
       if (!this._mounted) return;
@@ -359,8 +364,32 @@ export default class OAuthSignInPage extends React.Component {
           mode={RetinaImg.Mode.ContentIsMask} />
       </div>
     );
+    const serviceName = this.props.serviceName.toLowerCase();
+    let wbView;
+    let loadingImg;
+    if (serviceName === 'jira') {
+      wbView = <div className="jira-oauth-title">
+        <h2>
+          Sign in with Jira in<br />your browser.
+        </h2>
+      </div>;
+    } else {
+      wbView = <webview
+        useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+        key={this.randomNum}
+        ref='webview'
+        src={this.state.url}
+        partition={`in-memory-only${this.randomNum}`}
+        style={
+          isYahoo ? yahooOptions : defaultOptions
+        }
+      />
+      loadingImg = <LottieImg name='loading-spinner-blue'
+        size={{ width: 65, height: 65 }}
+        style={{ margin: '200px auto 0' }} />
+    }
     return (
-      <div className={`page account-setup oauth ${this.props.serviceName.toLowerCase()}`}>
+      <div className={`page account-setup oauth ${serviceName}`}>
         {
           !process.mas && (
             <div
@@ -380,21 +409,10 @@ export default class OAuthSignInPage extends React.Component {
         {authStage === 'buildingAccount' && Validating}
         {authStage === 'accountSuccess' && Success}
         {!(['buildingAccount', 'accountSuccess', 'error'].includes(authStage)) && (
-          <webview
-            useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
-            key={this.randomNum}
-            ref='webview'
-            src={this.state.url}
-            partition={`in-memory-only${this.randomNum}`}
-            style={
-              isYahoo ? yahooOptions : defaultOptions
-            }
-          />
+          wbView
         )}
         {loading && !(['buildingAccount', 'accountSuccess', 'error'].includes(authStage)) && (
-          <LottieImg name='loading-spinner-blue'
-            size={{ width: 65, height: 65 }}
-            style={{ margin: '200px auto 0' }} />
+          loadingImg
         )}
         {authStage === 'error' && (
           <div style={{ marginTop: 100 }} >

@@ -9,6 +9,7 @@ import { CSSTransitionGroup } from 'react-transition-group';
 import Watcher from './jira-watcher';
 import Status from './jira-status';
 import Priority from './jira-priority';
+import JiraComment from './jira-comment';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -32,7 +33,7 @@ export default class JiraDetail extends Component {
     }
     login = config => {
         if (config && Object.keys(config).length > 0) {
-            const apiVersion = '2';
+            const apiVersion = '3';
             if (config.access_token) {
                 this.jira = new JiraApi({
                     protocol: 'https',
@@ -233,7 +234,7 @@ export default class JiraDetail extends Component {
                                 {this.renderUserNode(item.author)}
                                 <span className="datetime">{DateUtils.mediumTimeString(item.created)}</span>
                             </div>
-                            <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(item.renderedBody) }}></div>
+                            <JiraComment data={item} html={this.replaceImageSrc(item.renderedBody)} />
                         </div>
                     ))
                 }
