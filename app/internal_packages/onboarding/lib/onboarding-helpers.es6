@@ -478,8 +478,6 @@ export async function buildJiraAccountFromAuthResponse(code) {
     AppEnv.close();
     return;
   }
-
-  debugger;
   AppEnv.config.set('plugin.jira.config', { access_token, refresh_token, resource });
   AppEnv.close();
 }
