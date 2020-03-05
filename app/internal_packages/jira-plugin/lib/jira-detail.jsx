@@ -3,13 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import Select, { Option } from 'rc-select';
 import { remote } from 'electron';
-import { DateUtils } from 'mailspring-exports';
 import JiraApi from './jira-api';
-import { CSSTransitionGroup } from 'react-transition-group';
 import Watcher from './jira-watcher';
 import Status from './jira-status';
 import Priority from './jira-priority';
-import JiraComment from './jira-comment';
+import { JiraComments, CommentSubmit } from './jira-comments';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -148,8 +146,6 @@ export default class JiraDetail extends Component {
                 this.downloadUri(issue.fields.attachment, true);
                 this.downloadUri(issue.fields.attachment, false);
             }
-            // get comments
-            this.findComments(issueKey);
             // get users
             if (this.state.allUsers.length === 0) {
                 const users = await this.jira.searchAssignableUsers({ issueKey: issueKey, maxResults: 500 });
@@ -158,17 +154,6 @@ export default class JiraDetail extends Component {
                 })
             }
         }
-    }
-    findComments = async (issueKey, shouldTransition) => {
-        this.safeSetState({
-            shouldTransition
-        })
-        let rst = await this.jira.findComments(issueKey);
-        this.safeSetState({
-            comments: rst.comments,
-            commentSaving: false,
-            commentLoading: false
-        })
     }
     downloadUri = async (attachments, isThumbnail = true) => {
         let downloadApi = isThumbnail ? this.jira.downloadThumbnail : this.jira.downloadAttachment;
@@ -183,11 +168,10 @@ export default class JiraDetail extends Component {
                 fs.writeFileSync(localPath, downloadAtt);
             }
             const { attachments = {}, originalFiles = {} } = this.state;
-            if (isThumbnail) {
-                attachments[attachment.id] = localPath;
-            } else {
+            if (!isThumbnail) {
                 originalFiles[attachment.id] = localPath;
             }
+            attachments[attachment.id] = localPath;
             this.safeSetState({
                 attachments,
                 originalFiles
@@ -212,34 +196,6 @@ export default class JiraDetail extends Component {
         // replace link href
         html = html.replace(/href="\/secure/g, `href="https://${this.jira.host}/secure`);
         return html;
-    }
-    _renderComments = comments => {
-        const { commentLoading } = this.state;
-        if (commentLoading) {
-            return <div>
-                {this._renderLoading(20)}
-            </div>;
-        }
-        return (
-            <CSSTransitionGroup
-                component="div"
-                transitionEnterTimeout={350}
-                transitionLeaveTimeout={350}
-                transitionName={this.state.shouldTransition ? 'transition-slide' : ''}
-            >
-                {
-                    comments.map(item => (
-                        <div key={item.id} className="row">
-                            <div className="comment-header">
-                                {this.renderUserNode(item.author)}
-                                <span className="datetime">{DateUtils.mediumTimeString(item.created)}</span>
-                            </div>
-                            <JiraComment data={item} html={this.replaceImageSrc(item.renderedBody)} />
-                        </div>
-                    ))
-                }
-            </CSSTransitionGroup>
-        )
     }
     selectFilter = (inputVal, option) => {
         return option.props.displayname.toLocaleLowerCase().indexOf(inputVal.toLocaleLowerCase()) !== -1;
@@ -279,30 +235,6 @@ export default class JiraDetail extends Component {
         const path = originalFiles[id] || attachments[id];
         const currentWin = AppEnv.getCurrentWindow();
         currentWin.previewFile(path);
-    }
-    addComment = async () => {
-        const comment = this.commentInput.value;
-        if (!comment) {
-            return;
-        }
-        AppEnv.trackingEvent('Jira-AddComment');
-        try {
-            this.safeSetState({
-                commentSaving: true
-            });
-            await this.jira.addComment(this.issueKey, comment);
-            this.findComments(this.issueKey, true);
-            this.commentInput.value = '';
-            // this._showDialog('Add comment successful.');
-            AppEnv.trackingEvent('Jira-AddComment-Success');
-        } catch (err) {
-            console.error('****err', err);
-            AppEnv.trackingEvent('Jira-AddComment-Failed');
-            if (err.message && err.message.includes('invalid refresh token')) {
-                this.logout();
-            }
-            this._showDialog('Add comment failed.');
-        }
     }
     _showDialog(message, type = 'info') {
         remote.dialog.showMessageBox({
@@ -375,10 +307,8 @@ export default class JiraDetail extends Component {
         const {
             issue,
             loading,
-            commentSaving,
             assignProgress,
             attachments = {},
-            comments = [],
             allUsers,
             issueKey,
             errorMessage
@@ -480,10 +410,13 @@ export default class JiraDetail extends Component {
                         <span className="label">Description</span>
                         <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(renderedFields.description) }}></div>
                     </div>
-                    <div className="jira-comments" onClick={this.openOrignalImage} >
-                        <span className="label">Comments</span>
-                        {this._renderComments(comments)}
-                    </div>
+                    <JiraComments
+                        onClick={this.openOrignalImage}
+                        jira={this.jira}
+                        issueKey={issueKey}
+                        renderUserNode={this.renderUserNode}
+                        replaceImageSrc={this.replaceImageSrc}
+                    />
                     <div className="jira-attachments">
                         <span className="label">Attachments</span>
                         <div className="attachments">
@@ -497,14 +430,10 @@ export default class JiraDetail extends Component {
                         </div>
                     </div>
                 </div>
-                <div className="jira-submit-comment">
-                    <textarea ref={el => this.commentInput = el}></textarea>
-                    {
-                        commentSaving ?
-                            this._renderLoading(20)
-                            : <button className="btn btn-jira" onClick={this.addComment}>Add Comment</button>
-                    }
-                </div>
+                <CommentSubmit
+                    jira={this.jira}
+                    issueKey={issueKey}
+                />
             </div >
         )
     }
