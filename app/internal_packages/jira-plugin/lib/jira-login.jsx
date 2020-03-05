@@ -84,7 +84,7 @@ export default class Login extends Component {
                 {
                     error && <div className="error">{error}</div>
                 }
-                <div className="row">
+                {/* <div className="row">
                     <span className="label">Jira workspace domain</span>
                     <input type="text" defaultValue={'easilydo.atlassian.net'} ref={el => this.host = el} placeholder="eg. https://your-workspace.atlassian.net" />
                 </div>
@@ -96,7 +96,7 @@ export default class Login extends Component {
                     <span className="label">API token</span>
                     <input type="password" defaultValue={password} ref={el => this.password = el} />
                     <span><a href="https://id.atlassian.com/manage/api-tokens">Get API token from here.</a></span>
-                </div>
+                </div> */}
                 <div className="row">
                     {loading ?
                         <LottieImg
@@ -105,8 +105,8 @@ export default class Login extends Component {
                             style={{ margin: 'none' }}
                         />
                         : <div>
-                            <button className="btn btn-jira btn-jira-login" onClick={this.submit}>Login</button>
-                            <h1>Or</h1>
+                            {/* <button className="btn btn-jira btn-jira-login" onClick={this.submit}>Login</button>
+                            <h1>Or</h1> */}
                             <button className="btn btn-jira btn-jira-login" onClick={this.openOauth}>Connect to Jira</button>
                         </div>
                     }
