@@ -20,6 +20,7 @@ export default class ConfigPropContainer extends React.Component {
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this.subscription) {
       this.subscription.dispose();
     }
