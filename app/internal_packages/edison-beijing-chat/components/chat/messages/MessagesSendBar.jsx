@@ -12,14 +12,26 @@ import { Actions, ReactDOM } from 'mailspring-exports'
 import EmojiPopup from '../../common/EmojiPopup'
 import { MESSAGE_STATUS_RECEIVED } from '../../../model/Message'
 import { getName } from '../../../utils/name'
-import { sendCmd2App2, getMyAppByShortName, getMyApps, getToken, sendMsg2App2 } from '../../../utils/appmgt'
+import {
+  sendCmd2App2,
+  getMyAppByShortName,
+  getMyApps,
+  getToken,
+  sendMsg2App2,
+} from '../../../utils/appmgt'
 import { RichText } from '../../common/RichText'
 import AtList from '../../common/AtList'
 import PluginPrompt from './PluginPrompt'
 import { xmpplogin } from '../../../utils/restjs'
 import { MessageStore, ConversationStore, RoomStore, MessageSend } from 'chat-exports'
 import { alert } from '../../../utils/electron-utils'
-import { sendFileMessage, AT_BEGIN_CHAR, AT_END_CHAR, AT_EMPTY_CHAR, removeTillAtChar } from '../../../utils/message'
+import {
+  sendFileMessage,
+  AT_BEGIN_CHAR,
+  AT_END_CHAR,
+  AT_EMPTY_CHAR,
+  removeTillAtChar,
+} from '../../../utils/message'
 const { dialog } = remote
 
 const getCaretCoordinates = require('../../../utils/textarea-caret-position')
@@ -99,12 +111,12 @@ export default class MessagesSendBar extends PureComponent {
       jid: PropTypes.string.isRequired,
       name: PropTypes.string,
       email: PropTypes.string, // .isRequired,
-      isGroup: PropTypes.bool.isRequired
-    }).isRequired
+      isGroup: PropTypes.bool.isRequired,
+    }).isRequired,
   }
 
   static defaultProps = {
-    selectedConversation: null
+    selectedConversation: null,
   }
 
   state = {
@@ -114,7 +126,7 @@ export default class MessagesSendBar extends PureComponent {
     atContacts: [],
     atActiveIndex: 0,
     atVisible: false,
-    promptPos: null
+    promptPos: null,
   }
 
   emojiRef = null
@@ -158,13 +170,13 @@ export default class MessagesSendBar extends PureComponent {
       {
         affiliation: 'member',
         jid: 'all',
-        name: 'all'
+        name: 'all',
       },
-      ...roomMembers
+      ...roomMembers,
     ]
     this.setState({
       roomMembers,
-      atContacts
+      atContacts,
     })
     this._richText.clearNode()
   }
@@ -198,14 +210,15 @@ export default class MessagesSendBar extends PureComponent {
 
     const inputTextHasAt = inputText.indexOf('@') >= 0
     const splitInputText = inputText.split('@')
-    const atFuzzyMatchingStr = splitInputText.length > 1 ? splitInputText[splitInputText.length - 1] : ''
+    const atFuzzyMatchingStr =
+      splitInputText.length > 1 ? splitInputText[splitInputText.length - 1] : ''
     const atContacts = [
       {
         affiliation: 'member',
         jid: 'all',
-        name: 'all'
+        name: 'all',
       },
-      ...roomMembers
+      ...roomMembers,
     ].filter(contact => {
       // filter contact that has be at
       const noBeAt = atJidList.indexOf(contact.jid) < 0
@@ -221,7 +234,7 @@ export default class MessagesSendBar extends PureComponent {
       prefix: inputText,
       messageBody,
       atContacts,
-      atActiveIndex: 0
+      atActiveIndex: 0,
     })
   }
 
@@ -246,7 +259,7 @@ export default class MessagesSendBar extends PureComponent {
             sender: appJid,
             body: JSON.stringify(data),
             sentTime: new Date().getTime() + edisonChatServerDiffTime,
-            status: MESSAGE_STATUS_RECEIVED
+            status: MESSAGE_STATUS_RECEIVED,
           }
           MessageStore.saveMessagesAndRefresh([msg])
         })
@@ -311,7 +324,7 @@ export default class MessagesSendBar extends PureComponent {
           timeSend: new Date().getTime() + window.edisonChatServerDiffTime,
           content: message,
           email: selectedConversation.email,
-          name: selectedConversation.name
+          name: selectedConversation.name,
         }
         MessageSend.sendMessage(body, selectedConversation)
       }
@@ -325,14 +338,13 @@ export default class MessagesSendBar extends PureComponent {
     dialog
       .showOpenDialog(null, {
         title: 'Select a file to send',
-        properties: ['openFile']
+        properties: ['openFile'],
       })
       .then(result => {
         console.log(result.canceled)
         if (result.canceled) {
           return
         }
-        console.log(' selectFile: ', result.filePaths)
         const files = result.filePaths
         this.setState({ files }, () => {
           this.sendMessage()
@@ -380,7 +392,7 @@ export default class MessagesSendBar extends PureComponent {
     AppEnv.windowEventHandler.openSpellingMenuFor(sel.toString(), !sel.isCollapsed, {
       onCorrect: correction => {
         document.execCommand('insertText', false, correction)
-      }
+      },
     })
   }
 
@@ -397,12 +409,12 @@ export default class MessagesSendBar extends PureComponent {
         originRect: {
           top: rectPosition.getBoundingClientRect().top,
           left: rectPosition.getBoundingClientRect().left,
-          width: 250
+          width: 250,
         },
         closeOnAppBlur: true,
         onClose: () => {
           this.setState({ openEmoji: false })
-        }
+        },
       })
     } else {
       Actions.closePopover()
@@ -474,7 +486,7 @@ export default class MessagesSendBar extends PureComponent {
     const { atContacts } = this.state
     const { selectedConversation } = this.props
     this.setState({
-      atVisible: selectedConversation.isGroup && !!atContacts.length
+      atVisible: selectedConversation.isGroup && !!atContacts.length,
     })
   }
 
@@ -509,7 +521,7 @@ export default class MessagesSendBar extends PureComponent {
         shiftKey: false,
         metaKey: false,
         // enter
-        keyEvent: () => this.EnterKeyEvent(false)
+        keyEvent: () => this.EnterKeyEvent(false),
       },
       {
         keyCode: 13,
@@ -517,7 +529,7 @@ export default class MessagesSendBar extends PureComponent {
         stopPropagation: true,
         shiftKey: true,
         // shift + enter
-        keyEvent: () => this.ShiftEnterKeyEvent()
+        keyEvent: () => this.ShiftEnterKeyEvent(),
       },
       {
         keyCode: 13,
@@ -526,7 +538,7 @@ export default class MessagesSendBar extends PureComponent {
         altKey: true,
         shiftKey: false,
         // alt + enter
-        keyEvent: () => this.EnterKeyEvent(true)
+        keyEvent: () => this.EnterKeyEvent(true),
       },
       {
         keyCode: 13,
@@ -535,7 +547,7 @@ export default class MessagesSendBar extends PureComponent {
         ctrlKey: true,
         shiftKey: false,
         // ctrl + enter
-        keyEvent: () => this.EnterKeyEvent(true)
+        keyEvent: () => this.EnterKeyEvent(true),
       },
       {
         keyCode: 13,
@@ -544,41 +556,41 @@ export default class MessagesSendBar extends PureComponent {
         metaKey: true,
         shiftKey: false,
         // meta + enter
-        keyEvent: () => this.EnterKeyEvent(true)
+        keyEvent: () => this.EnterKeyEvent(true),
       },
       {
         keyCode: 27,
-        keyEvent: this.EscKeyEvent
+        keyEvent: this.EscKeyEvent,
       },
       {
         keyCode: 40,
         preventDefault: true,
         stopPropagation: true,
-        keyEvent: this.DownKeyEvent
+        keyEvent: this.DownKeyEvent,
       },
       {
         keyCode: 38,
         preventDefault: true,
         stopPropagation: true,
-        keyEvent: this.UpKeyEvent
+        keyEvent: this.UpKeyEvent,
       },
       {
         keyCode: 50,
         shiftKey: true,
-        keyEvent: this.AtKeyEvent
+        keyEvent: this.AtKeyEvent,
       },
       {
         keyCode: 86,
         preventDefault: true,
         ctrlKey: true,
-        keyEvent: this.CopyFileEvent
+        keyEvent: this.CopyFileEvent,
       },
       {
         keyCode: 86,
         preventDefault: true,
         metaKey: true,
-        keyEvent: this.CopyFileEvent
-      }
+        keyEvent: this.CopyFileEvent,
+      },
     ]
     return (
       <KeyCommandsRegion>
@@ -601,10 +613,20 @@ export default class MessagesSendBar extends PureComponent {
             }}
           >
             <Button onClick={this.selectFile}>
-              <RetinaImg name={'attachments.svg'} style={{ width: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+              <RetinaImg
+                name={'attachments.svg'}
+                style={{ width: 24 }}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
             </Button>
             <Button onClick={this.onEmojiTouch}>
-              <RetinaImg name={'emoji.svg'} style={{ width: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+              <RetinaImg
+                name={'emoji.svg'}
+                style={{ width: 24 }}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
             </Button>
           </div>
           <PluginPrompt

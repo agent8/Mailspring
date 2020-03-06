@@ -22,11 +22,9 @@ export default class ZendeskApi {
   }
   searchAssignableUsers = async data => {
     const res = await this.zendesk.users.list()
-    console.log(' api.searchAssignableUsers:', data, res)
     return res.body.users
   }
   getUser = async id => {
-    console.log(' getUser id:', id)
     const res = await this.zendesk.users.get(id, {})
     return res.body.user
   }
@@ -50,7 +48,6 @@ export default class ZendeskApi {
   }
   getComments = async ticket => {
     const res = await this.zendesk.tickets.listComments(ticket.id)
-    console.log(' ', res)
     return res.body.comments
   }
 }

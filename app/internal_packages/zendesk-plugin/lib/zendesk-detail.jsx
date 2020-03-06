@@ -69,7 +69,6 @@ export default class ZendeskDetail extends Component {
       const match = m.body.match(
         /href=["'](https:\/\/\w+\.zendesk\.com\/agent\/tickets\/(\d+))["']/
       )
-      console.log(' _findTicketKey match:', match)
       if (match) {
         return { ticketLink: match[1], ticketKey: +match[2] }
       }
@@ -102,9 +101,7 @@ export default class ZendeskDetail extends Component {
       })
       this.ticketLink = ticketLink
       try {
-        console.log(' findTicket:', ticketKey)
         ticket = await this.zendesk.findTicket(ticketKey)
-        console.log(' ticket:', ticket)
       } catch (err) {
         console.log(`****find ticket error ${ticketKey}`, err)
         AppEnv.reportError(new Error(`find ticket error ${ticketKey}`), { errorData: err })
@@ -124,7 +121,6 @@ export default class ZendeskDetail extends Component {
           ticketKey: ticketKey,
           maxResults: 500,
         })
-        console.log(' searchAssignableUsers:', users)
         this.safeSetState({
           allUsers: users,
         })
@@ -186,7 +182,6 @@ export default class ZendeskDetail extends Component {
     await this.asyncUpdateField('type', item.key)
   }
   onStatusChange = async item => {
-    console.log(' onStatusChange:', item)
     await this.asyncUpdateField('status', item.key)
   }
   onAddTag = async event => {
@@ -348,7 +343,6 @@ export default class ZendeskDetail extends Component {
   }
 
   renderComments = comments => {
-    console.log(' c', comments)
     const { commentLoading } = this.state
     if (commentLoading) {
       return <div>{this._renderLoading(20)}</div>
@@ -417,7 +411,6 @@ export default class ZendeskDetail extends Component {
       )
     }
     const description = ticket.description.replace('\n', '<br/>')
-    console.log(' zendesk-detail.render 2:', this.state)
     const status = ticket.status
     const assgineeOptions = allUsers.map((item, idx) => (
       <Option key={item.name} displayname={item.name} value={item.id}>
@@ -473,7 +466,6 @@ export default class ZendeskDetail extends Component {
         </span>
       )
     })
-    console.log(' ticket.assignee, ticket.submitter:', ticket.assignee, ticket.submitter)
     return (
       <div className='zendesk-detail'>
         {userLogo}

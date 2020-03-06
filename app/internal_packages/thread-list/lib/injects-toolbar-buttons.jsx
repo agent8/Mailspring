@@ -27,7 +27,6 @@ function InjectsToolbarButtons (
     static containerRequired = false
 
     render () {
-      console.log(' InjectsToolbarButtons.render:', this.props)
       const { items } = this.props
       const dataSource = ThreadListStore.dataSource()
       const { selection } = ThreadListStore.dataSource()

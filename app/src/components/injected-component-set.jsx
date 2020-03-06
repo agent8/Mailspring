@@ -116,9 +116,6 @@ export default class InjectedComponentSet extends React.Component {
       0,
       props.matchLimit
     )
-    if (props.matching.role == 'MailActionsToolbarButton') {
-      console.log(' InjectedComponentSet props.matching components:', props.matching, components)
-    }
     return {
       components,
       visible: ComponentRegistry.showComponentRegions(),

@@ -27,7 +27,6 @@ export default class ZendeskToolbarButton extends Component {
     return await query
   }
   _isZendesk = async () => {
-    console.log(' btn._isZendesk this.props:', this.props)
     const { thread } = this.props
     if (thread && thread.participants) {
       for (const att of thread.participants) {
@@ -37,9 +36,7 @@ export default class ZendeskToolbarButton extends Component {
       }
     }
     const messages = await this.fetchMessages()
-    console.log(' btn._isZendesk messages:', messages)
     for (let message of messages) {
-      console.log(' btn._isZendesk for message.body:', message.body)
       if (message.body.match(/href="https:\/\/\w+\.zendesk\.com\/agent\/tickets\/\d+"/)) {
         return true
       }
