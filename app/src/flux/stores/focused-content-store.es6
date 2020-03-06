@@ -108,7 +108,8 @@ class FocusedContentStore extends MailspringStore {
     this.triggerAfterAnimationFrame({ impactsCollection: c => c === collection });
   };
 
-  _onFocus = ({ collection, item, usingClick }) => {
+  _onFocus = ({ collection, item, usingClick, reason }) => {
+    console.log('on focus change', item, collection, usingClick, reason);
     if (item && !(item instanceof Model)) {
       throw new Error('focus() requires a Model or null');
     }
