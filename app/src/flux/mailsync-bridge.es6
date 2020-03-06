@@ -741,7 +741,7 @@ export default class MailsyncBridge {
       }
       if (passAsIs || type === 'unpersist'){
         // console.log('passing data from native to UI without going through db');
-        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels, processAccountId: accountId });
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, modelJSONs: tmpModels.map(m => m.toJSON()), processAccountId: accountId });
         this._onIncomingChangeRecord(
           new DatabaseChangeRecord({
             type, // TODO BG move to "model" naming style, finding all uses might be tricky
@@ -827,7 +827,7 @@ export default class MailsyncBridge {
             return;
           }
           // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels, processAccountId: accountId });
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, modelJSONs: parsedModels.map(m => m.toJSON()), processAccountId: accountId });
           this._onIncomingChangeRecord(
             new DatabaseChangeRecord({
               type,
@@ -916,16 +916,14 @@ export default class MailsyncBridge {
   };
 
   _onIncomingRebroadcastMessage = (event, data) => {
-    const { type, models, modelClass, processAccountId } = data;
-    console.log(`type: ${type}, modelClass: ${modelClass}`, models);
-    // const models = modelJSONs.map(Utils.convertToModel);
+    const { type, modelJSONs, modelClass, processAccountId } = data;
+    console.log(`type: ${type}, modelClass: ${modelClass}`, modelJSONs);
+    const models = modelJSONs.map(Utils.convertToModel);
     DatabaseStore.trigger(
       new DatabaseChangeRecord({
         type,
         objectClass: modelClass,
-        objects: models.map(model => {
-          return Utils.populateWithModel(model, modelClass);
-        }),
+        objects: models,
         processAccountId
       })
     );
