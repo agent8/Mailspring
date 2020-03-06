@@ -86,7 +86,6 @@ export default class ZendeskDetail extends Component {
       if (ticketLink === this.ticketLink) {
         return
       }
-      this.state
       let ticket = null
       this.safeSetState({
         ticketKey,
@@ -116,6 +115,7 @@ export default class ZendeskDetail extends Component {
           ticket: null,
           errorMessage,
         })
+        return
       }
       if (this.state.allUsers.length === 0) {
         const users = await this.zendesk.searchAssignableUsers({
