@@ -96,6 +96,14 @@ export default class JiraApi extends JiraApiBase {
             }
         })));
     }
+    deleteComment = (jiraId, commentId) => {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(jiraId).concat("/comment/").concat(commentId),
+        }), {
+            method: 'DELETE',
+            followAllRedirects: true,
+        }));
+    }
     searchAssignableUsers(data) {
         var issueKey = data.issueKey,
             username = data.username,
@@ -197,6 +205,17 @@ export default class JiraApi extends JiraApiBase {
                     priority
                 }
             }
+        }));
+    }
+    updateComment(issueId, commentId, comment) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueId, "/comment/").concat(commentId)
+        }), {
+            body: {
+                body: comment
+            },
+            method: 'PUT',
+            followAllRedirects: true
         }));
     }
 }
