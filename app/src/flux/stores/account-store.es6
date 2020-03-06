@@ -578,7 +578,6 @@ class AccountStore extends MailspringStore {
         for (const alias of acc.aliases) {
           const aliasContact = acc.meUsingAlias(alias);
           if (aliasContact) {
-            aliasContact.isAlias = true;
             aliases.push(aliasContact);
           }
         }

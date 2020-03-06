@@ -3,8 +3,13 @@ import { applySignature } from './signature-utils';
 
 export default class SignatureComposerExtension extends ComposerExtension {
   static prepareNewDraft = ({ draft }) => {
-    const signatureObj =
-      draft.from && draft.from[0] ? SignatureStore.signatureForEmail(draft.from[0].email) : null;
+    const contact = draft.from && draft.from[0]
+    if (!contact) {
+      return
+    }
+    const contactEmail = contact.isAlias ? contact.aliasName : contact.email
+    const signatureObj =SignatureStore.signatureForEmailOrAliase(contactEmail)
+
     if (!signatureObj) {
       return;
     }
