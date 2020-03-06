@@ -18,29 +18,29 @@ const FormErrorMessage = props => {
     };
     rawLogLink = (
       <a href="" onClick={onViewLog} style={{ paddingLeft: 5 }}>
-        Details: {log}
+        Error details: {log}
       </a>
     );
   }
 
-  if (typeof message === 'string') {
-    const linkMatch = RegExpUtils.urlRegex({ matchEntireString: false }).exec(message);
-    if (linkMatch) {
-      const link = linkMatch[0];
-      return (
-        <div className="message error">
-          {message.substr(0, linkMatch.index)}
-          <a href={link}>{link}</a>
-          {message.substr(linkMatch.index + link.length)}
-          {rawLogLink}
-        </div>
-      );
-    }
-  }
+  // if (typeof message === 'string') {
+  //   const linkMatch = RegExpUtils.urlRegex({ matchEntireString: false }).exec(message);
+  //   if (linkMatch) {
+  //     const link = linkMatch[0];
+  //     return (
+  //       <div className="message error">
+  //         {message.substr(0, linkMatch.index)}
+  //         <a href={link}>{link}</a>
+  //         {message.substr(linkMatch.index + link.length)}
+  //         {rawLogLink}
+  //       </div>
+  //     );
+  //   }
+  // }
 
   return (
     <div className="message error">
-      {message}<br/>
+      {/*{message}*/}
       {rawLogLink}
     </div>
   );
