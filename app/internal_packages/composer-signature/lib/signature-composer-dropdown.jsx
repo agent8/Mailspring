@@ -54,7 +54,9 @@ export default class SignatureComposerDropdown extends React.Component {
 
   componentDidUpdate(previousProps) {
     if (previousProps.draftFromEmail !== this.props.draftFromEmail) {
-      const nextDefaultSignature = SignatureStore.signatureForEmail(this.props.draftFromEmail);
+      const nextDefaultSignature = SignatureStore.signatureForEmailOrAliase(
+        this.props.draftFromEmail
+      );
       window.requestAnimationFrame(() => {
         this._onChangeSignature(nextDefaultSignature);
       });
