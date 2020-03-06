@@ -43,6 +43,7 @@ export default class ZendeskPlugin extends Component {
     AppEnv.config.set(WIDTH_KEY, w)
   }, 200)
   _isZendesk () {
+    console.log(' zendesk-plugin._isZendesk:', this.props)
     const { thread } = this.props
     if (thread && thread.participants) {
       for (const att of thread.participants) {
@@ -51,9 +52,15 @@ export default class ZendeskPlugin extends Component {
         }
       }
     }
+    for (let message of this.props.messages) {
+      if (message.body.match(/href=["']https:\/\/\w+\.zendesk\.com\/agent\/tickets\/\d+["']/)) {
+        return true
+      }
+    }
     return false
   }
   render () {
+    console.log(' plugin.render:props:', this.props)
     const { active, config } = this.state
     const accounts = AccountStore.accounts()
     let isEdisonMail = false

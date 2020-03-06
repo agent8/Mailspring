@@ -66,7 +66,9 @@ export default class ZendeskDetail extends Component {
   }
   _findTicketKey (messages) {
     for (const m of messages) {
-      const match = m.body.match(/href="(https:\/\/edison\.zendesk\.com\/agent\/tickets\/(\d+))">/)
+      const match = m.body.match(
+        /href=["'](https:\/\/\w+\.zendesk\.com\/agent\/tickets\/(\d+))["']/
+      )
       console.log(' _findTicketKey match:', match)
       if (match) {
         return { ticketLink: match[1], ticketKey: +match[2] }

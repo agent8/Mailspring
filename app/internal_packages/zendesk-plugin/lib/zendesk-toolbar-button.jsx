@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 const { RetinaImg } = require('mailspring-component-kit')
 const { AccountStore } = require('mailspring-exports')
 const ZENDESK_SHOW_KEY = 'plugin.zendesk.show'
+import { MessageStore } from 'mailspring-exports'
 export default class ZendeskToolbarButton extends Component {
   static displayName = 'ZendeskToolbarButton'
   constructor (props) {
@@ -17,13 +18,30 @@ export default class ZendeskToolbarButton extends Component {
       active: newStatus,
     })
   }
-  _isZendesk () {
+  componentWillMount = async () => {
+    this.state.isZendesk = await this._isZendesk()
+  }
+  fetchMessages = async () => {
+    const { thread } = this.props
+    const query = MessageStore.findAllByThreadIdWithBody({ threadId: thread.id })
+    return await query
+  }
+  _isZendesk = async () => {
+    console.log(' btn._isZendesk this.props:', this.props)
     const { thread } = this.props
     if (thread && thread.participants) {
       for (const att of thread.participants) {
         if (att.email && att.email.split('@')[1].includes('zendesk.com')) {
           return true
         }
+      }
+    }
+    const messages = await this.fetchMessages()
+    console.log(' btn._isZendesk messages:', messages)
+    for (let message of messages) {
+      console.log(' btn._isZendesk for message.body:', message.body)
+      if (message.body.match(/href="https:\/\/\w+\.zendesk\.com\/agent\/tickets\/\d+"/)) {
+        return true
       }
     }
     return false
@@ -37,7 +55,7 @@ export default class ZendeskToolbarButton extends Component {
         break
       }
     }
-    if (!this.props.thread || !this._isZendesk() || !isEdisonMail) {
+    if (!this.props.thread || !this.state.isZendesk || !isEdisonMail) {
       return null
     }
     return (
