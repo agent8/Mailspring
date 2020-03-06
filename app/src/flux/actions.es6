@@ -577,7 +577,7 @@ class Actions {
   static upsertSignature = ActionScopeWindow;
   static removeSignature = ActionScopeWindow;
   static selectSignature = ActionScopeWindow;
-  static toggleAccount = ActionScopeWindow;
+  static toggleAliasesSignature = ActionScopeWindow;
 
   static expandSyncState = ActionScopeWindow;
 
