@@ -4,6 +4,7 @@ import { JSONTransformer } from '@atlaskit/editor-json-transformer';
 import { CSSTransitionGroup } from 'react-transition-group';
 import { DateUtils } from 'mailspring-exports';
 import Modal, { ModalTransition } from '@atlaskit/modal-dialog';
+import { makeProvider } from './mention-provider';
 const { LottieImg } = require('mailspring-component-kit');
 
 const _renderLoading = width => {
@@ -36,6 +37,7 @@ class JiraComment extends Component {
         this.state = {
             value: props.data.body
         };
+        this.mentionProvider = makeProvider(props.jira);
     }
     componentDidMount = async () => {
         this.mounted = true;
@@ -134,7 +136,7 @@ class JiraComment extends Component {
                                 <Editor
                                     defaultValue={value}
                                     appearance="comment"
-                                    onSave
+                                    mentionProvider={this.mentionProvider}
                                     onChange={this.onChange(actions)}
                                     onSave={progress !== 'loading' && this.onSubmit(actions)}
                                     onCancel={progress !== 'loading' && this.hideEditor}
@@ -177,7 +179,7 @@ class JiraComment extends Component {
 export class JiraComments extends Component {
     constructor(props) {
         super(props);
-        this.state = {}
+        this.state = {};
     }
     safeSetState = (data) => {
         if (this.mounted) {
@@ -266,6 +268,7 @@ export class CommentSubmit extends Component {
     constructor(props) {
         super(props);
         this.state = {};
+        this.mentionProvider = makeProvider(props.jira);
     }
     componentDidMount = async () => {
         this.mounted = true;
@@ -320,6 +323,7 @@ export class CommentSubmit extends Component {
                     <Editor
                         shouldFocus
                         appearance="comment"
+                        mentionProvider={this.mentionProvider}
                         onSave={!commentSaving && this.onSave}
                         onCancel={!commentSaving && this.collapseEditor}
                     />
