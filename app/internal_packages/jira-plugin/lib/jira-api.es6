@@ -125,6 +125,17 @@ export default class JiraApi extends JiraApiBase {
             followAllRedirects: true
         }));
     }
+    searchUsers(query, maxResults) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/user/search',
+            query: {
+                query,
+                maxResults: maxResults || 20
+            }
+        }), {
+            followAllRedirects: true
+        }));
+    }
     updateAssignee(issueKey, accountId) {
         return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueKey, "/assignee")
