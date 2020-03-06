@@ -216,6 +216,9 @@ export default class Thread extends ModelWithMetadata {
     return (this.files || []).length;
   }
   get labels() {
+    if(!Array.isArray(this.labelIds)){
+      return [];
+    }
     return this.labelIds.map(labelId => {
       if (typeof labelId === 'string') {
         return CategoryStore.byFolderId(labelId);
