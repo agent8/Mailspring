@@ -311,6 +311,15 @@ export default class Contact extends Model {
     searchIndexId: Attributes.Number({
       modelKey: 'searchIndexId',
     }),
+
+    isAlias: Attributes.Boolean({
+      queryable: false,
+      loadFromColumn: false,
+    }),
+    aliasName: Attributes.String({
+      queryable: false,
+      loadFromColumn: false,
+    }),
   });
 
   static searchable = true;
