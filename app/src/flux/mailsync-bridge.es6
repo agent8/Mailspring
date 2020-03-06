@@ -152,6 +152,8 @@ export default class MailsyncBridge {
     this._setObservableRangeTimer = {};
     this._cachedObservableThreadIds = {};
     this._cachedObservableMessageIds = {};
+    this._folderListCache = {};
+    this._folderListTTL = 60000;
     this._cachedObservableTTL = 30000;
     // Store threads that are opened in seperate window
     this._additionalObservableThreads = {};
@@ -546,6 +548,7 @@ export default class MailsyncBridge {
     delete this._additionalObservableThreads[account.id];
     delete this._cachedFetchAttachments[account.id];
     delete this._cachedFetchBodies[account.id];
+    delete this._folderListCache[account.id];
     const fullAccountJSON = (await KeyManager.insertAccountSecrets(account)).toJSON();
 
     if (force) {
@@ -1231,12 +1234,21 @@ export default class MailsyncBridge {
       console.error('no account');
       return;
     }
+    if(accountIds.length === 0){
+      console.error('account array is empty');
+      return;
+    }
+    const now = Date.now();
     accountIds.forEach(accountId => {
-      this.sendMessageToAccount(accountId, {
-        type: 'sync-folderList',
-        aid: accountId,
-        source
-      });
+      const interval = now - (this._folderListCache[accountId] || 1);
+      if(interval >= this._folderListTTL ){
+        this.sendMessageToAccount(accountId, {
+          type: 'sync-folderList',
+          aid: accountId,
+          source
+        });
+        this._folderListCache[accountId] = now;
+      }
     });
   }
 

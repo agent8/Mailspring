@@ -69,6 +69,9 @@ const toggleItemCollapsed = function (item) {
   if (!(item.children.length > 0)) {
     return;
   }
+  if(item.syncFolderList && (item.children.length > 0 && item.collapsed)){
+    Actions.syncFolderList({accountIds: item.accountIds, source: 'toggleItemCollapsed'});
+  }
   SidebarActions.setKeyCollapsed(item.id, !isItemCollapsed(item.id));
 };
 
@@ -213,8 +216,8 @@ class SidebarItem {
         onSelect(item) {
           // FocusedPerspectiveStore.refreshPerspectiveMessages({perspective: item});
           Actions.focusMailboxPerspective(item.perspective);
-          if(item.syncFolderList){
-            Actions.syncFolderList({accountIds: item.accountIds, source: 'onToggleItemCollapsed'});
+          if(item.syncFolderList && (item.children.length === 0)){
+            Actions.syncFolderList({accountIds: item.accountIds, source: 'onSelectItem'});
           }
         },
       },
@@ -351,6 +354,9 @@ class SidebarItem {
     const perspective = MailboxPerspective.forInbox(accountId);
     opts.categoryIds = this.getCategoryIds(accountId, 'inbox');
     const id = [accountId].join('-');
+    if(Array.isArray(perspective.accountIds) && perspective.accountIds.length === 0){
+      opts.accountIds = [accountId];
+    }
     const account = AccountStore.accountForId(accountId);
     if (account) {
       opts.url = account.picture;
