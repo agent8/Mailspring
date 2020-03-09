@@ -14,6 +14,9 @@ const _renderLoading = width => {
         style={{ margin: 'none', display: 'inline-block' }}
     />
 }
+const logout = () => {
+    AppEnv.config.set(CONFIG_KEY, {});
+}
 const eventBus = {
     callbacks: {},
     registCallback: (key, cb) => {
@@ -53,6 +56,7 @@ class JiraComment extends Component {
     onSubmit = actions => async editorView => {
         const value = await actions.getValue();
         if (value != null) {
+            AppEnv.trackingEvent('Jira-UpdateComment');
             this.safeSetState({
                 progress: 'loading'
             });
@@ -63,12 +67,17 @@ class JiraComment extends Component {
                 this.safeSetState({
                     progress: 'error'
                 });
+                if (err.message && err.message.includes('invalid refresh token')) {
+                    logout();
+                }
+                AppEnv.trackingEvent('Jira-UpdateComment-Failed');
                 return;
             }
             await findComments(issueKey, true);
             this.safeSetState({
                 progress: 'success'
             });
+            AppEnv.trackingEvent('Jira-UpdateComment-Success');
         }
         this.hideEditor();
     }
@@ -104,6 +113,7 @@ class JiraComment extends Component {
     deleteComment = async () => {
         this.closeDeleteDialog();
         const { issueKey, jira, data, findComments } = this.props;
+        AppEnv.trackingEvent('Jira-DeleteComment');
         this.safeSetState({
             progress: 'loading'
         });
@@ -113,12 +123,17 @@ class JiraComment extends Component {
             this.safeSetState({
                 progress: 'error'
             });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                logout();
+            }
+            AppEnv.trackingEvent('Jira-DeleteComment-Failed');
             return;
         }
         await findComments(issueKey, true);
         this.safeSetState({
             progress: 'success'
         });
+        AppEnv.trackingEvent('Jira-DeleteComment-Success');
     }
     render() {
         const { html } = this.props;
@@ -287,8 +302,8 @@ export class CommentSubmit extends Component {
     onSave = async (editorView) => {
         /* do something */
         const comment = this.transformer.encode(editorView.state.doc)
-        console.log('****data', comment);
-        if (!comment.content || comment.content.lengh === 0) {
+        console.log('****data', comment, comment.content.length);
+        if (!comment.content || comment.content.length === 0) {
             return;
         }
         AppEnv.trackingEvent('Jira-AddComment');
@@ -303,7 +318,7 @@ export class CommentSubmit extends Component {
             console.error('****err', err);
             AppEnv.trackingEvent('Jira-AddComment-Failed');
             if (err.message && err.message.includes('invalid refresh token')) {
-                this.logout();
+                logout();
             }
         }
         this.safeSetState({
