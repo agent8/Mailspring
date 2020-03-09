@@ -211,7 +211,7 @@ export class AttachmentItem extends Component {
 
   _onClick = e => {
     if (this.state.isDownloading) {
-      AttachmentStore.refreshAttachmentsState(this.props.fileId);
+      AttachmentStore.refreshAttachmentsState({fileId: this.props.fileId, filePath: this.props.filePath});
       return;
     }
     if (this.props.isDownloading || this.props.missing) {

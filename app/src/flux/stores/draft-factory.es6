@@ -133,8 +133,8 @@ class DraftFactory {
         newFile.accountId = message.accountId;
         newFile.originFile = f;
         if(noCopy){
-          console.log('update attachment cache');
-          AttachmentStore.setAttachmentData(newFile);
+          // console.log('update attachment cache');
+          // AttachmentStore.setAttachmentData(newFile);
         } else {
           newFile.id = uuid();
         }
