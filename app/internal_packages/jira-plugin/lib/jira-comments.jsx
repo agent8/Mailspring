@@ -29,7 +29,6 @@ const eventBus = {
         const cb = eventBus.callbacks[key];
         if (cb) {
             const args = [...arguments].slice(1);
-            console.log("****args", args);
             await cb(...args);
         }
     }
@@ -40,13 +39,18 @@ class JiraComment extends Component {
         this.state = {
             value: props.data.body
         };
-        this.mentionProvider = makeProvider(props.jira);
+        this.mentionProvider = makeProvider(props.jira, props.issueKey);
     }
     componentDidMount = async () => {
         this.mounted = true;
     }
     componentWillUnmount = () => {
         this.mounted = false;
+    }
+    componentWillReceiveProps = (nextProps) => {
+        if (this.props.issueKey !== nextProps.issueKey) {
+            this.mentionProvider = makeProvider(nextProps.jira, nextProps.issueKey);
+        }
     }
     safeSetState = (data) => {
         if (this.mounted) {
@@ -283,13 +287,18 @@ export class CommentSubmit extends Component {
     constructor(props) {
         super(props);
         this.state = {};
-        this.mentionProvider = makeProvider(props.jira);
+        this.mentionProvider = makeProvider(props.jira, props.issueKey);
     }
     componentDidMount = async () => {
         this.mounted = true;
     }
     componentWillUnmount = () => {
         this.mounted = false;
+    }
+    componentWillReceiveProps = (nextProps) => {
+        if (this.props.issueKey !== nextProps.issueKey) {
+            this.mentionProvider = makeProvider(nextProps.jira, nextProps.issueKey);
+        }
     }
     safeSetState = (data) => {
         if (this.mounted) {
