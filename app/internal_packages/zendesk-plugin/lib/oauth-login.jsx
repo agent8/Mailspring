@@ -12,7 +12,7 @@ export default class OauthLogin extends Component {
     this.state = {}
   }
   componentDidMount () {
-    const client_id = 'edison_integration_for_zendesk'
+    const client_id = 'zdg-edison-integration-for-zendesk'
     const redirectUrl = encodeURIComponent('http://127.0.0.1:12141')
     const scope = encodeURIComponent('read write')
     let urlString = `https://edison.zendesk.com/oauth/authorizations/new?response_type=code&client_id=${client_id}&redirectUrl=${redirectUrl}&scope=${scope}`
@@ -49,8 +49,8 @@ export default class OauthLogin extends Component {
     const options = {
       grant_type: 'authorization_code',
       code,
-      client_id: 'edison_integration_for_zendesk',
-      client_secret: '8d54bd4351f2b8e7cabe56091d39b1a1dd2cc5e26e323db4b18915cb27a0ed04',
+      client_id: 'zdg-edison-integration-for-zendesk',
+      client_secret: 'f4cb1c67b8739ecd5c66a9991bf671b4a8b16ad58478885911c83e99d9f47b7f',
       redirect_uri: 'http://127.0.0.1:12141',
       scope: 'read write',
     }
