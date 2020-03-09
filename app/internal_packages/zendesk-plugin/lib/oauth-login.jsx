@@ -3,6 +3,7 @@ import http from 'http'
 import url from 'url'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
 const Zendesk = require('zendesk-node')
+const CONFIG_KEY = 'plugin.zendesk.config'
 const LOCAL_SERVER_PORT = 12141
 
 export default class OauthLogin extends Component {
@@ -59,21 +60,20 @@ export default class OauthLogin extends Component {
     if (typeof res === 'string') {
       res = JSON.parse(res)
     }
-    const zendeskAdminToken = res.access_token
-    console.log('  zendeskAdminToken:', zendeskAdminToken)
+    const zendeskOauthAccessToken = res.access_token
+    console.log('  zendeskOauthAccessToken:', zendeskOauthAccessToken)
     const zendeskOptions = {
       authType: Zendesk.AUTH_TYPES.OAUTH_ACCESS_TOKEN,
       zendeskSubdomain,
-      zendeskAdminToken,
+      zendeskOauthAccessToken,
+    }
+    const config = {
+      subdomain: zendeskSubdomain,
+      zendeskOauthAccessToken,
     }
     console.log(' zendeskOptions:', zendeskOptions)
-    const zendesk = Zendesk(zendeskOptions)
-    try {
-      const tickets = await zendesk.tickets.list()
-      console.log(' zendesk tickets.list: tickets:', tickets)
-    } catch (e) {
-      console.log(' zendesk tickets.list error: ', e)
-    }
+    AppEnv.trackingEvent('Zendesk-Login-Success')
+    AppEnv.config.set(CONFIG_KEY, config)
   }
   render () {
     const { src } = this.state
