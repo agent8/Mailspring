@@ -1,0 +1,94 @@
+import React, { Component } from 'react'
+import http from 'http'
+import url from 'url'
+import { postAsync } from '../../edison-beijing-chat/utils/httpex'
+const Zendesk = require('zendesk-node')
+const LOCAL_SERVER_PORT = 12141
+
+export default class OauthLogin extends Component {
+  constructor (props) {
+    super(props)
+    this.state = {}
+  }
+  componentDidMount () {
+    const client_id = 'edison_integration_for_zendesk'
+    const redirectUrl = encodeURIComponent('http://127.0.0.1:12141')
+    const scope = encodeURIComponent('read write')
+    let urlString = `https://edison.zendesk.com/oauth/authorizations/new?response_type=code&client_id=${client_id}&redirectUrl=${redirectUrl}&scope=${scope}`
+    console.log(' urlString:', urlString)
+    this.setState({ src: urlString })
+    this._server = http.createServer((request, response) => {
+      console.log('after redirected:' + request.url)
+      const { query } = url.parse(request.url, { querystring: true })
+      if (query.code) {
+        this._onReceivedCode(query.code)
+        // when oauth succeed, display Edison homepage
+        response.writeHead(302, { Location: 'http://email.easilydo.com' })
+        response.end()
+      } else if (query.error === 'access_denied') {
+        OnboardingActions.moveToPage('account-choose')
+        return
+      } else {
+        response.end('Unknown Request')
+      }
+    })
+    this._server.listen(LOCAL_SERVER_PORT, err => {
+      if (err) {
+        AppEnv.showErrorDialog({
+          title: 'Unable to Start Local Server',
+          message: `To listen for the Oauth response, Edison Mail needs to start a webserver on port ${LOCAL_SERVER_PORT}. Please go back and try linking your account again. If this error persists, use the IMAP/SMTP option with an App Password.\n\n${err}`,
+        })
+        return
+      } else {
+        console.log(' local server is listening:' + LOCAL_SERVER_PORT)
+      }
+    })
+  }
+  _onReceivedCode = async code => {
+    const options = {
+      grant_type: 'authorization_code',
+      code,
+      client_id: 'edison_integration_for_zendesk',
+      client_secret: '8d54bd4351f2b8e7cabe56091d39b1a1dd2cc5e26e323db4b18915cb27a0ed04',
+      redirect_uri: 'http://127.0.0.1:12141',
+      scope: 'read write',
+    }
+    const zendeskSubdomain = 'edison'
+    let res = await postAsync('https://edison.zendesk.com/oauth/tokens', options)
+    console.log('  postAsync res:', res)
+    if (typeof res === 'string') {
+      res = JSON.parse(res)
+    }
+    const zendeskAdminToken = res.access_token
+    console.log('  zendeskAdminToken:', zendeskAdminToken)
+    const zendeskOptions = {
+      authType: Zendesk.AUTH_TYPES.OAUTH_ACCESS_TOKEN,
+      zendeskSubdomain,
+      zendeskAdminToken,
+    }
+    console.log(' zendeskOptions:', zendeskOptions)
+    const zendesk = Zendesk(zendeskOptions)
+    try {
+      const tickets = await zendesk.tickets.list()
+      console.log(' zendesk tickets.list: tickets:', tickets)
+    } catch (e) {
+      console.log(' zendesk tickets.list error: ', e)
+    }
+  }
+  render () {
+    const { src } = this.state
+    return (
+      <webview
+        src={src}
+        style={{
+          position: 'position',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 99,
+        }}
+      ></webview>
+    )
+  }
+}

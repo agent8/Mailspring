@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import ZendeskApi from './zendesk-api'
+import OauthLogin from './oauth-login'
 import { remote } from 'electron'
 const { RetinaImg, LottieImg } = require('mailspring-component-kit')
 const Zendesk = require('zendesk-node')
@@ -58,20 +59,15 @@ export default class Login extends Component {
     AppEnv.trackingEvent('Zendesk-Login-Success')
     AppEnv.config.set(CONFIG_KEY, config)
   }
-  openOauth () {
-    remote.getGlobal('application').windowManager.ensureWindow(ONBOARDING_WINDOW, {
-      windowProps: {
-        addingAccount: true,
-        existingAccountJSON: {
-          provider: 'zendesk-plugin',
-        },
-      },
-      title: '',
-    })
+  openOauth = () => {
+    this.setState({ openOauth: true })
   }
   render () {
     const { host, username, apitoken, password } = this.props.config
-    const { error, loading } = this.state
+    const { error, loading, openOauth } = this.state
+    if (openOauth) {
+      return <OauthLogin></OauthLogin>
+    }
     return (
       <div className='zendesk-login'>
         <div className='zendesk-logo'>
@@ -111,6 +107,9 @@ export default class Login extends Component {
             <div>
               <button className='btn btn-zendesk btn-zendesk-login' onClick={this.submit}>
                 Login
+              </button>
+              <button className='btn btn-zendesk btn-zendesk-login' onClick={this.openOauth}>
+                OauthLogin
               </button>
             </div>
           )}
