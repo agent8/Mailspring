@@ -412,7 +412,8 @@ export default class JiraDetail extends Component {
                         jira={this.jira}
                         issueKey={issueKey}
                         data={fields.description}
-                        html={this.replaceImageSrc(renderedFields.description)}
+                        replaceImageSrc={this.replaceImageSrc}
+                        html={renderedFields.description}
                     />
                     <JiraComments
                         onClick={this.openOrignalImage}

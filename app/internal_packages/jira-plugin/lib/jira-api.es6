@@ -229,4 +229,19 @@ export default class JiraApi extends JiraApiBase {
             followAllRedirects: true
         }));
     }
+    updateDescription(issueId, description) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueId)
+        }), {
+            body: {
+                update: {
+                    description: [
+                        { set: description }
+                    ]
+                }
+            },
+            method: 'PUT',
+            followAllRedirects: true
+        }));
+    }
 }
