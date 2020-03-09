@@ -48,9 +48,9 @@ export default class JiraDescription extends Component {
             this.safeSetState({
                 progress: 'loading'
             });
-            const { issueKey, jira, data, findComments } = this.props;
+            const { issueKey, jira } = this.props;
             try {
-                await jira.updateDescription(issueKey, data.id, value);
+                await jira.updateDescription(issueKey, value);
             } catch (err) {
                 this.safeSetState({
                     progress: 'error'
@@ -61,8 +61,9 @@ export default class JiraDescription extends Component {
                 AppEnv.trackingEvent('Jira-UpdateDescription-Failed');
                 return;
             }
-            // await findComments(issueKey, true);
+            const issue = await jira.findIssue(issueKey, `renderedFields`);
             this.safeSetState({
+                content: issue && issue.renderedFields.description,
                 progress: 'success'
             });
             AppEnv.trackingEvent('Jira-UpdateDescription-Success');
@@ -108,7 +109,7 @@ export default class JiraDescription extends Component {
                             )}
                         />
                     </EditorContext>
-                ) : <div onClick={this.showEditor} dangerouslySetInnerHTML={{ __html: content }}></div>
+                ) : <div onClick={this.showEditor} dangerouslySetInnerHTML={{ __html: this.props.replaceImageSrc(content) }}></div>
             }
             {
                 progress === 'loading' && <div className="loading">
