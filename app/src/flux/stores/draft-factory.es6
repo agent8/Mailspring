@@ -142,12 +142,6 @@ class DraftFactory {
     };
 
     const merged = Object.assign(defaults, fields);
-    if (merged.forwardedHeaderMessageId) {
-      merged.referenceMessageId = merged.forwardedHeaderMessageId;
-      delete merged.forwardedHeaderMessageId;
-    } else {
-      merged.referenceMessageId = merged.replyToHeaderMessageId;
-    }
     await mergeDefaultBccAndCCs(merged, account);
     // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
     // if (account.autoaddress.type === 'cc') {
@@ -426,6 +420,7 @@ class DraftFactory {
       accountId: accountId,
       replyOrForward: Message.draftType.reply,
       replyToHeaderMessageId: message.headerMessageId,
+      referenceMessageId: message.id,
       msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
       body,
     });
@@ -466,7 +461,8 @@ class DraftFactory {
       files: filterMissingAttachments(message.files),
       threadId: thread.id,
       accountId: accountId,
-      forwardedHeaderMessageId: message.id,
+      forwardedHeaderMessageId: message.headerMessageId,
+      referenceMessageId: message.id,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
       body: `
@@ -484,9 +480,9 @@ class DraftFactory {
     });
   }
 
-  async createDraftForResurfacing(thread, threadMessageId, body) {
+  async createDraftForResurfacing(thread, threadHeaderMessageId, body) {
     const account = AccountStore.accountForId(thread.accountId);
-    let replyToHeaderMessageId = threadMessageId;
+    let replyToHeaderMessageId = threadHeaderMessageId;
 
     if (!replyToHeaderMessageId) {
       // const msg = await DatabaseStore.findBy(Message, {
