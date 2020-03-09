@@ -28,8 +28,14 @@ class SignatureStore extends MailspringStore {
         initial: { id: sigDefaultTemplate.id, title: sigDefaultTemplate.title },
       };
       AccountStore.accounts().forEach(a => {
-        // this.defaultSignatures[a.emailAddress] = 'initial';
-        this.defaultSignatures[a.emailAddress] = null;
+        if (this.defaultSignatures[a.emailAddress] !== 'initial') {
+          this.defaultSignatures[a.emailAddress] = null;
+        }
+        (a.aliases || []).forEach(aliase => {
+          if (this.defaultSignatures[aliase] !== 'initial') {
+            this.defaultSignatures[aliase] = null;
+          }
+        });
       });
     }
 
@@ -43,7 +49,7 @@ class SignatureStore extends MailspringStore {
           fs.writeFile(
             path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),
             sigDefaultTemplate.body,
-            () => { }
+            () => {}
           );
         });
       }
@@ -54,7 +60,7 @@ class SignatureStore extends MailspringStore {
         Actions.removeSignature.listen(this._onRemoveSignature),
         Actions.upsertSignature.listen(this._onUpsertSignature),
         Actions.selectSignature.listen(this._onSelectSignature),
-        Actions.toggleAccount.listen(this._onToggleAccount),
+        Actions.toggleAliasesSignature.listen(this._onToggleAliasesSignature),
       ];
 
       AppEnv.config.onDidChange(`signatures`, () => {
@@ -114,8 +120,8 @@ class SignatureStore extends MailspringStore {
     return bodyInFile;
   }
 
-  signatureForEmail = email => {
-    return this.signatures[this.defaultSignatures[email]];
+  signatureForEmailOrAliase = emailOrAliase => {
+    return this.signatures[this.defaultSignatures[emailOrAliase]];
   };
 
   _saveSignatures() {
@@ -173,11 +179,11 @@ class SignatureStore extends MailspringStore {
     this.signaturesBody.set(id, body);
   };
 
-  _onToggleAccount = email => {
-    if (this.defaultSignatures[email] === this.selectedSignatureId) {
-      this.defaultSignatures[email] = null;
+  _onToggleAliasesSignature = aliases => {
+    if (this.defaultSignatures[aliases] === this.selectedSignatureId) {
+      this.defaultSignatures[aliases] = null;
     } else {
-      this.defaultSignatures[email] = this.selectedSignatureId;
+      this.defaultSignatures[aliases] = this.selectedSignatureId;
     }
 
     this.trigger();

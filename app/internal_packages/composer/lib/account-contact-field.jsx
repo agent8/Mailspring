@@ -46,7 +46,8 @@ export default class AccountContactField extends React.Component {
 
   _changeSignature = account => {
     const { draft, session } = this.props;
-    let sig = SignatureStore.signatureForEmail(account.email);
+    const accountName = account.isAlias ? account.aliasName : account.email;
+    let sig = SignatureStore.signatureForEmailOrAliase(accountName);
     let body;
     if (sig) {
       body = applySignature(draft.body, sig);
@@ -121,6 +122,8 @@ export default class AccountContactField extends React.Component {
 
   _renderFromFieldComponents = () => {
     const { draft, session, accounts } = this.props;
+    const draftFrom = draft.from[0] || {};
+    const draftFromEmail = draftFrom.isAlias ? draftFrom.aliasName : draftFrom.email;
     return (
       <InjectedComponentSet
         deferred
@@ -130,7 +133,7 @@ export default class AccountContactField extends React.Component {
           draft,
           session,
           accounts,
-          draftFromEmail: (draft.from[0] || {}).email,
+          draftFromEmail,
         }}
       />
     );
