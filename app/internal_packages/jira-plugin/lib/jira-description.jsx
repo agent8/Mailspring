@@ -20,7 +20,7 @@ export default class JiraDescription extends Component {
             value: props.data,
             content: props.html
         };
-        this.mentionProvider = makeProvider(props.jira);
+        this.mentionProvider = makeProvider(props.jira, props.issueKey);
     }
     componentDidMount = async () => {
         this.mounted = true;
@@ -30,6 +30,7 @@ export default class JiraDescription extends Component {
     }
     componentWillReceiveProps(nexProps) {
         if (nexProps.issueKey !== this.props.issueKey) {
+            this.mentionProvider = makeProvider(nexProps.jira, nexProps.issueKey);
             this.safeSetState({
                 value: nexProps.data,
                 content: nexProps.html
