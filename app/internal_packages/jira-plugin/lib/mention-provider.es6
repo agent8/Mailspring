@@ -10,7 +10,7 @@ class JiraMentionResource extends MentionResource {
     verifyMentionConfig() { }
     recordMentionSelection() { }
     remoteInitialState = () => {
-        return this.jira.searchUsers('', MAX_RESULT)
+        return this.jira.searchAssignableUsers({ issueKey: this.issueKey, username: '', maxResults: MAX_RESULT })
             .then((result) => {
                 const mentions = this.transformServiceResponse(result, '');
                 // this.notify(searchTime, mentions, '');
@@ -23,7 +23,7 @@ class JiraMentionResource extends MentionResource {
         };
     };
     remoteSearch = (query) => {
-        return this.jira.searchUsers(query, MAX_RESULT)
+        return this.jira.searchAssignableUsers({ issueKey: this.issueKey, username: query, maxResults: MAX_RESULT })
             .then((result) => {
                 const mentions = this.transformServiceResponse(result, query);
                 // this.notify(searchTime, mentions, query);
@@ -53,9 +53,10 @@ class JiraMentionResource extends MentionResource {
 
 const mentionProvider = new JiraMentionResource({});
 
-export function makeProvider(jira) {
+export function makeProvider(jira, issueKey) {
     return new Promise(function (resolve) {
         mentionProvider.jira = jira;
+        mentionProvider.issueKey = issueKey;
         resolve(mentionProvider);
     });
 }
