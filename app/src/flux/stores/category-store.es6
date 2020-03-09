@@ -1,5 +1,4 @@
 import _ from 'underscore';
-let Categories = require('../../global/mailspring-observables').Categories;
 import MailspringStore from 'mailspring-store';
 import DatabaseStore from './database-store';
 import AccountStore from './account-store';
@@ -7,6 +6,7 @@ import Account from '../models/account';
 import Category from '../models/category';
 import Actions from '../actions';
 import FolderState from '../models/folder-state';
+import Folder from '../models/folder';
 const asAccount = a => {
   if (!a) {
     throw new Error('You must pass an Account or Account Id');
@@ -37,26 +37,7 @@ class CategoryStore extends MailspringStore {
         this._onCategoriesChanged(this._categoryResult);
       }
     });
-    // If the computer is slow enough, we could be getting undefined for Categories exports
-    // Thus we wait for 300ms and try again.
-    if(Categories){
-      Categories.forAllAccounts()
-        .sort()
-        .subscribe(this._onCategoriesChanged);
-    }else {
-      console.log(`Categories still not loaded yet, wait until next cycle to attach listener`);
-      setTimeout(()=>{
-        Categories = require('../../global/mailspring-observables').Categories;
-        if(Categories){
-          console.log('adding Categories listener');
-          Categories.forAllAccounts()
-            .sort()
-            .subscribe(this._onCategoriesChanged);
-        }else {
-          console.log(`Error: categories still not loaded Categories ${Categories}`);
-        }
-      }, 300)
-    }
+    DatabaseStore.findAll(Folder, {state: 0}).then(this._onCategoriesChanged);
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
@@ -215,7 +196,10 @@ class CategoryStore extends MailspringStore {
     }
     return this._categorySyncState[categoryId].syncing;
   };
-  _onFolderStateChange = ({ objectClass, objects }) => {
+  _onFolderStateChange = ({ objectClass, objects, processAccountId }) => {
+    if(objectClass === Folder.name){
+      return this._onCategoriesChanged(objects, processAccountId);
+    }
     if (objectClass !== FolderState.name) {
       return;
     }
@@ -253,9 +237,17 @@ class CategoryStore extends MailspringStore {
     }
   };
 
-  _onCategoriesChanged = categories => {
+  _onCategoriesChanged = (categories, accountId = '') => {
     console.log('On Categories change');
-    this._categoryResult = categories;
+    if (!this._categoryResult){
+      this._categoryResult = [];
+    }
+    if(accountId){
+      this._categoryResult= this._categoryResult.filter(cat => cat.accountId !== accountId);
+      this._categoryResult = this._categoryResult.concat(categories);
+    }else {
+      this._categoryResult= categories;
+    }
     const categoryCache = {};
     for (const cat of categories) {
       categoryCache[cat.accountId] = categoryCache[cat.accountId] || {};
@@ -267,7 +259,11 @@ class CategoryStore extends MailspringStore {
       categoryCache[cat.accountId][cat.id] = cat;
       this._onCategoryFinishedSyncing(cat, false);
     }
-    this._categoryCache = categoryCache;
+    if(accountId){
+      this._categoryCache[accountId] = categoryCache[accountId];
+    }else {
+      this._categoryCache= categoryCache;
+    }
 
     const filteredByAccount = fn => {
       const result = {};
@@ -280,10 +276,15 @@ class CategoryStore extends MailspringStore {
       }
       return result;
     };
-
-    this._standardCategories = filteredByAccount(cat => cat.isStandardCategory());
-    this._userCategories = filteredByAccount(cat => cat.isUserCategory());
-    this._hiddenCategories = filteredByAccount(cat => cat.isHiddenCategory());
+    if(accountId){
+      this._standardCategories[accountId] = filteredByAccount(cat => cat.isStandardCategory())[accountId];
+      this._userCategories[accountId] = filteredByAccount(cat => cat.isUserCategory())[accountId];
+      this._hiddenCategories[accountId] = filteredByAccount(cat => cat.isHiddenCategory())[accountId];
+    }else {
+      this._standardCategories = filteredByAccount(cat => cat.isStandardCategory());
+      this._userCategories = filteredByAccount(cat => cat.isUserCategory());
+      this._hiddenCategories = filteredByAccount(cat => cat.isHiddenCategory());
+    }
 
     // Ensure standard categories are always sorted in the correct order
     for (const accountCategories of Object.values(this._standardCategories)) {

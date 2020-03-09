@@ -501,6 +501,10 @@ export default class MailsyncBridge {
     this._sift = client;
     client.identity = IdentityStore.identity();
     client.updatePrivacyOptions(AppEnv.config.get('core.privacy'));
+    const supportId = AppEnv.config.get('core.support.id');
+    if(supportId){
+      client.updateSupportId(supportId);
+    }
     const allAccountsJSON = [];
     for (const acct of AccountStore.accounts()) {
       const fullAccountJSON = (await KeyManager.insertAccountSecrets(acct)).toJSON();
@@ -530,6 +534,10 @@ export default class MailsyncBridge {
       return;
     }
     const client = new MailsyncProcess(this._getClientConfiguration());
+    const supportId = AppEnv.config.get('core.support.id');
+    if(supportId){
+      client.updateSupportId(supportId);
+    }
     this._clients[account.id] = client; // set this synchornously so we never spawn two
     this._clientsStartTime[account.id] = Date.now();
     delete this._setObservableRangeTimer[account.id];
@@ -681,7 +689,7 @@ export default class MailsyncBridge {
     }
   }
 
-  _onIncomingMessages = msgs => {
+  _onIncomingMessages = (msgs, accountId) => {
     for (const msg of msgs) {
       if (msg.length === 0) {
         AppEnv.logWarning(`Sync worker sent message with length as 0: ${msg}`);
@@ -733,12 +741,13 @@ export default class MailsyncBridge {
       }
       if (passAsIs || type === 'unpersist'){
         // console.log('passing data from native to UI without going through db');
-        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels });
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels, processAccountId: accountId });
         this._onIncomingChangeRecord(
           new DatabaseChangeRecord({
             type, // TODO BG move to "model" naming style, finding all uses might be tricky
             objectClass: modelClass,
             objects: tmpModels,
+            processAccountId: accountId,
           })
         );
         continue;
@@ -818,12 +827,13 @@ export default class MailsyncBridge {
             return;
           }
           // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels });
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels, processAccountId: accountId });
           this._onIncomingChangeRecord(
             new DatabaseChangeRecord({
               type,
               objectClass: modelClass,
               objects: parsedModels,
+              processAccountId: accountId,
             })
           );
         });
@@ -906,7 +916,7 @@ export default class MailsyncBridge {
   };
 
   _onIncomingRebroadcastMessage = (event, data) => {
-    const { type, models, modelClass } = data;
+    const { type, models, modelClass, processAccountId } = data;
     console.log(`type: ${type}, modelClass: ${modelClass}`, models);
     // const models = modelJSONs.map(Utils.convertToModel);
     DatabaseStore.trigger(
@@ -916,6 +926,7 @@ export default class MailsyncBridge {
         objects: models.map(model => {
           return Utils.populateWithModel(model, modelClass);
         }),
+        processAccountId
       })
     );
   };

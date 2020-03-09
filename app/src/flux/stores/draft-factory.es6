@@ -528,9 +528,10 @@ class DraftFactory {
       files: [].concat(message.files),
       threadId: thread.id,
       accountId: accountId,
-      forwardedHeaderMessageId: message.id,
+      forwardedHeaderMessageId: message.headerMessageId,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
+      pastMessageIds: [message.id],
       body: `
         <br/>
         <div class="gmail_quote">

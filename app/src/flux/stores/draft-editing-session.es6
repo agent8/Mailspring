@@ -461,7 +461,7 @@ export default class DraftEditingSession extends MailspringStore {
     const allRecipients = [].concat(this._draft.to, this._draft.cc, this._draft.bcc);
     const hasAttachment = Array.isArray(this._draft.files) && this._draft.files.length > 0;
     if(this._draft.waitingForAttachment){
-      errors.push(`Attachments are still processing`);
+      warnings.push(`Attachments are still processing`);
     }
 
     const allNames = [].concat(Utils.commonlyCapitalizedSalutations);
