@@ -235,8 +235,8 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'replyToHeaderMessageId',
     }),
 
-    forwardedHeaderMessageId: Attributes.String({
-      modelKey: 'forwardedHeaderMessageId',
+    forwardHeaderMessageId: Attributes.String({
+      modelKey: 'forwardHeaderMessageId',
     }),
     referenceMessageId: Attributes.String({
       modelKey: 'referenceMessageId'
