@@ -718,7 +718,14 @@ class DraftStore extends MailspringStore {
     if (change.objectClass !== Message.name) {
       return;
     }
-    const drafts = change.objects.filter(msg => msg.draft && !msg.calendarReply);
+    const pastMessageIds = [];
+    Object.values(this._draftSessions).forEach(session => {
+      const draft = session.draft();
+      if(draft && Array.isArray(draft.pastMessageIds)){
+        pastMessageIds.push(...draft.pastMessageIds)
+      }
+    });
+    const drafts = change.objects.filter(msg => (msg.draft && !msg.calendarReply) || pastMessageIds.includes(msg.id));
     if (drafts.length === 0) {
       return;
     }
@@ -1158,7 +1165,7 @@ class DraftStore extends MailspringStore {
             delete this._draftsDeleting[headerMessageId];
             if(AppEnv.isMainWindow()){
               AttachmentStore = AttachmentStore || require('./attachment-store').default;
-              AttachmentStore.deleteDraft({messageId: id, accountId, reason: 'Destroy Draft success'});
+              AttachmentStore.removeDraftAttachmentCache({id, accountId, reason: 'Destroy Draft success'});
             }
           }
           delete this._draftsDeleting[id];
@@ -1185,7 +1192,7 @@ class DraftStore extends MailspringStore {
           delete this._draftsDeleting[id];
           if(AppEnv.isMainWindow()){
             AttachmentStore = AttachmentStore || require('./attachment-store').default;
-            AttachmentStore.deleteDraft({messageId: id, accountId, reason: 'Destroy draft failed'});
+            AttachmentStore.removeDraftAttachmentCache({id, accountId, reason: 'Destroy draft failed'});
           }
         }
       });

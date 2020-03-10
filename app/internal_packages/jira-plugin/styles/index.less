@@ -42,6 +42,22 @@
     padding: 8px 18px 20px;
     background: @background-primary;
     color: @text-color;
+    .jhfGnb,
+    .akEditor {
+        background: @gray-lightest;
+        border-color: @gray-lighter; 
+    }
+    .akEditor {
+        .bXRoMz {
+            padding-top: 5px;
+        }
+        .heUXKZ {
+            background: @gray-lightest;
+        }
+        .EqFtw .ProseMirror p {
+            margin-top: 0;
+        }
+    }
     .transition-slide-enter {
         opacity: 0.01;
         transform: translateY(120px);
@@ -95,6 +111,7 @@
         }
         .row {
             margin-bottom: 16px;
+            text-align: center;
             .label {
                 font-weight: 600;
                 font-size: 14px;
@@ -273,7 +290,7 @@
             & > div {
                 .row {
                     word-break: break-word;
-                    margin-bottom: 10px;
+                    margin-bottom: 26px;
                     .comment-header {
                         display: flex;
                         flex-wrap: wrap;
@@ -290,32 +307,53 @@
                         }
                     }
                 }
-            } 
-        }
-        .jira-attachments {
-            .attachments > div {
+            }
+            .jira-comment-editor-container {
                 position: relative;
-                width: 100px;
-                height: 100px;
-                float: left;
-                margin: 4px 8px 0 0;
-                overflow: hidden;
-                cursor: pointer;
-                &:hover {
-                    &:after {
-                        content: attr(title);
-                        color: @text-color-inverse;
-                        display: block;
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                        height: 100%;
-                        width: 100%;
-                        background: fade(@black, 65);
+            }
+            .jira-comment-toolbar {
+                .btn {
+                    box-shadow: none;
+                    margin-right: 20px;
+                    opacity: 0.3;
+                    &:hover {
+                        opacity: 0.6;
+                        text-decoration: underline;
                     }
                 }
             }
         }
+        .jira-attachments {
+            .attachments {
+                overflow: hidden;
+                margin-bottom: 30px;
+                & > div {
+                    position: relative;
+                    width: 100px;
+                    height: 100px;
+                    float: left;
+                    margin: 4px 8px 0 0;
+                    overflow: hidden;
+                    cursor: pointer;
+                    &:hover {
+                        &:after {
+                            content: attr(title);
+                            color: @text-color-inverse;
+                            display: block;
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            height: 100%;
+                            width: 100%;
+                            background: fade(@black, 65);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    .jira-submit-comment {
+        position: relative;
     }
     .image-wrap {
         display: inline-block;
@@ -449,17 +487,17 @@
             border-top: 1px solid @border-color-primary;
             padding: 4px 0;
         }
-        .loading {
-            position: absolute;
-            height: 100%;
-            width: 100%;
-            left: 0;
-            top: 0;
-            background: fade(@black, 15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    }
+    .loading {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        left: 0;
+        top: 0;
+        background: fade(@black, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 

@@ -285,6 +285,10 @@ export default class MessageItem extends React.Component {
 
   _renderAttachments() {
     const { files = [], body, id } = this.props.message;
+    if(!body){
+      console.log('message have no body');
+      return null;
+    }
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
       return !f.contentId || !(body || '').includes(`cid:${f.contentId}`) || (f.contentId && !Utils.shouldDisplayAsImage(f));

@@ -152,6 +152,8 @@ export default class MailsyncBridge {
     this._setObservableRangeTimer = {};
     this._cachedObservableThreadIds = {};
     this._cachedObservableMessageIds = {};
+    this._folderListCache = {};
+    this._folderListTTL = 60000;
     this._cachedObservableTTL = 30000;
     // Store threads that are opened in seperate window
     this._additionalObservableThreads = {};
@@ -546,6 +548,7 @@ export default class MailsyncBridge {
     delete this._additionalObservableThreads[account.id];
     delete this._cachedFetchAttachments[account.id];
     delete this._cachedFetchBodies[account.id];
+    delete this._folderListCache[account.id];
     const fullAccountJSON = (await KeyManager.insertAccountSecrets(account)).toJSON();
 
     if (force) {
@@ -741,7 +744,7 @@ export default class MailsyncBridge {
       }
       if (passAsIs || type === 'unpersist'){
         // console.log('passing data from native to UI without going through db');
-        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels, processAccountId: accountId });
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, modelJSONs: tmpModels.map(m => m.toJSON()), processAccountId: accountId });
         this._onIncomingChangeRecord(
           new DatabaseChangeRecord({
             type, // TODO BG move to "model" naming style, finding all uses might be tricky
@@ -827,7 +830,7 @@ export default class MailsyncBridge {
             return;
           }
           // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels, processAccountId: accountId });
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, modelJSONs: parsedModels.map(m => m.toJSON()), processAccountId: accountId });
           this._onIncomingChangeRecord(
             new DatabaseChangeRecord({
               type,
@@ -916,16 +919,14 @@ export default class MailsyncBridge {
   };
 
   _onIncomingRebroadcastMessage = (event, data) => {
-    const { type, models, modelClass, processAccountId } = data;
-    console.log(`type: ${type}, modelClass: ${modelClass}`, models);
-    // const models = modelJSONs.map(Utils.convertToModel);
+    const { type, modelJSONs, modelClass, processAccountId } = data;
+    console.log(`type: ${type}, modelClass: ${modelClass}`, modelJSONs);
+    const models = modelJSONs.map(Utils.convertToModel);
     DatabaseStore.trigger(
       new DatabaseChangeRecord({
         type,
         objectClass: modelClass,
-        objects: models.map(model => {
-          return Utils.populateWithModel(model, modelClass);
-        }),
+        objects: models,
         processAccountId
       })
     );
@@ -1233,12 +1234,21 @@ export default class MailsyncBridge {
       console.error('no account');
       return;
     }
+    if(accountIds.length === 0){
+      console.error('account array is empty');
+      return;
+    }
+    const now = Date.now();
     accountIds.forEach(accountId => {
-      this.sendMessageToAccount(accountId, {
-        type: 'sync-folderList',
-        aid: accountId,
-        source
-      });
+      const interval = now - (this._folderListCache[accountId] || 1);
+      if(interval >= this._folderListTTL ){
+        this.sendMessageToAccount(accountId, {
+          type: 'sync-folderList',
+          aid: accountId,
+          source
+        });
+        this._folderListCache[accountId] = now;
+      }
     });
   }
 
