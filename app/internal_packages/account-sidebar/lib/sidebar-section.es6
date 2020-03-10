@@ -205,6 +205,11 @@ class SidebarSection {
     }
     SidebarSection.forSiftCategories(accountIds, items);
 
+    folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
+    if (folderItem) {
+      items.push(folderItem);
+    }
+
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)
       .forEach(ext => {
