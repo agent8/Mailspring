@@ -596,7 +596,7 @@ class AccountStore extends MailspringStore {
   isAlias(name, email) {
     const aliases = [];
     for (const acc of this._accounts) {
-      aliases.push(...acc.aliases);
+      aliases.push(...(acc.aliases || []));
     }
     return aliases.some(alias => {
       return alias === `${name} <${email}>`;
