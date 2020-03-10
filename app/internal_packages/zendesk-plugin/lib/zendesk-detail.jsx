@@ -141,40 +141,38 @@ export default class ZendeskDetail extends Component {
         this.safeSetState({
           allUsers: users,
         })
-        ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
-        ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
-        ticket.followers = []
-        for (let id of ticket.followerIds) {
-          const follower = await this.zendesk.getUser(id)
-          ticket.followers.push(follower)
-        }
-        console.log(
-          ' assignee submitter ticket.followers:',
-          ticket.assignee,
-          ticket.submitter,
-          ticket.followers
-        )
-        this.safeSetState({
-          loading: false,
-          ticket,
-          link: ticketLink,
-        })
       }
-      await this.getComments()
+      this.safeSetState({ cloading: false, commentLoading: true })
+      ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
+      ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
+      ticket.followers = []
+      for (let id of ticket.followerIds) {
+        const follower = await this.zendesk.getUser(id)
+        ticket.followers.push(follower)
+      }
+      console.log(
+        ' assignee submitter ticket.followers:',
+        ticket.assignee,
+        ticket.submitter,
+        ticket.followers
+      )
+      this.safeSetState({
+        loading: false,
+        ticket,
+        link: ticketLink,
+      })
+      await this.getComments(ticket)
       return
     }
   }
-  getComments = async () => {
-    const { ticket } = this.state
-    this.safeSetState({
-      commentLoading: true,
-    })
+  getComments = async ticket => {
     const comments = await this.zendesk.getComments(ticket)
     for (let item of comments) {
       item.author = await this.zendesk.getUser(item.authorId)
     }
     ticket.comments = comments
     this.safeSetState({
+      loading: false,
       commentLoading: false,
     })
   }
@@ -364,6 +362,9 @@ export default class ZendeskDetail extends Component {
     if (commentLoading) {
       return <div>{this._renderLoading(20)}</div>
     }
+    if (!comments) {
+      return null
+    }
     return (
       <CSSTransitionGroup
         component='div'
@@ -400,12 +401,6 @@ export default class ZendeskDetail extends Component {
       followerError,
       commentSaving,
     } = this.state
-    console.log(
-      ' zendesk-detail.render:',
-      this.state,
-      ticket && ticket.assignee,
-      ticket && ticket.submitter
-    )
     if (loading) {
       return <div className='large-loading'>{this._renderLoading(40)}</div>
     }
