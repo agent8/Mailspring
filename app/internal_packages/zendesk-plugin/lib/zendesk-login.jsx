@@ -12,7 +12,7 @@ export default class Login extends Component {
     this.state = {}
   }
   submit = async () => {
-    const fields = [this.subdomain, this.email, this.apitoken]
+    const fields = [this.subdomain, this.email, this.password, this.apitoken]
     let hasError = false
     this.setState({
       error: null,
@@ -25,22 +25,33 @@ export default class Login extends Component {
         hasError = true
       }
     }
-    if (hasError) {
+    if (!this.subdomain || !this.email || (!this.password && !this.apitoken)) {
       return
     }
     const zendeskSubdomain = this.subdomain.value
     AppEnv.trackingEvent('Zendesk-Login')
     const config = {
       subdomain: this.subdomain.value,
+      password: this.password.value,
       username: this.email.value,
       apitoken: this.apitoken.value,
     }
-    this.zendesk = new ZendeskApi({
-      zendeskSubdomain,
-      email: config.username,
-      password: config.password,
-      zendeskAdminToken: config.apitoken,
-    })
+    if (config.password) {
+      this.zendesk = new ZendeskApi({
+        authType: Zendesk.AUTH_TYPES.BASIC_AUTH,
+        zendeskSubdomain,
+        email: config.username,
+        password: config.password,
+      })
+    } else if (config.apitoken) {
+      this.zendesk = new ZendeskApi({
+        authType: Zendesk.AUTH_TYPES.API_TOKEN,
+        zendeskSubdomain,
+        email: config.username,
+        zendeskAdminToken: config.apitoken,
+      })
+    }
+
     try {
       const tickets = await this.zendesk.listTickets()
       console.log('****tickets', tickets)
@@ -88,7 +99,13 @@ export default class Login extends Component {
           <input type='text' defaultValue={username} ref={el => (this.email = el)} />
         </div>
         <div className='row'>
+          <span className='label'>Password</span>
+          <span className='prefer'>(if you prefer password)</span>
+          <input type='password' ref={el => (this.password = el)} />
+        </div>
+        <div className='row'>
           <span className='label'>API token</span>
+          <span className='prefer'>(if you prefer api token)</span>
           <input type='password' defaultValue={apitoken} ref={el => (this.apitoken = el)} />
           <span>
             <a href='https://support.zendesk.com/hc/en-us/articles/226022787-Generating-a-new-API-token-'>

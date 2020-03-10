@@ -32,7 +32,7 @@ export default class ZendeskDetail extends Component {
       if (config.password) {
         // tried, but zendesk return could not authenticate
         this.zendesk = new ZendeskApi({
-          authType: Zendesk.AUTH_TYPES.API_TOKEN,
+          authType: Zendesk.AUTH_TYPES.BASIC_AUTH,
           zendeskSubdomain: config.subdomain,
           email: config.username,
           password: config.password,
