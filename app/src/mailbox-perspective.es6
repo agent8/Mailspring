@@ -1006,8 +1006,7 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
   }
   unreadCount() {
     let sum = 0;
-    const accountIds = AccountStore.accountIds();
-    for (const aid of accountIds) {
+    for (const aid of this.accountIds) {
       sum += ThreadCountsStore.unreadCountForCategoryId(`${aid}_JIRA`);
     }
     return sum;
@@ -1017,7 +1016,6 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
       .where({
         inAllMail: true,
         state: 0,
-        accountId: this.accountIds[0],
         isJIRA: true
       })
       .order([Thread.attributes.lastMessageTimestamp.descending()])
