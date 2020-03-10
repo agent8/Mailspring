@@ -82,6 +82,9 @@ export default class JiraDetail extends Component {
     }
     _findIssueKey(messages) {
         for (const m of messages) {
+            if (!m || !m.body) {
+                continue;
+            }
             const $ = cheerio.load(m.body);
             let a = $('.breadcrumbs-table a').last();
             if (a && a.attr('href')) {
