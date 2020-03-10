@@ -390,6 +390,8 @@ export default class Contact extends Model {
   constructor(data) {
     super(data);
     this.thirdPartyData = this.thirdPartyData || {};
+    this.isAlias = AccountStore.isAlias(this.name, this.email);
+    this.aliasName = this.isAlias ? `${this.name} <${this.email}>` : '';
   }
 
   // Public: Returns a string of the format `Full Name <email@address.com>` if

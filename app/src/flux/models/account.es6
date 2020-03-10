@@ -133,8 +133,8 @@ export default class Account extends ModelWithMetadata {
       accountId: this.id,
     });
 
-    meAlias.isAlias = true;
-    meAlias.aliasName = `${meAlias.name} <${meAlias.email}>`;
+    // meAlias.isAlias = true;
+    // meAlias.aliasName = `${meAlias.name} <${meAlias.email}>`;
 
     return meAlias || this.me();
   }
