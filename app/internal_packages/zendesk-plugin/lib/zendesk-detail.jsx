@@ -482,7 +482,7 @@ export default class ZendeskDetail extends Component {
       <div className='zendesk-detail'>
         {userLogo}
         <div className='zendesk-title'>
-          <a href={this.state.link}>{ticketKey}</a>
+          <a href={this.state.link}>ticket {ticketKey}</a>
         </div>
         <div className='wrapper'>
           <header>
