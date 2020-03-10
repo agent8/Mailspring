@@ -588,12 +588,12 @@ class AccountDrafts{
     console.log(`draft ${item.messageId} added to account ${item.accountId}`);
   };
 
-  removeDraftCache({ accountId, messageId, headerMessageId }) {
+  removeDraftCache({ accountId, messageId, headerMessageId, reason= '' }) {
     const draft = this.findDraft({ accountId, messageId, headerMessageId });
     if (draft) {
       this.accounts[accountId] = this.accounts[accountId].filter(item => item.messageId !== draft.messageId);
     }
-    console.log(`Removed ${messageId} from draft attachment cache`);
+    console.log(`Removed ${messageId} from draft attachment cache, reason: ${reason}`);
   }
   addDraft({accountId, messageId, headerMessageId}){
     let draft = this.findDraft({accountId, messageId, headerMessageId});
@@ -608,14 +608,14 @@ class AccountDrafts{
   }
   addDraftWithAttachments(draft){
     if(!draft){
-      AppEnv.logError(`Draft is null, cannot remove draft from attachment cache`);
+      AppEnv.logError(new Error(`Draft is null, cannot add draft with attachments to cache`));
       return;
     }
     const accountId = draft.accountId;
     const messageId = draft.id;
     const headerMessageId = draft.headerMessageId;
     if(!accountId || (!messageId && !headerMessageId) ){
-      AppEnv.logError(`Draft data incorrect, cannot remove draft from attachment cache`, draft);
+      AppEnv.logError(new Error(`Draft data incorrect, cannot remove draft from attachment cache`), draft);
       return;
     }
     const draftCache = this.addDraft({accountId, messageId, headerMessageId});
@@ -648,7 +648,7 @@ class AccountDrafts{
     };
     if(draft.isDeleted()){
       done();
-      AppEnv.logError(`Draft ${messageId},${headerMessageId} is already deleted, will not add attachment`);
+      AppEnv.logError(new Error(`Draft ${messageId},${headerMessageId} is already deleted, will not add attachment`));
       return;
     }
     if(sourceFile && !originalPath){
@@ -807,7 +807,7 @@ class AttachmentStore extends MailspringStore {
   // }
   copyAttachmentsToDraft({ draft, fileData = [], cb }) {
     if(!draft){
-      AppEnv.logError(`Draft is null, add to attachment ignored`);
+      AppEnv.logError(new Error(`Draft is null, add to attachment ignored`));
       return;
     }
     if(!Array.isArray(fileData)){
@@ -847,11 +847,11 @@ class AttachmentStore extends MailspringStore {
   }
   deleteDraftAttachments({ draft, fileIds = [], cb }){
     if(!draft){
-      AppEnv.logError(`Draft is null, add to attachment ignored`);
+      AppEnv.logError(new Error(`Draft is null, delete draft attachments ignored`));
       return;
     }
     if(!Array.isArray(fileIds)){
-      AppEnv.logError(`fileData is not array, ignoring add to attachment`);
+      AppEnv.logError(new Error(`fileData is not array, ignoring add to attachment`));
       return;
     }
     const accountId = draft.accountId;
@@ -893,14 +893,14 @@ class AttachmentStore extends MailspringStore {
   }
   addDraftToAttachmentCache(draft){
     if(!draft){
-      AppEnv.logError(`Draft is null, cannot remove draft from attachment cache`);
+      AppEnv.logError(new Error(`Draft is null, cannot add draft to attachment cache`));
       return;
     }
     const accountId = draft.accountId;
     const messageId = draft.id;
     const headerMessageId = draft.headerMessageId;
     if(!accountId || (!messageId && !headerMessageId) ){
-      AppEnv.logError(`Draft data incorrect, cannot remove draft from attachment cache`, draft);
+      AppEnv.logError(new Error(`Draft data incorrect, cannot remove draft from attachment cache`), draft);
       return;
     }
     if(Array.isArray(draft.files) && draft.files.length > 0){
@@ -912,7 +912,7 @@ class AttachmentStore extends MailspringStore {
   }
   removeDraftAttachmentCache(draft){
     if(!draft){
-      AppEnv.logError(`Draft is null, cannot remove draft from attachment cache`);
+      AppEnv.logError(new Error(`Draft is null, cannot remove draft from attachment cache`));
       return;
     }
     const accountId = draft.accountId;

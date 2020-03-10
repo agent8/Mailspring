@@ -972,7 +972,8 @@ class DraftStore extends MailspringStore {
           title: ' ',
           threadId: newSession.draft().threadId,
         });
-        AttachmentStore.deleteDraft({accountId: draft.accountId, messageId: draft.id, reason: 'sessionForServerDraft'});
+        AttachmentStore = AttachmentStore || require('./attachment-store').default;
+        AttachmentStore.removeDraftAttachmentCache({accountId: draft.accountId, id: draft.id, reason: 'sessionForServerDraft'});
       });
     } else {
       const messageId = session.draft().id;
