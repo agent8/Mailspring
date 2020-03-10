@@ -213,8 +213,8 @@ class SidebarItem {
         onSelect(item) {
           // FocusedPerspectiveStore.refreshPerspectiveMessages({perspective: item});
           Actions.focusMailboxPerspective(item.perspective);
-          if(item.syncFolderList){
-            Actions.syncFolderList({accountIds: item.accountIds, source: 'onToggleItemCollapsed'});
+          if (item.syncFolderList) {
+            Actions.syncFolderList({ accountIds: item.accountIds, source: 'onToggleItemCollapsed' });
           }
         },
       },
@@ -346,6 +346,38 @@ class SidebarItem {
     return this.forPerspective(id, perspective, opts);
   }
 
+  static forJira(accountIds, opts = {}) {
+    const accounts = AccountStore.accounts();
+    let isEdisonMail = false;
+    for (const acc of accounts) {
+      if (acc.emailAddress.includes('edison.tech')) {
+        isEdisonMail = true;
+        break;
+      }
+    }
+    if (!isEdisonMail) {
+      return null;
+    }
+    let categories = accountIds.map(accId => {
+      return CategoryStore.getCategoryByRole(accId, 'inbox');
+    });
+
+    // NOTE: It's possible for an account to not yet have an `inbox`
+    // category. Since the `SidebarStore` triggers on `AccountStore`
+    // changes, it'll trigger the exact moment an account is added to the
+    // config. However, the API has not yet come back with the list of
+    // `categories` for that account.
+    categories = _.compact(categories);
+    opts.iconName = 'jira.svg';
+    opts.className = 'jira-icon';
+    const perspective = MailboxPerspective.forJira(categories);
+    let id = 'Jira';
+    if (opts.name) {
+      id += `-${opts.name}`;
+    }
+    return this.forPerspective(id, perspective, opts);
+  }
+
   static forSingleInbox(accountId, opts = {}) {
     opts.iconName = 'inbox.svg';
     const perspective = MailboxPerspective.forInbox(accountId);
@@ -452,7 +484,7 @@ class SidebarItem {
   static forTrash(accountId, opts = {}) {
     opts.iconName = 'trash.svg';
     const category = CategoryStore.getCategoryByRole(accountId, 'trash');
-    if(!category){
+    if (!category) {
       return null;
     }
     const perspective = MailboxPerspective.forCategory(category);
@@ -475,18 +507,18 @@ class SidebarItem {
   }
 
   static appendSubPathByAccount(accountId, parentPerspective, parentCategory) {
-    const {path} = parentCategory;
+    const { path } = parentCategory;
     if (!path) {
       throw new Error('path must not be empty');
     }
     if (!parentPerspective) {
       throw new Error('parentItem must not be empty');
     }
-    if(!accountId){
+    if (!accountId) {
       throw new Error('accountId must not be empty');
     }
     const account = AccountStore.accountForId(accountId);
-    if(!account){
+    if (!account) {
       throw new Error(`Cannot find account for ${accountId}`);
     }
     const isExchange = account.provider === 'exchange';
@@ -499,16 +531,16 @@ class SidebarItem {
       let itemKey;
 
       let parent = null;
-      if(isExchange){
+      if (isExchange) {
         itemKey = CategoryStore.decodePath(category.path);
-        if((category.parentId === path) && (path !== category.path)){
+        if ((category.parentId === path) && (path !== category.path)) {
           parentKey = path;
           parent = parentPerspective
         } else {
           continue;
         }
       } else {
-        itemKey  = category.displayName;
+        itemKey = category.displayName;
         const parentComponents = itemKey.split(category.delimiter);
         if ((parentComponents[0].toLocaleLowerCase() !== CategoryStore.decodePath(path).toLocaleLowerCase()) ||
           parentComponents.length === 1
@@ -525,7 +557,7 @@ class SidebarItem {
       }
       if (parent) {
         let itemDisplayName = category.displayName.substr(parentKey.length + 1);
-        if(isExchange){
+        if (isExchange) {
           itemDisplayName = category.displayName;
         }
         item = SidebarItem.forCategories([category], { name: itemDisplayName });

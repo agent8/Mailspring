@@ -96,6 +96,10 @@ export default class MailboxPerspective {
     return categories.length > 0 ? new UnreadMailboxPerspective(categories) : this.forNothing();
   }
 
+  static forJira(categories) {
+    return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
+  }
+
   static forUnreadByAccounts(accountIds) {
     let categories = accountIds.map(accId => {
       return CategoryStore.getCategoryByRole(accId, 'inbox');
@@ -831,7 +835,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       return [];
     }
     const previousFolder = TaskFactory.findPreviousFolder(current, accountId);
-    return TaskFactory.tasksForGeneralMoveFolder({threads, targetCategory: myCat, sourceCategory: currentCat, previousFolder, source: 'Dragged into List'});
+    return TaskFactory.tasksForGeneralMoveFolder({ threads, targetCategory: myCat, sourceCategory: currentCat, previousFolder, source: 'Dragged into List' });
     // if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
     //   // dragging from a label into All Mail? Make this an "archive" by removing the
     //   // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
@@ -981,6 +985,41 @@ class AllMailMailboxPerspective extends CategoryMailboxPerspective {
   threads() {
     const query = DatabaseStore.findAll(Thread)
       .where({ inAllMail: true, state: 0, accountId: this.accountIds[0] })
+      .order([Thread.attributes.lastMessageTimestamp.descending()])
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class JiraMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(_categories) {
+    super(_categories);
+  }
+  unreadCount() {
+    let sum = 0;
+    const accountIds = AccountStore.accountIds();
+    for (const aid of accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${aid}_JIRA`);
+    }
+    return sum;
+  }
+  threads() {
+    const query = DatabaseStore.findAll(Thread)
+      .where({
+        inAllMail: true,
+        state: 0,
+        accountId: this.accountIds[0],
+        isJIRA: true
+      })
       .order([Thread.attributes.lastMessageTimestamp.descending()])
       .limit(0);
 
