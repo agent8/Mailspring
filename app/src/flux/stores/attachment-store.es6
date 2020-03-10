@@ -980,30 +980,30 @@ class AttachmentStore extends MailspringStore {
     this._addToMissingDataAttachmentIds(fileId);
     return null;
   }
-  setAttachmentData(attachmentData) {
-    if (attachmentData.mimeType) {
-      return this.addAttachmentPartialData(attachmentData);
-    } else if (attachmentData.missingData) {
-      const cachedAttachment = this._attachementCache.get(attachmentData.id);
-      if (cachedAttachment) {
-        return;
-      }
-    }
-    this._attachementCache.set(attachmentData.id, attachmentData);
-  }
-  addAttachmentPartialData(partialFileData) {
-    let fileData = this._attachementCache.get(partialFileData.id);
-    if (!fileData) {
-      console.log(`file id not in cache ${partialFileData.id}`);
-      fileData = File.fromPartialData(partialFileData);
-      this._attachementCache.set(fileData.id, fileData);
-    }
-    if (fileData.missingData) {
-      console.log(`file missing data, queue db ${fileData.id}`);
-      this._addToMissingDataAttachmentIds(fileData.id);
-    }
-    return fileData;
-  }
+  // setAttachmentData(attachmentData) {
+  //   if (attachmentData.mimeType) {
+  //     return this.addAttachmentPartialData(attachmentData);
+  //   } else if (attachmentData.missingData) {
+  //     const cachedAttachment = this._attachementCache.get(attachmentData.id);
+  //     if (cachedAttachment) {
+  //       return;
+  //     }
+  //   }
+  //   this._attachementCache.set(attachmentData.id, attachmentData);
+  // }
+  // addAttachmentPartialData(partialFileData) {
+  //   let fileData = this._attachementCache.get(partialFileData.id);
+  //   if (!fileData) {
+  //     console.log(`file id not in cache ${partialFileData.id}`);
+  //     fileData = File.fromPartialData(partialFileData);
+  //     this._attachementCache.set(fileData.id, fileData);
+  //   }
+  //   if (fileData.missingData) {
+  //     console.log(`file missing data, queue db ${fileData.id}`);
+  //     this._addToMissingDataAttachmentIds(fileData.id);
+  //   }
+  //   return fileData;
+  // }
 
   // Returns a path on disk for saving the file. Note that we must account
   // for files that don't have a name and avoid returning <downloads/dir/"">
@@ -1293,9 +1293,9 @@ class AttachmentStore extends MailspringStore {
     }
   };
 
-  refreshAttachmentsState = fileId => {
-    const file = this.getAttachment(fileId);
-    const filePath = this.pathForFile(file);
+  refreshAttachmentsState = ({fileId = '', filePath = ''} = {}) => {
+    // const file = this.getAttachment(fileId);
+    // const filePath = this.pathForFile(file);
     if (filePath && fs.existsSync(filePath)) {
       this._onPresentSuccess([fileId]);
     }

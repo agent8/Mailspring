@@ -147,16 +147,16 @@ export default class MessageItem extends React.Component {
 
   _onMessageStoreChange = () => {
     const fileIds = this.props.message.fileIds();
-    const ret = [];
-    for (let fileId of fileIds) {
-      const attachment = AttachmentStore.getAttachment(fileId);
-      if (!attachment || attachment.missingData) {
-        ret.push(fileId);
-      }
-    }
+    // const ret = [];
+    // for (let fileId of fileIds) {
+    //   const attachment = AttachmentStore.getAttachment(fileId);
+    //   if (!attachment || attachment.missingData) {
+    //     ret.push(fileId);
+    //   }
+    // }
     console.log(`attachments missing data ids`);
     this.setState({
-      attachmentsMissingData: ret,
+      // attachmentsMissingData: ret,
       downloads: AttachmentStore.getDownloadDataForFiles(fileIds),
       filePreviewPaths: AttachmentStore.previewPathsForFiles(fileIds),
       missingFileIds: MessageStore.getMissingFileIds(),
