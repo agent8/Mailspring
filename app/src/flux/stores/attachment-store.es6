@@ -351,6 +351,14 @@ class DraftAttachment {
   }
   _deleteAttachment(cb = null){
     this.setState({state: AttachmentState.deleting});
+    if(this.fileId.indexOf('local-') !== 0){
+      console.log(`Attachment from server, fake deleted`);
+      this.setState({state: AttachmentState.deleted});
+      if(cb){
+        cb();
+      }
+      return;
+    }
     fs.unlink(this.filePath, err => {
       if(err){
         AppEnv.logError(err, {errorData: this}, {grabLogs: true});
@@ -658,7 +666,7 @@ class AccountDrafts{
       const sourceFileId = sourceFile.fileId;
       const sourceFilePath = sourceFile.filePath;
       if(!sourceAccountId || (!sourceMessageId && !sourceHeaderMessageId) || !sourceFileId || !sourceFilePath){
-        AppEnv.logError(`copy attachment missing data`);
+        AppEnv.logError(new Error(`copy attachment missing data`), );
         return;
       }
       let sourceDraft = this.findDraft({accountId: sourceAccountId,
@@ -1567,7 +1575,7 @@ class AttachmentStore extends MailspringStore {
         }
 
         const file = new File({
-          id: uuid(),
+          id: `local-${uuid()}`,
           messageId,
           accountId,
           filename: filename,
@@ -1625,7 +1633,7 @@ class AttachmentStore extends MailspringStore {
       }
 
       const file = new File({
-        id: uuid(),
+        id: `local-${uuid()}`,
         filename: filename,
         size: stats.size,
         contentType: null,
