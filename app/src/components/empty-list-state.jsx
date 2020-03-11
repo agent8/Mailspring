@@ -162,7 +162,7 @@ class EmptyListState extends React.Component {
             this.setState(state);
           }
           this._notSyncingTimer = null;
-        }, 2500);
+        }, 10000);
       }
     } else {
       if (this._notSyncingTimer) {
