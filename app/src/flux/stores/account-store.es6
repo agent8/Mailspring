@@ -596,6 +596,16 @@ class AccountStore extends MailspringStore {
     return this.aliases().filter(contact => ids.includes(contact.accountId));
   }
 
+  isAlias(name, email) {
+    const aliases = [];
+    for (const acc of this._accounts) {
+      aliases.push(...(acc.aliases || []));
+    }
+    return aliases.some(alias => {
+      return alias === `${name} <${email}>`;
+    });
+  }
+
   // Public: Returns the currently active {Account}.
   current() {
     throw new Error('AccountStore.current() has been deprecated.');

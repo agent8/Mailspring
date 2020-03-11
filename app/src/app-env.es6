@@ -176,6 +176,15 @@ export default class AppEnvConstructor {
             AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
           }
         });
+        ipcRenderer.on('application-activate', () => {
+          if (this.config.get('core.themeMode') === 'auto') {
+            const newisDarkMode = remote.systemPreferences.isDarkMode();
+            const oldisDarkMode = this.isDarkTheme();
+            if (newisDarkMode !== oldisDarkMode) {
+              AppEnv.themes.setActiveTheme(newisDarkMode ? 'ui-dark' : 'ui-light');
+            }
+          }
+        });
       }
       this.mailsyncBridge.startSift('Main window started');
     }
@@ -292,7 +301,11 @@ export default class AppEnvConstructor {
   }
 
   _onUnhandledRejection = (error, sourceMapCache) => {
-    this.reportError(error, { errorData: sourceMapCache, stack: error && error.stack }, { grabLogs: true });
+    this.reportError(
+      error,
+      { errorData: sourceMapCache, stack: error && error.stack },
+      { grabLogs: true }
+    );
   };
   _expandReportLog(error, extra = {}) {
     try {
