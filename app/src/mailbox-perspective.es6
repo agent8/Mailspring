@@ -719,7 +719,6 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     if (this._categories[0].role) {
       this.iconName = `${this._categories[0].role}.svg`;
     } else {
-      console.log('*****this._categories', this._categories);
       this.iconName = this._categories[0].isLabel() ? 'label.svg' : 'folder.svg';
       if (this.iconName === 'label.svg') {
         const bgColor = LabelColorizer.backgroundColor(this._categories[0]);
