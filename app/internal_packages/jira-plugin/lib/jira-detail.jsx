@@ -7,6 +7,7 @@ import JiraApi from './jira-api';
 import Watcher from './jira-watcher';
 import Status from './jira-status';
 import Priority from './jira-priority';
+import Description from './jira-description';
 import { JiraComments, CommentSubmit } from './jira-comments';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
@@ -81,6 +82,9 @@ export default class JiraDetail extends Component {
     }
     _findIssueKey(messages) {
         for (const m of messages) {
+            if (!m || !m.body) {
+                continue;
+            }
             const $ = cheerio.load(m.body);
             let a = $('.breadcrumbs-table a').last();
             if (a && a.attr('href')) {
@@ -406,10 +410,14 @@ export default class JiraDetail extends Component {
                             renderProgress={this._renderProgress}
                         />
                     </header>
-                    <div className="jira-description" onClick={this.openOrignalImage} >
-                        <span className="label">Description</span>
-                        <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(renderedFields.description) }}></div>
-                    </div>
+                    <Description
+                        onClick={this.openOrignalImage}
+                        jira={this.jira}
+                        issueKey={issueKey}
+                        data={fields.description}
+                        replaceImageSrc={this.replaceImageSrc}
+                        html={renderedFields.description}
+                    />
                     <JiraComments
                         onClick={this.openOrignalImage}
                         jira={this.jira}

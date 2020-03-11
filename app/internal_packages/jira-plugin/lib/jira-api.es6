@@ -125,6 +125,17 @@ export default class JiraApi extends JiraApiBase {
             followAllRedirects: true
         }));
     }
+    searchUsers(query, maxResults) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/user/search',
+            query: {
+                query,
+                maxResults: maxResults || 20
+            }
+        }), {
+            followAllRedirects: true
+        }));
+    }
     updateAssignee(issueKey, accountId) {
         return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueKey, "/assignee")
@@ -213,6 +224,21 @@ export default class JiraApi extends JiraApiBase {
         }), {
             body: {
                 body: comment
+            },
+            method: 'PUT',
+            followAllRedirects: true
+        }));
+    }
+    updateDescription(issueId, description) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueId)
+        }), {
+            body: {
+                update: {
+                    description: [
+                        { set: description }
+                    ]
+                }
             },
             method: 'PUT',
             followAllRedirects: true
