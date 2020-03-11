@@ -4,6 +4,7 @@ import { JSONTransformer } from '@atlaskit/editor-json-transformer';
 import { CSSTransitionGroup } from 'react-transition-group';
 import { DateUtils } from 'mailspring-exports';
 import Modal, { ModalTransition } from '@atlaskit/modal-dialog';
+import { makeProvider } from './mention-provider';
 const { LottieImg } = require('mailspring-component-kit');
 
 const _renderLoading = width => {
@@ -12,6 +13,9 @@ const _renderLoading = width => {
         size={{ width, height: width }}
         style={{ margin: 'none', display: 'inline-block' }}
     />
+}
+const logout = () => {
+    AppEnv.config.set(CONFIG_KEY, {});
 }
 const eventBus = {
     callbacks: {},
@@ -25,7 +29,6 @@ const eventBus = {
         const cb = eventBus.callbacks[key];
         if (cb) {
             const args = [...arguments].slice(1);
-            console.log("****args", args);
             await cb(...args);
         }
     }
@@ -36,12 +39,18 @@ class JiraComment extends Component {
         this.state = {
             value: props.data.body
         };
+        this.mentionProvider = makeProvider(props.jira, props.issueKey);
     }
     componentDidMount = async () => {
         this.mounted = true;
     }
     componentWillUnmount = () => {
         this.mounted = false;
+    }
+    componentWillReceiveProps = (nextProps) => {
+        if (this.props.issueKey !== nextProps.issueKey) {
+            this.mentionProvider = makeProvider(nextProps.jira, nextProps.issueKey);
+        }
     }
     safeSetState = (data) => {
         if (this.mounted) {
@@ -51,6 +60,7 @@ class JiraComment extends Component {
     onSubmit = actions => async editorView => {
         const value = await actions.getValue();
         if (value != null) {
+            AppEnv.trackingEvent('Jira-UpdateComment');
             this.safeSetState({
                 progress: 'loading'
             });
@@ -61,12 +71,17 @@ class JiraComment extends Component {
                 this.safeSetState({
                     progress: 'error'
                 });
+                if (err.message && err.message.includes('invalid refresh token')) {
+                    logout();
+                }
+                AppEnv.trackingEvent('Jira-UpdateComment-Failed');
                 return;
             }
             await findComments(issueKey, true);
             this.safeSetState({
                 progress: 'success'
             });
+            AppEnv.trackingEvent('Jira-UpdateComment-Success');
         }
         this.hideEditor();
     }
@@ -102,6 +117,7 @@ class JiraComment extends Component {
     deleteComment = async () => {
         this.closeDeleteDialog();
         const { issueKey, jira, data, findComments } = this.props;
+        AppEnv.trackingEvent('Jira-DeleteComment');
         this.safeSetState({
             progress: 'loading'
         });
@@ -111,12 +127,17 @@ class JiraComment extends Component {
             this.safeSetState({
                 progress: 'error'
             });
+            if (err.message && err.message.includes('invalid refresh token')) {
+                logout();
+            }
+            AppEnv.trackingEvent('Jira-DeleteComment-Failed');
             return;
         }
         await findComments(issueKey, true);
         this.safeSetState({
             progress: 'success'
         });
+        AppEnv.trackingEvent('Jira-DeleteComment-Success');
     }
     render() {
         const { html } = this.props;
@@ -134,7 +155,7 @@ class JiraComment extends Component {
                                 <Editor
                                     defaultValue={value}
                                     appearance="comment"
-                                    onSave
+                                    mentionProvider={this.mentionProvider}
                                     onChange={this.onChange(actions)}
                                     onSave={progress !== 'loading' && this.onSubmit(actions)}
                                     onCancel={progress !== 'loading' && this.hideEditor}
@@ -177,7 +198,7 @@ class JiraComment extends Component {
 export class JiraComments extends Component {
     constructor(props) {
         super(props);
-        this.state = {}
+        this.state = {};
     }
     safeSetState = (data) => {
         if (this.mounted) {
@@ -266,12 +287,18 @@ export class CommentSubmit extends Component {
     constructor(props) {
         super(props);
         this.state = {};
+        this.mentionProvider = makeProvider(props.jira, props.issueKey);
     }
     componentDidMount = async () => {
         this.mounted = true;
     }
     componentWillUnmount = () => {
         this.mounted = false;
+    }
+    componentWillReceiveProps = (nextProps) => {
+        if (this.props.issueKey !== nextProps.issueKey) {
+            this.mentionProvider = makeProvider(nextProps.jira, nextProps.issueKey);
+        }
     }
     safeSetState = (data) => {
         if (this.mounted) {
@@ -284,8 +311,8 @@ export class CommentSubmit extends Component {
     onSave = async (editorView) => {
         /* do something */
         const comment = this.transformer.encode(editorView.state.doc)
-        console.log('****data', comment);
-        if (!comment.content || comment.content.lengh === 0) {
+        console.log('****data', comment, comment.content.length);
+        if (!comment.content || comment.content.length === 0) {
             return;
         }
         AppEnv.trackingEvent('Jira-AddComment');
@@ -300,7 +327,7 @@ export class CommentSubmit extends Component {
             console.error('****err', err);
             AppEnv.trackingEvent('Jira-AddComment-Failed');
             if (err.message && err.message.includes('invalid refresh token')) {
-                this.logout();
+                logout();
             }
         }
         this.safeSetState({
@@ -320,6 +347,7 @@ export class CommentSubmit extends Component {
                     <Editor
                         shouldFocus
                         appearance="comment"
+                        mentionProvider={this.mentionProvider}
                         onSave={!commentSaving && this.onSave}
                         onCancel={!commentSaving && this.collapseEditor}
                     />
