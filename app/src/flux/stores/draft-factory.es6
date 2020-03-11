@@ -141,7 +141,7 @@ class DraftFactory {
         const originalPath = AttachmentStore.pathForFile(f);
         if(refMessageIsDraft){
           attachmentData.push({
-            sourceFile: Object.assign({}, f, {fileId: f.id, filePath: originalPath}),
+            sourceFile: Object.assign({}, f, {fileId: f.id, filePath: originalPath,}),
             dstFile: {
               fileId: newFile.id,
               filePath: AttachmentStore.pathForFile(newFile)
@@ -190,6 +190,7 @@ class DraftFactory {
       replyOrForward: Message.draftType.new,
       hasNewID: false,
       accountId: account.id,
+      pastMessageIds: [],
     };
 
     const merged = Object.assign(defaults, fields);
@@ -208,7 +209,7 @@ class DraftFactory {
     //   merged.bcc = (merged.bcc || []).concat(autoContacts);
     // }
     const message = new Message(merged);
-    DraftFactory.updateFiles(message, false, message.replyOrForward === Message.draftType.forward);
+    DraftFactory.updateFiles(message, false, true);
     return message
   }
   async createInviteDraft(draftData){
@@ -303,7 +304,7 @@ class DraftFactory {
       refOldDraftHeaderMessageId: ''
     });
     const message = new Message(defaults);
-    DraftFactory.updateFiles(message, true);
+    DraftFactory.updateFiles(message, true, true);
     return message;
   }
   // async createOutboxDraftForEdit(draft){
@@ -360,7 +361,7 @@ class DraftFactory {
       replyToHeaderMessageId: '',
       forwardedHeaderMessageId: '',
       refOldDraftHeaderMessageId: '',
-      pastMessageIds: [],
+      pastMessageIds: (draft.pastMessageIds || []),
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
       hasNewID: false,
@@ -368,7 +369,7 @@ class DraftFactory {
     });
     await mergeDefaultBccAndCCs(defaults, account);
     const message = new Message(defaults);
-    DraftFactory.updateFiles(message, true);
+    DraftFactory.updateFiles(message, true, true);
     return message;
   }
 
