@@ -176,6 +176,12 @@ export default class AppEnvConstructor {
             AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
           }
         });
+        ipcRenderer.on('application-activate', () => {
+          if (this.config.get('core.themeMode') === 'auto') {
+            const isDarkMode = remote.systemPreferences.isDarkMode();
+            AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
+          }
+        });
       }
       this.mailsyncBridge.startSift('Main window started');
     }
@@ -222,7 +228,12 @@ export default class AppEnvConstructor {
           line,
           column,
         });
-        return this.reportError(originalError, { url, line: newLine, column: newColumn, originalError });
+        return this.reportError(originalError, {
+          url,
+          line: newLine,
+          column: newColumn,
+          originalError,
+        });
       } catch (e) {
         console.error(e);
       }
@@ -281,7 +292,11 @@ export default class AppEnvConstructor {
   }
 
   _onUnhandledRejection = (error, sourceMapCache) => {
-    this.reportError(error, { errorData: sourceMapCache, stack: error && error.stack }, { grabLogs: true });
+    this.reportError(
+      error,
+      { errorData: sourceMapCache, stack: error && error.stack },
+      { grabLogs: true }
+    );
   };
   _expandReportLog(error, extra = {}) {
     try {
@@ -1374,15 +1389,15 @@ export default class AppEnvConstructor {
             const pass = new stream.PassThrough();
             pass.end(img.toPNG());
             pass.pipe(output);
-            output.on('close', function () {
+            output.on('close', function() {
               output.close();
               resolve(outputPath);
             });
-            output.on('end', function () {
+            output.on('end', function() {
               output.close();
               reject();
             });
-            output.on('error', function () {
+            output.on('error', function() {
               output.close();
               reject();
             });
@@ -1503,7 +1518,8 @@ export default class AppEnvConstructor {
     }
   }
   mockCal() {
-    const calData = 'BEGIN:VCALENDAR\n' +
+    const calData =
+      'BEGIN:VCALENDAR\n' +
       'PRODID:-//Google Inc//Google Calendar 70.9054//EN\n' +
       'VERSION:2.0\n' +
       'CALSCALE:GREGORIAN\n' +
@@ -1612,12 +1628,12 @@ export default class AppEnvConstructor {
     try {
       response = await fetch(
         WebServerRoot +
-        'registerBetaUser?type=' +
-        type +
-        '&apiKey=' +
-        WebServerApiKey +
-        '&email=' +
-        email
+          'registerBetaUser?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email
       );
       response = await response.json();
       if (response.status === 200) {
@@ -1638,24 +1654,24 @@ export default class AppEnvConstructor {
       // This is used for the mac app to get the user invite email copy. It will require an email address to get the correct share link
       response = await fetch(
         WebServerRoot +
-        'getUserInviteEmailBody?type=' +
-        type +
-        '&apiKey=' +
-        WebServerApiKey +
-        '&email=' +
-        email
-      );
-      response = await response.json();
-      if (response.error === 'email is invalid') {
-        await this.registerBetaUser(email);
-        response = await fetch(
-          WebServerRoot +
           'getUserInviteEmailBody?type=' +
           type +
           '&apiKey=' +
           WebServerApiKey +
           '&email=' +
           email
+      );
+      response = await response.json();
+      if (response.error === 'email is invalid') {
+        await this.registerBetaUser(email);
+        response = await fetch(
+          WebServerRoot +
+            'getUserInviteEmailBody?type=' +
+            type +
+            '&apiKey=' +
+            WebServerApiKey +
+            '&email=' +
+            email
         );
         response = await response.json();
       }
@@ -1677,13 +1693,13 @@ export default class AppEnvConstructor {
     try {
       response = await fetch(
         WebServerRoot +
-        'unlock?type=' +
-        type +
-        '&apiKey=' +
-        WebServerApiKey +
-        '&email=' +
-        email +
-        (force ? '&force=true' : '')
+          'unlock?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email +
+          (force ? '&force=true' : '')
       );
       if (response.status === 200) {
         response = {
