@@ -21,7 +21,7 @@ const asAccountId = a => {
   return a instanceof Account ? a.id : a;
 };
 
-const categoryUpdatingTimeout = 60000;
+const categoryUpdatingTimeout = 300000;
 
 class CategoryStore extends MailspringStore {
   constructor() {
@@ -188,7 +188,7 @@ class CategoryStore extends MailspringStore {
     } else {
       const lastUpdate = this._categorySyncState[categoryId].lastUpdate;
       if (
-        now - lastUpdate > categoryUpdatingTimeout &&
+        (now - lastUpdate) > categoryUpdatingTimeout &&
         this._categorySyncState[categoryId].syncing
       ) {
         this._categorySyncState[categoryId] = { syncing: false, lastUpdate: now };
