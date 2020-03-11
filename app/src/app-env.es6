@@ -178,8 +178,11 @@ export default class AppEnvConstructor {
         });
         ipcRenderer.on('application-activate', () => {
           if (this.config.get('core.themeMode') === 'auto') {
-            const isDarkMode = remote.systemPreferences.isDarkMode();
-            AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
+            const newisDarkMode = remote.systemPreferences.isDarkMode();
+            const oldisDarkMode = this.isDarkTheme();
+            if (newisDarkMode !== oldisDarkMode) {
+              AppEnv.themes.setActiveTheme(newisDarkMode ? 'ui-dark' : 'ui-light');
+            }
           }
         });
       }
