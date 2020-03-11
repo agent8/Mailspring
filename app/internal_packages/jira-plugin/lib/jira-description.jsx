@@ -110,7 +110,7 @@ export default class JiraDescription extends Component {
                             )}
                         />
                     </EditorContext>
-                ) : <div onClick={this.showEditor} dangerouslySetInnerHTML={{ __html: this.props.replaceImageSrc(content) }}></div>
+                ) : <div className="editable" onClick={this.showEditor} dangerouslySetInnerHTML={{ __html: this.props.replaceImageSrc(content) }}></div>
             }
             {
                 progress === 'loading' && <div className="loading">
