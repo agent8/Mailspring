@@ -49,8 +49,7 @@ export default class AccountContactField extends React.Component {
 
   _changeSignature = account => {
     const { draft, session } = this.props;
-    const accountName = account.isAlias ? account.aliasName : account.email;
-    let sig = SignatureStore.signatureForEmailOrAliase(accountName);
+    let sig = SignatureStore.signatureForDefaultSignatureId(account.signatureId());
     let body;
     if (sig) {
       body = applySignature(draft.body, sig);
@@ -64,7 +63,6 @@ export default class AccountContactField extends React.Component {
     if (this.props.draft && this.props.draft.accountId) {
       const account = AccountStore.accountForId(this.props.draft.accountId);
       if (account) {
-        console.log('account label', account.label);
         return this._renderAccountSpan(account.label);
       }
     }
@@ -137,7 +135,7 @@ export default class AccountContactField extends React.Component {
           draft,
           session,
           accounts,
-          draftFromEmail,
+          from: draft.from[0] || {}
         }}
       />
     );
