@@ -340,7 +340,7 @@ class DraftFactory {
 
   async copyDraftToAccount(draft, from) {
     const uniqueId = uuid();
-    const account = AccountStore.accountForEmail(from[0].email);
+    const account = AccountStore.accountForId(from[0].accountId);
     if (!account) {
       throw new Error(
         'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.',

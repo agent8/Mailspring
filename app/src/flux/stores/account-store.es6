@@ -548,15 +548,27 @@ class AccountStore extends MailspringStore {
   };
 
   // Public: Returns the {Account} for the given email address, or null.
-  accountForEmail = email => {
+  accountForEmail = ({email, accountId} = {}) => {
     for (const account of this.accounts()) {
-      if (Utils.emailIsEquivalent(email, account.emailAddress)) {
-        return account;
+      if(accountId){
+        if (account.id === accountId && Utils.emailIsEquivalent(email, account.emailAddress)) {
+          return account;
+        }
+      } else {
+        if (Utils.emailIsEquivalent(email, account.emailAddress)) {
+          return account;
+        }
       }
     }
     for (const alias of this.aliases()) {
-      if (Utils.emailIsEquivalent(email, alias.email)) {
-        return this.accountForId(alias.accountId);
+      if(accountId){
+        if (alias.accountId === accountId && Utils.emailIsEquivalent(email, alias.email)) {
+          return this.accountForId(alias.accountId);
+        }
+      } else {
+        if (Utils.emailIsEquivalent(email, alias.email)) {
+          return this.accountForId(alias.accountId);
+        }
       }
     }
     return null;

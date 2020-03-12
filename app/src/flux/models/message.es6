@@ -630,7 +630,7 @@ export default class Message extends ModelWithMetadata {
       return false;
     }
     if (ignoreOtherAccounts) {
-      const account = AccountStore.accountForEmail(this.from[0].email);
+      const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
       if (account) {
         return account.id === this.accountId;
       }
@@ -642,7 +642,7 @@ export default class Message extends ModelWithMetadata {
     if (!this.from[0]) {
       return false;
     }
-    const account = AccountStore.accountForEmail(this.from[0].email);
+    const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
     if (account) {
       return account.id !== this.accountId;
     }

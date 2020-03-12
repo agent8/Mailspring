@@ -96,7 +96,7 @@ export default class SendDraftTask extends Task {
   }
 
   willBeQueued() {
-    const account = AccountStore.accountForEmail(this.draft.from[0].email);
+    const account = AccountStore.accountForId(this.draft.from[0].accountId);
 
     if (!this.draft.from[0]) {
       throw new Error('SendDraftTask - you must populate `from` before sending.');
