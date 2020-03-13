@@ -444,7 +444,11 @@ export default class ModelQuery {
             }
             try {
               const tmp = JSON.parse(dataString);
-              object.mergeFromColumn(tmp);
+              if(tmp.__cls){
+                object = Utils.convertToModel(tmp);
+              } else {
+                object.mergeFromColumn(tmp);
+              }
             } catch (e) {
               console.error(`${dataString} for ${attr.tableColumn} is not json string`);
               continue;
