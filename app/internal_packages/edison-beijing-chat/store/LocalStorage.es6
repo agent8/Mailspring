@@ -1,31 +1,25 @@
-const storage = window.localStorage;
-
 import MailspringStore from 'mailspring-store';
 
 const EdisonMailStorageKey = 'EdisonMail-Storage';
 
 class LocalStorage extends MailspringStore {
-  constructor(){
+  constructor() {
     super();
     window.chatLocalStorage = null;
     this.loadFromLocalStorage();
-    this.nicknames = chatLocalStorage.nicknames;
-    return;
   }
 
   loadFromLocalStorage = () => {
     if (window.chatLocalStorage) {
       return;
     }
-    const storageString = storage.getItem(EdisonMailStorageKey) || '{"nicknames":{}}';
-    window.chatLocalStorage  = JSON.parse(storageString);
+    const storageString = window.localStorage.getItem(EdisonMailStorageKey) || '{"nicknames":{}}';
+    window.chatLocalStorage = JSON.parse(storageString);
   };
 
   saveToLocalStorage = () => {
-    const storageString = JSON.stringify(chatLocalStorage);
-    storage.setItem(EdisonMailStorageKey, storageString);
+    window.localStorage.setItem(EdisonMailStorageKey, JSON.stringify(window.chatLocalStorage));
   };
-
 }
 
 module.exports = new LocalStorage();

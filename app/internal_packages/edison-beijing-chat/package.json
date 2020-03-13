@@ -1,7 +1,7 @@
 {
   "name": "chat",
   "version": "0.1.0",
-  "main": "./lib/main",
+  "main": "./main",
   "description": "Chat",
   "license": "GPL-3.0",
   "private": true,
