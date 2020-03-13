@@ -1,5 +1,5 @@
 import MailspringStore from 'mailspring-store';
-import {ChatActions} from 'chat-exports';
+import { ChatActions } from 'chat-exports';
 class ProgressBarStore extends MailspringStore {
   constructor() {
     super();

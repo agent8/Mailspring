@@ -64,41 +64,49 @@ const DAY_LABEL_FORMATS = {
 export const dateFormat = (timestamp, format) => {
   const currentTime = new Date().getTime();
   if (typeof timestamp === 'string') {
-    timestamp = parseInt(timestamp);
+    timestamp = parseInt(timestamp, 10);
   }
   if (format) {
     return moment(timestamp).format(format);
   }
   const str = moment(timestamp).calendar(currentTime, DAY_LABEL_FORMATS);
   return str;
+};
 
-}
-export const dateFormatDigit = (timestamp) => {
-  const currentTime = new Date().getTime();
+export const dateFormatDigit = timestamp => {
   if (typeof timestamp === 'string') {
-    timestamp = parseInt(timestamp);
+    timestamp = parseInt(timestamp, 10);
   }
   const str = moment(timestamp).format('MMM D');
   return str;
-}
+};
 
-export const weekDayFormat = (timestamp) => {
+export const weekDayFormat = timestamp => {
   if (typeof timestamp === 'string') {
-    timestamp = parseInt(timestamp);
+    timestamp = parseInt(timestamp, 10);
   }
   const str = moment(timestamp).format('ddd');
   return str;
-}
+};
 
-export const nearDays = (timestamp) => {
+export const nearDays = timestamp => {
   const currentTime = new Date().getTime();
-  return Math.abs(timestamp - currentTime) < 2 * 24 * 3600 * 1000
-}
+  return Math.abs(timestamp - currentTime) < 2 * 24 * 3600 * 1000;
+};
+
+export const timeFormat = timestamp => {
+  if (typeof timestamp === 'string') {
+    timestamp = parseInt(timestamp, 10);
+  }
+  const str = moment(timestamp).format('hh:mm A');
+  return str;
+};
 
 export default {
   buildTimeDescriptor,
   dateFormat,
   dateFormatDigit,
   weekDayFormat,
-  nearDays
+  nearDays,
+  timeFormat,
 };

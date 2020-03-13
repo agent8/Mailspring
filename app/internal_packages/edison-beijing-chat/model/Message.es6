@@ -27,7 +27,7 @@ const db = getdb();
 
 export const getStatusWeight = status => STATUS_WEIGHTS[status];
 
-export default class Message extends Model { }
+export default class Message extends Model {}
 Message.init(
   {
     // attributes

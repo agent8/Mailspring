@@ -35,22 +35,31 @@ class OnlineUserStore extends MailspringStore {
   }
 
   addOnLineAccount(payload) {
-    const jid = payload.from && payload.from.bare || payload.bare;
+    const jid = (payload.from && payload.from.bare) || payload.bare;
     this.onlineAccounts[jid] = 1;
-    log('connect', `addOnLineAccount: ${jid}, onlineAccounts: ${JSON.stringify(this.onlineAccounts)}`);
+    log(
+      'connect',
+      `addOnLineAccount: ${jid}, onlineAccounts: ${JSON.stringify(this.onlineAccounts)}`
+    );
     this.authingAccounts[jid] = 0;
     this._triggerDebounced();
   }
 
   addAuthingAccount(jid) {
     this.authingAccounts[jid] = 1;
-    log('connect', `addAuthingAccount: ${jid}, authingAccounts: ${JSON.stringify(this.authingAccounts)}`);
+    log(
+      'connect',
+      `addAuthingAccount: ${jid}, authingAccounts: ${JSON.stringify(this.authingAccounts)}`
+    );
     this._triggerDebounced();
   }
 
   removeAuthingAccount(jid) {
     this.authingAccounts[jid] = 0;
-    log('connect', `removeAuthingAccount: ${jid}, authingAccounts: ${JSON.stringify(this.authingAccounts)}`);
+    log(
+      'connect',
+      `removeAuthingAccount: ${jid}, authingAccounts: ${JSON.stringify(this.authingAccounts)}`
+    );
     this._triggerDebounced();
   }
 
@@ -64,7 +73,10 @@ class OnlineUserStore extends MailspringStore {
     const jid = payload.curJid;
     this.onlineAccounts[jid] = 0;
     this.authingAccounts = {};
-    log('connect', `removeOnLineAccount: ${jid}, onlineAccounts: ${JSON.stringify(this.onlineAccounts)}`);
+    log(
+      'connect',
+      `removeOnLineAccount: ${jid}, onlineAccounts: ${JSON.stringify(this.onlineAccounts)}`
+    );
     this.resetOnlineUsers();
     this._triggerDebounced();
   }

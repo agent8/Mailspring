@@ -74,7 +74,7 @@ export default class EmailAvatar extends Component {
 
   _parseAvatarForSendMessage = (messages, from, props) => {
     const currentPerspective = FocusedPerspectiveStore.current();
-    if (currentPerspective && props.mode && ( props.mode === 'list' )) {
+    if (currentPerspective && props.mode && props.mode === 'list') {
       const cats = currentPerspective.categories();
       if (cats.length > 0 && cats[0].role === 'sent') {
         const message = this._findLatestSendMessage(messages);
@@ -86,7 +86,7 @@ export default class EmailAvatar extends Component {
     }
     return from;
   };
-  _findLatestSendMessage(messages){
+  _findLatestSendMessage(messages) {
     let sendMessage = null;
     const replaceSendMessage = newMessage => {
       if (!sendMessage) {
@@ -98,13 +98,13 @@ export default class EmailAvatar extends Component {
       }
     };
     messages.forEach(message => {
-      if(!message.from || (message.from.length === 0)){
+      if (!message.from || message.from.length === 0) {
         replaceSendMessage(message);
-      }else{
+      } else {
         const email = message.from[0].email;
         const account = AccountStore.accountForEmail(email);
-        if(account){
-          if(account.id === message.accountId){
+        if (account) {
+          if (account.id === message.accountId) {
             replaceSendMessage(message);
           }
         }

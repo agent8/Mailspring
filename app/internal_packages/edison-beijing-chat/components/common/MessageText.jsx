@@ -11,7 +11,7 @@ function getName(jid) {
   }
 }
 
-export default function MessageText({ text }) {
+export default function MessageText({ text, edited }) {
   // 创建匹配标记字符的正则，避免标记字符不是成对出现引起的问题
   // .*? 非贪婪模式，最少匹配
   const regStr = `(${AT_BEGIN_CHAR}@.*?${AT_END_CHAR})`;
@@ -28,5 +28,13 @@ export default function MessageText({ text }) {
       el.innerHTML = '@' + getName(jid);
     }
   });
-  return <div className="msg-text-with-at" dangerouslySetInnerHTML={{ __html: dom.innerHTML }} />;
+  let editedInnerHtml = edited ? '<span style="color: #999">&nbsp(edited)</span>' : '';
+  return (
+    <div
+      className="msg-text-with-at"
+      dangerouslySetInnerHTML={{
+        __html: dom.innerHTML + editedInnerHtml,
+      }}
+    />
+  );
 }
