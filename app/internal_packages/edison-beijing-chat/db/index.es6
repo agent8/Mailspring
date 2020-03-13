@@ -1,4 +1,4 @@
-import path from "path";
+import path from 'path';
 import fs from 'fs';
 const Sequelize = require('sequelize');
 
@@ -16,7 +16,7 @@ export function getdb() {
   console.log('****storage', `${dbPath}/chat-db.sqlite`);
   db = new Sequelize({
     dialect: 'sqlite',
-    storage: `${dbPath}/chat-db.sqlite`
+    storage: `${dbPath}/chat-db.sqlite`,
   });
   return db;
 }
