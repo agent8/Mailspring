@@ -163,7 +163,7 @@ export default class KeyCommandsRegion extends React.Component {
     }
     const $el = ReactDOM.findDOMNode(this);
     $el.removeEventListener('focusin', this._onFocusIn);
-    $el.removeEventListener('focusout', this._onDidFocusOut);
+    $el.removeEventListener('focusout', this._onFocusOut);
     window.removeEventListener('browser-window-blur', this._onWindowBlur);
     this._goingout = false;
   }
