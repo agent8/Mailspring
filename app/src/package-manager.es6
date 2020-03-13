@@ -2,7 +2,6 @@ import path from 'path';
 import fs from 'fs-plus';
 import { shell, remote, ipcRenderer } from 'electron';
 import Package from './package';
-require('./chat-plugin-init');
 
 export default class PackageManager {
   constructor({ configDirPath, devMode, safeMode, resourcePath, specMode }) {
