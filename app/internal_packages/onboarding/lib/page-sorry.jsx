@@ -40,6 +40,11 @@ export default class SorryPage extends React.Component {
 
   componentDidMount = async () => {
     require('electron').ipcRenderer.send('open-main-window-make-onboarding-on-top');
+    // if mac store version, don't need invite
+    if (process.mas) {
+      OnboardingActions.moveToPage('gdpr-terms');
+      return;
+    }
     this.disposable = AppEnv.config.onDidChange(CONFIG_KEY, async () => {
       const shareCounts = AppEnv.config.get(CONFIG_KEY) || 0;
       // AppEnv.getCurrentWindow().setAlwaysOnTop(true);
