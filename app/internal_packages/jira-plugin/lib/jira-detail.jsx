@@ -87,8 +87,9 @@ export default class JiraDetail extends Component {
             }
             const $ = cheerio.load(m.body);
             let a = $('.breadcrumbs-table a').last();
-            if (a && a.attr('href')) {
-                let href = a.attr('href');
+            let b = $('.issue-breadcrumbs a').last();
+            let href = (a && a.attr('href')) || (b && b.attr('href'));
+            if (href) {
                 href = href.split('?')[0];
                 return {
                     link: href,
