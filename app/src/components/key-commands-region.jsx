@@ -137,6 +137,9 @@ export default class KeyCommandsRegion extends React.Component {
   // determine which keymappings can fire a particular command in a
   // particular scope, we simply need to listen at the root window level
   // here for all commands coming in.
+
+  // If you want to bind events on the DOM,
+  // you need to add tabIndex on the child elements of the dom
   _setupListeners({ localHandlers, globalHandlers } = {}) {
     const $el = ReactDOM.findDOMNode(this);
     $el.addEventListener('focusin', this._onFocusIn);
