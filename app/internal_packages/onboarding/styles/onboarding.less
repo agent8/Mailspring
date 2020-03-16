@@ -232,7 +232,6 @@
   }
 
   .message {
-    margin-bottom: 15px;
     max-width: 600px;
     margin: auto;
     white-space: pre-wrap;
@@ -242,6 +241,9 @@
       font-size: 11px;
       line-height: 13px;
       -webkit-user-select: text;
+      max-height: 40px;
+      overflow-y: hidden;
+      text-overflow: ellipsis;
       a {
         color: #f36;
       }
