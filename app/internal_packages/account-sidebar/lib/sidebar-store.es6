@@ -35,6 +35,7 @@ class SidebarStore extends MailspringStore {
     this._registerTrayItems();
     this._registerListeners();
     this._updateSections();
+    this._onShiftItemThrottle = _.throttle(delta => this._onShiftItem(delta), 100);
   }
 
   accounts() {
@@ -54,6 +55,10 @@ class SidebarStore extends MailspringStore {
   }
 
   onShift(delta) {
+    this._onShiftItemThrottle(delta);
+  }
+
+  _onShiftItem(delta) {
     const items = this.standardSection().items;
     const itemsTmp = [];
     let select = null;
@@ -74,6 +79,9 @@ class SidebarStore extends MailspringStore {
     });
     const selectIndex = itemsTmp.indexOf(select);
     const newSelectIndex = Math.min(Math.max(0, delta + selectIndex), itemsTmp.length - 1);
+    if (selectIndex === newSelectIndex) {
+      return;
+    }
     const newSelectItem = itemsTmp[newSelectIndex];
     if (newSelectItem.onSelect && typeof newSelectItem.onSelect === 'function') {
       if (newSelectItem.fatherId) {

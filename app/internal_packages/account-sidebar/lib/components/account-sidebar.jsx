@@ -81,7 +81,7 @@ class AccountSidebar extends React.Component {
 
   _onStoreChange = () => {
     if (this._mounted) {
-      return this.setState(this._getStateFromStores());
+      return this.setState(this._getStateFromStores(), this._scrollToFocusItem);
     }
   };
 
@@ -94,10 +94,27 @@ class AccountSidebar extends React.Component {
     };
   };
 
+  _scrollToFocusItem = () => {
+    const { items } = this.state.standardSection;
+    let selectedItem = items.find(item => item.selected);
+    if (selectedItem && selectedItem.children && selectedItem.children.length) {
+      selectedItem = selectedItem.children.find(item => item.selected) || selectedItem;
+    }
+    if (selectedItem && selectedItem.id && this._accountSideBarWrapEl) {
+      const selectNode = document.querySelector(
+        `.nylas-outline-view .item-container .item[id='${selectedItem.id}']`
+      );
+      this._accountSideBarWrapEl.scrollTo(selectNode);
+    }
+  };
+
   _renderUserSections(sections) {
     return sections.map(section => <OutlineView key={section.title} {...section} />);
   }
   _onScroll = () => {
+    if (!this._accountSideBarWrapEl) {
+      return;
+    }
     window.sessionStorage.setItem('sidebar_scroll_position', this._accountSideBarWrapEl.scrollTop);
   };
 
