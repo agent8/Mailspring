@@ -22,6 +22,7 @@ export const LocalizedErrorStrings = {
     "Certificate Error - The mail server's security certificate is invalid and may pose a security" +
     " risk. If you trust the server, you can continue by checking 'Allowing Insecure SSL'.",
   ErrorAuthentication: 'Authentication Error - Check your username and password.',
+  ErrorAccountDisabled: 'Your email provider have blocked this account from login through this method. \nPlease check your email provider account/security settings.',
   ErrorGmailIMAPNotEnabled: 'Gmail IMAP is not enabled. Visit Gmail settings to turn it on.',
   ErrorGmailExceededBandwidthLimit: 'Gmail bandwidth exceeded. Please try again later.',
   ErrorGmailTooManySimultaneousConnections:
@@ -278,12 +279,19 @@ export default class MailsyncProcess extends EventEmitter {
           if (code === 0) {
             resolve({ response, buffer });
           } else {
+            console.log(`response.error ${response.error}, log: ${response.log}`);
             let msg = LocalizedErrorStrings[response.error] || response.error;
+            let errorStatusCode = response.error;
+            if((!(response.log || '').includes('password') && !(response.log || '').includes('credentials')) && response.error === 'ErrorAuthentication'){
+              msg = LocalizedErrorStrings.ErrorAccountDisabled;
+              errorStatusCode = 'ErrorAccountDisabled';
+            }
             if (response.error_service) {
               msg = `${msg} (${response.error_service.toUpperCase()})`;
             }
             const error = new Error(msg);
-            error.rawLog = stripSecrets(response.log);
+            error.rawLog = stripSecrets(response.log.replace('LOGIN', ''));
+            error.statusCode =errorStatusCode;
             reject(error);
           }
         } catch (err) {

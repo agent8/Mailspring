@@ -6,7 +6,7 @@ import DatabaseStore from './database-store';
 import SendActionsStore from './send-actions-store';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import SyncbackMetadataTask from '../tasks/syncback-metadata-task';
-import SendDraftTask from '../tasks/send-draft-task';
+import SendDraftTask, {SendTaskDisplayErrors} from '../tasks/send-draft-task';
 import DestroyDraftTask from '../tasks/destroy-draft-task';
 import Thread from '../models/thread';
 import Message from '../models/message';
@@ -22,6 +22,7 @@ import TaskFactory from '../tasks/task-factory';
 import ChangeDraftToFailingTask from '../tasks/change-draft-to-failing-task';
 import ChangeDraftToFailedTask from '../tasks/change-draft-to-failed-task';
 import FocusedContentStore from './focused-content-store';
+let AttachmentStore = null;
 const { DefaultSendActionKey } = SendActionsStore;
 const SendDraftTimeout = 300000;
 const DraftFailingBaseTimeout = 120000;
@@ -1453,26 +1454,26 @@ class DraftStore extends MailspringStore {
     this.trigger({ headerMessageId });
   };
 
-  _onSendDraftFailed = ({ headerMessageId, threadId, errorMessage, errorDetail }) => {
+  _onSendDraftFailed = ({ headerMessageId, threadId, errorMessage, errorDetail, errorKey }) => {
     this._cancelSendingDraftTimeout({ headerMessageId });
     this.trigger({ headerMessageId });
 
-    // if (AppEnv.isMainWindow()) {
-    // We delay so the view has time to update the restored draft. If we
-    // don't delay the modal may come up in a state where the draft looks
-    // like it hasn't been restored or has been lost.
-    //
-    // We also need to delay because the old draft window needs to fully
-    // close. It takes windows currently (June 2016) 100ms to close by
-    // setTimeout(() => {
-    //   const focusedThread = FocusedContentStore.focused('thread');
-    //   if (threadId && focusedThread && focusedThread.id === threadId) {
-    //     AppEnv.showErrorDialog(errorMessage, { detail: errorDetail });
-    //   } else {
-    //     Actions.composePopoutDraft(headerMessageId, { errorMessage, errorDetail });
-    //   }
-    // }, 300);
-    // }
+    if (AppEnv.isMainWindow() && errorDetail && errorMessage &&
+      Object.keys(SendTaskDisplayErrors).includes(errorKey) &&
+      errorKey !== SendTaskDisplayErrors.ErrorSendMessage) {
+      // We delay so the view has time to update the restored draft. If we
+      // don't delay the modal may come up in a state where the draft looks
+      // like it hasn't been restored or has been lost.
+      //
+      // We also need to delay because the old draft window needs to fully
+      // close. It takes windows currently (June 2016) 100ms to close by
+      setTimeout(() => {
+        const focusedThread = FocusedContentStore.focused('thread');
+        if (threadId && focusedThread && focusedThread.id === threadId) {
+          AppEnv.showErrorDialog(errorMessage, { detail: errorDetail });
+        }
+      }, 300);
+    }
   };
   _getCurrentWindowLevel = () => {
     if (AppEnv.isComposerWindow()) {
