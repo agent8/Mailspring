@@ -220,6 +220,8 @@ class PreferencesAccountDetails extends Component {
       message: 'Are you sure?',
       detail: `Delete this account ${account.emailAddress}`,
       buttons: ['Delete', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
     });
     if (chosen !== 0) {
       return;
