@@ -53,6 +53,36 @@ class SidebarStore extends MailspringStore {
     return this._sections[Sections.User];
   }
 
+  onShift(delta) {
+    const items = this.standardSection().items;
+    const itemsTmp = [];
+    let select = null;
+    function getLowestChildren(sidebarItem) {
+      if (sidebarItem.children && sidebarItem.children.length) {
+        sidebarItem.children.forEach(child => {
+          getLowestChildren({ ...child, fatherId: sidebarItem.id });
+        });
+      } else if (sidebarItem.id !== 'divider') {
+        itemsTmp.push(sidebarItem);
+        if (sidebarItem.selected) {
+          select = sidebarItem;
+        }
+      }
+    }
+    items.forEach(item => {
+      getLowestChildren(item);
+    });
+    const selectIndex = itemsTmp.indexOf(select);
+    const newSelectIndex = Math.min(Math.max(0, delta + selectIndex), itemsTmp.length - 1);
+    const newSelectItem = itemsTmp[newSelectIndex];
+    if (newSelectItem.onSelect && typeof newSelectItem.onSelect === 'function') {
+      if (newSelectItem.fatherId) {
+        this._onSetCollapsedByKey(newSelectItem.fatherId, false);
+      }
+      newSelectItem.onSelect(newSelectItem);
+    }
+  }
+
   _registerListeners() {
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
     this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
