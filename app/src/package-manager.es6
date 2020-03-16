@@ -194,6 +194,8 @@ export default class PackageManager {
           message: 'Run with debug flags?',
           detail: `To develop plugins, you should run Mailspring with debug flags. This gives you better error messages, the debug version of React, and more. You can disable it at any time from the Developer menu.`,
           buttons: ['OK', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
         })
         .then(({ response } = {}) => {
           if (response === 0) {
