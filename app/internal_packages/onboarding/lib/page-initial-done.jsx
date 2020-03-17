@@ -1,10 +1,6 @@
 const React = require('react');
-const PropTypes = require('prop-types');
-const path = require('path');
-const fs = require('fs');
-const { RetinaImg, Flexbox, ConfigPropContainer, LottieImg } = require('mailspring-component-kit');
-const { AccountStore, IdentityStore } = require('mailspring-exports');
-const OnboardingActions = require('./onboarding-actions').default;
+const { LottieImg } = require('mailspring-component-kit');
+const { AccountStore } = require('mailspring-exports');
 
 class InitialDonePage extends React.Component {
   static displayName = 'InitialDonePage';
@@ -63,11 +59,16 @@ class InitialDonePage extends React.Component {
   }
 
   _onFinished = () => {
+    if (AccountStore.accounts() && AccountStore.accounts().length === 1) {
+      AppEnv.trackingEvent('NewUser-FirstUse');
+    }
     AppEnv.trackingEvent('Onboarding-Done');
     this.setState({
       submitting: true
     });
-    require('electron').ipcRenderer.send('account-setup-successful');
+    setTimeout(() => {
+      require('electron').ipcRenderer.send('account-setup-successful');
+    }, 100);
   };
 }
 

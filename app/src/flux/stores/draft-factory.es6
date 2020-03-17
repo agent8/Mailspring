@@ -3,16 +3,16 @@ import Actions from '../actions';
 import AccountStore from './account-store';
 import ContactStore from './contact-store';
 import MessageStore from './message-store';
-import AttachmentStore from './attachment-store';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import uuid from 'uuid';
 import Contact from '../models/contact';
 import Message from '../models/message';
+import File from '../models/file';
 import Utils from '../models/utils';
 import InlineStyleTransformer from '../../services/inline-style-transformer';
 import SanitizeTransformer from '../../services/sanitize-transformer';
 import DOMUtils from '../../dom-utils';
-
+let AttachmentStore = null;
 let DraftStore = null;
 
 const findAccountIdFrom = (message, thread) => {
@@ -77,7 +77,23 @@ const removeAttachmentWithNoContentId = files => {
   });
   return filterMissingAttachments(ret);
 };
+const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
+  if (!Array.isArray(files)){
+    return [];
+  }
+  if(typeof bodyStr !== 'string'){
+    return [];
+  }
+  const ret = [];
+  files.forEach(file => {
+    if(file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
+      ret.push(file);
+    }
+  });
+  return removeAttachmentWithNoContentId(ret);
+};
 const filterMissingAttachments = files => {
+  AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
   return AttachmentStore.filterOutMissingAttachments(files);
 };
 const mergeDefaultBccAndCCs = async (message, account) => {
@@ -104,6 +120,56 @@ const mergeDefaultBccAndCCs = async (message, account) => {
 };
 
 class DraftFactory {
+  static updateFiles(message, refMessageIsDraft = false, noCopy = false){
+    if(!message){
+      return;
+    }
+    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+    if(Array.isArray(message.files) && message.files.length > 0){
+      const attachmentData = [];
+      message.files = message.files.map(f => {
+        const newFile = File.fromPartialData(f);
+        newFile.messageId = message.id;
+        newFile.accountId = message.accountId;
+        newFile.originFile = f;
+        if(noCopy){
+          // console.log('update attachment cache');
+          // AttachmentStore.setAttachmentData(newFile);
+        } else {
+          newFile.id = uuid();
+        }
+        const originalPath = AttachmentStore.pathForFile(f);
+        if(refMessageIsDraft){
+          attachmentData.push({
+            sourceFile: Object.assign({}, f, {fileId: f.id, filePath: originalPath,}),
+            dstFile: {
+              fileId: newFile.id,
+              filePath: AttachmentStore.pathForFile(newFile)
+            }
+          });
+        } else {
+          attachmentData.push({
+            originalPath,
+            dstFile: {
+              fileId: newFile.id,
+              filePath: AttachmentStore.pathForFile(newFile)
+            }
+          });
+        }
+        return newFile;
+      });
+      if(noCopy){
+        console.log('adding draft to draft attachment cache because of noCopy');
+        AttachmentStore.addDraftToAttachmentCache(message);
+      } else {
+        console.log('copying attachments to draft attachment cache');
+        AttachmentStore.copyAttachmentsToDraft({draft: message, fileData: attachmentData});
+      }
+    } else {
+      console.log('adding draft to draft attachment cache because of files');
+      AttachmentStore.addDraftToAttachmentCache(message);
+    }
+  }
   async createDraft(fields = {}) {
     const account = this._accountForNewDraft();
     // const uniqueId = `${Math.floor(Date.now() / 1000)}.${Utils.generateTempId()}`;
@@ -124,15 +190,16 @@ class DraftFactory {
       replyOrForward: Message.draftType.new,
       hasNewID: false,
       accountId: account.id,
+      pastMessageIds: [],
     };
 
     const merged = Object.assign(defaults, fields);
-    if (merged.forwardedHeaderMessageId) {
-      merged.referenceMessageId = merged.forwardedHeaderMessageId;
-      delete merged.forwardedHeaderMessageId;
-    } else {
-      merged.referenceMessageId = merged.replyToHeaderMessageId;
-    }
+    // if (merged.forwardedHeaderMessageId) {
+    //   merged.referenceMessageId = merged.forwardedHeaderMessageId;
+    //   delete merged.forwardedHeaderMessageId;
+    // } else {
+    //   merged.referenceMessageId = merged.replyToHeaderMessageId;
+    // }
     await mergeDefaultBccAndCCs(merged, account);
     // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
     // if (account.autoaddress.type === 'cc') {
@@ -141,8 +208,9 @@ class DraftFactory {
     // if (account.autoaddress.type === 'bcc') {
     //   merged.bcc = (merged.bcc || []).concat(autoContacts);
     // }
-
-    return new Message(merged);
+    const message = new Message(merged);
+    DraftFactory.updateFiles(message, false, true);
+    return message
   }
   async createInviteDraft(draftData){
     const draft = await this.createDraft(draftData);
@@ -157,6 +225,8 @@ class DraftFactory {
         'DraftEditingSession::createNewDraftForEdit - you can only send drafts from a configured account.',
       );
     }
+    const pastMessageIds = Array.isArray(draft.pastMessageIds) ? draft.pastMessageIds.slice() : [];
+    pastMessageIds.push(draft.id);
     const defaults = Object.assign({}, draft, {
       body: draft.body,
       version: 0,
@@ -167,9 +237,12 @@ class DraftFactory {
       accountId: account.id,
       savedOnRemote: false,
       hasRefOldDraftOnRemote: true,
-      refOldDraftHeaderMessageId: draft.headerMessageId
+      refOldDraftHeaderMessageId: draft.headerMessageId,
+      pastMessageIds,
     });
-    return new Message(defaults);
+    const message =  new Message(defaults);
+    DraftFactory.updateFiles(message, true, true);
+    return message;
   }
 
   async createReportBugDraft(logId, userFeedBack) {
@@ -230,42 +303,44 @@ class DraftFactory {
       hasRefOldDraftOnRemote: false,
       refOldDraftHeaderMessageId: ''
     });
-    return new Message(defaults);
+    const message = new Message(defaults);
+    DraftFactory.updateFiles(message, true, true);
+    return message;
   }
-  async createOutboxDraftForEdit(draft){
-    const uniqueId = uuid();
-    const account = AccountStore.accountForId(draft.accountId);
-    if (!account) {
-      throw new Error(
-        'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.',
-      );
-    }
-    const defaults = Object.assign({}, draft, {
-      body: draft.body,
-      version: 0,
-      unread: false,
-      starred: false,
-      headerMessageId: `${uniqueId}@edison.tech`,
-      id: uniqueId,
-      date: new Date(),
-      pristine: false,
-      hasNewID: false,
-      accountId: account.id
-    });
-    await mergeDefaultBccAndCCs(defaults, account);
-    // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
-    // if (account.autoaddress.type === 'cc') {
-    //   defaults.cc = (defaults.cc || []).concat(autoContacts);
-    // }
-    // if (account.autoaddress.type === 'bcc') {
-    //   defaults.bcc = (defaults.bcc || []).concat(autoContacts);
-    // }
-    return new Message(defaults);
-  }
+  // async createOutboxDraftForEdit(draft){
+  //   const uniqueId = uuid();
+  //   const account = AccountStore.accountForId(draft.accountId);
+  //   if (!account) {
+  //     throw new Error(
+  //       'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.',
+  //     );
+  //   }
+  //   const defaults = Object.assign({}, draft, {
+  //     body: draft.body,
+  //     version: 0,
+  //     unread: false,
+  //     starred: false,
+  //     headerMessageId: `${uniqueId}@edison.tech`,
+  //     id: uniqueId,
+  //     date: new Date(),
+  //     pristine: false,
+  //     hasNewID: false,
+  //     accountId: account.id
+  //   });
+  //   await mergeDefaultBccAndCCs(defaults, account);
+  //   // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
+  //   // if (account.autoaddress.type === 'cc') {
+  //   //   defaults.cc = (defaults.cc || []).concat(autoContacts);
+  //   // }
+  //   // if (account.autoaddress.type === 'bcc') {
+  //   //   defaults.bcc = (defaults.bcc || []).concat(autoContacts);
+  //   // }
+  //   return new Message(defaults);
+  // }
 
   async copyDraftToAccount(draft, from) {
     const uniqueId = uuid();
-    const account = AccountStore.accountForEmail(from[0].email);
+    const account = AccountStore.accountForId(from[0].accountId);
     if (!account) {
       throw new Error(
         'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.',
@@ -286,13 +361,16 @@ class DraftFactory {
       replyToHeaderMessageId: '',
       forwardedHeaderMessageId: '',
       refOldDraftHeaderMessageId: '',
+      pastMessageIds: (draft.pastMessageIds || []),
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
       hasNewID: false,
       accountId: account.id,
     });
     await mergeDefaultBccAndCCs(defaults, account);
-    return new Message(defaults);
+    const message = new Message(defaults);
+    DraftFactory.updateFiles(message, true, true);
+    return message;
   }
 
   async createDraftForMailto(urlString) {
@@ -389,30 +467,30 @@ class DraftFactory {
       participants = message.participantsForReplyAll();
     }
     const accountId = findAccountIdFrom(message, thread);
-
-    return this.createDraft({
-      subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
-      to: participants.to,
-      cc: participants.cc,
-      from: [this._fromContactForReply(message)],
-      files: removeAttachmentWithNoContentId(message.files),
-      threadId: thread.id,
-      accountId: accountId,
-      replyOrForward: Message.draftType.reply,
-      replyToHeaderMessageId: message.headerMessageId,
-      msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
-      body: `
+    const body = `
         <br/>
         <br/>
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
-        message.replyAttributionLine(),
-      )}</div>
+      message.replyAttributionLine(),
+    )}</div>
         <blockquote class="gmail_quote" data-edison="true"
           style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
           ${prevBody}
           <br/>
         </blockquote>
-        `,
+        `;
+    return this.createDraft({
+      subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
+      to: participants.to,
+      cc: participants.cc,
+      from: [this._fromContactForReply(message)],
+      files: removeAttachmentNotLinkedInBody(body, message.files),
+      threadId: thread.id,
+      accountId: accountId,
+      replyOrForward: Message.draftType.reply,
+      replyToHeaderMessageId: message.headerMessageId,
+      msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
+      body,
     });
   }
   async createReplyForEvent({ message, file, replyStatus, tos, me, replyEvent }) {
@@ -448,12 +526,13 @@ class DraftFactory {
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Fwd:'),
       from: [this._fromContactForReply(message)],
-      files: filterMissingAttachments(message.files),
+      files: [].concat(message.files),
       threadId: thread.id,
       accountId: accountId,
-      forwardedHeaderMessageId: message.id,
+      forwardedHeaderMessageId: message.headerMessageId,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
+      pastMessageIds: [message.id],
       body: `
         <br/>
         <div class="gmail_quote">

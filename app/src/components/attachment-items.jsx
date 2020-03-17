@@ -9,6 +9,7 @@ import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
 import { AttachmentStore, MessageStore } from 'mailspring-exports';
+import Actions from '../flux/actions';
 
 const propTypes = {
   className: PropTypes.string,
@@ -191,11 +192,29 @@ export class AttachmentItem extends Component {
       event.preventDefault();
     }
   };
+
+  // Avoid double click events triggering two single click events
+  _onClickCoordinate = e => {
+    e.persist();
+    this._clickTime = (this._clickTime || 0) + 1;
+    setTimeout(() => {
+      if (this._clickTime === 1) {
+        // single click
+        this._onClick(e);
+      } else if (this._clickTime >= 2) {
+        // double click
+        this._onOpenAttachment(e);
+      }
+      this._clickTime = 0;
+    }, 300);
+  };
+
   _onClick = e => {
-    if (this.state.isDownloading || this.props.isDownloading) {
+    if (this.state.isDownloading) {
+      AttachmentStore.refreshAttachmentsState({fileId: this.props.fileId, filePath: this.props.filePath});
       return;
     }
-    if (this.props.missing && !this.state.isDownloading) {
+    if (this.props.isDownloading || this.props.missing) {
       MessageStore.fetchMissingAttachmentsByFileIds({ fileIds: [this.props.fileId] });
     } else {
       if (fs.existsSync(this.props.filePath)) {
@@ -293,8 +312,7 @@ export class AttachmentItem extends Component {
         tabIndex={tabIndex}
         onKeyDown={focusable && !disabled ? this._onAttachmentKeyDown : null}
         draggable={draggable && !disabled}
-        onDoubleClick={!disabled ? this._onOpenAttachment : null}
-        onClick={!disabled ? this._onClick : null}
+        onClick={!disabled ? this._onClickCoordinate : null}
         onDragStart={!disabled ? this._onDragStart : null}
         {...pickHTMLProps(extraProps)}
       >
@@ -386,20 +404,41 @@ export class ImageAttachmentItem extends Component {
       isDownloading: false,
       percent: 0,
       displaySupportPopup: false,
+      notReady: false,
     };
+    this._mounted = false;
   }
 
   componentDidMount() {
-    this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+    this._storeUnlisten = [
+      AttachmentStore.listen(this._onDownloadStoreChange),
+      Actions.broadcastDraftAttachmentState.listen(this._onAttachmentStateChange, this)
+    ];
+    this._mounted = true;
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this._storeUnlisten) {
       for (let un of this._storeUnlisten) {
         un();
       }
     }
   }
+
+  _onAttachmentStateChange = ({fileId, fileState} = {}) => {
+    if(!this._mounted){
+      return;
+    }
+    if(!fileId || !fileState){
+      return;
+    }
+    console.log(`file ${fileId} state changed ${fileState}`);
+    if(fileId === this.props.fileId && fileState === 1 && this.state.notReady){
+      this.setState({notReady: false});
+      this._onImgLoaded();
+    }
+  };
 
   _onDownloadStoreChange = () => {
     const saveState = AttachmentStore.getSaveSuccessState(this.props.fileId);
@@ -428,6 +467,12 @@ export class ImageAttachmentItem extends Component {
     }
   };
 
+  _onImageError = () => {
+    if(this._mounted){
+      this.setState({notReady: true});
+    }
+  };
+
   _onImgLoaded = () => {
     // on load, modify our DOM just /slightly/. This causes DOM mutation listeners
     // watching the DOM to trigger. This is a good thing, because the image may
@@ -449,7 +494,7 @@ export class ImageAttachmentItem extends Component {
       );
     }
     // const src =filePath;
-    return <img draggable={draggable} src={filePath} alt="" onLoad={this._onImgLoaded} />;
+    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={filePath} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
   }
 
   render() {

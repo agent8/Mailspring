@@ -67,6 +67,7 @@ lazyLoad(`MutableQuerySubscription`, 'flux/models/mutable-query-subscription');
 exports.DatabaseObjectRegistry = DatabaseObjectRegistry;
 lazyLoad(`Model`, 'flux/models/model');
 lazyLoad(`Attributes`, 'flux/attributes');
+lazyLoadAndRegisterModel(`Version`, 'version');
 lazyLoadAndRegisterModel(`File`, 'file');
 lazyLoadAndRegisterModel(`Event`, 'event');
 lazyLoadAndRegisterModel(`Label`, 'label');
@@ -139,6 +140,7 @@ lazyLoadAndRegisterTask('SiftExpungeUserDataTask', 'sift-expunge-user-data-task'
 lazyLoadAndRegisterTask('SiftExportUserDataTask', 'sift-export-user-data-task');
 lazyLoadAndRegisterTask('SiftChangeSharingOptTask', 'sift-change-sharing-opt-task');
 lazyLoadAndRegisterTask('IMAPSearchTask', 'imap-search-task');
+lazyLoadAndRegisterTask('NativeReportTask', 'native-report-task');
 // Stores
 // These need to be required immediately since some Stores are
 // listen-only and not explicitly required from anywhere. Stores

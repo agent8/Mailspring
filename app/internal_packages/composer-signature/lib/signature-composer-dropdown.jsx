@@ -10,9 +10,9 @@ export default class SignatureComposerDropdown extends React.Component {
 
   static propTypes = {
     draft: PropTypes.object.isRequired,
-    draftFromEmail: PropTypes.string,
     session: PropTypes.object.isRequired,
     accounts: PropTypes.array,
+    from: PropTypes.object.isRequired,
   };
 
   constructor(props) {
@@ -53,8 +53,13 @@ export default class SignatureComposerDropdown extends React.Component {
   };
 
   componentDidUpdate(previousProps) {
-    if (previousProps.draftFromEmail !== this.props.draftFromEmail) {
-      const nextDefaultSignature = SignatureStore.signatureForEmail(this.props.draftFromEmail);
+    if (previousProps.from.id !== this.props.from.id) {
+      const from = this.props.from;
+      if(!from.accountId){
+        return;
+      }
+      const signatureId = typeof from.signatureId === 'function' ? from.signatureId() : `local-${from.accountId}-${from.email}-${from.name}`;
+      const nextDefaultSignature = SignatureStore.signatureForDefaultSignatureId(signatureId);
       window.requestAnimationFrame(() => {
         this._onChangeSignature(nextDefaultSignature);
       });

@@ -5,6 +5,11 @@ import ModelWithMetadata from './model-with-metadata';
 let CategoryStore = null;
 let Contact = null;
 
+const noticeTypeEnum = [
+  { type: 'None', title: 'None/Mute' },
+  { type: 'All', title: 'All mail' },
+];
+const noticeTypeImportant = [{ type: 'Important', title: 'Marked as Important' }];
 /*
  * Public: The Account model represents a Account served by the Nylas Platform API.
  * Every object on the Nylas platform exists within a Account, which typically represents
@@ -97,9 +102,17 @@ export default class Account extends ModelWithMetadata {
     };
     this.lastVerified = this.lastVerified || 0;
     this.notifacation = this.notifacation || {
-      noticeType: 'AllMail',
+      noticeType: 'All',
       sound: false,
     };
+
+    if (
+      this.getNoticeTypeEnum()
+        .map(item => item.type)
+        .indexOf(this.notifacation.noticeType) < 0
+    ) {
+      this.notifacation.noticeType = 'All';
+    }
   }
 
   toJSON(...args) {
@@ -123,11 +136,14 @@ export default class Account extends ModelWithMetadata {
 
     return new Contact({
       // used to give them random strings, let's try for something consistent
-      id: `local-${this.id}-me`,
+      id: `local-${this.id}-${this.emailAddress}-${this.name}`,
       accountId: this.id,
       name: this.name,
       email: this.emailAddress,
     });
+  }
+  signatureId(){
+    return `local-${this.id}-${this.emailAddress}-${this.name}`;
   }
 
   meUsingAlias(alias) {
@@ -139,6 +155,9 @@ export default class Account extends ModelWithMetadata {
     const meAlias = Contact.fromString(alias, {
       accountId: this.id,
     });
+
+    // meAlias.isAlias = true;
+    // meAlias.aliasName = `${meAlias.name} <${meAlias.email}>`;
 
     return meAlias || this.me();
   }
@@ -162,12 +181,36 @@ export default class Account extends ModelWithMetadata {
     }
     return ret;
   }
+  getAllAliasContacts(){
+    const ret = this.getAllIsMeContacts();
+    return ret.slice(1);
+  }
+  getAllIsMeContacts(){
+    const ret = [this.me()]
+    if (this.aliases.length > 0) {
+      for (let alias of this.aliases) {
+        const meAlias = Contact.fromString(alias, { accountId: this.id });
+        if (meAlias) {
+          ret.push(meAlias);
+        }
+      }
+    }
+    return ret;
+  }
   isMyEmail(emailAddress) {
     return this.getAllEmails().includes(emailAddress);
   }
 
   usesLabels() {
     return this.provider === 'gmail';
+  }
+
+  getNoticeTypeEnum() {
+    const tmp = [...noticeTypeEnum];
+    if (this.provider === 'gmail') {
+      tmp.push(...noticeTypeImportant);
+    }
+    return tmp;
   }
 
   // Public: Returns the localized, properly capitalized provider name,

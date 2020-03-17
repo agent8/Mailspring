@@ -1,5 +1,5 @@
 import MailspringStore from 'mailspring-store';
-import {ChatActions} from 'chat-exports';
+import { ChatActions } from 'chat-exports';
 
 class MessageImagePopupStore extends MailspringStore {
   constructor() {
@@ -15,8 +15,6 @@ class MessageImagePopupStore extends MailspringStore {
     this.msg = msg;
     this.trigger();
   }
-
 }
 
 module.exports = new MessageImagePopupStore();
-

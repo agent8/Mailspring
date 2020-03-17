@@ -54,7 +54,7 @@ export default class MailLabelSet extends React.Component {
 
       for (const label of thread.sortedCategories()) {
         const labelExists = CategoryStore.byId(thread.accountId, label.id);
-        if (ignoredNames.includes(label.name) || ignoredIds.includes(label.id) || !labelExists) {
+        if (ignoredNames.includes(label.role) || ignoredIds.includes(label.id) || !labelExists) {
           continue;
         }
         label.bgColor = labelExists.bgColor;

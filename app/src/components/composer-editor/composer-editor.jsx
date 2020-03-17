@@ -10,6 +10,8 @@ import { lastUnquotedNode } from './base-block-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
 import { shortCutsUtils } from './system-text-replacements-plugins';
 
+const TOOLBAR_MIN_WIDTH = 628;
+
 export default class ComposerEditor extends React.Component {
   static propTypes = {
     readOnly: PropTypes.bool,
@@ -39,16 +41,37 @@ export default class ComposerEditor extends React.Component {
         };
       });
     });
+    this.state = {
+      isCrowded: false,
+    };
   }
 
   componentDidMount() {
     shortCutsUtils.refreshTextShortCuts();
     this._mounted = true;
+    window.addEventListener('resize', this._onResize, true);
+    this._onResize();
   }
 
   componentWillUnmount() {
     this._mounted = false;
+    window.removeEventListener('resize', this._onResize, true);
   }
+
+  _onResize = () => {
+    const container = document.querySelector('.RichEditor-toolbar');
+
+    if (!container) {
+      return;
+    }
+    let isCrowded = false;
+    if (container.clientWidth <= TOOLBAR_MIN_WIDTH) {
+      isCrowded = true;
+    }
+    if (isCrowded !== this.state.isCrowded && this._mounted) {
+      this.setState({ isCrowded });
+    }
+  };
 
   focus = () => {
     const { onChange, value } = this.props;
@@ -58,6 +81,16 @@ export default class ComposerEditor extends React.Component {
         .selectAll()
         .collapseToStart()
         .focus()
+    );
+  };
+  unfocus = () => {
+    const { onChange, value } = this.props;
+    onChange(
+      value
+        .change()
+        .selectAll()
+        .collapseToStart()
+        .blur()
     );
   };
 
@@ -163,6 +196,7 @@ export default class ComposerEditor extends React.Component {
         const tmpPath = path.join(tmpFolder, `Pasted File${ext}`);
         fs.mkdir(tmpFolder, () => {
           fs.writeFile(tmpPath, buffer, () => {
+            console.log('copying file from clipboard')
             onFileReceived(tmpPath);
           });
         });
@@ -178,6 +212,7 @@ export default class ComposerEditor extends React.Component {
         ''
       );
       if (macCopiedFile.length || winCopiedFile.length) {
+        console.log('coping from clipboard');
         onFileReceived(macCopiedFile || winCopiedFile);
         return true;
       }
@@ -250,7 +285,7 @@ export default class ComposerEditor extends React.Component {
           onChange={this.onChange}
           plugins={plugins}
           readOnly={this.props.readOnly}
-          isCrowded={this.props.isCrowded}
+          isCrowded={this.state.isCrowded}
         />
         <div
           className="RichEditor-content"

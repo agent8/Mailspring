@@ -96,6 +96,10 @@ export default class MailboxPerspective {
     return categories.length > 0 ? new UnreadMailboxPerspective(categories) : this.forNothing();
   }
 
+  static forJira(categories) {
+    return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
+  }
+
   static forUnreadByAccounts(accountIds) {
     let categories = accountIds.map(accId => {
       return CategoryStore.getCategoryByRole(accId, 'inbox');
@@ -303,7 +307,11 @@ export default class MailboxPerspective {
       if (AccountStore.accountForId(category.accountId).provider === 'gmail') {
         ret.push({ accountId: category.accountId, path: category.path.replace('[Gmail]/', '') });
       } else {
-        ret.push({ accountId: category.accountId, path: category.path });
+        ret.push({
+          accountId: category.accountId,
+          path: category.path,
+          parentId: category.parentId,
+        });
       }
     }
     return ret;
@@ -821,6 +829,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       FocusedPerspectiveStore || require('./flux/stores/focused-perspective-store').default;
     ChangeLabelsTask = ChangeLabelsTask || require('./flux/tasks/change-labels-task').default;
     ChangeFolderTask = ChangeFolderTask || require('./flux/tasks/change-folder-task').default;
+    ChangeStarredTask = ChangeStarredTask || require('./flux/tasks/change-starred-task').default;
 
     const current = FocusedPerspectiveStore.current();
 
@@ -841,64 +850,92 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       return [];
     }
     const previousFolder = TaskFactory.findPreviousFolder(current, accountId);
-    if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
-      // dragging from a label into All Mail? Make this an "archive" by removing the
-      // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
-      return [
-        new ChangeLabelsTask({
-          threads,
-          source: 'Dragged into list',
-          labelsToAdd: [],
-          labelsToRemove: [currentCat],
-          previousFolder,
-        }),
-      ];
-    }
-    if (myCat.isFolder()) {
-      // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
-      return [
-        new ChangeFolderTask({
-          threads,
-          source: 'Dragged into list',
-          folder: myCat,
-          previousFolder,
-        }),
-      ];
-    }
-
-    if (myCat.isLabel() && currentCat && currentCat.isFolder()) {
-      // dragging from trash or spam into a label? We need to both apply the label and
-      // move to the "All Mail" folder.
-      if (currentCat.role === 'all') {
-        return [
-          new ChangeLabelsTask({
-            threads,
-            source: 'Dragged into list',
-            labelsToAdd: [myCat],
-            labelsToRemove: [],
-            previousFolder,
-          }),
-        ];
-      }
-      return [
-        new ChangeFolderTask({
-          threads,
-          source: 'Dragged into list',
-          folder: myCat,
-          currentPerspective: current,
-        }),
-      ];
-    }
-    // label to label
-    return [
-      new ChangeLabelsTask({
-        threads,
-        source: 'Dragged into list',
-        labelsToAdd: [myCat],
-        labelsToRemove: currentCat ? [currentCat] : [],
-        previousFolder,
-      }),
-    ];
+    return TaskFactory.tasksForGeneralMoveFolder({
+      threads,
+      targetCategory: myCat,
+      sourceCategory: currentCat,
+      previousFolder,
+      source: 'Dragged into List',
+    });
+    // if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
+    //   // dragging from a label into All Mail? Make this an "archive" by removing the
+    //   // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
+    //   return [
+    //     new ChangeLabelsTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       labelsToAdd: [],
+    //       labelsToRemove: [currentCat],
+    //       previousFolder,
+    //     }),
+    //   ];
+    // }
+    // if(myCat.isLabel() && currentCat && currentCat.isLabel() && (currentCat.role === 'important' || currentCat.role === 'flagged')){
+    //   return [
+    //       new ChangeLabelsTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       labelsToAdd: [myCat],
+    //       labelsToRemove: [],
+    //       previousFolder,
+    //     })
+    //     ]
+    // }
+    // if (myCat.isFolder()) {
+    //   // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
+    //   return [
+    //     new ChangeFolderTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       folder: myCat,
+    //       previousFolder,
+    //     }),
+    //   ];
+    // }
+    //
+    // if (myCat.isLabel() && currentCat && currentCat.isFolder()) {
+    //   // dragging from trash or spam into a label? We need to both apply the label and
+    //   // move to the "All Mail" folder.
+    //   if (currentCat.role === 'all') {
+    //     return [
+    //       new ChangeLabelsTask({
+    //         threads,
+    //         source: 'Dragged into list',
+    //         labelsToAdd: [myCat],
+    //         labelsToRemove: [],
+    //         previousFolder,
+    //       })];
+    //   }
+    //   return [
+    //     new ChangeFolderTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       folder: myCat,
+    //       currentPerspective: current,
+    //     }),
+    //   ];
+    // }
+    // // label to label
+    // if(myCat.role === 'inbox'){
+    //   return [
+    //     new ChangeLabelsTask({
+    //       threads,
+    //       source: 'Dragged into list',
+    //       labelsToAdd: [myCat],
+    //       labelsToRemove: [],
+    //       previousFolder,
+    //     }),
+    //   ];
+    // }
+    // return [
+    //   new ChangeLabelsTask({
+    //     threads,
+    //     source: 'Dragged into list',
+    //     labelsToAdd: [myCat],
+    //     labelsToRemove: currentCat ? [currentCat] : [],
+    //     previousFolder,
+    //   }),
+    // ];
   }
 
   // Public:
@@ -971,6 +1008,39 @@ class AllMailMailboxPerspective extends CategoryMailboxPerspective {
   threads() {
     const query = DatabaseStore.findAll(Thread)
       .where({ inAllMail: true, state: 0, accountId: this.accountIds[0] })
+      .order([Thread.attributes.lastMessageTimestamp.descending()])
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class JiraMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(_categories) {
+    super(_categories);
+  }
+  unreadCount() {
+    let sum = 0;
+    for (const aid of this.accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${aid}_JIRA`);
+    }
+    return sum;
+  }
+  threads() {
+    const query = DatabaseStore.findAll(Thread)
+      .where({
+        inAllMail: true,
+        state: 0,
+        isJIRA: true,
+      })
       .order([Thread.attributes.lastMessageTimestamp.descending()])
       .limit(0);
 

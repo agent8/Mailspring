@@ -8,24 +8,29 @@ class GroupChatAvatar extends Component {
     super(props);
     this.state = {};
   }
+
   componentDidMount = () => {
     const { conversation } = this.props;
     const { members, avatarMembers } = conversation;
+    console.log('avatarMembers', avatarMembers);
     this.setState({ members, avatarMembers });
     this.unsub = ChatActions.memberChange.listen(this.onMemberChange);
-  }
-  UNSAFE_componentWillReceiveProps = (nextProps) => {
+  };
+
+  UNSAFE_componentWillReceiveProps = nextProps => {
     const { conversation } = nextProps;
     if (!conversation) {
       return;
     }
     const { members, avatarMembers } = conversation;
     this.setState({ members, avatarMembers });
-  }
+  };
+
   componentWillUnmount = () => {
     this.unsub();
-  }
-  onMemberChange = (jid) => {
+  };
+
+  onMemberChange = jid => {
     let { conversation } = this.props;
     if (!conversation || jid != conversation.jid) {
       return;
@@ -36,43 +41,52 @@ class GroupChatAvatar extends Component {
       members = members.slice();
       this.setState({ members });
     }
-  }
+  };
+
   render() {
     const { conversation, size } = this.props;
     const { members, avatarMembers } = this.state;
+
     if (members && members.length === 1) {
-      const member = members[0]
-      return (<ContactAvatar
-        conversation={conversation}
-        jid={member.jid}
-        name={member.name}
-        email={member.email} size={size} />)
+      const member = members[0];
+      return (
+        <ContactAvatar
+          conversation={conversation}
+          jid={member.jid}
+          name={member.name}
+          email={member.email}
+          size={size}
+        />
+      );
     }
+
     if (!avatarMembers) {
       return null;
     }
+
     return (
       <div className="groupAvatar">
-        {
-          avatarMembers && avatarMembers.map((item, index) => {
+        {avatarMembers &&
+          avatarMembers.map((item, index) => {
             item = item || {};
-            return (<ContactAvatar
-              key={(item.jid && item.jid.bare || item.jid || '') + index}
-              conversation={this.props.conversation}
-              jid={item.jid && item.jid.bare || item.jid || ''}
-              name={item && item.name || ''}
-              email={item.email || ''}
-              size={index === 0 ? 35 : 20}
-            />)
-          })
-        }
+            return (
+              <ContactAvatar
+                key={((item.jid && item.jid.bare) || item.jid || '') + index}
+                conversation={this.props.conversation}
+                jid={(item.jid && item.jid.bare) || item.jid || ''}
+                name={(item && item.name) || ''}
+                email={item.email || ''}
+                size={index === 0 ? 35 : 20}
+              />
+            );
+          })}
       </div>
-    )
+    );
   }
 }
 
 GroupChatAvatar.propTypes = {
-  conversation: PropTypes.object.isRequired
+  conversation: PropTypes.object.isRequired,
 };
 
 GroupChatAvatar.defaultProps = {

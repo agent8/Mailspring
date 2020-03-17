@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
 import OnboardingActions from './onboarding-actions';
 import AccountProviders from './account-providers';
+const INVITE_COUNT_KEY = 'invite.count';
 
 export default class AccountChoosePage extends React.Component {
   static displayName = 'AccountChoosePage';
@@ -13,7 +14,21 @@ export default class AccountChoosePage extends React.Component {
 
   componentDidMount() {
     // facebook tracking: add account
-    AppEnv.trackingEvent('AddAccount');
+    // first time open app and add account
+    if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+      AppEnv.trackingEvent('Invite-AddAccount');
+    } else {
+      AppEnv.trackingEvent('AddAccount');
+    }
+  }
+
+  chooseAccountProvider(provider) {
+    if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+      AppEnv.trackingEvent('Invite-ChooseAccountProvider', { provider });
+    } else {
+      AppEnv.trackingEvent('ChooseAccountProvider', { provider });
+    }
+    OnboardingActions.chooseAccountProvider(provider);
   }
 
   _renderProviders() {
@@ -21,7 +36,7 @@ export default class AccountChoosePage extends React.Component {
       <div
         key={provider}
         className={`provider ${provider}`}
-        onClick={() => OnboardingActions.chooseAccountProvider(provider)}
+        onClick={() => this.chooseAccountProvider(provider)}
       >
         <div className="icon-container">
           <RetinaImg name={icon} mode={RetinaImg.Mode.ContentPreserve} className="icon" />

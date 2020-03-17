@@ -160,18 +160,43 @@ export default class PreferencesSignatures extends React.Component {
   };
 
   _renderSig = sig => {
-    const checkedList = this.state.accounts.filter(
-      account => this.state.defaults[account.emailAddress] === sig.id
-    );
-    const checkedListLen = checkedList && checkedList.length ? checkedList.length : 0;
+    let checkedAccountLength = 0;
+    let checkedAliasLength = 0;
+    this.state.accounts.forEach(account => {
+      let signatureId = typeof account.signatureId === 'function' ? account.signatureId() : `local-${account.id}-${account.emailAddress}-${account.name}`;
+      if (this.state.defaults[signatureId] === sig.id) {
+        checkedAccountLength += 1;
+      }
+      (account.getAllAliasContacts() || []).forEach(alias => {
+        signatureId = typeof account.signatureId === 'function' ? alias.signatureId() : `local-${alias.accountId}-${alias.email}-${alias.name}`;
+        if (this.state.defaults[signatureId] === sig.id) {
+          checkedAliasLength += 1;
+        }
+      });
+    });
 
+    const checkedAccountStr =
+      checkedAccountLength === 0
+        ? ''
+        : `${checkedAccountLength} account${checkedAccountLength > 1 ? 's' : ''}`;
+    const checkedAliasStr =
+      checkedAliasLength === 0
+        ? ''
+        : `${checkedAliasLength} ${checkedAliasLength > 1 ? 'aliases' : 'alias'}`;
+
+    let checkedStr = 'Not currently in use';
+    if (checkedAccountStr && checkedAliasStr) {
+      checkedStr = `${checkedAccountStr}，${checkedAliasStr}`;
+    } else if (checkedAccountStr) {
+      checkedStr = checkedAccountStr;
+    } else if (checkedAliasStr) {
+      checkedStr = checkedAliasStr;
+    }
     return (
       <div className="signatures">
         <div className="title">{sig.title}</div>
-        <div className={`use-account ${checkedListLen ? 'inuse' : ''}`}>
-          {checkedListLen
-            ? `${checkedListLen} account${checkedListLen > 1 ? 's' : ''}`
-            : 'Not currently in use'}
+        <div className={`use-account ${checkedAccountLength + checkedAliasLength ? 'inuse' : ''}`}>
+          {checkedStr}
         </div>
       </div>
     );

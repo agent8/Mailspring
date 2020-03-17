@@ -25,6 +25,7 @@ export default class ComposerHeader extends React.Component {
   static propTypes = {
     draft: PropTypes.object.isRequired,
     session: PropTypes.object.isRequired,
+    onClick: PropTypes.func.isRequired,
   };
 
   static contextTypes = {
@@ -35,7 +36,7 @@ export default class ComposerHeader extends React.Component {
     super(props);
     this._els = {};
     this.state = this._initialStateForDraft(this.props.draft, props);
-    this.state.missingAttachements = false;
+    this.state.missingAttachments = false;
     this._mounted = false;
   }
   componentDidMount() {
@@ -62,11 +63,13 @@ export default class ComposerHeader extends React.Component {
       }
       const missing = ret.totalMissing();
       if (missing.length !== 0) {
-        this.setState({ missingAttachments: true });
-        Actions.fetchAttachments({
-          accountId: props.draft.accountId,
-          missingItems: missing.map(f => f.id),
-        });
+        if(!this.state.missingAttachments){
+          this.setState({ missingAttachments: true });
+          Actions.fetchAttachments({
+            accountId: props.draft.accountId,
+            missingItems: missing.map(f => f.id),
+          });
+        }
       } else {
         this.setState({ missingAttachments: false });
       }
@@ -146,6 +149,11 @@ export default class ComposerHeader extends React.Component {
     }
     return participants.to[0].name;
   }
+  _onHeaderClicked = () => {
+    if(this.props.onClick){
+      this.props.onClick();
+    }
+  };
 
   _onChangeParticipants = changes => {
     this.props.session.changes.add(changes);
@@ -160,8 +168,8 @@ export default class ComposerHeader extends React.Component {
   };
 
   _draftNotReady = () => {
-    return this.props.session.isPopout() || this.state.missingAttachments;
-  }
+    return this.props.session.isPopout();
+  };
 
   _renderSubject = () => {
     const enabledFields = this.state.enabledFields || [];
@@ -277,7 +285,7 @@ export default class ComposerHeader extends React.Component {
 
   render() {
     return (
-      <div className="composer-header">
+      <div className="composer-header" onClick={this._onHeaderClicked}>
         <ComposerHeaderActions
           headerMessageId={this.props.draft.headerMessageId}
           enabledFields={this.state.enabledFields}

@@ -62,7 +62,7 @@ const HiddenRoleMap = ToObject([
   'drafts',
   'all',
   'archive',
-  'starred',
+  'flagged',
   'important',
   'snoozed',
   '[Mailspring]',
@@ -86,9 +86,18 @@ Folders and Labels have different semantics. The `Category` class only exists to
 
 Section: Models
 */
+const fromDelimiterJsonMappings = val => {
+  return String.fromCharCode(val);
+};
+const toDelimiterJSONMappings = val => {
+  if(typeof val !== 'string' || val.length === 0){
+    return 47;
+  }
+  return val.charCodeAt(0);
+};
 export default class Category extends Model {
   get displayName() {
-    return Category.pathToDisplayName(this.path);
+    return Category.pathToDisplayName(this.name);
   }
   static pathToDisplayName(pathString) {
     if (!pathString) {
@@ -111,9 +120,10 @@ export default class Category extends Model {
   }
 
   /* Available for historical reasons, do not use. */
-  get name() {
-    return this.role;
-  }
+  // get name() {
+  //   console.error('using get name()');
+  //   return this.role;
+  // }
 
   static attributes = Object.assign({}, Model.attributes, {
     role: Attributes.String({
@@ -123,10 +133,20 @@ export default class Category extends Model {
       toJSONMapping,
       fromJSONMapping
     }),
+    name: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'name',
+    }),
     path: Attributes.String({
       queryable: true,
       loadFromColumn: true,
       modelKey: 'path',
+    }),
+    parentId: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'parentId',
     }),
     state: Attributes.Number({
       modelKey: 'state',
@@ -137,6 +157,13 @@ export default class Category extends Model {
       modelKey: 'type',
       queryable: true,
       loadFromColumn: true,
+    }),
+    delimiter: Attributes.String({
+      modelKey: 'delimiter',
+      queryable: true,
+      loadFromColumn: true,
+      fromJSONMapping: fromDelimiterJsonMappings,
+      toJSONMapping: toDelimiterJSONMappings,
     })
   });
 

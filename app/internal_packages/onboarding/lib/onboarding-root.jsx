@@ -13,6 +13,7 @@ import AccountSettingsPageIMAP from './page-account-settings-imap';
 import AccountSettingsPageOffice365 from './page-account-settings-office365';
 import AccountSettingsPageOutlook from './page-account-settings-outlook';
 import AccountSettingsPageYahoo from './page-account-settings-yahoo';
+import AccountSettingsPageJira from './page-account-settings-jira-plugin';
 import AccountOnboardingSuccess from './page-account-onboarding-success';
 import InitialPreferencesPage from './page-initial-preferences';
 import InitialPreferencesProfilePage from './page-initial-preferences-profile';
@@ -37,6 +38,7 @@ const PageComponents = {
   'account-settings-hotmail': AccountSettingsPageOutlook,
   'account-settings-yahoo': AccountSettingsPageYahoo,
   'account-settings-imap': AccountSettingsPageIMAP,
+  'account-settings-jira-plugin': AccountSettingsPageJira,
   'account-onboarding-success': AccountOnboardingSuccess,
   'account-add-another': AddAnotherAccountPage,
   'initial-preferences': InitialPreferencesPage,
@@ -98,6 +100,7 @@ export default class OnboardingRoot extends React.Component {
               'account-add-another',
               'account-choose',
               'login-error',
+              'account-settings-jira-plugin'
             ].includes(this.state.page)
           }
         />

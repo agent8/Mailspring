@@ -6,15 +6,21 @@ export default class ConfigPropContainer extends React.Component {
   constructor(props) {
     super(props);
     this.state = this.getStateFromStores();
+    this._mounted = false;
   }
 
   componentDidMount() {
+    this._mounted = true;
     this.subscription = AppEnv.config.onDidChange(null, () => {
+      if(!this._mounted){
+        return;
+      }
       this.setState(this.getStateFromStores());
     });
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this.subscription) {
       this.subscription.dispose();
     }

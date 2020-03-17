@@ -67,9 +67,9 @@ class AppsStore extends MailspringStore {
     let dbpath = path.join(configDirPath, 'edisonmail.db');
     const sqldb = sqlite(dbpath);
     const accounts = AppEnv.config.get('accounts');
-    let accoundIds = accounts.map(acc => `"${acc.id}"`);
+    let accoundIds = accounts.map(acc => `"${acc.pid}"`);
     log('contact', `saveEmailContacts: acc.id: ` + accoundIds.join(', '));
-    const sql = `SELECT * FROM contact where sendToCount >= 1 and recvFromCount >= 1 and accountId in (${accoundIds.join(
+    const sql = `SELECT * FROM contact where sendToCount >= 1 and recvFromCount >= 1 and aid in (${accoundIds.join(
       ','
     )})`;
     let stmt = sqldb.prepare(sql);

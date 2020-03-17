@@ -54,11 +54,11 @@
     .messages-wrap {
       width: 100%;
       max-height: 100%;
+      overflow-x: hidden;
       overflow-y: auto;
       &:hover {
         &::-webkit-scrollbar-thumb {
           visibility: visible;
-          // opacity: 1;
         }
       }
       &::-webkit-scrollbar {
@@ -68,6 +68,7 @@
       }
       &::-webkit-scrollbar-thumb {
         visibility: hidden;
+        // height: 60px;
         opacity: 0;
         -webkit-border-radius: 2px;
         background: rgba(150, 150, 150, 0.33);
@@ -83,6 +84,30 @@
     }
   }
 
+  .messages-wrap {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    &:hover {
+      &::-webkit-scrollbar-thumb {
+        visibility: visible;
+      }
+    }
+    &::-webkit-scrollbar {
+      background: @white;
+      color: #000;
+      width: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+      visibility: hidden;
+      // height: 60px;
+      opacity: 0;
+      -webkit-border-radius: 2px;
+      background: rgba(150, 150, 150, 0.33);
+    }
+  }
+
   .upload-error {
     color: @red;
     img.content-mask {
@@ -95,73 +120,82 @@
     padding-bottom: 8px;
     display: flex;
     flex-direction: column;
-    .day-label {
-      height: 30px;
-      line-height: 30px;
-      text-align: center;
-      label {
-        display: block;
-        margin: 0 auto;
-        .divider {
-          position: relative;
-          top: -5px;
-          margin: 0 15px;
-          z-index: -1;
-        }
-        span {
-          margin: 0 auto;
-          background: @white;
-          display: inline-block;
-          padding: 0 14px;
-          border-radius: 20px;
-          text-align: center;
-          font-size: 10px;
-          color: @timeColor;
-        }
-      }
-      .day-label-text {
-        display: inline-block;
+  }
+  .day-label {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    label {
+      display: block;
+      margin: 0 auto;
+      .divider {
         position: relative;
-        padding: 0 11px;
-        height: 20px;
-        line-height: 20px;
-        margin: -10px auto 0;
-        font-size: 8px;
-        background-color: @gray-lightest;
+        top: -5px;
+        margin: 0 15px;
+        z-index: -1;
+      }
+      span {
+        margin: 0 auto;
+        background: @white;
+        display: inline-block;
+        padding: 0 14px;
         border-radius: 20px;
-        span {
-          color: @gray;
-        }
-        .weekday {
-          padding: 0;
-          margin: 0 2px;
-          font-size: 10px;
-          font-weight: 700;
-          letter-spacing: 0.07px;
-          line-height: 12px;
-          text-align: center;
-          background-color: @gray-lightest;
-        }
-        .date {
-          padding: 0;
-          margin: 0 2px;
-          font-size: 10px;
-          letter-spacing: 0.07px;
-          line-height: 12px;
-          text-align: center;
-          background-color: @gray-lightest;
-        }
+        text-align: center;
+        font-size: 10px;
+        color: @timeColor;
+      }
+    }
+    .day-label-text {
+      display: inline-block;
+      position: relative;
+      padding: 0 11px;
+      height: 20px;
+      line-height: 20px;
+      margin: -10px auto 0;
+      font-size: 8px;
+      background-color: @gray-lightest;
+      border-radius: 20px;
+      span {
+        color: @gray;
+      }
+      .weekday {
+        padding: 0;
+        margin: 0 2px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.07px;
+        line-height: 12px;
+        text-align: center;
+        background-color: @gray-lightest;
+      }
+      .date {
+        padding: 0;
+        margin: 0 2px;
+        font-size: 10px;
+        letter-spacing: 0.07px;
+        line-height: 12px;
+        text-align: center;
+        background-color: @gray-lightest;
       }
     }
   }
-  .message-group.time-label-fix {
-    .day-label label {
-      position: absolute;
-      z-index: 8;
-      top: 72px;
-      left: 0px;
-      right: 0px;
-    }
+
+  .day-label-fixed {
+    position: absolute;
+    top: 68px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .time-label-text {
+    height: 20px;
+    line-height: 20px;
+    font-size: 10px;
+    text-align: center;
+    color: @gray;
   }
 
   .message {
@@ -172,21 +206,11 @@
     font-size: 12px;
   }
 
-  .message.system-event {
-    padding-left: 0;
+  .message-wrapper .system-event {
     text-align: center;
-    .username {
-      display: none;
-    }
-    .time {
-      float: initial;
-    }
-    .text-content {
-      margin: 0 auto;
-      text-align: center;
-      color: @gray;
-    }
+    color: @gray;
   }
+
   .message.message-fail {
     background-color: rgba(255, 72, 95, 5%);
   }
@@ -278,6 +302,7 @@
     align-items: flex-start;
     align-self: flex-start;
     flex-direction: row;
+    min-height: 34px;
     text-align: left;
     white-space: pre-line;
     word-break: break-word;
@@ -340,6 +365,7 @@
 
     .text-content {
       display: inline-block;
+      max-width: calc(~'100% - 50px');
       line-height: 22px;
       min-height: 35px;
       .text {
@@ -360,7 +386,6 @@
     }
     &:hover .message-toolbar {
       display: inline-block;
-      top: 0px;
     }
   }
 

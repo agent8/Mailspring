@@ -32,6 +32,7 @@ export default class DestroyDraftTask extends Task {
 
   onSuccess() {
     Actions.destroyDraftSucceeded({
+      accountId: this.accountId,
       messageIds: this.messageIds,
     });
   }
@@ -43,6 +44,7 @@ export default class DestroyDraftTask extends Task {
     }
     Actions.destroyDraftFailed({
       key, debuginfo,
+      accountId: this.accountId,
       messageIds: this.messageIds,
     });
   }

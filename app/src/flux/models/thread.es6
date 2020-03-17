@@ -179,6 +179,11 @@ export default class Thread extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    isJIRA: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'isJIRA',
+    }),
   });
 
   static sortOrderAttribute = () => {
@@ -207,18 +212,21 @@ export default class Thread extends ModelWithMetadata {
     // noop
   }
 
-  get attachmentCount(){
+  get attachmentCount() {
     return (this.files || []).length;
   }
-  get labels(){
+  get labels() {
+    if(!Array.isArray(this.labelIds)){
+      return [];
+    }
     return this.labelIds.map(labelId => {
-      if(typeof labelId === 'string'){
+      if (typeof labelId === 'string') {
         return CategoryStore.byFolderId(labelId);
       }
-    })
+    }).filter(l => l);
   }
 
-  get folders(){
+  get folders() {
     return this.labels;
   }
 
@@ -229,13 +237,16 @@ export default class Thread extends ModelWithMetadata {
    * When loading data from the API, there are `folders` AND `labels` but
    * no `categories` yet.
    */
-  fromJSON(json) {
+    fromJSON(json) {
     super.fromJSON(json);
 
     if (this.participants && this.participants instanceof Array) {
       this.participants.forEach(item => {
         item.accountId = this.accountId;
       });
+    }
+    if(!this.id){
+      this.id = json.id || json.pid;
     }
     return this;
   }

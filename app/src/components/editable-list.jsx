@@ -117,9 +117,9 @@ class EditableList extends Component {
     className: '',
     createInputProps: {},
     showEditIcon: false,
-    onDeleteItem: () => {},
-    onItemEdited: () => {},
-    onItemCreated: () => {},
+    onDeleteItem: () => { },
+    onItemEdited: () => { },
+    onItemCreated: () => { },
   };
 
   constructor(props) {
@@ -178,7 +178,7 @@ class EditableList extends Component {
     this._setStateAndFocus({ creatingItem: false }, callback);
   };
 
-  _setStateAndFocus = (state, callback = () => {}) => {
+  _setStateAndFocus = (state, callback = () => { }) => {
     this.setState(state, () => {
       this._focusSelf();
       callback();
@@ -379,6 +379,10 @@ class EditableList extends Component {
   };
 
   _onDrop = event => {
+    if (!this.props.onReorderItem) {
+      event.preventDefault();
+      return;
+    }
     if (this.state.dropInsertionIndex !== -1) {
       const startIdx = event.dataTransfer.getData('editablelist-index');
       if (startIdx && this.state.dropInsertionIndex !== startIdx) {
@@ -560,8 +564,17 @@ class EditableList extends Component {
             {items}
           </ScrollRegion>
         ) : (
-          <div>{items}</div>
-        )}
+            <div
+              ref={el => {
+                this._itemsWrapperEl = el;
+              }}
+              onDragOver={this._onDragOver}
+              onDragLeave={this._onDragLeave}
+              onDrop={this._onDrop}
+            >
+              {items}
+            </div>
+          )}
         {this._renderButtons()}
       </KeyCommandsRegion>
     );

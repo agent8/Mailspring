@@ -15,18 +15,23 @@ import CategoryStore from '../stores/category-store';
 let AttachmentStore = null;
 
 const mapping = {
-  attachmentIdsFromJSON: json =>{
-    if(!Array.isArray(json)){
+  attachmentIdsFromJSON: json => {
+    if (!Array.isArray(json)) {
       return [];
     }
     return json.map(attachment => {
-      return File.fromPartialData(attachment);
+      const file = new File();
+      file.fromJSON(attachment);
+      if(!file.id && (attachment.pid || attachment.id)){
+        file.id = (attachment.pid || attachment.id);
+      }
+      return file;
     })
   }
 };
 
 export default class Message extends ModelWithMetadata {
-  static fieldsNotInDB=[
+  static fieldsNotInDB = [
     'calendarReply',
     'listUnsubscribe',
     'pristine',
@@ -183,12 +188,24 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'waitingForBody',
       queryable: false,
     }),
+    waitingForAttachment: Attributes.Boolean({
+      modelKey: 'waitingForAttachment',
+      queryable: false,
+    }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
       queryable: false
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
+      queryable: false
+    }),
+    pastMessageIds: Attributes.Collection({
+      modelKey: 'pastMessageIds',
+      queryable: false
+    }),
+    lastSync: Attributes.Number({
+      modelKey: 'lastSync',
       queryable: false
     }),
 
@@ -231,11 +248,11 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
-    attachmentIds: Attributes.Collection({
-      jsModelKey: 'attachmentIds',
+    files: Attributes.Collection({
       modelKey: 'files',
       queryable: true,
       loadFromColumn: true,
+      itemClass: File,
       fromJSONMapping: mapping.attachmentIdsFromJSON
     }),
 
@@ -325,7 +342,12 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'syncState',
       loadFromColumn: true,
       queryable: true,
-    })
+    }),
+    isJIRA: Attributes.String({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'isJIRA',
+    }),
   });
 
   static naturalSortOrder() {
@@ -344,17 +366,20 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
-    if(Array.isArray(data.files)){
-      this.attachmentIds = data.files
+    if(!Array.isArray(data.pastMessageIds)){
+      this.pastMessageIds = [];
+    }
+    if(!Array.isArray(data.files)){
+      this.files = [];
     }
   }
 
   toJSON(options) {
     const json = super.toJSON(options);
-    json.headerMessageId = this.headerMessageId || '';
+    // json.headerMessageId = this.headerMessageId || '';
     json.file_ids = this.fileIds();
     if (this.draft) {
-      json.draft= true;
+      json.draft = true;
     }
 
     if (this.events && this.events.length) {
@@ -366,6 +391,9 @@ export default class Message extends ModelWithMetadata {
 
   fromJSON(json = {}) {
     super.fromJSON(json);
+    if(!Array.isArray(json.pastMessageIds)){
+      this.pastMessageIds = [];
+    }
     return this;
   }
 
@@ -471,43 +499,55 @@ export default class Message extends ModelWithMetadata {
     }
     return false;
   }
-  get files(){
-    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-    if(!Array.isArray(this.attachmentIds)){
-      console.error(`attachmentIds is not array`, this.attachmentIds);
-      return [];
-    }
-    const rets = [];
-    this.attachmentIds.forEach(partialAttachmentData => {
-      if(!(partialAttachmentData instanceof File)){
-        partialAttachmentData = File.fromPartialData(partialAttachmentData)
-      }
-      const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
-      if(fileData){
-        rets.push(fileData);
-      }
-    });
-    return rets;
-  }
-  set files(attachments){
-    this.attachmentIds = attachments;
-  }
+  // get files() {
+  //   AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+  //   if (!Array.isArray(this.attachmentIds)) {
+  //     console.error(`attachmentIds is not array`, this.attachmentIds);
+  //     return [];
+  //   }
+  //   const rets = [];
+  //   this.attachmentIds.forEach(partialAttachmentData => {
+  //     if (!(partialAttachmentData instanceof File)) {
+  //       partialAttachmentData = File.fromPartialData(partialAttachmentData)
+  //     }
+  //     const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
+  //     if (fileData) {
+  //       rets.push(fileData);
+  //     }
+  //   });
+  //   return rets;
+  // }
+  // set files(attachments) {
+  //   this.attachmentIds = attachments.map(attachment => {
+  //     if (!(attachment instanceof File)) {
+  //       attachment = File.fromPartialData(attachment)
+  //     }
+  //     if (!attachment.missingData) {
+  //       AttachmentStore.setAttachmentData(attachment);
+  //     } else {
+  //       attachment = AttachmentStore.addAttachmentPartialData(attachment);
+  //     }
+  //     return attachment;
+  //   });
+  // }
 
   // Public: Returns an {Array} of {File} IDs
   fileIds() {
-    return this.files.map(file => file.id);
+    return (this.files || []).map(file => file.id);
   }
 
-  get labels(){
+  get labels() {
     const ret = [];
-    this.labelIds.forEach(labelId => {
-      if(typeof labelId === 'string'){
-        const tmp = CategoryStore.byFolderId(labelId);
-        if(tmp){
-          ret.push(tmp);
+    if(Array.isArray(this.labelIds)){
+      this.labelIds.forEach(labelId => {
+        if (typeof labelId === 'string') {
+          const tmp = CategoryStore.byFolderId(labelId);
+          if (tmp) {
+            ret.push(tmp);
+          }
         }
-      }
-    });
+      });
+    }
     return ret;
   }
 
@@ -533,13 +573,13 @@ export default class Message extends ModelWithMetadata {
           needToDownload: [],
         },
       };
-      const total = this.files.length * 2;
+      const total = (this.files || []).length * 2;
       if (total === 0) {
         resolve(ret);
         return;
       }
       let processed = 0;
-      this.files.forEach(f => {
+      (this.files || []).forEach(f => {
         const path = AttachmentStore.pathForFile(f);
         const exists = fs.existsSync(path);
         if (!exists) {
@@ -574,15 +614,15 @@ export default class Message extends ModelWithMetadata {
 
   //Public: returns the first email that belongs to the account that received the email,
   // otherwise returns the account's default email.
-  findMyEmail(){
-    const participants = this.participants({includeFrom: false, includeBcc: true});
+  findMyEmail() {
+    const participants = this.participants({ includeFrom: false, includeBcc: true });
     const account = AccountStore.accountForId(this.accountId);
-    if(!account){
-      AppEnv.reportError(new Error('Message accountId is not part of any account'), {errorData: this.toJSON()})
+    if (!account) {
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), { errorData: this.toJSON() })
       return false;
     }
-    for(let participant of participants){
-      if(account.isMyEmail(participant.email)){
+    for (let participant of participants) {
+      if (account.isMyEmail(participant.email)) {
         return participant.email;
       }
     }
@@ -596,7 +636,7 @@ export default class Message extends ModelWithMetadata {
       return false;
     }
     if (ignoreOtherAccounts) {
-      const account = AccountStore.accountForEmail(this.from[0].email);
+      const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
       if (account) {
         return account.id === this.accountId;
       }
@@ -608,7 +648,7 @@ export default class Message extends ModelWithMetadata {
     if (!this.from[0]) {
       return false;
     }
-    const account = AccountStore.accountForEmail(this.from[0].email);
+    const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
     if (account) {
       return account.id !== this.accountId;
     }
@@ -616,7 +656,7 @@ export default class Message extends ModelWithMetadata {
   }
 
   isForwarded() {
-    if(!this.subject){
+    if (!this.subject) {
       console.error(`subject is ${this.subject}`);
       return false;
     }
@@ -645,7 +685,7 @@ export default class Message extends ModelWithMetadata {
     }
     return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
   }
-  isInSpam(){
+  isInSpam() {
     if (!this.labels) {
       return false;
     }
