@@ -35,6 +35,7 @@ class SidebarStore extends MailspringStore {
     this._registerTrayItems();
     this._registerListeners();
     this._updateSections();
+    this._onShiftItemThrottle = _.throttle(delta => this._onShiftItem(delta), 100);
   }
 
   accounts() {
@@ -51,6 +52,43 @@ class SidebarStore extends MailspringStore {
 
   userSections() {
     return this._sections[Sections.User];
+  }
+
+  onShift(delta) {
+    this._onShiftItemThrottle(delta);
+  }
+
+  _onShiftItem(delta) {
+    const items = this.standardSection().items;
+    const itemsTmp = [];
+    let select = null;
+    function getLowestChildren(sidebarItem) {
+      if (sidebarItem.children && sidebarItem.children.length) {
+        sidebarItem.children.forEach(child => {
+          getLowestChildren({ ...child, fatherId: sidebarItem.id });
+        });
+      } else if (sidebarItem.id !== 'divider') {
+        itemsTmp.push(sidebarItem);
+        if (sidebarItem.selected) {
+          select = sidebarItem;
+        }
+      }
+    }
+    items.forEach(item => {
+      getLowestChildren(item);
+    });
+    const selectIndex = itemsTmp.indexOf(select);
+    const newSelectIndex = Math.min(Math.max(0, delta + selectIndex), itemsTmp.length - 1);
+    if (selectIndex === newSelectIndex) {
+      return;
+    }
+    const newSelectItem = itemsTmp[newSelectIndex];
+    if (newSelectItem.onSelect && typeof newSelectItem.onSelect === 'function') {
+      if (newSelectItem.fatherId) {
+        this._onSetCollapsedByKey(newSelectItem.fatherId, false);
+      }
+      newSelectItem.onSelect(newSelectItem);
+    }
   }
 
   _registerListeners() {
