@@ -97,7 +97,6 @@ class CircularCache {
     for(let i=0; i < this.cacheLength; i++){
       if( cacheKey === this.cacheContents[i].key){
         this.cacheContents[i].lastAccess = Date.now();
-        console.log(`cache found at index ${i}`);
         return this.cacheContents[i];
       }
     }
@@ -210,6 +209,10 @@ module.exports = Utils = {
     if(!model){
       return null;
     }
+    if(model.fromJSON){
+      return model.fromJSON(json);
+    }
+    console.warn(`model doesn't have fromJSON`);
     return Object.assign(model, json);
   },
 

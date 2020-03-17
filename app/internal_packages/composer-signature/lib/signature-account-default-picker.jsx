@@ -8,30 +8,35 @@ export default class SignatureAccountDefaultPicker extends React.Component {
     accounts: PropTypes.array,
   };
 
-  _onToggleAccount = account => {
-    Actions.toggleAccount(account.emailAddress);
+  _onToggleAccount = aliases => {
+    Actions.toggleAliasesSignature(aliases);
   };
 
   render() {
     const { accounts, defaults, signature } = this.props;
+    const aliases = [];
+    accounts.forEach(account => {
+      aliases.push(...account.getAllIsMeContacts());
+    });
 
     return (
       <div className="account-picker">
         <label>Use this signature as the default for:</label>
 
-        {accounts.map(account => {
-          const isChecked = defaults[account.emailAddress] === signature.id;
+        {aliases.map(alias => {
+          const signatureId = typeof alias.signatureId === 'function' ? alias.signatureId() : `local-${alias.accountId}-${alias.email}-${alias.name}`;
+          const isChecked = defaults[signatureId] === signature.id;
           return (
-            <div key={account.id}>
+            <div key={alias.id}>
               <label>
                 <input
                   type="checkbox"
                   onChange={() => {
-                    this._onToggleAccount(account);
+                    this._onToggleAccount(alias);
                   }}
                   checked={isChecked}
                 />
-                {account.emailAddress}
+                {`${alias.name} <${alias.email}`}>
               </label>
             </div>
           );

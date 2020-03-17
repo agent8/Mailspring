@@ -26,9 +26,15 @@ function ImageNode(props) {
       className={`file-upload ${isSelected && 'custom-block-selected'}`}
       filePath={AttachmentStore.pathForFile(file)}
       displayName={file.filename}
+      fileId={file.id}
       onRemoveAttachment={() =>
         editor.change(change => {
-          Actions.removeAttachment(draft.headerMessageId, file);
+          Actions.removeAttachment({
+            headerMessageId: draft.headerMessageId,
+            messageId: draft.id,
+            accountId: draft.accountId,
+            fileToRemove: file,
+          });
           return change.removeNodeByKey(node.key);
         })
       }

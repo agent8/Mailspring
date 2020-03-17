@@ -147,16 +147,16 @@ export default class MessageItem extends React.Component {
 
   _onMessageStoreChange = () => {
     const fileIds = this.props.message.fileIds();
-    const ret = [];
-    for(let fileId of fileIds){
-      const attachment = AttachmentStore.getAttachment(fileId);
-      if(!attachment || attachment.missingData){
-        ret.push(fileId);
-      }
-    }
+    // const ret = [];
+    // for (let fileId of fileIds) {
+    //   const attachment = AttachmentStore.getAttachment(fileId);
+    //   if (!attachment || attachment.missingData) {
+    //     ret.push(fileId);
+    //   }
+    // }
     console.log(`attachments missing data ids`);
     this.setState({
-      attachmentsMissingData: ret,
+      // attachmentsMissingData: ret,
       downloads: AttachmentStore.getDownloadDataForFiles(fileIds),
       filePreviewPaths: AttachmentStore.previewPathsForFiles(fileIds),
       missingFileIds: MessageStore.getMissingFileIds(),
@@ -285,6 +285,10 @@ export default class MessageItem extends React.Component {
 
   _renderAttachments() {
     const { files = [], body, id } = this.props.message;
+    if(!body){
+      console.log('message have no body');
+      return null;
+    }
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
       return !f.contentId || !(body || '').includes(`cid:${f.contentId}`) || (f.contentId && !Utils.shouldDisplayAsImage(f));
@@ -376,7 +380,7 @@ export default class MessageItem extends React.Component {
         {/*</div>*/}
         <div className="row">
           {this._renderEmailAvatar()}
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, width: 0 }}>
             <div className="participants-to">
               <MessageParticipants
                 from={message.from}
@@ -500,7 +504,7 @@ export default class MessageItem extends React.Component {
                   <MessageTimestamp date={date} />
                 </div>
               </div>
-              <div className="collapsed-snippet">{snippet}</div>
+              <div className="collapsed-snippet">{Utils.superTrim(snippet)}</div>
             </div>
           </div>
         </div>

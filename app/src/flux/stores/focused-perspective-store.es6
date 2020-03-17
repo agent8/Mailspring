@@ -162,7 +162,7 @@ class FocusedPerspectiveStore extends MailspringStore {
 
   // Inbound Events
   _onCategoryStoreChanged = () => {
-    if (!this._initialized) {
+    if (!this._initialized && AppEnv.isMainWindow()) {
       this._initializeFromSavedState();
     } else if (!this._isValidPerspective(this._current)) {
       this._setPerspective(this._defaultPerspective(this._current.accountIds));

@@ -81,11 +81,11 @@ export default class ChangeLabelsTask extends ChangeMailTask {
       throw new Error(`Assertion Failure: ChangeLabelsTask requires labelsToRemove`);
     }
     for (const l of [].concat(this.labelsToAdd, this.labelsToRemove)) {
-      if (l.isLabel() === false) {
-        throw new Error(
-          `Assertion Failure: ChangeLabelsTask received a non-label: ${JSON.stringify(l)}`
-        );
-      }
+      // if (l.isLabel() === false) {
+      //   throw new Error(
+      //     `Assertion Failure: ChangeLabelsTask received a non-label: ${JSON.stringify(l)}`
+      //   );
+      // }
     }
     super.willBeQueued();
   }

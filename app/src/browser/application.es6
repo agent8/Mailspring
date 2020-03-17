@@ -1,6 +1,15 @@
 /* eslint global-require: "off" */
 
-import { BrowserWindow, Menu, app, ipcMain, dialog, systemPreferences, Notification, screen } from 'electron';
+import {
+  BrowserWindow,
+  Menu,
+  app,
+  ipcMain,
+  dialog,
+  systemPreferences,
+  Notification,
+  screen,
+} from 'electron';
 
 import fs from 'fs-plus';
 import rimraf from 'rimraf';
@@ -17,7 +26,6 @@ import ApplicationMenu from './application-menu';
 import ApplicationTouchBar from './application-touch-bar';
 import AutoUpdateManager from './autoupdate-manager';
 import SystemTrayManager from './system-tray-manager';
-import DefaultClientHelper from '../default-client-helper';
 import MailspringProtocolHandler from './mailspring-protocol-handler';
 import ConfigPersistenceManager from './config-persistence-manager';
 import moveToApplications from './move-to-applications';
@@ -125,12 +133,8 @@ export default class Application extends EventEmitter {
     this.handleEvents();
     this.handleLaunchOptions(options);
 
-    if (process.platform === 'linux') {
-      const helper = new DefaultClientHelper();
-      helper.registerForURLScheme('EdisonMail');
-    } else {
-      app.setAsDefaultProtocolClient('EdisonMail');
-    }
+    // add 'EdisonMail://' to LSSetDefaultHandlerForURLScheme
+    app.setAsDefaultProtocolClient('EdisonMail');
 
     this._draftsSendLater = {};
 
@@ -324,7 +328,11 @@ export default class Application extends EventEmitter {
         console.log(e);
       }
     }
-    ipcMain.emit('upload-to-report-server', { status: 'uploading', error: null, payload: { logID: extra.logID || '' } });
+    ipcMain.emit('upload-to-report-server', {
+      status: 'uploading',
+      error: null,
+      payload: { logID: extra.logID || '' },
+    });
     if (type.toLocaleLowerCase() === 'error') {
       global.errorLogger.reportError(error, extra);
     } else if (type.toLocaleLowerCase() === 'warning') {
@@ -339,7 +347,7 @@ export default class Application extends EventEmitter {
       extra.osInfo = getOSInfo();
       extra.native = this.nativeVersion;
       extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
-      if (!!extra.errorData && (typeof extra.errorData !== 'string')) {
+      if (!!extra.errorData && typeof extra.errorData !== 'string') {
         extra.errorData = JSON.stringify(extra.errorData);
       }
     } catch (err) {
@@ -456,16 +464,16 @@ export default class Application extends EventEmitter {
         zlib: { level: 9 }, // Sets the compression level.
       });
 
-      output.on('close', function () {
+      output.on('close', function() {
         console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
         console.log('archiver has been finalized and the output file descriptor has closed.');
         resolve(outputPath);
       });
-      output.on('end', function () {
+      output.on('end', function() {
         console.log('\n----->\nData has been drained');
         resolve(outputPath);
       });
-      archive.on('warning', function (err) {
+      archive.on('warning', function(err) {
         if (err.code === 'ENOENT') {
           console.log(err);
         } else {
@@ -474,7 +482,7 @@ export default class Application extends EventEmitter {
           reject(err);
         }
       });
-      archive.on('error', function (err) {
+      archive.on('error', function(err) {
         output.close();
         console.log(err);
         reject(err);
@@ -592,7 +600,7 @@ export default class Application extends EventEmitter {
   // we close windows and log out, we need to wait for these processes to completely
   // exit and then delete the file. It's hard to tell when this happens, so we just
   // retry the deletion a few times.
-  deleteFileWithRetry(filePath, callback = () => { }, retries = 5) {
+  deleteFileWithRetry(filePath, callback = () => {}, retries = 5) {
     glob(filePath, (err, files) => {
       if (err) {
         return;
@@ -618,6 +626,10 @@ export default class Application extends EventEmitter {
       };
       const total = files.length;
       let processed = 0;
+      if (!files || files.length === 0) {
+        shouldCallcb();
+        return;
+      }
       for (let fileName of files) {
         if (!fs.existsSync(fileName)) {
           processed++;
@@ -637,7 +649,7 @@ export default class Application extends EventEmitter {
     });
   }
 
-  renameFileWithRetry(filePath, newPath, callback = () => { }, retries = 5) {
+  renameFileWithRetry(filePath, newPath, callback = () => {}, retries = 5) {
     const callbackWithRetry = err => {
       if (err && err.message.indexOf('no such file') === -1) {
         console.log(`File Error: ${err.message} - retrying in 150msec`);
@@ -686,8 +698,7 @@ export default class Application extends EventEmitter {
 
     if (hasAccount && hasIdentity && agree) {
       this.windowManager.ensureWindow(WindowManager.MAIN_WINDOW);
-    }
-    else {
+    } else {
       this.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, {
         title: 'Welcome to EdisonMail',
       });
@@ -765,42 +776,39 @@ export default class Application extends EventEmitter {
   };
 
   _deleteDatabase = (callback, rebuild) => {
-    this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db-wal'), () => {
-      console.log('\nedisonmail.db-wal deleted\n');
-      this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db-shm'), () => {
-        console.log('\nedisonmail.db-shm deleted\n');
-        this.deleteFileWithRetry(path.join(this.configDirPath, 'embody*'), () => {
-          console.log('\nembody* deleted\n');
-          this.deleteFileWithRetry(path.join(this.configDirPath, 'emdb_*'), () => {
-            console.log('\nemdb_* deleted\n');
-            if (rebuild) {
-              const dbPath = path.join(this.configDirPath, 'edisonmail.db');
-              const newDbName = `edisonmail_backup_${new Date().getTime()}.db`;
-              const newDbPath = path.join(this.configDirPath, newDbName);
-              this.renameFileWithRetry(dbPath, newDbPath, () => {
-                // repair the database
-                if (process.platform === 'darwin') {
-                  const sqlPath = 'data.sql';
-                  execSync(`sqlite3 ${newDbName} .dump > ${sqlPath}`, {
-                    cwd: this.configDirPath,
-                  });
-                  execSync(`sed -i '' 's/ROLLBACK/COMMIT/g' ${sqlPath}`, {
-                    cwd: this.configDirPath,
-                  });
-                  execSync(`sqlite3 edisonmail.db < ${sqlPath}`, {
-                    cwd: this.configDirPath,
-                  });
-                  fs.unlink(path.join(this.configDirPath, sqlPath), () => { });
-                } else {
-                  // TODO in windows
-                  console.warn('in this system does not implement yet');
-                }
-                callback();
-              });
-            } else {
-              this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db'), callback);
-            }
-          });
+    this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db*'), () => {
+      console.log('\nedisonmail.db* deleted\n');
+      this.deleteFileWithRetry(path.join(this.configDirPath, 'embody*'), () => {
+        console.log('\nembody* deleted\n');
+        this.deleteFileWithRetry(path.join(this.configDirPath, 'emdb_*'), () => {
+          console.log('\nemdb_* deleted\n');
+          // if (rebuild) {
+          //   const dbPath = path.join(this.configDirPath, 'edisonmail.db');
+          //   const newDbName = `edisonmail_backup_${new Date().getTime()}.db`;
+          //   const newDbPath = path.join(this.configDirPath, newDbName);
+          //   this.renameFileWithRetry(dbPath, newDbPath, () => {
+          //     // repair the database
+          //     if (process.platform === 'darwin') {
+          //       const sqlPath = 'data.sql';
+          //       execSync(`sqlite3 ${newDbName} .dump > ${sqlPath}`, {
+          //         cwd: this.configDirPath,
+          //       });
+          //       execSync(`sed -i '' 's/ROLLBACK/COMMIT/g' ${sqlPath}`, {
+          //         cwd: this.configDirPath,
+          //       });
+          //       execSync(`sqlite3 edisonmail.db < ${sqlPath}`, {
+          //         cwd: this.configDirPath,
+          //       });
+          //       fs.unlink(path.join(this.configDirPath, sqlPath), () => { });
+          //     } else {
+          //       // TODO in windows
+          //       console.warn('in this system does not implement yet');
+          //     }
+          //     callback();
+          //   });
+          // } else {
+          this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonsift.db*'), callback);
+          // }
         });
       });
     });
@@ -908,7 +916,7 @@ export default class Application extends EventEmitter {
       if (mainWindow) {
         mainWindow.sendMessage('composeInvite', {
           subject,
-          body
+          body,
         });
       }
     });

@@ -15,6 +15,7 @@ export default class SorryPage extends React.Component {
       shareCounts: AppEnv.config.get(CONFIG_KEY) || 0,
       body: AppEnv.config.get('invite.body'),
       loading: false,
+      fetchingBody: false
     };
     this.email = AppEnv.config.get('invite.email');
     if (!this.email) {
@@ -39,6 +40,13 @@ export default class SorryPage extends React.Component {
 
   componentDidMount = async () => {
     require('electron').ipcRenderer.send('open-main-window-make-onboarding-on-top');
+    // if mac store version, don't need invite
+    if (process.mas) {
+      console.log('*****this is a mas build, go to next page');
+      AppEnv.config.set(CONFIG_KEY, NEED_INVITE_COUNT);
+      OnboardingActions.moveToPage('gdpr-terms');
+      return;
+    }
     this.disposable = AppEnv.config.onDidChange(CONFIG_KEY, async () => {
       const shareCounts = AppEnv.config.get(CONFIG_KEY) || 0;
       // AppEnv.getCurrentWindow().setAlwaysOnTop(true);
@@ -88,17 +96,21 @@ export default class SorryPage extends React.Component {
   };
 
   componentWillUnmount() {
-    this.disposable.dispose();
+    if (this.disposable) {
+      this.disposable.dispose();
+    }
   }
 
   _onContinue = async () => {
     // AppEnv.getCurrentWindow().setAlwaysOnTop(false);
     let { body } = this.state;
     // if body not exists or body has error, fetch body again
+    this.setState({ fetchingBody: true });
     if (!body || body.error) {
       body = await AppEnv.getUserInviteEmailBody(this.email);
       this.setState({ body });
     }
+    this.setState({ fetchingBody: false });
     if (body && !body.error) {
       AppEnv.getCurrentWindow().setAlwaysOnTop(false);
       ipcRenderer.send(
@@ -112,7 +124,7 @@ export default class SorryPage extends React.Component {
   };
 
   render() {
-    const { loading, body, shareCounts } = this.state;
+    const { loading, body, shareCounts, fetchingBody } = this.state;
     const needInvite = NEED_INVITE_COUNT - shareCounts;
     return (
       <div className="page sorry">
@@ -133,7 +145,12 @@ export default class SorryPage extends React.Component {
               </p>
               <br />
               <br />
-              <button key="next" className="btn btn-large btn-invite" onClick={this._onContinue}>
+              <button
+                key="next"
+                disabled={fetchingBody ? true : false}
+                className={`btn btn-large btn-invite ${fetchingBody ? 'btn-disabled' : ''}`}
+                onClick={this._onContinue}
+              >
                 Invite {needInvite} {needInvite > 1 ? 'Friends' : 'Friend'}
               </button>
               {body && !body.error ? (

@@ -13,7 +13,7 @@ import mime from 'mime-types';
 import DatabaseStore from './database-store';
 import AttachmentProgress from '../models/attachment-progress';
 import { autoGenerateFileName } from '../../fs-utils';
-import ca from 'moment/locale/ca';
+import uuid from 'uuid';
 
 Promise.promisifyAll(fs);
 
@@ -224,6 +224,538 @@ const colorMapping = {
 const PREVIEW_FILE_SIZE_LIMIT = 2000000; // 2mb
 const THUMBNAIL_WIDTH = 320;
 
+const AttachmentState = {
+  'ready': 1,
+  'beingCopied': 2,
+  'copying': 3,
+  'deleting': 4,
+  'deleted': -1,
+  'error': -2
+};
+export const DraftAttachmentState = {
+  'ready': 1,
+  'busy': 2,
+  'deleted': -1,
+  'error': -2
+};
+const AccountAttachmentsState = {
+  'ready': 1,
+  'busy': 2,
+  'deleted': -1,
+  'error': -2
+};
+
+class DraftAttachment {
+  constructor({fileId = '', filePath = '', state = AttachmentState.ready, callback = null } = {}) {
+    this.fileId = fileId;
+    this.filePath = filePath;
+    this.state = state;
+    this.callback = callback;
+    this.filePathReady = false;
+    this.queuedCallBack = [];
+    if(!fileId){
+      throw new Error('fileId cannot be empty');
+    }
+  }
+  isReady(){
+    return this.state === AttachmentState.ready;
+  }
+  isBusy(){
+    return this.state > AttachmentState.ready;
+  }
+  isDeleted(){
+    return this.state === AttachmentState.deleted;
+  }
+
+  _mkdir(cb = null) {
+    fs.mkdir(path.dirname(this.filePath), { recursive: true }, err => {
+      if (!err) {
+        this.filePathReady = true;
+        console.log(`file path ${this.filePath} ready`);
+        if (cb) {
+          cb();
+        }
+      } else {
+        AppEnv.logError(err, { errorData: this }, { grabLogs: true });
+        this.setState({ state: AttachmentState.error });
+        if (cb) {
+          cb();
+        }
+      }
+    });
+  }
+  copyFrom({originalPath = '', cb = null, ...rest} = {}){
+    if(typeof originalPath !== 'string' || originalPath.length === 0){
+      AppEnv.logError(new Error('copyFrom originalPath incorrect'));
+      return;
+    }
+    this._mkdir(()=>{
+      this._copy({originalPath, cb, ...rest});
+    })
+  }
+  _copy({originalPath = '', cb, ...rest} = {}){
+    this.setState({state: AttachmentState.copying, extra: rest});
+    fs.copyFile(originalPath, this.filePath,err => {
+      if(err) {
+        AppEnv.logError(err, {errorData: this}, {grabLogs: true});
+        this.setState({state: AttachmentState.ready, extra: rest});
+        if(cb){
+          cb();
+        }
+        return;
+      }
+      this.setState({state: AttachmentState.ready, extra: rest});
+      AppEnv.logDebug(`File copied, state set ${this.fileId}`);
+      if(cb){
+        cb();
+      }
+    });
+  }
+  copyFromAttachment({sourceAttachment = null, cb, ...rest} = {}){
+    if(!sourceAttachment){
+      AppEnv.logError(new Error('target Attachment is null'));
+      return;
+    }
+    const done = () => {
+      this.setState({state: AttachmentState.ready, ...rest});
+      sourceAttachment.setState({state: AttachmentState.ready, ...rest});
+      if(cb){
+        cb();
+      }
+    };
+    const originalPath = sourceAttachment.filePath;
+    sourceAttachment.setState({state: AttachmentState.beingCopied});
+    this.copyFrom({originalPath, fileId: this.fileId, cb: done})
+  }
+  markForDelete(cb = null) {
+    if(this.state === AttachmentState.deleted){
+      if(cb){
+        cb()
+      }
+      return;
+    } else if(this.state === AttachmentState.deleting){
+      if(cb){
+        this.queuedCallBack.push(cb);
+      }
+      console.log('Attachment is deleting, queued');
+      return;
+    }
+    if(this.state !== AttachmentState.ready){
+      this.queuedCallBack.push(() => {
+        this._deleteAttachment(cb);
+      });
+      console.log(`Attachment is ${this.fileId} busy, queued`);
+      return;
+    }
+    this._deleteAttachment(cb);
+  }
+  _deleteAttachment(cb = null){
+    this.setState({state: AttachmentState.deleting});
+    if(this.fileId.indexOf('local-') !== 0){
+      console.log(`Attachment from server, fake deleted`);
+      this.setState({state: AttachmentState.deleted});
+      if(cb){
+        cb();
+      }
+      return;
+    }
+    fs.unlink(this.filePath, err => {
+      if(err){
+        AppEnv.logError(err, {errorData: this}, {grabLogs: true});
+      }
+      console.log(`Attachment deleted`);
+      this.setState({state: AttachmentState.deleted});
+      if(cb){
+        cb();
+      }
+    });
+  }
+  setState({state, extra = {}} = {}){
+    if(!state){
+      AppEnv.logError(new Error('Attachment setState state cannot be null'));
+      return;
+    }
+    if(state === this.state){
+      AppEnv.logWarning(`Attachment state not changed, ${state}`);
+      return;
+    }
+    this.state = state;
+    if(state === AttachmentState.ready || state === AttachmentState.deleted){
+      this.queuedCallBack.forEach(cb => {
+        if(cb){
+          cb();
+        }
+      });
+      this.queuedCallBack = [];
+    }
+    this.trigger(extra);
+  }
+  trigger(data = {}){
+    if(!this.callback){
+      return;
+    }
+    this.callback({fileId: this.fileId, filePath: this.filePath, fileState: this.state, ...data});
+  }
+}
+
+class DraftAttachments {
+  constructor({messageId, headerMessageId, accountId, callback = null} = {}) {
+    this.messageId = messageId;
+    this.hearderMessageId =headerMessageId;
+    this.accountId = accountId;
+    this.callback = callback;
+    this.state = DraftAttachmentState.ready;
+    this.attachments = [];
+    this.busyCount = 0;
+    this.queuedCallback = null;
+  }
+  isBusy(){
+    return this.state === DraftAttachmentState.busy;
+  }
+  isReady(){
+    return this.state === DraftAttachmentState.ready;
+  }
+  isDeleted(){
+    return this.state === DraftAttachmentState.deleted;
+  }
+  addFrom({originalPath = '', cb = null, dstFile = null, ...rest} = {}){
+    if(!dstFile){
+      AppEnv.logError(new Error('Add From in DraftAttachments missing dstFile'));
+      return;
+    }
+    if(!originalPath){
+      AppEnv.logError(new Error('Add From in DraftAttachments missing source'));
+      return;
+    }
+    const attachment = new DraftAttachment({filePath: dstFile.filePath, fileId: dstFile.id || dstFile.fileId, callback: this.onAttachmentCallBack})
+    this.attachments.push(attachment);
+    console.log(`attachment ${dstFile.id || dstFile.fileId} added to draft ${this.messageId}`);
+    this._addFrom({originalPath, attachment, cb, ...rest});
+  }
+  _addFrom({originalPath = '', attachment,  cb = null, ...rest}){
+    if(!attachment){
+      AppEnv.logError('missing attachment');
+      return;
+    }
+    const done = () =>{
+      this.setState({state: DraftAttachmentState.ready, ...rest});
+      if(cb){
+        cb();
+      }
+    };
+    this.setState({state: DraftAttachmentState.busy, ...rest});
+    attachment.copyFrom({originalPath, cb: done});
+  }
+  addFromAttachment({sourceAttachment, cb, dstFile, ...rest}){
+    if(!sourceAttachment){
+      AppEnv.logError('missing source attachment');
+      return;
+    }
+    if(!dstFile){
+      AppEnv.logError(new Error('Add From in DraftAttachments missing dstFile'));
+      return;
+    }
+    const done = () => {
+      this.setState({state: DraftAttachmentState.ready, ...rest});
+      if(cb){
+        cb();
+      }
+    };
+    const attachment = new DraftAttachment({filePath: dstFile.filePath, fileId: dstFile.fileId, callback: this.onAttachmentCallBack})
+    this.attachments.push(attachment);
+    attachment.copyFromAttachment({sourceAttachment, cb: done, ...rest});
+  }
+  deleteAttachmentByFileId({fileId, cb} = {}){
+    const attachment = this.findAttachmentById(fileId);
+    if(!attachment){
+      AppEnv.logError(`Attachment with id: ${fileId} not found in message ${this.messageId}`)
+      return;
+    }
+    this._deleteAttachment({attachment, cb});
+  }
+  _deleteAttachment({attachment = null, cb}){
+    if(!attachment){
+      return;
+    }
+    const done = () => {
+      this.setState({state: DraftAttachmentState.ready});
+      console.log(`attachment ${attachment.fileId} for draft: ${this.messageId} deleted`);
+      this.attachments = this.attachments.filter(i => i.fileId !== attachment.fileId);
+      if(cb){
+        cb();
+      }
+    };
+    attachment.markForDelete(done);
+    this.setState({state: DraftAttachmentState.busy});
+    console.log(`attachment ${attachment.fileId} for draft: ${this.messageId} marked for delete`);
+  }
+  markForDelete(cb){
+    if(this.state === DraftAttachmentState.busy){
+      this.queuedCallback = () => {
+        this._deleteDraft(cb);
+      };
+      console.log(`Draft ${this.messageId} busy, queued`);
+      return;
+    } else {
+      this._deleteDraft(cb);
+    }
+  }
+  _deleteDraft(cb){
+    const total = this.attachments.length;
+    let processed = 0;
+    this.setState({state: DraftAttachmentState.busy});
+    if(total === processed){
+      console.log('no attachments, delete  draft');
+      this.setState({state: DraftAttachmentState.deleted});
+      if(cb){
+        cb();
+      }
+    } else {
+      console.log('deleting all attachments');
+      const done = () => {
+        processed++;
+        if(processed === total){
+          this.setState({state: DraftAttachmentState.deleted});
+          if(cb){
+            cb();
+          }
+        }
+      };
+      this.attachments.forEach(attachment =>{
+        attachment.markForDelete(done);
+      });
+    }
+  }
+  findAttachmentById(id){
+    return this.attachments.find(item => item.fileId === id);
+  }
+  addReadyAttachment({fileId, filePath}){
+    let attachment = this.findAttachmentById(fileId);
+    if(!attachment) {
+      attachment = new DraftAttachment({
+        filePath,
+        fileId,
+        state: AttachmentState.ready,
+        callback: this.onAttachmentCallBack
+      });
+      this.attachments.push(attachment);
+    }
+    return attachment;
+  }
+  onAttachmentCallBack = ({fileId, fileState} = {}) => {
+    const data = {fileId, fileState};
+    this.trigger(data);
+  };
+  setState({state, ...extra} = {}){
+    if(!state){
+      AppEnv.logWarning(`DraftAttachments set state is wrong: ${state}`);
+      return;
+    }
+    if(state === this.state){
+      AppEnv.logWarning(`state is the same ${state}, ignored`);
+      return;
+    }
+    if(state === DraftAttachmentState.busy){
+      this.busyCount++;
+    } else {
+      this.busyCount--;
+    }
+    if(state !== DraftAttachmentState.busy && this.busyCount > 0){
+      AppEnv.logDebug(`Draft Attachments still busy ${this.busyCount}`);
+      return;
+    }
+    this.state = state;
+    if(state === DraftAttachmentState.ready){
+      if(this.queuedCallback){
+        this.queuedCallback();
+        this.queuedCallback = null;
+      }
+    }
+    this.trigger(extra);
+  }
+  trigger(extra){
+    if(this.callback){
+      this.callback({messageId: this.messageId, headerMessageId: this.hearderMessageId, accountId: this.accountId, draftState: this.state, ...extra});
+    }
+  }
+}
+
+class AccountDrafts{
+  constructor({callback = null}) {
+    this.accounts = {push: this._push};
+    this.callback = callback;
+  }
+  _push = item => {
+    if(!item || !item.accountId){
+      AppEnv.logError(`Push item does not have accountId`);
+    }
+    if(!this.accounts[item.accountId]){
+      this.accounts[item.accountId] = [];
+    }
+    this.accounts[item.accountId].push(item);
+    console.log(`draft ${item.messageId} added to account ${item.accountId}`);
+  };
+
+  removeDraftCache({ accountId, messageId, headerMessageId, reason= '' }) {
+    const draft = this.findDraft({ accountId, messageId, headerMessageId });
+    if (draft) {
+      this.accounts[accountId] = this.accounts[accountId].filter(item => item.messageId !== draft.messageId);
+    }
+    console.log(`Removed ${messageId} from draft attachment cache, reason: ${reason}`);
+  }
+  addDraft({accountId, messageId, headerMessageId}){
+    let draft = this.findDraft({accountId, messageId, headerMessageId});
+    if(!draft) {
+      draft = new DraftAttachments({ messageId, headerMessageId, accountId, callback: this._onDraftStateChange });
+      this.accounts.push(draft);
+      console.log(`draft ${messageId} added to cache`);
+    } else {
+      console.log(`draft ${messageId} already in cache`);
+    }
+    return draft;
+  }
+  addDraftWithAttachments(draft){
+    if(!draft){
+      AppEnv.logError(new Error(`Draft is null, cannot add draft with attachments to cache`));
+      return;
+    }
+    const accountId = draft.accountId;
+    const messageId = draft.id;
+    const headerMessageId = draft.headerMessageId;
+    if(!accountId || (!messageId && !headerMessageId) ){
+      AppEnv.logError(new Error(`Draft data incorrect, cannot remove draft from attachment cache`), draft);
+      return;
+    }
+    const draftCache = this.addDraft({accountId, messageId, headerMessageId});
+    if(!draftCache){
+      AppEnv.reportError(new Error(`adding draft to cache failed`), {errorData: {accountId, messageId, headerMessageId}}, {grabLogs: true});
+      return;
+    }
+    if(Array.isArray(draft.attachmentCache) && draft.attachmentCache.length > 0){
+      console.log('adding attachment with draft to cache');
+      draft.attachmentCache.forEach(f => {
+        draftCache.addReadyAttachment(f);
+      });
+    }
+    delete draft.attachmentCache;
+  }
+  copyAttachment({accountId, messageId, headerMessageId, dstFile, sourceFile, originalPath, cb}){
+    if(!this.accounts[accountId]){
+      this.accounts[accountId] = [];
+    }
+    let draft = this.findDraft({accountId, messageId, headerMessageId});
+    if(!draft) {
+      draft = new DraftAttachments({ messageId, headerMessageId, accountId, callback: this._onDraftStateChange });
+      this.accounts.push(draft);
+    }
+    const doneFromOutside = ()=>{
+      if(cb){
+        cb();
+      }
+      this.trigger({accountId, messageId, headerMessageId, dstFile, sourceFile, originalPath});
+    };
+    if(draft.isDeleted()){
+      done();
+      AppEnv.logError(new Error(`Draft ${messageId},${headerMessageId} is already deleted, will not add attachment`));
+      return;
+    }
+    if(sourceFile && !originalPath){
+      const sourceAccountId = sourceFile.accountId;
+      const sourceMessageId = sourceFile.messageId;
+      const sourceHeaderMessageId = sourceFile.headerMessageId;
+      const sourceFileId = sourceFile.fileId;
+      const sourceFilePath = sourceFile.filePath;
+      if(!sourceAccountId || (!sourceMessageId && !sourceHeaderMessageId) || !sourceFileId || !sourceFilePath){
+        AppEnv.logError(new Error(`copy attachment missing data`), );
+        return;
+      }
+      let sourceDraft = this.findDraft({accountId: sourceAccountId,
+        messageId: sourceMessageId, headerMessageId: sourceHeaderMessageId});
+      if(!sourceDraft){
+        sourceDraft = this.addDraft({accountId: sourceAccountId,
+          messageId: sourceMessageId, headerMessageId: sourceHeaderMessageId});
+      }
+      let sourceAttachment = sourceDraft.findAttachmentById(sourceFileId);
+      if(!sourceAttachment){
+        sourceAttachment = sourceDraft.addReadyAttachment({fileId: sourceFileId, filePath: sourceFilePath});
+      }
+      const doneFromMessage = ()=> {
+        sourceDraft.setState({state: DraftAttachmentState.ready});
+        if(cb){
+          cb();
+        }
+      };
+      sourceDraft.setState({state: DraftAttachmentState.busy});
+      console.log(`copying attachment ${sourceAttachment.fileId} from message to ${dstFile.fileId}`);
+      draft.addFromAttachment({sourceAttachment, dstFile, cb: doneFromMessage});
+    }else if (originalPath && !sourceFile){
+      console.log(`copying attachment from outside to ${dstFile.fileId}`);
+      draft.addFrom({originalPath, dstFile, cb: doneFromOutside});
+    }
+  }
+  deleteAttachment({accountId, messageId, headerMessageId, fileId, cb}){
+    const draft = this.findDraft({accountId, messageId, headerMessageId});
+    if(!draft){
+      AppEnv.logWarning(`AccountsDraft does not have draft: ${accountId}, ${messageId}, ${headerMessageId}`);
+      return;
+    }
+    const done = () => {
+      console.log(`file: ${fileId} for message: ${messageId} deleted`);
+      if(cb){
+        cb();
+      }
+    };
+    console.log(`file: ${fileId} for message: ${messageId} mark for deletion`);
+    draft.deleteAttachmentByFileId({fileId, cb: done});
+  }
+  deleteDraft({accountId, messageId, headerMessageId, cb, reason = ''} = {}){
+    console.log(`trying to delete draft ${accountId}, ${messageId}, ${headerMessageId} because ${reason}`);
+    const draft = this.findDraft({accountId, messageId, headerMessageId});
+    if(!draft){
+      AppEnv.logWarning(`Accounts does not have draft: ${accountId}, ${messageId}, ${headerMessageId}`);
+      return;
+    }
+    const done = () => {
+      if(!this){
+        console.log(`removing draft ${messageId} from account: ${accountId}, no this`);
+        return;
+      }
+      if(!this.accounts[accountId]){
+        console.log(`removing draft ${messageId} from account: ${accountId} not needed, accounts doesn't exist`);
+        return;
+      }
+      console.log(`removing draft ${messageId} from account: ${accountId}`);
+      this.accounts[accountId] = this.accounts[accountId].filter(item => item.messageId !== draft.messageId);
+      if(cb){
+        cb();
+      }
+    };
+    console.log(`marking draft ${messageId} from account: ${accountId} for removal`);
+    draft.markForDelete(done);
+  }
+  findDraft({accountId, messageId, headerMessageId}){
+    if(!accountId){
+      AppEnv.logError(`Find Draft missing accountId`);
+      return null;
+    }
+    if(!this.accounts[accountId]){{}
+      AppEnv.logDebug(`Accounts missing accountId ${accountId}`);
+      return null;
+    }
+    return this.accounts[accountId].find(draft => (messageId && draft.messageId === messageId) || (headerMessageId && draft.headerMessageId === headerMessageId));
+  }
+  _onDraftStateChange = data => {
+      this.trigger(data);
+  };
+
+  trigger(data = {}){
+    if(!this.callback){
+      return;
+    }
+    this.callback(data);
+  }
+}
+
 class AttachmentStore extends MailspringStore {
   constructor() {
     super();
@@ -241,7 +773,12 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.addAttachments, this._onAddAttachments);
     this.listenTo(Actions.selectAttachment, this._onSelectAttachment);
     this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
+    if(AppEnv.isMainWindow()){
+      this.listenTo(Actions.syncAttachmentToMain, this._onAddAttachmentFromNonMainWindow);
+      this.listenTo(Actions.removeAttachmentToMain, this._onRemoveAttachmentMainWindow);
+    }
     this._attachementCache = Utils.createCircularBuffer(200);
+    this._draftAttachmentProgress = new AccountDrafts({callback: this._onDraftAttachmentStateChanged});
     this._missingDataAttachmentIds = new Set();
     this._queryFileDBTimer = null;
     this._filePreviewPaths = {};
@@ -256,24 +793,163 @@ class AttachmentStore extends MailspringStore {
       }
     });
   }
-  _queryFilesFromDB = ()=>{
-    if(this._queryFileDBTimer){
+  _onDraftAttachmentStateChanged = data => {
+    console.log(`draft attachment state changed `, data);
+    Actions.broadcastDraftAttachmentState(data);
+  };
+  // isDraftAttachmentBusy(draft){
+  //   const accountId = draft.accountId;
+  //   const messageId = draft.id;
+  //   const headerMessageId = draft.headerMessageId;
+  //   if(!accountId || !messageId || !headerMessageId){
+  //     AppEnv.reportError(new Error(`Draft data is incorrect,`), {errorData: draft}, {grabLogs: true});
+  //     return false;
+  //   }
+  //   const item = this.findDraft({accountId, messageId, headerMessageId});
+  //   if(!item){
+  //     AppEnv.logWarning(`draft cache ${accountId} ${messageId}, ${headerMessageId} not found, assuming attachments ready`);
+  //     return true;
+  //   }
+  //   Actions.broadcastDraftAttachmentState({accountId, messageId, headerMessageId, busy: item.isBusy()});
+  //   return item.isBusy();
+  // }
+  copyAttachmentsToDraft({ draft, fileData = [], cb }) {
+    if(!draft){
+      AppEnv.logError(new Error(`Draft is null, add to attachment ignored`));
+      return;
+    }
+    if(!Array.isArray(fileData)){
+      AppEnv.logError(`fileData is not array, ignoring add to attachment`);
+      return;
+    }
+    const accountId = draft.accountId;
+    const messageId = draft.id;
+    const headerMessageId = draft.headerMessageId;
+    if(!accountId || !messageId || !headerMessageId){
+      AppEnv.reportError(new Error(`Draft data is incorrect,`), {errorData: draft}, {grabLogs: true});
+      return;
+    }
+    fileData.forEach(f => {
+      const {dstFile, sourceFile, originalPath} = f;
+      this.copyAttachmentToDraft({
+        accountId,
+        messageId,
+        headerMessageId,
+        dstFile,
+        sourceFile,
+        originalPath,
+        cb,
+      });
+    });
+  }
+  copyAttachmentToDraft({accountId, messageId, headerMessageId, dstFile, sourceFile, originalPath, cb }) {
+    this._draftAttachmentProgress.copyAttachment({
+      accountId,
+      messageId,
+      headerMessageId,
+      dstFile,
+      sourceFile,
+      originalPath,
+      cb,
+    });
+  }
+  deleteDraftAttachments({ draft, fileIds = [], cb }){
+    if(!draft){
+      AppEnv.logError(new Error(`Draft is null, delete draft attachments ignored`));
+      return;
+    }
+    if(!Array.isArray(fileIds)){
+      AppEnv.logError(new Error(`fileData is not array, ignoring add to attachment`));
+      return;
+    }
+    const accountId = draft.accountId;
+    const messageId = draft.id;
+    const headerMessageId = draft.headerMessageId;
+    if(!accountId || !messageId || !headerMessageId){
+      AppEnv.reportError(new Error(`Draft data is incorrect,`), {errorData: draft}, {grabLogs: true});
+      return;
+    }
+    fileIds.forEach(fileId => {
+      this.deleteDraftAttachment({
+        accountId,
+        messageId,
+        headerMessageId,
+        fileId,
+        cb,
+      });
+    });
+  }
+  deleteDraftAttachment({accountId, messageId, headerMessageId, fileId, cb}){
+    this._draftAttachmentProgress.deleteAttachment({accountId, messageId, headerMessageId, fileId, cb});
+  }
+  deleteDraft({accountId, messageId, headerMessageId, cb, reason = ''}){
+    if(!accountId){
+      const keys = Object.keys(this._draftAttachmentProgress.accounts);
+      for(let id of keys){
+        if(id === 'push'){
+          continue;
+        }
+        let draft = this._draftAttachmentProgress.findDraft({accountId: id, messageId, headerMessageId});
+        if(draft){
+          accountId = id;
+          break;
+        }
+      }
+    }
+    console.log(`using account ${accountId} to remove draft because: ${reason}`);
+    this._draftAttachmentProgress.deleteDraft({accountId, messageId, headerMessageId, cb, reason});
+  }
+  addDraftToAttachmentCache(draft){
+    if(!draft){
+      AppEnv.logError(new Error(`Draft is null, cannot add draft to attachment cache`));
+      return;
+    }
+    const accountId = draft.accountId;
+    const messageId = draft.id;
+    const headerMessageId = draft.headerMessageId;
+    if(!accountId || (!messageId && !headerMessageId) ){
+      AppEnv.logError(new Error(`Draft data incorrect, cannot remove draft from attachment cache`), draft);
+      return;
+    }
+    if(Array.isArray(draft.files) && draft.files.length > 0){
+      draft.attachmentCache = draft.files.map(f => {
+        return {filePath: this.pathForFile(f), fileId: f.id};
+      })
+    }
+    this._draftAttachmentProgress.addDraftWithAttachments(draft);
+  }
+  removeDraftAttachmentCache(draft){
+    if(!draft){
+      AppEnv.logError(new Error(`Draft is null, cannot remove draft from attachment cache`));
+      return;
+    }
+    const accountId = draft.accountId;
+    const messageId = draft.id;
+    const headerMessageId = draft.headerMessageId;
+    if(!accountId || (!messageId && !headerMessageId) ){
+      AppEnv.logError(`Draft data incorrect, cannot remove draft from attachment cache`, draft);
+      return;
+    }
+    this._draftAttachmentProgress.removeDraftCache({accountId, messageId, headerMessageId});
+  }
+  _queryFilesFromDB = () => {
+    if (this._queryFileDBTimer) {
       this._queryFileDBTimer = null;
     }
-    if(this._missingDataAttachmentIds.size === 0){
+    if (this._missingDataAttachmentIds.size === 0) {
       return;
     }
     const fileIds = [];
-    for( let id of this._missingDataAttachmentIds.values()) {
+    for (let id of this._missingDataAttachmentIds.values()) {
       fileIds.push(id);
     }
-    if(fileIds.length > 0) {
+    if (fileIds.length > 0) {
       this._missingDataAttachmentIds.clear();
       // console.log(`Querying db for file ids ${fileIds}`);
       this.findAllByFileIds(fileIds).then(files => {
         const attachmentChange = [];
         files.forEach(file => {
-          if(!file){
+          if (!file) {
             return;
           }
           file.missingData = false;
@@ -282,60 +958,60 @@ class AttachmentStore extends MailspringStore {
           }
           this._attachementCache.set(file.id, file);
         });
-        if(attachmentChange.length > 0){
+        if (attachmentChange.length > 0) {
           console.log(`Attachment cache updated`);
           this.trigger({ attachmentChange });
         }
-      })
+      });
     }
   };
 
   _addToMissingDataAttachmentIds = fileId => {
     this._missingDataAttachmentIds.add(fileId);
-    if(!this._queryFileDBTimer){
+    if (!this._queryFileDBTimer) {
       this._queryFileDBTimer = setImmediate(this._queryFilesFromDB);
     }
   };
 
-  findAll(){
+  findAll() {
     return DatabaseStore.findAll(File);
   }
-  findAllByFileIds(fileIds){
+  findAllByFileIds(fileIds) {
     return this.findAll().where([File.attributes.id.in(fileIds)]);
   }
 
-  getAttachment(fileId){
+  getAttachment(fileId) {
     const ret = this._attachementCache.get(fileId);
-    if(ret){
+    if (ret) {
       return ret;
     }
     this._addToMissingDataAttachmentIds(fileId);
     return null;
   }
-  setAttachmentData(attachmentData){
-    if(attachmentData.mimeType){
-      return this.addAttachmentPartialData(attachmentData);
-    } else if (attachmentData.missingData) {
-      const cachedAttachment = this._attachementCache.get(attachmentData.id);
-      if(cachedAttachment){
-        return;
-      }
-    }
-    this._attachementCache.set(attachmentData.id, attachmentData);
-  }
-  addAttachmentPartialData(partialFileData){
-    let fileData = this._attachementCache.get(partialFileData.id);
-    if(!fileData){
-      console.log(`file id already not in cache ${partialFileData.id}`);
-      fileData = File.fromPartialData(partialFileData);
-      this._attachementCache.set(fileData.id, fileData);
-    }
-    if(fileData.missingData){
-      console.log(`file missing data, queue db ${fileData.id}`);
-      this._addToMissingDataAttachmentIds(fileData.id);
-    }
-    return fileData;
-  }
+  // setAttachmentData(attachmentData) {
+  //   if (attachmentData.mimeType) {
+  //     return this.addAttachmentPartialData(attachmentData);
+  //   } else if (attachmentData.missingData) {
+  //     const cachedAttachment = this._attachementCache.get(attachmentData.id);
+  //     if (cachedAttachment) {
+  //       return;
+  //     }
+  //   }
+  //   this._attachementCache.set(attachmentData.id, attachmentData);
+  // }
+  // addAttachmentPartialData(partialFileData) {
+  //   let fileData = this._attachementCache.get(partialFileData.id);
+  //   if (!fileData) {
+  //     console.log(`file id not in cache ${partialFileData.id}`);
+  //     fileData = File.fromPartialData(partialFileData);
+  //     this._attachementCache.set(fileData.id, fileData);
+  //   }
+  //   if (fileData.missingData) {
+  //     console.log(`file missing data, queue db ${fileData.id}`);
+  //     this._addToMissingDataAttachmentIds(fileData.id);
+  //   }
+  //   return fileData;
+  // }
 
   // Returns a path on disk for saving the file. Note that we must account
   // for files that don't have a name and avoid returning <downloads/dir/"">
@@ -504,7 +1180,7 @@ class AttachmentStore extends MailspringStore {
       this._prepareAndResolveFilePath(file)
         .catch(this._catchFSErrors)
         // Passively ignore
-        .catch(() => { })
+        .catch(() => {})
     );
   };
 
@@ -546,16 +1222,8 @@ class AttachmentStore extends MailspringStore {
       this._prepareAndResolveFilePath(file)
         .then(filePath => this._writeToExternalPath(filePath, actualSavePath))
         .then(() => {
-          if (AppEnv.savedState.lastDownloadDirectory !== newDownloadDirectory) {
-            AppEnv.savedState.lastDownloadDirectory = newDownloadDirectory;
-
-            if (
-              this._lastDownloadDirectory !== newDownloadDirectory &&
-              AppEnv.config.get('core.attachments.openFolderAfterDownload')
-            ) {
-              this._lastDownloadDirectory = newDownloadDirectory;
-              remote.shell.showItemInFolder(actualSavePath);
-            }
+          if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
+            remote.shell.showItemInFolder(actualSavePath);
           }
           this._onSaveSuccess([file]);
         })
@@ -567,35 +1235,19 @@ class AttachmentStore extends MailspringStore {
   };
 
   _fetchAndSaveAll = files => {
-    const configDownloadDir = AppEnv.getSaveDirPath();
-    if (configDownloadDir) {
-      this._saveAllFilesToDir(files, configDownloadDir);
-    } else {
-      const defaultPath = this._defaultSaveDir();
-      const options = {
-        defaultPath,
-        title: 'Save Into...',
-        buttonLabel: 'Download All',
-        properties: ['openDirectory', 'createDirectory'],
-      };
-
-      AppEnv.showOpenDialog(options, selected => {
-        if (!selected) {
-          return;
-        }
-        const dirPath = selected[0];
-        if (!dirPath) {
-          return;
-        }
-        this._saveAllFilesToDir(files, dirPath);
-      });
-    }
+    const options = {
+      title: 'Save Into...',
+      buttonLabel: 'Download All',
+    };
+    AppEnv.showSaveDirDialog(options, dirPath => {
+      if (!dirPath) {
+        return;
+      }
+      this._saveAllFilesToDir(files, dirPath);
+    });
   };
 
   _saveAllFilesToDir = (files, dirPath) => {
-    this._lastDownloadDirectory = dirPath;
-    AppEnv.savedState.lastDownloadDirectory = dirPath;
-
     const lastSavePaths = [];
     const savePromises = files.map(file => {
       const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName());
@@ -649,27 +1301,19 @@ class AttachmentStore extends MailspringStore {
     }
   };
 
+  refreshAttachmentsState = ({fileId = '', filePath = ''} = {}) => {
+    // const file = this.getAttachment(fileId);
+    // const filePath = this.pathForFile(file);
+    if (filePath && fs.existsSync(filePath)) {
+      this._onPresentSuccess([fileId]);
+    }
+  };
+
   _abortFetchFile = () => {
     // file
     // put this back if we ever support downloading individual files again
     return;
   };
-
-  _defaultSaveDir() {
-    const home = AppEnv.getUserDirPath();
-    let downloadDir = path.join(home, 'Downloads');
-    if (!fs.existsSync(downloadDir)) {
-      downloadDir = os.tmpdir();
-    }
-
-    if (AppEnv.savedState.lastDownloadDirectory) {
-      if (fs.existsSync(AppEnv.savedState.lastDownloadDirectory)) {
-        downloadDir = AppEnv.savedState.lastDownloadDirectory;
-      }
-    }
-
-    return downloadDir;
-  }
 
   _onFetchAttachments = ({ missingItems, needProgress }) => {
     if (!needProgress) {
@@ -699,15 +1343,31 @@ class AttachmentStore extends MailspringStore {
     if (changes && changes.length) {
       changes.forEach(obj => {
         if (obj) {
-          const id = obj.id;
+          const pid = obj.pid;
           const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
-          if (id && percent) {
-            this._fileProcess.set(id, {
-              state: percent >= 1 ? 'done' : 'downloading',
-              percent: parseInt(percent * 100),
+          const nowState = this.getDownloadDataForFile(pid);
+          const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
+          const maxPercent = Math.max(parseInt(percent * 100), nowPercent);
+          if (pid && maxPercent) {
+            this._fileProcess.set(pid, {
+              state: maxPercent >= 100 ? 'done' : 'downloading',
+              percent: maxPercent,
             });
           }
         }
+      });
+      this.trigger();
+    }
+  };
+
+  _onPresentSuccess = ids => {
+    const fileIds = ids || [];
+    if (fileIds.length) {
+      fileIds.forEach(id => {
+        this._fileProcess.set(id, {
+          state: 'done',
+          percent: 100,
+        });
       });
       this.trigger();
     }
@@ -821,20 +1481,21 @@ class AttachmentStore extends MailspringStore {
     try {
       // Delete the file and it's containing folder. Todo: possibly other empty dirs?
       let removeFinishedCount = 0;
-      fs.unlink(this.pathForFile(file), err => {
+      const filePath = this.pathForFile(file);
+      fs.unlink(filePath, err => {
         if (err) {
           AppEnv.reportError('Delete attachment failed: ', err);
         }
         removeFinishedCount++;
         if (removeFinishedCount === 2) {
-          fs.rmdir(path.dirname(this.pathForFile(file)), err => {
+          fs.rmdir(path.dirname(filePath), err => {
             if (err) {
               AppEnv.reportError('Delete attachment failed: ', err);
             }
           });
         }
       });
-      fs.unlink(this.pathForFile(file) + '.png', err => {
+      fs.unlink(filePath + '.png', err => {
         if (err) {
           if (err.code !== 'ENOENT') {
             AppEnv.reportError('Delete attachment failed: ', err);
@@ -842,7 +1503,7 @@ class AttachmentStore extends MailspringStore {
         }
         removeFinishedCount++;
         if (removeFinishedCount === 2) {
-          fs.rmdir(path.dirname(this.pathForFile(file)), err => {
+          fs.rmdir(path.dirname(filePath), err => {
             if (err) {
               AppEnv.reportError('Delete attachment failed: ', err);
             }
@@ -857,13 +1518,15 @@ class AttachmentStore extends MailspringStore {
   async _applySessionChanges(headerMessageId, changeFunction) {
     const session = await DraftStore.sessionForClientId(headerMessageId);
     const files = changeFunction(session.draft().files);
+    console.log(`update attachments with applySession changes`, files);
     session.changes.add({ files });
-    session.changes.commit();
+    session.updateAttachments(files);
+    // session.changes.commit();
   }
 
   // Handlers
 
-  _onSelectAttachment = ({ headerMessageId, onCreated = () => { }, type = '*' }) => {
+  _onSelectAttachment = ({ headerMessageId, messageId, accountId, onCreated = () => {}, type = '*' }) => {
     this._assertIdPresent(headerMessageId);
 
     // When the dialog closes, it triggers `Actions.addAttachment`
@@ -876,9 +1539,9 @@ class AttachmentStore extends MailspringStore {
         pathsToOpen = [pathsToOpen];
       }
       if (pathsToOpen.length > 1) {
-        Actions.addAttachments({ headerMessageId, filePaths: pathsToOpen, onCreated });
+        Actions.addAttachments({ headerMessageId, messageId, accountId, filePaths: pathsToOpen, onCreated, inline: type === 'image' });
       } else {
-        Actions.addAttachment({ headerMessageId, filePath: pathsToOpen[0], onCreated });
+        Actions.addAttachment({ headerMessageId, messageId, accountId, filePath: pathsToOpen[0], onCreated, inline: type === 'image' });
       }
     };
     if (type === 'image') {
@@ -888,9 +1551,11 @@ class AttachmentStore extends MailspringStore {
   };
   _onAddAttachments = async ({
     headerMessageId,
+    messageId,
+    accountId,
     inline = false,
     filePaths = [],
-    onCreated = () => { },
+    onCreated = () => {},
   }) => {
     if (!Array.isArray(filePaths) || filePaths.length === 0) {
       throw new Error('_onAddAttachments must have an array of filePaths');
@@ -910,16 +1575,24 @@ class AttachmentStore extends MailspringStore {
         }
 
         const file = new File({
-          id: Utils.generateTempId(),
+          id: `local-${uuid()}`,
+          messageId,
+          accountId,
           filename: filename,
           size: stats.size,
           contentType: null,
-          messageId: null,
           contentId: inline ? Utils.generateContentId() : null,
+          isInline: inline
         });
-
-        await mkdirpAsync(path.dirname(this.pathForFile(file)));
-        await this._copyToInternalPath(filePath, this.pathForFile(file));
+        const dstPath = this.pathForFile(file);
+        const tmpData= {accountId, messageId, originalPath: filePath, dstFile: {fileId: file.id, filePath: dstPath,}};
+        if(AppEnv.isMainWindow()){
+          this.copyAttachmentToDraft(tmpData);
+        } else {
+          Actions.syncAttachmentToMain(tmpData)
+        }
+        // await mkdirpAsync(path.dirname(dstPath));
+        // await this._copyToInternalPath(filePath, dstPath);
 
         await this._applySessionChanges(headerMessageId, files => {
           if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
@@ -934,15 +1607,18 @@ class AttachmentStore extends MailspringStore {
         }
       });
     } catch (err) {
+      AppEnv.logError(err);
       AppEnv.showErrorDialog(err.message);
     }
   };
 
   _onAddAttachment = async ({
     headerMessageId,
+    accountId,
+    messageId,
     filePath,
-    inline = false,
-    onCreated = () => { },
+    inline = undefined,
+    onCreated = () => {},
   }) => {
     this._assertIdPresent(headerMessageId);
 
@@ -957,16 +1633,29 @@ class AttachmentStore extends MailspringStore {
       }
 
       const file = new File({
-        id: Utils.generateTempId(),
+        id: `local-${uuid()}`,
         filename: filename,
         size: stats.size,
         contentType: null,
-        messageId: null,
+        messageId,
+        accountId,
         contentId: inline ? Utils.generateContentId() : null,
+        isInline: inline
       });
-
-      await mkdirpAsync(path.dirname(this.pathForFile(file)));
-      await this._copyToInternalPath(filePath, this.pathForFile(file));
+      if(inline === undefined && Utils.shouldDisplayAsImage(file)){
+        console.log('should be image but not set as inline');
+        file.isInline = true;
+        file.contentId = Utils.generateContentId();
+      }
+      const dstPath = this.pathForFile(file);
+      const tmpData= {accountId, messageId, originalPath: filePath, dstFile: {fileId: file.id, filePath: dstPath,}};
+      if(AppEnv.isMainWindow()){
+        this.copyAttachmentToDraft(tmpData);
+      } else {
+        Actions.syncAttachmentToMain(tmpData)
+      }
+      // await mkdirpAsync(path.dirname(this.pathForFile(file)));
+      // await this._copyToInternalPath(filePath, this.pathForFile(file));
 
       await this._applySessionChanges(headerMessageId, files => {
         if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
@@ -977,25 +1666,38 @@ class AttachmentStore extends MailspringStore {
       });
       onCreated(file);
     } catch (err) {
+      AppEnv.logError(err);
       AppEnv.showErrorDialog(err.message);
     }
   };
+  _onAddAttachmentFromNonMainWindow(data){
+    if(!AppEnv.isMainWindow()){
+      return;
+    }
+    this.copyAttachmentToDraft(data);
+  }
 
-  _onRemoveAttachment = async (headerMessageId, fileToRemove) => {
+  _onRemoveAttachment = async ({headerMessageId, accountId, messageId, fileToRemove}) => {
     if (!fileToRemove) {
       return;
     }
-
-    await this._applySessionChanges(headerMessageId, files =>
-      files.filter(({ id }) => id !== fileToRemove.id)
-    );
-
-    try {
-      await this._deleteFile(fileToRemove);
-    } catch (err) {
-      AppEnv.showErrorDialog(err.message);
+    console.log(`file to remove id: ${fileToRemove.id}`);
+    if(AppEnv.isMainWindow()){
+      this._onRemoveAttachmentMainWindow({headerMessageId, accountId, messageId, fileToRemove});
+      this._applySessionChanges(headerMessageId, files => {
+        return files.filter(({ id }) => id !== fileToRemove.id)
+      });
+    } else {
+      Actions.removeAttachmentToMain({headerMessageId, accountId, messageId, fileToRemove});
+      this._applySessionChanges(headerMessageId, files => {
+        return files.filter(({ id }) => id !== fileToRemove.id)
+      });
     }
   };
+  _onRemoveAttachmentMainWindow({headerMessageId, accountId, messageId, fileToRemove}){
+    console.log('removing file in main window', fileToRemove.id);
+    this.deleteDraftAttachment({accountId, messageId, headerMessageId, fileId: fileToRemove.id});
+  }
 }
 
 export default new AttachmentStore();

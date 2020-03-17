@@ -1,24 +1,16 @@
 import React from 'react';
-import { MuteNotificationStore, Actions, EmailAvatar, AccountStore } from 'mailspring-exports';
+import {
+  MuteNotificationStore,
+  Actions,
+  EmailAvatar,
+  AccountStore,
+  Account,
+  RegExpUtils,
+} from 'mailspring-exports';
 import { RetinaImg, EditableList, Flexbox, FullScreenModal } from 'mailspring-component-kit';
 import classnames from 'classnames';
 import ContactList from './contact-list';
 import ContactSearch from './contact-search';
-
-const noticeTypeEnum = [
-  {
-    id: 'NoneMute',
-    title: 'None/Mute',
-  },
-  {
-    id: 'AllMail',
-    title: 'All mail',
-  },
-  {
-    id: 'Important',
-    title: 'Marked as Important',
-  },
-];
 
 class CoutactSelectShow extends React.Component {
   static displayName = 'CoutactSelectShow';
@@ -84,6 +76,8 @@ export class PreferencesMutedNotifacations extends React.Component {
       mutes: [],
       showAddContact: false,
       selectContact: null,
+      muteInputValue: '',
+      inputIsValid: false,
     };
   }
 
@@ -121,12 +115,18 @@ export class PreferencesMutedNotifacations extends React.Component {
   };
 
   _onMuteContact = () => {
-    const { selectContact } = this.state;
-    const email = selectContact.email;
-    if (email) {
-      MuteNotificationStore.muteNotifacationEmails([email]);
+    const { selectContact, muteInputValue, inputIsValid } = this.state;
+    let muteEmail = '';
+    if (selectContact) {
+      muteEmail = selectContact.email;
+    } else if (muteInputValue && inputIsValid) {
+      muteEmail = muteInputValue;
     }
-    this._onToggleMutePopup();
+
+    if (muteEmail) {
+      MuteNotificationStore.muteNotifacationEmails([muteEmail]);
+      this._onToggleMutePopup();
+    }
   };
 
   _unmuteSelect = select => {
@@ -138,8 +138,14 @@ export class PreferencesMutedNotifacations extends React.Component {
     this.setState({ showAddContact: !this.state.showAddContact, selectContact: null });
   };
 
+  _onInputChange = value => {
+    const isValidDomain = RegExpUtils.domainRegex(true).test(value);
+    const isValidEmail = RegExpUtils.emailRegex().test(value);
+    this.setState({ muteInputValue: value, inputIsValid: isValidDomain || isValidEmail });
+  };
+
   _renderMuteContactPop = () => {
-    const { mutes, selectContact } = this.state;
+    const { mutes, selectContact, inputIsValid } = this.state;
     return (
       <div className="add-mute-contact-popup">
         <RetinaImg
@@ -155,16 +161,22 @@ export class PreferencesMutedNotifacations extends React.Component {
         {selectContact ? (
           <CoutactSelectShow contact={selectContact} delSelectContact={this._onDelSelectContact} />
         ) : (
-          <ContactSearch filterContacts={mutes} onSelectContact={this._onSelectContact} />
+          <ContactSearch
+            filterContacts={mutes}
+            onSelectContact={this._onSelectContact}
+            onChange={this._onInputChange}
+          />
         )}
         <div className="btn-group">
           <button onClick={this._onToggleMutePopup}>Cancel</button>
           <button
             className={classnames({
               confirm: true,
-              disable: !selectContact,
+              disable: !selectContact && !inputIsValid,
             })}
-            onClick={this._onMuteContact}
+            onClick={() => {
+              this._onMuteContact();
+            }}
           >
             Mute
           </button>
@@ -329,20 +341,22 @@ export class PreferencesAccountNotifacations extends React.Component {
           <div className="config-group">
             <h6>{(selected.emailAddress || '').toUpperCase()}</h6>
             <div className="account-notifacations-note">
-              Notifications will be sent for all emails for this account.
+              {noticeType === 'None'
+                ? 'Notifications are disabled for this account.'
+                : `Notifications will be sent for ${noticeType.toLocaleLowerCase()} emails for this account.`}
             </div>
-            {noticeTypeEnum.map(type => {
+            {selected.getNoticeTypeEnum().map(item => {
               return (
-                <div className="checkmark" key={type.id}>
+                <div className="checkmark" key={item.type}>
                   <label>
                     <input
                       type="radio"
-                      checked={noticeType === type.id}
+                      checked={noticeType === item.type}
                       onChange={() => {
-                        this._onChangeNoticeType(type.id);
+                        this._onChangeNoticeType(item.type);
                       }}
                     />
-                    {type.title}
+                    {item.title}
                   </label>
                 </div>
               );

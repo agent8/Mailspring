@@ -60,7 +60,7 @@ class UserCacheStore extends MailspringStore {
       }
       for (const member of members) {
         await UserCacheModel.upsert({
-          jid: member.jid.bare,
+          jid: member.jid.bare || member.jid,
           email: member.email,
           name: member.name,
           info: member,

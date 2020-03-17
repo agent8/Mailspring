@@ -42,20 +42,54 @@ Actions.dequeueMatchingTask({
 })
 */
 class TaskQueue extends MailspringStore {
+  static maxDateRange = 2 * 24 * 60 * 60; //Two days seconds
+  static minDateRange = 2 * 60 * 60; //Two hours seconds
+  static dateStepping = 60 * 60; //One hour seconds
+  static upperTaskQueueThreshHold = 2000;
+  static lowerTaskQueueThreshHold = 1000;
   constructor() {
     super();
     this._queue = [];
     this._completed = [];
-    this._currentSequentialId = Date.now();
-
+    this._dateRange = 2 * 24 * 60 * 60;
     this._waitingForLocal = [];
     this._waitingForRemote = [];
     if (AppEnv.isMainWindow()) {
-      Rx.Observable.fromQuery(DatabaseStore.findAll(Task)).subscribe(this._onQueueChangedDebounced);
+      this._queryTasks();
+      this.listenTo(DatabaseStore, this._onDataChange);
+      // Rx.Observable.fromQuery(DatabaseStore.findAll(Task)).subscribe(this._onQueueChangedDebounced);
     } else {
       this.listenTo(Actions.rebroadcastTasksQueueResults, this._onQueueChangedDebounced);
     }
   }
+  _calculateDateRange = () => {
+    const currentLength = [].concat(this._queue, this._completed).length;
+    const aboveUpperTaskQueueThreshHold = currentLength > TaskQueue.upperTaskQueueThreshHold;
+    const belowLowerTaskQueueThreshHold = currentLength < TaskQueue.lowerTaskQueueThreshHold;
+    AppEnv.logDebug(`TaskQueueRangeStats-currentLength:${currentLength}-currentDateRange:${this._dateRange}`);
+    if(aboveUpperTaskQueueThreshHold){
+      this._dateRange = this._dateRange - TaskQueue.dateStepping;
+    } else if(belowLowerTaskQueueThreshHold){
+      this._dateRange = this._dateRange + TaskQueue.dateStepping;
+    }
+    if(this._dateRange > TaskQueue.maxDateRange){
+      this._dateRange = TaskQueue.maxDateRange;
+    } else if(this._dateRange < TaskQueue.minDateRange){
+      this._dateRange = TaskQueue.minDateRange;
+    }
+    return Math.floor(Date.now()/1000) - this._dateRange;
+  };
+
+  _onDataChange = change=>{
+    if(change.objectClass === Task.name){
+      this._queryTasks();
+    }
+  };
+
+  _queryTasks = _.throttle(() => {
+    DatabaseStore.findAll(Task).where([Task.attributes.createdAt.greaterThan(this._calculateDateRange())])
+      .then(this._onQueueChangedDebounced);
+  });
 
   _onQueueChangedDebounced = _.throttle(tasks => {
     if(AppEnv.isMainWindow()){

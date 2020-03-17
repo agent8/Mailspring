@@ -160,7 +160,7 @@ body.platform-win32 {
 #outbox-message,
 #message-list {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   position: relative;
 
   transition: all 125ms ease-in-out;
@@ -533,6 +533,7 @@ body.platform-win32 {
       text-align: left;
       flex-direction: row;
       align-items: center;
+      white-space: nowrap;
       .primary-item,
       .secondary-picker,
       .secondary-items .item {
@@ -624,7 +625,7 @@ body.platform-win32 {
       align-items: start;
       justify-content: flex-end;
       height: 24px;
-      min-width: 244px;
+      min-width: 255px;
       flex: 1;
     }
     .replyBtn {
@@ -690,6 +691,7 @@ body.platform-win32 {
       width: 100%;
       .participants-to {
         display: flex;
+        flex-wrap: wrap-reverse;
       }
     }
   }
@@ -900,6 +902,8 @@ body.platform-win32 {
 
   &.from-participants {
     .expanded-participants {
+      display: flex;
+      align-items: center;
       .participant-type {
         margin-top: 0;
       }

@@ -7,6 +7,9 @@ export default class SyncbackCategoryTask extends Task {
     path: Attributes.String({
       modelKey: 'path',
     }),
+    name: Attributes.String({
+      modelKey: 'name',
+    }),
     bgColor: Attributes.String({
       modelKey: 'bgColor',
     }),
@@ -18,18 +21,21 @@ export default class SyncbackCategoryTask extends Task {
     }),
   });
 
-  static forCreating({ name, accountId, bgColor = 0 }) {
+  static forCreating({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
     return new SyncbackCategoryTask({
-      path: utf7.imap.encode(name),
+      name: utf7.imap.encode(name),
+      path: isExchange ? '' :  utf7.imap.encode(name),
       bgColor: bgColor,
       accountId: accountId,
+      parentId,
     });
   }
 
-  static forRenaming({ path, accountId, newName }) {
+  static forRenaming({ path, accountId, newName, isExchange = false }) {
     return new SyncbackCategoryTask({
       existingPath: path,
-      path: utf7.imap.encode(newName),
+      path: isExchange ? '': utf7.imap.encode(newName),
+      name: utf7.imap.encode(newName),
       accountId: accountId,
     });
   }

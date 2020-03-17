@@ -113,14 +113,24 @@ export class Notifier {
   _msgShouldNotify(msg) {
     const myAccountId = msg.accountId;
     const myAccount = AccountStore.accountForId(myAccountId);
+    const fromEmail = (msg.from[0] && msg.from[0].email) || '';
+
+    const isMutedDomain = MuteNotificationStore.isMutedDomainByAccount(myAccountId, fromEmail);
+    if (isMutedDomain) {
+      return false;
+    }
+
+    const isMuted = MuteNotificationStore.isMuteByAccount(myAccountId, fromEmail);
+    if (isMuted) {
+      return false;
+    }
+
     const { noticeType } = myAccount.notifacation;
 
     switch (noticeType) {
-      case 'NoneMute':
-        const fromEmail = (msg.from[0] && msg.from[0].email) || '';
-        const isMuted = MuteNotificationStore.isMuteByAccount(myAccountId, fromEmail);
-        return !isMuted;
-      case 'AllMail':
+      case 'None':
+        return false;
+      case 'All':
         return true;
       case 'Important':
         const isImportant = msg.labels.some(label => label.role === 'important');
@@ -154,9 +164,7 @@ export class Notifier {
         AppEnv.displayWindow();
       },
     });
-    // if (msgsSomeHasNoteSound) {
-    //   this._playNewMailSound();
-    // }
+
     this.unnotifiedQueue = [];
   }
 
@@ -174,7 +182,8 @@ export class Notifier {
     }
 
     if (this.notifiedMessageIds[message.id]) {
-      AppEnv.reportError(new Error(`Notifier._notifyOne duplicated message id: ${message.id}`));
+      console.warn(`Notifier._notifyOne duplicated message id: ${message.id}`);
+      // AppEnv.reportError(new Error(`Notifier._notifyOne duplicated message id: ${message.id}`));
       return;
     }
 
@@ -202,9 +211,6 @@ export class Notifier {
         Actions.setFocus({ collection: 'thread', item: thread });
       },
     });
-    // if (msgsSomeHasNoteSound) {
-    //   this._playNewMailSound();
-    // }
 
     if (!this.activeNotifications[thread.id]) {
       this.activeNotifications[thread.id] = [notification];

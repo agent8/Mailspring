@@ -1,6 +1,6 @@
 /* eslint jsx-a11y/tabindex-no-positive: 0 */
 import { React, ReactDOM, PropTypes, Actions } from 'mailspring-exports';
-import { Menu, RetinaImg } from 'mailspring-component-kit';
+import { Menu, RetinaImg, InputSearch } from 'mailspring-component-kit';
 import TemplateStore from './template-store';
 import TemplateActions from './template-actions';
 
@@ -39,12 +39,12 @@ class TemplatePopover extends React.Component {
     }
 
     return templates.filter(t => {
-      return t.name.toLowerCase().indexOf(searchValue.toLowerCase()) === 0;
+      return t.name.toLowerCase().indexOf(searchValue.toLowerCase()) >= 0;
     });
   }
 
-  _onSearchValueChange = event => {
-    this.setState({ searchValue: event.target.value });
+  _onSearchValueChange = value => {
+    this.setState({ searchValue: value });
   };
 
   _onChooseTemplate = template => {
@@ -72,14 +72,7 @@ class TemplatePopover extends React.Component {
     const filteredTemplates = this._filteredTemplates();
 
     const headerComponents = [
-      <input
-        type="text"
-        tabIndex="1"
-        key="textfield"
-        className="search"
-        value={this.state.searchValue}
-        onChange={this._onSearchValueChange}
-      />,
+      <InputSearch showPreIcon placeholder="" onChange={this._onSearchValueChange} />,
     ];
 
     // note: these are using onMouseDown to avoid clearing focus in the composer (I think)

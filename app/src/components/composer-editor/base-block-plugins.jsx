@@ -52,7 +52,41 @@ function toggleBlockTypeWithBreakout(value, change, type) {
 
   return change;
 }
+function isStartOfDocument(value){
+  if(!value){
+    return false;
+  }
+  if(!value.document){
+    return false;
+  }
+  const focusOffset = value.focusOffset;
+  const focusText = value.focusText;
+  const firstText = value.document.getFirstText();
+  return focusOffset === 0 && focusText && firstText && firstText.key === focusText.key
+}
+function isEmptySelection(value){
+  if(!value){
+    return false;
+  }
+  if(!value.selection){
+    return false;
+  }
+  const selectionStartKey = value.selection.startKey;
+  const selectionEndKey = value.selection.endKey;
+  if(!selectionEndKey || !selectionStartKey){
+    return false;
+  }
+  if(selectionEndKey!==selectionStartKey){
+    return false;
+  }
+  const selectionStartOffSetKey = value.selection.startOffset;
+  const selectionEndOffSetKey = value.selection.endOffset;
+  if(selectionEndOffSetKey !== selectionStartOffSetKey){
+    return false;
+  }
+  return true;
 
+}
 function shouldBeRemoved(value) {
   const listTypes = ['ol_list', 'ul_list', 'code', 'blockquote'];
   const focusKey = value.focusKey;
@@ -404,23 +438,24 @@ export default [
     onlyIn: [BLOCK_CONFIG.code.type, BLOCK_CONFIG.blockquote.type],
   }),
 
-  // Pressing backspace when you're at the top of the document should not delete down
   {
     onKeyDown: function onKeyDown(event, change) {
       if (event.key !== 'Backspace' || event.shiftKey || event.metaKey || event.optionKey) {
         return;
       }
-      const { focusText, focusOffset, document, selection } = change.value;
-      const firstText = document.getFirstText();
-      if (focusOffset === 0 && focusText && firstText && firstText.key === focusText.key) {
-        if (selection.startOffset !== selection.endOffset) {
-          return;
-        }
+      // const { focusText, focusOffset, document } = change.value;
+      // const firstText = document.getFirstText();
+      if (isStartOfDocument(change.value)) {
         if (shouldBeRemoved(change.value)) {
           return;
         }
+        if (isEmptySelection(change.value)) {
+          return true;
+        }
         event.preventDefault();
-        return true;
+        return;
+        // Pressing backspace when you're at the top of the document should not delete down
+        // return true;
       }
     },
   },

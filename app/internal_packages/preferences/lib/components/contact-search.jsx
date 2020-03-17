@@ -10,6 +10,7 @@ class ContactSearch extends React.Component {
   static propTypes = {
     filterContacts: PropTypes.array,
     onSelectContact: PropTypes.func,
+    onChange: PropTypes.func,
   };
 
   constructor() {
@@ -32,17 +33,15 @@ class ContactSearch extends React.Component {
   }
 
   _onAddContactInputChange = value => {
+    const { onChange } = this.props;
+    if (onChange && typeof onChange === 'function') {
+      onChange(value);
+    }
     this.setState({ addContactInputValue: value }, () => this._refreshCompletions());
   };
 
   _onAddContactInputBlur = () => {
-    this._onAddContactInputChange('');
-    if (this._inputSearch) {
-      this._inputSearch.clear();
-    }
-    if (this.props.onSelectContact && typeof this.props.onSelectContact === 'function') {
-      this.props.onSelectContact();
-    }
+    this.setState({ completions: [] });
   };
 
   _onSelectContact = contact => {

@@ -166,6 +166,9 @@ class AccountStore extends MailspringStore {
       this._version = AppEnv.config.get(configVersionKey) || 0;
       this._accounts = [];
       for (const json of AppEnv.config.get(configAccountsKey) || []) {
+        if (!json.pid && json.id) {
+          json.pid = json.id;
+        }
         this._accounts.push(new Account().fromJSON(json));
         let fetchEmailInterval = 60000;
         if (json.mailsync && json.mailsync.fetchEmailInterval) {
@@ -545,15 +548,27 @@ class AccountStore extends MailspringStore {
   };
 
   // Public: Returns the {Account} for the given email address, or null.
-  accountForEmail = email => {
+  accountForEmail = ({email, accountId} = {}) => {
     for (const account of this.accounts()) {
-      if (Utils.emailIsEquivalent(email, account.emailAddress)) {
-        return account;
+      if(accountId){
+        if (account.id === accountId && Utils.emailIsEquivalent(email, account.emailAddress)) {
+          return account;
+        }
+      } else {
+        if (Utils.emailIsEquivalent(email, account.emailAddress)) {
+          return account;
+        }
       }
     }
     for (const alias of this.aliases()) {
-      if (Utils.emailIsEquivalent(email, alias.email)) {
-        return this.accountForId(alias.accountId);
+      if(accountId){
+        if (alias.accountId === accountId && Utils.emailIsEquivalent(email, alias.email)) {
+          return this.accountForId(alias.accountId);
+        }
+      } else {
+        if (Utils.emailIsEquivalent(email, alias.email)) {
+          return this.accountForId(alias.accountId);
+        }
       }
     }
     return null;
@@ -578,7 +593,6 @@ class AccountStore extends MailspringStore {
         for (const alias of acc.aliases) {
           const aliasContact = acc.meUsingAlias(alias);
           if (aliasContact) {
-            aliasContact.isAlias = true;
             aliases.push(aliasContact);
           }
         }
@@ -592,6 +606,16 @@ class AccountStore extends MailspringStore {
       return accOrId instanceof Account ? accOrId.id : accOrId;
     });
     return this.aliases().filter(contact => ids.includes(contact.accountId));
+  }
+
+  isAlias(name, email) {
+    const aliases = [];
+    for (const acc of this._accounts) {
+      aliases.push(...(acc.aliases || []));
+    }
+    return aliases.some(alias => {
+      return alias === `${name} <${email}>`;
+    });
   }
 
   // Public: Returns the currently active {Account}.

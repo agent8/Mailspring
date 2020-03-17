@@ -22,6 +22,7 @@ export const LocalizedErrorStrings = {
     "Certificate Error - The mail server's security certificate is invalid and may pose a security" +
     " risk. If you trust the server, you can continue by checking 'Allowing Insecure SSL'.",
   ErrorAuthentication: 'Authentication Error - Check your username and password.',
+  ErrorAccountDisabled: 'Your email provider have blocked this account from login through this method. \nPlease check your email provider account/security settings.',
   ErrorGmailIMAPNotEnabled: 'Gmail IMAP is not enabled. Visit Gmail settings to turn it on.',
   ErrorGmailExceededBandwidthLimit: 'Gmail bandwidth exceeded. Please try again later.',
   ErrorGmailTooManySimultaneousConnections:
@@ -64,7 +65,7 @@ export default class MailsyncProcess extends EventEmitter {
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
     this.binaryPath = path.join(resourcePath, 'mailsync').replace('app.asar', 'app.asar.unpacked');
-    // this.binaryPath = path.join('/Users/zsq/Library/Developer/Xcode/DerivedData/EdisonMailSync-gnxarlbpnlszfmgdglqxwrawejbo/Build/Products/Debug', 'mailsync').replace('app.asar', 'app.asar.unpacked');
+    // this.binaryPath = path.join('/Users/bumblebee/Library/Developer/Xcode/DerivedData/EdisonMailSync-azgzmucfxprjdgbzddxewvyuqyfa/Build/Products/Debug', 'mailsync').replace('app.asar', 'app.asar.unpacked');
     this.killNativeScript = path.join(resourcePath, 'src', 'scripts', process.platform === 'darwin' ? 'mac' : process.platform, 'killNative').replace('app.asar', 'app.asar.unpacked');
     this._proc = null;
     this.isRemoving = false;
@@ -78,6 +79,7 @@ export default class MailsyncProcess extends EventEmitter {
     this._sendMessageQueue = [];
     this._mode = '';
     this.dataPrivacyOptions = { isGDPR: false, optOut: false };
+    this.supportId = '';
   }
 
   _showStatusWindow(mode) {
@@ -157,9 +159,12 @@ export default class MailsyncProcess extends EventEmitter {
       args.push('--verbose');
     }
     if (this.account) {
-      args.push('--info', this.account.pid);
+      args.push('--info', this.account.pid || this.account.id);
     } else {
       args.push('--info', mode);
+    }
+    if ((typeof this.supportId === 'string') && (this.supportId.length > 0)) {
+      args.push('--supportId', this.supportId);
     }
     if (mode === mailSyncModes.SIFT) {
       if (this.dataPrivacyOptions.optOut) {
@@ -274,12 +279,19 @@ export default class MailsyncProcess extends EventEmitter {
           if (code === 0) {
             resolve({ response, buffer });
           } else {
+            console.log(`response.error ${response.error}, log: ${response.log}`);
             let msg = LocalizedErrorStrings[response.error] || response.error;
+            let errorStatusCode = response.error;
+            if((!(response.log || '').includes('password') && !(response.log || '').includes('credentials')) && response.error === 'ErrorAuthentication'){
+              msg = LocalizedErrorStrings.ErrorAccountDisabled;
+              errorStatusCode = 'ErrorAccountDisabled';
+            }
             if (response.error_service) {
               msg = `${msg} (${response.error_service.toUpperCase()})`;
             }
             const error = new Error(msg);
-            error.rawLog = stripSecrets(response.log);
+            error.rawLog = stripSecrets(response.log.replace('LOGIN', ''));
+            error.statusCode =errorStatusCode;
             reject(error);
           }
         } catch (err) {
@@ -329,6 +341,12 @@ export default class MailsyncProcess extends EventEmitter {
     this.dataPrivacyOptions.isGDPR = options.isGDPR;
     this.dataPrivacyOptions.optOut = options.dataShare.optOut;
   }
+  updateSupportId(supportId){
+    if(!supportId){
+      return;
+    }
+    this.supportId = supportId;
+  }
 
   sync(mode = mailSyncModes.SYNC) {
     this._spawnProcess(mode);
@@ -347,7 +365,7 @@ export default class MailsyncProcess extends EventEmitter {
         if (isIndexOfEnter) {
           const msgs = this._arrayTrim(outBuffer.split('\n'));
           outBuffer = '';
-          this.emit('deltas', msgs);
+          this.emit('deltas', msgs, this.account ? this.account.id || this.account.pid : '');
         }
       });
     }
@@ -378,7 +396,7 @@ export default class MailsyncProcess extends EventEmitter {
           if (lastJSON.error) {
             error = new Error(lastJSON.error);
           } else {
-            this.emit('deltas', [outBuffer]);
+            this.emit('deltas', [outBuffer], this.account ? this.account.id || this.account.pid : '');
           }
         }
       }
@@ -442,7 +460,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-        this.account ? this.account.pid : 'no account'
+        this.account ? this.account.pid || this.account.id: 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');

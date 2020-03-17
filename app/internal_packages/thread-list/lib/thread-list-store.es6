@@ -41,7 +41,7 @@ class ThreadListStore extends MailspringStore {
     }
 
     this.trigger(this);
-    Actions.setFocus({ collection: 'thread', item: null });
+    Actions.setFocus({ collection: 'thread', item: null, reason: 'onCreateThreadListDataSource' });
   };
 
   selectionObservable = () => {
@@ -51,7 +51,11 @@ class ThreadListStore extends MailspringStore {
   // Inbound Events
 
   _onPerspectiveChanged = () => {
-    this.createListDataSource();
+    if(AppEnv.isMainWindow()){
+      this.createListDataSource();
+    } else {
+      AppEnv.logDebug('not main window ignoring perspective change');
+    }
   };
 
   _onDataChanged = ({ previous, next } = {}) => {
@@ -68,7 +72,7 @@ class ThreadListStore extends MailspringStore {
       // If next query returns empty results, we set all focus to null;
       if (next.empty() || next._ids.length === 0) {
         AppEnv.logDebug('Next query returns empty results');
-        Actions.setFocus({ collection: 'thread', item: null });
+        Actions.setFocus({ collection: 'thread', item: null, reason: 'Next query returns empty results' });
         Actions.setCursorPosition({ collection: 'thread', item: null });
         return;
       }

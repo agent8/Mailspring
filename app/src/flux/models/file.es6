@@ -58,15 +58,26 @@ export default class File extends Model {
     missingData: Attributes.Boolean({
       modelKey: 'missingData',
       queryable: false
+    }),
+    originFilePath: Attributes.String({
+      modelKey: 'originFilePath',
+      queryable: false
+    }),
+    filePath: Attributes.String({
+      modelKey: 'filePath',
+      queryable: false
     })
   });
   static fromPartialData(data){
-    const tmp = new File();
-    tmp.fromJSON(data);
+    const tmp = new File(data);
+    // tmp.fromJSON(data);
     if(!tmp.id && (data.id || data.pid)){
       tmp.id = data.id || data.pid;
     }
-    tmp.missingData = true;
+    if(!tmp.contentType && tmp.mimeType){
+      tmp.contentType = tmp.mimeType;
+    }
+    tmp.missingData = !tmp.hasOwnProperty('size');
     return tmp;
   }
   constructor({mimeType = '', ...extra} = {}) {
@@ -99,8 +110,9 @@ export default class File extends Model {
   }
 
   safeDisplayName() {
-    RegExpUtils = RegExpUtils || require('../../regexp-utils');
-    return this.displayName().replace(RegExpUtils.illegalPathCharactersRegexp(), '-');
+    // RegExpUtils = RegExpUtils || require('../../regexp-utils');
+    // return this.displayName().replace(RegExpUtils.illegalPathCharactersRegexp(), '-');
+    return this.displayName();
   }
 
   // Public: Returns the file extension that should be used for this file.

@@ -176,9 +176,24 @@ export default class AppEnvConstructor {
             AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
           }
         });
+        ipcRenderer.on('application-activate', () => {
+          if (this.config.get('core.themeMode') === 'auto') {
+            const newisDarkMode = remote.systemPreferences.isDarkMode();
+            const oldisDarkMode = this.isDarkTheme();
+            if (newisDarkMode !== oldisDarkMode) {
+              AppEnv.themes.setActiveTheme(newisDarkMode ? 'ui-dark' : 'ui-light');
+            }
+          }
+        });
       }
       this.mailsyncBridge.startSift('Main window started');
     }
+  }
+  toggleLogging(){
+    this.enabledToNativeLog = !this.enabledToNativeLog;
+    this.enabledFromNativeLog = !this.enabledFromNativeLog;
+    this.enabledBackgroundQueryLog = !this.enabledBackgroundQueryLog;
+    this.enabledLocalQueryLog = !this.enabledLocalQueryLog;
   }
   sendSyncMailNow(accountId) {
     if (navigator.onLine) {
@@ -222,7 +237,12 @@ export default class AppEnvConstructor {
           line,
           column,
         });
-        return this.reportError(originalError, { url, line: newLine, column: newColumn, originalError });
+        return this.reportError(originalError, {
+          url,
+          line: newLine,
+          column: newColumn,
+          originalError,
+        });
       } catch (e) {
         console.error(e);
       }
@@ -281,7 +301,11 @@ export default class AppEnvConstructor {
   }
 
   _onUnhandledRejection = (error, sourceMapCache) => {
-    this.reportError(error, { errorData: sourceMapCache }, { grabLogs: true });
+    this.reportError(
+      error,
+      { errorData: sourceMapCache, stack: error && error.stack },
+      { grabLogs: true }
+    );
   };
   _expandReportLog(error, extra = {}) {
     try {
@@ -1179,9 +1203,14 @@ export default class AppEnvConstructor {
     const downloadPath = this.getSaveDirPath();
 
     if (downloadPath) {
-      const fileName = path.basename(options.defaultPath || 'untitled');
-      const fileNewName = autoGenerateFileName(downloadPath, fileName);
-      callback(path.join(downloadPath, fileNewName));
+      if (!fs.existsSync(downloadPath)) {
+        remote.dialog.showErrorBox('File Save Error', `directory: ${downloadPath} doesn't exist`);
+        callback(null);
+      } else {
+        const fileName = path.basename(options.defaultPath || 'untitled');
+        const fileNewName = autoGenerateFileName(downloadPath, fileName);
+        callback(path.join(downloadPath, fileNewName));
+      }
     } else {
       if (options.title == null) {
         options.title = 'Save File';
@@ -1193,6 +1222,46 @@ export default class AppEnvConstructor {
             callback(null);
           } else {
             callback(filePath);
+          }
+        });
+    }
+  }
+
+  showSaveDirDialog(options, callback) {
+    const downloadPath = this.getSaveDirPath();
+
+    if (downloadPath) {
+      if (!fs.existsSync(downloadPath)) {
+        remote.dialog.showErrorBox('Files Save Error', `directory: ${downloadPath} doesn't exist`);
+        callback(null);
+      } else {
+        callback(downloadPath);
+      }
+    } else {
+      const home = this.getUserDirPath();
+      let downloadDir = path.join(home, 'Downloads');
+      if (!fs.existsSync(downloadDir)) {
+        downloadDir = os.tmpdir();
+      }
+
+      const optionTmp = {
+        ...options,
+        defaultPath: options.defaultPath || downloadDir,
+        title: options.title || 'Save Into...',
+        properties: ['openDirectory', 'createDirectory'],
+      };
+
+      return remote.dialog
+        .showOpenDialog(this.getCurrentWindow(), optionTmp)
+        .then(({ canceled, dirPath }) => {
+          if (canceled) {
+            callback(null);
+            return;
+          }
+          if (dirPath && dirPath.length) {
+            callback(dirPath[0]);
+          } else {
+            callback(null);
           }
         });
     }
@@ -1374,15 +1443,15 @@ export default class AppEnvConstructor {
             const pass = new stream.PassThrough();
             pass.end(img.toPNG());
             pass.pipe(output);
-            output.on('close', function () {
+            output.on('close', function() {
               output.close();
               resolve(outputPath);
             });
-            output.on('end', function () {
+            output.on('end', function() {
               output.close();
               reject();
             });
-            output.on('error', function () {
+            output.on('error', function() {
               output.close();
               reject();
             });
@@ -1503,7 +1572,8 @@ export default class AppEnvConstructor {
     }
   }
   mockCal() {
-    const calData = 'BEGIN:VCALENDAR\n' +
+    const calData =
+      'BEGIN:VCALENDAR\n' +
       'PRODID:-//Google Inc//Google Calendar 70.9054//EN\n' +
       'VERSION:2.0\n' +
       'CALSCALE:GREGORIAN\n' +
@@ -1612,12 +1682,12 @@ export default class AppEnvConstructor {
     try {
       response = await fetch(
         WebServerRoot +
-        'registerBetaUser?type=' +
-        type +
-        '&apiKey=' +
-        WebServerApiKey +
-        '&email=' +
-        email
+          'registerBetaUser?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email
       );
       response = await response.json();
       if (response.status === 200) {
@@ -1638,24 +1708,24 @@ export default class AppEnvConstructor {
       // This is used for the mac app to get the user invite email copy. It will require an email address to get the correct share link
       response = await fetch(
         WebServerRoot +
-        'getUserInviteEmailBody?type=' +
-        type +
-        '&apiKey=' +
-        WebServerApiKey +
-        '&email=' +
-        email
-      );
-      response = await response.json();
-      if (response.error === 'email is invalid') {
-        await this.registerBetaUser(email);
-        response = await fetch(
-          WebServerRoot +
           'getUserInviteEmailBody?type=' +
           type +
           '&apiKey=' +
           WebServerApiKey +
           '&email=' +
           email
+      );
+      response = await response.json();
+      if (response.error === 'email is invalid') {
+        await this.registerBetaUser(email);
+        response = await fetch(
+          WebServerRoot +
+            'getUserInviteEmailBody?type=' +
+            type +
+            '&apiKey=' +
+            WebServerApiKey +
+            '&email=' +
+            email
         );
         response = await response.json();
       }
@@ -1677,13 +1747,13 @@ export default class AppEnvConstructor {
     try {
       response = await fetch(
         WebServerRoot +
-        'unlock?type=' +
-        type +
-        '&apiKey=' +
-        WebServerApiKey +
-        '&email=' +
-        email +
-        (force ? '&force=true' : '')
+          'unlock?type=' +
+          type +
+          '&apiKey=' +
+          WebServerApiKey +
+          '&email=' +
+          email +
+          (force ? '&force=true' : '')
       );
       if (response.status === 200) {
         response = {

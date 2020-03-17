@@ -41,12 +41,15 @@ export default class AccountContactField extends React.Component {
       originalMessageId: draft.id,
       newParticipants: { from, cc, bcc },
     };
-    Actions.changeDraftAccount(changeDraftData);
+    if(draft.accountId !== contact.accountId){
+      console.log('actual account changed');
+      Actions.changeDraftAccount(changeDraftData);
+    }
   };
 
   _changeSignature = account => {
     const { draft, session } = this.props;
-    let sig = SignatureStore.signatureForEmail(account.email);
+    let sig = SignatureStore.signatureForDefaultSignatureId(account.signatureId());
     let body;
     if (sig) {
       body = applySignature(draft.body, sig);
@@ -60,7 +63,6 @@ export default class AccountContactField extends React.Component {
     if (this.props.draft && this.props.draft.accountId) {
       const account = AccountStore.accountForId(this.props.draft.accountId);
       if (account) {
-        console.log('account label', account.label);
         return this._renderAccountSpan(account.label);
       }
     }
@@ -122,6 +124,8 @@ export default class AccountContactField extends React.Component {
 
   _renderFromFieldComponents = () => {
     const { draft, session, accounts } = this.props;
+    const draftFrom = draft.from[0] || {};
+    const draftFromEmail = draftFrom.isAlias ? draftFrom.aliasName : draftFrom.email;
     return (
       <InjectedComponentSet
         deferred
@@ -131,7 +135,7 @@ export default class AccountContactField extends React.Component {
           draft,
           session,
           accounts,
-          draftFromEmail: (draft.from[0] || {}).email,
+          from: draft.from[0] || {}
         }}
       />
     );

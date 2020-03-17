@@ -23,6 +23,8 @@ import SiftChangeSharingOptTask from './tasks/sift-change-sharing-opt-task';
 import Message from './models/message';
 let FocusedPerspectiveStore = null;
 let Thread = null;
+import NativeReportTask from './tasks/native-report-task';
+
 const MAX_CRASH_HISTORY = 10;
 
 const VERBOSE_UNTIL_KEY = 'core.sync.verboseUntil';
@@ -127,6 +129,7 @@ export default class MailsyncBridge {
     Actions.fetchBodies.listen(this._onFetchBodies, this);
     Actions.fetchAttachments.listen(this._onFetchAttachments, this);
     Actions.syncFolders.listen(this._onSyncFolders, this);
+    Actions.syncFolderList.listen(this._onSyncFolderList, this);
     Actions.syncSiftFolder.listen(this._onSyncSiftFolder, this);
     Actions.setObservableRange.listen(this._onSetObservableRange, this);
     Actions.debugFakeNativeMessage.listen(this.fakeEmit, this);
@@ -149,6 +152,8 @@ export default class MailsyncBridge {
     this._setObservableRangeTimer = {};
     this._cachedObservableThreadIds = {};
     this._cachedObservableMessageIds = {};
+    this._folderListCache = {};
+    this._folderListTTL = 60000;
     this._cachedObservableTTL = 30000;
     // Store threads that are opened in seperate window
     this._additionalObservableThreads = {};
@@ -345,7 +350,7 @@ export default class MailsyncBridge {
         const fullAccountJSON = (await KeyManager.insertAccountSecrets(account)).toJSON();
         if (this._crashTracker.tooManyFailures(fullAccountJSON)) {
           delete this._clientsStartTime[account.id];
-          Actions.updateAccount(account.id, {
+          Actions.updateAccount(account.pid || account.id, {
             syncState: Account.SYNC_STATE_ERROR,
             syncError: null,
           });
@@ -498,6 +503,10 @@ export default class MailsyncBridge {
     this._sift = client;
     client.identity = IdentityStore.identity();
     client.updatePrivacyOptions(AppEnv.config.get('core.privacy'));
+    const supportId = AppEnv.config.get('core.support.id');
+    if(supportId){
+      client.updateSupportId(supportId);
+    }
     const allAccountsJSON = [];
     for (const acct of AccountStore.accounts()) {
       const fullAccountJSON = (await KeyManager.insertAccountSecrets(acct)).toJSON();
@@ -527,6 +536,10 @@ export default class MailsyncBridge {
       return;
     }
     const client = new MailsyncProcess(this._getClientConfiguration());
+    const supportId = AppEnv.config.get('core.support.id');
+    if(supportId){
+      client.updateSupportId(supportId);
+    }
     this._clients[account.id] = client; // set this synchornously so we never spawn two
     this._clientsStartTime[account.id] = Date.now();
     delete this._setObservableRangeTimer[account.id];
@@ -535,6 +548,7 @@ export default class MailsyncBridge {
     delete this._additionalObservableThreads[account.id];
     delete this._cachedFetchAttachments[account.id];
     delete this._cachedFetchBodies[account.id];
+    delete this._folderListCache[account.id];
     const fullAccountJSON = (await KeyManager.insertAccountSecrets(account)).toJSON();
 
     if (force) {
@@ -678,7 +692,7 @@ export default class MailsyncBridge {
     }
   }
 
-  _onIncomingMessages = msgs => {
+  _onIncomingMessages = (msgs, accountId) => {
     for (const msg of msgs) {
       if (msg.length === 0) {
         AppEnv.logWarning(`Sync worker sent message with length as 0: ${msg}`);
@@ -729,13 +743,14 @@ export default class MailsyncBridge {
         }
       }
       if (passAsIs || type === 'unpersist'){
-        console.log('passing data from native to UI without going through db');
-        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: tmpModels });
+        // console.log('passing data from native to UI without going through db');
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, modelJSONs: tmpModels.map(m => m.toJSON()), processAccountId: accountId });
         this._onIncomingChangeRecord(
           new DatabaseChangeRecord({
             type, // TODO BG move to "model" naming style, finding all uses might be tricky
             objectClass: modelClass,
             objects: tmpModels,
+            processAccountId: accountId,
           })
         );
         continue;
@@ -757,19 +772,22 @@ export default class MailsyncBridge {
             FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
             const perspective = FocusedPerspectiveStore.current();
             if(perspective){
-              const categoryIds = perspective.categoryIds;
+              const categoryIds = Array.isArray(perspective.categories()) ? perspective.categories().map(cat=> cat.id) : [];
               if(Array.isArray(categoryIds) && categoryIds.length > 0){
-                console.log(`adding category constrain, ${categoryIds}`);
+                // console.log(`adding category constrain, ${categoryIds}`);
                 Thread = Thread || require('./models/thread').default;
-                const thread = DatabaseStore.findBy(Thread, where)
+                const threadPromise = DatabaseStore.findBy(Thread, where)
                   .where([Thread.attributes.categories.containsAny(categoryIds)]);
-                promises.push(thread);
-                threadIndex = promises.length -1;
-                threadCategories = categoryIds;
+                promises.push(threadPromise);
+                threadIndex = promises.length - 1;
+              } else {
+                console.log(`Cannot get category Ids, using data purely from thread`);
               }
+            } else {
+              console.log(`No current perspective, using data purely from thread`);
             }
           }
-          promises.push(tmp)
+          promises.push(tmp);
         }else{
           console.error(`Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`);
         }
@@ -790,10 +808,14 @@ export default class MailsyncBridge {
               }
               if(m[pseudoPrimaryKey] === model[pseudoPrimaryKey]){
                 duplicate = true;
-                // if(index === threadIndex){
-                //   model.categories = threadCategories;
-                // }
+                let correctLastMessageTimestamp;
+                if(index === threadIndex){
+                  correctLastMessageTimestamp = model.lastMessageTimestamp;
+                } else {
+                  correctLastMessageTimestamp = m.lastMessageTimestamp;
+                }
                 Object.assign(m, model);
+                m.lastMessageTimestamp = correctLastMessageTimestamp;
                 break;
               }
             }
@@ -808,12 +830,13 @@ export default class MailsyncBridge {
             return;
           }
           // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, models: parsedModels });
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', { type, modelClass, modelJSONs: parsedModels.map(m => m.toJSON()), processAccountId: accountId });
           this._onIncomingChangeRecord(
             new DatabaseChangeRecord({
               type,
               objectClass: modelClass,
               objects: parsedModels,
+              processAccountId: accountId,
             })
           );
         });
@@ -856,6 +879,20 @@ export default class MailsyncBridge {
       }
     }
   };
+  _uploadNativeReport = nativeReportTask => {
+    if(nativeReportTask instanceof NativeReportTask){
+      if(nativeReportTask.level === NativeReportTask.errorLevel.info){
+        console.log(nativeReportTask);
+        AppEnv.reportLog(new Error(nativeReportTask.key), {errorData: nativeReportTask});
+      } else if(nativeReportTask.level === NativeReportTask.errorLevel.warning){
+        console.warn(nativeReportTask);
+        AppEnv.reportWarning(new Error(nativeReportTask.key), {errorData: nativeReportTask});
+      } else {
+        console.error(nativeReportTask);
+        AppEnv.reportError(new Error(nativeReportTask.key), {errorData: nativeReportTask}, {grabLogs: true});
+      }
+    }
+  };
 
   _onIncomingChangeRecord = record => {
     DatabaseStore.trigger(record);
@@ -864,9 +901,9 @@ export default class MailsyncBridge {
     // Note: cannot use `record.objectClass` because of subclass names
     if (record.type === 'persist' && record.objects[0] instanceof Task) {
       for (const task of record.objects) {
-        if (task.error != null && task.status !== Task.Status.Remote) {
-          task.onError(task.error);
-          this._recordErrorToConsole(task);
+        if(task && task instanceof NativeReportTask){
+          this._uploadNativeReport(task);
+          continue;
         }
         if (task.status !== Task.Status.Complete) {
           continue;
@@ -882,16 +919,15 @@ export default class MailsyncBridge {
   };
 
   _onIncomingRebroadcastMessage = (event, data) => {
-    const { type, models, modelClass } = data;
-    console.log(`type: ${type}, modelClass: ${modelClass}`, models);
-    // const models = modelJSONs.map(Utils.convertToModel);
+    const { type, modelJSONs, modelClass, processAccountId } = data;
+    console.log(`type: ${type}, modelClass: ${modelClass}`, modelJSONs);
+    const models = modelJSONs.map(Utils.convertToModel);
     DatabaseStore.trigger(
       new DatabaseChangeRecord({
         type,
         objectClass: modelClass,
-        objects: models.map(model => {
-          return Utils.populateWithModel(model, modelClass);
-        }),
+        objects: models,
+        processAccountId
       })
     );
   };
@@ -1059,9 +1095,9 @@ export default class MailsyncBridge {
       for (let account of accounts) {
         if (account.mailsync) {
           delete account.mailsync.taskDelay;
-          mailsyncConfig[account.id] = Object.assign({}, defaultSettings, account.mailsync);
+          mailsyncConfig[account.pid || account.id] = Object.assign({}, defaultSettings, account.mailsync);
         } else {
-          mailsyncConfig[account.id] = Object.assign({}, defaultSettings);
+          mailsyncConfig[account.pid || account.id] = Object.assign({}, defaultSettings);
         }
       }
     }
@@ -1192,6 +1228,28 @@ export default class MailsyncBridge {
         source,
       });
     }
+  }
+  _onSyncFolderList({ accountIds, source='syncFolderList'} = {}) {
+    if(!Array.isArray(accountIds)){
+      console.error('no account');
+      return;
+    }
+    if(accountIds.length === 0){
+      console.error('account array is empty');
+      return;
+    }
+    const now = Date.now();
+    accountIds.forEach(accountId => {
+      const interval = now - (this._folderListCache[accountId] || 1);
+      if(interval >= this._folderListTTL ){
+        this.sendMessageToAccount(accountId, {
+          type: 'sync-folderList',
+          aid: accountId,
+          source
+        });
+        this._folderListCache[accountId] = now;
+      }
+    });
   }
 
   _onSyncSiftFolder({ categories = [Sift.categories.Entertainment, Sift.categories.Packages, Sift.categories.Travel, Sift.categories.Bill], source = '' } = {}) {

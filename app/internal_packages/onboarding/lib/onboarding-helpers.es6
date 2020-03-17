@@ -1,7 +1,7 @@
 /* eslint global-require: 0 */
 
 import crypto from 'crypto';
-import { Account, IdentityStore, MailsyncProcess, Actions } from 'mailspring-exports';
+import { Account, IdentityStore, MailsyncProcess, Actions, AccountStore } from 'mailspring-exports';
 import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
 import dns from 'dns';
@@ -34,6 +34,10 @@ const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.settings.basic',
   'profile',
 ];
+
+const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
+const JIRA_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE';
+const JIRA_SCOPES = ['read:me', 'read:jira-user', 'read:jira-work', 'write:jira-work', 'offline_access'];
 
 const YAHOO_CLIENT_ID =
   'dj0yJmk9c3IxR3h4VG5GTXBYJmQ9WVdrOVlVeHZNVXh1TkhVbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
@@ -427,6 +431,57 @@ export async function buildGmailAccountFromAuthResponse(code) {
   return await finalizeAndValidateAccount(account);
 }
 
+export async function buildJiraAccountFromAuthResponse(code) {
+  /// Exchange code for an access token
+  const body = [];
+  body.push(`code=${encodeURIComponent(code)}`);
+  body.push(`client_id=${encodeURIComponent(JIRA_CLIENT_ID)}`);
+  body.push(`redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}`);
+  body.push(`client_secret=${encodeURIComponent(JIRA_CLIENT_SECRET)}`);
+  body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
+
+  const resp = await fetch('https://auth.atlassian.com/oauth/token', {
+    method: 'POST',
+    body: body.join('&'),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+    },
+  });
+
+  const json = (await resp.json()) || {};
+  if (!resp.ok) {
+    throw new Error(
+      `Jira OAuth Code exchange returned ${resp.status} ${resp.statusText}: ${JSON.stringify(
+        json
+      )}`
+    );
+  }
+  const { access_token, refresh_token } = json;
+
+  const resourcesResp = await fetch('https://api.atlassian.com/oauth/token/accessible-resources', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      Accept: 'application/json'
+    },
+  });
+  const resources = await resourcesResp.json();
+  if (!resourcesResp.ok) {
+    throw new Error(
+      `Jira resources request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
+    );
+  }
+  let resource = {};
+  if (resources && resources.length > 0) {
+    resource = resources[0];
+  } else {
+    AppEnv.close();
+    return;
+  }
+  AppEnv.config.set('plugin.jira.config', { access_token, refresh_token, resource });
+  AppEnv.close();
+}
+
 export async function buildYahooAccountFromAuthResponse(code) {
   const body = [
     `client_id=${encodeURIComponent(YAHOO_CLIENT_ID)}`,
@@ -555,6 +610,16 @@ export function buildGmailAuthURL() {
   );
 }
 
+export function buildJiraAuthURL() {
+  return (
+    `https://auth.atlassian.com/authorize?` +
+    `audience=api.atlassian.com&client_id=${JIRA_CLIENT_ID}` +
+    `&scope=${encodeURIComponent(JIRA_SCOPES.join(' '))}` +
+    `&redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}` +
+    `&state=${EDISON_OAUTH_KEYWORD}&response_type=code&prompt=consenta`
+  );
+}
+
 export async function finalizeAndValidateAccount(account) {
   if (account.settings.imap_host) {
     account.settings.imap_host = account.settings.imap_host.trim();
@@ -590,7 +655,10 @@ export async function finalizeAndValidateAccount(account) {
   }
   Actions.siftUpdateAccount(newAccount);
   // preload mail data
-  proc.sync();
+  const accounts = AccountStore.accounts();
+  if (accounts && accounts.length === 0) {
+    proc.sync();
+  }
   const acc = new Account(newAccount);
   acc.picture = account.picture;
   return acc;

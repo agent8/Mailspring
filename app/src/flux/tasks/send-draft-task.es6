@@ -8,6 +8,13 @@ import SoundRegistry from '../../registries/sound-registry';
 import { Composer as ComposerExtensionRegistry } from '../../registries/extension-registry';
 import { LocalizedErrorStrings } from '../../mailsync-process';
 
+export const SendTaskDisplayErrors = {
+  'ErrorSendMessage':'ErrorSendMessage',
+  'ErrorSendMessageSpamSuspected':'ErrorSendMessageSpamSuspected',
+  'ErrorSendMessageIllegalAttachment':'ErrorSendMessageIllegalAttachment',
+  'ErrorSendMessageNotAllowed':'ErrorSendMessageNotAllowed',
+  'ErrorSendMessageDailyLimitExceeded':'ErrorSendMessageDailyLimitExceeded',
+};
 function applyExtensionTransforms(draft, recipient) {
   const extensions = ComposerExtensionRegistry.extensions();
   const fragment = document.createDocumentFragment();
@@ -89,11 +96,10 @@ export default class SendDraftTask extends Task {
   }
 
   willBeQueued() {
-    const account = AccountStore.accountForEmail(this.draft.from[0].email);
-
     if (!this.draft.from[0]) {
       throw new Error('SendDraftTask - you must populate `from` before sending.');
     }
+    const account = AccountStore.accountForEmail({email: this.draft.from[0].email, accountId: this.draft.accountId});
     if (!account) {
       throw new Error('SendDraftTask - you can only send drafts from a configured account.');
     }
@@ -157,6 +163,9 @@ export default class SendDraftTask extends Task {
     } else if (key === 'ErrorAuthentication') {
       errorMessage = `We encountered a problem with account authentication. Please make sure account is set up correctly.`;
       errorDetail = LocalizedErrorStrings[debuginfo];
+    } else if (Object.keys(SendTaskDisplayErrors).includes(key) && key !== SendTaskDisplayErrors.ErrorSendMessage) {
+      errorMessage = 'Email blocked by service provider';
+      errorDetail = debuginfo;
     } else {
       errorMessage = 'We were unable to deliver this message.';
       errorDetail = `An unknown error occurred: ${JSON.stringify({ key, debuginfo })}`;
@@ -166,6 +175,7 @@ export default class SendDraftTask extends Task {
       threadId: this.draft.threadId,
       headerMessageId: this.draft.headerMessageId,
       draft: this.draft,
+      errorKey: key,
       errorMessage,
       errorDetail,
     });

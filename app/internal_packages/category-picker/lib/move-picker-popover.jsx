@@ -1,7 +1,7 @@
 /* eslint jsx-a11y/tabindex-no-positive: 0 */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Menu, RetinaImg, LabelColorizer, BoldedSearchResult, ScrollRegion } from 'mailspring-component-kit';
+import { Menu, LabelColorizer, BoldedSearchResult } from 'mailspring-component-kit';
 import {
   Utils,
   Actions,
@@ -14,7 +14,6 @@ import {
   TaskFactory,
 } from 'mailspring-exports';
 import { Categories } from 'mailspring-observables';
-import ChangeFolderTask from '../../../src/flux/tasks/change-folder-task';
 
 export default class MovePickerPopover extends Component {
   static propTypes = {
@@ -166,48 +165,77 @@ export default class MovePickerPopover extends Component {
 
   _onMoveToCategory = ({ category }) => {
     const { threads } = this.props;
-    let previousFolder = null;
+    if(!Array.isArray(threads) || threads.length === 0){
+      AppEnv.reportError(new Error('Move folder threads is empty'), {errorData: category}, {grabLogs: true});
+      this._onActionCallback(category);
+      return;
+    }
+    let currentCategory = null;
     const currentPerspective = FocusedPerspectiveStore.current();
+    const previousFolder = TaskFactory.findPreviousFolder(currentPerspective, threads[0].accountId);
     if(currentPerspective && Array.isArray(threads) && threads.length > 0){
-      previousFolder = currentPerspective.categories().find(
+      currentCategory = currentPerspective.categories().find(
         cat => cat.accountId === threads[0].accountId
       );
     }
-    if (category.isFolder()) {
-      Actions.queueTasks(
-        TaskFactory.tasksForChangeFolder({
-          source: 'Category Picker: New Category',
-          threads: threads,
-          folder: category,
-          currentPerspective,
-        }),
-      );
-    } else {
-      const all = [];
-      threads.forEach(({ labels }) => all.push(...labels));
-      const tasks = [];
-      if (all.length > 0 && category.role !== 'inbox') {
-        tasks.push(
-          new ChangeLabelsTask({
-            source: 'Category Picker: New Category',
-            labelsToRemove: all,
-            labelsToAdd: [],
-            threads: threads,
-            previousFolder,
-          })
-        );
-      }
-      tasks.push(
-        new ChangeLabelsTask({
-          source: 'Category Picker: New Category',
-          labelsToRemove: [],
-          labelsToAdd: [category],
-          threads: threads,
-          previousFolder,
-        })
-      );
+    const tasks = TaskFactory.tasksForGeneralMoveFolder({threads, source: 'Move to Folder popup', previousFolder, targetCategory: category, sourceCategory: currentCategory});
+    if (tasks.length > 0) {
       Actions.queueTasks(tasks);
+    } else {
+      AppEnv.reportError(new Error(`Move Folder Tasks returned no tasks`), {
+          errorData:
+            {
+              threads,
+              source: 'Move to Folder popup',
+              previousFolder,
+              targetCategory: category,
+              sourceCategory: currentCategory,
+            },
+        },
+        { grabLogs: true });
     }
+    // if (category.isFolder() || (previousFolder && previousFolder.isFolder())) {
+    //   Actions.queueTasks(
+    //     TaskFactory.tasksForChangeFolder({
+    //       source: 'Category Picker: Move to Category',
+    //       threads: threads,
+    //       folder: category,
+    //       currentPerspective,
+    //     }),
+    //   );
+    // } else {
+    //   const all = [];
+    //   // let moveFromInbox = false;
+    //   // if(currentPerspective){
+    //   //   moveFromInbox = currentPerspective.isInbox();
+    //   // }
+    //   if(previousFolder && previousFolder.isLabel()){
+    //     all.push(previousFolder);
+    //   }
+    //
+    //   // if (all.length > 0 && category.role !== 'inbox') {
+    //     tasks.push(
+    //       new ChangeLabelsTask({
+    //         source: 'Category Picker: Move to Label',
+    //         labelsToRemove: all,
+    //         labelsToAdd: [category],
+    //         threads: threads,
+    //         previousFolder,
+    //       })
+    //     );
+    //   // }else {
+    //   //   tasks.push(
+    //   //     new ChangeLabelsTask({
+    //   //       source: 'Category Picker: Add Inbox Label',
+    //   //       labelsToRemove: [],
+    //   //       labelsToAdd: [category],
+    //   //       threads: threads,
+    //   //       previousFolder,
+    //   //     })
+    //   //   );
+    //   // }
+    //   Actions.queueTasks(tasks);
+    // }
     this._onActionCallback(category);
   };
 

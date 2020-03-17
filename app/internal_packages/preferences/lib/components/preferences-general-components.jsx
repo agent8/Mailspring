@@ -17,19 +17,21 @@ import { ipcRenderer } from 'electron';
 export class DefaultMailClientItem extends React.Component {
   constructor() {
     super();
+    this.state = { defaultClient: false };
     this._helper = new DefaultClientHelper();
-    if (this._helper.available()) {
-      this.state = { defaultClient: false };
-      this._helper.isRegisteredForURLScheme('mailto', registered => {
-        if (this._mounted) this.setState({ defaultClient: registered });
-      });
-    } else {
-      this.state = { defaultClient: 'unknown' };
-    }
   }
 
   componentDidMount() {
     this._mounted = true;
+    if (this._helper.available()) {
+      this._helper.isRegisteredForURLScheme('mailto', registered => {
+        if (this._mounted) {
+          this.setState({ defaultClient: registered });
+        }
+      });
+    } else {
+      this.state = { defaultClient: 'unknown' };
+    }
   }
 
   componentWillUnmount() {
@@ -38,11 +40,25 @@ export class DefaultMailClientItem extends React.Component {
 
   toggleDefaultMailClient = event => {
     if (this.state.defaultClient) {
-      this.setState({ defaultClient: false });
-      this._helper.resetURLScheme('mailto');
+      this._helper.resetURLScheme('mailto', err => {
+        if (err) {
+          AppEnv.reportError(err);
+          return;
+        }
+        if (this._mounted) {
+          this.setState({ defaultClient: false });
+        }
+      });
     } else {
-      this.setState({ defaultClient: true });
-      this._helper.registerForURLScheme('mailto');
+      this._helper.registerForURLScheme('mailto', err => {
+        if (err) {
+          AppEnv.reportError(err);
+          return;
+        }
+        if (this._mounted) {
+          this.setState({ defaultClient: true });
+        }
+      });
     }
     event.target.blur();
   };
@@ -270,13 +286,13 @@ export class LocalData extends React.Component {
     this.resetStarted = false;
     this.unsubscribe = null;
   }
-  componentDidMount(){
-    if(AppEnv.isMainWindow()){
+  componentDidMount() {
+    if (AppEnv.isMainWindow()) {
       this.unsubscribe = Actions.resetSettingsCb.listen(this._onResetAccountsCb, this);
     }
   }
-  componentWillUnmount(){
-    if(this.unsubscribe){
+  componentWillUnmount() {
+    if (this.unsubscribe) {
       this.unsubscribe();
     }
   }
@@ -296,7 +312,7 @@ export class LocalData extends React.Component {
     rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
       if (err) {
         return AppEnv.showErrorDialog(
-          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`,
+          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
         );
       }
       this._onReboot();
@@ -325,7 +341,7 @@ export class LocalData extends React.Component {
   }
 }
 
-export class TaskDelay extends React.Component{
+export class TaskDelay extends React.Component {
   static displayName = 'TaskDelay';
   static propTypes = {
     config: PropTypes.object.isRequired,
@@ -426,7 +442,11 @@ export class SupportId extends React.Component {
         >
           ID Copied
         </div>
-        <div title="Click to Copy" className="btn-primary support-id" onClick={this._onCopySupportId}>
+        <div
+          title="Click to Copy"
+          className="btn-primary support-id"
+          onClick={this._onCopySupportId}
+        >
           {this.props.config.core.support.id}
         </div>
       </div>
