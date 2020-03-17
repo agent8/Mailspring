@@ -44,7 +44,6 @@ export default class JiraStatus extends Component {
                 statusProgress: null,
             })
             const { transitions } = await this.jira.listTransitions(issueKey);
-            console.log('****transitions', transitions);
             this.safeSetState({
                 transitions
             })
