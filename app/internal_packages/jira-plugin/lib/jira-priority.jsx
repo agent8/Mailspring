@@ -43,7 +43,6 @@ export default class JiraPriority extends Component {
                 priorityProgress: null,
             })
             const priorities = await this.jira.listPriorities(issueKey);
-            console.log('****priorities', priorities);
             this.safeSetState({
                 priorities
             })
@@ -51,7 +50,6 @@ export default class JiraPriority extends Component {
     }
     onStatusChange = async (item, option) => {
         AppEnv.trackingEvent('Jira-Change-Status');
-        console.log('*****onStatusChange', item, option);
         try {
             let priority = { id: item.key }
             this.safeSetState({
