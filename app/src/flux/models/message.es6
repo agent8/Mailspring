@@ -317,6 +317,12 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    inboxCategory: Attributes.Number({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'category',
+      jsModelKey: 'inboxCategory',
+    }),
     siftCategory: Attributes.Collection({
       queryable: true,
       modelKey: 'siftCategory',
@@ -684,6 +690,26 @@ export default class Message extends ModelWithMetadata {
       return false;
     }
     return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
+  }
+  isInInbox() {
+    if (!this.labels) {
+      return false;
+    }
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('inbox')
+    );
+  }
+  isInInboxFocused() {
+    if (!this.isInInbox()) {
+      return false;
+    }
+    return this.inboxCategory === 1 || this.inboxCategory === 2;
+  }
+  isInInboxOther() {
+    if (!this.isInInbox()) {
+      return false;
+    }
+    return this.inboxCategory === 0;
   }
 
   fromContact() {

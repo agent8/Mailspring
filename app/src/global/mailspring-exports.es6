@@ -120,6 +120,8 @@ lazyLoadAndRegisterTask(`UndoTask`, 'undo-task');
 lazyLoadAndRegisterTask('AnalyzeDBTask', 'analyze-db-task');
 lazyLoadAndRegisterTask('ExpungeMessagesTask', 'expunge-messages-task');
 lazyLoadAndRegisterTask('DeleteThreadsTask', 'delete-threads-task');
+lazyLoadAndRegisterTask('MakePrimaryTask', 'make-primary-task');
+lazyLoadAndRegisterTask('MakeOtherTask', 'make-other-task');
 lazyLoadAndRegisterTask('CalendarTask', 'calendar-task');
 lazyLoadAndRegisterTask('ResendDraftTask', 'resend-draft-task');
 lazyLoadAndRegisterTask('CancelOutboxDraftTask', 'cancel-outbox-draft-task');
