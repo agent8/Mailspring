@@ -65,6 +65,9 @@ export default class JiraDetail extends Component {
                 const currentUser = await this.jira.getCurrentUser();
                 console.log('****currentUser', currentUser);
                 config.currentUser = currentUser;
+                const permissions = await this.jira.myPermissions(['ADMINISTER', 'ADMINISTER_PROJECTS']);
+                console.log('****permissions', permissions);
+                config.permissions = permissions;
                 AppEnv.config.set(CONFIG_KEY, config);
             } catch (err) {
                 console.log('****getCurrentUserInfo failed', err);

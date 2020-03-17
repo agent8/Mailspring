@@ -244,4 +244,20 @@ export default class JiraApi extends JiraApiBase {
             followAllRedirects: true
         }));
     }
+    myPermissions(permissions) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/mypermissions',
+            query: {
+                permissions: permissions.join(',')
+            }
+        })));
+    }
+    getCurrentUser(expand) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/myself',
+            query: {
+                expand: expand || ['groups', 'applicationRoles'].join(','),
+            }
+        })));
+    }
 }
