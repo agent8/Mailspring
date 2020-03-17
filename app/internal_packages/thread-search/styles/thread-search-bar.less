@@ -15,7 +15,7 @@
   width: 100%;
 }
 .thread-title {
-  float:left;
+  float: left;
   width: 40%;
   -webkit-app-region: drag;
   height: @search-bar-height;
@@ -30,9 +30,45 @@
     line-height: @search-bar-height;
   }
 }
-.sheet-toolbar{
-  .item-container{
-    .title-search-bar{
+.title-tabs {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  .tab-item {
+    flex: 0 1 auto;
+    padding: 0 20px;
+    display: flex;
+    overflow: hidden;
+    align-items: center;
+
+    h1 {
+      font-family: 'SF UI Display';
+      font-weight: 700;
+      letter-spacing: 0.01px;
+      color: @text-color-very-subtle;
+      margin: 0;
+      font-size: 22px;
+      line-height: 26px;
+      white-space: nowrap;
+      width: 100%;
+      height: 26px;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+      span {
+        font-size: 17px;
+        margin-left: 10px;
+      }
+    }
+
+    &.select h1 {
+      color: @text-color;
+    }
+  }
+}
+.sheet-toolbar {
+  .item-container {
+    .title-search-bar {
       -webkit-app-region: drag;
     }
   }

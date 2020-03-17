@@ -3,7 +3,7 @@ import ThreadSearchBar from './thread-search-bar';
 import { HasTutorialTip } from 'mailspring-component-kit';
 import SearchStore from './search-store';
 import { ListensToFluxStore } from 'mailspring-component-kit';
-import { FocusedPerspectiveStore } from 'mailspring-exports';
+import { Actions, FocusedPerspectiveStore, ThreadCountsStore } from 'mailspring-exports';
 
 const ThreadSearchBarWithTip = HasTutorialTip(ThreadSearchBar, {
   title: 'Search with ease',
@@ -22,21 +22,22 @@ class TitleSearchBar extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      fontSize: this.props.fontSize || this.INITIAL_FONT_SIZE
-    }
+      fontSize: this.props.fontSize || this.INITIAL_FONT_SIZE,
+    };
   }
 
   UNSAFE_componentWillReceiveProps() {
-    this.state.fontSize = this.props.fontSize || this.INITIAL_FONT_SIZE
+    this.state.fontSize = this.props.fontSize || this.INITIAL_FONT_SIZE;
   }
 
   componentDidMount() {
     setTimeout(() => {
-      const container = this.titleEl.closest('.item-container');
-      this.containerWidth = container ? container.clientWidth : 0;
-      this.adjustFontSize();
+      if (this.titleEl) {
+        const container = this.titleEl.closest('.item-container');
+        this.containerWidth = container ? container.clientWidth : 0;
+        this.adjustFontSize();
+      }
     }, 200);
-
   }
 
   componentDidUpdate() {
@@ -44,6 +45,9 @@ class TitleSearchBar extends Component {
   }
 
   adjustFontSize() {
+    if (!this.titleEl) {
+      return;
+    }
     const minFontSize = this.props.minFontSize || this.MIN_FONT_SIZE;
     if (this.titleEl.offsetWidth > this.containerWidth) {
       const newSize = this.state.fontSize - 1;
@@ -52,48 +56,77 @@ class TitleSearchBar extends Component {
         return;
       }
       this.setState({
-        fontSize: newSize
-      })
+        fontSize: newSize,
+      });
     } else {
       this.titleEl.style.visibility = 'visible';
     }
   }
 
-
   render() {
-    const current = this.props.perspective;
-    let title = '';
-    if (current && current.threadTitleName) {
-      title = current.threadTitleName;
-    } else if (current && current.displayName) {
-      title = current.displayName;
-    } else if (current) {
-      title = current.name;
-    }
-    return (
-      <div className="title-search-bar">
-        <div className='thread-title'>
+    const { perspective, current } = this.props;
+    let TitleComponent = null;
+    if (perspective.tab) {
+      TitleComponent = (
+        <div className="title-tabs">
+          {perspective.tab.map(tab => {
+            const unreadCount = tab.unreadCount();
+
+            return (
+              <div
+                className={`tab-item${current.isEqual(tab) ? ' select' : ''}`}
+                onClick={() => {
+                  Actions.focusMailboxPerspective(tab);
+                }}
+                key={tab.name}
+              >
+                <h1>
+                  {tab.name}
+                  {unreadCount > 0 ? (
+                    <span>({new Intl.NumberFormat().format(unreadCount)})</span>
+                  ) : null}
+                </h1>
+              </div>
+            );
+          })}
+        </div>
+      );
+    } else {
+      let title = '';
+      if (perspective && perspective.threadTitleName) {
+        title = perspective.threadTitleName;
+      } else if (perspective && perspective.displayName) {
+        title = perspective.displayName;
+      } else if (perspective) {
+        title = perspective.name;
+      }
+      TitleComponent = (
+        <div className="thread-title">
           <h1
             style={{
               width: 'max-content',
-              fontSize: this.state.fontSize
+              fontSize: this.state.fontSize,
             }}
-            ref={el => this.titleEl = el}
-          >{title}</h1>
+            ref={el => (this.titleEl = el)}
+          >
+            {title}
+          </h1>
         </div>
-      </div>
-    );
+      );
+    }
+
+    return <div className="title-search-bar">{TitleComponent}</div>;
   }
 }
 
-
 export default ListensToFluxStore(TitleSearchBar, {
-  stores: [SearchStore, FocusedPerspectiveStore],
+  stores: [SearchStore, FocusedPerspectiveStore, ThreadCountsStore],
   getStateFromStores() {
     return {
       query: SearchStore.query(),
       isSearching: SearchStore.isSearching(),
-      perspective: FocusedPerspectiveStore.current(),
+      perspective: FocusedPerspectiveStore.currentSidebar(),
+      current: FocusedPerspectiveStore.current(),
     };
   },
 });
