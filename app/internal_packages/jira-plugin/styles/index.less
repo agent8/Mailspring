@@ -127,14 +127,16 @@
         }
     }
 
+    .jira-fix-versions,
     .jira-priority,
     .jira-status,
     .assign-users {
-        width: 170px;
+        min-width: 200px;
         .rc-select-selection {
             &:hover {
                 box-shadow: none;
             }
+            box-shadow: none;
             border: none;
         }
         &.rc-select-focused {
@@ -167,6 +169,50 @@
         img {
             width: 16px;
             margin-right: 4px;
+        }
+    }
+    .jira-fix-versions {
+        &.rc-select-focused .rc-select-selection--multiple {
+            .rc-select-selection__rendered {
+                .rc-select-selection__choice {
+                    background: darken(@list-hover-bg, 5%);
+                    .rc-select-selection__choice__content {
+                        margin-left: -7px;
+                        margin-right: 8px;
+                    }
+                    .rc-select-selection__choice__remove {
+                        display: block;
+                    }
+                }
+            }
+        }
+        .rc-select-selection--multiple {
+            margin-top: 1px;
+            .rc-select-selection__rendered {
+                height: unset;
+                min-height: 32px;
+                padding-left: 10px;
+                margin-left: 0;
+                & > ul {
+                    flex-wrap: wrap;
+                }
+                @choiceHeight: 24px;
+                .rc-select-selection__choice {
+                    background: @list-hover-bg;
+                    line-height: @choiceHeight;
+                    height: @choiceHeight;
+                    .rc-select-selection__choice__content {
+                        height: @choiceHeight;
+                        line-height: @choiceHeight;
+                        margin-left: 0;
+                        margin-right: 0;
+                    }
+                    .rc-select-selection__choice__remove {
+                        line-height: @choiceHeight;
+                        display: none;
+                    }
+                }
+            }
         }
     }
     .jira-user {
@@ -205,17 +251,21 @@
                float: left; 
             }
             .label {
-                width: 64px;
+                width: 74px;
                 line-height: 28px;
             }
             .content {
                 line-height: 28px;
-                width: 200px;
+                width: 230px;
                 padding-left: 10px;
                 &.with-progress {
                     align-items: center;
                     padding: 0;
                     display: flex;
+                }
+                &.fix-versions {
+                    width: unset;
+                    min-width: 230px;
                 }
             }
         }

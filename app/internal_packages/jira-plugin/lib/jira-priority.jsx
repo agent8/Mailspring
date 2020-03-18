@@ -49,7 +49,7 @@ export default class JiraPriority extends Component {
         }
     }
     onStatusChange = async (item, option) => {
-        AppEnv.trackingEvent('Jira-Change-Status');
+        AppEnv.trackingEvent('Jira-Change-Priority');
         try {
             let priority = { id: item.key }
             this.safeSetState({
@@ -62,11 +62,11 @@ export default class JiraPriority extends Component {
             this.safeSetState({
                 priorityProgress: 'success'
             })
-            AppEnv.trackingEvent('Jira-Change-Status-Success');
+            AppEnv.trackingEvent('Jira-Change-Priority-Success');
         } catch (err) {
-            AppEnv.trackingEvent('Jira-Change-Status-Failed');
-            console.error(`****Change assignee failed ${this.issueKey}`, err);
-            AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
+            AppEnv.trackingEvent('Jira-Change-Priority-Failed');
+            console.error(`****Change Priority failed ${this.issueKey}`, err);
+            AppEnv.reportError(new Error(`Change Priority failed ${this.issueKey}`), { errorData: err });
             if (err.message && err.message.includes('invalid refresh token')) {
                 this.props.logout();
             }
