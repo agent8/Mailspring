@@ -495,6 +495,14 @@ class SidebarItem {
     return this.forPerspective(id, perspective, opts);
   }
 
+  static forToday(accountIds, opts){
+    if (!Array.isArray(accountIds)) {
+      accountIds = [accountIds];
+    }
+    const perspective = MailboxPerspective.forToday(accountIds);
+    return this.forPerspective('today', perspective, opts);
+  }
+
   static forAllTrash(accountIds, opts = {}) {
     opts.iconName = 'trash.svg';
     const perspective = MailboxPerspective.forAllTrash(accountIds);
