@@ -12,7 +12,7 @@ export default class OauthLogin extends Component {
     this.state = {}
   }
   componentDidMount () {
-    const client_id = 'zdg-edison-integration-for-zendesk'
+    const client_id = 'zdg-global-edisonmail-desktop-zendesk-plugin'
     const redirectUrl = encodeURIComponent('http://127.0.0.1:12141')
     const scope = encodeURIComponent('read write')
     let urlString = `https://edison.zendesk.com/oauth/authorizations/new?response_type=code&client_id=${client_id}&redirectUrl=${redirectUrl}&scope=${scope}`
@@ -49,12 +49,12 @@ export default class OauthLogin extends Component {
     const options = {
       grant_type: 'authorization_code',
       code,
-      client_id: 'zdg-edison-integration-for-zendesk',
-      client_secret: 'f4cb1c67b8739ecd5c66a9991bf671b4a8b16ad58478885911c83e99d9f47b7f',
+      client_id: 'zdg-global-edisonmail-desktop-zendesk-plugin',
+      client_secret: 'fa4d5970bb79deed1b2e3b4760516d7f579339f6e5fb4caca9838a062fe88e3e',
       redirect_uri: 'http://127.0.0.1:12141',
       scope: 'read write',
     }
-    const zendeskSubdomain = 'edison'
+    const zendeskSubdomain = 'edisonassistant'
     let res = await postAsync('https://edison.zendesk.com/oauth/tokens', options)
     console.log('  postAsync res:', res)
     if (typeof res === 'string') {
