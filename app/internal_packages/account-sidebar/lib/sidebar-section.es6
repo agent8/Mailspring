@@ -91,6 +91,10 @@ class SidebarSection {
     if(standardItem){
       items.unshift(standardItem);
     }
+    standardItem = SidebarItem.forToday([account.id], { displayName: 'Today' });
+    if (standardItem) {
+      items.unshift(standardItem);
+    }
     standardItem = SidebarItem.forInbox([account.id]);
     if(standardItem){
       items.unshift(standardItem);
@@ -169,6 +173,10 @@ class SidebarSection {
     }
     if (accounts.length > 1) {
       items.push(DIVIDER_OBJECT);
+      folderItem = SidebarItem.forToday(accountIds, { displayName: 'Today' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
       folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread' });
       if (folderItem) {
         items.push(folderItem);

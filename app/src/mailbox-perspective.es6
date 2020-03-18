@@ -1,7 +1,6 @@
 /* eslint global-require: 0 */
 /* eslint no-use-before-define: 0 */
 import _ from 'underscore';
-
 import Utils from './flux/models/utils';
 import TaskFactory from './flux/tasks/task-factory';
 import AccountStore from './flux/stores/account-store';
@@ -9,19 +8,14 @@ import CategoryStore from './flux/stores/category-store';
 import DatabaseStore from './flux/stores/database-store';
 import OutboxStore from './flux/stores/outbox-store';
 import ThreadCountsStore from './flux/stores/thread-counts-store';
-import FolderSyncProgressStore from './flux/stores/folder-sync-progress-store';
 import MutableQuerySubscription from './flux/models/mutable-query-subscription';
 import UnreadQuerySubscription from './flux/models/unread-query-subscription';
 import Thread from './flux/models/thread';
 import Message from './flux/models/message';
 import Sift from './flux/models/sift';
 import Category from './flux/models/category';
-import Label from './flux/models/label';
-import Folder from './flux/models/folder';
 import Actions from './flux/actions';
-import Matcher from './flux/attributes/matcher';
 import { LabelColorizer } from 'mailspring-component-kit';
-import RetinaImg from './components/retina-img';
 
 let WorkspaceStore = null;
 let ChangeStarredTask = null;
@@ -72,6 +66,10 @@ export default class MailboxPerspective {
 
   static forAttachments(accountIds) {
     return new AttachementMailboxPerspective(accountIds);
+  }
+
+  static forToday(accountIds){
+    return new TodayMailboxPerspective(accountIds);
   }
 
   static forCategory(category) {
@@ -708,6 +706,68 @@ class EmptyMailboxPerspective extends MailboxPerspective {
 
   canReceiveThreadsFromAccountIds() {
     return false;
+  }
+}
+
+class TodayMailboxPerspective extends MailboxPerspective {
+  constructor(accountIds) {
+    super(accountIds);
+    this.name = 'Today';
+    this.iconName = 'today.svg';
+    const categories = [];
+    this.accountIds.forEach(accountId => {
+      const account = AccountStore.accountForId(accountId);
+      if (account) {
+        let role = 'inbox';
+        if (account.provider === 'gmail') {
+          role = 'all';
+        }
+        const category = CategoryStore.getCategoryByRole(accountId, role);
+        if (category) {
+          categories.push(category);
+        }
+      }
+    });
+    this._categories = categories;
+  }
+  categories() {
+    return this._categories;
+  }
+
+  threads() {
+    const now = new Date();
+    const startOfDay = new Date(now.toDateString());
+    const query = DatabaseStore.findAll(Thread, {state: false})
+      .where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay/1000)])
+      .limit(0);
+    const categoryIds = [];
+    this.categories().forEach(category => {
+      if (category) {
+        categoryIds.push(category.id);
+      }
+    });
+    if (categoryIds.length > 0) {
+      query.where([Thread.attributes.categories.containsAny(categoryIds)]);
+    }
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+
+  unreadCount() {
+    if(this.accountIds.length > 1){
+      return ThreadCountsStore.unreadCountForCategoryId('today-all');
+    } else {
+      return ThreadCountsStore.unreadCountForCategoryId(`today-${this.accountIds[0]}`);
+    }
+  }
+
+  canReceiveThreadsFromAccountIds() {
+    return false;
+  }
+  receiveThreadIds(threadIds) {
+    return;
+  }
+  actionsForReceivingThreads(threads, accountId) {
+    return;
   }
 }
 
