@@ -69,9 +69,9 @@ const rules = [
 
 export const changes = {
   insert: (change, file) => {
-    const canHoldInline = node => !node.isVoid && !isQuoteNode(node) && !!node.getFirstText();
+    const canHoldInlineImage = (node, anchorKey) => !node.isVoid && !isQuoteNode(node) && !!node.getFirstText() && !!node.getChild(anchorKey);
 
-    while (!canHoldInline(change.value.anchorBlock)) {
+    while (!canHoldInlineImage(change.value.anchorBlock, change.value.anchorKey)) {
       change.collapseToEndOfPreviousText();
       if (!change.value.anchorBlock) {
         break;
