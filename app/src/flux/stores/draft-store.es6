@@ -1363,9 +1363,15 @@ class DraftStore extends MailspringStore {
       );
       return;
     }
-    if(syncData){
+    let bodyString = '';
+    try {
+      if (syncData) {
         AppEnv.logInfo('We have syncData from none main window and main window draft data is not updated yet');
-        session.localApplySyncDraftData({syncData});
+        session.localApplySyncDraftData({ syncData });
+      }
+    } catch (e) {
+      AppEnv.reportError(new Error('localApplySyncDraftData failed'), {errorData: {error: e, syncData}}, {grabLogs: true});
+      bodyString = syncData.body;
     }
     session.cancelCommit();
 
@@ -1419,6 +1425,9 @@ class DraftStore extends MailspringStore {
     // could overwrite the metadata value back to null.
     if (sendLaterMetadataValue) {
       const sendDraftTask = SendDraftTask.forSending(draft);
+      if (bodyString.length > 0) {
+        sendDraftTask.draft.body = bodyString;
+      }
       const undoTask = SyncbackMetadataTask.forSaving({
         pluginId: 'send-later',
         model: draft,
