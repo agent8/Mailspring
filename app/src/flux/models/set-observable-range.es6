@@ -15,11 +15,15 @@ export default class SetObservableRange extends Model {
     type: Attributes.String({
       modelKey: 'type',
     }),
+    folderIds : Attributes.Collection({
+      modelKEy: 'folderIds'
+    })
   });
 
   constructor({
                 threadIds = [],
                 messageIds = [],
+                folderIds = [],
                 accountId,
                 ...rest
               } = {}) {
@@ -27,13 +31,15 @@ export default class SetObservableRange extends Model {
     this.threadIds = threadIds;
     this.messageIds = messageIds;
     this.accountId = accountId;
+    this.folderIds = folderIds;
     this.type = 'observed-ids';
   }
   toJSON(){
     return {
       type: this.type,
       threadIds: this.threadIds,
-      messageIds: this.messageIds
+      messageIds: this.messageIds,
+      folderIds: this.folderIds
     };
   }
 }
