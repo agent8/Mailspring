@@ -1166,7 +1166,20 @@ export default class MailsyncBridge {
         if (threadIds.length === 0 && messageIds.length === 0) {
           return;
         }
-        const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds });
+        const folderIds = [];
+        FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+        const currentPerspective = FocusedPerspectiveStore.current();
+        if(currentPerspective){
+          const categories = currentPerspective.categories();
+          if(Array.isArray(categories)){
+            categories.forEach(category => {
+              if(category && category.accountId === accountId && category.id){
+                folderIds.push(category.id);
+              }
+            })
+          }
+        }
+        const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
         this._setObservableRangeTimer[accountId].timestamp = Date.now();
         // DC-46
         // We call sendMessageToAccount last on the off chance that mailsync have died,
@@ -1189,7 +1202,20 @@ export default class MailsyncBridge {
             if (threadIds.length === 0 && messageIds.length === 0) {
               return;
             }
-            const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds });
+            const folderIds = [];
+            FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+            const currentPerspective = FocusedPerspectiveStore.current();
+            if(currentPerspective){
+              const categories = currentPerspective.categories();
+              if(Array.isArray(categories)){
+                categories.forEach(category => {
+                  if(category && category.accountId === accountId && category.id){
+                    folderIds.push(category.id);
+                  }
+                })
+              }
+            }
+            const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
             this.sendMessageToAccount(accountId, tmpTask.toJSON());
           }, 1000),
           timestamp: Date.now(),
@@ -1210,8 +1236,20 @@ export default class MailsyncBridge {
           );
           if (threadIds.length === 0 && messageIds.length === 0) {
             return;
+          }const folderIds = [];
+          FocusedPerspectiveStore  = FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+          const currentPerspective = FocusedPerspectiveStore.current();
+          if(currentPerspective){
+            const categories = currentPerspective.categories();
+            if(Array.isArray(categories)){
+              categories.forEach(category => {
+                if(category && category.accountId === accountId && category.id){
+                  folderIds.push(category.id);
+                }
+              })
+            }
           }
-          const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds });
+          const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
           this.sendMessageToAccount(accountId, tmpTask.toJSON());
         }, 1000),
         timestamp: Date.now(),
