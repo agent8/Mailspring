@@ -227,7 +227,7 @@ class OutlineViewItem extends Component {
     event.preventDefault();
     this._runCallback('onSelect');
     if (this.props.item.selected) {
-      if (!this.props.item.children.some(i => i.selected)) {
+      if (!this.props.item.children.some(i => i.selected && i.perspective && !i.perspective.isInbox())) {
         this._onCollapseToggled();
       }
     }
