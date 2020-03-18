@@ -87,7 +87,7 @@ class MultiselectList extends React.Component {
     this.unsubscribers.push(WorkspaceStore.listen(this._onChange));
   }
 
-  _globalKeymapHandlers() {
+  _localKeymapHandlers() {
     return Object.assign({}, this.props.keymapHandlers, {
       'core:focus-item': () => this._onEnter(),
       'core:select-item': () => this._onSelectKeyboardItem(),
@@ -162,7 +162,7 @@ class MultiselectList extends React.Component {
       }
 
       return (
-        <KeyCommandsRegion globalHandlers={this._globalKeymapHandlers()} className={className}>
+        <KeyCommandsRegion localHandlers={this._localKeymapHandlers()} className={className}>
           <ListTabular
             ref="list"
             columns={this.state.computedColumns}
