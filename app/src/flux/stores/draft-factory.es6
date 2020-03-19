@@ -78,15 +78,15 @@ const removeAttachmentWithNoContentId = files => {
   return filterMissingAttachments(ret);
 };
 const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
-  if (!Array.isArray(files)){
+  if (!Array.isArray(files)) {
     return [];
   }
-  if(typeof bodyStr !== 'string'){
+  if (typeof bodyStr !== 'string') {
     return [];
   }
   const ret = [];
   files.forEach(file => {
-    if(file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
+    if (file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
       ret.push(file);
     }
   });
@@ -153,12 +153,12 @@ class DraftFactory {
 
     return new Message(merged);
   }
-  async createInviteDraft(draftData){
+  async createInviteDraft(draftData) {
     const draft = await this.createDraft(draftData);
     draft.noSave = true;
     return draft;
   }
-  createNewDraftForEdit(draft){
+  createNewDraftForEdit(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
@@ -194,7 +194,7 @@ class DraftFactory {
             -----User bug report end-----</br>
             </div>
             <div>
-            [MacOS] ${AppEnv.config.get('core.support.native')}
+            [MacOS] ${AppEnv.getVersion()}
             </div></br>
             <div>
             SupportId: ${AppEnv.config.get('core.support.id')}
@@ -219,7 +219,7 @@ class DraftFactory {
       return null;
     }
   }
-  duplicateDraftBecauseOfNewId(draft){
+  duplicateDraftBecauseOfNewId(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
@@ -241,7 +241,7 @@ class DraftFactory {
     });
     return new Message(defaults);
   }
-  async createOutboxDraftForEdit(draft){
+  async createOutboxDraftForEdit(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
