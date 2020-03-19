@@ -205,6 +205,20 @@ export default class JiraApi extends JiraApiBase {
             pathname: '/priority'
         })));
     }
+    listVersions(project) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/project/".concat(project).concat("/versions")
+        })));
+    }
+    listLabels(content) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/jql/autocompletedata/suggestions",
+            query: {
+                fieldName: 'labels',
+                fieldValue: content,
+            }
+        })));
+    }
     setIssuePriority(issueNumber, priority) {
         return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueNumber)
@@ -214,6 +228,32 @@ export default class JiraApi extends JiraApiBase {
             body: {
                 fields: {
                     priority
+                }
+            }
+        }));
+    }
+    setIssueFixVersions(issueNumber, fixVersions) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber)
+        }), {
+            method: 'PUT',
+            followAllRedirects: true,
+            body: {
+                fields: {
+                    fixVersions
+                }
+            }
+        }));
+    }
+    setIssueLabels(issueNumber, labels) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber)
+        }), {
+            method: 'PUT',
+            followAllRedirects: true,
+            body: {
+                fields: {
+                    labels
                 }
             }
         }));
@@ -243,5 +283,21 @@ export default class JiraApi extends JiraApiBase {
             method: 'PUT',
             followAllRedirects: true
         }));
+    }
+    myPermissions(permissions) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/mypermissions',
+            query: {
+                permissions: permissions.join(',')
+            }
+        })));
+    }
+    getCurrentUser(expand) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/myself',
+            query: {
+                expand: expand || ['groups', 'applicationRoles'].join(','),
+            }
+        })));
     }
 }

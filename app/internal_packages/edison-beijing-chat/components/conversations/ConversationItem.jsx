@@ -63,7 +63,7 @@ export default class ConversationItem extends PureComponent {
       .showMessageBox({
         type: 'error',
         message: 'All Conversation Messages Will Be Cleared!',
-        buttons: ['OK', 'CANCEL'],
+        buttons: ['OKay', 'Cancel'],
         defaultId: 1,
         // icon:
         //   AppEnv.getLoadSettings().resourcePath +
@@ -105,16 +105,16 @@ export default class ConversationItem extends PureComponent {
               //   <GroupChatAvatar conversation={conversation} size={23} />
               <div className={false ? 'online' : 'offline'}></div>
             ) : (
-              //   <ContactAvatar
-              //     conversation={conversation}
-              //     jid={conversation.jid}
-              //     name={conversation.name}
-              //     email={conversation.email}
-              //     size={23}
-              //   />
+                //   <ContactAvatar
+                //     conversation={conversation}
+                //     jid={conversation.jid}
+                //     name={conversation.name}
+                //     email={conversation.email}
+                //     size={23}
+                //   />
 
-              <div className={isOnline ? 'online' : 'offline'}></div>
-            )}
+                <div className={isOnline ? 'online' : 'offline'}></div>
+              )}
             {/* {!conversation.isHiddenNotification ? <Badge count={conversation.unreadMessages} /> : null} */}
           </div>
           <div className="content">
@@ -136,8 +136,8 @@ export default class ConversationItem extends PureComponent {
             </div>
             <div className="subHeader">
               {conversation.isGroup &&
-              conversation.lastMessageSenderName &&
-              conversation.lastMessageText
+                conversation.lastMessageSenderName &&
+                conversation.lastMessageText
                 ? `${conversation.lastMessageSenderName}:`
                 : null}
               {conversation.lastMessageText}

@@ -43,6 +43,8 @@ export class PreferencesKeymapsHearder extends React.Component {
       message: 'Are you sure?',
       detail: 'Delete your custom key bindings and reset to the template defaults?',
       buttons: ['Cancel', 'Reset'],
+      defaultId: 1,
+      cancelId: 0,
     });
 
     if (chosen === 1) {
