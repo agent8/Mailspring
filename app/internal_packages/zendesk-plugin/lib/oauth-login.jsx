@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { remote } from 'electron'
 import http from 'http'
 import url from 'url'
 import { postAsync } from '../../edison-beijing-chat/utils/httpex'
@@ -13,9 +14,10 @@ export default class OauthLogin extends Component {
   }
   componentDidMount () {
     const client_id = 'zdg-global-edisonmail-desktop-zendesk-plugin'
+    const { subdomain } = this.props
     const redirectUrl = encodeURIComponent('http://127.0.0.1:12141')
     const scope = encodeURIComponent('read write')
-    let urlString = `https://edison.zendesk.com/oauth/authorizations/new?response_type=code&client_id=${client_id}&redirectUrl=${redirectUrl}&scope=${scope}`
+    let urlString = `https://${subdomain}.zendesk.com/oauth/authorizations/new?response_type=code&client_id=${client_id}&redirectUrl=${redirectUrl}&scope=${scope}`
     console.log(' urlString:', urlString)
     this.setState({ src: urlString })
     this._server = http.createServer((request, response) => {
@@ -44,6 +46,8 @@ export default class OauthLogin extends Component {
         console.log(' local server is listening:' + LOCAL_SERVER_PORT)
       }
     })
+    console.log(' urlString:', urlString)
+    remote.shell.openExternal(urlString)
   }
   _onReceivedCode = async code => {
     const options = {
@@ -78,17 +82,18 @@ export default class OauthLogin extends Component {
   render () {
     const { src } = this.state
     return (
-      <webview
-        src={src}
-        style={{
-          position: 'position',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 99,
-        }}
-      ></webview>
+      // <webview
+      //   src={src}
+      //   style={{
+      //     position: 'absolute',
+      //     top: 0,
+      //     left: 0,
+      //     width: '100%',
+      //     height: '100%',
+      //     zIndex: 99,
+      //   }}
+      // ></webview>
+      <div className='sign-prompt'> Sign in Zendesk in the browser.</div>
     )
   }
 }

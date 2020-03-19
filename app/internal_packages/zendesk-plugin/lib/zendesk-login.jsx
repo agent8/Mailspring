@@ -71,13 +71,19 @@ export default class Login extends Component {
     AppEnv.config.set(CONFIG_KEY, config)
   }
   openOauth = () => {
-    this.setState({ openOauth: true })
+    if (!this.subdomain.value) {
+      this.subdomain.className = 'error'
+      this.setState({ subdomainErrorMessage: 'Please input subdomain before do oauth login' })
+    } else {
+      this.setState({ openOauth: true, subdomain: this.subdomain.value })
+    }
   }
   render () {
-    const { host, username, apitoken, password } = this.props.config
+    const { username, apitoken } = this.props.config
+    const { subdomain, subdomainErrorMessage } = this.state
     const { error, loading, openOauth } = this.state
     if (openOauth) {
-      return <OauthLogin></OauthLogin>
+      return <OauthLogin subdomain={subdomain}></OauthLogin>
     }
     return (
       <div className='zendesk-login'>
@@ -93,6 +99,7 @@ export default class Login extends Component {
             ref={el => (this.subdomain = el)}
             placeholder='eg. your-subdomain for zendesk'
           />
+          <span className='error'>{subdomainErrorMessage}</span>
         </div>
         <div className='row'>
           <span className='label'>Email</span>
