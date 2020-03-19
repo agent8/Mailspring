@@ -49,13 +49,12 @@ export default class JiraFixVersions extends Component {
         }
     }
     saveFixVersions = async values => {
-        console.log('*******this.select', this.select, values);
         AppEnv.trackingEvent('Jira-Save-FixVersion');
         try {
             this.safeSetState({
                 progress: 'loading'
             })
-            await this.jira.setIssuFixVersions(
+            await this.jira.setIssueFixVersions(
                 this.issueKey,
                 values.map(v => ({ id: v.key }))
             );
@@ -89,7 +88,7 @@ export default class JiraFixVersions extends Component {
             progress,
             versions = [],
         } = this.state;
-        const priorityOptions = versions.length > 0 ?
+        const options = versions.length > 0 ?
             versions.map(this._renderOption) : fixVersions.map(this._renderOption);
         const value = fixVersions.map(v => ({ key: v.id, value: v.name }));
         return (
@@ -107,7 +106,7 @@ export default class JiraFixVersions extends Component {
                         multiple
                         onBlur={this.saveFixVersions}
                         dropdownClassName="jira-dropdown"
-                    >{priorityOptions}</Select>
+                    >{options}</Select>
                     {this.props.renderProgress(progress)}
                 </div>
             </div>

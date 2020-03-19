@@ -210,6 +210,15 @@ export default class JiraApi extends JiraApiBase {
             pathname: "/project/".concat(project).concat("/versions")
         })));
     }
+    listLabels(content) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/jql/autocompletedata/suggestions",
+            query: {
+                fieldName: 'labels',
+                fieldValue: content,
+            }
+        })));
+    }
     setIssuePriority(issueNumber, priority) {
         return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueNumber)
@@ -223,7 +232,7 @@ export default class JiraApi extends JiraApiBase {
             }
         }));
     }
-    setIssuFixVersions(issueNumber, fixVersions) {
+    setIssueFixVersions(issueNumber, fixVersions) {
         return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueNumber)
         }), {
@@ -232,6 +241,19 @@ export default class JiraApi extends JiraApiBase {
             body: {
                 fields: {
                     fixVersions
+                }
+            }
+        }));
+    }
+    setIssueLabels(issueNumber, labels) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber)
+        }), {
+            method: 'PUT',
+            followAllRedirects: true,
+            body: {
+                fields: {
+                    labels
                 }
             }
         }));
