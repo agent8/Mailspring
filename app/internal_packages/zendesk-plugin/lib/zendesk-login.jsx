@@ -28,30 +28,24 @@ export default class Login extends Component {
     if (!this.subdomain || !this.email || (!this.password && !this.apitoken)) {
       return
     }
-    const zendeskSubdomain = this.subdomain.value
+    let config
     AppEnv.trackingEvent('Zendesk-Login')
-    const config = {
-      subdomain: this.subdomain.value,
-      password: this.password.value,
-      username: this.email.value,
-      apitoken: this.apitoken.value,
-    }
-    if (config.password) {
-      this.zendesk = new ZendeskApi({
+    if (this.password.value) {
+      config = {
         authType: Zendesk.AUTH_TYPES.BASIC_AUTH,
-        zendeskSubdomain,
-        email: config.username,
-        password: config.password,
-      })
-    } else if (config.apitoken) {
-      this.zendesk = new ZendeskApi({
+        zendeskSubdomain: this.subdomain.value,
+        email: this.email.value,
+        password: this.password.value,
+      }
+    } else if (this.apitoken.value) {
+      config = {
         authType: Zendesk.AUTH_TYPES.API_TOKEN,
-        zendeskSubdomain,
-        email: config.username,
-        zendeskAdminToken: config.apitoken,
-      })
+        zendeskSubdomain: this.subdomain.value,
+        email: this.email.value,
+        zendeskAdminToken: this.apitoken.value,
+      }
     }
-
+    this.zendesk = new ZendeskApi(config)
     try {
       const tickets = await this.zendesk.listTickets()
       console.log('****tickets', tickets)
@@ -65,7 +59,6 @@ export default class Login extends Component {
         loading: false,
         error: message,
       })
-      return
     }
     AppEnv.trackingEvent('Zendesk-Login-Success')
     AppEnv.config.set(CONFIG_KEY, config)
@@ -95,9 +88,8 @@ export default class Login extends Component {
           <span className='label'>Zendesk subdomain</span>
           <input
             type='text'
-            defaultValue={'edison'}
             ref={el => (this.subdomain = el)}
-            placeholder='eg. your-subdomain for zendesk'
+            placeholder='your-subdomain for zendesk'
           />
           <span className='error'>{subdomainErrorMessage}</span>
         </div>

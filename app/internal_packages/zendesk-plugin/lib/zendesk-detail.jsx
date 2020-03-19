@@ -29,29 +29,7 @@ export default class ZendeskDetail extends Component {
   }
   login = config => {
     if (config && Object.keys(config).length > 0) {
-      if (config.password) {
-        // tried, but zendesk return could not authenticate
-        this.zendesk = new ZendeskApi({
-          authType: Zendesk.AUTH_TYPES.BASIC_AUTH,
-          zendeskSubdomain: config.subdomain,
-          email: config.username,
-          password: config.password,
-        })
-      } else if (config.apitoken) {
-        this.zendesk = new ZendeskApi({
-          authType: Zendesk.AUTH_TYPES.API_TOKEN,
-          zendeskSubdomain: config.subdomain,
-          email: config.username,
-          zendeskAdminToken: config.apitoken,
-        })
-      } else {
-        this.zendesk = new ZendeskApi({
-          authType: Zendesk.AUTH_TYPES.OAUTH_ACCESS_TOKEN,
-          zendeskSubdomain: config.subdomain,
-          //email is no necessary for OAUTH_ACCESS_TOKEN
-          zendeskAdminToken: config.zendeskOauthAccessToken,
-        })
-      }
+      this.zendesk = new ZendeskApi(config)
     }
   }
   logout () {

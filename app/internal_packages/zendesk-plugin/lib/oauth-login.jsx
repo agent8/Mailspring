@@ -49,6 +49,11 @@ export default class OauthLogin extends Component {
     console.log(' urlString:', urlString)
     remote.shell.openExternal(urlString)
   }
+  componentWillUnmount () {
+    if (this._server) {
+      this._server.close()
+    }
+  }
   _onReceivedCode = async code => {
     const options = {
       grant_type: 'authorization_code',
@@ -58,26 +63,33 @@ export default class OauthLogin extends Component {
       redirect_uri: 'http://127.0.0.1:12141',
       scope: 'read write',
     }
-    const zendeskSubdomain = 'edisonassistant'
-    let res = await postAsync('https://edison.zendesk.com/oauth/tokens', options)
+    const zendeskSubdomain = this.props.subdomain
+    let res = await postAsync(`https://${zendeskSubdomain}.zendesk.com/oauth/tokens`, options)
     console.log('  postAsync res:', res)
     if (typeof res === 'string') {
       res = JSON.parse(res)
     }
-    const zendeskOauthAccessToken = res.access_token
-    console.log('  zendeskOauthAccessToken:', zendeskOauthAccessToken)
-    const zendeskOptions = {
-      authType: Zendesk.AUTH_TYPES.OAUTH_ACCESS_TOKEN,
-      zendeskSubdomain,
-      zendeskOauthAccessToken,
+    if (res.error) {
+      AppEnv.showErrorDialog({
+        title: res.error,
+        message: res.error_description,
+      })
+    } else {
+      const zendeskOauthAccessToken = res.access_token
+      console.log('  zendeskOauthAccessToken:', zendeskOauthAccessToken)
+      const zendeskOptions = {
+        authType: Zendesk.AUTH_TYPES.OAUTH_ACCESS_TOKEN,
+        zendeskSubdomain,
+        zendeskAdminToken: zendeskOauthAccessToken,
+      }
+      const config = zendeskOptions
+      console.log(' zendeskOptions:', zendeskOptions)
+      AppEnv.trackingEvent('Zendesk-Login-Success')
+      AppEnv.config.set(CONFIG_KEY, config)
     }
-    const config = {
-      subdomain: zendeskSubdomain,
-      zendeskOauthAccessToken,
+    if (this._server) {
+      this._server.close()
     }
-    console.log(' zendeskOptions:', zendeskOptions)
-    AppEnv.trackingEvent('Zendesk-Login-Success')
-    AppEnv.config.set(CONFIG_KEY, config)
   }
   render () {
     const { src } = this.state
