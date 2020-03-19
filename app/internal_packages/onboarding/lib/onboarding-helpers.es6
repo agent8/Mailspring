@@ -37,7 +37,7 @@ const GMAIL_SCOPES = [
 
 const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
 const JIRA_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE';
-const JIRA_SCOPES = ['read:me', 'read:jira-user', 'read:jira-work', 'write:jira-work', 'offline_access'];
+const JIRA_SCOPES = ['read:me', 'read:jira-user', 'read:jira-work', 'write:jira-work', 'offline_access', 'manage:jira-project'];
 
 const YAHOO_CLIENT_ID =
   'dj0yJmk9c3IxR3h4VG5GTXBYJmQ9WVdrOVlVeHZNVXh1TkhVbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';

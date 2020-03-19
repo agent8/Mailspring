@@ -44,6 +44,9 @@ export default class Login extends Component {
             const currentUser = await this.jira.getCurrentUser();
             console.log('****currentUser', currentUser);
             config.currentUser = currentUser;
+            const permissions = await this.jira.myPermissions(['ADMINISTER', 'ADMINISTER_PROJECTS']);
+            console.log('****permissions', permissions);
+            config.permissions = permissions;
         } catch (err) {
             console.log('****jira login failed', err);
             let message = 'Login failed, please check your Email and Api token.';

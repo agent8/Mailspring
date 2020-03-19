@@ -86,7 +86,7 @@ const CreatePageForForm = FormComponent => {
       }
 
       const { errorFieldNames, errorMessage, populated } = FormComponent.validateAccount(next);
-      if(this._mounted){
+      if (this._mounted) {
         this.setState({
           account: next,
           errorFieldNames,
@@ -124,7 +124,7 @@ const CreatePageForForm = FormComponent => {
     onConnect = updatedAccount => {
       const account = updatedAccount || this.state.account;
       const proceedWithAccount = () => {
-        if(this._mounted){
+        if (this._mounted) {
           this.setState({ submitting: true });
         }
         finalizeAndValidateAccount(account)
@@ -159,6 +159,8 @@ const CreatePageForForm = FormComponent => {
                 {
                   type: 'warning',
                   buttons: ['Go Back', 'Continue'],
+                  defaultId: 1,
+                  cancelId: 0,
                   message: 'Certificate Error',
                   detail: `The TLS certificate for this server seems to be incorrect. Do you want to continue?`,
                 })
@@ -166,7 +168,7 @@ const CreatePageForForm = FormComponent => {
                   if (response === 1 && this.state.account && this.state.account.settings) {
                     account.settings.imap_allow_insecure_ssl = true;
                     account.settings.smtp_allow_insecure_ssl = true;
-                    if(this._mounted){
+                    if (this._mounted) {
                       this.setState({ account, submitting: true }, () => {
                         this.onConnect(this.state.account);
                       });
@@ -183,7 +185,7 @@ const CreatePageForForm = FormComponent => {
                     AppEnv.reportError(err, {
                       account: AccountStore.stripAccountData(errorAccount),
                     });
-                    if(this._mounted){
+                    if (this._mounted) {
                       this.setState({
                         errorMessage: err.message,
                         errorStatusCode: err.statusCode,
@@ -206,7 +208,7 @@ const CreatePageForForm = FormComponent => {
             AppEnv.reportError(err, {
               account: AccountStore.stripAccountData(errorAccount),
             });
-            if(this._mounted){
+            if (this._mounted) {
               this.setState({
                 errorMessage: err.message,
                 errorStatusCode: err.statusCode,
@@ -231,6 +233,8 @@ const CreatePageForForm = FormComponent => {
           .showMessageBox(null, {
             type: 'warning',
             buttons: ['Go Back', 'Continue'],
+            defaultId: 1,
+            cancelId: 0,
             message: 'Are you sure?',
             detail:
               `This looks like a Gmail account! While it's possible to setup an App ` +

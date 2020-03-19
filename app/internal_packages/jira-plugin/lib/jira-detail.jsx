@@ -9,6 +9,8 @@ import Status from './jira-status';
 import Priority from './jira-priority';
 import Description from './jira-description';
 import { JiraComments, CommentSubmit } from './jira-comments';
+import FixVersions from './jira-fix-versions';
+import Labels from './jira-labels';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -65,6 +67,9 @@ export default class JiraDetail extends Component {
                 const currentUser = await this.jira.getCurrentUser();
                 console.log('****currentUser', currentUser);
                 config.currentUser = currentUser;
+                const permissions = await this.jira.myPermissions(['ADMINISTER', 'ADMINISTER_PROJECTS']);
+                console.log('****permissions', permissions);
+                config.permissions = permissions;
                 AppEnv.config.set(CONFIG_KEY, config);
             } catch (err) {
                 console.log('****getCurrentUserInfo failed', err);
@@ -358,7 +363,7 @@ export default class JiraDetail extends Component {
         if (userOptions.length === 0) {
             userOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
         }
-        const watcerProps = {
+        const watcherProps = {
             jira: this.jira,
             fields: issue.fields,
             issueKey,
@@ -370,7 +375,7 @@ export default class JiraDetail extends Component {
                 {userLogo}
                 <div className="jira-title">
                     <a href={this.state.link}>{issueKey}</a>
-                    <Watcher {...watcerProps} />
+                    <Watcher {...watcherProps} />
                 </div>
                 <div className="wrapper">
                     <header>
@@ -397,16 +402,31 @@ export default class JiraDetail extends Component {
                             <span className="content">{this.renderUserNode(fields.reporter)}</span>
                         </div>
                         <Priority
-                            priority={issue.fields.priority}
+                            priority={fields.priority}
                             jira={this.jira}
                             issueKey={issueKey}
                             logout={this.logout}
                             renderProgress={this._renderProgress}
                         />
                         <Status
-                            status={issue.fields.status}
+                            status={fields.status}
                             jira={this.jira}
                             issueKey={issueKey}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
+                        <Labels
+                            labels={fields.labels}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
+                        <FixVersions
+                            fixVersions={fields.fixVersions}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            projectKey={fields.project && fields.project.key}
                             logout={this.logout}
                             renderProgress={this._renderProgress}
                         />
