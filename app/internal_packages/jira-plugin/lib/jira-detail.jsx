@@ -10,6 +10,7 @@ import Priority from './jira-priority';
 import Description from './jira-description';
 import { JiraComments, CommentSubmit } from './jira-comments';
 import FixVersions from './jira-fix-versions';
+import Labels from './jira-labels';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -409,6 +410,13 @@ export default class JiraDetail extends Component {
                         />
                         <Status
                             status={fields.status}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
+                        <Labels
+                            labels={fields.labels}
                             jira={this.jira}
                             issueKey={issueKey}
                             logout={this.logout}
