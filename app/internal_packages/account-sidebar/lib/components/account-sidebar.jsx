@@ -7,7 +7,7 @@ const {
   Flexbox,
   KeyCommandsRegion,
 } = require('mailspring-component-kit');
-const AccountSwitcher = require('./account-switcher');
+// const AccountSwitcher = require('./account-switcher');
 const SidebarStore = require('../sidebar-store');
 
 class AccountSidebar extends React.Component {
@@ -81,7 +81,7 @@ class AccountSidebar extends React.Component {
 
   _onStoreChange = () => {
     if (this._mounted) {
-      return this.setState(this._getStateFromStores(), this._scrollToFocusItem);
+      return this.setState(this._getStateFromStores());
     }
   };
 
@@ -94,18 +94,26 @@ class AccountSidebar extends React.Component {
     };
   };
 
-  _scrollToFocusItem = () => {
-    const { items } = this.state.standardSection;
-    let selectedItem = items.find(item => item.selected);
-    if (selectedItem && selectedItem.children && selectedItem.children.length) {
-      selectedItem = selectedItem.children.find(item => item.selected) || selectedItem;
-    }
-    if (selectedItem && selectedItem.id && this._accountSideBarWrapEl) {
-      const selectNode = document.querySelector(
-        `.nylas-outline-view .item-container .item[id='${selectedItem.id}']`
-      );
+  _scrollToFocusItem = (selectedItemKey) => {
+    const selectNode = document.querySelector(
+      `.nylas-outline-view .item-container .item[id='${selectedItemKey}']`
+    );
+    if(selectNode && this._accountSideBarWrapEl){
       this._accountSideBarWrapEl.scrollTo(selectNode);
     }
+    // const { items } = this.state.standardSection;
+    // let selectedItem = items.find(item => item.selected);
+    // if (selectedItem && selectedItem.children && selectedItem.children.length) {
+    //   selectedItem = selectedItem.children.find(item => item.selected) || selectedItem;
+    // }
+    // if (selectedItem && selectedItem.id && this._accountSideBarWrapEl) {
+    //   const selectNode = document.querySelector(
+    //     `.nylas-outline-view .item-container .item[id='${selectedItem.id}']`
+    //   );
+    //   if(selectNode){
+    //     this._accountSideBarWrapEl.scrollTo(selectNode);
+    //   }
+    // }
   };
 
   _renderUserSections(sections) {
@@ -119,7 +127,7 @@ class AccountSidebar extends React.Component {
   };
 
   _onShift = delta => {
-    SidebarStore.onShift(delta);
+    SidebarStore.onShift(delta, this._scrollToFocusItem);
   };
 
   _localKeymapHandlers() {
