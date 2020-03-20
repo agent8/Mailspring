@@ -166,7 +166,6 @@ class MessageStore extends MailspringStore {
     this._popedOut = false;
     this._lastThreadChangeTimestamp = 0;
     this._missingAttachmentIds = [];
-    this._checkingMessageForMissingAttachment = {};
   }
 
   _registerListeners() {
@@ -560,15 +559,14 @@ class MessageStore extends MailspringStore {
     }
   }
 
-  fetchMissingAttachmentsByFileIds({ fileIds = [] } = {}) {
-    if (
-      fileIds.every(id => {
-        return this._missingAttachmentIds.includes(id);
-      })
-    ) {
+  fetchMissingAttachmentsByFileIds({ accountId, fileIds = [] } = {}) {
+    const missingList = fileIds.filter(id => {
+      return this._missingAttachmentIds.includes(id)
+    })
+    if (missingList && missingList.length && accountId) {
       Actions.fetchAttachments({
-        accountId: this._items[0].accountId,
-        missingItems: fileIds,
+        accountId: accountId,
+        missingItems: missingList,
         needProgress: true,
       });
     }
@@ -578,180 +576,101 @@ class MessageStore extends MailspringStore {
     const missing = [];
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
-    let processed = 0;
-    for (let i = 0; i < this._items.length; i++) {
-      if (this._items[i].id === messageId) {
-        this._setMessageCheckingAttachmentStatus({messageId: this._items[i].id, val: true});
-        let total = this._items[i].files.length * 2;
-        this._items[i].files.forEach((f, fileIndex) => {
-          const tmpPath = AttachmentStore.pathForFile(f);
-          const tempExists = fs.existsSync(tmpPath);
-          if (!tempExists) {
-            missing.push(f.id);
-            if (!this.isAttachmentMissing(f.id)) {
-              this._missingAttachmentIds.push(f.id);
-              console.log('updating missingAttachmentIds');
-              change = true;
-            }
-            processed++;
-            const partExists = fs.existsSync(`${tmpPath}.part`);
-            this._setMessageCheckingAttachmentStatus({messageId: this._items[i].id, val: false});
-            if (!partExists) {
-              change = true;
-            }
-            this._items[i].files[fileIndex].isDownloading = partExists;
-            processed++;
-            if (processed === total) {
-              if (missing.length > 0) {
-                Actions.fetchAttachments({
-                  accountId: this._items[i].accountId,
-                  missingItems: missing,
-                  needProgress: true,
-                });
-              }
-              if (change) {
-                this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
-                  return !noLongerMissing.includes(id);
-                });
-                console.log('updating missingAttachmentIds');
-                this.trigger();
-              }
-            }
-          } else {
-            this._setMessageCheckingAttachmentStatus({messageId: this._items[i].id, val: false});
-            if (this.isAttachmentMissing(f.id)) {
-              noLongerMissing.push(f.id);
-              change = true;
-            }
-            processed += 2;
-          }
-          if (processed === total) {
-            if (missing.length > 0) {
-              Actions.fetchAttachments({
-                accountId: this._items[i].accountId,
-                missingItems: missing,
-                needProgress: true,
-              });
-            }
-            if (change) {
-              this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
-                return !noLongerMissing.includes(id);
-              });
-              this.trigger();
-            }
-          }
-        });
-        // });
-        return;
+    const message = this._items.find(item => item.id === messageId)
+    if (!message) {
+      return
+    }
+
+    message.files.forEach((f, fileIndex) => {
+      const tmpPath = AttachmentStore.pathForFile(f);
+      const tempExists = fs.existsSync(tmpPath);
+      if (!tempExists) {
+        missing.push(f.id);
+        if (!this.isAttachmentMissing(f.id)) {
+          this._missingAttachmentIds.push(f.id);
+          change = true;
+        }
+        const partExists = fs.existsSync(`${tmpPath}.part`);
+        if (message.files[fileIndex].isDownloading !== partExists) {
+          change = true;
+          message.files[fileIndex].isDownloading = partExists;
+        }
+      } else {
+        if (this.isAttachmentMissing(f.id)) {
+          noLongerMissing.push(f.id);
+          change = true;
+        }
       }
+    });
+
+    if (missing.length > 0) {
+      Actions.fetchAttachments({
+        accountId: message.accountId,
+        missingItems: missing,
+        needProgress: true,
+      });
+    }
+    if (change) {
+      this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
+        return !noLongerMissing.includes(id);
+      });
+      console.log('updating missingAttachmentIds');
+      this.trigger();
     }
   }
 
 
-  _fetchMissingAttachments(items) {
-    const inLineMissing = [];
-    const normalMissing = [];
+  _fetchMissingAttachments(messages) {
+    const missingAidMap = new Map();
+    const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
-    let total = 0;
-    let processed = 0;
-    items.forEach(i => {
-      total += i.files.length;
-    });
-    total = total * 2;
-    items.forEach((i, itemIndex) => {
-      i.files.forEach((f, fileIndex) => {
+    messages.forEach((message, messageIndex) => {
+      message.files.forEach((f, fileIndex) => {
         const tmpPath = AttachmentStore.pathForFile(f);
-        this._setMessageCheckingAttachmentStatus({messageId: i.id, val: true});
         const tempExists = fs.existsSync(tmpPath);
         if (!tempExists) {
-          if (f.isInline) {
-            inLineMissing.push(f.id);
-          } else {
-            normalMissing.push(f.id);
-          }
-          // This is needed for server draft attachment checking
+          const aId = message.accountId
+          const oldAIdMap = missingAidMap.get(aId) || []
+          missingAidMap.set(aId, [...oldAIdMap, f.id])
           if (!this.isAttachmentMissing(f.id)) {
             this._missingAttachmentIds.push(f.id);
             change = true;
           }
-          this._setMessageCheckingAttachmentStatus({messageId: i.id, val: false});
-          processed++;
           const partExists = fs.existsSync(`${tmpPath}.part`);
-          items[itemIndex].files[fileIndex].isDownloading = partExists;
-          processed++;
-          if (processed === total) {
-            if (change) {
-              if (inLineMissing.length > 0) {
-                Actions.fetchAttachments({
-                  accountId: i.accountId,
-                  missingItems: inLineMissing,
-                });
-              }
-              if (normalMissing.length > 0) {
-                Actions.fetchAttachments({
-                  accountId: i.accountId,
-                  missingItems: normalMissing,
-                });
-              }
-              this._missingAttachmentIds = [...inLineMissing, ...normalMissing];
-              console.log('updating missingAttachmentIds');
-              this.trigger();
-            }
+          if (message.files[fileIndex].isDownloading !== partExists) {
+            change = true;
+            messages[messageIndex].files[fileIndex].isDownloading = partExists;
           }
         } else {
           if (this.isAttachmentMissing(f.id)) {
+            noLongerMissing.push(f.id);
             change = true;
           }
-          processed += 2;
-          this._setMessageCheckingAttachmentStatus({messageId: i.id, val: false});
         }
-        if (processed === total) {
-          if (change) {
-            if (inLineMissing.length > 0) {
-              Actions.fetchAttachments({ accountId: i.accountId, missingItems: inLineMissing });
-            }
-            if (normalMissing.length > 0) {
-              Actions.fetchAttachments({
-                accountId: i.accountId,
-                missingItems: normalMissing,
-              });
-            }
-            this._missingAttachmentIds = [...inLineMissing, ...normalMissing];
-            console.log('updating missingAttachmentIds');
-            this.trigger();
-          }
-        }
-        // });
       });
     });
+    missingAidMap.forEach((value, aid) => {
+      if (value && value.length && aid) {
+        Actions.fetchAttachments({
+          accountId: aid,
+          missingItems: value,
+          needProgress: true,
+        });
+      }
+    })
+
+    if (change) {
+      this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
+        return !noLongerMissing.includes(id);
+      });
+      console.log('updating missingAttachmentIds');
+      this.trigger();
+    }
   }
 
   getMissingFileIds() {
     return this._missingAttachmentIds.slice();
   }
-  _setMessageCheckingAttachmentStatus = ({messageId, val}) => {
-    if(!messageId){
-      return;
-    }
-    // console.log(`Setting ${messageId} result: ${val}`);
-    if(!this._checkingMessageForMissingAttachment[messageId]){
-      this._checkingMessageForMissingAttachment[messageId] = 0;
-    }
-    const prevIsChecking = this._checkingMessageForMissingAttachment[messageId] > 0;
-    if(val){
-      this._checkingMessageForMissingAttachment[messageId]++;
-    } else {
-      this._checkingMessageForMissingAttachment[messageId]--;
-    }
-    if(this._checkingMessageForMissingAttachment <0){
-      this._checkingMessageForMissingAttachment[messageId] = 0;
-    }
-    const isChecking = this._checkingMessageForMissingAttachment[messageId] > 0;
-    if(prevIsChecking !== isChecking){
-      // console.log(`Message ${messageId} checking attachment status changed, trigger`);
-      this.trigger();
-    }
-  };
 
   isMessageMissingAttachment(message) {
     if(!message){
@@ -762,10 +681,6 @@ class MessageStore extends MailspringStore {
     if(!msgId){
       console.error('Missing message.id for isMessageMissingAttachment');
       return false;
-    }
-    if(this._checkingMessageForMissingAttachment[msgId]){
-      // console.log(`Message ${msgId} is checking for attachment`);
-      return true;
     }
     if(!Array.isArray(message.files)){
       // console.error(`Missing message ${msgId} files`);
