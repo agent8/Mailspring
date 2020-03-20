@@ -284,7 +284,7 @@ export default class MessageItem extends React.Component {
   }
 
   _renderAttachments() {
-    const { files = [], body, id } = this.props.message;
+    const { files = [], body, id, accountId } = this.props.message;
     if(!body){
       console.log('message have no body');
       return null;
@@ -303,6 +303,7 @@ export default class MessageItem extends React.Component {
               exposedProps={{
                 files: attachedFiles,
                 messageId: id,
+                accountId,
                 downloads,
                 filePreviewPaths,
                 canRemoveAttachments: false,

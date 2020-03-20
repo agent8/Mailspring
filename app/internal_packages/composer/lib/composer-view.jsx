@@ -17,7 +17,6 @@ import {
   TabGroupRegion,
   AttachmentItem,
   KeyCommandsRegion,
-  ImageAttachmentItem,
   InjectedComponentSet,
   ComposerEditor,
   ComposerSupport,
@@ -472,6 +471,7 @@ export default class ComposerView extends React.Component {
           displayName={file.filename}
           displaySize={file.displayFileSize()}
           fileIconName={`file-${file.extension}.png`}
+          accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
             Actions.removeAttachment({
               headerMessageId: this.props.draft.headerMessageId,
@@ -494,6 +494,7 @@ export default class ComposerView extends React.Component {
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
           isImage={true}
+          accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
             Actions.removeAttachment({
               headerMessageId: this.props.draft.headerMessageId,
@@ -527,6 +528,7 @@ export default class ComposerView extends React.Component {
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
           isImage={true}
+          accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
             Actions.removeAttachment({
               headerMessageId: this.props.draft.headerMessageId,
