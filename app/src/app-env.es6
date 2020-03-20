@@ -189,7 +189,7 @@ export default class AppEnvConstructor {
       this.mailsyncBridge.startSift('Main window started');
     }
   }
-  toggleLogging(){
+  toggleLogging() {
     this.enabledToNativeLog = !this.enabledToNativeLog;
     this.enabledFromNativeLog = !this.enabledFromNativeLog;
     this.enabledBackgroundQueryLog = !this.enabledBackgroundQueryLog;
@@ -1253,13 +1253,13 @@ export default class AppEnvConstructor {
 
       return remote.dialog
         .showOpenDialog(this.getCurrentWindow(), optionTmp)
-        .then(({ canceled, dirPath }) => {
+        .then(({ canceled, filePaths }) => {
           if (canceled) {
             callback(null);
             return;
           }
-          if (dirPath && dirPath.length) {
-            callback(dirPath[0]);
+          if (filePaths && filePaths.length) {
+            callback(filePaths[0]);
           } else {
             callback(null);
           }
