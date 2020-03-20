@@ -78,15 +78,15 @@ const removeAttachmentWithNoContentId = files => {
   return filterMissingAttachments(ret);
 };
 const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
-  if (!Array.isArray(files)){
+  if (!Array.isArray(files)) {
     return [];
   }
-  if(typeof bodyStr !== 'string'){
+  if (typeof bodyStr !== 'string') {
     return [];
   }
   const ret = [];
   files.forEach(file => {
-    if(file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
+    if (file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
       ret.push(file);
     }
   });
@@ -120,28 +120,28 @@ const mergeDefaultBccAndCCs = async (message, account) => {
 };
 
 class DraftFactory {
-  static updateFiles(message, refMessageIsDraft = false, noCopy = false){
-    if(!message){
+  static updateFiles(message, refMessageIsDraft = false, noCopy = false) {
+    if (!message) {
       return;
     }
     AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-    if(Array.isArray(message.files) && message.files.length > 0){
+    if (Array.isArray(message.files) && message.files.length > 0) {
       const attachmentData = [];
       message.files = message.files.map(f => {
         const newFile = File.fromPartialData(f);
         newFile.messageId = message.id;
         newFile.accountId = message.accountId;
         newFile.originFile = f;
-        if(noCopy){
+        if (noCopy) {
           // console.log('update attachment cache');
           // AttachmentStore.setAttachmentData(newFile);
         } else {
           newFile.id = uuid();
         }
         const originalPath = AttachmentStore.pathForFile(f);
-        if(refMessageIsDraft){
+        if (refMessageIsDraft) {
           attachmentData.push({
-            sourceFile: Object.assign({}, f, {fileId: f.id, filePath: originalPath,}),
+            sourceFile: Object.assign({}, f, { fileId: f.id, filePath: originalPath, }),
             dstFile: {
               fileId: newFile.id,
               filePath: AttachmentStore.pathForFile(newFile)
@@ -158,12 +158,12 @@ class DraftFactory {
         }
         return newFile;
       });
-      if(noCopy){
+      if (noCopy) {
         console.log('adding draft to draft attachment cache because of noCopy');
         AttachmentStore.addDraftToAttachmentCache(message);
       } else {
         console.log('copying attachments to draft attachment cache');
-        AttachmentStore.copyAttachmentsToDraft({draft: message, fileData: attachmentData});
+        AttachmentStore.copyAttachmentsToDraft({ draft: message, fileData: attachmentData });
       }
     } else {
       console.log('adding draft to draft attachment cache because of files');
@@ -212,12 +212,12 @@ class DraftFactory {
     DraftFactory.updateFiles(message, false, true);
     return message
   }
-  async createInviteDraft(draftData){
+  async createInviteDraft(draftData) {
     const draft = await this.createDraft(draftData);
     draft.noSave = true;
     return draft;
   }
-  createNewDraftForEdit(draft){
+  createNewDraftForEdit(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
@@ -240,7 +240,7 @@ class DraftFactory {
       refOldDraftHeaderMessageId: draft.headerMessageId,
       pastMessageIds,
     });
-    const message =  new Message(defaults);
+    const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);
     return message;
   }
@@ -258,7 +258,7 @@ class DraftFactory {
             -----User bug report end-----</br>
             </div>
             <div>
-            [MacOS] ${AppEnv.config.get('core.support.native')}
+            [MacOS] ${AppEnv.getVersion()}
             </div></br>
             <div>
             SupportId: ${AppEnv.config.get('core.support.id')}
@@ -283,7 +283,7 @@ class DraftFactory {
       return null;
     }
   }
-  duplicateDraftBecauseOfNewId(draft){
+  duplicateDraftBecauseOfNewId(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
