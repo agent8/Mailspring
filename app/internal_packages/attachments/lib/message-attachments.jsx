@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Actions, Utils, AttachmentStore, MessageStore } from 'mailspring-exports';
-import { AttachmentItem, ImageAttachmentItem } from 'mailspring-component-kit';
+import { AttachmentItem } from 'mailspring-component-kit';
 
 class MessageAttachments extends Component {
   static displayName = 'MessageAttachments';
@@ -10,6 +10,7 @@ class MessageAttachments extends Component {
 
   static propTypes = {
     files: PropTypes.array,
+    accountId: PropTypes.string,
     downloads: PropTypes.object,
     headerMessageId: PropTypes.string,
     filePreviewPaths: PropTypes.object,
@@ -24,7 +25,7 @@ class MessageAttachments extends Component {
   onOpenAttachment = file => {
     if (MessageStore.isAttachmentMissing(file.id)) {
       Actions.fetchAttachments({
-        accountId: file.accountId,
+        accountId: this.props.accountId,
         missingItems: [file.id],
         needProgress: true,
       });
@@ -76,6 +77,7 @@ class MessageAttachments extends Component {
         displaySize={displaySize}
         fileIconName={fileIconName}
         filePreviewPath={filePreviewPath}
+        accountId={this.props.accountId}
         onOpenAttachment={() => this.onOpenAttachment(file)}
         onDownloadAttachment={() => this.onDownloadAttachment(file)}
         onAbortDownload={() => this.onAbortDownload(file)}

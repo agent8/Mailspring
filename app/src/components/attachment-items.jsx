@@ -20,6 +20,7 @@ const propTypes = {
   missing: PropTypes.bool,
   fileId: PropTypes.string,
   filePath: PropTypes.string,
+  accountId: PropTypes.string,
   contentType: PropTypes.string,
   download: PropTypes.shape({
     state: PropTypes.string,
@@ -215,7 +216,10 @@ export class AttachmentItem extends Component {
       return;
     }
     if (this.props.isDownloading || this.props.missing) {
-      MessageStore.fetchMissingAttachmentsByFileIds({ fileIds: [this.props.fileId] });
+      MessageStore.fetchMissingAttachmentsByFileIds({
+        accountId: this.props.accountId,
+        fileIds: [this.props.fileId],
+      });
     } else {
       if (fs.existsSync(this.props.filePath)) {
         this._onClickQuicklookIcon(e);
@@ -230,7 +234,10 @@ export class AttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      MessageStore.fetchMissingAttachmentsByFileIds({ filedIds: [this.props.fileId] });
+      MessageStore.fetchMissingAttachmentsByFileIds({
+        accountId: this.props.accountId,
+        filedIds: [this.props.fileId],
+      });
     }
     const { onOpenAttachment } = this.props;
     if (onOpenAttachment != null) {
@@ -459,7 +466,10 @@ export class ImageAttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      MessageStore.fetchMissingAttachmentsByFileIds({ filedIds: [this.props.fileId] });
+      MessageStore.fetchMissingAttachmentsByFileIds({
+        accountId: this.props.accountId,
+        filedIds: [this.props.fileId],
+      });
     }
     const { onOpenAttachment } = this.props;
     if (onOpenAttachment != null) {

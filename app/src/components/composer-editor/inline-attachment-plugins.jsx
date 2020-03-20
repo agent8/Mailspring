@@ -27,6 +27,7 @@ function ImageNode(props) {
       filePath={AttachmentStore.pathForFile(file)}
       displayName={file.filename}
       fileId={file.id}
+      accountId={draft.accountId}
       onRemoveAttachment={() =>
         editor.change(change => {
           Actions.removeAttachment({
