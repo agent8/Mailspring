@@ -174,6 +174,7 @@ class SidebarItem {
     return Object.assign(
       {
         id,
+        selfId: id,
         // As we are not sure if 'Drafts-' as id have any special meaning, we are adding categoryIds
         categoryIds: opts.categoryIds ? opts.categoryIds : undefined,
         accountIds: perspective.accountIds,
@@ -276,7 +277,12 @@ class SidebarItem {
       return null;
     }
     const perspective = MailboxPerspective.forCategories(cats);
-    const id = _.pluck(cats, 'id').join('-');
+    let id = 'sent';
+    if(opts.key){
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`
+    }
     opts.categoryIds = this.getCategoryIds(accountIds, 'sent');
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
@@ -296,7 +302,12 @@ class SidebarItem {
       return null;
     }
     const perspective = MailboxPerspective.forCategories(cats);
-    const id = _.pluck(cats, 'id').join('-');
+    let id = 'spam';
+    if(opts.key){
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`
+    }
     opts.categoryIds = this.getCategoryIds(accountIds, 'spam');
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
@@ -316,8 +327,18 @@ class SidebarItem {
     if (cats.length === 0) {
       return null;
     }
-    const perspective = MailboxPerspective.forCategories(cats);
-    const id = _.pluck(cats, 'id').join('-');
+    let perspective;
+    if(opts.key === 'all'){
+      perspective = MailboxPerspective.forAllArchived(cats);
+    } else {
+      perspective = MailboxPerspective.forCategories(cats);
+    }
+    let id = 'archive';
+    if(opts.key){
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`
+    }
     opts.categoryIds = this.getCategoryIds(accountIds, 'archive');
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
@@ -346,8 +367,10 @@ class SidebarItem {
     opts.iconName = 'flag.svg';
     const perspective = MailboxPerspective.forStarred(accountIds);
     let id = 'Starred';
-    if (opts.name) {
-      id += `-${opts.name}`;
+    if (opts.key) {
+      id += `-${opts.key}`;
+    }  else {
+      id += `-${accountIds.join('-')}`;
     }
     return this.forPerspective(id, perspective, opts);
   }
@@ -366,8 +389,10 @@ class SidebarItem {
     opts.iconName = 'unread.svg';
     const perspective = MailboxPerspective.forUnread(categories);
     let id = 'Unread';
-    if (opts.name) {
-      id += `-${opts.name}`;
+    if (opts.key) {
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`;
     }
     return this.forPerspective(id, perspective, opts);
   }
@@ -398,8 +423,8 @@ class SidebarItem {
     opts.className = 'jira-icon';
     const perspective = MailboxPerspective.forJira(categories);
     let id = 'Jira';
-    if (opts.name) {
-      id += `-${opts.name}`;
+    if (opts.key) {
+      id += `-${opts.key}`;
     }
     return this.forPerspective(id, perspective, opts);
   }
@@ -408,7 +433,7 @@ class SidebarItem {
     opts.iconName = 'inbox.svg';
     const perspective = MailboxPerspective.forInbox(accountId);
     opts.categoryIds = this.getCategoryIds(accountId, 'inbox');
-    const id = [accountId].join('-');
+    const id = `${accountId}-single`;
     if (Array.isArray(perspective.accountIds) && perspective.accountIds.length === 0) {
       opts.accountIds = [accountId];
     }
@@ -433,7 +458,7 @@ class SidebarItem {
     opts.iconName = 'inbox.svg';
     const perspective = MailboxPerspective.forInbox(accountId);
     opts.categoryIds = this.getCategoryIds(accountId, 'inbox');
-    const id = [accountId].join('-');
+    const id = `${accountId}-inbox`;
     return SidebarItem.appendSubPathByAccounts(
       accountId,
       this.forPerspective(id, perspective, opts)
@@ -452,15 +477,15 @@ class SidebarItem {
     const perspective = MailboxPerspective.forInbox(accountIds);
     opts.categoryIds = this.getCategoryIds(accountIds, 'inbox');
     opts.mode = RetinaImg.Mode.ContentPreserve;
-    const id = accountIds.join('-');
+    const id = 'AllInbox';
     return this.forPerspective(id, perspective, opts);
   }
 
-  static forSingleAccount(accountId, opts = {}) {
-    const perspective = MailboxPerspective.forSingleAccount(accountId);
-    const id = accountId;
-    return this.forPerspective(id, perspective, opts);
-  }
+  // static forSingleAccount(accountId, opts = {}) {
+  //   const perspective = MailboxPerspective.forSingleAccount(accountId);
+  //   const id = accountId;
+  //   return this.forPerspective(id, perspective, opts);
+  // }
 
   static forAttachments(accountIds, opts = {}) {
     const perspetive = MailboxPerspective.forAttachments(accountIds);
@@ -475,7 +500,13 @@ class SidebarItem {
     if (!Array.isArray(opts.categoryIds) || opts.categoryIds.length === 0) {
       return null;
     }
-    const id = `Drafts-${opts.name}`;
+    let id = `Drafts-`;
+    if(opts.key) {
+      id += `${opts.key}`;
+    } else {
+      id += `${accountIds.join('-')}`
+    }
+
     // return this.forPerspective(id, perspective, opts);
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
@@ -495,12 +526,18 @@ class SidebarItem {
     return this.forPerspective(id, perspective, opts);
   }
 
-  static forToday(accountIds, opts){
+  static forToday(accountIds, opts = {}){
     if (!Array.isArray(accountIds)) {
       accountIds = [accountIds];
     }
     const perspective = MailboxPerspective.forToday(accountIds);
-    return this.forPerspective('today', perspective, opts);
+    let id = 'today-';
+    if(opts && opts.key){
+      id += opts.key;
+    } else {
+      id += accountIds.join('-');
+    }
+    return this.forPerspective(id, perspective, opts);
   }
 
   static forAllTrash(accountIds, opts = {}) {
@@ -510,7 +547,7 @@ class SidebarItem {
     if (!Array.isArray(opts.categoryIds) || opts.categoryIds.length === 0) {
       return null;
     }
-    const id = `AllTrash-${opts.name}`;
+    const id = `AllTrash`;
     // return this.forPerspective(id, perspective, opts);
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
@@ -600,6 +637,8 @@ class SidebarItem {
           itemDisplayName = category.displayName;
         }
         item = SidebarItem.forCategories([category], { name: itemDisplayName });
+        item.id = `${parent.id}-${item.selfId}`;
+        item.collapsed = isItemCollapsed(item.id);
         parent.children.push(item);
         if (item.selected) {
           parent.selected = true;

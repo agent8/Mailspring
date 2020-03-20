@@ -79,7 +79,7 @@ class SidebarSection {
     if(standardItem){
       items.unshift(standardItem);
     }
-    standardItem = SidebarItem.forDrafts([account.id]);
+    standardItem = SidebarItem.forDrafts([account.id], {key: `standard-${account.id}`});
     if(standardItem){
       items.unshift(standardItem);
     }
@@ -173,19 +173,19 @@ class SidebarSection {
     }
     if (accounts.length > 1) {
       items.push(DIVIDER_OBJECT);
-      folderItem = SidebarItem.forToday(accountIds, { displayName: 'Today' });
+      folderItem = SidebarItem.forToday(accountIds, { displayName: 'Today', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread' });
+      folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forStarred(accountIds, { displayName: 'Flagged' });
+      folderItem = SidebarItem.forStarred(accountIds, { displayName: 'Flagged', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forDrafts(accountIds, { displayName: 'All Drafts' });
+      folderItem = SidebarItem.forDrafts(accountIds, { displayName: 'All Drafts', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
@@ -193,20 +193,20 @@ class SidebarSection {
       // if (folderItem) {
       //   items.push(folderItem);
       // }
-      folderItem = SidebarItem.forSpam(accountIds, { displayName: 'Spam' });
+      folderItem = SidebarItem.forSpam(accountIds, { displayName: 'Spam', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forAllTrash(accountIds, { displayName: 'Trash' });
+      folderItem = SidebarItem.forAllTrash(accountIds, { displayName: 'Trash', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
 
-      folderItem = SidebarItem.forArchived(accountIds, { displayName: 'All Archive', name: 'allArchive' });
+      folderItem = SidebarItem.forArchived(accountIds, { displayName: 'All Archive', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forSentMails(accountIds, { displayName: 'All Sent' });
+      folderItem = SidebarItem.forSentMails(accountIds, { displayName: 'All Sent', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
