@@ -30,15 +30,16 @@ export default class SheetContainer extends React.Component {
       if (rst) {
         for (const v of rst) {
           if (v.version === '6') {
-            const message = `In order to use new Edison Mail, \nplease click Rebuild to reset your local cache.`;
-            const buttons = ['Quit', 'Rebuild'];
-            remote.dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
-              if (response === 0) {
-                AppEnv.quit();
-              } else {
-                Actions.forceKillAllClients();
-              }
-            });
+            // const message = `In order to use new Edison Mail, \nplease click Rebuild to reset your local cache.`;
+            // const buttons = ['Quit', 'Rebuild'];
+            // remote.dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
+            //   if (response === 0) {
+            //     AppEnv.quit();
+            //   } else {
+            //     Actions.forceKillAllClients();
+            //   }
+            // });
+            Actions.forceKillAllClients();
             break;
           }
         }
