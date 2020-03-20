@@ -21,6 +21,10 @@ export default class ZendeskToolbarButton extends Component {
   componentWillMount = async () => {
     this.state.isZendesk = await this._isZendesk()
   }
+  UNSAFE_componentWillReceiveProps = async nextProps => {
+    const isZendesk = await this._isZendesk()
+    this.setState({ isZendesk })
+  }
   fetchMessages = async () => {
     const { thread } = this.props
     const query = MessageStore.findAllByThreadIdWithBody({ threadId: thread.id })
