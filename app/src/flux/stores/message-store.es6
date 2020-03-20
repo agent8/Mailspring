@@ -654,7 +654,6 @@ class MessageStore extends MailspringStore {
         Actions.fetchAttachments({
           accountId: aid,
           missingItems: value,
-          needProgress: true,
         });
       }
     })
