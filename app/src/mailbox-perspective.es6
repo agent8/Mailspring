@@ -75,6 +75,9 @@ export default class MailboxPerspective {
   static forCategory(category) {
     return category ? new CategoryMailboxPerspective([category]) : this.forNothing();
   }
+  static forAllArchived(categories) {
+    return categories.length > 0 ? new AllArchiveCategoryMailboxPerspective(categories) : this.forNothing();
+  }
 
   static forCategories(categories) {
     return categories.length > 0 ? new CategoryMailboxPerspective(categories) : this.forNothing();
@@ -158,6 +161,10 @@ export default class MailboxPerspective {
       if (json.type === CategoryMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
         return this.forCategories(categories);
+      }
+      if (json.type === AllArchiveCategoryMailboxPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forAllArchived(categories);
       }
       if (json.type === UnreadMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -1058,6 +1065,23 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         previousFolder,
       });
     });
+  }
+}
+
+
+class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(data) {
+    super(data);
+    this.isAllArchive = true;
+  }
+  toJSON() {
+    const json = super.toJSON();
+    json.isAllArchive = true;
+    return json
+  }
+
+  isEqual(other) {
+    return other.isAllArchive;
   }
 }
 
