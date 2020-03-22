@@ -120,7 +120,12 @@ export default class ZendeskDetail extends Component {
           allUsers: users,
         })
       }
-      this.safeSetState({ cloading: false, commentLoading: true })
+      this.safeSetState({ loading: false, commentLoading: true })
+      this.safeSetState({
+        loading: false,
+        ticket,
+        link: ticketLink,
+      })
       ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
       ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
       ticket.followers = []
@@ -145,6 +150,10 @@ export default class ZendeskDetail extends Component {
   }
   getComments = async ticket => {
     const comments = await this.zendesk.getComments(ticket)
+    this.safeSetState({
+      loading: false,
+      commentLoading: false,
+    })
     for (let item of comments) {
       item.author = await this.zendesk.getUser(item.authorId)
     }
@@ -161,7 +170,7 @@ export default class ZendeskDetail extends Component {
     return (
       <span className='zendesk-user'>
         {/* <img src={userInfo.avatarUrls['24x24']} /> */}
-        <span>{userInfo.name}</span>
+        <span>{userInfo && userInfo.name}</span>
       </span>
     )
   }
@@ -227,6 +236,7 @@ export default class ZendeskDetail extends Component {
     comment.createdAt = new Date()
     comment.htmlBody = commentContent
     ticket.comments.unshift(comment)
+    this.commentInput.value = ''
     this.setState({ ticket })
   }
   asyncUpdateField = async (name, value, field) => {
@@ -376,6 +386,7 @@ export default class ZendeskDetail extends Component {
       tagsProgress,
       errorMessage,
       followersProgress,
+      commentProgress,
       followerError,
       commentSaving,
     } = this.state
@@ -604,6 +615,7 @@ export default class ZendeskDetail extends Component {
                 Add Comment
               </button>
             )}
+            {this._renderProgress(commentProgress)}
           </div>
         </div>
       </div>

@@ -86,6 +86,13 @@ export default class OauthLogin extends Component {
       console.log(' zendeskOptions:', zendeskOptions)
       AppEnv.trackingEvent('Zendesk-Login-Success')
       AppEnv.config.set(CONFIG_KEY, config)
+      remote.dialog.showMessageBox({
+        type: 'info',
+        buttons: ['OK'],
+        defaultId: 0,
+        title: 'Login Succeed',
+        message: `You login ${zendeskSubdomain}.zendesk.com.`,
+      })
     }
     if (this._server) {
       this._server.close()
