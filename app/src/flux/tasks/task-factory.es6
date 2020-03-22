@@ -309,7 +309,7 @@ const TaskFactory = {
           threads,
           source,
           labelsToAdd: [],
-          labelsToRemove: [targetCategory],
+          labelsToRemove: [sourceCategory],
           previousFolder,
         }),
       ];
