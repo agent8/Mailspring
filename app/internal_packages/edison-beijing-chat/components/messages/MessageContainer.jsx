@@ -22,15 +22,23 @@ class MessageContainer extends Component {
     groupedMessages: [],
     startIndex: START_INDEX,
   };
+  _mounted = false;
   //   isFinished = false;
   shouldComponentUpdate = true;
+  _resizeDebounce = () => debounce(this.onResize, 100);
 
   componentDidMount() {
+    this._mounted = true;
     this.onResize();
     this.getMessages();
     // 监听是否有新消息
     this._unsub = MessageStore.listen(this.getMessages);
-    window.addEventListener('resize', debounce(this.onResize, 100));
+    window.addEventListener('resize', this._resizeDebounce);
+  }
+  componentWillUnmount() {
+    this._mounted = false;
+    this._unsub();
+    window.removeEventListener('resize', this._resizeDebounce);
   }
 
   //   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -51,6 +59,9 @@ class MessageContainer extends Component {
   //   }
 
   getMessages = async () => {
+    if(!this._mounted){
+      return;
+    }
     let selectedConversation = await MessageStore.getSelectedConversation();
     let nextJid = selectedConversation.jid;
     console.log('shouldComponentUpdate--getMessages', nextJid);
@@ -59,6 +70,9 @@ class MessageContainer extends Component {
 
     const { startIndex } = this.state;
     let groupedMessages = groupByTime(messages.slice(0, startIndex));
+    if(!this._mounted){
+      return;
+    }
     this.setState({
       //   shouldComponentUpdate: true,
       jid: nextJid,
@@ -98,6 +112,9 @@ class MessageContainer extends Component {
   };
 
   onResize = () => {
+    if(!this._mounted){
+      return;
+    }
     console.log('shouldComponentUpdate--resize');
     const chatViewContainer = document.querySelector('.chat-view-container');
     let clientHeight = chatViewContainer.clientHeight - 68 - 92;
