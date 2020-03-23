@@ -276,9 +276,16 @@ class SidebarItem {
     opts.iconName = 'archive.svg';
     let cats = [];
     for (let accountId of accountIds) {
-      let tmp = CategoryStore.getCategoryByRole(accountId, 'archive');
-      if (tmp) {
-        cats.push(tmp);
+      const account = AccountStore.accountForId(accountId);
+      if(account){
+        let role = 'archive';
+        if(account.provider === 'gmail' && accountIds.length > 1){
+          role = 'all';
+        }
+        let tmp = CategoryStore.getCategoryByRole(accountId, role);
+        if (tmp) {
+          cats.push(tmp);
+        }
       }
     }
     if (cats.length === 0) {
