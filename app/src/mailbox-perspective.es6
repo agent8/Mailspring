@@ -16,6 +16,8 @@ import Sift from './flux/models/sift';
 import Category from './flux/models/category';
 import Actions from './flux/actions';
 import { LabelColorizer } from 'mailspring-component-kit';
+import Matcher from './flux/attributes/matcher';
+import JoinTable from './flux/models/join-table';
 
 let WorkspaceStore = null;
 let ChangeStarredTask = null;
@@ -742,11 +744,10 @@ class TodayMailboxPerspective extends MailboxPerspective {
   }
 
   threads() {
+    let query = DatabaseStore.findAll(Thread, {state: false})
+      .limit(0);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
-    const query = DatabaseStore.findAll(Thread, {state: false})
-      .where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay/1000)])
-      .limit(0);
     const categoryIds = [];
     this.categories().forEach(category => {
       if (category) {
@@ -754,7 +755,14 @@ class TodayMailboxPerspective extends MailboxPerspective {
       }
     });
     if (categoryIds.length > 0) {
-      query.where([Thread.attributes.categories.containsAny(categoryIds)]);
+      const conditions = new Matcher.JoinAnd([
+        Thread.attributes.categories.containsAny(categoryIds),
+        JoinTable.useAttribute('lastDate', 'DateTime').greaterThan(startOfDay / 1000),
+        Thread.attributes.state.equal(0),
+      ]);
+      query = query.where([conditions]);
+    } else {
+      query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay/1000)]);
     }
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
