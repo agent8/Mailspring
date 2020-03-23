@@ -103,10 +103,14 @@ class AccountBasicSettingsForm extends React.Component {
         .split('@')
         .pop()
         .toLowerCase();
+      account.settings.imap_username = account.emailAddress;
       account.settings.imap_host = `imap.${domain}`;
       account.settings.smtp_host = `smtp.${domain}`;
+      // try to connect default imap server, if failed, move to 'account-settings-imap' page
+      this.props.onConnect(account);
+
       // we need the user to provide IMAP/SMTP credentials manually
-      OnboardingActions.moveToPage('account-settings-imap');
+      // OnboardingActions.moveToPage('account-settings-imap');
     }
   }
 
