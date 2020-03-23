@@ -121,12 +121,12 @@ export default class ZendeskDetail extends Component {
         })
       }
       this.safeSetState({ loading: false, commentLoading: true })
+      ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
       this.safeSetState({
         loading: false,
         ticket,
         link: ticketLink,
       })
-      ticket.assignee = await this.zendesk.getUser(ticket.assigneeId)
       ticket.submitter = await this.zendesk.getUser(ticket.submitterId)
       ticket.followers = []
       for (let id of ticket.followerIds) {
@@ -403,7 +403,8 @@ export default class ZendeskDetail extends Component {
         )}
       </div>
     )
-    if (!ticket || !ticket.assignee || !ticket.submitter) {
+    if (!ticket) {
+      // || !ticket.assignee || !ticket.submitters
       return (
         <div className='zendesk-detail'>
           {userLogo}
@@ -439,7 +440,8 @@ export default class ZendeskDetail extends Component {
         {status}
       </Option>
     )
-    const followers = ticket.followers.map((item, index) => {
+    const ticketFollwers = ticket.followers || []
+    const followers = ticketFollwers.map((item, index) => {
       return (
         <span className='piece' key={index}>
           <span>{item.email || item.user_email}</span>
@@ -482,7 +484,7 @@ export default class ZendeskDetail extends Component {
                   ref={el => (this.assignee = el)}
                   className='assign-users'
                   defaultValue={{
-                    key: ticket.assignee.name,
+                    key: ticket.assignee && ticket.assignee.name,
                     value: this.renderUserNode(ticket.assignee),
                   }}
                   optionLabelProp='children'
