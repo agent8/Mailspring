@@ -445,13 +445,6 @@ export default class ZendeskDetail extends Component {
       return (
         <span className='piece' key={index}>
           <span>{item.email || item.user_email}</span>
-          <RetinaImg
-            isIcon
-            name='close.svg'
-            className='remove-tag'
-            mode={RetinaImg.Mode.ContentIsMask}
-            onClick={() => this.onRemoveFollower(index)}
-          />
         </span>
       )
     })
@@ -480,24 +473,7 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Assignee</span>
               <div className='content with-progress'>
-                <Select
-                  ref={el => (this.assignee = el)}
-                  className='assign-users'
-                  defaultValue={{
-                    key: ticket.assignee && ticket.assignee.name,
-                    value: this.renderUserNode(ticket.assignee),
-                  }}
-                  optionLabelProp='children'
-                  filterOption={this.selectFilter}
-                  labelInValue={true}
-                  notFoundContent=''
-                  showSearch={true}
-                  onChange={this.onAssigneeChange}
-                  dropdownClassName='zendesk-dropdown'
-                >
-                  {assgineeOptions}
-                </Select>
-                {this._renderProgress(assignProgress)}
+                <span>{ticket.assignee && ticket.assignee.name}</span>
               </div>
             </div>
             <div>
@@ -509,22 +485,6 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Followers</span>
               <div>{followers}</div>
-              <input
-                style={{ width: '60px' }}
-                ref={el => {
-                  this.followerInput = el
-                }}
-              ></input>
-              <RetinaImg
-                className='change-done'
-                style={{ width: 16 }}
-                name={'check-alone.svg'}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-                onClick={this.onAddFollower}
-              />
-              {this._renderProgress(followersProgress)}
-              {followerError ? <span className='follower-error'>{followerError}</span> : null}
             </div>
             <div>
               <span className='label'>Priority</span>
