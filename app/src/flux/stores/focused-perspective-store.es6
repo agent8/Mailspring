@@ -210,10 +210,13 @@ class FocusedPerspectiveStore extends MailspringStore {
     }
     return perspective;
   }
+  _isInChatView(){
+    const currentSheet = WorkspaceStore.topSheet();
+    return currentSheet && currentSheet.id === 'ChatView';
+  }
 
   _setPerspective(perspective, sidebarAccountIds, forceTrigger = false) {
     let shouldTrigger = forceTrigger;
-
     if (perspective.isTab) {
       // if this perspective is a tab, it must be a tab of this current sidebar
 
@@ -223,7 +226,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     } else {
       // if this perspective not a tab, judge if current sidebar need to update
 
-      if (perspective.isEqual(this._currentSidebar)) {
+      if (perspective.isEqual(this._currentSidebar) && !this._isInChatView() ) {
         return;
       } else {
         this._currentSidebar = perspective;
@@ -232,7 +235,7 @@ class FocusedPerspectiveStore extends MailspringStore {
       }
     }
 
-    if (this._current.isTab && this._current.isTabOfPerspective(perspective)) {
+    if (this._current.isTab && this._current.isTabOfPerspective(perspective) && !this._isInChatView()) {
       return;
     }
 
@@ -245,6 +248,9 @@ class FocusedPerspectiveStore extends MailspringStore {
 
     if (!focusPerspective.isEqual(this._current)) {
       this._current = focusPerspective;
+      shouldTrigger = true;
+    } else if(this._isInChatView()){
+      console.log('trigger because we are in chat view');
       shouldTrigger = true;
     }
 
