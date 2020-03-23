@@ -49,6 +49,7 @@ export default class MessagesPanel extends Component {
   }
 
   componentDidMount() {
+    this._mounted = true;
     this.onConversationChange();
     this.setState({
       online: navigator.onLine,
@@ -75,6 +76,7 @@ export default class MessagesPanel extends Component {
   //   };
 
   componentWillUnmount() {
+    this._mounted = false;
     for (const unsub of this._unsubs) {
       unsub();
     }
@@ -91,16 +93,20 @@ export default class MessagesPanel extends Component {
 
   onConversationChange = () => {
     const selectedConversation = ConversationStore.getSelectedConversation();
-    this.setState({
-      selectedConversation,
-    });
+    if (this._mounted) {
+      this.setState({
+        selectedConversation,
+      });
+    }
   };
 
   onContactChange = async () => {
     const contacts = await ContactStore.getContacts();
-    this.setState({
-      contacts,
-    });
+    if (this._mounted) {
+      this.setState({
+        contacts,
+      });
+    }
   };
 
   onLine = e => {
