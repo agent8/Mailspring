@@ -122,7 +122,7 @@ export default {
           },
           enableChat: {
             type: 'boolean',
-            default: false,
+            default: true,
             title: 'Enable chat feature',
           },
           chatProdEnv: {

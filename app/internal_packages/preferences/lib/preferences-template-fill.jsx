@@ -158,17 +158,17 @@ const preferencesTemplateFill = {
             },
           ],
         },
-        // {
-        //   groupName: 'MESSAGES/CHAT',
-        //   groupItem: [
-        //     {
-        //       label: 'Enable chat feature',
-        //       configSchema: configSchema => configSchema.properties.workspace.properties.enableChat,
-        //       keyPath: 'core.workspace.enableChat',
-        //       keywords: [],
-        //     },
-        //   ],
-        // },
+        {
+          groupName: 'MESSAGES/CHAT',
+          groupItem: [
+            {
+              label: 'Enable chat feature',
+              configSchema: configSchema => configSchema.properties.workspace.properties.enableChat,
+              keyPath: 'core.workspace.enableChat',
+              keywords: [],
+            },
+          ],
+        },
         {
           groupName: 'DOWNLOADS',
           groupItem: [
