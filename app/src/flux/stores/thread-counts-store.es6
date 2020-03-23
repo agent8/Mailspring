@@ -80,17 +80,24 @@ class ThreadCountsStore extends MailspringStore {
   _generateTodayViewQuery = (countType, categoryIds) => {
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
-    let query = DatabaseStore.count(Thread, { state: 0 })
-      .where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay / 1000)]);
+    let query = DatabaseStore.count(Thread, { state: 0 });
     if (countType === 'unread' && categoryIds.length > 0) {
       const unreadMatchers = new Matcher.JoinAnd([
         Thread.attributes.categories.containsAny(categoryIds),
         JoinTable.useAttribute('unread', 'Number').equal(1),
         Thread.attributes.state.equal(0),
+        JoinTable.useAttribute('lastDate', 'DateTime').greaterThan(startOfDay / 1000)
       ]);
       query = query.where([unreadMatchers]);
     }else if (countType === 'total' && categoryIds.length > 0) {
-      query = query.where([Thread.attributes.categories.containsAny(categoryIds)]);
+      const conditions = new Matcher.JoinAnd([
+        Thread.attributes.categories.containsAny(categoryIds),
+        Thread.attributes.state.equal(0),
+        JoinTable.useAttribute('lastDate', 'DateTime').greaterThan(startOfDay / 1000)
+      ]);
+      query = query.where([conditions]);
+    } else {
+      query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay / 1000)]);
     }
     return query;
   };
