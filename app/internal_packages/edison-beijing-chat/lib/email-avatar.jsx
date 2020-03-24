@@ -123,7 +123,7 @@ export default class EmailAvatar extends Component {
       return;
     }
     if (email) {
-      const acc = AccountStore.accountForEmail({ email });
+      const acc = AccountStore.accountForEmail(email);
       let avatarUrl;
       if (acc && acc.picture) {
         avatarUrl = acc.picture;
