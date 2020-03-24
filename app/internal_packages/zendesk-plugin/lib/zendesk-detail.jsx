@@ -77,6 +77,21 @@ export default class ZendeskDetail extends Component {
     }
 
     const { ticketLink, ticketKey } = this._findTicketKey(messages)
+    if (!ticketLink) {
+      this.safeSetState({
+        loading: false,
+        errorMessage: 'No ticket link found in this thread.',
+      })
+      return
+    }
+    const { zendeskSubdomain } = this.props.config
+    if (!ticketLink.includes(zendeskSubdomain)) {
+      this.safeSetState({
+        loading: false,
+        errorMessage: `This ticket is not in your subdomain: ${zendeskSubdomain}.`,
+      })
+      return
+    }
 
     if (ticketLink) {
       if (ticketLink === this.ticketLink) {
@@ -110,6 +125,13 @@ export default class ZendeskDetail extends Component {
           errorMessage,
         })
         return
+      }
+      try {
+        await this.asyncUpdateField('tags', ticket.tags)
+      } catch (err) {
+        if (err.statusMessage == 'Unprocessable Entity') {
+          ticket.status = 'closed'
+        }
       }
       if (this.state.allUsers.length === 0) {
         const users = await this.zendesk.searchAssignableUsers({
@@ -290,6 +312,10 @@ export default class ZendeskDetail extends Component {
     )
   }
   _renderProgress (progress) {
+    const { ticket } = this.state
+    if (ticket.status == 'closed') {
+      return null
+    }
     let p = null
     if (progress === 'loading') {
       p = this._renderLoading(20)
@@ -393,27 +419,15 @@ export default class ZendeskDetail extends Component {
     if (loading) {
       return <div className='large-loading'>{this._renderLoading(40)}</div>
     }
-    const { currentUser } = this.props.config
-    const userLogo = (
-      <div className='zendesk-current-user' onClick={this.showMore}>
-        {currentUser && currentUser.avatarUrls ? (
-          <img src={currentUser.avatarUrls && currentUser.avatarUrls['48x48']} />
-        ) : (
-          <RetinaImg name={'zendesk.svg'} isIcon mode={RetinaImg.Mode.ContentIsMask} />
-        )}
-      </div>
-    )
     if (!ticket) {
       // || !ticket.assignee || !ticket.submitters
       return (
         <div className='zendesk-detail'>
-          {userLogo}
           <div className='error'>{errorMessage}</div>
         </div>
       )
     }
     const description = ticket.description.replace('\n', '<br/>')
-    const status = ticket.status
     const assgineeOptions = allUsers.map((item, idx) => (
       <Option key={item.name} displayname={item.name} value={item.id}>
         {this.renderUserNode(item)}
@@ -429,17 +443,15 @@ export default class ZendeskDetail extends Component {
         {item}
       </Option>
     ))
-    const statusOptions = ['open', 'pending', 'solved'].map(item => (
+    const statusList = ['open', 'pending', 'solved']
+    if (!statusList.includes(ticket.status)) {
+      statusList.push(ticket.status)
+    }
+    const statusOptions = statusList.map(item => (
       <Option key={item} value={item}>
         {item}
       </Option>
     ))
-    const statusKey = 'status:' + status
-    statusOptions.push(
-      <Option key={statusKey} value={statusKey}>
-        {status}
-      </Option>
-    )
     const ticketFollwers = ticket.followers || []
     const followers = ticketFollwers.map((item, index) => {
       return (
@@ -452,19 +464,20 @@ export default class ZendeskDetail extends Component {
       return (
         <span className='piece' key={index}>
           <span>{item}</span>
-          <RetinaImg
-            isIcon
-            name='close.svg'
-            className='remove-tag'
-            mode={RetinaImg.Mode.ContentIsMask}
-            onClick={() => this.onRemoveTag(index)}
-          />
+          {ticket.status != 'closed' ? (
+            <RetinaImg
+              isIcon
+              name='close.svg'
+              className='remove-tag'
+              mode={RetinaImg.Mode.ContentIsMask}
+              onClick={() => this.onRemoveTag(index)}
+            />
+          ) : null}
         </span>
       )
     })
     return (
       <div className='zendesk-detail'>
-        {userLogo}
         <div className='zendesk-title'>
           <a href={this.state.link}>ticket {ticketKey}</a>
         </div>
@@ -489,74 +502,90 @@ export default class ZendeskDetail extends Component {
             <div>
               <span className='label'>Priority</span>
               <div className='content with-progress'>
-                <Select
-                  className='zendesk-status'
-                  value={{ key: ticket.priority, value: ticket.priority }}
-                  optionLabelProp='children'
-                  labelInValue={true}
-                  notFoundContent=''
-                  showSearch={false}
-                  onChange={this.onPriorityChange}
-                  dropdownClassName='zendesk-dropdown'
-                >
-                  {priorityOptions}
-                </Select>
+                {ticket.status != 'closed' ? (
+                  <Select
+                    className='zendesk-status'
+                    value={{ key: ticket.priority, value: ticket.priority }}
+                    optionLabelProp='children'
+                    labelInValue={true}
+                    notFoundContent=''
+                    showSearch={false}
+                    onChange={this.onPriorityChange}
+                    dropdownClassName='zendesk-dropdown'
+                  >
+                    {priorityOptions}
+                  </Select>
+                ) : (
+                  <span>{ticket.priority}</span>
+                )}
                 {this._renderProgress(priorityProgress)}
               </div>
             </div>
             <div>
               <span className='label'>Type</span>
               <div className='content with-progress'>
-                <Select
-                  className='zendesk-status'
-                  value={{ key: ticket.type, value: ticket.type }}
-                  optionLabelProp='children'
-                  labelInValue={true}
-                  notFoundContent=''
-                  showSearch={false}
-                  onChange={this.onTypeChange}
-                  dropdownClassName='zendesk-dropdown'
-                >
-                  {typeOptions}
-                </Select>
+                {ticket.status != 'closed' ? (
+                  <Select
+                    className='zendesk-status'
+                    value={{ key: ticket.type, value: ticket.type }}
+                    optionLabelProp='children'
+                    labelInValue={true}
+                    notFoundContent=''
+                    showSearch={false}
+                    onChange={this.onTypeChange}
+                    dropdownClassName='zendesk-dropdown'
+                  >
+                    {typeOptions}
+                  </Select>
+                ) : (
+                  <span>{ticket.type}</span>
+                )}
                 {this._renderProgress(typeProgress)}
               </div>
             </div>
             <div>
               <span className='label'>Status</span>
               <div className='content with-progress'>
-                <Select
-                  className='zendesk-status'
-                  value={{ key: statusKey, value: status }}
-                  optionLabelProp='children'
-                  labelInValue={true}
-                  notFoundContent=''
-                  showSearch={false}
-                  onChange={this.onStatusChange}
-                  dropdownClassName='zendesk-dropdown'
-                >
-                  {statusOptions}
-                </Select>
+                {ticket.status != 'closed' ? (
+                  <Select
+                    className='zendesk-status'
+                    value={{ key: ticket.status, value: ticket.status }}
+                    optionLabelProp='children'
+                    labelInValue={true}
+                    notFoundContent=''
+                    showSearch={false}
+                    onChange={this.onStatusChange}
+                    dropdownClassName='zendesk-dropdown'
+                  >
+                    {statusOptions}
+                  </Select>
+                ) : (
+                  <span>{ticket.status}</span>
+                )}
                 {this._renderProgress(statusProgress)}
               </div>
             </div>
             <div>
               <span className='label'>Tags</span>
               <div>{tags}</div>
-              <input
-                style={{ width: '60px' }}
-                ref={el => {
-                  this.tagInput = el
-                }}
-              ></input>
-              <RetinaImg
-                className='change-done'
-                style={{ width: 16 }}
-                name={'check-alone.svg'}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-                onClick={this.onAddTag}
-              />
+              {ticket.status != 'closed' ? (
+                <input
+                  style={{ width: '60px' }}
+                  ref={el => {
+                    this.tagInput = el
+                  }}
+                ></input>
+              ) : null}
+              {ticket.status != 'closed' ? (
+                <RetinaImg
+                  className='change-done'
+                  style={{ width: 16 }}
+                  name={'check-alone.svg'}
+                  isIcon
+                  mode={RetinaImg.Mode.ContentIsMask}
+                  onClick={this.onAddTag}
+                />
+              ) : null}
               {this._renderProgress(tagsProgress)}
             </div>
           </header>
@@ -568,17 +597,19 @@ export default class ZendeskDetail extends Component {
             <span className='label'>Comments</span>
             {this.renderComments(ticket.comments)}
           </div>
-          <div className='zendesk-submit-comment'>
-            <textarea ref={el => (this.commentInput = el)}></textarea>
-            {commentSaving ? (
-              this._renderLoading(20)
-            ) : (
-              <button className='btn btn-zendesk' onClick={this.addComment}>
-                Add Comment
-              </button>
-            )}
-            {this._renderProgress(commentProgress)}
-          </div>
+          {ticket.status != 'closed' ? (
+            <div className='zendesk-submit-comment'>
+              <textarea ref={el => (this.commentInput = el)}></textarea>
+              {commentSaving ? (
+                this._renderLoading(20)
+              ) : (
+                <button className='btn btn-zendesk' onClick={this.addComment}>
+                  Add Comment
+                </button>
+              )}
+              {this._renderProgress(commentProgress)}
+            </div>
+          ) : null}
         </div>
       </div>
     )
