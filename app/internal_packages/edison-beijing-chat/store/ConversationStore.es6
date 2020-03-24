@@ -208,11 +208,10 @@ class ConversationStore extends MailspringStore {
   };
 
   refreshConversations = async () => {
-    const res = await ConversationModel.findAll({
+    this.conversations = await ConversationModel.findAll({
       order: [['lastMessageTime', 'desc']],
       //   raw: true,
     });
-    this.conversations = res.map(item => ({ ...item.dataValues }));
     if (this.selectedConversation && this.selectedConversation.jid !== NEW_CONVERSATION) {
       this.selectedConversation = await this.getConversationByJid(this.selectedConversation.jid);
     }
