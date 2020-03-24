@@ -299,7 +299,7 @@ class ConversationStore extends MailspringStore {
     conversation = {
       jid: contact.jid,
       curJid: contact.curJid,
-      name: name(contact.jid) || contact.name,
+      name: contact.name || name(contact.jid),
       isGroup: false,
       // below is some filling to show the conversation
       unreadMessages: 0,
