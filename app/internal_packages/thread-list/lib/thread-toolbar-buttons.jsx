@@ -31,17 +31,17 @@ const threadSelectionScope = (props, selection) => {
   let threads = props.items;
   const focusedThread = FocusedContentStore.focused('thread');
   const workspaceMode = WorkspaceStore.layoutMode();
-  if (selection &&  workspaceMode!== 'list') {
+  if (selection && workspaceMode !== 'list') {
     const selectionThreads = selection.items();
     if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
       threads = selectionThreads;
     }
-  } else if (selection && !focusedThread && workspaceMode === 'list'){
+  } else if (selection && !focusedThread && workspaceMode === 'list') {
     const selectionThreads = selection.items();
     if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
       threads = selectionThreads;
     }
-  } else if (focusedThread && workspaceMode === 'list'){
+  } else if (focusedThread && workspaceMode === 'list') {
     threads = [focusedThread];
   }
   return threads;
@@ -642,12 +642,12 @@ class HiddenToggleImportantButton extends React.Component {
       <BindGlobalCommands
         key={allImportant ? 'unimportant' : 'important'}
         commands={
-            {
-              'core:mark-unimportant': event =>
-                commandCb(event, this._onShortcutSetImportant, false),
-              'core:mark-important': event =>
-                commandCb(event, this._onShortcutSetImportant, true),
-            }
+          {
+            'core:mark-unimportant': event =>
+              commandCb(event, this._onShortcutSetImportant, false),
+            'core:mark-important': event =>
+              commandCb(event, this._onShortcutSetImportant, true),
+          }
         }
       >
         <span />
@@ -761,7 +761,7 @@ export class ThreadListMoreButton extends React.Component {
       if (this._account && this._account.usesLabels()) {
         menu.append(
           new MenuItem({
-            label: `Mark important`,
+            label: `Mark as important`,
             click: () => AppEnv.commands.dispatch('core:mark-important'),
           })
         );
@@ -983,7 +983,7 @@ export const ThreadListToolbarButtons = CreateButtonGroup(
 );
 export const HiddenThreadListToolbarButtons = CreateButtonGroup(
   'HiddenThreadListToolbarButtons',
-  [ HiddenGenericRemoveButton, HiddenToggleImportantButton ],
+  [HiddenGenericRemoveButton, HiddenToggleImportantButton],
   { order: 1 }
 );
 
