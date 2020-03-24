@@ -29,12 +29,9 @@ export default class ConversationsPanel extends PureComponent {
 
   onProgressChange = () => {
     let { progress, props } = ProgressBarStore;
-    // progress = Object.assign({}, progress);
-    // const state = Object.assign({}, this.state, { progress }, props);
-    this.setState({
-      progress,
-      ...props,
-    });
+    progress = Object.assign({}, progress);
+    const state = Object.assign({}, this.state, { progress }, props);
+    this.setState(state);
   };
 
   onFailMessageChange = () => {
