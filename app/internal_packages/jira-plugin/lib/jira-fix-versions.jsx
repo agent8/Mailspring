@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import Select, { Option } from 'rc-select';
+import _ from 'underscore';
 
 export default class JiraFixVersions extends Component {
     constructor(props) {
@@ -49,6 +50,10 @@ export default class JiraFixVersions extends Component {
         }
     }
     saveFixVersions = async values => {
+        const versions = values ? values.map(v => ({ id: v.key })) : [];
+        if (_.isEqual(this.preValue, versions.map(v => v.id))) {
+            return;
+        }
         AppEnv.trackingEvent('Jira-Save-FixVersion');
         try {
             this.safeSetState({
@@ -82,6 +87,9 @@ export default class JiraFixVersions extends Component {
     selectFilter = (inputVal, option) => {
         return option.props.data.name.toLocaleLowerCase().indexOf(inputVal.toLocaleLowerCase()) !== -1;
     }
+    _onFocus = () => {
+        this.preValue = this.select.state.value;
+    }
     render() {
         const {
             fixVersions,
@@ -104,6 +112,7 @@ export default class JiraFixVersions extends Component {
                         labelInValue={true}
                         notFoundContent=""
                         multiple
+                        onFocus={this._onFocus}
                         onBlur={this.saveFixVersions}
                         dropdownClassName="jira-dropdown"
                     >{options}</Select>
