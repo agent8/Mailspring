@@ -64,7 +64,7 @@ class SearchStore extends MailspringStore {
     if (!flag) {
       return;
     }
-    const current = FocusedPerspectiveStore.current();
+    const current = FocusedPerspectiveStore.currentSidebar();
 
     if (this.queryPopulated()) {
       this._isSearching = true;
