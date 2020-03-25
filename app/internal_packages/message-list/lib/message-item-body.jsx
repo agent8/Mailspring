@@ -7,8 +7,6 @@ import {
   QuotedHTMLTransformer,
   AttachmentStore,
   MessageStore,
-  DatabaseStore,
-  Message,
 } from 'mailspring-exports';
 import { InjectedComponentSet, RetinaImg } from 'mailspring-component-kit';
 
@@ -158,7 +156,7 @@ export default class MessageItemBody extends React.Component {
           const cidRegexp = new RegExp(`"cid:${safeContentId}(@[^'"]+)?"`, 'gi');
           merged = merged.replace(
             cidRegexp,
-            `"file://${AttachmentStore.pathForFile(file)}" class='inline-image'`
+            `"file://${Utils.safeBrowserPath(AttachmentStore.pathForFile(file))}" class='inline-image'`
           );
         }
       });
