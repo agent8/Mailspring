@@ -469,7 +469,6 @@ class DraftFactory {
     const accountId = findAccountIdFrom(message, thread);
     const body = `
         <br/>
-        <br/>
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
       message.replyAttributionLine(),
     )}</div>
