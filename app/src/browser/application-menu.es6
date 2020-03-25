@@ -209,7 +209,7 @@ module.exports = class ApplicationMenu {
       case 'idle':
       case 'error':
       case 'no-update-available':
-        checkForUpdateItem.visible = true;
+        checkForUpdateItem.visible = process.mas ? false : true;
         break;
       case 'checking':
       case 'downloading':
