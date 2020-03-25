@@ -727,11 +727,7 @@ class TodayMailboxPerspective extends MailboxPerspective {
     this.accountIds.forEach(accountId => {
       const account = AccountStore.accountForId(accountId);
       if (account) {
-        let role = 'inbox';
-        if (account.provider === 'gmail') {
-          role = 'all';
-        }
-        const category = CategoryStore.getCategoryByRole(accountId, role);
+        const category = CategoryStore.getCategoryByRole(accountId, 'inbox');
         if (category) {
           categories.push(category);
         }
