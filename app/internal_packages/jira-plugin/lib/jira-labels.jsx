@@ -43,6 +43,10 @@ export default class JiraLabels extends Component {
         })
     }, 100)
     saveLabels = async values => {
+        const lavelValues = values ? values.map(v => v.key) : [];
+        if (_.isEqual(this.preValue, lavelValues)) {
+            return;
+        }
         AppEnv.trackingEvent('Jira-Save-Labels');
         const { issueKey } = this.props;
         try {
@@ -51,7 +55,7 @@ export default class JiraLabels extends Component {
             })
             await this.jira.setIssueLabels(
                 issueKey,
-                values.map(v => v.key)
+                lavelValues
             );
             this.safeSetState({
                 progress: 'success'
@@ -77,6 +81,9 @@ export default class JiraLabels extends Component {
     selectFilter = (inputVal, option) => {
         return option.props.data.toLocaleLowerCase().indexOf(inputVal.toLocaleLowerCase()) !== -1;
     }
+    _onFocus = () => {
+        this.preValue = this.select.state.value;
+    }
     render() {
         const {
             labels,
@@ -101,6 +108,7 @@ export default class JiraLabels extends Component {
                         multiple
                         tags
                         onSearch={this.onInput}
+                        onFocus={this._onFocus}
                         onBlur={this.saveLabels}
                         dropdownClassName="jira-dropdown"
                     >{options}</Select>
