@@ -55,11 +55,7 @@ class ThreadCountsStore extends MailspringStore {
     }
     accounts.forEach(account => {
       if (account) {
-        let role = 'inbox';
-        if (account.provider === 'gmail') {
-          role = 'all';
-        }
-        const category = CategoryStore.getCategoryByRole(account.id, role);
+        const category = CategoryStore.getCategoryByRole(account.id, 'inbox');
         if (category) {
           categoryIds.push(category.id);
         }
