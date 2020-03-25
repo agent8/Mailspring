@@ -718,70 +718,6 @@ class EmptyMailboxPerspective extends MailboxPerspective {
   }
 }
 
-class TodayMailboxPerspective extends MailboxPerspective {
-  constructor(accountIds) {
-    super(accountIds);
-    this.name = 'Today';
-    this.iconName = 'today.svg';
-    const categories = [];
-    this.accountIds.forEach(accountId => {
-      const account = AccountStore.accountForId(accountId);
-      if (account) {
-        const category = CategoryStore.getCategoryByRole(accountId, 'inbox');
-        if (category) {
-          categories.push(category);
-        }
-      }
-    });
-    this._categories = categories;
-  }
-  categories() {
-    return this._categories;
-  }
-
-  threads() {
-    let query = DatabaseStore.findAll(Thread, {state: 0})
-      .limit(0);
-    const now = new Date();
-    const startOfDay = new Date(now.toDateString());
-    const categoryIds = [];
-    this.categories().forEach(category => {
-      if (category) {
-        categoryIds.push(category.id);
-      }
-    });
-    if (categoryIds.length > 0) {
-      const conditions = new Matcher.JoinAnd([
-        Thread.attributes.categories.containsAny(categoryIds),
-        JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(startOfDay / 1000),
-        Thread.attributes.state.equal(0),
-      ]);
-      query = query.where([conditions]);
-    } else {
-      query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay/1000)]);
-    }
-    return new MutableQuerySubscription(query, { emitResultSet: true });
-  }
-
-  unreadCount() {
-    if(this.accountIds.length > 1){
-      return ThreadCountsStore.unreadCountForCategoryId('today-all');
-    } else {
-      return ThreadCountsStore.unreadCountForCategoryId(`today-${this.accountIds[0]}`);
-    }
-  }
-
-  canReceiveThreadsFromAccountIds() {
-    return false;
-  }
-  receiveThreadIds(threadIds) {
-    return;
-  }
-  actionsForReceivingThreads(threads, accountId) {
-    return;
-  }
-}
-
 class CategoryMailboxPerspective extends MailboxPerspective {
   constructor(_categories) {
     super(_.uniq(_categories.map(c => c.accountId)));
@@ -1072,6 +1008,69 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 }
 
+class TodayMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(accountIds) {
+    const categories = [];
+    accountIds.forEach(accountId => {
+      const account = AccountStore.accountForId(accountId);
+      if (account) {
+        const category = CategoryStore.getCategoryByRole(accountId, 'inbox');
+        if (category) {
+          categories.push(category);
+        }
+      }
+    });
+    super(categories);
+    this.name = 'Today';
+    this.iconName = 'today.svg';
+    this._categories = categories;
+  }
+  categories() {
+    return this._categories;
+  }
+
+  threads() {
+    let query = DatabaseStore.findAll(Thread, {state: 0})
+      .limit(0);
+    const now = new Date();
+    const startOfDay = new Date(now.toDateString());
+    const categoryIds = [];
+    this.categories().forEach(category => {
+      if (category) {
+        categoryIds.push(category.id);
+      }
+    });
+    if (categoryIds.length > 0) {
+      const conditions = new Matcher.JoinAnd([
+        Thread.attributes.categories.containsAny(categoryIds),
+        JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(startOfDay / 1000),
+        Thread.attributes.state.equal(0),
+      ]);
+      query = query.where([conditions]);
+    } else {
+      query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay/1000)]);
+    }
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+
+  unreadCount() {
+    if(this.accountIds.length > 1){
+      return ThreadCountsStore.unreadCountForCategoryId('today-all');
+    } else {
+      return ThreadCountsStore.unreadCountForCategoryId(`today-${this.accountIds[0]}`);
+    }
+  }
+
+  canReceiveThreadsFromAccountIds() {
+    return false;
+  }
+  receiveThreadIds(threadIds) {
+    return;
+  }
+  actionsForReceivingThreads(threads, accountId) {
+    return;
+  }
+}
 
 class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
   constructor(data) {
