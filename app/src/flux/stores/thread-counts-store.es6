@@ -80,7 +80,7 @@ class ThreadCountsStore extends MailspringStore {
   _generateTodayViewQuery = (countType, categoryIds) => {
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
-    let query = DatabaseStore.count(Thread, { state: 0 });
+    let query = DatabaseStore.count(Thread, { state: 0, inboxCategory: ['1', '2'] });
     if (countType === 'unread' && categoryIds.length > 0) {
       const unreadMatchers = new Matcher.JoinAnd([
         Thread.attributes.categories.containsAny(categoryIds),

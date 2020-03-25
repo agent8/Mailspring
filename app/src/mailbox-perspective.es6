@@ -727,11 +727,7 @@ class TodayMailboxPerspective extends MailboxPerspective {
     this.accountIds.forEach(accountId => {
       const account = AccountStore.accountForId(accountId);
       if (account) {
-        let role = 'inbox';
-        if (account.provider === 'gmail') {
-          role = 'all';
-        }
-        const category = CategoryStore.getCategoryByRole(accountId, role);
+        const category = CategoryStore.getCategoryByRole(accountId, 'inbox');
         if (category) {
           categories.push(category);
         }
@@ -744,7 +740,7 @@ class TodayMailboxPerspective extends MailboxPerspective {
   }
 
   threads() {
-    let query = DatabaseStore.findAll(Thread, {state: false})
+    let query = DatabaseStore.findAll(Thread, {state: 0})
       .limit(0);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
@@ -757,7 +753,7 @@ class TodayMailboxPerspective extends MailboxPerspective {
     if (categoryIds.length > 0) {
       const conditions = new Matcher.JoinAnd([
         Thread.attributes.categories.containsAny(categoryIds),
-        JoinTable.useAttribute('lastDate', 'DateTime').greaterThan(startOfDay / 1000),
+        JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(startOfDay / 1000),
         Thread.attributes.state.equal(0),
       ]);
       query = query.where([conditions]);
