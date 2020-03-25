@@ -51,7 +51,7 @@ export default class ThreadListContextMenu {
     return {
       label: `Search for ${from.email}`,
       click: () => {
-        Actions.searchQuerySubmitted(`"${from.email.replace('"', '""')}"`);
+        Actions.searchQuerySubmitted(`"${from.email.replace('"', '""')}"`, true);
       },
     };
   }
@@ -65,7 +65,7 @@ export default class ThreadListContextMenu {
     return {
       label: `Search for ${subject.length > 35 ? `${subject.substr(0, 35)}...` : subject}`,
       click: () => {
-        Actions.searchQuerySubmitted(`subject:"${subject}"`);
+        Actions.searchQuerySubmitted(`subject:"${subject}"`, true);
       },
     };
   }

@@ -578,7 +578,7 @@ class MessageList extends React.Component {
       menu.append(
         new MenuItem({
           label: `Search for "${subject}`,
-          click: () => Actions.searchQuerySubmitted(`subject:"${subject}"`),
+          click: () => Actions.searchQuerySubmitted(`subject:"${subject}"`, true),
         })
       );
     }
