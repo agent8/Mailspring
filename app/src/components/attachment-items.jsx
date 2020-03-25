@@ -8,7 +8,7 @@ import { pickHTMLProps } from 'pick-react-known-prop';
 import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
-import { AttachmentStore, MessageStore } from 'mailspring-exports';
+import { AttachmentStore, MessageStore, Utils } from 'mailspring-exports';
 import Actions from '../flux/actions';
 
 const propTypes = {
@@ -503,8 +503,7 @@ export class ImageAttachmentItem extends Component {
         </div>
       );
     }
-    // const src =filePath;
-    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={filePath} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
+    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={Utils.safeBrowserPath(filePath)} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
   }
 
   render() {

@@ -134,6 +134,13 @@ class CircularCache {
   }
 }
 module.exports = Utils = {
+  safeBrowserPath: filePath => {
+    if(process.platform === 'win32'){
+      return path.join(path.dirname(filePath),encodeURIComponent(path.win32.basename(filePath)));
+    } else {
+      return path.join(path.dirname(filePath),encodeURIComponent(path.posix.basename(filePath)));
+    }
+  },
   createCircularBuffer: maxItems =>{
     return new CircularCache(maxItems);
   },
