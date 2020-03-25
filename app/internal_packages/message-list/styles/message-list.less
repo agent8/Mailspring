@@ -808,10 +808,10 @@ body.platform-win32 {
       }
       img.content-mask {
         background-color: @gray-light;
-        transition: background-color 0.25s;
+        transition: background-color 0.15s;
       }
       span {
-        transition: color 0.25s;
+        transition: color 0.15s;
       }
       &:after {
         content: '';
@@ -821,13 +821,11 @@ body.platform-win32 {
         top: 0;
         width: 100%;
         height: 100%;
-        transform: scale(0);
-        transition: all 0.25s;
       }
       &:hover {
         &:after {
-          transform: scale(1.1);
-          background-color: @gray-lightest;
+          animation: growUp 0.15s;
+          background-color: @off-white;
         }
         color: @blue;
         img.content-mask {
