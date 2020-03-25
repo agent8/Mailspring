@@ -12,7 +12,7 @@ const buildQuery = categoryIds => {
     Thread.attributes.state.equal(0),
   ]);
 
-  const query = DatabaseStore.findAll(Thread).limit(0);
+  const query = DatabaseStore.findAll(Thread, {inboxCategory: ['1', '2']}).limit(0);
 
   // The "Unread" view shows all threads which are unread. When you read a thread,
   // it doesn't disappear until you leave the view and come back. This behavior
