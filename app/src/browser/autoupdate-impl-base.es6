@@ -61,7 +61,7 @@ export default class AutoupdateImplBase extends EventEmitter {
 
   /* Public: Check for updates and emit events if an update is available. */
   checkForUpdates() {
-    if (!this.feedURL) {
+    if (!this.feedURL || process.mas) {
       return;
     }
 
