@@ -805,7 +805,11 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   unreadCount() {
     let sum = 0;
     for (const cat of this._categories) {
-      sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
+      if(this.isInbox()){
+        sum += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
+      }else {
+        sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
+      }
     }
     return sum;
   }
@@ -1158,7 +1162,7 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
   unreadCount() {
     let sum = 0;
     for (const cat of this._categories) {
-      sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
     }
     return sum;
   }
