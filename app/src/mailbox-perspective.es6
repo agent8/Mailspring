@@ -1224,7 +1224,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
 
     const query = DatabaseStore.findAll(Thread)
       .where([Thread.attributes.categories.containsAny(categoryIds)])
-      .where({ state: 0, inboxCategory: ['1', '2'] })
+      .where({ state: 0, inboxCategory: [Category.InboxCategoryState.MsgCandidate, Category.InboxCategoryState.MsgPrimary] })
       .limit(0);
 
     if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
@@ -1275,7 +1275,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
 
     const query = DatabaseStore.findAll(Thread)
       .where([Thread.attributes.categories.containsAny(categoryIds)])
-      .where({ state: 0, inboxCategory: 0 })
+      .where({ state: 0, inboxCategory: Category.InboxCategoryState.MsgOther })
       .limit(0);
 
     if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
