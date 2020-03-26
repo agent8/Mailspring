@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { shell, ipcRenderer, remote } from 'electron';
-import { RegExpUtils, KeyManager, Account } from 'mailspring-exports';
+import { RegExpUtils, KeyManager, Account, Utils } from 'mailspring-exports';
 import { EditableList } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 
@@ -300,9 +300,9 @@ class PreferencesAccountDetails extends Component {
         return null;
     }
   }
-  _onUpdateMailSyncSettings = ({ value, key, defaultData = {} }) => {
+  _onUpdateMailSyncSettings = ({ value, key }) => {
     try {
-      const defalutMailsyncSettings = AppEnv.config.get('core.mailsync') || defaultData;
+      const defalutMailsyncSettings = this._getDefalutMailsyncSettings();;
       let mailsyncSettings = this.state.account.mailsync;
       if (defalutMailsyncSettings && !mailsyncSettings) {
         mailsyncSettings = defalutMailsyncSettings;
@@ -325,7 +325,6 @@ class PreferencesAccountDetails extends Component {
       const newSettings = this._onUpdateMailSyncSettings({
         value: fetchInterval,
         key: 'fetchEmailInterval',
-        defaultData: { fetchEmailInterval: 1 },
       });
       if (newSettings) {
         this._setState({ mailsync: newSettings });
@@ -337,10 +336,9 @@ class PreferencesAccountDetails extends Component {
   _onFetchEmailRangeUpdate = event => {
     try {
       const fetchRange = parseInt(event.target.value, 10);
-      const newSettings = this. _onUpdateMailSyncSettings({
+      const newSettings = this._onUpdateMailSyncSettings({
         value: fetchRange,
         key: 'fetchEmailRange',
-        defaultData: { fetchEmailRange: 365 },
       });
       if (newSettings) {
         this._setState({ mailsync: newSettings });
@@ -351,10 +349,7 @@ class PreferencesAccountDetails extends Component {
   };
 
   _renderMailFetchRange() {
-    const defalutMailsyncSettings = AppEnv.config.get('core.mailsync') || {
-      fetchEmailRange: 365,
-      fetchEmailInterval: 1,
-    };
+    const defalutMailsyncSettings = this._getDefalutMailsyncSettings();
     let mailsyncSettings = this.state.account.mailsync;
     if (defalutMailsyncSettings && !mailsyncSettings) {
       mailsyncSettings = defalutMailsyncSettings;
@@ -384,10 +379,7 @@ class PreferencesAccountDetails extends Component {
   }
 
   _renderMailFetchInterval() {
-    const defalutMailsyncSettings = AppEnv.config.get('core.mailsync') || {
-      fetchEmailRange: 365,
-      fetchEmailInterval: 1,
-    };
+    const defalutMailsyncSettings = this._getDefalutMailsyncSettings();
     let mailsyncSettings = this.state.account.mailsync;
     if (defalutMailsyncSettings && !mailsyncSettings) {
       mailsyncSettings = defalutMailsyncSettings;
@@ -410,6 +402,47 @@ class PreferencesAccountDetails extends Component {
           <option value="3">Every 3 minutes</option>
           <option value="5">Every 5 minutes</option>
         </select>
+      </div>
+    );
+  }
+
+  _getDefalutMailsyncSettings = () => {
+    const defalutMailsyncSettings = AppEnv.config.get('core.mailsync') || {
+      fetchEmailRange: 365,
+      fetchEmailInterval: 1,
+    };
+    return defalutMailsyncSettings;
+  }
+
+  _onCopyToSentUpdate = event => {
+    try {
+      const checked = event.target.checked;
+      const newSettings = this._onUpdateMailSyncSettings({
+        value: checked ? 1 : 0,
+        key: 'copyToSent',
+      });
+      if (newSettings) {
+        this._setState({ mailsync: newSettings });
+      }
+    } catch (e) {
+      AppEnv.reportError(e);
+    }
+  };
+
+  _renderCopyToSent() {
+    let mailsyncSettings = this.state.account.mailsync;
+    let copyToSent;
+    if (!mailsyncSettings || mailsyncSettings.copyToSent === undefined) {
+      copyToSent = !Utils.isAutoCopyToSent(this.state.account);
+    } else {
+      copyToSent = mailsyncSettings.copyToSent;
+    }
+    return (
+      <div className="item">
+        <label>
+          <input type="checkbox" checked={!!copyToSent} onChange={this._onCopyToSentUpdate} />
+          Save copies of messages in the Sent folder
+        </label>
       </div>
     );
   }
@@ -477,6 +510,7 @@ class PreferencesAccountDetails extends Component {
         </div>
         <div className="config-group">
           <h6>ADVANCED</h6>
+          {this._renderCopyToSent()}
           {this._renderMailFetchRange()}
           {this._renderMailFetchInterval()}
           <div onClick={this._onReconnect} className="btn-primary account-detail-btn">

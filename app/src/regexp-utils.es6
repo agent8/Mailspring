@@ -202,7 +202,7 @@ const RegExpUtils = {
   },
 
   mailspringSignatureRegex() {
-    return /<signature id="([A-Za-z0-9-/\\]+)">[^]*<\/signature>/;
+    return /<edo\-signature id="([A-Za-z0-9-/\\]+)">[^]*<\/edo\-signature>/;
   },
 
   // https://regex101.com/r/zG7aW4/3
