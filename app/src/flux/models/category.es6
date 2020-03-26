@@ -174,6 +174,13 @@ export default class Category extends Model {
     Hidden: 'hidden',
   };
 
+  static InboxCategoryState = {
+    MsgNone: '-1', //message not in INBOX
+    MsgOther: '0',
+    MsgCandidate: '1',
+    MsgPrimary: '2',
+  };
+
   static StandardRoles = Object.keys(StandardRoleMap);
   static LockedRoles = Object.keys(LockedRoleMap);
   static HiddenRoles = Object.keys(HiddenRoleMap);
