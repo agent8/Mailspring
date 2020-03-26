@@ -746,7 +746,7 @@ export class ThreadListMoreButton extends React.Component {
       }
       const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
         this.props.items,
-        'important'
+        'spam'
       );
       if (allowed) {
         menu.append(
