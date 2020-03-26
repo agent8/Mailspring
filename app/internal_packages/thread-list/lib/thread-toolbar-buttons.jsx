@@ -16,6 +16,7 @@ import {
 import { remote } from 'electron';
 import ThreadListStore from './thread-list-store';
 import ToolbarCategoryPicker from '../../category-picker/lib/toolbar-category-picker';
+import _ from 'underscore';
 
 const { Menu, MenuItem } = remote;
 const commandCb = (event, cb, cbArgs) => {
@@ -688,6 +689,7 @@ export class ThreadListMoreButton extends React.Component {
   _more = () => {
     const selectionCount = this.props.items ? this.props.items.length : 0;
     const menu = new Menu();
+    const accounts = AccountStore.accountsForItems(this.props.items);
     if (selectionCount > 0) {
       if (isSameAccount(this.props.items)) {
         menu.append(
@@ -699,8 +701,7 @@ export class ThreadListMoreButton extends React.Component {
           })
         );
       }
-      const account = AccountStore.accountForItems(this.props.items);
-      if (account && account.usesLabels()) {
+      if (accounts.length === 1 && accounts[0].usesLabels()) {
         menu.append(
           new MenuItem({
             label: 'Apply Labels',
@@ -758,13 +759,29 @@ export class ThreadListMoreButton extends React.Component {
           })
         );
       }
-      if (this._account && this._account.usesLabels()) {
-        menu.append(
-          new MenuItem({
-            label: `Mark as important`,
-            click: () => AppEnv.commands.dispatch('core:mark-important'),
-          })
-        );
+      const isAllAccountsUseLabels = accounts.every(
+        acc => acc.usesLabels()
+      )
+      if (isAllAccountsUseLabels) {
+        const isAllImportant = this.props.items.every(item => {
+          const category = CategoryStore.getCategoryByRole(item.accountId, 'important');
+          return _.findWhere(item.labels, { id: category.id }) != null;
+        })
+        if (isAllImportant) {
+          menu.append(
+            new MenuItem({
+              label: `Mark as unimportant`,
+              click: () => AppEnv.commands.dispatch('core:mark-unimportant'),
+            })
+          );
+        } else {
+          menu.append(
+            new MenuItem({
+              label: `Mark as important`,
+              click: () => AppEnv.commands.dispatch('core:mark-important'),
+            })
+          );
+        }
       }
     } else {
       menu.append(
