@@ -86,7 +86,7 @@ export default ListensToFluxStore(ThreadListEmptyFolderBar, {
 
     if (
       !folders.length ||
-      !folders.every(c => c.isFolder() && (c.role === 'trash' || c.role === 'trash'))
+      !folders.every(c => c.isFolder() && (c.role === 'trash' || c.role === 'spam'))
     ) {
       return { role: null, folders: null };
     }
