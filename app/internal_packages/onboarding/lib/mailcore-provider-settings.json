@@ -2284,6 +2284,7 @@
         }
     },
     "office365": {
+        "auto-copy-to-sent": true,
         "domain-match": [
             "office365\\.com",
             "onmicrosoft\\.com"
@@ -2312,6 +2313,7 @@
         }
     },
     "office365-enterprise": {
+        "auto-copy-to-sent": true,
         "domain-match": [
             "astro\\.as\\.utexas\\.edu",
             "asu\\.edu"
