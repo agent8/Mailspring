@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron';
 import ChatButton from './lib/chat-button';
 import ChatView from './lib/chat-view';
 import NewConversation from './components/new/NewConversation';
@@ -28,7 +29,12 @@ const isChatTest = isChatTestUser();
 
 module.exports = {
   activate() {
-    if (!AppEnv.config.get(`core.workspace.enableChat`)) {
+    // application can't read the config-schema
+    // So should register the default value of 'core.workspace.enableChat'
+    // at the first time of chat loading
+    const chatEnable = AppEnv.config.get(`core.workspace.enableChat`);
+    ipcRenderer.send('update-system-tray-chat-enable', chatEnable);
+    if (!chatEnable) {
       return;
     }
     startXmpp(xmpp);
