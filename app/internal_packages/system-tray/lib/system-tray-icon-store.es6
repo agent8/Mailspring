@@ -25,6 +25,11 @@ class SystemTrayIconStore {
 
   constructor() {
     this._windowBlurred = false;
+    // application can't read the config-schema
+    // So should register the default value of 'core.workspace.systemTray'
+    // at the first time of tray loading
+    const systemTrayEnable = AppEnv.config.get(`core.workspace.systemTray`);
+    ipcRenderer.send('update-system-tray-enable', systemTrayEnable);
   }
 
   activate() {
@@ -73,7 +78,10 @@ class SystemTrayIconStore {
     const unread = BadgeStore.unread();
     const unreadString = (+unread).toLocaleString();
     const isInboxZero = BadgeStore.total() === 0;
-    const { iconPath, isTemplateImg, chatIconPath } = this._getIconImageData(isInboxZero, this._windowBlurred);
+    const { iconPath, isTemplateImg, chatIconPath } = this._getIconImageData(
+      isInboxZero,
+      this._windowBlurred
+    );
     ipcRenderer.send('update-system-tray', iconPath, unreadString, isTemplateImg, chatIconPath);
   };
 }
