@@ -1075,6 +1075,18 @@ export default class Application extends EventEmitter {
       this.systemTrayManager.updateTraySettings(...args);
     });
 
+    // This application can't read the config-schema
+    // So should register the default value of 'core.workspace.systemTray'
+    ipcMain.on('update-system-tray-enable', (event, ...args) => {
+      this.systemTrayManager.updateSystemTrayEnable(...args);
+    });
+
+    // This application  can't read the config-schema
+    // So should register the default value of 'core.workspace.enableChat'
+    ipcMain.on('update-system-tray-chat-enable', (event, ...args) => {
+      this.systemTrayManager.updateTrayChatEnable(...args);
+    });
+
     ipcMain.on('update-system-tray-account-menu', (event, ...args) => {
       this.systemTrayManager.updateTrayAccountMenu(...args);
     });
