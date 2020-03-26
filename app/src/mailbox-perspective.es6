@@ -70,7 +70,7 @@ export default class MailboxPerspective {
     return new AttachementMailboxPerspective(accountIds);
   }
 
-  static forToday(accountIds){
+  static forToday(accountIds) {
     return new TodayMailboxPerspective(accountIds);
   }
 
@@ -416,6 +416,11 @@ export default class MailboxPerspective {
     if (this.categoriesSharedRole() === 'trash') {
       return true;
     }
+    // if searching in trash
+    if (this.sourcePerspective && this.sourcePerspective.categoriesSharedRole() === 'trash') {
+      return true;
+    }
+    return false;
   }
 
   tasksForRemovingItems(threads) {
@@ -805,9 +810,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   unreadCount() {
     let sum = 0;
     for (const cat of this._categories) {
-      if(this.isInbox()){
+      if (this.isInbox()) {
         sum += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
-      }else {
+      } else {
         sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
       }
     }
@@ -1034,7 +1039,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
   }
 
   threads() {
-    let query = DatabaseStore.findAll(Thread, {state: 0})
+    let query = DatabaseStore.findAll(Thread, { state: 0 })
       .limit(0);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
@@ -1052,13 +1057,13 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
       ]);
       query = query.where([conditions]);
     } else {
-      query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay/1000)]);
+      query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay / 1000)]);
     }
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
 
   unreadCount() {
-    if(this.accountIds.length > 1){
+    if (this.accountIds.length > 1) {
       return ThreadCountsStore.unreadCountForCategoryId('today-all');
     } else {
       return ThreadCountsStore.unreadCountForCategoryId(`today-${this.accountIds[0]}`);
