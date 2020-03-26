@@ -700,14 +700,6 @@
                 {
                     "port": 587,
                     "starttls": true
-                },
-                {
-                    "port": 465,
-                    "ssl": true
-                },
-                {
-                    "port": 25,
-                    "starttls": true
                 }
             ]
         }
@@ -801,40 +793,20 @@
     },
     "edisonmail": {
         "domain-match": [
-            "edisonmail\\.app"
+            "edisonmail\\.com",
+            "onmail\\.com"
         ],
         "servers": {
             "imap": [
                 {
-                    "hostname": "imap.edsionmail.app",
+                    "hostname": "imap.edsionmail.com",
                     "port": 993,
                     "ssl": true
                 }
             ],
             "smtp": [
                 {
-                    "hostname": "smtp.edsionmail.app",
-                    "port": 587,
-                    "starttls": true
-                }
-            ]
-        }
-    },
-    "edisonmail-staging": {
-        "domain-match": [
-            "staging\\.edisonmail\\.app"
-        ],
-        "servers": {
-            "imap": [
-                {
-                    "hostname": "imap.staging.edsionmail.app",
-                    "port": 993,
-                    "ssl": true
-                }
-            ],
-            "smtp": [
-                {
-                    "hostname": "smtp.staging.edsionmail.app",
+                    "hostname": "smtp.edsionmail.com",
                     "port": 587,
                     "starttls": true
                 }
@@ -2312,6 +2284,7 @@
         }
     },
     "office365": {
+        "auto-copy-to-sent": true,
         "domain-match": [
             "office365\\.com",
             "onmicrosoft\\.com"
@@ -2340,6 +2313,7 @@
         }
     },
     "office365-enterprise": {
+        "auto-copy-to-sent": true,
         "domain-match": [
             "astro\\.as\\.utexas\\.edu",
             "asu\\.edu"

@@ -527,7 +527,7 @@ export default class DraftEditingSession extends MailspringStore {
     const sigIndex = cleaned.search(RegExpUtils.mailspringSignatureRegex());
     cleaned = sigIndex > -1 ? cleaned.substr(0, sigIndex) : cleaned;
 
-    const signatureIndex = cleaned.indexOf('<signature>');
+    const signatureIndex = cleaned.indexOf('<edo-signature>');
     if (signatureIndex !== -1) {
       cleaned = cleaned.substr(0, signatureIndex - 1);
     }

@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs-plus';
 import { BrowserWindow, dialog, app } from 'electron';
 import { atomicWriteFileSync } from '../fs-utils';
+import Utils from '../flux/models/utils';
 
 let _ = require('underscore');
 _ = Object.assign(_, require('../config-utils'));
@@ -146,7 +147,11 @@ export default class ConfigPersistenceManager {
       if (Array.isArray(this.settings.accounts)) {
         mailsyncSettings.accounts = {};
         for (let account of this.settings.accounts) {
-          mailsyncSettings.accounts[account.id || account.pid] = account.mailsync ? account.mailsync : {};
+          const settings = _.clone(account.mailsync ? account.mailsync : {});
+          if (settings.copyToSent === undefined) {
+            settings.copyToSent = !Utils.isAutoCopyToSent(account) ? 1 : 0;
+          }
+          mailsyncSettings.accounts[account.id || account.pid] = settings;
         }
       }
     }
