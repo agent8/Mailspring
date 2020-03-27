@@ -600,24 +600,23 @@ class HiddenToggleImportantButton extends React.Component {
       TaskFactory.tasksForThreadsByAccountId(
         items,
         (accountThreads, accountId) => {
+          let labelsToAdd;
+          let labelsToRemove;
+          if (important) {
+            labelsToAdd = [CategoryStore.getCategoryByRole(accountId, 'important')];
+            labelsToRemove = [];
+          } else {
+            labelsToAdd = [];
+            labelsToRemove = [CategoryStore.getCategoryByRole(accountId, 'important')];
+          }
           return [
             new ChangeLabelsTask({
               threads: accountThreads,
               source: 'Keyboard Shortcut',
-              labelsToAdd: [],
-              labelsToRemove: important
-                ? []
-                : [CategoryStore.getCategoryByRole(accountId, 'important')],
-            }),
-            new ChangeLabelsTask({
-              threads: accountThreads,
-              source: 'Keyboard Shortcut',
-              labelsToAdd: important
-                ? [CategoryStore.getCategoryByRole(accountId, 'important')]
-                : [],
-              labelsToRemove: [],
-            }),
-          ];
+              labelsToAdd: labelsToAdd,
+              labelsToRemove: labelsToRemove,
+            })
+          ]
         }
       )
     );
