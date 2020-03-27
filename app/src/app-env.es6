@@ -1149,7 +1149,7 @@ export default class AppEnvConstructor {
         filters: [
           {
             name: 'Images',
-            extensions: ['jpg', 'bmp', 'gif', 'png', 'jpeg'],
+            extensions: ['jpg', 'bmp', 'gif', 'png', 'jpeg', 'heic'],
           },
         ],
       })
