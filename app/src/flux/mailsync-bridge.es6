@@ -895,6 +895,11 @@ export default class MailsyncBridge {
   };
 
   _onIncomingChangeRecord = record => {
+    if(AppEnv.enabledChangeRecordLog){
+      console.log('------DatabaseChangeRecord-----');
+      AppEnv.logDebug(`databaseChangeRecord: ${JSON.stringify(record)}`);
+      console.log('------DatabaseChangeRecord end-----');
+    }
     DatabaseStore.trigger(record);
 
     // Run task success / error handlers if the task is now complete
