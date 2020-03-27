@@ -47,6 +47,7 @@ export default class MessageControls extends React.Component {
       isForwarding: false,
       isMuted: false,
       showViewOriginalEmail: AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
+      showMoveOtherModal: false,
     };
     this._mounted = false;
     this._replyTimer = null;
@@ -181,6 +182,10 @@ export default class MessageControls extends React.Component {
     this.setState({ showMuteEmailModal: !this.state.showMuteEmailModal });
   };
 
+  _onToggleMoveOther = () => {
+    this.setState({ showMoveOtherModal: !this.state.showMoveOtherModal });
+  };
+
   _onUnmuteNotification = () => {
     const { message } = this.props;
     const email = message.from && message.from[0] ? message.from[0].email : '';
@@ -280,7 +285,7 @@ export default class MessageControls extends React.Component {
       name: 'Move to Other',
       image: 'preview.svg',
       iconHidden: true,
-      select: this._onMoveToOther,
+      select: this._onToggleMoveOther,
     };
 
     const ret = [];
@@ -514,7 +519,7 @@ export default class MessageControls extends React.Component {
     const email = message.from && message.from[0] ? message.from[0].email : '';
 
     return (
-      <div className="mute-email-popup">
+      <div className="email-confirm-popup">
         <RetinaImg
           isIcon
           className="close-icon"
@@ -535,6 +540,38 @@ export default class MessageControls extends React.Component {
           </div>
           <div className="btn confirm" onClick={() => this._onMuteEmail(email)}>
             Mute
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  _renderMoveOtherPopup = () => {
+    const { message } = this.props;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+
+    return (
+      <div className="email-confirm-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onToggleMoveOther}
+        />
+        <h1>Move to Other Inbox</h1>
+        <p>
+          Always move conversations from
+          <br />
+          {`${email} to your Other Inbox`}
+        </p>
+        <div className="btn-list">
+          <div className="btn cancel" onClick={this._onToggleMoveOther}>
+            Cancel
+          </div>
+          <div className="btn confirm" onClick={this._onMoveToOther}>
+            Move
           </div>
         </div>
       </div>
@@ -642,6 +679,19 @@ export default class MessageControls extends React.Component {
           }}
         >
           {this._renderMuteEmailPopup()}
+        </FullScreenModal>
+        <FullScreenModal
+          visible={this.state.showMoveOtherModal}
+          style={{
+            height: '192px',
+            width: '400px',
+            top: '165px',
+            right: '255px',
+            left: 'auto',
+            bottom: 'auto',
+          }}
+        >
+          {this._renderMoveOtherPopup()}
         </FullScreenModal>
       </div>
     );
