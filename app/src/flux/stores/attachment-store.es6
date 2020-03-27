@@ -110,6 +110,7 @@ const attachmentCategoryMap = {
       'image/svg+xml',
       'image/tiff',
       'image/webp',
+      'image/heic',
       'application/vnd.google-apps.drawing',
       'application/vnd.google-apps.photo',
     ],

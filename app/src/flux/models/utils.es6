@@ -368,10 +368,10 @@ module.exports = Utils = {
     const size = file.size || file.fileSize || 0;
     const ext = path.extname(name).toLowerCase();
     const contentType = (file.contentType || '').toUpperCase();
-    const contentTypes = ['IMAGE/JPG', 'IMAGE/BMP', 'IMAGE/GIF', 'IMAGE/PNG', 'IMAGE/JPEG'];
-    const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg'];
+    const contentTypes = ['IMAGE/JPG', 'IMAGE/BMP', 'IMAGE/GIF', 'IMAGE/PNG', 'IMAGE/JPEG', 'IMAGE/HEIC'];
+    const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
 
-    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256 && size < 1024 * 1024 * 5;
+    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256 ;
   },
 
   // Escapes potentially dangerous html characters
