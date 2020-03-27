@@ -30,11 +30,9 @@ export default class MuteNotification extends Model {
       queryable: true,
       loadFromColumn: true,
     }),
-    filterId: Attributes.String({
-      modelKey: 'filterId',
-    }),
     type: Attributes.Number({
       modelKey: 'type',
     }),
+    data: Attributes.Ignore(),
   });
 }

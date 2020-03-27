@@ -36,11 +36,7 @@ export default class BlockContact extends Model {
     type: Attributes.Number({
       modelKey: 'type',
     }),
-    data: Attributes.Object({
-      modelKey: 'data',
-      queryable: true,
-      loadFromColumn: true,
-    }),
+    data: Attributes.Ignore(),
   });
   constructor(data) {
     super(data);
