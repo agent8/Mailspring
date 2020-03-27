@@ -115,6 +115,7 @@ const onDeleteItem = function(item) {
   Actions.queueTask(
     new DestroyCategoryTask({
       path: category.path,
+      name: category.name,
       accountId: category.accountId,
     })
   );
