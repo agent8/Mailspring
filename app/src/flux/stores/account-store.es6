@@ -2,7 +2,7 @@
 
 import _ from 'underscore';
 import MailspringStore from 'mailspring-store';
-import { FocusedPerspectiveStore } from 'mailspring-exports';
+import { FocusedPerspectiveStore, SignatureStore } from 'mailspring-exports';
 import { MessageStore, ConversationStore, ContactStore, ConversationModel, ContactModel, AppStore } from 'chat-exports';
 import KeyManager from '../../key-manager';
 import Actions from '../actions';
@@ -261,6 +261,13 @@ class AccountStore extends MailspringStore {
     const idx = this._accounts.findIndex(a => a.id === id);
     let account = this._accounts[idx];
     if (!account) return;
+    // Signature depends on the name of the account
+    // if account name is change, also change signature select with this account
+    if (account.name !== updated.name) {
+      const sig = SignatureStore.signatureForDefaultSignatureId(account.signatureId())
+      SignatureStore.setDefaultSignature(updated.signatureId(), sig.id)
+    }
+
     account = Object.assign(account, updated);
     this._caches = {};
     this._accounts[idx] = account;

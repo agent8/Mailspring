@@ -90,6 +90,15 @@ class SignatureStore extends MailspringStore {
     return this.defaultSignatures;
   }
 
+  setDefaultSignature(accountSigId, sigId) {
+    if (this.signatures[sigId] === undefined) {
+      return;
+    }
+    this.defaultSignatures[accountSigId] = sigId;
+    this.trigger();
+    this._saveDefaultSignatures();
+  }
+
   getDefaultTemplate() {
     return sigDefaultTemplate;
   }
@@ -180,7 +189,10 @@ class SignatureStore extends MailspringStore {
   };
 
   _onToggleAliasesSignature = alias => {
-    const signatureId = typeof alias.signatureId === 'function' ? alias.signatureId() : `local-${alias.accountId}-${alias.email}-${alias.name}`;
+    const signatureId =
+      typeof alias.signatureId === 'function'
+        ? alias.signatureId()
+        : `local-${alias.accountId}-${alias.email}-${alias.name}`;
     if (this.defaultSignatures[signatureId] === this.selectedSignatureId) {
       this.defaultSignatures[signatureId] = null;
     } else {
