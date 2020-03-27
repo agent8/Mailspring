@@ -86,6 +86,7 @@ export default class AppEnvConstructor {
     this.enabledFromNativeLog = true;
     this.enabledBackgroundQueryLog = true;
     this.enabledLocalQueryLog = true;
+    this.enabledChangeRecordLog = false;
     this.enabledXmppLog = true;
     LOG.transports.file.file = path.join(
       this.getConfigDirPath(),
