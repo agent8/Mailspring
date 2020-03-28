@@ -113,7 +113,7 @@ export default class RuntimeInfoPanel extends Component {
                         handle={ResizableRegion.Handle.Top}
                         className="runtime-info-panel"
                     >
-                        <h1>Rutime Info</h1>
+                        <h1>Runtime Info</h1>
                         {
                             runtimeInfo && Object.keys(runtimeInfo).map(this.renderProcess)
                         }
