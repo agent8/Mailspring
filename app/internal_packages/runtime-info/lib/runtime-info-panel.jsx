@@ -42,7 +42,7 @@ export default class RuntimeInfoPanel extends Component {
         }, 1000);
     }
     _renderSection = sectionData => {
-        return Object.keys(sectionData).map(k => {
+        return sectionData && Object.keys(sectionData).map(k => {
             const dataset = sectionData[k];
             return (
                 <td key={k} colSpan="4" className="data-cell">
