@@ -26,7 +26,7 @@ export default class ChatViewLeftResizeBar extends Component {
       }
       // accSidebar.style.height = panelNewHeight - BOTTOM_OFFSET + 'px';
       leftPanel.style.height = height + distance + 'px';
-      Actions.updateChatPanelHeight(leftPanel.getBoundingClientRect().top);
+      Actions.updateChatPanelHeight(height + distance);
     };
     window.onmousemove = onMouseMove;
     window.onmouseup = () => {
@@ -38,17 +38,17 @@ export default class ChatViewLeftResizeBar extends Component {
 
   calcPanel(h) {
     const leftPanel = document.querySelector('.chat-left-panel-container');
-    const { devMode } = AppEnv.getLoadSettings();
-    if (devMode) {
-      leftPanel.style.bottom = '115px';
-    }
+    // const { devMode } = AppEnv.getLoadSettings();
+    // if (devMode) {
+    //   leftPanel.style.bottom = '115px';
+    // }
 
     const accSidebar = document.querySelector('.account-sidebar');
     if (accSidebar) {
       //   const sidebarPanelHeight = accSidebar.parentNode.offsetHeight;
       // accSidebar.style.height = sidebarPanelHeight - h - BOTTOM_OFFSET + 'px';
       leftPanel.style.height = h + 'px';
-      Actions.updateChatPanelHeight(leftPanel.getBoundingClientRect().top);
+      Actions.updateChatPanelHeight(h);
     }
 
     // set panel width
