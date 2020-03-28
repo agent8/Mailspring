@@ -89,6 +89,7 @@ lazyLoadAndRegisterModel('MuteNotification', 'mute-notification');
 lazyLoadAndRegisterModel(`ProviderSyncbackRequest`, 'provider-syncback-request');
 lazyLoadAndRegisterModel('SetObservableRange', 'set-observable-range');
 lazyLoadAndRegisterModel('AttachmentProgress', 'attachment-progress');
+lazyLoadAndRegisterModel('RuntimeInfo', 'runtime-info');
 lazyLoadAndRegisterModel('FolderState', 'folder-state');
 lazyLoadAndRegisterModel('SentProgress', 'sent-progress');
 // Search Query Interfaces
@@ -180,6 +181,7 @@ load('DebugStore', 'flux/stores/debug-store');
 load('SystemInfoStore', 'flux/stores/system-info-store');
 load('CalendarStore', 'flux/stores/calendar-store');
 load('SiftStore', 'flux/stores/sift-store');
+lazyLoad('RuntimeInfoStore', 'flux/stores/runtime-info-store');
 lazyLoad('ThreadStore', 'flux/stores/thread-store');
 lazyLoad('BlockedSendersStore', 'flux/stores/blocked-senders-store');
 lazyLoad('MuteNotificationStore', 'flux/stores/mute-notification-store');
