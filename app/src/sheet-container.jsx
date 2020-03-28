@@ -7,6 +7,7 @@ import Sheet from './sheet';
 import Toolbar from './sheet-toolbar';
 import Flexbox from './components/flexbox';
 import InjectedComponentSet from './components/injected-component-set';
+import InjectedComponent from './components/injected-component';
 
 export default class SheetContainer extends React.Component {
   static displayName = 'SheetContainer';
@@ -233,6 +234,10 @@ export default class SheetContainer extends React.Component {
             id={topSheet.id}
           />
         </div>
+        <InjectedComponent
+          id="runtimeInfoPanel"
+          matching={{ role: 'runtime-info-panel' }}
+        />
         {
           !this.isValidUser() && (
             <div className="need-login" style={{

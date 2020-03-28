@@ -1,0 +1,37 @@
+@import 'ui-variables';
+.runtime-info-panel {
+    border-top: 1px solid @gray;
+    order: 4;
+    // width: 100%;
+    // height: 50%;
+    // left: 0;
+    // bottom: 0;
+    overflow: auto;
+    z-index: 99;
+    background: #fff;
+    padding: 40px 0 0 20px;
+    overflow: auto;
+    table {
+        margin: 20px 0 40px;
+        .info-title {
+            text-align: center;
+            font-weight: bold;
+            background: @gray-lightest;
+        }
+        td {
+            border: 1px solid @gray-light;
+            padding: 0 3px;
+            line-height: 22px;
+        }
+        .data-cell {
+            min-width: 140px;
+            &>div{
+                display: flex;
+                text-align: right;
+                span {
+                    flex: 1;
+                }
+            }
+        }
+    }
+}
