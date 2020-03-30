@@ -1,10 +1,9 @@
 const Sequelize = require('sequelize');
 const Model = Sequelize.Model;
-const { getdb } = require('../db/index');
-const db = getdb();
+const db = require('../db/index').default;
 const { tableCompletedSync } = require('../utils/databaseCompleteInt');
 
-export default class UserCache extends Model {}
+export default class UserCache extends Model { }
 UserCache.init(
   {
     jid: {

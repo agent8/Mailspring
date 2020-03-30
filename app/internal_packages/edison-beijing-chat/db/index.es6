@@ -13,7 +13,6 @@ export function getdb() {
   if (!fs.existsSync(dbPath)) {
     fs.mkdirSync(dbPath);
   }
-  console.log('****storage', `${dbPath}/chat-db.sqlite`);
   db = new Sequelize({
     dialect: 'sqlite',
     storage: `${dbPath}/chat-db.sqlite`,
@@ -21,4 +20,4 @@ export function getdb() {
   return db;
 }
 
-export default getdb;
+export default getdb();
