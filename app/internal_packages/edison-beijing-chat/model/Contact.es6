@@ -1,10 +1,9 @@
 const Sequelize = require('sequelize');
 const Model = Sequelize.Model;
-const { getdb } = require('../db/index');
-const db = getdb();
+const db = require('../db/index').default;
 const { tableCompletedSync } = require('../utils/databaseCompleteInt');
 
-export default class Contact extends Model {}
+export default class Contact extends Model { }
 Contact.init(
   {
     // attributes

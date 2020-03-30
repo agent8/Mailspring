@@ -6,7 +6,6 @@ import ChatViewLeft from './lib/chat-view-left';
 import ChatAccountSidebarFiller from './lib/chat-account-sidebar-filler';
 import { LocalStorage } from 'chat-exports';
 import { ContactModel, AppStore } from 'chat-exports';
-import './model/';
 import startXmpp from './xmpp/startXmpp';
 import xmpp from './xmpp';
 import Mousetrap from 'mousetrap';
@@ -37,6 +36,7 @@ module.exports = {
     if (!chatEnable) {
       return;
     }
+    require('./model/');
     startXmpp(xmpp);
     bindMousetrap(Mousetrap);
     WorkspaceStore.defineSheet(
