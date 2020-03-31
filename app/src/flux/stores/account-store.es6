@@ -264,8 +264,16 @@ class AccountStore extends MailspringStore {
     // Signature depends on the name of the account
     // if account name is change, also change signature select with this account
     if (account.name !== updated.name) {
-      const sig = SignatureStore.signatureForDefaultSignatureId(account.signatureId())
-      SignatureStore.setDefaultSignature(updated.signatureId(), sig.id)
+      const oldAccountSigId =
+        typeof account.signatureId === 'function'
+          ? account.signatureId()
+          : `local-${account.id}-${account.emailAddress}-${account.name}`;
+      const newAccountSigId =
+        typeof updated.signatureId === 'function'
+          ? updated.signatureId()
+          : `local-${updated.id}-${updated.emailAddress}-${updated.name}`;
+      const sig = SignatureStore.signatureForDefaultSignatureId(oldAccountSigId);
+      SignatureStore.setDefaultSignature(newAccountSigId, sig.id);
     }
 
     account = Object.assign(account, updated);
