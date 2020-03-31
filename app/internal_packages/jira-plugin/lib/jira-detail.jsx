@@ -349,7 +349,7 @@ export default class JiraDetail extends Component {
             </div>;
         }
         const { renderedFields, fields } = issue;
-        const userOptions = allUsers
+        const userOptions = allUsers ? allUsers
             .filter(item => item.accountType === "atlassian")
             .map((item, idx) => (
                 <Option
@@ -359,7 +359,7 @@ export default class JiraDetail extends Component {
                     value={item.accountId}>
                     {this.renderUserNode(item)}
                 </Option>
-            ));
+            )) : [];
         if (userOptions.length === 0) {
             userOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
         }
