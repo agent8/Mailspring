@@ -47,7 +47,6 @@ export class Notifier {
     const notifworthy = {};
 
     for (const msg of msgs) {
-      console.log('*****msg', msg);
       // ensure the message is unread
       if (msg.unread !== true) continue;
       // ensure the message was just created (eg: this is not a modification)
