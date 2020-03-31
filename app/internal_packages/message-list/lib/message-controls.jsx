@@ -219,6 +219,7 @@ export default class MessageControls extends React.Component {
     if (event) {
       event.stopPropagation();
     }
+    this._onToggleMoveOther();
     if (this.props.selection) {
       this.props.selection.clear();
     }
