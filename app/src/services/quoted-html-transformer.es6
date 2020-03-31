@@ -268,25 +268,12 @@ class QuotedHTMLTransformer {
       if (node.style.margin === "0px 0px 0px 40px" && node.style.border === "none" && !node.className) {
         continue;
       }
-      if (this._isBlockNodeInMailContent(node)) {
+      if (this._isElementFollowedByUnquotedElement(node, nodes)) {
         continue;
       }
       blocks.push(node);
     }
     return blocks;
-  }
-
-  _isBlockNodeInMailContent = (el) => {
-    let node = el;
-    while (node = node.nextSibling) {
-      if (node.nodeName === 'IMG') {
-        return true;
-      }
-      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
-        return true;
-      }
-    }
-    return false;
   }
 
   _findConfidentialityNotice(doc) {
