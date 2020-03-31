@@ -257,15 +257,14 @@ export default class ConversationInfo extends Component {
   renderPrivateConversationMember() {
     const { selectedConversation: conversation } = this.props;
     const { curJid } = conversation;
-    let privateChatMember = { ...conversation };
-    let self = JSON.parse(JSON.stringify(UserCacheStore.getUserInfoByJid(curJid)));
+    const self = UserCacheStore.getUserInfoByJid(curJid);
 
     return [
       <MemberListItem
         conversation={conversation}
-        member={privateChatMember}
+        member={conversation}
         currentUserIsOwner={false}
-        key={privateChatMember.jid}
+        key={conversation.jid}
       />,
       self && (
         <MemberListItem

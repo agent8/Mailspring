@@ -462,12 +462,12 @@ class MessageStore extends MailspringStore {
     if (senderName) {
       body = senderName + ': ' + body;
     }
-    const noti = postNotification(title, body);
-    noti.addEventListener('click', event => {
-      ChatActions.selectConversation(convjid);
-      Actions.selectRootSheet(WorkspaceStore.Sheet.ChatView);
-
-      remote.getCurrentWindow().show();
+    postNotification(title, body, ({ activationType }) => {
+      if (activationType === 'clicked') {
+        ChatActions.selectConversation(convjid);
+        Actions.selectRootSheet(WorkspaceStore.Sheet.ChatView);
+        remote.getCurrentWindow().show();
+      }
     });
   };
 
