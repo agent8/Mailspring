@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import util from 'util';
 import fs from 'fs';
 import path from 'path';
 import Select, { Option } from 'rc-select';
@@ -17,6 +18,8 @@ const configDirPath = AppEnv.getConfigDirPath();
 const jiraDirPath = path.join(configDirPath, 'jira_cache');
 const { Menu, MenuItem } = remote;
 const CONFIG_KEY = 'plugin.jira.config';
+const exists = util.promisify(fs.exists);
+const writeFile = util.promisify(fs.writeFile);
 
 export default class JiraDetail extends Component {
     constructor(props) {
@@ -173,9 +176,11 @@ export default class JiraDetail extends Component {
                 return;
             }
             const localPath = path.join(jiraDirPath, `${isThumbnail ? '' : 'origin_'}${attachment.id}_${attachment.filename}`);
-            if (!fs.existsSync(localPath)) {
+
+            const exist = await exists(localPath);
+            if (!exist) {
                 const downloadAtt = await downloadApi(attachment);
-                fs.writeFileSync(localPath, downloadAtt);
+                await writeFile(localPath, downloadAtt);
             }
             const { attachments = {}, originalFiles = {} } = this.state;
             if (!isThumbnail) {
