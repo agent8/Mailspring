@@ -60,10 +60,10 @@ export default class RuntimeInfoPanel extends Component {
             )
         })
     }
-    renderProcess = accountId => {
+    renderAsyncProcess = accountId => {
         const data = this.state.runtimeInfo[accountId];
         const account = AccountStore.accountForId(accountId);
-        return <table key={accountId}>
+        return <table key={accountId} className="async-table">
             <tbody>
                 <tr className="info-title">
                     <td rowSpan="2">Email</td>
@@ -92,6 +92,49 @@ export default class RuntimeInfoPanel extends Component {
             </tbody>
         </table>
     }
+    renderSyncProcess = runtimeInfo => {
+        const dataset = Object.keys(runtimeInfo).map(k => runtimeInfo[k]);
+        if (!dataset || dataset.length === 0) {
+            return null;
+        }
+        return <table className="sync-table">
+            <tbody>
+                <tr className="info-title">
+                    <td>Email</td>
+                    <td></td>
+                    {dataset[0].sync && Object.keys(dataset[0].sync).map(k => <td key={k}>{k}</td>)}
+                </tr>
+                {
+                    dataset.map(data => {
+                        const account = AccountStore.accountForId(data['accountId']);
+                        return (
+                            <tr>
+                                <td className="info-title">
+                                    {account.emailAddress}
+                                </td>
+                                <td>
+                                    <div>execute</div>
+                                    <div>existCount</div>
+                                    <div>folderName</div>
+                                    <div>newCount</div>
+                                    <div>syncState</div>
+                                    <div>total</div>
+                                </td>
+                                {data.sync && Object.keys(data.sync).map(k => <td className="sync-data-cell" key={k}>
+                                    <div>{data.sync[k].execute}</div>
+                                    <div>{data.sync[k].existCount}</div>
+                                    <div>{data.sync[k].folderName}</div>
+                                    <div>{data.sync[k].newCount}</div>
+                                    <div>{data.sync[k].syncState}</div>
+                                    <div>{data.sync[k].total}</div>
+                                </td>)}
+                            </tr>
+                        )
+                    })
+                }
+            </tbody>
+        </table>
+    }
     _toggleShowRuntime = () => {
         if (this.state.show) {
             clearInterval(this.timer);
@@ -113,9 +156,14 @@ export default class RuntimeInfoPanel extends Component {
                         handle={ResizableRegion.Handle.Top}
                         className="runtime-info-panel"
                     >
-                        <h1>Runtime Info</h1>
+                        <h2>Async Info</h2>
                         {
-                            runtimeInfo && Object.keys(runtimeInfo).map(this.renderProcess)
+                            runtimeInfo && Object.keys(runtimeInfo).map(this.renderAsyncProcess)
+                        }
+                        <hr />
+                        <h2>Sync Info</h2>
+                        {
+                            runtimeInfo && this.renderSyncProcess(runtimeInfo)
                         }
                     </ResizableRegion>
                 }
