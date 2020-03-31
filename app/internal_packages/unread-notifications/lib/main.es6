@@ -4,6 +4,7 @@ import {
   Actions,
   AccountStore,
   Message,
+  Category,
   SoundRegistry,
   NativeNotifications,
   DatabaseStore,
@@ -55,8 +56,10 @@ export class Notifier {
       // ensure the message is not a loopback
       const account = msg.from[0] && AccountStore.accountForEmail(msg.from[0].email);
       if (msg.accountId === (account || {}).id) continue;
-      // // if snippet is empty, that means body is not pull over
+      // if snippet is empty, that means body is not pull over
       if (!msg.snippet) continue;
+      // if is Other, don't display notification
+      if (msg.inboxCategory === Category.InboxCategoryState.MsgOther) continue;
       // filter the message that dont should note by account config
       if (!this._msgShouldNotify(msg)) continue;
 

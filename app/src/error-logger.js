@@ -76,7 +76,7 @@ module.exports = ErrorLogger = (function () {
   ErrorLogger.prototype._startCrashReporter = function (args) {
     const crashPath = path.join(this.resourcePath, 'crashReport');
     // const serverURL = `http://tiger:1127/post`;
-    const serverURL = `https://cp.stag.easilydo.cc/api/log2/`;
+    const serverURL = `https://cs.edison.tech/api/log2/`;
     getDeviceHash().then(deviceId=>{
       crashReporter.start({
         productName: 'EdisonMail',
