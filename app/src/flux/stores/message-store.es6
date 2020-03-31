@@ -624,47 +624,65 @@ class MessageStore extends MailspringStore {
     const missingAidMap = new Map();
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
+    let totalFiles = 0;
+    messages.forEach(message=>{
+      totalFiles += message.files.length;
+    });
+    let processed = 0;
+    const processMissingData = missingIds => {
+      missingIds.forEach((value, aid) => {
+        if (value && value.length && aid) {
+          Actions.fetchAttachments({
+            accountId: aid,
+            missingItems: value,
+          });
+        }
+      });
+      if (change) {
+        this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
+          return !noLongerMissing.includes(id);
+        });
+        console.log('updating missingAttachmentIds');
+        this.trigger();
+      }
+    };
     messages.forEach((message, messageIndex) => {
       message.files.forEach((f, fileIndex) => {
         const tmpPath = AttachmentStore.pathForFile(f);
-        const tempExists = fs.existsSync(tmpPath);
-        if (!tempExists) {
-          const aId = message.accountId
-          const oldAIdMap = missingAidMap.get(aId) || []
-          missingAidMap.set(aId, [...oldAIdMap, f.id])
-          if (!this.isAttachmentMissing(f.id)) {
-            this._missingAttachmentIds.push(f.id);
-            change = true;
+        fs.access(tmpPath, fs.constants.R_OK, (err) => {
+          const tempExists = !err;
+          if (!tempExists) {
+            const aId = message.accountId;
+            const oldAIdMap = missingAidMap.get(aId) || [];
+            missingAidMap.set(aId, [...oldAIdMap, f.id]);
+            if (!this.isAttachmentMissing(f.id)) {
+              this._missingAttachmentIds.push(f.id);
+              change = true;
+            }
+            fs.access(`${tmpPath}.part`, err => {
+              const partExists = !err;
+              processed++;
+              if (message.files[fileIndex].isDownloading !== partExists) {
+                change = true;
+                messages[messageIndex].files[fileIndex].isDownloading = partExists;
+              }
+              if(processed === totalFiles){
+                processMissingData(missingAidMap);
+              }
+            });
+          } else {
+            processed++;
+            if (this.isAttachmentMissing(f.id)) {
+              noLongerMissing.push(f.id);
+              change = true;
+            }
+            if(processed === totalFiles){
+              processMissingData(missingAidMap);
+            }
           }
-          const partExists = fs.existsSync(`${tmpPath}.part`);
-          if (message.files[fileIndex].isDownloading !== partExists) {
-            change = true;
-            messages[messageIndex].files[fileIndex].isDownloading = partExists;
-          }
-        } else {
-          if (this.isAttachmentMissing(f.id)) {
-            noLongerMissing.push(f.id);
-            change = true;
-          }
-        }
+        });
       });
     });
-    missingAidMap.forEach((value, aid) => {
-      if (value && value.length && aid) {
-        Actions.fetchAttachments({
-          accountId: aid,
-          missingItems: value,
-        });
-      }
-    })
-
-    if (change) {
-      this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
-        return !noLongerMissing.includes(id);
-      });
-      console.log('updating missingAttachmentIds');
-      this.trigger();
-    }
   }
 
   getMissingFileIds() {
