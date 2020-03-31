@@ -23,7 +23,7 @@ export const plugins = [
   ...BaseMarkPlugins,
   ...TemplatePlugins,
   ...EmojiPlugins,
-  ...ImagePlugins,
+  ...ImagePlugins, //This must be after InlineAttachmentPlugin so we only render img with external scr link
   ...LinkPlugins,
   ...BaseBlockPlugins,
   ...MarkdownPlugins,
