@@ -179,6 +179,7 @@ export default class Category extends Model {
     MsgOther: '0',
     MsgCandidate: '1',
     MsgPrimary: '2',
+    MsgPrimaryAndOther: '3',
   };
 
   static StandardRoles = Object.keys(StandardRoleMap);
