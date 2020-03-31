@@ -10,6 +10,9 @@ export default class RuntimeInfo extends Model {
     async: Attributes.Object({
       modelKey: 'async',
     }),
+    sync: Attributes.Object({
+      modelKey: 'sync',
+    }),
   });
   constructor() {
     super();
