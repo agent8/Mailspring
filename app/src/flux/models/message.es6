@@ -12,6 +12,7 @@ import ModelWithMetadata from './model-with-metadata';
 import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
 import CategoryStore from '../stores/category-store';
+import Category from './category'
 let AttachmentStore = null;
 
 const mapping = {
@@ -703,13 +704,16 @@ export default class Message extends ModelWithMetadata {
     if (!this.isInInbox()) {
       return false;
     }
-    return this.inboxCategory === 1 || this.inboxCategory === 2;
+    return (
+      `${this.inboxCategory}` === Category.InboxCategoryState.MsgCandidate ||
+      `${this.inboxCategory}` === Category.InboxCategoryState.MsgPrimary
+    );
   }
   isInInboxOther() {
     if (!this.isInInbox()) {
       return false;
     }
-    return this.inboxCategory === 0;
+    return `${this.inboxCategory}` === Category.InboxCategoryState.MsgOther;
   }
 
   fromContact() {
