@@ -1,9 +1,12 @@
 import MailspringStore from 'mailspring-store';
 import UserCacheModel from '../model/UserCache';
 import fs from 'fs';
+import util from 'util';
 import path from 'path';
 import _ from 'underscore';
 import { ContactStore, OnlineUserStore } from 'chat-exports';
+const exists = util.promisify(fs.exists);
+const writeFile = util.promisify(fs.writeFile);
 
 const download = require('download');
 let configDirPath = AppEnv.getConfigDirPath();
@@ -82,14 +85,15 @@ class UserCacheStore extends MailspringStore {
             userInfoInstance &&
             userInfoInstance.info &&
             userInfoInstance.info.avatar !== member.avatar;
-          if (!fs.existsSync(avatarLocalPath) || isAvatarUpdated) {
+          const exist = await exists(avatarLocalPath);
+          if (!exist || isAvatarUpdated) {
             try {
               if (this.downloading[jid]) {
                 return;
               }
               this.downloading[jid] = 1;
               const data = await download(this._getAvatarUrl(member.avatar));
-              fs.writeFileSync(avatarLocalPath, data);
+              await writeFile(avatarLocalPath, data);
               this.downloading[jid] = 0;
               await userInfoInstance.update({
                 avatar: avatarLocalPath,
