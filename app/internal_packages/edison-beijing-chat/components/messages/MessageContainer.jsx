@@ -59,10 +59,13 @@ class MessageContainer extends Component {
   //   }
 
   getMessages = async () => {
-    if(!this._mounted){
+    if (!this._mounted) {
       return;
     }
     let selectedConversation = await MessageStore.getSelectedConversation();
+    if (!selectedConversation) {
+      return;
+    }
     let nextJid = selectedConversation.jid;
     console.log('shouldComponentUpdate--getMessages', nextJid);
     let messages = await MessageStore.getSelectedConversationMessages(nextJid);
@@ -70,7 +73,7 @@ class MessageContainer extends Component {
 
     const { startIndex } = this.state;
     let groupedMessages = groupByTime(messages.slice(0, startIndex));
-    if(!this._mounted){
+    if (!this._mounted) {
       return;
     }
     this.setState({
@@ -112,7 +115,7 @@ class MessageContainer extends Component {
   };
 
   onResize = () => {
-    if(!this._mounted){
+    if (!this._mounted) {
       return;
     }
     console.log('shouldComponentUpdate--resize');
