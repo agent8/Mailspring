@@ -1204,6 +1204,17 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     this.isTab = true;
   }
 
+  inboxCategorys(strict = false) {
+    const inboxCategorys = [
+      Category.InboxCategoryState.MsgCandidate,
+      Category.InboxCategoryState.MsgPrimary,
+    ];
+    if (!strict) {
+      inboxCategorys.push(Category.InboxCategoryState.MsgPrimaryAndOther);
+    }
+    return inboxCategorys;
+  }
+
   isTabOfPerspective(other) {
     const tab = other.tab || [];
     const equalTab = tab.filter(per => {
@@ -1235,11 +1246,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
       .where([Thread.attributes.categories.containsAny(categoryIds)])
       .where({
         state: 0,
-        inboxCategory: [
-          Category.InboxCategoryState.MsgCandidate,
-          Category.InboxCategoryState.MsgPrimary,
-          Category.InboxCategoryState.MsgPrimaryAndOther,
-        ],
+        inboxCategory: this.inboxCategorys().map(categoryNum => `${categoryNum}`),
       })
       .limit(0);
 
@@ -1261,6 +1268,14 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     const isAllInbox = categories && categories.length > 1;
     this.name = `${isAllInbox ? 'All ' : ''}Other`;
     this.isTab = true;
+  }
+
+  inboxCategorys(strict = false) {
+    const inboxCategorys = [Category.InboxCategoryState.MsgOther];
+    if (!strict) {
+      inboxCategorys.push(Category.InboxCategoryState.MsgPrimaryAndOther);
+    }
+    return inboxCategorys;
   }
 
   isTabOfPerspective(other) {
@@ -1293,10 +1308,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
       .where([Thread.attributes.categories.containsAny(categoryIds)])
       .where({
         state: 0,
-        inboxCategory: [
-          Category.InboxCategoryState.MsgOther,
-          Category.InboxCategoryState.MsgPrimaryAndOther,
-        ],
+        inboxCategory: this.inboxCategorys().map(categoryNum => `${categoryNum}`),
       })
       .limit(0);
 
