@@ -58,7 +58,9 @@ class ThreadArchiveQuickAction extends React.Component {
   }
 
   shouldComponentUpdate(newProps, newState) {
-    return newProps.thread.id !== (this.props != null ? this.props.thread.id : undefined);
+    const newAllowed = FocusedPerspectiveStore.current().canArchiveThreads([newProps.thread]);
+    const prevAllowed = FocusedPerspectiveStore.current().canArchiveThreads([this.props.thread]);
+    return newProps.thread.id !== (this.props != null ? this.props.thread.id : undefined) || (newAllowed !== prevAllowed);
   }
 
   _onArchive = event => {
