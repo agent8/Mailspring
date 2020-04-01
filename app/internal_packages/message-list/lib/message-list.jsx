@@ -281,6 +281,7 @@ class MessageList extends React.Component {
       'core:forward': () => this._onForward(),
       'core:print-thread': () => this._onPrintThread(),
       'core:export-pdf': this._onPdfThread,
+      'core:copy-thread-url': this._onCopyThreadUrl,
       'core:messages-page-up': () => this._onScrollByPage(-1),
       'core:messages-page-down': () => this._onScrollByPage(1),
     };
@@ -290,6 +291,15 @@ class MessageList extends React.Component {
     }
 
     return handlers;
+  }
+
+  _onCopyThreadUrl = () => {
+    const { currentThread } = this.state;
+    if (!currentThread) {
+      return;
+    }
+    const { clipboard } = require('electron');
+    clipboard.writeText(`edisonmail://email/${currentThread.accountId}/${currentThread.id}/view`);
   }
 
   _getMessageContainer(headerMessageId) {
