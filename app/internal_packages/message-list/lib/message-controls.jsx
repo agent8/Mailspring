@@ -47,7 +47,7 @@ export default class MessageControls extends React.Component {
       isForwarding: false,
       isMuted: false,
       showViewOriginalEmail: AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
-      showMoveOtherModal: false,
+      showMoveFocusedOtherModal: false,
     };
     this._mounted = false;
     this._replyTimer = null;
@@ -182,8 +182,8 @@ export default class MessageControls extends React.Component {
     this.setState({ showMuteEmailModal: !this.state.showMuteEmailModal });
   };
 
-  _onToggleMoveOther = () => {
-    this.setState({ showMoveOtherModal: !this.state.showMoveOtherModal });
+  _onToggleMoveFocusedOther = () => {
+    this.setState({ showMoveFocusedOtherModal: !this.state.showMoveFocusedOtherModal });
   };
 
   _onUnmuteNotification = () => {
@@ -205,7 +205,7 @@ export default class MessageControls extends React.Component {
     if (event) {
       event.stopPropagation();
     }
-
+    this._onToggleMoveFocusedOther();
     if (this.props.selection) {
       this.props.selection.clear();
     }
@@ -219,7 +219,7 @@ export default class MessageControls extends React.Component {
     if (event) {
       event.stopPropagation();
     }
-    this._onToggleMoveOther();
+    this._onToggleMoveFocusedOther();
     if (this.props.selection) {
       this.props.selection.clear();
     }
@@ -278,14 +278,14 @@ export default class MessageControls extends React.Component {
       name: 'Move to Focused',
       image: 'preview.svg',
       iconHidden: true,
-      select: this._onMoveToFocused,
+      select: this._onToggleMoveFocusedOther,
     };
 
     const moveToOther = {
       name: 'Move to Other',
       image: 'preview.svg',
       iconHidden: true,
-      select: this._onToggleMoveOther,
+      select: this._onToggleMoveFocusedOther,
     };
 
     const ret = [];
@@ -546,10 +546,12 @@ export default class MessageControls extends React.Component {
     );
   };
 
-  _renderMoveOtherPopup = () => {
+  _renderMoveFocusedOtherPopup = () => {
     const { message } = this.props;
     const email = message.from && message.from[0] ? message.from[0].email : '';
-
+    const isInInbox = message.isInInboxFocused();
+    const toTabsName = isInInbox ? 'Other' : 'Focused';
+    const onConfirmFn = isInInbox ? this._onMoveToOther : this._onMoveToFocused;
     return (
       <div className="email-confirm-popup">
         <RetinaImg
@@ -558,19 +560,19 @@ export default class MessageControls extends React.Component {
           style={{ width: '20', height: '20' }}
           name="close.svg"
           mode={RetinaImg.Mode.ContentIsMask}
-          onClick={this._onToggleMoveOther}
+          onClick={this._onToggleMoveFocusedOther}
         />
-        <h1>Move to Other Inbox</h1>
+        <h1>{`Move to ${toTabsName} Inbox`}</h1>
         <p>
           Always move conversations from
           <br />
-          {`${email} to your Other Inbox`}
+          {`${email} to your ${toTabsName} Inbox`}
         </p>
         <div className="btn-list">
-          <div className="btn cancel" onClick={this._onToggleMoveOther}>
+          <div className="btn cancel" onClick={this._onToggleMoveFocusedOther}>
             Cancel
           </div>
-          <div className="btn confirm" onClick={this._onMoveToOther}>
+          <div className="btn confirm" onClick={onConfirmFn}>
             Move
           </div>
         </div>
@@ -681,7 +683,7 @@ export default class MessageControls extends React.Component {
           {this._renderMuteEmailPopup()}
         </FullScreenModal>
         <FullScreenModal
-          visible={this.state.showMoveOtherModal}
+          visible={this.state.showMoveFocusedOtherModal}
           style={{
             height: '192px',
             width: '400px',
@@ -691,7 +693,7 @@ export default class MessageControls extends React.Component {
             bottom: 'auto',
           }}
         >
-          {this._renderMoveOtherPopup()}
+          {this._renderMoveFocusedOtherPopup()}
         </FullScreenModal>
       </div>
     );
