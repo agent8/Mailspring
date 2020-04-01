@@ -705,15 +705,15 @@ export default class Message extends ModelWithMetadata {
       return false;
     }
     return (
-      `${this.inboxCategory}` === Category.InboxCategoryState.MsgCandidate ||
-      `${this.inboxCategory}` === Category.InboxCategoryState.MsgPrimary
+      this.inboxCategory === Category.InboxCategoryState.MsgCandidate ||
+      this.inboxCategory === Category.InboxCategoryState.MsgPrimary
     );
   }
   isInInboxOther() {
     if (!this.isInInbox()) {
       return false;
     }
-    return `${this.inboxCategory}` === Category.InboxCategoryState.MsgOther;
+    return this.inboxCategory === Category.InboxCategoryState.MsgOther;
   }
 
   fromContact() {

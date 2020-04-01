@@ -77,12 +77,17 @@ class MessageStore extends MailspringStore {
 
   items() {
     if (this._showingHiddenItems) return this._items;
-
-    const viewing = FocusedPerspectiveStore.current().categoriesSharedRole();
+    const currentPerspective = FocusedPerspectiveStore.current();
+    const viewing = currentPerspective.categoriesSharedRole();
     const viewingHiddenCategory = FolderNamesHiddenByDefault.includes(viewing);
 
     return this._items.filter(item => {
       const inHidden = item.labels.some(label => FolderNamesHiddenByDefault.includes(label.role)) || item.isHidden();
+      if (viewing === 'inbox') {
+        // inbox primary or other
+        const isInStrictCategory = (currentPerspective.inboxCategorys(true) || []).includes(item.inboxCategory)
+        return !inHidden && isInStrictCategory
+      }
       return viewingHiddenCategory ? inHidden || item.draft : !inHidden;
     });
   }
