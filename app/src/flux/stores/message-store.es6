@@ -93,7 +93,7 @@ class MessageStore extends MailspringStore {
           inboxHiddenCategorys = Category.inboxFocusedCategorys(true);
         }
         const isInHiddenCategory = inboxHiddenCategorys.includes(item.inboxCategory);
-        return !inHidden && isInHiddenCategory;
+        return !inHidden && !isInHiddenCategory;
       }
       return viewingHiddenCategory ? inHidden || item.draft : !inHidden;
     });
