@@ -223,7 +223,6 @@ export default class MessageControls extends React.Component {
     if (this.props.selection) {
       this.props.selection.clear();
     }
-    this.setState({showMoveOtherModal: false});
     Actions.popSheet({ reason: 'MessageControls:_onMoveOther' });
   };
 
