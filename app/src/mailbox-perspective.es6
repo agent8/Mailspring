@@ -78,7 +78,9 @@ export default class MailboxPerspective {
     return category ? new CategoryMailboxPerspective([category]) : this.forNothing();
   }
   static forAllArchived(categories) {
-    return categories.length > 0 ? new AllArchiveCategoryMailboxPerspective(categories) : this.forNothing();
+    return categories.length > 0
+      ? new AllArchiveCategoryMailboxPerspective(categories)
+      : this.forNothing();
   }
 
   static forCategories(categories) {
@@ -752,21 +754,6 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     }
   }
 
-  // primary thread is in this categorys
-  inboxCategorys(strict = false) {
-    if (this.categoriesSharedRole() !== 'inbox') {
-      return null;
-    }
-    const inboxCategorys = [
-      Category.InboxCategoryState.MsgCandidate,
-      Category.InboxCategoryState.MsgPrimary,
-    ];
-    if (!strict) {
-      inboxCategorys.push(Category.InboxCategoryState.MsgPrimaryAndOther);
-    }
-    return inboxCategorys;
-  }
-
   toJSON() {
     const json = super.toJSON();
     json.serializedCategories = JSON.stringify(this._categories);
@@ -1054,8 +1041,12 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
   }
 
   threads() {
-    let query = DatabaseStore.findAll(Thread, { state: 0 })
-      .limit(0);
+    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+      categoryNum => `${categoryNum}`
+    );
+    let query = DatabaseStore.findAll(Thread, { state: 0, inboxCategory: notOtherCategorys }).limit(
+      0
+    );
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
     const categoryIds = [];
@@ -1067,7 +1058,9 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
     if (categoryIds.length > 0) {
       const conditions = new Matcher.JoinAnd([
         Thread.attributes.categories.containsAny(categoryIds),
-        JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(startOfDay / 1000),
+        JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(
+          startOfDay / 1000
+        ),
         Thread.attributes.state.equal(0),
       ]);
       query = query.where([conditions]);
@@ -1104,7 +1097,7 @@ class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
   toJSON() {
     const json = super.toJSON();
     json.isAllArchive = true;
-    return json
+    return json;
   }
 
   isEqual(other) {
@@ -1219,17 +1212,6 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     this.isTab = true;
   }
 
-  inboxCategorys(strict = false) {
-    const inboxCategorys = [
-      Category.InboxCategoryState.MsgCandidate,
-      Category.InboxCategoryState.MsgPrimary,
-    ];
-    if (!strict) {
-      inboxCategorys.push(Category.InboxCategoryState.MsgPrimaryAndOther);
-    }
-    return inboxCategorys;
-  }
-
   isTabOfPerspective(other) {
     const tab = other.tab || [];
     const equalTab = tab.filter(per => {
@@ -1257,11 +1239,15 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
       }
     });
 
+    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+      categoryNum => `${categoryNum}`
+    );
+
     const query = DatabaseStore.findAll(Thread)
       .where([Thread.attributes.categories.containsAny(categoryIds)])
       .where({
         state: 0,
-        inboxCategory: this.inboxCategorys().map(categoryNum => `${categoryNum}`),
+        inboxCategory: notOtherCategorys,
       })
       .limit(0);
 
@@ -1283,14 +1269,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     const isAllInbox = categories && categories.length > 1;
     this.name = `${isAllInbox ? 'All ' : ''}Other`;
     this.isTab = true;
-  }
-
-  inboxCategorys(strict = false) {
-    const inboxCategorys = [Category.InboxCategoryState.MsgOther];
-    if (!strict) {
-      inboxCategorys.push(Category.InboxCategoryState.MsgPrimaryAndOther);
-    }
-    return inboxCategorys;
+    this.isOther = true
   }
 
   isTabOfPerspective(other) {
@@ -1319,11 +1298,13 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
       }
     });
 
+    const otherCategorys = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+
     const query = DatabaseStore.findAll(Thread)
       .where([Thread.attributes.categories.containsAny(categoryIds)])
       .where({
         state: 0,
-        inboxCategory: this.inboxCategorys().map(categoryNum => `${categoryNum}`),
+        inboxCategory: otherCategorys,
       })
       .limit(0);
 
