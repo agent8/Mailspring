@@ -174,6 +174,7 @@ class MessageStore extends MailspringStore {
       this._currentWindowLevel = 1;
       ipcRenderer.on('thread-close-window', this._onPopoutClosed);
       ipcRenderer.on('thread-arp-reply', this._onThreadARPReply);
+      ipcRenderer.on('popout-thread', (e, thread) => this._onPopoutThread(thread));
     } else if (AppEnv.isThreadWindow()) {
       this._currentWindowLevel = 2;
       ipcRenderer.on('thread-arp', this._onReceivedThreadARP);
@@ -808,7 +809,7 @@ class MessageStore extends MailspringStore {
     }
   }
 
-  _onPopoutThread(thread) {
+  _onPopoutThread = thread => {
     this._setPopout(true);
     return AppEnv.newWindow({
       title: thread.subject,
