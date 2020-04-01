@@ -111,8 +111,8 @@ const rules = [
     deserialize(el, next) {
       if (
         el.tagName.toLowerCase() === 'img' &&
-        el.getAttribute('src') &&
-        el.getAttribute('resizable') === 'true'
+        el.getAttribute('src')
+        // el.getAttribute('resizable') === 'true'
       ) {
         const data = {
           src: el.getAttribute('src'),

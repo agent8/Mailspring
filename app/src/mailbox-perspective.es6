@@ -105,6 +105,16 @@ export default class MailboxPerspective {
     return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
   }
 
+  static forInboxFocused(categories) {
+    return categories.length > 0
+      ? new InboxMailboxFocusedPerspective(categories)
+      : this.forNothing();
+  }
+
+  static forInboxOther(categories) {
+    return categories.length > 0 ? new InboxMailboxOtherPerspective(categories) : this.forNothing();
+  }
+
   static forUnreadByAccounts(accountIds) {
     let categories = accountIds.map(accId => {
       return CategoryStore.getCategoryByRole(accId, 'inbox');
@@ -162,6 +172,14 @@ export default class MailboxPerspective {
 
   static fromJSON(json) {
     try {
+      if (json.type === InboxMailboxFocusedPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forInboxFocused(categories);
+      }
+      if (json.type === InboxMailboxOtherPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forInboxOther(categories);
+      }
       if (json.type === CategoryMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
         return this.forCategories(categories);
@@ -1269,7 +1287,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     const isAllInbox = categories && categories.length > 1;
     this.name = `${isAllInbox ? 'All ' : ''}Other`;
     this.isTab = true;
-    this.isOther = true
+    this.isOther = true;
   }
 
   isTabOfPerspective(other) {
