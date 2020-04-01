@@ -1066,7 +1066,19 @@ export default class Application extends EventEmitter {
     });
 
     app.on('open-url', (event, urlToOpen) => {
-      this.openUrl(urlToOpen);
+      // if want to open thread by url, url should this format edisonmail://email/accountId/threadId/view
+      const matchs = /\/email\/(.+)\/(.+)\/view$/g.exec(urlToOpen);
+      if (matchs && matchs.length === 3) {
+        const accountId = matchs[1];
+        const threadId = matchs[2];
+        const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+        mainWindow.sendMessage('popout-thread', {
+          accountId,
+          id: threadId
+        });
+      } else {
+        this.openUrl(urlToOpen);
+      }
       event.preventDefault();
     });
 
