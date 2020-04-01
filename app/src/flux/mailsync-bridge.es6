@@ -966,7 +966,7 @@ export default class MailsyncBridge {
               cache.lastSend = now;
               cache.priority = priority;
               missing.push(cache.id);
-            } else if (priority > cache.priority) {
+            } else if (priority > cache.priority || priority === 0) {
               cache.lastSend = now;
               cache.priority = priority;
               missing.push(cache.id);
