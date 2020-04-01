@@ -141,6 +141,7 @@
       { "label": "Mark as Unread", "command": "core:mark-as-unread" },
       { "label": "Mark as Spam", "command": "core:report-as-spam" },
       { "type": "separator" },
+      { "label": "Copy Thread Url", "command": "core:copy-thread-url", "hideWhenDisabled":  true},
       { "label": "Export to PDF", "command": "core:export-pdf", "hideWhenDisabled":  true}
     ]
   },
