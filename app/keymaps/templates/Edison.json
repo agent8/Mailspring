@@ -58,5 +58,6 @@
   "core:mark-as-read": "shift+i",
   "core:mark-as-unread": ["shift+mod+u", "_"],
   "core:mark-important": ["+", "="],
-  "core:mark-unimportant": "-"
+  "core:mark-unimportant": "-",
+  "core:copy-thread-url": ["mod+option+c"]
 }
