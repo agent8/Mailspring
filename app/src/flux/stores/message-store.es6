@@ -2,6 +2,7 @@ import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
 import Message from '../models/message';
 import Thread from '../models/thread';
+import Category from '../models/category';
 import DatabaseStore from './database-store';
 import ThreadStore from './thread-store';
 import SiftStore from './sift-store';
@@ -87,12 +88,12 @@ class MessageStore extends MailspringStore {
         item.isHidden();
       if (viewing === 'inbox') {
         // inbox primary or other
-        const inboxCategorys = currentPerspective.inboxCategorys(true);
-        if (!inboxCategorys || inboxCategorys.length <= 0) {
-          return !inHidden;
+        let inboxHiddenCategorys = Category.inboxOtherCategorys(true);
+        if (currentPerspective.isOther) {
+          inboxHiddenCategorys = Category.inboxFocusedCategorys(true);
         }
-        const isInStrictCategory = inboxCategorys.includes(item.inboxCategory);
-        return !inHidden && isInStrictCategory;
+        const isInHiddenCategory = inboxHiddenCategorys.includes(item.inboxCategory);
+        return !inHidden && !isInHiddenCategory;
       }
       return viewingHiddenCategory ? inHidden || item.draft : !inHidden;
     });

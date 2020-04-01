@@ -39,11 +39,8 @@ export default class MessageListHiddenMessagesToggle extends React.Component {
         message = `There is one more message in this thread that is not in spam or trash.`;
       }
     } else if (viewing === 'inbox') {
-      const currentPerspectiveName = currentPerspective.name;
-      let theOtherTabName = '';
-      if (/focused$/i.test(currentPerspectiveName)) {
-        theOtherTabName = 'other';
-      } else if (/other$/i.test(currentPerspectiveName)) {
+      let theOtherTabName = 'other';
+      if (currentPerspective.isOther) {
         theOtherTabName = 'focused';
       }
       if (numberOfHiddenItems > 1) {
