@@ -382,9 +382,9 @@ var Content = function (_React$Component) {
 
       // COMPAT: Composition events can change the DOM out of under React, so we
       // increment this key to ensure that a full re-render happens. (2017/10/16)
-      if (handler == 'onCompositionEnd') {
-        this.tmp.key++;
-      }
+      // if (handler == 'onCompositionEnd') {
+      //   this.tmp.key++;
+      // }
 
       // Ignore `onBlur`, `onFocus` and `onSelect` events generated
       // programmatically while updating selection.
@@ -502,7 +502,7 @@ var Content = function (_React$Component) {
         Container,
         _extends({}, handlers, {
           'data-slate-editor': true,
-          key: this.tmp.key,
+          // key: this.tmp.key,
           ref: this.ref,
           'data-key': document.key,
           contentEditable: readOnly ? null : true,
