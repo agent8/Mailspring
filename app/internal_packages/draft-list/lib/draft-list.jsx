@@ -96,7 +96,7 @@ class DraftList extends React.Component {
         }
       });
     } else {
-      Actions.fetchBodies({ messages: [draft] });
+      Actions.fetchBodies({ messages: [draft], source: 'draft' });
       AppEnv.showErrorDialog('Draft is still downloading, cannot edit', {
         showInMainWindow: true,
         async: true,

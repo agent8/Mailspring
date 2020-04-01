@@ -1016,22 +1016,21 @@ export default class MailsyncBridge {
         let cacheUpdated = false;
         for (let i = 0; i < missingIdsMap.length; i++) {
           if (missingIdsMap[i].id === cache.id) {
-            if (cache.lastSend < clientStartTime) {
+            if ((cache.lastSend < clientStartTime) || ((now - cache.lastSend) >= ttl)) {
               cache.lastSend = now;
               cache.priority = priority;
-              missing.push(cache.id);
             } else if (priority > cache.priority || priority === 0) {
               cache.lastSend = now;
               cache.priority = priority;
-              missing.push(cache.id);
+            } else {
+              missingIdsMap[i].isNew = false;
             }
             newCache.push(cache);
             cacheUpdated = true;
-            missingIdsMap[i].isNew = false;
             break;
           }
         }
-        if (cache.lastSend > clientStartTime && !cacheUpdated) {
+        if ((now - cache.lastSend) < ttl && !cacheUpdated) {
           newCache.push(cache);
         }
       }

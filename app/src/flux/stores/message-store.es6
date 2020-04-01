@@ -564,7 +564,7 @@ class MessageStore extends MailspringStore {
   _fetchMissingBodies(items) {
     const missing = items.filter(i => {
       return (
-        (i.body === null || (typeof i.body === 'string' && i.body.length === 0))
+        (!i.body || (typeof i.body === 'string' && i.body.length === 0))
       );
     });
     if (missing.length > 0) {
