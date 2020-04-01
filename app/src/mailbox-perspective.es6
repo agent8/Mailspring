@@ -752,6 +752,21 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     }
   }
 
+  // primary thread is in this categorys
+  inboxCategorys(strict = false) {
+    if (this.categoriesSharedRole() !== 'inbox') {
+      return null;
+    }
+    const inboxCategorys = [
+      Category.InboxCategoryState.MsgCandidate,
+      Category.InboxCategoryState.MsgPrimary,
+    ];
+    if (!strict) {
+      inboxCategorys.push(Category.InboxCategoryState.MsgPrimaryAndOther);
+    }
+    return inboxCategorys;
+  }
+
   toJSON() {
     const json = super.toJSON();
     json.serializedCategories = JSON.stringify(this._categories);
