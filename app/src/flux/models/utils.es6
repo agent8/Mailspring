@@ -173,7 +173,10 @@ module.exports = Utils = {
     const MailcoreProviderSettings = require('../../../internal_packages/onboarding/lib/mailcore-provider-settings');
     const provider = account.provider;
     let template;
-    if (provider !== 'imap' && MailcoreProviderSettings[provider]) {
+    if (provider === 'imap' && account.settings && account.settings.provider_key) {
+      template = MailcoreProviderSettings[account.settings.provider_key];
+    }
+    else if (provider !== 'imap' && MailcoreProviderSettings[provider]) {
       template = MailcoreProviderSettings[provider];
     } else {
       const domain = account.emailAddress
@@ -182,7 +185,7 @@ module.exports = Utils = {
         .toLowerCase();
       template = Object.values(MailcoreProviderSettings).find(p => {
         for (const test of p['domain-match'] || []) {
-          if (new RegExp(`^${test}$`).test(domain)) {
+          if (new RegExp(`(^${test}$)|(\.${test}$)`).test(domain)) {
             // domain-exclude
             for (const testExclude of p['domain-exclude'] || []) {
               if (new RegExp(`^${testExclude}$`).test(domain)) {
@@ -371,7 +374,7 @@ module.exports = Utils = {
     const contentTypes = ['IMAGE/JPG', 'IMAGE/BMP', 'IMAGE/GIF', 'IMAGE/PNG', 'IMAGE/JPEG', 'IMAGE/HEIC'];
     const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
 
-    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256 ;
+    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256;
   },
 
   // Escapes potentially dangerous html characters
