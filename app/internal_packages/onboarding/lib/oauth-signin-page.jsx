@@ -2,6 +2,7 @@ import { clipboard, remote } from 'electron';
 import OnboardingActions from './onboarding-actions';
 import { React, ReactDOM, PropTypes } from 'mailspring-exports';
 import { RetinaImg, LottieImg } from 'mailspring-component-kit';
+import LoginErrorPage from './page-login-error';
 import http from 'http';
 import url from 'url';
 
@@ -120,13 +121,13 @@ export default class OAuthSignInPage extends React.Component {
     if (this._server) this._server.close();
   }
 
-  moveToLoginError() {
-    OnboardingActions.moveToPage('login-error');
+  moveToLoginError(err) {
+    // OnboardingActions.moveToPage('login-error');
+    this.setState(Object.assign({ loading: false }, err));
   }
 
   _onError(err) {
-    this.setState({ authStage: 'error', errorMessage: err.message });
-    this.moveToLoginError();
+    this.moveToLoginError({ authStage: 'error', errorMessage: err.message });
     AppEnv.reportError(err, { oAuthURL: this.props.providerAuthPageUrl });
   }
 
@@ -256,15 +257,15 @@ export default class OAuthSignInPage extends React.Component {
     }
     // For some reason, yahoo oauth page will cause webview to throw load-did-fail with errorCode of -3 when
     // navigating to permission granting view. Thus we want to capture that and ignore it.
-    if (event && event.errorCode < 0) {
+    if (event && event.errorCode === -3) {
       AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
       return;
     }
-    this.setState({
+    let errorMessage = `${event.errorCode}:${event.errorDescription}`;
+    this.moveToLoginError({
       authStage: 'error',
-      errorMessage: 'Network Error.'
+      errorMessage
     });
-    // this.moveToLoginError();
     AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
   };
 
@@ -416,12 +417,7 @@ export default class OAuthSignInPage extends React.Component {
           loadingImg
         )}
         {authStage === 'error' && (
-          <div style={{ marginTop: 100 }} >
-            <h2>Sorry, we had trouble logging you in</h2>
-            <div className="error-region">
-              <FormErrorMessage message={this.state.errorMessage} />
-            </div>
-          </div>
+          <LoginErrorPage errorMessage={this.state.errorMessage} />
         )}
       </div>
     );
