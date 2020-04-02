@@ -255,9 +255,22 @@ export default class OAuthSignInPage extends React.Component {
       }
       return;
     }
-    // For some reason, yahoo oauth page will cause webview to throw load-did-fail with errorCode of -3 when
+    // For some reason, oauth page will cause webview to throw load-did-fail with errorCode
+    // Yahoo
+    // -3
+    // -105:RR_NAME_NOT_RESOLVED Yahoo try to connect opus.analytics.yahoo.com
+    // Gmail
+    // -21:ERR_NETWORK_CHANGED Gmail oauth try to connect youtube
+    // -100:ERR_CONNECTION_CLOSED Gmail oauth try to connect youtube
+    // -101:ERR_CONNECTION_RESET Gmail oauth try to connect youtube
+    // -102:ERR_CONNECTION_REFUSED Gmail oauth try to connect youtube
+    // -324:ERR_EMPTY_RESPONSE Gmail oauth try to connect youtube
     // navigating to permission granting view. Thus we want to capture that and ignore it.
-    if (event && event.errorCode === -3) {
+    if (event && (
+      event.errorCode === -3 ||
+      event.validatedURL.includes('youtube.com') ||
+      event.validatedURL.includes('analytics.yahoo')
+    )) {
       AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
       return;
     }
