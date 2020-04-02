@@ -1,9 +1,4 @@
-/* eslint no-unused-vars: 0*/
-import _ from 'underscore';
-import Thread from '../models/thread';
-import Actions from '../actions';
 import Attributes from '../attributes';
-import DatabaseStore from '../stores/database-store';
 import ChangeMailTask from './change-mail-task';
 
 export default class ChangeUnreadTask extends ChangeMailTask {
