@@ -241,11 +241,6 @@ export default class OAuthSignInPage extends React.Component {
   }
 
   _webviewDidFailLoad = (event) => {
-    // For some reason, yahoo oauth page will cause webview to throw load-did-fail with errorCode of -3 when
-    // navigating to permission granting view. Thus we want to capture that and ignore it.
-    if (event && event.errorCode === -3) {
-      return;
-    }
     // if running in mas mode
     if (process.mas && event.validatedURL && event.validatedURL.indexOf('127.0.0.1') !== -1) {
       if (!this._mounted) return;
@@ -259,11 +254,17 @@ export default class OAuthSignInPage extends React.Component {
       }
       return;
     }
+    // For some reason, yahoo oauth page will cause webview to throw load-did-fail with errorCode of -3 when
+    // navigating to permission granting view. Thus we want to capture that and ignore it.
+    if (event && event.errorCode < 0) {
+      AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
+      return;
+    }
     this.setState({
       authStage: 'error',
       errorMessage: 'Network Error.'
     });
-    this.moveToLoginError();
+    // this.moveToLoginError();
     AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
   };
 
