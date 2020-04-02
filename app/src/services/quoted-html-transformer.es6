@@ -253,14 +253,23 @@ class QuotedHTMLTransformer {
     return false;
   }
 
-  _findGmailQuotes(doc) {
+  _findGmailQuotes = doc => {
     // Gmail creates both div.gmail_quote and blockquote.gmail_quote. The div
     // version marks text but does not cause indentation, but both should be
     // considered quoted text.
-    return Array.from(doc.querySelectorAll('.gmail_quote'));
+    const nodes = Array.from(doc.querySelectorAll('.gmail_quote'));
+    const blocks = [];
+    for (const node of nodes) {
+      // Keep quotes that are followed by non-quote blocks (eg: inline reply text)
+      if (this._isElementFollowedByUnquotedElement(node, nodes)) {
+        continue;
+      }
+      blocks.push(node);
+    }
+    return blocks;
   }
 
-  _findBlockquoteQuotes = (doc) => {
+  _findBlockquoteQuotes = doc => {
     const nodes = Array.from(doc.querySelectorAll('blockquote'));
     const blocks = [];
     for (const node of nodes) {
@@ -268,6 +277,7 @@ class QuotedHTMLTransformer {
       if (node.style.margin === "0px 0px 0px 40px" && node.style.border === "none" && !node.className) {
         continue;
       }
+      // Keep quotes that are followed by non-quote blocks (eg: inline reply text)
       if (this._isElementFollowedByUnquotedElement(node, nodes)) {
         continue;
       }
