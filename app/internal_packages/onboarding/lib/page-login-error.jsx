@@ -1,9 +1,5 @@
 const React = require('react');
-const PropTypes = require('prop-types');
-const path = require('path');
-const fs = require('fs');
-const { RetinaImg, Flexbox, ConfigPropContainer, LottieImg } = require('mailspring-component-kit');
-const { AccountStore, IdentityStore } = require('mailspring-exports');
+const { LottieImg } = require('mailspring-component-kit');
 const OnboardingActions = require('./onboarding-actions').default;
 
 class LoginErrorPage extends React.Component {
@@ -16,14 +12,20 @@ class LoginErrorPage extends React.Component {
 
   render() {
     const { submitting } = this.state;
+    const { errorMessage } = this.props;
     return (
-      <div className="page opaque" style={{ width: 900, height: '100%' }}>
+      <div className="page opaque" style={{ height: '100%' }}>
         <img
           src={`edisonmail://onboarding/assets/login-error.png`}
           alt=""
         />
         <h1>Oops!</h1>
         <h4>We had trouble logging you in.</h4>
+        {
+          errorMessage && <div className="error">
+            {errorMessage}
+          </div>
+        }
         <div className="footer">
           <button className={'btn btn-large ' + (submitting && 'btn-disabled')} onClick={this._onClick}>
             Try Again
