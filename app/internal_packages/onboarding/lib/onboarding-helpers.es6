@@ -5,6 +5,7 @@ import { Account, IdentityStore, MailsyncProcess, Actions, AccountStore } from '
 import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
 import dns from 'dns';
+const regexpForDomain = test => new RegExp(`(^${test}$)|(\.${test}$)`);
 
 const queryStringify = (data, encoded = false) => {
   const queryString = Object.keys(data)
@@ -98,7 +99,7 @@ export function validateEmailAddressForProvider(emailAddress = '', provider = nu
   mxRecordsForDomain(domain).then(mxRecords => {
     if (template) {
       for (const test of template['mx-match'] || []) {
-        const reg = new RegExp(`^${test}$`);
+        const reg = regexpForDomain(test);
         if (mxRecords.some(record => reg.test(record))) {
           return { ret: true };
         }
@@ -107,7 +108,7 @@ export function validateEmailAddressForProvider(emailAddress = '', provider = nu
   });
   if (template) {
     for (const test of template['domain-match'] || []) {
-      if (new RegExp(`^${test}$`).test(domain)) {
+      if (regexpForDomain(test).test(domain)) {
         return { ret: true };
       }
     }
@@ -156,9 +157,11 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
   // find matching template using new Mailcore lookup tables. These match against the
   // email's domain and the mx records for the domain, which means it will identify that
   // "foundry376.com" uses Google Apps, for example.
-  let template = Object.values(MailcoreProviderSettings).find(p => {
+  let template;
+  let providerKey = Object.keys(MailcoreProviderSettings).find(k => {
+    const p = MailcoreProviderSettings[k];
     for (const test of p['domain-match'] || []) {
-      if (new RegExp(`^${test}$`).test(forceDomain || domain)) {
+      if (regexpForDomain(test).test(forceDomain || domain)) {
         // domain-exclude
         for (const testExclude of p['domain-exclude'] || []) {
           if (new RegExp(`^${testExclude}$`).test(forceDomain || domain)) {
@@ -170,10 +173,11 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
     }
     return false;
   });
-  if (!template) {
-    template = Object.values(MailcoreProviderSettings).find(p => {
+  if (!providerKey) {
+    providerKey = Object.keys(MailcoreProviderSettings).find(k => {
+      const p = MailcoreProviderSettings[k];
       for (const test of p['mx-match'] || []) {
-        const reg = new RegExp(`^${test}$`);
+        const reg = regexpForDomain(test);
         if (mxRecords.some(record => reg.test(record))) {
           return true;
         }
@@ -182,11 +186,13 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
     });
   }
 
-  if (template) {
+  if (providerKey) {
+    template = MailcoreProviderSettings[providerKey];
     console.log(`Using Mailcore Template: ${JSON.stringify(template, null, 2)}`);
     const imap = (template.servers.imap || [])[0] || {};
     const smtp = (template.servers.smtp || [])[0] || {};
     const defaults = {
+      provider_key: providerKey,
       imap_host: imap.hostname.replace('{domain}', domain),
       imap_port: imap.port,
       imap_username: usernameWithFormat('email'),
@@ -649,6 +655,7 @@ export async function finalizeAndValidateAccount(account) {
   proc.account = account;
   const { response } = await proc.test();
   const newAccount = response.account;
+  newAccount.settings.provider_key = account.settings.provider_key;
   if (account.mailsync) {
     newAccount.mailsync = account.mailsync;
     delete newAccount.mailsync.accounts;
