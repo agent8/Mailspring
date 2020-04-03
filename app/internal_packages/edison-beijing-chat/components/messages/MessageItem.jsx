@@ -91,12 +91,8 @@ export default class MessageItem extends React.Component {
   }
 
   updateProgress(progress) {
-    const { msgBody } = this.props.msg;
-    if (
-      progress.finished &&
-      msgBody.mediaObjectId &&
-      msgBody.mediaObjectId === progress.mediaObjectId
-    ) {
+    const { body } = this.props.msg;
+    if (progress.finished && body.mediaObjectId && body.mediaObjectId === progress.mediaObjectId) {
       this.setState({
         file_downloaded: true,
       });
@@ -139,23 +135,23 @@ export default class MessageItem extends React.Component {
 
   retrySend() {
     const { msg, conversation } = this.props;
-    const { msgBody } = this.props.msg;
-    if (msgBody.failMessage) {
-      msgBody.failMessage = '';
-      msgBody.type = msgBody.path ? FILE_TYPE.IMAGE : FILE_TYPE.TEXT;
+    const { body } = this.props.msg;
+    if (body.failMessage) {
+      body.failMessage = '';
+      body.type = body.path ? FILE_TYPE.IMAGE : FILE_TYPE.TEXT;
     }
-    if (msgBody.localFile && !msgBody.uploadFailed) {
+    if (body.localFile && !body.uploadFailed) {
       const loadConfig = {
         conversation,
         messageId: msg.id,
-        msgBody,
-        filepath: msgBody.localFile,
+        msgBody: body,
+        filepath: body.localFile,
         type: 'upload',
       };
       const { queueLoadMessage } = this.props;
       queueLoadMessage(loadConfig);
     } else {
-      MessageSend.sendMessage(msgBody, conversation, msg.id);
+      MessageSend.sendMessage(body, conversation, msg.id);
     }
   }
 
