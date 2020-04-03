@@ -80,9 +80,6 @@ class MessageSend {
             devices.push(device);
           }
         });
-        if (e2ees.length != devices.length) {
-          devices = [];
-        }
       }
     } else {
       let e2ee = await E2eeStore.findOne(to, from);
