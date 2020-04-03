@@ -73,10 +73,36 @@ const rules = [
     },
   },
 ];
+const onKeyUp = (event, change) => {
+  if (
+    event.shiftKey ||
+    event.metaKey ||
+    event.optionKey ||
+    event.altKey ||
+    event.ctrlKey ||
+    ['Control'].includes(event.key)
+  ) {
+    return;
+  }
+  let contentIds = [];
+  const inLines = change.value.inlines;
+  if (inLines) {
+    for (let i = 0; i < inLines.size; i++) {
+      const inline = inLines.get(i);
+      if (inline) {
+        if (inline && inline.data && inline.data.get('contentId')) {
+          contentIds.push(inline.data.get('contentId'));
+        }
+      }
+    }
+  }
+  contentIds.forEach(contentId => Actions.draftInlineAttachmentRemoved(contentId));
+};
 
 export const changes = {
   insert: (change, file) => {
-    const canHoldInlineImage = (node, anchorKey) => !node.isVoid && !isQuoteNode(node) && !!node.getFirstText() && !!node.getChild(anchorKey);
+    const canHoldInlineImage = (node, anchorKey) =>
+      !node.isVoid && !isQuoteNode(node) && !!node.getFirstText() && !!node.getChild(anchorKey);
 
     while (!canHoldInlineImage(change.value.anchorBlock, change.value.anchorKey)) {
       change.collapseToEndOfPreviousText();
@@ -99,5 +125,6 @@ export default [
   {
     renderNode,
     rules,
+    onKeyUp,
   },
 ];
