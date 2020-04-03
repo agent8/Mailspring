@@ -79,7 +79,7 @@ class SidebarSection {
     if(standardItem){
       items.unshift(standardItem);
     }
-    standardItem = SidebarItem.forDrafts([account.id]);
+    standardItem = SidebarItem.forDrafts([account.id], {key: `standard-${account.id}`});
     if(standardItem){
       items.unshift(standardItem);
     }
@@ -89,6 +89,10 @@ class SidebarSection {
     }
     standardItem = SidebarItem.forUnread([account.id]);
     if(standardItem){
+      items.unshift(standardItem);
+    }
+    standardItem = SidebarItem.forToday([account.id], { displayName: 'Today' });
+    if (standardItem) {
       items.unshift(standardItem);
     }
     standardItem = SidebarItem.forInbox([account.id]);
@@ -169,15 +173,19 @@ class SidebarSection {
     }
     if (accounts.length > 1) {
       items.push(DIVIDER_OBJECT);
-      folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread' });
+      folderItem = SidebarItem.forToday(accountIds, { displayName: 'Today', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forStarred(accountIds, { displayName: 'Flagged' });
+      folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forDrafts(accountIds, { displayName: 'All Drafts' });
+      folderItem = SidebarItem.forStarred(accountIds, { displayName: 'Flagged', key: 'all' });
+      if (folderItem) {
+        items.push(folderItem);
+      }
+      folderItem = SidebarItem.forDrafts(accountIds, { displayName: 'All Drafts', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
@@ -185,25 +193,30 @@ class SidebarSection {
       // if (folderItem) {
       //   items.push(folderItem);
       // }
-      folderItem = SidebarItem.forSpam(accountIds, { displayName: 'Spam' });
+      folderItem = SidebarItem.forSpam(accountIds, { displayName: 'Spam', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forAllTrash(accountIds, { displayName: 'Trash' });
+      folderItem = SidebarItem.forAllTrash(accountIds, { displayName: 'Trash', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
 
-      folderItem = SidebarItem.forArchived(accountIds, { displayName: 'All Archive', name: 'allArchive' });
+      folderItem = SidebarItem.forArchived(accountIds, { displayName: 'All Archive', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
-      folderItem = SidebarItem.forSentMails(accountIds, { displayName: 'All Sent' });
+      folderItem = SidebarItem.forSentMails(accountIds, { displayName: 'All Sent', key: 'all' });
       if (folderItem) {
         items.push(folderItem);
       }
     }
     SidebarSection.forSiftCategories(accountIds, items);
+
+    folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
+    if (folderItem) {
+      items.push(folderItem);
+    }
 
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)

@@ -1066,13 +1066,37 @@ export default class Application extends EventEmitter {
     });
 
     app.on('open-url', (event, urlToOpen) => {
-      this.openUrl(urlToOpen);
+      // if want to open thread by url, url should this format edisonmail://email/accountId/threadId/view
+      const matchs = /\/email\/(.+)\/(.+)\/view$/g.exec(urlToOpen);
+      if (matchs && matchs.length === 3) {
+        const accountId = matchs[1];
+        const threadId = matchs[2];
+        const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+        mainWindow.sendMessage('popout-thread', {
+          accountId,
+          id: threadId
+        });
+      } else {
+        this.openUrl(urlToOpen);
+      }
       event.preventDefault();
     });
 
     // System Tray
     ipcMain.on('update-system-tray', (event, ...args) => {
       this.systemTrayManager.updateTraySettings(...args);
+    });
+
+    // This application can't read the config-schema
+    // So should register the default value of 'core.workspace.systemTray'
+    ipcMain.on('update-system-tray-enable', (event, ...args) => {
+      this.systemTrayManager.updateSystemTrayEnable(...args);
+    });
+
+    // This application  can't read the config-schema
+    // So should register the default value of 'core.workspace.enableChat'
+    ipcMain.on('update-system-tray-chat-enable', (event, ...args) => {
+      this.systemTrayManager.updateTrayChatEnable(...args);
     });
 
     ipcMain.on('update-system-tray-account-menu', (event, ...args) => {

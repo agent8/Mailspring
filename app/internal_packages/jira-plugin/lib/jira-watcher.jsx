@@ -241,7 +241,7 @@ export default class Watcher extends Component {
                     <RetinaImg
                         name={isWatching ? 'jira-watch.svg' : 'jira-not-watch.svg'}
                         isIcon
-                        className={loading ? 'loading' : ''}
+                        className={loading ? 'loading-watcher' : ''}
                         mode={RetinaImg.Mode.ContentIsMask}
                     />
                     <span>{watchCount > 0 ? watchCount : ''}</span>

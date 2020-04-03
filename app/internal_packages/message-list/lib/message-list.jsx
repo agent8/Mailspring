@@ -26,37 +26,37 @@ import {
   KeyCommandsRegion,
   InjectedComponentSet,
   LottieImg,
-} from 'mailspring-component-kit'
+} from 'mailspring-component-kit';
 
-import FindInThread from './find-in-thread'
-import MessageItemContainer from './message-item-container'
-import OutboxItemContainer from './outbox-item-container'
-import { remote } from 'electron'
-const { Menu, MenuItem } = remote
+import FindInThread from './find-in-thread';
+import MessageItemContainer from './message-item-container';
+import OutboxItemContainer from './outbox-item-container';
+import { remote } from 'electron';
+const { Menu, MenuItem } = remote;
 
-const buttonTimeout = 700
-const TOOLBAR_MIN_WIDTH = 595
+const buttonTimeout = 700;
+const TOOLBAR_MIN_WIDTH = 595;
 
 class MessageListScrollTooltip extends React.Component {
   static displayName = 'MessageListScrollTooltip'
   static propTypes = {
     viewportCenter: PropTypes.number.isRequired,
     totalHeight: PropTypes.number.isRequired,
+  };
+
+  UNSAFE_componentWillMount() {
+    this.setupForProps(this.props);
   }
 
-  UNSAFE_componentWillMount () {
-    this.setupForProps(this.props)
+  UNSAFE_componentWillReceiveProps(newProps) {
+    this.setupForProps(newProps);
   }
 
-  UNSAFE_componentWillReceiveProps (newProps) {
-    this.setupForProps(newProps)
+  shouldComponentUpdate(newProps, newState) {
+    return !Utils.isEqualReact(this.state, newState);
   }
 
-  shouldComponentUpdate (newProps, newState) {
-    return !Utils.isEqualReact(this.state, newState)
-  }
-
-  setupForProps (props) {
+  setupForProps(props) {
     // Technically, we could have MessageList provide the currently visible
     // item index, but the DOM approach is simple and self-contained.
     //
@@ -284,40 +284,45 @@ class MessageList extends React.Component {
       'core:forward': () => this._onForward(),
       'core:print-thread': () => this._onPrintThread(),
       'core:export-pdf': this._onPdfThread,
+      'core:copy-thread-url': this._onCopyThreadUrl,
       'core:messages-page-up': () => this._onScrollByPage(-1),
       'core:messages-page-down': () => this._onScrollByPage(1),
-    }
+    };
 
     if (this.state.canCollapse) {
-      handlers['message-list:toggle-expanded'] = () => this._onToggleAllMessagesExpanded()
+      handlers['message-list:toggle-expanded'] = () => this._onToggleAllMessagesExpanded();
     }
 
-    return handlers
+    return handlers;
   }
 
-  _getMessageContainer (headerMessageId) {
-    return this.refs[`message-container-${headerMessageId}`]
+  _onCopyThreadUrl = () => {
+    const { currentThread } = this.state;
+    if (!currentThread) {
+      return;
+    }
+    const { clipboard } = require('electron');
+    clipboard.writeText(`edisonmail://email/${currentThread.accountId}/${currentThread.id}/view`);
+  }
+
+  _getMessageContainer(headerMessageId) {
+    return this.refs[`message-container-${headerMessageId}`];
   }
 
   _onForward = () => {
-    if (
-      !this.state.currentThread ||
-      this.state.isForwarding ||
-      !this._mounted ||
-      this._forwardTimer
-    ) {
-      return
+    if (!this.state.currentThread || this.state.isForwarding || !this._mounted || this._forwardTimer) {
+      return;
     }
-    this._timeoutButton('forward')
-    this.safeSetState({ isForwarding: true })
+    this._timeoutButton('forward');
+    this.safeSetState({ isForwarding: true });
     Actions.composeForward({
       thread: this.state.currentThread,
       message: this._lastMessage(),
-    })
-  }
+    });
+  };
 
-  _lastMessage () {
-    return (this.state.messages || []).filter(m => !m.draft).pop()
+  _lastMessage() {
+    return (this.state.messages || []).filter(m => !m.draft).pop();
   }
 
   // Returns either "reply" or "reply-all"
@@ -591,7 +596,7 @@ class MessageList extends React.Component {
       menu.append(
         new MenuItem({
           label: `Search for "${subject}`,
-          click: () => Actions.searchQuerySubmitted(`subject:"${subject}"`),
+          click: () => Actions.searchQuerySubmitted(`subject:"${subject}"`, true),
         })
       )
     }
@@ -802,50 +807,45 @@ class MessageList extends React.Component {
 
   _onScroll = e => {
     if (e.target) {
-      this._calcScrollPosition(e.target.scrollTop)
+      this._calcScrollPosition(e.target.scrollTop);
     }
-  }
-  renderOutboxMessage (wrapClass, messageListClass) {
-    return (
-      <KeyCommandsRegion>
-        <div className={'outbox-message-toolbar'} id='outbox-message-toolbar'>
-          <InjectedComponentSet
-            className='item-container'
-            matching={{ role: 'OutboxMessageToolbar' }}
-            exposedProps={{
-              draft: this.state.selectedDraft,
-              hiddenLocations: WorkspaceStore.hiddenLocations(),
-            }}
-          />
-        </div>
-        <div className={messageListClass} id='outbox-message'>
-          <ScrollRegion
-            tabIndex='-1'
-            className={wrapClass}
-            scrollbarTickProvider={SearchableComponentStore}
-            scrollTooltipComponent={MessageListScrollTooltip}
-            ref={el => {
-              this._messageWrapEl = el
-            }}
-            onScroll={this._onScroll}
-          >
-            {this._renderSubject()}
-            <div className='headers' style={{ position: 'relative' }}>
-              <InjectedComponentSet
-                className='message-list-headers'
-                matching={{ role: 'MessageListHeaders' }}
-                exposedProps={{ draft: this.state.selectedDraft }}
-                direction='column'
-              />
-            </div>
-            {this._renderDraftElement()}
-          </ScrollRegion>
-        </div>
-      </KeyCommandsRegion>
-    )
+  };
+  renderOutboxMessage(wrapClass, messageListClass) {
+    return <KeyCommandsRegion >
+      <div className={'outbox-message-toolbar'} id="outbox-message-toolbar">
+        <InjectedComponentSet
+          className="item-container"
+          matching={{ role: 'OutboxMessageToolbar' }}
+          exposedProps={{ draft: this.state.selectedDraft, hiddenLocations: WorkspaceStore.hiddenLocations() }}
+        />
+      </div>
+      <div className={messageListClass} id="outbox-message">
+        <ScrollRegion
+          tabIndex="-1"
+          className={wrapClass}
+          scrollbarTickProvider={SearchableComponentStore}
+          scrollTooltipComponent={MessageListScrollTooltip}
+          ref={el => {
+            this._messageWrapEl = el;
+          }}
+          onScroll={this._onScroll}
+        >
+          {this._renderSubject()}
+          <div className="headers" style={{ position: 'relative' }}>
+            <InjectedComponentSet
+              className="message-list-headers"
+              matching={{ role: 'MessageListHeaders' }}
+              exposedProps={{ draft: this.state.selectedDraft }}
+              direction="column"
+            />
+          </div>
+          {this._renderDraftElement()}
+        </ScrollRegion>
+      </div>
+    </KeyCommandsRegion>
   }
 
-  render () {
+  render() {
     const {
       currentThread,
       messages,
@@ -855,17 +855,17 @@ class MessageList extends React.Component {
       isSearching,
       query,
       theme,
-      loading,
-    } = this.state
+      loading
+    } = this.state;
     if ((!currentThread && !inOutbox) || (inOutbox && !selectedDraft)) {
       if (hideMessageList) {
-        return <div />
+        return <div />;
       }
       // if is searching
       if (isSearching || query) {
-        const lottieName = theme === 'ui-dark' ? 'search-dark' : 'search'
+        const lottieName = theme === 'ui-dark' ? 'search-dark' : 'search';
         return (
-          <div className='searching'>
+          <div className="searching">
             <LottieImg
               name={lottieName}
               size={{ width: 250, height: 250 }}

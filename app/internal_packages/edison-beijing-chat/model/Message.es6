@@ -22,8 +22,7 @@ const STATUS_WEIGHTS = {
 
 const Sequelize = require('sequelize');
 const Model = Sequelize.Model;
-const { getdb } = require('../db/index');
-const db = getdb();
+const db = require('../db/index').default;
 
 export const getStatusWeight = status => STATUS_WEIGHTS[status];
 

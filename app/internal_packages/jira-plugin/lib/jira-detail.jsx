@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import util from 'util';
 import fs from 'fs';
 import path from 'path';
 import Select, { Option } from 'rc-select';
@@ -7,13 +8,18 @@ import JiraApi from './jira-api';
 import Watcher from './jira-watcher';
 import Status from './jira-status';
 import Priority from './jira-priority';
+import Description from './jira-description';
 import { JiraComments, CommentSubmit } from './jira-comments';
+import FixVersions from './jira-fix-versions';
+import Labels from './jira-labels';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
 const jiraDirPath = path.join(configDirPath, 'jira_cache');
 const { Menu, MenuItem } = remote;
 const CONFIG_KEY = 'plugin.jira.config';
+const exists = util.promisify(fs.exists);
+const writeFile = util.promisify(fs.writeFile);
 
 export default class JiraDetail extends Component {
     constructor(props) {
@@ -64,6 +70,9 @@ export default class JiraDetail extends Component {
                 const currentUser = await this.jira.getCurrentUser();
                 console.log('****currentUser', currentUser);
                 config.currentUser = currentUser;
+                const permissions = await this.jira.myPermissions(['ADMINISTER', 'ADMINISTER_PROJECTS']);
+                console.log('****permissions', permissions);
+                config.permissions = permissions;
                 AppEnv.config.set(CONFIG_KEY, config);
             } catch (err) {
                 console.log('****getCurrentUserInfo failed', err);
@@ -81,10 +90,14 @@ export default class JiraDetail extends Component {
     }
     _findIssueKey(messages) {
         for (const m of messages) {
+            if (!m || !m.body) {
+                continue;
+            }
             const $ = cheerio.load(m.body);
             let a = $('.breadcrumbs-table a').last();
-            if (a && a.attr('href')) {
-                let href = a.attr('href');
+            let b = $('.issue-breadcrumbs a').last();
+            let href = (a && a.attr('href')) || (b && b.attr('href'));
+            if (href) {
                 href = href.split('?')[0];
                 return {
                     link: href,
@@ -163,9 +176,11 @@ export default class JiraDetail extends Component {
                 return;
             }
             const localPath = path.join(jiraDirPath, `${isThumbnail ? '' : 'origin_'}${attachment.id}_${attachment.filename}`);
-            if (!fs.existsSync(localPath)) {
+
+            const exist = await exists(localPath);
+            if (!exist) {
                 const downloadAtt = await downloadApi(attachment);
-                fs.writeFileSync(localPath, downloadAtt);
+                await writeFile(localPath, downloadAtt);
             }
             const { attachments = {}, originalFiles = {} } = this.state;
             if (!isThumbnail) {
@@ -339,7 +354,7 @@ export default class JiraDetail extends Component {
             </div>;
         }
         const { renderedFields, fields } = issue;
-        const userOptions = allUsers
+        const userOptions = allUsers ? allUsers
             .filter(item => item.accountType === "atlassian")
             .map((item, idx) => (
                 <Option
@@ -349,11 +364,11 @@ export default class JiraDetail extends Component {
                     value={item.accountId}>
                     {this.renderUserNode(item)}
                 </Option>
-            ));
+            )) : [];
         if (userOptions.length === 0) {
             userOptions.push(<Option key={fields.assignee.accountId} displayname={fields.assignee.displayName} value={fields.assignee.accountId}>{this.renderUserNode(fields.assignee)}</Option>);
         }
-        const watcerProps = {
+        const watcherProps = {
             jira: this.jira,
             fields: issue.fields,
             issueKey,
@@ -365,7 +380,7 @@ export default class JiraDetail extends Component {
                 {userLogo}
                 <div className="jira-title">
                     <a href={this.state.link}>{issueKey}</a>
-                    <Watcher {...watcerProps} />
+                    <Watcher {...watcherProps} />
                 </div>
                 <div className="wrapper">
                     <header>
@@ -392,24 +407,43 @@ export default class JiraDetail extends Component {
                             <span className="content">{this.renderUserNode(fields.reporter)}</span>
                         </div>
                         <Priority
-                            priority={issue.fields.priority}
+                            priority={fields.priority}
                             jira={this.jira}
                             issueKey={issueKey}
                             logout={this.logout}
                             renderProgress={this._renderProgress}
                         />
                         <Status
-                            status={issue.fields.status}
+                            status={fields.status}
                             jira={this.jira}
                             issueKey={issueKey}
                             logout={this.logout}
                             renderProgress={this._renderProgress}
                         />
+                        <Labels
+                            labels={fields.labels}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
+                        <FixVersions
+                            fixVersions={fields.fixVersions}
+                            jira={this.jira}
+                            issueKey={issueKey}
+                            projectKey={fields.project && fields.project.key}
+                            logout={this.logout}
+                            renderProgress={this._renderProgress}
+                        />
                     </header>
-                    <div className="jira-description" onClick={this.openOrignalImage} >
-                        <span className="label">Description</span>
-                        <div dangerouslySetInnerHTML={{ __html: this.replaceImageSrc(renderedFields.description) }}></div>
-                    </div>
+                    <Description
+                        onClick={this.openOrignalImage}
+                        jira={this.jira}
+                        issueKey={issueKey}
+                        data={fields.description}
+                        replaceImageSrc={this.replaceImageSrc}
+                        html={renderedFields.description}
+                    />
                     <JiraComments
                         onClick={this.openOrignalImage}
                         jira={this.jira}

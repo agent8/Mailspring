@@ -27,10 +27,12 @@ class ThreadListEmptyFolderBar extends React.Component {
       .showMessageBox({
         type: 'question',
         buttons: ['Cancel', 'Delete'],
+        defaultId: 1,
+        cancelId: 0,
         message: 'Are you sure?',
         detail: `This action will permanently affect ${(count / 1).toLocaleString()} ${
           count > 1 ? 'messages' : 'message'
-        }. Are you sure you want to continue?`,
+          }. Are you sure you want to continue?`,
       })
       .then(({ response = 0 } = {}) => {
         if (response === 0) {
@@ -84,7 +86,7 @@ export default ListensToFluxStore(ThreadListEmptyFolderBar, {
 
     if (
       !folders.length ||
-      !folders.every(c => c.isFolder() && (c.role === 'trash' || c.role === 'trash'))
+      !folders.every(c => c.isFolder() && (c.role === 'trash' || c.role === 'spam'))
     ) {
       return { role: null, folders: null };
     }

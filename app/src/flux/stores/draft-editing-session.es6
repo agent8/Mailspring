@@ -275,6 +275,17 @@ export default class DraftEditingSession extends MailspringStore {
     this._registerListeners();
     if (draft) {
       hotwireDraftBodyState(draft);
+      if(!Array.isArray(draft.from) || draft.from.length === 0){
+        const myAccount = AccountStore.accountForId(draft.accountId);
+        if(myAccount){
+          draft.from = [myAccount.me()];
+        }else {
+          draft.from = [];
+        }
+      }
+      if(draft.from[0] && !draft.from[0].accountId){
+        draft.from[0].accountId = draft.accountId;
+      }
       this._draft = draft;
       this._draftPromise = Promise.resolve(draft);
       this._isDraftMissingAttachments();
@@ -328,6 +339,17 @@ export default class DraftEditingSession extends MailspringStore {
           if (!draft.body) {
             draft.waitingForBody = true;
             Actions.fetchBodies({ messages: [draft], source: 'draft' });
+          }
+          if(!Array.isArray(draft.from) || draft.from.length === 0){
+            const myAccount = AccountStore.accountForId(draft.accountId);
+            if(myAccount){
+              draft.from = [myAccount.defaultMe()];
+            }else {
+              draft.from = [];
+            }
+          }
+          if(draft.from[0] && !draft.from[0].accountId){
+            draft.from[0].accountId = draft.accountId;
           }
           if (Array.isArray(draft.from) && draft.from.length === 1) {
             if (draft.from[0].email.length === 0) {
@@ -505,7 +527,7 @@ export default class DraftEditingSession extends MailspringStore {
     const sigIndex = cleaned.search(RegExpUtils.mailspringSignatureRegex());
     cleaned = sigIndex > -1 ? cleaned.substr(0, sigIndex) : cleaned;
 
-    const signatureIndex = cleaned.indexOf('<signature>');
+    const signatureIndex = cleaned.indexOf('<edo-signature>');
     if (signatureIndex !== -1) {
       cleaned = cleaned.substr(0, signatureIndex - 1);
     }
@@ -544,72 +566,72 @@ export default class DraftEditingSession extends MailspringStore {
   // it's accountId if the from address does not match the account for the from
   // address.
   //
-  async ensureCorrectAccount() {
-    // if (this._popedOut) {
-      // We do nothing if session have popouts
-      // console.log('we are poped out');
-      // return;
-    // }
-    const draft = this.draft();
-    const account = AccountStore.accountForEmail(draft.from[0].email);
-    if (!account) {
-      throw new Error(
-        'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.'
-      );
-    }
-
-    if (account.id !== draft.accountId) {
-      // Create a new draft in the new account (with a new ID).
-      // Because we use the headerMessageId /exclusively/ as the
-      // identifier we'll be fine.
-      //
-      // Then destroy the old one, since it may be synced to the server
-      // and require cleanup!
-      //
-      const newId = uuid();
-      const create = new SyncbackDraftTask({
-        headerMessageId: draft.headerMessageId,
-        draft: new Message({
-          id: newId,
-          from: draft.from,
-          version: 0,
-          to: draft.to,
-          cc: draft.cc,
-          bcc: draft.bcc,
-          body: draft.body,
-          files: draft.files,
-          replyTo: draft.replyTo,
-          subject: draft.subject,
-          headerMessageId: newId,
-          // referenceMessageId: draft.id,
-          hasNewID: draft.hasNewID,
-          accountId: account.id,
-          msgOrigin: draft.msgOrigin,
-          unread: false,
-          starred: false,
-          draft: true,
-        }),
-      });
-
-      const destroy =
-        draft.id &&
-        new DestroyDraftTask({
-          messageIds: [draft.id],
-          accountId: draft.accountId,
-        });
-      // console.log('syncback draft from ensure account');
-      try {
-        await TaskQueue.waitForPerformLocal(create, {sendTask: true});
-        if (destroy) {
-          // console.log('destroyed');
-          Actions.destroyDraft([draft], { switchingAccount: true });
-        }
-      } catch (e) {
-        AppEnv.reportError(new Error(e));
-      }
-    }
-    return this;
-  }
+  // async ensureCorrectAccount() {
+  //   // if (this._popedOut) {
+  //     // We do nothing if session have popouts
+  //     // console.log('we are poped out');
+  //     // return;
+  //   // }
+  //   const draft = this.draft();
+  //   const account = AccountStore.accountForEmail(draft.from[0].email);
+  //   if (!account) {
+  //     throw new Error(
+  //       'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.'
+  //     );
+  //   }
+  //
+  //   if (account.id !== draft.accountId) {
+  //     // Create a new draft in the new account (with a new ID).
+  //     // Because we use the headerMessageId /exclusively/ as the
+  //     // identifier we'll be fine.
+  //     //
+  //     // Then destroy the old one, since it may be synced to the server
+  //     // and require cleanup!
+  //     //
+  //     const newId = uuid();
+  //     const create = new SyncbackDraftTask({
+  //       headerMessageId: draft.headerMessageId,
+  //       draft: new Message({
+  //         id: newId,
+  //         from: draft.from,
+  //         version: 0,
+  //         to: draft.to,
+  //         cc: draft.cc,
+  //         bcc: draft.bcc,
+  //         body: draft.body,
+  //         files: draft.files,
+  //         replyTo: draft.replyTo,
+  //         subject: draft.subject,
+  //         headerMessageId: newId,
+  //         // referenceMessageId: draft.id,
+  //         hasNewID: draft.hasNewID,
+  //         accountId: account.id,
+  //         msgOrigin: draft.msgOrigin,
+  //         unread: false,
+  //         starred: false,
+  //         draft: true,
+  //       }),
+  //     });
+  //
+  //     const destroy =
+  //       draft.id &&
+  //       new DestroyDraftTask({
+  //         messageIds: [draft.id],
+  //         accountId: draft.accountId,
+  //       });
+  //     // console.log('syncback draft from ensure account');
+  //     try {
+  //       await TaskQueue.waitForPerformLocal(create, {sendTask: true});
+  //       if (destroy) {
+  //         // console.log('destroyed');
+  //         Actions.destroyDraft([draft], { switchingAccount: true });
+  //       }
+  //     } catch (e) {
+  //       AppEnv.reportError(new Error(e));
+  //     }
+  //   }
+  //   return this;
+  // }
 
   _isDraftMissingAttachments = () => {
     if (typeof this._draft.missingAttachments !== 'function') {
@@ -754,6 +776,9 @@ export default class DraftEditingSession extends MailspringStore {
       if(key === 'pastMessageIds'){
         console.log('ignoring pastMessageIds change');
         continue;
+      }
+      if (key === 'from' && Array.isArray(nextDraft.from) && nextDraft.from.length > 0){
+        nextDraft.from[0].accountId = nextDraft.accountId;
       }
       this._draft[key] = nextDraft[key];
     }
@@ -932,6 +957,9 @@ export default class DraftEditingSession extends MailspringStore {
       for (const key of Object.getOwnPropertyNames(syncData)) {
         if (key === 'body' || key === 'bodyEditorState' || key === 'waitingForAttachment' ) {
           continue;
+        }
+        if (key === 'from' && Array.isArray(syncData.from) && syncData.from.length > 0){
+          syncData.from[0].accountId = syncData.accountId;
         }
         this._draft[key] = syncData[key];
       }

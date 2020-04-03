@@ -13,10 +13,16 @@ export default class DatabaseChangeRecord {
   }
 
   toJSON() {
+    let objectString = '';
+    try{
+      objectString = JSON.stringify(this.objects);
+    } catch (e){
+
+    }
     return {
       type: this.type,
       objectClass: this.objectClass,
-      objectsString: this._objectsString,
+      objectsString: objectString,
       processAccountId: this.processAccountId
     };
   }

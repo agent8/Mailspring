@@ -1,19 +1,15 @@
 import MailspringStore from 'mailspring-store';
+import { ChatActions } from 'chat-exports';
 
 class MemberProfileStore extends MailspringStore {
-  constructor(){
+  constructor() {
     super();
-    this.member = null;
-    return;
+    this.listenTo(ChatActions.checkMember, this.setMember);
   }
 
-  setMember = (member) => {
-    const clickSame = member && member === this.member;
-    this.member = member;
-    if (!clickSame){
-      this.trigger();
-    }
-  }
+  setMember = payload => {
+    this.trigger(payload);
+  };
 }
 
 module.exports = new MemberProfileStore();

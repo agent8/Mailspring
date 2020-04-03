@@ -5,6 +5,7 @@ import { Account, IdentityStore, MailsyncProcess, Actions, AccountStore } from '
 import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
 import dns from 'dns';
+const regexpForDomain = test => new RegExp(`(^${test}$)|(\\.${test}$)`);
 
 const queryStringify = (data, encoded = false) => {
   const queryString = Object.keys(data)
@@ -37,14 +38,14 @@ const GMAIL_SCOPES = [
 
 const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
 const JIRA_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE';
-const JIRA_SCOPES = ['read:me', 'read:jira-user', 'read:jira-work', 'write:jira-work', 'offline_access'];
+const JIRA_SCOPES = ['read:me', 'read:jira-user', 'read:jira-work', 'write:jira-work', 'offline_access', 'manage:jira-project'];
 
 const YAHOO_CLIENT_ID =
   'dj0yJmk9c3IxR3h4VG5GTXBYJmQ9WVdrOVlVeHZNVXh1TkhVbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
 const YAHOO_CLIENT_SECRET = '8a267b9f897da839465ff07a712f9735550ed412';
 
-const OFFICE365_CLIENT_ID = '000000004818114B';
-const OFFICE365_CLIENT_SECRET = 'jXRAIb5CxLHI5MsVy9kb5okP9mGDZaqw';
+const OFFICE365_CLIENT_ID = '62db40a4-2c7e-4373-a609-eda138798962';
+const OFFICE365_CLIENT_SECRET = 'lj9US4uHiIYYs]ew?vU6C?E0?zt:qw41';
 const OFFICE365_SCOPES = ['user.read', 'mail.read'];
 
 const OUTLOOK_CLIENT_ID = '000000004818114B';
@@ -98,7 +99,7 @@ export function validateEmailAddressForProvider(emailAddress = '', provider = nu
   mxRecordsForDomain(domain).then(mxRecords => {
     if (template) {
       for (const test of template['mx-match'] || []) {
-        const reg = new RegExp(`^${test}$`);
+        const reg = regexpForDomain(test);
         if (mxRecords.some(record => reg.test(record))) {
           return { ret: true };
         }
@@ -107,7 +108,7 @@ export function validateEmailAddressForProvider(emailAddress = '', provider = nu
   });
   if (template) {
     for (const test of template['domain-match'] || []) {
-      if (new RegExp(`^${test}$`).test(domain)) {
+      if (regexpForDomain(test).test(domain)) {
         return { ret: true };
       }
     }
@@ -156,9 +157,11 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
   // find matching template using new Mailcore lookup tables. These match against the
   // email's domain and the mx records for the domain, which means it will identify that
   // "foundry376.com" uses Google Apps, for example.
-  let template = Object.values(MailcoreProviderSettings).find(p => {
+  let template;
+  let providerKey = Object.keys(MailcoreProviderSettings).find(k => {
+    const p = MailcoreProviderSettings[k];
     for (const test of p['domain-match'] || []) {
-      if (new RegExp(`^${test}$`).test(forceDomain || domain)) {
+      if (regexpForDomain(test).test(forceDomain || domain)) {
         // domain-exclude
         for (const testExclude of p['domain-exclude'] || []) {
           if (new RegExp(`^${testExclude}$`).test(forceDomain || domain)) {
@@ -170,10 +173,11 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
     }
     return false;
   });
-  if (!template) {
-    template = Object.values(MailcoreProviderSettings).find(p => {
+  if (!providerKey) {
+    providerKey = Object.keys(MailcoreProviderSettings).find(k => {
+      const p = MailcoreProviderSettings[k];
       for (const test of p['mx-match'] || []) {
-        const reg = new RegExp(`^${test}$`);
+        const reg = regexpForDomain(test);
         if (mxRecords.some(record => reg.test(record))) {
           return true;
         }
@@ -182,11 +186,13 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
     });
   }
 
-  if (template) {
+  if (providerKey) {
+    template = MailcoreProviderSettings[providerKey];
     console.log(`Using Mailcore Template: ${JSON.stringify(template, null, 2)}`);
     const imap = (template.servers.imap || [])[0] || {};
     const smtp = (template.servers.smtp || [])[0] || {};
     const defaults = {
+      provider_key: providerKey,
       imap_host: imap.hostname.replace('{domain}', domain),
       imap_port: imap.port,
       imap_username: usernameWithFormat('email'),
@@ -649,6 +655,7 @@ export async function finalizeAndValidateAccount(account) {
   proc.account = account;
   const { response } = await proc.test();
   const newAccount = response.account;
+  newAccount.settings.provider_key = account.settings.provider_key;
   if (account.mailsync) {
     newAccount.mailsync = account.mailsync;
     delete newAccount.mailsync.accounts;

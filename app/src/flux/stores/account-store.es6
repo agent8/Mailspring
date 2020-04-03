@@ -2,8 +2,15 @@
 
 import _ from 'underscore';
 import MailspringStore from 'mailspring-store';
-import { FocusedPerspectiveStore } from 'mailspring-exports';
-import { MessageStore, ConversationStore, ContactStore, ConversationModel, ContactModel, AppStore } from 'chat-exports';
+import { FocusedPerspectiveStore, SignatureStore } from 'mailspring-exports';
+import {
+  MessageStore,
+  ConversationStore,
+  ContactStore,
+  ConversationModel,
+  ContactModel,
+  AppStore,
+} from 'chat-exports';
 import KeyManager from '../../key-manager';
 import Actions from '../actions';
 import Account from '../models/account';
@@ -13,14 +20,13 @@ import { removeMyApps } from '../../../internal_packages/edison-beijing-chat/uti
 import delay from '../../../internal_packages/edison-beijing-chat/utils/delay';
 import { registerLoginEmailAccountForChat } from '../../../internal_packages/edison-beijing-chat/utils/register-login-chat';
 import crypto from 'crypto';
-const ipcRenderer = require('electron').ipcRenderer;
-
-const configAccountsKey = 'accounts';
-const configVersionKey = 'accountsVersion';
 import Indicator from '../models/indicator';
 import SiftRemoveAccountsTask from '../tasks/sift-remove-accounts-task';
 import SiftUpdateAccountTask from '../tasks/sift-update-account-task';
 
+const ipcRenderer = require('electron').ipcRenderer;
+const configAccountsKey = 'accounts';
+const configVersionKey = 'accountsVersion';
 /*
 Public: The AccountStore listens to changes to the available accounts in
 the database and exposes the currently active Account via {::current}
@@ -38,20 +44,26 @@ class AccountStore extends MailspringStore {
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.siftUpdateAccount, this._onSiftUpdateAccount);
       ipcRenderer.on('after-add-account', async (event, account) => {
-        AppEnv.config.set('chatNeedAddIntialConversations', true)
+        AppEnv.config.set('chatNeedAddIntialConversations', true);
         // refresh thread list
         FocusedPerspectiveStore.trigger();
         // add chat account
         if (AppEnv.config.get(`core.workspace.enableChat`)) {
-          AppEnv.config.set('chatNeedAddIntialConversations', true)
-          let chatConversationsInitialized = AppEnv.config.get('chatConversationsInitialized') || ''
-          chatConversationsInitialized = chatConversationsInitialized.replace(account.emailAddress, '')
-          AppEnv.config.set('chatConversationsInitialized', chatConversationsInitialized)
+          AppEnv.config.set('chatNeedAddIntialConversations', true);
+          let chatConversationsInitialized =
+            AppEnv.config.get('chatConversationsInitialized') || '';
+          chatConversationsInitialized = chatConversationsInitialized.replace(
+            account.emailAddress,
+            ''
+          );
+          AppEnv.config.set('chatConversationsInitialized', chatConversationsInitialized);
           // wait nativesync to pull emails
           await delay(30000);
           await registerLoginEmailAccountForChat(account);
           await AppStore.refreshAppsEmailContacts();
-          await ConversationStore.createInitialPrivateConversationsFromAllContactsOfEmail(account.emailAddress);
+          await ConversationStore.createInitialPrivateConversationsFromAllContactsOfEmail(
+            account.emailAddress
+          );
           await MessageStore.saveMessagesAndRefresh([]);
         }
       });
@@ -108,10 +120,20 @@ class AccountStore extends MailspringStore {
       change.objects.forEach(obj => {
         if (obj) {
           const account = this.accountForId(obj.accountId);
-          if (account && obj.key === 'ErrorAuthentication' && account.syncState !== Account.SYNC_STATE_AUTH_FAILED) {
-            Actions.updateAccount(account.id, { syncState: Account.SYNC_STATE_AUTH_FAILED })
-          } else if (account && obj.key === Account.INSUFFICIENT_PERMISSION && account.syncState !== Account.INSUFFICIENT_PERMISSION) {
-            AppEnv.reportWarning(new Error(`Account.INSUFFICIENT_PERMISSION`), { errorData: account });
+          if (
+            account &&
+            obj.key === 'ErrorAuthentication' &&
+            account.syncState !== Account.SYNC_STATE_AUTH_FAILED
+          ) {
+            Actions.updateAccount(account.id, { syncState: Account.SYNC_STATE_AUTH_FAILED });
+          } else if (
+            account &&
+            obj.key === Account.INSUFFICIENT_PERMISSION &&
+            account.syncState !== Account.INSUFFICIENT_PERMISSION
+          ) {
+            AppEnv.reportWarning(new Error(`Account.INSUFFICIENT_PERMISSION`), {
+              errorData: account,
+            });
             // Comment out until native fix issue with false negative with gmail permission issue.
             // Actions.updateAccount(account.id, { syncState: Account.INSUFFICIENT_PERMISSION })
           }
@@ -157,7 +179,7 @@ class AccountStore extends MailspringStore {
         clearInterval(this._wakeWorkerTimer[id].timer);
         delete this._wakeWorkerTimer[id];
       }
-    })
+    });
   };
 
   _loadAccounts = () => {
@@ -236,7 +258,7 @@ class AccountStore extends MailspringStore {
     this.trigger(arguments);
   }
 
-  _save = (reason) => {
+  _save = reason => {
     this._version += 1;
     const configAccounts = this._accounts.map(a => a.toJSON());
     configAccounts.forEach(a => {
@@ -261,6 +283,23 @@ class AccountStore extends MailspringStore {
     const idx = this._accounts.findIndex(a => a.id === id);
     let account = this._accounts[idx];
     if (!account) return;
+    // Signature depends on the name of the account
+    // if account name is change, also change signature select with this account
+    if (account.name !== updated.name) {
+      const oldAccountSigId =
+        typeof account.signatureId === 'function'
+          ? account.signatureId()
+          : `local-${account.id}-${account.emailAddress}-${account.name}`;
+      const newAccountSigId =
+        typeof updated.signatureId === 'function'
+          ? updated.signatureId()
+          : `local-${updated.id}-${updated.emailAddress}-${updated.name}`;
+      const sig = SignatureStore.signatureForDefaultSignatureId(oldAccountSigId);
+      if (sig) {
+        SignatureStore.setDefaultSignature(newAccountSigId, sig.id);
+      }
+    }
+
     account = Object.assign(account, updated);
     this._caches = {};
     this._accounts[idx] = account;
@@ -270,7 +309,7 @@ class AccountStore extends MailspringStore {
   _forceRelaunchClients(accts) {
     accts.forEach(acct => {
       AppEnv.mailsyncBridge.forceRelaunchClient(acct);
-    })
+    });
   }
   _reconnectAccount = async account => {
     AppEnv.mailsyncBridge.tmpKillClient(account);
@@ -285,7 +324,10 @@ class AccountStore extends MailspringStore {
       const okAccountMessages = [];
       okAccounts.forEach(acct => {
         if (acct) {
-          okAccountMessages.push({ id: `account-error-${acct.emailAddress}`, accountIds: [acct.id] });
+          okAccountMessages.push({
+            id: `account-error-${acct.emailAddress}`,
+            accountIds: [acct.id],
+          });
         }
       });
       Actions.removeAppMessages(okAccountMessages);
@@ -303,33 +345,38 @@ class AccountStore extends MailspringStore {
         actions: [
           {
             text: 'Check Again',
-            onClick: () => this._forceRelaunchClients(erroredAccounts)
+            onClick: () => this._forceRelaunchClients(erroredAccounts),
           },
           {
             text: 'Manage',
             onClick: () => {
               Actions.switchPreferencesTab('Accounts');
               Actions.openPreferences();
-            }
-          }
+            },
+          },
         ],
-        allowClose: true
+        allowClose: true,
       };
       Actions.pushAppMessage(message);
     } else {
       const erroredAccount = erroredAccounts[0];
-      const message = { allowClose: true, level: 0, id: `account-error-${erroredAccount.emailAddress}`, accountIds: [erroredAccount.id] };
+      const message = {
+        allowClose: true,
+        level: 0,
+        id: `account-error-${erroredAccount.emailAddress}`,
+        accountIds: [erroredAccount.id],
+      };
       switch (erroredAccount.syncState) {
         case Account.SYNC_STATE_AUTH_FAILED:
           message.description = `Cannot authenticate with ${erroredAccount.emailAddress}`;
           message.actions = [
             {
               text: 'Okay',
-              onClick: () => Actions.removeAppMessage(message)
+              onClick: () => Actions.removeAppMessage(message),
             },
             {
               text: 'Reconnect',
-              onClick: () => this._reconnectAccount(erroredAccount)
+              onClick: () => this._reconnectAccount(erroredAccount),
             },
           ];
           break;
@@ -338,11 +385,11 @@ class AccountStore extends MailspringStore {
           message.actions = [
             {
               text: 'Check Again',
-              onClick: () => this._forceRelaunchClients([erroredAccount])
+              onClick: () => this._forceRelaunchClients([erroredAccount]),
             },
             {
               text: 'Reauthenticate',
-              onClick: () => this._reconnectAccount(erroredAccount)
+              onClick: () => this._reconnectAccount(erroredAccount),
             },
           ];
           break;
@@ -378,22 +425,22 @@ class AccountStore extends MailspringStore {
         let jid = chatAccount.userId + '@im.edison.tech';
         await ConversationModel.destroy({
           where: {
-            curJid: jid
-          }
+            curJid: jid,
+          },
         });
         ConversationStore.refreshConversations();
         // all valid contacts will be add back in AppStore.refreshAppsEmailContacts()
         await ContactModel.destroy({
           where: { curJid: jid },
           truncate: true,
-          force: true
+          force: true,
         });
-        ContactStore.contacts = []
+        ContactStore.contacts = [];
         await ContactStore.refreshContacts();
         xmpp.removeXmpp(jid);
         removeMyApps(chatAccount.userId);
         // await AppStore.refreshAppsEmailContacts();
-        AppEnv.config.set(`${chatAccount.userId}_message_ts`, null)
+        AppEnv.config.set(`${chatAccount.userId}_message_ts`, null);
       }
     }
 
@@ -436,7 +483,7 @@ class AccountStore extends MailspringStore {
     this._save();
   };
 
-  _onSiftUpdateAccount = (fullAccount) => {
+  _onSiftUpdateAccount = fullAccount => {
     Actions.queueTask(new SiftUpdateAccountTask({ account: fullAccount }));
   };
 
@@ -500,7 +547,7 @@ class AccountStore extends MailspringStore {
       return crypto
         .createHash('sha256')
         .update(str)
-        .digest('hex')
+        .digest('hex');
     };
     for (let key in account) {
       if (key !== 'aliases' && key !== 'settings' && !sensitveData.includes(key)) {
@@ -528,7 +575,7 @@ class AccountStore extends MailspringStore {
   accountsForErrorLog = () => {
     return this.accounts().map(account => {
       return this.stripAccountData(account);
-    })
+    });
   };
 
   accountsForItems = items => {
@@ -548,15 +595,27 @@ class AccountStore extends MailspringStore {
   };
 
   // Public: Returns the {Account} for the given email address, or null.
-  accountForEmail = email => {
+  accountForEmail = ({ email, accountId } = {}) => {
     for (const account of this.accounts()) {
-      if (Utils.emailIsEquivalent(email, account.emailAddress)) {
-        return account;
+      if (accountId) {
+        if (account.id === accountId && Utils.emailIsEquivalent(email, account.emailAddress)) {
+          return account;
+        }
+      } else {
+        if (Utils.emailIsEquivalent(email, account.emailAddress)) {
+          return account;
+        }
       }
     }
     for (const alias of this.aliases()) {
-      if (Utils.emailIsEquivalent(email, alias.email)) {
-        return this.accountForId(alias.accountId);
+      if (accountId) {
+        if (alias.accountId === accountId && Utils.emailIsEquivalent(email, alias.email)) {
+          return this.accountForId(alias.accountId);
+        }
+      } else {
+        if (Utils.emailIsEquivalent(email, alias.email)) {
+          return this.accountForId(alias.accountId);
+        }
       }
     }
     return null;
@@ -594,6 +653,16 @@ class AccountStore extends MailspringStore {
       return accOrId instanceof Account ? accOrId.id : accOrId;
     });
     return this.aliases().filter(contact => ids.includes(contact.accountId));
+  }
+
+  isAlias(name, email) {
+    const aliases = [];
+    for (const acc of this._accounts) {
+      aliases.push(...(acc.aliases || []));
+    }
+    return aliases.some(alias => {
+      return alias === `${name} <${email}>`;
+    });
   }
 
   // Public: Returns the currently active {Account}.

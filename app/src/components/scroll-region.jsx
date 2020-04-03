@@ -33,6 +33,7 @@ class Scrollbar extends React.Component {
   }
 
   componentDidMount() {
+    this._mounted = true;
     if (this.props.scrollbarTickProvider && this.props.scrollbarTickProvider.listenx) {
       this._tickUnsub = this.props.scrollbarTickProvider.listen(this._onTickProviderChange);
     }
@@ -43,7 +44,8 @@ class Scrollbar extends React.Component {
   }
 
   componentWillUnmount() {
-    this._onHandleUp({ preventDefault() { } });
+    this._mounted = false;
+    this._onHandleUp({ preventDefault() {} });
     if (this._tickUnsub) {
       this._tickUnsub();
     }
@@ -134,8 +136,7 @@ class Scrollbar extends React.Component {
   _scrollbarHandleStyles = () => {
     const handleHeight = this._getHandleHeight();
     const handleTop =
-      this.state.viewportScrollTop /
-      (this.state.totalHeight - this.state.viewportHeight) *
+      (this.state.viewportScrollTop / (this.state.totalHeight - this.state.viewportHeight)) *
       (this.state.trackHeight - handleHeight);
 
     return {
@@ -199,7 +200,7 @@ class Scrollbar extends React.Component {
   _getHandleHeight = () => {
     return Math.min(
       this.state.totalHeight,
-      Math.max(40, this.state.trackHeight / this.state.totalHeight * this.state.trackHeight)
+      Math.max(40, (this.state.trackHeight / this.state.totalHeight) * this.state.trackHeight)
     );
   };
 }
@@ -327,7 +328,7 @@ class ScrollRegion extends React.Component {
       classNames({
         'scroll-region': true,
         dragging: this.state.dragging,
-        scrolling: this.state.scrolling
+        scrolling: this.state.scrolling,
       });
 
     if (!this.props.getScrollbar) {
@@ -512,6 +513,9 @@ class ScrollRegion extends React.Component {
   };
 
   _setSharedState(state) {
+    if (!this._mounted) {
+      return;
+    }
     const scrollbar = this.props.getScrollbar ? this.props.getScrollbar() : this.refs.scrollbar;
     if (scrollbar) {
       scrollbar.setStateFromScrollRegion(state);

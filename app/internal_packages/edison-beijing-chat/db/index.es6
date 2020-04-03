@@ -1,4 +1,4 @@
-import path from "path";
+import path from 'path';
 import fs from 'fs';
 const Sequelize = require('sequelize');
 
@@ -13,12 +13,11 @@ export function getdb() {
   if (!fs.existsSync(dbPath)) {
     fs.mkdirSync(dbPath);
   }
-  console.log('****storage', `${dbPath}/chat-db.sqlite`);
   db = new Sequelize({
     dialect: 'sqlite',
-    storage: `${dbPath}/chat-db.sqlite`
+    storage: `${dbPath}/chat-db.sqlite`,
   });
   return db;
 }
 
-export default getdb;
+export default getdb();

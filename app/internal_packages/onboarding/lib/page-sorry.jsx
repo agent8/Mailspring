@@ -40,6 +40,13 @@ export default class SorryPage extends React.Component {
 
   componentDidMount = async () => {
     require('electron').ipcRenderer.send('open-main-window-make-onboarding-on-top');
+    // if mac store version, don't need invite
+    if (process.mas) {
+      console.log('*****this is a mas build, go to next page');
+      AppEnv.config.set(CONFIG_KEY, NEED_INVITE_COUNT);
+      OnboardingActions.moveToPage('gdpr-terms');
+      return;
+    }
     this.disposable = AppEnv.config.onDidChange(CONFIG_KEY, async () => {
       const shareCounts = AppEnv.config.get(CONFIG_KEY) || 0;
       // AppEnv.getCurrentWindow().setAlwaysOnTop(true);
@@ -89,7 +96,9 @@ export default class SorryPage extends React.Component {
   };
 
   componentWillUnmount() {
-    this.disposable.dispose();
+    if (this.disposable) {
+      this.disposable.dispose();
+    }
   }
 
   _onContinue = async () => {

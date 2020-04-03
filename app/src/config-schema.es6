@@ -122,7 +122,7 @@ export default {
           },
           enableChat: {
             type: 'boolean',
-            default: false,
+            default: true,
             title: 'Enable chat feature',
           },
           chatProdEnv: {
@@ -185,7 +185,7 @@ export default {
         properties: {
           markAsReadDelay: {
             type: 'integer',
-            default: 500,
+            default: 0,
             enum: [0, 500, 2000, -1],
             enumLabels: ['Instantly', 'After ½ Second', 'After 2 Seconds', 'Manually'],
             title: 'When reading messages, mark as read after',

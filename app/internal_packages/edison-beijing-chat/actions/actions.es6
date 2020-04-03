@@ -16,6 +16,8 @@ class Actions {
   static updateDownload = ActionScopeWindow;
   static userOnlineStatusChanged = ActionScopeWindow;
   static memberChange = ActionScopeWindow;
+  static checkMember = ActionScopeWindow; // 点击右侧 members 列表成员动作
+  static changeConversationName = ActionScopeWindow; // 修改 conversation name
 }
 
 // Read the actions we declared on the dummy Actions object above

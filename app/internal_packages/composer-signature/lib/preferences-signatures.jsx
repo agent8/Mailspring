@@ -163,11 +163,13 @@ export default class PreferencesSignatures extends React.Component {
     let checkedAccountLength = 0;
     let checkedAliasLength = 0;
     this.state.accounts.forEach(account => {
-      if (this.state.defaults[account.emailAddress] === sig.id) {
+      let signatureId = typeof account.signatureId === 'function' ? account.signatureId() : `local-${account.id}-${account.emailAddress}-${account.name}`;
+      if (this.state.defaults[signatureId] === sig.id) {
         checkedAccountLength += 1;
       }
-      (account.aliases || []).forEach(aliase => {
-        if (this.state.defaults[aliase] === sig.id) {
+      (account.getAllAliasContacts() || []).forEach(alias => {
+        signatureId = typeof account.signatureId === 'function' ? alias.signatureId() : `local-${alias.accountId}-${alias.email}-${alias.name}`;
+        if (this.state.defaults[signatureId] === sig.id) {
           checkedAliasLength += 1;
         }
       });

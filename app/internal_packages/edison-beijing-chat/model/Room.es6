@@ -2,8 +2,7 @@ import { tableCompletedSync } from '../utils/databaseCompleteInt';
 
 const Sequelize = require('sequelize');
 const Model = Sequelize.Model;
-const { getdb } = require('../db/index');
-const db = getdb();
+const db = require('../db/index').default;
 
 export default class Room extends Model { }
 Room.init(

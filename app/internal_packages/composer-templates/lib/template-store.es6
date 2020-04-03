@@ -143,6 +143,12 @@ class TemplateStore extends MailspringStore {
         }
         return;
       }
+
+      if (draft.files && draft.files.length) {
+        this._displayError('Sorry，template does not support attachments.');
+        return;
+      }
+
       if (!draftContents || draftContents.length === 0) {
         this._displayError('To create a template you need to fill the body of the current draft.');
       }
@@ -278,7 +284,7 @@ class TemplateStore extends MailspringStore {
         const current = session.draft().body;
         let insertion = current.length;
         for (const s of [
-          '<signature',
+          '<edo-signature',
           '<div class="gmail_quote_attribution"',
           '<blockquote class="gmail_quote"',
         ]) {

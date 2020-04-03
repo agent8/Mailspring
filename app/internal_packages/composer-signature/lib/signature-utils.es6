@@ -41,11 +41,11 @@ export function applySignature(body, signature) {
   if (signature) {
     const contentBefore = newBody.slice(0, insertionPoint);
     const contentAfter = newBody.slice(insertionPoint);
-    return `${contentBefore}${additionalWhitespace}<signature id="${
+    return `${contentBefore}${additionalWhitespace}<edo-signature id="${
       signature.id
     }">${SignatureStore.getBodyById(
       signature.id
-    )}</signature>${additionalClosingWhitespace}${contentAfter}`;
+    )}</edo-signature>${additionalClosingWhitespace}${contentAfter}`;
   } else {
     return newBody;
   }

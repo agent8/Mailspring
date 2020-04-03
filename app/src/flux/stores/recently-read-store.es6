@@ -28,10 +28,12 @@ class RecentlyReadStore extends MailspringStore {
   tasksQueued(tasks) {
     let changed = false;
 
-    tasks.filter(task => task instanceof ChangeUnreadTask).forEach(({ threadIds }) => {
-      this.ids = this.ids.concat(threadIds);
-      changed = true;
-    });
+    tasks
+      .filter(task => task instanceof ChangeUnreadTask)
+      .forEach(({ threadIds }) => {
+        this.ids = this.ids.concat(threadIds);
+        changed = true;
+      });
 
     tasks
       .filter(task => task instanceof ChangeLabelsTask || task instanceof ChangeFolderTask)

@@ -1,7 +1,12 @@
 import _ from 'underscore';
-
 import Model from '../flux/models/model';
 import DatabaseStore from '../flux/stores/database-store';
+
+let recentlyReadStore = null;
+
+const RecentlyReadStore = () => {
+  return recentlyReadStore || require('../flux/stores/recently-read-store').default;
+};
 
 export default class ListSelection {
   constructor(_view, callback) {
@@ -118,7 +123,13 @@ export default class ListSelection {
 
   removeItemsNotMatching(matchers) {
     const count = this._items.length;
-    this._items = this._items.filter(t => t.matches(matchers));
+    this._items = this._items.filter(t => {
+      let matching = t.matches(matchers);
+      if (!matching && !t.unread) {
+        matching = Array.isArray(RecentlyReadStore().ids) && RecentlyReadStore().ids.includes(t.id);
+      }
+      return matching;
+    });
     if (this._items.length !== count) {
       this.trigger(this);
     }

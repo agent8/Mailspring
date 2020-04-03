@@ -12,6 +12,7 @@ class FocusedPerspectiveStore extends MailspringStore {
   constructor() {
     super();
     this._current = MailboxPerspective.forNothing();
+    this._currentSidebar = MailboxPerspective.forNothing();
     this._initialized = false;
     this._refreshPerspectiveTimer = null;
 
@@ -19,7 +20,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     this.listenTo(Actions.focusMailboxPerspective, this._onFocusPerspective);
     this.listenTo(
       Actions.focusDefaultMailboxPerspectiveForAccounts,
-      this._onFocusDefaultPerspectiveForAccounts,
+      this._onFocusDefaultPerspectiveForAccounts
     );
     this.listenTo(Actions.ensureCategoryIsFocused, this._onEnsureCategoryIsFocused);
     this._listenToCommands();
@@ -27,6 +28,10 @@ class FocusedPerspectiveStore extends MailspringStore {
 
   current() {
     return this._current;
+  }
+
+  currentSidebar() {
+    return this._currentSidebar;
   }
 
   getLastUpdatedTime() {
@@ -71,7 +76,8 @@ class FocusedPerspectiveStore extends MailspringStore {
         this._setPerspective(MailboxPerspective.forUnreadByAccounts(this.sidebarAccountIds()));
       },
       'navigation:go-to-all-inbox': () => this.gotoAllInbox(),
-      'navigation:go-to-all-sent': () => this._setPerspective(MailboxPerspective.forSent(this.sidebarAccountIds())),
+      'navigation:go-to-all-sent': () =>
+        this._setPerspective(MailboxPerspective.forSent(this.sidebarAccountIds())),
       'navigation:go-to-starred': () =>
         this._setPerspective(MailboxPerspective.forStarred(this._current.accountIds)),
       'navigation:go-to-drafts': () =>
@@ -81,12 +87,9 @@ class FocusedPerspectiveStore extends MailspringStore {
         this._setPerspective(MailboxPerspective.forCategories(categories));
       },
       'navigation:go-to-chat': () => this.gotoChat(),
-      'navigation:go-to-contacts': () => {
-      }, // TODO,
-      'navigation:go-to-tasks': () => {
-      }, // TODO,
-      'navigation:go-to-label': () => {
-      }, // TODO,
+      'navigation:go-to-contacts': () => {}, // TODO,
+      'navigation:go-to-tasks': () => {}, // TODO,
+      'navigation:go-to-label': () => {}, // TODO,
     });
   }
   gotoOutbox = () => {
@@ -99,7 +102,7 @@ class FocusedPerspectiveStore extends MailspringStore {
 
   gotoChat = () => {
     Actions.goToMostRecentChat();
-    Actions.popToRootSheet({reason: 'FocusedPerspectiveStore:gotoChat'});
+    Actions.popToRootSheet({ reason: 'FocusedPerspectiveStore:gotoChat' });
     Actions.selectRootSheet(WorkspaceStore.Sheet.ChatView);
   };
 
@@ -166,7 +169,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     }
   };
 
-  _onFocusPerspective = (perspective, forceTrigger=false)=> {
+  _onFocusPerspective = (perspective, forceTrigger = false) => {
     // If looking at unified inbox, don't attempt to change the sidebar accounts
     const sidebarIsUnifiedInbox = this.sidebarAccountIds().length > 1;
     if (sidebarIsUnifiedInbox) {
@@ -177,10 +180,10 @@ class FocusedPerspectiveStore extends MailspringStore {
   };
 
   /*
-  * Takes an optional array of `sidebarAccountIds`. By default, this method will
-  * set the sidebarAccountIds to the perspective's accounts if no value is
-  * provided
-  */
+   * Takes an optional array of `sidebarAccountIds`. By default, this method will
+   * set the sidebarAccountIds to the perspective's accounts if no value is
+   * provided
+   */
   _onFocusDefaultPerspectiveForAccounts = (accountsOrIds, { sidebarAccountIds } = {}) => {
     if (!accountsOrIds) {
       return;
@@ -207,13 +210,47 @@ class FocusedPerspectiveStore extends MailspringStore {
     }
     return perspective;
   }
+  _isInChatView(){
+    const currentSheet = WorkspaceStore.topSheet();
+    return currentSheet && currentSheet.id === 'ChatView';
+  }
 
   _setPerspective(perspective, sidebarAccountIds, forceTrigger = false) {
     let shouldTrigger = forceTrigger;
+    if (perspective.isTab) {
+      // if this perspective is a tab, it must be a tab of this current sidebar
 
-    if (!perspective.isEqual(this._current)) {
-      AppEnv.savedState.perspective = perspective.toJSON();
-      this._current = perspective;
+      if (!perspective.isTabOfPerspective(this._currentSidebar)) {
+        return;
+      }
+    } else {
+      // if this perspective not a tab, judge if current sidebar need to update
+
+      if (perspective.isEqual(this._currentSidebar) && !this._isInChatView() ) {
+        return;
+      } else {
+        this._currentSidebar = perspective;
+        AppEnv.savedState.perspective = perspective.toJSON();
+        shouldTrigger = true;
+      }
+    }
+
+    if (this._current.isTab && this._current.isTabOfPerspective(perspective) && !this._isInChatView()) {
+      return;
+    }
+
+    let focusPerspective;
+    if (perspective.tab && perspective.tab.length) {
+      focusPerspective = perspective.tab[0];
+    } else {
+      focusPerspective = perspective;
+    }
+
+    if (!focusPerspective.isEqual(this._current)) {
+      this._current = focusPerspective;
+      shouldTrigger = true;
+    } else if(this._isInChatView()){
+      console.log('trigger because we are in chat view');
       shouldTrigger = true;
     }
 
@@ -238,7 +275,7 @@ class FocusedPerspectiveStore extends MailspringStore {
       this.trigger();
     }
 
-    let desired = perspective.sheet();
+    let desired = focusPerspective.sheet();
 
     // Always switch to the correct sheet and pop to root when perspective set
     if (desired && WorkspaceStore.rootSheet() !== desired) {

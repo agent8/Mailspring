@@ -16,6 +16,7 @@ import {
 import { remote } from 'electron';
 import ThreadListStore from './thread-list-store';
 import ToolbarCategoryPicker from '../../category-picker/lib/toolbar-category-picker';
+import _ from 'underscore';
 
 const { Menu, MenuItem } = remote;
 const commandCb = (event, cb, cbArgs) => {
@@ -31,17 +32,17 @@ const threadSelectionScope = (props, selection) => {
   let threads = props.items;
   const focusedThread = FocusedContentStore.focused('thread');
   const workspaceMode = WorkspaceStore.layoutMode();
-  if (selection &&  workspaceMode!== 'list') {
+  if (selection && workspaceMode !== 'list') {
     const selectionThreads = selection.items();
     if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
       threads = selectionThreads;
     }
-  } else if (selection && !focusedThread && workspaceMode === 'list'){
+  } else if (selection && !focusedThread && workspaceMode === 'list') {
     const selectionThreads = selection.items();
     if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
       threads = selectionThreads;
     }
-  } else if (focusedThread && workspaceMode === 'list'){
+  } else if (focusedThread && workspaceMode === 'list') {
     threads = [focusedThread];
   }
   return threads;
@@ -599,24 +600,23 @@ class HiddenToggleImportantButton extends React.Component {
       TaskFactory.tasksForThreadsByAccountId(
         items,
         (accountThreads, accountId) => {
+          let labelsToAdd;
+          let labelsToRemove;
+          if (important) {
+            labelsToAdd = [CategoryStore.getCategoryByRole(accountId, 'important')];
+            labelsToRemove = [];
+          } else {
+            labelsToAdd = [];
+            labelsToRemove = [CategoryStore.getCategoryByRole(accountId, 'important')];
+          }
           return [
             new ChangeLabelsTask({
               threads: accountThreads,
               source: 'Keyboard Shortcut',
-              labelsToAdd: [],
-              labelsToRemove: important
-                ? []
-                : [CategoryStore.getCategoryByRole(accountId, 'important')],
-            }),
-            new ChangeLabelsTask({
-              threads: accountThreads,
-              source: 'Keyboard Shortcut',
-              labelsToAdd: important
-                ? [CategoryStore.getCategoryByRole(accountId, 'important')]
-                : [],
-              labelsToRemove: [],
-            }),
-          ];
+              labelsToAdd: labelsToAdd,
+              labelsToRemove: labelsToRemove,
+            })
+          ]
         }
       )
     );
@@ -642,12 +642,12 @@ class HiddenToggleImportantButton extends React.Component {
       <BindGlobalCommands
         key={allImportant ? 'unimportant' : 'important'}
         commands={
-            {
-              'core:mark-unimportant': event =>
-                commandCb(event, this._onShortcutSetImportant, false),
-              'core:mark-important': event =>
-                commandCb(event, this._onShortcutSetImportant, true),
-            }
+          {
+            'core:mark-unimportant': event =>
+              commandCb(event, this._onShortcutSetImportant, false),
+            'core:mark-important': event =>
+              commandCb(event, this._onShortcutSetImportant, true),
+          }
         }
       >
         <span />
@@ -688,6 +688,7 @@ export class ThreadListMoreButton extends React.Component {
   _more = () => {
     const selectionCount = this.props.items ? this.props.items.length : 0;
     const menu = new Menu();
+    const accounts = AccountStore.accountsForItems(this.props.items);
     if (selectionCount > 0) {
       if (isSameAccount(this.props.items)) {
         menu.append(
@@ -699,8 +700,7 @@ export class ThreadListMoreButton extends React.Component {
           })
         );
       }
-      const account = AccountStore.accountForItems(this.props.items);
-      if (account && account.usesLabels()) {
+      if (accounts.length === 1 && accounts[0].usesLabels()) {
         menu.append(
           new MenuItem({
             label: 'Apply Labels',
@@ -746,7 +746,7 @@ export class ThreadListMoreButton extends React.Component {
       }
       const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
         this.props.items,
-        'important'
+        'spam'
       );
       if (allowed) {
         menu.append(
@@ -758,13 +758,29 @@ export class ThreadListMoreButton extends React.Component {
           })
         );
       }
-      if (this._account && this._account.usesLabels()) {
-        menu.append(
-          new MenuItem({
-            label: `Mark important`,
-            click: () => AppEnv.commands.dispatch('core:mark-important'),
-          })
-        );
+      const isAllAccountsUseLabels = accounts.every(
+        acc => acc.usesLabels()
+      )
+      if (isAllAccountsUseLabels) {
+        const isAllImportant = this.props.items.every(item => {
+          const category = CategoryStore.getCategoryByRole(item.accountId, 'important');
+          return _.findWhere(item.labels, { id: category.id }) != null;
+        })
+        if (isAllImportant) {
+          menu.append(
+            new MenuItem({
+              label: `Mark as unimportant`,
+              click: () => AppEnv.commands.dispatch('core:mark-unimportant'),
+            })
+          );
+        } else {
+          menu.append(
+            new MenuItem({
+              label: `Mark as important`,
+              click: () => AppEnv.commands.dispatch('core:mark-important'),
+            })
+          );
+        }
       }
     } else {
       menu.append(
@@ -983,7 +999,7 @@ export const ThreadListToolbarButtons = CreateButtonGroup(
 );
 export const HiddenThreadListToolbarButtons = CreateButtonGroup(
   'HiddenThreadListToolbarButtons',
-  [ HiddenGenericRemoveButton, HiddenToggleImportantButton ],
+  [HiddenGenericRemoveButton, HiddenToggleImportantButton],
   { order: 1 }
 );
 

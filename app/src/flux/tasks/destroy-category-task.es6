@@ -7,9 +7,22 @@ export default class DestroyCategoryTask extends Task {
     path: Attributes.String({
       modelKey: 'path',
     }),
+    name: Attributes.String({
+      modelKey: 'name',
+    })
   });
 
+  constructor(data) {
+    super(data);
+    this.name = this.name || this.path;
+  }
+  onError({ key, debuginfo, retryable }) {
+    const errorMessage = `Delete folder ${utf7.imap.decode(this.name)} failed`;
+    const errorDetail = debuginfo;
+    AppEnv.showErrorDialog({title: errorMessage, message: errorDetail});
+  }
+
   label() {
-    return `Deleting ${utf7.imap.decode(this.path)}`;
+    return `Deleting ${utf7.imap.decode(this.name)}`;
   }
 }

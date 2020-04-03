@@ -110,6 +110,7 @@ const attachmentCategoryMap = {
       'image/svg+xml',
       'image/tiff',
       'image/webp',
+      'image/heic',
       'application/vnd.google-apps.drawing',
       'application/vnd.google-apps.photo',
     ],
@@ -351,6 +352,14 @@ class DraftAttachment {
   }
   _deleteAttachment(cb = null){
     this.setState({state: AttachmentState.deleting});
+    if(this.fileId.indexOf('local-') !== 0){
+      console.log(`Attachment from server, fake deleted`);
+      this.setState({state: AttachmentState.deleted});
+      if(cb){
+        cb();
+      }
+      return;
+    }
     fs.unlink(this.filePath, err => {
       if(err){
         AppEnv.logError(err, {errorData: this}, {grabLogs: true});
@@ -588,12 +597,12 @@ class AccountDrafts{
     console.log(`draft ${item.messageId} added to account ${item.accountId}`);
   };
 
-  removeDraftCache({ accountId, messageId, headerMessageId }) {
+  removeDraftCache({ accountId, messageId, headerMessageId, reason= '' }) {
     const draft = this.findDraft({ accountId, messageId, headerMessageId });
     if (draft) {
       this.accounts[accountId] = this.accounts[accountId].filter(item => item.messageId !== draft.messageId);
     }
-    console.log(`Removed ${messageId} from draft attachment cache`);
+    console.log(`Removed ${messageId} from draft attachment cache, reason: ${reason}`);
   }
   addDraft({accountId, messageId, headerMessageId}){
     let draft = this.findDraft({accountId, messageId, headerMessageId});
@@ -608,14 +617,14 @@ class AccountDrafts{
   }
   addDraftWithAttachments(draft){
     if(!draft){
-      AppEnv.logError(`Draft is null, cannot remove draft from attachment cache`);
+      AppEnv.logError(new Error(`Draft is null, cannot add draft with attachments to cache`));
       return;
     }
     const accountId = draft.accountId;
     const messageId = draft.id;
     const headerMessageId = draft.headerMessageId;
     if(!accountId || (!messageId && !headerMessageId) ){
-      AppEnv.logError(`Draft data incorrect, cannot remove draft from attachment cache`, draft);
+      AppEnv.logError(new Error(`Draft data incorrect, cannot remove draft from attachment cache`), draft);
       return;
     }
     const draftCache = this.addDraft({accountId, messageId, headerMessageId});
@@ -648,7 +657,7 @@ class AccountDrafts{
     };
     if(draft.isDeleted()){
       done();
-      AppEnv.logError(`Draft ${messageId},${headerMessageId} is already deleted, will not add attachment`);
+      AppEnv.logError(new Error(`Draft ${messageId},${headerMessageId} is already deleted, will not add attachment`));
       return;
     }
     if(sourceFile && !originalPath){
@@ -658,7 +667,7 @@ class AccountDrafts{
       const sourceFileId = sourceFile.fileId;
       const sourceFilePath = sourceFile.filePath;
       if(!sourceAccountId || (!sourceMessageId && !sourceHeaderMessageId) || !sourceFileId || !sourceFilePath){
-        AppEnv.logError(`copy attachment missing data`);
+        AppEnv.logError(new Error(`copy attachment missing data`), );
         return;
       }
       let sourceDraft = this.findDraft({accountId: sourceAccountId,
@@ -807,7 +816,7 @@ class AttachmentStore extends MailspringStore {
   // }
   copyAttachmentsToDraft({ draft, fileData = [], cb }) {
     if(!draft){
-      AppEnv.logError(`Draft is null, add to attachment ignored`);
+      AppEnv.logError(new Error(`Draft is null, add to attachment ignored`));
       return;
     }
     if(!Array.isArray(fileData)){
@@ -847,11 +856,11 @@ class AttachmentStore extends MailspringStore {
   }
   deleteDraftAttachments({ draft, fileIds = [], cb }){
     if(!draft){
-      AppEnv.logError(`Draft is null, add to attachment ignored`);
+      AppEnv.logError(new Error(`Draft is null, delete draft attachments ignored`));
       return;
     }
     if(!Array.isArray(fileIds)){
-      AppEnv.logError(`fileData is not array, ignoring add to attachment`);
+      AppEnv.logError(new Error(`fileData is not array, ignoring add to attachment`));
       return;
     }
     const accountId = draft.accountId;
@@ -893,14 +902,14 @@ class AttachmentStore extends MailspringStore {
   }
   addDraftToAttachmentCache(draft){
     if(!draft){
-      AppEnv.logError(`Draft is null, cannot remove draft from attachment cache`);
+      AppEnv.logError(new Error(`Draft is null, cannot add draft to attachment cache`));
       return;
     }
     const accountId = draft.accountId;
     const messageId = draft.id;
     const headerMessageId = draft.headerMessageId;
     if(!accountId || (!messageId && !headerMessageId) ){
-      AppEnv.logError(`Draft data incorrect, cannot remove draft from attachment cache`, draft);
+      AppEnv.logError(new Error(`Draft data incorrect, cannot remove draft from attachment cache`), draft);
       return;
     }
     if(Array.isArray(draft.files) && draft.files.length > 0){
@@ -912,7 +921,7 @@ class AttachmentStore extends MailspringStore {
   }
   removeDraftAttachmentCache(draft){
     if(!draft){
-      AppEnv.logError(`Draft is null, cannot remove draft from attachment cache`);
+      AppEnv.logError(new Error(`Draft is null, cannot remove draft from attachment cache`));
       return;
     }
     const accountId = draft.accountId;
@@ -980,30 +989,30 @@ class AttachmentStore extends MailspringStore {
     this._addToMissingDataAttachmentIds(fileId);
     return null;
   }
-  setAttachmentData(attachmentData) {
-    if (attachmentData.mimeType) {
-      return this.addAttachmentPartialData(attachmentData);
-    } else if (attachmentData.missingData) {
-      const cachedAttachment = this._attachementCache.get(attachmentData.id);
-      if (cachedAttachment) {
-        return;
-      }
-    }
-    this._attachementCache.set(attachmentData.id, attachmentData);
-  }
-  addAttachmentPartialData(partialFileData) {
-    let fileData = this._attachementCache.get(partialFileData.id);
-    if (!fileData) {
-      console.log(`file id not in cache ${partialFileData.id}`);
-      fileData = File.fromPartialData(partialFileData);
-      this._attachementCache.set(fileData.id, fileData);
-    }
-    if (fileData.missingData) {
-      console.log(`file missing data, queue db ${fileData.id}`);
-      this._addToMissingDataAttachmentIds(fileData.id);
-    }
-    return fileData;
-  }
+  // setAttachmentData(attachmentData) {
+  //   if (attachmentData.mimeType) {
+  //     return this.addAttachmentPartialData(attachmentData);
+  //   } else if (attachmentData.missingData) {
+  //     const cachedAttachment = this._attachementCache.get(attachmentData.id);
+  //     if (cachedAttachment) {
+  //       return;
+  //     }
+  //   }
+  //   this._attachementCache.set(attachmentData.id, attachmentData);
+  // }
+  // addAttachmentPartialData(partialFileData) {
+  //   let fileData = this._attachementCache.get(partialFileData.id);
+  //   if (!fileData) {
+  //     console.log(`file id not in cache ${partialFileData.id}`);
+  //     fileData = File.fromPartialData(partialFileData);
+  //     this._attachementCache.set(fileData.id, fileData);
+  //   }
+  //   if (fileData.missingData) {
+  //     console.log(`file missing data, queue db ${fileData.id}`);
+  //     this._addToMissingDataAttachmentIds(fileData.id);
+  //   }
+  //   return fileData;
+  // }
 
   // Returns a path on disk for saving the file. Note that we must account
   // for files that don't have a name and avoid returning <downloads/dir/"">
@@ -1293,9 +1302,9 @@ class AttachmentStore extends MailspringStore {
     }
   };
 
-  refreshAttachmentsState = fileId => {
-    const file = this.getAttachment(fileId);
-    const filePath = this.pathForFile(file);
+  refreshAttachmentsState = ({fileId = '', filePath = ''} = {}) => {
+    // const file = this.getAttachment(fileId);
+    // const filePath = this.pathForFile(file);
     if (filePath && fs.existsSync(filePath)) {
       this._onPresentSuccess([fileId]);
     }
@@ -1567,7 +1576,7 @@ class AttachmentStore extends MailspringStore {
         }
 
         const file = new File({
-          id: uuid(),
+          id: `local-${uuid()}`,
           messageId,
           accountId,
           filename: filename,
@@ -1625,7 +1634,7 @@ class AttachmentStore extends MailspringStore {
       }
 
       const file = new File({
-        id: uuid(),
+        id: `local-${uuid()}`,
         filename: filename,
         size: stats.size,
         contentType: null,

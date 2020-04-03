@@ -30,11 +30,13 @@ class SidebarStore extends MailspringStore {
     this._sections = {};
     this._sections[Sections.Standard] = {};
     this._sections[Sections.User] = [];
+    this._keyboardFocusKey = null;
     this._registerCommands();
     this._registerMenuItems();
     this._registerTrayItems();
     this._registerListeners();
     this._updateSections();
+    this._onShiftItemThrottle = _.throttle((delta, cb) => this._onShiftItem(delta, cb), 100);
   }
 
   accounts() {
@@ -52,6 +54,75 @@ class SidebarStore extends MailspringStore {
   userSections() {
     return this._sections[Sections.User];
   }
+  flattenStandardSections(sections) {
+    const ret = [];
+    if(!Array.isArray(sections)){
+      sections = Object.values(this.standardSection().items).filter(i => i.id !== 'divider');
+    }
+    sections.forEach(section => {
+      if(!section){
+        return;
+      }
+      ret.push(section);
+      if(Array.isArray(section.children) && section.children.length > 0 && !section.collapsed){
+        const tmp = this.flattenStandardSections(section.children);
+        ret.push(...tmp);
+      }
+    });
+    return ret;
+  }
+
+  onShift(delta, cb) {
+    this._onShiftItemThrottle(delta, cb);
+  }
+  _findKeyboardFocusKeyFromCurrentSelected = () => {
+    const getLowestSelected = sections => {
+      if(!Array.isArray(sections)){
+        return null;
+      }
+      const selectedItem = sections.find(section => section.selected);
+      if(selectedItem){
+        if(Array.isArray(selectedItem.children) && selectedItem.children.length > 0 && !selectedItem.collapsed){
+          const childSelected = getLowestSelected(selectedItem.children);
+          if(childSelected){
+            return childSelected;
+          }
+        }
+      }
+      return selectedItem;
+    };
+    const selectedItem = getLowestSelected(this.standardSection().items);
+    if(selectedItem){
+      return selectedItem.id;
+    }
+    return null;
+  };
+
+  _onShiftItem = (delta, cb) => {
+    let forceUpdate = false;
+    if(!this._keyboardFocusKey){
+      this._keyboardFocusKey = this._findKeyboardFocusKeyFromCurrentSelected();
+      forceUpdate = true;
+    }
+    if(!this._keyboardFocusKey){
+      return;
+    }
+    const sections = this.flattenStandardSections();
+    const currentIndex = sections.findIndex(section => section.id === this._keyboardFocusKey);
+    let nextIndex = currentIndex + delta;
+    if(nextIndex < 0){
+      nextIndex = 0;
+    } else if (nextIndex >= sections.length){
+      nextIndex = sections.length - 1;
+    }
+    if(currentIndex !== nextIndex || forceUpdate){
+      this._keyboardFocusKey = sections[nextIndex].id;
+      sections[nextIndex].onSelect(sections[nextIndex]);
+      if(cb){
+        cb(this._keyboardFocusKey);
+      }
+    }
+  };
 
   _registerListeners() {
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
@@ -157,6 +228,10 @@ class SidebarStore extends MailspringStore {
     // const multiAccount = accounts.length > 1;
 
     this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts);
+    const keyboardFocusKey = this._findKeyboardFocusKeyFromCurrentSelected();
+    if(keyboardFocusKey !== this._keyboardFocusKey){
+      this._keyboardFocusKey = keyboardFocusKey;
+    }
     // this._sections[Sections.User] = accounts.map(function(acc) {
     //   const opts = {};
     //   if (multiAccount) {

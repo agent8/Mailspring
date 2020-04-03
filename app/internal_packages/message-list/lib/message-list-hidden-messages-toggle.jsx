@@ -28,7 +28,8 @@ export default class MessageListHiddenMessagesToggle extends React.Component {
       return <span />;
     }
 
-    const viewing = FocusedPerspectiveStore.current().categoriesSharedRole();
+    const currentPerspective = FocusedPerspectiveStore.current();
+    const viewing = currentPerspective.categoriesSharedRole();
     let message = null;
 
     if (MessageStore.FolderNamesHiddenByDefault.includes(viewing)) {
@@ -36,6 +37,20 @@ export default class MessageListHiddenMessagesToggle extends React.Component {
         message = `There are ${numberOfHiddenItems} more messages in this thread that are not in spam or trash.`;
       } else {
         message = `There is one more message in this thread that is not in spam or trash.`;
+      }
+    } else if (viewing === 'inbox') {
+      let theOtherTabName = 'other';
+      if (currentPerspective.isOther) {
+        theOtherTabName = 'focused';
+      }
+      if (numberOfHiddenItems > 1) {
+        message = `${numberOfHiddenItems} messages in this thread are hidden because it was moved to ${
+          theOtherTabName ? `${theOtherTabName} or ` : ''
+        }trash or spam.`;
+      } else {
+        message = `One message in this thread is hidden because it was moved to ${
+          theOtherTabName ? `${theOtherTabName} or ` : ''
+        }trash or spam.`;
       }
     } else {
       if (numberOfHiddenItems > 1) {

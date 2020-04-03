@@ -1,9 +1,10 @@
-import keyMannager from '../../../src/key-manager';
-import { getPubKey } from './e2ee';
-import { isJsonStr } from './stringUtils';
-import path from 'path';
-import fs from 'fs';
-import { AccountStore } from 'mailspring-exports';
+import keyMannager from '../../../src/key-manager'
+import { getPubKey } from './e2ee'
+import { isJsonStr } from './stringUtils'
+import path from 'path'
+import fs from 'fs'
+import util from 'util';
+const exists = util.promisify(fs.exists);
 
 const { get, post } = require('./httpex')
 const download = require('download')
@@ -295,15 +296,11 @@ async function downloadImage(url, logoPath, domain) {
 const logoCache = {}
 export const getLogo = async email => {
   if (email) {
-    const account = AccountStore.accountForEmail(email);
-    if (account && account.picture) {
-      return account.picture;
-    }
     let domain = email.split('@')[1]
     // domain = /\w+\.\w+$/g.exec(domain);
     // find in localFolder
     let logoPath = path.join(logoDirPath, domain + '.png')
-    if (fs.existsSync(logoPath)) {
+    if (await exists(logoPath)) {
       return `file:${logoPath}`
     }
 

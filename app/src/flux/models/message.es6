@@ -12,6 +12,7 @@ import ModelWithMetadata from './model-with-metadata';
 import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
 import CategoryStore from '../stores/category-store';
+import Category from './category'
 let AttachmentStore = null;
 
 const mapping = {
@@ -20,7 +21,12 @@ const mapping = {
       return [];
     }
     return json.map(attachment => {
-      return File.fromPartialData(attachment);
+      const file = new File();
+      file.fromJSON(attachment);
+      if(!file.id && (attachment.pid || attachment.id)){
+        file.id = (attachment.pid || attachment.id);
+      }
+      return file;
     })
   }
 };
@@ -243,11 +249,11 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
-    attachmentIds: Attributes.Collection({
-      jsModelKey: 'attachmentIds',
+    files: Attributes.Collection({
       modelKey: 'files',
       queryable: true,
       loadFromColumn: true,
+      itemClass: File,
       fromJSONMapping: mapping.attachmentIdsFromJSON
     }),
 
@@ -312,6 +318,12 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    inboxCategory: Attributes.Number({
+      queryable: true,
+      loadFromColumn: true,
+      modelKey: 'category',
+      jsModelKey: 'inboxCategory',
+    }),
     siftCategory: Attributes.Collection({
       queryable: true,
       modelKey: 'siftCategory',
@@ -358,13 +370,15 @@ export default class Message extends ModelWithMetadata {
     if(!Array.isArray(data.pastMessageIds)){
       this.pastMessageIds = [];
     }
+    if(!Array.isArray(data.files)){
+      this.files = [];
+    }
   }
 
   toJSON(options) {
     const json = super.toJSON(options);
     // json.headerMessageId = this.headerMessageId || '';
     json.file_ids = this.fileIds();
-    json.files = this.files.map(f => f.toJSON());
     if (this.draft) {
       json.draft = true;
     }
@@ -486,41 +500,41 @@ export default class Message extends ModelWithMetadata {
     }
     return false;
   }
-  get files() {
-    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-    if (!Array.isArray(this.attachmentIds)) {
-      console.error(`attachmentIds is not array`, this.attachmentIds);
-      return [];
-    }
-    const rets = [];
-    this.attachmentIds.forEach(partialAttachmentData => {
-      if (!(partialAttachmentData instanceof File)) {
-        partialAttachmentData = File.fromPartialData(partialAttachmentData)
-      }
-      const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
-      if (fileData) {
-        rets.push(fileData);
-      }
-    });
-    return rets;
-  }
-  set files(attachments) {
-    this.attachmentIds = attachments.map(attachment => {
-      if (!(attachment instanceof File)) {
-        attachment = File.fromPartialData(attachment)
-      }
-      if (!attachment.missingData) {
-        AttachmentStore.setAttachmentData(attachment);
-      } else {
-        attachment = AttachmentStore.addAttachmentPartialData(attachment);
-      }
-      return attachment;
-    });
-  }
+  // get files() {
+  //   AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
+  //   if (!Array.isArray(this.attachmentIds)) {
+  //     console.error(`attachmentIds is not array`, this.attachmentIds);
+  //     return [];
+  //   }
+  //   const rets = [];
+  //   this.attachmentIds.forEach(partialAttachmentData => {
+  //     if (!(partialAttachmentData instanceof File)) {
+  //       partialAttachmentData = File.fromPartialData(partialAttachmentData)
+  //     }
+  //     const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
+  //     if (fileData) {
+  //       rets.push(fileData);
+  //     }
+  //   });
+  //   return rets;
+  // }
+  // set files(attachments) {
+  //   this.attachmentIds = attachments.map(attachment => {
+  //     if (!(attachment instanceof File)) {
+  //       attachment = File.fromPartialData(attachment)
+  //     }
+  //     if (!attachment.missingData) {
+  //       AttachmentStore.setAttachmentData(attachment);
+  //     } else {
+  //       attachment = AttachmentStore.addAttachmentPartialData(attachment);
+  //     }
+  //     return attachment;
+  //   });
+  // }
 
   // Public: Returns an {Array} of {File} IDs
   fileIds() {
-    return this.files.map(file => file.id);
+    return (this.files || []).map(file => file.id);
   }
 
   get labels() {
@@ -560,13 +574,13 @@ export default class Message extends ModelWithMetadata {
           needToDownload: [],
         },
       };
-      const total = this.files.length * 2;
+      const total = (this.files || []).length * 2;
       if (total === 0) {
         resolve(ret);
         return;
       }
       let processed = 0;
-      this.files.forEach(f => {
+      (this.files || []).forEach(f => {
         const path = AttachmentStore.pathForFile(f);
         const exists = fs.existsSync(path);
         if (!exists) {
@@ -623,7 +637,7 @@ export default class Message extends ModelWithMetadata {
       return false;
     }
     if (ignoreOtherAccounts) {
-      const account = AccountStore.accountForEmail(this.from[0].email);
+      const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
       if (account) {
         return account.id === this.accountId;
       }
@@ -635,7 +649,7 @@ export default class Message extends ModelWithMetadata {
     if (!this.from[0]) {
       return false;
     }
-    const account = AccountStore.accountForEmail(this.from[0].email);
+    const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
     if (account) {
       return account.id !== this.accountId;
     }
@@ -678,6 +692,29 @@ export default class Message extends ModelWithMetadata {
     }
     return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
   }
+  isInInbox() {
+    if (!this.labels) {
+      return false;
+    }
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('inbox')
+    );
+  }
+  isInInboxFocused() {
+    if (!this.isInInbox()) {
+      return false;
+    }
+    return (
+      this.inboxCategory === Category.InboxCategoryState.MsgCandidate ||
+      this.inboxCategory === Category.InboxCategoryState.MsgPrimary
+    );
+  }
+  isInInboxOther() {
+    if (!this.isInInbox()) {
+      return false;
+    }
+    return this.inboxCategory === Category.InboxCategoryState.MsgOther;
+  }
 
   fromContact() {
     return (this.from || [])[0] || new Contact({ name: 'Unknown', email: 'Unknown' });
@@ -700,7 +737,7 @@ export default class Message extends ModelWithMetadata {
     }
 
     // https://regex101.com/r/hR7zN3/1
-    const re = /(?:<signature>.*<\/signature>)|(?:<.+?>)|\s/gim;
+    const re = /(?:<edo\-signature>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
     return this.body.replace(re, '').length === 0;
   }
 

@@ -1,7 +1,6 @@
 /* eslint global-require: 0 */
 /* eslint no-use-before-define: 0 */
 import _ from 'underscore';
-
 import Utils from './flux/models/utils';
 import TaskFactory from './flux/tasks/task-factory';
 import AccountStore from './flux/stores/account-store';
@@ -9,19 +8,16 @@ import CategoryStore from './flux/stores/category-store';
 import DatabaseStore from './flux/stores/database-store';
 import OutboxStore from './flux/stores/outbox-store';
 import ThreadCountsStore from './flux/stores/thread-counts-store';
-import FolderSyncProgressStore from './flux/stores/folder-sync-progress-store';
 import MutableQuerySubscription from './flux/models/mutable-query-subscription';
 import UnreadQuerySubscription from './flux/models/unread-query-subscription';
 import Thread from './flux/models/thread';
 import Message from './flux/models/message';
 import Sift from './flux/models/sift';
 import Category from './flux/models/category';
-import Label from './flux/models/label';
-import Folder from './flux/models/folder';
 import Actions from './flux/actions';
-import Matcher from './flux/attributes/matcher';
 import { LabelColorizer } from 'mailspring-component-kit';
-import RetinaImg from './components/retina-img';
+import Matcher from './flux/attributes/matcher';
+import JoinTable from './flux/models/join-table';
 
 let WorkspaceStore = null;
 let ChangeStarredTask = null;
@@ -74,8 +70,17 @@ export default class MailboxPerspective {
     return new AttachementMailboxPerspective(accountIds);
   }
 
+  static forToday(accountIds) {
+    return new TodayMailboxPerspective(accountIds);
+  }
+
   static forCategory(category) {
     return category ? new CategoryMailboxPerspective([category]) : this.forNothing();
+  }
+  static forAllArchived(categories) {
+    return categories.length > 0
+      ? new AllArchiveCategoryMailboxPerspective(categories)
+      : this.forNothing();
   }
 
   static forCategories(categories) {
@@ -94,6 +99,20 @@ export default class MailboxPerspective {
 
   static forUnread(categories) {
     return categories.length > 0 ? new UnreadMailboxPerspective(categories) : this.forNothing();
+  }
+
+  static forJira(categories) {
+    return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
+  }
+
+  static forInboxFocused(categories) {
+    return categories.length > 0
+      ? new InboxMailboxFocusedPerspective(categories)
+      : this.forNothing();
+  }
+
+  static forInboxOther(categories) {
+    return categories.length > 0 ? new InboxMailboxOtherPerspective(categories) : this.forNothing();
   }
 
   static forUnreadByAccounts(accountIds) {
@@ -153,9 +172,21 @@ export default class MailboxPerspective {
 
   static fromJSON(json) {
     try {
+      if (json.type === InboxMailboxFocusedPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forInboxFocused(categories);
+      }
+      if (json.type === InboxMailboxOtherPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forInboxOther(categories);
+      }
       if (json.type === CategoryMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
         return this.forCategories(categories);
+      }
+      if (json.type === AllArchiveCategoryMailboxPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forAllArchived(categories);
       }
       if (json.type === UnreadMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -303,7 +334,11 @@ export default class MailboxPerspective {
       if (AccountStore.accountForId(category.accountId).provider === 'gmail') {
         ret.push({ accountId: category.accountId, path: category.path.replace('[Gmail]/', '') });
       } else {
-        ret.push({ accountId: category.accountId, path: category.path, parentId: category.parentId });
+        ret.push({
+          accountId: category.accountId,
+          path: category.path,
+          parentId: category.parentId,
+        });
       }
     }
     return ret;
@@ -366,7 +401,8 @@ export default class MailboxPerspective {
       threads.every(thread => {
         const account = AccountStore.accountForId(thread.accountId);
         if (account && account.provider === 'gmail') {
-          if (this.isInbox()) { // make sure inbox label can archive
+          if (this.isInbox()) {
+            // make sure inbox label can archive
             // if (!thread.labels.some(label => label.role === 'inbox')) {
             //   console.error(`The thread in inbox, but do not have inbox label. Thread id is ${thread.id}. subject is [${thread.subject}]`);
             //   AppEnv.reportError(
@@ -392,7 +428,7 @@ export default class MailboxPerspective {
       return false;
     }
     return AccountStore.accountsForItems(threads).every(
-      acc => CategoryStore.getCategoryByRole(acc, standardCategoryName) !== null,
+      acc => CategoryStore.getCategoryByRole(acc, standardCategoryName) !== null
     );
   }
 
@@ -400,6 +436,11 @@ export default class MailboxPerspective {
     if (this.categoriesSharedRole() === 'trash') {
       return true;
     }
+    // if searching in trash
+    if (this.sourcePerspective && this.sourcePerspective.categoriesSharedRole() === 'trash') {
+      return true;
+    }
+    return false;
   }
 
   tasksForRemovingItems(threads) {
@@ -417,7 +458,6 @@ class SingleAccountMailboxPerspective extends MailboxPerspective {
   }
 }
 
-
 class OutboxMailboxPerspective extends MailboxPerspective {
   constructor(accountIds) {
     super(accountIds);
@@ -426,7 +466,6 @@ class OutboxMailboxPerspective extends MailboxPerspective {
     this.outbox = true; // The OutboxStore looks for this
     this._categories = [];
   }
-
 
   categories() {
     return this._categories;
@@ -546,7 +585,8 @@ class SiftMailboxPerspective extends MailboxPerspective {
       .where([Message.attributes.siftCategory.containsAnyAtColumn('category', [siftCategory])])
       .where({ deleted: false, draft: false })
       .order([Message.attributes.date.descending()])
-      .page(0, 1).distinct();
+      .page(0, 1)
+      .distinct();
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
 
@@ -669,7 +709,10 @@ class AttachementMailboxPerspective extends MailboxPerspective {
 
   threads() {
     const query = DatabaseStore.findAll(Thread)
-      .where([Thread.attributes.hasAttachments.equal(true)], Thread.attributes.inAllMail.equal(true))
+      .where(
+        [Thread.attributes.hasAttachments.equal(true)],
+        Thread.attributes.inAllMail.equal(true)
+      )
       .limit(0);
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
@@ -721,6 +764,12 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         this.bgColor = bgColor;
       }
     }
+    if (this.isInbox() && this.constructor === CategoryMailboxPerspective) {
+      this.tab = [
+        new InboxMailboxFocusedPerspective(this._categories),
+        new InboxMailboxOtherPerspective(this._categories),
+      ];
+    }
   }
 
   toJSON() {
@@ -732,7 +781,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
+      _.isEqual(
+        this.categories().map(c => c.id),
+        other.categories().map(c => c.id)
+      )
     );
   }
 
@@ -758,7 +810,6 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       query.where({ state: 0 });
     }
 
-
     // if (['spam', 'trash'].includes(this.categoriesSharedRole())) {
     //   query.where(new Matcher.Not([
     //     Thread.attributes.id.like('delete')
@@ -779,7 +830,11 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   unreadCount() {
     let sum = 0;
     for (const cat of this._categories) {
-      sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
+      if (this.isInbox()) {
+        sum += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
+      } else {
+        sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
+      }
     }
     return sum;
   }
@@ -831,7 +886,13 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       return [];
     }
     const previousFolder = TaskFactory.findPreviousFolder(current, accountId);
-    return TaskFactory.tasksForGeneralMoveFolder({threads, targetCategory: myCat, sourceCategory: currentCat, previousFolder, source: 'Dragged into List'});
+    return TaskFactory.tasksForGeneralMoveFolder({
+      threads,
+      targetCategory: myCat,
+      sourceCategory: currentCat,
+      previousFolder,
+      source: 'Dragged into List',
+    });
     // if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
     //   // dragging from a label into All Mail? Make this an "archive" by removing the
     //   // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
@@ -948,7 +1009,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       const acct = AccountStore.accountForId(accountId);
       const preferred = acct.preferredRemovalDestination();
       if (!preferred) {
-        AppEnv.reportError(new Error('We cannot find our preferred removal destination'), { errorData: { account: acct, errorCode: 'folderNotAvailable' } });
+        AppEnv.reportError(new Error('We cannot find our preferred removal destination'), {
+          errorData: { account: acct, errorCode: 'folderNotAvailable' },
+        });
         return;
       }
       const cat = this.categories().find(c => c.accountId === accountId);
@@ -974,6 +1037,92 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 }
 
+class TodayMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(accountIds) {
+    const categories = [];
+    accountIds.forEach(accountId => {
+      const account = AccountStore.accountForId(accountId);
+      if (account) {
+        const category = CategoryStore.getCategoryByRole(accountId, 'inbox');
+        if (category) {
+          categories.push(category);
+        }
+      }
+    });
+    super(categories);
+    this.name = 'Today';
+    this.iconName = 'today.svg';
+    this._categories = categories;
+  }
+  categories() {
+    return this._categories;
+  }
+
+  threads() {
+    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+      categoryNum => `${categoryNum}`
+    );
+    let query = DatabaseStore.findAll(Thread, { state: 0, inboxCategory: notOtherCategorys }).limit(
+      0
+    );
+    const now = new Date();
+    const startOfDay = new Date(now.toDateString());
+    const categoryIds = [];
+    this.categories().forEach(category => {
+      if (category) {
+        categoryIds.push(category.id);
+      }
+    });
+    if (categoryIds.length > 0) {
+      const conditions = new Matcher.JoinAnd([
+        Thread.attributes.categories.containsAny(categoryIds),
+        JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(
+          startOfDay / 1000
+        ),
+        Thread.attributes.state.equal(0),
+      ]);
+      query = query.where([conditions]);
+    } else {
+      query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay / 1000)]);
+    }
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+
+  unreadCount() {
+    if (this.accountIds.length > 1) {
+      return ThreadCountsStore.unreadCountForCategoryId('today-all');
+    } else {
+      return ThreadCountsStore.unreadCountForCategoryId(`today-${this.accountIds[0]}`);
+    }
+  }
+
+  canReceiveThreadsFromAccountIds() {
+    return false;
+  }
+  receiveThreadIds(threadIds) {
+    return;
+  }
+  actionsForReceivingThreads(threads, accountId) {
+    return;
+  }
+}
+
+class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(data) {
+    super(data);
+    this.isAllArchive = true;
+  }
+  toJSON() {
+    const json = super.toJSON();
+    json.isAllArchive = true;
+    return json;
+  }
+
+  isEqual(other) {
+    return other.isAllArchive;
+  }
+}
+
 class AllMailMailboxPerspective extends CategoryMailboxPerspective {
   constructor(_categories) {
     super(_categories);
@@ -981,6 +1130,39 @@ class AllMailMailboxPerspective extends CategoryMailboxPerspective {
   threads() {
     const query = DatabaseStore.findAll(Thread)
       .where({ inAllMail: true, state: 0, accountId: this.accountIds[0] })
+      .order([Thread.attributes.lastMessageTimestamp.descending()])
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class JiraMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(_categories) {
+    super(_categories);
+  }
+  unreadCount() {
+    let sum = 0;
+    for (const aid of this.accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${aid}_JIRA`);
+    }
+    return sum;
+  }
+  threads() {
+    const query = DatabaseStore.findAll(Thread)
+      .where({
+        inAllMail: true,
+        state: 0,
+        isJIRA: true,
+      })
       .order([Thread.attributes.lastMessageTimestamp.descending()])
       .limit(0);
 
@@ -1011,7 +1193,7 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
   unreadCount() {
     let sum = 0;
     for (const cat of this._categories) {
-      sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
     }
     return sum;
   }
@@ -1024,7 +1206,7 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
         threads: threads,
         unread: true,
         source: 'Dragged Into List',
-      }),
+      })
     );
     return tasks;
   }
@@ -1034,8 +1216,124 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
 
     const tasks = super.tasksForRemovingItems(threads, ruleset, source);
     tasks.push(
-      new ChangeUnreadTask({ threads, unread: false, source: source || 'Removed From List' }),
+      new ChangeUnreadTask({ threads, unread: false, source: source || 'Removed From List' })
     );
     return tasks;
+  }
+}
+
+class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
+  constructor(categories) {
+    super(categories);
+    const isAllInbox = categories && categories.length > 1;
+    this.name = `${isAllInbox ? 'All ' : ''}Focused`;
+    this.isTab = true;
+  }
+
+  isTabOfPerspective(other) {
+    const tab = other.tab || [];
+    const equalTab = tab.filter(per => {
+      return this.isEqual(per);
+    });
+    return equalTab.length > 0;
+  }
+
+  unreadCount() {
+    let sum = 0;
+
+    for (const accountId of this.accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${accountId}_Focused`);
+    }
+
+    return sum;
+  }
+
+  threads() {
+    const categoryIds = [];
+    this.categories().forEach(c => {
+      if (!c.state) {
+        //In case Category will also add state in future versions
+        categoryIds.push(c.id);
+      }
+    });
+
+    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+      categoryNum => `${categoryNum}`
+    );
+
+    const query = DatabaseStore.findAll(Thread)
+      .where([Thread.attributes.categories.containsAny(categoryIds)])
+      .where({
+        state: 0,
+        inboxCategory: notOtherCategorys,
+      })
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
+  constructor(categories) {
+    super(categories);
+    const isAllInbox = categories && categories.length > 1;
+    this.name = `${isAllInbox ? 'All ' : ''}Other`;
+    this.isTab = true;
+    this.isOther = true;
+  }
+
+  isTabOfPerspective(other) {
+    const tab = other.tab || [];
+    const equalTab = tab.filter(per => {
+      return this.isEqual(per);
+    });
+    return equalTab.length > 0;
+  }
+
+  unreadCount() {
+    let sum = 0;
+
+    for (const accountId of this.accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${accountId}_Other`);
+    }
+    return sum;
+  }
+
+  threads() {
+    const categoryIds = [];
+    this.categories().forEach(c => {
+      if (!c.state) {
+        //In case Category will also add state in future versions
+        categoryIds.push(c.id);
+      }
+    });
+
+    const otherCategorys = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+
+    const query = DatabaseStore.findAll(Thread)
+      .where([Thread.attributes.categories.containsAny(categoryIds)])
+      .where({
+        state: 0,
+        inboxCategory: otherCategorys,
+      })
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
   }
 }

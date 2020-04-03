@@ -86,6 +86,7 @@ export default class AppEnvConstructor {
     this.enabledFromNativeLog = true;
     this.enabledBackgroundQueryLog = true;
     this.enabledLocalQueryLog = true;
+    this.enabledChangeRecordLog = false;
     this.enabledXmppLog = true;
     LOG.transports.file.file = path.join(
       this.getConfigDirPath(),
@@ -176,11 +177,20 @@ export default class AppEnvConstructor {
             AppEnv.themes.setActiveTheme(isDarkMode ? 'ui-dark' : 'ui-light');
           }
         });
+        ipcRenderer.on('application-activate', () => {
+          if (this.config.get('core.themeMode') === 'auto') {
+            const newisDarkMode = remote.systemPreferences.isDarkMode();
+            const oldisDarkMode = this.isDarkTheme();
+            if (newisDarkMode !== oldisDarkMode) {
+              AppEnv.themes.setActiveTheme(newisDarkMode ? 'ui-dark' : 'ui-light');
+            }
+          }
+        });
       }
       this.mailsyncBridge.startSift('Main window started');
     }
   }
-  toggleLogging(){
+  toggleLogging() {
     this.enabledToNativeLog = !this.enabledToNativeLog;
     this.enabledFromNativeLog = !this.enabledFromNativeLog;
     this.enabledBackgroundQueryLog = !this.enabledBackgroundQueryLog;
@@ -292,7 +302,11 @@ export default class AppEnvConstructor {
   }
 
   _onUnhandledRejection = (error, sourceMapCache) => {
-    this.reportError(error, { errorData: sourceMapCache, stack: error && error.stack }, { grabLogs: true });
+    this.reportError(
+      error,
+      { errorData: sourceMapCache, stack: error && error.stack },
+      { grabLogs: true }
+    );
   };
   _expandReportLog(error, extra = {}) {
     try {
@@ -1136,7 +1150,7 @@ export default class AppEnvConstructor {
         filters: [
           {
             name: 'Images',
-            extensions: ['jpg', 'bmp', 'gif', 'png', 'jpeg'],
+            extensions: ['jpg', 'bmp', 'gif', 'png', 'jpeg', 'heic'],
           },
         ],
       })
@@ -1240,13 +1254,13 @@ export default class AppEnvConstructor {
 
       return remote.dialog
         .showOpenDialog(this.getCurrentWindow(), optionTmp)
-        .then(({ canceled, dirPath }) => {
+        .then(({ canceled, filePaths }) => {
           if (canceled) {
             callback(null);
             return;
           }
-          if (dirPath && dirPath.length) {
-            callback(dirPath[0]);
+          if (filePaths && filePaths.length) {
+            callback(filePaths[0]);
           } else {
             callback(null);
           }

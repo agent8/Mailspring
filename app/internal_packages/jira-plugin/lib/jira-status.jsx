@@ -44,7 +44,6 @@ export default class JiraStatus extends Component {
                 statusProgress: null,
             })
             const { transitions } = await this.jira.listTransitions(issueKey);
-            console.log('****transitions', transitions);
             this.safeSetState({
                 transitions
             })
@@ -78,8 +77,8 @@ export default class JiraStatus extends Component {
             AppEnv.trackingEvent('Jira-Change-Status-Success');
         } catch (err) {
             AppEnv.trackingEvent('Jira-Change-Status-Failed');
-            console.error(`****Change assignee failed ${this.issueKey}`, err);
-            AppEnv.reportError(new Error(`Change assignee failed ${this.issueKey}`), { errorData: err });
+            console.error(`****Change Status failed ${this.issueKey}`, err);
+            AppEnv.reportError(new Error(`Change Status failed ${this.issueKey}`), { errorData: err });
             if (err.message && err.message.includes('invalid refresh token')) {
                 this.props.logout();
             }

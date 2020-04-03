@@ -7,6 +7,7 @@ import Sheet from './sheet';
 import Toolbar from './sheet-toolbar';
 import Flexbox from './components/flexbox';
 import InjectedComponentSet from './components/injected-component-set';
+import InjectedComponent from './components/injected-component';
 
 export default class SheetContainer extends React.Component {
   static displayName = 'SheetContainer';
@@ -30,15 +31,16 @@ export default class SheetContainer extends React.Component {
       if (rst) {
         for (const v of rst) {
           if (v.version === '6') {
-            const message = `In order to use new Edison Mail, \nplease click Rebuild to reset your local cache.`;
-            const buttons = ['Quit', 'Rebuild'];
-            remote.dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
-              if (response === 0) {
-                AppEnv.quit();
-              } else {
-                Actions.forceKillAllClients();
-              }
-            });
+            // const message = `In order to use new Edison Mail, \nplease click Rebuild to reset your local cache.`;
+            // const buttons = ['Quit', 'Rebuild'];
+            // remote.dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
+            //   if (response === 0) {
+            //     AppEnv.quit();
+            //   } else {
+            //     Actions.forceKillAllClients();
+            //   }
+            // });
+            Actions.forceKillAllClients();
             break;
           }
         }
@@ -232,6 +234,10 @@ export default class SheetContainer extends React.Component {
             id={topSheet.id}
           />
         </div>
+        <InjectedComponent
+          id="runtimeInfoPanel"
+          matching={{ role: 'runtime-info-panel' }}
+        />
         {
           !this.isValidUser() && (
             <div className="need-login" style={{

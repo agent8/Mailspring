@@ -2,6 +2,7 @@ import { clipboard, remote } from 'electron';
 import OnboardingActions from './onboarding-actions';
 import { React, ReactDOM, PropTypes } from 'mailspring-exports';
 import { RetinaImg, LottieImg } from 'mailspring-component-kit';
+import LoginErrorPage from './page-login-error';
 import http from 'http';
 import url from 'url';
 
@@ -120,13 +121,13 @@ export default class OAuthSignInPage extends React.Component {
     if (this._server) this._server.close();
   }
 
-  moveToLoginError() {
-    OnboardingActions.moveToPage('login-error');
+  moveToLoginError(err) {
+    // OnboardingActions.moveToPage('login-error');
+    this.setState(Object.assign({ loading: false }, err));
   }
 
   _onError(err) {
-    this.setState({ authStage: 'error', errorMessage: err.message });
-    this.moveToLoginError();
+    this.moveToLoginError({ authStage: 'error', errorMessage: err.message });
     AppEnv.reportError(err, { oAuthURL: this.props.providerAuthPageUrl });
   }
 
@@ -241,11 +242,6 @@ export default class OAuthSignInPage extends React.Component {
   }
 
   _webviewDidFailLoad = (event) => {
-    // For some reason, yahoo oauth page will cause webview to throw load-did-fail with errorCode of -3 when
-    // navigating to permission granting view. Thus we want to capture that and ignore it.
-    if (event && event.errorCode === -3) {
-      return;
-    }
     // if running in mas mode
     if (process.mas && event.validatedURL && event.validatedURL.indexOf('127.0.0.1') !== -1) {
       if (!this._mounted) return;
@@ -259,11 +255,30 @@ export default class OAuthSignInPage extends React.Component {
       }
       return;
     }
-    this.setState({
+    // For some reason, oauth page will cause webview to throw load-did-fail with errorCode
+    // Yahoo
+    // -3
+    // -105:RR_NAME_NOT_RESOLVED Yahoo try to connect opus.analytics.yahoo.com
+    // Gmail
+    // -21:ERR_NETWORK_CHANGED Gmail oauth try to connect youtube
+    // -100:ERR_CONNECTION_CLOSED Gmail oauth try to connect youtube
+    // -101:ERR_CONNECTION_RESET Gmail oauth try to connect youtube
+    // -102:ERR_CONNECTION_REFUSED Gmail oauth try to connect youtube
+    // -324:ERR_EMPTY_RESPONSE Gmail oauth try to connect youtube
+    // navigating to permission granting view. Thus we want to capture that and ignore it.
+    if (event && (
+      event.errorCode === -3 ||
+      event.validatedURL.includes('youtube.com') ||
+      event.validatedURL.includes('analytics.yahoo')
+    )) {
+      AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
+      return;
+    }
+    let errorMessage = `${event.errorCode}:${event.errorDescription}`;
+    this.moveToLoginError({
       authStage: 'error',
-      errorMessage: 'Network Error.'
+      errorMessage
     });
-    this.moveToLoginError();
     AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
   };
 
@@ -415,12 +430,7 @@ export default class OAuthSignInPage extends React.Component {
           loadingImg
         )}
         {authStage === 'error' && (
-          <div style={{ marginTop: 100 }} >
-            <h2>Sorry, we had trouble logging you in</h2>
-            <div className="error-region">
-              <FormErrorMessage message={this.state.errorMessage} />
-            </div>
-          </div>
+          <LoginErrorPage errorMessage={this.state.errorMessage} />
         )}
       </div>
     );

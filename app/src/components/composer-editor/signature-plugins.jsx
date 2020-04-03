@@ -9,7 +9,7 @@ function SignatureNode(props) {
   const id = node.data.get ? node.data.get('id') : node.data.id;
 
   if (targetIsHTML) {
-    return <signature id={id}>{BLOCK_CONFIG.div.render(props)}</signature>;
+    return <edo-signature id={id}>{BLOCK_CONFIG.div.render(props)}</edo-signature>;
   }
   return (
     <div {...attributes} className={`editable-box ${isSelected && 'custom-block-selected'}`}>
@@ -29,7 +29,7 @@ function SignatureNode(props) {
           mode={RetinaImg.Mode.ContentPreserve}
         />
       </a>
-      <signature id={id}>{BLOCK_CONFIG.div.render(props)}</signature>
+      <edo-signature id={id}>{BLOCK_CONFIG.div.render(props)}</edo-signature>
     </div>
   );
 }
@@ -43,7 +43,7 @@ function renderNode(props) {
 const rules = [
   {
     deserialize(el, next) {
-      if (el.tagName.toLowerCase() === 'signature') {
+      if (el.tagName.toLowerCase() === 'edo-signature') {
         return {
           object: 'block',
           type: SIGNATURE_TYPE,

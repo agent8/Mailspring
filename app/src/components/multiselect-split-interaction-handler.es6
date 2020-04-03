@@ -29,6 +29,10 @@ module.exports = class MultiselectSplitInteractionHandler {
   }
 
   onClick = item => {
+    const noneSelected = this.props.dataSource.selection.ids();
+    if (noneSelected) {
+      this.props.onSetCursorPosition(item);
+    }
     this.onFocusItem(item);
     // this.props.dataSource.selection.clear();
     // this._checkSelectionAndFocusConsistency();
@@ -42,7 +46,7 @@ module.exports = class MultiselectSplitInteractionHandler {
     const selected = selectedIds.includes(item.id);
     if (item.id === this.props.focusedId && !selected) {
       this.props.dataSource.selection.add(item);
-      this.onFocusItem(item)
+      this.onFocusItem(item);
     } else {
       this.props.dataSource.selection.toggle(item);
       if (selected) {
@@ -71,7 +75,7 @@ module.exports = class MultiselectSplitInteractionHandler {
     this.props.dataSource.selection.expandTo(item);
   };
 
-  onEnter = () => { };
+  onEnter = () => {};
   // This concept does not exist in split mode
 
   onDeselect = () => {
@@ -88,7 +92,7 @@ module.exports = class MultiselectSplitInteractionHandler {
     if (autoSelectFocus) {
       const selectedIds = this.props.dataSource.selection.ids();
       const { focused } = this.props;
-      if(focused && !selectedIds.includes(focused.id)){
+      if (focused && !selectedIds.includes(focused.id)) {
         this.props.dataSource.selection.add(focused);
       }
     }
@@ -133,7 +137,7 @@ module.exports = class MultiselectSplitInteractionHandler {
     this.props.dataSource.selection.add(focused);
   }
 
-  _ifMoreThanOneSelectionUnfocus(){
+  _ifMoreThanOneSelectionUnfocus() {
     const { focused } = this.props;
     const { selection } = this.props.dataSource;
     if (focused && selection.count() > 1) {

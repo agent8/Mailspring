@@ -101,9 +101,11 @@
 .RichEditor-root {
   padding: 0 22px 0 22px;
   min-height: @compose-min-height;
+  margin-bottom: 12px;
 
   .RichEditor-content {
     padding: 12px 10px 0 0;
+    margin-left: 10px;
     position: relative; // needed for floating emoji picker
     color: @text-color;
     overflow-x: scroll;
@@ -518,46 +520,27 @@ body.platform-win32 {
     margin: 0 5px;
     cursor: pointer;
     span {
-      div[role='button'] {
-        float: left;
-        svg {
-          path {
-            stroke: @blue;
-          }
-        }
-      }
       img.content-mask {
         float: left;
-        background-color: @blue;
+        background-color: @blue !important;
         margin-top: 3px;
       }
       span {
         float: left;
-        color: @blue;
+        color: @blue !important;
         font-size: 15px;
         line-height: 33px;
+        position: relative;
+        z-index: 2;
       }
     }
     &:hover {
-      background-color: @blue;
       &:after {
-        display: none;
-      }
-      span {
-        div[role='button'] {
-          float: left;
-          svg {
-            path {
-              stroke: @text-color-inverse;
-            }
-          }
-        }
-        img.content-mask {
-          background-color: @text-color-inverse;
-        }
-        span {
-          color: @text-color-inverse;
-        }
+        height: 33px;
+        width: 98px;
+        left: 0;
+        top: 0;
+        border-radius: 17px;
       }
     }
     &:active {

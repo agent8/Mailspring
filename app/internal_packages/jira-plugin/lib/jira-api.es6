@@ -125,6 +125,17 @@ export default class JiraApi extends JiraApiBase {
             followAllRedirects: true
         }));
     }
+    searchUsers(query, maxResults) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/user/search',
+            query: {
+                query,
+                maxResults: maxResults || 20
+            }
+        }), {
+            followAllRedirects: true
+        }));
+    }
     updateAssignee(issueKey, accountId) {
         return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueKey, "/assignee")
@@ -194,6 +205,20 @@ export default class JiraApi extends JiraApiBase {
             pathname: '/priority'
         })));
     }
+    listVersions(project) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/project/".concat(project).concat("/versions")
+        })));
+    }
+    listLabels(content) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/jql/autocompletedata/suggestions",
+            query: {
+                fieldName: 'labels',
+                fieldValue: content,
+            }
+        })));
+    }
     setIssuePriority(issueNumber, priority) {
         return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
             pathname: "/issue/".concat(issueNumber)
@@ -203,6 +228,32 @@ export default class JiraApi extends JiraApiBase {
             body: {
                 fields: {
                     priority
+                }
+            }
+        }));
+    }
+    setIssueFixVersions(issueNumber, fixVersions) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber)
+        }), {
+            method: 'PUT',
+            followAllRedirects: true,
+            body: {
+                fields: {
+                    fixVersions
+                }
+            }
+        }));
+    }
+    setIssueLabels(issueNumber, labels) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueNumber)
+        }), {
+            method: 'PUT',
+            followAllRedirects: true,
+            body: {
+                fields: {
+                    labels
                 }
             }
         }));
@@ -217,5 +268,36 @@ export default class JiraApi extends JiraApiBase {
             method: 'PUT',
             followAllRedirects: true
         }));
+    }
+    updateDescription(issueId, description) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: "/issue/".concat(issueId)
+        }), {
+            body: {
+                update: {
+                    description: [
+                        { set: description }
+                    ]
+                }
+            },
+            method: 'PUT',
+            followAllRedirects: true
+        }));
+    }
+    myPermissions(permissions) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/mypermissions',
+            query: {
+                permissions: permissions.join(',')
+            }
+        })));
+    }
+    getCurrentUser(expand) {
+        return this.safeDoRequest(this.makeRequestHeader(this.makeUri({
+            pathname: '/myself',
+            query: {
+                expand: expand || ['groups', 'applicationRoles'].join(','),
+            }
+        })));
     }
 }

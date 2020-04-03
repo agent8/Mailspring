@@ -7,6 +7,8 @@ import {
   Actions,
   TaskQueue,
   GetMessageRFC2822Task,
+  MakePrimaryTask,
+  MakeOtherTask,
   TaskFactory,
   FocusedPerspectiveStore,
   MuteNotificationStore,
@@ -45,6 +47,7 @@ export default class MessageControls extends React.Component {
       isForwarding: false,
       isMuted: false,
       showViewOriginalEmail: AppEnv.isDarkTheme() && AppEnv.config.get(this.CONFIG_KEY),
+      showMoveFocusedOtherModal: false,
     };
     this._mounted = false;
     this._replyTimer = null;
@@ -179,6 +182,10 @@ export default class MessageControls extends React.Component {
     this.setState({ showMuteEmailModal: !this.state.showMuteEmailModal });
   };
 
+  _onToggleMoveFocusedOther = () => {
+    this.setState({ showMoveFocusedOtherModal: !this.state.showMoveFocusedOtherModal });
+  };
+
   _onUnmuteNotification = () => {
     const { message } = this.props;
     const email = message.from && message.from[0] ? message.from[0].email : '';
@@ -190,6 +197,33 @@ export default class MessageControls extends React.Component {
     const { message } = this.props;
     this._onToggleMuteEmail();
     MuteNotificationStore.muteNotifacationByAccount(message.accountId, email);
+  };
+
+  _onMoveToFocused = event => {
+    const { accountId, id } = this.props.message;
+    Actions.queueTask(new MakePrimaryTask({ accountId: accountId, messageIds: [id] }));
+    if (event) {
+      event.stopPropagation();
+    }
+    this._onToggleMoveFocusedOther();
+    if (this.props.selection) {
+      this.props.selection.clear();
+    }
+
+    Actions.popSheet({ reason: 'MessageControls:_onMoveFocused' });
+  };
+
+  _onMoveToOther = event => {
+    const { accountId, id } = this.props.message;
+    Actions.queueTask(new MakeOtherTask({ accountId: accountId, messageIds: [id] }));
+    if (event) {
+      event.stopPropagation();
+    }
+    this._onToggleMoveFocusedOther();
+    if (this.props.selection) {
+      this.props.selection.clear();
+    }
+    Actions.popSheet({ reason: 'MessageControls:_onMoveOther' });
   };
 
   _items() {
@@ -240,6 +274,20 @@ export default class MessageControls extends React.Component {
       select: isMuted ? this._onUnmuteNotification : this._onToggleMuteEmail,
     };
 
+    const moveToFocused = {
+      name: 'Move to Focused',
+      image: 'preview.svg',
+      iconHidden: true,
+      select: this._onToggleMoveFocusedOther,
+    };
+
+    const moveToOther = {
+      name: 'Move to Other',
+      image: 'preview.svg',
+      iconHidden: true,
+      select: this._onToggleMoveFocusedOther,
+    };
+
     const ret = [];
 
     if (!this.props.message.canReplyAll()) {
@@ -260,7 +308,15 @@ export default class MessageControls extends React.Component {
     if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
-    ret.push(printEmail, muteEmail);
+    ret.push(muteEmail);
+    if (this.props.message.isInInboxFocused()) {
+      ret.push(moveToOther);
+    }
+    if (this.props.message.isInInboxOther()) {
+      ret.push(moveToFocused);
+    }
+    ret.push(printEmail);
+
     return ret;
   }
 
@@ -463,7 +519,7 @@ export default class MessageControls extends React.Component {
     const email = message.from && message.from[0] ? message.from[0].email : '';
 
     return (
-      <div className="mute-email-popup">
+      <div className="email-confirm-popup">
         <RetinaImg
           isIcon
           className="close-icon"
@@ -484,6 +540,40 @@ export default class MessageControls extends React.Component {
           </div>
           <div className="btn confirm" onClick={() => this._onMuteEmail(email)}>
             Mute
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  _renderMoveFocusedOtherPopup = () => {
+    const { message } = this.props;
+    const email = message.from && message.from[0] ? message.from[0].email : '';
+    const isInInbox = message.isInInboxFocused();
+    const toTabsName = isInInbox ? 'Other' : 'Focused';
+    const onConfirmFn = isInInbox ? this._onMoveToOther : this._onMoveToFocused;
+    return (
+      <div className="email-confirm-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onToggleMoveFocusedOther}
+        />
+        <h1>{`Move to ${toTabsName} Inbox`}</h1>
+        <p>
+          Always move conversations from
+          <br />
+          {`${email} to your ${toTabsName} Inbox`}
+        </p>
+        <div className="btn-list">
+          <div className="btn cancel" onClick={this._onToggleMoveFocusedOther}>
+            Cancel
+          </div>
+          <div className="btn confirm" onClick={onConfirmFn}>
+            Move
           </div>
         </div>
       </div>
@@ -591,6 +681,19 @@ export default class MessageControls extends React.Component {
           }}
         >
           {this._renderMuteEmailPopup()}
+        </FullScreenModal>
+        <FullScreenModal
+          visible={this.state.showMoveFocusedOtherModal}
+          style={{
+            height: '192px',
+            width: '400px',
+            top: '165px',
+            right: '255px',
+            left: 'auto',
+            bottom: 'auto',
+          }}
+        >
+          {this._renderMoveFocusedOtherPopup()}
         </FullScreenModal>
       </div>
     );

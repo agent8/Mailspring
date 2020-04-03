@@ -53,13 +53,13 @@ const aggregation = (baseClass, ...mixins) => {
   return base;
 };
 class CircularCache {
-  static LRU = (cacheArray, currentNextAvailableIndex)=>{
+  static LRU = (cacheArray, currentNextAvailableIndex) => {
     let newIndex = currentNextAvailableIndex;
     let previousLastAccess = cacheArray[currentNextAvailableIndex].lastAccess;
-    for(let i=0; i < cacheArray.length; i++){
-      if(cacheArray[i].lastAccess === 0){
+    for (let i = 0; i < cacheArray.length; i++) {
+      if (cacheArray[i].lastAccess === 0) {
         return i;
-      } else if( cacheArray[i].lastAccess < previousLastAccess ){
+      } else if (cacheArray[i].lastAccess < previousLastAccess) {
         newIndex = i;
         previousLastAccess = cacheArray[i].lastAccess;
       }
@@ -82,20 +82,20 @@ class CircularCache {
       this.cacheContents.push({ val: null, lastAccess: 0, key: '' });
     }
   }
-  get(cacheKey = ''){
-    if(typeof cacheKey !== 'string' || cacheKey.length === 0){
+  get(cacheKey = '') {
+    if (typeof cacheKey !== 'string' || cacheKey.length === 0) {
       console.error(`No cacheKey set ${cacheKey}`);
       return null;
     }
     const tmp = this._findCacheByKey(cacheKey);
-    if(tmp){
+    if (tmp) {
       return tmp.val;
     }
     return null;
   }
-  _findCacheByKey = cacheKey=>{
-    for(let i=0; i < this.cacheLength; i++){
-      if( cacheKey === this.cacheContents[i].key){
+  _findCacheByKey = cacheKey => {
+    for (let i = 0; i < this.cacheLength; i++) {
+      if (cacheKey === this.cacheContents[i].key) {
         this.cacheContents[i].lastAccess = Date.now();
         return this.cacheContents[i];
       }
@@ -103,13 +103,13 @@ class CircularCache {
     return null;
   };
 
-  set(cacheKey, cacheContent){
-    if(typeof cacheKey !== 'string' || cacheKey.length === 0){
+  set(cacheKey, cacheContent) {
+    if (typeof cacheKey !== 'string' || cacheKey.length === 0) {
       console.error(`No cacheKey set ${cacheKey}`);
-      return ;
+      return;
     }
     const currentCache = this._findCacheByKey(cacheKey);
-    if(currentCache){
+    if (currentCache) {
       currentCache.val = cacheContent;
       return;
     }
@@ -123,9 +123,9 @@ class CircularCache {
   }
 
   _findNextAvailableCacheIndex() {
-    if(this.cacheMethod === 'LRU'){
+    if (this.cacheMethod === 'LRU') {
       this.nextAvailableCacheIndex = CircularCache.LRU(this.cacheContents, this.nextAvailableCacheIndex);
-    }else{
+    } else {
       // Currently Only LRU is supported;
       this.nextAvailableCacheIndex = CircularCache.LRU(this.cacheContents, this.nextAvailableCacheIndex);
     }
@@ -134,7 +134,14 @@ class CircularCache {
   }
 }
 module.exports = Utils = {
-  createCircularBuffer: maxItems =>{
+  safeBrowserPath: filePath => {
+    if (process.platform === 'win32') {
+      return path.join(path.dirname(filePath), encodeURIComponent(path.win32.basename(filePath)));
+    } else {
+      return path.join(path.dirname(filePath), encodeURIComponent(path.posix.basename(filePath)));
+    }
+  },
+  createCircularBuffer: maxItems => {
     return new CircularCache(maxItems);
   },
   multipleInheritance: (...classes) => aggregation(...classes),
@@ -160,6 +167,41 @@ module.exports = Utils = {
       locale = locale.split('_')[1];
     }
     return GDPR_COUNTRIES.indexOf(locale) !== -1;
+  },
+
+  isAutoCopyToSent(account) {
+    const MailcoreProviderSettings = require('../../../internal_packages/onboarding/lib/mailcore-provider-settings');
+    const provider = account.provider;
+    let template;
+    if (provider === 'imap' && account.settings && account.settings.provider_key) {
+      template = MailcoreProviderSettings[account.settings.provider_key];
+    }
+    else if (provider !== 'imap' && MailcoreProviderSettings[provider]) {
+      template = MailcoreProviderSettings[provider];
+    } else {
+      const domain = account.emailAddress
+        .split('@')
+        .pop()
+        .toLowerCase();
+      template = Object.values(MailcoreProviderSettings).find(p => {
+        for (const test of p['domain-match'] || []) {
+          if (new RegExp(`(^${test}$)|(\.${test}$)`).test(domain)) {
+            // domain-exclude
+            for (const testExclude of p['domain-exclude'] || []) {
+              if (new RegExp(`^${testExclude}$`).test(domain)) {
+                return false;
+              }
+            }
+            return true;
+          }
+        }
+        return false;
+      });
+    }
+    if (template) {
+      return template['auto-copy-to-sent'];
+    }
+    return false;
   },
 
   showIconForAttachments(files) {
@@ -202,14 +244,14 @@ module.exports = Utils = {
     return v;
   },
   populateWithModel: (json, className) => {
-    if(!json || (typeof className !== 'string' || className.length === 0)){
+    if (!json || (typeof className !== 'string' || className.length === 0)) {
       return null;
     }
     const model = Utils.getEmptyModel(className);
-    if(!model){
+    if (!model) {
       return null;
     }
-    if(model.fromJSON){
+    if (model.fromJSON) {
       return model.fromJSON(json);
     }
     console.warn(`model doesn't have fromJSON`);
@@ -228,7 +270,7 @@ module.exports = Utils = {
     }
     return DatabaseObjectRegistry.deserialize(json.__cls, json);
   },
-  getEmptyModel(className){
+  getEmptyModel(className) {
     if (!DatabaseObjectRegistry.isInRegistry(className)) {
       throw new Error('getEmptyModel: not a known class. className:' + className);
     }
@@ -329,10 +371,10 @@ module.exports = Utils = {
     const size = file.size || file.fileSize || 0;
     const ext = path.extname(name).toLowerCase();
     const contentType = (file.contentType || '').toUpperCase();
-    const contentTypes = ['IMAGE/JPG', 'IMAGE/BMP', 'IMAGE/GIF', 'IMAGE/PNG', 'IMAGE/JPEG'];
-    const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg'];
+    const contentTypes = ['IMAGE/JPG', 'IMAGE/BMP', 'IMAGE/GIF', 'IMAGE/PNG', 'IMAGE/JPEG', 'IMAGE/HEIC'];
+    const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
 
-    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256 && size < 1024 * 1024 * 5;
+    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256;
   },
 
   // Escapes potentially dangerous html characters

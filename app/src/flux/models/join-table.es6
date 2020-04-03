@@ -6,12 +6,23 @@ export default class JoinTable extends Model {
   static originalAttributes = Object.assign({}, Model.attributes);
   static useAttribute(attr, type) {
     const newObj = {};
-    newObj[attr] = Attributes[type]({
-      queryable: true,
-      modelKey: attr,
-      isJoinTable: true,
-    });
+    let attrKey;
+    if(typeof attr === 'string'){
+      newObj[attr] = Attributes[type]({
+        queryable: true,
+        modelKey: attr,
+        isJoinTable: true,
+      });
+      attrKey = attr;
+    } else {
+      attrKey = attr.modelKey;
+      newObj[attrKey] = Attributes[type](
+        Object.assign({},attr,{
+        queryable: true,
+        isJoinTable: true,
+      }));
+    }
     JoinTable.attributes = Object.assign({}, JoinTable.originalAttributes, newObj);
-    return JoinTable.attributes[attr];
+    return JoinTable.attributes[attrKey];
   }
 }

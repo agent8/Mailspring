@@ -10,14 +10,14 @@ const {
   WorkspaceStore,
   Actions,
   RegExpUtils,
-  AccountStore
+  AccountStore,
 } = require('mailspring-exports');
 
 const SidebarActions = require('./sidebar-actions');
 
 const idForCategories = categories => _.pluck(categories, 'id').join('-');
 
-const countForItem = function (perspective) {
+const countForItem = function(perspective) {
   const unreadCountEnabled = AppEnv.config.get('core.workspace.showUnreadForAllCategories');
   if (perspective.isInbox() || perspective.isDrafts() || unreadCountEnabled) {
     return perspective.unreadCount();
@@ -30,13 +30,20 @@ const isChildrenSelected = (children = [], currentPerspective) => {
     return false;
   }
   for (let p of children) {
-    if (p.perspective && p.perspective.isEqual(currentPerspective)) {
+    if (isItemSelected(p.perspective, p.children)) {
       return true;
     }
-    if (p.children && p.children.length > 0) {
-      if (isChildrenSelected(p.children, currentPerspective)) {
-        return true;
-      }
+  }
+  return false;
+};
+
+const isTabSelected = (perspective, currentPerspective) => {
+  if (!perspective.tab || perspective.tab.length === 0) {
+    return false;
+  }
+  for (const tab of perspective.tab) {
+    if (tab && tab.isEqual(currentPerspective)) {
+      return true;
     }
   }
   return false;
@@ -54,10 +61,20 @@ const isItemSelected = (perspective, children = []) => {
   if (isCurrent) {
     return true;
   }
-  return isChildrenSelected(children, FocusedPerspectiveStore.current());
+
+  const tabSelected = isTabSelected(perspective, FocusedPerspectiveStore.current());
+  if (tabSelected) {
+    return true;
+  }
+
+  const childrenSelected = isChildrenSelected(children, FocusedPerspectiveStore.current());
+  if (childrenSelected) {
+    return true;
+  }
+  return false;
 };
 
-const isItemCollapsed = function (id) {
+const isItemCollapsed = function(id) {
   if (AppEnv.savedState.sidebarKeysCollapsed[id] !== undefined) {
     return AppEnv.savedState.sidebarKeysCollapsed[id];
   } else {
@@ -65,17 +82,17 @@ const isItemCollapsed = function (id) {
   }
 };
 
-const toggleItemCollapsed = function (item) {
+const toggleItemCollapsed = function(item) {
   if (!(item.children.length > 0)) {
     return;
   }
-  if(item.syncFolderList && (item.children.length > 0 && item.collapsed)){
-    Actions.syncFolderList({accountIds: item.accountIds, source: 'toggleItemCollapsed'});
+  if (item.syncFolderList && item.children.length > 0 && item.collapsed) {
+    Actions.syncFolderList({ accountIds: item.accountIds, source: 'toggleItemCollapsed' });
   }
   SidebarActions.setKeyCollapsed(item.id, !isItemCollapsed(item.id));
 };
 
-const onDeleteItem = function (item) {
+const onDeleteItem = function(item) {
   if (item.deleted === true) {
     return;
   }
@@ -98,12 +115,13 @@ const onDeleteItem = function (item) {
   Actions.queueTask(
     new DestroyCategoryTask({
       path: category.path,
+      name: category.name,
       accountId: category.accountId,
-    }),
+    })
   );
 };
 
-const onEditItem = function (item, value) {
+const onEditItem = function(item, value) {
   let newDisplayName;
   if (!value) {
     return;
@@ -137,8 +155,8 @@ const onEditItem = function (item, value) {
       accountId: category.accountId,
       path: category.path,
       newName: newDisplayName,
-      isExchange: account && account.provider === 'exchange'
-    }),
+      isExchange: account && account.provider === 'exchange',
+    })
   );
 };
 
@@ -157,6 +175,7 @@ class SidebarItem {
     return Object.assign(
       {
         id,
+        selfId: id,
         // As we are not sure if 'Drafts-' as id have any special meaning, we are adding categoryIds
         categoryIds: opts.categoryIds ? opts.categoryIds : undefined,
         accountIds: perspective.accountIds,
@@ -216,12 +235,12 @@ class SidebarItem {
         onSelect(item) {
           // FocusedPerspectiveStore.refreshPerspectiveMessages({perspective: item});
           Actions.focusMailboxPerspective(item.perspective);
-          if(item.syncFolderList && (item.children.length === 0)){
-            Actions.syncFolderList({accountIds: item.accountIds, source: 'onSelectItem'});
+          if (item.syncFolderList && item.children.length === 0) {
+            Actions.syncFolderList({ accountIds: item.accountIds, source: 'onSelectItem' });
           }
         },
       },
-      opts,
+      opts
     );
   }
 
@@ -229,7 +248,7 @@ class SidebarItem {
     const id = idForCategories(categories);
     const accountIds = new Set(categories.map(c => c.accountId));
     const contextMenuLabel = _str.capitalize(
-      categories[0] != null ? categories[0].displayType() : undefined,
+      categories[0] != null ? categories[0].displayType() : undefined
     );
     const perspective = MailboxPerspective.forCategories(categories);
 
@@ -242,7 +261,7 @@ class SidebarItem {
     opts.contextMenuLabel = contextMenuLabel;
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
-      this.forPerspective(id, perspective, opts),
+      this.forPerspective(id, perspective, opts)
     );
   }
 
@@ -259,9 +278,17 @@ class SidebarItem {
       return null;
     }
     const perspective = MailboxPerspective.forCategories(cats);
-    const id = _.pluck(cats, 'id').join('-');
+    let id = 'sent';
+    if(opts.key){
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`
+    }
     opts.categoryIds = this.getCategoryIds(accountIds, 'sent');
-    return SidebarItem.appendSubPathByAccounts(accountIds, this.forPerspective(id, perspective, opts));
+    return SidebarItem.appendSubPathByAccounts(
+      accountIds,
+      this.forPerspective(id, perspective, opts)
+    );
   }
 
   static forSpam(accountIds, opts = {}) {
@@ -276,29 +303,54 @@ class SidebarItem {
       return null;
     }
     const perspective = MailboxPerspective.forCategories(cats);
-    const id = _.pluck(cats, 'id').join('-');
+    let id = 'spam';
+    if(opts.key){
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`
+    }
     opts.categoryIds = this.getCategoryIds(accountIds, 'spam');
-    return SidebarItem.appendSubPathByAccounts(accountIds, this.forPerspective(id, perspective, opts));
+    return SidebarItem.appendSubPathByAccounts(
+      accountIds,
+      this.forPerspective(id, perspective, opts)
+    );
   }
 
   static forArchived(accountIds, opts = {}) {
     opts.iconName = 'archive.svg';
     let cats = [];
     for (let accountId of accountIds) {
-      let tmp = CategoryStore.getCategoryByRole(accountId, 'archive');
-      if (tmp) {
-        cats.push(tmp);
+      const account = AccountStore.accountForId(accountId);
+      if(account){
+        let role = 'archive';
+        if(account.provider === 'gmail' && accountIds.length > 1){
+          role = 'all';
+        }
+        let tmp = CategoryStore.getCategoryByRole(accountId, role);
+        if (tmp) {
+          cats.push(tmp);
+        }
       }
     }
     if (cats.length === 0) {
       return null;
     }
-    const perspective = MailboxPerspective.forCategories(cats);
-    const id = _.pluck(cats, 'id').join('-');
+    let perspective;
+    if(opts.key === 'all'){
+      perspective = MailboxPerspective.forAllArchived(cats);
+    } else {
+      perspective = MailboxPerspective.forCategories(cats);
+    }
+    let id = 'archive';
+    if(opts.key){
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`
+    }
     opts.categoryIds = this.getCategoryIds(accountIds, 'archive');
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
-      this.forPerspective(id, perspective, opts),
+      this.forPerspective(id, perspective, opts)
     );
   }
 
@@ -323,8 +375,10 @@ class SidebarItem {
     opts.iconName = 'flag.svg';
     const perspective = MailboxPerspective.forStarred(accountIds);
     let id = 'Starred';
-    if (opts.name) {
-      id += `-${opts.name}`;
+    if (opts.key) {
+      id += `-${opts.key}`;
+    }  else {
+      id += `-${accountIds.join('-')}`;
     }
     return this.forPerspective(id, perspective, opts);
   }
@@ -343,8 +397,42 @@ class SidebarItem {
     opts.iconName = 'unread.svg';
     const perspective = MailboxPerspective.forUnread(categories);
     let id = 'Unread';
-    if (opts.name) {
-      id += `-${opts.name}`;
+    if (opts.key) {
+      id += `-${opts.key}`;
+    } else {
+      id += `-${accountIds.join('-')}`;
+    }
+    return this.forPerspective(id, perspective, opts);
+  }
+
+  static forJira(accountIds, opts = {}) {
+    const accounts = AccountStore.accounts();
+    let isEdisonMail = false;
+    for (const acc of accounts) {
+      if (acc.emailAddress.includes('edison.tech')) {
+        isEdisonMail = true;
+        break;
+      }
+    }
+    if (!isEdisonMail) {
+      return null;
+    }
+    let categories = accountIds.map(accId => {
+      return CategoryStore.getCategoryByRole(accId, 'inbox');
+    });
+
+    // NOTE: It's possible for an account to not yet have an `inbox`
+    // category. Since the `SidebarStore` triggers on `AccountStore`
+    // changes, it'll trigger the exact moment an account is added to the
+    // config. However, the API has not yet come back with the list of
+    // `categories` for that account.
+    categories = _.compact(categories);
+    opts.iconName = 'jira.svg';
+    opts.className = 'jira-icon';
+    const perspective = MailboxPerspective.forJira(categories);
+    let id = 'Jira';
+    if (opts.key) {
+      id += `-${opts.key}`;
     }
     return this.forPerspective(id, perspective, opts);
   }
@@ -353,8 +441,8 @@ class SidebarItem {
     opts.iconName = 'inbox.svg';
     const perspective = MailboxPerspective.forInbox(accountId);
     opts.categoryIds = this.getCategoryIds(accountId, 'inbox');
-    const id = [accountId].join('-');
-    if(Array.isArray(perspective.accountIds) && perspective.accountIds.length === 0){
+    const id = `${accountId}-single`;
+    if (Array.isArray(perspective.accountIds) && perspective.accountIds.length === 0) {
       opts.accountIds = [accountId];
     }
     const account = AccountStore.accountForId(accountId);
@@ -378,10 +466,10 @@ class SidebarItem {
     opts.iconName = 'inbox.svg';
     const perspective = MailboxPerspective.forInbox(accountId);
     opts.categoryIds = this.getCategoryIds(accountId, 'inbox');
-    const id = [accountId].join('-');
+    const id = `${accountId}-inbox`;
     return SidebarItem.appendSubPathByAccounts(
       accountId,
-      this.forPerspective(id, perspective, opts),
+      this.forPerspective(id, perspective, opts)
     );
   }
 
@@ -397,15 +485,15 @@ class SidebarItem {
     const perspective = MailboxPerspective.forInbox(accountIds);
     opts.categoryIds = this.getCategoryIds(accountIds, 'inbox');
     opts.mode = RetinaImg.Mode.ContentPreserve;
-    const id = accountIds.join('-');
+    const id = 'AllInbox';
     return this.forPerspective(id, perspective, opts);
   }
 
-  static forSingleAccount(accountId, opts = {}) {
-    const perspective = MailboxPerspective.forSingleAccount(accountId);
-    const id = accountId;
-    return this.forPerspective(id, perspective, opts);
-  }
+  // static forSingleAccount(accountId, opts = {}) {
+  //   const perspective = MailboxPerspective.forSingleAccount(accountId);
+  //   const id = accountId;
+  //   return this.forPerspective(id, perspective, opts);
+  // }
 
   static forAttachments(accountIds, opts = {}) {
     const perspetive = MailboxPerspective.forAttachments(accountIds);
@@ -420,11 +508,17 @@ class SidebarItem {
     if (!Array.isArray(opts.categoryIds) || opts.categoryIds.length === 0) {
       return null;
     }
-    const id = `Drafts-${opts.name}`;
+    let id = `Drafts-`;
+    if(opts.key) {
+      id += `${opts.key}`;
+    } else {
+      id += `${accountIds.join('-')}`
+    }
+
     // return this.forPerspective(id, perspective, opts);
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
-      this.forPerspective(id, perspective, opts),
+      this.forPerspective(id, perspective, opts)
     );
   }
 
@@ -440,6 +534,20 @@ class SidebarItem {
     return this.forPerspective(id, perspective, opts);
   }
 
+  static forToday(accountIds, opts = {}){
+    if (!Array.isArray(accountIds)) {
+      accountIds = [accountIds];
+    }
+    const perspective = MailboxPerspective.forToday(accountIds);
+    let id = 'today-';
+    if(opts && opts.key){
+      id += opts.key;
+    } else {
+      id += accountIds.join('-');
+    }
+    return this.forPerspective(id, perspective, opts);
+  }
+
   static forAllTrash(accountIds, opts = {}) {
     opts.iconName = 'trash.svg';
     const perspective = MailboxPerspective.forAllTrash(accountIds);
@@ -447,7 +555,7 @@ class SidebarItem {
     if (!Array.isArray(opts.categoryIds) || opts.categoryIds.length === 0) {
       return null;
     }
-    const id = `AllTrash-${opts.name}`;
+    const id = `AllTrash`;
     // return this.forPerspective(id, perspective, opts);
     return SidebarItem.appendSubPathByAccounts(
       accountIds,
@@ -458,7 +566,7 @@ class SidebarItem {
   static forTrash(accountId, opts = {}) {
     opts.iconName = 'trash.svg';
     const category = CategoryStore.getCategoryByRole(accountId, 'trash');
-    if(!category){
+    if (!category) {
       return null;
     }
     const perspective = MailboxPerspective.forCategory(category);
@@ -481,18 +589,18 @@ class SidebarItem {
   }
 
   static appendSubPathByAccount(accountId, parentPerspective, parentCategory) {
-    const {path} = parentCategory;
+    const { path } = parentCategory;
     if (!path) {
       throw new Error('path must not be empty');
     }
     if (!parentPerspective) {
       throw new Error('parentItem must not be empty');
     }
-    if(!accountId){
+    if (!accountId) {
       throw new Error('accountId must not be empty');
     }
     const account = AccountStore.accountForId(accountId);
-    if(!account){
+    if (!account) {
       throw new Error(`Cannot find account for ${accountId}`);
     }
     const isExchange = account.provider === 'exchange';
@@ -505,18 +613,20 @@ class SidebarItem {
       let itemKey;
 
       let parent = null;
-      if(isExchange){
+      if (isExchange) {
         itemKey = CategoryStore.decodePath(category.path);
-        if((category.parentId === path) && (path !== category.path)){
+        if (category.parentId === path && path !== category.path) {
           parentKey = path;
-          parent = parentPerspective
+          parent = parentPerspective;
         } else {
           continue;
         }
       } else {
-        itemKey  = category.displayName;
+        itemKey = category.displayName;
         const parentComponents = itemKey.split(category.delimiter);
-        if ((parentComponents[0].toLocaleLowerCase() !== CategoryStore.decodePath(path).toLocaleLowerCase()) ||
+        if (
+          parentComponents[0].toLocaleLowerCase() !==
+            CategoryStore.decodePath(path).toLocaleLowerCase() ||
           parentComponents.length === 1
         ) {
           continue;
@@ -531,10 +641,12 @@ class SidebarItem {
       }
       if (parent) {
         let itemDisplayName = category.displayName.substr(parentKey.length + 1);
-        if(isExchange){
+        if (isExchange) {
           itemDisplayName = category.displayName;
         }
         item = SidebarItem.forCategories([category], { name: itemDisplayName });
+        item.id = `${parent.id}-${item.selfId}`;
+        item.collapsed = isItemCollapsed(item.id);
         parent.children.push(item);
         if (item.selected) {
           parent.selected = true;

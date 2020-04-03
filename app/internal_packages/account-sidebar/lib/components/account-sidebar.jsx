@@ -1,8 +1,13 @@
 const React = require('react');
 import { ipcRenderer } from 'electron';
-const { Utils, AccountStore } = require('mailspring-exports');
-const { OutlineView, ScrollRegion, Flexbox } = require('mailspring-component-kit');
-const AccountSwitcher = require('./account-switcher');
+const { Utils, AccountStore, ReactDOM } = require('mailspring-exports');
+const {
+  OutlineView,
+  ScrollRegion,
+  Flexbox,
+  KeyCommandsRegion,
+} = require('mailspring-component-kit');
+// const AccountSwitcher = require('./account-switcher');
 const SidebarStore = require('../sidebar-store');
 
 class AccountSidebar extends React.Component {
@@ -31,6 +36,11 @@ class AccountSidebar extends React.Component {
       window.requestAnimationFrame(() => {
         this._accountSideBarWrapEl.scrollTop = pos;
       });
+    }
+    // auto focus for keyboard operation
+    if (this._keyCommands) {
+      const el = ReactDOM.findDOMNode(this._keyCommands);
+      el.focus();
     }
     this.unsubscribers = [];
     this.unsubscribers.push(SidebarStore.listen(this._onStoreChange));
@@ -84,32 +94,76 @@ class AccountSidebar extends React.Component {
     };
   };
 
+  _scrollToFocusItem = (selectedItemKey) => {
+    const selectNode = document.querySelector(
+      `.nylas-outline-view .item-container .item[id='${selectedItemKey}']`
+    );
+    if(selectNode && this._accountSideBarWrapEl){
+      this._accountSideBarWrapEl.scrollTo(selectNode);
+    }
+    // const { items } = this.state.standardSection;
+    // let selectedItem = items.find(item => item.selected);
+    // if (selectedItem && selectedItem.children && selectedItem.children.length) {
+    //   selectedItem = selectedItem.children.find(item => item.selected) || selectedItem;
+    // }
+    // if (selectedItem && selectedItem.id && this._accountSideBarWrapEl) {
+    //   const selectNode = document.querySelector(
+    //     `.nylas-outline-view .item-container .item[id='${selectedItem.id}']`
+    //   );
+    //   if(selectNode){
+    //     this._accountSideBarWrapEl.scrollTo(selectNode);
+    //   }
+    // }
+  };
+
   _renderUserSections(sections) {
     return sections.map(section => <OutlineView key={section.title} {...section} />);
   }
   _onScroll = () => {
+    if (!this._accountSideBarWrapEl) {
+      return;
+    }
     window.sessionStorage.setItem('sidebar_scroll_position', this._accountSideBarWrapEl.scrollTop);
   };
+
+  _onShift = delta => {
+    SidebarStore.onShift(delta, this._scrollToFocusItem);
+  };
+
+  _localKeymapHandlers() {
+    return {
+      'core:next-item': () => this._onShift(1),
+      'core:previous-item': () => this._onShift(-1),
+    };
+  }
 
   render() {
     const { accounts, sidebarAccountIds, userSections, standardSection } = this.state;
 
     return (
       <Flexbox direction="column" style={{ order: 1, flexShrink: 1, flex: 1 }}>
-        <ScrollRegion
-          onScrollEnd={this._onScroll}
+        <KeyCommandsRegion
+          localHandlers={this._localKeymapHandlers()}
+          tabIndex={-1}
           ref={el => {
-            this._accountSideBarWrapEl = el;
+            this._keyCommands = el;
           }}
-          className="account-sidebar"
-          style={{ order: 2 }}
         >
-          {/*<AccountSwitcher accounts={accounts} sidebarAccountIds={sidebarAccountIds} />*/}
-          <div className="account-sidebar-sections">
-            <OutlineView {...standardSection} />
-            {/*{this._renderUserSections(userSections)}*/}
-          </div>
-        </ScrollRegion>
+          <ScrollRegion
+            onScrollEnd={this._onScroll}
+            ref={el => {
+              this._accountSideBarWrapEl = el;
+            }}
+            className="account-sidebar"
+            style={{ order: 2 }}
+          >
+            {/*<AccountSwitcher accounts={accounts} sidebarAccountIds={sidebarAccountIds} />*/}
+            <div className="account-sidebar-sections">
+              <OutlineView {...standardSection} />
+              {/*{this._renderUserSections(userSections)}*/}
+            </div>
+          </ScrollRegion>
+        </KeyCommandsRegion>
       </Flexbox>
     );
   }

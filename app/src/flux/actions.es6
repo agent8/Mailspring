@@ -500,6 +500,7 @@ class Actions {
   static selectAttachment = ActionScopeWindow;
   static removeAttachment = ActionScopeWindow;
   static removeAttachmentToMain = ActionScopeMainWindow;
+  static draftInlineAttachmentRemoved = ActionScopeWindow;
   static broadcastDraftAttachmentState = ActionScopeGlobal;
 
   static syncFolders = ActionScopeMainWindow;
@@ -515,6 +516,7 @@ class Actions {
   static syncDraftAttachments = ActionScopeGlobal;
   static syncAttachmentToMain = ActionScopeMainWindow;
   static abortFetchFile = ActionScopeWindow;
+  static fetchNativeRuntimeInfo = ActionScopeMainWindow;
 
   /*
   Public: Pop the current sheet off the Sheet stack maintained by the {WorkspaceStore}.

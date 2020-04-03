@@ -8,7 +8,7 @@ import { pickHTMLProps } from 'pick-react-known-prop';
 import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
-import { AttachmentStore, MessageStore } from 'mailspring-exports';
+import { AttachmentStore, MessageStore, Utils } from 'mailspring-exports';
 import Actions from '../flux/actions';
 
 const propTypes = {
@@ -20,6 +20,7 @@ const propTypes = {
   missing: PropTypes.bool,
   fileId: PropTypes.string,
   filePath: PropTypes.string,
+  accountId: PropTypes.string,
   contentType: PropTypes.string,
   download: PropTypes.shape({
     state: PropTypes.string,
@@ -211,11 +212,14 @@ export class AttachmentItem extends Component {
 
   _onClick = e => {
     if (this.state.isDownloading) {
-      AttachmentStore.refreshAttachmentsState(this.props.fileId);
+      AttachmentStore.refreshAttachmentsState({fileId: this.props.fileId, filePath: this.props.filePath});
       return;
     }
     if (this.props.isDownloading || this.props.missing) {
-      MessageStore.fetchMissingAttachmentsByFileIds({ fileIds: [this.props.fileId] });
+      MessageStore.fetchMissingAttachmentsByFileIds({
+        accountId: this.props.accountId,
+        fileIds: [this.props.fileId],
+      });
     } else {
       if (fs.existsSync(this.props.filePath)) {
         this._onClickQuicklookIcon(e);
@@ -230,7 +234,10 @@ export class AttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      MessageStore.fetchMissingAttachmentsByFileIds({ filedIds: [this.props.fileId] });
+      MessageStore.fetchMissingAttachmentsByFileIds({
+        accountId: this.props.accountId,
+        filedIds: [this.props.fileId],
+      });
     }
     const { onOpenAttachment } = this.props;
     if (onOpenAttachment != null) {
@@ -459,7 +466,10 @@ export class ImageAttachmentItem extends Component {
       return;
     }
     if (this.props.missing && !this.state.isDownloading) {
-      MessageStore.fetchMissingAttachmentsByFileIds({ filedIds: [this.props.fileId] });
+      MessageStore.fetchMissingAttachmentsByFileIds({
+        accountId: this.props.accountId,
+        filedIds: [this.props.fileId],
+      });
     }
     const { onOpenAttachment } = this.props;
     if (onOpenAttachment != null) {
@@ -493,8 +503,7 @@ export class ImageAttachmentItem extends Component {
         </div>
       );
     }
-    // const src =filePath;
-    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={filePath} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
+    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={Utils.safeBrowserPath(filePath)} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
   }
 
   render() {

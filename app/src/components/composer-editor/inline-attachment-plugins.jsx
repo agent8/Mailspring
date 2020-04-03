@@ -27,6 +27,7 @@ function ImageNode(props) {
       filePath={AttachmentStore.pathForFile(file)}
       displayName={file.filename}
       fileId={file.id}
+      accountId={draft.accountId}
       onRemoveAttachment={() =>
         editor.change(change => {
           Actions.removeAttachment({
@@ -72,12 +73,38 @@ const rules = [
     },
   },
 ];
+const onKeyUp = (event, change) => {
+  if (
+    event.shiftKey ||
+    event.metaKey ||
+    event.optionKey ||
+    event.altKey ||
+    event.ctrlKey ||
+    ['Control'].includes(event.key)
+  ) {
+    return;
+  }
+  let contentIds = [];
+  const inLines = change.value.inlines;
+  if (inLines) {
+    for (let i = 0; i < inLines.size; i++) {
+      const inline = inLines.get(i);
+      if (inline) {
+        if (inline && inline.data && inline.data.get('contentId')) {
+          contentIds.push(inline.data.get('contentId'));
+        }
+      }
+    }
+  }
+  contentIds.forEach(contentId => Actions.draftInlineAttachmentRemoved(contentId));
+};
 
 export const changes = {
   insert: (change, file) => {
-    const canHoldInline = node => !node.isVoid && !isQuoteNode(node) && !!node.getFirstText();
+    const canHoldInlineImage = (node, anchorKey) =>
+      !node.isVoid && !isQuoteNode(node) && !!node.getFirstText() && !!node.getChild(anchorKey);
 
-    while (!canHoldInline(change.value.anchorBlock)) {
+    while (!canHoldInlineImage(change.value.anchorBlock, change.value.anchorKey)) {
       change.collapseToEndOfPreviousText();
       if (!change.value.anchorBlock) {
         break;
@@ -98,5 +125,6 @@ export default [
   {
     renderNode,
     rules,
+    onKeyUp,
   },
 ];

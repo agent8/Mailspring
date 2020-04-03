@@ -21,6 +21,7 @@ class DraftList extends React.Component {
     };
     this._mounted = false;
     this._deletingTimer = false;
+    this._isOpeningTimer = false;
   }
   componentDidMount() {
     this._mounted = true;
@@ -28,6 +29,7 @@ class DraftList extends React.Component {
   componentWillUnmount() {
     this._mounted = false;
     clearTimeout(this._deletingTimer);
+    clearTimeout(this._isOpeningTimer);
   }
 
   render() {
@@ -70,6 +72,9 @@ class DraftList extends React.Component {
   };
 
   _onClick = draft => {
+    if(this._isOpeningDraftCoolDown()){
+      return;
+    }
     if (DraftStore.isSendingDraft(draft.headerMessageId)) {
       AppEnv.showErrorDialog('Draft is sending, cannot edit', {
         showInMainWindow: true,
@@ -91,7 +96,7 @@ class DraftList extends React.Component {
         }
       });
     } else {
-      Actions.fetchBodies({ messages: [draft] });
+      Actions.fetchBodies({ messages: [draft], source: 'draft' });
       AppEnv.showErrorDialog('Draft is still downloading, cannot edit', {
         showInMainWindow: true,
         async: true,
@@ -108,6 +113,15 @@ class DraftList extends React.Component {
       }
       this._deletingTimer = null;
     }, buttonTimer);
+  };
+  _isOpeningDraftCoolDown = () => {
+    if(this._isOpeningTimer){
+      return true;
+    }
+    this._isOpeningTimer = setTimeout(()=>{
+      this._isOpeningTimer = false;
+    }, buttonTimer);
+    return false;
   };
 
   _onRemoveFromView = () => {

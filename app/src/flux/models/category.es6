@@ -174,6 +174,43 @@ export default class Category extends Model {
     Hidden: 'hidden',
   };
 
+  static InboxCategoryState = {
+    MsgNone: -1, //message not in INBOX
+    MsgOther: 0,
+    MsgCandidate: 1,
+    MsgPrimary: 2,
+    MsgPrimaryAndOther: 3,
+  };
+
+  static inboxFocusedCategorys(strict = false) {
+    const focusedCategorys = [
+      Category.InboxCategoryState.MsgCandidate,
+      Category.InboxCategoryState.MsgPrimary,
+    ];
+    if (strict) {
+      return focusedCategorys;
+    }
+
+    return [...focusedCategorys, Category.InboxCategoryState.MsgPrimaryAndOther];
+  }
+
+  static inboxOtherCategorys(strict = false) {
+    const otherCategorys = [Category.InboxCategoryState.MsgOther];
+    if (strict) {
+      return otherCategorys;
+    }
+
+    return [...otherCategorys, Category.InboxCategoryState.MsgPrimaryAndOther];
+  }
+
+  static inboxNotOtherCategorys() {
+    const isStrictOtherCategorys = Category.inboxOtherCategorys(true)
+    const notOtherCategorys = Object.values(Category.InboxCategoryState).filter(item => {
+      return !isStrictOtherCategorys.some(other => item === other)
+    })
+    return notOtherCategorys
+  }
+
   static StandardRoles = Object.keys(StandardRoleMap);
   static LockedRoles = Object.keys(LockedRoleMap);
   static HiddenRoles = Object.keys(HiddenRoleMap);

@@ -136,11 +136,14 @@ export default class Account extends ModelWithMetadata {
 
     return new Contact({
       // used to give them random strings, let's try for something consistent
-      id: `local-${this.id}-me`,
+      id: `local-${this.id}-${this.emailAddress}-${this.name}`,
       accountId: this.id,
       name: this.name,
       email: this.emailAddress,
     });
+  }
+  signatureId(){
+    return `local-${this.id}-${this.emailAddress}-${this.name}`;
   }
 
   meUsingAlias(alias) {
@@ -153,8 +156,8 @@ export default class Account extends ModelWithMetadata {
       accountId: this.id,
     });
 
-    meAlias.isAlias = true;
-    meAlias.aliasName = `${meAlias.name} <${meAlias.email}>`;
+    // meAlias.isAlias = true;
+    // meAlias.aliasName = `${meAlias.name} <${meAlias.email}>`;
 
     return meAlias || this.me();
   }
@@ -173,6 +176,22 @@ export default class Account extends ModelWithMetadata {
         const meAlias = Contact.fromString(alias, { accountId: this.id });
         if (meAlias) {
           ret.push(meAlias.email);
+        }
+      }
+    }
+    return ret;
+  }
+  getAllAliasContacts(){
+    const ret = this.getAllIsMeContacts();
+    return ret.slice(1);
+  }
+  getAllIsMeContacts(){
+    const ret = [this.me()]
+    if (this.aliases.length > 0) {
+      for (let alias of this.aliases) {
+        const meAlias = Contact.fromString(alias, { accountId: this.id });
+        if (meAlias) {
+          ret.push(meAlias);
         }
       }
     }

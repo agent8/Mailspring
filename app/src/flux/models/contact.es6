@@ -352,7 +352,7 @@ export default class Contact extends Model {
     }
     return new Contact({
       // used to give them random strings, let's try for something consistent
-      id: `local-${accountId}-${email}`,
+      id: `local-${accountId}-${email}-${name.trim()}`,
       accountId: accountId,
       name: name.trim(),
       email: email,
@@ -371,7 +371,7 @@ export default class Contact extends Model {
     }
     return new Contact({
       // used to give them random strings, let's try for something consistent
-      id: `local-${accountId}-${email}`,
+      id: `local-${accountId}-${email}-${name.trim()}`,
       accountId: accountId,
       name: name.trim(),
       email: email,
@@ -381,6 +381,8 @@ export default class Contact extends Model {
   constructor(data) {
     super(data);
     this.thirdPartyData = this.thirdPartyData || {};
+    this.isAlias = AccountStore.isAlias(this.name, this.email);
+    this.aliasName = this.isAlias ? `${this.name} <${this.email}>` : '';
   }
 
   // Public: Returns a string of the format `Full Name <email@address.com>` if
@@ -415,18 +417,15 @@ export default class Contact extends Model {
   // the account email, since it is case-insensitive and future-proof.
   isMe({ meAccountId = null } = {}) {
     if (meAccountId) {
-      const account = AccountStore.accountForEmail(this.email);
-      if (account) {
-        return account.id === meAccountId;
-      }
-      return false;
+      const account = AccountStore.accountForEmail({email: this.email, accountId: meAccountId});
+      return !!account;
     }
-    return !!AccountStore.accountForEmail(this.email);
+    return !!AccountStore.accountForEmail({email: this.email});
   }
 
   isMyOtherAccount({ meAccountId = null } = {}) {
     if (meAccountId) {
-      const account = AccountStore.accountForEmail(this.email);
+      const account = AccountStore.accountForEmail({email: this.email, accountId: meAccountId});
       if (account) {
         return account.id !== meAccountId;
       }
@@ -444,8 +443,12 @@ export default class Contact extends Model {
     return false;
   }
 
+  signatureId(){
+    return `local-${this.accountId}-${this.email}-${this.name}`;
+  }
+
   isMePhrase({ includeAccountLabel, forceAccountLabel } = {}) {
-    const account = AccountStore.accountForEmail(this.email);
+    const account = AccountStore.accountForEmail({email: this.email});
     if (!account) {
       return null;
     }

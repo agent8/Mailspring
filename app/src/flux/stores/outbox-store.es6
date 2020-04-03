@@ -18,6 +18,13 @@ import {
 const resendIndicatorTimeoutMS = 3000;
 class OutboxStore extends MailspringStore {
   static findAll() {
+    const accountIds = AccountStore.accountIds();
+    if(Array.isArray(accountIds) && accountIds.length > 0){
+      return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false, deleted: false }).where([
+        Message.attributes.syncState.in([Message.messageSyncState.failed, Message.messageSyncState.failing]),
+      ])
+        .where({accountId: accountIds});
+    }
     return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false, deleted: false }).where([
       Message.attributes.syncState.in([Message.messageSyncState.failed, Message.messageSyncState.failing]),
     ]);
@@ -49,6 +56,7 @@ class OutboxStore extends MailspringStore {
       this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
       this.listenTo(FocusedContentStore, this._onFocusedContentChanged);
       this.listenTo(DatabaseStore, this._onDataChanged);
+      this.listenTo(AccountStore, this._onAccountChange);
       this.listenTo(Actions.gotoOutbox, this._gotoOutbox);
       this.listenTo(Actions.cancelOutboxDrafts, this._onCancelOutboxDraft);
       this.listenTo(Actions.editOutboxDraft, this._onEditOutboxDraft);
@@ -148,6 +156,9 @@ class OutboxStore extends MailspringStore {
       FocusedPerspectiveStore.gotoOutbox();
     }
   }
+  _onAccountChange = () => {
+    this._createListDataSource();
+  };
 
   _onDataChanged(change) {
     const currentPerspective = FocusedPerspectiveStore.current();
