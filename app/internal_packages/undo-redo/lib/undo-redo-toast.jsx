@@ -104,7 +104,8 @@ class BasicContent extends React.Component {
         const folderText = ` to ${tasks[0].folder.displayName}`;
         description = `Moved ${total} threads${folderText}`;
       } else if (
-        tasks.every(task => task instanceof ChangeFolderTask || task instanceof ChangeLabelsTask)
+        tasks.every(task => task instanceof ChangeFolderTask || task instanceof ChangeLabelsTask) &&
+        tasks.some(task => task instanceof ChangeFolderTask)
       ) {
         // if all ChangeFolderTask or ChangeLabelsTask
         const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
