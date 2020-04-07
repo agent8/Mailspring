@@ -66,7 +66,54 @@ const rules = [
     },
   },
 ];
-
+const nonPrintableKeyCode = {
+  //Based on https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
+  mac: [
+    18, //Alt
+    20, //CapsLock
+    17, //Control
+    91, //OSLeft
+    93, //OSRight
+    16, //Shift
+    13, //Enter
+    9, // Tab
+    35, //End
+    45, //Insert
+    36, //Help
+    34, //PageDown
+    33, //PageUp
+    40, //ArrowDown
+    37, //ArrowLeft
+    39, //ArrowRight
+    38, //ArrowUp
+    27, //Escape
+    124, //PrintScreen
+    125, //ScrollLock
+    126, //Pause
+    //F1-F20
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131,
+    0, //Unknown key
+  ],
+};
 const onKeyUp = (event, change) => {
   if (
     event.shiftKey ||
@@ -74,7 +121,8 @@ const onKeyUp = (event, change) => {
     event.optionKey ||
     event.altKey ||
     event.ctrlKey ||
-    ['Control'].includes(event.key)
+    ['Control', 'Meta', 'Alt', 'Shift', 'Enter'].includes(event.key) ||
+    nonPrintableKeyCode.mac.includes(event.keyCode)
   ) {
     return;
   }
