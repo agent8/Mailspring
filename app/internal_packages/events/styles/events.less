@@ -72,20 +72,35 @@
       font-size: @font-size-base;
       .event-time {
         display: inline-block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        max-width: 100%;
         padding-bottom: @padding-small-horizontal;
       }
       .event-location{
         user-select: text;
-        display: inline-block;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        white-space: nowrap;
+        //overflow: hidden;
+        max-width: 100%;
         padding-bottom: @padding-small-horizontal;
+        .location-text {
+          flex-wrap: wrap;
+          flex: 20px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
         .open-external {
-          border-radius: 40px;
+          //border-radius: 40px;
           position: relative;
-          top: 12px;
+          //top: 12px;
           left: 6px;
           float: right;
-          overflow: hidden;
-          margin-top: -24px;
+          //overflow: hidden;
+          margin-top: -8px;
+          clip-path: circle(20px at center);
         }
       }
       .event-participants{
