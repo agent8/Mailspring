@@ -34,8 +34,21 @@ function findDOMRange(range) {
   var r = win.document.createRange();
   var start = isBackward ? focus : anchor;
   var end = isBackward ? anchor : focus;
-  r.setStart(start.node, start.offset);
-  r.setEnd(end.node, end.offset);
+
+  if (start.offset > start.node.length) {
+    AppEnv.reportError(new Error(`rich_editor start offset error`), { errorData: start });
+    r.setStart(start.node, start.node.length);
+  } else {
+    r.setStart(start.node, start.offset);
+  }
+
+  if (end.offset > end.node.length) {
+    AppEnv.reportError(new Error(`rich_editor end offset error`), { errorData: end });
+    r.setEnd(end.node, end.node.length);
+  } else {
+    r.setEnd(end.node, end.offset);
+  }
+
   return r;
 }
 
