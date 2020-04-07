@@ -40,6 +40,10 @@ export default class File extends Model {
       queryable: true,
       loadFromColumn: true,
     }),
+    mimeType: Attributes.String({
+      modelKey: 'mimeType',
+      queryable: false,
+    }),
     messageId: Attributes.String({
       modelKey: 'messageId',
       queryable: true,
@@ -57,34 +61,44 @@ export default class File extends Model {
     }),
     missingData: Attributes.Boolean({
       modelKey: 'missingData',
-      queryable: false
+      queryable: false,
     }),
     originFilePath: Attributes.String({
       modelKey: 'originFilePath',
-      queryable: false
+      queryable: false,
     }),
     filePath: Attributes.String({
       modelKey: 'filePath',
-      queryable: false
-    })
+      queryable: false,
+    }),
   });
-  static fromPartialData(data){
+  static fromPartialData(data) {
     const tmp = new File(data);
     // tmp.fromJSON(data);
-    if(!tmp.id && (data.id || data.pid)){
+    if (!tmp.id && (data.id || data.pid)) {
       tmp.id = data.id || data.pid;
     }
-    if(!tmp.contentType && tmp.mimeType){
+    if (!tmp.contentType && tmp.mimeType) {
       tmp.contentType = tmp.mimeType;
     }
     tmp.missingData = !tmp.hasOwnProperty('size');
     return tmp;
   }
-  constructor({mimeType = '', ...extra} = {}) {
+  constructor({ mimeType = '', ...extra } = {}) {
     super(extra);
     if (mimeType) {
       this.contentType = mimeType;
     }
+    if (this.mimeType && !this.contentType) {
+      this.contentType = this.mimeType;
+    }
+  }
+  fromJSON(json) {
+    const ret = super.fromJSON(json);
+    if (ret.mimeType && !ret.contentType) {
+      ret.contentType = ret.mimeType;
+    }
+    return ret;
   }
 
   // Public: Files can have empty names, or no name. `displayName` returns the file's
