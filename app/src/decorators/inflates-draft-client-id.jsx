@@ -16,8 +16,7 @@ function InflatesDraftClientId(ComposedComponent) {
     };
 
     static defaultProps = {
-      onDraftReady: () => {
-      },
+      onDraftReady: () => {},
     };
 
     static containerRequired = false;
@@ -51,7 +50,7 @@ function InflatesDraftClientId(ComposedComponent) {
         if (
           this.props.draft &&
           (Message.compareMessageState(this.props.draft.state, Message.messageSyncState.sending) ||
-          Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failing))
+            Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failing))
         ) {
           AppEnv.reportError(
             new Error('Draft editing session should not have sending/failing state drafts'),
@@ -65,7 +64,7 @@ function InflatesDraftClientId(ComposedComponent) {
 
     componentWillUnmount() {
       this._mounted = false;
-      this._teardownForDraft({headerMessageId: this.props.headerMessageId});
+      this._teardownForDraft({ headerMessageId: this.props.headerMessageId });
       // this._deleteDraftIfEmpty();
     }
 
@@ -75,12 +74,13 @@ function InflatesDraftClientId(ComposedComponent) {
         newProps.messageId !== this.props.messageId
       ) {
         // console.log(`new props: ${JSON.stringify(newProps)}`);
-        this._teardownForDraft({headerMessageId: this.props.headerMessageId});
+        this._teardownForDraft({ headerMessageId: this.props.headerMessageId });
         if (
           newProps.draft &&
           newProps.draft.savedOnRemote &&
           !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.sending) &&
-          !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.failing)) {
+          !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.failing)
+        ) {
           this._prepareServerDraftForEdit(newProps.draft);
         } else {
           this._prepareForDraft(newProps.headerMessageId, newProps.messageId);
@@ -108,31 +108,36 @@ function InflatesDraftClientId(ComposedComponent) {
           const shouldSetState = () => {
             if (!session) {
               AppEnv.reportError(new Error('session not available'));
-              return this._mounted;
+              return false;
             }
             const newDraft = session.draft();
             let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
             if (newDraft && newDraft.refOldDraftHeaderMessageId) {
-              sameDraftWithNewID = newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId;
+              sameDraftWithNewID =
+                newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId;
             }
             return (
               this._mounted &&
-              (newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId || sameDraftWithNewID)
+              (newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId ||
+                sameDraftWithNewID)
             );
           };
+          if (!shouldSetState()) {
+            return;
+          }
           this._sessionUnlisten = session.listen(() => {
             // console.log('inflates, data change');
             if (!shouldSetState()) {
               console.log('-------------------inflate-draft-cilent-id--------------- ');
-              console.log('did not update state')
+              console.log('did not update state');
               console.log('------------------------------------- ');
               return;
             }
-            if(this._mounted){
+            if (this._mounted) {
               this.setState({ draft: session.draft() });
             }
           });
-          if(this._mounted){
+          if (this._mounted) {
             this.setState({
               session: session,
               draft: session.draft(),
@@ -151,7 +156,7 @@ function InflatesDraftClientId(ComposedComponent) {
         const shouldSetState = () => {
           if (!session) {
             AppEnv.reportError(new Error('session not available'));
-            return this._mounted;
+            return false;
           }
           const draft = session.draft();
           let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
@@ -165,7 +170,7 @@ function InflatesDraftClientId(ComposedComponent) {
         };
         if (!shouldSetState()) {
           console.log('-------------------inflate-draft-cilent-id--------------- ');
-          console.log('did not update state')
+          console.log('did not update state');
           console.log('------------------------------------- ');
           return;
         }
@@ -176,17 +181,17 @@ function InflatesDraftClientId(ComposedComponent) {
           // console.log('inflates, data change');
           if (!shouldSetState()) {
             console.log('-------------------inflate-draft-cilent-id--------------- ');
-            console.log('did not update state')
+            console.log('did not update state');
             console.log('------------------------------------- ');
             return;
           }
-          if(this._mounted){
+          if (this._mounted) {
             this.setState({ draft: session.draft() });
-          }else {
+          } else {
             console.error(`component unmounted, session draft ${session.draft()}`);
           }
         });
-        if(this._mounted){
+        if (this._mounted) {
           this.setState({
             session: session,
             draft: session.draft(),
@@ -198,8 +203,8 @@ function InflatesDraftClientId(ComposedComponent) {
       });
     }
 
-    _teardownForDraft({headerMessageId} = {}) {
-      if(!headerMessageId){
+    _teardownForDraft({ headerMessageId } = {}) {
+      if (!headerMessageId) {
         AppEnv.logError('headerMessageId is null');
         return;
       }
@@ -207,8 +212,10 @@ function InflatesDraftClientId(ComposedComponent) {
         this._sessionUnlisten();
       }
       if (this.state.draft) {
-        if(headerMessageId !== this.state.headerMessageId){
-          AppEnv.logWarning(`HeaderMessageId is inconsisstent, input: ${headerMessageId}, state: ${this.state.headerMessageId}`);
+        if (headerMessageId !== this.state.headerMessageId) {
+          AppEnv.logWarning(
+            `HeaderMessageId is inconsisstent, input: ${headerMessageId}, state: ${this.state.headerMessageId}`
+          );
         }
         Actions.draftWindowClosing({
           headerMessageIds: [headerMessageId],
@@ -233,13 +240,12 @@ function InflatesDraftClientId(ComposedComponent) {
     focus() {
       return Utils.waitFor(() => this.refs.composed)
         .then(() => this.refs.composed.focus())
-        .catch(() => {
-        });
+        .catch(() => {});
     }
 
     render() {
       if (!this.state.draft) {
-        return <span/>;
+        return <span />;
       }
       return (
         <ComposedComponent
