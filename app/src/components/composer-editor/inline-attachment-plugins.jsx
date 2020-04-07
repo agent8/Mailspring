@@ -73,6 +73,52 @@ const rules = [
     },
   },
 ];
+const nonPrintableKeyCode = {
+  mac: [
+    18,
+    20,
+    17,
+    91,
+    93,
+    16,
+    13,
+    9,
+    35,
+    45,
+    36,
+    34,
+    33,
+    40,
+    37,
+    39,
+    38,
+    27,
+    124,
+    125,
+    126,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131,
+    0,
+  ],
+};
 const onKeyUp = (event, change) => {
   if (
     event.shiftKey ||
@@ -80,7 +126,8 @@ const onKeyUp = (event, change) => {
     event.optionKey ||
     event.altKey ||
     event.ctrlKey ||
-    ['Control'].includes(event.key)
+    ['Control', 'Meta', 'Alt', 'Shift', 'Enter'].includes(event.key) ||
+    nonPrintableKeyCode.mac.includes(event.keyCode)
   ) {
     return;
   }
