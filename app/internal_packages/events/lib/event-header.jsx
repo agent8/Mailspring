@@ -1,5 +1,6 @@
 import { RetinaImg } from 'mailspring-component-kit';
 import _ from 'underscore';
+import { remote } from 'electron';
 const {
   Actions,
   React,
@@ -9,7 +10,6 @@ const {
   CalendarStore,
   AttachmentStore,
 } = require('mailspring-exports');
-import { remote } from 'electron';
 const moment = require('moment-timezone');
 
 class EventHeader extends React.Component {
@@ -34,26 +34,25 @@ class EventHeader extends React.Component {
     this.setState({ event: this.props.calendar ? this.props.calendar.getFirstEvent() : null });
   }
 
-
   UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({ event: nextProps.calendar ? nextProps.calendar.getFirstEvent() : null });
     // this._onChange();
   }
-  componentDidUpdate(prevProps, prevState, snapshot){
-    if(!prevState.event && this.state.event){
-      this.setState({expandParticipantNumber: this._calculateShownParticipantNumber()});
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (!prevState.event && this.state.event) {
+      this.setState({ expandParticipantNumber: this._calculateShownParticipantNumber() });
     }
   }
-  componentDidMount(){
+  componentDidMount() {
     this._mounted = true;
-    this.setState({expandParticipantNumber: this._calculateShownParticipantNumber()});
+    this.setState({ expandParticipantNumber: this._calculateShownParticipantNumber() });
     window.addEventListener('resize', this._onWindowResize);
   }
   _onWindowResize = () => {
-    if(!this._mounted){
+    if (!this._mounted) {
       return;
     }
-    this.setState({expandParticipantNumber: this._calculateShownParticipantNumber()});
+    this.setState({ expandParticipantNumber: this._calculateShownParticipantNumber() });
   };
 
   componentWillUnmount() {
@@ -77,19 +76,27 @@ class EventHeader extends React.Component {
     let startTime = '';
     let end = '';
     if (duration.length === 0) {
-      startTime = ', ' + moment(this.state.event.startDate.toJSDate())
-        .tz(DateUtils.timeZone)
-        .format(DateUtils.getTimeFormat({ timeZone: false }));
+      startTime =
+        ', ' +
+        moment(this.state.event.startDate.toJSDate())
+          .tz(DateUtils.timeZone)
+          .format(DateUtils.getTimeFormat({ timeZone: false }));
       if (this.state.event.isLessThanADay()) {
-        end = ' - ' + moment(this.state.event.endDate.toJSDate())
-          .tz(DateUtils.timeZone)
-          .format(DateUtils.getTimeFormat({ timeZone: true }));
-      } else {
-        end = ' - ' + moment(this.state.event.endDate.toJSDate())
-          .tz(DateUtils.timeZone)
-          .format('dddd, MMMM Do') + ' ' + moment(this.state.event.endDate.toJSDate())
+        end =
+          ' - ' +
+          moment(this.state.event.endDate.toJSDate())
             .tz(DateUtils.timeZone)
-            .format(DateUtils.getTimeFormat({ timeZone: true }))
+            .format(DateUtils.getTimeFormat({ timeZone: true }));
+      } else {
+        end =
+          ' - ' +
+          moment(this.state.event.endDate.toJSDate())
+            .tz(DateUtils.timeZone)
+            .format('dddd, MMMM Do') +
+          ' ' +
+          moment(this.state.event.endDate.toJSDate())
+            .tz(DateUtils.timeZone)
+            .format(DateUtils.getTimeFormat({ timeZone: true }));
       }
     }
     return `${duration} ${startDate}${startTime} ${end}${repeat}`;
@@ -106,7 +113,9 @@ class EventHeader extends React.Component {
       return (
         <div className="event-wrapper">
           <div className="event-header">
-            <span className="event-title" onContextMenu={this._onContextMenu}>{this.state.event.summary || 'Event'}</span>
+            <span className="event-title" onContextMenu={this._onContextMenu}>
+              {this.state.event.summary || 'Event'}
+            </span>
             {/*<RetinaImg name={'feed-calendar.svg'} style={{ width: 20 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />*/}
           </div>
           <div className="event-body">
@@ -132,73 +141,100 @@ class EventHeader extends React.Component {
       return null;
     }
 
-    const actions = [{ status: 1, label: 'Yes', css: 'yes' }, { status: 3, label: 'Maybe', css: 'maybe' }, { status: 2, label: 'No', css: 'no' }];
+    const actions = [
+      { status: 1, label: 'Yes', css: 'yes' },
+      { status: 3, label: 'Maybe', css: 'maybe' },
+      { status: 2, label: 'No', css: 'no' },
+    ];
 
     return (
       <div className="event-actions">
-        <div>{actions.map(item => {
-          const { status, label, css } = item;
-          let classes = 'btn btn-rsvp ';
-          if (this.props.message.calendarStatus() === status) {
-            classes += css;
-          }
-          return (
-            <div key={status} className={classes} onClick={_.throttle(this._rsvp.bind(this, this.props.message, status), 200, { trailing: false })}>
-              {label}
-            </div>
-          );
-        })}</div>
+        <div>
+          {actions.map(item => {
+            const { status, label, css } = item;
+            let classes = 'btn btn-rsvp ';
+            if (this.props.message.calendarStatus() === status) {
+              classes += css;
+            }
+            return (
+              <div
+                key={status}
+                className={classes}
+                onClick={_.throttle(this._rsvp.bind(this, this.props.message, status), 200, {
+                  trailing: false,
+                })}
+              >
+                {label}
+              </div>
+            );
+          })}
+        </div>
         {/*<div className="open-external" onClick={this._openCalenderExternally}>more details</div>*/}
       </div>
     );
   }
   _renderParticipants = () => {
-    if(!this.state.event){
+    if (!this.state.event) {
       return null;
     }
-    const humanAttendees = this.state.event.filterAttendeesBy({criteria: 'type', values: ['INDIVIDUAL', 'GROUP']});
-    let organizerStr ;
-    if(this.state.event.organizer){
-      organizerStr = <div className="participant-name">{this.state.event.organizer.name} <span className="organizer-label">(organizer)</span>,</div>
+    const humanAttendees = this.state.event.filterAttendeesBy({
+      criteria: 'type',
+      values: ['INDIVIDUAL', 'GROUP'],
+    });
+    let organizerStr;
+    if (this.state.event.organizer) {
+      organizerStr = (
+        <div className="participant-name">
+          {this.state.event.organizer.name} <span className="organizer-label">(organizer)</span>,
+        </div>
+      );
     } else {
       organizerStr = null;
     }
     let participantsStr = humanAttendees.map(this._renderParticipant);
     participantsStr.unshift(organizerStr);
-    participantsStr= participantsStr.filter(i => !!i);
+    participantsStr = participantsStr.filter(i => !!i);
     let expandStr = '';
     let expandClass = '';
-    if(this.state.expandParticipantNumber > 0 && !this.state.expandParticipant){
+    if (this.state.expandParticipantNumber > 0 && !this.state.expandParticipant) {
       expandStr = `+${this.state.expandParticipantNumber} more`;
-    }else if(this.state.expandParticipantNumber > 0 && this.state.expandParticipant){
+    } else if (this.state.expandParticipantNumber > 0 && this.state.expandParticipant) {
       expandStr = 'less';
-      expandClass='expand'
+      expandClass = 'expand';
     }
     let expandElement = null;
-    if(this.state.expandParticipantNumber > 0){
-      expandElement = <div className="expand-element" onClick={this._toggleExpandNames}>{expandStr}</div>;
+    if (this.state.expandParticipantNumber > 0) {
+      expandElement = (
+        <div className="expand-element" onClick={this._toggleExpandNames}>
+          {expandStr}
+        </div>
+      );
     }
-    if(humanAttendees.length > 0){
-      return <div className="event-participants">
-        <span className="event-key-name">{humanAttendees.length} Guests</span>
-        <div className={`participant-names ${expandClass}`} ref={ref => this._partNames = ref}>{participantsStr}</div>
-        {expandElement}
-      </div>;
+    if (humanAttendees.length > 0) {
+      return (
+        <div className="event-participants">
+          <span className="event-key-name">{humanAttendees.length} Guests</span>
+          <div className={`participant-names ${expandClass}`} ref={ref => (this._partNames = ref)}>
+            {participantsStr}
+          </div>
+          {expandElement}
+        </div>
+      );
     }
   };
-  _calculateShownParticipantNumber(){
-    if(!this._partNames){
-      return 0
+  _calculateShownParticipantNumber() {
+    if (!this._partNames) {
+      return 0;
     }
     const namesElements = this._partNames.children;
-    if(namesElements.length === 0){
+    if (namesElements.length === 0) {
       return 0;
     }
     const total = namesElements.length;
     let shown = 0;
     const top = namesElements[0].getBoundingClientRect().y;
-    for(let el of namesElements){
-      if(top !== el.getBoundingClientRect().y){
+    for (let el of namesElements) {
+      if (top !== el.getBoundingClientRect().y) {
         break;
       }
       shown++;
@@ -206,18 +242,21 @@ class EventHeader extends React.Component {
     return `${total - shown}`;
   }
   _toggleExpandNames = () => {
-    this.setState({expandParticipant: !this.state.expandParticipant});
+    this.setState({ expandParticipant: !this.state.expandParticipant });
   };
   _renderParticipant = (participant, index, all) => {
-    if(!participant || participant.role === 'CHAIR'){
+    if (!participant || participant.role === 'CHAIR') {
       return null;
     }
-    if(this.state.event.organizer){
-      if(participant.name === this.state.event.organizer.name || participant.email === this.state.event.organizer.name){
+    if (this.state.event.organizer) {
+      if (
+        participant.name === this.state.event.organizer.name ||
+        participant.email === this.state.event.organizer.name
+      ) {
         return null;
       }
     }
-    if(index < all.length -1){
+    if (index < all.length - 1) {
       return <div className="participant-name">{participant.name || participant.email}, </div>;
     } else {
       return <div className="participant-name">{participant.name || participant.email}</div>;
@@ -232,20 +271,23 @@ class EventHeader extends React.Component {
     return (
       <div className="event-location" onContextMenu={this._onContextMenu}>
         <span className="event-key-name">Location</span>
-        <span>{locationString}</span>
-        {this.state.event.location &&
-          <span className="open-external" onClick={this._openMapExternally}>
-            <RetinaImg name={'map-preview.png'}
-                mode={RetinaImg.Mode.ContentPreserve}
-                style={{ width: 40, height: 40 }}/>
-        </span>}
+        <div className="location-text">{locationString}</div>
+        {this.state.event.location && (
+          <div className="open-external" onClick={this._openMapExternally}>
+            <RetinaImg
+              name={'map-preview.png'}
+              mode={RetinaImg.Mode.ContentPreserve}
+              style={{ width: 40, height: 40 }}
+            />
+          </div>
+        )}
       </div>
     );
   };
 
   _openMapExternally = _.throttle(() => {
-      const searchQueryBase = 'https://www.openstreetmap.org/search?commit=Go&query=';
-      const searchQuery = `${searchQueryBase}${encodeURI(this.state.event.location)}`
+    const searchQueryBase = 'https://www.openstreetmap.org/search?commit=Go&query=';
+    const searchQuery = `${searchQueryBase}${encodeURI(this.state.event.location)}`;
     remote.shell.openExternal(searchQuery);
   }, 500);
 
