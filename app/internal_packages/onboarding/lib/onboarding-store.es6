@@ -31,17 +31,18 @@ class OnboardingStore extends MailspringStore {
     });
 
     // beta invite flow
-    const shareCounts = AppEnv.config.get('invite.count') || 0;
-    const agree = AppEnv.config.get('agree');
-    if (!agree && shareCounts < NEED_INVITE_COUNT) {
-      if (hasAccounts) {
-        this._pageStack = ['sorry'];
-      }
-      else {
-        this._pageStack = ['login'];
-      }
-    }
-    else if (existingAccountJSON) {
+    // const shareCounts = AppEnv.config.get('invite.count') || 0;
+    // const agree = AppEnv.config.get('agree');
+    // if (!agree && shareCounts < NEED_INVITE_COUNT) {
+    //   if (hasAccounts) {
+    //     this._pageStack = ['sorry'];
+    //   }
+    //   else {
+    //     this._pageStack = ['login'];
+    //   }
+    // }
+    // else 
+    if (existingAccountJSON) {
       // Used when re-adding an account after re-connecting, take the user back
       // to the best page with the most details
       this._account = new Account(existingAccountJSON);
@@ -172,13 +173,13 @@ class OnboardingStore extends MailspringStore {
     const isOnboarding = !addingAccount;
     if (isOnboarding) {
       // beta invite flow
-      const shareCounts = AppEnv.config.get('invite.count') || 0;
-      const agree = AppEnv.config.get('agree');
-      if (!agree && shareCounts < NEED_INVITE_COUNT) {
-        AppEnv.config.set('invite.email', account.emailAddress);
-        this._onMoveToPage('sorry');
-        return;
-      }
+      // const shareCounts = AppEnv.config.get('invite.count') || 0;
+      // const agree = AppEnv.config.get('agree');
+      // if (!agree && shareCounts < NEED_INVITE_COUNT) {
+      //   AppEnv.config.set('invite.email', account.emailAddress);
+      //   this._onMoveToPage('sorry');
+      //   return;
+      // }
       this._onMoveToPage('account-add-another');
     } else {
       // let them see the "success" screen for a moment
