@@ -6,6 +6,7 @@ import {
   ChangeUnreadTask,
   ChangeStarredTask,
   ChangeFolderTask,
+  ChangeLabelsTask,
   TrashFromSenderTask,
   Actions,
 } from 'mailspring-exports';
@@ -16,7 +17,8 @@ import SendDraftTask from '../../../src/flux/tasks/send-draft-task';
 function isUndoSend(block) {
   return (
     (block.tasks.length === 1 &&
-      (block.tasks[0] instanceof SyncbackMetadataTask && block.tasks[0].value.isUndoSend)) ||
+      block.tasks[0] instanceof SyncbackMetadataTask &&
+      block.tasks[0].value.isUndoSend) ||
     block.tasks[0] instanceof SendDraftTask
   );
 }
@@ -86,34 +88,29 @@ class BasicContent extends React.Component {
     let description = block.description;
     const tasks = block.tasks;
     if (tasks.length >= 2) {
-      // if all ChangeUnreadTask
-      if (
-        tasks[0] instanceof ChangeUnreadTask &&
-        tasks[tasks.length - 1] instanceof ChangeUnreadTask
-      ) {
-        let total = 0;
-        tasks.forEach(item => (total += item.threadIds.length));
+      if (tasks.every(task => task instanceof ChangeUnreadTask)) {
+        // if all ChangeUnreadTask
+        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
         const newState = tasks[0].unread ? 'unread' : 'read';
         description = `Marked ${total} threads as ${newState}`;
-      }
-      // if all ChangeStarredTask
-      else if (
-        tasks[0] instanceof ChangeStarredTask &&
-        tasks[tasks.length - 1] instanceof ChangeStarredTask
-      ) {
-        let total = 0;
-        tasks.forEach(item => (total += item.threadIds.length));
+      } else if (tasks.every(task => task instanceof ChangeStarredTask)) {
+        // if all ChangeStarredTask
+        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
         const verb = tasks[0].starred ? 'Flagged' : 'Unflagged';
         description = `${verb} ${total} threads`;
-      }
-      // if all ChangeFolderTask
-      else if (
-        tasks[0] instanceof ChangeFolderTask &&
-        tasks[tasks.length - 1] instanceof ChangeFolderTask
-      ) {
-        let total = 0;
-        tasks.forEach(item => (total += item.threadIds.length));
+      } else if (tasks.every(task => task instanceof ChangeFolderTask)) {
+        // if all ChangeFolderTask
+        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
         const folderText = ` to ${tasks[0].folder.displayName}`;
+        description = `Moved ${total} threads${folderText}`;
+      } else if (
+        tasks.every(task => task instanceof ChangeFolderTask || task instanceof ChangeLabelsTask) &&
+        tasks.some(task => task instanceof ChangeFolderTask)
+      ) {
+        // if all ChangeFolderTask or ChangeLabelsTask
+        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
+        const firstChangeFolderTask = tasks.find(task => task instanceof ChangeFolderTask);
+        const folderText = ` to ${firstChangeFolderTask.folder.displayName}`;
         description = `Moved ${total} threads${folderText}`;
       }
     } else {
