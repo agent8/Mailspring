@@ -127,7 +127,7 @@ export default class EmailFrame extends React.Component {
     }
     doc.write(
       `<div id='inbox-html-wrapper' class="${process.platform} ${
-        this.props.viewOriginalEmail ? 'original' : ''
+      this.props.viewOriginalEmail ? 'original' : ''
       }">${this._emailContent(isPlainBody)}</div>`
     );
     doc.close();
@@ -280,7 +280,7 @@ export default class EmailFrame extends React.Component {
       this._lastComputedHeight = height;
     }
 
-    if (iframeNode.contentDocument.readyState !== 'complete') {
+    if (iframeNode.contentDocument && iframeNode.contentDocument.readyState !== 'complete') {
       window.requestAnimationFrame(() => {
         this._setFrameHeight();
       });
@@ -354,7 +354,7 @@ export default class EmailFrame extends React.Component {
       <div
         className={`iframe-container  ${
           this.props.viewOriginalEmail ? 'original-iframe-container' : null
-        }`}
+          }`}
         ref={el => {
           this._iframeHeightHolderEl = el;
         }}

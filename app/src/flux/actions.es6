@@ -499,6 +499,7 @@ class Actions {
   static addAttachments = ActionScopeWindow;
   static selectAttachment = ActionScopeWindow;
   static removeAttachment = ActionScopeWindow;
+  static draftInlineAttachmentRemoved = ActionScopeWindow;
 
   static syncFolders = ActionScopeMainWindow;
   static syncSiftFolder = ActionScopeMainWindow;

@@ -648,7 +648,7 @@ export default class ComposerView extends React.Component {
   _inFooterRegion(el) {
     return el.closest && el.closest('.composer-footer-region');
   }
-  _inSendBarRegion(el){
+  _inSendBarRegion(el) {
     return el && el.closest && el.closest('.sendbar-for-dock');
   }
 
@@ -791,6 +791,8 @@ export default class ComposerView extends React.Component {
       dialog.showMessageBox(remote.getCurrentWindow(), {
         type: 'warning',
         buttons: ['Edit Message', 'Cancel'],
+        defaultId: 0,
+        cancelId: 1,
         message: 'Cannot Send',
         detail: errors[0],
       });
@@ -802,6 +804,8 @@ export default class ComposerView extends React.Component {
         .showMessageBox(remote.getCurrentWindow(), {
           type: 'warning',
           buttons: ['Send Anyway', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
           message: 'Are you sure?',
           detail: `Send ${warnings.join(' and ')}?`,
         })

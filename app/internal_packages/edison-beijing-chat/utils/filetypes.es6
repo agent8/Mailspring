@@ -4,6 +4,8 @@ const FILE_TYPE = {
   GIF: 5,
   STICKER: 12,
   OTHER_FILE: 9,
+  DATE: 'DATE',
+  TIME: 'TIME',
 };
 
 const MESSAGE_TYPE = {

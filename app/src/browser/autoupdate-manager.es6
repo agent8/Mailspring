@@ -166,6 +166,8 @@ export default class AutoUpdateManager extends EventEmitter {
         choice = dialog.showMessageBoxSync({
           type: 'info',
           buttons: ['Update', 'Remind Me Later'],
+          defaultId: 0,
+          cancelId: 1,
           icon: this.iconURL(),
           message: `Update available.`,
           title: 'Update Available',

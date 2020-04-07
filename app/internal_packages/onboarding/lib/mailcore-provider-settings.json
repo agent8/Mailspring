@@ -42,6 +42,28 @@
             ]
         }
     },
+    "126-vip": {
+        "auto-copy-to-sent": true,
+        "domain-match": [
+            "vip\\.126\\.com"
+        ],
+        "servers": {
+            "imap": [
+                {
+                    "hostname": "imap.vip.126.com",
+                    "port": 993,
+                    "ssl": true
+                }
+            ],
+            "smtp": [
+                {
+                    "hostname": "smtp.vip.126.com",
+                    "port": 465,
+                    "ssl": true
+                }
+            ]
+        }
+    },
     "163": {
         "auto-copy-to-sent": true,
         "domain-match": [
@@ -3762,6 +3784,7 @@
         }
     },
     "yahoo": {
+        "auto-copy-to-sent": true,
         "domain-exclude": [
             "yahoo\\.co\\.jp"
         ],
@@ -3800,6 +3823,7 @@
         }
     },
     "yahoo.co.jp": {
+        "auto-copy-to-sent": true,
         "domain-match": [
             "yahoo\\.co\\.jp"
         ],

@@ -232,7 +232,6 @@
   }
 
   .message {
-    margin-bottom: 15px;
     max-width: 600px;
     margin: auto;
     white-space: pre-wrap;
@@ -242,6 +241,9 @@
       font-size: 11px;
       line-height: 13px;
       -webkit-user-select: text;
+      max-height: 40px;
+      overflow-y: hidden;
+      text-overflow: ellipsis;
       a {
         color: #f36;
       }
@@ -835,6 +837,18 @@
     img.content-mask {
       margin: 125px auto 0 auto;
       background-color: #39f;
+    }
+  }
+  .error {
+    color: @red;
+    font-size: 11px;
+  }
+  .jira-oauth-title {
+    width: 100%;
+    margin-top: 100px;
+    padding-top: 100px;
+    h2 {
+      // color: @text-color-inverse;
     }
   }
 }

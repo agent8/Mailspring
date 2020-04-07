@@ -110,7 +110,7 @@ class EventedIFrame extends React.Component {
 
   _unsubscribeFromIFrameEvents() {
     const node = ReactDOM.findDOMNode(this);
-    const doc = node.contentDocument;
+    const doc = node && node.contentDocument;
     if (!doc) {
       return;
     }

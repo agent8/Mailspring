@@ -80,10 +80,6 @@
       width: 100%;
     }
   }
-  .row:hover {
-    background-color: @active;
-  }
-
   .clear {
     padding: 10px 8px;
     width: 100%;
@@ -128,7 +124,9 @@
     }
     .info {
       flex: 1;
-      text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .name {
       height: 16px;
@@ -148,6 +146,10 @@
     }
   }
 
+  .row:hover {
+    background-color: @active;
+  }
+
   .row:first-child {
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
@@ -162,6 +164,7 @@
     display: none;
     float: right;
     transform: scale(0.8);
+    cursor: pointer;
   }
   .row:hover .remove-member {
     display: block;

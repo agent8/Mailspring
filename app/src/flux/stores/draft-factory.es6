@@ -78,15 +78,15 @@ const removeAttachmentWithNoContentId = files => {
   return filterMissingAttachments(ret);
 };
 const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
-  if (!Array.isArray(files)){
+  if (!Array.isArray(files)) {
     return [];
   }
-  if(typeof bodyStr !== 'string'){
+  if (typeof bodyStr !== 'string') {
     return [];
   }
   const ret = [];
   files.forEach(file => {
-    if(file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
+    if (file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
       ret.push(file);
     }
   });
@@ -142,12 +142,6 @@ class DraftFactory {
     };
 
     const merged = Object.assign(defaults, fields);
-    if (merged.forwardedHeaderMessageId) {
-      merged.referenceMessageId = merged.forwardedHeaderMessageId;
-      delete merged.forwardedHeaderMessageId;
-    } else {
-      merged.referenceMessageId = merged.replyToHeaderMessageId;
-    }
     await mergeDefaultBccAndCCs(merged, account);
     // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
     // if (account.autoaddress.type === 'cc') {
@@ -159,12 +153,12 @@ class DraftFactory {
 
     return new Message(merged);
   }
-  async createInviteDraft(draftData){
+  async createInviteDraft(draftData) {
     const draft = await this.createDraft(draftData);
     draft.noSave = true;
     return draft;
   }
-  createNewDraftForEdit(draft){
+  createNewDraftForEdit(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
@@ -200,7 +194,7 @@ class DraftFactory {
             -----User bug report end-----</br>
             </div>
             <div>
-            [MacOS] ${AppEnv.config.get('core.support.native')}
+            [MacOS] ${AppEnv.getVersion()}
             </div></br>
             <div>
             SupportId: ${AppEnv.config.get('core.support.id')}
@@ -225,7 +219,7 @@ class DraftFactory {
       return null;
     }
   }
-  duplicateDraftBecauseOfNewId(draft){
+  duplicateDraftBecauseOfNewId(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
@@ -247,7 +241,7 @@ class DraftFactory {
     });
     return new Message(defaults);
   }
-  async createOutboxDraftForEdit(draft){
+  async createOutboxDraftForEdit(draft) {
     const uniqueId = uuid();
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
@@ -299,7 +293,7 @@ class DraftFactory {
       replyOrForward: Message.draftType.new,
       threadId: '',
       replyToHeaderMessageId: '',
-      forwardedHeaderMessageId: '',
+      forwardHeaderMessageId: '',
       refOldDraftHeaderMessageId: '',
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
@@ -406,7 +400,6 @@ class DraftFactory {
     const accountId = findAccountIdFrom(message, thread);
     const body = `
         <br/>
-        <br/>
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
       message.replyAttributionLine(),
     )}</div>
@@ -426,6 +419,7 @@ class DraftFactory {
       accountId: accountId,
       replyOrForward: Message.draftType.reply,
       replyToHeaderMessageId: message.headerMessageId,
+      referenceMessageId: message.id,
       msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
       body,
     });
@@ -466,7 +460,8 @@ class DraftFactory {
       files: filterMissingAttachments(message.files),
       threadId: thread.id,
       accountId: accountId,
-      forwardedHeaderMessageId: message.id,
+      forwardHeaderMessageId: message.headerMessageId,
+      referenceMessageId: message.id,
       replyOrForward: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
       body: `
@@ -484,9 +479,9 @@ class DraftFactory {
     });
   }
 
-  async createDraftForResurfacing(thread, threadMessageId, body) {
+  async createDraftForResurfacing(thread, threadHeaderMessageId, body) {
     const account = AccountStore.accountForId(thread.accountId);
-    let replyToHeaderMessageId = threadMessageId;
+    let replyToHeaderMessageId = threadHeaderMessageId;
 
     if (!replyToHeaderMessageId) {
       // const msg = await DatabaseStore.findBy(Message, {

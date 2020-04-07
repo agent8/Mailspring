@@ -12,7 +12,6 @@ import {
   ConversationStore,
   ChatActions,
 } from 'chat-exports';
-import delay from '../utils/delay';
 
 const ROOM_MEMBER_VER = 'room_member_ver_';
 const ROOM_LIST_VER = 'room_list_ver_';
@@ -30,7 +29,6 @@ class RoomStore extends MailspringStore {
     for (const item of data) {
       this.rooms[item.jid] = item;
     }
-    // ConversationStore.refreshConversations();
   };
 
   createGroupChatRoom = async payload => {
@@ -101,9 +99,8 @@ class RoomStore extends MailspringStore {
         members = await this.getRoomMembersFromXmpp(roomId, curJid, true);
       }
     }
-    const room = this.rooms && this.rooms[roomId];
-    if (room) {
-      room.members = members;
+    if (this.rooms && this.rooms[roomId]) {
+      this.rooms[roomId].members = members;
     }
     await this.loadRooms();
     UserCacheStore.saveUserCache(members);
@@ -134,7 +131,7 @@ class RoomStore extends MailspringStore {
       ver = config.value;
     }
     const result = await xmpp.getRoomMembers(roomId, ver, curJid);
-    if (result && result.mucAdmin && ver != result.mucAdmin.ver && result.mucAdmin.items) {
+    if (result && result.mucAdmin && ver !== result.mucAdmin.ver && result.mucAdmin.items) {
       members = result.mucAdmin.items;
       await RoomModel.upsert({
         jid: roomId,
@@ -189,7 +186,7 @@ class RoomStore extends MailspringStore {
   };
 
   onMembersChange = async payload => {
-    const nicknames = chatLocalStorage.nicknames;
+    const nicknames = global.chatLocalStorage.nicknames;
     const conversationJid = payload.from.bare;
     const fromjid = payload.userJid;
     let fromcontact = await UserCacheStore.getUserInfoByJid(fromjid);
@@ -260,6 +257,7 @@ class RoomStore extends MailspringStore {
       sentTime: new Date().getTime(),
       status: MESSAGE_STATUS_RECEIVED,
     };
+
     MessageStore.saveMessagesAndRefresh([msg]);
     this.trigger();
   };

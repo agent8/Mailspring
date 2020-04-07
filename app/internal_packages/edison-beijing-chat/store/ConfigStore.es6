@@ -14,7 +14,7 @@ class ConfigStore extends MailspringStore {
       this.configs[item.key] = item;
     }
     this.trigger();
-  }
+  };
 
   saveConfig(config) {
     if (config) {
@@ -32,8 +32,8 @@ class ConfigStore extends MailspringStore {
       await this.refreshConfigs();
     }
     return this.configs;
-  }
-  find = async (keys) => {
+  };
+  find = async keys => {
     if (!this.configs) {
       await this.refreshConfigs();
     }
@@ -47,13 +47,13 @@ class ConfigStore extends MailspringStore {
       }
     }
     return items;
-  }
-  findOne = async (key) => {
+  };
+  findOne = async key => {
     if (!this.configs) {
       await this.refreshConfigs();
     }
     return this.configs[key];
-  }
+  };
 }
 
 module.exports = new ConfigStore();
