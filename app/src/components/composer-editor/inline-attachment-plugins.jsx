@@ -74,28 +74,30 @@ const rules = [
   },
 ];
 const nonPrintableKeyCode = {
+  //Based on https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
   mac: [
-    18,
-    20,
-    17,
-    91,
-    93,
-    16,
-    13,
-    9,
-    35,
-    45,
-    36,
-    34,
-    33,
-    40,
-    37,
-    39,
-    38,
-    27,
-    124,
-    125,
-    126,
+    18, //Alt
+    20, //CapsLock
+    17, //Control
+    91, //OSLeft
+    93, //OSRight
+    16, //Shift
+    13, //Enter
+    9, // Tab
+    35, //End
+    45, //Insert
+    36, //Help
+    34, //PageDown
+    33, //PageUp
+    40, //ArrowDown
+    37, //ArrowLeft
+    39, //ArrowRight
+    38, //ArrowUp
+    27, //Escape
+    124, //PrintScreen
+    125, //ScrollLock
+    126, //Pause
+    //F1-F20
     112,
     113,
     114,
@@ -116,7 +118,7 @@ const nonPrintableKeyCode = {
     129,
     130,
     131,
-    0,
+    0, //Unknown key
   ],
 };
 const onKeyUp = (event, change) => {
