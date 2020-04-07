@@ -94,10 +94,10 @@ export default ListensToFluxStore(ThreadListEmptyFolderBar, {
     return {
       folders,
       role: folders[0].role,
-      busy:
-        TaskQueue.findTasks(ExpungeAllInFolderTask).some(t =>
-          folders.map(f => f.accountId).includes(t.accountId)
-        ) > 0,
+      busy: false,
+      // TaskQueue.findTasks(ExpungeAllInFolderTask).some(t =>
+      //   folders.map(f => f.accountId).includes(t.accountId)
+      // ) > 0,
       count: folders.reduce(
         (sum, { id }) => sum + ThreadCountsStore.totalCountForCategoryId(id),
         0
