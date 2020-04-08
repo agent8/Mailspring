@@ -1,6 +1,7 @@
 import _ from 'underscore';
 import moment from 'moment';
 import fs from 'fs';
+import util from 'util';
 import File from './file';
 import Utils from './utils';
 import Event from './event';
@@ -12,9 +13,10 @@ import ModelWithMetadata from './model-with-metadata';
 import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
 import CategoryStore from '../stores/category-store';
-import Category from './category'
+import Category from './category';
 let AttachmentStore = null;
 
+const fsExists = util.promisify(fs.exists);
 const mapping = {
   attachmentIdsFromJSON: json => {
     if (!Array.isArray(json)) {
@@ -23,12 +25,12 @@ const mapping = {
     return json.map(attachment => {
       const file = new File();
       file.fromJSON(attachment);
-      if(!file.id && (attachment.pid || attachment.id)){
-        file.id = (attachment.pid || attachment.id);
+      if (!file.id && (attachment.pid || attachment.id)) {
+        file.id = attachment.pid || attachment.id;
       }
       return file;
-    })
-  }
+    });
+  },
 };
 
 export default class Message extends ModelWithMetadata {
@@ -126,12 +128,12 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarReply: Attributes.Boolean({
       modelKey: 'calendarReply',
-      queryable: false
+      queryable: false,
     }),
 
     listUnsubscribe: Attributes.String({
       modelKey: 'listUnsubscribe',
-      queryable: false
+      queryable: false,
     }),
 
     pristine: Attributes.Boolean({
@@ -141,28 +143,28 @@ export default class Message extends ModelWithMetadata {
     replyToHeaderMessageId: Attributes.String({
       modelKey: 'replyToHeaderMessageId',
       jsonKey: 'replyToHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
 
     forwardedHeaderMessageId: Attributes.String({
       modelKey: 'forwardedHeaderMessageId',
       jsonKey: 'forwardHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
 
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
       jsonKey: 'refDraftHeaderMsgId',
-      queryable: false
+      queryable: false,
     }),
     savedOnRemote: Attributes.Boolean({
       modelKey: 'savedOnRemote',
-      queryable: false
+      queryable: false,
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
       jsonKey: 'hasRefDraft',
-      queryable: false
+      queryable: false,
     }),
     folder: Attributes.Object({
       queryable: false,
@@ -171,7 +173,7 @@ export default class Message extends ModelWithMetadata {
     }),
     replyOrForward: Attributes.Number({
       modelKey: 'replyOrForward',
-      queryable: false
+      queryable: false,
     }),
     msgOrigin: Attributes.Number({
       modelKey: 'msgOrigin',
@@ -195,32 +197,32 @@ export default class Message extends ModelWithMetadata {
     }),
     calendarCurrentStatus: Attributes.Number({
       modelKey: 'calCurStat',
-      queryable: false
+      queryable: false,
     }),
     calendarTargetStatus: Attributes.Number({
       modelKey: 'calTarStat',
-      queryable: false
+      queryable: false,
     }),
     pastMessageIds: Attributes.Collection({
       modelKey: 'pastMessageIds',
-      queryable: false
+      queryable: false,
     }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
-      queryable: false
+      queryable: false,
     }),
 
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true
+      mergeIntoModel: true,
     }),
     msgData: Attributes.Object({
       modelKey: 'msgData',
       queryable: true,
       loadFromColumn: true,
-      mergeIntoModel: true
+      mergeIntoModel: true,
     }),
 
     date: Attributes.DateTime({
@@ -254,7 +256,7 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
       itemClass: File,
-      fromJSONMapping: mapping.attachmentIdsFromJSON
+      fromJSONMapping: mapping.attachmentIdsFromJSON,
     }),
 
     unread: Attributes.Boolean({
@@ -291,7 +293,7 @@ export default class Message extends ModelWithMetadata {
       loadFromColumn: true,
       jsonKey: 'headerMsgId',
       modelKey: 'headerMsgId',
-      jsModelKey: 'headerMessageId'
+      jsModelKey: 'headerMessageId',
     }),
 
     subject: Attributes.String({
@@ -367,10 +369,10 @@ export default class Message extends ModelWithMetadata {
     this.events = this.events || [];
     this.waitingForBody = data.waitingForBody || false;
     this.hasCalendar = this.hasCalendar || false;
-    if(!Array.isArray(data.pastMessageIds)){
+    if (!Array.isArray(data.pastMessageIds)) {
       this.pastMessageIds = [];
     }
-    if(!Array.isArray(data.files)){
+    if (!Array.isArray(data.files)) {
       this.files = [];
     }
   }
@@ -392,7 +394,7 @@ export default class Message extends ModelWithMetadata {
 
   fromJSON(json = {}) {
     super.fromJSON(json);
-    if(!Array.isArray(json.pastMessageIds)){
+    if (!Array.isArray(json.pastMessageIds)) {
       this.pastMessageIds = [];
     }
     return this;
@@ -539,7 +541,7 @@ export default class Message extends ModelWithMetadata {
 
   get labels() {
     const ret = [];
-    if(Array.isArray(this.labelIds)){
+    if (Array.isArray(this.labelIds)) {
       this.labelIds.forEach(labelId => {
         if (typeof labelId === 'string') {
           const tmp = CategoryStore.byFolderId(labelId);
@@ -582,33 +584,39 @@ export default class Message extends ModelWithMetadata {
       let processed = 0;
       (this.files || []).forEach(f => {
         const path = AttachmentStore.pathForFile(f);
-        const exists = fs.existsSync(path);
-        if (!exists) {
-          processed++;
-          const partExists = fs.existsSync(`${path}.part`);
-          processed++;
-          if (!partExists) {
-            if (f.isInline) {
-              ret.inline.needToDownload.push(f);
-            } else {
-              ret.normal.needToDownload.push(f);
+        fsExists(path)
+          .then(() => {
+            processed += 2;
+            if (processed === total) {
+              resolve(ret);
             }
-          } else {
-            if (f.isInline) {
-              ret.inline.downloading.push(f);
-            } else {
-              ret.normal.downloading.push(f);
-            }
-          }
-          if (processed === total) {
-            resolve(ret);
-          }
-        } else {
-          processed += 2;
-          if (processed === total) {
-            resolve(ret);
-          }
-        }
+          })
+          .catch(error => {
+            processed++;
+            fsExists(`${path}.part`)
+              .then(() => {
+                processed++;
+                if (f.isInline) {
+                  ret.inline.downloading.push(f);
+                } else {
+                  ret.normal.downloading.push(f);
+                }
+                if (processed === total) {
+                  resolve(ret);
+                }
+              })
+              .catch(error => {
+                processed++;
+                if (f.isInline) {
+                  ret.inline.needToDownload.push(f);
+                } else {
+                  ret.normal.needToDownload.push(f);
+                }
+                if (processed === total) {
+                  resolve(ret);
+                }
+              });
+          });
       });
     });
   }
@@ -619,7 +627,9 @@ export default class Message extends ModelWithMetadata {
     const participants = this.participants({ includeFrom: false, includeBcc: true });
     const account = AccountStore.accountForId(this.accountId);
     if (!account) {
-      AppEnv.reportError(new Error('Message accountId is not part of any account'), { errorData: this.toJSON() })
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), {
+        errorData: this.toJSON(),
+      });
       return false;
     }
     for (let participant of participants) {
@@ -637,7 +647,10 @@ export default class Message extends ModelWithMetadata {
       return false;
     }
     if (ignoreOtherAccounts) {
-      const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
+      const account = AccountStore.accountForEmail({
+        email: this.from[0].email,
+        accountId: this.accountId,
+      });
       if (account) {
         return account.id === this.accountId;
       }
@@ -649,7 +662,10 @@ export default class Message extends ModelWithMetadata {
     if (!this.from[0]) {
       return false;
     }
-    const account = AccountStore.accountForEmail({email: this.from[0].email, accountId: this.accountId});
+    const account = AccountStore.accountForEmail({
+      email: this.from[0].email,
+      accountId: this.accountId,
+    });
     if (account) {
       return account.id !== this.accountId;
     }
@@ -684,13 +700,17 @@ export default class Message extends ModelWithMetadata {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('trash'));
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('trash')
+    );
   }
   isInSpam() {
     if (!this.labels) {
       return false;
     }
-    return this.labels.some(folder => folder && folder.role && folder.role.toLowerCase().includes('spam'));
+    return this.labels.some(
+      folder => folder && folder.role && folder.role.toLowerCase().includes('spam')
+    );
   }
   isInInbox() {
     if (!this.labels) {
@@ -741,17 +761,25 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() { }
+  isActiveDraft() {}
 
   isDeleted() {
     return this.deleted;
   }
   isDraftSending() {
-    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState === Message.messageSyncState.sending);
+    return (
+      !this.isDeleted() &&
+      this.draft &&
+      Message.compareMessageState(this.syncState === Message.messageSyncState.sending)
+    );
   }
 
   isDraftSaving() {
-    return !this.isDeleted() && this.draft && Message.compareMessageState(this.syncState == Message.messageSyncState.saving); // eslint-ignore-line
+    return (
+      !this.isDeleted() &&
+      this.draft &&
+      Message.compareMessageState(this.syncState == Message.messageSyncState.saving)
+    ); // eslint-ignore-line
   }
   isCalendarReply() {
     return this.calendarReply;
