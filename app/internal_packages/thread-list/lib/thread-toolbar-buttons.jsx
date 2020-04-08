@@ -31,17 +31,17 @@ const threadSelectionScope = (props, selection) => {
   let threads = props.items;
   const focusedThread = FocusedContentStore.focused('thread');
   const workspaceMode = WorkspaceStore.layoutMode();
-  if (selection &&  workspaceMode!== 'list') {
+  if (selection && workspaceMode !== 'list') {
     const selectionThreads = selection.items();
     if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
       threads = selectionThreads;
     }
-  } else if (selection && !focusedThread && workspaceMode === 'list'){
+  } else if (selection && !focusedThread && workspaceMode === 'list') {
     const selectionThreads = selection.items();
     if (Array.isArray(selectionThreads) && selectionThreads.length > 0) {
       threads = selectionThreads;
     }
-  } else if (focusedThread && workspaceMode === 'list'){
+  } else if (focusedThread && workspaceMode === 'list') {
     threads = [focusedThread];
   }
   return threads;
@@ -66,7 +66,7 @@ const hiddenButtonSelectionScope = (props, threads) => {
     }
   }
   return items;
-}
+};
 
 const isSameAccount = items => {
   if (!Array.isArray(items)) {
@@ -161,7 +161,7 @@ export function TrashButton(props) {
                 threads: JSON.stringify(props.items),
               },
             });
-          } catch (e) { }
+          } catch (e) {}
         }
       });
     }
@@ -203,7 +203,7 @@ export function TrashButton(props) {
                 messages: JSON.stringify(messages),
               },
             });
-          } catch (e) { }
+          } catch (e) {}
         }
       });
     }
@@ -505,11 +505,11 @@ export function ToggleUnreadButton(props) {
       commands={
         targetUnread
           ? {
-            'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
-          }
+              'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
+            }
           : {
-            'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
-          }
+              'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
+            }
       }
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
@@ -556,15 +556,25 @@ class HiddenGenericRemoveButton extends React.Component {
   _onRemoveFromView = threads => {
     const current = FocusedPerspectiveStore.current();
     const items = hiddenButtonSelectionScope(this.props, threads);
-    const tasks = current.tasksForRemovingItems(items,
-      'Keyboard Shortcut'
-    );
-    Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:HiddenGenericRemoveButton:removeFromView' });
-    if (AppEnv.isThreadWindow()) {
-      AppEnv.debugLog(`Closing window because in ThreadWindow`);
-      AppEnv.close();
+    if (Array.isArray(items) && items.length > 0) {
+      const tasks = current.tasksForRemovingItems(items, 'Keyboard Shortcut');
+      if (Array.isArray(tasks) && tasks.length > 0) {
+        Actions.queueTasks(tasks);
+        Actions.popSheet({ reason: 'ToolbarButton:HiddenGenericRemoveButton:removeFromView' });
+        if (AppEnv.isThreadWindow()) {
+          AppEnv.debugLog(`Closing window because in ThreadWindow`);
+          AppEnv.close();
+        }
+        return;
+      }
     }
+    AppEnv.reportWarning(new Error('Tasks is empty'), {
+      errorData: {
+        threads,
+        props: this.props,
+        perspective: current,
+      },
+    });
   };
 
   render() {
@@ -596,29 +606,24 @@ class HiddenToggleImportantButton extends React.Component {
   _onSetImportant = (important, threads) => {
     const items = hiddenButtonSelectionScope(this.props, threads);
     Actions.queueTasks(
-      TaskFactory.tasksForThreadsByAccountId(
-        items,
-        (accountThreads, accountId) => {
-          return [
-            new ChangeLabelsTask({
-              threads: accountThreads,
-              source: 'Keyboard Shortcut',
-              labelsToAdd: [],
-              labelsToRemove: important
-                ? []
-                : [CategoryStore.getCategoryByRole(accountId, 'important')],
-            }),
-            new ChangeLabelsTask({
-              threads: accountThreads,
-              source: 'Keyboard Shortcut',
-              labelsToAdd: important
-                ? [CategoryStore.getCategoryByRole(accountId, 'important')]
-                : [],
-              labelsToRemove: [],
-            }),
-          ];
-        }
-      )
+      TaskFactory.tasksForThreadsByAccountId(items, (accountThreads, accountId) => {
+        return [
+          new ChangeLabelsTask({
+            threads: accountThreads,
+            source: 'Keyboard Shortcut',
+            labelsToAdd: [],
+            labelsToRemove: important
+              ? []
+              : [CategoryStore.getCategoryByRole(accountId, 'important')],
+          }),
+          new ChangeLabelsTask({
+            threads: accountThreads,
+            source: 'Keyboard Shortcut',
+            labelsToAdd: important ? [CategoryStore.getCategoryByRole(accountId, 'important')] : [],
+            labelsToRemove: [],
+          }),
+        ];
+      })
     );
   };
 
@@ -641,14 +646,10 @@ class HiddenToggleImportantButton extends React.Component {
     return (
       <BindGlobalCommands
         key={allImportant ? 'unimportant' : 'important'}
-        commands={
-            {
-              'core:mark-unimportant': event =>
-                commandCb(event, this._onShortcutSetImportant, false),
-              'core:mark-important': event =>
-                commandCb(event, this._onShortcutSetImportant, true),
-            }
-        }
+        commands={{
+          'core:mark-unimportant': event => commandCb(event, this._onShortcutSetImportant, false),
+          'core:mark-important': event => commandCb(event, this._onShortcutSetImportant, true),
+        }}
       >
         <span />
       </BindGlobalCommands>
@@ -694,8 +695,8 @@ export class ThreadListMoreButton extends React.Component {
           new MenuItem({
             label: 'Move to Folder',
             click: () => {
-              AppEnv.commands.dispatch('core:change-folders', this._anchorEl)
-            }
+              AppEnv.commands.dispatch('core:change-folders', this._anchorEl);
+            },
           })
         );
       }
@@ -983,7 +984,7 @@ export const ThreadListToolbarButtons = CreateButtonGroup(
 );
 export const HiddenThreadListToolbarButtons = CreateButtonGroup(
   'HiddenThreadListToolbarButtons',
-  [ HiddenGenericRemoveButton, HiddenToggleImportantButton ],
+  [HiddenGenericRemoveButton, HiddenToggleImportantButton],
   { order: 1 }
 );
 
