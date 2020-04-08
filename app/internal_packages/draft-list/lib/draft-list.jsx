@@ -72,7 +72,7 @@ class DraftList extends React.Component {
   };
 
   _onClick = draft => {
-    if(this._isOpeningDraftCoolDown()){
+    if (this._isOpeningDraftCoolDown()) {
       return;
     }
     if (DraftStore.isSendingDraft(draft.headerMessageId)) {
@@ -84,6 +84,9 @@ class DraftList extends React.Component {
     }
     if (!!draft.body || !!draft.snippet) {
       draft.missingAttachments().then(ret => {
+        if (!this._mounted) {
+          return;
+        }
         const totalMissing = ret.totalMissing().map(f => f.id);
         if (totalMissing.length === 0) {
           Actions.composePopoutDraft(draft.headerMessageId);
@@ -115,10 +118,10 @@ class DraftList extends React.Component {
     }, buttonTimer);
   };
   _isOpeningDraftCoolDown = () => {
-    if(this._isOpeningTimer){
+    if (this._isOpeningTimer) {
       return true;
     }
-    this._isOpeningTimer = setTimeout(()=>{
+    this._isOpeningTimer = setTimeout(() => {
       this._isOpeningTimer = false;
     }, buttonTimer);
     return false;
