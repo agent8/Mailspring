@@ -72,7 +72,7 @@ export default class OAuthSignInPage extends React.Component {
       if (!this._mounted) return;
       // shell.openExternal(this.props.providerAuthPageUrl);
       const serviceName = this.props.serviceName.toLowerCase();
-      if (serviceName === 'jira') {
+      if (serviceName === 'jira' && !process.mas) {
         this.openBrowser();
       } else {
         this._openInWebView(this.props.providerAuthPageUrl)
@@ -382,7 +382,7 @@ export default class OAuthSignInPage extends React.Component {
     const serviceName = this.props.serviceName.toLowerCase();
     let wbView;
     let loadingImg;
-    if (serviceName === 'jira') {
+    if (serviceName === 'jira' && !process.mas) {
       wbView = <div className="jira-oauth-title">
         <h2>
           Sign in with Jira in<br />your browser.
