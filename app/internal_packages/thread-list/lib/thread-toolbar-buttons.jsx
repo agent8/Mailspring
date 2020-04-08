@@ -67,7 +67,7 @@ const hiddenButtonSelectionScope = (props, threads) => {
     }
   }
   return items;
-}
+};
 
 const isSameAccount = items => {
   if (!Array.isArray(items)) {
@@ -162,7 +162,7 @@ export function TrashButton(props) {
                 threads: JSON.stringify(props.items),
               },
             });
-          } catch (e) { }
+          } catch (e) {}
         }
       });
     }
@@ -204,7 +204,7 @@ export function TrashButton(props) {
                 messages: JSON.stringify(messages),
               },
             });
-          } catch (e) { }
+          } catch (e) {}
         }
       });
     }
@@ -506,11 +506,11 @@ export function ToggleUnreadButton(props) {
       commands={
         targetUnread
           ? {
-            'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
-          }
+              'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
+            }
           : {
-            'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
-          }
+              'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
+            }
       }
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
@@ -557,15 +557,25 @@ class HiddenGenericRemoveButton extends React.Component {
   _onRemoveFromView = threads => {
     const current = FocusedPerspectiveStore.current();
     const items = hiddenButtonSelectionScope(this.props, threads);
-    const tasks = current.tasksForRemovingItems(items,
-      'Keyboard Shortcut'
-    );
-    Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:HiddenGenericRemoveButton:removeFromView' });
-    if (AppEnv.isThreadWindow()) {
-      AppEnv.debugLog(`Closing window because in ThreadWindow`);
-      AppEnv.close();
+    if (Array.isArray(items) && items.length > 0) {
+      const tasks = current.tasksForRemovingItems(items, 'Keyboard Shortcut');
+      if (Array.isArray(tasks) && tasks.length > 0) {
+        Actions.queueTasks(tasks);
+        Actions.popSheet({ reason: 'ToolbarButton:HiddenGenericRemoveButton:removeFromView' });
+        if (AppEnv.isThreadWindow()) {
+          AppEnv.debugLog(`Closing window because in ThreadWindow`);
+          AppEnv.close();
+        }
+        return;
+      }
     }
+    AppEnv.reportWarning(new Error('Tasks is empty'), {
+      errorData: {
+        threads,
+        props: this.props,
+        perspective: current,
+      },
+    });
   };
 
   render() {
@@ -597,28 +607,25 @@ class HiddenToggleImportantButton extends React.Component {
   _onSetImportant = (important, threads) => {
     const items = hiddenButtonSelectionScope(this.props, threads);
     Actions.queueTasks(
-      TaskFactory.tasksForThreadsByAccountId(
-        items,
-        (accountThreads, accountId) => {
-          let labelsToAdd;
-          let labelsToRemove;
-          if (important) {
-            labelsToAdd = [CategoryStore.getCategoryByRole(accountId, 'important')];
-            labelsToRemove = [];
-          } else {
-            labelsToAdd = [];
-            labelsToRemove = [CategoryStore.getCategoryByRole(accountId, 'important')];
-          }
-          return [
-            new ChangeLabelsTask({
-              threads: accountThreads,
-              source: 'Keyboard Shortcut',
-              labelsToAdd: labelsToAdd,
-              labelsToRemove: labelsToRemove,
-            })
-          ]
+      TaskFactory.tasksForThreadsByAccountId(items, (accountThreads, accountId) => {
+        let labelsToAdd;
+        let labelsToRemove;
+        if (important) {
+          labelsToAdd = [CategoryStore.getCategoryByRole(accountId, 'important')];
+          labelsToRemove = [];
+        } else {
+          labelsToAdd = [];
+          labelsToRemove = [CategoryStore.getCategoryByRole(accountId, 'important')];
         }
-      )
+        return [
+          new ChangeLabelsTask({
+            threads: accountThreads,
+            source: 'Keyboard Shortcut',
+            labelsToAdd: labelsToAdd,
+            labelsToRemove: labelsToRemove,
+          }),
+        ];
+      })
     );
   };
 
@@ -641,14 +648,10 @@ class HiddenToggleImportantButton extends React.Component {
     return (
       <BindGlobalCommands
         key={allImportant ? 'unimportant' : 'important'}
-        commands={
-          {
-            'core:mark-unimportant': event =>
-              commandCb(event, this._onShortcutSetImportant, false),
-            'core:mark-important': event =>
-              commandCb(event, this._onShortcutSetImportant, true),
-          }
-        }
+        commands={{
+          'core:mark-unimportant': event => commandCb(event, this._onShortcutSetImportant, false),
+          'core:mark-important': event => commandCb(event, this._onShortcutSetImportant, true),
+        }}
       >
         <span />
       </BindGlobalCommands>
@@ -695,8 +698,8 @@ export class ThreadListMoreButton extends React.Component {
           new MenuItem({
             label: 'Move to Folder',
             click: () => {
-              AppEnv.commands.dispatch('core:change-folders', this._anchorEl)
-            }
+              AppEnv.commands.dispatch('core:change-folders', this._anchorEl);
+            },
           })
         );
       }
@@ -744,10 +747,7 @@ export class ThreadListMoreButton extends React.Component {
           })
         );
       }
-      const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
-        this.props.items,
-        'spam'
-      );
+      const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(this.props.items, 'spam');
       if (allowed) {
         menu.append(
           new MenuItem({
@@ -758,14 +758,12 @@ export class ThreadListMoreButton extends React.Component {
           })
         );
       }
-      const isAllAccountsUseLabels = accounts.every(
-        acc => acc.usesLabels()
-      )
+      const isAllAccountsUseLabels = accounts.every(acc => acc.usesLabels());
       if (isAllAccountsUseLabels) {
         const isAllImportant = this.props.items.every(item => {
           const category = CategoryStore.getCategoryByRole(item.accountId, 'important');
           return _.findWhere(item.labels, { id: category.id }) != null;
-        })
+        });
         if (isAllImportant) {
           menu.append(
             new MenuItem({
