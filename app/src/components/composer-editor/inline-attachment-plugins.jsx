@@ -121,18 +121,8 @@ const nonPrintableKeyCode = {
     0, //Unknown key
   ],
 };
-const onKeyUp = (event, change) => {
-  if (
-    event.shiftKey ||
-    event.metaKey ||
-    event.optionKey ||
-    event.altKey ||
-    event.ctrlKey ||
-    ['Control', 'Meta', 'Alt', 'Shift', 'Enter'].includes(event.key) ||
-    nonPrintableKeyCode.mac.includes(event.keyCode)
-  ) {
-    return;
-  }
+
+const processInlineAttachment = change => {
   let contentIds = [];
   const inLines = change.value.inlines;
   if (inLines) {
@@ -146,6 +136,20 @@ const onKeyUp = (event, change) => {
     }
   }
   contentIds.forEach(contentId => Actions.draftInlineAttachmentRemoved(contentId));
+};
+const onKeyDown = (event, change) => {
+  if (
+    event.shiftKey ||
+    event.metaKey ||
+    event.optionKey ||
+    event.altKey ||
+    event.ctrlKey ||
+    ['Control', 'Meta', 'Alt', 'Shift', 'Enter'].includes(event.key) ||
+    nonPrintableKeyCode.mac.includes(event.keyCode)
+  ) {
+    return;
+  }
+  processInlineAttachment(change);
 };
 
 export const changes = {
@@ -174,6 +178,6 @@ export default [
   {
     renderNode,
     rules,
-    onKeyUp,
+    onKeyDown,
   },
 ];
