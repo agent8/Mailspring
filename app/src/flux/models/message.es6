@@ -1,6 +1,7 @@
 import _ from 'underscore';
 import moment from 'moment';
 import fs from 'fs';
+import util from 'util';
 import File from './file';
 import Utils from './utils';
 import Event from './event';
@@ -12,7 +13,7 @@ import ModelWithMetadata from './model-with-metadata';
 import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
 let AttachmentStore = null;
-
+const fsExists = util.promisify(fs.exists);
 /*
 Public: The Message model represents an email message or draft.
 
@@ -239,7 +240,7 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'forwardHeaderMessageId',
     }),
     referenceMessageId: Attributes.String({
-      modelKey: 'referenceMessageId'
+      modelKey: 'referenceMessageId',
     }),
     refOldDraftHeaderMessageId: Attributes.String({
       modelKey: 'refOldDraftHeaderMessageId',
@@ -303,8 +304,8 @@ export default class Message extends ModelWithMetadata {
     }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
-      queryable: false
-    })
+      queryable: false,
+    }),
   });
 
   static naturalSortOrder() {
@@ -483,56 +484,64 @@ export default class Message extends ModelWithMetadata {
           needToDownload: [],
         },
       };
-      const total = this.files.length * 2;
+      const total = (this.files || []).length * 2;
       if (total === 0) {
         resolve(ret);
         return;
       }
       let processed = 0;
-      this.files.forEach(f => {
+      (this.files || []).forEach(f => {
         const path = AttachmentStore.pathForFile(f);
-        const exists = fs.existsSync(path);
-        if (!exists) {
-          processed++;
-          const partExists = fs.existsSync(`${path}.part`);
-          processed++;
-          if (!partExists) {
-            if (f.isInline) {
-              ret.inline.needToDownload.push(f);
-            } else {
-              ret.normal.needToDownload.push(f);
+        fsExists(path)
+          .then(() => {
+            processed += 2;
+            if (processed === total) {
+              resolve(ret);
             }
-          } else {
-            if (f.isInline) {
-              ret.inline.downloading.push(f);
-            } else {
-              ret.normal.downloading.push(f);
-            }
-          }
-          if (processed === total) {
-            resolve(ret);
-          }
-        } else {
-          processed += 2;
-          if (processed === total) {
-            resolve(ret);
-          }
-        }
+          })
+          .catch(error => {
+            processed++;
+            fsExists(`${path}.part`)
+              .then(() => {
+                processed++;
+                if (f.isInline) {
+                  ret.inline.downloading.push(f);
+                } else {
+                  ret.normal.downloading.push(f);
+                }
+                if (processed === total) {
+                  resolve(ret);
+                }
+              })
+              .catch(error => {
+                processed++;
+                if (f.isInline) {
+                  ret.inline.needToDownload.push(f);
+                } else {
+                  ret.normal.needToDownload.push(f);
+                }
+                if (processed === total) {
+                  resolve(ret);
+                }
+              });
+          });
       });
     });
   }
 
   //Public: returns the first email that belongs to the account that received the email,
   // otherwise returns the account's default email.
-  findMyEmail(){
-    const participants = this.participants({includeFrom: false, includeBcc: true});
+  findMyEmail() {
+    const participants = this.participants({ includeFrom: false, includeBcc: true });
     const account = AccountStore.accountForId(this.accountId);
-    if(!account){
-      AppEnv.reportError(new Error('Message accountId is not part of any account'), {errorData: this.toJSON()})
+    if (!account) {
+      AppEnv.reportError(new Error('Message accountId is not part of any account'), {
+        errorData: this.toJSON(),
+      });
       return false;
     }
-    for(let participant of participants){
-      if(account.isMyEmail(participant.email)){
+    for (let participant of participants) {
+      if (account.isMyEmail(participant.email)) {
         return participant.email;
       }
     }
@@ -617,7 +626,7 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() { }
+  isActiveDraft() {}
 
   isDeleted() {
     //DC-269

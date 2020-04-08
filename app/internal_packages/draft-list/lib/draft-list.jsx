@@ -78,6 +78,9 @@ class DraftList extends React.Component {
       return;
     }
     if (!!draft.body || !!draft.snippet) {
+      if (!this._mounted) {
+        return;
+      }
       draft.missingAttachments().then(ret => {
         const totalMissing = ret.totalMissing().map(f => f.id);
         if (totalMissing.length === 0) {
