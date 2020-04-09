@@ -34,9 +34,7 @@ export const DEFAULT_FONT_FACE_OPTIONS = [
 const PT_TO_SIZE = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 7];
 
 let plugins = null;
-export const Divider = (key = 'divider') => (
-  <div className="divider " key={key} />
-);
+export const Divider = (key = 'divider') => <div className="divider " key={key} />;
 Divider.displayName = 'Divider';
 
 function isMeaningfulColor(color) {
@@ -98,7 +96,18 @@ export const MARK_CONFIG = {
   codeInline: {
     type: 'codeInline',
     tagNames: ['code'],
-    render: props => <code>{props.children}</code>,
+    render: props => (
+      <code>
+        <div
+          style={{
+            backgroundColor: `rgba(0, 0, 0, 0.05)`,
+            padding: `0.2em 1em`,
+          }}
+        >
+          {props.children}
+        </div>
+      </code>
+    ),
   },
 
   color: {
@@ -122,8 +131,8 @@ export const MARK_CONFIG = {
       return typeof v === 'string' ? (
         <font style={{ fontSize: v }}>{children}</font>
       ) : (
-          <font size={v}>{children}</font>
-        );
+        <font size={v}>{children}</font>
+      );
     },
   },
   face: {
@@ -317,7 +326,7 @@ export default [
               let size = 2;
               if (provided.endsWith('px')) {
                 // 16px = 12pt
-                size = PT_TO_SIZE[Math.round(provided.replace('px', '') / 1 * 0.75)];
+                size = PT_TO_SIZE[Math.round((provided.replace('px', '') / 1) * 0.75)];
               }
               if (provided.endsWith('em')) {
                 // 1em = 12pt
