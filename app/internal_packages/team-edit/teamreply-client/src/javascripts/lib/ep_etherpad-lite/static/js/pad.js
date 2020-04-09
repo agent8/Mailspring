@@ -259,26 +259,18 @@ require.define({
       var teamPadConfig = window.parent.teamPadConfig
       var url = teamPadConfig.stagUrl
       //find out in which subfolder we are
-      var resource = teamPadConfig.stagServicePath + 'socket.io' //exports.baseURL.substring(1)  + "socket.io";
+      var resource = teamPadConfig.stagServicePath + 'socket.io'
       console.log('yazz', url)
       console.log('yazz', exports.baseURL)
       //connect
       socket = pad.socket = io.connect(url, {
         // Allow deployers to host Etherpad on a non-root path
-        path: '/tr/socket.io', //exports.baseURL + "socket.io",
+        path: '/api/cp/tr/socket.io',
         resource: resource,
         reconnectionAttempts: 5,
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        // transportOptions: {
-        //   polling: {
-        //       extraHeaders: {
-        //           'token': token,
-        //           'userId': userId
-        //       }
-        //   }
-        // }
       })
 
       var composerOnPadSocketHandler = window.parent.composerOnPadSocketHandler

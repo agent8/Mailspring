@@ -76,19 +76,19 @@ class PadStore extends MailspringStore {
     this.token = token
     const apiPath = window.teamPadConfig.teamEditAPIUrl + 'listPadsOfAuthor'
     const options = { userId, token }
+    const headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'cross-site',
+    }
     console.log(
       ' PadStore.updateFromServer postAsync listPadsOfAuthor apiPath, options: ',
       apiPath,
-      options
+      options,
+      headers
     )
-    let res = await postAsync(apiPath, options, {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'cross-site',
-      },
-    })
+    let res = await postAsync(apiPath, options) //, { headers }
     console.log(' PadStore.updateFromServer postAsync listPadsOfAuthor res: ', res)
     if (!res) {
       return

@@ -706,7 +706,7 @@ export default class ComposerView extends React.Component {
           'Sec-Fetch-Site': 'cross-site',
         },
       })
-      console.log(' createTeamEditPad postAsync apiPath, createPadOptions:', res)
+      console.log(' createTeamEditPad postAsync res:', res)
       if (typeof res === 'string') {
         res = JSON.parse(res)
       }
