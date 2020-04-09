@@ -141,23 +141,27 @@ export const BLOCK_CONFIG = {
       onToggle: (value, active) => {
         return active
           ? value.change().setBlock(BLOCK_CONFIG.div.type)
-          : value.change().setBlock(BLOCK_CONFIG.blockquote.type).moveToEnd().insertBlock(BLOCK_CONFIG.div.type);
+          : value
+              .change()
+              .setBlock(BLOCK_CONFIG.blockquote.type)
+              .moveToEnd()
+              .insertBlock(BLOCK_CONFIG.div.type);
       },
     },
   },
   code: {
     type: 'code',
-    tagNames: ['pre'],
+    tagNames: ['code'],
     render: props => (
       <code {...props.attributes}>
-        <pre
+        <div
           style={{
             backgroundColor: `rgba(0, 0, 0, 0.05)`,
             padding: `0.2em 1em`,
           }}
         >
           {props.children}
-        </pre>
+        </div>
       </code>
     ),
     button: {
@@ -168,7 +172,11 @@ export const BLOCK_CONFIG = {
       onToggle: (value, active) =>
         active
           ? value.change().setBlock(BLOCK_CONFIG.div.type)
-          : value.change().setBlock(BLOCK_CONFIG.code.type).moveToEnd().insertBlock(BLOCK_CONFIG.div.type),
+          : value
+              .change()
+              .setBlock(BLOCK_CONFIG.code.type)
+              .moveToEnd()
+              .insertBlock(BLOCK_CONFIG.div.type),
     },
   },
   ol_list: {
@@ -182,7 +190,7 @@ export const BLOCK_CONFIG = {
         const list = EditListPlugin.utils.getCurrentList(value);
         return list && list.type === BLOCK_CONFIG.ol_list.type;
       },
-      onToggle: (value, active) => toggleList(value, active, BLOCK_CONFIG.ol_list.type)
+      onToggle: (value, active) => toggleList(value, active, BLOCK_CONFIG.ol_list.type),
     },
   },
   ul_list: {
@@ -463,7 +471,7 @@ export default [
         return Handlers.onShiftTab({ lineType: 'div' }, event, change);
       }
       return Handlers.onTab({ lineType: 'div' }, event, change);
-    }
+    },
   },
 
   // Tabbing in / out in lists, enter to start new list item
