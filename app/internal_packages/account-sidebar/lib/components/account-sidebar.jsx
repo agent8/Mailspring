@@ -37,11 +37,6 @@ class AccountSidebar extends React.Component {
         this._accountSideBarWrapEl.scrollTop = pos;
       });
     }
-    // auto focus for keyboard operation
-    if (this._keyCommands) {
-      const el = ReactDOM.findDOMNode(this._keyCommands);
-      el.focus();
-    }
     this.unsubscribers = [];
     this.unsubscribers.push(SidebarStore.listen(this._onStoreChange));
     this.unsubscribers.push(AccountStore.listen(this._onStoreChange));
@@ -94,11 +89,11 @@ class AccountSidebar extends React.Component {
     };
   };
 
-  _scrollToFocusItem = (selectedItemKey) => {
+  _scrollToFocusItem = selectedItemKey => {
     const selectNode = document.querySelector(
       `.nylas-outline-view .item-container .item[id='${selectedItemKey}']`
     );
-    if(selectNode && this._accountSideBarWrapEl){
+    if (selectNode && this._accountSideBarWrapEl) {
       this._accountSideBarWrapEl.scrollTo(selectNode);
     }
     // const { items } = this.state.standardSection;
@@ -130,10 +125,10 @@ class AccountSidebar extends React.Component {
     SidebarStore.onShift(delta, this._scrollToFocusItem);
   };
 
-  _localKeymapHandlers() {
+  _globalKeymapHandlers() {
     return {
-      'core:next-item': () => this._onShift(1),
-      'core:previous-item': () => this._onShift(-1),
+      'core:next-folder': () => this._onShift(1),
+      'core:previous-folder': () => this._onShift(-1),
     };
   }
 
@@ -143,7 +138,7 @@ class AccountSidebar extends React.Component {
     return (
       <Flexbox direction="column" style={{ order: 1, flexShrink: 1, flex: 1 }}>
         <KeyCommandsRegion
-          localHandlers={this._localKeymapHandlers()}
+          globalHandlers={this._globalKeymapHandlers()}
           tabIndex={-1}
           ref={el => {
             this._keyCommands = el;

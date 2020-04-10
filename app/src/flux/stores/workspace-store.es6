@@ -54,7 +54,7 @@ class WorkspaceStore extends MailspringStore {
       });
     } else {
       webFrame.setZoomFactor(1);
-      AppEnv.config.observe('core.workspace.interfaceZoom', () => { });
+      AppEnv.config.observe('core.workspace.interfaceZoom', () => {});
     }
   }
 
@@ -104,18 +104,14 @@ class WorkspaceStore extends MailspringStore {
             'MessageList',
             // 'QuickSidebar',
             // 'MessageListSidebar'
-          ]
+          ],
         }
       );
       this.defineSheet(
         'Outbox',
         { root: true },
         {
-          split: [
-            'RootSidebar',
-            'Outbox',
-            'OutboxMessage'
-          ],
+          split: ['RootSidebar', 'Outbox', 'OutboxMessage'],
         }
       );
       this.defineSheet(
@@ -134,7 +130,7 @@ class WorkspaceStore extends MailspringStore {
             'SiftList',
             // 'QuickSidebar',
             // 'MessageListSidebar'
-          ]
+          ],
         }
       );
     } else {
@@ -394,7 +390,9 @@ class WorkspaceStore extends MailspringStore {
     // make toolbar display
     if (
       (this.topSheet() &&
-        ['Threads', 'Thread', 'Drafts', 'ChatView', 'Outbox', 'Sift'].includes(this.topSheet().id)) ||
+        ['Threads', 'Thread', 'Drafts', 'ChatView', 'Outbox', 'Sift'].includes(
+          this.topSheet().id
+        )) ||
       sheet.id === 'ChatView'
     ) {
       setTimeout(() => {
