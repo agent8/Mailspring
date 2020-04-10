@@ -474,7 +474,7 @@ export default {
           delayInMs: {
             type: 'number',
             default: 5000,
-            enum: [5000, 15000, 30000, 60000, 0],
+            enum: [5000, 15000, 30000, 60000, 1],
             enumLabels: ['5 seconds', '15 seconds', '30 seconds', '60 seconds', 'Disable'],
             title: 'Undo time window',
           },

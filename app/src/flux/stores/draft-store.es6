@@ -1404,9 +1404,9 @@ class DraftStore extends MailspringStore {
     if (!sendAction) {
       throw new Error(`Cant find send action ${actionKey} `);
     }
-
+    const tmpNow = Date.now();
     const sendLaterMetadataValue = {
-      expiration: new Date(Date.now() + delay),
+      expiration: new Date(tmpNow + (delay === 0 ? 5000 : delay)),
       isUndoSend: true,
       actionKey: actionKey,
     };
