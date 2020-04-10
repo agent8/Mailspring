@@ -1,9 +1,6 @@
 import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
-import {
-  SyncbackMetadataTask,
-  TaskFactory,
-} from 'mailspring-exports';
+import { SyncbackMetadataTask, TaskFactory } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 
 class UndoRedoStore extends MailspringStore {
@@ -58,15 +55,24 @@ class UndoRedoStore extends MailspringStore {
         },
         undo: () => {
           this._queueingTasks = true;
-          Actions.queueTasks(tasks.map(t => {
-            // undo send mail
-            if (t instanceof SyncbackMetadataTask && t.pluginId === 'send-later') {
-              ipcRenderer.send('send-later-manager', 'undo', t.modelHeaderMessageId, null, null, t.modelThreadId);
-              return null;
-            } else {
-              return TaskFactory.taskForUndo({ task: t });
-            }
-          }));
+          Actions.queueTasks(
+            tasks.map(t => {
+              // undo send mail
+              if (t instanceof SyncbackMetadataTask && t.pluginId === 'send-later') {
+                ipcRenderer.send(
+                  'send-later-manager',
+                  'undo',
+                  t.modelHeaderMessageId,
+                  null,
+                  null,
+                  t.modelThreadId
+                );
+                return null;
+              } else {
+                return TaskFactory.taskForUndo({ task: t });
+              }
+            })
+          );
           this._queueingTasks = false;
         },
         delayDuration: this.getDelayDuration(tasks),
@@ -79,7 +85,7 @@ class UndoRedoStore extends MailspringStore {
         },
         taskPurgedCallBacks: () => {
           tasks.forEach(t => {
-            if (typeof t.taskPurged === 'function'){
+            if (typeof t.taskPurged === 'function') {
               t.taskPurged();
             }
           });
@@ -134,7 +140,7 @@ class UndoRedoStore extends MailspringStore {
     }
     this._timeouts[block.id] = setTimeout(
       this._onBlockTimedOut.bind(this, { block }),
-      block.delayDuration,
+      block.delayDuration
     );
   };
   _onBlockTimedOut = ({ block }) => {
@@ -245,7 +251,7 @@ class UndoRedoStore extends MailspringStore {
       }
     }
   };
-  removeTaskFromUndo = ({ block, noTrigger = false, purgeTask = false}) => {
+  removeTaskFromUndo = ({ block, noTrigger = false, purgeTask = false }) => {
     let priority = 'low';
     switch (block.priority) {
       case this.priority.critical:
@@ -292,10 +298,7 @@ class UndoRedoStore extends MailspringStore {
   };
 
   isUndoSend(task) {
-    return (
-      task instanceof SyncbackMetadataTask &&
-      task.value.isUndoSend
-    );
+    return task instanceof SyncbackMetadataTask && task.value.isUndoSend;
   }
 
   getUndoSendExpiration(task) {
@@ -303,8 +306,14 @@ class UndoRedoStore extends MailspringStore {
   }
 
   getDelayDuration(tasks) {
+    const now = Date.now();
+    const taskDelay = AppEnv.config.get('core.task.delayInMs');
     let timeouts = tasks.map(task => {
-      return this.isUndoSend(task) ? Math.max(400, this.getUndoSendExpiration(task) - Date.now()) : AppEnv.config.get('core.task.delayInMs');
+      return this.isUndoSend(task)
+        ? Math.max(400, this.getUndoSendExpiration(task) - now)
+        : taskDelay === 0
+        ? 5000
+        : taskDelay;
     });
     return Math.min(...timeouts);
   }
