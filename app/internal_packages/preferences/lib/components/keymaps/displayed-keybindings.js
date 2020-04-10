@@ -1,7 +1,10 @@
 module.exports = [
   {
     title: 'APPLICATION',
-    items: [['application:new-message', 'New Message'], ['core:focus-search', 'Search']],
+    items: [
+      ['application:new-message', 'New Message'],
+      ['core:focus-search', 'Search'],
+    ],
   },
   {
     title: 'EMAILS',
@@ -54,6 +57,8 @@ module.exports = [
       ['core:focus-item', 'Open selected email'],
       ['core:previous-item', 'Move to next email'],
       ['core:next-item', 'Move to previous email'],
+      ['core:previous-folder', 'Move to next folder'],
+      ['core:next-folder', 'Move to previous folder'],
       ['core:select-item', 'Select'],
       ['multiselect-list:select-all', 'Select all'],
       ['multiselect-list:deselect-all', 'Deselect all'],
