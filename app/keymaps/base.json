@@ -8,6 +8,8 @@
   "core:select-all": "mod+a",
   "core:previous-item": "up",
   "core:next-item": "down",
+  "core:previous-folder":"mod+up",
+  "core:next-folder": "mod+down",
   "core:move-left": "left",
   "core:move-right": "right",
   "core:select-up": "shift+up",
