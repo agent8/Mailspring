@@ -168,6 +168,7 @@ function BeforePlugin() {
     });
 
     debug('onCompositionEnd', { event: event });
+    return change.deleteBackward().insertText(event.data);
   }
 
   /**
@@ -191,6 +192,7 @@ function BeforePlugin() {
     }
 
     debug('onCompositionStart', { event: event });
+    return change.insertText('\u200b');
   }
 
   /**

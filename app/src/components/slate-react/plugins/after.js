@@ -103,6 +103,10 @@ function AfterPlugin() {
     debug('onBeforeInput', { event: event });
 
     event.preventDefault();
+    // if using CJK input, do nothing
+    if (editor.state.isComposing) {
+      return true;
+    }
     change.insertText(event.data);
   }
 
