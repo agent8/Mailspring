@@ -16,8 +16,7 @@ function InflatesDraftClientId(ComposedComponent) {
     };
 
     static defaultProps = {
-      onDraftReady: () => {
-      },
+      onDraftReady: () => {},
     };
 
     static containerRequired = false;
@@ -51,7 +50,7 @@ function InflatesDraftClientId(ComposedComponent) {
         if (
           this.props.draft &&
           (Message.compareMessageState(this.props.draft.state, Message.messageState.sending) ||
-          Message.compareMessageState(this.props.draft.state, Message.messageState.failing))
+            Message.compareMessageState(this.props.draft.state, Message.messageState.failing))
         ) {
           AppEnv.reportError(
             new Error('Draft editing session should not have sending/failing state drafts'),
@@ -80,7 +79,8 @@ function InflatesDraftClientId(ComposedComponent) {
           newProps.draft &&
           newProps.draft.savedOnRemote &&
           !Message.compareMessageState(newProps.draft.state, Message.messageState.sending) &&
-          !Message.compareMessageState(newProps.draft.state, Message.messageState.failing)) {
+          !Message.compareMessageState(newProps.draft.state, Message.messageState.failing)
+        ) {
           this._prepareServerDraftForEdit(newProps.draft);
         } else {
           this._prepareForDraft(newProps.headerMessageId, newProps.messageId);
@@ -108,18 +108,23 @@ function InflatesDraftClientId(ComposedComponent) {
           const shouldSetState = () => {
             if (!session) {
               AppEnv.reportError(new Error('session not available'));
-              return this._mounted;
+              return false;
             }
             const newDraft = session.draft();
             let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
             if (newDraft && newDraft.refOldDraftHeaderMessageId) {
-              sameDraftWithNewID = newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId;
+              sameDraftWithNewID =
+                newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId;
             }
             return (
               this._mounted &&
-              (newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId || sameDraftWithNewID)
+              (newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId ||
+                sameDraftWithNewID)
             );
           };
+          if (!shouldSetState()) {
+            return;
+          }
           this._sessionUnlisten = session.listen(() => {
             // console.log('inflates, data change');
             if (!shouldSetState()) {
@@ -128,11 +133,11 @@ function InflatesDraftClientId(ComposedComponent) {
               // console.log('------------------------------------- ');
               return;
             }
-            if(this._mounted){
+            if (this._mounted) {
               this.setState({ draft: session.draft() });
             }
           });
-          if(this._mounted){
+          if (this._mounted) {
             this.setState({
               session: session,
               draft: session.draft(),
@@ -151,7 +156,7 @@ function InflatesDraftClientId(ComposedComponent) {
         const shouldSetState = () => {
           if (!session) {
             AppEnv.reportError(new Error('session not available'));
-            return this._mounted;
+            return false;
           }
           const draft = session.draft();
           let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
@@ -180,13 +185,13 @@ function InflatesDraftClientId(ComposedComponent) {
             // console.log('------------------------------------- ');
             return;
           }
-          if(this._mounted){
+          if (this._mounted) {
             this.setState({ draft: session.draft() });
-          }else {
+          } else {
             console.error(`component unmounted, session draft ${session.draft()}`);
           }
         });
-        if(this._mounted){
+        if (this._mounted) {
           this.setState({
             session: session,
             draft: session.draft(),
@@ -226,13 +231,12 @@ function InflatesDraftClientId(ComposedComponent) {
     focus() {
       return Utils.waitFor(() => this.refs.composed)
         .then(() => this.refs.composed.focus())
-        .catch(() => {
-        });
+        .catch(() => {});
     }
 
     render() {
       if (!this.state.draft) {
-        return <span/>;
+        return <span />;
       }
       return (
         <ComposedComponent
