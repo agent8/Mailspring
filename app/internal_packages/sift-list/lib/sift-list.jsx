@@ -51,7 +51,7 @@ class SiftList extends React.Component {
     clearTimeout(this._deletingTimer);
   }
 
-  _calcScrollPosition = _.throttle((scrollTop) => {
+  _calcScrollPosition = _.throttle(scrollTop => {
     const toolbar = document.querySelector('.outbox-list .outbox-list-toolbar');
     if (toolbar) {
       if (scrollTop > 0) {
@@ -164,13 +164,15 @@ class SiftList extends React.Component {
   };
 
   _onRemoveFromView = () => {
-    if (!this.state.isDeleting && !this._deletingTimer) {
-      this._changeBackToNotDeleting();
-      this.setState({ isDeleting: true });
-      for (const draft of SiftStore.dataSource().selection.items()) {
-        // Actions.destroyDraft(draft);
-      }
-    }
+    //No op
+    return;
+    // if (!this.state.isDeleting && !this._deletingTimer) {
+    //   this._changeBackToNotDeleting();
+    //   this.setState({ isDeleting: true });
+    //   for (const draft of SiftStore.dataSource().selection.items()) {
+    //     // Actions.destroyDraft(draft);
+    //   }
+    // }
   };
 }
 
