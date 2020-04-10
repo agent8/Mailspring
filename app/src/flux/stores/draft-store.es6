@@ -264,7 +264,8 @@ class DraftStore extends MailspringStore {
         const matching = draft.files.some(f => f.contentId === contentId);
         if (matching) {
           console.log('match found for draft', draft.headerMessageId);
-          session.updateAttachments(draft.files.filter(f => f.contentId !== contentId));
+          session.changes.add({ files: draft.files.filter(f => f.contentId !== contentId) });
+          session.changes.commit();
           break;
         }
       }
