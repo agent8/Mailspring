@@ -1,10 +1,22 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
+Object.defineProperty(exports, '__esModule', {
+  value: true,
 });
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+var _extends =
+  Object.assign ||
+  function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
 
 var _slateBase64Serializer = require('slate-base64-serializer');
 
@@ -72,7 +84,9 @@ var _setEventTransfer = require('../utils/set-event-transfer');
 
 var _setEventTransfer2 = _interopRequireDefault(_setEventTransfer);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : { default: obj };
+}
 
 /**
  * Debug.
@@ -103,6 +117,10 @@ function AfterPlugin() {
     debug('onBeforeInput', { event: event });
 
     event.preventDefault();
+    // if using CJK input, do nothing
+    if (editor.state.isComposing) {
+      return true;
+    }
     change.insertText(event.data);
   }
 
@@ -178,27 +196,27 @@ function AfterPlugin() {
 
     // Once the fake cut content has successfully been added to the clipboard,
     // delete the content in the current selection.
-    window.requestAnimationFrame(function () {
+    window.requestAnimationFrame(function() {
       // If user cuts a void block node or a void inline node,
       // manually removes it since selection is collapsed in this case.
       var value = change.value;
       var endBlock = value.endBlock,
-          endInline = value.endInline,
-          isCollapsed = value.isCollapsed;
+        endInline = value.endInline,
+        isCollapsed = value.isCollapsed;
 
       var isVoidBlock = endBlock && endBlock.isVoid && isCollapsed;
       var isVoidInline = endInline && endInline.isVoid && isCollapsed;
 
       if (isVoidBlock) {
-        editor.change(function (c) {
+        editor.change(function(c) {
           return c.removeNodeByKey(endBlock.key);
         });
       } else if (isVoidInline) {
-        editor.change(function (c) {
+        editor.change(function(c) {
           return c.removeNodeByKey(endInline.key);
         });
       } else {
-        editor.change(function (c) {
+        editor.change(function(c) {
           return c.delete();
         });
       }
@@ -276,7 +294,7 @@ function AfterPlugin() {
 
     var value = change.value;
     var document = value.document,
-        selection = value.selection;
+      selection = value.selection;
 
     var window = (0, _getWindow2.default)(event.target);
     var target = (0, _getEventRange2.default)(event, value);
@@ -284,17 +302,24 @@ function AfterPlugin() {
 
     var transfer = (0, _getEventTransfer2.default)(event);
     var type = transfer.type,
-        fragment = transfer.fragment,
-        node = transfer.node,
-        text = transfer.text;
-
+      fragment = transfer.fragment,
+      node = transfer.node,
+      text = transfer.text;
 
     change.focus();
 
     // If the drag is internal and the target is after the selection, it
     // needs to account for the selection's content being deleted.
-    if (isDraggingInternally && selection.endKey == target.endKey && selection.endOffset < target.endOffset) {
-      target = target.move(selection.startKey == selection.endKey ? 0 - selection.endOffset + selection.startOffset : 0 - selection.endOffset);
+    if (
+      isDraggingInternally &&
+      selection.endKey == target.endKey &&
+      selection.endOffset < target.endOffset
+    ) {
+      target = target.move(
+        selection.startKey == selection.endKey
+          ? 0 - selection.endOffset + selection.startOffset
+          : 0 - selection.endOffset
+      );
     }
 
     if (isDraggingInternally) {
@@ -305,7 +330,7 @@ function AfterPlugin() {
 
     if (type == 'text' || type == 'html') {
       var _target = target,
-          anchorKey = _target.anchorKey;
+        anchorKey = _target.anchorKey;
 
       var hasVoidParent = document.hasVoidParent(anchorKey);
 
@@ -321,7 +346,7 @@ function AfterPlugin() {
         if (n) change.collapseToStartOf(n);
       }
 
-      text.split('\n').forEach(function (line, i) {
+      text.split('\n').forEach(function(line, i) {
         if (i > 0) change.splitBlock();
         change.insertText(line);
       });
@@ -347,11 +372,13 @@ function AfterPlugin() {
     var el = (0, _findDomNode2.default)(focusNode, window);
     if (!el) return;
 
-    el.dispatchEvent(new MouseEvent('mouseup', {
-      view: window,
-      bubbles: true,
-      cancelable: true
-    }));
+    el.dispatchEvent(
+      new MouseEvent('mouseup', {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
   }
 
   /**
@@ -371,14 +398,14 @@ function AfterPlugin() {
 
     var native = window.getSelection();
     var anchorNode = native.anchorNode,
-        anchorOffset = native.anchorOffset;
+      anchorOffset = native.anchorOffset;
 
     var point = (0, _findPoint2.default)(anchorNode, anchorOffset, value);
     if (!point) return;
 
     // Get the text node and leaf in question.
     var document = value.document,
-        selection = value.selection;
+      selection = value.selection;
 
     var node = document.getDescendant(point.key);
     var block = document.getClosestBlock(node.key);
@@ -388,11 +415,12 @@ function AfterPlugin() {
     var start = 0;
     var end = 0;
 
-    var leaf = leaves.find(function (r) {
-      start = end;
-      end += r.text.length;
-      if (end >= point.offset) return true;
-    }) || lastLeaf;
+    var leaf =
+      leaves.find(function(r) {
+        start = end;
+        end += r.text.length;
+        if (end >= point.offset) return true;
+      }) || lastLeaf;
 
     // Get the text information.
     var text = leaf.text;
@@ -433,7 +461,6 @@ function AfterPlugin() {
     debug('onKeyDown', { event: event });
 
     var value = change.value;
-
 
     if (_hotkeys2.default.SPLIT_BLOCK(event)) {
       return value.isInVoid ? change.collapseToStartOfNextText() : change.splitBlock();
@@ -499,9 +526,9 @@ function AfterPlugin() {
     // browsers won't know what to do.
     if (_hotkeys2.default.COLLAPSE_CHAR_BACKWARD(event)) {
       var document = value.document,
-          isInVoid = value.isInVoid,
-          previousText = value.previousText,
-          startText = value.startText;
+        isInVoid = value.isInVoid,
+        previousText = value.previousText,
+        startText = value.startText;
 
       var isPreviousInVoid = previousText && document.hasVoidParent(previousText.key);
       if (isInVoid || isPreviousInVoid || startText.text == '') {
@@ -512,9 +539,9 @@ function AfterPlugin() {
 
     if (_hotkeys2.default.COLLAPSE_CHAR_FORWARD(event)) {
       var _document = value.document,
-          _isInVoid = value.isInVoid,
-          nextText = value.nextText,
-          _startText = value.startText;
+        _isInVoid = value.isInVoid,
+        nextText = value.nextText,
+        _startText = value.startText;
 
       var isNextInVoid = nextText && _document.hasVoidParent(nextText.key);
       if (_isInVoid || isNextInVoid || _startText.text == '') {
@@ -525,9 +552,9 @@ function AfterPlugin() {
 
     if (_hotkeys2.default.EXTEND_CHAR_BACKWARD(event)) {
       var _document2 = value.document,
-          _isInVoid2 = value.isInVoid,
-          _previousText = value.previousText,
-          _startText2 = value.startText;
+        _isInVoid2 = value.isInVoid,
+        _previousText = value.previousText,
+        _startText2 = value.startText;
 
       var _isPreviousInVoid = _previousText && _document2.hasVoidParent(_previousText.key);
       if (_isInVoid2 || _isPreviousInVoid || _startText2.text == '') {
@@ -538,9 +565,9 @@ function AfterPlugin() {
 
     if (_hotkeys2.default.EXTEND_CHAR_FORWARD(event)) {
       var _document3 = value.document,
-          _isInVoid3 = value.isInVoid,
-          _nextText = value.nextText,
-          _startText3 = value.startText;
+        _isInVoid3 = value.isInVoid,
+        _nextText = value.nextText,
+        _startText3 = value.startText;
 
       var _isNextInVoid = _nextText && _document3.hasVoidParent(_nextText.key);
       if (_isInVoid3 || _isNextInVoid || _startText3.text == '') {
@@ -563,9 +590,8 @@ function AfterPlugin() {
 
     var transfer = (0, _getEventTransfer2.default)(event);
     var type = transfer.type,
-        fragment = transfer.fragment,
-        text = transfer.text;
-
+      fragment = transfer.fragment,
+      text = transfer.text;
 
     if (type == 'fragment') {
       change.insertFragment(fragment);
@@ -575,14 +601,17 @@ function AfterPlugin() {
       if (!text) return;
       var value = change.value;
       var document = value.document,
-          selection = value.selection,
-          startBlock = value.startBlock;
+        selection = value.selection,
+        startBlock = value.startBlock;
 
       if (startBlock.isVoid) return;
 
       var defaultBlock = startBlock;
       var defaultMarks = document.getMarksAtRange(selection.collapseToStart());
-      var frag = _slatePlainSerializer2.default.deserialize(text, { defaultBlock: defaultBlock, defaultMarks: defaultMarks }).document;
+      var frag = _slatePlainSerializer2.default.deserialize(text, {
+        defaultBlock: defaultBlock,
+        defaultMarks: defaultMarks,
+      }).document;
       change.insertFragment(frag);
     }
   }
@@ -615,10 +644,10 @@ function AfterPlugin() {
     if (!range) return;
 
     var _range = range,
-        anchorKey = _range.anchorKey,
-        anchorOffset = _range.anchorOffset,
-        focusKey = _range.focusKey,
-        focusOffset = _range.focusOffset;
+      anchorKey = _range.anchorKey,
+      anchorOffset = _range.anchorOffset,
+      focusKey = _range.focusKey,
+      focusOffset = _range.focusOffset;
 
     var anchorText = document.getNode(anchorKey);
     var focusText = document.getNode(focusKey);
@@ -634,7 +663,14 @@ function AfterPlugin() {
     // than `0`. Since we can't know what it really should be, and since an
     // offset of `0` is less destructive because it creates a hanging
     // selection, go with `0`. (2017/09/07)
-    if (anchorBlock && !anchorBlock.isVoid && anchorOffset == 0 && focusBlock && focusBlock.isVoid && focusOffset != 0) {
+    if (
+      anchorBlock &&
+      !anchorBlock.isVoid &&
+      anchorOffset == 0 &&
+      focusBlock &&
+      focusBlock.isVoid &&
+      focusOffset != 0
+    ) {
       range = range.set('focusOffset', 0);
     }
 
@@ -666,24 +702,27 @@ function AfterPlugin() {
    */
 
   function renderEditor(props, editor) {
-    var handlers = _eventHandlers2.default.reduce(function (obj, handler) {
+    var handlers = _eventHandlers2.default.reduce(function(obj, handler) {
       obj[handler] = editor[handler];
       return obj;
     }, {});
 
-    return _react2.default.createElement(_content2.default, _extends({}, handlers, {
-      autoCorrect: props.autoCorrect,
-      autoFocus: props.autoFocus,
-      className: props.className,
-      children: props.children,
-      editor: editor,
-      readOnly: props.readOnly,
-      role: props.role,
-      spellCheck: props.spellCheck,
-      style: props.style,
-      tabIndex: props.tabIndex,
-      tagName: props.tagName
-    }));
+    return _react2.default.createElement(
+      _content2.default,
+      _extends({}, handlers, {
+        autoCorrect: props.autoCorrect,
+        autoFocus: props.autoFocus,
+        className: props.className,
+        children: props.children,
+        editor: editor,
+        readOnly: props.readOnly,
+        role: props.role,
+        spellCheck: props.spellCheck,
+        style: props.style,
+        tabIndex: props.tabIndex,
+        tagName: props.tagName,
+      })
+    );
   }
 
   /**
@@ -695,17 +734,13 @@ function AfterPlugin() {
 
   function renderNode(props) {
     var attributes = props.attributes,
-        children = props.children,
-        node = props.node;
+      children = props.children,
+      node = props.node;
 
     if (node.object != 'block' && node.object != 'inline') return;
     var Tag = node.object == 'block' ? 'div' : 'span';
     var style = { position: 'relative' };
-    return _react2.default.createElement(
-      Tag,
-      _extends({}, attributes, { style: style }),
-      children
-    );
+    return _react2.default.createElement(Tag, _extends({}, attributes, { style: style }), children);
   }
 
   /**
@@ -717,7 +752,7 @@ function AfterPlugin() {
 
   function renderPlaceholder(props) {
     var editor = props.editor,
-        node = props.node;
+      node = props.node;
 
     if (!editor.props.placeholder) return;
     if (editor.state.isComposing) return;
@@ -732,7 +767,7 @@ function AfterPlugin() {
       width: '0',
       maxWidth: '100%',
       whiteSpace: 'nowrap',
-      opacity: '0.333'
+      opacity: '0.333',
     };
 
     return _react2.default.createElement(
@@ -764,7 +799,7 @@ function AfterPlugin() {
     onSelect: onSelect,
     renderEditor: renderEditor,
     renderNode: renderNode,
-    renderPlaceholder: renderPlaceholder
+    renderPlaceholder: renderPlaceholder,
   };
 }
 
