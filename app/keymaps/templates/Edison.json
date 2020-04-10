@@ -18,8 +18,10 @@
 
   "core:pop-sheet": "u",
   "core:previous-item": "k",
+  "core:previous-folder":"mod+k",
   "core:select-up": "shift+k",
   "core:next-item": "j",
+  "core:next-folder": "mod+j",
   "core:select-down": "shift+j",
   "core:focus-item": "o",
   "core:select-item": "x",
