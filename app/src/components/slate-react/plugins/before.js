@@ -192,7 +192,11 @@ function BeforePlugin() {
     }
 
     debug('onCompositionStart', { event: event });
-    // return change.insertText('\u200b');
+    const sel = window.getSelection()
+    const range = sel.getRangeAt(0)
+    if (range && range.startContainer!==range.endContainer) {
+      change.insertText('\u200b');
+    }
     return true
   }
 
