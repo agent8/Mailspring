@@ -192,7 +192,8 @@ function BeforePlugin() {
     }
 
     debug('onCompositionStart', { event: event });
-    return change.insertText('\u200b');
+    // return change.insertText('\u200b');
+    return true
   }
 
   /**
