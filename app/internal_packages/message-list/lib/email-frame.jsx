@@ -150,6 +150,17 @@ export default class EmailFrame extends React.Component {
     // when dark mode, inverse content
     if (AppEnv.isDarkTheme() && !this.props.viewOriginalEmail) {
       this.applyDarkMode(doc);
+
+      // sometimes doc don't change to dark mode, because the dom tree is not ready, when applyDarkMode
+      // so we add a protection for it, when dom tree is ready we process again.
+      const readyChangeCb = () => {
+        if (doc.readyState == "complete") {
+          doc.removeEventListener('readystatechange', readyChangeCb, false);
+          this.applyDarkMode(doc);
+        }
+
+      };
+      doc.addEventListener('readystatechange', readyChangeCb, false);
     }
 
     for (const extension of MessageStore.extensions()) {
