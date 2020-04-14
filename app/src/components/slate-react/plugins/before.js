@@ -1,7 +1,7 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true,
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
 var _debug = require('debug');
@@ -24,9 +24,7 @@ var _findNode = require('../utils/find-node');
 
 var _findNode2 = _interopRequireDefault(_findNode);
 
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : { default: obj };
-}
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * Debug.
@@ -68,11 +66,7 @@ function BeforePlugin() {
     // broken if we called `preventDefault()` on React's synthetic event here.
     // Since native `onbeforeinput` mainly benefits autocorrect and spellcheck
     // for mobile, on desktop it brings IME issue, limit its scope for now.
-    if (
-      (_environment.IS_IOS || _environment.IS_ANDROID) &&
-      _environment.SUPPORTED_EVENTS.beforeinput
-    )
-      return true;
+    if ((_environment.IS_IOS || _environment.IS_ANDROID) && _environment.SUPPORTED_EVENTS.beforeinput) return true;
 
     debug('onBeforeInput', { event: event });
   }
@@ -91,7 +85,7 @@ function BeforePlugin() {
 
     var value = change.value;
     var relatedTarget = event.relatedTarget,
-      target = event.target;
+        target = event.target;
 
     var window = (0, _getWindow2.default)(target);
 
@@ -160,7 +154,7 @@ function BeforePlugin() {
     // The `count` check here ensures that if another composition starts
     // before the timeout has closed out this one, we will abort unsetting the
     // `isComposing` flag, since a composition is still in affect.
-    window.requestAnimationFrame(function() {
+    window.requestAnimationFrame(function () {
       if (compositionCount > n) return;
       isComposing = false;
 
@@ -169,7 +163,7 @@ function BeforePlugin() {
       // differently ideally, in a less invasive way?
       // editor.setState({ isComposing: false });
       if (editor.state.isComposing) {
-        editor.setState({ isComposing: false });
+        editor.setState({ isComposing: false })
       }
     });
 
@@ -194,10 +188,11 @@ function BeforePlugin() {
     // differently ideally, in a less invasive way?
     // editor.setState({ isComposing: true });
     if (!editor.state.isComposing) {
-      editor.setState({ isComposing: true });
+      editor.setState({ isComposing: true })
     }
 
     debug('onCompositionStart', { event: event });
+    return change.insertText('\u200b');
   }
 
   /**
@@ -211,8 +206,8 @@ function BeforePlugin() {
   function onCopy(event, change, editor) {
     var window = (0, _getWindow2.default)(event.target);
     isCopying = true;
-    window.requestAnimationFrame(function() {
-      return (isCopying = false);
+    window.requestAnimationFrame(function () {
+      return isCopying = false;
     });
 
     debug('onCopy', { event: event });
@@ -231,8 +226,8 @@ function BeforePlugin() {
 
     var window = (0, _getWindow2.default)(event.target);
     isCopying = true;
-    window.requestAnimationFrame(function() {
-      return (isCopying = false);
+    window.requestAnimationFrame(function () {
+      return isCopying = false;
     });
 
     debug('onCut', { event: event });
@@ -482,7 +477,7 @@ function BeforePlugin() {
     onInput: onInput,
     onKeyDown: onKeyDown,
     onPaste: onPaste,
-    onSelect: onSelect,
+    onSelect: onSelect
   };
 }
 
