@@ -85,7 +85,7 @@ function BeforePlugin() {
 
     var value = change.value;
     var relatedTarget = event.relatedTarget,
-        target = event.target;
+      target = event.target;
 
     var window = (0, _getWindow2.default)(target);
 
@@ -168,7 +168,7 @@ function BeforePlugin() {
     });
 
     debug('onCompositionEnd', { event: event });
-    return change.deleteBackward().insertText(event.data);
+    return change.insertText(event.data);
   }
 
   /**
@@ -192,7 +192,7 @@ function BeforePlugin() {
     }
 
     debug('onCompositionStart', { event: event });
-    return change.insertText('\u200b');
+    return change.insertText('\u200b').extendCharBackward();;
   }
 
   /**
