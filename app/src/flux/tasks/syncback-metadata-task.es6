@@ -10,7 +10,7 @@ export default class SyncbackMetadataTask extends Task {
       modelId: model.id,
       pluginId: pluginId,
       modelClassName: model.constructor.name.toLowerCase(),
-      modelHeaderMessageId: model.headerMessageId || null,
+      modelMessageId: model.id || null,
       modelThreadId: model.threadId || null,
       accountId: model.accountId,
       value,
@@ -40,8 +40,8 @@ export default class SyncbackMetadataTask extends Task {
     modelClassName: Attributes.String({
       modelKey: 'modelClassName',
     }),
-    modelHeaderMessageId: Attributes.String({
-      modelKey: 'modelHeaderMessageId',
+    modelMessageId: Attributes.String({
+      modelKey: 'modelMessageId',
     }),
     modelThreadId: Attributes.String({
       modelKey: 'modelThreadId',

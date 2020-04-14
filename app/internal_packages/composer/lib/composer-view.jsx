@@ -8,7 +8,6 @@ import {
   DraftStore,
   AttachmentStore,
   MessageStore,
-  WorkspaceStore,
 } from 'mailspring-exports';
 import {
   DropZone,
@@ -20,7 +19,6 @@ import {
   InjectedComponentSet,
   ComposerEditor,
   ComposerSupport,
-  Spinner,
   LottieImg,
 } from 'mailspring-component-kit';
 import ComposerHeader from './composer-header';
@@ -149,8 +147,8 @@ export default class ComposerView extends React.Component {
     // session.changes.add({ bodyEditorState: draft.bodyEditorState.set('history', new History()) });
   }
 
-  _onQuoteRemoved({ headerMessageId = '' } = {}) {
-    if (this._mounted && this.props.draft && this.props.draft.headerMessageId === headerMessageId) {
+  _onQuoteRemoved({ messageId = '' } = {}) {
+    if (this._mounted && this.props.draft && this.props.draft.id === messageId) {
       this.setState({ quotedTextHidden: false, quotedTextPresent: false });
     }
   }
@@ -175,7 +173,7 @@ export default class ComposerView extends React.Component {
       }
       const missing = ret.totalMissing();
       if (missing.length !== 0) {
-        if(!this.state.missingAttachments){
+        if (!this.state.missingAttachments) {
           this.setState({ missingAttachments: true });
           Actions.fetchAttachments({
             accountId: props.draft.accountId,
@@ -185,7 +183,7 @@ export default class ComposerView extends React.Component {
           console.warn('state already missing attachments');
         }
       } else {
-        if(this.state.missingAttachments){
+        if (this.state.missingAttachments) {
           this.setState({ missingAttachments: false });
         } else {
           console.warn('state already not missing attachments');
@@ -377,7 +375,7 @@ export default class ComposerView extends React.Component {
             const change = removeQuotedText(draft.bodyEditorState);
             session.changes.add({ bodyEditorState: change.value });
             if (draft) {
-              Actions.removeQuoteText({ headerMessageId: draft.headerMessageId });
+              Actions.removeQuoteText({ messageId: draft.id });
             }
             this.setState({ quotedTextHidden: false });
           }}
@@ -449,7 +447,7 @@ export default class ComposerView extends React.Component {
           exposedProps={{
             draft: this.props.draft,
             threadId: this.props.draft.threadId,
-            headerMessageId: this.props.draft.headerMessageId,
+            messageId: this.props.draft.id,
             session: this.props.session,
           }}
           direction="column"
@@ -459,7 +457,7 @@ export default class ComposerView extends React.Component {
   }
 
   _renderAttachments() {
-    const { files, headerMessageId } = this.props.draft;
+    const { files } = this.props.draft;
     const nonImageFiles = files
       .filter(f => !Utils.shouldDisplayAsImage(f))
       .map(file => (
@@ -474,7 +472,6 @@ export default class ComposerView extends React.Component {
           accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
             Actions.removeAttachment({
-              headerMessageId: this.props.draft.headerMessageId,
               messageId: this.props.draft.id,
               accountId: this.props.draft.accountId,
               fileToRemove: file,
@@ -497,7 +494,6 @@ export default class ComposerView extends React.Component {
           accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
             Actions.removeAttachment({
-              headerMessageId: this.props.draft.headerMessageId,
               messageId: this.props.draft.id,
               accountId: this.props.draft.accountId,
               fileToRemove: file,
@@ -531,7 +527,6 @@ export default class ComposerView extends React.Component {
           accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
             Actions.removeAttachment({
-              headerMessageId: this.props.draft.headerMessageId,
               messageId: this.props.draft.id,
               accountId: this.props.draft.accountId,
               fileToRemove: file,
@@ -556,7 +551,7 @@ export default class ComposerView extends React.Component {
         exposedProps={{
           draft: this.props.draft,
           threadId: this.props.draft.threadId,
-          headerMessageId: this.props.draft.headerMessageId,
+          messageId: this.props.draft.id,
           session: this.props.session,
         }}
       />
@@ -584,7 +579,7 @@ export default class ComposerView extends React.Component {
                 tabIndex={-1}
                 style={{ order: -52 }}
                 draft={this.props.draft}
-                headerMessageId={this.props.draft.headerMessageId}
+                messageId={this.props.draft.id}
                 session={this.props.session}
                 isValidDraft={this._isValidDraft}
                 disabled={this.props.session.isPopout() || this._draftNotReady()}
@@ -763,13 +758,12 @@ export default class ComposerView extends React.Component {
         // session.changes.add({
         //   files: [].concat(draft.files),
         // });
-      if (this._els[Fields.Body]) {
-        this._els[Fields.Body].insertInlineAttachments(fileObjs);
-      }
-      session.changes.commit();
+        if (this._els[Fields.Body]) {
+          this._els[Fields.Body].insertInlineAttachments(fileObjs);
+        }
+        session.changes.commit();
       }
     }
-
   };
 
   _onAttachmentCreated = fileObj => {
@@ -798,7 +792,6 @@ export default class ComposerView extends React.Component {
     // called from onDrop and onFilePaste - assume images should be inline
     Actions.addAttachment({
       filePath: filePath,
-      headerMessageId: this.props.draft.headerMessageId,
       messageId: this.props.draft.id,
       accountId: this.props.draft.accountId,
       onCreated: this._onAttachmentCreated,
@@ -810,7 +803,7 @@ export default class ComposerView extends React.Component {
     // immediately and synchronously updated as soon as this function
     // fires. Since `setState` is asynchronous, if we used that as our only
     // check, then we might get a false reading.
-    if (DraftStore.isSendingDraft(this.props.draft.headerMessageId)) {
+    if (DraftStore.isSendingDraft(this.props.draft.id)) {
       return false;
     }
 
@@ -893,7 +886,6 @@ export default class ComposerView extends React.Component {
   _onSelectAttachment = ({ type = 'image' }) => {
     if (type === 'image') {
       Actions.selectAttachment({
-        headerMessageId: this.props.draft.headerMessageId,
         messageId: this.props.draft.id,
         accountId: this.props.draft.accountId,
         onCreated: fileObjs => {
@@ -907,7 +899,6 @@ export default class ComposerView extends React.Component {
       });
     } else {
       Actions.selectAttachment({
-        headerMessageId: this.props.draft.headerMessageId,
         messageId: this.props.draft.id,
         accountId: this.props.draft.accountId,
         type,

@@ -1,11 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg, CreateButtonGroup } from 'mailspring-component-kit';
-import {
-  OutboxStore,
-  Actions,
-  Message,
-} from 'mailspring-exports';
+import { OutboxStore, Actions, Message } from 'mailspring-exports';
 
 export class ResendButton extends React.Component {
   static displayName = 'ResendButton';
@@ -22,7 +18,7 @@ export class ResendButton extends React.Component {
     const draft = OutboxStore.selectedDraft();
     Actions.resendDrafts({
       messages: [draft],
-      source: 'Outbox Message Controls: Resend'
+      source: 'Outbox Message Controls: Resend',
     });
     return;
   };
@@ -30,14 +26,18 @@ export class ResendButton extends React.Component {
   render() {
     const draft = OutboxStore.selectedDraft();
     if (draft && Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
-      return <button tabIndex={-1} className="btn btn-toolbar" title="Resend" onClick={this._onResend}>
-        <RetinaImg name={'refresh.svg'}
-                   style={{ width: 24, height: 24 }}
-                   isIcon
-                   mode={RetinaImg.Mode.ContentIsMask}/>
-      </button>;
+      return (
+        <button tabIndex={-1} className="btn btn-toolbar" title="Resend" onClick={this._onResend}>
+          <RetinaImg
+            name={'refresh.svg'}
+            style={{ width: 24, height: 24 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </button>
+      );
     } else {
-      return <span/>;
+      return <span />;
     }
   }
 }
@@ -65,16 +65,18 @@ export class TrashButton extends React.Component {
   render() {
     const draft = OutboxStore.selectedDraft();
     if (draft && Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
-      return <button
-        tabIndex={-1}
-        className="btn btn-toolbar"
-        title='Cancel'
-        onClick={this._onRemove}
-      >
-        <RetinaImg name={'trash.svg'} style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask}/>
-      </button>;
+      return (
+        <button tabIndex={-1} className="btn btn-toolbar" title="Cancel" onClick={this._onRemove}>
+          <RetinaImg
+            name={'trash.svg'}
+            style={{ width: 24, height: 24 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </button>
+      );
     } else {
-      return <span/>;
+      return <span />;
     }
   }
 }
@@ -88,32 +90,39 @@ export class EditButton extends React.Component {
       event.stopPropagation();
     }
     const draft = OutboxStore.selectedDraft();
-    Actions.editOutboxDraft(draft.headerMessageId);
+    Actions.editOutboxDraft(draft.id);
     return;
   };
 
   render() {
     const draft = OutboxStore.selectedDraft();
     if (draft && Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
-      return <button tabIndex={-1} className="btn btn-toolbar" title="Edit" onClick={this._onEditOutboxDraft}>
-        <RetinaImg name={'pencil.svg'}
-                   style={{ width: 24, height: 24 }}
-                   isIcon
-                   mode={RetinaImg.Mode.ContentIsMask}/>
-      </button>;
+      return (
+        <button
+          tabIndex={-1}
+          className="btn btn-toolbar"
+          title="Edit"
+          onClick={this._onEditOutboxDraft}
+        >
+          <RetinaImg
+            name={'pencil.svg'}
+            style={{ width: 24, height: 24 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </button>
+      );
     } else {
-      return <span/>;
+      return <span />;
     }
   }
 }
 
-const Divider = (key = 'divider') => (
-  <div className="divider" key={key}/>
-);
+const Divider = (key = 'divider') => <div className="divider" key={key} />;
 Divider.displayName = 'Divider';
 
 export const OutboxMessageButtons = CreateButtonGroup(
   'OutboxMessageButtons',
   [ResendButton, TrashButton, Divider, EditButton],
-  { order: 205 },
+  { order: 205 }
 );

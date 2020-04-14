@@ -6,10 +6,11 @@ export default class DestroyDraftTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
     messageIds: Attributes.Collection({
       modelKey: 'messageIds',
+      jsonKey: 'msgPIds',
     }),
     canBeUndone: Attributes.Boolean({
       modelKey: 'canBeUndone',
-    })
+    }),
   });
 
   constructor({ messageIds = [], ...rest } = {}) {
@@ -43,7 +44,8 @@ export default class DestroyDraftTask extends Task {
       return;
     }
     Actions.destroyDraftFailed({
-      key, debuginfo,
+      key,
+      debuginfo,
       accountId: this.accountId,
       messageIds: this.messageIds,
     });

@@ -75,7 +75,7 @@ class DraftList extends React.Component {
     if (this._isOpeningDraftCoolDown()) {
       return;
     }
-    if (DraftStore.isSendingDraft(draft.headerMessageId)) {
+    if (DraftStore.isSendingDraft(draft.id)) {
       AppEnv.showErrorDialog('Draft is sending, cannot edit', {
         showInMainWindow: true,
         async: true,
@@ -89,7 +89,7 @@ class DraftList extends React.Component {
         }
         const totalMissing = ret.totalMissing().map(f => f.id);
         if (totalMissing.length === 0) {
-          Actions.composePopoutDraft(draft.headerMessageId);
+          Actions.composePopoutDraft(draft.id);
         } else {
           Actions.fetchAttachments({ accountId: draft.accountId, missingItems: totalMissing });
           AppEnv.showErrorDialog('Draft is still downloading, cannot edit', {

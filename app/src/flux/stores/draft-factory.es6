@@ -192,18 +192,18 @@ class DraftFactory {
       draft: true,
       pristine: true,
       msgOrigin: Message.NewDraft,
-      replyOrForward: Message.draftType.new,
+      replyType: Message.draftType.new,
       hasNewID: false,
       accountId: account.id,
       pastMessageIds: [],
     };
 
     const merged = Object.assign(defaults, fields);
-    // if (merged.forwardedHeaderMessageId) {
-    //   merged.referenceMessageId = merged.forwardedHeaderMessageId;
-    //   delete merged.forwardedHeaderMessageId;
+    // if (merged.replyToMessageId) {
+    //   merged.referenceMessageId = merged.replyToMessageId;
+    //   delete merged.replyToMessageId;
     // } else {
-    //   merged.referenceMessageId = merged.replyToHeaderMessageId;
+    //   merged.referenceMessageId = merged.replyToMessageId;
     // }
     await mergeDefaultBccAndCCs(merged, account);
     // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
@@ -242,7 +242,7 @@ class DraftFactory {
       accountId: account.id,
       savedOnRemote: false,
       hasRefOldDraftOnRemote: true,
-      refOldDraftHeaderMessageId: draft.headerMessageId,
+      refOldDraftMessageId: draft.id,
       pastMessageIds,
     });
     const message = new Message(defaults);
@@ -306,7 +306,7 @@ class DraftFactory {
       accountId: account.id,
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
-      refOldDraftHeaderMessageId: '',
+      refOldDraftMessageId: '',
     });
     const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);
@@ -361,11 +361,10 @@ class DraftFactory {
       id: uniqueId,
       draft: true,
       pristine: false,
-      replyOrForward: Message.draftType.new,
+      replyType: Message.draftType.new,
       threadId: '',
-      replyToHeaderMessageId: '',
-      forwardedHeaderMessageId: '',
-      refOldDraftHeaderMessageId: '',
+      replyToMessageId: '',
+      refOldDraftMessageId: '',
       pastMessageIds: draft.pastMessageIds || [],
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
@@ -491,8 +490,8 @@ class DraftFactory {
       files: removeAttachmentNotLinkedInBody(body, message.files),
       threadId: thread.id,
       accountId: accountId,
-      replyOrForward: Message.draftType.reply,
-      replyToHeaderMessageId: message.headerMessageId,
+      replyType: Message.draftType.reply,
+      replyToMessageId: message.id,
       msgOrigin: type === 'reply' ? Message.ReplyDraft : Message.ReplyAllDraft,
       body,
     });
@@ -504,7 +503,7 @@ class DraftFactory {
       from: [this._fromContactForReply(message)],
       threadId: '',
       accountId: message.accountId,
-      replyToHeaderMessageId: '',
+      replyToMessageId: '',
       body: `${me.name} have replied with a status of ${replyStatus.label}`,
       files: [file],
       calTarStat: replyStatus.code,
@@ -533,8 +532,8 @@ class DraftFactory {
       files: [].concat(message.files),
       threadId: thread.id,
       accountId: accountId,
-      forwardedHeaderMessageId: message.headerMessageId,
-      replyOrForward: Message.draftType.forward,
+      replyToMessageId: message.id,
+      replyType: Message.draftType.forward,
       msgOrigin: Message.ForwardDraft,
       pastMessageIds: [message.id],
       body: `
@@ -554,9 +553,9 @@ class DraftFactory {
 
   async createDraftForResurfacing(thread, threadMessageId, body) {
     const account = AccountStore.accountForId(thread.accountId);
-    let replyToHeaderMessageId = threadMessageId;
+    let replyToMessageId = threadMessageId;
 
-    if (!replyToHeaderMessageId) {
+    if (!replyToMessageId) {
       // const msg = await DatabaseStore.findBy(Message, {
       //   accountId: thread.accountId,
       //   threadId: thread.id,
@@ -567,7 +566,7 @@ class DraftFactory {
         threadId: thread.id,
         accountId: thread.accountId,
       }).limit(1);
-      replyToHeaderMessageId = (msg && msg.headerMessageId) || '';
+      replyToMessageId = (msg && msg.id) || '';
     }
 
     return this.createDraft({
@@ -578,7 +577,7 @@ class DraftFactory {
       subject: thread.subject,
       threadId: thread.id,
       accountId: thread.accountId,
-      replyToHeaderMessageId: replyToHeaderMessageId,
+      replyToMessageId: replyToMessageId,
       body: body,
     });
   }
@@ -594,7 +593,7 @@ class DraftFactory {
         : await MessageStore.findAllByThreadId({ threadId: message.threadId });
 
     const candidateDrafts = messages.filter(
-      other => other.replyToHeaderMessageId === message.headerMessageId && other.draft === true
+      other => other.replyToMessageId === message.id && other.draft === true
     );
 
     if (candidateDrafts.length === 0) {
@@ -607,9 +606,7 @@ class DraftFactory {
     if (behavior === 'prefer-existing-if-pristine') {
       DraftStore = DraftStore || require('./draft-store').default;
       const sessions = await Promise.all(
-        candidateDrafts.map(candidateDraft =>
-          DraftStore.sessionForClientId(candidateDraft.headerMessageId)
-        )
+        candidateDrafts.map(candidateDraft => DraftStore.sessionForClientId(candidateDraft.id))
       );
       for (const session of sessions) {
         if (session.draft().pristine) {

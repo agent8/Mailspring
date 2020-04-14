@@ -162,12 +162,8 @@ class UndoSendContent extends BasicContent {
     }
   }
 
-  onSendSuccess = ({ headerMessageId }) => {
-    if (
-      this.mounted &&
-      headerMessageId &&
-      this.props.block.tasks[0].modelHeaderMessageId === headerMessageId
-    ) {
+  onSendSuccess = ({ messageId }) => {
+    if (this.mounted && messageId && this.props.block.tasks[0].modelMessageId === messageId) {
       this.setState({ sendStatus: 'success' });
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
@@ -176,12 +172,8 @@ class UndoSendContent extends BasicContent {
     }
   };
 
-  onSendFailed = ({ headerMessageId, draft }) => {
-    if (
-      this.mounted &&
-      headerMessageId &&
-      this.props.block.tasks[0].modelHeaderMessageId === headerMessageId
-    ) {
+  onSendFailed = ({ messageId, draft }) => {
+    if (this.mounted && messageId && this.props.block.tasks[0].modelMessageId === messageId) {
       this.setState({ sendStatus: 'failed', failedDraft: draft });
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
@@ -198,7 +190,7 @@ class UndoSendContent extends BasicContent {
       setTimeout(() => {
         AppEnv.reportError(
           new Error(
-            `Sending email failed, and user clicked view. headerMessageId: ${this.props.block.tasks[0].modelHeaderMessageId}`
+            `Sending email failed, and user clicked view. messageId: ${this.props.block.tasks[0].modelMessageId}`
           )
         );
         Actions.gotoOutbox();

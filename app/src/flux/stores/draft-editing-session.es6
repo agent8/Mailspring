@@ -16,7 +16,7 @@ import DestroyDraftTask from '../tasks/destroy-draft-task';
 import uuid from 'uuid';
 import { ipcRenderer } from 'electron';
 import _ from 'underscore';
-import {DraftAttachmentState} from './attachment-store';
+import { DraftAttachmentState } from './attachment-store';
 
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
@@ -79,7 +79,7 @@ class DraftChangeSet extends EventEmitter {
   isDirty() {
     return this.dirtyFields().length > 0 || this._draftDirty;
   }
-  onNewDraftFromOtherWindow(){
+  onNewDraftFromOtherWindow() {
     this._draftDirty = true;
     this.debounceCommit();
   }
@@ -214,7 +214,7 @@ function fastCloneDraft(draft) {
   Object.defineProperty(next, 'bodyEditorState', next.__bodyEditorStatePropDescriptor);
   return next;
 }
-export function cloneForSyncDraftData(draft){
+export function cloneForSyncDraftData(draft) {
   const next = new Message();
   for (const key of Object.getOwnPropertyNames(draft)) {
     if (key === 'body' || key === 'bodyEditorState') {
@@ -226,7 +226,6 @@ export function cloneForSyncDraftData(draft){
   next['lastSync'] = Date.now();
   return next;
 }
-
 
 /**
  Public: DraftEditingSession is a small class that makes it easy to implement components
@@ -244,7 +243,7 @@ export function cloneForSyncDraftData(draft){
 export default class DraftEditingSession extends MailspringStore {
   static DraftChangeSet = DraftChangeSet;
 
-  constructor(headerMessageId, draft = null, options = {}) {
+  constructor(messageId, draft = null, options = {}) {
     super();
     this._draft = false;
     this._destroyed = false;
@@ -266,7 +265,7 @@ export default class DraftEditingSession extends MailspringStore {
       currentWindowLevel = 3;
     }
 
-    this.headerMessageId = headerMessageId;
+    this.messageId = messageId;
     this.changes = new DraftChangeSet({
       onAddChanges: changes => this.changeSetApplyChanges(changes),
       onCommit: arg => this.changeSetCommit(arg), // for specs
@@ -275,15 +274,15 @@ export default class DraftEditingSession extends MailspringStore {
     this._registerListeners();
     if (draft) {
       hotwireDraftBodyState(draft);
-      if(!Array.isArray(draft.from) || draft.from.length === 0){
+      if (!Array.isArray(draft.from) || draft.from.length === 0) {
         const myAccount = AccountStore.accountForId(draft.accountId);
-        if(myAccount){
+        if (myAccount) {
           draft.from = [myAccount.me()];
-        }else {
+        } else {
           draft.from = [];
         }
       }
-      if(draft.from[0] && !draft.from[0].accountId){
+      if (draft.from[0] && !draft.from[0].accountId) {
         draft.from[0].accountId = draft.accountId;
       }
       this._draft = draft;
@@ -295,88 +294,88 @@ export default class DraftEditingSession extends MailspringStore {
         // Because new drafts can't be viewed in main window, we don't add it towards open count, if we are in mainWin
         // we want to trigger open count in composer window
         Actions.draftOpenCount({
-          headerMessageId,
+          messageId: messageId,
           windowLevel: currentWindowLevel,
           source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
         });
-      } else if (draft.replyOrForward !== Message.draftType.new) {
+      } else if (draft.replyType !== Message.draftType.new) {
         if (currentWindowLevel === 2) {
           Actions.draftOpenCount({
-            headerMessageId,
+            messageId: messageId,
             windowLevel: currentWindowLevel,
             source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
           });
         } else if (currentWindowLevel === 1 && inFocusedThread) {
           Actions.draftOpenCount({
-            headerMessageId,
+            messageId: messageId,
             windowLevel: currentWindowLevel,
             source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
           });
         }
       }
     } else {
-      let localPromise = DraftStore.findByHeaderMessageIdWithBody({
-        headerMessageId: this.headerMessageId,
+      let localPromise = DraftStore.findByMessageIdWithBody({
+        messageId: this.messageId,
       }).limit(1);
       if (options.showFailed) {
-        localPromise = DraftStore.findFailedByHeaderMessageIdWithBody({
-          headerMessageId: this.headerMessageId,
+        localPromise = DraftStore.findFailedByMessageIdWithBody({
+          messageId: this.messageId,
         }).limit(1);
       }
       this._draftPromise = localPromise.then(draft => {
-          if (this._destroyed) {
-            AppEnv.reportWarning(`Draft loaded but session has been torn down.`);
-            return;
+        if (this._destroyed) {
+          AppEnv.reportWarning(`Draft loaded but session has been torn down.`);
+          return;
+        }
+        if (!draft) {
+          AppEnv.reportWarning(`Draft ${this.messageId} could not be found. Just deleted?`);
+          return;
+        }
+        // if (Message.compareMessageState(draft.state, Message.messageState.failed)) {
+        //   AppEnv.logDebug(`Draft ${draft.headerMessageId} state is failed, setting it to normal`);
+        //   draft.state = Message.messageState.normal;
+        // }
+        if (!draft.body) {
+          draft.waitingForBody = true;
+          Actions.fetchBodies({ messages: [draft], source: 'draft' });
+        }
+        if (!Array.isArray(draft.from) || draft.from.length === 0) {
+          const myAccount = AccountStore.accountForId(draft.accountId);
+          if (myAccount) {
+            draft.from = [myAccount.defaultMe()];
+          } else {
+            draft.from = [];
           }
-          if (!draft) {
-            AppEnv.reportWarning(`Draft ${this.headerMessageId} could not be found. Just deleted?`);
-            return;
-          }
-          // if (Message.compareMessageState(draft.state, Message.messageState.failed)) {
-          //   AppEnv.logDebug(`Draft ${draft.headerMessageId} state is failed, setting it to normal`);
-          //   draft.state = Message.messageState.normal;
-          // }
-          if (!draft.body) {
-            draft.waitingForBody = true;
-            Actions.fetchBodies({ messages: [draft], source: 'draft' });
-          }
-          if(!Array.isArray(draft.from) || draft.from.length === 0){
-            const myAccount = AccountStore.accountForId(draft.accountId);
-            if(myAccount){
-              draft.from = [myAccount.defaultMe()];
-            }else {
-              draft.from = [];
+        }
+        if (draft.from[0] && !draft.from[0].accountId) {
+          draft.from[0].accountId = draft.accountId;
+        }
+        if (Array.isArray(draft.from) && draft.from.length === 1) {
+          if (draft.from[0].email.length === 0) {
+            const currentAccount = AccountStore.accountForId(draft.accountId);
+            if (currentAccount) {
+              draft.from = [currentAccount.me()];
             }
           }
-          if(draft.from[0] && !draft.from[0].accountId){
-            draft.from[0].accountId = draft.accountId;
-          }
-          if (Array.isArray(draft.from) && draft.from.length === 1) {
-            if (draft.from[0].email.length === 0) {
-              const currentAccount = AccountStore.accountForId(draft.accountId);
-              if (currentAccount) {
-                draft.from = [currentAccount.me()];
-              }
-            }
-          }
-          hotwireDraftBodyState(draft);
-          if (draft.remoteUID) {
-            draft.setOrigin(Message.EditExistingDraft);
-          }
-          this._draft = draft;
-          this._threadId = draft.threadId;
-          this._isDraftMissingAttachments();
-          const thread = FocusedContentStore.focused('thread');
-          const inFocusedThread = thread && thread.id === draft.threadId;
-          if(currentWindowLevel === 2 || currentWindowLevel ===1 && inFocusedThread){
-            Actions.draftOpenCount({
-              headerMessageId,
-              windowLevel: currentWindowLevel,
-              source: `draft editing session, no draft ${currentWindowLevel}`,
-            });
-          }
-          this.trigger();
-        });
+        }
+        hotwireDraftBodyState(draft);
+        if (draft.remoteUID) {
+          draft.setOrigin(Message.EditExistingDraft);
+        }
+        this._draft = draft;
+        this._threadId = draft.threadId;
+        this._isDraftMissingAttachments();
+        const thread = FocusedContentStore.focused('thread');
+        const inFocusedThread = thread && thread.id === draft.threadId;
+        if (currentWindowLevel === 2 || (currentWindowLevel === 1 && inFocusedThread)) {
+          Actions.draftOpenCount({
+            messageId: messageId,
+            windowLevel: currentWindowLevel,
+            source: `draft editing session, no draft ${currentWindowLevel}`,
+          });
+        }
+        this.trigger();
+      });
     }
   }
 
@@ -445,7 +444,7 @@ export default class DraftEditingSession extends MailspringStore {
       }
     }
     AppEnv.logDebug(
-      `closing session of ${this.headerMessageId} for ${reason} windowLevel: ${this.currentWindowLevel}`
+      `closing session of ${this.messageId} for ${reason} windowLevel: ${this.currentWindowLevel}`
     );
     this.teardown();
   }
@@ -468,10 +467,10 @@ export default class DraftEditingSession extends MailspringStore {
     this.changes.cancelCommit();
   };
 
-  validateDraftForChangeAccount(){
+  validateDraftForChangeAccount() {
     const warnings = [];
     const errors = [];
-    if(this._draft.waitingForAttachment){
+    if (this._draft.waitingForAttachment) {
       warnings.push(`Attachments are still processing`);
     }
     return { errors, warnings };
@@ -482,7 +481,7 @@ export default class DraftEditingSession extends MailspringStore {
     const errors = [];
     const allRecipients = [].concat(this._draft.to, this._draft.cc, this._draft.bcc);
     const hasAttachment = Array.isArray(this._draft.files) && this._draft.files.length > 0;
-    if(this._draft.waitingForAttachment){
+    if (this._draft.waitingForAttachment) {
       warnings.push(`Attachments are still processing`);
     }
 
@@ -562,77 +561,6 @@ export default class DraftEditingSession extends MailspringStore {
     return { errors, warnings };
   }
 
-  // This function makes sure the draft is attached to a valid account, and changes
-  // it's accountId if the from address does not match the account for the from
-  // address.
-  //
-  // async ensureCorrectAccount() {
-  //   // if (this._popedOut) {
-  //     // We do nothing if session have popouts
-  //     // console.log('we are poped out');
-  //     // return;
-  //   // }
-  //   const draft = this.draft();
-  //   const account = AccountStore.accountForEmail(draft.from[0].email);
-  //   if (!account) {
-  //     throw new Error(
-  //       'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.'
-  //     );
-  //   }
-  //
-  //   if (account.id !== draft.accountId) {
-  //     // Create a new draft in the new account (with a new ID).
-  //     // Because we use the headerMessageId /exclusively/ as the
-  //     // identifier we'll be fine.
-  //     //
-  //     // Then destroy the old one, since it may be synced to the server
-  //     // and require cleanup!
-  //     //
-  //     const newId = uuid();
-  //     const create = new SyncbackDraftTask({
-  //       headerMessageId: draft.headerMessageId,
-  //       draft: new Message({
-  //         id: newId,
-  //         from: draft.from,
-  //         version: 0,
-  //         to: draft.to,
-  //         cc: draft.cc,
-  //         bcc: draft.bcc,
-  //         body: draft.body,
-  //         files: draft.files,
-  //         replyTo: draft.replyTo,
-  //         subject: draft.subject,
-  //         headerMessageId: newId,
-  //         // referenceMessageId: draft.id,
-  //         hasNewID: draft.hasNewID,
-  //         accountId: account.id,
-  //         msgOrigin: draft.msgOrigin,
-  //         unread: false,
-  //         starred: false,
-  //         draft: true,
-  //       }),
-  //     });
-  //
-  //     const destroy =
-  //       draft.id &&
-  //       new DestroyDraftTask({
-  //         messageIds: [draft.id],
-  //         accountId: draft.accountId,
-  //       });
-  //     // console.log('syncback draft from ensure account');
-  //     try {
-  //       await TaskQueue.waitForPerformLocal(create, {sendTask: true});
-  //       if (destroy) {
-  //         // console.log('destroyed');
-  //         Actions.destroyDraft([draft], { switchingAccount: true });
-  //       }
-  //     } catch (e) {
-  //       AppEnv.reportError(new Error(e));
-  //     }
-  //   }
-  //   return this;
-  // }
-
   _isDraftMissingAttachments = () => {
     if (typeof this._draft.missingAttachments !== 'function') {
       console.error('missing attachments is not a function');
@@ -648,7 +576,11 @@ export default class DraftEditingSession extends MailspringStore {
       if (this._destroyed) {
         return;
       }
-      let totalMissing = missingAttachments.inline.needToDownload.length + missingAttachments.inline.downloading.length + missingAttachments.normal.needToDownload.length + missingAttachments.normal.downloading.length;
+      let totalMissing =
+        missingAttachments.inline.needToDownload.length +
+        missingAttachments.inline.downloading.length +
+        missingAttachments.normal.needToDownload.length +
+        missingAttachments.normal.downloading.length;
       if (totalMissing > 0) {
         if (!this._draft.waitingForAttachment) {
           this._draft.waitingForAttachment = true;
@@ -665,15 +597,14 @@ export default class DraftEditingSession extends MailspringStore {
     });
   };
   _onPastMessageChange = pastMsgId => {
-    if(!this._draft || !pastMsgId){
+    if (!this._draft || !pastMsgId) {
       return;
     }
-    if((this._draft.pastMessageIds || []).includes(pastMsgId)){
+    if ((this._draft.pastMessageIds || []).includes(pastMsgId)) {
       console.log(`past draft changed ${pastMsgId}`);
       this._isDraftMissingAttachments();
       this.trigger();
     }
-
   };
 
   _onDraftChanged = change => {
@@ -688,8 +619,8 @@ export default class DraftEditingSession extends MailspringStore {
 
     // Some change events just tell us that the state of the draft (eg sending state)
     // have changed and don't include a payload.
-    if (change.headerMessageId) {
-      if (change.headerMessageId === this._draft.headerMessageId) {
+    if (change.messageId) {
+      if (change.messageId === this._draft.id) {
         // console.log('triggered data change');
         this.trigger();
       } else {
@@ -697,39 +628,37 @@ export default class DraftEditingSession extends MailspringStore {
       }
       return;
     }
-    if (Array.isArray(change.headerMessageIds)) {
-      if (change.headerMessageIds.includes(this.draft.headerMessageId)) {
+    if (Array.isArray(change.messageIds)) {
+      if (change.messageIds.includes(this.draft.id)) {
         this.trigger();
       }
       return;
     }
 
-    const nextDraft = change.objects
-      .filter(obj => obj.headerMessageId === this._draft.headerMessageId)
-      .pop();
+    const nextDraft = change.objects.filter(obj => obj.id === this._draft.id).pop();
 
     if (!nextDraft) {
-      for(let msg of change.objects){
+      for (let msg of change.objects) {
         this._onPastMessageChange(msg.id);
       }
       return;
     }
     let changed = false;
-    if (nextDraft.id !== this._draft.id) {
-      this._draft.id = nextDraft.id;
-      ipcRenderer.send('draft-got-new-id', {
-        newHeaderMessageId: this._draft.headerMessageId,
-        oldHeaderMessageId: this._draft.headerMessageId,
-        newMessageId: this._draft.id,
-        referenceMessageId: this._draft.referenceMessageId,
-        threadId: this._draft.threadId,
-        windowLevel: this.currentWindowLevel,
-      });
-      changed = true;
-    }
+    // if (nextDraft.id !== this._draft.id) {
+    //   this._draft.id = nextDraft.id;
+    //   ipcRenderer.send('draft-got-new-id', {
+    //     newHeaderMessageId: this._draft.headerMessageId,
+    //     oldHeaderMessageId: this._draft.headerMessageId,
+    //     newMessageId: this._draft.id,
+    //     referenceMessageId: this._draft.referenceMessageId,
+    //     threadId: this._draft.threadId,
+    //     windowLevel: this.currentWindowLevel,
+    //   });
+    //   changed = true;
+    // }
     if (this._draft.waitingForBody || !this._draft.body) {
-      DraftStore.findByHeaderMessageIdWithBody({
-        headerMessageId: this.headerMessageId,
+      DraftStore.findByMessageIdWithBody({
+        messageId: this.messageId,
       })
         .limit(1)
         .then(draft => {
@@ -738,11 +667,11 @@ export default class DraftEditingSession extends MailspringStore {
             return;
           }
           if (!draft) {
-            console.warn(`Draft ${this.headerMessageId} could not be found. Just deleted?`);
+            console.warn(`Draft ${this.messageId} could not be found. Just deleted?`);
             return;
           }
           hotwireDraftBodyState(draft);
-          if(this._draft){
+          if (this._draft) {
             draft.waitingForAttachment = this._draft.waitingForAttachment;
           }
           this._draft = draft;
@@ -761,8 +690,9 @@ export default class DraftEditingSession extends MailspringStore {
     const lockedFields = this.changes.dirtyFields();
     for (const [key] of Object.entries(Message.attributes)) {
       if (key === 'headerMessageId') continue;
+      if (key === 'id') continue;
       if (nextDraft[key] === undefined) continue;
-      if (this._draft[key] === nextDraft[key]) continue;
+      if ((this._draft || {})[key] === nextDraft[key]) continue;
       if (lockedFields.includes(key) && !this.isPopout()) continue;
 
       if (changed === false) {
@@ -773,14 +703,14 @@ export default class DraftEditingSession extends MailspringStore {
         console.log('body is empty, ignoring');
         continue;
       }
-      if(key === 'pastMessageIds'){
+      if (key === 'pastMessageIds') {
         console.log('ignoring pastMessageIds change');
         continue;
       }
-      if (key === 'from' && Array.isArray(nextDraft.from) && nextDraft.from.length > 0){
+      if (key === 'from' && Array.isArray(nextDraft.from) && nextDraft.from.length > 0) {
         nextDraft.from[0].accountId = nextDraft.accountId;
       }
-      this._draft[key] = nextDraft[key];
+      (this._draft || {})[key] = nextDraft[key];
     }
 
     if (changed) {
@@ -790,15 +720,15 @@ export default class DraftEditingSession extends MailspringStore {
       // console.log('no changes');
     }
   };
-  cancelCommit(){
+  cancelCommit() {
     this.changes.cancelCommit();
   }
 
-  async changeSetCommit(reason='') {
+  async changeSetCommit(reason = '') {
     // if (this._destroyed || !this._draft || this._popedOut) {
     //   return;
     // }
-    if (!this._draft){
+    if (!this._draft) {
       return;
     }
     //if id is empty, we assign uuid to id;
@@ -813,13 +743,13 @@ export default class DraftEditingSession extends MailspringStore {
       this.needUpload = false;
       this._draft.savedOnRemote = true;
     }
-    if(this.changes._draftDirty){
+    if (this.changes._draftDirty) {
       this.changes._draftDirty = false;
     }
     const task = new SyncbackDraftTask({ draft: this._draft, source: reason });
     task.saveOnRemote = reason === 'unload';
     try {
-      await TaskQueue.waitForPerformLocal(task, {sendTask: true});
+      await TaskQueue.waitForPerformLocal(task, { sendTask: true });
     } catch (e) {
       AppEnv.reportError(
         new Error('SyncbackDraft Task not returned'),
@@ -836,23 +766,23 @@ export default class DraftEditingSession extends MailspringStore {
     return this._draft.needUpload;
   }
   set needsSyncToMain(val) {
-    if (!AppEnv.isMainWindow()){
+    if (!AppEnv.isMainWindow()) {
       this._needsSyncWithMain = val;
     } else {
       this._needsSyncWithMain = false;
     }
   }
-  get needsSyncToMain(){
+  get needsSyncToMain() {
     return !AppEnv.isMainWindow() && this._needsSyncWithMain;
   }
-  updateAttachments(files){
-    if(this._draft && Array.isArray(files)){
+  updateAttachments(files) {
+    if (this._draft && Array.isArray(files)) {
       this._draft.files = files;
       this.needUpload = true;
       this._draft.pristine = false;
       this.needsSyncToMain = true;
-      if(!AppEnv.isMainWindow()){
-        this.syncDraftDataToMainNow({forceCommit: true});
+      if (!AppEnv.isMainWindow()) {
+        this.syncDraftDataToMainNow({ forceCommit: true });
       } else {
         this.changeSetCommit(`attachments change`);
       }
@@ -917,11 +847,11 @@ export default class DraftEditingSession extends MailspringStore {
   //     this.trigger()
   //   }
   // };
-  _onDraftAttachmentStateChange = ({messageId, draftState}) => {
-    if(!this._draft){
+  _onDraftAttachmentStateChange = ({ messageId, draftState }) => {
+    if (!this._draft) {
       return;
     }
-    if(messageId !== this._draft.id){
+    if (messageId !== this._draft.id) {
       console.log(`${messageId} is not current draft ${this._draft.id}`);
       return;
     }
@@ -935,15 +865,21 @@ export default class DraftEditingSession extends MailspringStore {
     //   console.log(`Attachment state not changed because target is ${iswaitingForAttachment} current is ${this._draft.waitingForAttachment}`);
     // }
   };
-  localApplySyncDraftData = ({syncData = {}} = {} ) => {
-    if(syncData && (typeof  syncData.lastSync === 'number') && syncData.lastSync > this.lastSync){
-      this._applySyncDraftData({syncData, sourceLevel: 0, broadcastDraftData: false});
+  localApplySyncDraftData = ({ syncData = {} } = {}) => {
+    if (syncData && typeof syncData.lastSync === 'number' && syncData.lastSync > this.lastSync) {
+      this._applySyncDraftData({ syncData, sourceLevel: 0, broadcastDraftData: false });
     } else {
       AppEnv.logInfo(`syncData.lastSync ${syncData.lastSync}, local lastSync ${this.lastSync}`);
     }
   };
 
-  _applySyncDraftData({ syncData = {}, sourceLevel = 0, broadcastDraftData = true, trigger = true, forceCommit = false } = {}) {
+  _applySyncDraftData({
+    syncData = {},
+    sourceLevel = 0,
+    broadcastDraftData = true,
+    trigger = true,
+    forceCommit = false,
+  } = {}) {
     if (sourceLevel !== this.currentWindowLevel && syncData.id === this._draft.id) {
       AppEnv.logDebug('apply sync draft data');
       const nothingChanged =
@@ -955,10 +891,10 @@ export default class DraftEditingSession extends MailspringStore {
         JSON.stringify(this._draft.files) === JSON.stringify(syncData.files) &&
         this._draft.subject === syncData.subject;
       for (const key of Object.getOwnPropertyNames(syncData)) {
-        if (key === 'body' || key === 'bodyEditorState' || key === 'waitingForAttachment' ) {
+        if (key === 'body' || key === 'bodyEditorState' || key === 'waitingForAttachment') {
           continue;
         }
-        if (key === 'from' && Array.isArray(syncData.from) && syncData.from.length > 0){
+        if (key === 'from' && Array.isArray(syncData.from) && syncData.from.length > 0) {
           syncData.from[0].accountId = syncData.accountId;
         }
         this._draft[key] = syncData[key];
@@ -969,16 +905,16 @@ export default class DraftEditingSession extends MailspringStore {
         this.trigger();
       }
       if (AppEnv.isMainWindow()) {
-        if(broadcastDraftData){
+        if (broadcastDraftData) {
           Actions.broadcastDraftData({ syncData, sourceLevel });
         }
 
-        if(!nothingChanged){
+        if (!nothingChanged) {
           AppEnv.logDebug('things changed');
           this.needUpload = true;
-          if(forceCommit){
+          if (forceCommit) {
             this.changeSetCommit('forced to commit by applySyncDraftData');
-          }else {
+          } else {
             this.changes.onNewDraftFromOtherWindow();
           }
         }
@@ -986,7 +922,7 @@ export default class DraftEditingSession extends MailspringStore {
     }
   }
 
-  syncDraftDataToMainNow = ({forceCommit = false} = {})=>{
+  syncDraftDataToMainNow = ({ forceCommit = false } = {}) => {
     if (this.needsSyncToMain) {
       AppEnv.logDebug('sync draft to main');
       this.needsSyncToMain = false;
@@ -997,12 +933,12 @@ export default class DraftEditingSession extends MailspringStore {
 
   _syncDraftDataToMain = _.debounce(this.syncDraftDataToMainNow, 1500);
 
-  onDraftOpenCountChange = ({ headerMessageId, data = {} }) => {
-    AppEnv.logDebug(`draft open count change ${headerMessageId}`);
-    if (this._draft && headerMessageId === this._draft.headerMessageId) {
+  onDraftOpenCountChange = ({ messageId, data = {} }) => {
+    AppEnv.logDebug(`draft open count change ${messageId}`);
+    if (this._draft && messageId === this._draft.id) {
       AppEnv.logDebug('draft open count change');
       let level = 3;
-      let changedToTrue= false;
+      let changedToTrue = false;
       while (level > this.currentWindowLevel) {
         if (data[level]) {
           this.setPopout(true);
@@ -1011,7 +947,7 @@ export default class DraftEditingSession extends MailspringStore {
         }
         level = level - 1;
       }
-      if(!changedToTrue){
+      if (!changedToTrue) {
         this.setPopout(false);
       }
     }
