@@ -9,11 +9,11 @@ import { Composer as ComposerExtensionRegistry } from '../../registries/extensio
 import { LocalizedErrorStrings } from '../../mailsync-process';
 
 export const SendTaskDisplayErrors = {
-  'ErrorSendMessage':'ErrorSendMessage',
-  'ErrorSendMessageSpamSuspected':'ErrorSendMessageSpamSuspected',
-  'ErrorSendMessageIllegalAttachment':'ErrorSendMessageIllegalAttachment',
-  'ErrorSendMessageNotAllowed':'ErrorSendMessageNotAllowed',
-  'ErrorSendMessageDailyLimitExceeded':'ErrorSendMessageDailyLimitExceeded',
+  ErrorSendMessage: 'ErrorSendMessage',
+  ErrorSendMessageSpamSuspected: 'ErrorSendMessageSpamSuspected',
+  ErrorSendMessageIllegalAttachment: 'ErrorSendMessageIllegalAttachment',
+  ErrorSendMessageNotAllowed: 'ErrorSendMessageNotAllowed',
+  ErrorSendMessageDailyLimitExceeded: 'ErrorSendMessageDailyLimitExceeded',
 };
 function applyExtensionTransforms(draft, recipient) {
   const extensions = ComposerExtensionRegistry.extensions();
@@ -35,7 +35,6 @@ export default class SendDraftTask extends Task {
   static forSending(d, { silent } = {}) {
     const task = new SendDraftTask();
     task.draft = d.clone();
-    task.headerMessageId = task.draft.headerMessageId;
     task.silent = silent;
 
     const separateBodies = ComposerExtensionRegistry.extensions().some(
@@ -61,8 +60,8 @@ export default class SendDraftTask extends Task {
       modelKey: 'draft',
       itemClass: Message,
     }),
-    headerMessageId: Attributes.String({
-      modelKey: 'headerMessageId',
+    messageId: Attributes.String({
+      modelKey: 'messageId',
     }),
     perRecipientBodies: Attributes.Object({
       modelKey: 'perRecipientBodies',
@@ -71,7 +70,7 @@ export default class SendDraftTask extends Task {
       modelKey: 'silent',
     }),
   });
-  constructor(data){
+  constructor(data) {
     super(data);
   }
 
@@ -83,11 +82,11 @@ export default class SendDraftTask extends Task {
     // no-op
   }
 
-  get headerMessageId() {
-    return this.draft.headerMessageId;
+  get messageId() {
+    return this.draft.id;
   }
 
-  set headerMessageId(h) {
+  set messageId(h) {
     // no-op
   }
 
@@ -99,7 +98,10 @@ export default class SendDraftTask extends Task {
     if (!this.draft.from[0]) {
       throw new Error('SendDraftTask - you must populate `from` before sending.');
     }
-    const account = AccountStore.accountForEmail({email: this.draft.from[0].email, accountId: this.draft.accountId});
+    const account = AccountStore.accountForEmail({
+      email: this.draft.from[0].email,
+      accountId: this.draft.accountId,
+    });
     if (!account) {
       throw new Error('SendDraftTask - you can only send drafts from a configured account.');
     }
@@ -112,7 +114,7 @@ export default class SendDraftTask extends Task {
 
   onSuccess() {
     Actions.draftDeliverySucceeded({
-      headerMessageId: this.draft.headerMessageId,
+      messageId: this.draft.id,
       accountId: this.draft.accountId,
     });
 
@@ -152,18 +154,17 @@ export default class SendDraftTask extends Task {
       const [smtpError, emails] = debuginfo.split(':::');
       errorMessage =
         "We were unable to deliver this message to some recipients. Click 'See Details' for more information.";
-      errorDetail = `We encountered an SMTP Gateway error that prevented this message from being delivered to all recipients. The message was only sent successfully to these recipients:\n${emails}\n\nError: ${
-        LocalizedErrorStrings[smtpError]
-      }`;
+      errorDetail = `We encountered an SMTP Gateway error that prevented this message from being delivered to all recipients. The message was only sent successfully to these recipients:\n${emails}\n\nError: ${LocalizedErrorStrings[smtpError]}`;
     } else if (key === 'send-failed') {
       errorMessage = `We were unable to deliver this message. ${LocalizedErrorStrings[debuginfo]}`;
-      errorDetail = `We encountered an SMTP error that prevented this message from being delivered:\n\n${
-        LocalizedErrorStrings[debuginfo]
-      }`;
+      errorDetail = `We encountered an SMTP error that prevented this message from being delivered:\n\n${LocalizedErrorStrings[debuginfo]}`;
     } else if (key === 'ErrorAuthentication') {
       errorMessage = `We encountered a problem with account authentication. Please make sure account is set up correctly.`;
       errorDetail = LocalizedErrorStrings[debuginfo];
-    } else if (Object.keys(SendTaskDisplayErrors).includes(key) && key !== SendTaskDisplayErrors.ErrorSendMessage) {
+    } else if (
+      Object.keys(SendTaskDisplayErrors).includes(key) &&
+      key !== SendTaskDisplayErrors.ErrorSendMessage
+    ) {
       errorMessage = 'Email blocked by service provider';
       errorDetail = debuginfo;
     } else {
@@ -173,7 +174,7 @@ export default class SendDraftTask extends Task {
 
     Actions.draftDeliveryFailed({
       threadId: this.draft.threadId,
-      headerMessageId: this.draft.headerMessageId,
+      messageId: this.draft.id,
       draft: this.draft,
       errorKey: key,
       errorMessage,

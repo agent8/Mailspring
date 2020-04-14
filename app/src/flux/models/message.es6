@@ -38,13 +38,11 @@ export default class Message extends ModelWithMetadata {
     'calendarReply',
     'listUnsubscribe',
     'pristine',
-    'replyToHeaderMessageId',
-    'forwardedHeaderMessageId',
-    'refOldDraftHeaderMessageId',
+    'refOldDraftMessageId',
     'savedOnRemote',
     'hasRefOldDraftOnRemote',
     'folder',
-    'replyOrForward',
+    'replyType',
     'msgOrigin',
     'hasNewID',
     'noSave',
@@ -140,30 +138,24 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'pristine',
       queryable: false,
     }),
-    replyToHeaderMessageId: Attributes.String({
-      modelKey: 'replyToHeaderMessageId',
-      jsonKey: 'replyToHeaderMsgId',
+    replyToMessageId: Attributes.String({
+      modelKey: 'relyToMessageId',
+      jsonKey: 'replyToMsgPid',
       queryable: false,
     }),
 
-    forwardedHeaderMessageId: Attributes.String({
-      modelKey: 'forwardedHeaderMessageId',
-      jsonKey: 'forwardHeaderMsgId',
-      queryable: false,
-    }),
-
-    refOldDraftHeaderMessageId: Attributes.String({
-      modelKey: 'refOldDraftHeaderMessageId',
-      jsonKey: 'refDraftHeaderMsgId',
+    refOldDraftMessageId: Attributes.String({
+      modelKey: 'refOldDraftMessageId',
+      jsonKey: 'prevDraftPid',
       queryable: false,
     }),
     savedOnRemote: Attributes.Boolean({
       modelKey: 'savedOnRemote',
+      jsonKey: 'uploaded',
       queryable: false,
     }),
     hasRefOldDraftOnRemote: Attributes.Boolean({
       modelKey: 'hasRefOldDraftOnRemote',
-      jsonKey: 'hasRefDraft',
       queryable: false,
     }),
     folder: Attributes.Object({
@@ -171,8 +163,8 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'folder',
       itemClass: Folder,
     }),
-    replyOrForward: Attributes.Number({
-      modelKey: 'replyOrForward',
+    replyType: Attributes.Number({
+      modelKey: 'replyType',
       queryable: false,
     }),
     msgOrigin: Attributes.Number({
@@ -380,6 +372,9 @@ export default class Message extends ModelWithMetadata {
     if (!Array.isArray(data.files)) {
       this.files = [];
     }
+    if (this.refOldDraftMessageId) {
+      this.hasRefOldDraftOnRemote = true;
+    }
   }
 
   toJSON(options) {
@@ -401,6 +396,9 @@ export default class Message extends ModelWithMetadata {
     super.fromJSON(json);
     if (!Array.isArray(json.pastMessageIds)) {
       this.pastMessageIds = [];
+    }
+    if (this.refOldDraftMessageId) {
+      this.hasRefOldDraftOnRemote = true;
     }
     return this;
   }

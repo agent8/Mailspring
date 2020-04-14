@@ -1,7 +1,7 @@
 /* eslint react/sort-comp: 0 */
 import _ from 'underscore';
 import React from 'react';
-import { ipcRenderer } from 'electron'
+import { ipcRenderer } from 'electron';
 import {
   Message,
   DraftStore,
@@ -25,14 +25,17 @@ class ComposerWithWindowProps extends React.Component {
 
     // We'll now always have windowProps by the time we construct this.
     const windowProps = AppEnv.getWindowProps();
-    const { draftJSON, headerMessageId } = windowProps;
+    const { draftJSON, messageId } = windowProps;
     if (!draftJSON) {
       throw new Error('Initialize popout composer windows with valid draftJSON');
     }
     const draft = new Message().fromJSON(draftJSON);
     this.state = windowProps;
     this._mounted = false;
-    this._unlisten = Actions.changeDraftAccountComplete.listen(this._onDraftChangeAccountComplete, this);
+    this._unlisten = Actions.changeDraftAccountComplete.listen(
+      this._onDraftChangeAccountComplete,
+      this
+    );
     if (draft.savedOnRemote) {
       console.log('savedOnRemote');
       DraftStore.sessionForServerDraft(draft).then(session => {
@@ -46,7 +49,7 @@ class ComposerWithWindowProps extends React.Component {
         }
       });
     } else {
-      DraftStore._createSession(headerMessageId, draft);
+      DraftStore._createSession(messageId, draft);
       this.state.messageId = draft.id;
     }
   }
@@ -57,17 +60,17 @@ class ComposerWithWindowProps extends React.Component {
     this._mounted = true;
   }
 
-  _onDraftChangeAccountComplete = ({ newDraftJSON, originalHeaderMessageId }) => {
+  _onDraftChangeAccountComplete = ({ newDraftJSON, originalMessageId }) => {
     // Because we transform in action-bridge, this is actually message model.
-    if(!this._mounted){
+    if (!this._mounted) {
       return;
     }
-    if(!originalHeaderMessageId){
-      AppEnv.logError(`originalHeaderMessageId not found`);
+    if (!originalMessageId) {
+      AppEnv.logError(`originalMessageId not found`);
       return;
     }
-    if(!this.state.headerMessageId || this.state.headerMessageId !==originalHeaderMessageId){
-      AppEnv.logDebug(`Not for this message ${originalHeaderMessageId}, ${this.state.headerMessageId}`);
+    if (!this.state.messageId || this.state.messageId !== originalMessageId) {
+      AppEnv.logDebug(`Not for this message ${originalMessageId}, ${this.state.messageId}`);
       return;
     }
     const draft = new Message(newDraftJSON);
@@ -75,24 +78,22 @@ class ComposerWithWindowProps extends React.Component {
       DraftStore.sessionForServerDraft(draft).then(session => {
         const newDraft = session.draft();
         if (newDraft) {
-          this.setState({ headerMessageId: newDraft.headerMessageId, messageId: newDraft.id });
+          this.setState({ messageId: newDraft.id });
         }
       });
     } else {
-      DraftStore._createSession(draft.headerMessageId, draft);
-      this.setState({ headerMessageId: draft.headerMessageId, messageId: draft.id });
+      DraftStore._createSession(draft.id, draft);
+      this.setState({ messageId: draft.id });
     }
   };
 
   _onDraftGotNewId = (event, options) => {
     if (
       options.oldMessageId &&
-      options.newHeaderMessageId &&
       options.newMessageId &&
       options.oldMessageId === this.state.messageId
     ) {
       this.setState({
-        headerMessageId: options.newHeaderMessageId,
         messageId: options.newMessageId,
       });
     }
@@ -128,7 +129,6 @@ class ComposerWithWindowProps extends React.Component {
           this._composerComponent = cm;
         }}
         onDraftReady={this._onDraftReady}
-        headerMessageId={this.state.headerMessageId}
         messageId={this.state.messageId}
         className="composer-full-window"
       />

@@ -3,38 +3,26 @@ import Attributes from '../attributes';
 
 export default class CancelOutboxDraftTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
-    headerMessageIds: Attributes.Collection({
-      modelKey: 'headerMessageIds',
-    }),
-    refOldDraftHeaderMessageIds: Attributes.Collection({
-      modelKey: 'refOldDraftHeaderMessageIds',
+    messageIds: Attributes.Collection({
+      modelKey: 'messageIds',
+      jsonKey: 'msgPIds',
     }),
     canBeUndone: Attributes.Boolean({
       modelKey: 'canBeUndone',
-    })
+    }),
   });
 
-  constructor({ headerMessageIds = [], refOldDraftHeaderMessageIds = [], ...rest } = {}) {
+  constructor({ messageIds = [], refOldDraftMessageIds = [], ...rest } = {}) {
     super(rest);
-    this.headerMessageIds = Array.isArray(headerMessageIds) ? headerMessageIds : [headerMessageIds];
-    this.refOldDraftHeaderMessageIds = Array.isArray(refOldDraftHeaderMessageIds)
-      ? refOldDraftHeaderMessageIds
-      : [refOldDraftHeaderMessageIds];
-    if (this.headerMessageIds.length !== this.refOldDraftHeaderMessageIds.length) {
-      AppEnv.reportError(
-        new Error(
-          `CancelOutboxDraftTask have unequal length headerMessageIds and refOldDraftHeaderMessageIds`
-        )
-      );
-    }
+    this.messageIds = Array.isArray(messageIds) ? messageIds : [messageIds];
     if (this.canBeUndone === undefined) {
       this.canBeUndone = true;
     }
   }
 
   label() {
-    if (this.headerMessageIds.length > 1) {
-      return `Canceling ${this.headerMessageIds.length} drafts`;
+    if (this.messageIds.length > 1) {
+      return `Canceling ${this.messageIds.length} drafts`;
     }
     return 'Canceling draft';
   }

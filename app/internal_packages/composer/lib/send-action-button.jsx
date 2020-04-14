@@ -65,7 +65,7 @@ class SendActionButton extends React.Component {
   shouldComponentUpdate(nextProps, nextState) {
     return (
       nextProps.sendActions.map(a => a.configKey).join(',') !==
-      this.props.sendActions.map(a => a.configKey).join(',') ||
+        this.props.sendActions.map(a => a.configKey).join(',') ||
       this.props.disabled !== nextProps.disabled ||
       this.state.isSending !== nextState.isSending
     );
@@ -142,14 +142,21 @@ class SendActionButton extends React.Component {
         SoundRegistry.playSound('hit-send');
       }
       if (noDelay) {
-        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, delay: 0, source: 'No Delay' });
+        Actions.sendDraft(this.props.draft.id, {
+          actionKey: sendAction.configKey,
+          delay: 0,
+          source: 'No Delay',
+        });
       } else {
-        Actions.sendDraft(this.props.draft.headerMessageId, { actionKey: sendAction.configKey, source: 'User Trigger' });
+        Actions.sendDraft(this.props.draft.id, {
+          actionKey: sendAction.configKey,
+          source: 'User Trigger',
+        });
       }
     }
   };
-  _onSendDraftProcessCompleted = ({ headerMessageId }) => {
-    if (this._mounted && headerMessageId && headerMessageId === this.props.draft.headerMessageId) {
+  _onSendDraftProcessCompleted = ({ messageId }) => {
+    if (this._mounted && messageId && messageId === this.props.draft.id) {
       clearTimeout(this._delayLoadingTimer);
       if (this._sendButtonTimer) {
         return;
@@ -181,13 +188,13 @@ class SendActionButton extends React.Component {
             style={{ margin: '0', display: 'inline-block', float: 'left' }}
           />
         ) : (
-            <RetinaImg
-              name={'sent.svg'}
-              style={{ width: 27, height: 27 }}
-              isIcon={true}
-              mode={RetinaImg.Mode.ContentIsMask}
-            />
-          )}
+          <RetinaImg
+            name={'sent.svg'}
+            style={{ width: 27, height: 27 }}
+            isIcon={true}
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        )}
         <span className="text">Send{plusHTML}</span>
         {additionalImg}
       </span>
