@@ -2,9 +2,9 @@ import React from 'react';
 import SoftBreak from 'slate-soft-break';
 import EditList from 'slate-edit-list';
 import AutoReplace from 'slate-auto-replace';
-const Handlers = require('./slate-edit-code/handlers');
-
 import { BuildToggleButton } from './toolbar-component-factories';
+
+const Handlers = require('./slate-edit-code/handlers');
 const TABKey = 9;
 function nodeIsEmpty(node) {
   if (node.text !== '') {
@@ -52,40 +52,39 @@ function toggleBlockTypeWithBreakout(value, change, type) {
 
   return change;
 }
-function isStartOfDocument(value){
-  if(!value){
+function isStartOfDocument(value) {
+  if (!value) {
     return false;
   }
-  if(!value.document){
+  if (!value.document) {
     return false;
   }
   const focusOffset = value.focusOffset;
   const focusText = value.focusText;
   const firstText = value.document.getFirstText();
-  return focusOffset === 0 && focusText && firstText && firstText.key === focusText.key
+  return focusOffset === 0 && focusText && firstText && firstText.key === focusText.key;
 }
-function isEmptySelection(value){
-  if(!value){
+function isEmptySelection(value) {
+  if (!value) {
     return false;
   }
-  if(!value.selection){
+  if (!value.selection) {
     return false;
   }
   const selectionStartKey = value.selection.startKey;
   const selectionEndKey = value.selection.endKey;
-  if(!selectionEndKey || !selectionStartKey){
+  if (!selectionEndKey || !selectionStartKey) {
     return false;
   }
-  if(selectionEndKey!==selectionStartKey){
+  if (selectionEndKey !== selectionStartKey) {
     return false;
   }
   const selectionStartOffSetKey = value.selection.startOffset;
   const selectionEndOffSetKey = value.selection.endOffset;
-  if(selectionEndOffSetKey !== selectionStartOffSetKey){
+  if (selectionEndOffSetKey !== selectionStartOffSetKey) {
     return false;
   }
   return true;
-
 }
 function shouldBeRemoved(value) {
   const listTypes = ['ol_list', 'ul_list', 'code', 'blockquote'];
@@ -108,6 +107,39 @@ function toggleList(value, activated, type) {
   }
 }
 
+function isMoreThanTabs(numOfTabs, value) {
+  const text = value.focusText;
+  //Because of an issue with built in Tab, we are hardcoding this value to 10
+  //And because of said bug, the number of tab is actually 5.
+  numOfTabs = 10;
+  if (!isFinite(numOfTabs)) {
+    return false;
+  }
+  if (numOfTabs <= 0) {
+    return true;
+  }
+  if (text && text.text) {
+    let i = 0;
+    let count = 0;
+    const textLength = text.text.length;
+    //Because we use 4 spaces to represent tab
+    while (i < numOfTabs * 4 && i < textLength) {
+      let allSpaces = false;
+      for (let k = i; k <= i + 3; k++) {
+        allSpaces = text.text.charCodeAt(k) === 32;
+        if (!allSpaces) {
+          return false;
+        }
+      }
+      count++;
+      if (count >= numOfTabs) {
+        return true;
+      }
+      i += 4;
+    }
+  }
+  return false;
+}
 export const BLOCK_CONFIG = {
   div: {
     type: 'div',
@@ -145,7 +177,9 @@ export const BLOCK_CONFIG = {
       iconClass: 'dt-icon dt-icon-increase-indent',
       isActive: value => false,
       onToggle: (value, active, event) => {
-        return Handlers.onTab({ lineType: 'div' }, event, value.change());
+        if (isMoreThanTabs(10, value)) {
+          return Handlers.onTab({ lineType: 'div' }, event, value.change());
+        }
       },
     },
   },
@@ -428,7 +462,9 @@ export default [
       'contenteditable:indent': (event, value) => {
         const focusBlock = value.focusBlock;
         if (focusBlock && focusBlock.type === BLOCK_CONFIG.div.type) {
-          return Handlers.onTab({ lineType: 'div' }, event, value.change());
+          if (!isMoreThanTabs(10, value)) {
+            return Handlers.onTab({ lineType: 'div' }, event, value.change());
+          }
         }
       },
       'contenteditable:outdent': (event, value) => {
@@ -505,7 +541,10 @@ export default [
       if (event.shiftKey || event.metaKey || event.optionKey) {
         return Handlers.onShiftTab({ lineType: 'div' }, event, change);
       }
-      return Handlers.onTab({ lineType: 'div' }, event, change);
+      if (!isMoreThanTabs(10, change.value)) {
+        return Handlers.onTab({ lineType: 'div' }, event, change);
+      }
+      return;
     },
   },
 
