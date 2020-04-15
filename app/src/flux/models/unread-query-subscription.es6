@@ -32,7 +32,7 @@ const buildQuery = categoryIds => {
             Thread.attributes.state.equal(0),
           ]),
           new Matcher.JoinAnd([
-            JoinTable.useAttribute('id', 'String').in(RecentlyReadStore.ids),
+            JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids),
             JoinTable.useAttribute('state', 'Number').equal(0),
           ]),
         ]),
