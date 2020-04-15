@@ -37,18 +37,18 @@ class CategoryStore extends MailspringStore {
         this._onCategoriesChanged(this._categoryResult);
       }
     });
-    DatabaseStore.findAll(Folder, {state: 0}).then(this._onCategoriesChanged);
+    DatabaseStore.findAll(Folder, { state: 0 }).then(this._onCategoriesChanged);
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
   decodePath(pathString) {
     return Category.pathToDisplayName(pathString);
   }
-  byFolderId(categoryId){
+  byFolderId(categoryId) {
     const accountIds = Object.keys(this._categoryCache);
-    for(let accountId of accountIds){
+    for (let accountId of accountIds) {
       const category = this.byId(accountId, categoryId);
-      if(category){
+      if (category) {
         return category;
       }
     }
@@ -179,7 +179,7 @@ class CategoryStore extends MailspringStore {
   }
 
   isCategorySyncing = categoryId => {
-    if (!categoryId || typeof categoryId !== 'string' || (categoryId.length === 0)) {
+    if (!categoryId || typeof categoryId !== 'string' || categoryId.length === 0) {
       return false;
     }
     const now = Date.now();
@@ -188,7 +188,7 @@ class CategoryStore extends MailspringStore {
     } else {
       const lastUpdate = this._categorySyncState[categoryId].lastUpdate;
       if (
-        (now - lastUpdate) > categoryUpdatingTimeout &&
+        now - lastUpdate > categoryUpdatingTimeout &&
         this._categorySyncState[categoryId].syncing
       ) {
         this._categorySyncState[categoryId] = { syncing: false, lastUpdate: now };
@@ -197,7 +197,7 @@ class CategoryStore extends MailspringStore {
     return this._categorySyncState[categoryId].syncing;
   };
   _onFolderStateChange = ({ objectClass, objects, processAccountId }) => {
-    if(objectClass === Folder.name){
+    if (objectClass === Folder.name) {
       return this._onCategoriesChanged(objects, processAccountId);
     }
     if (objectClass !== FolderState.name) {
@@ -239,30 +239,35 @@ class CategoryStore extends MailspringStore {
 
   _onCategoriesChanged = (categories, accountId = '') => {
     console.log('On Categories change');
-    if (!this._categoryResult){
+    if (!accountId) {
+      debugger;
+    }
+    if (!this._categoryResult) {
       this._categoryResult = [];
     }
-    if(accountId){
-      this._categoryResult= this._categoryResult.filter(cat => cat.accountId !== accountId);
+    if (accountId) {
+      this._categoryResult = this._categoryResult.filter(cat => cat.accountId !== accountId);
       this._categoryResult = this._categoryResult.concat(categories);
-    }else {
-      this._categoryResult= categories;
+    } else {
+      this._categoryResult = categories;
     }
     const categoryCache = {};
     for (const cat of categories) {
       categoryCache[cat.accountId] = categoryCache[cat.accountId] || {};
       // don't overwrite bgColor
-      const oldCat = this._categoryCache[cat.accountId] ? this._categoryCache[cat.accountId][cat.id] : null;
+      const oldCat = this._categoryCache[cat.accountId]
+        ? this._categoryCache[cat.accountId][cat.id]
+        : null;
       if (oldCat && oldCat.bgColor && oldCat.id === cat.id) {
         cat.bgColor = oldCat.bgColor;
       }
       categoryCache[cat.accountId][cat.id] = cat;
       this._onCategoryFinishedSyncing(cat, false);
     }
-    if(accountId){
+    if (accountId) {
       this._categoryCache[accountId] = categoryCache[accountId];
-    }else {
-      this._categoryCache= categoryCache;
+    } else {
+      this._categoryCache = categoryCache;
     }
 
     const filteredByAccount = fn => {
@@ -276,19 +281,25 @@ class CategoryStore extends MailspringStore {
       }
       return result;
     };
-    if(accountId){
-      this._standardCategories[accountId] = filteredByAccount(cat => cat.isStandardCategory())[accountId];
-      this._userCategories[accountId] = filteredByAccount(cat => cat.isUserCategory())[accountId];
-      this._hiddenCategories[accountId] = filteredByAccount(cat => cat.isHiddenCategory())[accountId];
-    }else {
-      this._standardCategories = filteredByAccount(cat => cat.isStandardCategory());
-      this._userCategories = filteredByAccount(cat => cat.isUserCategory());
-      this._hiddenCategories = filteredByAccount(cat => cat.isHiddenCategory());
+    if (accountId) {
+      this._standardCategories[accountId] = filteredByAccount(
+        cat => cat && cat.isStandardCategory()
+      )[accountId];
+      this._userCategories[accountId] = filteredByAccount(cat => cat && cat.isUserCategory())[
+        accountId
+      ];
+      this._hiddenCategories[accountId] = filteredByAccount(cat => cat && cat.isHiddenCategory())[
+        accountId
+      ];
+    } else {
+      this._standardCategories = filteredByAccount(cat => cat && cat.isStandardCategory());
+      this._userCategories = filteredByAccount(cat => cat && cat.isUserCategory());
+      this._hiddenCategories = filteredByAccount(cat => cat && cat.isHiddenCategory());
     }
 
     // Ensure standard categories are always sorted in the correct order
     for (const accountCategories of Object.values(this._standardCategories)) {
-      accountCategories.sort(
+      (accountCategories || []).sort(
         (a, b) => Category.StandardRoles.indexOf(a.name) - Category.StandardRoles.indexOf(b.name)
       );
     }
