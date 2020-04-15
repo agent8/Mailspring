@@ -37,6 +37,7 @@ export default class NewConversation extends Component {
 
   componentDidMount() {
     this._mounted = true;
+    this.initContacts();
     this.unsub = AppStore.listen(() => {
       this.initContacts();
     });
