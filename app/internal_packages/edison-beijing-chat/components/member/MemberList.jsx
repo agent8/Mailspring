@@ -256,13 +256,14 @@ export default class ConversationInfo extends Component {
 
   renderPrivateConversationMember() {
     const { selectedConversation: conversation } = this.props;
-    const { curJid } = conversation;
+    const { curJid, jid } = conversation;
+    const other = UserCacheStore.getUserInfoByJid(jid);
     const self = UserCacheStore.getUserInfoByJid(curJid);
 
     return [
       <MemberListItem
         conversation={conversation}
-        member={conversation}
+        member={other}
         currentUserIsOwner={false}
         key={conversation.jid}
       />,
