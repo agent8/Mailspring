@@ -8,6 +8,19 @@ import Button from '../common/Button';
 import genRoomId from '../../utils/genRoomId';
 import conversationTitle from '../../utils/conversationTitle';
 const { AccountStore } = require('mailspring-exports');
+
+function generateContactValue(contact) {
+  return contact.name + '|' + contact.email;
+}
+
+function generateContactName(contact) {
+  // use zero-widthjoiner break up the string
+  // If zero width characters are not used,
+  // once onBlur, rc-select will auto select the option that has same label to input value,
+  // and if there are more than one, select the first one,
+  // which is not in line with our expectation
+  return contact.name + '\u200d';
+}
 export default class NewConversation extends Component {
   static displayName = 'NewConversation';
 
@@ -16,7 +29,7 @@ export default class NewConversation extends Component {
     this.state = {
       members: [],
       contacts: [],
-      membersTemp: [],
+      selectedOptions: [],
       loading: true,
     };
     this._mounted = false;
@@ -77,22 +90,35 @@ export default class NewConversation extends Component {
     }
   }
 
-  handleChange = (value, options) => {
-    const members = options.map(item => ({
-      name: item.props.label,
-      jid: item.props.jid,
-      curJid: item.props.curjid,
-      email: item.props.email,
-    }));
-    this.saveRoomMembersForTemp(members);
+  handleChange = selectedOptions => {
+    const { contacts } = this.state;
+    const members = [];
+    contacts.forEach(item => {
+      if (selectedOptions.some(option => option === generateContactValue(item))) {
+        members.push({
+          name: item.name,
+          jid: item.jid,
+          curJid: item.curJid,
+          email: item.email,
+        });
+      }
+    });
     this.setState(
       {
         members,
+        selectedOptions,
       },
-      () => {
-        document.querySelector('#contact-select input').focus();
-      }
+      this.focusIntoInput
     );
+  };
+
+  onSelect = value => {
+    const { selectedOptions } = this.state;
+    this.handleChange([...selectedOptions, value]);
+  };
+  onDeselect = value => {
+    const { selectedOptions } = this.state;
+    this.handleChange(selectedOptions.filter(option => option !== value));
   };
 
   createConversation = () => {
@@ -102,7 +128,7 @@ export default class NewConversation extends Component {
     this._close();
     Actions.selectRootSheet(WorkspaceStore.Sheet.ChatView);
 
-    const contacts = this.state.membersTemp;
+    const contacts = this.state.members;
     if (contacts && contacts.length) {
       const curJid = contacts[0].curJid;
       if (contacts.length === 1) {
@@ -150,12 +176,8 @@ export default class NewConversation extends Component {
     document.querySelector('#contact-select input').focus();
   };
 
-  saveRoomMembersForTemp = members => {
-    this.setState({ membersTemp: members });
-  };
-
   render() {
-    const { members, contacts, loading } = this.state;
+    const { members, contacts, loading, selectedOptions } = this.state;
 
     const children = contacts
       .filter(contact => !!contact && !this.isMe(contact.email))
@@ -164,9 +186,9 @@ export default class NewConversation extends Component {
           key={contact.jid}
           jid={contact.jid}
           curjid={contact.curJid}
-          value={contact.name + contact.email}
+          value={generateContactValue(contact)}
           email={contact.email}
-          label={contact.name}
+          label={generateContactName(contact)}
         >
           <div className="chip">
             <ContactAvatar jid={contact.jid} name={contact.name} email={contact.email} size={32} />
@@ -203,8 +225,9 @@ export default class NewConversation extends Component {
               id="contact-select"
               style={{ width: '400px', flex: 1, height: '70px' }}
               dropdownStyle={{ maxHeight: 1 }} // init set 1px, fixbug DC-990:4
-              onChange={this.handleChange}
-              onSelect={this.focusIntoInput}
+              onSelect={this.onSelect}
+              onDeselect={this.onDeselect}
+              value={selectedOptions}
               defaultOpen
               multiple
               autoFocus
