@@ -503,15 +503,10 @@ export function ToggleUnreadButton(props) {
   return (
     <BindGlobalCommands
       key={fragment}
-      commands={
-        targetUnread
-          ? {
-              'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
-            }
-          : {
-              'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
-            }
-      }
+      commands={{
+        'core:mark-as-unread': event => commandCb(event, _onShortcutChangeUnread, true),
+        'core:mark-as-read': event => commandCb(event, _onShortcutChangeUnread, false),
+      }}
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
         <RetinaImg
