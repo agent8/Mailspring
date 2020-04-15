@@ -320,6 +320,11 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    hasBody: Attributes.Boolean({
+      modelKey: 'hasBody',
+      queryable: true,
+      loadFromColumn: true,
+    }),
     inboxCategory: Attributes.Number({
       queryable: true,
       loadFromColumn: true,
@@ -761,7 +766,7 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() {}
+  isActiveDraft() { }
 
   isDeleted() {
     return this.deleted;
