@@ -4,7 +4,6 @@ import fs from 'fs';
 import util from 'util';
 import File from './file';
 import Utils from './utils';
-import Event from './event';
 import Contact from './contact';
 import Folder from './folder';
 import Sift from './sift';
@@ -201,6 +200,10 @@ export default class Message extends ModelWithMetadata {
     }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
+      queryable: false,
+    }),
+    needUpload: Attributes.Boolean({
+      modelKey: 'needUpload',
       queryable: false,
     }),
 
@@ -764,7 +767,7 @@ export default class Message extends ModelWithMetadata {
     return this.body.replace(re, '').length === 0;
   }
 
-  isActiveDraft() { }
+  isActiveDraft() {}
 
   isDeleted() {
     return this.deleted;
