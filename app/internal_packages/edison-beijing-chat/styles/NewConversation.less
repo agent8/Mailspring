@@ -1,6 +1,5 @@
 @import '../node_modules/rc-select/assets/index.css';
 @import 'ui-variables';
-@btn-disabled-color: @gray-lighter;
 
 @marginLeft: 18px;
 &.new-conversation-popup {
@@ -27,6 +26,9 @@
       top: 50%;
       transform: translateY(-13px);
     }
+    .rc-select-search input {
+      color: @text-color;
+    }
   }
 
   .toolbar-window-controls {
@@ -37,9 +39,9 @@
 
   .btn.btn-disabled {
     color: @text-color-inverse;
-    background: @btn-disabled-color;
+    background: @disabled-bg-color;
     &:active {
-      background: @btn-disabled-color;
+      background: @disabled-bg-color;
     }
   }
 
@@ -160,6 +162,8 @@ li.rc-select-dropdown-menu-item-selected {
 .rc-select {
   .rc-select-selection__choice,
   .rc-select-selection__choice:hover {
+    color: @text-color-very-subtle;
+    background: @active;
     height: 28px;
     .rc-select-selection__choice__content {
       margin-left: -7px;
