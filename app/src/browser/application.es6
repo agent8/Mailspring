@@ -1111,47 +1111,36 @@ export default class Application extends EventEmitter {
       this.systemTrayManager.updateTrayChatUnreadCount(...args);
     });
 
-    ipcMain.on(
-      'send-later-manager',
-      (event, action, headerMessageId, delay, actionKey, threadId) => {
-        const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-        if (action === 'send-later') {
-          if (this._draftsSendLater[headerMessageId]) {
-            clearTimeout(this._draftsSendLater[headerMessageId]);
+    ipcMain.on('send-later-manager', (event, action, messageId, delay, actionKey, threadId) => {
+      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (action === 'send-later') {
+        if (this._draftsSendLater[messageId]) {
+          clearTimeout(this._draftsSendLater[messageId]);
+        }
+        this._draftsSendLater[messageId] = setTimeout(() => {
+          delete this._draftsSendLater[messageId];
+          if (!mainWindow || !mainWindow.browserWindow.webContents) {
+            return;
           }
-          this._draftsSendLater[headerMessageId] = setTimeout(() => {
-            delete this._draftsSendLater[headerMessageId];
-            if (!mainWindow || !mainWindow.browserWindow.webContents) {
-              return;
-            }
-            mainWindow.browserWindow.webContents.send(
-              'action-send-now',
-              headerMessageId,
+          mainWindow.browserWindow.webContents.send('action-send-now', messageId, actionKey);
+        }, delay);
+      } else if (action === 'undo') {
+        const timer = this._draftsSendLater[messageId];
+        clearTimeout(timer);
+        delete this._draftsSendLater[messageId];
+        mainWindow.browserWindow.webContents.send('action-send-cancelled', messageId, actionKey);
+        if (threadId) {
+          const threadWindow = this.windowManager.get(`thread-${threadId}`);
+          if (threadWindow && threadWindow.browserWindow.webContents) {
+            threadWindow.browserWindow.webContents.send(
+              'action-send-cancelled',
+              messageId,
               actionKey
             );
-          }, delay);
-        } else if (action === 'undo') {
-          const timer = this._draftsSendLater[headerMessageId];
-          clearTimeout(timer);
-          delete this._draftsSendLater[headerMessageId];
-          mainWindow.browserWindow.webContents.send(
-            'action-send-cancelled',
-            headerMessageId,
-            actionKey
-          );
-          if (threadId) {
-            const threadWindow = this.windowManager.get(`thread-${threadId}`);
-            if (threadWindow && threadWindow.browserWindow.webContents) {
-              threadWindow.browserWindow.webContents.send(
-                'action-send-cancelled',
-                headerMessageId,
-                actionKey
-              );
-            }
           }
         }
       }
-    );
+    });
 
     ipcMain.on('set-badge-value', (event, value) => {
       if (app.dock && app.dock.setBadge) {
