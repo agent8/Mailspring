@@ -51,6 +51,7 @@ export default class MessagesPanel extends Component {
   componentDidMount() {
     this._mounted = true;
     this.onConversationChange();
+    this.onContactChange();
     this.setState({
       online: navigator.onLine,
     });
