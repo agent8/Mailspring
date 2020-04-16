@@ -1074,7 +1074,7 @@ export default class Application extends EventEmitter {
         const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
         mainWindow.sendMessage('popout-thread', {
           accountId,
-          id: threadId
+          id: threadId,
         });
       } else {
         this.openUrl(urlToOpen);
@@ -1276,49 +1276,49 @@ export default class Application extends EventEmitter {
         }
       }
     });
-    ipcMain.on('draft-arp', (event, options) => {
-      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      if (mainWindow && mainWindow.browserWindow.webContents) {
-        mainWindow.browserWindow.webContents.send('draft-arp', options);
-      }
-      if (options.threadId) {
-        const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-        if (threadWindow && threadWindow.browserWindow.webContents) {
-          threadWindow.browserWindow.webContents.send('draft-arp', options);
-        }
-      }
-      if (options.headerMessageId) {
-        const composerWindow = this.windowManager.get(`composer-${options.headerMessageId}`);
-        if (composerWindow && composerWindow.browserWindow.webContents) {
-          composerWindow.browserWindow.webContents.send('draft-arp', options);
-        }
-      }
-    });
+    // ipcMain.on('draft-arp', (event, options) => {
+    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+    //   if (mainWindow && mainWindow.browserWindow.webContents) {
+    //     mainWindow.browserWindow.webContents.send('draft-arp', options);
+    //   }
+    //   if (options.threadId) {
+    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
+    //     if (threadWindow && threadWindow.browserWindow.webContents) {
+    //       threadWindow.browserWindow.webContents.send('draft-arp', options);
+    //     }
+    //   }
+    //   if (options.headerMessageId) {
+    //     const composerWindow = this.windowManager.get(`composer-${options.headerMessageId}`);
+    //     if (composerWindow && composerWindow.browserWindow.webContents) {
+    //       composerWindow.browserWindow.webContents.send('draft-arp', options);
+    //     }
+    //   }
+    // });
 
-    ipcMain.on('draft-arp-reply', (event, options) => {
-      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      if (mainWindow && mainWindow.browserWindow.webContents) {
-        mainWindow.browserWindow.webContents.send('draft-arp-reply', options);
-      }
-      if (options.threadId) {
-        const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-        if (threadWindow && threadWindow.browserWindow.webContents) {
-          threadWindow.browserWindow.webContents.send('draft-arp-reply', options);
-        }
-      }
-    });
-    ipcMain.on('draft-delete', (event, options) => {
-      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      if (mainWindow && mainWindow.browserWindow.webContents) {
-        mainWindow.browserWindow.webContents.send('draft-delete', options);
-      }
-      if (options.threadId) {
-        const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-        if (threadWindow && threadWindow.browserWindow.webContents) {
-          threadWindow.browserWindow.webContents.send('draft-delete', options);
-        }
-      }
-    });
+    // ipcMain.on('draft-arp-reply', (event, options) => {
+    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+    //   if (mainWindow && mainWindow.browserWindow.webContents) {
+    //     mainWindow.browserWindow.webContents.send('draft-arp-reply', options);
+    //   }
+    //   if (options.threadId) {
+    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
+    //     if (threadWindow && threadWindow.browserWindow.webContents) {
+    //       threadWindow.browserWindow.webContents.send('draft-arp-reply', options);
+    //     }
+    //   }
+    // });
+    // ipcMain.on('draft-delete', (event, options) => {
+    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+    //   if (mainWindow && mainWindow.browserWindow.webContents) {
+    //     mainWindow.browserWindow.webContents.send('draft-delete', options);
+    //   }
+    //   if (options.threadId) {
+    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
+    //     if (threadWindow && threadWindow.browserWindow.webContents) {
+    //       threadWindow.browserWindow.webContents.send('draft-delete', options);
+    //     }
+    //   }
+    // });
 
     ipcMain.on('new-window', (event, options) => {
       const win = options.windowKey ? this.windowManager.get(options.windowKey) : null;
