@@ -370,6 +370,7 @@ class DraftFactory {
       hasRefOldDraftOnRemote: false,
       hasNewID: false,
       accountId: account.id,
+      needUpload: true,
     });
     await mergeDefaultBccAndCCs(defaults, account);
     const message = new Message(defaults);
