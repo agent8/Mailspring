@@ -177,6 +177,11 @@ export default class MailsyncProcess extends EventEmitter {
       } else {
         args.push('--isGDPR', 0);
       }
+      if (process.mas) {
+        args.push('--mas', 1);
+      } else {
+        args.push('--mas', 0);
+      }
     }
     console.log(`\n\n\n\n\nprocess mode: ${mode} args: ${args.join(' ')}`);
     this._proc = spawn(this.binaryPath, args, { env });
@@ -282,7 +287,7 @@ export default class MailsyncProcess extends EventEmitter {
             console.log(`response.error ${response.error}, log: ${response.log}`);
             let msg = LocalizedErrorStrings[response.error] || response.error;
             let errorStatusCode = response.error;
-            if((!(response.log || '').includes('password') && !(response.log || '').includes('credentials')) && response.error === 'ErrorAuthentication'){
+            if ((!(response.log || '').includes('password') && !(response.log || '').includes('credentials')) && response.error === 'ErrorAuthentication') {
               msg = LocalizedErrorStrings.ErrorAccountDisabled;
               errorStatusCode = 'ErrorAccountDisabled';
             }
@@ -291,7 +296,7 @@ export default class MailsyncProcess extends EventEmitter {
             }
             const error = new Error(msg);
             error.rawLog = stripSecrets(response.log.replace('LOGIN', ''));
-            error.statusCode =errorStatusCode;
+            error.statusCode = errorStatusCode;
             reject(error);
           }
         } catch (err) {
@@ -341,8 +346,8 @@ export default class MailsyncProcess extends EventEmitter {
     this.dataPrivacyOptions.isGDPR = options.isGDPR;
     this.dataPrivacyOptions.optOut = options.dataShare.optOut;
   }
-  updateSupportId(supportId){
-    if(!supportId){
+  updateSupportId(supportId) {
+    if (!supportId) {
       return;
     }
     this.supportId = supportId;
@@ -460,7 +465,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-        this.account ? this.account.pid || this.account.id: 'no account'
+        this.account ? this.account.pid || this.account.id : 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');
