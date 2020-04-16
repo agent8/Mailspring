@@ -55,7 +55,10 @@ const subject = function (subj) {
 const getSnippet = function (thread) {
   const messages = thread.__messages || [];
   if (thread.snippet) {
-    return thread.snippet;
+    // quanzs: here substring 400 is for old user, their snippet is too long
+    // TODO: if native fix [snippet is over 400] issue, here should rollback
+    return thread.snippet.substring(0, 400);
+    // return thread.snippet;
   }
   for (let ii = messages.length - 1; ii >= 0; ii--) {
     if (messages[ii].snippet) return messages[ii].snippet;
