@@ -463,7 +463,7 @@ class AccountStore extends MailspringStore {
 
     if (remainingAccounts.length === 0) {
       // Clear everything and logout
-      Actions.forceKillAllClients();
+      Actions.forceKillAllClients('AccountStore:onRemoveAccount');
       // ipcRenderer.send('command', 'application:reset-database', {});
     } else {
       // Clear the cached data for the account and reset secrets once that has completed
