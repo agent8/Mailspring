@@ -306,14 +306,10 @@ class UndoRedoStore extends MailspringStore {
   }
 
   getDelayDuration(tasks) {
-    const now = Date.now();
-    const taskDelay = AppEnv.config.get('core.task.delayInMs');
     let timeouts = tasks.map(task => {
       return this.isUndoSend(task)
-        ? Math.max(400, this.getUndoSendExpiration(task) - now)
-        : taskDelay === 0
-        ? 5000
-        : taskDelay;
+        ? Math.max(400, this.getUndoSendExpiration(task) - Date.now())
+        : AppEnv.config.get('core.task.delayInMs');
     });
     return Math.min(...timeouts);
   }

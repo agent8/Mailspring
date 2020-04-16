@@ -21,6 +21,9 @@
       "mailsync": {
         "fetchEmailRange": 365,
         "fetchEmailInterval": 1
+      },
+      "task": {
+        "delayInMs": 500
       }
     }
   }
