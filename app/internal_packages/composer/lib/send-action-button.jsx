@@ -95,18 +95,18 @@ class SendActionButton extends React.Component {
     }
 
     // beta invite flow
-    const inviteKey = 'invite.count';
-    const NEED_INVITE_COUNT = 3;
-    const shareCounts = AppEnv.config.get(inviteKey) || 0;
-    if (shareCounts < NEED_INVITE_COUNT && this.props.draft) {
-      const { to, cc } = this.props.draft;
-      AppEnv.config.set(inviteKey, shareCounts + to.length + cc.length);
-
-      // facebook tracking: invite send email
-      AppEnv.trackingEvent('Invite-SendEmail');
-      this._onSendWithAction(this.props.sendActions[0], disableDraftCheck, true);
-      return;
-    }
+    // const inviteKey = 'invite.count';
+    // const NEED_INVITE_COUNT = 3;
+    // const shareCounts = AppEnv.config.get(inviteKey) || 0;
+    // if (shareCounts < NEED_INVITE_COUNT && this.props.draft) {
+    //   const { to, cc } = this.props.draft;
+    //   AppEnv.config.set(inviteKey, shareCounts + to.length + cc.length);
+    //
+    //   // facebook tracking: invite send email
+    //   AppEnv.trackingEvent('Invite-SendEmail');
+    //   this._onSendWithAction(this.props.sendActions[0], disableDraftCheck, true);
+    //   return;
+    // }
     this._onSendWithAction(this.props.sendActions[0], disableDraftCheck);
   };
   _timoutButton = () => {

@@ -728,7 +728,7 @@ export default class Application extends EventEmitter {
     }
   }
 
-  _resetDatabaseAndRelaunch = ({ errorMessage } = {}) => {
+  _resetDatabaseAndRelaunch = ({ errorMessage, source = 'Unknown' } = {}) => {
     if (this._resettingAndRelaunching) return;
     this._resettingAndRelaunching = true;
     let rebuild = false;
@@ -746,13 +746,13 @@ export default class Application extends EventEmitter {
           detail: errorMessage,
         })
         .then(() => {
-          console.log('deleting databases and destroying all windows');
+          console.log(`deleting databases and destroying all windows because of ${source}`);
           this.windowManager.destroyAllWindows();
           this._deleteDatabase(done, rebuild);
         });
       return;
     }
-    console.log('deleting databases and destroying all windows');
+    console.log(`deleting databases and destroying all windows because of ${source}`);
     this.windowManager.destroyAllWindows();
     this._deleteDatabase(done, rebuild);
   };
@@ -1074,7 +1074,7 @@ export default class Application extends EventEmitter {
         const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
         mainWindow.sendMessage('popout-thread', {
           accountId,
-          id: threadId
+          id: threadId,
         });
       } else {
         this.openUrl(urlToOpen);
@@ -1111,47 +1111,36 @@ export default class Application extends EventEmitter {
       this.systemTrayManager.updateTrayChatUnreadCount(...args);
     });
 
-    ipcMain.on(
-      'send-later-manager',
-      (event, action, headerMessageId, delay, actionKey, threadId) => {
-        const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-        if (action === 'send-later') {
-          if (this._draftsSendLater[headerMessageId]) {
-            clearTimeout(this._draftsSendLater[headerMessageId]);
+    ipcMain.on('send-later-manager', (event, action, messageId, delay, actionKey, threadId) => {
+      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (action === 'send-later') {
+        if (this._draftsSendLater[messageId]) {
+          clearTimeout(this._draftsSendLater[messageId]);
+        }
+        this._draftsSendLater[messageId] = setTimeout(() => {
+          delete this._draftsSendLater[messageId];
+          if (!mainWindow || !mainWindow.browserWindow.webContents) {
+            return;
           }
-          this._draftsSendLater[headerMessageId] = setTimeout(() => {
-            delete this._draftsSendLater[headerMessageId];
-            if (!mainWindow || !mainWindow.browserWindow.webContents) {
-              return;
-            }
-            mainWindow.browserWindow.webContents.send(
-              'action-send-now',
-              headerMessageId,
+          mainWindow.browserWindow.webContents.send('action-send-now', messageId, actionKey);
+        }, delay);
+      } else if (action === 'undo') {
+        const timer = this._draftsSendLater[messageId];
+        clearTimeout(timer);
+        delete this._draftsSendLater[messageId];
+        mainWindow.browserWindow.webContents.send('action-send-cancelled', messageId, actionKey);
+        if (threadId) {
+          const threadWindow = this.windowManager.get(`thread-${threadId}`);
+          if (threadWindow && threadWindow.browserWindow.webContents) {
+            threadWindow.browserWindow.webContents.send(
+              'action-send-cancelled',
+              messageId,
               actionKey
             );
-          }, delay);
-        } else if (action === 'undo') {
-          const timer = this._draftsSendLater[headerMessageId];
-          clearTimeout(timer);
-          delete this._draftsSendLater[headerMessageId];
-          mainWindow.browserWindow.webContents.send(
-            'action-send-cancelled',
-            headerMessageId,
-            actionKey
-          );
-          if (threadId) {
-            const threadWindow = this.windowManager.get(`thread-${threadId}`);
-            if (threadWindow && threadWindow.browserWindow.webContents) {
-              threadWindow.browserWindow.webContents.send(
-                'action-send-cancelled',
-                headerMessageId,
-                actionKey
-              );
-            }
           }
         }
       }
-    );
+    });
 
     ipcMain.on('set-badge-value', (event, value) => {
       if (app.dock && app.dock.setBadge) {
@@ -1276,49 +1265,49 @@ export default class Application extends EventEmitter {
         }
       }
     });
-    ipcMain.on('draft-arp', (event, options) => {
-      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      if (mainWindow && mainWindow.browserWindow.webContents) {
-        mainWindow.browserWindow.webContents.send('draft-arp', options);
-      }
-      if (options.threadId) {
-        const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-        if (threadWindow && threadWindow.browserWindow.webContents) {
-          threadWindow.browserWindow.webContents.send('draft-arp', options);
-        }
-      }
-      if (options.headerMessageId) {
-        const composerWindow = this.windowManager.get(`composer-${options.headerMessageId}`);
-        if (composerWindow && composerWindow.browserWindow.webContents) {
-          composerWindow.browserWindow.webContents.send('draft-arp', options);
-        }
-      }
-    });
+    // ipcMain.on('draft-arp', (event, options) => {
+    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+    //   if (mainWindow && mainWindow.browserWindow.webContents) {
+    //     mainWindow.browserWindow.webContents.send('draft-arp', options);
+    //   }
+    //   if (options.threadId) {
+    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
+    //     if (threadWindow && threadWindow.browserWindow.webContents) {
+    //       threadWindow.browserWindow.webContents.send('draft-arp', options);
+    //     }
+    //   }
+    //   if (options.headerMessageId) {
+    //     const composerWindow = this.windowManager.get(`composer-${options.headerMessageId}`);
+    //     if (composerWindow && composerWindow.browserWindow.webContents) {
+    //       composerWindow.browserWindow.webContents.send('draft-arp', options);
+    //     }
+    //   }
+    // });
 
-    ipcMain.on('draft-arp-reply', (event, options) => {
-      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      if (mainWindow && mainWindow.browserWindow.webContents) {
-        mainWindow.browserWindow.webContents.send('draft-arp-reply', options);
-      }
-      if (options.threadId) {
-        const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-        if (threadWindow && threadWindow.browserWindow.webContents) {
-          threadWindow.browserWindow.webContents.send('draft-arp-reply', options);
-        }
-      }
-    });
-    ipcMain.on('draft-delete', (event, options) => {
-      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-      if (mainWindow && mainWindow.browserWindow.webContents) {
-        mainWindow.browserWindow.webContents.send('draft-delete', options);
-      }
-      if (options.threadId) {
-        const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-        if (threadWindow && threadWindow.browserWindow.webContents) {
-          threadWindow.browserWindow.webContents.send('draft-delete', options);
-        }
-      }
-    });
+    // ipcMain.on('draft-arp-reply', (event, options) => {
+    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+    //   if (mainWindow && mainWindow.browserWindow.webContents) {
+    //     mainWindow.browserWindow.webContents.send('draft-arp-reply', options);
+    //   }
+    //   if (options.threadId) {
+    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
+    //     if (threadWindow && threadWindow.browserWindow.webContents) {
+    //       threadWindow.browserWindow.webContents.send('draft-arp-reply', options);
+    //     }
+    //   }
+    // });
+    // ipcMain.on('draft-delete', (event, options) => {
+    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+    //   if (mainWindow && mainWindow.browserWindow.webContents) {
+    //     mainWindow.browserWindow.webContents.send('draft-delete', options);
+    //   }
+    //   if (options.threadId) {
+    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
+    //     if (threadWindow && threadWindow.browserWindow.webContents) {
+    //       threadWindow.browserWindow.webContents.send('draft-delete', options);
+    //     }
+    //   }
+    // });
 
     ipcMain.on('new-window', (event, options) => {
       const win = options.windowKey ? this.windowManager.get(options.windowKey) : null;
