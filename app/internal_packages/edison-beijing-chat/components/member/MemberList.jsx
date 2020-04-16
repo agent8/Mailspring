@@ -259,7 +259,9 @@ export default class ConversationInfo extends Component {
     const { curJid, jid } = conversation;
     const other = UserCacheStore.getUserInfoByJid(jid);
     const self = UserCacheStore.getUserInfoByJid(curJid);
-
+    if (!other || !self) {
+      return null;
+    }
     return [
       <MemberListItem
         conversation={conversation}
@@ -267,14 +269,12 @@ export default class ConversationInfo extends Component {
         currentUserIsOwner={false}
         key={conversation.jid}
       />,
-      self && (
-        <MemberListItem
-          conversation={conversation}
-          member={self}
-          currentUserIsOwner={false}
-          key="curJid"
-        />
-      ),
+      <MemberListItem
+        conversation={conversation}
+        member={self}
+        currentUserIsOwner={false}
+        key="curJid"
+      />,
     ];
   }
 
