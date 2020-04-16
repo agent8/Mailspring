@@ -304,7 +304,7 @@ export class LocalData extends React.Component {
   };
 
   _onResetEmailCache = () => {
-    Actions.forceKillAllClients();
+    Actions.forceKillAllClients('onResetEmailCache');
   };
 
   _onResetAccountsCb = () => {

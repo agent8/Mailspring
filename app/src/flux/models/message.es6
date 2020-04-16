@@ -680,7 +680,6 @@ export default class Message extends ModelWithMetadata {
 
   isForwarded() {
     if (!this.subject) {
-      console.error(`subject is ${this.subject}`);
       return false;
     }
     if (this.subject.toLowerCase().startsWith('fwd:')) {

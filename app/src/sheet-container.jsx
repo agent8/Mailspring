@@ -1,7 +1,14 @@
 import React from 'react';
 import WindowManager from './browser/window-manager';
 import { ipcRenderer, remote } from 'electron';
-import { WorkspaceStore, BlockedSendersStore, MuteNotificationStore, Version, DatabaseStore, Actions } from 'mailspring-exports';
+import {
+  WorkspaceStore,
+  BlockedSendersStore,
+  MuteNotificationStore,
+  Version,
+  DatabaseStore,
+  Actions,
+} from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import Sheet from './sheet';
 import Toolbar from './sheet-toolbar';
@@ -40,19 +47,19 @@ export default class SheetContainer extends React.Component {
             //     Actions.forceKillAllClients();
             //   }
             // });
-            Actions.forceKillAllClients();
+            Actions.forceKillAllClients('checkDBVersion:version===6');
             break;
           }
         }
       }
-    })
+    });
   }
 
   openOnboarding() {
     const application = remote.getGlobal('application');
     application.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, {
       title: 'Welcome to EdisonMail',
-      alwaysOnTop: true
+      alwaysOnTop: true,
     });
   }
 
@@ -96,13 +103,8 @@ export default class SheetContainer extends React.Component {
     MuteNotificationStore.syncMuteNotifacations();
   };
 
-  toggleMaximize = (e) => {
-    if (e.target &&
-      (
-        e.target.contentEditable === 'true' ||
-        e.target.tagName === 'INPUT'
-      )
-    ) {
+  toggleMaximize = e => {
+    if (e.target && (e.target.contentEditable === 'true' || e.target.tagName === 'INPUT')) {
       return;
     }
     const win = AppEnv.getCurrentWindow();
@@ -113,7 +115,7 @@ export default class SheetContainer extends React.Component {
     }
     e.stopPropagation();
     e.preventDefault();
-  }
+  };
 
   _toolbarContainerElement() {
     const rootSheet = this.state.stack[0];
@@ -161,7 +163,7 @@ export default class SheetContainer extends React.Component {
       return true;
     }
     return agree || shareCounts >= NEED_INVITE_COUNT;
-  }
+  };
 
   render() {
     const totalSheets = this.state.stack.length;
@@ -234,27 +236,27 @@ export default class SheetContainer extends React.Component {
             id={topSheet.id}
           />
         </div>
-        <InjectedComponent
-          id="runtimeInfoPanel"
-          matching={{ role: 'runtime-info-panel' }}
-        />
-        {
-          !this.isValidUser() && (
-            <div className="need-login" style={{
+        <InjectedComponent id="runtimeInfoPanel" matching={{ role: 'runtime-info-panel' }} />
+        {!this.isValidUser() && (
+          <div
+            className="need-login"
+            style={{
               position: 'fixed',
-              zIndex: 100
-            }}>
-              <RetinaImg
-                className="icons"
-                url="edisonmail://onboarding/assets/logo-light.png"
-                mode={RetinaImg.Mode.ContentPreserve}
-              />
-              <h1>Start Using Edison Mail for Mac</h1>
-              <p>Connect your account to continue using the app</p>
-              <button className="btn login-button" onClick={this.openOnboarding}>Connect your account to unlock</button>
-            </div>
-          )
-        }
+              zIndex: 100,
+            }}
+          >
+            <RetinaImg
+              className="icons"
+              url="edisonmail://onboarding/assets/logo-light.png"
+              mode={RetinaImg.Mode.ContentPreserve}
+            />
+            <h1>Start Using Edison Mail for Mac</h1>
+            <p>Connect your account to continue using the app</p>
+            <button className="btn login-button" onClick={this.openOnboarding}>
+              Connect your account to unlock
+            </button>
+          </div>
+        )}
       </Flexbox>
     );
   }
