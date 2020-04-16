@@ -39,8 +39,8 @@ Section: Models
 */
 
 const threadInboxCategory = {
-  'primary': 0,
-  'others': 1
+  primary: 0,
+  others: 1,
 };
 
 export default class Thread extends ModelWithMetadata {
@@ -79,7 +79,7 @@ export default class Thread extends ModelWithMetadata {
     inboxCategory: Attributes.Number({
       queryable: true,
       loadFromColumn: true,
-      modelKey: 'category',
+      modelKey: 'primary',
       jsModelKey: 'inboxCategory',
     }),
 
@@ -90,11 +90,7 @@ export default class Thread extends ModelWithMetadata {
       joinTableColumn: 'categoryId',
       joinTableName: 'ThreadCategory',
       joinOnWhere: { state: 0 },
-      joinQueryableBy: [
-        'inAllMail',
-        'lastDate',
-        'unread',
-      ],
+      joinQueryableBy: ['inAllMail', 'lastDate', 'unread'],
       itemClass: Category,
       queryable: true,
     }),
@@ -196,7 +192,13 @@ export default class Thread extends ModelWithMetadata {
 
   async messages({ includeHidden } = {}) {
     const messages = await DatabaseStore.findAll(Message)
-      .where({ threadId: this.id, deleted: false }).where([Message.attributes.syncState.in([Message.messageSyncState.saving, Message.messageSyncState.normal])]);
+      .where({ threadId: this.id, deleted: false })
+      .where([
+        Message.attributes.syncState.in([
+          Message.messageSyncState.saving,
+          Message.messageSyncState.normal,
+        ]),
+      ]);
 
     if (!includeHidden) {
       return messages.filter(message => !message.isHidden());
@@ -216,14 +218,16 @@ export default class Thread extends ModelWithMetadata {
     return (this.files || []).length;
   }
   get labels() {
-    if(!Array.isArray(this.labelIds)){
+    if (!Array.isArray(this.labelIds)) {
       return [];
     }
-    return this.labelIds.map(labelId => {
-      if (typeof labelId === 'string') {
-        return CategoryStore.byFolderId(labelId);
-      }
-    }).filter(l => l);
+    return this.labelIds
+      .map(labelId => {
+        if (typeof labelId === 'string') {
+          return CategoryStore.byFolderId(labelId);
+        }
+      })
+      .filter(l => l);
   }
 
   get folders() {
@@ -237,7 +241,7 @@ export default class Thread extends ModelWithMetadata {
    * When loading data from the API, there are `folders` AND `labels` but
    * no `categories` yet.
    */
-    fromJSON(json) {
+  fromJSON(json) {
     super.fromJSON(json);
 
     if (this.participants && this.participants instanceof Array) {
@@ -245,7 +249,7 @@ export default class Thread extends ModelWithMetadata {
         item.accountId = this.accountId;
       });
     }
-    if(!this.id){
+    if (!this.id) {
       this.id = json.id || json.pid;
     }
     return this;
