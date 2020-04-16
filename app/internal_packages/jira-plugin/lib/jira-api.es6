@@ -30,7 +30,6 @@ export default class JiraApi extends JiraApiBase {
             )}`);
         }
         const { access_token } = json;
-        console.log('*****this', this);
         this.baseOptions.auth.bearer = access_token;
         console.log('******get new token', access_token);
         AppEnv.config.set('plugin.jira.config.access_token', access_token);
@@ -115,7 +114,7 @@ export default class JiraApi extends JiraApiBase {
             pathname: '/user/assignable/search',
             query: {
                 issueKey: issueKey,
-                username: username,
+                query: username,
                 startAt: startAt || 0,
                 maxResults: maxResults || 50,
                 includeActive: includeActive || true,
