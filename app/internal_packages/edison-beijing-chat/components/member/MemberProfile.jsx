@@ -76,8 +76,7 @@ export default class MemberProfile extends Component {
 
   startPrivateChat = e => {
     this.exitProfile(this.state.member);
-    let member = Object.assign({}, this.state.member);
-    member = member.dataValues || member;
+    const member = Object.assign({}, this.state.member);
     member.jid = (member.jid && member.jid.bare) || member.jid;
     member.name = member.name || (member.jid && member.jid.split('^at^')[0]);
     member.curJid = member.curJid || this.props.conversation.curJid;
@@ -96,7 +95,7 @@ export default class MemberProfile extends Component {
     Actions.composeNewDraftToRecipient(contact);
   };
 
-  exitProfile = async member => {
+  exitProfile = async (member, close = true) => {
     if (!member) {
       return;
     }
@@ -107,7 +106,13 @@ export default class MemberProfile extends Component {
       nicknames[jid] = nickname;
       LocalStorage.saveToLocalStorage();
     }
-    this.setState({ visible: false });
+
+    if (close) {
+      this.setState({ visible: false });
+    } else {
+      // update name and nickname
+      this.setMember(this.state.member);
+    }
 
     MessageStore.saveMessagesAndRefresh();
     UserCacheStore.saveUserCache([{ ...this.state.member, name: nickname }]);
@@ -202,9 +207,14 @@ export default class MemberProfile extends Component {
 
   onChangeNickname = e => {
     let nickname = e.target.value;
-    this.setState({
-      member: { ...this.state.member, nickname: nickname.trim() },
-    });
+    this.setState(
+      {
+        member: { ...this.state.member, nickname: nickname.trim() },
+      },
+      () => {
+        this.exitProfile(this.state.member, false);
+      }
+    );
   };
 
   onKeyPressEvent = e => {

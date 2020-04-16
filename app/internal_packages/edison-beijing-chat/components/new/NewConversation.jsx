@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { RetinaImg, InjectedComponent } from 'mailspring-component-kit';
 import Select, { Option } from 'rc-select';
 import { Actions, WorkspaceStore } from 'mailspring-exports';
-import { ChatActions, ConversationStore, ContactStore, AppStore } from 'chat-exports';
+import { ChatActions, ConversationStore, ContactStore } from 'chat-exports';
 import ContactAvatar from '../common/ContactAvatar';
 import Button from '../common/Button';
 import genRoomId from '../../utils/genRoomId';
@@ -38,7 +38,7 @@ export default class NewConversation extends Component {
   componentDidMount() {
     this._mounted = true;
     this.initContacts();
-    this.unsub = AppStore.listen(() => {
+    this.unsub = ContactStore.listen(() => {
       this.initContacts();
     });
     setTimeout(this._setDropDownHeight, 300);

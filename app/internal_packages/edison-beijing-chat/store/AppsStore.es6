@@ -113,7 +113,6 @@ class AppsStore extends MailspringStore {
         `saveEmailContacts: emails 2: ` + emailContacts.map(contact => contact.email).join(', ')
       );
       await ContactStore.saveContacts(emailContacts, payload.curJid);
-      this.trigger();
     });
   };
 
