@@ -1,5 +1,13 @@
 import classNames from 'classnames';
-import { Actions, React, PropTypes, Utils, DraftStore, ComponentRegistry, Message } from 'mailspring-exports';
+import {
+  Actions,
+  React,
+  PropTypes,
+  Utils,
+  DraftStore,
+  ComponentRegistry,
+  Message,
+} from 'mailspring-exports';
 
 import MessageItem from './message-item';
 
@@ -19,7 +27,7 @@ export default class MessageItemContainer extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-    this.state = {isSending: false};
+    this.state = { isSending: false };
     this.state = this._getStateFromStores();
     this.state.draftMissingAttachments = false;
   }
@@ -70,7 +78,9 @@ export default class MessageItemContainer extends React.Component {
       console.log(`DraftStore: ${DraftStore.isSendingDraft(this.props.message.headerMessageId)}`);
       this.setState(this._getStateFromStores());
     } else {
-      console.log(`change draft HeaderMessageId ${headerMessageId}, current: ${this.props.message.headerMessageId}`);
+      console.log(
+        `change draft HeaderMessageId ${headerMessageId}, current: ${this.props.message.headerMessageId}`
+      );
     }
   };
 
@@ -107,7 +117,6 @@ export default class MessageItemContainer extends React.Component {
         ref={cm => {
           this._messageComponent = cm;
         }}
-        headerMessageId={this.props.message.headerMessageId}
         messageId={this.props.message.id}
         draft={this.props.message}
         className={this._classNames()}
@@ -134,9 +143,7 @@ export default class MessageItemContainer extends React.Component {
     if (!this.props.message.draft) {
       return false;
     }
-    return (
-      this.state.isSending || this._isMessageSendingState()
-    );
+    return this.state.isSending || this._isMessageSendingState();
   }
 
   render() {

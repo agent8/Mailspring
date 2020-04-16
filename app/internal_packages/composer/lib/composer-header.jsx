@@ -63,7 +63,7 @@ export default class ComposerHeader extends React.Component {
       }
       const missing = ret.totalMissing();
       if (missing.length !== 0) {
-        if(!this.state.missingAttachments){
+        if (!this.state.missingAttachments) {
           this.setState({ missingAttachments: true });
           Actions.fetchAttachments({
             accountId: props.draft.accountId,
@@ -137,7 +137,7 @@ export default class ComposerHeader extends React.Component {
     if (this.props.draft.isForwarded()) {
       return true;
     }
-    if (this.props.draft.replyToHeaderMessageId) {
+    if (this.props.draft.replyToMessageId) {
       return false;
     }
     return true;
@@ -150,7 +150,7 @@ export default class ComposerHeader extends React.Component {
     return participants.to[0].name;
   }
   _onHeaderClicked = () => {
-    if(this.props.onClick){
+    if (this.props.onClick) {
       this.props.onClick();
     }
   };
@@ -287,7 +287,7 @@ export default class ComposerHeader extends React.Component {
     return (
       <div className="composer-header" onClick={this._onHeaderClicked}>
         <ComposerHeaderActions
-          headerMessageId={this.props.draft.headerMessageId}
+          messageId={this.props.draft.id}
           enabledFields={this.state.enabledFields}
           onShowAndFocusField={this.showAndFocusField}
         />

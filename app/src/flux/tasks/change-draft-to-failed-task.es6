@@ -3,18 +3,19 @@ import Attributes from '../attributes';
 
 export default class ChangeDraftToFailedTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
-    headerMessageIds: Attributes.Collection({
-      modelKey: 'headerMessageIds',
+    messageIds: Attributes.Collection({
+      modelKey: 'messageIds',
+      jsonKey: 'msgPIds',
     }),
     sendDraftTaskIds: Attributes.Collection({
       modelKey: 'sendDraftTaskIds',
       jsonKey: 'refSendDraftTaskIds',
-    })
+    }),
   });
 
-  constructor({ headerMessageIds = [], ...rest } = {}) {
+  constructor({ messageIds = [], ...rest } = {}) {
     super(rest);
-    this.headerMessageIds = headerMessageIds;
+    this.messageIds = messageIds;
     if (this.canBeUndone) {
       this.canBeUndone = false;
     }

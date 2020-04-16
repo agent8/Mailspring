@@ -26,8 +26,17 @@ class MessageStore extends MailspringStore {
 
   findAll() {
     return DatabaseStore.findAll(Message)
-      .where({deleted: false})
-      .where([Message.attributes.syncState.in([Message.messageSyncState.normal, Message.messageSyncState.saving, Message.messageSyncState.sending, Message.messageSyncState.updatingHasUID, Message.messageSyncState.updatingNoUID, Message.messageSyncState.failing])]);
+      .where({ deleted: false })
+      .where([
+        Message.attributes.syncState.in([
+          Message.messageSyncState.normal,
+          Message.messageSyncState.saving,
+          Message.messageSyncState.sending,
+          Message.messageSyncState.updatingHasUID,
+          Message.messageSyncState.updatingNoUID,
+          Message.messageSyncState.failing,
+        ]),
+      ]);
   }
 
   findAllInDescendingOrder() {
@@ -51,7 +60,16 @@ class MessageStore extends MailspringStore {
   }
 
   findByThreadId({ threadId }) {
-    return DatabaseStore.findBy(Message, { threadId, deleted: false }).where([Message.attributes.syncState.in([Message.messageSyncState.normal, Message.messageSyncState.saving, Message.messageSyncState.sending, Message.messageSyncState.updatingHasUID, Message.messageSyncState.updatingNoUID, Message.messageSyncState.failing])]);
+    return DatabaseStore.findBy(Message, { threadId, deleted: false }).where([
+      Message.attributes.syncState.in([
+        Message.messageSyncState.normal,
+        Message.messageSyncState.saving,
+        Message.messageSyncState.sending,
+        Message.messageSyncState.updatingHasUID,
+        Message.messageSyncState.updatingNoUID,
+        Message.messageSyncState.failing,
+      ]),
+    ]);
   }
 
   findByThreadIdAndAccountId({ threadId, accountId }) {
@@ -59,7 +77,9 @@ class MessageStore extends MailspringStore {
   }
 
   findByThreadIdAndAccountIdInDesecndingOrder({ threadId, accountId }) {
-    return this.findByThreadIdAndAccountId({ threadId, accountId }).order(Message.attributes.date.descending());
+    return this.findByThreadIdAndAccountId({ threadId, accountId }).order(
+      Message.attributes.date.descending()
+    );
   }
 
   findByThreadIdInDescendingOrder({ threadId }) {
@@ -67,7 +87,16 @@ class MessageStore extends MailspringStore {
   }
 
   findByMessageId({ messageId }) {
-    return DatabaseStore.find(Message, messageId).where([Message.attributes.syncState.in([Message.messageSyncState.normal, Message.messageSyncState.saving, Message.messageSyncState.sending, Message.messageSyncState.updatingHasUID, Message.messageSyncState.updatingNoUID, Message.messageSyncState.failing])]);
+    return DatabaseStore.find(Message, messageId).where([
+      Message.attributes.syncState.in([
+        Message.messageSyncState.normal,
+        Message.messageSyncState.saving,
+        Message.messageSyncState.sending,
+        Message.messageSyncState.updatingHasUID,
+        Message.messageSyncState.updatingNoUID,
+        Message.messageSyncState.failing,
+      ]),
+    ]);
   }
 
   findByMessageIdWithBody({ messageId }) {
@@ -141,7 +170,6 @@ class MessageStore extends MailspringStore {
     // We only care for popout in main window
     return AppEnv.isMainWindow() && this._popedOut;
   };
-
 
   /*
   Message Store Extensions
@@ -279,7 +307,7 @@ class MessageStore extends MailspringStore {
 
     if (change.objectClass === Message.name) {
       const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
-      if (!inDisplayedThread && (change.type === 'persist')) return;
+      if (!inDisplayedThread && change.type === 'persist') return;
 
       if (
         change.objects.length === 1 &&
@@ -290,8 +318,12 @@ class MessageStore extends MailspringStore {
         const item = change.objects[0];
         const itemIndex = this._items.findIndex(msg => msg.id === item.id);
 
-        if (change.type === 'persist' && itemIndex === -1 && !Message.compareMessageState(item.state, Message.messageSyncState.failed)) {
-          this._items = [].concat(this._items, [item]).filter(m => !m.isHidden()).filter(this.filterOutDuplicateDraftHeaderMessage);
+        if (
+          change.type === 'persist' &&
+          itemIndex === -1 &&
+          !Message.compareMessageState(item.state, Message.messageSyncState.failed)
+        ) {
+          this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
           this._items = this._sortItemsForDisplay(this._items);
           this._expandItemsToDefault();
           this.trigger();
@@ -382,11 +414,11 @@ class MessageStore extends MailspringStore {
     if (!focused) {
       this._lastMarkedAsReadThreadId = null;
     }
-    if(WorkspaceStore.layoutMode() === 'list' && AppEnv.isMainWindow()){
+    if (WorkspaceStore.layoutMode() === 'list' && AppEnv.isMainWindow()) {
       const currentSheet = WorkspaceStore.topSheet();
-      if(!focused && this.thread() && currentSheet && currentSheet.id === 'Thread'){
+      if (!focused && this.thread() && currentSheet && currentSheet.id === 'Thread') {
         console.log('current thread is gone, and no replacement');
-        Actions.popSheet({reason: 'Message-Store, current Thread is no longer available'});
+        Actions.popSheet({ reason: 'Message-Store, current Thread is no longer available' });
       }
     }
 
@@ -461,7 +493,7 @@ class MessageStore extends MailspringStore {
             source: 'Thread Selected',
             canBeUndone: false,
             unread: false,
-          }),
+          })
         );
       }, markAsReadDelay);
     }
@@ -507,18 +539,18 @@ class MessageStore extends MailspringStore {
     delete this._itemsExpanded[item.id];
   }
 
-  _onAttachmentCacheChange = ({attachmentChange = []} = {}) => {
+  _onAttachmentCacheChange = ({ attachmentChange = [] } = {}) => {
     let dataChange = false;
-    for (let k = 0; k < attachmentChange.length; k++){
+    for (let k = 0; k < attachmentChange.length; k++) {
       const change = attachmentChange[k];
-     for (let i = 0; i < this._items.length; i++){
-        if(this._items[i].id === change.messageId){
+      for (let i = 0; i < this._items.length; i++) {
+        if (this._items[i].id === change.messageId) {
           dataChange = true;
           break;
         }
       }
     }
-    if(dataChange){
+    if (dataChange) {
       console.warn(`attachment cache updated`);
       this._fetchFromCache();
       return;
@@ -540,7 +572,7 @@ class MessageStore extends MailspringStore {
       // loading items for. Necessary because this takes a while.
       if (loadedThreadId !== this.threadId()) return;
 
-      this._items = items.filter(m => !m.isHidden()).filter(this.filterOutDuplicateDraftHeaderMessage);
+      this._items = items.filter(m => !m.isHidden());
       this._items = this._sortItemsForDisplay(this._items);
 
       this._expandItemsToDefault();
@@ -563,9 +595,7 @@ class MessageStore extends MailspringStore {
 
   _fetchMissingBodies(items) {
     const missing = items.filter(i => {
-      return (
-        (!i.body || (typeof i.body === 'string' && i.body.length === 0))
-      );
+      return !i.body || (typeof i.body === 'string' && i.body.length === 0);
     });
     if (missing.length > 0) {
       return Actions.fetchBodies({ messages: missing, source: 'message' });
@@ -574,8 +604,8 @@ class MessageStore extends MailspringStore {
 
   fetchMissingAttachmentsByFileIds({ accountId, fileIds = [] } = {}) {
     const missingList = fileIds.filter(id => {
-      return this._missingAttachmentIds.includes(id)
-    })
+      return this._missingAttachmentIds.includes(id);
+    });
     if (missingList && missingList.length && accountId) {
       Actions.fetchAttachments({
         accountId: accountId,
@@ -589,9 +619,9 @@ class MessageStore extends MailspringStore {
     const missing = [];
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
-    const message = this._items.find(item => item.id === messageId)
+    const message = this._items.find(item => item.id === messageId);
     if (!message) {
-      return
+      return;
     }
 
     message.files.forEach((f, fileIndex) => {
@@ -632,13 +662,12 @@ class MessageStore extends MailspringStore {
     }
   }
 
-
   _fetchMissingAttachments(messages) {
     const missingAidMap = new Map();
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
     let totalFiles = 0;
-    messages.forEach(message=>{
+    messages.forEach(message => {
       totalFiles += message.files.length;
     });
     let processed = 0;
@@ -662,7 +691,7 @@ class MessageStore extends MailspringStore {
     messages.forEach((message, messageIndex) => {
       message.files.forEach((f, fileIndex) => {
         const tmpPath = AttachmentStore.pathForFile(f);
-        fs.access(tmpPath, fs.constants.R_OK, (err) => {
+        fs.access(tmpPath, fs.constants.R_OK, err => {
           const tempExists = !err;
           if (!tempExists) {
             const aId = message.accountId;
@@ -679,7 +708,7 @@ class MessageStore extends MailspringStore {
                 change = true;
                 messages[messageIndex].files[fileIndex].isDownloading = partExists;
               }
-              if(processed === totalFiles){
+              if (processed === totalFiles) {
                 processMissingData(missingAidMap);
               }
             });
@@ -689,7 +718,7 @@ class MessageStore extends MailspringStore {
               noLongerMissing.push(f.id);
               change = true;
             }
-            if(processed === totalFiles){
+            if (processed === totalFiles) {
               processMissingData(missingAidMap);
             }
           }
@@ -703,18 +732,18 @@ class MessageStore extends MailspringStore {
   }
 
   isMessageMissingAttachment(message) {
-    if(!message){
+    if (!message) {
       console.error('Missing message for isMessageMissingAttachment');
       return false;
     }
     const msgId = message.id;
-    if(!msgId){
+    if (!msgId) {
       console.error('Missing message.id for isMessageMissingAttachment');
       return false;
     }
-    if(!Array.isArray(message.files)){
+    if (!Array.isArray(message.files)) {
       // console.error(`Missing message ${msgId} files`);
-      return false
+      return false;
     }
     // console.log('getting message missing attachment result');
     return message.files.some(f => {
@@ -772,27 +801,29 @@ class MessageStore extends MailspringStore {
     }
   }
 
-  _isDraftDuplicateHeaderMessageId(item) {
-    if (!item.draft) {
-      return false;
-    }
-    let count = 0;
-    for (let i of this._items) {
-      if (i.headerMessageId === item.headerMessageId) {
-        count++;
-      }
-      if (count > 1) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  filterOutDuplicateDraftHeaderMessage(value, index, array) {
-    return array.findIndex((el) => {
-      return el.headerMessageId == value.headerMessageId;
-    }) === index || !value.draft;
-  }
+  // _isDraftDuplicateHeaderMessageId(item) {
+  //   if (!item.draft) {
+  //     return false;
+  //   }
+  //   let count = 0;
+  //   for (let i of this._items) {
+  //     if (i.headerMessageId === item.headerMessageId) {
+  //       count++;
+  //     }
+  //     if (count > 1) {
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }
+  //
+  // filterOutDuplicateDraftHeaderMessage(value, index, array) {
+  //   return (
+  //     array.findIndex(el => {
+  //       return el.id == value.id;
+  //     }) === index || !value.draft
+  //   );
+  // }
 
   _sortItemsForDisplay(items) {
     // Re-sort items in the list so that drafts appear after the message that
@@ -802,7 +833,7 @@ class MessageStore extends MailspringStore {
     const itemsInReplyTo = [];
     for (index = items.length - 1; index >= 0; index--) {
       item = items[index];
-      if (item.draft && item.replyToHeaderMessageId) {
+      if (item.draft && item.replyToMessageId) {
         itemsInReplyTo.push(item);
         items.splice(index, 1);
       }
@@ -813,7 +844,7 @@ class MessageStore extends MailspringStore {
     for (item of itemsInReplyTo) {
       for (index = 0; index < items.length; index++) {
         const other = items[index];
-        if (item.replyToHeaderMessageId === other.headerMessageId) {
+        if (item.replyToMessageId === other.id) {
           items.splice(index + 1, 0, item);
           item = null;
           break;
@@ -850,7 +881,7 @@ class MessageStore extends MailspringStore {
         perspectiveJSON: FocusedPerspectiveStore.current().toJSON(),
       },
     });
-  }
+  };
 
   _onFocusThreadMainWindow(thread) {
     if (AppEnv.isMainWindow()) {

@@ -3,24 +3,25 @@ import Attributes from '../attributes';
 
 export default class ChangeDraftToFailingTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
-    headerMessageIds: Attributes.Collection({
-      modelKey: 'headerMessageIds',
-    })
+    messageIds: Attributes.Collection({
+      modelKey: 'messageIds',
+      jsonKey: 'msgPIds',
+    }),
   });
 
   constructor({ messages = [], ...rest } = {}) {
     super(rest);
-    this.headerMessageIds = [];
+    this.messageIds = [];
     if (messages) {
       this.messages = messages;
       if (Array.isArray(messages)) {
-        this.headerMessageIds = this.headerMessageIds.concat(
+        this.messageIds = this.messageIds.concat(
           ...messages.map(msg => {
-            return msg.headerMessageId;
+            return msg.id;
           })
         );
       } else {
-        this.headerMessageIds.push(messages.headerMessageId);
+        this.messageIds.push(messages.id);
       }
     }
     if (this.canBeUndone) {

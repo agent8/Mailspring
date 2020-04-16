@@ -122,7 +122,7 @@ const TaskFactory = {
 
   tasksForMovingToTrash({ threads = [], messages = [], source, currentPerspective }) {
     const tasks = [];
-    if (threads.length > 0 && (threads[0] instanceof Thread)) {
+    if (threads.length > 0 && threads[0] instanceof Thread) {
       tasks.push(
         ...this.tasksForThreadsByAccountId(threads, (accountThreads, accountId) => {
           const previousFolder = this.findPreviousFolder(currentPerspective, accountId);
@@ -140,10 +140,10 @@ const TaskFactory = {
               source,
             });
           }
-        }),
+        })
       );
     }
-    if (messages.length > 0 && (messages[0] instanceof Message)) {
+    if (messages.length > 0 && messages[0] instanceof Message) {
       tasks.push(
         ...this.tasksForMessagesByAccount(messages, ({ accountId, messages }) => {
           return new ChangeFolderTask({
@@ -151,7 +151,7 @@ const TaskFactory = {
             messages: messages,
             source,
           });
-        }),
+        })
       );
     }
     return tasks;
@@ -177,7 +177,7 @@ const TaskFactory = {
             messageIds: messages.map(msg => msg.id),
             source,
           });
-        }),
+        })
       );
     }
     return tasks;
@@ -192,7 +192,7 @@ const TaskFactory = {
             messageIds: messages.map(msg => msg.id),
             source,
           });
-        }),
+        })
       );
     }
     return tasks;
@@ -202,49 +202,16 @@ const TaskFactory = {
     if (messages.length > 0 && messages[0] instanceof Message) {
       tasks.push(
         ...this.tasksForMessagesByAccount(messages, ({ accountId, messages }) => {
-          const headerMessageIds = [];
-          const refOldDraftHeaderMessageIds = [];
+          const messageIds = [];
           messages.forEach(message => {
-            headerMessageIds.push(message.headerMessageId);
-            if (message.refOldDraftHeaderMessageId) {
-              refOldDraftHeaderMessageIds.push(message.refOldDraftHeaderMessageId);
-            } else {
-              refOldDraftHeaderMessageIds.push('');
-            }
+            messageIds.push(message.id);
           });
           return new CancelOutboxDraftTask({
             accountId: accountId,
-            headerMessageIds,
-            refOldDraftHeaderMessageIds,
+            messageIds: messageIds,
             source,
           });
-        }),
-      );
-    }
-    return tasks;
-  },
-  tasksForResendingDraft({ messages = [], source = '' }) {
-    const tasks = [];
-    if (messages.length > 0 && messages[0] instanceof Message) {
-      tasks.push(
-        ...this.tasksForMessagesByAccount(messages, ({ accountId, messages }) => {
-          const headerMessageIds = [];
-          const refOldDraftHeaderMessageIds = [];
-          messages.forEach(message => {
-            headerMessageIds.push(message.headerMessageId);
-            if (message.refOldDraftHeaderMessageId) {
-              refOldDraftHeaderMessageIds.push(message.refOldDraftHeaderMessageId);
-            } else {
-              refOldDraftHeaderMessageIds.push('');
-            }
-          });
-          return new ResendDraftTask({
-            accountId: accountId,
-            headerMessageIds,
-            refOldDraftHeaderMessageIds,
-            source,
-          });
-        }),
+        })
       );
     }
     return tasks;
@@ -259,7 +226,12 @@ const TaskFactory = {
     const threadsByFolder = this._splitByAccount(threads);
     const tasks = [];
     for (const accId in threadsByFolder) {
-      const t = new ChangeUnreadTask({ threads: threadsByFolder[accId], unread, source, canBeUndone });
+      const t = new ChangeUnreadTask({
+        threads: threadsByFolder[accId],
+        unread,
+        source,
+        canBeUndone,
+      });
       tasks.push(t);
     }
     return tasks;
@@ -289,11 +261,19 @@ const TaskFactory = {
   },
   tasksForGeneralMoveFolder({ threads, source, targetCategory, sourceCategory, previousFolder }) {
     if (!Array.isArray(threads) || threads.length === 0) {
-      AppEnv.reportError(new Error(`Move task by ${source} failed, no threads`), { errorData: threads }, { grabLogs: true });
+      AppEnv.reportError(
+        new Error(`Move task by ${source} failed, no threads`),
+        { errorData: threads },
+        { grabLogs: true }
+      );
       return [];
     }
     if (!targetCategory) {
-      AppEnv.reportError(new Error(`Move task by ${source} failed, no target category`), { errorData: targetCategory }, { grabLogs: true });
+      AppEnv.reportError(
+        new Error(`Move task by ${source} failed, no target category`),
+        { errorData: targetCategory },
+        { grabLogs: true }
+      );
       return [];
     }
     // if (!previousFolder) {
@@ -313,7 +293,12 @@ const TaskFactory = {
         }),
       ];
     }
-    if (targetCategory.isLabel() && sourceCategory && sourceCategory.isLabel() && (sourceCategory.role === 'important' || sourceCategory.role === 'flagged')) {
+    if (
+      targetCategory.isLabel() &&
+      sourceCategory &&
+      sourceCategory.isLabel() &&
+      (sourceCategory.role === 'important' || sourceCategory.role === 'flagged')
+    ) {
       return [
         new ChangeLabelsTask({
           threads,
@@ -347,7 +332,8 @@ const TaskFactory = {
             labelsToAdd: [targetCategory],
             labelsToRemove: [],
             previousFolder,
-          })];
+          }),
+        ];
       }
       return [
         new ChangeFolderTask({
@@ -370,7 +356,11 @@ const TaskFactory = {
         }),
       ];
     }
-    if(sourceCategory && sourceCategory.isLabel() && (sourceCategory.role === 'sent' || sourceCategory.role === 'drafts')){
+    if (
+      sourceCategory &&
+      sourceCategory.isLabel() &&
+      (sourceCategory.role === 'sent' || sourceCategory.role === 'drafts')
+    ) {
       return [
         new ChangeLabelsTask({
           threads,
@@ -400,9 +390,7 @@ const TaskFactory = {
   },
   findPreviousFolder(currentPerspective, accountId) {
     if (currentPerspective) {
-      let previousFolder = currentPerspective.categories().find(
-        cat => cat.accountId === accountId,
-      );
+      let previousFolder = currentPerspective.categories().find(cat => cat.accountId === accountId);
       const provider = currentPerspective.providerByAccountId(accountId);
       if (!provider) {
         AppEnv.reportError(new Error('no provider found'), {
@@ -433,14 +421,16 @@ const TaskFactory = {
   },
   _splitByFolder(threads) {
     const arr = [];
-    const folderIds = _.uniq(threads.map(({ id, folders }) => {
-      if (folders && folders.length > 0) {
-        return folders[0].id;
-      } else {
-        AppEnv.reportWarning(new Error(`ThreadId: ${id} have no folder attribute`));
-        return null;
-      }
-    }));
+    const folderIds = _.uniq(
+      threads.map(({ id, folders }) => {
+        if (folders && folders.length > 0) {
+          return folders[0].id;
+        } else {
+          AppEnv.reportWarning(new Error(`ThreadId: ${id} have no folder attribute`));
+          return null;
+        }
+      })
+    );
     for (const folderId of folderIds) {
       const threadGroup = threads.filter(({ folders }) => {
         if (folders && folders.length > 0 && folders[0].id === folderId) {

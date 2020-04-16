@@ -4,8 +4,9 @@ import Attributes from '../attributes';
 export default class SentProgress extends Model {
   static passAsIs = true;
   static attributes = Object.assign({}, Model.attributes, {
-    pid: Attributes.String({
+    id: Attributes.String({
       modelKey: 'pid',
+      jsModelKey: 'id',
     }),
     headerMessageId: Attributes.String({
       modelKey: 'hMsgId',
