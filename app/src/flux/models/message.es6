@@ -320,7 +320,7 @@ export default class Message extends ModelWithMetadata {
     inboxCategory: Attributes.Number({
       queryable: true,
       loadFromColumn: true,
-      modelKey: 'category',
+      modelKey: 'primary',
       jsModelKey: 'inboxCategory',
     }),
     siftCategory: Attributes.Collection({
