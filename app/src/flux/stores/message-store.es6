@@ -321,7 +321,7 @@ class MessageStore extends MailspringStore {
         if (
           change.type === 'persist' &&
           itemIndex === -1 &&
-          !Message.compareMessageState(item.state, Message.messageSyncState.failed)
+          !Message.compareMessageState(item.syncState, Message.messageSyncState.failed)
         ) {
           this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
           this._items = this._sortItemsForDisplay(this._items);
