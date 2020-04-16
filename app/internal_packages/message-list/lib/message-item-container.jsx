@@ -66,26 +66,21 @@ export default class MessageItemContainer extends React.Component {
     });
   }
 
-  _onSendingStateChanged = ({ headerMessageIds = [], headerMessageId = '' }) => {
-    if (
-      Array.isArray(headerMessageIds) &&
-      headerMessageIds.includes(this.props.message.headerMessageId)
-    ) {
+  _onSendingStateChanged = ({ messageIds = [], messageId = '' }) => {
+    if (Array.isArray(messageIds) && messageIds.includes(this.props.message.id)) {
       console.log('draft sending state changed');
       this.setState(this._getStateFromStores());
-    } else if (headerMessageId === this.props.message.headerMessageId) {
-      console.log('draft sending state changed for single headerMessageId');
-      console.log(`DraftStore: ${DraftStore.isSendingDraft(this.props.message.headerMessageId)}`);
+    } else if (messageId === this.props.message.id) {
+      console.log('draft sending state changed for single messageId');
+      console.log(`DraftStore: ${DraftStore.isSendingDraft(this.props.message.id)}`);
       this.setState(this._getStateFromStores());
     } else {
-      console.log(
-        `change draft HeaderMessageId ${headerMessageId}, current: ${this.props.message.headerMessageId}`
-      );
+      console.log(`change draft messageId ${messageId}, current: ${this.props.message.id}`);
     }
   };
 
   _getStateFromStores(props = this.props) {
-    const isSending = DraftStore.isSendingDraft(props.message.headerMessageId);
+    const isSending = DraftStore.isSendingDraft(props.message.id);
     return { isSending };
   }
 

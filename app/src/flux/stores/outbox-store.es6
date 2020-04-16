@@ -19,14 +19,25 @@ const resendIndicatorTimeoutMS = 3000;
 class OutboxStore extends MailspringStore {
   static findAll() {
     const accountIds = AccountStore.accountIds();
-    if(Array.isArray(accountIds) && accountIds.length > 0){
-      return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false, deleted: false }).where([
-        Message.attributes.syncState.in([Message.messageSyncState.failed, Message.messageSyncState.failing]),
-      ])
-        .where({accountId: accountIds});
+    if (Array.isArray(accountIds) && accountIds.length > 0) {
+      return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false, deleted: false })
+        .where([
+          Message.attributes.syncState.in([
+            Message.messageSyncState.failed,
+            Message.messageSyncState.failing,
+          ]),
+        ])
+        .where({ accountId: accountIds });
     }
-    return DatabaseStore.findAll(Message, { draft: true, hasCalendar: false, deleted: false }).where([
-      Message.attributes.syncState.in([Message.messageSyncState.failed, Message.messageSyncState.failing]),
+    return DatabaseStore.findAll(Message, {
+      draft: true,
+      hasCalendar: false,
+      deleted: false,
+    }).where([
+      Message.attributes.syncState.in([
+        Message.messageSyncState.failed,
+        Message.messageSyncState.failing,
+      ]),
     ]);
   }
 
@@ -85,20 +96,20 @@ class OutboxStore extends MailspringStore {
   };
 
   draftNeedsToDisplaySending = draft => {
-    if (this._resendingDrafts[draft.headerMessageId]) {
+    if (this._resendingDrafts[draft.id]) {
       return true;
     }
     return Message.compareMessageState(draft.syncState, Message.messageSyncState.failing);
   };
   _clearResendIndicators = () => {
     this._resendDraftCheckTimer = null;
-    const headerMessageIds = Object.keys(this._resendingDrafts);
-    if (headerMessageIds.length > 0) {
+    const messageIds = Object.keys(this._resendingDrafts);
+    if (messageIds.length > 0) {
       let shouldTrigger = false;
-      headerMessageIds.forEach(headerMessageId => {
+      messageIds.forEach(messageId => {
         const now = Date.now();
-        if (now - this._resendingDrafts[headerMessageId] >= resendIndicatorTimeoutMS) {
-          delete this._resendingDrafts[headerMessageId];
+        if (now - this._resendingDrafts[messageId] >= resendIndicatorTimeoutMS) {
+          delete this._resendingDrafts[messageId];
           shouldTrigger = true;
         }
       });
@@ -109,8 +120,8 @@ class OutboxStore extends MailspringStore {
     }
   };
   _triggerTimerCheck = () => {
-    const headerMessageIds = Object.keys(this._resendingDrafts);
-    if (headerMessageIds.length > 0) {
+    const messageIds = Object.keys(this._resendingDrafts);
+    if (messageIds.length > 0) {
       if (!this._resendDraftCheckTimer) {
         this._resendDraftCheckTimer = setTimeout(
           this._clearResendIndicators,
@@ -119,31 +130,31 @@ class OutboxStore extends MailspringStore {
       }
     }
   };
-  _appendToResendDraft = ({ messages = [], source = '' } = {}) =>{
+  _appendToResendDraft = ({ messages = [], source = '' } = {}) => {
     let shouldTrigger = false;
     messages.forEach(message => {
-      if (!this._resendingDrafts[message.headerMessageId]) {
-        this._resendingDrafts[message.headerMessageId] = Date.now();
+      if (!this._resendingDrafts[message.id]) {
+        this._resendingDrafts[message.id] = Date.now();
         shouldTrigger = true;
       }
     });
     this._triggerTimerCheck();
-    if (shouldTrigger){
+    if (shouldTrigger) {
       this.trigger();
     }
   };
-  _onEditOutboxDraft = (headerMessageId) =>{
-    if(this._selectedDraft && headerMessageId === this._selectedDraft.headerMessageId){
+  _onEditOutboxDraft = messageId => {
+    if (this._selectedDraft && messageId === this._selectedDraft.id) {
       this._selectedDraft = null;
       this.trigger();
     }
   };
-  _onCancelOutboxDraft = ({messages = []}) => {
-    if(!this._selectedDraft){
+  _onCancelOutboxDraft = ({ messages = [] }) => {
+    if (!this._selectedDraft) {
       return;
     }
-    for(let i = 0; i< messages.length; i++){
-      if(messages[i].id === this._selectedDraft.id){
+    for (let i = 0; i < messages.length; i++) {
+      if (messages[i].id === this._selectedDraft.id) {
         this._selectedDraft = null;
         this.trigger();
         break;
@@ -166,7 +177,12 @@ class OutboxStore extends MailspringStore {
       if (change.objectClass === Message.name) {
         let needUpdate = false;
         change.objects.forEach(obj => {
-          if (obj.draft && [Message.messageSyncState.failing, Message.messageSyncState.failed].includes(obj.syncState)) {
+          if (
+            obj.draft &&
+            [Message.messageSyncState.failing, Message.messageSyncState.failed].includes(
+              obj.syncState
+            )
+          ) {
             if (this._selectedDraft && this._selectedDraft.id === obj.id) {
               if (change.type === 'persist') {
                 this._selectedDraft = obj;
@@ -193,7 +209,9 @@ class OutboxStore extends MailspringStore {
       }
     } else if (
       focused.draft &&
-      [Message.messageSyncState.failed, Message.messageSyncState.failing].includes(focused.syncState.toString())
+      [Message.messageSyncState.failed, Message.messageSyncState.failing].includes(
+        focused.syncState.toString()
+      )
     ) {
       if (!this._selectedDraft) {
         this._selectedDraft = focused;
@@ -241,16 +259,13 @@ class OutboxStore extends MailspringStore {
     const query = OutboxStore.findAllWithBodyInDescendingOrder().page(0, 1);
     const subscription = new MutableQuerySubscription(query, { emitResultSet: true });
     let $resultSet = Rx.Observable.fromNamedQuerySubscription('outbox-list', subscription);
-    $resultSet = Rx.Observable.combineLatest(
-      [$resultSet],
-      (resultSet, outbox) => {
-        // Generate a new result set that includes additional information on
-        // the draft objects. This is similar to what we do in the thread-list,
-        // where we set thread.__messages to the message array.
-        const resultSetWithTasks = new MutableQueryResultSet(resultSet);
-        return resultSetWithTasks.immutableClone();
-      },
-    );
+    $resultSet = Rx.Observable.combineLatest([$resultSet], (resultSet, outbox) => {
+      // Generate a new result set that includes additional information on
+      // the draft objects. This is similar to what we do in the thread-list,
+      // where we set thread.__messages to the message array.
+      const resultSetWithTasks = new MutableQueryResultSet(resultSet);
+      return resultSetWithTasks.immutableClone();
+    });
 
     this._dataSource = new ObservableListDataSource($resultSet, subscription.replaceRange);
     this._dataSourceUnlisten = this._dataSource.listen(this._onDataSourceChanged, this);
@@ -264,7 +279,7 @@ class OutboxStore extends MailspringStore {
       if (total !== this._totalInOutbox || failed !== this._totalFailedDrafts) {
         this._totalInOutbox = total;
         this._totalFailedDrafts = failed;
-        if(total === 0){
+        if (total === 0) {
           AppEnv.logDebug('Outbox no longer have data');
           const currentPerspective = FocusedPerspectiveStore.current();
           if (currentPerspective && currentPerspective.outbox) {
@@ -312,7 +327,7 @@ class OutboxStore extends MailspringStore {
 
   _populate() {
     const nextTasks = TaskQueue.queue().filter(
-      task => task instanceof SendDraftTask || task instanceof SyncbackDraftTask,
+      task => task instanceof SendDraftTask || task instanceof SyncbackDraftTask
     );
     if (this._tasks.length === 0 && nextTasks.length === 0) {
       return;
