@@ -10,7 +10,6 @@ function InflatesDraftClientId(ComposedComponent) {
     static displayName = `${ComposedComponent.displayName}-inflate`;
 
     static propTypes = {
-      headerMessageId: PropTypes.string,
       messageId: PropTypes.string,
       onDraftReady: PropTypes.func,
     };
@@ -57,24 +56,20 @@ function InflatesDraftClientId(ComposedComponent) {
             { errorData: this.props.draft }
           );
         } else {
-          this._prepareForDraft(this.props.headerMessageId, this.props.messageId);
+          this._prepareForDraft(this.props.messageId);
         }
       }
     }
 
     componentWillUnmount() {
       this._mounted = false;
-      this._teardownForDraft({ headerMessageId: this.props.headerMessageId });
-      // this._deleteDraftIfEmpty();
+      this._teardownForDraft({ messageId: this.props.messageId });
     }
 
     UNSAFE_componentWillReceiveProps(newProps) {
-      if (
-        newProps.headerMessageId !== this.props.headerMessageId ||
-        newProps.messageId !== this.props.messageId
-      ) {
+      if (newProps.messageId !== this.props.messageId) {
         // console.log(`new props: ${JSON.stringify(newProps)}`);
-        this._teardownForDraft({ headerMessageId: this.props.headerMessageId });
+        this._teardownForDraft({ messageId: this.props.messageId });
         if (
           newProps.draft &&
           newProps.draft.savedOnRemote &&
@@ -83,24 +78,10 @@ function InflatesDraftClientId(ComposedComponent) {
         ) {
           this._prepareServerDraftForEdit(newProps.draft);
         } else {
-          this._prepareForDraft(newProps.headerMessageId, newProps.messageId);
+          this._prepareForDraft(newProps.messageId);
         }
       }
     }
-
-    _onDraftGotNewId = (event, options) => {
-      if (
-        options.referenceMessageId &&
-        options.newHeaderMessageId &&
-        options.newMessageId &&
-        options.referenceMessageId === this.state.messageId
-      ) {
-        this.setState({
-          headerMessageId: options.newHeaderMessageId,
-          messageId: options.newMessageId,
-        });
-      }
-    };
 
     _prepareServerDraftForEdit(draft) {
       if (draft.savedOnRemote) {
@@ -112,14 +93,12 @@ function InflatesDraftClientId(ComposedComponent) {
             }
             const newDraft = session.draft();
             let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
-            if (newDraft && newDraft.refOldDraftHeaderMessageId) {
-              sameDraftWithNewID =
-                newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId;
+            if (newDraft && newDraft.refOldDraftMessageId) {
+              sameDraftWithNewID = newDraft.refOldDraftMessageId === this.props.messageId;
             }
             return (
               this._mounted &&
-              (newDraft.refOldDraftHeaderMessageId === this.props.headerMessageId ||
-                sameDraftWithNewID)
+              (newDraft.refOldDraftMessageId === this.props.messageId || sameDraftWithNewID)
             );
           };
           if (!shouldSetState()) {
@@ -148,11 +127,11 @@ function InflatesDraftClientId(ComposedComponent) {
       }
     }
 
-    _prepareForDraft(headerMessageId, messageId) {
-      if (!headerMessageId && !messageId) {
+    _prepareForDraft(messageId) {
+      if (!messageId) {
         return;
       }
-      DraftStore.sessionForClientId(headerMessageId).then(session => {
+      DraftStore.sessionForClientId(messageId).then(session => {
         const shouldSetState = () => {
           if (!session) {
             AppEnv.reportError(new Error('session not available'));
@@ -160,12 +139,11 @@ function InflatesDraftClientId(ComposedComponent) {
           }
           const draft = session.draft();
           let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
-          if (draft && draft.referenceMessageId) {
-            sameDraftWithNewID = draft.referenceMessageId === messageId;
+          if (draft && draft.refOldDraftMessageId) {
+            sameDraftWithNewID = draft.refOldDraftMessageId === messageId;
           }
           return (
-            this._mounted &&
-            (session.headerMessageId === this.props.headerMessageId || sameDraftWithNewID)
+            this._mounted && (session.messageId === this.props.messageId || sameDraftWithNewID)
           );
         };
         if (!shouldSetState()) {
@@ -203,8 +181,8 @@ function InflatesDraftClientId(ComposedComponent) {
       });
     }
 
-    _teardownForDraft({ headerMessageId } = {}) {
-      if (!headerMessageId) {
+    _teardownForDraft({ messageId } = {}) {
+      if (!messageId) {
         AppEnv.logError('headerMessageId is null');
         return;
       }
@@ -212,26 +190,16 @@ function InflatesDraftClientId(ComposedComponent) {
         this._sessionUnlisten();
       }
       if (this.state.draft) {
-        if (headerMessageId !== this.state.headerMessageId) {
+        if (messageId !== this.state.draft.id) {
           AppEnv.logWarning(
-            `HeaderMessageId is inconsisstent, input: ${headerMessageId}, state: ${this.state.headerMessageId}`
+            `MessageId is inconsisstent, input: ${messageId}, state: ${this.state.draft.id}`
           );
         }
         Actions.draftWindowClosing({
-          headerMessageIds: [headerMessageId],
+          messageIds: [messageId],
           windowLevel: this._windowLevel,
           source: 'componentWillUnmount',
         });
-      }
-    }
-
-    _deleteDraftIfEmpty() {
-      if (!this.state.draft) {
-        return;
-      }
-      if (this.state.draft.pristine && !this.state.draft.savedOnRemote) {
-        //making sure draft is not from remote
-        Actions.destroyDraft([this.state.draft], { canBeUndone: false });
       }
     }
 
@@ -249,7 +217,7 @@ function InflatesDraftClientId(ComposedComponent) {
       }
       return (
         <ComposedComponent
-          key={this.state.draft.headerMessageId}
+          key={this.state.draft.id}
           ref="composed"
           {...this.props}
           {...this.state}

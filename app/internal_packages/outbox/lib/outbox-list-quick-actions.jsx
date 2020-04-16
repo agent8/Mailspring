@@ -1,9 +1,4 @@
-const {
-  Actions,
-  React,
-  PropTypes,
-  FocusedPerspectiveStore,
-} = require('mailspring-exports');
+const { Actions, React, PropTypes, FocusedPerspectiveStore } = require('mailspring-exports');
 import { RetinaImg } from 'mailspring-component-kit';
 
 class OutboxTrashQuickAction extends React.Component {
@@ -11,10 +6,7 @@ class OutboxTrashQuickAction extends React.Component {
   static propTypes = { draft: PropTypes.object };
 
   render() {
-    const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
-      [this.props.draft],
-      'trash'
-    );
+    const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo([this.props.draft], 'trash');
     if (!allowed) {
       return <span />;
     }
@@ -23,11 +15,16 @@ class OutboxTrashQuickAction extends React.Component {
       <div
         key="remove"
         title="Cancel"
-        style={{ order: 3}}
+        style={{ order: 3 }}
         className="action action-trash"
         onClick={this._onRemove}
       >
-        <RetinaImg name="trash.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name="trash.svg"
+          style={{ width: 24, height: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
@@ -49,7 +46,7 @@ class OutboxEditQuickAction extends React.Component {
     return (
       <div
         key="edit"
-        title='Edit'
+        title="Edit"
         style={{ order: 2 }}
         className="action action-edit "
         onClick={this._onEdit}
@@ -58,13 +55,14 @@ class OutboxEditQuickAction extends React.Component {
           name="pencil.svg"
           style={{ width: 24, height: 24 }}
           isIcon
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
 
   _onEdit = event => {
-    Actions.editOutboxDraft(this.props.draft.headerMessageId);
+    Actions.editOutboxDraft(this.props.draft.id);
     return event.stopPropagation();
   };
 }
@@ -77,18 +75,23 @@ class OutboxResendQuickAction extends React.Component {
     return (
       <div
         key="resend"
-        title='Resend'
+        title="Resend"
         style={{ order: 1 }}
         className="action action-flag"
         onClick={this._onResend}
       >
-        <RetinaImg name='refresh.svg' style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name="refresh.svg"
+          style={{ width: 24, height: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
 
   _onResend = event => {
-    Actions.resendDrafts({messages: [this.props.draft], source: "Outbox:QuickAction:Resend"});
+    Actions.resendDrafts({ messages: [this.props.draft], source: 'Outbox:QuickAction:Resend' });
     return event.stopPropagation();
   };
 }

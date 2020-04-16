@@ -5,8 +5,8 @@ import Account from '../models/account';
 
 export default class SyncbackDraftTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
-    headerMessageId: Attributes.String({
-      modelKey: 'headerMessageId',
+    messageId: Attributes.String({
+      modelKey: 'messageId',
     }),
     saveOnRemote: Attributes.Boolean({
       modelKey: 'saveOnRemote',
@@ -21,7 +21,7 @@ export default class SyncbackDraftTask extends Task {
     super(rest);
     this.draft = draft;
     this.accountId = (draft || {}).accountId;
-    this.headerMessageId = (draft || {}).headerMessageId;
+    this.messageId = (draft || {}).id;
   }
 
   onError({ key, debuginfo, retryable }) {
@@ -30,12 +30,16 @@ export default class SyncbackDraftTask extends Task {
       return;
     }
     if (key === 'no-drafts-folder') {
-      const previousError = AppEnv.filterTaskErrorCounter({accountId: this.accountId, identityKey: 'type', value: 'SyncBackDraft'});
-      if(previousError.length === 0) {
+      const previousError = AppEnv.filterTaskErrorCounter({
+        accountId: this.accountId,
+        identityKey: 'type',
+        value: 'SyncBackDraft',
+      });
+      if (previousError.length === 0) {
         AppEnv.showErrorDialog({
           title: 'Drafts folder not found',
           message:
-            'Edison Mail can\'t find your Drafts folder. To create and send mail, visit Preferences > Folders and' +
+            "Edison Mail can't find your Drafts folder. To create and send mail, visit Preferences > Folders and" +
             ' choose a Drafts folder.',
         });
         AppEnv.pushTaskErrorCounter({ data: { type: 'SyncBackDraft' }, accountId: this.accountId });
@@ -57,7 +61,7 @@ export default class SyncbackDraftTask extends Task {
           AppEnv.config.set('accounts', newAccounts);
           // AppEnv.showErrorDialog(`Cannot authenticate with ${errorAccount.emailAddress}`, { detail: debuginfo });
         }
-      } else if (AppEnv.inDevMode()){
+      } else if (AppEnv.inDevMode()) {
         AppEnv.showErrorDialog('Draft processing failed', { detail: debuginfo });
       }
     }

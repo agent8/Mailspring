@@ -8,13 +8,13 @@ export default class ComposerHeaderActions extends React.Component {
   static displayName = 'ComposerHeaderActions';
 
   static propTypes = {
-    headerMessageId: PropTypes.string.isRequired,
+    messageId: PropTypes.string.isRequired,
     enabledFields: PropTypes.array.isRequired,
     onShowAndFocusField: PropTypes.func.isRequired,
   };
 
   _onPopoutComposer = () => {
-    Actions.composePopoutDraft(this.props.headerMessageId);
+    Actions.composePopoutDraft(this.props.messageId);
   };
 
   render() {

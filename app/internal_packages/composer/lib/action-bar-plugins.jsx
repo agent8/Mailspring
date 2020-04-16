@@ -30,7 +30,7 @@ export default class ActionBarPlugins extends React.Component {
   }
 
   _onComponentsChange = () => {
-    if(!this._mounted){
+    if (!this._mounted) {
       return;
     }
     if (this._getPluginsLength() > 0) {
@@ -42,7 +42,7 @@ export default class ActionBarPlugins extends React.Component {
       // It also takes 2 frames to reliably get all of the icons painted.
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
-          if(this._mounted){
+          if (this._mounted) {
             this.setState(this._getStateFromStores());
           }
         });
@@ -76,7 +76,7 @@ export default class ActionBarPlugins extends React.Component {
           exposedProps={{
             draft: this.props.draft,
             threadId: this.props.draft.threadId,
-            headerMessageId: this.props.draft.headerMessageId,
+            messageId: this.props.draft.id,
             session: this.props.session,
             isValidDraft: this.props.isValidDraft,
           }}
