@@ -18,7 +18,7 @@ class UserCacheStore extends MailspringStore {
     super();
     this.downloading = {};
     this._triggerDebounced = _.debounce(() => this.trigger(), 20);
-    // this.loadUserCacheData(); // 这里执行貌似无实际作用，待观察
+    this.loadUserCacheData();
   }
 
   init = async () => {
@@ -32,7 +32,7 @@ class UserCacheStore extends MailspringStore {
     const UserCacheDatas = await UserCacheModel.findAll();
     this.userCache = {};
     for (const item of UserCacheDatas) {
-      this.userCache[item.jid] = item;
+      this.userCache[item.jid] = item.dataValues;
     }
     // 从Contact中取数据，优先级要高于UserCache中的数据
     const ContactDatas = await ContactStore.getContacts();

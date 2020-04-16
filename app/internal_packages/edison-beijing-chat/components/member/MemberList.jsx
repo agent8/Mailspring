@@ -256,24 +256,25 @@ export default class ConversationInfo extends Component {
 
   renderPrivateConversationMember() {
     const { selectedConversation: conversation } = this.props;
-    const { curJid } = conversation;
+    const { curJid, jid } = conversation;
+    const other = UserCacheStore.getUserInfoByJid(jid);
     const self = UserCacheStore.getUserInfoByJid(curJid);
-
+    if (!other || !self) {
+      return null;
+    }
     return [
       <MemberListItem
         conversation={conversation}
-        member={conversation}
+        member={other}
         currentUserIsOwner={false}
         key={conversation.jid}
       />,
-      self && (
-        <MemberListItem
-          conversation={conversation}
-          member={self}
-          currentUserIsOwner={false}
-          key="curJid"
-        />
-      ),
+      <MemberListItem
+        conversation={conversation}
+        member={self}
+        currentUserIsOwner={false}
+        key="curJid"
+      />,
     ];
   }
 

@@ -20,10 +20,6 @@ export default class InfoMember extends Component {
     };
   }
 
-  componentDidMount() {
-    UserCacheStore.loadUserCacheData();
-  }
-
   onClickRemove = e => {
     e.stopPropagation();
     e.preventDefault();
