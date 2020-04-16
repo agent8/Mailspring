@@ -177,6 +177,11 @@ export default class MailsyncProcess extends EventEmitter {
       } else {
         args.push('--isGDPR', 0);
       }
+      if (process.mas) {
+        args.push('--mas', 1);
+      } else {
+        args.push('--mas', 0);
+      }
     }
     console.log(`\n\n\n\n\nprocess mode: ${mode} args: ${args.join(' ')}`);
     this._proc = spawn(this.binaryPath, args, { env });
