@@ -728,7 +728,7 @@ export default class Application extends EventEmitter {
     }
   }
 
-  _resetDatabaseAndRelaunch = ({ errorMessage } = {}) => {
+  _resetDatabaseAndRelaunch = ({ errorMessage, source = 'Unknown' } = {}) => {
     if (this._resettingAndRelaunching) return;
     this._resettingAndRelaunching = true;
     let rebuild = false;
@@ -746,13 +746,13 @@ export default class Application extends EventEmitter {
           detail: errorMessage,
         })
         .then(() => {
-          console.log('deleting databases and destroying all windows');
+          console.log(`deleting databases and destroying all windows because of ${source}`);
           this.windowManager.destroyAllWindows();
           this._deleteDatabase(done, rebuild);
         });
       return;
     }
-    console.log('deleting databases and destroying all windows');
+    console.log(`deleting databases and destroying all windows because of ${source}`);
     this.windowManager.destroyAllWindows();
     this._deleteDatabase(done, rebuild);
   };
