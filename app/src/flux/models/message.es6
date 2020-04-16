@@ -226,6 +226,11 @@ export default class Message extends ModelWithMetadata {
       queryable: false,
     }),
 
+    needUpload: Attributes.Boolean({
+      modelKey: 'needUpload',
+      queryable: false,
+    }),
+
     version: Attributes.Number({
       jsonKey: 'v',
       modelKey: 'version',
