@@ -71,7 +71,7 @@ const removeAttachmentWithNoContentId = files => {
   const ret = [];
   files.forEach(file => {
     // Because in the end, we use contentId to id which attachment goes where
-    if (file && (typeof file.contentId === 'string') && file.contentId.length > 0) {
+    if (file && typeof file.contentId === 'string' && file.contentId.length > 0) {
       ret.push(file);
     }
   });
@@ -86,7 +86,12 @@ const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
   }
   const ret = [];
   files.forEach(file => {
-    if (file && (typeof file.contentId === 'string') && file.contentId.length > 0 && bodyStr.includes(file.contentId)) {
+    if (
+      file &&
+      typeof file.contentId === 'string' &&
+      file.contentId.length > 0 &&
+      bodyStr.includes(file.contentId)
+    ) {
       ret.push(file);
     }
   });
@@ -163,7 +168,7 @@ class DraftFactory {
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
       throw new Error(
-        'DraftEditingSession::createNewDraftForEdit - you can only send drafts from a configured account.',
+        'DraftEditingSession::createNewDraftForEdit - you can only send drafts from a configured account.'
       );
     }
     const defaults = Object.assign({}, draft, {
@@ -176,7 +181,7 @@ class DraftFactory {
       accountId: account.id,
       savedOnRemote: false,
       hasRefOldDraftOnRemote: true,
-      refOldDraftHeaderMessageId: draft.headerMessageId
+      refOldDraftHeaderMessageId: draft.headerMessageId,
     });
     return new Message(defaults);
   }
@@ -224,7 +229,7 @@ class DraftFactory {
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
       throw new Error(
-        'DraftEditingSession::createNewDraftForEdit - you can only send drafts from a configured account.',
+        'DraftEditingSession::createNewDraftForEdit - you can only send drafts from a configured account.'
       );
     }
     const defaults = Object.assign({}, draft, {
@@ -237,7 +242,7 @@ class DraftFactory {
       accountId: account.id,
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
-      refOldDraftHeaderMessageId: ''
+      refOldDraftHeaderMessageId: '',
     });
     return new Message(defaults);
   }
@@ -246,7 +251,7 @@ class DraftFactory {
     const account = AccountStore.accountForId(draft.accountId);
     if (!account) {
       throw new Error(
-        'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.',
+        'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.'
       );
     }
     const defaults = Object.assign({}, draft, {
@@ -259,7 +264,7 @@ class DraftFactory {
       date: new Date(),
       pristine: false,
       hasNewID: false,
-      accountId: account.id
+      accountId: account.id,
     });
     await mergeDefaultBccAndCCs(defaults, account);
     // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
@@ -277,7 +282,7 @@ class DraftFactory {
     const account = AccountStore.accountForEmail(from[0].email);
     if (!account) {
       throw new Error(
-        'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.',
+        'DraftEditingSession::ensureCorrectAccount - you can only send drafts from a configured account.'
       );
     }
     const defaults = Object.assign({}, draft, {
@@ -299,6 +304,7 @@ class DraftFactory {
       hasRefOldDraftOnRemote: false,
       hasNewID: false,
       accountId: account.id,
+      needUpload: true,
     });
     await mergeDefaultBccAndCCs(defaults, account);
     return new Message(defaults);
@@ -401,8 +407,8 @@ class DraftFactory {
     const body = `
         <br/>
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
-      message.replyAttributionLine(),
-    )}</div>
+          message.replyAttributionLine()
+        )}</div>
         <blockquote class="gmail_quote" data-edison="true"
           style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
           ${prevBody}
@@ -436,7 +442,7 @@ class DraftFactory {
       files: [file],
       calTarStat: replyStatus.code,
       hasCalendar: true,
-      calendarReply: true
+      calendarReply: true,
     });
   }
 
@@ -521,7 +527,7 @@ class DraftFactory {
         : await MessageStore.findAllByThreadId({ threadId: message.threadId });
 
     const candidateDrafts = messages.filter(
-      other => other.replyToHeaderMessageId === message.headerMessageId && other.draft === true,
+      other => other.replyToHeaderMessageId === message.headerMessageId && other.draft === true
     );
 
     if (candidateDrafts.length === 0) {
@@ -535,8 +541,8 @@ class DraftFactory {
       DraftStore = DraftStore || require('./draft-store').default;
       const sessions = await Promise.all(
         candidateDrafts.map(candidateDraft =>
-          DraftStore.sessionForClientId(candidateDraft.headerMessageId),
-        ),
+          DraftStore.sessionForClientId(candidateDraft.headerMessageId)
+        )
       );
       for (const session of sessions) {
         if (session.draft().pristine) {
