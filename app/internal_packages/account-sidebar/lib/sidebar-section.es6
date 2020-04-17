@@ -211,7 +211,10 @@ class SidebarSection {
         items.push(folderItem);
       }
     }
-    SidebarSection.forSiftCategories(accountIds, items);
+    if (!process.mas) {
+      SidebarSection.forSiftCategories(accountIds, items);
+    }
+
 
     folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
     if (folderItem) {
