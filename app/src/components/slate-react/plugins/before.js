@@ -168,7 +168,12 @@ function BeforePlugin() {
     });
 
     debug('onCompositionEnd', { event: event });
-    return change.deleteBackward().insertText(event.data);
+    const sel = window.getSelection()
+    const range = sel.getRangeAt(0)
+    if (range && range.startContainer!==range.endContainer) {
+      change.deleteBackward()
+    }
+    return change.insertText(event.data);
   }
 
   /**
