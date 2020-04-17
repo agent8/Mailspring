@@ -203,7 +203,10 @@ class SidebarSection {
         items.push(folderItem);
       }
     }
-    SidebarSection.forSiftCategories(accountIds, items);
+    if (!process.mas) {
+      SidebarSection.forSiftCategories(accountIds, items);
+    }
+
 
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)
