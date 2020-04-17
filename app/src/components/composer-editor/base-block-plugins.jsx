@@ -64,7 +64,7 @@ function isStartOfDocument(value) {
   const firstText = value.document.getFirstText();
   return focusOffset === 0 && focusText && firstText && firstText.key === focusText.key;
 }
-function isEmptySelection(value) {
+export function isEmptySelection(value) {
   if (!value) {
     return false;
   }
