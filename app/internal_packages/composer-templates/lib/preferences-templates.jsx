@@ -122,7 +122,10 @@ export default class PreferencesTemplates extends React.Component {
     }
 
     const templates = TemplateStore.items();
-    const selected = templates.find(t => t.name === lastSelName) || templates[lastSelIndex] || null;
+    let selected = templates.find(t => t.name === lastSelName) || templates[lastSelIndex] || null;
+    if (!selected && templates.length > 0) {
+      selected = templates[0];
+    }
 
     return {
       templates,
