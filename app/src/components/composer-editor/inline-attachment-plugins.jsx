@@ -1,7 +1,7 @@
 import React from 'react';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
 import { AttachmentStore, Actions } from 'mailspring-exports';
-import { isQuoteNode } from './base-block-plugins';
+import { isQuoteNode, isEmptySelection } from './base-block-plugins';
 
 const IMAGE_TYPE = 'image';
 
@@ -125,12 +125,43 @@ const nonPrintableKeyCode = {
 const processInlineAttachment = change => {
   let contentIds = [];
   const inLines = change.value.inlines;
-  if (inLines) {
+  if (inLines && inLines.size > 0) {
     for (let i = 0; i < inLines.size; i++) {
       const inline = inLines.get(i);
       if (inline) {
         if (inline && inline.data && inline.data.get('contentId')) {
           contentIds.push(inline.data.get('contentId'));
+        }
+      }
+    }
+  }
+  contentIds.forEach(contentId => Actions.draftInlineAttachmentRemoved(contentId));
+  return contentIds;
+};
+const processNearestInlineAttachment = (change, offSet) => {
+  const contentIds = [];
+  if (isEmptySelection(change.value)) {
+    const focusKey = change.value.focusKey;
+    const anchorOffset = change.value.anchorOffset;
+    const focusText = change.value.focusText.text;
+    const parentBlock = change.value.focusBlock;
+    let isAtEnd = anchorOffset === 0;
+    if (offSet === 1 && focusText) {
+      const windowSelection = window.getSelection();
+      if (windowSelection) {
+        const windowAnchorOffset = windowSelection.getRangeAt(0).endOffset;
+        isAtEnd = anchorOffset === focusText.length - 1 && anchorOffset === windowAnchorOffset;
+      }
+    }
+    if (parentBlock && focusKey && isAtEnd) {
+      const nodes = parentBlock.nodes;
+      for (let i = 0; i < nodes.size; i++) {
+        if (nodes.get(i).key === focusKey && i + offSet > 0) {
+          const inlineImage = nodes.get(i + offSet);
+          if (inlineImage && inlineImage.data && inlineImage.data.get('contentId')) {
+            contentIds.push(inlineImage.data.get('contentId'));
+            break;
+          }
         }
       }
     }
@@ -144,12 +175,30 @@ const onKeyDown = (event, change) => {
     event.optionKey ||
     event.altKey ||
     event.ctrlKey ||
-    ['Control', 'Meta', 'Alt', 'Shift', 'Enter'].includes(event.key) ||
+    ['Control', 'Meta', 'Alt', 'Shift', 'Enter', 'Backspace', 'Delete'].includes(event.key) ||
     nonPrintableKeyCode.mac.includes(event.keyCode)
   ) {
     return;
   }
   processInlineAttachment(change);
+};
+const onBackspace = (event, change) => {
+  if (event.key !== 'Backspace') {
+    return;
+  }
+  const contentIds = processInlineAttachment(change);
+  if (contentIds.length === 0) {
+    processNearestInlineAttachment(change, -1);
+  }
+};
+const onDelete = (event, change) => {
+  if (event.key !== 'Delete') {
+    return;
+  }
+  const contentIds = processInlineAttachment(change);
+  if (contentIds.length === 0) {
+    processNearestInlineAttachment(change, 1);
+  }
 };
 
 export const changes = {
@@ -180,4 +229,6 @@ export default [
     rules,
     onKeyDown,
   },
+  { onKeyDown: onBackspace },
+  { onKeyDown: onDelete },
 ];
