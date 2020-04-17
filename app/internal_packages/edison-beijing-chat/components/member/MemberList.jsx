@@ -210,19 +210,10 @@ export default class ConversationInfo extends Component {
   };
 
   filterCurrentMemebers = contact => {
-    if (this.props.selectedConversation.isGroup) {
-      const memberJids = this.state.members.map(c => c.email);
-      return !memberJids.includes(contact.email);
-    } else {
-      if (
-        this.props.selectedConversation.roomMembers &&
-        this.props.selectedConversation.roomMembers.length > 0
-      ) {
-        return [this.props.selectedConversation.roomMembers[0].email];
-      } else {
-        return [this.props.selectedConversation.email];
-      }
-    }
+    const memberJids = this.props.selectedConversation.isGroup
+      ? this.state.members.map(c => c.jid)
+      : [this.props.selectedConversation.jid, this.props.selectedConversation.curJid];
+    return !memberJids.includes(contact.jid);
   };
 
   renderGroupConversationMember() {

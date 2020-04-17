@@ -81,13 +81,7 @@ module.exports = {
       //   });
       // }
     }
-    ContactModel.destroy({
-      where: {},
-      truncate: true,
-      force: true,
-    }).then(() => {
-      AppStore.refreshAppsEmailContacts();
-    });
+    AppStore.refreshAppsEmailContacts();
   },
 
   deactivate() {
