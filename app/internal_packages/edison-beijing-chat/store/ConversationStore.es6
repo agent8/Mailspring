@@ -119,9 +119,7 @@ class ConversationStore extends MailspringStore {
       }
     }
     this.selectedConversation = selectedConversation;
-    this.selectedConversation = selectedConversation;
-    // this.trigger();
-    // this._triggerDebounced();
+    this._triggerDebounced();
   };
 
   setSelectedConversationByNew = () => {

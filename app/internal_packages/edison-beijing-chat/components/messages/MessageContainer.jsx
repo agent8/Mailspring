@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import VirtualizedList from '../common/VirtualizedList/VirtualizedList';
 import Divider from '../common/Divider';
 import MessageItem from './MessageItem';
-import { MessageStore, OnlineUserStore } from 'chat-exports';
+import { MessageStore, OnlineUserStore, ConversationStore } from 'chat-exports';
 import { FILE_TYPE } from '../../utils/filetypes';
 import { dateFormat, dateFormatDigit, weekDayFormat, nearDays } from '../../utils/time';
 import groupByTime, { groupByDate } from '../../utils/groupByTime';
@@ -62,7 +62,7 @@ class MessageContainer extends Component {
     if (!this._mounted) {
       return;
     }
-    let selectedConversation = await MessageStore.getSelectedConversation();
+    let selectedConversation = await ConversationStore.getSelectedConversation();
     if (!selectedConversation) {
       return;
     }
