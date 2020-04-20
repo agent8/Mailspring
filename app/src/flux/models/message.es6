@@ -320,6 +320,11 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    inAllMail: Attributes.Boolean({
+      modelKey: 'inAllMail',
+      queryable: true,
+      loadFromColumn: true,
+    }),
     inboxCategory: Attributes.Number({
       queryable: true,
       loadFromColumn: true,
@@ -660,6 +665,7 @@ export default class Message extends ModelWithMetadata {
       if (account) {
         return account.id === this.accountId;
       }
+      return this.from[0].isMe({ meAccountId: this.accountId });
     }
     return this.from[0].isMe();
   }

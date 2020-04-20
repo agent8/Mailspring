@@ -308,7 +308,15 @@ export default class MessageControls extends React.Component {
     if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
-    ret.push(muteEmail);
+    if (
+      this.props.message &&
+      this.props.message.isFromMe &&
+      !this.props.message.isFromMe({ ignoreOtherAccounts: true })
+    ) {
+      ret.push(muteEmail);
+    } else if (this.props.message && !this.props.message.isFromMe) {
+      ret.push(muteEmail);
+    }
     if (this.props.message.isInInboxFocused()) {
       ret.push(moveToOther);
     }
@@ -582,6 +590,9 @@ export default class MessageControls extends React.Component {
 
   _renderBlockBtn() {
     const { message, isBlocked, onBlock } = this.props;
+    if (message && message.isFromMe && message.isFromMe({ ignoreOtherAccounts: true })) {
+      return;
+    }
     let btnText = '';
 
     if (message.listUnsubscribe) {

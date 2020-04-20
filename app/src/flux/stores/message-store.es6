@@ -302,6 +302,15 @@ class MessageStore extends MailspringStore {
     return this.trigger();
   }
 
+  _closeWindowIfNoMessage() {
+    if (AppEnv.isThreadWindow()) {
+      if (Array.isArray(this._items) && this._items.length === 0 && !this._thread) {
+        AppEnv.debugLog('Closing window because no message in thread and in ThreadWindow');
+        AppEnv.close();
+      }
+    }
+  }
+
   _onDataChanged(change) {
     if (!this._thread) return;
 
@@ -327,6 +336,7 @@ class MessageStore extends MailspringStore {
           this._items = this._sortItemsForDisplay(this._items);
           this._expandItemsToDefault();
           this.trigger();
+          this._closeWindowIfNoMessage();
           return;
         }
 
@@ -335,11 +345,12 @@ class MessageStore extends MailspringStore {
           this._items.splice(itemIndex, 1);
           this._expandItemsToDefault();
           this.trigger();
+          this._closeWindowIfNoMessage();
           return;
         }
       }
-
       this._fetchFromCache();
+      this._closeWindowIfNoMessage();
     }
 
     if (change.objectClass === Thread.name) {
@@ -351,6 +362,7 @@ class MessageStore extends MailspringStore {
           this._fetchFromCache();
         });
       }
+      this._closeWindowIfNoMessage();
     }
   }
 
@@ -436,6 +448,7 @@ class MessageStore extends MailspringStore {
     this._setWindowTitle();
 
     this._fetchFromCache();
+    this._closeWindowIfNoMessage();
   }
 
   setWindowTitle(title) {
