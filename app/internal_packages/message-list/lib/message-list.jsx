@@ -90,7 +90,7 @@ class MessageList extends React.Component {
 
   static default = {
     buttonTimeout: 700, // in milliseconds
-    inOubox: false
+    inOubox: false,
   };
 
   constructor(props) {
@@ -139,23 +139,23 @@ class MessageList extends React.Component {
   componentDidUpdate() {
     // cannot remove
   }
-  _hideEmptyList = (hide) => {
+  _hideEmptyList = hide => {
     this.safeSetState({ hideMessageList: hide });
-  }
+  };
 
   safeSetState = (data, callback) => {
     if (this._mounted) {
       this.setState(data, callback);
     }
-  }
+  };
 
   _onlineStatusChange = () => {
     if (this.state.isOnline !== OnlineStatusStore.isOnline()) {
       this.safeSetState({
-        isOnline: OnlineStatusStore.isOnline()
-      })
+        isOnline: OnlineStatusStore.isOnline(),
+      });
     }
-  }
+  };
 
   componentWillUnmount() {
     for (const unsubscribe of this._unsubscribers) {
@@ -183,9 +183,9 @@ class MessageList extends React.Component {
         }
       });
     }
-  }
+  };
 
-  _timeoutButton = (type) => {
+  _timeoutButton = type => {
     if (type === 'reply') {
       if (!this._replyTimer) {
         this._replyTimer = setTimeout(() => {
@@ -223,7 +223,10 @@ class MessageList extends React.Component {
   };
 
   _onDraftCreated = ({ messageId, type = '' }) => {
-    if (this._mounted && (!this._lastMessage() || messageId && messageId === this._lastMessage().id)) {
+    if (
+      this._mounted &&
+      (!this._lastMessage() || (messageId && messageId === this._lastMessage().id))
+    ) {
       if (type === 'reply') {
         if (this._replyTimer) {
           return;
@@ -300,14 +303,19 @@ class MessageList extends React.Component {
     }
     const { clipboard } = require('electron');
     clipboard.writeText(`edisonmail://email/${currentThread.accountId}/${currentThread.id}/view`);
-  }
+  };
 
   _getMessageContainer(headerMessageId) {
     return this.refs[`message-container-${headerMessageId}`];
   }
 
   _onForward = () => {
-    if (!this.state.currentThread || this.state.isForwarding || !this._mounted || this._forwardTimer) {
+    if (
+      !this.state.currentThread ||
+      this.state.isForwarding ||
+      !this._mounted ||
+      this._forwardTimer
+    ) {
       return;
     }
     this._timeoutButton('forward');
@@ -373,7 +381,12 @@ class MessageList extends React.Component {
   };
 
   _onClickReplyArea = (replyType = 'reply') => {
-    if (!this.state.currentThread || this.state.isReplying || this.state.isReplyAlling || !this._mounted) {
+    if (
+      !this.state.currentThread ||
+      this.state.isReplying ||
+      this.state.isReplyAlling ||
+      !this._mounted
+    ) {
       return;
     }
     if (replyType === 'reply-all') {
@@ -435,7 +448,7 @@ class MessageList extends React.Component {
           isBeforeReplyArea={isBeforeReplyArea}
           scrollTo={this._scrollTo}
           threadPopedOut={this.state.popedOut}
-        />,
+        />
       );
 
       if (isBeforeReplyArea) {
@@ -556,7 +569,7 @@ class MessageList extends React.Component {
         inOutbox: false,
         query: SearchStore.query(),
         isSearching: SearchStore.isSearching(),
-        theme: AppEnv.config.get('core.theme')
+        theme: AppEnv.config.get('core.theme'),
       };
     } else {
       return {
@@ -569,7 +582,7 @@ class MessageList extends React.Component {
   _onSelectText = e => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.target.className && e.target.className.indexOf("message-subject") === -1) {
+    if (e.target.className && e.target.className.indexOf('message-subject') === -1) {
       return;
     }
 
@@ -640,20 +653,23 @@ class MessageList extends React.Component {
     return (
       <div className="message-subject-wrap">
         <div style={{ flex: 1, flexWrap: 'wrap' }}>
-          <span className="message-subject"
+          <span
+            className="message-subject"
             onClick={this._onSelectText}
             onContextMenu={this._onContactContextMenu.bind(this, subject)}
           >
             {subject}
             {!this.state.inOutbox && <MailImportantIcon thread={this.state.currentThread} />}
-            {!this.state.inOutbox && <MailLabelSet
-              noWrapper
-              removable
-              includeCurrentCategories
-              messages={this.state.messages}
-              thread={this.state.currentThread}
-              onLabelRemoved={this._onLabelsRemoved}
-            />}
+            {!this.state.inOutbox && (
+              <MailLabelSet
+                noWrapper
+                removable
+                includeCurrentCategories
+                messages={this.state.messages}
+                thread={this.state.currentThread}
+                onLabelRemoved={this._onLabelsRemoved}
+              />
+            )}
           </span>
         </div>
         {/* {this._renderIcons()} */}
@@ -666,11 +682,13 @@ class MessageList extends React.Component {
       <div className="message-icons-wrap">
         {this._renderExpandToggle()}
         <div onClick={this._onPrintThread}>
-          <RetinaImg name={'print.svg'}
+          <RetinaImg
+            name={'print.svg'}
             title="Print Thread"
             style={{ width: 24, height: 24 }}
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </div>
         {this._renderPopoutToggle()}
       </div>
@@ -699,55 +717,63 @@ class MessageList extends React.Component {
     if (AppEnv.isThreadWindow()) {
       return (
         <div onClick={this._onPopThreadIn}>
-          <RetinaImg name={'pop-in.svg'}
+          <RetinaImg
+            name={'pop-in.svg'}
             style={{ width: 24, height: 24 }}
             title="Pop thread in"
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </div>
       );
     }
     return (
       <div onClick={this._onPopoutThread}>
-        <RetinaImg name={'popout.svg'}
+        <RetinaImg
+          name={'popout.svg'}
           style={{ width: 24, height: 24 }}
           title="Pop thread out"
           isIcon
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
 
   _renderReplyArea() {
     return (
-      <div className="footer-reply-area-wrap"
-        onClick={this.state.popedOut ? this._onPopoutThread : null} key="reply-area">
+      <div
+        className="footer-reply-area-wrap"
+        onClick={this.state.popedOut ? this._onPopoutThread : null}
+        key="reply-area"
+      >
         <div className="btn" onClick={() => this._onClickReplyArea('reply')}>
           <RetinaImg
             name={`reply.svg`}
             style={{ width: 24 }}
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
           <span className="reply-text">Reply</span>
         </div>
-        {
-          this._canReplyAll() && (
-            <div className="btn" onClick={() => this._onClickReplyArea('reply-all')}>
-              <RetinaImg
-                name={`reply-all.svg`}
-                style={{ width: 24 }}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask} />
-              <span className="reply-text">Reply All</span>
-            </div>
-          )
-        }
+        {this._canReplyAll() && (
+          <div className="btn" onClick={() => this._onClickReplyArea('reply-all')}>
+            <RetinaImg
+              name={`reply-all.svg`}
+              style={{ width: 24 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+            <span className="reply-text">Reply All</span>
+          </div>
+        )}
         <div className="btn" onClick={this._onForward}>
           <RetinaImg
             name={`forward.svg`}
             style={{ width: 24 }}
             isIcon
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
           <span className="reply-text">Forward</span>
         </div>
       </div>
@@ -764,19 +790,14 @@ class MessageList extends React.Component {
         key={Utils.generateTempId()}
       >
         <div className="msg-avatars">
-          {
-            <EmailAvatar
-              key={`thread-avatar`}
-              number={`${bundle.messages.length}`}
-            />
-          }
+          {<EmailAvatar key={`thread-avatar`} number={`${bundle.messages.length}`} />}
         </div>
         <div className="num-messages">more emails</div>
       </div>
     );
   }
 
-  _calcScrollPosition = _.throttle((scrollTop) => {
+  _calcScrollPosition = _.throttle(scrollTop => {
     const toolbar = document.querySelector('#message-list-toolbar');
     if (toolbar) {
       if (scrollTop > 0) {
@@ -787,7 +808,7 @@ class MessageList extends React.Component {
         toolbar.className = toolbar.className.replace(' has-shadow', '');
       }
     }
-  }, 100)
+  }, 100);
 
   _onScroll = e => {
     if (e.target) {
@@ -795,38 +816,43 @@ class MessageList extends React.Component {
     }
   };
   renderOutboxMessage(wrapClass, messageListClass) {
-    return <KeyCommandsRegion >
-      <div className={'outbox-message-toolbar'} id="outbox-message-toolbar">
-        <InjectedComponentSet
-          className="item-container"
-          matching={{ role: 'OutboxMessageToolbar' }}
-          exposedProps={{ draft: this.state.selectedDraft, hiddenLocations: WorkspaceStore.hiddenLocations() }}
-        />
-      </div>
-      <div className={messageListClass} id="outbox-message">
-        <ScrollRegion
-          tabIndex="-1"
-          className={wrapClass}
-          scrollbarTickProvider={SearchableComponentStore}
-          scrollTooltipComponent={MessageListScrollTooltip}
-          ref={el => {
-            this._messageWrapEl = el;
-          }}
-          onScroll={this._onScroll}
-        >
-          {this._renderSubject()}
-          <div className="headers" style={{ position: 'relative' }}>
-            <InjectedComponentSet
-              className="message-list-headers"
-              matching={{ role: 'MessageListHeaders' }}
-              exposedProps={{ draft: this.state.selectedDraft }}
-              direction="column"
-            />
-          </div>
-          {this._renderDraftElement()}
-        </ScrollRegion>
-      </div>
-    </KeyCommandsRegion>
+    return (
+      <KeyCommandsRegion>
+        <div className={'outbox-message-toolbar'} id="outbox-message-toolbar">
+          <InjectedComponentSet
+            className="item-container"
+            matching={{ role: 'OutboxMessageToolbar' }}
+            exposedProps={{
+              draft: this.state.selectedDraft,
+              hiddenLocations: WorkspaceStore.hiddenLocations(),
+            }}
+          />
+        </div>
+        <div className={messageListClass} id="outbox-message">
+          <ScrollRegion
+            tabIndex="-1"
+            className={wrapClass}
+            scrollbarTickProvider={SearchableComponentStore}
+            scrollTooltipComponent={MessageListScrollTooltip}
+            ref={el => {
+              this._messageWrapEl = el;
+            }}
+            onScroll={this._onScroll}
+          >
+            {this._renderSubject()}
+            <div className="headers" style={{ position: 'relative' }}>
+              <InjectedComponentSet
+                className="message-list-headers"
+                matching={{ role: 'MessageListHeaders' }}
+                exposedProps={{ draft: this.state.selectedDraft }}
+                direction="column"
+              />
+            </div>
+            {this._renderDraftElement()}
+          </ScrollRegion>
+        </div>
+      </KeyCommandsRegion>
+    );
   }
 
   render() {
@@ -839,7 +865,7 @@ class MessageList extends React.Component {
       isSearching,
       query,
       theme,
-      loading
+      loading,
     } = this.state;
     if ((!currentThread && !inOutbox) || (inOutbox && !selectedDraft)) {
       if (hideMessageList) {
