@@ -164,6 +164,7 @@ class DraftStore extends MailspringStore {
     return MessageStore.findAllWithBodyInDescendingOrder().where({
       draft: true,
       hasCalendar: false,
+      inAllMail: true,
     });
   }
 

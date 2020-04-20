@@ -320,6 +320,11 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    inAllMail: Attributes.Boolean({
+      modelKey: 'inAllMail',
+      queryable: true,
+      loadFromColumn: true,
+    }),
     inboxCategory: Attributes.Number({
       queryable: true,
       loadFromColumn: true,
