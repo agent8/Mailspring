@@ -18,13 +18,41 @@ let lottieData = null;
 
 const CALENDAR_TYPES = ['text/calendar', 'application/ics'];
 const GDPR_COUNTRIES = [
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
-  "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL",
-  "PO", "PT", "RO", "SK", "SI", "ES", "SE", "GB", "IS", "LI",
-  "NO", "CH",
+  'AT',
+  'BE',
+  'BG',
+  'HR',
+  'CY',
+  'CZ',
+  'DK',
+  'EE',
+  'FI',
+  'FR',
+  'DE',
+  'GR',
+  'HU',
+  'IE',
+  'IT',
+  'LV',
+  'LT',
+  'LU',
+  'MT',
+  'NL',
+  'PO',
+  'PT',
+  'RO',
+  'SK',
+  'SI',
+  'ES',
+  'SE',
+  'GB',
+  'IS',
+  'LI',
+  'NO',
+  'CH',
   // "CN", "US",
 ];
-const BLANK_ZWNJ = '\u200c' // &zwnj;
+const BLANK_ZWNJ = '\u200c'; // &zwnj;
 const aggregation = (baseClass, ...mixins) => {
   class base extends baseClass {
     constructor(...args) {
@@ -39,7 +67,7 @@ const aggregation = (baseClass, ...mixins) => {
     Object.getOwnPropertyNames(source).forEach(prop => {
       if (
         !prop.match(
-          /^(?:constructor|prototype|arguments|caller|name|bind|call|apply|toString|length)$/,
+          /^(?:constructor|prototype|arguments|caller|name|bind|call|apply|toString|length)$/
         )
       )
         Object.defineProperty(target, prop, Object.getOwnPropertyDescriptor(source, prop));
@@ -117,17 +145,23 @@ class CircularCache {
     this.cacheContents[index] = {
       val: cacheContent,
       lastAccess: Date.now(),
-      key: cacheKey
+      key: cacheKey,
     };
     console.log(`cache set at index ${index}`);
   }
 
   _findNextAvailableCacheIndex() {
     if (this.cacheMethod === 'LRU') {
-      this.nextAvailableCacheIndex = CircularCache.LRU(this.cacheContents, this.nextAvailableCacheIndex);
+      this.nextAvailableCacheIndex = CircularCache.LRU(
+        this.cacheContents,
+        this.nextAvailableCacheIndex
+      );
     } else {
       // Currently Only LRU is supported;
-      this.nextAvailableCacheIndex = CircularCache.LRU(this.cacheContents, this.nextAvailableCacheIndex);
+      this.nextAvailableCacheIndex = CircularCache.LRU(
+        this.cacheContents,
+        this.nextAvailableCacheIndex
+      );
     }
     console.log(`New Cache next Index ${this.nextAvailableCacheIndex}`);
     return this.nextAvailableCacheIndex;
@@ -148,8 +182,8 @@ module.exports = Utils = {
   waitFor(latch, options = {}) {
     const timeout = options.timeout || 400;
     const expire = Date.now() + timeout;
-    return new Promise(function (resolve, reject) {
-      var attempt = function () {
+    return new Promise(function(resolve, reject) {
+      var attempt = function() {
         if (Date.now() > expire) {
           return reject(new Error(`Utils.waitFor hit timeout (${timeout}ms) without firing.`));
         }
@@ -175,8 +209,7 @@ module.exports = Utils = {
     let template;
     if (provider === 'imap' && account.settings && account.settings.provider_key) {
       template = MailcoreProviderSettings[account.settings.provider_key];
-    }
-    else if (provider !== 'imap' && MailcoreProviderSettings[provider]) {
+    } else if (provider !== 'imap' && MailcoreProviderSettings[provider]) {
       template = MailcoreProviderSettings[provider];
     } else {
       const domain = account.emailAddress
@@ -208,7 +241,11 @@ module.exports = Utils = {
     if (!(files instanceof Array)) {
       return false;
     }
-    return files.find(f => (!f.contentId || (f.contentId && !Utils.shouldDisplayAsImage(f))) && !CALENDAR_TYPES.includes(f.contentType));
+    return files.find(
+      f =>
+        (!f.contentId || (f.contentId && !Utils.shouldDisplayAsImage(f))) &&
+        !CALENDAR_TYPES.includes(f.contentType)
+    );
   },
 
   superTrim(text) {
@@ -216,7 +253,7 @@ module.exports = Utils = {
       return text;
     }
 
-    const reg = new RegExp(`${BLANK_ZWNJ}+`, "g");
+    const reg = new RegExp(`${BLANK_ZWNJ}+`, 'g');
     return text.replace(reg, '').trim();
   },
 
@@ -244,7 +281,7 @@ module.exports = Utils = {
     return v;
   },
   populateWithModel: (json, className) => {
-    if (!json || (typeof className !== 'string' || className.length === 0)) {
+    if (!json || typeof className !== 'string' || className.length === 0) {
       return null;
     }
     const model = Utils.getEmptyModel(className);
@@ -363,7 +400,6 @@ module.exports = Utils = {
     }
     return set;
   },
-
   // Given a File object or uploadData of an uploading file object,
   // determine if it looks like an image and is in the size range for previews
   shouldDisplayAsImage(file = {}) {
@@ -371,7 +407,14 @@ module.exports = Utils = {
     const size = file.size || file.fileSize || 0;
     const ext = path.extname(name).toLowerCase();
     const contentType = (file.contentType || '').toUpperCase();
-    const contentTypes = ['IMAGE/JPG', 'IMAGE/BMP', 'IMAGE/GIF', 'IMAGE/PNG', 'IMAGE/JPEG', 'IMAGE/HEIC'];
+    const contentTypes = [
+      'IMAGE/JPG',
+      'IMAGE/BMP',
+      'IMAGE/GIF',
+      'IMAGE/PNG',
+      'IMAGE/JPEG',
+      'IMAGE/HEIC',
+    ];
     const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
 
     return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256;
@@ -384,7 +427,7 @@ module.exports = Utils = {
   // And the original source here: https://github.com/angular/angular.js/blob/master/src/ngSanitize/sanitize.js#L451
   encodeHTMLEntities(value) {
     const SURROGATE_PAIR_REGEXP = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
-    const pairFix = function (value) {
+    const pairFix = function(value) {
       const hi = value.charCodeAt(0);
       const low = value.charCodeAt(1);
       return `&#${(hi - 0xd800) * 0x400 + (low - 0xdc00) + 0x10000};`;
@@ -747,7 +790,8 @@ module.exports = Utils = {
           _.isFunction(bCtor) &&
           bCtor instanceof bCtor
         ) &&
-        ('constructor' in a && 'constructor' in b)
+        'constructor' in a &&
+        'constructor' in b
       ) {
         return false;
       }

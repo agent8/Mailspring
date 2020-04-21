@@ -26,7 +26,7 @@ class ContactStore extends MailspringStore {
   // Returns an {Array} of matching {Contact} models
   //
   searchContacts(_search, options = {}) {
-    const limit = Math.max(options.limit ? options.limit : 5, 0);
+    const limit = Math.max(options.limit ? options.limit : 10, 0);
     const search = _search.toLowerCase();
 
     const accountCount = AccountStore.accounts().length;
@@ -45,10 +45,12 @@ class ContactStore extends MailspringStore {
     // (which is very slow), we just ask for more items.
     const query = DatabaseStore.findAll(Contact)
       // .search(search)
-      .where(new Matcher.Or([
-        Contact.attributes.name.like(search),
-        Contact.attributes.email.like(search),
-      ]))
+      .where(
+        new Matcher.Or([
+          Contact.attributes.name.like(search),
+          Contact.attributes.email.like(search),
+        ])
+      )
       .limit(limit * accountCount)
       .order(Contact.attributes.refs.descending());
 
@@ -61,11 +63,14 @@ class ContactStore extends MailspringStore {
       if (results.length > limit) {
         results.length = limit;
       }
+      if (options.filterRobotContact) {
+        return results.filter(c => !this.isRobotContact(c));
+      }
       return results;
     });
   }
 
-  topContacts({ limit = 5 } = {}) {
+  topContacts({ limit = 10, filterRobotContact = false } = {}) {
     const accountCount = AccountStore.accounts().length;
     return DatabaseStore.findAll(Contact)
       .limit(limit * accountCount)
@@ -75,12 +80,18 @@ class ContactStore extends MailspringStore {
         if (results.length > limit) {
           results.length = limit;
         }
+        if (filterRobotContact) {
+          return results.filter(c => !this.isRobotContact(c));
+        }
         return results;
       });
   }
 
   isValidContact(contact) {
     return contact instanceof Contact ? contact.isValid() : false;
+  }
+  isRobotContact(contact) {
+    return contact instanceof Contact ? contact.isRobot() : false;
   }
 
   parseContactsInString(contactString, { skipNameLookup } = {}) {
@@ -140,8 +151,8 @@ class ContactStore extends MailspringStore {
         if (contact.name !== contact.email) {
           return contact;
         }
-        return this.searchContacts(contact.email, { limit: 1 }).then(
-          ([smatch]) => (smatch && smatch.email === contact.email ? smatch : contact)
+        return this.searchContacts(contact.email, { limit: 1 }).then(([smatch]) =>
+          smatch && smatch.email === contact.email ? smatch : contact
         );
       })
     );
@@ -156,7 +167,7 @@ class ContactStore extends MailspringStore {
       }
       const key = contact.email.toLowerCase();
       const existing = uniq[key];
-      if (!existing || (!existing.name || existing.name === existing.email)) {
+      if (!existing || !existing.name || existing.name === existing.email) {
         uniq[key] = contact;
       }
     }
