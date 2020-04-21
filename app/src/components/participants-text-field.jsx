@@ -225,10 +225,12 @@ export default class ParticipantsTextField extends React.Component {
             this._textfieldEl = el;
           }}
           tokens={this.props.participants[this.props.field]}
-          tokenKey={p => p ? p.email : ''}
+          tokenKey={p => (p ? p.email : '')}
           tokenIsValid={p => ContactStore.isValidContact(p)}
           tokenRenderer={TokenRenderer}
-          onRequestCompletions={input => ContactStore.searchContacts(input)}
+          onRequestCompletions={input =>
+            ContactStore.searchContacts(input, { filterRobotContact: true })
+          }
           shouldBreakOnKeydown={this._shouldBreakOnKeydown}
           onInputTrySubmit={this._onInputTrySubmit}
           completionNode={this._completionNode}

@@ -45,13 +45,21 @@ const RegExpUtils = {
     );
   },
 
+  //https://regex101.com/r/ZvpGUw/3/tests
+  robotEmailRegex() {
+    return new RegExp(
+      '(^(\\S*[\\.\\-_])?not?[\\.\\-_]?reply([\\.\\-_]\\S*)?@\\S+)|(\\S+@(\\S*\\.)?((mandrillapp\\.com)|(mcsv\\.net)|(rsgsv\\.net)|(mcdlv\\.net))$)|(^@?[^@]*@?$)|\\S+\\+\\S*@\\S+$',
+      'i'
+    );
+  },
+
   // http://stackoverflow.com/a/16463966
   // http://www.regexpal.com/?fam=93928
   // NOTE: This does not match full urls with `http` protocol components.
   domainRegex(hasAt = false) {
     return new RegExp(
       `^${
-      hasAt ? '@' : ''
+        hasAt ? '@' : ''
       }(?!:\\/\\/)([a-zA-Z${UnicodeEmailChars}0-9-_]+\\.)*[a-zA-Z${UnicodeEmailChars}0-9][a-zA-Z${UnicodeEmailChars}0-9-_]+\\.[a-zA-Z]{2,11}?`,
       'i'
     );
