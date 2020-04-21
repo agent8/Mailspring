@@ -8,7 +8,6 @@ import {
   MessageStore,
   RoomStore,
   ConversationStore,
-  ContactStore,
   UserCacheStore,
   AppStore,
   LocalStorage,
@@ -17,10 +16,7 @@ import Button from '../common/Button';
 import MemberListItem from './MemberListItem';
 import { NEW_CONVERSATION } from '../../utils/constant';
 import InviteGroupChatList from '../new/InviteGroupChatList';
-import { name, nickname } from '../../utils/name';
-import { alert } from '../../utils/electron-utils';
-import genRoomId from '../../utils/genRoomId';
-import conversationTitle from '../../utils/conversationTitle';
+import { name } from '../../utils/name';
 
 export default class ConversationInfo extends Component {
   constructor(props) {
@@ -126,49 +122,7 @@ export default class ConversationInfo extends Component {
 
   onUpdateGroup = async contacts => {
     this.setState({ inviting: false });
-
-    if (contacts.some(contact => contact.jid.match(/@app/))) {
-      return alert('plugin app should not be added to any group chat as contact.');
-    }
-    if (!contacts || !contacts.length) {
-      return;
-    }
-
-    const { selectedConversation } = this.props;
-    if (selectedConversation.isGroup) {
-      Promise.all(
-        contacts.map(contact =>
-          global.xmpp.addMember(selectedConversation.jid, contact.jid, selectedConversation.curJid)
-        )
-      );
-    } else {
-      const roomId = genRoomId();
-      const owner = await ContactStore.findContactByJid(selectedConversation.curJid);
-
-      if (!contacts.filter(item => item.jid === selectedConversation.jid).length) {
-        const other = await ContactStore.findContactByJid(selectedConversation.jid);
-        if (other) {
-          contacts.unshift(other);
-        } else {
-          contacts.unshift({ jid: selectedConversation.jid, name: '' });
-        }
-      }
-      if (!contacts.filter(item => item.jid === selectedConversation.curJid).length) {
-        if (owner) {
-          contacts.unshift(owner);
-        } else {
-          contacts.unshift({ jid: selectedConversation.curJid, name: '' });
-        }
-      }
-      const names = contacts.map(item => item.name);
-      ConversationStore.createGroupConversation({
-        contacts,
-        roomId,
-        name: conversationTitle(names),
-        curJid: selectedConversation.curJid,
-        creator: owner,
-      });
-    }
+    ConversationStore.addMembersToSelectedConversation(contacts);
   };
 
   showMenu = e => {

@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Actions } from 'mailspring-exports';
+import { BOTTOM_OFFSET } from './chat-view-left';
 export default class ChatAccountSidebarFiller extends PureComponent {
   static displayName = 'ChatAccountSidebarFiller';
 
@@ -10,9 +11,7 @@ export default class ChatAccountSidebarFiller extends PureComponent {
       selfHeight: 300,
       expand: 1,
     };
-    this.unlisteners = [
-      Actions.updateChatPanelHeight.listen(this.setHeight, this)
-    ];
+    this.unlisteners = [Actions.updateChatPanelHeight.listen(this.setHeight, this)];
   }
 
   componentDidMount() {
@@ -33,8 +32,9 @@ export default class ChatAccountSidebarFiller extends PureComponent {
   };
 
   setHeight = height => {
+    // should add the bottom offset to filler's height
     this.setState({
-      selfHeight: height
+      selfHeight: height + BOTTOM_OFFSET,
     });
   };
 

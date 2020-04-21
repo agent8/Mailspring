@@ -99,7 +99,14 @@ class PreferencesTabsBar extends React.Component {
   }
 
   render() {
-    return <div className="container-preference-tabs">{this.renderTabs()}</div>;
+    return (
+      <div
+        className="container-preference-tabs"
+        style={{ width: AppEnv.getColumnWidth('RootSidebar') + 'px' }}
+      >
+        {this.renderTabs()}
+      </div>
+    );
   }
 }
 
