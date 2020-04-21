@@ -267,20 +267,20 @@ export default class Contact extends Model {
     name: Attributes.String({
       modelKey: 'name',
       queryable: true,
-      loadFromColumn: true
+      loadFromColumn: true,
     }),
 
     email: Attributes.String({
       modelKey: 'email',
       queryable: true,
-      loadFromColumn: true
+      loadFromColumn: true,
     }),
 
     refs: Attributes.Number({
       modelKey: 'refs',
       jsonKey: 'refs',
       queryable: true,
-      loadFromColumn: true
+      loadFromColumn: true,
     }),
 
     // Contains the raw thirdPartyData (keyed by the vendor name) about
@@ -336,7 +336,7 @@ export default class Contact extends Model {
 
   static fromString(string, { accountId } = {}) {
     const emailRegex = RegExpUtils.emailRegex();
-    const matches = Array.from(string.matchAll(emailRegex), m => m );
+    const matches = Array.from(string.matchAll(emailRegex), m => m);
     if (!matches || matches.length === 0) {
       const errMsg = `Error while calling Contact.fromString: string does not contain any email:${string}`;
       console.error(errMsg);
@@ -411,21 +411,39 @@ export default class Contact extends Model {
     const result = RegExpUtils.emailRegex().exec(this.email);
     return result && result instanceof Array ? result[0] === this.email : false;
   }
+  isRobot() {
+    if (!this.isValid()) {
+      return false;
+    }
+    if (typeof this.email !== 'string' || this.email.length === 0) {
+      return false;
+    }
+    // If longer than 30 characters, it's probably robot email
+    if (this.email.length > 30) {
+      return true;
+    }
+    const parts = this.email.split('@');
+    if (parts.length > 0) {
+      const emailRegex = RegExpUtils.robotEmailRegex();
+      return emailRegex.exec(this.email);
+    }
+    return false;
+  }
 
   // Public: Returns true if the contact is the current user, false otherwise.
   // You should use this method instead of comparing the user's email address to
   // the account email, since it is case-insensitive and future-proof.
   isMe({ meAccountId = null } = {}) {
     if (meAccountId) {
-      const account = AccountStore.accountForEmail({email: this.email, accountId: meAccountId});
+      const account = AccountStore.accountForEmail({ email: this.email, accountId: meAccountId });
       return !!account;
     }
-    return !!AccountStore.accountForEmail({email: this.email});
+    return !!AccountStore.accountForEmail({ email: this.email });
   }
 
   isMyOtherAccount({ meAccountId = null } = {}) {
     if (meAccountId) {
-      const account = AccountStore.accountForEmail({email: this.email, accountId: meAccountId});
+      const account = AccountStore.accountForEmail({ email: this.email, accountId: meAccountId });
       if (account) {
         return account.id !== meAccountId;
       }
@@ -443,12 +461,12 @@ export default class Contact extends Model {
     return false;
   }
 
-  signatureId(){
+  signatureId() {
     return `local-${this.accountId}-${this.email}-${this.name}`;
   }
 
   isMePhrase({ includeAccountLabel, forceAccountLabel } = {}) {
-    const account = AccountStore.accountForEmail({email: this.email});
+    const account = AccountStore.accountForEmail({ email: this.email });
     if (!account) {
       return null;
     }
@@ -519,10 +537,10 @@ export default class Contact extends Model {
     return c1 + c2;
   }
 
-  nameSpecialCharacterStripping(){
+  nameSpecialCharacterStripping() {
     return this._nameParts().map(n => n.replace(/\W/g, '')) || ['']; // eg: //bryan w. edd -> bryan w edd
   }
-  nameOnlyLetters(){
+  nameOnlyLetters() {
     return this._nameParts().map(n => n.replace(/[\W|\d]/g, '')) || ['']; // eg: //23bryan33 w. edd -> bryan w edd
   }
 
