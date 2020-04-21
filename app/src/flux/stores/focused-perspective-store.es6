@@ -210,7 +210,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     }
     return perspective;
   }
-  _isInChatView(){
+  _isInChatView() {
     const currentSheet = WorkspaceStore.topSheet();
     return currentSheet && currentSheet.id === 'ChatView';
   }
@@ -226,8 +226,15 @@ class FocusedPerspectiveStore extends MailspringStore {
     } else {
       // if this perspective not a tab, judge if current sidebar need to update
 
-      if (perspective.isEqual(this._currentSidebar) && !this._isInChatView() ) {
-        return;
+      if (perspective.isEqual(this._currentSidebar) && !this._isInChatView()) {
+        const topSheet = WorkspaceStore.topSheet();
+        if (topSheet && topSheet.id === 'Thread') {
+          Actions.popSheet({
+            reason: 'Thread View, same perspective clicked',
+          });
+        } else {
+          return;
+        }
       } else {
         this._currentSidebar = perspective;
         AppEnv.savedState.perspective = perspective.toJSON();
@@ -235,8 +242,19 @@ class FocusedPerspectiveStore extends MailspringStore {
       }
     }
 
-    if (this._current.isTab && this._current.isTabOfPerspective(perspective) && !this._isInChatView()) {
-      return;
+    if (
+      this._current.isTab &&
+      this._current.isTabOfPerspective(perspective) &&
+      !this._isInChatView()
+    ) {
+      const topSheet = WorkspaceStore.topSheet();
+      if (topSheet && topSheet.id === 'Thread') {
+        Actions.popSheet({
+          reason: 'Thread View, same perspective clicked',
+        });
+      } else {
+        return;
+      }
     }
 
     let focusPerspective;
@@ -249,7 +267,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     if (!focusPerspective.isEqual(this._current)) {
       this._current = focusPerspective;
       shouldTrigger = true;
-    } else if(this._isInChatView()){
+    } else if (this._isInChatView()) {
       console.log('trigger because we are in chat view');
       shouldTrigger = true;
     }
@@ -322,7 +340,7 @@ class FocusedPerspectiveStore extends MailspringStore {
         Actions.syncFolders({
           accountId: perspective.accountIds[i],
           foldersIds: [perspective.categoryIds[i]],
-          source
+          source,
         });
       }
     }
