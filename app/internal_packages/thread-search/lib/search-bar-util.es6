@@ -27,7 +27,8 @@ export const rankOfRole = role => {
 export const wrapInQuotes = s => `"${s.replace(/"/g, '')}"`;
 
 export const getThreadSuggestions = async (term, accountIds) => {
-  let dbQuery = DatabaseStore.findAll(Thread).where({state: 0})
+  let dbQuery = DatabaseStore.findAll(Thread)
+    .where({ state: 0 })
     .structuredSearch(SearchQueryParser.parse(`subject:${wrapInQuotes(term)}`))
     .order(Thread.attributes.lastMessageTimestamp.descending())
     .limit(10);
@@ -42,8 +43,8 @@ export const getThreadSuggestions = async (term, accountIds) => {
 export const getContactSuggestions = async (term, accountIds) => {
   const results = [];
   const contacts = term
-    ? await ContactStore.searchContacts(term, { limit: 5 })
-    : await ContactStore.topContacts({ limit: 5 });
+    ? await ContactStore.searchContacts(term, { limit: 10, filterRobotContact: true })
+    : await ContactStore.topContacts({ limit: 10, filterRobotContact: true });
 
   contacts.forEach(c => results.push(c.email, c.name));
 
