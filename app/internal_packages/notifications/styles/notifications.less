@@ -2,8 +2,11 @@
 @import 'ui-mixins';
 
 .sidebar-activity-floating-container {
-  order: 3;
   z-index: 2;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
 }
 
 .sidebar-activity {
@@ -87,7 +90,7 @@
           overflow: hidden;
           white-space: nowrap;
           text-overflow: ellipsis;
-          
+
           .progress-label {
             color: @text-color-very-subtle;
             margin-left: 2px;
@@ -271,7 +274,7 @@
     padding-right: 14.5px;
   }
 }
-div[data-id=Preferences] {
+div[data-id='Preferences'] {
   .network-offline {
     display: none;
   }

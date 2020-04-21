@@ -1,7 +1,7 @@
 /* eslint jsx-a11y/tabindex-no-positive: 0 */
 import React, { Component } from 'react';
 import { Actions } from 'mailspring-exports';
-
+import { MIN_HEIGHT } from '../../lib/chat-view-left';
 export default class ChatViewLeftResizeBar extends Component {
   componentDidMount() {
     const h = AppEnv.config.get(`chatPanelHeight`);
@@ -20,12 +20,15 @@ export default class ChatViewLeftResizeBar extends Component {
     const sidebarPanelHeight = accSidebar.parentNode.offsetHeight;
     const onMouseMove = e => {
       distance = startY - e.clientY;
-      const panelNewHeight = sidebarPanelHeight - distance;
-      if (panelNewHeight < 10) {
+      const sidebarNewHeight = sidebarPanelHeight - distance;
+      if (sidebarNewHeight < 10) {
         return;
       }
-      // accSidebar.style.height = panelNewHeight - BOTTOM_OFFSET + 'px';
-      leftPanel.style.height = height + distance + 'px';
+      const chatNewHeight = height + distance;
+      if (chatNewHeight < MIN_HEIGHT) {
+        return;
+      }
+      leftPanel.style.height = chatNewHeight + 'px';
       Actions.updateChatPanelHeight(height + distance);
     };
     window.onmousemove = onMouseMove;
