@@ -8,6 +8,10 @@ import { MESSAGE_STATUS_RECEIVED } from '../model/Message';
 import { setTimeout } from 'timers';
 import { NEW_CONVERSATION } from '../utils/constant';
 import { name } from '../utils/name';
+import { alert } from '../utils/electron-utils';
+import genRoomId from '../utils/genRoomId';
+import conversationTitle from '../utils/conversationTitle';
+
 class ConversationStore extends MailspringStore {
   constructor() {
     super();
@@ -119,9 +123,7 @@ class ConversationStore extends MailspringStore {
       }
     }
     this.selectedConversation = selectedConversation;
-    this.selectedConversation = selectedConversation;
-    // this.trigger();
-    // this._triggerDebounced();
+    this._triggerDebounced();
   };
 
   setSelectedConversationByNew = () => {
@@ -403,6 +405,53 @@ class ConversationStore extends MailspringStore {
         }
         break;
       }
+    }
+  };
+
+  addMembersToSelectedConversation = async contacts => {
+    if (contacts.some(contact => contact.jid.match(/@app/))) {
+      return alert('plugin app should not be added to any group chat as contact.');
+    }
+    if (!contacts || !contacts.length) {
+      return;
+    }
+
+    if (this.selectedConversation.isGroup) {
+      const oldMembers = this.selectedConversation.members;
+      const oldMemberJids = oldMembers.map(contact => contact.jid);
+      const addMembers = contacts.filter(contact => !oldMemberJids.includes(contact.jid));
+      const newMembers = [...oldMembers, ...addMembers];
+      for (const contact of addMembers) {
+        await global.xmpp.addMember(
+          this.selectedConversation.jid,
+          contact.jid,
+          this.selectedConversation.curJid
+        );
+      }
+    } else {
+      const owner = (await ContactStore.findContactByJid(this.selectedConversation.curJid)) || {
+        jid: this.selectedConversation.curJid,
+        name: '',
+      };
+      const other = (await ContactStore.findContactByJid(this.selectedConversation.jid)) || {
+        jid: this.selectedConversation.jid,
+        name: '',
+      };
+      const oldMembers = [owner, other];
+      const addMemberJids = contacts.map(contact => contact.jid);
+      const newMembers = [
+        ...oldMembers.filter(member => !addMemberJids.includes(member.jid)),
+        ...contacts,
+      ];
+      const roomId = genRoomId();
+      const names = newMembers.map(item => item.name);
+      await this.createGroupConversation({
+        contacts: newMembers,
+        roomId,
+        name: conversationTitle(names),
+        curJid: this.selectedConversation.curJid,
+        creator: owner,
+      });
     }
   };
 }

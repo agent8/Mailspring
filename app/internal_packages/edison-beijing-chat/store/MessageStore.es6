@@ -32,7 +32,6 @@ class MessageStore extends MailspringStore {
   constructor() {
     super();
     this.groupedMessages = [];
-    this.conversationJid = '';
     this.totalNumber = 0;
     this.pageNum = 0;
     this._triggerDebounced = _.debounce(() => this.trigger(), 20);
@@ -40,18 +39,8 @@ class MessageStore extends MailspringStore {
   }
 
   registerListeners() {
-    this.listenTo(ChatActions.selectConversation, this.selectConversation);
+    this.listenTo(ConversationStore, this.retrieveSelectedConversationMessages);
   }
-
-  selectConversation = jid => {
-    this.conversationJid = jid;
-    this.retrieveSelectedConversationMessages(jid);
-  };
-
-  getSelectedConversation = async () => {
-    const selectConversation = await ConversationStore.getConversationByJid(this.conversationJid);
-    return selectConversation;
-  };
 
   getMessageById = async (id, conversationJid) => {
     return await MessageModel.findOne({
@@ -78,8 +67,9 @@ class MessageStore extends MailspringStore {
     if (!conv) {
       return;
     }
-    if (conv.jid === this.conversationJid) {
-      this.retrieveSelectedConversationMessages(conv.jid);
+    const selectConversation = ConversationStore.getSelectedConversation();
+    if (conv.jid === selectConversation.jid) {
+      this.retrieveSelectedConversationMessages();
     }
     this.showNotification(message);
   };
@@ -96,16 +86,12 @@ class MessageStore extends MailspringStore {
     if (!conv) {
       return;
     }
-    if (conv.jid === this.conversationJid) {
-      this.retrieveSelectedConversationMessages(conv.jid);
+    const selectConversation = ConversationStore.getSelectedConversation();
+    if (conv.jid === selectConversation.jid) {
+      this.retrieveSelectedConversationMessages();
     }
     this.showNotification(message);
   };
-
-  //   async sendOrReceiveNewMessage(jid) {
-  //     let res = await this.getSelectedConversationMessages(jid);
-  //     ChatActions.sendOrReceiveNewMessage(res);
-  //   }
 
   removeMessagesByConversationJid = async jid => {
     await MessageModel.destroy({
@@ -113,19 +99,20 @@ class MessageStore extends MailspringStore {
         conversationJid: jid,
       },
     });
-    if (this.conversationJid === jid) {
+    const selectConversation = ConversationStore.getSelectedConversation();
+    if (selectConversation.jid === jid) {
       this.groupedMessages = [];
       this._triggerDebounced();
     }
   };
 
   removeMessageById = async (id, convJid) => {
-    if (!convJid) {
-      convJid = this.conversationJid;
-    }
-    await MessageModel.destroy({ where: { id, conversationJid: convJid } });
-    if (convJid === this.conversationJid) {
-      await this.retrieveSelectedConversationMessages(convJid);
+    const selectConversation = ConversationStore.getSelectedConversation();
+    await MessageModel.destroy({
+      where: { id, conversationJid: convJid || selectConversation.jid },
+    });
+    if (convJid === selectConversation.jid) {
+      await this.retrieveSelectedConversationMessages();
     }
   };
 
@@ -341,19 +328,17 @@ class MessageStore extends MailspringStore {
       },
     });
     this.groupedMessages = messages;
-    this.conversationJid = jid;
     return messages;
   }
 
-  retrieveSelectedConversationMessages = async jid => {
-    await this.getSelectedConversationMessages(jid);
+  retrieveSelectedConversationMessages = async () => {
+    const selectedConversation = await ConversationStore.getSelectedConversation();
+    if (!selectedConversation) {
+      return;
+    }
+    await this.getSelectedConversationMessages(selectedConversation.jid);
     this.trigger(this.groupedMessages);
   };
-
-  //   loadMore = async (jid, page = 0, pageSize = 100) => {
-  //     await this.retrieveSelectedConversationMessages(jid, page, pageSize);
-  //     return this.groupedMessages;
-  //   };
 
   processGroupMessage = async payload => {
     const body = parseMessageBody(payload.body);
@@ -528,11 +513,8 @@ class MessageStore extends MailspringStore {
   };
 
   saveMessagesAndRefresh = async (messages = []) => {
-    // console.log('retrieveSelectedConversationMessages');
     await this.saveMessages(messages);
-    if (this.conversationJid) {
-      this.retrieveSelectedConversationMessages(this.conversationJid);
-    }
+    this.retrieveSelectedConversationMessages();
     return messages;
   };
 
@@ -540,7 +522,8 @@ class MessageStore extends MailspringStore {
     for (const msg of messages) {
       if (!msg.conversationJid) {
         console.error(`msg did not have conversationJid`, msg);
-        msg.conversationJid = this.conversationJid;
+        const selectConversation = ConversationStore.getSelectedConversation();
+        msg.conversationJid = selectConversation.jid;
       }
 
       const messageInDb = await MessageModel.findOne({

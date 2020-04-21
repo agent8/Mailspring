@@ -575,4 +575,8 @@ export default {
       },
     },
   },
+  chatPanelHeight: {
+    type: 'number',
+    default: 300,
+  },
 };
