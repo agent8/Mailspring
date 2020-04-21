@@ -417,11 +417,7 @@ class ConversationStore extends MailspringStore {
     }
 
     if (this.selectedConversation.isGroup) {
-      const oldMembers = this.selectedConversation.members;
-      const oldMemberJids = oldMembers.map(contact => contact.jid);
-      const addMembers = contacts.filter(contact => !oldMemberJids.includes(contact.jid));
-      const newMembers = [...oldMembers, ...addMembers];
-      for (const contact of addMembers) {
+      for (const contact of contacts) {
         await global.xmpp.addMember(
           this.selectedConversation.jid,
           contact.jid,
