@@ -243,17 +243,17 @@ export default class OAuthSignInPage extends React.Component {
 
   _webviewDidFailLoad = (event) => {
     // if running in mas mode
-    if (process.mas && event.validatedURL && event.validatedURL.indexOf('127.0.0.1') !== -1) {
+    if (event.validatedURL && event.validatedURL.indexOf('127.0.0.1') !== -1) {
       if (!this._mounted) return;
       const { query } = url.parse(event.validatedURL, { querystring: true });
       if (query.code) {
         this._onReceivedCode(query.code);
+        return;
       }
       else if (query.error === 'access_denied') {
         OnboardingActions.moveToPage('account-choose');
         return;
       }
-      return;
     }
     // For some reason, oauth page will cause webview to throw load-did-fail with errorCode
     // Yahoo
@@ -268,10 +268,11 @@ export default class OAuthSignInPage extends React.Component {
     // navigating to permission granting view. Thus we want to capture that and ignore it.
     if (event && (
       event.errorCode === -3 ||
+      event.errorCode === -324 ||
       event.validatedURL.includes('youtube.com') ||
       event.validatedURL.includes('analytics.yahoo')
     )) {
-      AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
+      AppEnv.reportError(new Error('webview failed to load skip this error'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
       return;
     }
     let errorMessage = `${event.errorCode}:${event.errorDescription}`;
