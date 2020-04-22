@@ -68,7 +68,7 @@ class MessageStore extends MailspringStore {
       return;
     }
     const selectConversation = ConversationStore.getSelectedConversation();
-    if (conv.jid === selectConversation.jid) {
+    if (selectConversation && selectConversation.jid === conv.jid) {
       this.retrieveSelectedConversationMessages();
     }
     this.showNotification(message);
@@ -447,10 +447,11 @@ class MessageStore extends MailspringStore {
     if (senderName) {
       body = senderName + ': ' + body;
     }
-    postNotification(title, body, ({ activationType }) => {
+    postNotification(title, body, activationType => {
       if (activationType === 'clicked') {
-        ChatActions.selectConversation(convjid);
+        Actions.popToRootSheet({ reason: 'click chat notification' });
         Actions.selectRootSheet(WorkspaceStore.Sheet.ChatView);
+        ChatActions.selectConversation(convjid);
         remote.getCurrentWindow().show();
       }
     });
