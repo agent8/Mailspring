@@ -5,7 +5,6 @@ import Thread from '../models/thread';
 import Category from '../models/category';
 import DatabaseStore from './database-store';
 import ThreadStore from './thread-store';
-import SiftStore from './sift-store';
 import AttachmentStore from './attachment-store';
 import WorkspaceStore from './workspace-store';
 import TaskFactory from '../tasks/task-factory';
@@ -35,6 +34,7 @@ class MessageStore extends MailspringStore {
           Message.messageSyncState.updatingHasUID,
           Message.messageSyncState.updatingNoUID,
           Message.messageSyncState.failing,
+          Message.messageSyncState.failed,
         ]),
       ]);
   }
@@ -68,6 +68,7 @@ class MessageStore extends MailspringStore {
         Message.messageSyncState.updatingHasUID,
         Message.messageSyncState.updatingNoUID,
         Message.messageSyncState.failing,
+        Message.messageSyncState.failed,
       ]),
     ]);
   }
@@ -95,6 +96,7 @@ class MessageStore extends MailspringStore {
         Message.messageSyncState.updatingHasUID,
         Message.messageSyncState.updatingNoUID,
         Message.messageSyncState.failing,
+        Message.messageSyncState.failed,
       ]),
     ]);
   }

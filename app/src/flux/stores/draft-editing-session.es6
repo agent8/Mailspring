@@ -12,11 +12,8 @@ import FocusedContentStore from './focused-content-store';
 import { Composer as ComposerExtensionRegistry } from '../../registries/extension-registry';
 import QuotedHTMLTransformer from '../../services/quoted-html-transformer';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
-import DestroyDraftTask from '../tasks/destroy-draft-task';
 import uuid from 'uuid';
-import { ipcRenderer } from 'electron';
 import _ from 'underscore';
-import { DraftAttachmentState } from './attachment-store';
 
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
