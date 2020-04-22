@@ -41,6 +41,7 @@ class ConversationStore extends MailspringStore {
         this.showNewConversationSheet();
       });
       ipcRenderer.on('select-conversation', (event, jid) => {
+        Actions.popToRootSheet({ reason: 'select conversation from IPC' });
         Actions.selectRootSheet(WorkspaceStore.Sheet.ChatView);
         this.setSelectedConversation(jid);
       });
