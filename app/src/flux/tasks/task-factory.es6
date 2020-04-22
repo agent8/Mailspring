@@ -6,13 +6,10 @@ import UndoTask from './undo-task';
 import CategoryStore from '../stores/category-store';
 import Thread from '../models/thread';
 import Message from '../models/message';
-import Label from '../models/label';
 import _ from 'underscore';
 import DeleteThreadsTask from './delete-threads-task';
-import ExpungeAllInFolderTask from './expunge-all-in-folder-task';
 import ExpungeMessagesTask from './expunge-messages-task';
 import DestroyDraftTask from './destroy-draft-task';
-import ResendDraftTask from './resend-draft-task';
 import CancelOutboxDraftTask from './cancel-outbox-draft-task';
 
 const TaskFactory = {
