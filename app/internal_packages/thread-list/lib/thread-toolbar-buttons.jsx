@@ -12,6 +12,8 @@ import {
   FocusedPerspectiveStore,
   WorkspaceStore,
   MessageStore,
+  SiftStore,
+  ThreadStore,
 } from 'mailspring-exports';
 import { remote } from 'electron';
 import ThreadListStore from './thread-list-store';
@@ -535,14 +537,32 @@ class HiddenGenericRemoveButton extends React.Component {
     this._onRemoveFromView();
   };
   _onShift = ({ offset }) => {
-    const dataSource = ThreadListStore.dataSource();
-    const focusedId = FocusedContentStore.focusedId('thread');
+    const currentPerspective = FocusedPerspectiveStore.current();
+    const isInSift = currentPerspective && currentPerspective.sift;
+    let dataSource;
+    let focusedId;
+    if (isInSift) {
+      dataSource = SiftStore.dataSource();
+      focusedId = FocusedContentStore.focusedId('sift');
+    } else {
+      dataSource = ThreadListStore.dataSource();
+      focusedId = FocusedContentStore.focusedId('thread');
+    }
     const focusedIdx = Math.min(
       dataSource.count() - 1,
       Math.max(0, dataSource.indexOfId(focusedId) + offset)
     );
     const item = dataSource.get(focusedIdx);
-    Actions.setFocus({ collection: 'thread', item });
+    if (isInSift) {
+      Actions.setFocus({ collection: 'sift', item });
+      Actions.setCursorPosition({ collection: 'sift', item });
+      ThreadStore.findBy({ threadId: item.threadId }).then(result => {
+        Actions.setFocus({ collection: 'thread', item: result });
+        Actions.setCursorPosition({ collection: 'thread', item: result });
+      });
+    } else {
+      Actions.setFocus({ collection: 'thread', item });
+    }
   };
 
   _onShortcutRemoveFromView = event => {
@@ -998,9 +1018,16 @@ export const HiddenThreadListToolbarButtons = CreateButtonGroup(
 
 export const DownButton = props => {
   const getStateFromStores = () => {
-    const selectedId = FocusedContentStore.focusedId('thread');
-    const lastIndex = ThreadListStore.dataSource().count() - 1;
-    const lastItem = ThreadListStore.dataSource().get(lastIndex);
+    const perspective = FocusedPerspectiveStore.current();
+    let collection = 'thread';
+    let store = ThreadListStore;
+    if (perspective && perspective.sift) {
+      collection = 'sift';
+      store = SiftStore;
+    }
+    const selectedId = FocusedContentStore.focusedId(collection);
+    const lastIndex = store.dataSource().count() - 1;
+    const lastItem = store.dataSource().get(lastIndex);
     return {
       disabled: lastItem && lastItem.id === selectedId,
     };
@@ -1009,13 +1036,12 @@ export const DownButton = props => {
   if (WorkspaceStore.layoutMode() !== 'list') {
     return null;
   }
-  const perspective = FocusedPerspectiveStore.current();
-  if (perspective && perspective.sift) {
-    return null;
-  }
 
   const title = 'Next thread';
   if (props.isMenuItem) {
+    if (getStateFromStores().disabled) {
+      return null;
+    }
     return new MenuItem({
       label: title,
       click: () => AppEnv.commands.dispatch('core:show-next'),
@@ -1036,18 +1062,21 @@ DownButton.containerRequired = false;
 
 export const UpButton = props => {
   const getStateFromStores = () => {
-    const selectedId = FocusedContentStore.focusedId('thread');
-    const item = ThreadListStore.dataSource().get(0);
+    const perspective = FocusedPerspectiveStore.current();
+    let collection = 'thread';
+    let store = ThreadListStore;
+    if (perspective && perspective.sift) {
+      collection = 'sift';
+      store = SiftStore;
+    }
+    const selectedId = FocusedContentStore.focusedId(collection);
+    const item = store.dataSource().get(0);
     return {
       disabled: item && item.id === selectedId,
     };
   };
 
   if (WorkspaceStore.layoutMode() !== 'list') {
-    return null;
-  }
-  const perspective = FocusedPerspectiveStore.current();
-  if (perspective && perspective.sift) {
     return null;
   }
   const title = 'Previous thread';
