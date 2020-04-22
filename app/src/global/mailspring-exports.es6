@@ -125,7 +125,6 @@ lazyLoadAndRegisterTask('DeleteThreadsTask', 'delete-threads-task');
 lazyLoadAndRegisterTask('MakePrimaryTask', 'make-primary-task');
 lazyLoadAndRegisterTask('MakeOtherTask', 'make-other-task');
 lazyLoadAndRegisterTask('CalendarTask', 'calendar-task');
-lazyLoadAndRegisterTask('ResendDraftTask', 'resend-draft-task');
 lazyLoadAndRegisterTask('CancelOutboxDraftTask', 'cancel-outbox-draft-task');
 lazyLoadAndRegisterTask('ChangeDraftToFailingTask', 'change-draft-to-failing-task');
 lazyLoadAndRegisterTask('ChangeDraftToFailedTask', 'change-draft-to-failed-task');

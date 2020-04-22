@@ -1,5 +1,6 @@
 import Task from './task';
 import Attributes from '../attributes';
+import Actions from '../actions';
 
 export default class CancelOutboxDraftTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
@@ -29,9 +30,21 @@ export default class CancelOutboxDraftTask extends Task {
   description() {
     return this.label();
   }
+  onSuccess() {
+    Actions.destroyDraftSucceeded({
+      accountId: this.accountId,
+      messageIds: this.messageIds,
+    });
+  }
 
   onError({ key, debuginfo, retryable }) {
-    if (retryable) {
+    if (!retryable) {
+      Actions.destroyDraftFailed({
+        key,
+        debuginfo,
+        accountId: this.accountId,
+        messageIds: this.messageIds,
+      });
       AppEnv.reportError(new Error(`Canceling draft failed because ${debuginfo}`));
       return;
     }

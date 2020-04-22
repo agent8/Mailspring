@@ -117,7 +117,7 @@ class DraftStore extends MailspringStore {
 
     this._draftSessions = {};
     this._draftsSending = {};
-    this._draftSendindTimeouts = {};
+    this._draftSendingTimeouts = {};
     this._draftFailingTimeouts = {};
     this._draftsDeleting = {}; //Using messageId
     this._draftsDeleted = {};
@@ -148,6 +148,7 @@ class DraftStore extends MailspringStore {
         Message.messageSyncState.updatingNoUID,
         Message.messageSyncState.updatingHasUID,
         Message.messageSyncState.failing,
+        Message.messageSyncState.failed,
       ]),
     ]);
   }
@@ -410,14 +411,6 @@ class DraftStore extends MailspringStore {
     });
   }
 
-  // _onPopoutClosed = (event, options = {}) => {
-  //   if (options.headerMessageId && this._draftSessions[options.headerMessageId]) {
-  //     // console.log(`popout closed with header ${options.headerMessageId}`);
-  //     delete this._draftsOpenCount[options.headerMessageId];
-  //     this._draftSessions[options.headerMessageId].setPopout(false);
-  //   }
-  // };
-
   _onOutboxCancelDraft = ({ messages = [], source } = {}) => {
     const tasks = TaskFactory.tasksForCancellingOutboxDrafts({ messages, source });
     if (tasks && tasks.length > 0) {
@@ -448,31 +441,21 @@ class DraftStore extends MailspringStore {
           });
         }
         const deleting = this._draftsDeleting[message.id];
-        if (deleting) {
-          delete this._draftsDeleting[message.id];
+        if (!deleting) {
+          this._onDestroyDraft(message, { source: 'onCancelOutboxDraft' });
         }
       }
     });
   };
 
-  _onResendDraft = ({ messages = [], source = '' } = {}) => {
-    const tasks = [];
-    messages.forEach(message => {
-      tasks.push(SendDraftTask.forSending(message));
-    });
-    if (tasks && tasks.length > 0) {
-      Actions.queueTasks(tasks);
-    } else {
-      AppEnv.reportError(
-        new Error('Tasks for cancellingOutboxDraft is empty'),
-        {
-          errorData: {
-            messages,
-            source,
-          },
-        },
-        { grabLogs: true }
-      );
+  _onResendDraft = async ({ messages = [], source = '' } = {}) => {
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      const session = this._draftSessions[message.id];
+      if (!session) {
+        await this.sessionForClientId(message.id, { showFailed: true });
+      }
+      this._onSendDraft(message.id);
     }
   };
   _onDraftOpenCount = ({ messageId, windowLevel = 0, source = '' }) => {
@@ -760,13 +743,13 @@ class DraftStore extends MailspringStore {
       return;
     }
     const messageId = progress.id;
-    const sendingTimeouts = this._draftSendindTimeouts[messageId];
+    const sendingTimeouts = this._draftSendingTimeouts[messageId];
     if (sendingTimeouts) {
       AppEnv.logDebug(`Restarting draft failed timout for ${messageId}`);
       const taskId = sendingTimeouts.taskId;
       this._cancelDraftFailedTimeout({ messageId });
       this._startSendingDraftFailedTimeout({
-        draft: { accountId: progress.accountId, messageId },
+        draft: { accountId: progress.accountId, id: messageId },
         taskId,
         source: 'restart on sent progress',
       });
@@ -1169,11 +1152,18 @@ class DraftStore extends MailspringStore {
     } else if (!Array.isArray(messages)) {
       return;
     }
+    const failedDrafts = [];
+    const normalDrafts = [];
     messages.forEach(message => {
+      if (Message.compareMessageState(message.syncState, Message.messageSyncState.failed)) {
+        failedDrafts.push(message);
+      } else {
+        normalDrafts.push(message);
+      }
       this._onDestroyDraft(message, opts);
     });
     tasks.push(
-      ...TaskFactory.tasksForMessagesByAccount(messages, ({ accountId, messages: msgs }) => {
+      ...TaskFactory.tasksForMessagesByAccount(normalDrafts, ({ accountId, messages: msgs }) => {
         const ids = [];
         msgs.forEach(msg => {
           ids.push(msg.id);
@@ -1184,6 +1174,10 @@ class DraftStore extends MailspringStore {
           messageIds: ids,
           source: opts.source || '',
         });
+      }),
+      ...TaskFactory.tasksForCancellingOutboxDrafts({
+        messages: failedDrafts,
+        source: 'on user destroy draft',
       })
     );
     if (tasks.length > 0) {
@@ -1191,28 +1185,28 @@ class DraftStore extends MailspringStore {
     }
   };
 
-  _onDestroyDraft = (message = {}, opts = {}) => {
+  _onDestroyDraft = (message = {}, opts = { source: 'Unknown' }) => {
     // console.log('on destroy draft');
-    const { id } = message;
-    if (this._draftsDeleting[id] || this._draftsDeleted[id]) {
+    const { id: messageId } = message;
+    if (this._draftsDeleting[messageId] || this._draftsDeleted[messageId]) {
       AppEnv.reportError(new Error(`Draft is already deleting`), {
         errorData: { draftsDeleting: this._draftsDeleting, currentDraft: message },
       });
       return;
     }
     let draftDeleting = false;
-    if (id) {
-      draftDeleting = !!this._draftsDeleting[id];
-      this._draftsDeleting[id] = id;
+    if (messageId) {
+      draftDeleting = !!this._draftsDeleting[messageId];
+      this._draftsDeleting[messageId] = messageId;
     }
-    const session = this._draftSessions[id];
+    const session = this._draftSessions[messageId];
     if (session && !draftDeleting) {
-      if (this._draftsSending[id]) {
+      if (this._draftsSending[messageId]) {
         return;
       }
-      const openCount = this._draftsOpenCount[id];
+      const openCount = this._draftsOpenCount[messageId];
       if (!openCount) {
-        if (opts.source !== 'onLastOpenDraftClosed') {
+        if (['onLastOpenDraftClosed', 'onCancelOutboxDraft'].includes(opts.source)) {
           AppEnv.logError(`no open count in destroy draft from source ${opts.source}`);
         }
       } else if (openCount['3'] && opts.allowNewDraft) {
@@ -1231,23 +1225,16 @@ class DraftStore extends MailspringStore {
           }
         }
       }
-      session.closeSession({ cancelCommits: true, reason: 'onDestroyDraft' });
+      session.closeSession({ cancelCommits: true, reason: `${opts.source}:onDestroyDraft` });
     }
-    if (id) {
+    if (messageId) {
       if (!draftDeleting) {
-        this.trigger({ messageId: id });
+        this.trigger({ messageId: messageId });
       }
     } else {
       AppEnv.reportError(new Error('Tried to delete a draft that had no ID assigned yet.'));
     }
   };
-  // _onDraftDeleting = (event, options) => {
-  //   if (Array.isArray(options.messageIds) && Array.isArray(options.headerMessageIds) && options.messageIds.length === options.headerMessageIds.length) {
-  //     for(let i = 0; i< options.messageIds.length; i++){
-  //       this._draftsDeleting[options.messageIds[i]] = options.headerMessageIds[i];
-  //     }
-  //   }
-  // };
   _onDestroyDraftSuccess = ({ messageIds, accountId }) => {
     AppEnv.logDebug('destroy draft succeeded');
     if (Array.isArray(messageIds)) {
@@ -1323,11 +1310,11 @@ class DraftStore extends MailspringStore {
     this._startDraftFailingTimeout({ messages: [draft] });
   };
   _startSendingDraftFailedTimeout = ({ draft, taskId = '', source = '' } = {}) => {
-    if (this._draftSendindTimeouts[draft.id]) {
-      clearTimeout(this._draftSendindTimeouts[draft.id].handler);
+    if (this._draftSendingTimeouts[draft.id]) {
+      clearTimeout(this._draftSendingTimeouts[draft.id].handler);
     }
-    this._draftSendindTimeouts[draft.id] = { handler: null, taskId };
-    this._draftSendindTimeouts[draft.id].handler = setTimeout(() => {
+    this._draftSendingTimeouts[draft.id] = { handler: null, taskId };
+    this._draftSendingTimeouts[draft.id].handler = setTimeout(() => {
       this._cancelSendingDraftTimeout({
         messageId: draft.id,
         trigger: true,
@@ -1343,9 +1330,9 @@ class DraftStore extends MailspringStore {
     }, SendDraftTimeout);
   };
   _cancelDraftFailedTimeout = ({ messageId, source = '' } = {}) => {
-    if (this._draftSendindTimeouts[messageId]) {
-      clearTimeout(this._draftSendindTimeouts[messageId].handler);
-      delete this._draftSendindTimeouts[messageId];
+    if (this._draftSendingTimeouts[messageId]) {
+      clearTimeout(this._draftSendingTimeouts[messageId].handler);
+      delete this._draftSendingTimeouts[messageId];
     }
   };
   _cancelDraftFailingTimeout = ({ messageId, source = '' }) => {
@@ -1552,9 +1539,9 @@ class DraftStore extends MailspringStore {
     draft.files = files;
 
     // attach send-later metadata if a send delay is enabled
-    if (sendLaterMetadataValue) {
-      session.changes.addPluginMetadata('send-later', sendLaterMetadataValue);
-    }
+    // if (sendLaterMetadataValue) {
+    //   session.changes.addPluginMetadata('send-later', sendLaterMetadataValue);
+    // }
     await session.changes.commit('send draft');
     AppEnv.logDebug(`Committing draft before sending for ${messageId}`);
     // ensureCorrectAccount / commit may assign this draft a new ID. To move forward
