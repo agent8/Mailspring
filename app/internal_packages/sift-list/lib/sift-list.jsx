@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import _ from 'underscore';
 import classnames from 'classnames';
-import { Actions, SiftStore, Message, WorkspaceStore, ThreadStore } from 'mailspring-exports';
+import { Actions, SiftStore, WorkspaceStore, ThreadStore } from 'mailspring-exports';
 import {
   FluxContainer,
   FocusContainer,
@@ -87,17 +87,23 @@ class SiftList extends React.Component {
     });
     return { className: classes };
   };
-  _onFocusItem = message => {
+  _onFocusItem = (message, queryDB = true) => {
     Actions.setFocus({ collection: 'sift', item: message });
-    ThreadStore.findBy({ threadId: message.threadId }).then(result => {
-      Actions.setFocus({ collection: 'thread', item: result });
-    });
+    if (queryDB) {
+      ThreadStore.findBy({ threadId: message.threadId }).then(result => {
+        Actions.setFocus({ collection: 'thread', item: result });
+      });
+      this._onSetCursorPosition(message, false);
+    }
   };
-  _onSetCursorPosition = message => {
+  _onSetCursorPosition = (message, queryDB = true) => {
     Actions.setCursorPosition({ collection: 'sift', item: message });
-    ThreadStore.findBy({ threadId: message.threadId }).then(result => {
-      Actions.setCursorPosition({ collection: 'thread', item: result });
-    });
+    if (queryDB) {
+      ThreadStore.findBy({ threadId: message.threadId }).then(result => {
+        Actions.setCursorPosition({ collection: 'thread', item: result });
+      });
+      this._onFocusItem(message, false);
+    }
   };
   render() {
     const { previewLines } = this.state;
