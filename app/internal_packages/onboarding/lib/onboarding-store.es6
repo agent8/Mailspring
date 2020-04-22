@@ -156,6 +156,13 @@ class OnboardingStore extends MailspringStore {
       AppEnv.trackingEvent('AddAccount-Success', { provider, domain });
     }
     try {
+      await fetch(`https://web-marketing.edison.tech/markBetaUserInstall?type=mac&apiKey=bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR&email=${emailAddress}`, {
+        method: 'GET'
+      })
+    } catch (err) {
+      console.log('add tracing failed', err);
+    }
+    try {
       await AccountStore.addAccount(account);
     } catch (e) {
       AppEnv.reportError(e);
