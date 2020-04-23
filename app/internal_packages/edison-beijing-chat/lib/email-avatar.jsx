@@ -8,9 +8,82 @@ import { FocusedPerspectiveStore, AccountStore } from 'mailspring-exports';
 const ConfigProfileKey = 'core.appearance.profile';
 export default class EmailAvatar extends Component {
   static displayName = 'EmailAvatar';
-
+  static getDerivedStateFromProps(props, state) {
+    const newState = EmailAvatar._processProps(props, !state.hasImage);
+    if (
+      state.email !== newState.email ||
+      state.name !== newState.name ||
+      (state.bgColor !== newState.bgColor && !state.hasImage)
+    ) {
+      return newState;
+    }
+    return null;
+  }
   constructor(props) {
     super(props);
+    // This mode is not the "split/list" mode, but as in "use in list"  or "use in other places" mode
+    const isListModel = props.mode && props.mode === 'list';
+    const showPictures = AppEnv.config.get(ConfigProfileKey) || !isListModel;
+    this.state = EmailAvatar._processProps(props, true);
+    this.state.hasImage = false;
+    this._mounted = false;
+    this.state.showPicture = showPictures;
+    this.disposable = AppEnv.config.onDidChange(ConfigProfileKey, () => {
+      this.setState({
+        showPicture: AppEnv.config.get(ConfigProfileKey) || !isListModel,
+      });
+    });
+  }
+
+  componentDidMount = async () => {
+    this._mounted = true;
+    this._updateImage(this.state, true);
+  };
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    this._updateImage(prevState);
+  }
+
+  componentWillUnmount() {
+    this.disposable.dispose();
+    this._mounted = false;
+  }
+  _safeSetState(state, cb = () => {}) {
+    if (this._mounted) {
+      this.setState(state, cb);
+    }
+  }
+  _updateImage = async (prevState, forceUpdate) => {
+    const { email, showPicture } = this.state;
+    if (!showPicture && this.state.hasImage) {
+      this._safeSetState({ hasImage: false });
+      return;
+    }
+    if (
+      (email && prevState.email !== email) ||
+      forceUpdate ||
+      (showPicture && !prevState.showPicture)
+    ) {
+      const acc = AccountStore.accountForEmail({ email });
+      let avatarUrl;
+      if (acc && acc.picture) {
+        avatarUrl = acc.picture;
+      } else {
+        avatarUrl = await getLogo(email);
+      }
+      if (this._mounted && this) {
+        if (avatarUrl) {
+          this._safeSetState({
+            bgColor: `url('${avatarUrl}')`,
+            hasImage: true,
+          });
+        } else if (this.state.hasImage) {
+          this._safeSetState({ hasImage: false });
+        }
+      }
+    }
+  };
+
+  static _processProps = (props, changeBgColor) => {
     let from = {};
     if (props.thread) {
       const messages = props.thread.__messages;
@@ -21,7 +94,7 @@ export default class EmailAvatar extends Component {
         if (!from && to) {
           from = to;
         }
-        from = this._parseAvatarForSendMessage(messages, from, props);
+        from = EmailAvatar._parseAvatarForSendMessage(messages, from, props);
       }
       from = from || {};
     } else if (props.message) {
@@ -47,37 +120,28 @@ export default class EmailAvatar extends Component {
         email: props.email,
       };
     }
-    // This mode is not the "split/list" mode, but as in "use in list"  or "use in other places" mode
-    const isListModel = props.mode && props.mode === 'list';
-
-    this.state = {
+    const state = {
       name: (from.name || from.email || ' ')
         .trim()
         .substring(0, 1)
         .toUpperCase(),
-      bgColor: gradientColorForString(from.email || ''),
       email: from.email,
-      hasImage: false,
-      showPicture: AppEnv.config.get(ConfigProfileKey) || !isListModel,
     };
     if (props.number) {
-      this.state.name = props.number;
+      state.name = props.number;
     }
-    this._mounted = false;
+    if (changeBgColor) {
+      state.bgColor = gradientColorForString(from.email || '');
+    }
+    return state;
+  };
 
-    this.disposable = AppEnv.config.onDidChange(ConfigProfileKey, () => {
-      this.setState({
-        showPicture: AppEnv.config.get(ConfigProfileKey) || !isListModel,
-      });
-    });
-  }
-
-  _parseAvatarForSendMessage = (messages, from, props) => {
+  static _parseAvatarForSendMessage = (messages, from, props) => {
     const currentPerspective = FocusedPerspectiveStore.current();
     if (currentPerspective && props.mode && props.mode === 'list') {
       const cats = currentPerspective.categories();
       if (cats.length > 0 && cats[0].role === 'sent') {
-        const message = this._findLatestSendMessage(messages);
+        const message = EmailAvatar._findLatestSendMessage(messages);
         const to = message.to && message.to[0];
         const cc = message.cc && message.cc[0];
         const bcc = message.bcc && message.bcc[0];
@@ -86,7 +150,7 @@ export default class EmailAvatar extends Component {
     }
     return from;
   };
-  _findLatestSendMessage(messages) {
+  static _findLatestSendMessage(messages) {
     let sendMessage = null;
     const replaceSendMessage = newMessage => {
       if (!sendMessage) {
@@ -114,35 +178,6 @@ export default class EmailAvatar extends Component {
       return messages[messages.length - 1];
     }
     return sendMessage;
-  }
-
-  componentDidMount = async () => {
-    this._mounted = true;
-    const { email, showPicture } = this.state;
-    if (!showPicture) {
-      return;
-    }
-    if (email) {
-      const acc = AccountStore.accountForEmail(email);
-      let avatarUrl;
-      if (acc && acc.picture) {
-        avatarUrl = acc.picture;
-      } else {
-        avatarUrl = await getLogo(email);
-      }
-      if (avatarUrl && this._mounted) {
-        this &&
-          this.setState({
-            bgColor: `url('${avatarUrl}')`,
-            hasImage: true,
-          });
-      }
-    }
-  };
-
-  componentWillUnmount() {
-    this.disposable.dispose();
-    this._mounted = false;
   }
 
   render() {
