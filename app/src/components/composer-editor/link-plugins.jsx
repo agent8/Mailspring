@@ -123,7 +123,7 @@ function renderMark({ mark, children, targetIsHTML }) {
   let href = mark.data.href || mark.data.get('href') || '';
   const title = href;
   if (targetIsHTML) {
-    if (href && !href.includes('://')) {
+    if (href && !href.includes(':')) {
       href = 'http://' + href;
     }
     return (
