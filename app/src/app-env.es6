@@ -315,6 +315,7 @@ export default class AppEnvConstructor {
       extra.chatEnabled = this.config.get('core.workspace.enableChat');
       // extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
       extra.pluginIds = JSON.stringify(this._findPluginsFromError(error));
+      extra.mas = process.mas ? '1' : '0';
       // if (!!extra.errorData) {
       //   extra.errorData = JSON.stringify(extra.errorData);
       // }

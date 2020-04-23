@@ -199,7 +199,7 @@ class DraftFactory {
             -----User bug report end-----</br>
             </div>
             <div>
-            [MacOS] ${AppEnv.getVersion()}
+            [MacOS] ${AppEnv.getVersion()}${process.mas ? '-mas' : ''}
             </div></br>
             <div>
             SupportId: ${AppEnv.config.get('core.support.id')}
