@@ -22,7 +22,8 @@ export const LocalizedErrorStrings = {
     "Certificate Error - The mail server's security certificate is invalid and may pose a security" +
     " risk. If you trust the server, you can continue by checking 'Allowing Insecure SSL'.",
   ErrorAuthentication: 'Authentication Error - Check your username and password.',
-  ErrorAccountDisabled: 'Your email provider have blocked this account from login through this method. \nPlease check your email provider account/security settings.',
+  ErrorAccountDisabled:
+    'Your email provider have blocked this account from login through this method. \nPlease check your email provider account/security settings.',
   ErrorGmailIMAPNotEnabled: 'Gmail IMAP is not enabled. Visit Gmail settings to turn it on.',
   ErrorGmailExceededBandwidthLimit: 'Gmail bandwidth exceeded. Please try again later.',
   ErrorGmailTooManySimultaneousConnections:
@@ -43,7 +44,7 @@ export const LocalizedErrorStrings = {
   ErrorSendMessageIllegalAttachment:
     'The message contains an illegial attachment that is not allowed by the server.',
   ErrorYahooSendMessageSpamSuspected:
-    'The message has been blocked by Yahoo\'s outbound spam filter.',
+    "The message has been blocked by Yahoo's outbound spam filter.",
   ErrorYahooSendMessageDailyLimitExceeded:
     'The message has been blocked by Yahoo - you have exceeded your daily sending limit.',
   ErrorNoSender: 'The message has been blocked because no sender is configured.',
@@ -55,7 +56,7 @@ export const LocalizedErrorStrings = {
 export const mailSyncModes = {
   RESET: 'reset',
   SYNC: 'sync',
-  SIFT: 'sift'
+  SIFT: 'sift',
 };
 
 export default class MailsyncProcess extends EventEmitter {
@@ -64,9 +65,17 @@ export default class MailsyncProcess extends EventEmitter {
     this.verbose = verbose;
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
-    this.binaryPath = path.join(resourcePath, 'mailsync').replace('app.asar', 'app.asar.unpacked');
     // this.binaryPath = path.join('/Users/zsq/Library/Developer/Xcode/DerivedData/EdisonMailSync-gnxarlbpnlszfmgdglqxwrawejbo/Build/Products/Debug', 'mailsync').replace('app.asar', 'app.asar.unpacked');
-    this.killNativeScript = path.join(resourcePath, 'src', 'scripts', process.platform === 'darwin' ? 'mac' : process.platform, 'killNative').replace('app.asar', 'app.asar.unpacked');
+    this.binaryPath = path.join(resourcePath, 'mailsync').replace('app.asar', 'app.asar.unpacked');
+    this.killNativeScript = path
+      .join(
+        resourcePath,
+        'src',
+        'scripts',
+        process.platform === 'darwin' ? 'mac' : process.platform,
+        'killNative'
+      )
+      .replace('app.asar', 'app.asar.unpacked');
     this._proc = null;
     this.isRemoving = false;
     this._win = null;
@@ -120,20 +129,20 @@ export default class MailsyncProcess extends EventEmitter {
   // -20 - 0: high
   // 0:  normal
   // 0 - 20: low
-  setPriority = (priority) => {
-    const proc = spawn("renice", [priority, this._proc.pid]);
-    proc.on('exit', function (code) {
+  setPriority = priority => {
+    const proc = spawn('renice', [priority, this._proc.pid]);
+    proc.on('exit', function(code) {
       if (code !== 0) {
-        console.log("Process exec failed with code - " + code);
+        console.log('Process exec failed with code - ' + code);
       }
     });
-    proc.stdout.on('data', function (data) {
+    proc.stdout.on('data', function(data) {
       console.log('stdout: ' + data);
     });
-    proc.stderr.on('data', function (data) {
+    proc.stderr.on('data', function(data) {
       console.log('stderr: ' + data);
     });
-  }
+  };
 
   _spawnProcess(mode) {
     const env = {
@@ -163,7 +172,7 @@ export default class MailsyncProcess extends EventEmitter {
     } else {
       args.push('--info', mode);
     }
-    if ((typeof this.supportId === 'string') && (this.supportId.length > 0)) {
+    if (typeof this.supportId === 'string' && this.supportId.length > 0) {
       args.push('--supportId', this.supportId);
     }
     if (mode === mailSyncModes.SIFT) {
@@ -198,24 +207,28 @@ export default class MailsyncProcess extends EventEmitter {
 
     // stdout may not be present if an error occurred. Error handler hasn't been
     // attached yet, but will be by the caller of spawnProcess.
-    if (this.account && this._proc.stdout && (mode !== mailSyncModes.RESET || mode !== mailSyncModes.SIFT)) {
+    if (
+      this.account &&
+      this._proc.stdout &&
+      (mode !== mailSyncModes.RESET || mode !== mailSyncModes.SIFT)
+    ) {
       this._proc.stdout.once('data', () => {
         var rs = new Readable();
         rs.push(`${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`);
         rs.push(null);
-        rs.pipe(
-          this._proc.stdin,
-          { end: false }
-        );
+        rs.pipe(this._proc.stdin, { end: false });
         if (AppEnv.enabledToNativeLog) {
           console.log('--------------------To native---------------');
           AppEnv.logDebug(
-            `to native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`,
+            `to native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`
           );
           console.log('-----------------------------To native END-----------------------');
         }
-        this.syncInitilMessageSend = true;
-        this._flushSendQueue();
+        rs.on('end', () => {
+          console.log('-----first message send-------');
+          this.syncInitilMessageSend = true;
+          this._flushSendQueue();
+        });
       });
     } else if (this.accounts && this._proc.stdout && mode === mailSyncModes.SIFT) {
       this._proc.stdout.once('data', () => {
@@ -226,17 +239,12 @@ export default class MailsyncProcess extends EventEmitter {
         }
         rs.push(siftAccountString);
         rs.push(null);
-        rs.pipe(
-          this._proc.stdin,
-          { end: false }
-        );
-        // if (AppEnv.enabledToNativeLog) {
-        //   console.log('--------------------To native---------------');
-        //   AppEnv.logDebug(`to sift: ${siftAccountString}`);
-        //   console.log('-----------------------------To native END-----------------------');
-        // }
-        this.syncInitilMessageSend = true;
-        this._flushSendQueue();
+        rs.pipe(this._proc.stdin, { end: false });
+        rs.on('end', () => {
+          console.log('-----first message send-------');
+          this.syncInitilMessageSend = true;
+          this._flushSendQueue();
+        });
       });
     }
   }
@@ -287,7 +295,11 @@ export default class MailsyncProcess extends EventEmitter {
             console.log(`response.error ${response.error}, log: ${response.log}`);
             let msg = LocalizedErrorStrings[response.error] || response.error;
             let errorStatusCode = response.error;
-            if((!(response.log || '').includes('password') && !(response.log || '').includes('credentials')) && response.error === 'ErrorAuthentication'){
+            if (
+              !(response.log || '').includes('password') &&
+              !(response.log || '').includes('credentials') &&
+              response.error === 'ErrorAuthentication'
+            ) {
               msg = LocalizedErrorStrings.ErrorAccountDisabled;
               errorStatusCode = 'ErrorAccountDisabled';
             }
@@ -296,7 +308,7 @@ export default class MailsyncProcess extends EventEmitter {
             }
             const error = new Error(msg);
             error.rawLog = stripSecrets(response.log.replace('LOGIN', ''));
-            error.statusCode =errorStatusCode;
+            error.statusCode = errorStatusCode;
             reject(error);
           }
         } catch (err) {
@@ -346,8 +358,8 @@ export default class MailsyncProcess extends EventEmitter {
     this.dataPrivacyOptions.isGDPR = options.isGDPR;
     this.dataPrivacyOptions.optOut = options.dataShare.optOut;
   }
-  updateSupportId(supportId){
-    if(!supportId){
+  updateSupportId(supportId) {
+    if (!supportId) {
       return;
     }
     this.supportId = supportId;
@@ -364,7 +376,7 @@ export default class MailsyncProcess extends EventEmitter {
         if (added.trim() === 'Waiting for Account JSON:') {
           return;
         }
-        const isIndexOfEnter = added && added.lastIndexOf('\n') === (added.length - 1);
+        const isIndexOfEnter = added && added.lastIndexOf('\n') === added.length - 1;
         outBuffer += added;
 
         if (isIndexOfEnter) {
@@ -405,7 +417,6 @@ export default class MailsyncProcess extends EventEmitter {
           }
         }
       }
-
       if (errBuffer) {
         error = new Error(errBuffer);
       }
@@ -444,7 +455,11 @@ export default class MailsyncProcess extends EventEmitter {
     for (let i = 0; i < this._sendMessageQueue.length; i++) {
       if (AppEnv.enabledToNativeLog) {
         console.log('--------------------To native ---------------');
-        AppEnv.logDebug(`to native: flushing queue: ${this.account ? this.account.id : 'no account'} - ${this._sendMessageQueue[i]}`);
+        AppEnv.logDebug(
+          `to native: flushing queue: ${this.account ? this.account.id : 'no account'} - ${
+            this._sendMessageQueue[i]
+          }`
+        );
         console.log('-----------------------------To native END-----------------------');
       }
       this.sendMessage(this._sendMessageQueue[i]);
@@ -465,7 +480,7 @@ export default class MailsyncProcess extends EventEmitter {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
         `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
-        this.account ? this.account.id : 'no account'
+          this.account ? this.account.id : 'no account'
         } - ${msg}`
       );
       console.log('-----------------------------To native END-----------------------');
@@ -545,7 +560,7 @@ tell application "System Events"
   end tell
   
 end tell
-    `,
+    `
     );
     exec(`osascript ${tmppath}`);
   }
