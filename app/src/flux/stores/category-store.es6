@@ -239,9 +239,6 @@ class CategoryStore extends MailspringStore {
 
   _onCategoriesChanged = (categories, accountId = '') => {
     console.log('On Categories change');
-    if (!accountId) {
-      debugger;
-    }
     if (!this._categoryResult) {
       this._categoryResult = [];
     }

@@ -10,7 +10,6 @@ export default class Sift extends Model {
   };
   static categoryStringToIntString = category => {
     if (typeof category !== 'string') {
-      debugger;
       return '1';
     }
     if (category.toLocaleLowerCase() === Sift.categories.Travel.toLocaleLowerCase()) {
@@ -64,5 +63,4 @@ export default class Sift extends Model {
   label() {
     return `Sift Data`;
   }
-
 }
