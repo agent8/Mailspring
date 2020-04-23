@@ -138,8 +138,12 @@ export default class MessagesSendBar extends PureComponent {
   _richText = null;
 
   componentDidMount = () => {
+    this._mounted = true;
     this.initAtContacts();
   };
+  componentWillUnmount() {
+    this._mounted = false;
+  }
 
   UNSAFE_componentWillReceiveProps = async nextProps => {
     const selectedConversation = ConversationStore.selectedConversation;
@@ -165,7 +169,9 @@ export default class MessagesSendBar extends PureComponent {
     ) {
       this.initAtContacts();
     }
-    this.setState(state);
+    if (this._mounted) {
+      this.setState(state);
+    }
   };
 
   initAtContacts = async () => {
@@ -178,11 +184,15 @@ export default class MessagesSendBar extends PureComponent {
       },
       ...roomMembers,
     ];
-    this.setState({
-      roomMembers,
-      atContacts,
-    });
-    this._richText.clearNode();
+    if (this._mounted) {
+      this.setState({
+        roomMembers,
+        atContacts,
+      });
+    }
+    if (this._richText) {
+      this._richText.clearNode();
+    }
   };
 
   initKeyMapping = () => {

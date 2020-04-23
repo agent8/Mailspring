@@ -19,12 +19,10 @@ export default class ConversationItem extends PureComponent {
       lastMessageText: PropTypes.string.isRequired,
       lastMessageTime: PropTypes.number.isRequired,
     }).isRequired,
-    referenceTime: PropTypes.number,
   };
 
   static defaultProps = {
     selected: false,
-    referenceTime: new Date().getTime(),
   };
 
   state = {};
@@ -90,9 +88,8 @@ export default class ConversationItem extends PureComponent {
   };
 
   render() {
-    const { selected, conversation, referenceTime, onClick, ...otherProps } = this.props;
+    const { selected, conversation, onClick, ...otherProps } = this.props;
     const { isOnline } = this.state;
-    // const timeDescriptor = buildTimeDescriptor(referenceTime);
     const unreadMessage =
       !conversation.isHiddenNotification && conversation.unreadMessages
         ? conversation.unreadMessages
@@ -105,16 +102,16 @@ export default class ConversationItem extends PureComponent {
               //   <GroupChatAvatar conversation={conversation} size={23} />
               <div className={false ? 'online' : 'offline'}></div>
             ) : (
-                //   <ContactAvatar
-                //     conversation={conversation}
-                //     jid={conversation.jid}
-                //     name={conversation.name}
-                //     email={conversation.email}
-                //     size={23}
-                //   />
+              //   <ContactAvatar
+              //     conversation={conversation}
+              //     jid={conversation.jid}
+              //     name={conversation.name}
+              //     email={conversation.email}
+              //     size={23}
+              //   />
 
-                <div className={isOnline ? 'online' : 'offline'}></div>
-              )}
+              <div className={isOnline ? 'online' : 'offline'}></div>
+            )}
             {/* {!conversation.isHiddenNotification ? <Badge count={conversation.unreadMessages} /> : null} */}
           </div>
           <div className="content">
@@ -136,8 +133,8 @@ export default class ConversationItem extends PureComponent {
             </div>
             <div className="subHeader">
               {conversation.isGroup &&
-                conversation.lastMessageSenderName &&
-                conversation.lastMessageText
+              conversation.lastMessageSenderName &&
+              conversation.lastMessageText
                 ? `${conversation.lastMessageSenderName}:`
                 : null}
               {conversation.lastMessageText}
