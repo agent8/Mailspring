@@ -1,17 +1,8 @@
 import React, { PureComponent } from 'react';
 import { ChatActions, ConversationStore } from 'chat-exports';
-import PropTypes from 'prop-types';
 import ConversationItem from './ConversationItem';
 import { WorkspaceStore, Actions } from 'mailspring-exports';
 export default class ConversationList extends PureComponent {
-  //   static propTypes = {
-  //     referenceTime: PropTypes.number,
-  //   };
-
-  //   static defaultProps = {
-  //     referenceTime: new Date().getTime(),
-  //   };
-
   constructor(props) {
     super(props);
     this.state = {
@@ -58,7 +49,6 @@ export default class ConversationList extends PureComponent {
   };
 
   render() {
-    // const { referenceTime } = this.props;
     const { selectedConversation, conversations } = this.state;
 
     if (!conversations || conversations.length === 0) {
@@ -75,7 +65,6 @@ export default class ConversationList extends PureComponent {
             key={conv.jid}
             conversation={conv}
             selected={selectedConversation && selectedConversation.jid === conv.jid}
-            // referenceTime={referenceTime}
             onClick={() => {
               ChatActions.selectConversation(conv.jid);
             }}
