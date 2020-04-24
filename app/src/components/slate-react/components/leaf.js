@@ -178,15 +178,6 @@ var Leaf = function (_React$Component) {
         '\u200B'
       );
 
-      // COMPAT: If the text is empty, it's because it's on the edge of an inline
-      // void node, so we render a zero-width space so that the selection can be
-      // inserted next to it still.
-      if (text == '') return _react2.default.createElement(
-        'span',
-        { 'data-slate-zero-width': true },
-        '\u200B'
-      );
-
       // COMPAT: Browsers will collapse trailing new lines at the end of blocks,
       // so we need to add an extra trailing new lines to prevent that.
       var lastText = block.getLastText();
@@ -194,6 +185,22 @@ var Leaf = function (_React$Component) {
       var isLastText = node == lastText;
       var isLastLeaf = index == leaves.size - 1;
       if (isLastText && isLastLeaf && lastChar == '\n') return text + '\n';
+
+      // COMPAT: If the text is empty, it's because it's on the edge of an inline
+      // void node, so we render a zero-width space so that the selection can be
+      // inserted next to it still.
+      if (text == '') {
+        // if is the only leaf, return null
+        if (isLastLeaf && index === 0) {
+          return null
+        }
+
+        return _react2.default.createElement(
+          'span',
+          { 'data-slate-zero-width': true },
+          '\u200B'
+        );
+      }
 
       // Otherwise, just return the text.
       return text;
