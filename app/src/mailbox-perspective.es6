@@ -1026,13 +1026,24 @@ class CategoryMailboxPerspective extends MailboxPerspective {
           source: source,
           previousFolder,
         });
+      } else if (!preferred && acct.provider === 'gmail' && !acct.preferDelete() && cat.isLabel()) {
+        const inboxCat = CategoryStore.getInboxCategory(accountId);
+        return new ChangeLabelsTask({
+          threads: accountThreads,
+          labelsToAdd: [],
+          labelsToRemove: [cat, inboxCat],
+          source: source,
+          previousFolder,
+        });
       }
-      return new ChangeFolderTask({
-        threads: accountThreads,
-        folder: preferred,
-        source: source,
-        previousFolder,
-      });
+      if (preferred) {
+        return new ChangeFolderTask({
+          threads: accountThreads,
+          folder: preferred,
+          source: source,
+          previousFolder,
+        });
+      }
     });
   }
 }
