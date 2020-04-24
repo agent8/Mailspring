@@ -104,6 +104,10 @@ const file_mappings = [
     'veyron-design/images/desktop/send-data.png',
     './app/static/images/preferences/privacy/send-data.png',
   ],
+  [
+    'veyron-design/images/desktop/focused-inbox.png',
+    './app/static/images/notification/focused-inbox.png',
+  ],
 ];
 
 let errorCommands = [];
