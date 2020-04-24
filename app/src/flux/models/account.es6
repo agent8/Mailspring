@@ -201,6 +201,9 @@ export default class Account extends ModelWithMetadata {
     }
     return CategoryStore.getArchiveCategory(this);
   }
+  preferDelete() {
+    return AppEnv.config.get('core.reading.backspaceDelete');
+  }
 
   hasSyncStateError() {
     return this.syncState !== Account.SYNC_STATE_OK;
