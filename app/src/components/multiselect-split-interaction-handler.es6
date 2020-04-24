@@ -111,7 +111,7 @@ module.exports = class MultiselectSplitInteractionHandler {
     }
 
     let action, id;
-    if (this.props.dataSource.selection.count() > 0) {
+    if (this.props.dataSource.selection.count() > 0 && options.select) {
       const keyboardId = this.props.keyboardCursorId;
       id = keyboardId != null ? keyboardId : this.props.dataSource.selection.top().id;
       action = this.onSetCursorPosition;
