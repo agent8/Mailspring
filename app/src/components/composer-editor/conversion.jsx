@@ -188,7 +188,7 @@ function parseHtml(html) {
       cssValueIsZero(p.style.margin);
 
     // if the <p> is followed by a non-empty node and, insert a <br>
-    if (!prHasExplicitZeroMargin && p.nextSibling && !nodeIsEmpty(p.nextSibling)) {
+    if (!prHasExplicitZeroMargin && p.nextSibling && p.nextSibling.nodeName !== 'P' && !nodeIsEmpty(p.nextSibling)) {
       const br = document.createElement('BR');
       p.parentNode.insertBefore(br, p.nextSibling);
     }
