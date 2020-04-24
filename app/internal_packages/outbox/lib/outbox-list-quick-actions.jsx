@@ -82,7 +82,7 @@ class OutboxResendQuickAction extends React.Component {
         className="action action-flag"
         onClick={this._onResend}
       >
-        <RetinaImg name='refresh.svg' style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg name='sent.svg' style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
       </div>
     );
   }
