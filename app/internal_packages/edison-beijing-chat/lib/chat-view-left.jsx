@@ -6,7 +6,7 @@ import ChatViewLeftResizeBar from '../components/common/ChatViewLeftResizeBar';
 import registerLoginChat from '../utils/register-login-chat';
 
 export const BOTTOM_OFFSET = 37;
-export const MIN_HEIGHT = 60;
+export const MIN_HEIGHT = 50;
 
 export default class ChatViewLeft extends Component {
   static displayName = 'ChatViewLeft';
