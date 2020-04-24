@@ -142,7 +142,7 @@ export default class Account extends ModelWithMetadata {
       email: this.emailAddress,
     });
   }
-  signatureId(){
+  signatureId() {
     return `local-${this.id}-${this.emailAddress}-${this.name}`;
   }
 
@@ -181,12 +181,12 @@ export default class Account extends ModelWithMetadata {
     }
     return ret;
   }
-  getAllAliasContacts(){
+  getAllAliasContacts() {
     const ret = this.getAllIsMeContacts();
     return ret.slice(1);
   }
-  getAllIsMeContacts(){
-    const ret = [this.me()]
+  getAllIsMeContacts() {
+    const ret = [this.me()];
     if (this.aliases.length > 0) {
       for (let alias of this.aliases) {
         const meAlias = Contact.fromString(alias, { accountId: this.id });
@@ -247,6 +247,9 @@ export default class Account extends ModelWithMetadata {
       return CategoryStore.getTrashCategory(this);
     }
     return CategoryStore.getArchiveCategory(this);
+  }
+  preferDelete() {
+    return AppEnv.config.get('core.reading.backspaceDelete');
   }
 
   hasSyncStateError() {

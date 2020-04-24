@@ -1008,7 +1008,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     return TaskFactory.tasksForThreadsByAccountId(threads, (accountThreads, accountId) => {
       const acct = AccountStore.accountForId(accountId);
       const preferred = acct.preferredRemovalDestination();
-      if (!preferred) {
+      if (!preferred && (acct.provider !== 'gmail' || acct.preferDelete())) {
         AppEnv.reportError(new Error('We cannot find our preferred removal destination'), {
           errorData: { account: acct, errorCode: 'folderNotAvailable' },
         });
