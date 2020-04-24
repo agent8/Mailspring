@@ -11,12 +11,13 @@ export function name(jid) {
     return nicknames[jid];
   }
   const info = UserCacheStore.getUserInfoByJid(jid);
-  const name = info && info.name;
-  if (name) {
-    return name;
+  if (info && info.name) {
+    return info.name;
   }
-  const email = info && info.email;
-  return (email && email.split('@')[0]) || jid || '';
+  if (info && info.email && info.email.split('@')[0]) {
+    return info.email.split('@')[0];
+  }
+  return jid || '';
 }
 
 export async function getName(jid) {
