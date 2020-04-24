@@ -1,8 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { Actions, PreferencesUIStore } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import _ from 'underscore';
+import { Actions, PreferencesUIStore, ComponentRegistry } from 'mailspring-exports';
+import { ResizableRegion, RetinaImg } from 'mailspring-component-kit';
+
+const sidebarId = 'RootSidebar';
 
 class PreferencesTabItem extends React.Component {
   static displayName = 'PreferencesTabItem';
@@ -36,7 +39,7 @@ class PreferencesTabItem extends React.Component {
     });
 
     return (
-      <div className={classes} onClick={this._onClick}>
+      <div className={classes} onClick={this._onClick} title={displayName}>
         <div className="transition-box">
           <RetinaImg
             isIcon
@@ -69,6 +72,16 @@ class PreferencesTabsBar extends React.Component {
     this.state = {
       sidebaricons: AppEnv.config.get(this.CONFIG_KEY),
     };
+    const AccountSidebar = ComponentRegistry.findComponentByName('AccountSidebar');
+    const containerStyles =
+      AccountSidebar && AccountSidebar.containerStyles
+        ? AccountSidebar.containerStyles
+        : {
+            minWidth: 125,
+            maxWidth: 250,
+          };
+    this.minWidth = containerStyles.minWidth;
+    this.maxWidth = containerStyles.maxWidth;
   }
 
   componentDidMount() {
@@ -87,6 +100,10 @@ class PreferencesTabsBar extends React.Component {
     this.disposable.dispose();
   }
 
+  _onColumnResize = _.debounce(w => {
+    AppEnv.storeColumnWidth({ id: sidebarId, width: w });
+  }, 200);
+
   renderTabs() {
     return this.props.tabs.map(tabItem => (
       <PreferencesTabItem
@@ -100,12 +117,16 @@ class PreferencesTabsBar extends React.Component {
 
   render() {
     return (
-      <div
+      <ResizableRegion
+        minWidth={this.minWidth}
+        maxWidth={this.maxWidth}
         className="container-preference-tabs"
-        style={{ width: AppEnv.getColumnWidth('RootSidebar') + 'px' }}
+        handle={ResizableRegion.Handle.right}
+        onResize={this._onColumnResize}
+        initialWidth={AppEnv.getColumnWidth(sidebarId) || this.maxWidth}
       >
         {this.renderTabs()}
-      </div>
+      </ResizableRegion>
     );
   }
 }
