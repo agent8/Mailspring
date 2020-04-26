@@ -24,6 +24,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     );
     this.listenTo(Actions.ensureCategoryIsFocused, this._onEnsureCategoryIsFocused);
     this._listenToCommands();
+    AppEnv.config.onDidChange('core.workspace.enableFocusedInbox', this._onFocusedInboxToggle);
   }
 
   current() {
@@ -312,6 +313,19 @@ class FocusedPerspectiveStore extends MailspringStore {
     }
     this._setPerspective(MailboxPerspective.forCategories(categories));
   }
+
+  _onFocusedInboxToggle = () => {
+    Actions.popToRootSheet({ reason: 'focused inbox toggle' });
+    const json = this.currentSidebar().toJSON();
+    const newPerspective = MailboxPerspective.fromJSON(json);
+    this._currentSidebar = newPerspective;
+    if (newPerspective.tab && newPerspective.tab.length) {
+      this._current = newPerspective.tab[0];
+    } else {
+      this._current = newPerspective;
+    }
+    this.trigger();
+  };
 
   refreshPerspectiveMessages({ perspective = null, source = 'folderItem' } = {}) {
     if (!perspective) {
