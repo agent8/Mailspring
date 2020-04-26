@@ -82,9 +82,7 @@ class TitleSearchBar extends Component {
               >
                 <h1>
                   {tab.name}
-                  {unreadCount > 0 ? (
-                    <span>({new Intl.NumberFormat().format(unreadCount)})</span>
-                  ) : null}
+                  {unreadCount > 0 ? <span>({unreadCount > 99 ? '99+' : unreadCount})</span> : null}
                 </h1>
               </div>
             );
