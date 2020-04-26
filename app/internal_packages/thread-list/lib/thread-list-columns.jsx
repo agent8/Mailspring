@@ -2,20 +2,21 @@ import QuickActions from './quick-actions';
 const React = require('react');
 const {
   ListTabular,
-  RetinaImg,
   MailLabelSet,
-  MailImportantIcon,
   InjectedComponent,
   InjectedComponentSet,
 } = require('mailspring-component-kit');
 
-const { FocusedPerspectiveStore, Utils, DateUtils, EmailAvatar } = require('mailspring-exports');
+const { Message, Utils, DateUtils, EmailAvatar } = require('mailspring-exports');
+let draftStore = null;
+const DraftStore = () => {
+  return draftStore || require('mailspring-exports').DraftStore;
+};
 
 const ThreadListParticipants = require('./thread-list-participants');
-const ThreadListIcon = require('./thread-list-icon');
 
 // Get and format either last sent or last received timestamp depending on thread-list being viewed
-const ThreadListTimestamp = function ({ thread }) {
+const ThreadListTimestamp = function({ thread }) {
   // let rawTimestamp = FocusedPerspectiveStore.current().isSent()
   //   ? thread.lastMessageSentTimestamp
   //   : thread.lastMessageReceivedTimestamp;
@@ -29,7 +30,7 @@ const ThreadListTimestamp = function ({ thread }) {
 
 ThreadListTimestamp.containerRequired = false;
 
-const subject = function (subj) {
+const subject = function(subj) {
   if ((subj || '').trim().length === 0) {
     return <span className="no-subject">(No Subject)</span>;
   } else if (subj.split(/([\uD800-\uDBFF][\uDC00-\uDFFF])/g).length > 1) {
@@ -53,7 +54,7 @@ const subject = function (subj) {
   }
 };
 
-const getSnippet = function (thread) {
+const getSnippet = function(thread) {
   const messages = thread.__messages || [];
   if (thread.snippet) {
     // quanzs: here substring 400 is for old user, their snippet is too long
@@ -124,7 +125,7 @@ const c3 = new ListTabular.Column({
   resolver: thread => {
     const messages = thread.__messages || [];
     let draft = null;
-    const hasDraft = messages.find(m => m.draft);
+    const hasDraft = messages.find(m => m.draft && !DraftStore().isSendingDraft(m.id));
     if (hasDraft) {
       // draft = (
       //   <RetinaImg
@@ -194,17 +195,8 @@ const cNarrow = new ListTabular.Column({
       attachment = <div className="thread-icon thread-icon-attachment" />;
     }
 
-    const hasDraft = messages.find(m => m.draft);
+    const hasDraft = messages.find(m => m.draft && !DraftStore().isSendingDraft(m.id));
     if (hasDraft) {
-      // pencil = (
-      //   <RetinaImg
-      //     name="pencil.svg"
-      //     isIcon
-      //     style={{ width: 16, height: 16 }}
-      //     className="thread-icon-pencil"
-      //     mode={RetinaImg.Mode.ContentIsMask}
-      //   />
-      // );
       pencil = <span className="draft-icon">Draft</span>;
     }
 
