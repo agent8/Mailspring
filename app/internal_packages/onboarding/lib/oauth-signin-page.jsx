@@ -1,4 +1,4 @@
-import { clipboard, remote } from 'electron';
+import { clipboard, remote, ipcRenderer } from 'electron';
 import OnboardingActions from './onboarding-actions';
 import { React, ReactDOM, PropTypes } from 'mailspring-exports';
 import { RetinaImg, LottieImg } from 'mailspring-component-kit';
@@ -62,8 +62,21 @@ export default class OAuthSignInPage extends React.Component {
     }
   }
 
+  needOpenInBrowser(serviceName) {
+    serviceName = serviceName.toLowerCase();
+    if (serviceName === 'jira' && !process.mas) {
+      return true;
+    }
+    // else if (serviceName === 'google') {
+    //   return true;
+    // }
+    return false;
+  }
+
   componentDidMount() {
+    ipcRenderer.on('oauth-redirect-url', (e, { url }) => this.processRedirectUrlFromBrowser(url));
     this._setupWebview();
+    const serviceName = this.props.serviceName.toLowerCase();
 
     // Show the "Sign in to ..." prompt for a moment before bouncing
     // to URL. (400msec animation + 200msec to read)
@@ -71,8 +84,7 @@ export default class OAuthSignInPage extends React.Component {
     this._startTimer = setTimeout(() => {
       if (!this._mounted) return;
       // shell.openExternal(this.props.providerAuthPageUrl);
-      const serviceName = this.props.serviceName.toLowerCase();
-      if (serviceName === 'jira' && !process.mas) {
+      if (this.needOpenInBrowser(serviceName)) {
         this.openBrowser();
       } else {
         this._openInWebView(this.props.providerAuthPageUrl)
@@ -84,7 +96,7 @@ export default class OAuthSignInPage extends React.Component {
     }, 1500);
 
     // if not running in mas mode, launch a web server
-    if (!process.mas) {
+    if (!process.mas && !this.needOpenInBrowser(serviceName)) {
       this._server = http.createServer((request, response) => {
         if (!this._mounted) return;
         const { query } = url.parse(request.url, { querystring: true });
@@ -111,6 +123,14 @@ export default class OAuthSignInPage extends React.Component {
           return;
         }
       });
+    }
+  }
+
+  processRedirectUrlFromBrowser = (redirectUrl) => {
+    const { query } = url.parse(redirectUrl, { querystring: true });
+    if (query.code) {
+      this._onReceivedCode(query.code);
+      return;
     }
   }
 
@@ -383,10 +403,10 @@ export default class OAuthSignInPage extends React.Component {
     const serviceName = this.props.serviceName.toLowerCase();
     let wbView;
     let loadingImg;
-    if (serviceName === 'jira' && !process.mas) {
+    if (this.needOpenInBrowser(serviceName)) {
       wbView = <div className="jira-oauth-title">
         <h2>
-          Sign in with Jira in<br />your browser.
+          Sign in with your browser.
         </h2>
       </div>;
     } else {
