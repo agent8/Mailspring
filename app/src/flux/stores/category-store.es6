@@ -178,6 +178,19 @@ class CategoryStore extends MailspringStore {
     return this.getCategoryByRole(accountOrId, 'spam');
   }
 
+  getCategoryByPath(path, accountId = '') {
+    if (accountId) {
+      const cache = this._categoryCache && this._categoryCache[accountId];
+      if (cache) {
+        return Object.values(cache).find(cat => cat && cat.path === path);
+      }
+    }
+    if (Array.isArray(this._categoryResult)) {
+      return this._categoryResult.find(cat => cat && cat.path === path);
+    }
+    return null;
+  }
+
   isCategorySyncing = categoryId => {
     if (!categoryId || typeof categoryId !== 'string' || categoryId.length === 0) {
       return false;
