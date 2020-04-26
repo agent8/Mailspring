@@ -73,7 +73,7 @@ class InitialPreferencesOptions extends React.Component {
     const templateWithBasename = name => templates.find(t => t.indexOf(name) === 0);
 
     if (this.props.account.provider === 'gmail') {
-      this.props.config.set('core.workspace.mode', 'list');
+      this.props.config.set('core.workspace.mode', 'split');
       this.props.config.set('core.keymapTemplate', templateWithBasename('Edison'));
     } else if (
       this.props.account.provider === 'eas' ||
