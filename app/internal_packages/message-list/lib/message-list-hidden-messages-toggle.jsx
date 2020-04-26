@@ -24,6 +24,7 @@ export default class MessageListHiddenMessagesToggle extends React.Component {
 
   render() {
     const { numberOfHiddenItems } = this.state;
+    const enableFocusedInbox = AppEnv.config.get('core.workspace.enableFocusedInbox');
     if (numberOfHiddenItems === 0) {
       return <span />;
     }
@@ -38,7 +39,7 @@ export default class MessageListHiddenMessagesToggle extends React.Component {
       } else {
         message = `There is one more message in this thread that is not in spam or trash.`;
       }
-    } else if (viewing === 'inbox') {
+    } else if (viewing === 'inbox' && enableFocusedInbox) {
       let theOtherTabName = 'other';
       if (currentPerspective.isOther) {
         theOtherTabName = 'focused';
