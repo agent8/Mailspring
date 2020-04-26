@@ -23,6 +23,8 @@ import {
 import MessageTimestamp from './message-timestamp';
 
 const buttonTimeout = 700;
+const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
+
 export default class MessageControls extends React.Component {
   static displayName = 'MessageControls';
   static propTypes = {
@@ -317,11 +319,13 @@ export default class MessageControls extends React.Component {
     } else if (this.props.message && !this.props.message.isFromMe) {
       ret.push(muteEmail);
     }
-    if (this.props.message.isInInboxFocused()) {
-      ret.push(moveToOther);
-    }
-    if (this.props.message.isInInboxOther()) {
-      ret.push(moveToFocused);
+    if (AppEnv.config.get(EnableFocusedInboxKey)) {
+      if (this.props.message.isInInboxFocused()) {
+        ret.push(moveToOther);
+      }
+      if (this.props.message.isInInboxOther()) {
+        ret.push(moveToFocused);
+      }
     }
     ret.push(printEmail);
 

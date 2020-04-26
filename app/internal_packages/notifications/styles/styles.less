@@ -104,3 +104,58 @@
   background-color: rgba(0, 0, 0, 0.2);
   box-shadow: @standard-shadow inset;
 }
+
+.focused-inbox-notif {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 45px;
+  text-align: center;
+  font-family: 'SF UI Text';
+  h2 {
+    margin: 10px 0;
+    color: @text-color;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 29px;
+  }
+  p {
+    width: 420px;
+    color: @gray-dark;
+    font-size: 15px;
+    line-height: 20px;
+    margin-bottom: 80px;
+  }
+  .btn-list {
+    display: flex;
+    justify-content: center;
+
+    .btn {
+      margin: 0 10px;
+      box-sizing: border-box;
+      height: 36px;
+      background-color: #fff;
+      opacity: 0.98;
+      border-radius: 20px;
+      border: 1px solid @blue;
+      line-height: 34px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      padding: 0 24px;
+
+      &.modal-btn-disable {
+        color: @blue;
+      }
+
+      &.modal-btn-enable {
+        color: @text-color-inverse;
+        background: @blue;
+      }
+    }
+  }
+}
