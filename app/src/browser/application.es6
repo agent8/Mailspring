@@ -1362,6 +1362,13 @@ export default class Application extends EventEmitter {
       }
     });
 
+    ipcMain.on('client-config', (event, options) => {
+      const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (mainWindow && mainWindow.browserWindow.webContents) {
+        mainWindow.browserWindow.webContents.send(`client-config`, options);
+      }
+    });
+
     // Theme Error Handling
 
     let userResetTheme = false;
