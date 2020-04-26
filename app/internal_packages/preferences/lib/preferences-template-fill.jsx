@@ -57,13 +57,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.workspace.systemTray',
               keywords: [],
             },
-            // {
-            //   label: 'Enable Focused Inbox (only show important senders in your inbox)',
-            //   configSchema: configSchema =>
-            //     configSchema.properties.workspace.properties.focusedInbox,
-            //   keyPath: 'core.workspace.focusedInbox',
-            //   keywords: [],
-            // },
+            {
+              label: 'Enable Focused Inbox (only show important senders in your inbox)',
+              configSchema: configSchema =>
+                configSchema.properties.workspace.properties.enableFocusedInbox,
+              keyPath: 'core.workspace.enableFocusedInbox',
+              keywords: [],
+            },
             {
               label: 'Show important markers (Gmail only)',
               configSchema: configSchema =>

@@ -100,10 +100,14 @@ export default {
             title: 'Show icon in menu bar',
             platforms: ['darwin', 'linux'],
           },
-          focusedInbox: {
+          enableFocusedInbox: {
             type: 'boolean',
             default: true,
             title: 'Enable Focused Inbox (only show important senders in your inbox)',
+          },
+          promptedFocusedInbox: {
+            type: 'boolean',
+            default: false,
           },
           showImportant: {
             type: 'boolean',

@@ -11,6 +11,7 @@ import PleaseSubscribeNotification from './items/please-subscribe-notif';
 import DisabledMailRulesNotification from './items/disabled-mail-rules-notif';
 import UpdateNotification from './items/update-notification';
 import DiskUsageNotification from './items/disk-usage-notification';
+import FocusedInboxNotif from './items/focused-inbox-notif';
 
 const notifications = [
   DefaultClientNotification,
@@ -20,6 +21,7 @@ const notifications = [
   DisabledMailRulesNotification,
   UpdateNotification,
   DiskUsageNotification,
+  FocusedInboxNotif,
 ];
 
 export function activate() {
@@ -33,7 +35,7 @@ export function activate() {
   }
 }
 
-export function serialize() { }
+export function serialize() {}
 
 export function deactivate() {
   if (AppEnv.inDevMode()) {
