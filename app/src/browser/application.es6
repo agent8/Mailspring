@@ -1067,7 +1067,7 @@ export default class Application extends EventEmitter {
 
     app.on('open-url', (event, urlToOpen) => {
       // if want to open thread by url, url should this format edisonmail://email/accountId/threadId/view
-      const matchs = /\/email\/(.+)\/(.+)\/view$/g.exec(urlToOpen);
+      let matchs = /\/email\/(.+)\/(.+)\/view$/g.exec(urlToOpen);
       if (matchs && matchs.length === 3) {
         const accountId = matchs[1];
         const threadId = matchs[2];
@@ -1076,7 +1076,15 @@ export default class Application extends EventEmitter {
           accountId,
           id: threadId,
         });
-      } else {
+      } else if (/\/auth\/(.+)$/g.test(urlToOpen)) {
+        const onboardingWindow = this.windowManager.get(WindowManager.ONBOARDING_WINDOW);
+        matchs = /\/auth\/(.+)$/g.exec(urlToOpen);
+        const url = decodeURIComponent(matchs[1]);
+        if (onboardingWindow) {
+          onboardingWindow.sendMessage('oauth-redirect-url', { url });
+        }
+      }
+      else {
         this.openUrl(urlToOpen);
       }
       event.preventDefault();
