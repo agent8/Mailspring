@@ -279,10 +279,10 @@ class SidebarItem {
     }
     const perspective = MailboxPerspective.forCategories(cats);
     let id = 'sent';
-    if(opts.key){
+    if (opts.key) {
       id += `-${opts.key}`;
     } else {
-      id += `-${accountIds.join('-')}`
+      id += `-${accountIds.join('-')}`;
     }
     opts.categoryIds = this.getCategoryIds(accountIds, 'sent');
     return SidebarItem.appendSubPathByAccounts(
@@ -304,10 +304,10 @@ class SidebarItem {
     }
     const perspective = MailboxPerspective.forCategories(cats);
     let id = 'spam';
-    if(opts.key){
+    if (opts.key) {
       id += `-${opts.key}`;
     } else {
-      id += `-${accountIds.join('-')}`
+      id += `-${accountIds.join('-')}`;
     }
     opts.categoryIds = this.getCategoryIds(accountIds, 'spam');
     return SidebarItem.appendSubPathByAccounts(
@@ -321,9 +321,9 @@ class SidebarItem {
     let cats = [];
     for (let accountId of accountIds) {
       const account = AccountStore.accountForId(accountId);
-      if(account){
+      if (account) {
         let role = 'archive';
-        if(account.provider === 'gmail' && accountIds.length > 1){
+        if (account.provider === 'gmail' && accountIds.length > 1) {
           role = 'all';
         }
         let tmp = CategoryStore.getCategoryByRole(accountId, role);
@@ -336,16 +336,16 @@ class SidebarItem {
       return null;
     }
     let perspective;
-    if(opts.key === 'all'){
+    if (opts.key === 'all') {
       perspective = MailboxPerspective.forAllArchived(cats);
     } else {
       perspective = MailboxPerspective.forCategories(cats);
     }
     let id = 'archive';
-    if(opts.key){
+    if (opts.key) {
       id += `-${opts.key}`;
     } else {
-      id += `-${accountIds.join('-')}`
+      id += `-${accountIds.join('-')}`;
     }
     opts.categoryIds = this.getCategoryIds(accountIds, 'archive');
     return SidebarItem.appendSubPathByAccounts(
@@ -377,7 +377,7 @@ class SidebarItem {
     let id = 'Starred';
     if (opts.key) {
       id += `-${opts.key}`;
-    }  else {
+    } else {
       id += `-${accountIds.join('-')}`;
     }
     return this.forPerspective(id, perspective, opts);
@@ -509,10 +509,10 @@ class SidebarItem {
       return null;
     }
     let id = `Drafts-`;
-    if(opts.key) {
+    if (opts.key) {
       id += `${opts.key}`;
     } else {
-      id += `${accountIds.join('-')}`
+      id += `${accountIds.join('-')}`;
     }
 
     // return this.forPerspective(id, perspective, opts);
@@ -534,13 +534,13 @@ class SidebarItem {
     return this.forPerspective(id, perspective, opts);
   }
 
-  static forToday(accountIds, opts = {}){
+  static forToday(accountIds, opts = {}) {
     if (!Array.isArray(accountIds)) {
       accountIds = [accountIds];
     }
     const perspective = MailboxPerspective.forToday(accountIds);
     let id = 'today-';
-    if(opts && opts.key){
+    if (opts && opts.key) {
       id += opts.key;
     } else {
       id += accountIds.join('-');
@@ -642,7 +642,7 @@ class SidebarItem {
       if (parent) {
         let itemDisplayName = category.displayName.substr(parentKey.length + 1);
         if (isExchange) {
-          itemDisplayName = category.displayName;
+          itemDisplayName = category.displayName.substr(parentCategory.displayName.length + 1);
         }
         item = SidebarItem.forCategories([category], { name: itemDisplayName });
         item.id = `${parent.id}-${item.selfId}`;

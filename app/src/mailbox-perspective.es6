@@ -333,12 +333,17 @@ export default class MailboxPerspective {
     const ret = [];
     for (const category of this.categories()) {
       if (AccountStore.accountForId(category.accountId).provider === 'gmail') {
-        ret.push({ accountId: category.accountId, path: category.path.replace('[Gmail]/', '') });
+        ret.push({
+          accountId: category.accountId,
+          path: category.path.replace('[Gmail]/', ''),
+          displayName: category.displayName,
+        });
       } else {
         ret.push({
           accountId: category.accountId,
           path: category.path,
           parentId: category.parentId,
+          displayName: category.displayName,
         });
       }
     }
