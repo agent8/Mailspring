@@ -53,16 +53,18 @@ class SidebarSection {
       return this.empty(account.label);
     }
 
-    const items = _.reject(cats, cat => cat.role && cat.role !== 'all' && cat.role !== 'none' && cat.role !== 'important').map(cat => {
+    const items = _.reject(
+      cats,
+      cat => cat.role && cat.role !== 'all' && cat.role !== 'none' && cat.role !== 'important'
+    ).map(cat => {
       if (cat.role === 'all' && account.provider === 'gmail') {
         return SidebarItem.forAllMail(cat, { editable: false, deletable: false });
       } else {
         return SidebarItem.forCategories([cat], { editable: false, deletable: false });
       }
-    }
-    );
+    });
     let standardItem = SidebarItem.forSentMails([account.id]);
-    if(standardItem){
+    if (standardItem) {
       items.unshift(standardItem);
     }
     if (account.provider !== 'gmail') {
@@ -72,23 +74,23 @@ class SidebarSection {
       }
     }
     standardItem = SidebarItem.forTrash(account.id);
-    if(standardItem){
+    if (standardItem) {
       items.unshift(standardItem);
     }
     standardItem = SidebarItem.forSpam([account.id]);
-    if(standardItem){
+    if (standardItem) {
       items.unshift(standardItem);
     }
-    standardItem = SidebarItem.forDrafts([account.id], {key: `standard-${account.id}`});
-    if(standardItem){
+    standardItem = SidebarItem.forDrafts([account.id], { key: `standard-${account.id}` });
+    if (standardItem) {
       items.unshift(standardItem);
     }
     standardItem = SidebarItem.forStarred([account.id], { displayName: 'Flagged' });
-    if(standardItem){
+    if (standardItem) {
       items.unshift(standardItem);
     }
     standardItem = SidebarItem.forUnread([account.id]);
-    if(standardItem){
+    if (standardItem) {
       items.unshift(standardItem);
     }
     standardItem = SidebarItem.forToday([account.id], { displayName: 'Today' });
@@ -96,11 +98,10 @@ class SidebarSection {
       items.unshift(standardItem);
     }
     standardItem = SidebarItem.forInbox([account.id]);
-    if(standardItem){
+    if (standardItem) {
       items.unshift(standardItem);
     }
     // const attachmentsMail = SidebarItem.forAttachments([account.id]);
-
 
     items.push(...this.accountUserCategories(account));
     ExtensionRegistry.AccountSidebar.extensions()
@@ -131,7 +132,10 @@ class SidebarSection {
     if (accounts.length === 1) {
       outbox = SidebarItem.forOutbox([accounts[0].id], outboxOpts);
     } else {
-      outbox = SidebarItem.forOutbox(accounts.map(act => act.id), outboxOpts);
+      outbox = SidebarItem.forOutbox(
+        accounts.map(act => act.id),
+        outboxOpts
+      );
     }
     if (!accounts || accounts.length === 0) {
       return this.empty('All Accounts');
@@ -215,7 +219,6 @@ class SidebarSection {
       SidebarSection.forSiftCategories(accountIds, items);
     }
 
-
     folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
     if (folderItem) {
       items.push(folderItem);
@@ -272,8 +275,10 @@ class SidebarSection {
 
       if (!parent) {
         if (!category.displayName.match(re)) {
-          item = SidebarItem.forCategories([category]);
-          items.push(item);
+          item = SidebarItem.forCategories([category], {}, false);
+          if (item) {
+            items.push(item);
+          }
         } else {
           missingCategory.push(category);
           item = null;
@@ -328,11 +333,15 @@ class SidebarSection {
 
       if (parent) {
         const itemDisplayName = category.displayName.substr(parentKey.length + 1);
-        item = SidebarItem.forCategories([category], { name: itemDisplayName });
-        parent.children.push(item);
+        item = SidebarItem.forCategories([category], { name: itemDisplayName }, false);
+        if (item) {
+          parent.children.push(item);
+        }
       } else {
-        item = SidebarItem.forCategories([category]);
-        items.push(item);
+        item = SidebarItem.forCategories([category], {}, false);
+        if (item) {
+          items.push(item);
+        }
       }
       seenItems[itemKey] = item;
     }
@@ -370,7 +379,7 @@ class SidebarSection {
           SyncbackCategoryTask.forCreating({
             name: displayName,
             accountId: account.id,
-          }),
+          })
         );
       },
     };
