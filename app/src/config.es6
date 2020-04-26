@@ -359,7 +359,7 @@ class Config {
         settings: this.settings,
         defaultSettings: this.defaultSettings,
         schema: this.schema,
-      }),
+      })
     );
     const hash = str => {
       return crypto
@@ -807,6 +807,9 @@ class Config {
       if (!settings || _.isEmpty(settings)) {
         throw new Error('settings is falsey or empty');
       }
+      app.configPersistenceManager.setShouldSyncToNativeConfigs(
+        this.getShouldSyncToNativeConfigs()
+      );
       app.configPersistenceManager.setSettings(settings, webContentsId);
     });
   }
@@ -832,8 +835,36 @@ class Config {
 
   setRawValue(keyPath, value) {
     app.configPersistenceManager.setRawValue(keyPath, value, webContentsId);
+    const configSchema = this.getSchema(keyPath);
+    if (configSchema && configSchema.notifyNative) {
+      // should notify native this config is changed
+      const { ipcRenderer } = require('electron');
+      const options = {};
+      options[keyPath.replace(/\./g, '_')] = value;
+      ipcRenderer.send('client-config', options);
+    }
     this.load();
   }
+  getShouldSyncToNativeConfigs = () => {
+    const options = [];
+    const findNotifyNativeConfig = (schemaList, parentKeyPath) => {
+      Object.keys(schemaList).forEach(key => {
+        const schema = schemaList[key];
+        const keyPath = `${parentKeyPath ? parentKeyPath + '.' : ''}${key}`;
+        if (schema.notifyNative) {
+          options.push(keyPath);
+          return;
+        }
+        // if schema.notifyNative is true and schema has properties
+        // skip the properties find
+        if (schema.properties) {
+          findNotifyNativeConfig(schema.properties, keyPath);
+        }
+      });
+    };
+    findNotifyNativeConfig(this.schema.properties);
+    return options;
+  };
 }
 
 // Base schema enforcers. These will coerce raw input into the specified type,
@@ -1017,7 +1048,7 @@ Config.addSchemaEnforcers({
 var isPlainObject = value =>
   _.isObject(value) && !_.isArray(value) && !_.isFunction(value) && !_.isString(value);
 
-var splitKeyPath = function (keyPath) {
+var splitKeyPath = function(keyPath) {
   if (keyPath == null) {
     return [];
   }
@@ -1034,7 +1065,7 @@ var splitKeyPath = function (keyPath) {
   return keyPathArray;
 };
 
-var withoutEmptyObjects = function (object) {
+var withoutEmptyObjects = function(object) {
   let resultObject = undefined;
   if (isPlainObject(object)) {
     for (let key in object) {

@@ -14,6 +14,7 @@ export default class ConfigPersistenceManager {
     this.configDirPath = configDirPath;
     this.resourcePath = resourcePath;
 
+    this.shouldSyncToNativeConfigs = [];
     this.userWantsToPreserveErrors = false;
     this.saveRetries = 0;
     this.configFilePath = path.join(this.configDirPath, 'config.json');
@@ -57,13 +58,9 @@ export default class ConfigPersistenceManager {
     let detail = error.message;
 
     if (error instanceof SyntaxError) {
-      detail += `\n\nThe file ${
-        this.configFilePath
-        } has incorrect JSON formatting or is empty. Fix the formatting to resolve this error, or reset your settings to continue using N1.`;
+      detail += `\n\nThe file ${this.configFilePath} has incorrect JSON formatting or is empty. Fix the formatting to resolve this error, or reset your settings to continue using N1.`;
     } else {
-      detail += `\n\nWe were unable to read the file ${
-        this.configFilePath
-        }. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`;
+      detail += `\n\nWe were unable to read the file ${this.configFilePath}. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`;
     }
 
     const clickedIndex = dialog.showMessageBoxSync({
@@ -126,9 +123,7 @@ export default class ConfigPersistenceManager {
     const clickedIndex = dialog.showMessageBoxSync({
       type: 'error',
       message: `Failed to save "${path.basename(this.configFilePath)}"`,
-      detail: `\n\nWe were unable to save the file ${
-        this.configFilePath
-        }. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`,
+      detail: `\n\nWe were unable to save the file ${this.configFilePath}. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`,
       buttons: ['Okay', 'Try again'],
     });
     return ['ignore', 'retry'][clickedIndex];
@@ -155,6 +150,10 @@ export default class ConfigPersistenceManager {
         }
       }
     }
+    this.shouldSyncToNativeConfigs.forEach(keyPath => {
+      const value = _.valueForKeyPath(this.settings, keyPath);
+      mailsyncSettings[keyPath.replace(/\./g, '_')] = value;
+    });
     const mailsyncSettingsJSON = JSON.stringify(mailsyncSettings, null, 2);
     const allSettingsJSON = JSON.stringify(allSettings, null, 2);
     this.lastSaveTimestamp = Date.now();
@@ -199,6 +198,11 @@ export default class ConfigPersistenceManager {
     }
     _.setValueForKeyPath(this.settings, keyPath, value);
     this.emitChangeEvent({ sourceWebcontentsId });
+    this.save();
+  };
+
+  setShouldSyncToNativeConfigs = shouldSyncToNativeConfigs => {
+    this.shouldSyncToNativeConfigs = shouldSyncToNativeConfigs;
     this.save();
   };
 
