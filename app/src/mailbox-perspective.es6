@@ -25,6 +25,7 @@ let ChangeLabelsTask = null;
 let ChangeFolderTask = null;
 let ChangeUnreadTask = null;
 let FocusedPerspectiveStore = null;
+const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
 // This is a class cluster. Subclasses are not for external use!
 // https://developer.apple.com/library/ios/documentation/General/Conceptual/CocoaEncyclopedia/ClassClusters/ClassClusters.html
@@ -764,7 +765,11 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         this.bgColor = bgColor;
       }
     }
-    if (this.isInbox() && this.constructor === CategoryMailboxPerspective) {
+    if (
+      this.isInbox() &&
+      this.constructor === CategoryMailboxPerspective &&
+      AppEnv.config.get(EnableFocusedInboxKey)
+    ) {
       this.tab = [
         new InboxMailboxFocusedPerspective(this._categories),
         new InboxMailboxOtherPerspective(this._categories),
