@@ -6,6 +6,8 @@ import Thread from '../models/thread';
 import Category from '../models/category';
 import JoinTable from '../models/join-table';
 
+const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
+
 const buildQuery = categoryIds => {
   const unreadMatchers = new Matcher.JoinAnd([
     Thread.attributes.categories.containsAny(categoryIds),
@@ -13,8 +15,15 @@ const buildQuery = categoryIds => {
     Thread.attributes.state.equal(0),
   ]);
 
-  const notOtherCategorys = Category.inboxNotOtherCategorys().map(categoryNum => `${categoryNum}`);
-  const query = DatabaseStore.findAll(Thread, { inboxCategory: notOtherCategorys }).limit(0);
+  const whereOption = {};
+  const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
+  if (enableFocusedInboxKey) {
+    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+      categoryNum => `${categoryNum}`
+    );
+    whereOption['inboxCategory'] = notOtherCategorys;
+  }
+  const query = DatabaseStore.findAll(Thread, whereOption).limit(0);
 
   // The "Unread" view shows all threads which are unread. When you read a thread,
   // it doesn't disappear until you leave the view and come back. This behavior
