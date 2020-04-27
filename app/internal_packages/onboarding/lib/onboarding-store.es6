@@ -112,9 +112,9 @@ class OnboardingStore extends MailspringStore {
 
   _onMoveToPreviousPage = () => {
     const p = this._pageStack.pop();
-    if (p === 'account-choose') {
-      this._onMoveToPage('tutorial');
-    }
+    // if (p === 'account-choose') {
+    //   this._onMoveToPage('tutorial');
+    // }
     this.trigger();
   };
 
