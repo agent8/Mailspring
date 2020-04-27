@@ -256,8 +256,8 @@ class DatabaseStore extends MailspringStore {
         msg.push(q[i]);
       }
     }
-
     console.log(msg.join(''), ...colors);
+    AppEnv.reportWarning(new Error(msg.join('')), { errorData: { queryTakingTooLong: true } });
   }
 
   // Returns a Promise that resolves when the query has been completed and
