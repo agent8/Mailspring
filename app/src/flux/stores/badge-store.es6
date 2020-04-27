@@ -33,14 +33,15 @@ class BadgeStore extends MailspringStore {
   }
 
   _updateCounts = () => {
+    const enableFocusedInboxKey = AppEnv.config.get('core.workspace.enableFocusedInbox');
     let unread = 0;
     let total = 0;
-
 
     // const accountIds = FocusedPerspectiveStore.current().accountIds;
     const accountIds = AccountStore.accountIds();
     for (const cat of CategoryStore.getCategoriesWithRoles(accountIds, 'inbox')) {
-      unread += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
+      const categoryId = enableFocusedInboxKey ? `${cat.accountId}_Focused` : cat.id;
+      unread += ThreadCountsStore.unreadCountForCategoryId(categoryId);
       total += ThreadCountsStore.totalCountForCategoryId(cat.id);
     }
 

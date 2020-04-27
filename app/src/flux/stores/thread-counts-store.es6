@@ -4,6 +4,7 @@ import DatabaseStore from './database-store';
 import Thread from '../models/thread';
 import ThreadCounts from '../models/thread-counts';
 import ThreadCategory from '../models/thread-category';
+import Category from '../models/category';
 import CategoryStore from './category-store';
 import Matcher from '../attributes/matcher';
 import JoinTable from '../models/join-table';
@@ -11,6 +12,8 @@ let _accountStore = null;
 const AccountStore = () => {
   return _accountStore || require('./account-store').default;
 };
+
+const EnableFocusedInbox = 'core.workspace.enableFocusedInbox'
 
 class ThreadCountsStore extends MailspringStore {
   constructor() {
@@ -29,6 +32,8 @@ class ThreadCountsStore extends MailspringStore {
           this._onCountsChangedDebounced();
         }
       });
+      this.listenTo(CategoryStore, this._reCalculateTodayNumber);
+      AppEnv.config.onDidChange(EnableFocusedInbox, this._reCalculateTodayNumber);
       this._onCountsChangedDebounced();
     }
   }
@@ -74,9 +79,17 @@ class ThreadCountsStore extends MailspringStore {
     }
   };
   _generateTodayViewQuery = (countType, categoryIds) => {
+    const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInbox);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
-    let query = DatabaseStore.count(Thread, { state: 0, inboxCategory: ['1', '2'] });
+    const whereOption = { state: 0 };
+    if (enableFocusedInboxKey) {
+      const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+        categoryNum => `${categoryNum}`
+      );
+      whereOption['inboxCategory'] = notOtherCategorys;
+    }
+    let query = DatabaseStore.count(Thread, whereOption);
     if (countType === 'unread' && categoryIds.length > 0) {
       const unreadMatchers = new Matcher.JoinAnd([
         Thread.attributes.categories.containsAny(categoryIds),
