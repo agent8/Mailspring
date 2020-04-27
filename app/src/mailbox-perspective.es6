@@ -1080,12 +1080,16 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
   }
 
   threads() {
-    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
-      categoryNum => `${categoryNum}`
-    );
-    let query = DatabaseStore.findAll(Thread, { state: 0, inboxCategory: notOtherCategorys }).limit(
-      0
-    );
+    const whereOption = { state: 0 };
+    const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
+    if (enableFocusedInboxKey) {
+      const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+        categoryNum => `${categoryNum}`
+      );
+      whereOption['inboxCategory'] = notOtherCategorys;
+    }
+
+    let query = DatabaseStore.findAll(Thread, whereOption).limit(0);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
     const categoryIds = [];
