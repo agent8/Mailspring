@@ -112,12 +112,13 @@ class MessageStore extends MailspringStore {
     const currentPerspective = FocusedPerspectiveStore.current();
     const viewing = currentPerspective.categoriesSharedRole();
     const viewingHiddenCategory = FolderNamesHiddenByDefault.includes(viewing);
+    const enableFocusedInbox = AppEnv.config.get('core.workspace.enableFocusedInbox');
 
     return this._items.filter(item => {
       const inHidden =
         item.labels.some(label => FolderNamesHiddenByDefault.includes(label.role)) ||
         item.isHidden();
-      if (viewing === 'inbox') {
+      if (viewing === 'inbox' && enableFocusedInbox) {
         // inbox primary or other
         let inboxHiddenCategorys = Category.inboxOtherCategorys(true);
         if (currentPerspective.isOther) {

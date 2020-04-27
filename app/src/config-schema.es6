@@ -103,6 +103,7 @@ export default {
           enableFocusedInbox: {
             type: 'boolean',
             default: true,
+            notifyNative: true,
             title: 'Enable Focused Inbox (only show important senders in your inbox)',
           },
           promptedFocusedInbox: {

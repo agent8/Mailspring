@@ -139,6 +139,7 @@ export default class MailsyncBridge {
     Actions.remoteSearch.listen(this._onRemoteSearch, this);
     Actions.fetchNativeRuntimeInfo.listen(this._onFetchNativeRuntimeInfo, this);
     ipcRenderer.on('mailsync-config', this._onMailsyncConfigUpdate);
+    ipcRenderer.on('client-config', this._onClientConfigUpdate);
     ipcRenderer.on('thread-new-window', this._onNewWindowOpened);
     // ipcRenderer.on('thread-close-window', this._onNewWindowClose);
 
@@ -1145,6 +1146,19 @@ export default class MailsyncBridge {
           settings: mailsyncConfig[accountId],
         });
       }
+    }
+  };
+
+  _onClientConfigUpdate = (event, clientConfig) => {
+    if (!clientConfig) {
+      return;
+    }
+
+    for (const accountId of Object.keys(this._clients)) {
+      this.sendMessageToAccount(accountId, {
+        type: 'config-change',
+        settings: clientConfig,
+      });
     }
   };
 
