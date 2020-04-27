@@ -838,10 +838,12 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 
   unreadCount() {
+    const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
     let sum = 0;
     for (const cat of this._categories) {
       if (this.isInbox()) {
-        sum += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
+        const categorieId = enableFocusedInboxKey ? `${cat.accountId}_Focused` : cat.id;
+        sum += ThreadCountsStore.unreadCountForCategoryId(categorieId);
       } else {
         sum += ThreadCountsStore.unreadCountForCategoryId(cat.id);
       }
@@ -1216,9 +1218,11 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
   }
 
   unreadCount() {
+    const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
     let sum = 0;
     for (const cat of this._categories) {
-      sum += ThreadCountsStore.unreadCountForCategoryId(`${cat.accountId}_Focused`);
+      const categorieId = enableFocusedInboxKey ? `${cat.accountId}_Focused` : cat.id;
+      sum += ThreadCountsStore.unreadCountForCategoryId(categorieId);
     }
     return sum;
   }
