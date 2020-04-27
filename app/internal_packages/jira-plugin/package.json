@@ -10,7 +10,7 @@
     "mailspring": "*"
   },
   "windowTypes": {
-    "default": true,
-    "thread-popout": true
+    "default": false,
+    "thread-popout": false
   }
 }
