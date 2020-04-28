@@ -108,7 +108,7 @@ const file_mappings = [
 
 let errorCommands = [];
 function copyIt(from, to) {
-  const command = `cp ../../${from} ${to}`;
+  const command = `cp ../${from} ${to}`;
   try {
     const result = child_process.execSync(command);
   } catch (e) {
