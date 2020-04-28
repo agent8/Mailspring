@@ -44,6 +44,7 @@ export class Notifier {
 
   // async for testing
   async _onMessagesChanged(msgs) {
+    const enableFocusedInboxKey = AppEnv.config.get('core.workspace.enableFocusedInbox');
     const notifworthy = {};
 
     for (const msg of msgs) {
@@ -59,7 +60,9 @@ export class Notifier {
       // if body is not pull over
       if (!msg.hasBody) continue;
       // if is Other, don't display notification
-      if (msg.inboxCategory === Category.InboxCategoryState.MsgOther) continue;
+      if (enableFocusedInboxKey && msg.inboxCategory === Category.InboxCategoryState.MsgOther) {
+        continue;
+      }
       // filter the message that dont should note by account config
       if (!this._msgShouldNotify(msg)) continue;
 
