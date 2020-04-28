@@ -90,7 +90,9 @@ export class Privacy extends React.Component {
         );
       }
       const app = require('electron').remote.app;
-      app.relaunch();
+      if (!process.mas) {
+        app.relaunch();
+      }
       app.quit();
     });
   }

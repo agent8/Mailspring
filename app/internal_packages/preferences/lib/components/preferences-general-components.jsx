@@ -299,7 +299,9 @@ export class LocalData extends React.Component {
 
   _onReboot = () => {
     const app = require('electron').remote.app;
-    app.relaunch();
+    if (!process.mas) {
+      app.relaunch();
+    }
     app.quit();
   };
 
