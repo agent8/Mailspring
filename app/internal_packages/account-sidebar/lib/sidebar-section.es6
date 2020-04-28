@@ -219,10 +219,11 @@ class SidebarSection {
       SidebarSection.forSiftCategories(accountIds, items);
     }
 
-    folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
+    // quanzs: disable jira plugin for temp
+    // folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
+    // if (folderItem) {
+    //   items.push(folderItem);
+    // }
 
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)
