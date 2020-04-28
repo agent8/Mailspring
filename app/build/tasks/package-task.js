@@ -110,22 +110,12 @@ module.exports = grunt => {
       appVersion: packageJSON.version,
       buildVersion: packageJSON.version,
       platform: isMas ? 'mas' : platform,
-      protocols: [
-        {
-          name: 'EdisonMail Protocol',
-          schemes: ['EdisonMail'],
-        },
-        {
-          name: 'Mailto Protocol',
-          schemes: ['mailto'],
-        },
-      ],
       dir: grunt.config('appDir'),
       appCategoryType: 'public.app-category.business',
       tmpdir: tmpdir,
       arch: {
         win32: 'ia32',
-        x64: 'x64'
+        x64: 'x64',
       }[arch],
       icon: {
         darwin: path.resolve(
@@ -214,11 +204,13 @@ module.exports = grunt => {
        * runs the `security find-identity` command. Note that
        * setup-mac-keychain-task needs to be run first
        */
-      osxSign: !!process.env.SIGN_BUILD ? {
-        hardenedRuntime: true,
-        entitlements: '../scripts/osx_plist/parent.plist',
-        'entitlements-inherit': '../scripts/osx_plist/parent.plist'
-      } : false,
+      osxSign: !!process.env.SIGN_BUILD
+        ? {
+            hardenedRuntime: true,
+            entitlements: '../scripts/osx_plist/parent.plist',
+            'entitlements-inherit': '../scripts/osx_plist/parent.plist',
+          }
+        : false,
       win32metadata: {
         CompanyName: 'Edison Software Inc',
         FileDescription: 'Edison Mail',
@@ -251,32 +243,40 @@ module.exports = grunt => {
     },
   });
 
-  grunt.registerTask('package', 'Package EdisonMail', function pack() {
-    const done = this.async();
-    const start = Date.now();
+  grunt.registerTask(
+    'package',
+    'Package EdisonMail',
+    function pack() {
+      const done = this.async();
+      const start = Date.now();
 
-    console.log('---> Running packager with options:');
-    console.log(util.inspect(grunt.config.get('packager'), true, 7, true));
+      console.log('---> Running packager with options:');
+      console.log(util.inspect(grunt.config.get('packager'), true, 7, true));
 
-    const ongoing = setInterval(() => {
-      const elapsed = Math.round((Date.now() - start) / 1000.0);
-      console.log(`---> Packaging for ${elapsed}s`);
-    }, 1000);
+      const ongoing = setInterval(() => {
+        const elapsed = Math.round((Date.now() - start) / 1000.0);
+        console.log(`---> Packaging for ${elapsed}s`);
+      }, 1000);
 
-    resolveRealSymlinkPaths(grunt.config('appDir'));
+      resolveRealSymlinkPaths(grunt.config('appDir'));
 
-    packager(grunt.config.get('packager')).then(appPaths => {
+      packager(grunt.config.get('packager')).then(
+        appPaths => {
+          clearInterval(ongoing);
+          console.log(`---> Done Successfully. Built into: ${appPaths}`);
+          return done();
+        },
+        err => {
+          console.log('---> Done Failed.', err);
+        }
+      );
+    },
+    err => {
       clearInterval(ongoing);
-      console.log(`---> Done Successfully. Built into: ${appPaths}`);
-      return done();
-    }, err => {
-      console.log('---> Done Failed.', err);
-    });
-  }, err => {
-    clearInterval(ongoing);
-    if (err) {
-      grunt.fail.fatal(err);
-      return done(err);
+      if (err) {
+        grunt.fail.fatal(err);
+        return done(err);
+      }
     }
-  });
+  );
 };
