@@ -217,52 +217,37 @@ class FocusedPerspectiveStore extends MailspringStore {
   }
 
   _setPerspective(perspective, sidebarAccountIds, forceTrigger = false) {
-    let shouldTrigger = forceTrigger;
-    if (perspective.isTab) {
-      // if this perspective is a tab, it must be a tab of this current sidebar
-
-      if (!perspective.isTabOfPerspective(this._currentSidebar)) {
-        return;
-      }
-    } else {
-      // if this perspective not a tab, judge if current sidebar need to update
-
-      if (perspective.isEqual(this._currentSidebar) && !this._isInChatView()) {
-        const topSheet = WorkspaceStore.topSheet();
-        if (topSheet && topSheet.id === 'Thread') {
-          Actions.popSheet({
-            reason: 'Thread View, same perspective clicked',
-          });
-        } else {
-          return;
-        }
-      } else {
-        this._currentSidebar = perspective;
-        AppEnv.savedState.perspective = perspective.toJSON();
-        shouldTrigger = true;
-      }
-    }
-
-    if (
-      this._current.isTab &&
-      this._current.isTabOfPerspective(perspective) &&
-      !this._isInChatView()
-    ) {
+    // Should back to mail list if click account or inbox while one mail is opened in reading pane off mode
+    if (perspective.isEqual(this._currentSidebar) && !this._isInChatView()) {
       const topSheet = WorkspaceStore.topSheet();
       if (topSheet && topSheet.id === 'Thread') {
         Actions.popSheet({
           reason: 'Thread View, same perspective clicked',
         });
-      } else {
-        return;
       }
     }
 
+    let shouldTrigger = forceTrigger;
     let focusPerspective;
-    if (perspective.tab && perspective.tab.length) {
-      focusPerspective = perspective.tab[0];
-    } else {
+
+    if (perspective.isTab) {
+      // if this perspective is a tab, it must be a tab of this current sidebar
+      if (!perspective.isTabOfPerspective(this._currentSidebar)) {
+        return;
+      }
       focusPerspective = perspective;
+    } else {
+      // if this perspective not a tab, judge if current sidebar need to update
+      if (!perspective.isEqual(this._currentSidebar)) {
+        this._currentSidebar = perspective;
+        AppEnv.savedState.perspective = perspective.toJSON();
+        shouldTrigger = true;
+      }
+      if (perspective.tab && perspective.tab.length) {
+        focusPerspective = perspective.tab[0];
+      } else {
+        focusPerspective = perspective;
+      }
     }
 
     if (!focusPerspective.isEqual(this._current)) {
@@ -300,7 +285,9 @@ class FocusedPerspectiveStore extends MailspringStore {
     if (desired && WorkspaceStore.rootSheet() !== desired) {
       Actions.selectRootSheet(desired);
     }
-    Actions.popToRootSheet({ reason: 'FocusedPerspectiveStore:setPerspective' });
+    Actions.popToRootSheet({
+      reason: 'FocusedPerspectiveStore:setPerspective',
+    });
   }
 
   _setPerspectiveByName(categoryName) {
@@ -343,7 +330,11 @@ class FocusedPerspectiveStore extends MailspringStore {
         accounts[cat.accountId].push(cat.id);
       });
       for (let key of Object.keys(accounts)) {
-        Actions.syncFolders({ accountId: key, foldersIds: accounts[key], source });
+        Actions.syncFolders({
+          accountId: key,
+          foldersIds: accounts[key],
+          source,
+        });
       }
     } else if (
       perspective.categoryIds &&
