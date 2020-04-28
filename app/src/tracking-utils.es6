@@ -66,13 +66,17 @@ export default class TrackingAppEvents {
     if (this.devMode) {
       return;
     }
-    TrackingAppEvents.onQueueTask(task);
+    try {
+      TrackingAppEvents.onQueueTask(task);
+    } catch (e) {}
   };
 
   trackingEvent = (...args) => {
     if (this.devMode) {
       return;
     }
-    TrackingAppEvents.onTrackingEvent(...args);
+    try {
+      TrackingAppEvents.onTrackingEvent(...args);
+    } catch (e) {}
   };
 }
