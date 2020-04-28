@@ -206,7 +206,9 @@ export default class MailsyncBridge {
       title: `Verbose logging is now ${phrase}`,
       message,
     }).then(() => {
-      remote.app.relaunch();
+      if (!process.mas) {
+        remote.app.relaunch();
+      }
       remote.app.quit();
     });
   }

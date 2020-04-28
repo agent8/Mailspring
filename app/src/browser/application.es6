@@ -85,7 +85,9 @@ export default class Application extends EventEmitter {
           app.quit();
         } else {
           this._deleteDatabase(() => {
-            app.relaunch();
+            if (!process.mas) {
+              app.relaunch();
+            }
             app.quit();
           }, true);
         }
@@ -733,7 +735,9 @@ export default class Application extends EventEmitter {
     this._resettingAndRelaunching = true;
     let rebuild = false;
     const done = () => {
-      app.relaunch();
+      if (!process.mas) {
+        app.relaunch();
+      }
       app.quit();
     };
     if (errorMessage) {
@@ -770,7 +774,9 @@ export default class Application extends EventEmitter {
         detail: '',
       })
       .then(() => {
-        app.relaunch();
+        if (!process.mas) {
+          app.relaunch();
+        }
         app.quit();
       });
   };
