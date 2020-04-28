@@ -81,6 +81,28 @@ export default class OnboardingRoot extends React.Component {
     this.setState(this._getStateFromStore());
   };
 
+  _allowMoveBack = () => {
+    if (this.state.page === 'account-choose') {
+      const pageStack = OnboardingStore._pageStack;
+      if (pageStack.length >= 2) {
+        const prePage = pageStack[pageStack.length - 2];
+        if (prePage === 'account-add-another') {
+          return true;
+        }
+      }
+    }
+    return ![
+      'initial-preferences',
+      'tutorial',
+      'authenticate',
+      'gdpr-terms',
+      'account-add-another',
+      'account-choose',
+      'login-error',
+      'account-settings-jira-plugin'
+    ].includes(this.state.page)
+  }
+
   render() {
     const Component = PageComponents[this.state.page];
     if (!Component) {
@@ -91,18 +113,7 @@ export default class OnboardingRoot extends React.Component {
       <div className="page-frame">
         <PageTopBar
           pageDepth={this.state.pageDepth}
-          allowMoveBack={
-            ![
-              'initial-preferences',
-              'tutorial',
-              'authenticate',
-              'gdpr-terms',
-              'account-add-another',
-              'account-choose',
-              'login-error',
-              'account-settings-jira-plugin'
-            ].includes(this.state.page)
-          }
+          allowMoveBack={this._allowMoveBack()}
         />
         <CSSTransitionGroup
           transitionName="alpha-fade"
