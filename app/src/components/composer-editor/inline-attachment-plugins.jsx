@@ -1,7 +1,7 @@
 import React from 'react';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
 import { AttachmentStore, Actions } from 'mailspring-exports';
-import { isQuoteNode, isEmptySelection } from './base-block-plugins';
+import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
 
 const IMAGE_TYPE = 'image';
 
@@ -73,54 +73,6 @@ const rules = [
     },
   },
 ];
-const nonPrintableKeyCode = {
-  //Based on https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
-  mac: [
-    18, //Alt
-    20, //CapsLock
-    17, //Control
-    91, //OSLeft
-    93, //OSRight
-    16, //Shift
-    13, //Enter
-    9, // Tab
-    35, //End
-    45, //Insert
-    36, //Help
-    34, //PageDown
-    33, //PageUp
-    40, //ArrowDown
-    37, //ArrowLeft
-    39, //ArrowRight
-    38, //ArrowUp
-    27, //Escape
-    124, //PrintScreen
-    125, //ScrollLock
-    126, //Pause
-    //F1-F20
-    112,
-    113,
-    114,
-    115,
-    116,
-    117,
-    118,
-    119,
-    120,
-    121,
-    122,
-    123,
-    124,
-    125,
-    126,
-    127,
-    128,
-    129,
-    130,
-    131,
-    0, //Unknown key
-  ],
-};
 
 const processInlineAttachment = change => {
   let contentIds = [];
@@ -131,6 +83,10 @@ const processInlineAttachment = change => {
       if (inline) {
         if (inline && inline.data && inline.data.get('contentId')) {
           contentIds.push(inline.data.get('contentId'));
+          // DC-1725 Because inlineImage have a void node with the same key
+          // that is not deleted when this inline is removed
+          // We manually removes one of them so Slate can automatically removes the next one.
+          change.removeNodeByKey(inline.key);
         }
       }
     }
@@ -150,7 +106,7 @@ const processNearestInlineAttachment = (change, offSet) => {
       const windowSelection = window.getSelection();
       if (windowSelection) {
         const windowAnchorOffset = windowSelection.getRangeAt(0).endOffset;
-        isAtEnd = anchorOffset === focusText.length - 1 && anchorOffset === windowAnchorOffset;
+        isAtEnd = focusText.length === windowAnchorOffset;
       }
     }
     if (parentBlock && focusKey && isAtEnd) {
@@ -160,13 +116,17 @@ const processNearestInlineAttachment = (change, offSet) => {
           const inlineImage = nodes.get(i + offSet);
           if (inlineImage && inlineImage.data && inlineImage.data.get('contentId')) {
             contentIds.push(inlineImage.data.get('contentId'));
-            break;
+            // DC-1725 Because inlineImage have a void node with the same key
+            // that is not deleted when this inline is removed
+            // We manually removes one of them so Slate can automatically removes the next one.
+            change.removeNodeByKey(inlineImage.key);
           }
         }
       }
     }
   }
   contentIds.forEach(contentId => Actions.draftInlineAttachmentRemoved(contentId));
+  return contentIds;
 };
 const onKeyDown = (event, change) => {
   if (
@@ -189,6 +149,8 @@ const onBackspace = (event, change) => {
   const contentIds = processInlineAttachment(change);
   if (contentIds.length === 0) {
     processNearestInlineAttachment(change, -1);
+  } else {
+    return change;
   }
 };
 const onDelete = (event, change) => {
@@ -198,6 +160,8 @@ const onDelete = (event, change) => {
   const contentIds = processInlineAttachment(change);
   if (contentIds.length === 0) {
     processNearestInlineAttachment(change, 1);
+  } else {
+    return change;
   }
 };
 
