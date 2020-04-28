@@ -97,7 +97,6 @@ export default class EmailAvatar extends Component {
           if (account && Array.isArray(from)) {
             from = message.from[0];
             if (!account.isMyEmail(from.email)) {
-              console.warn('not from me', message.id);
               return message;
             }
           }
