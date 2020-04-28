@@ -83,12 +83,36 @@ export default class EmailAvatar extends Component {
     }
   };
 
+  static _findLastMessage = (props, messages) => {
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (currentPerspective && props.mode && props.mode === 'list') {
+      const cats = currentPerspective.categories();
+      if (cats.length > 0 && cats.some(cat => cat.role === 'sent')) {
+        return messages[messages.length - 1];
+      } else {
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const message = messages[i];
+          const account = AccountStore.accountForId(message.accountId);
+          let from = message.from;
+          if (account && Array.isArray(from)) {
+            from = message.from[0];
+            if (!account.isMyEmail(from.email)) {
+              console.warn('not from me', message.id);
+              return message;
+            }
+          }
+        }
+      }
+    }
+    return messages[messages.length - 1];
+  };
+
   static _processProps = (props, changeBgColor) => {
     let from = {};
     if (props.thread) {
       const messages = props.thread.__messages;
       if (messages && messages.length) {
-        let message = messages[messages.length - 1];
+        let message = EmailAvatar._findLastMessage(props, messages);
         from = message.from && message.from[0];
         let to = message.to && message.to[0];
         if (!from && to) {
