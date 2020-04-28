@@ -213,6 +213,7 @@ class DatabaseStore extends MailspringStore {
   }
 
   _prettyConsoleLog(qa) {
+    AppEnv.reportWarning(new Error(qa), { errorData: { queryTakingTooLong: true } });
     let q = qa.replace(/%/g, '%%');
     q = `color:black |||%c ${q}`;
     q = q.replace(/`(\w+)`/g, '||| color:purple |||%c$&||| color:black |||%c');
@@ -257,7 +258,6 @@ class DatabaseStore extends MailspringStore {
       }
     }
     console.log(msg.join(''), ...colors);
-    AppEnv.reportWarning(new Error(msg.join('')), { errorData: { queryTakingTooLong: true } });
   }
 
   // Returns a Promise that resolves when the query has been completed and
