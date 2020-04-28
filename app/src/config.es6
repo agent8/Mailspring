@@ -562,7 +562,9 @@ class Config {
     }
 
     this.setRawValue(keyPath, value);
-    AppEnv.trackingEvent('Preferences-Config-Set', { keyPath, value });
+    setTimeout(() => {
+      AppEnv.trackingEvent && AppEnv.trackingEvent('Preferences-Config-Set', { keyPath, value })
+    }, 0);
     return true;
   }
 
