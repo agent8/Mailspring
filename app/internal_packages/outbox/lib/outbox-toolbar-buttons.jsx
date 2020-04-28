@@ -1,5 +1,5 @@
 import { RetinaImg } from 'mailspring-component-kit';
-import { React, PropTypes, Actions, Message} from 'mailspring-exports';
+import { React, PropTypes, Actions, Message } from 'mailspring-exports';
 
 const buttonTimer = 500;
 
@@ -42,9 +42,11 @@ class OutboxDeleteButton extends React.Component {
   };
 
   render() {
-    if(!this.props.selection.items().every(selection => {
-      return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
-    })){
+    if (
+      !this.props.selection.items().every(selection => {
+        return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
+      })
+    ) {
       return null;
     }
     return (
@@ -54,10 +56,12 @@ class OutboxDeleteButton extends React.Component {
         title="Cancel"
         onClick={this._onDestroySelected}
       >
-        <RetinaImg name={'trash.svg'}
-                   style={{ width: 24, height: 24 }}
-                   isIcon
-                   mode={RetinaImg.Mode.ContentIsMask}/>
+        <RetinaImg
+          name={'trash.svg'}
+          style={{ width: 24, height: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </button>
     );
   }
@@ -115,9 +119,11 @@ class ReSendButton extends React.Component {
 
   render() {
     const items = this.props.selection.items();
-    if(!items.every(selection => {
-      return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
-    })){
+    if (
+      !items.every(selection => {
+        return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
+      })
+    ) {
       return null;
     }
     return (
@@ -127,10 +133,12 @@ class ReSendButton extends React.Component {
         title="Resend"
         onClick={this._onResendDrafts}
       >
-        <RetinaImg name={'refresh.svg'}
-                   style={{ width: 24, height: 24 }}
-                   isIcon
-                   mode={RetinaImg.Mode.ContentIsMask}/>
+        <RetinaImg
+          name={'sent.svg'}
+          style={{ width: 24, height: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </button>
     );
   }
@@ -139,7 +147,10 @@ class ReSendButton extends React.Component {
     if (!this.state.isDeleting && !this._deletingTimer) {
       this._changeBackToNotDeleting();
       this.setState({ isDeleting: true });
-      Actions.resendDrafts({ messages: this.props.selection.items(), source: 'OutboxToolbar:ResendDraft' });
+      Actions.resendDrafts({
+        messages: this.props.selection.items(),
+        source: 'OutboxToolbar:ResendDraft',
+      });
       this.props.selection.clear();
     }
     return;

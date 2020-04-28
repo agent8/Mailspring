@@ -7,12 +7,12 @@ import _ from 'underscore';
 const { Matcher, AttributeJoinedData, AttributeCollection } = Attributes;
 
 const isCrossDBAttr = attr => {
-  return attr && (typeof attr.crossDBKey === 'function');
+  return attr && typeof attr.crossDBKey === 'function';
 };
 
 // This is loosely used as the default count/primary field.
 const findPseudoPrimaryKey = attrs => {
-  if (!Array.isArray(attrs)){
+  if (!Array.isArray(attrs)) {
     console.log('attrs is not array');
     return null;
   }
@@ -76,7 +76,7 @@ export default class ModelQuery {
     this._finalized = { main: false };
     const attrs = Object.values(this._klass.main.attributes);
     this._pseudoPrimaryKey = { main: findPseudoPrimaryKey(attrs) || 'pid' };
-    this._mustSelectFields = { main: attrs.filter(attr => attr.mergeIntoModel)};
+    this._mustSelectFields = { main: attrs.filter(attr => attr.mergeIntoModel) };
     this.parseCrossJoinDBs(attrs);
   }
 
@@ -98,7 +98,7 @@ export default class ModelQuery {
             this._crossDB.connections[key].modelKeys.push(attr.modelKey);
             this._crossDB.connections[key].columnKeys.push(attr.tableColumn);
           }
-          if(!this._crossDB.link[key]){
+          if (!this._crossDB.link[key]) {
             this._crossDB.link[key] = false;
           }
           if (!Array.isArray(this._crossDB.valueCache[attr.joinModelJsonKey])) {
@@ -106,7 +106,8 @@ export default class ModelQuery {
           }
           if (!this._klass[key]) {
             this._klass[key] = attr.itemClass;
-            this._pseudoPrimaryKey[key] = findPseudoPrimaryKey(Object.values(attr.itemClass.attributes)) || 'id';
+            this._pseudoPrimaryKey[key] =
+              findPseudoPrimaryKey(Object.values(attr.itemClass.attributes)) || 'id';
           }
           if (!Array.isArray(this._includeJoinedData[key])) {
             this._includeJoinedData[key] = [];
@@ -170,7 +171,7 @@ export default class ModelQuery {
     q._crossDB = Object.assign({}, JSON.parse(JSON.stringify(this._crossDB)));
     const attrs = Object.values(q._klass.main.attributes);
     q._pseudoPrimaryKey = { main: findPseudoPrimaryKey(attrs) || 'id' };
-    q._mustSelectFields = { main: attrs.filter(attr => attr.mergeIntoModel)};
+    q._mustSelectFields = { main: attrs.filter(attr => attr.mergeIntoModel) };
     return q;
   }
 
@@ -227,22 +228,20 @@ export default class ModelQuery {
       // Support a shorthand format of {id: '123', accountId: '123'}
       for (const key of Object.keys(matchers)) {
         const value = matchers[key];
-          const attr = this._klass[dbKey].attributes[key];
-          if (!attr) {
-            const msg = `Cannot create where clause \`${key}:${value}\`. ${key} is not an attribute of ${
-              this._klass[dbKey].name
-            }`;
-            throw new Error(msg);
-          }
-          if (isCrossDBAttr(attr)) {
-            const obj = {};
-            obj[key] = value;
-            this._matchers[attr.crossDBKey()].push(obj);
-          } else if (value instanceof Array) {
-            this._matchers.main.push(attr.in(value));
-          } else {
-            this._matchers.main.push(attr.equal(value));
-          }
+        const attr = this._klass[dbKey].attributes[key];
+        if (!attr) {
+          const msg = `Cannot create where clause \`${key}:${value}\`. ${key} is not an attribute of ${this._klass[dbKey].name}`;
+          throw new Error(msg);
+        }
+        if (isCrossDBAttr(attr)) {
+          const obj = {};
+          obj[key] = value;
+          this._matchers[attr.crossDBKey()].push(obj);
+        } else if (value instanceof Array) {
+          this._matchers.main.push(attr.in(value));
+        } else {
+          this._matchers.main.push(attr.equal(value));
+        }
       }
     }
     return this;
@@ -275,7 +274,7 @@ export default class ModelQuery {
   //
   include(attr) {
     let dbKey = 'main';
-    if(isCrossDBAttr(attr)){
+    if (isCrossDBAttr(attr)) {
       dbKey = attr.crossDBKey();
     }
     this._assertNotFinalized(dbKey);
@@ -385,7 +384,7 @@ export default class ModelQuery {
     this._count[dbKey] = true;
     return this;
   }
-  isIdsOnly(dbKey = 'main'){
+  isIdsOnly(dbKey = 'main') {
     return this._returnIds[dbKey];
   }
 
@@ -419,12 +418,15 @@ export default class ModelQuery {
     }
 
     if (this._count[dbKey]) {
-      console.log(`returning only count ${dbKey}`);
+      // console.log(`returning only count ${dbKey}`);
       return result[0].count / 1;
     }
     if (this._returnIds[dbKey]) {
       // console.log(`returning only Ids ${dbKey}`);
-      return result.map(row => row[(this._pseudoPrimaryKey[dbKey] && this._pseudoPrimaryKey[dbKey].modelKey) || 'id']);
+      return result.map(
+        row =>
+          row[(this._pseudoPrimaryKey[dbKey] && this._pseudoPrimaryKey[dbKey].modelKey) || 'id']
+      );
     }
 
     try {
@@ -439,12 +441,12 @@ export default class ModelQuery {
           }
           if (attr.mergeIntoModel) {
             const dataString = row[attr.tableColumn];
-            if(typeof dataString !== 'string' || dataString.length === 0){
+            if (typeof dataString !== 'string' || dataString.length === 0) {
               continue;
             }
             try {
               const tmp = JSON.parse(dataString);
-              if(tmp.__cls){
+              if (tmp.__cls) {
                 object = Utils.convertToModel(tmp);
               } else {
                 object.mergeFromColumn(tmp);
@@ -475,8 +477,13 @@ export default class ModelQuery {
             }
           }
         } else if (dbKey !== 'main') {
-          const { modelKeys, joinModelJsonKey, joinTableKey, columnKeys} = this._crossDB.connections[dbKey];
-          for(let i = 0; i<modelKeys.length; i++){
+          const {
+            modelKeys,
+            joinModelJsonKey,
+            joinTableKey,
+            columnKeys,
+          } = this._crossDB.connections[dbKey];
+          for (let i = 0; i < modelKeys.length; i++) {
             const modelKey = modelKeys[i];
             const columnKey = columnKeys[i];
             const replaceObj =
@@ -531,16 +538,20 @@ export default class ModelQuery {
     if (this._count[dbKey]) {
       result = `COUNT(*) as count`;
     } else if (this._returnIds[dbKey]) {
-      result = `\`${this._klass[dbKey].name}\`.\`${this._pseudoPrimaryKey[dbKey].modelKey || 'id'}\``;
+      result = `\`${this._klass[dbKey].name}\`.\`${this._pseudoPrimaryKey[dbKey].modelKey ||
+        'id'}\``;
     } else {
       if (dbKey === 'main') {
-        result = this._mustSelectFields[dbKey].map(attr => {
-          return `\`${this._klass[dbKey].name}\`.\`${attr.modelKey}\``;
-        }).join(',');
+        result = this._mustSelectFields[dbKey]
+          .map(attr => {
+            return `\`${this._klass[dbKey].name}\`.\`${attr.modelKey}\``;
+          })
+          .join(',');
       } else {
         result = `\`${this._klass[dbKey].name}\`.\`${this._crossDB.connections[dbKey].joinTableKey}\``;
       }
-      const noDefaultSelect = this._mustSelectFields[dbKey] && this._mustSelectFields[dbKey].length === 0;
+      const noDefaultSelect =
+        this._mustSelectFields[dbKey] && this._mustSelectFields[dbKey].length === 0;
       for (const attrName of Object.keys(this._klass[dbKey].attributes)) {
         const attr = this._klass[dbKey].attributes[attrName];
         if (!attr.needsColumn() || !attr.loadFromColumn || attr.ignore || attr.mergeIntoModel) {
@@ -549,7 +560,9 @@ export default class ModelQuery {
         // get data from inner join table
         if (attr.modelTable && attr.modelTable !== this._klass[dbKey].name) {
           let tableRef = this._getMuidByJoinTableName(allMatchers, attr.modelTable);
-          result += `, \`${tableRef ? tableRef : this._klass[dbKey].name}\`.\`${attr.tableColumn}\` `;
+          result += `, \`${tableRef ? tableRef : this._klass[dbKey].name}\`.\`${
+            attr.tableColumn
+          }\` `;
         } else {
           result += `, \`${this._klass[dbKey].name}\`.\`${attr.tableColumn}\` `;
         }
@@ -558,7 +571,7 @@ export default class ModelQuery {
         result = result.slice(1);
       }
       this._includeJoinedData[dbKey].forEach(attr => {
-        if(!attr.ignore){
+        if (!attr.ignore) {
           result += `, ${attr.selectSQL(this._klass[dbKey])} `;
         }
       });
@@ -577,7 +590,7 @@ export default class ModelQuery {
     const order = this._count[dbKey] ? '' : this._orderClause(dbKey);
 
     let limit = '';
-    if(!this._range[dbKey]){
+    if (!this._range[dbKey]) {
       console.error(`range: ${Object.keys(this._range).join(',')}`);
       console.error(`klass: ${Object.keys(this._klass).join(',')}`);
       console.error(`crossDB: ${Object.keys(this._crossDB).join(',')}`);
@@ -597,16 +610,13 @@ export default class ModelQuery {
     //
     if (joins.length === 1 && this._canSubselectForJoin(joins[0], allMatchers, dbKey)) {
       // console.warn(`They used to use subselect sql`);
-    //   const subSql = this._subselectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
-    //   return `SELECT ${distinct} ${selectSql} FROM \`${
-    //     this._klass[dbKey].name
-    //     }\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
+      //   const subSql = this._subselectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
+      //   return `SELECT ${distinct} ${selectSql} FROM \`${
+      //     this._klass[dbKey].name
+      //     }\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
     }
 
-
-    return `SELECT ${distinct} ${selectSql} FROM \`${
-      this._klass[dbKey].name
-      }\` ${whereSql} ${order} ${limit}`;
+    return `SELECT ${distinct} ${selectSql} FROM \`${this._klass[dbKey].name}\` ${whereSql} ${order} ${limit}`;
   }
 
   // If one of our matchers requires a join, and the attribute configuration lists
@@ -664,7 +674,7 @@ export default class ModelQuery {
     });
     const joinedDataTableNames = [];
     this._includeJoinedData[dbKey].forEach(attr => {
-      if(!joinedDataTableNames.includes(attr.tableName())){
+      if (!joinedDataTableNames.includes(attr.tableName())) {
         joinedDataTableNames.push(attr.tableName());
         const join = attr.includeSQL(this._klass[dbKey]);
         if (join) {
@@ -691,7 +701,7 @@ export default class ModelQuery {
         // console.log(`where clause for auxDB: ${linkMainDB}`);
         sql += ` WHERE ${linkMainDB} AND ${wheres.join(' AND ')}`;
       }
-    } else if (wheres.length === 0 && (dbKey !== 'main')) {
+    } else if (wheres.length === 0 && dbKey !== 'main') {
       const modelKey = this._crossDB.connections[dbKey].joinModelJsonKey;
       const mainDBIds = this._crossDB.valueCache[modelKey].join(`','`);
       const linkMainDB = `\`${this._klass[dbKey].name}\`.\`${this._crossDB.connections[dbKey].joinTableKey}\` in ('${mainDBIds}')`;
