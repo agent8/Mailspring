@@ -15,6 +15,12 @@ export default class EmailAvatar extends Component {
       state.name !== newState.name ||
       (state.bgColor !== newState.bgColor && !state.hasImage)
     ) {
+      if (
+        props.thread &&
+        (!Array.isArray(props.thread.__messages) || props.thread.__messages.length === 0)
+      ) {
+        return null;
+      }
       return newState;
     }
     return null;
