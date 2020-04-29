@@ -23,6 +23,7 @@ import AddAnotherAccountPage from './page-account-add-another';
 import GdprTerms from './page-gdpr-terms';
 import LoginPage from './page-login';
 import SorryPage from './page-sorry';
+import OptinTrendsResearchPage from './page-optin-trends-research';
 
 const PageComponents = {
   login: LoginPage,
@@ -30,7 +31,7 @@ const PageComponents = {
   welcome: WelcomePage,
   tutorial: TutorialPage,
   authenticate: AuthenticatePage,
-  'account-choose': AccountChoosePage,
+  'account-choose': InitialPreferencesProfilePage,
   'account-settings': AccountSettingsPage,
   'account-settings-gmail': AccountSettingsPageGmail,
   'account-settings-office365': AccountSettingsPageOffice365,
@@ -46,6 +47,7 @@ const PageComponents = {
   'initial-done': InitialDonePage,
   'gdpr-terms': GdprTerms,
   'login-error': LoginErrorPage,
+  'optin-trends-research': OptinTrendsResearchPage,
 };
 
 export default class OnboardingRoot extends React.Component {
