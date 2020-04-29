@@ -234,7 +234,7 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
       return;
     }
     const ts = Math.floor(date.getTime() / 1000);
-    this._result = `(\`${this._className}\`.\`lastMessageReceivedTimestamp\` ${comparator} ${ts})`;
+    this._result = `(SELECT \`lastDate\` FROM \`ThreadCategory\` WHERE \`ThreadCategory\`.\`threadId\` = \`${this._className}\`.\`pid\`) ${comparator} ${ts}`;
   }
 
   visitMatch(node) {
