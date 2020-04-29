@@ -27,6 +27,7 @@ class ContactStore extends MailspringStore {
   //
   searchContacts(_search, options = {}) {
     const limit = Math.max(options.limit ? options.limit : 10, 0);
+    const displayLimit = Math.max(options.displayLimit ? options.displayLimit : limit, 0);
     const search = _search.toLowerCase();
 
     const accountCount = AccountStore.accounts().length;
@@ -60,8 +61,8 @@ class ContactStore extends MailspringStore {
       for (const ext of extensions) {
         results = await ext.findAdditionalContacts(search, results);
       }
-      if (results.length > limit) {
-        results.length = limit;
+      if (results.length > displayLimit) {
+        results.length = displayLimit;
       }
       if (options.filterRobotContact) {
         return results.filter(c => !this.isRobotContact(c));
