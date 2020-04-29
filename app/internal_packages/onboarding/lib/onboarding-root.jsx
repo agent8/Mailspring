@@ -31,7 +31,7 @@ const PageComponents = {
   welcome: WelcomePage,
   tutorial: TutorialPage,
   authenticate: AuthenticatePage,
-  'account-choose': InitialPreferencesProfilePage,
+  'account-choose': AccountChoosePage,
   'account-settings': AccountSettingsPage,
   'account-settings-gmail': AccountSettingsPageGmail,
   'account-settings-office365': AccountSettingsPageOffice365,
