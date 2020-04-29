@@ -15,19 +15,19 @@ export default class AccountChoosePage extends React.Component {
   componentDidMount() {
     // facebook tracking: add account
     // first time open app and add account
-    if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
-      AppEnv.trackingEvent('Invite-AddAccount');
-    } else {
-      AppEnv.trackingEvent('AddAccount');
-    }
+    // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+    //   AppEnv.trackingEvent('Invite-AddAccount');
+    // } else {
+    AppEnv.trackingEvent('AddAccount');
+    // }
   }
 
   chooseAccountProvider(provider) {
-    if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
-      AppEnv.trackingEvent('Invite-ChooseAccountProvider', { provider });
-    } else {
-      AppEnv.trackingEvent('ChooseAccountProvider', { provider });
-    }
+    // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+    //   AppEnv.trackingEvent('Invite-ChooseAccountProvider', { provider });
+    // } else {
+    AppEnv.trackingEvent('ChooseAccountProvider', { provider });
+    // }
     OnboardingActions.chooseAccountProvider(provider);
   }
 

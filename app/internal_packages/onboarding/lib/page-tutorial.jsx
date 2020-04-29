@@ -67,6 +67,7 @@ export default class TutorialPage extends React.Component {
   }
 
   _onNextUnseen = () => {
+    AppEnv.trackingEvent('NewUser-IntroDone');
     OnboardingActions.moveToPage('authenticate');
   };
 
