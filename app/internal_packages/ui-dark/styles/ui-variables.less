@@ -38,8 +38,6 @@
 @text-color-link-hover: @accent-primary-dark;
 @text-color-link-active: @accent-primary-dark;
 
-@text-color-search-match: #00f;
-
 @btn-default-bg-color: lighten(@background-primary, 5%);
 @dropdown-default-bg-color: #404040;
 @dropdown-default-hover-bg-color: @active;
@@ -90,6 +88,11 @@ img.content-light {
 
 .preferences-wrap .section.basic-info input::placeholder {
   color: fadeout(@gray-lighter, 80%) !important;
+}
+
+search-match,
+.search-match {
+  color: @black;
 }
 
 @input-search-bg: @cards;
