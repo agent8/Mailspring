@@ -1,9 +1,7 @@
 const React = require('react');
 const PropTypes = require('prop-types');
-const path = require('path');
-const fs = require('fs');
-const { RetinaImg, Flexbox, ConfigPropContainer, LottieImg } = require('mailspring-component-kit');
-const { AccountStore, IdentityStore } = require('mailspring-exports');
+const { RetinaImg, Flexbox, ConfigPropContainer } = require('mailspring-component-kit');
+const { AccountStore, Utils } = require('mailspring-exports');
 const OnboardingActions = require('./onboarding-actions').default;
 
 // NOTE: Temporarily copied from preferences module
@@ -121,6 +119,10 @@ class InitialPreferencesProfilePage extends React.Component {
       AppEnv.trackingEvent('Onboarding-Profile-show');
     } else {
       AppEnv.trackingEvent('Onboarding-Profile-hide');
+    }
+    if (!Utils.needGDPR()) {
+      OnboardingActions.moveToPage('optin-trends-research');
+      return;
     }
     OnboardingActions.moveToPage('initial-done');
   };
