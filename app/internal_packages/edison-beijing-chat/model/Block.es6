@@ -3,7 +3,7 @@ const Model = Sequelize.Model;
 const db = require('../db/index').default;
 const { tableCompletedSync } = require('../utils/databaseCompleteInt');
 
-export default class Block extends Model { }
+export default class Block extends Model {}
 Block.init(
   {
     curJid: {
@@ -14,11 +14,6 @@ Block.init(
     },
   },
   {
-    indexes: [
-      {
-        fields: ['curJid'],
-      },
-    ],
     sequelize: db,
     modelName: 'block',
   }
