@@ -229,7 +229,7 @@ export default class ParticipantsTextField extends React.Component {
           tokenIsValid={p => ContactStore.isValidContact(p)}
           tokenRenderer={TokenRenderer}
           onRequestCompletions={input =>
-            ContactStore.searchContacts(input, { filterRobotContact: true })
+            ContactStore.searchContacts(input, { filterRobotContact: true, displayLimit: 5 })
           }
           shouldBreakOnKeydown={this._shouldBreakOnKeydown}
           onInputTrySubmit={this._onInputTrySubmit}
