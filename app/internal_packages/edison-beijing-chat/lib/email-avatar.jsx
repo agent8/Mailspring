@@ -94,9 +94,9 @@ export default class EmailAvatar extends Component {
           const message = messages[i];
           const account = AccountStore.accountForId(message.accountId);
           let from = message.from;
-          if (account && Array.isArray(from)) {
+          if (account && Array.isArray(from) && from.length > 0) {
             from = message.from[0];
-            if (!account.isMyEmail(from.email)) {
+            if (from && !account.isMyEmail(from.email)) {
               return message;
             }
           }
@@ -112,10 +112,12 @@ export default class EmailAvatar extends Component {
       const messages = props.thread.__messages;
       if (messages && messages.length) {
         let message = EmailAvatar._findLastMessage(props, messages);
-        from = message.from && message.from[0];
-        let to = message.to && message.to[0];
-        if (!from && to) {
-          from = to;
+        if (message) {
+          from = message.from && message.from[0];
+          let to = message.to && message.to[0];
+          if (!from && to) {
+            from = to;
+          }
         }
         from = EmailAvatar._parseAvatarForSendMessage(messages, from, props);
       }
@@ -127,7 +129,7 @@ export default class EmailAvatar extends Component {
       if (!from && to) {
         from = to;
       }
-    } else if (props.from) {
+    } else if (props.from && props.from.displayName) {
       from = {
         name: props.from && props.from.displayName({ compact: true }),
         email: props.from.email,
@@ -143,12 +145,15 @@ export default class EmailAvatar extends Component {
         email: props.email,
       };
     }
+    if (!from) {
+      from = {};
+    }
     const state = {
       name: (from.name || from.email || ' ')
         .trim()
         .substring(0, 1)
         .toUpperCase(),
-      email: from.email,
+      email: from.email || ' ',
     };
     if (props.number) {
       state.name = props.number;
@@ -165,10 +170,13 @@ export default class EmailAvatar extends Component {
       const cats = currentPerspective.categories();
       if (cats.length > 0 && cats[0].role === 'sent') {
         const message = EmailAvatar._findLatestSendMessage(messages);
-        const to = message.to && message.to[0];
-        const cc = message.cc && message.cc[0];
-        const bcc = message.bcc && message.bcc[0];
-        from = to || cc || bcc;
+        if (message) {
+          const to = message.to && message.to[0];
+          const cc = message.cc && message.cc[0];
+          const bcc = message.bcc && message.bcc[0];
+          from = to || cc || bcc || {};
+          console.log('using last sent');
+        }
       }
     }
     return from;
@@ -179,20 +187,26 @@ export default class EmailAvatar extends Component {
       if (!sendMessage) {
         sendMessage = newMessage;
       } else {
-        if (newMessage.date.getTime() > sendMessage.date.getTime()) {
+        if (
+          newMessage.date &&
+          sendMessage.date &&
+          newMessage.date.getTime() > sendMessage.date.getTime()
+        ) {
           sendMessage = newMessage;
         }
       }
     };
     messages.forEach(message => {
-      if (!message.from || message.from.length === 0) {
-        replaceSendMessage(message);
-      } else {
-        const email = message.from[0].email;
-        const account = AccountStore.accountForEmail(email);
-        if (account) {
-          if (account.id === message.accountId) {
-            replaceSendMessage(message);
+      if (message) {
+        if (!message.from || message.from.length === 0) {
+          replaceSendMessage(message);
+        } else {
+          const email = message.from[0].email;
+          const account = AccountStore.accountForEmail(email);
+          if (account) {
+            if (account.id === message.accountId) {
+              replaceSendMessage(message);
+            }
           }
         }
       }
