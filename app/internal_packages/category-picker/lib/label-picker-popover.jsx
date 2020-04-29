@@ -139,10 +139,12 @@ export default class LabelPickerPopover extends Component {
       const tasks = this.tasks;
       // get remove label tasks and add label tasks
       for (const k in tasks) {
-        if (tasks[k].action === 'Add') {
-          addedLabels.push(tasks[k].label);
-        } else if (tasks[k].action === 'Remove') {
-          removedLabels.push(tasks[k].label);
+        if (tasks[k].label.isLabel()) {
+          if (tasks[k].action === 'Add') {
+            addedLabels.push(tasks[k].label);
+          } else if (tasks[k].action === 'Remove') {
+            removedLabels.push(tasks[k].label);
+          }
         }
       }
       if (addedLabels.length > 0 || removedLabels.length > 0) {
