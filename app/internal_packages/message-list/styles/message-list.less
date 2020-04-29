@@ -694,7 +694,7 @@ body.platform-win32 {
       width: 100%;
       .participants-to {
         display: flex;
-        flex-wrap: wrap-reverse;
+        flex-wrap: wrap;
       }
     }
   }
@@ -906,6 +906,11 @@ body.platform-win32 {
   display: flex;
   transition: padding-left 150ms;
   transition-timing-function: ease-in-out;
+  &.from-participants {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
   &.collapsed:hover {
     cursor: default;
