@@ -7,7 +7,6 @@ const {
   PropTypes,
   AccountStore,
   WorkspaceStore,
-  Folder,
   CategoryStore,
 } = require('mailspring-exports');
 
@@ -38,7 +37,9 @@ class MovePicker extends React.Component {
     this.state = {
       createFolderPopoverVisible: false,
       moveFolderPopoutVisible: false,
-      isFolder: CategoryStore.getInboxCategory(this._account) ? CategoryStore.getInboxCategory(this._account).isFolder() : false,
+      isFolder: CategoryStore.getInboxCategory(this._account)
+        ? CategoryStore.getInboxCategory(this._account).isFolder()
+        : false,
     };
   }
 
@@ -90,7 +91,11 @@ class MovePicker extends React.Component {
     if (!threadListAnchor || !inThreadList) {
       return;
     }
-    this._onOpenLabelsPopover(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+    this._onOpenLabelsPopover(
+      null,
+      threadListAnchor,
+      threadSelectionScope(this.props, this.selection)
+    );
   };
   _onMessageListOpenLabelsPopover = event => {
     const inMessageList = this.props.position === 'messageList';
@@ -226,7 +231,11 @@ class MovePicker extends React.Component {
     if (!inThreadList || !threadListAnchor) {
       return;
     }
-    this._onOpenMovePopover(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+    this._onOpenMovePopover(
+      null,
+      threadListAnchor,
+      threadSelectionScope(this.props, this.selection)
+    );
   };
 
   _onShortcutOpenMovePopover = event => {

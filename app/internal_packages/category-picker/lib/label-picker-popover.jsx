@@ -2,12 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Menu, RetinaImg, LabelColorizer, BoldedSearchResult } from 'mailspring-component-kit';
-import {
-  Utils,
-  Actions,
-  Label,
-  ChangeLabelsTask,
-} from 'mailspring-exports';
+import { Utils, Actions, ChangeLabelsTask } from 'mailspring-exports';
 import { Categories } from 'mailspring-observables';
 
 export default class LabelPickerPopover extends Component {
@@ -117,7 +112,7 @@ export default class LabelPickerPopover extends Component {
       // });
       this.tasks[item.category.path] = {
         label: item.category,
-        action: 'Remove'
+        action: 'Remove',
       };
       item.usage = 0;
     } else {
@@ -129,7 +124,7 @@ export default class LabelPickerPopover extends Component {
       // });
       this.tasks[item.category.path] = {
         label: item.category,
-        action: 'Add'
+        action: 'Add',
       };
       item.usage = threads.length;
     }
@@ -150,12 +145,12 @@ export default class LabelPickerPopover extends Component {
           removedLabels.push(tasks[k].label);
         }
       }
-      if(addedLabels.length > 0 || removedLabels.length > 0){
+      if (addedLabels.length > 0 || removedLabels.length > 0) {
         const task = new ChangeLabelsTask({
           source: 'Category Picker: Existing Category',
-            threads: this.props.threads,
-            labelsToRemove: removedLabels,
-            labelsToAdd: addedLabels,
+          threads: this.props.threads,
+          labelsToRemove: removedLabels,
+          labelsToAdd: addedLabels,
         });
         Actions.queueTask(task);
       }
@@ -167,7 +162,7 @@ export default class LabelPickerPopover extends Component {
     if (typeof this.props.onActionCallback === 'function') {
       this.props.onActionCallback({ addedLabels, removedLabels });
     }
-  }
+  };
 
   _onSearchValueChange = event => {
     this.setState(this._recalculateState(this.props, { searchValue: event.target.value }));
@@ -250,7 +245,9 @@ export default class LabelPickerPopover extends Component {
   render() {
     const { categoryData } = this.state;
     const headerComponents = [
-      <div key="headerText" className="header-text">Add label...</div>,
+      <div key="headerText" className="header-text">
+        Add label...
+      </div>,
       <input
         type="text"
         tabIndex="1"
@@ -263,11 +260,19 @@ export default class LabelPickerPopover extends Component {
     ];
 
     let footerComponents = [
-      <div key="footer" className="category-item category-create-new" onClick={this._onApplyChanges}>Save Changes</div>
+      <div
+        key="footer"
+        className="category-item category-create-new"
+        onClick={this._onApplyChanges}
+      >
+        Save Changes
+      </div>,
     ];
 
-    if (!categoryData
-      || (categoryData.length === 1 && categoryData[0].id === 'category-create-new')) {
+    if (
+      !categoryData ||
+      (categoryData.length === 1 && categoryData[0].id === 'category-create-new')
+    ) {
       footerComponents = [];
     }
 
