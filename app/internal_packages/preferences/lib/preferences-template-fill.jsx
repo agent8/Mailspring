@@ -41,11 +41,11 @@ const preferencesTemplateFill = {
         {
           groupName: 'EMAIL',
           groupItem: [
-            {
-              label: 'Make Edison Mail your default mail client',
-              component: DefaultMailClientItem,
-              keywords: [],
-            },
+            // {
+            //   label: 'Make Edison Mail your default mail client',
+            //   component: DefaultMailClientItem,
+            //   keywords: [],
+            // },
             {
               label: 'Launch on system start',
               component: LaunchSystemStartItem,
