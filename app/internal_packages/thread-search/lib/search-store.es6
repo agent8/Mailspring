@@ -13,7 +13,6 @@ class SearchStore extends MailspringStore {
     super();
 
     this._searchQuery = FocusedPerspectiveStore.current().searchQuery || '';
-    this._preSearchQuery = this._searchQuery;
     this._isSearching = false;
 
     this.listenTo(WorkspaceStore, this._onWorkspaceChange);
@@ -72,7 +71,7 @@ class SearchStore extends MailspringStore {
         this._perspectiveBeforeSearch = current;
       }
       const next = new SearchMailboxPerspective(current, this._searchQuery);
-      Actions.focusMailboxPerspective(next);
+      Actions.focusMailboxPerspective(next, true);
     } else if (current instanceof SearchMailboxPerspective) {
       if (this._perspectiveBeforeSearch) {
         Actions.focusMailboxPerspective(this._perspectiveBeforeSearch);
@@ -86,12 +85,9 @@ class SearchStore extends MailspringStore {
 
   _onQuerySubmitted = (query, forceQuery) => {
     if (query !== this._searchQuery || forceQuery) {
-      if (query !== this._preSearchQuery || !query) {
-        this._preSearchQuery = query;
-        this._searchQuery = query;
-        this.trigger();
-        this._processAndSubmitQuery(forceQuery);
-      }
+      this._searchQuery = query;
+      this.trigger();
+      this._processAndSubmitQuery(forceQuery);
     }
   };
 }
