@@ -14,7 +14,7 @@ import DiskUsageNotification from './items/disk-usage-notification';
 import FocusedInboxNotif from './items/focused-inbox-notif';
 
 const notifications = [
-  DefaultClientNotification,
+  // DefaultClientNotification,
   UnstableChannelNotification,
   DevModeNotification,
   PleaseSubscribeNotification,
