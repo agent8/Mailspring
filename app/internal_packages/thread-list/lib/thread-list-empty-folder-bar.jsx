@@ -2,12 +2,10 @@ import { ListensToFluxStore, RetinaImg } from 'mailspring-component-kit';
 import {
   Actions,
   React,
-  Folder,
   PropTypes,
   TaskQueue,
   ExpungeAllInFolderTask,
   FocusedPerspectiveStore,
-  ThreadCountsStore,
 } from 'mailspring-exports';
 import { remote } from 'electron';
 
@@ -17,12 +15,12 @@ class ThreadListEmptyFolderBar extends React.Component {
   static propTypes = {
     role: PropTypes.string,
     folders: PropTypes.array,
-    count: PropTypes.number,
+    total: PropTypes.number,
     busy: PropTypes.bool,
   };
 
   _onClick = () => {
-    const { folders, count } = this.props;
+    const { folders, total } = this.props;
     remote.dialog
       .showMessageBox({
         type: 'question',
@@ -30,9 +28,9 @@ class ThreadListEmptyFolderBar extends React.Component {
         defaultId: 1,
         cancelId: 0,
         message: 'Are you sure?',
-        detail: `This action will permanently affect ${(count / 1).toLocaleString()} ${
-          count > 1 ? 'messages' : 'message'
-          }. Are you sure you want to continue?`,
+        detail: `This action will permanently affect ${(total / 1).toLocaleString()} ${
+          total > 1 ? 'messages' : 'message'
+        }. Are you sure you want to continue?`,
       })
       .then(({ response = 0 } = {}) => {
         if (response === 0) {
@@ -51,16 +49,14 @@ class ThreadListEmptyFolderBar extends React.Component {
   };
 
   render() {
-    const { role, count, busy } = this.props;
-    if (!role || count === 0) {
+    const { role, busy, total } = this.props;
+    if (!role || total === 0) {
       return false;
     }
-    const term = role === 'trash' ? 'deleted' : role;
-
     return (
       <div className="thread-list-empty-folder-bar">
         <div className="notice">
-          {`${(count / 1).toLocaleString()} ${count > 1 ? 'messages' : 'message'} in ${role}`}
+          {`${(total / 1).toLocaleString()} ${total > 1 ? 'messages' : 'message'} in ${role}`}
         </div>
         {busy ? (
           <div className="btn">
@@ -71,15 +67,15 @@ class ThreadListEmptyFolderBar extends React.Component {
             />
           </div>
         ) : (
-            <div className="btn" onClick={this._onClick}>{`Delete all ${role} messages now.`}</div>
-          )}
+          <div className="btn" onClick={this._onClick}>{`Delete all ${role} messages now.`}</div>
+        )}
       </div>
     );
   }
 }
 
 export default ListensToFluxStore(ThreadListEmptyFolderBar, {
-  stores: [TaskQueue, ThreadCountsStore, FocusedPerspectiveStore],
+  stores: [TaskQueue, FocusedPerspectiveStore],
   getStateFromStores: props => {
     const p = FocusedPerspectiveStore.current();
     const folders = (p && p.categories()) || [];
@@ -92,16 +88,17 @@ export default ListensToFluxStore(ThreadListEmptyFolderBar, {
     }
 
     return {
+      total: props.total ? props.total : 0,
       folders,
       role: folders[0].role,
       busy: false,
       // TaskQueue.findTasks(ExpungeAllInFolderTask).some(t =>
       //   folders.map(f => f.accountId).includes(t.accountId)
       // ) > 0,
-      count: folders.reduce(
-        (sum, { id }) => sum + ThreadCountsStore.totalCountForCategoryId(id),
-        0
-      ),
+      // count: folders.reduce(
+      //   (sum, { id }) => sum + ThreadCountsStore.totalCountForCategoryId(id),
+      //   0
+      // ),
     };
   },
 });
