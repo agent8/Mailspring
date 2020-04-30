@@ -737,6 +737,12 @@ export default class Application extends EventEmitter {
     const done = () => {
       if (!process.mas) {
         app.relaunch();
+      } else {
+        dialog.showMessageBoxSync({
+          type: 'info',
+          buttons: ['Okay'],
+          message: 'Please restart Edison Mail manually.',
+        });
       }
       app.quit();
     };
@@ -776,6 +782,12 @@ export default class Application extends EventEmitter {
       .then(() => {
         if (!process.mas) {
           app.relaunch();
+        } else {
+          dialog.showMessageBoxSync({
+            type: 'info',
+            buttons: ['Okay'],
+            message: 'Please restart Edison Mail manually.',
+          });
         }
         app.quit();
       });
@@ -1089,8 +1101,7 @@ export default class Application extends EventEmitter {
         if (onboardingWindow) {
           onboardingWindow.sendMessage('oauth-redirect-url', { url });
         }
-      }
-      else {
+      } else {
         this.openUrl(urlToOpen);
       }
       event.preventDefault();
