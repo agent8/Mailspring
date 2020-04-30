@@ -73,6 +73,7 @@ class SearchStore extends MailspringStore {
       const next = new SearchMailboxPerspective(current, this._searchQuery);
       Actions.focusMailboxPerspective(next, true);
     } else if (current instanceof SearchMailboxPerspective) {
+      this._isSearching = false;
       if (this._perspectiveBeforeSearch) {
         Actions.focusMailboxPerspective(this._perspectiveBeforeSearch);
         this._perspectiveBeforeSearch = null;
