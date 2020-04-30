@@ -637,7 +637,7 @@ export function buildJiraAuthURL() {
     `audience=api.atlassian.com&client_id=${JIRA_CLIENT_ID}` +
     `&scope=${encodeURIComponent(JIRA_SCOPES.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}` +
-    `&state=${EDISON_OAUTH_KEYWORD}&response_type=code&prompt=consenta`
+    `&state=${EDISON_OAUTH_KEYWORD}&response_type=code&prompt=consent`
   );
 }
 
