@@ -793,22 +793,21 @@
     },
     "edisonmail": {
         "domain-match": [
-            "edisonmail\\.com",
             "onmail\\.com"
         ],
         "servers": {
             "imap": [
                 {
-                    "hostname": "imap.edsionmail.com",
+                    "hostname": "imap.onmail.com",
                     "port": 993,
                     "ssl": true
                 }
             ],
             "smtp": [
                 {
-                    "hostname": "smtp.edsionmail.com",
-                    "port": 587,
-                    "starttls": true
+                    "hostname": "smtp.onmail.com",
+                    "port": 465,
+                    "ssl": true
                 }
             ]
         }
@@ -970,6 +969,7 @@
         }
     },
     "fastmail.com": {
+        "alias-support": true,
         "domain-match": [
             "fastmail\\.com"
         ],
@@ -2286,13 +2286,13 @@
     "office365": {
         "auto-copy-to-sent": true,
         "domain-match": [
-            "office365\\.com",
-            "onmicrosoft\\.com"
+            "(.+\\.)?office365\\.com",
+            "(.+\\.)?onmicrosoft\\.com"
         ],
         "mailboxes": {
             "drafts": "Drafts",
             "sentmail": "Sent Items",
-            "spam": "EdoJunk",
+            "spam": "Junk Email",
             "trash": "Deleted Items"
         },
         "servers": {
@@ -2522,7 +2522,7 @@
             "allmail": "Archive",
             "drafts": "Drafts",
             "sentmail": "Sent Messages",
-            "spam": "EdoJunk",
+            "spam": "Junk Email",
             "trash": "Deleted"
         },
         "mx-match": [
@@ -3758,6 +3758,7 @@
         }
     },
     "yahoo": {
+        "alias-support": true,
         "auto-copy-to-sent": true,
         "domain-exclude": [
             "yahoo\\.co\\.jp"
