@@ -1,4 +1,4 @@
-import { DateUtils} from 'mailspring-exports';
+import { DateUtils } from 'mailspring-exports';
 class SearchQueryExpressionVisitor {
   constructor() {
     this._result = null;
@@ -75,7 +75,7 @@ class QueryExpression {
   equals(other) {
     throw new Error('Abstract function not implemented!', other);
   }
-  toJSON(){
+  toJSON() {
     const json = this;
     json.__cls = this.constructor.name;
     return json;
@@ -352,6 +352,10 @@ class InQueryExpression extends QueryExpression {
 class HasAttachmentQueryExpression extends QueryExpression {
   accept(visitor) {
     visitor.visitHasAttachment(this);
+  }
+
+  _computeIsMatchCompatible() {
+    return false;
   }
 
   equals(other) {
