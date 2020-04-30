@@ -164,6 +164,7 @@ const cNarrow = new ListTabular.Column({
       actions.unshift(<OutboxEditQuickAction draft={draft} key='outbox-edit-quick-action' />);
       actions.unshift(<OutboxResendQuickAction draft={draft} key='outbox-resend-quick-action' />)
     }
+    const snippet = Utils.superTrim(getSnippet(draft));
     return (
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
         <div className="icons-column">
@@ -199,7 +200,7 @@ const cNarrow = new ListTabular.Column({
             {calendar || attachment || <div className="thread-icon no-icon" />}
           </div>
           <div className="snippet-and-labels">
-            <div className="snippet">{Utils.superTrim(getSnippet(draft))}&nbsp;</div>
+            <div className="snippet">{snippet ? snippet : ' '}</div>
           </div>
         </div>
       </div>
