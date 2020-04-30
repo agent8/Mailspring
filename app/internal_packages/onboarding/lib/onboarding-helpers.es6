@@ -22,10 +22,11 @@ const queryStringify = (data, encoded = false) => {
 
 const EDISON_OAUTH_KEYWORD = 'edison_desktop';
 const EDISON_REDIRECT_URI = 'http://email.easilydo.com';
+const NEW_EDISON_REDIRECT_URI = 'https://mail.edison.tech/oauthSuccess';
 
 export const LOCAL_SERVER_PORT = 12141;
 export const LOCAL_REDIRECT_URI = `http://127.0.0.1:${LOCAL_SERVER_PORT}`;
-const GMAIL_CLIENT_ID = '533632962939-3kp63blvln9j1pjmqrtfsv9pc66nsfqn.apps.googleusercontent.com';
+const GMAIL_CLIENT_ID = '533632962939-g0m1obkdahbh4pva3rohik5skarb2pon.apps.googleusercontent.com';
 const GMAIL_SCOPES = [
   // Edison
   'https://mail.google.com/',
@@ -384,7 +385,7 @@ export async function buildGmailAccountFromAuthResponse(code) {
   const body = [];
   body.push(`code=${encodeURIComponent(code)}`);
   body.push(`client_id=${encodeURIComponent(GMAIL_CLIENT_ID)}`);
-  body.push(`redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}`);
+  body.push(`redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
   const resp = await fetch('https://www.googleapis.com/oauth2/v4/token', {
@@ -608,7 +609,7 @@ export function buildGmailAuthURL() {
     `https://accounts.google.com/o/oauth2/auth` +
     `?` +
     `client_id=${GMAIL_CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&response_type=code` +
     `&scope=${encodeURIComponent(GMAIL_SCOPES.join(' '))}` +
     `&access_type=offline` +
