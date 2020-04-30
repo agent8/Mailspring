@@ -613,6 +613,7 @@ export function buildGmailAuthURL() {
     `client_id=${GMAIL_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&response_type=code` +
+    `&prompt=consent` +
     `&scope=${encodeURIComponent(GMAIL_SCOPES.join(' '))}` +
     `&access_type=offline` +
     `&select_account%20consent`
