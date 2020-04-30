@@ -60,21 +60,29 @@ class SiftStore extends MailspringStore {
     return Rx.Observable.fromListSelection(this);
   };
   _triggerDatasource = model => {
-      Actions.forceDatabaseTrigger(
-        new DatabaseChangeRecord({
-          type: 'unpersist',
-          objectClass: 'Message',
-          objects: [model],
-        }),
-      );
+    Actions.forceDatabaseTrigger(
+      new DatabaseChangeRecord({
+        type: 'unpersist',
+        objectClass: 'Message',
+        objects: [model],
+      })
+    );
   };
   _forceDataSourceTrigger = ({ source = '', index = -1 }) => {
     if (this._dataSource && !this._dataSource.empty()) {
       const mockMessage = this._dataSource.get(index === -1 ? 0 : index);
-      mockMessage.date = Date.now();
-      mockMessage.siftData = [];
-      mockMessage.ignoreSift = true;
-      this._triggerDatasource(mockMessage);
+      if (mockMessage) {
+        mockMessage.date = Date.now();
+        mockMessage.siftData = [];
+        mockMessage.ignoreSift = true;
+        this._triggerDatasource(mockMessage);
+      } else {
+        AppEnv.reportError(
+          new Error('mockMessage not found'),
+          { errorData: { index, total: this._dataSource.count() } },
+          { grabLogs: false }
+        );
+      }
     }
   };
 
@@ -111,7 +119,7 @@ class SiftStore extends MailspringStore {
         }
       } else if (change.objectClass === Sift.name) {
         let needUpdate = false;
-        for (let obj of change.objects){
+        for (let obj of change.objects) {
           if (Sift.categoryStringToIntString(this._siftCategory) === obj.category.toString()) {
             needUpdate = true;
             break;
@@ -194,13 +202,10 @@ class SiftStore extends MailspringStore {
       const subscription = perspective.messages();
       this._siftCategory = perspective.siftCategory;
       let $resultSet = Rx.Observable.fromNamedQuerySubscription('sift-list', subscription);
-      $resultSet = Rx.Observable.combineLatest(
-        [$resultSet],
-        (resultSet, sift) => {
-          const resultSetWithTasks = new MutableQueryResultSet(resultSet);
-          return resultSetWithTasks.immutableClone();
-        },
-      );
+      $resultSet = Rx.Observable.combineLatest([$resultSet], (resultSet, sift) => {
+        const resultSetWithTasks = new MutableQueryResultSet(resultSet);
+        return resultSetWithTasks.immutableClone();
+      });
 
       this._dataSource = new ObservableListDataSource($resultSet, subscription.replaceRange);
       this._dataSourceUnlisten = this._dataSource.listen(this._onDataSourceChanged, this);
