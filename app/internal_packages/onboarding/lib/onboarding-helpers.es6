@@ -86,6 +86,21 @@ function mxRecordsForDomain(domain) {
   });
 }
 
+async function edisonFetch(url, options) {
+  try {
+    const resp = await fetch(url, options);
+    return resp;
+  } catch (err) {
+    AppEnv.reportError(new Error(`onboarding-helpers fetch failed`), {
+      errorData: {
+        error: err,
+        url,
+      },
+    });
+    throw new Error('Please check network connection and try again.');
+  }
+}
+
 export function validateEmailAddressForProvider(emailAddress = '', provider = null) {
   if (!provider) {
     return { ret: false, message: 'Email entered is not valid.' };
@@ -258,7 +273,7 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   body.push(`redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
-  const resp = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+  const resp = await edisonFetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
     method: 'POST',
     body: body.join('&'),
     headers: {
@@ -277,7 +292,7 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   const { access_token, refresh_token } = json;
 
   // get the user's email address
-  const meResp = await fetch('https://graph.microsoft.com/v1.0/me', {
+  const meResp = await edisonFetch('https://graph.microsoft.com/v1.0/me', {
     method: 'GET',
     headers: {
       Authorization: `${access_token}`,
@@ -318,8 +333,8 @@ export async function buildOutlookAccountFromAuthResponse(code) {
   body.push(`redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
-  // const resp = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
-  const resp = await fetch('https://login.live.com/oauth20_token.srf', {
+  // const resp = await edisonFetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+  const resp = await edisonFetch('https://login.live.com/oauth20_token.srf', {
     method: 'POST',
     body: body.join('&'),
     headers: {
@@ -338,8 +353,8 @@ export async function buildOutlookAccountFromAuthResponse(code) {
   const { access_token, refresh_token } = json;
 
   // get the user's email address
-  // const meResp = await fetch('https://graph.microsoft.com/v1.0/me', {
-  const meResp = await fetch('https://apis.live.net/v5.0/me', {
+  // const meResp = await edisonFetch('https://graph.microsoft.com/v1.0/me', {
+  const meResp = await edisonFetch('https://apis.live.net/v5.0/me', {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${access_token}`,
@@ -352,7 +367,7 @@ export async function buildOutlookAccountFromAuthResponse(code) {
     );
   }
 
-  // const meResp2 = await fetch('https://apis.live.net/v5.0/me/picture', {
+  // const meResp2 = await edisonFetch('https://apis.live.net/v5.0/me/picture', {
   //   method: 'GET',
   //   headers: {
   //     Authorization: `Bearer ${access_token}`,
@@ -390,7 +405,7 @@ export async function buildGmailAccountFromAuthResponse(code) {
   body.push(`redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
-  const resp = await fetch('https://www.googleapis.com/oauth2/v4/token', {
+  const resp = await edisonFetch('https://www.googleapis.com/oauth2/v4/token', {
     method: 'POST',
     body: body.join('&'),
     headers: {
@@ -409,7 +424,7 @@ export async function buildGmailAccountFromAuthResponse(code) {
   const { access_token, refresh_token } = json;
 
   // get the user's email address
-  const meResp = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+  const meResp = await edisonFetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
     method: 'GET',
     headers: { Authorization: `Bearer ${access_token}` },
   });
@@ -449,7 +464,7 @@ export async function buildJiraAccountFromAuthResponse(code) {
   body.push(`client_secret=${encodeURIComponent(JIRA_CLIENT_SECRET)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
-  const resp = await fetch('https://auth.atlassian.com/oauth/token', {
+  const resp = await edisonFetch('https://auth.atlassian.com/oauth/token', {
     method: 'POST',
     body: body.join('&'),
     headers: {
@@ -467,7 +482,7 @@ export async function buildJiraAccountFromAuthResponse(code) {
   }
   const { access_token, refresh_token } = json;
 
-  const resourcesResp = await fetch('https://api.atlassian.com/oauth/token/accessible-resources', {
+  const resourcesResp = await edisonFetch('https://api.atlassian.com/oauth/token/accessible-resources', {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${access_token}`,
@@ -500,7 +515,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
     `redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}`,
   ].join('&');
 
-  const resp = await fetch('https://api.login.yahoo.com/oauth2/get_token', {
+  const resp = await edisonFetch('https://api.login.yahoo.com/oauth2/get_token', {
     method: 'POST',
     body: body,
     headers: {
@@ -521,7 +536,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
   const { access_token, refresh_token, xoauth_yahoo_guid } = json;
 
   // get the user's email address
-  const meResp = await fetch('https://api.login.yahoo.com/openid/v1/userinfo?format=json', {
+  const meResp = await edisonFetch('https://api.login.yahoo.com/openid/v1/userinfo?format=json', {
     method: 'GET',
     headers: { Authorization: `Bearer ${access_token}` },
   });
@@ -626,7 +641,7 @@ export function buildJiraAuthURL() {
     `audience=api.atlassian.com&client_id=${JIRA_CLIENT_ID}` +
     `&scope=${encodeURIComponent(JIRA_SCOPES.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}` +
-    `&state=${EDISON_OAUTH_KEYWORD}&response_type=code&prompt=consenta`
+    `&state=${EDISON_OAUTH_KEYWORD}&response_type=code&prompt=consent`
   );
 }
 

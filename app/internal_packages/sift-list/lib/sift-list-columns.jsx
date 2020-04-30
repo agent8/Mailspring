@@ -182,6 +182,7 @@ const cNarrow = new ListTabular.Column({
       <SiftStarQuickAction message={message} key="sift-star-quick-action" />,
       <SiftUnreadQuickAction message={message} key="sift-unread-quick-action" />,
     ];
+    const snippet = Utils.superTrim(getSnippet(message));
     return (
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
         <div className="icons-column">
@@ -217,7 +218,7 @@ const cNarrow = new ListTabular.Column({
             {calendar || attachment || <div className="thread-icon no-icon" />}
           </div>
           <div className="snippet-and-labels">
-            <div className="snippet">{Utils.superTrim(getSnippet(message))}&nbsp;</div>
+            <div className="snippet">{snippet ? snippet : ' '}</div>
           </div>
         </div>
       </div>

@@ -72,7 +72,7 @@ export default class TrackingAppEvents {
   };
 
   trackingEvent = (...args) => {
-    if (this.devMode) {
+    if (this.devMode || (AppEnv && AppEnv.config.get("core.workspace.sendUsageData") === false)) {
       return;
     }
     try {
