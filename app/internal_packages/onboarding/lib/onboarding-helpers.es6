@@ -22,7 +22,7 @@ const queryStringify = (data, encoded = false) => {
 
 const EDISON_OAUTH_KEYWORD = 'edison_desktop';
 const EDISON_REDIRECT_URI = 'http://email.easilydo.com';
-const NEW_EDISON_REDIRECT_URI = 'https://mail.edison.tech/oauthsuccess';
+const NEW_EDISON_REDIRECT_URI = 'https://mail.edison.tech/oauthsuccess'; // https://mail.edison.tech/oauthsuccess.html
 
 export const LOCAL_SERVER_PORT = 12141;
 export const LOCAL_REDIRECT_URI = `http://127.0.0.1:${LOCAL_SERVER_PORT}`;
