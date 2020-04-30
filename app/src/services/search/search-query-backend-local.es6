@@ -39,7 +39,7 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
     this._result = `(${lhs} OR ${rhs})`;
   }
 
-  visitDate(node) { }
+  visitDate(node) {}
 
   visitFrom(node) {
     const text = this.visitAndGetResult(node.text);
@@ -58,7 +58,8 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
 
   visitGeneric(node) {
     const text = this.visitAndGetResult(node.text);
-    this._result = `("${text}"*)`;
+    // this._result = `("${text}"*)`;
+    this._result = `(("${text}"*) OR (remoteSearch : "${text}"*))`;
   }
 
   visitText(node) {
@@ -242,10 +243,7 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
     // in sqlite3, you use '' to escape a '. Weird right?
     const escaped = node.rawQuery.replace(/'/g, "''");
-
-    this._result = `(\`${
-      this._className
-      }\`.\`pid\` IN (SELECT \`threadId\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
+    this._result = `(\`${this._className}\`.\`pid\` IN (SELECT \`threadId\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
   }
 }
 
