@@ -44,10 +44,10 @@ export default class OptInTrendsResearchPage extends React.Component {
           </p>
         </div>
         <div className="footer">
-          <button key="no" className="btn btn-large btn-ghost" onClick={() => this._onFinish(false)}>
+          <button key="no" className="btn btn-large btn-ghost" onClick={() => this._onFinish(true)}>
             No, Thanks
           </button>
-          <button key="agree" className="btn btn-large btn-agree" onClick={() => this._onFinish(true)}>
+          <button key="agree" className="btn btn-large btn-agree" onClick={() => this._onFinish(false)}>
             Agree
           </button>
         </div>

@@ -215,9 +215,7 @@ class SidebarSection {
         items.push(folderItem);
       }
     }
-    if (!process.mas) {
-      SidebarSection.forSiftCategories(accountIds, items);
-    }
+    SidebarSection.forSiftCategories(accountIds, items);
 
     // quanzs: disable jira plugin for temp
     // folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
