@@ -1076,13 +1076,14 @@ export default class MailsyncBridge {
     }
   }
 
-  _onFetchAttachments({ accountId, missingItems, needProgress }) {
+  _onFetchAttachments({ accountId, missingItems, needProgress, source }) {
     const ids = this._fetchAttachmentCacheFilter({ accountId, missingItems });
     if (ids.length > 0) {
       this.sendMessageToAccount(accountId, {
         type: 'need-attachments',
         ids: ids,
-        needProgress: !!needProgress,
+        needProgress: true,
+        source
       });
     }
   }

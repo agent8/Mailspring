@@ -28,6 +28,7 @@ class MessageAttachments extends Component {
         accountId: this.props.accountId,
         missingItems: [file.id],
         needProgress: true,
+        source: "Click"
       });
     } else {
       Actions.fetchAndOpenFile(file);
