@@ -254,18 +254,18 @@ class SidebarSection {
     const items = [];
     const seenItems = {};
     const missingCategory = [];
+    // https://regex101.com/r/jK8cC2/1
     const re = RegExpUtils.subcategorySplitRegex();
     for (let category of CategoryStore.userCategories(account)) {
-      // https://regex101.com/r/jK8cC2/1
-      var item, parentKey;
-      const itemKey = category.displayName.replace(re, '/');
+      let item, parentKey;
+      const itemKey = category.displayName;
       if (itemKey.toLocaleLowerCase().includes('inbox/')) {
         continue;
       }
       let parent = null;
-      const parentComponents = itemKey.split('/');
+      const parentComponents = itemKey.split(category.delimiter);
       for (let i = parentComponents.length; i >= 1; i--) {
-        parentKey = parentComponents.slice(0, i).join('/');
+        parentKey = parentComponents.slice(0, i).join(category.delimiter);
         parent = seenItems[parentKey.toLocaleLowerCase()];
         if (parent) {
           break;
@@ -273,7 +273,7 @@ class SidebarSection {
       }
 
       if (!parent) {
-        if (!category.displayName.match(re)) {
+        if (!category.displayName.includes(category.delimiter)) {
           item = SidebarItem.forCategories([category], {}, false);
           if (item) {
             items.push(item);
@@ -288,7 +288,7 @@ class SidebarSection {
       }
     }
     missingCategory.forEach(category => {
-      const catKey = category.displayName.replace(re, '/');
+      const catKey = category.displayName;
       if (!seenItems[catKey.toLocaleLowerCase()]) {
         const item = SidebarItem.forCategories([category]);
         if (item) {
