@@ -484,8 +484,9 @@ body.platform-win32 {
   }
 
   .btn.btn-toolbar.btn-trash {
-    position: absolute;
-    right: 10px;
+    margin-left: auto;
+    // position: absolute;
+    // right: 10px;
     color: @medium-grey;
     font-weight: bold;
     font-size: 14px;
@@ -526,7 +527,6 @@ body.platform-win32 {
         margin-top: 3px;
       }
       span {
-        float: left;
         color: @blue !important;
         font-size: 15px;
         line-height: 33px;
@@ -975,6 +975,25 @@ body.platform-win32 {
 
   &.from-field {
     padding: 0 10px;
+    display: flex;
+    align-items: center;
+    .button-dropdown,
+    .composer-field-label {
+      padding-top: unset;
+    }
+    .from-accounts {
+      flex: 1;
+      width: 0;
+      display: flex;
+      white-space: nowrap;
+      &.from-single-name {
+        overflow: hidden;
+      }
+      .only-item {
+        max-width: 100%;
+        overflow: hidden;
+      }
+    }
   }
 
   .from-single-name {
