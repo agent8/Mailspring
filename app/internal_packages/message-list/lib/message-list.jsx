@@ -84,7 +84,7 @@ class MessageListScrollTooltip extends React.Component {
 class MessageList extends React.Component {
   static displayName = 'MessageList';
   static containerStyles = {
-    minWidth: 200,
+    minWidth: 400,
     maxWidth: 999999,
   };
 

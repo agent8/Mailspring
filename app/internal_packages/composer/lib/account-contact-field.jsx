@@ -83,6 +83,7 @@ export default class AccountContactField extends React.Component {
           ref={cm => {
             this._dropdownComponent = cm;
           }}
+          className="from-accounts"
           bordered={false}
           primaryItem={<span>{label}</span>}
           menu={this._renderAccounts(this.props.accounts)}
@@ -95,7 +96,7 @@ export default class AccountContactField extends React.Component {
 
   _renderAccountSpan = label => {
     return (
-      <span className="from-single-name" style={{ position: 'relative', top: 11, left: '0.5em' }}>
+      <span className="from-accounts from-single-name" style={{ position: 'relative', left: '0.5em' }}>
         {label}
       </span>
     );
@@ -128,7 +129,7 @@ export default class AccountContactField extends React.Component {
     return (
       <InjectedComponentSet
         deferred
-        className="dropdown-component"
+        className="dropdown-component signature"
         matching={{ role: 'Composer:FromFieldComponents' }}
         exposedProps={{
           draft,
