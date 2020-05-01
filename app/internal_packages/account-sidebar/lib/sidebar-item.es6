@@ -636,20 +636,24 @@ class SidebarItem {
       } else {
         itemKey = category.displayName;
         const parentComponents = itemKey.split(category.delimiter);
-        if (
-          parentComponents[0].toLocaleLowerCase() !==
-            CategoryStore.decodePath(path).toLocaleLowerCase() ||
-          parentComponents.length === 1
-        ) {
+        if (parentComponents.length === 1) {
           continue;
-        }
-        for (let i = parentComponents.length; i >= 1; i--) {
-          parentKey = parentComponents.slice(0, i).join(category.delimiter);
+        } else {
+          parentKey = parentComponents
+            .slice(0, parentComponents.length - 1)
+            .join(category.delimiter);
+          // if (path === 'bba.d' && itemKey === 'bba.d/a1') {
+          //   debugger;
+          // }
           parent = seenItems[parentKey.toLocaleLowerCase()];
-          if (parent) {
-            break;
-          }
         }
+        // for (let i = parentComponents.length; i >= 1; i--) {
+        //   parentKey = parentComponents.slice(0, i).join(category.delimiter);
+        //   parent = seenItems[parentKey.toLocaleLowerCase()];
+        //   if (parent) {
+        //     break;
+        //   }
+        // }
       }
       if (parent) {
         let itemDisplayName = category.displayName.substr(parentKey.length + 1);
@@ -671,11 +675,11 @@ class SidebarItem {
           }
         }
       } else {
-        item = SidebarItem.forCategories([category]);
+        // item = SidebarItem.forCategories([category]);
       }
-      if (item) {
-        seenItems[itemKey.toLocaleLowerCase()] = item;
-      }
+      // if (item) {
+      //   seenItems[itemKey.toLocaleLowerCase()] = item;
+      // }
     }
   }
 
@@ -694,25 +698,7 @@ class SidebarItem {
     }
   };
   static getCategoryParent = category => {
-    const account = AccountStore.accountForId(category.accountId);
-    if (account) {
-      const isExchange = account.provider === 'exchange';
-      let parent = null;
-      if (isExchange) {
-        const inboxCategory = CategoryStore.getInboxCategory(account.id);
-        if (inboxCategory && category.parentId === inboxCategory.parentId) {
-          return null;
-        }
-        parent = CategoryStore.getCategoryByPath(category.parentId);
-      } else {
-        const parentComponents = category.path.split(category.delimiter);
-        if (parentComponents.length > 1) {
-          parent = CategoryStore.getCategoryByPath(parentComponents[0]);
-        }
-      }
-      return parent;
-    }
-    return null;
+    return CategoryStore.getCategoryParent(category);
   };
 }
 

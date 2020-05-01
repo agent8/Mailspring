@@ -177,16 +177,45 @@ class CategoryStore extends MailspringStore {
   getSpamCategory(accountOrId) {
     return this.getCategoryByRole(accountOrId, 'spam');
   }
+  getCategoryParent = category => {
+    const account = AccountStore.accountForId(category.accountId);
+    if (account && category) {
+      const isExchange = account.provider === 'exchange';
+      let parent = null;
+      if (isExchange) {
+        const inboxCategory = this.getInboxCategory(account.id);
+        if (inboxCategory && category.parentId === inboxCategory.parentId) {
+          return null;
+        }
+        parent = this.getCategoryByPath(category.parentId);
+      } else {
+        const parentComponents = category.path.split(category.delimiter);
+        if (parentComponents.length > 1) {
+          let k = 1;
+          while (!parent && k <= parentComponents.length - 1) {
+            parent = this.getCategoryByPath(parentComponents.slice(0, k).join(category.delimiter));
+            k++;
+          }
+        }
+      }
+      return parent;
+    }
+    return null;
+  };
 
   getCategoryByPath(path, accountId = '') {
     if (accountId) {
       const cache = this._categoryCache && this._categoryCache[accountId];
       if (cache) {
-        return Object.values(cache).find(cat => cat && cat.path === path);
+        return Object.values(cache).find(
+          cat => cat && this.decodePath(cat.path) === this.decodePath(path)
+        );
       }
     }
     if (Array.isArray(this._categoryResult)) {
-      return this._categoryResult.find(cat => cat && cat.path === path);
+      return this._categoryResult.find(
+        cat => cat && this.decodePath(cat.path) === this.decodePath(path)
+      );
     }
     return null;
   }
