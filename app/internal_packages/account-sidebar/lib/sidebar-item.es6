@@ -620,7 +620,7 @@ class SidebarItem {
     seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
       // https://regex101.com/r/jK8cC2/1
-      var item, parentKey;
+      let item, parentKey;
       const re = RegExpUtils.subcategorySplitRegex();
       let itemKey;
 
