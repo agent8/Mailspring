@@ -202,7 +202,12 @@ class ListTabular extends Component {
   _highlightSearchInDocument = () => {
     try {
       const query = SearchStore.query();
-      const parsedQuery = query ? SearchQueryParser.parse(query) : {};
+      let parsedQuery = {};
+      try {
+        parsedQuery = query ? SearchQueryParser.parse(query) : {};
+      } catch (err) {
+        AppEnv.reportError(new Error(`list-tabular._highlightSearchInDocument error`), { errorData: err });
+      }
       let searchValue = '';
       if (parsedQuery instanceof AndQueryExpression) {
         for (const k in parsedQuery) {
