@@ -16,7 +16,6 @@ import {
 import { CategoryStore, FocusedPerspectiveStore } from 'mailspring-exports';
 var utf7 = require('utf7').imap;
 
-
 const nextStringToken = text => {
   if (text[0] !== '"') {
     throw new Error('Expected string token to begin with double quote (")');
@@ -304,7 +303,7 @@ const parseSimpleQuery = text => {
   return [new GenericQueryExpression(txt), afterTxt];
 };
 
-const findRoleForPath = (path) => {
+const findRoleForPath = path => {
   // replace path to role
   let newPath = path;
   if (newPath) {
@@ -314,15 +313,15 @@ const findRoleForPath = (path) => {
     for (const aid of accountIds) {
       const standardCategories = CategoryStore.standardCategories(aid);
       for (const ct of standardCategories) {
-        const names = ct.name.split(ct.delimiter);
-        if (names && names.includes(newPath)) {
+        const names = ct.name.split(ct.delimiter) || [];
+        if (names.some(nameItem => nameItem.toUpperCase() === newPath.toUpperCase())) {
           return ct.role;
         }
       }
     }
   }
   return utf7.encode(path);
-}
+};
 
 const parseOrQuery = text => {
   const [lhs, afterLhs] = parseSimpleQuery(text);

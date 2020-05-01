@@ -11,6 +11,8 @@ import {
   IMAPSearchTask,
 } from 'mailspring-exports';
 
+const utf7 = require('utf7').imap;
+
 class SearchQuerySubscription extends MutableQuerySubscription {
   constructor(searchQuery, accountIds) {
     super(null, { emitResultSet: true });
@@ -49,38 +51,64 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     }
     dbQuery = dbQuery
       .background()
-      .where({state: 0})
+      .where({ state: 0 })
       .order(Thread.attributes.lastMessageTimestamp.descending())
       .limit(1000);
-    this._performRemoteSearch({accountIds: this._accountIds, parsedQuery, searchQuery: this._searchQuery});
+    this._performRemoteSearch({
+      accountIds: this._accountIds,
+      parsedQuery,
+      searchQuery: this._searchQuery,
+    });
     this.replaceQuery(dbQuery);
   }
 
   _performRemoteSearch = ({ accountIds, parsedQuery = null, searchQuery = '' } = {}) => {
-      let queryJSON = {};
-      let genericText = '';
-      if (parsedQuery) {
-        queryJSON = parsedQuery;
-        genericText = IMAPSearchQueryBackend.folderNamesForQuery(parsedQuery);
-      } else {
-        genericText = searchQuery;
+    let queryJSON = {};
+    let genericText = '';
+    let firstInQueryRole = null;
+    if (parsedQuery) {
+      const firstInQueryExpression = parsedQuery.getFirstInQueryExpression();
+      firstInQueryRole =
+        firstInQueryExpression &&
+        firstInQueryExpression.text &&
+        firstInQueryExpression.text.token &&
+        firstInQueryExpression.text.token.s
+          ? utf7.decode(firstInQueryExpression.text.token.s)
+          : '';
+      queryJSON = parsedQuery;
+      genericText = IMAPSearchQueryBackend.folderNamesForQuery(parsedQuery);
+    } else {
+      genericText = searchQuery;
+    }
+    const tasks = [];
+    accountIds.forEach(accountId => {
+      const categories = CategoryStore.categories(accountId);
+      let firstPath = null;
+      if (firstInQueryRole) {
+        firstPath = categories.find(categorie => {
+          if (categorie.role === firstInQueryRole) {
+            return true;
+          }
+          const names = categorie.name.split(categorie.delimiter) || [];
+          return names.some(nameItem => nameItem.toUpperCase() === firstInQueryRole.toUpperCase());
+        });
       }
-      const tasks = [];
-      accountIds.forEach( accountId => {
-        const all = CategoryStore.getCategoryByRole(accountId, 'inbox');
-        if (all) {
-          tasks.push(
-            new IMAPSearchTask({
-              accountId,
-              fullTextSearch: genericText,
-              paths: [all],
-              query: queryJSON,
-            })
-          );
-        }
-      });
-      Actions.remoteSearch(tasks);
-    };
+      if (!firstPath) {
+        firstPath = CategoryStore.getCategoryByRole(accountId, 'inbox');
+      }
+      if (firstPath) {
+        tasks.push(
+          new IMAPSearchTask({
+            accountId,
+            fullTextSearch: genericText,
+            paths: [firstPath],
+            query: queryJSON,
+          })
+        );
+      }
+    });
+    Actions.remoteSearch(tasks);
+  };
 
   _createResultAndTrigger() {
     super._createResultAndTrigger();
