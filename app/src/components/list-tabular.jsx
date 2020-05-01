@@ -21,7 +21,8 @@ import IFrameSearcher from '../searchable-components/iframe-searcher';
 const {
   GenericQueryExpression,
   AndQueryExpression,
-  SubjectQueryExpression
+  SubjectQueryExpression,
+  FromQueryExpression
 } = SearchQueryAST;
 const ConfigProfileKey = 'core.appearance.profile';
 
@@ -194,31 +195,33 @@ class ListTabular extends Component {
       return false;
     }
     if (query instanceof GenericQueryExpression
-      || query instanceof SubjectQueryExpression) {
+      || query instanceof SubjectQueryExpression
+      || query instanceof FromQueryExpression) {
       return true;
     }
     return false;
   }
   _highlightSearchInDocument = () => {
+    let searchValue = '';
     try {
-      const query = SearchStore.query();
+      const query = SearchStore._preSearchQuery;
       let parsedQuery = {};
       try {
         parsedQuery = query ? SearchQueryParser.parse(query) : {};
-      } catch (err) {
-        AppEnv.reportError(new Error(`list-tabular._highlightSearchInDocument error`), { errorData: err });
-      }
-      let searchValue = '';
-      if (parsedQuery instanceof AndQueryExpression) {
-        for (const k in parsedQuery) {
-          if (this._isMatchedExpression(parsedQuery[k])) {
-            searchValue = parsedQuery[k].text.token.s;
-            break;
+        if (parsedQuery instanceof AndQueryExpression) {
+          for (const k in parsedQuery) {
+            if (this._isMatchedExpression(parsedQuery[k])) {
+              searchValue = parsedQuery[k].text.token.s;
+              break;
+            }
           }
         }
-      }
-      else if (this._isMatchedExpression(parsedQuery)) {
-        searchValue = parsedQuery.text.token.s;
+        else if (this._isMatchedExpression(parsedQuery)) {
+          searchValue = parsedQuery.text.token.s;
+        }
+      } catch (err) {
+        console.info('Failed to parse local search query, falling back to generic query', query);
+        searchValue = query;
       }
       const node = ReactDOM.findDOMNode(this);
       IFrameSearcher.highlightSearchInDocument(this._regionId, searchValue, node, null);
