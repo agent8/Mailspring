@@ -86,6 +86,9 @@ class SearchQuerySubscription extends MutableQuerySubscription {
       let firstPath = null;
       if (firstInQueryRole) {
         firstPath = categories.find(categorie => {
+          if (categorie.role === firstInQueryRole) {
+            return true;
+          }
           const names = categorie.name.split(categorie.delimiter) || [];
           return names.some(nameItem => nameItem.toUpperCase() === firstInQueryRole.toUpperCase());
         });
