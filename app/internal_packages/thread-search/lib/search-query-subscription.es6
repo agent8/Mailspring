@@ -11,6 +11,8 @@ import {
   IMAPSearchTask,
 } from 'mailspring-exports';
 
+const utf7 = require('utf7').imap;
+
 class SearchQuerySubscription extends MutableQuerySubscription {
   constructor(searchQuery, accountIds) {
     super(null, { emitResultSet: true });
@@ -71,7 +73,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
         firstInQueryExpression.text &&
         firstInQueryExpression.text.token &&
         firstInQueryExpression.text.token.s
-          ? firstInQueryExpression.text.token.s
+          ? utf7.decode(firstInQueryExpression.text.token.s)
           : '';
       queryJSON = parsedQuery;
       genericText = IMAPSearchQueryBackend.folderNamesForQuery(parsedQuery);
@@ -80,9 +82,13 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     }
     const tasks = [];
     accountIds.forEach(accountId => {
+      const categories = CategoryStore.categories(accountId);
       let firstPath = null;
       if (firstInQueryRole) {
-        firstPath = CategoryStore.getCategoryByRole(accountId, firstInQueryRole);
+        firstPath = categories.find(categorie => {
+          const names = categorie.name.split(categorie.delimiter) || [];
+          return names.some(nameItem => nameItem.toUpperCase() === firstInQueryRole.toUpperCase());
+        });
       }
       if (!firstPath) {
         firstPath = CategoryStore.getCategoryByRole(accountId, 'inbox');
