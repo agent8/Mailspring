@@ -252,50 +252,46 @@ class SidebarSection {
 
   static accountUserCategories(account, { title, collapsible } = {}) {
     const items = [];
-    const seenItems = {};
-    const missingCategory = [];
-    // https://regex101.com/r/jK8cC2/1
-    const re = RegExpUtils.subcategorySplitRegex();
+    // const isExchange = account && account.provider === 'exchange';
+    // let exchangeInboxCategory;
+    // if (isExchange) {
+    //   exchangeInboxCategory = CategoryStore.getInboxCategory(account.id);
+    // }
     for (let category of CategoryStore.userCategories(account)) {
-      let item, parentKey;
-      const itemKey = category.displayName;
-      if (itemKey.toLocaleLowerCase().includes('inbox/')) {
+      let item;
+      const parent = CategoryStore.getCategoryParent(category);
+      if (parent) {
         continue;
       }
-      let parent = null;
-      const parentComponents = itemKey.split(category.delimiter);
-      for (let i = parentComponents.length; i >= 1; i--) {
-        parentKey = parentComponents.slice(0, i).join(category.delimiter);
-        parent = seenItems[parentKey.toLocaleLowerCase()];
-        if (parent) {
-          break;
-        }
-      }
-
-      if (!parent) {
-        if (!category.displayName.includes(category.delimiter)) {
-          item = SidebarItem.forCategories([category], {}, false);
-          if (item) {
-            items.push(item);
-          }
-        } else {
-          missingCategory.push(category);
-          item = null;
-        }
-      }
+      // if (isExchange) {
+      //   if (exchangeInboxCategory && category.parentId !== exchangeInboxCategory.parentId) {
+      //     continue;
+      //   }
+      // } else {
+      //   const itemKey = category.displayName;
+      //   if (itemKey.toLocaleLowerCase().includes('inbox/')) {
+      //     continue;
+      //   }
+      //   const parentComponents = category.path.split(category.delimiter);
+      //   if (parentComponents.length > 1) {
+      //     let parent = null;
+      //     let k = 1;
+      //     while (!parent && k <= parentComponents.length - 1) {
+      //       parent = CategoryStore.getCategoryByPath(
+      //         parentComponents.slice(0, k).join(category.delimiter)
+      //       );
+      //       k++;
+      //     }
+      //     if (parent) {
+      //       continue;
+      //     }
+      //   }
+      // }
+      item = SidebarItem.forCategories([category], {}, false);
       if (item) {
-        seenItems[itemKey.toLocaleLowerCase()] = item;
+        items.push(item);
       }
     }
-    missingCategory.forEach(category => {
-      const catKey = category.displayName;
-      if (!seenItems[catKey.toLocaleLowerCase()]) {
-        const item = SidebarItem.forCategories([category]);
-        if (item) {
-          items.push(item);
-        }
-      }
-    });
     return items;
   }
 
