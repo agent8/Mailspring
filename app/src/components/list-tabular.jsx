@@ -202,6 +202,11 @@ class ListTabular extends Component {
     return false;
   }
   _highlightSearchInDocument = () => {
+    const current = FocusedPerspectiveStore.current();
+    if (!current.isSearchMailbox) {
+      return;
+    }
+
     let searchValue = '';
     try {
       const query = SearchStore._preSearchQuery;

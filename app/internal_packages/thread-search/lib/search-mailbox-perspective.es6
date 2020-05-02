@@ -30,6 +30,7 @@ class SearchMailboxPerspective extends MailboxPerspective {
     }
 
     this.name = `Searching ${folderOrLabel}`;
+    this.isSearchMailbox = true;
   }
 
   emptyMessage() {
