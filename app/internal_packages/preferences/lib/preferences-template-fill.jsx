@@ -92,6 +92,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Send usage data to help improve the performance of the app',
+              configSchema: configSchema =>
+                configSchema.properties.workspace.properties.sendUsageData,
+              keyPath: 'core.workspace.sendUsageData',
+              keywords: [],
+            },
+            {
               label: 'Send new mail from',
               component: DefaultAccountSending,
               configSchema: configSchema => configSchema,

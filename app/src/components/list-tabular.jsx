@@ -1,9 +1,15 @@
 import _ from 'underscore';
 import React, { Component } from 'react';
-import { Utils, ComponentRegistry } from 'mailspring-exports';
+import {
+  Utils,
+  ComponentRegistry,
+  SearchStore,
+  SearchQueryAST,
+  SearchQueryParser,
+  FocusedPerspectiveStore
+} from 'mailspring-exports';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { FocusedPerspectiveStore } from 'mailspring-exports';
 
 import ScrollRegion from './scroll-region';
 import Spinner from './spinner';
@@ -11,7 +17,13 @@ import Spinner from './spinner';
 import ListDataSource from './list-data-source';
 import ListSelection from './list-selection';
 import ListTabularItem from './list-tabular-item';
-
+import IFrameSearcher from '../searchable-components/iframe-searcher';
+const {
+  GenericQueryExpression,
+  AndQueryExpression,
+  SubjectQueryExpression,
+  FromQueryExpression
+} = SearchQueryAST;
 const ConfigProfileKey = 'core.appearance.profile';
 
 class ListColumn {
@@ -145,6 +157,7 @@ class ListTabular extends Component {
     window.addEventListener('resize', this.onWindowResize, true);
     this.setupDataSource(this.props.dataSource);
     this.updateRangeState();
+    this._regionId = Utils.generateTempId();
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -174,7 +187,53 @@ class ListTabular extends Component {
     if (!this._cleanupAnimationTimeout) {
       this._cleanupAnimationTimeout = window.setTimeout(this.onCleanupAnimatingItems, 50);
     }
+    this._highlightSearchInDocument();
   }
+
+  _isMatchedExpression = query => {
+    if (!query) {
+      return false;
+    }
+    if (query instanceof GenericQueryExpression
+      || query instanceof SubjectQueryExpression
+      || query instanceof FromQueryExpression) {
+      return true;
+    }
+    return false;
+  }
+  _highlightSearchInDocument = () => {
+    const current = FocusedPerspectiveStore.current();
+    if (!current.isSearchMailbox) {
+      return;
+    }
+
+    let searchValue = '';
+    try {
+      const query = SearchStore._preSearchQuery;
+      let parsedQuery = {};
+      try {
+        parsedQuery = query ? SearchQueryParser.parse(query) : {};
+        if (parsedQuery instanceof AndQueryExpression) {
+          for (const k in parsedQuery) {
+            if (this._isMatchedExpression(parsedQuery[k])) {
+              searchValue = parsedQuery[k].text.token.s;
+              break;
+            }
+          }
+        }
+        else if (this._isMatchedExpression(parsedQuery)) {
+          searchValue = parsedQuery.text.token.s;
+        }
+      } catch (err) {
+        console.info('Failed to parse local search query, falling back to generic query', query);
+        searchValue = query;
+      }
+      const node = ReactDOM.findDOMNode(this);
+      IFrameSearcher.highlightSearchInDocument(this._regionId, searchValue, node, null);
+    } catch (err) {
+      console.error('list-tabular._highlightSearchInDocument error:', err);
+    }
+  };
 
   componentWillUnmount() {
     this.mounted = false;

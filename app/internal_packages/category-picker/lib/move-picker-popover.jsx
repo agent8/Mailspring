@@ -7,9 +7,7 @@ import {
   Actions,
   TaskQueue,
   CategoryStore,
-  Folder,
   SyncbackCategoryTask,
-  ChangeLabelsTask,
   FocusedPerspectiveStore,
   TaskFactory,
 } from 'mailspring-exports';
@@ -51,9 +49,14 @@ export default class MovePickerPopover extends Component {
     }
   };
 
-  onBlur = (e) => {
+  onBlur = e => {
     const rect = this.container.getBoundingClientRect();
-    if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+    if (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom
+    ) {
       this.onCancel();
     }
   };
@@ -100,7 +103,7 @@ export default class MovePickerPopover extends Component {
       .filter(
         cat =>
           // remove categories that are part of the current perspective or locked
-          !hidden.includes(cat.role) && !currentCategoryIds.includes(cat.id),
+          !hidden.includes(cat.role) && !currentCategoryIds.includes(cat.id)
       )
       .filter(cat => Utils.wordSearchRegExp(searchValue).test(cat.displayName))
       .map(cat => {
@@ -137,10 +140,10 @@ export default class MovePickerPopover extends Component {
     } else {
       this._onMoveToCategory(item);
     }
-    Actions.popSheet({reason: 'Move-picker-popover:_onSelectCategory'});
+    Actions.popSheet({ reason: 'Move-picker-popover:_onSelectCategory' });
     Actions.closePopover();
   };
-  onCreate = (data) => {
+  onCreate = data => {
     if (this.props.onCreate) {
       this.props.onCreate(data, true);
     }
@@ -165,34 +168,46 @@ export default class MovePickerPopover extends Component {
 
   _onMoveToCategory = ({ category }) => {
     const { threads } = this.props;
-    if(!Array.isArray(threads) || threads.length === 0){
-      AppEnv.reportError(new Error('Move folder threads is empty'), {errorData: category}, {grabLogs: true});
+    if (!Array.isArray(threads) || threads.length === 0) {
+      AppEnv.reportError(
+        new Error('Move folder threads is empty'),
+        { errorData: category },
+        { grabLogs: true }
+      );
       this._onActionCallback(category);
       return;
     }
     let currentCategory = null;
     const currentPerspective = FocusedPerspectiveStore.current();
     const previousFolder = TaskFactory.findPreviousFolder(currentPerspective, threads[0].accountId);
-    if(currentPerspective && Array.isArray(threads) && threads.length > 0){
-      currentCategory = currentPerspective.categories().find(
-        cat => cat.accountId === threads[0].accountId
-      );
+    if (currentPerspective && Array.isArray(threads) && threads.length > 0) {
+      currentCategory = currentPerspective
+        .categories()
+        .find(cat => cat.accountId === threads[0].accountId);
     }
-    const tasks = TaskFactory.tasksForGeneralMoveFolder({threads, source: 'Move to Folder popup', previousFolder, targetCategory: category, sourceCategory: currentCategory});
+    const tasks = TaskFactory.tasksForGeneralMoveFolder({
+      threads,
+      source: 'Move to Folder popup',
+      previousFolder,
+      targetCategory: category,
+      sourceCategory: currentCategory,
+    });
     if (tasks.length > 0) {
       Actions.queueTasks(tasks);
     } else {
-      AppEnv.reportError(new Error(`Move Folder Tasks returned no tasks`), {
-          errorData:
-            {
-              threads,
-              source: 'Move to Folder popup',
-              previousFolder,
-              targetCategory: category,
-              sourceCategory: currentCategory,
-            },
+      AppEnv.reportError(
+        new Error(`Move Folder Tasks returned no tasks`),
+        {
+          errorData: {
+            threads,
+            source: 'Move to Folder popup',
+            previousFolder,
+            targetCategory: category,
+            sourceCategory: currentCategory,
+          },
         },
-        { grabLogs: true });
+        { grabLogs: true }
+      );
     }
     // if (category.isFolder() || (previousFolder && previousFolder.isFolder())) {
     //   Actions.queueTasks(
@@ -244,13 +259,19 @@ export default class MovePickerPopover extends Component {
   };
 
   _renderCreateNewItem = ({ searchValue }) => {
-    const isFolder = CategoryStore.getInboxCategory(this.props.account) && CategoryStore.getInboxCategory(this.props.account).isFolder();
+    const isFolder =
+      CategoryStore.getInboxCategory(this.props.account) &&
+      CategoryStore.getInboxCategory(this.props.account).isFolder();
     let displayText = isFolder ? 'New Folder' : 'New Label';
     if (searchValue.length > 0) {
       displayText = `"${searchValue}" (create new)`;
     }
     return (
-      <div key="createNew" className="category-item category-create-new" onMouseDown={this.onCreate.bind(this, searchValue)}>
+      <div
+        key="createNew"
+        className="category-item category-create-new"
+        onMouseDown={this.onCreate.bind(this, searchValue)}
+      >
         {displayText}
       </div>
     );
@@ -279,7 +300,9 @@ export default class MovePickerPopover extends Component {
 
   render() {
     const headerComponents = [
-      <div className="header-text" key="headerText">Move to ...</div>,
+      <div className="header-text" key="headerText">
+        Move to ...
+      </div>,
       <input
         type="text"
         tabIndex="1"
@@ -292,7 +315,7 @@ export default class MovePickerPopover extends Component {
     ];
 
     return (
-      <div className="category-picker-popover" ref={(el) => this.container = el}>
+      <div className="category-picker-popover" ref={el => (this.container = el)}>
         <Menu
           headerComponents={headerComponents}
           footerComponents={this._renderNewItem()}

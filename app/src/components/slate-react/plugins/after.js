@@ -187,8 +187,8 @@ function AfterPlugin() {
       // manually removes it since selection is collapsed in this case.
       var value = change.value;
       var endBlock = value.endBlock,
-          endInline = value.endInline,
-          isCollapsed = value.isCollapsed;
+        endInline = value.endInline,
+        isCollapsed = value.isCollapsed;
 
       var isVoidBlock = endBlock && endBlock.isVoid && isCollapsed;
       var isVoidInline = endInline && endInline.isVoid && isCollapsed;
@@ -280,7 +280,7 @@ function AfterPlugin() {
 
     var value = change.value;
     var document = value.document,
-        selection = value.selection;
+      selection = value.selection;
 
     var window = (0, _getWindow2.default)(event.target);
     var target = (0, _getEventRange2.default)(event, value);
@@ -288,9 +288,9 @@ function AfterPlugin() {
 
     var transfer = (0, _getEventTransfer2.default)(event);
     var type = transfer.type,
-        fragment = transfer.fragment,
-        node = transfer.node,
-        text = transfer.text;
+      fragment = transfer.fragment,
+      node = transfer.node,
+      text = transfer.text;
 
 
     change.focus();
@@ -309,7 +309,7 @@ function AfterPlugin() {
 
     if (type == 'text' || type == 'html') {
       var _target = target,
-          anchorKey = _target.anchorKey;
+        anchorKey = _target.anchorKey;
 
       var hasVoidParent = document.hasVoidParent(anchorKey);
 
@@ -375,14 +375,14 @@ function AfterPlugin() {
 
     var native = window.getSelection();
     var anchorNode = native.anchorNode,
-        anchorOffset = native.anchorOffset;
+      anchorOffset = native.anchorOffset;
 
     var point = (0, _findPoint2.default)(anchorNode, anchorOffset, value);
     if (!point) return;
 
     // Get the text node and leaf in question.
     var document = value.document,
-        selection = value.selection;
+      selection = value.selection;
 
     var node = document.getDescendant(point.key);
     var block = document.getClosestBlock(node.key);
@@ -409,7 +409,7 @@ function AfterPlugin() {
     // COMPAT: If this is the last leaf, and the DOM text ends in a new line,
     // we will have added another new line in <Leaf>'s render method to account
     // for browsers collapsing a single trailing new lines, so remove it.
-    if (isLastText && isLastLeaf && lastChar == '\n') {
+    if (isLastText && isLastLeaf && (lastChar == '\n' || lastChar == '\u200b')) {
       textContent = textContent.slice(0, -1);
     }
 
@@ -503,9 +503,9 @@ function AfterPlugin() {
     // browsers won't know what to do.
     if (_hotkeys2.default.COLLAPSE_CHAR_BACKWARD(event)) {
       var document = value.document,
-          isInVoid = value.isInVoid,
-          previousText = value.previousText,
-          startText = value.startText;
+        isInVoid = value.isInVoid,
+        previousText = value.previousText,
+        startText = value.startText;
 
       var isPreviousInVoid = previousText && document.hasVoidParent(previousText.key);
       if (isInVoid || isPreviousInVoid || startText.text == '') {
@@ -516,9 +516,9 @@ function AfterPlugin() {
 
     if (_hotkeys2.default.COLLAPSE_CHAR_FORWARD(event)) {
       var _document = value.document,
-          _isInVoid = value.isInVoid,
-          nextText = value.nextText,
-          _startText = value.startText;
+        _isInVoid = value.isInVoid,
+        nextText = value.nextText,
+        _startText = value.startText;
 
       var isNextInVoid = nextText && _document.hasVoidParent(nextText.key);
       if (_isInVoid || isNextInVoid || _startText.text == '') {
@@ -529,9 +529,9 @@ function AfterPlugin() {
 
     if (_hotkeys2.default.EXTEND_CHAR_BACKWARD(event)) {
       var _document2 = value.document,
-          _isInVoid2 = value.isInVoid,
-          _previousText = value.previousText,
-          _startText2 = value.startText;
+        _isInVoid2 = value.isInVoid,
+        _previousText = value.previousText,
+        _startText2 = value.startText;
 
       var _isPreviousInVoid = _previousText && _document2.hasVoidParent(_previousText.key);
       if (_isInVoid2 || _isPreviousInVoid || _startText2.text == '') {
@@ -542,9 +542,9 @@ function AfterPlugin() {
 
     if (_hotkeys2.default.EXTEND_CHAR_FORWARD(event)) {
       var _document3 = value.document,
-          _isInVoid3 = value.isInVoid,
-          _nextText = value.nextText,
-          _startText3 = value.startText;
+        _isInVoid3 = value.isInVoid,
+        _nextText = value.nextText,
+        _startText3 = value.startText;
 
       var _isNextInVoid = _nextText && _document3.hasVoidParent(_nextText.key);
       if (_isInVoid3 || _isNextInVoid || _startText3.text == '') {
@@ -567,8 +567,8 @@ function AfterPlugin() {
 
     var transfer = (0, _getEventTransfer2.default)(event);
     var type = transfer.type,
-        fragment = transfer.fragment,
-        text = transfer.text;
+      fragment = transfer.fragment,
+      text = transfer.text;
 
 
     if (type == 'fragment') {
@@ -579,8 +579,8 @@ function AfterPlugin() {
       if (!text) return;
       var value = change.value;
       var document = value.document,
-          selection = value.selection,
-          startBlock = value.startBlock;
+        selection = value.selection,
+        startBlock = value.startBlock;
 
       if (startBlock.isVoid) return;
 
@@ -619,10 +619,10 @@ function AfterPlugin() {
     if (!range) return;
 
     var _range = range,
-        anchorKey = _range.anchorKey,
-        anchorOffset = _range.anchorOffset,
-        focusKey = _range.focusKey,
-        focusOffset = _range.focusOffset;
+      anchorKey = _range.anchorKey,
+      anchorOffset = _range.anchorOffset,
+      focusKey = _range.focusKey,
+      focusOffset = _range.focusOffset;
 
     var anchorText = document.getNode(anchorKey);
     var focusText = document.getNode(focusKey);
@@ -699,8 +699,8 @@ function AfterPlugin() {
 
   function renderNode(props) {
     var attributes = props.attributes,
-        children = props.children,
-        node = props.node;
+      children = props.children,
+      node = props.node;
 
     if (node.object != 'block' && node.object != 'inline') return;
     var Tag = node.object == 'block' ? 'div' : 'span';
@@ -721,7 +721,7 @@ function AfterPlugin() {
 
   function renderPlaceholder(props) {
     var editor = props.editor,
-        node = props.node;
+      node = props.node;
 
     if (!editor.props.placeholder) return;
     if (editor.state.isComposing) return;
@@ -753,7 +753,7 @@ function AfterPlugin() {
    */
 
   return {
-    onBeforeInput: onBeforeInput,
+    // onBeforeInput: onBeforeInput,
     onBlur: onBlur,
     onClick: onClick,
     onCopy: onCopy,

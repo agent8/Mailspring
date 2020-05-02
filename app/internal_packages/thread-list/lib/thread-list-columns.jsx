@@ -200,6 +200,7 @@ const cNarrow = new ListTabular.Column({
       pencil = <span className="draft-icon">Draft</span>;
     }
 
+    const snippet = Utils.superTrim(getSnippet(thread));
     // TODO We are limiting the amount on injected icons in narrow mode to 1
     // until we revisit the UI to accommodate more icons
     return (
@@ -231,7 +232,7 @@ const cNarrow = new ListTabular.Column({
             {calendar || attachment || <div className="thread-icon no-icon" />}
           </div>
           <div className="snippet-and-labels">
-            <div className="snippet">{Utils.superTrim(getSnippet(thread))}&nbsp;</div>
+            <div className="snippet">{snippet ? snippet : ' '}</div>
             {/* <div style={{ flex: 1, flexShrink: 1 }} /> */}
             {/* <MailLabelSet thread={thread} /> */}
             {/* <div className="icons">

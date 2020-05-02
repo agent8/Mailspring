@@ -97,7 +97,8 @@ class FocusedContactsStore extends MailspringStore {
         this._currentFocusedContact = match || contact;
         this._triggerLater();
       });
-      this._loadCurrentParticipantThreads();
+      // quanzs: comment out for temporary
+      // this._loadCurrentParticipantThreads();
     } else {
       this._currentFocusedContact = null;
       this._triggerLater();
