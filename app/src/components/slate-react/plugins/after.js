@@ -409,7 +409,7 @@ function AfterPlugin() {
     // COMPAT: If this is the last leaf, and the DOM text ends in a new line,
     // we will have added another new line in <Leaf>'s render method to account
     // for browsers collapsing a single trailing new lines, so remove it.
-    if (isLastText && isLastLeaf && lastChar == '\n') {
+    if (isLastText && isLastLeaf && (lastChar == '\n' || lastChar == '\u200b')) {
       textContent = textContent.slice(0, -1);
     }
 
@@ -753,7 +753,7 @@ function AfterPlugin() {
    */
 
   return {
-    onBeforeInput: onBeforeInput,
+    // onBeforeInput: onBeforeInput,
     onBlur: onBlur,
     onClick: onClick,
     onCopy: onCopy,
