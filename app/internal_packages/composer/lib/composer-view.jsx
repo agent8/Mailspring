@@ -222,6 +222,11 @@ export default class ComposerView extends React.Component {
       }
     }
   }
+  _onFocusToBody = () => {
+    if (this._mounted && this._els[Fields.Body]) {
+      this._els[Fields.Body].focus();
+    }
+  };
 
   scrollBodyInView(header) {
     const headerNode = ReactDOM.findDOMNode(header);
@@ -297,6 +302,7 @@ export default class ComposerView extends React.Component {
             session={this.props.session}
             initiallyFocused={this.props.draft.to.length === 0}
             onClick={this._onHeaderClicked}
+            onFocusBody={this._onFocusToBody}
           />
           <div
             className="compose-body"
@@ -414,6 +420,7 @@ export default class ComposerView extends React.Component {
             }))
         );
       });
+      console.log('onChange');
       this.props.session.changes.add({ bodyEditorState: change.value }, { skipSaving });
     }
   };
