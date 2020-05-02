@@ -875,21 +875,28 @@ body.platform-win32 {
   .subject {
     font-size: @font-size-base + 2px;
     overflow: hidden;
-    text-overflow: ellipsis;
+    // text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
     text-align: left;
     color: @text-color;
     margin-right: @scrollbar-margin;
-    padding-right: 26px;
+    padding-right: 4px;
     position: relative;
     line-height: 19px;
     margin: 4px 0 2px 0;
     span {
       color: @gray-darker;
     }
+    &>span {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .thread-icon {
-      position: absolute;
-      right: 4px;
-      top: 0;
+      // position: absolute;
+      // right: 4px;
+      // top: 0;
       width: 20px;
       -webkit-mask-size: 18px;
     }
