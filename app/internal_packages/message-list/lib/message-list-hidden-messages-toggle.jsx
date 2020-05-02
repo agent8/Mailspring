@@ -39,19 +39,12 @@ export default class MessageListHiddenMessagesToggle extends React.Component {
       } else {
         message = `There is one more message in this thread that is not in spam or trash.`;
       }
-    } else if (viewing === 'inbox' && enableFocusedInbox) {
-      let theOtherTabName = 'other';
-      if (currentPerspective.isOther) {
-        theOtherTabName = 'focused';
-      }
+    } else if (viewing === 'inbox' && enableFocusedInbox && !currentPerspective.isOther) {
       if (numberOfHiddenItems > 1) {
-        message = `${numberOfHiddenItems} messages in this thread are hidden because it was moved to ${
-          theOtherTabName ? `${theOtherTabName} or ` : ''
-        }trash or spam.`;
+        message = `${numberOfHiddenItems} messages in this thread are hidden because it was moved to 
+          other or trash or spam.`;
       } else {
-        message = `One message in this thread is hidden because it was moved to ${
-          theOtherTabName ? `${theOtherTabName} or ` : ''
-        }trash or spam.`;
+        message = `One message in this thread is hidden because it was moved to other or trash or spam.`;
       }
     } else {
       if (numberOfHiddenItems > 1) {
