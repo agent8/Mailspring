@@ -140,6 +140,11 @@ export default {
             default: false,
             title: 'Use 24-hour clock',
           },
+          sendUsageData: {
+            type: 'boolean',
+            default: true,
+            title: 'Send usage data to help improve the performance of the app',
+          },
           interfaceZoom: {
             title: 'Override standard interface scaling',
             type: 'number',

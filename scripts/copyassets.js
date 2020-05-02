@@ -19,6 +19,10 @@ const file_mappings = [
     'veyron-design/images/desktop/addAnotherAccount.png',
     './app/internal_packages/onboarding/assets/',
   ],
+  [
+    'veyron-design/images/desktop/trends-research.png',
+    './app/internal_packages/onboarding/assets/',
+  ],
   ['veyron-design/images/desktop/login-error.png', './app/internal_packages/onboarding/assets/'],
   ['veyron-design/images/desktop/manage-privacy.png', './app/internal_packages/onboarding/assets/'],
   [

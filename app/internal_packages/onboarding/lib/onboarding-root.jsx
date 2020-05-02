@@ -23,6 +23,7 @@ import AddAnotherAccountPage from './page-account-add-another';
 import GdprTerms from './page-gdpr-terms';
 import LoginPage from './page-login';
 import SorryPage from './page-sorry';
+import OptinTrendsResearchPage from './page-optin-trends-research';
 
 const PageComponents = {
   login: LoginPage,
@@ -46,6 +47,7 @@ const PageComponents = {
   'initial-done': InitialDonePage,
   'gdpr-terms': GdprTerms,
   'login-error': LoginErrorPage,
+  'optin-trends-research': OptinTrendsResearchPage,
 };
 
 export default class OnboardingRoot extends React.Component {

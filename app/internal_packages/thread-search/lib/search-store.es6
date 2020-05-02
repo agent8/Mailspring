@@ -87,6 +87,7 @@ class SearchStore extends MailspringStore {
   _onQuerySubmitted = (query, forceQuery) => {
     if (query !== this._searchQuery || forceQuery) {
       this._searchQuery = query;
+      this._preSearchQuery = query;
       this.trigger();
       this._processAndSubmitQuery(forceQuery);
     }
