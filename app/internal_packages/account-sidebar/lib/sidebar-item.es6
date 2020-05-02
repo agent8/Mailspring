@@ -1,3 +1,5 @@
+import ThreadCategory from '../../../src/flux/models/thread-category';
+
 const _ = require('underscore');
 const _str = require('underscore.string');
 const { OutlineViewItem, RetinaImg } = require('mailspring-component-kit');
@@ -11,6 +13,7 @@ const {
   Actions,
   RegExpUtils,
   AccountStore,
+  DatabaseStore,
 } = require('mailspring-exports');
 
 const SidebarActions = require('./sidebar-actions');
@@ -111,14 +114,27 @@ const onDeleteItem = function(item) {
   if (!category) {
     return;
   }
-
-  Actions.queueTask(
-    new DestroyCategoryTask({
-      path: category.path,
-      name: category.name,
-      accountId: category.accountId,
-    })
-  );
+  DatabaseStore.findAll(ThreadCategory)
+    .where({ categoryId: category.id })
+    .count()
+    .then(count => {
+      if (count === 0) {
+        Actions.queueTask(
+          new DestroyCategoryTask({
+            path: category.path,
+            name: category.name,
+            accountId: category.accountId,
+          })
+        );
+      } else {
+        _.defer(() => {
+          AppEnv.showErrorDialog({
+            title: `Cannot delete ${(item.contextMenuLabel || item.name).toLocaleLowerCase()}`,
+            message: `Must empty ${(item.contextMenuLabel || item.name).toLocaleLowerCase()} first`,
+          });
+        });
+      }
+    });
 };
 
 const onEditItem = function(item, value) {
