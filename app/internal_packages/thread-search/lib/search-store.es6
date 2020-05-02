@@ -35,8 +35,22 @@ class SearchStore extends MailspringStore {
   }
 
   _onSearchCompleted = () => {
+    this._onRemoveCancelSearchingTimeout();
     this._isSearching = false;
     this.trigger();
+  };
+  _onAddCancelSearchingTimeout = () => {
+    this._onRemoveCancelSearchingTimeout();
+    this._completedTimeout = setTimeout(() => {
+      this._isSearching = false;
+      this.trigger();
+    }, 5000);
+  };
+  _onRemoveCancelSearchingTimeout = () => {
+    if (this._completedTimeout) {
+      clearTimeout(this._completedTimeout);
+      this._completedTimeout = null;
+    }
   };
   _onWorkspaceChange = () => {
     const sheetId = WorkspaceStore.topSheet().id;
@@ -72,6 +86,7 @@ class SearchStore extends MailspringStore {
       }
       const next = new SearchMailboxPerspective(current, this._searchQuery);
       Actions.focusMailboxPerspective(next, true);
+      this._onAddCancelSearchingTimeout();
     } else if (current instanceof SearchMailboxPerspective) {
       this._isSearching = false;
       if (this._perspectiveBeforeSearch) {
