@@ -753,7 +753,7 @@ function AfterPlugin() {
    */
 
   return {
-    // onBeforeInput: onBeforeInput,
+    onBeforeInput: onBeforeInput,
     onBlur: onBlur,
     onClick: onClick,
     onCopy: onCopy,
