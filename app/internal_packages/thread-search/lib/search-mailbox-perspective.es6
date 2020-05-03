@@ -28,7 +28,7 @@ class SearchMailboxPerspective extends MailboxPerspective {
     if (hasFolderOrLabel && hasFolderOrLabel[1]) {
       folderOrLabel = hasFolderOrLabel[1];
     }
-
+    this.folder = folderOrLabel;
     this.name = `Searching ${folderOrLabel}`;
     this.isSearchMailbox = true;
   }
