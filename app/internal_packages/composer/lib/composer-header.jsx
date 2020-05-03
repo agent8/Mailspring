@@ -26,6 +26,7 @@ export default class ComposerHeader extends React.Component {
     draft: PropTypes.object.isRequired,
     session: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
+    onFocusBody: PropTypes.func.isRequired,
   };
 
   static contextTypes = {
@@ -162,6 +163,29 @@ export default class ComposerHeader extends React.Component {
       Actions.setCurrentWindowTitle(this._getToName(changes));
     }
   };
+  _onSubjectKeyDown = event => {
+    if (['Tab'].includes(event.key)) {
+      this._onTab('subject');
+    }
+  };
+  _onTab = field => {
+    let focusBody = false;
+    let checkFields = [];
+    if (field === 'to') {
+      checkFields = ['textFieldCc', 'textFieldBcc', 'textFieldSubject'];
+    } else if (field === 'cc') {
+      checkFields = ['textFieldBcc', 'textFieldSubject'];
+    } else if (field === 'bcc') {
+      checkFields = ['textFieldSubject'];
+    } else if (field === 'subject') {
+      focusBody = true;
+    }
+    const enableFields = Array.isArray(this.state.enabledFields) ? this.state.enabledFields : [];
+    focusBody = focusBody || !enableFields.some(el => checkFields.includes(el));
+    if (this.props.onFocusBody && focusBody) {
+      this.props.onFocusBody();
+    }
+  };
 
   _onSubjectChange = event => {
     this.props.session.changes.add({ subject: event.target.value });
@@ -188,6 +212,7 @@ export default class ComposerHeader extends React.Component {
           name="subject"
           placeholder="Subject"
           value={this.props.draft.subject}
+          onKeyDown={this._onSubjectKeyDown}
           onChange={this._onSubjectChange}
           disabled={this._draftNotReady()}
         />
@@ -216,6 +241,7 @@ export default class ComposerHeader extends React.Component {
         participants={{ to, cc, bcc }}
         draft={this.props.draft}
         session={this.props.session}
+        onTab={this._onTab}
         disabled={this._draftNotReady()}
       />
     );
@@ -236,6 +262,7 @@ export default class ComposerHeader extends React.Component {
           participants={{ to, cc, bcc }}
           draft={this.props.draft}
           session={this.props.session}
+          onTab={this._onTab}
           disabled={this._draftNotReady()}
         />
       );
@@ -257,6 +284,7 @@ export default class ComposerHeader extends React.Component {
           participants={{ to, cc, bcc }}
           draft={this.props.draft}
           session={this.props.session}
+          onTab={this._onTab}
           disabled={this._draftNotReady()}
         />
       );
