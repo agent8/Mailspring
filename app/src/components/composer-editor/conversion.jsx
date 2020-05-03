@@ -27,7 +27,7 @@ export const plugins = [
   ...LinkPlugins,
   ...BaseBlockPlugins,
   ...MarkdownPlugins,
-  ...SpellcheckPlugins,
+  // ...SpellcheckPlugins,
   ...CrowdedButtons,
   ...SignaturePlugins,
 ];
