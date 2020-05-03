@@ -52,7 +52,7 @@ class ThreadSearchBar extends Component {
       return 'is:starred ';
     }
     if (perspective.unread) {
-      return 'is:unread in:inbox ';
+      return 'is:unread in:"inbox" ';
     }
     if (perspective.isInbox()) {
       return '';
@@ -61,9 +61,9 @@ class ThreadSearchBar extends Component {
       ...new Set(perspective.categories().map(c => c.role || wrapInQuotes(c.path))),
     ];
     if (rolesAndPaths.length > 1) {
-      return `(in:${rolesAndPaths.join(' OR in:')}) `;
+      return `(in:"${rolesAndPaths.join('" OR in:"')}") `;
     } else if (rolesAndPaths.length === 1) {
-      return `in:${rolesAndPaths[0]} `;
+      return `in:"${rolesAndPaths[0]}" `;
     } else {
       return '';
     }
@@ -103,7 +103,7 @@ class ThreadSearchBar extends Component {
           promises.push(
             termSuggestions(term, accountIds).then(results => {
               suggestions.push(...results.map(textToSuggestion));
-            }),
+            })
           );
         } else {
           suggestions = termSuggestions
@@ -125,11 +125,16 @@ class ThreadSearchBar extends Component {
               term: wrapInQuotes(t.subject),
               description: t.subject,
               thread: t,
-              role: 'email'
-            })),
+              role: 'email',
+            }))
           ),
           contacts: getContactSuggestions(query, accountIds).then(results =>
-            results.map(term => ({ token: null, term: wrapInQuotes(term), description: term, role: 'contact' })),
+            results.map(term => ({
+              token: null,
+              term: wrapInQuotes(term),
+              description: term,
+              role: 'contact',
+            }))
           ),
         }).then(({ contacts, subjects }) => {
           suggestions = [...contacts, ...subjects].sort((a, b) => {
@@ -142,7 +147,7 @@ class ThreadSearchBar extends Component {
           if (suggestions.length > 10) {
             suggestions.length = 10;
           }
-        }),
+        })
       );
     }
 
@@ -165,7 +170,7 @@ class ThreadSearchBar extends Component {
     if (this.props.query === '') {
       this._onSearchQueryChanged(this._initialQueryForPerspective());
       window.requestAnimationFrame(() => {
-        this._fieldElFocus()
+        this._fieldElFocus();
       });
     }
   };
@@ -259,7 +264,7 @@ class ThreadSearchBar extends Component {
 
   _setSuggestionState = suggestions => {
     const sameItemIdx = suggestions.findIndex(
-      s => this.state.selected && s.description === this.state.selected.description,
+      s => this.state.selected && s.description === this.state.selected.description
     );
     const backupIdx = Math.max(-1, Math.min(this.state.selectedIdx, suggestions.length - 1));
     const selectedIdx = sameItemIdx !== -1 ? sameItemIdx : backupIdx;
@@ -333,14 +338,14 @@ class ThreadSearchBar extends Component {
             mode={RetinaImg.Mode.ContentPreserve}
           />
         ) : (
-            <RetinaImg
-              className="search-accessory search"
-              name="search.svg"
-              isIcon
-              mode={RetinaImg.Mode.ContentIsMask}
-              onClick={() => this._fieldElFocus()}
-            />
-          )}
+          <RetinaImg
+            className="search-accessory search"
+            name="search.svg"
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+            onClick={() => this._fieldElFocus()}
+          />
+        )}
         <TokenizingContenteditable
           ref={el => (this._fieldEl = el)}
           value={showPlaceholder ? this._placeholder() : utf7.decode(query)}
@@ -358,53 +363,44 @@ class ThreadSearchBar extends Component {
             onMouseDown={this._onClearSearchQuery}
           />
         )}
-        {suggestions.length > 0 &&
-          this.state.focused && (
-            <div className="suggestions">
-              {suggestions.map((s, idx) => (
-                <div
-                  onMouseDown={e => {
-                    this._onChooseSuggestion(s);
-                    e.preventDefault();
-                  }}
-                  className={`suggestion ${selectedIdx === idx ? 'selected' : ''}`}
-                  key={`${idx + s.description}`}
-                >
-                  {s.role === 'contact' ? (
-                    <EmailAvatar
-                      name={s.description}
-                      email={s.description}
-                    />
-                  ) : null}
-                  {s.role === 'email' ? (
-                    <RetinaImg
-                      name="unread.svg"
-                      isIcon
-                      mode={RetinaImg.Mode.ContentIsMask}
-                    />
-                  ) : null}
-                  {s.token && <span className="suggestion-token">{s.token}: </span>}
-                  {s.description}
-                </div>
-              ))}
-              {suggestions === TokenSuggestionsForEmpty && (
-                <div className="footer">
-                  Pro tip: Combine search terms with AND and OR to create complex queries.{' '}
-                  {/*<a*/}
-                  {/*  onMouseDown={e => {*/}
-                  {/*    AppEnv.windowEventHandler.openLink({*/}
-                  {/*      href: LearnMoreURL,*/}
-                  {/*      metaKey: e.metaKey,*/}
-                  {/*    });*/}
-                  {/*    e.preventDefault();*/}
-                  {/*  }}*/}
-                  {/*>*/}
-                  {/*  Learn more >*/}
-                  {/*</a>*/}
-                </div>
-              )}
-            </div>
-          )}
+        {suggestions.length > 0 && this.state.focused && (
+          <div className="suggestions">
+            {suggestions.map((s, idx) => (
+              <div
+                onMouseDown={e => {
+                  this._onChooseSuggestion(s);
+                  e.preventDefault();
+                }}
+                className={`suggestion ${selectedIdx === idx ? 'selected' : ''}`}
+                key={`${idx + s.description}`}
+              >
+                {s.role === 'contact' ? (
+                  <EmailAvatar name={s.description} email={s.description} />
+                ) : null}
+                {s.role === 'email' ? (
+                  <RetinaImg name="unread.svg" isIcon mode={RetinaImg.Mode.ContentIsMask} />
+                ) : null}
+                {s.token && <span className="suggestion-token">{s.token}: </span>}
+                {s.description}
+              </div>
+            ))}
+            {suggestions === TokenSuggestionsForEmpty && (
+              <div className="footer">
+                Pro tip: Combine search terms with AND and OR to create complex queries. {/*<a*/}
+                {/*  onMouseDown={e => {*/}
+                {/*    AppEnv.windowEventHandler.openLink({*/}
+                {/*      href: LearnMoreURL,*/}
+                {/*      metaKey: e.metaKey,*/}
+                {/*    });*/}
+                {/*    e.preventDefault();*/}
+                {/*  }}*/}
+                {/*>*/}
+                {/*  Learn more >*/}
+                {/*</a>*/}
+              </div>
+            )}
+          </div>
+        )}
       </KeyCommandsRegion>
     );
   }
