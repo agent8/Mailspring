@@ -148,9 +148,15 @@ const onBackspace = (event, change) => {
   }
   const contentIds = processInlineAttachment(change);
   if (contentIds.length === 0) {
-    processNearestInlineAttachment(change, -1);
+    const haveInlineDeleted = processNearestInlineAttachment(change, -1).length > 0;
+    if (haveInlineDeleted) {
+      return change;
+    }
   } else {
-    return change;
+    if (isEmptySelection(change.value)) {
+      return change;
+    }
+    return;
   }
 };
 const onDelete = (event, change) => {
@@ -159,12 +165,19 @@ const onDelete = (event, change) => {
   }
   const contentIds = processInlineAttachment(change);
   if (contentIds.length === 0) {
-    processNearestInlineAttachment(change, 1);
+    const haveInlineDeleted = processNearestInlineAttachment(change, 1).length > 0;
+    if (haveInlineDeleted) {
+      return;
+    } else {
+      return change;
+    }
   } else {
-    return change;
+    if (isEmptySelection(change.value)) {
+      return change;
+    }
+    return;
   }
 };
-
 export const changes = {
   insert: (change, file) => {
     const canHoldInlineImage = (node, anchorKey) =>
