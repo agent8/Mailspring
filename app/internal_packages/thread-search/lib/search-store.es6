@@ -2,6 +2,16 @@ import MailspringStore from 'mailspring-store';
 import { Actions, AccountStore, FocusedPerspectiveStore, WorkspaceStore } from 'mailspring-exports';
 import _ from 'underscore';
 import SearchMailboxPerspective from './search-mailbox-perspective';
+let searchQueryParser = null;
+let searchQueryAST = null;
+const SearchQueryAST = () => {
+  searchQueryAST = searchQueryAST || require('mailspring-exports').SeachQueryAST;
+  return searchQueryAST;
+};
+const SearchQueryParser = () => {
+  searchQueryParser = searchQueryParser || require('mailspring-exports').SeachQueryParser;
+  return searchQueryParser;
+};
 
 // Stores should closely match the needs of a particular part of the front end.
 // For example, we might create a "MessageStore" that observes this store
@@ -24,6 +34,38 @@ class SearchStore extends MailspringStore {
 
   query() {
     return this._searchQuery;
+  }
+  _isMatchedExpression = query => {
+    if (!query) {
+      return false;
+    }
+    return (
+      query instanceof SearchQueryAST().GenericQueryExpression ||
+      query instanceof SearchQueryAST().SubjectQueryExpression ||
+      query instanceof SearchQueryAST().FromQueryExpression
+    );
+  };
+  getSearchText() {
+    let searchValue = '';
+    const query = this._preSearchQuery;
+    let parsedQuery = {};
+    try {
+      parsedQuery = query ? SearchQueryParser().parse(query) : {};
+      if (parsedQuery instanceof SearchQueryAST().AndQueryExpression) {
+        for (const k in parsedQuery) {
+          if (this._isMatchedExpression(parsedQuery[k])) {
+            searchValue = parsedQuery[k].text.token.s;
+            break;
+          }
+        }
+      } else if (this._isMatchedExpression(parsedQuery)) {
+        searchValue = parsedQuery.text.token.s;
+      }
+    } catch (err) {
+      console.info('Failed to parse local search query, falling back to generic query', query);
+      searchValue = query;
+    }
+    return searchValue;
   }
 
   queryPopulated() {
