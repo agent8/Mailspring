@@ -11,6 +11,8 @@ import {
   IMAPSearchTask,
 } from 'mailspring-exports';
 
+const utf7 = require('utf7').imap;
+
 class SearchQuerySubscription extends MutableQuerySubscription {
   constructor(searchQuery, accountIds) {
     super(null, { emitResultSet: true });
@@ -19,7 +21,6 @@ class SearchQuerySubscription extends MutableQuerySubscription {
 
     this._connections = [];
     this._extDisposables = [];
-    this._searching = false;
 
     _.defer(() => this.performSearch());
   }
@@ -29,7 +30,6 @@ class SearchQuerySubscription extends MutableQuerySubscription {
   };
 
   performSearch() {
-    this._searching = true;
     this.performLocalSearch();
     this.performExtensionSearch();
   }
@@ -42,6 +42,19 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     let parsedQuery = null;
     try {
       parsedQuery = SearchQueryParser.parse(this._searchQuery);
+      const firstInQueryExpression = parsedQuery.getFirstInQueryExpression();
+      if (!firstInQueryExpression) {
+        const defaultCategoryIds = [];
+        this._accountIds.forEach(aid => {
+          const category = this._getDefaultCategoryByAccountId(aid);
+          if (category && category.id) {
+            return defaultCategoryIds.push(category.id);
+          }
+        });
+        if (defaultCategoryIds.length) {
+          dbQuery = dbQuery.where([Thread.attributes.categories.containsAny(defaultCategoryIds)]);
+        }
+      }
       dbQuery = dbQuery.structuredSearch(parsedQuery);
     } catch (e) {
       console.info('Failed to parse local search query, falling back to generic query', e);
@@ -49,45 +62,81 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     }
     dbQuery = dbQuery
       .background()
-      .where({state: 0})
+      .where({ state: 0 })
       .order(Thread.attributes.lastMessageTimestamp.descending())
       .limit(1000);
-    this._performRemoteSearch({accountIds: this._accountIds, parsedQuery, searchQuery: this._searchQuery});
+    this._performRemoteSearch({
+      accountIds: this._accountIds,
+      parsedQuery,
+      searchQuery: this._searchQuery,
+    });
     this.replaceQuery(dbQuery);
   }
 
   _performRemoteSearch = ({ accountIds, parsedQuery = null, searchQuery = '' } = {}) => {
-      let queryJSON = {};
-      let genericText = '';
-      if (parsedQuery) {
-        queryJSON = parsedQuery;
-        genericText = IMAPSearchQueryBackend.folderNamesForQuery(parsedQuery);
-      } else {
-        genericText = searchQuery;
+    let queryJSON = {};
+    let genericText = '';
+    let firstInQueryRole = null;
+    if (parsedQuery) {
+      const firstInQueryExpression = parsedQuery.getFirstInQueryExpression();
+      firstInQueryRole =
+        firstInQueryExpression &&
+        firstInQueryExpression.text &&
+        firstInQueryExpression.text.token &&
+        firstInQueryExpression.text.token.s
+          ? utf7.decode(firstInQueryExpression.text.token.s)
+          : '';
+      queryJSON = parsedQuery;
+      genericText = IMAPSearchQueryBackend.folderNamesForQuery(parsedQuery);
+    } else {
+      genericText = searchQuery;
+    }
+    const tasks = [];
+    accountIds.forEach(accountId => {
+      const categories = CategoryStore.categories(accountId);
+      let firstPath = null;
+      if (firstInQueryRole) {
+        firstPath = categories.find(categorie => {
+          if (categorie.role === firstInQueryRole) {
+            return true;
+          }
+          const names = categorie.name.split(categorie.delimiter) || [];
+          return names.some(nameItem => nameItem.toUpperCase() === firstInQueryRole.toUpperCase());
+        });
       }
-      const tasks = [];
-      accountIds.forEach( accountId => {
-        const all = CategoryStore.getCategoryByRole(accountId, 'inbox');
-        if (all) {
-          tasks.push(
-            new IMAPSearchTask({
-              accountId,
-              fullTextSearch: genericText,
-              paths: [all],
-              query: queryJSON,
-            })
-          );
-        }
-      });
-      Actions.remoteSearch(tasks);
-    };
+      if (!firstPath) {
+        firstPath = this._getDefaultCategoryByAccountId(accountId);
+      }
+
+      if (firstPath) {
+        tasks.push(
+          new IMAPSearchTask({
+            accountId,
+            fullTextSearch: genericText,
+            paths: [firstPath],
+            query: queryJSON,
+          })
+        );
+      }
+    });
+    Actions.remoteSearch(tasks);
+  };
+
+  _getDefaultCategoryByAccountId(aid) {
+    // if account has `all mail`, use `all mail` as default folder, e.g. gmail
+    const allMailCategory = CategoryStore.getAllMailCategory(aid);
+    if (allMailCategory && allMailCategory.id) {
+      return allMailCategory;
+    }
+    // if account dont has `all mail`, use `inbox` as default folder, e.g. hotmail
+    const inboxCategory = CategoryStore.getCategoryByRole(aid, 'inbox');
+    if (inboxCategory && inboxCategory.id) {
+      return inboxCategory;
+    }
+  }
 
   _createResultAndTrigger() {
     super._createResultAndTrigger();
-    if (this._searching) {
-      this._searching = false;
-      Actions.searchCompleted();
-    }
   }
 
   _addThreadIdsToSearch(ids = []) {

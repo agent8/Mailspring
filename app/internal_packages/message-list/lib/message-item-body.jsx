@@ -141,7 +141,7 @@ export default class MessageItemBody extends React.Component {
         // Note: I don't like doing this with RegExp before the body is inserted into
         // the DOM, but we want to avoid "could not load cid://" in the console.
 
-        if (download && download.state !== 'finished') {
+        if (download && download.state !== 'done') {
           const inlineImgRegexp = new RegExp(
             `<\\s*img.*src=['"]cid:${safeContentId}['"][^>]*>`,
             'gi'
@@ -156,7 +156,9 @@ export default class MessageItemBody extends React.Component {
           const cidRegexp = new RegExp(`"cid:${safeContentId}(@[^'"]+)?"`, 'gi');
           merged = merged.replace(
             cidRegexp,
-            `"file://${Utils.safeBrowserPath(AttachmentStore.pathForFile(file))}" class='inline-image'`
+            `"file://${Utils.safeBrowserPath(
+              AttachmentStore.pathForFile(file)
+            )}" class='inline-image'`
           );
         }
       });
@@ -178,7 +180,7 @@ export default class MessageItemBody extends React.Component {
     if (
       typeof message.body === 'string' &&
       message.body.length > 0 &&
-      (typeof processedBody === 'string' && processedBody.length > 0)
+      typeof processedBody === 'string' && processedBody.length > 0
     ) {
       return (
         <EmailFrame

@@ -370,6 +370,7 @@ export default class TokenizingTextField extends React.Component {
     menuClassSet: PropTypes.object,
 
     tabIndex: PropTypes.number,
+    onTab: PropTypes.func,
   };
 
   static defaultProps = {
@@ -461,8 +462,13 @@ export default class TokenizingTextField extends React.Component {
       this._removeTokens(this._selectedTokens());
     } else if (['Escape'].includes(event.key)) {
       this._refreshCompletions('', { clear: true });
-    } else if (['Tab', 'Enter'].includes(event.key)) {
+    } else if (['Tab', 'Enter', 'Meta'].includes(event.key)) {
+      // The 'Meta' is needed so when user use shortcut to send draft,
+      // we'll have already updated draft fields data
       this._onInputTrySubmit(event);
+      if (['Tab'].includes(event.key) && this.props.onTab) {
+        this.props.onTab();
+      }
     } else if (['ArrowLeft', 'ArrowRight'].includes(event.key)) {
       const delta = event.key === 'ArrowLeft' ? -1 : 1;
       const { start } = this.refs.input.selectionRange();

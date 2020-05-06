@@ -72,6 +72,18 @@ class QueryExpression {
     throw new Error('Abstract function not implemented!');
   }
 
+  getFirstInQueryExpression() {
+    if (this.constructor === InQueryExpression) {
+      return this;
+    }
+    if (this.e1 instanceof InQueryExpression) {
+      return this.e1;
+    }
+    if (this.e2 instanceof InQueryExpression) {
+      return this.e2;
+    }
+  }
+
   equals(other) {
     throw new Error('Abstract function not implemented!', other);
   }

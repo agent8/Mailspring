@@ -148,6 +148,46 @@ export function TrashButton(props) {
   const _onShortCutExpunge = event => {
     _onExpunge(event, threadSelectionScope(props, props.selection));
   };
+  const _onShortCutSearchTrash = event => {
+    _onSearchTrash(event, threadSelectionScope(props, props.selection));
+  };
+  const _onSearchTrash = (event, threads) => {
+    const moveThreads = [];
+    const expungeMessages = [];
+    threads.forEach(thread => {
+      if (
+        allFoldersInTrashOrSpam(thread.accountId, thread.labelIds) &&
+        Array.isArray(thread.__messages)
+      ) {
+        expungeMessages.push(...thread.__messages);
+      } else {
+        moveThreads.push(thread);
+      }
+    });
+    const moveTasks = TaskFactory.tasksForMovingToTrash({
+      threads: moveThreads,
+      currentPerspective: FocusedPerspectiveStore.current(),
+      source: 'Toolbar Button: Search Trash',
+    });
+    const expungeTasks = TaskFactory.tasksForExpungingThreadsOrMessages({
+      messages: expungeMessages,
+      source: 'Toolbar Button: Search Expunge',
+    });
+    const tasks = [...moveTasks, ...expungeTasks];
+    Actions.queueTasks(tasks);
+    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:remove' });
+    if (event) {
+      event.stopPropagation();
+    }
+    if (props.selection) {
+      props.selection.clear();
+    }
+    if (AppEnv.isThreadWindow()) {
+      AppEnv.debugLog(`Remove Closing window because in ThreadWindow`);
+      AppEnv.close();
+    }
+    return;
+  };
   const _onRemove = (event, threads) => {
     const tasks = TaskFactory.tasksForMovingToTrash({
       threads: Array.isArray(threads) ? threads : props.items,
@@ -222,6 +262,54 @@ export function TrashButton(props) {
     return;
   };
 
+  const allFoldersInTrashOrSpam = (accountId, labelIds) => {
+    if (!Array.isArray(labelIds) || !accountId) {
+      return false;
+    }
+    return labelIds
+      .map(labelId => CategoryStore.byId(accountId, labelId))
+      .every(folder => folder.role === 'trash' || folder.role === 'spam');
+  };
+  const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
+    if (!Array.isArray(labelIds) || !accountId) {
+      return false;
+    }
+    return labelIds
+      .map(labelId => CategoryStore.byId(accountId, labelId))
+      .some(folder => folder.role !== 'trash' && folder.role !== 'spam');
+  };
+  const isMixed = threads => {
+    let notInTrashOrSpam = undefined;
+    let inTrashOrSpam = undefined;
+    for (let i = 0; i < threads.length; i++) {
+      if (allFoldersInTrashOrSpam(threads[i].accountId, threads[i].labelIds)) {
+        inTrashOrSpam = true;
+      } else {
+        notInTrashOrSpam = true;
+      }
+      if (inTrashOrSpam !== undefined && notInTrashOrSpam !== undefined) {
+        if (inTrashOrSpam && notInTrashOrSpam) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  const allThreadsInTrashOrSpam = threads => {
+    return threads.every(thread => allFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
+  };
+  const allThreadsNotInTrashOrSpam = threads => {
+    return threads.every(thread => notAllFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
+  };
+
+  const isInSearch = props => {
+    let currentPerspective = props.currentPerspective;
+    if (!currentPerspective) {
+      currentPerspective = FocusedPerspectiveStore.current();
+    }
+    return currentPerspective && currentPerspective.isSearchMailbox;
+  };
+
   const canMove = FocusedPerspectiveStore.current().canMoveThreadsTo(props.items, 'trash');
   const canExpunge = FocusedPerspectiveStore.current().canExpungeThreads(props.items);
   if (!canMove && !canExpunge) {
@@ -232,9 +320,29 @@ export function TrashButton(props) {
   if (canMove) {
     actionCallBack = _onShortCutRemove;
     title = 'Move to Trash';
+    if (
+      isInSearch(props) &&
+      props.thread &&
+      Array.isArray(props.thread.labelIds) &&
+      allFoldersInTrashOrSpam(props.thread.accountId, props.thread.labelIds)
+    ) {
+      actionCallBack = _onShortCutExpunge;
+      title = 'Expunge Thread';
+    }
   } else if (canExpunge) {
     actionCallBack = _onShortCutExpunge;
     title = 'Expunge Thread';
+  }
+  if (isInSearch(props) && !props.thread) {
+    const threads = threadSelectionScope(props, props.selection);
+    if (isMixed(threads)) {
+      title = 'Trash';
+    } else if (allThreadsInTrashOrSpam(threads)) {
+      title = 'Expunge';
+    } else {
+      title = 'Trash';
+    }
+    actionCallBack = _onShortCutSearchTrash;
   }
 
   if (props.isMenuItem) {

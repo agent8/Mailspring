@@ -1,3 +1,5 @@
+import ThreadCategory from '../../../src/flux/models/thread-category';
+
 const _ = require('underscore');
 const _str = require('underscore.string');
 const { OutlineViewItem, RetinaImg } = require('mailspring-component-kit');
@@ -11,6 +13,7 @@ const {
   Actions,
   RegExpUtils,
   AccountStore,
+  DatabaseStore,
 } = require('mailspring-exports');
 
 const SidebarActions = require('./sidebar-actions');
@@ -111,14 +114,27 @@ const onDeleteItem = function(item) {
   if (!category) {
     return;
   }
-
-  Actions.queueTask(
-    new DestroyCategoryTask({
-      path: category.path,
-      name: category.name,
-      accountId: category.accountId,
-    })
-  );
+  DatabaseStore.findAll(ThreadCategory)
+    .where({ categoryId: category.id })
+    .count()
+    .then(count => {
+      if (count === 0) {
+        Actions.queueTask(
+          new DestroyCategoryTask({
+            path: category.path,
+            name: category.name,
+            accountId: category.accountId,
+          })
+        );
+      } else {
+        _.defer(() => {
+          AppEnv.showErrorDialog({
+            title: `Cannot delete ${(item.contextMenuLabel || item.name).toLocaleLowerCase()}`,
+            message: `Must empty ${(item.contextMenuLabel || item.name).toLocaleLowerCase()} first`,
+          });
+        });
+      }
+    });
 };
 
 const onEditItem = function(item, value) {
@@ -620,7 +636,7 @@ class SidebarItem {
     seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
       // https://regex101.com/r/jK8cC2/1
-      var item, parentKey;
+      let item, parentKey;
       const re = RegExpUtils.subcategorySplitRegex();
       let itemKey;
 
@@ -636,20 +652,24 @@ class SidebarItem {
       } else {
         itemKey = category.displayName;
         const parentComponents = itemKey.split(category.delimiter);
-        if (
-          parentComponents[0].toLocaleLowerCase() !==
-            CategoryStore.decodePath(path).toLocaleLowerCase() ||
-          parentComponents.length === 1
-        ) {
+        if (parentComponents.length === 1) {
           continue;
-        }
-        for (let i = parentComponents.length; i >= 1; i--) {
-          parentKey = parentComponents.slice(0, i).join(category.delimiter);
+        } else {
+          parentKey = parentComponents
+            .slice(0, parentComponents.length - 1)
+            .join(category.delimiter);
+          // if (path === 'bba.d' && itemKey === 'bba.d/a1') {
+          //   debugger;
+          // }
           parent = seenItems[parentKey.toLocaleLowerCase()];
-          if (parent) {
-            break;
-          }
         }
+        // for (let i = parentComponents.length; i >= 1; i--) {
+        //   parentKey = parentComponents.slice(0, i).join(category.delimiter);
+        //   parent = seenItems[parentKey.toLocaleLowerCase()];
+        //   if (parent) {
+        //     break;
+        //   }
+        // }
       }
       if (parent) {
         let itemDisplayName = category.displayName.substr(parentKey.length + 1);
@@ -671,11 +691,11 @@ class SidebarItem {
           }
         }
       } else {
-        item = SidebarItem.forCategories([category]);
+        // item = SidebarItem.forCategories([category]);
       }
-      if (item) {
-        seenItems[itemKey.toLocaleLowerCase()] = item;
-      }
+      // if (item) {
+      //   seenItems[itemKey.toLocaleLowerCase()] = item;
+      // }
     }
   }
 
@@ -694,25 +714,7 @@ class SidebarItem {
     }
   };
   static getCategoryParent = category => {
-    const account = AccountStore.accountForId(category.accountId);
-    if (account) {
-      const isExchange = account.provider === 'exchange';
-      let parent = null;
-      if (isExchange) {
-        const inboxCategory = CategoryStore.getInboxCategory(account.id);
-        if (inboxCategory && category.parentId === inboxCategory.parentId) {
-          return null;
-        }
-        parent = CategoryStore.getCategoryByPath(category.parentId);
-      } else {
-        const parentComponents = category.path.split(category.delimiter);
-        if (parentComponents.length > 1) {
-          parent = CategoryStore.getCategoryByPath(parentComponents[0]);
-        }
-      }
-      return parent;
-    }
-    return null;
+    return CategoryStore.getCategoryParent(category);
   };
 }
 

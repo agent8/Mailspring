@@ -4,25 +4,25 @@ import {
   Utils,
   ComponentRegistry,
   SearchStore,
-  SearchQueryAST,
-  SearchQueryParser,
-  FocusedPerspectiveStore
+  // SearchQueryAST,
+  // SearchQueryParser,
+  FocusedPerspectiveStore,
 } from 'mailspring-exports';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
 import ScrollRegion from './scroll-region';
 import Spinner from './spinner';
-
 import ListDataSource from './list-data-source';
 import ListSelection from './list-selection';
 import ListTabularItem from './list-tabular-item';
 import IFrameSearcher from '../searchable-components/iframe-searcher';
-const {
-  GenericQueryExpression,
-  AndQueryExpression,
-  SubjectQueryExpression
-} = SearchQueryAST;
+// const {
+//   GenericQueryExpression,
+//   AndQueryExpression,
+//   SubjectQueryExpression,
+//   FromQueryExpression,
+// } = SearchQueryAST;
 const ConfigProfileKey = 'core.appearance.profile';
 
 class ListColumn {
@@ -129,7 +129,7 @@ class ListTabular extends Component {
       );
     }
 
-    this._unlisten = () => { };
+    this._unlisten = () => {};
     this.newItemsCache = {};
     this.state = this.buildStateForRange({ start: -1, end: -1 });
     this.state.profileAvatar = AppEnv.config.get(ConfigProfileKey);
@@ -145,11 +145,14 @@ class ListTabular extends Component {
 
   _safeSetState = newState => {
     if (this.mounted) {
-      this.setState(newState)
+      this.setState(newState);
     } else {
-      console.error('ListTabular here should not setState, because this component is unmounted', newState)
+      console.error(
+        'ListTabular here should not setState, because this component is unmounted',
+        newState
+      );
     }
-  }
+  };
 
   componentDidMount() {
     this.mounted = true;
@@ -186,40 +189,54 @@ class ListTabular extends Component {
     if (!this._cleanupAnimationTimeout) {
       this._cleanupAnimationTimeout = window.setTimeout(this.onCleanupAnimatingItems, 50);
     }
-    this._highlightSearchInDocument();
+    // this._highlightSearchInDocument();
   }
-
-  _isMatchedExpression = query => {
-    if (!query) {
-      return false;
-    }
-    if (query instanceof GenericQueryExpression
-      || query instanceof SubjectQueryExpression) {
-      return true;
-    }
-    return false;
-  }
+  //
+  // _isMatchedExpression = query => {
+  //   if (!query) {
+  //     return false;
+  //   }
+  //   if (
+  //     query instanceof GenericQueryExpression ||
+  //     query instanceof SubjectQueryExpression ||
+  //     query instanceof FromQueryExpression
+  //   ) {
+  //     return true;
+  //   }
+  //   return false;
+  // };
   _highlightSearchInDocument = () => {
-    try {
-      const query = SearchStore.query();
-      const parsedQuery = query ? SearchQueryParser.parse(query) : {};
-      let searchValue = '';
-      if (parsedQuery instanceof AndQueryExpression) {
-        for (const k in parsedQuery) {
-          if (this._isMatchedExpression(parsedQuery[k])) {
-            searchValue = parsedQuery[k].text.token.s;
-            break;
-          }
-        }
-      }
-      else if (this._isMatchedExpression(parsedQuery)) {
-        searchValue = parsedQuery.text.token.s;
-      }
-      const node = ReactDOM.findDOMNode(this);
-      IFrameSearcher.highlightSearchInDocument(this._regionId, searchValue, node, null);
-    } catch (err) {
-      console.error('list-tabular._highlightSearchInDocument error:', err);
-    }
+    // const current = FocusedPerspectiveStore.current();
+    // if (!current.isSearchMailbox) {
+    //   return;
+    // }
+    //
+    // let searchValue = SearchStore.getSearchText();
+    // try {
+    //   // const query = SearchStore._preSearchQuery;
+    //   // let parsedQuery = {};
+    //   // try {
+    //   //   parsedQuery = query ? SearchQueryParser.parse(query) : {};
+    //   //   if (parsedQuery instanceof AndQueryExpression) {
+    //   //     for (const k in parsedQuery) {
+    //   //       if (this._isMatchedExpression(parsedQuery[k])) {
+    //   //         searchValue = parsedQuery[k].text.token.s;
+    //   //         break;
+    //   //       }
+    //   //     }
+    //   //   }
+    //   //   else if (this._isMatchedExpression(parsedQuery)) {
+    //   //     searchValue = parsedQuery.text.token.s;
+    //   //   }
+    //   // } catch (err) {
+    //   //   console.info('Failed to parse local search query, falling back to generic query', query);
+    //   //   searchValue = query;
+    //   // }
+    //   const node = ReactDOM.findDOMNode(this);
+    //   // IFrameSearcher.highlightSearchInDocument(this._regionId, searchValue, node, null);
+    // } catch (err) {
+    //   console.error('list-tabular._highlightSearchInDocument error:', err);
+    // }
   };
 
   componentWillUnmount() {

@@ -2,6 +2,16 @@ import MailspringStore from 'mailspring-store';
 import { Actions, AccountStore, FocusedPerspectiveStore, WorkspaceStore } from 'mailspring-exports';
 import _ from 'underscore';
 import SearchMailboxPerspective from './search-mailbox-perspective';
+let searchQueryParser = null;
+let searchQueryAST = null;
+const SearchQueryAST = () => {
+  searchQueryAST = searchQueryAST || require('mailspring-exports').SeachQueryAST;
+  return searchQueryAST;
+};
+const SearchQueryParser = () => {
+  searchQueryParser = searchQueryParser || require('mailspring-exports').SeachQueryParser;
+  return searchQueryParser;
+};
 
 // Stores should closely match the needs of a particular part of the front end.
 // For example, we might create a "MessageStore" that observes this store
@@ -25,6 +35,38 @@ class SearchStore extends MailspringStore {
   query() {
     return this._searchQuery;
   }
+  _isMatchedExpression = query => {
+    if (!query) {
+      return false;
+    }
+    return (
+      query instanceof SearchQueryAST().GenericQueryExpression ||
+      query instanceof SearchQueryAST().SubjectQueryExpression ||
+      query instanceof SearchQueryAST().FromQueryExpression
+    );
+  };
+  getSearchText() {
+    let searchValue = '';
+    const query = this._preSearchQuery;
+    let parsedQuery = {};
+    try {
+      parsedQuery = query ? SearchQueryParser().parse(query) : {};
+      if (parsedQuery instanceof SearchQueryAST().AndQueryExpression) {
+        for (const k in parsedQuery) {
+          if (this._isMatchedExpression(parsedQuery[k])) {
+            searchValue = parsedQuery[k].text.token.s;
+            break;
+          }
+        }
+      } else if (this._isMatchedExpression(parsedQuery)) {
+        searchValue = parsedQuery.text.token.s;
+      }
+    } catch (err) {
+      console.info('Failed to parse local search query, falling back to generic query', query);
+      searchValue = query;
+    }
+    return searchValue;
+  }
 
   queryPopulated() {
     return this._searchQuery && this._searchQuery.trim().length > 0;
@@ -35,8 +77,22 @@ class SearchStore extends MailspringStore {
   }
 
   _onSearchCompleted = () => {
+    this._onRemoveCancelSearchingTimeout();
     this._isSearching = false;
     this.trigger();
+  };
+  _onAddCancelSearchingTimeout = () => {
+    this._onRemoveCancelSearchingTimeout();
+    this._completedTimeout = setTimeout(() => {
+      this._isSearching = false;
+      this.trigger();
+    }, 5000);
+  };
+  _onRemoveCancelSearchingTimeout = () => {
+    if (this._completedTimeout) {
+      clearTimeout(this._completedTimeout);
+      this._completedTimeout = null;
+    }
   };
   _onWorkspaceChange = () => {
     const sheetId = WorkspaceStore.topSheet().id;
@@ -56,6 +112,7 @@ class SearchStore extends MailspringStore {
       this._searchQuery = query;
       this.trigger();
       this._processAndSubmitQuery();
+      this._throttleOnQuerySubmitted(query, true);
     }
   };
 
@@ -72,6 +129,7 @@ class SearchStore extends MailspringStore {
       }
       const next = new SearchMailboxPerspective(current, this._searchQuery);
       Actions.focusMailboxPerspective(next, true);
+      this._onAddCancelSearchingTimeout();
     } else if (current instanceof SearchMailboxPerspective) {
       this._isSearching = false;
       if (this._perspectiveBeforeSearch) {
@@ -84,9 +142,14 @@ class SearchStore extends MailspringStore {
     this.trigger();
   }, 500);
 
+  _throttleOnQuerySubmitted = _.throttle((query, forceQuery) => {
+    this._onQuerySubmitted(query, forceQuery);
+  }, 500);
+
   _onQuerySubmitted = (query, forceQuery) => {
     if (query !== this._searchQuery || forceQuery) {
       this._searchQuery = query;
+      this._preSearchQuery = query;
       this.trigger();
       this._processAndSubmitQuery(forceQuery);
     }

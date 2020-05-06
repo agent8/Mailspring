@@ -751,6 +751,14 @@ export default class AppEnvConstructor {
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
   }
+  getOpenWindows() {
+    try {
+      return remote.getGlobal('application').windowManager.getOpenWindows();
+    } catch (e) {
+      this.reportError(e, {});
+      return [];
+    }
+  }
 
   getOpenWindowCount() {
     let ret = 0;

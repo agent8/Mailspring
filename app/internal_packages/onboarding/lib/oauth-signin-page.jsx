@@ -193,7 +193,7 @@ export default class OAuthSignInPage extends React.Component {
     }
     if (authStage === 'accountSuccess') {
       return (
-        <div>
+        <div className="auth-success">
           <h2>Successfully connected to {this.props.serviceName}!</h2>
           <h3>Adding your account to Edison Mail…</h3>
         </div>
