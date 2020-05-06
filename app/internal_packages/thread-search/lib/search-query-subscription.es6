@@ -94,6 +94,9 @@ class SearchQuerySubscription extends MutableQuerySubscription {
         });
       }
       if (!firstPath) {
+        firstPath = CategoryStore.getAllMailCategory(accountId);
+      }
+      if (!firstPath) {
         firstPath = CategoryStore.getCategoryByRole(accountId, 'inbox');
       }
       if (firstPath) {
