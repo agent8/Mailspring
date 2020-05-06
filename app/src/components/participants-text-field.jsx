@@ -48,6 +48,7 @@ export default class ParticipantsTextField extends React.Component {
     onEmptied: PropTypes.func,
 
     onFocus: PropTypes.func,
+    onTab: PropTypes.func,
 
     draft: PropTypes.object,
 
@@ -92,6 +93,11 @@ export default class ParticipantsTextField extends React.Component {
       // (malformed) contact object.
       return [new Contact({ email: string, name: '' })];
     });
+  };
+  _onTab = () => {
+    if (this.props.onTab) {
+      this.props.onTab(this.props.field);
+    }
   };
 
   _remove = values => {
@@ -234,6 +240,7 @@ export default class ParticipantsTextField extends React.Component {
           shouldBreakOnKeydown={this._shouldBreakOnKeydown}
           onInputTrySubmit={this._onInputTrySubmit}
           completionNode={this._completionNode}
+          onTab={this._onTab}
           onAdd={this._add}
           onRemove={this._remove}
           onEdit={this._edit}

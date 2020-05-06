@@ -24,12 +24,15 @@ class SearchMailboxPerspective extends MailboxPerspective {
     }
     let folderOrLabel = 'All';
 
-    const hasFolderOrLabel = searchQuery.match(/in:"([A-Za-z]+)"/);
-    if (hasFolderOrLabel && hasFolderOrLabel[1]) {
-      folderOrLabel = hasFolderOrLabel[1];
+    const hasFolderOrLabel = searchQuery.match(
+      /in:\s*(("(?<folder1>[A-Za-z\s]+)")|(?<folder2>[A-Za-z]+))/
+    );
+    if (hasFolderOrLabel && hasFolderOrLabel.groups) {
+      folderOrLabel = hasFolderOrLabel.groups.folder1 || hasFolderOrLabel.groups.folder2;
     }
-
+    this.folder = folderOrLabel;
     this.name = `Searching ${folderOrLabel}`;
+    this.isSearchMailbox = true;
   }
 
   emptyMessage() {

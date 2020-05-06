@@ -21,10 +21,14 @@ import Utils from './models/utils';
 import AnalyzeDBTask from './tasks/analyze-db-task';
 import SiftChangeSharingOptTask from './tasks/sift-change-sharing-opt-task';
 import Message from './models/message';
-let FocusedPerspectiveStore = null;
-let Thread = null;
 import NativeReportTask from './tasks/native-report-task';
-
+let FocusedPerspectiveStore = null;
+let focusedContentStore = null;
+const FocusedContentStore = () => {
+  return (focusedContentStore =
+    focusedContentStore || require('./stores/focused-content-store').default);
+};
+let Thread = null;
 const MAX_CRASH_HISTORY = 10;
 
 const VERBOSE_UNTIL_KEY = 'core.sync.verboseUntil';
@@ -969,6 +973,26 @@ export default class MailsyncBridge {
     );
   };
 
+  _getFocusedThreadId = () => {
+    const currentThread = FocusedContentStore().focused('thread');
+    if (currentThread) {
+      return currentThread.id;
+    }
+    return null;
+  };
+  _getOpenThreadWindowIds = () => {
+    const threadIds = [];
+    const openWindows = AppEnv.getOpenWindows();
+    if (Array.isArray(openWindows)) {
+      openWindows.forEach(win => {
+        if (win && win.windowKey && win.windowKey.includes('thread-')) {
+          threadIds.push(win.windowKey.slice('thread-'.length));
+        }
+      });
+    }
+    return threadIds;
+  };
+
   _observableCacheFilter({ accountId = null, missingIds = [], priority = 0 } = {}, dataCache, ttl) {
     if (!accountId) {
       return [];
@@ -1076,13 +1100,14 @@ export default class MailsyncBridge {
     }
   }
 
-  _onFetchAttachments({ accountId, missingItems, needProgress }) {
+  _onFetchAttachments({ accountId, missingItems, needProgress, source }) {
     const ids = this._fetchAttachmentCacheFilter({ accountId, missingItems });
     if (ids.length > 0) {
       this.sendMessageToAccount(accountId, {
         type: 'need-attachments',
         ids: ids,
-        needProgress: !!needProgress,
+        needProgress: true,
+        source
       });
     }
   }
@@ -1195,6 +1220,58 @@ export default class MailsyncBridge {
       });
     }
   };
+  _sentObservableRangeTask = (accountId, missingThreadIds, missingMessageIds) => {
+    const threadIds = this._observableCacheFilter(
+      { accountId, missingIds: missingThreadIds },
+      this._cachedObservableThreadIds,
+      this._cachedObservableTTL
+    );
+    const currentThreadId = this._getFocusedThreadId();
+    if (currentThreadId) {
+      threadIds.push(currentThreadId);
+    }
+    const openThreadWindowIds = this._getOpenThreadWindowIds();
+    if (Array.isArray(openThreadWindowIds)) {
+      threadIds.push(...openThreadWindowIds);
+    }
+    const messageIds = this._observableCacheFilter(
+      { accountId, missingIds: missingMessageIds },
+      this._cachedObservableMessageIds,
+      this._cachedObservableTTL
+    );
+    if (threadIds.length === 0 && messageIds.length === 0) {
+      return;
+    }
+    const folderIds = [];
+    FocusedPerspectiveStore =
+      FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (currentPerspective) {
+      const categories = currentPerspective.categories();
+      if (Array.isArray(categories)) {
+        categories.forEach(category => {
+          if (category && category.accountId === accountId && category.id) {
+            folderIds.push(category.id);
+          }
+        });
+      }
+    }
+    const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
+    this.sendMessageToAccount(accountId, tmpTask.toJSON());
+  };
+
+  _setObservableRangeTaskTimer = (
+    accountId = '',
+    missingThreadIds = [],
+    missingMessageIds = []
+  ) => {
+    this._setObservableRangeTimer[accountId] = {
+      id: setTimeout(() => {
+        this._sentObservableRangeTask(accountId, missingThreadIds, missingMessageIds);
+      }, 1000),
+      timestamp: Date.now(),
+    };
+  };
 
   _onSetObservableRange = (accountId, { missingThreadIds = [], missingMessageIds = [] } = {}) => {
     if (!this._clients[accountId]) {
@@ -1206,111 +1283,13 @@ export default class MailsyncBridge {
     }
     if (this._setObservableRangeTimer[accountId]) {
       if (Date.now() - this._setObservableRangeTimer[accountId].timestamp > 1000) {
-        const threadIds = this._observableCacheFilter(
-          { accountId, missingIds: missingThreadIds },
-          this._cachedObservableThreadIds,
-          this._cachedObservableTTL
-        );
-        const messageIds = this._observableCacheFilter(
-          { accountId, missingIds: missingMessageIds },
-          this._cachedObservableMessageIds,
-          this._cachedObservableTTL
-        );
-        if (threadIds.length === 0 && messageIds.length === 0) {
-          return;
-        }
-        const folderIds = [];
-        FocusedPerspectiveStore =
-          FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
-        const currentPerspective = FocusedPerspectiveStore.current();
-        if (currentPerspective) {
-          const categories = currentPerspective.categories();
-          if (Array.isArray(categories)) {
-            categories.forEach(category => {
-              if (category && category.accountId === accountId && category.id) {
-                folderIds.push(category.id);
-              }
-            });
-          }
-        }
-        const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
-        this._setObservableRangeTimer[accountId].timestamp = Date.now();
-        // DC-46
-        // We call sendMessageToAccount last on the off chance that mailsync have died,
-        // we want to avoid triggering client.kill() before setting observable cache
-        this.sendMessageToAccount(accountId, tmpTask.toJSON());
+        this._sentObservableRangeTask(accountId, missingThreadIds, missingMessageIds);
       } else {
         clearTimeout(this._setObservableRangeTimer[accountId].id);
-        this._setObservableRangeTimer[accountId] = {
-          id: setTimeout(() => {
-            const threadIds = this._observableCacheFilter(
-              { accountId, missingIds: missingThreadIds },
-              this._cachedObservableThreadIds,
-              this._cachedObservableTTL
-            );
-            const messageIds = this._observableCacheFilter(
-              { accountId, missingIds: missingMessageIds },
-              this._cachedObservableMessageIds,
-              this._cachedObservableTTL
-            );
-            if (threadIds.length === 0 && messageIds.length === 0) {
-              return;
-            }
-            const folderIds = [];
-            FocusedPerspectiveStore =
-              FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
-            const currentPerspective = FocusedPerspectiveStore.current();
-            if (currentPerspective) {
-              const categories = currentPerspective.categories();
-              if (Array.isArray(categories)) {
-                categories.forEach(category => {
-                  if (category && category.accountId === accountId && category.id) {
-                    folderIds.push(category.id);
-                  }
-                });
-              }
-            }
-            const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
-            this.sendMessageToAccount(accountId, tmpTask.toJSON());
-          }, 1000),
-          timestamp: Date.now(),
-        };
+        this._setObservableRangeTaskTimer(accountId, missingThreadIds, missingMessageIds);
       }
     } else {
-      this._setObservableRangeTimer[accountId] = {
-        id: setTimeout(() => {
-          const threadIds = this._observableCacheFilter(
-            { accountId, missingIds: missingThreadIds },
-            this._cachedObservableThreadIds,
-            this._cachedObservableTTL
-          );
-          const messageIds = this._observableCacheFilter(
-            { accountId, missingIds: missingMessageIds },
-            this._cachedObservableMessageIds,
-            this._cachedObservableTTL
-          );
-          if (threadIds.length === 0 && messageIds.length === 0) {
-            return;
-          }
-          const folderIds = [];
-          FocusedPerspectiveStore =
-            FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
-          const currentPerspective = FocusedPerspectiveStore.current();
-          if (currentPerspective) {
-            const categories = currentPerspective.categories();
-            if (Array.isArray(categories)) {
-              categories.forEach(category => {
-                if (category && category.accountId === accountId && category.id) {
-                  folderIds.push(category.id);
-                }
-              });
-            }
-          }
-          const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
-          this.sendMessageToAccount(accountId, tmpTask.toJSON());
-        }, 1000),
-        timestamp: Date.now(),
-      };
+      this._setObservableRangeTaskTimer(accountId, missingThreadIds, missingMessageIds);
     }
   };
 

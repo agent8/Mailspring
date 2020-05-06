@@ -118,12 +118,9 @@ class MessageStore extends MailspringStore {
       const inHidden =
         item.labels.some(label => FolderNamesHiddenByDefault.includes(label.role)) ||
         item.isHidden();
-      if (viewing === 'inbox' && enableFocusedInbox) {
+      if (viewing === 'inbox' && enableFocusedInbox && !currentPerspective.isOther) {
         // inbox primary or other
-        let inboxHiddenCategorys = Category.inboxOtherCategorys(true);
-        if (currentPerspective.isOther) {
-          inboxHiddenCategorys = Category.inboxFocusedCategorys(true);
-        }
+        const inboxHiddenCategorys = Category.inboxOtherCategorys(true);
         const isInHiddenCategory = inboxHiddenCategorys.includes(item.inboxCategory);
         return !inHidden && !isInHiddenCategory;
       }
@@ -627,6 +624,7 @@ class MessageStore extends MailspringStore {
         accountId: accountId,
         missingItems: missingList,
         needProgress: true,
+        source: "Click"
       });
     }
   }
@@ -667,6 +665,7 @@ class MessageStore extends MailspringStore {
         accountId: message.accountId,
         missingItems: missing,
         needProgress: true,
+        source: "Click"
       });
     }
     if (change) {

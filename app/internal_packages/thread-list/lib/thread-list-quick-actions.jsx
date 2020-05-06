@@ -4,6 +4,7 @@ const {
   PropTypes,
   TaskFactory,
   FocusedPerspectiveStore,
+  CategoryStore,
 } = require('mailspring-exports');
 import { RetinaImg } from 'mailspring-component-kit';
 const ToolbarCategoryPicker = require('../../category-picker/lib/toolbar-category-picker');
@@ -26,9 +27,10 @@ class ThreadMoveQuickAction extends ToolbarCategoryPicker {
           name={'folder.svg'}
           style={{ width: 24, height: 24 }}
           isIcon
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
-    )
+    );
   }
 }
 
@@ -52,7 +54,12 @@ class ThreadArchiveQuickAction extends React.Component {
         className="action action-archive"
         onClick={this._onArchive}
       >
-        <RetinaImg name="archive.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name="archive.svg"
+          style={{ width: 24, height: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
@@ -60,7 +67,10 @@ class ThreadArchiveQuickAction extends React.Component {
   shouldComponentUpdate(newProps, newState) {
     const newAllowed = FocusedPerspectiveStore.current().canArchiveThreads([newProps.thread]);
     const prevAllowed = FocusedPerspectiveStore.current().canArchiveThreads([this.props.thread]);
-    return newProps.thread.id !== (this.props != null ? this.props.thread.id : undefined) || (newAllowed !== prevAllowed);
+    return (
+      newProps.thread.id !== (this.props != null ? this.props.thread.id : undefined) ||
+      newAllowed !== prevAllowed
+    );
   }
 
   _onArchive = event => {
@@ -79,9 +89,7 @@ class ThreadArchiveQuickAction extends React.Component {
                 thread: JSON.stringify(this.props.thread),
               },
             });
-          } catch (e) {
-
-          }
+          } catch (e) {}
         }
       });
     }
@@ -98,21 +106,38 @@ class ThreadTrashQuickAction extends React.Component {
 
   render() {
     const canExpungeThread = FocusedPerspectiveStore.current().canExpungeThreads();
-    if (canExpungeThread) {
-      return <div
-        key="remove"
-        title="Expunge"
-        style={{ order: 110 }}
-        className="action action-trash"
-        onClick={this._onExpunge}
-      >
-        <RetinaImg name="trash.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
-      </div>;
+    let allInTrashOrSpam = false;
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (
+      currentPerspective &&
+      currentPerspective.isSearchMailbox &&
+      this.props &&
+      this.props.thread &&
+      Array.isArray(this.props.thread.labelIds)
+    ) {
+      allInTrashOrSpam = this.props.thread.labelIds
+        .map(labelId => CategoryStore.byId(this.props.thread.accountId, labelId))
+        .every(folder => folder.role === 'trash' || folder.role === 'spam');
     }
-    let allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
-      [this.props.thread],
-      'trash',
-    );
+    if (canExpungeThread || allInTrashOrSpam) {
+      return (
+        <div
+          key="remove"
+          title="Expunge"
+          style={{ order: 110 }}
+          className="action action-trash"
+          onClick={this._onExpunge}
+        >
+          <RetinaImg
+            name="trash.svg"
+            style={{ width: 24, height: 24 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </div>
+      );
+    }
+    let allowed = FocusedPerspectiveStore.current().canMoveThreadsTo([this.props.thread], 'trash');
     const folders = this.props.thread && this.props.thread.folders;
     const labels = this.props.thread && this.props.thread.labels;
     // if only one folder, and it's trash
@@ -134,7 +159,12 @@ class ThreadTrashQuickAction extends React.Component {
         className="action action-trash"
         onClick={this._onRemove}
       >
-        <RetinaImg name="trash.svg" style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name="trash.svg"
+          style={{ width: 24, height: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
@@ -171,9 +201,7 @@ class ThreadTrashQuickAction extends React.Component {
                 thread: JSON.stringify(this.props.thread),
               },
             });
-          } catch (e) {
-
-          }
+          } catch (e) {}
         }
       });
     }
@@ -196,14 +224,15 @@ class ThreadStarQuickAction extends React.Component {
         key="remove"
         title={title}
         style={{ order: 109 }}
-        className={"action action-flag " + className}
+        className={'action action-flag ' + className}
         onClick={this._onToggleStar}
       >
         <RetinaImg
           name="flag.svg"
           style={{ width: 24, height: 24 }}
           isIcon
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
@@ -223,9 +252,7 @@ class ThreadStarQuickAction extends React.Component {
                 thread: JSON.stringify(this.props.thread),
               },
             });
-          } catch (e) {
-
-          }
+          } catch (e) {}
         }
       });
     }
@@ -250,7 +277,12 @@ class ThreadUnreadQuickAction extends React.Component {
         className="action action-flag"
         onClick={this._onToggleUnread}
       >
-        <RetinaImg name={imgName} style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name={imgName}
+          style={{ width: 24, height: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
@@ -268,9 +300,7 @@ class ThreadUnreadQuickAction extends React.Component {
             thread: JSON.stringify(this.props.thread),
           },
         });
-      } catch (e) {
-
-      }
+      } catch (e) {}
     }
     Actions.queueTasks([task]);
     // Don't trigger the thread row click
@@ -283,5 +313,5 @@ module.exports = {
   ThreadStarQuickAction,
   ThreadArchiveQuickAction,
   ThreadTrashQuickAction,
-  ThreadMoveQuickAction
+  ThreadMoveQuickAction,
 };

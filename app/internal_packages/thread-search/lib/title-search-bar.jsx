@@ -103,7 +103,10 @@ class TitleSearchBar extends Component {
           <h1
             style={{
               width: 'max-content',
+              maxWidth: '100%',
               fontSize: this.state.fontSize,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
             ref={el => (this.titleEl = el)}
           >
