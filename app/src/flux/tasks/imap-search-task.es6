@@ -1,6 +1,7 @@
 import Task from './task';
 import Attributes from '../attributes';
 import Category from '../models/category';
+import Actions from '../actions';
 
 /*
 Send the SEARCH IMAP command query to native.
@@ -19,7 +20,7 @@ export default class IMAPSearchTask extends Task {
     }),
     fullTextSearch: Attributes.String({
       modelKey: 'fullTextSearch',
-    })
+    }),
   });
   constructor({ accountId, paths = [], fullTextSearch = '', query = {}, ...rest } = {}) {
     super(rest);
@@ -36,5 +37,12 @@ export default class IMAPSearchTask extends Task {
 
   label() {
     return `IMAP remote search`;
+  }
+  onError(err) {
+    Actions.searchCompleted();
+  }
+
+  onSuccess() {
+    Actions.searchCompleted();
   }
 }
