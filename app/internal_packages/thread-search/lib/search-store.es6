@@ -70,6 +70,7 @@ class SearchStore extends MailspringStore {
       this._searchQuery = query;
       this.trigger();
       this._processAndSubmitQuery();
+      this._throttleOnQuerySubmitted(query, true);
     }
   };
 
@@ -97,6 +98,10 @@ class SearchStore extends MailspringStore {
       }
     }
     this.trigger();
+  }, 500);
+
+  _throttleOnQuerySubmitted = _.throttle((query, forceQuery) => {
+    this._onQuerySubmitted(query, forceQuery);
   }, 500);
 
   _onQuerySubmitted = (query, forceQuery) => {
