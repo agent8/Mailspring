@@ -634,12 +634,18 @@ export default class ModelQuery {
       return false;
     }
 
-    const allMatchersOnJoinTable = allMatchers.every(
-      m =>
-        m === matcher ||
-        joinAttribute.joinQueryableBy.includes(m.attr.modelKey) ||
-        m.attr.isPseudoPrimary
-    );
+    const allMatchersOnJoinTable = allMatchers.every(m => {
+      if (m === matcher) {
+        return true;
+      }
+      if (m.attr && joinAttribute.joinQueryableBy.includes(m.attr.modelKey)) {
+        return true;
+      }
+      if (m.attr && m.attr.isPseudoPrimary) {
+        return true;
+      }
+      return false;
+    });
     const allOrdersOnJoinTable = this._orders[dbKey].every(o =>
       joinAttribute.joinQueryableBy.includes(o.attr.modelKey)
     );
