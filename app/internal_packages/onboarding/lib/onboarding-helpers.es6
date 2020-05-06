@@ -687,5 +687,8 @@ export async function finalizeAndValidateAccount(account) {
   }
   const acc = new Account(newAccount);
   acc.picture = account.picture;
+  if (account.settings && account.settings.refresh_client_id) {
+    acc.settings.refresh_client_id = account.settings.refresh_client_id;
+  }
   return acc;
 }
