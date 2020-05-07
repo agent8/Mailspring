@@ -13,7 +13,7 @@ class AccountOnboardingSuccess extends Component {
 
   render() {
     const { account } = this.props;
-    const providerConfig = AccountProviders.find(({ provider }) => provider === account.provider);
+    const providerConfig = AccountProviders.find(({ provider }) => provider === account.provider) || {};
 
     return (
       <div className={`page account-setup AccountOnboardingSuccess`}>
@@ -25,7 +25,7 @@ class AccountOnboardingSuccess extends Component {
             className="logo"
           />
         </div>
-        <div>
+        <div className="auth-success">
           <h2>
             Successfully connected to{' '}
             {providerConfig.displayNameShort || providerConfig.displayName}!

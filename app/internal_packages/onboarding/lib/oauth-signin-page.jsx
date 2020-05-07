@@ -159,11 +159,11 @@ export default class OAuthSignInPage extends React.Component {
     try {
       account = await this.props.buildAccountFromAuthResponse(code);
     } catch (err) {
-      if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
-        AppEnv.trackingEvent('Invite-AddAccount-Failed', { provider: this.props.serviceName });
-      } else {
-        AppEnv.trackingEvent('AddAccount-Failed', { provider: this.props.serviceName });
-      }
+      // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+      //   AppEnv.trackingEvent('Invite-AddAccount-Failed', { provider: this.props.serviceName });
+      // } else {
+      AppEnv.trackingEvent('AddAccount-Failed', { provider: this.props.serviceName });
+      // }
       if (!this._mounted) return;
       this._onError(err);
       return;
@@ -190,7 +190,7 @@ export default class OAuthSignInPage extends React.Component {
     }
     if (authStage === 'accountSuccess') {
       return (
-        <div>
+        <div className="auth-success">
           <h2>Successfully connected to {this.props.serviceName}!</h2>
           <h3>Adding your account to Edison Mail…</h3>
         </div>

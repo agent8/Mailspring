@@ -60,10 +60,16 @@ class ThreadSearchBar extends Component {
     const rolesAndPaths = [
       ...new Set(perspective.categories().map(c => c.role || wrapInQuotes(c.path))),
     ];
+    for (const i in rolesAndPaths) {
+      let path = rolesAndPaths[i];
+      if (!path.startsWith(`"`)) {
+        rolesAndPaths[i] = `"${path}"`
+      }
+    }
     if (rolesAndPaths.length > 1) {
-      return `(in:"${rolesAndPaths.join('" OR in:"')}") `;
+      return `(in:${rolesAndPaths.join(' OR in:')}) `;
     } else if (rolesAndPaths.length === 1) {
-      return `in:"${rolesAndPaths[0]}" `;
+      return `in:${rolesAndPaths[0]} `;
     } else {
       return '';
     }
@@ -338,14 +344,14 @@ class ThreadSearchBar extends Component {
             mode={RetinaImg.Mode.ContentPreserve}
           />
         ) : (
-          <RetinaImg
-            className="search-accessory search"
-            name="search.svg"
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-            onClick={() => this._fieldElFocus()}
-          />
-        )}
+            <RetinaImg
+              className="search-accessory search"
+              name="search.svg"
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+              onClick={() => this._fieldElFocus()}
+            />
+          )}
         <TokenizingContenteditable
           ref={el => (this._fieldEl = el)}
           value={showPlaceholder ? this._placeholder() : utf7.decode(query)}

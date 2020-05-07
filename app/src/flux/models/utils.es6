@@ -247,6 +247,40 @@ module.exports = Utils = {
         !CALENDAR_TYPES.includes(f.contentType)
     );
   },
+  findKeywordIndex(str = '', searchValue = '') {
+    if (typeof str !== 'string' || typeof searchValue !== 'string') {
+      return { startIndex: -1, endIndex: -1 };
+    }
+    let startIndex, endIndex;
+    try {
+      startIndex = str.search(new RegExp(searchValue, 'ui'));
+    } catch (e) {
+      startIndex = -1;
+    }
+    endIndex = startIndex + searchValue.length - 1;
+    if (startIndex > -1) {
+      return { startIndex, endIndex };
+    }
+    const splits = searchValue.split(/\s/);
+    if (splits.length === 1) {
+      return { startIndex, endIndex };
+    }
+    splits.sort((a, b) => {
+      return b.length - a.length;
+    });
+    for (let i = 0; i < splits.length; i++) {
+      try {
+        startIndex = str.search(new RegExp(splits[0], 'ui'));
+      } catch (e) {
+        startIndex = -1;
+      }
+      if (startIndex > -1) {
+        endIndex = startIndex + splits[0].length - 1;
+        return { startIndex, endIndex };
+      }
+    }
+    return { startIndex, endIndex };
+  },
 
   superTrim(text) {
     if (!text || typeof text !== 'string') {
