@@ -159,11 +159,11 @@ export default class OAuthSignInPage extends React.Component {
     try {
       account = await this.props.buildAccountFromAuthResponse(code);
     } catch (err) {
-      if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
-        AppEnv.trackingEvent('Invite-AddAccount-Failed', { provider: this.props.serviceName });
-      } else {
-        AppEnv.trackingEvent('AddAccount-Failed', { provider: this.props.serviceName });
-      }
+      // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+      //   AppEnv.trackingEvent('Invite-AddAccount-Failed', { provider: this.props.serviceName });
+      // } else {
+      AppEnv.trackingEvent('AddAccount-Failed', { provider: this.props.serviceName });
+      // }
       if (!this._mounted) return;
       this._onError(err);
       return;
