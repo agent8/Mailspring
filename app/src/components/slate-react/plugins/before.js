@@ -163,12 +163,10 @@ function BeforePlugin() {
       // differently ideally, in a less invasive way?
       // editor.setState({ isComposing: false });
       if (editor.state.isComposing) {
-        editor.setState({ isComposing: false })
+        editor.setState({ isComposing: false });
       }
     });
-
-    debug('onCompositionEnd', { event: event });
-    return change.deleteBackward().insertText(event.data);
+    return change.insertText(event.data);
   }
 
   /**
@@ -188,11 +186,19 @@ function BeforePlugin() {
     // differently ideally, in a less invasive way?
     // editor.setState({ isComposing: true });
     if (!editor.state.isComposing) {
-      editor.setState({ isComposing: true })
+      editor.setState({ isComposing: true });
     }
 
     debug('onCompositionStart', { event: event });
-    return change.insertText('\u200b');
+    var value = change.value;
+    var selection = value.selection;
+
+    debug('onCompositionStart', { event: event });
+    // if select a range
+    if (!selection.isCollapsed) {
+      console.log(`****it's a range, so we add a zero width blank`);
+      change.insertText('\u200b');
+    }
   }
 
   /**
