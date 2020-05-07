@@ -205,11 +205,11 @@ export default {
             default: true,
             title: 'Automatically load images in open emails',
           },
-          backspaceDelete: {
-            type: 'boolean',
-            default: false,
-            title: 'Use the backspace/delete key to move emails to the trash',
-          },
+          // backspaceDelete: {
+          //   type: 'boolean',
+          //   default: false,
+          //   title: 'Use the backspace/delete key to move emails to the trash',
+          // },
           descendingOrderMessageList: {
             type: 'boolean',
             default: false,
