@@ -7,13 +7,69 @@ const {
   InjectedComponentSet,
 } = require('mailspring-component-kit');
 
-const { Message, Utils, DateUtils, EmailAvatar } = require('mailspring-exports');
+const { Utils, DateUtils, EmailAvatar } = require('mailspring-exports');
 let draftStore = null;
+let focusedPerspectiveStore = null;
+let searchStore = null;
+const FocusedPerspectiveStore = () => {
+  focusedPerspectiveStore =
+    focusedPerspectiveStore || require('mailspring-exports').FocusedPerspectiveStore;
+  return focusedPerspectiveStore;
+};
 const DraftStore = () => {
-  return draftStore || require('mailspring-exports').DraftStore;
+  draftStore = draftStore || require('mailspring-exports').DraftStore;
+  return draftStore;
+};
+const SearchStore = () => {
+  searchStore = searchStore || require('mailspring-exports').SearchStore;
+  return searchStore;
+};
+const ThreadListParticipants = require('./thread-list-participants');
+
+const snippetProcessSearch = snippet => {
+  const currentPerspective = FocusedPerspectiveStore().current();
+  if (!currentPerspective || !currentPerspective.isSearchMailbox) {
+    return snippet;
+  }
+  const searchTerm = SearchStore().getSearchText();
+  if (searchTerm.length === 0) {
+    return snippet;
+  }
+  const { startIndex = -1, endIndex = -1 } = Utils.findKeywordIndex(snippet, searchTerm);
+  if (startIndex === -1) {
+    return snippet;
+  }
+  let actualStart = Math.max(0, startIndex - 30);
+  return (
+    <React.Fragment>
+      {snippet.slice(actualStart, startIndex)}
+      <search-match>{snippet.slice(startIndex, endIndex + 1)}</search-match>
+      {snippet.slice(endIndex + 1)}
+    </React.Fragment>
+  );
 };
 
-const ThreadListParticipants = require('./thread-list-participants');
+const processSubject = subject => {
+  const currentPerspective = FocusedPerspectiveStore().current();
+  if (!currentPerspective || !currentPerspective.isSearchMailbox) {
+    return subject;
+  }
+  const searchTerm = SearchStore().getSearchText();
+  if (searchTerm.length === 0) {
+    return subject;
+  }
+  const { startIndex = -1, endIndex = -1 } = Utils.findKeywordIndex(subject, searchTerm);
+  if (startIndex === -1) {
+    return subject;
+  }
+  return (
+    <React.Fragment>
+      {subject.slice(0, startIndex)}
+      <search-match>{subject.slice(startIndex, endIndex + 1)}</search-match>
+      {subject.slice(endIndex + 1)}
+    </React.Fragment>
+  );
+};
 
 // Get and format either last sent or last received timestamp depending on thread-list being viewed
 const ThreadListTimestamp = function({ thread }) {
@@ -50,7 +106,7 @@ const subject = function(subj) {
     }
     return subjComponents;
   } else {
-    return subj;
+    return processSubject(subj);
   }
 };
 
@@ -138,12 +194,13 @@ const c3 = new ListTabular.Column({
       // );
       draft = <span className="draft-icon">Draft</span>;
     }
+    const processedSnippet = snippetProcessSearch(Utils.superTrim(getSnippet(thread)));
     return (
       <span className="details">
         {draft}
         <span className="subject">{subject(thread.subject)}</span>
         <MailLabelSet thread={thread} />
-        <span className="snippet">{Utils.superTrim(getSnippet(thread))}</span>
+        <span className="snippet">{processedSnippet}</span>
         {/* <ThreadListIcon thread={thread} /> */}
       </span>
     );
@@ -200,7 +257,7 @@ const cNarrow = new ListTabular.Column({
       pencil = <span className="draft-icon">Draft</span>;
     }
 
-    const snippet = Utils.superTrim(getSnippet(thread));
+    const snippet = snippetProcessSearch(Utils.superTrim(getSnippet(thread)));
     // TODO We are limiting the amount on injected icons in narrow mode to 1
     // until we revisit the UI to accommodate more icons
     return (
@@ -232,7 +289,7 @@ const cNarrow = new ListTabular.Column({
             {calendar || attachment || <div className="thread-icon no-icon" />}
           </div>
           <div className="snippet-and-labels">
-            <div className="snippet">{snippet ? snippet : ' '}</div>
+            <div className="snippet">{snippet}</div>
             {/* <div style={{ flex: 1, flexShrink: 1 }} /> */}
             {/* <MailLabelSet thread={thread} /> */}
             {/* <div className="icons">
