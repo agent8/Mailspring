@@ -136,13 +136,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.reading.autoloadImages',
               keywords: [],
             },
-            {
-              label: 'Use the backspace/delete key to move emails to the trash',
-              configSchema: configSchema =>
-                configSchema.properties.reading.properties.backspaceDelete,
-              keyPath: 'core.reading.backspaceDelete',
-              keywords: [],
-            },
+            // {
+            //   label: 'Use the backspace/delete key to move emails to the trash',
+            //   configSchema: configSchema =>
+            //     configSchema.properties.reading.properties.backspaceDelete,
+            //   keyPath: 'core.reading.backspaceDelete',
+            //   keywords: [],
+            // },
             {
               label: 'Display conversations in descending chronological order',
               configSchema: configSchema =>
