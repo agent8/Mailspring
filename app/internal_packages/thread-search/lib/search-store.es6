@@ -142,7 +142,7 @@ class SearchStore extends MailspringStore {
     this.trigger();
   }, 500);
 
-  _throttleOnQuerySubmitted = _.throttle((query, forceQuery) => {
+  _throttleOnQuerySubmitted = _.debounce((query, forceQuery) => {
     this._onQuerySubmitted(query, forceQuery);
   }, 500);
 
