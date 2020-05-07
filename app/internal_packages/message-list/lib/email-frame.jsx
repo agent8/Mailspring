@@ -136,7 +136,7 @@ export default class EmailFrame extends React.Component {
     // }
     doc.write(
       `<div id='inbox-html-wrapper' class="${process.platform} ${
-      this.props.viewOriginalEmail ? 'original' : ''
+        this.props.viewOriginalEmail ? 'original' : ''
       }">${this._emailContent(isPlainBody)}</div>`
     );
     doc.close();
@@ -154,11 +154,10 @@ export default class EmailFrame extends React.Component {
       // sometimes doc don't change to dark mode, because the dom tree is not ready, when applyDarkMode
       // so we add a protection for it, when dom tree is ready we process again.
       const readyChangeCb = () => {
-        if (doc.readyState == "complete") {
+        if (doc.readyState == 'complete') {
           doc.removeEventListener('readystatechange', readyChangeCb, false);
           this.applyDarkMode(doc);
         }
-
       };
       doc.addEventListener('readystatechange', readyChangeCb, false);
     }
@@ -272,6 +271,13 @@ export default class EmailFrame extends React.Component {
       }
       height = doc.body.scrollHeight;
     }
+    // DC-1801 if scrollHeight is higher than iframe's scrollHeight is going to be,
+    // then we are going to see cropped out iframe data, thus use body's scroll height
+    if (doc && doc.body && isFinite(doc.body.scrollHeight)) {
+      if (height < doc.body.scrollHeight) {
+        height = doc.body.scrollHeight;
+      }
+    }
     return height;
   };
 
@@ -344,8 +350,8 @@ export default class EmailFrame extends React.Component {
   ifColorsIsNearToBackground(r, g, b) {
     const nearScore = Math.sqrt(
       (this.background.r - r) * (this.background.r - r) +
-      (this.background.g - g) * (this.background.g - g) +
-      (this.background.b - b) * (this.background.b - b)
+        (this.background.g - g) * (this.background.g - g) +
+        (this.background.b - b) * (this.background.b - b)
     );
     return nearScore < this.colorNearThreshold;
   }
@@ -385,7 +391,7 @@ export default class EmailFrame extends React.Component {
       <div
         className={`iframe-container  ${
           this.props.viewOriginalEmail ? 'original-iframe-container' : null
-          }`}
+        }`}
         ref={el => {
           this._iframeHeightHolderEl = el;
         }}
