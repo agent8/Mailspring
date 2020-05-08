@@ -9,6 +9,7 @@ import {
   MultiselectList,
 } from 'mailspring-component-kit';
 import OutboxListColumns from './outbox-list-columns';
+import { OutboxTrashQuickAction } from './outbox-list-quick-actions';
 
 const buttonTimer = 500;
 const PREVIEW_LINES_KEY = 'core.appearance.previewLines';
@@ -107,12 +108,15 @@ class OutboxList extends React.Component {
 
   _itemCheckProvider = (draft, onClick) => {
     if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
-      return null;
+      const timeLapsed = draft.lastUpdateTimestamp
+        ? Date.now() - draft.lastUpdateTimestamp.getTime()
+        : 0;
+      if (timeLapsed <= AppEnv.config.get('core.outbox.failingUnlockInMs')) {
+        return null;
+      }
     }
     const toggle = event => {
-      if (!Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
-        onClick(event);
-      }
+      onClick(event);
       event.stopPropagation();
     };
     return (
