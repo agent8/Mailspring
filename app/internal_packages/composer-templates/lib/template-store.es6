@@ -114,9 +114,11 @@ class TemplateStore extends MailspringStore {
     }
     if (!name || name.length === 0) {
       this._displayError('You must provide a name for your template.');
+      return;
     }
     if (!contents || contents.length === 0) {
       this._displayError('You must provide contents for your template.');
+      return;
     }
     this.saveNewTemplate(name, contents, template => {
       this._onShowTemplates();
