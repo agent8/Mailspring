@@ -43,23 +43,23 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
 
   visitFrom(node) {
     const text = this.visitAndGetResult(node.text);
-    this._result = `(from_ : "${text}"*)`;
+    this._result = `(from_ : "${text}")`;
   }
 
   visitTo(node) {
     const text = this.visitAndGetResult(node.text);
-    this._result = `(to_ : "${text}"*)`;
+    this._result = `(to_ : "${text}")`;
   }
 
   visitSubject(node) {
     const text = this.visitAndGetResult(node.text);
-    this._result = `(subject : "${text}"*)`;
+    this._result = `(subject : "${text}")`;
   }
 
   visitGeneric(node) {
     const text = this.visitAndGetResult(node.text);
-    // this._result = `("${text}"*)`;
-    this._result = `(("${text}"*) OR (remoteSearch : "${text}"*))`;
+    // this._result = `("${text}")`;
+    this._result = `(("${text}") OR (remoteSearch : "${text}"))`;
   }
 
   visitText(node) {
@@ -77,7 +77,7 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
 
   visitIn(node) {
     const text = this.visitAndGetResult(node.text);
-    this._result = `(categories : "${text}*")`;
+    this._result = `(categories : "${text}")`;
   }
 
   visitHasAttachment(node) {
