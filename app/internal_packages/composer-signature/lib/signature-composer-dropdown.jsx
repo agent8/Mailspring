@@ -117,6 +117,7 @@ export default class SignatureComposerDropdown extends React.Component {
         <ButtonDropdown
           disabled={this.props.session.isPopout()}
           bordered={false}
+          closeOnMenuClick
           primaryItem={this._staticIcon}
           menu={this._renderSignatures()}
         />
