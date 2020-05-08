@@ -77,7 +77,7 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
 
   visitIn(node) {
     const text = this.visitAndGetResult(node.text);
-    this._result = `(categories : "${text}*")`;
+    this._result = `(categories : "${text}")`;
   }
 
   visitHasAttachment(node) {
