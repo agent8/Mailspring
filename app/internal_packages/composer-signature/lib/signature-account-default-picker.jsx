@@ -24,8 +24,11 @@ export default class SignatureAccountDefaultPicker extends React.Component {
         <label>Use this signature as the default for:</label>
 
         {aliases.map(alias => {
-          const signatureId = typeof alias.signatureId === 'function' ? alias.signatureId() : `local-${alias.accountId}-${alias.email}-${alias.name}`;
-          const isChecked = defaults[signatureId] === signature.id;
+          const signatureId =
+            typeof alias.signatureId === 'function'
+              ? alias.signatureId()
+              : `local-${alias.accountId}-${alias.email}-${alias.name}`;
+          const isChecked = defaults[signatureId] && defaults[signatureId] === signature.id;
           return (
             <div key={alias.id}>
               <label>
