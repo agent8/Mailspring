@@ -28,7 +28,7 @@ export default class SignatureComposerDropdown extends React.Component {
           width: 30,
           display: 'inline-block',
           marginRight: -3,
-          marginTop: -4
+          marginTop: -4,
         }}
       />
     );
@@ -52,19 +52,19 @@ export default class SignatureComposerDropdown extends React.Component {
     ];
   };
 
-  componentDidUpdate(previousProps) {
-    if (previousProps.from.id !== this.props.from.id) {
-      const from = this.props.from;
-      if(!from.accountId){
-        return;
-      }
-      const signatureId = typeof from.signatureId === 'function' ? from.signatureId() : `local-${from.accountId}-${from.email}-${from.name}`;
-      const nextDefaultSignature = SignatureStore.signatureForDefaultSignatureId(signatureId);
-      window.requestAnimationFrame(() => {
-        this._onChangeSignature(nextDefaultSignature);
-      });
-    }
-  }
+  // componentDidUpdate(previousProps) {
+  //   if (previousProps.from.id !== this.props.from.id) {
+  //     const from = this.props.from;
+  //     if(!from.accountId){
+  //       return;
+  //     }
+  //     const signatureId = typeof from.signatureId === 'function' ? from.signatureId() : `local-${from.accountId}-${from.email}-${from.name}`;
+  //     const nextDefaultSignature = SignatureStore.signatureForDefaultSignatureId(signatureId);
+  //     window.requestAnimationFrame(() => {
+  //       this._onChangeSignature(nextDefaultSignature);
+  //     });
+  //   }
+  // }
 
   componentWillUnmount() {
     this.unsubscribers.forEach(unsubscribe => unsubscribe());
