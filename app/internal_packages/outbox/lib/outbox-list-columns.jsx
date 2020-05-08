@@ -36,7 +36,7 @@ const SenderColumn = new ListTabular.Column({
     return (
       <OutboxSender
         draft={draft}
-        lottieStyle={{ left: 10, top: 11, width: 45, height: 45 }}
+        lottieStyle={{ left: 11, top: 10, width: 42, height: 42 }}
         avatarStyle={{ width: 35, height: 35 }}
       />
     );
