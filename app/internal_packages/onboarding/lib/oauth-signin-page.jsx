@@ -9,6 +9,7 @@ import url from 'url';
 import FormErrorMessage from './form-error-message';
 import { LOCAL_SERVER_PORT } from './onboarding-helpers';
 const INVITE_COUNT_KEY = 'invite.count';
+const OPEN_BROWSER_PROVIDERS = ['google', 'outlook'];
 
 export default class OAuthSignInPage extends React.Component {
   static displayName = 'OAuthSignInPage';
@@ -64,7 +65,7 @@ export default class OAuthSignInPage extends React.Component {
 
   needOpenInBrowser(serviceName) {
     serviceName = serviceName.toLowerCase();
-    if (['google', 'outlook'].includes(serviceName) && !AppEnv.inDevMode()) {
+    if (OPEN_BROWSER_PROVIDERS.includes(serviceName)) {
       return true;
     }
     if (serviceName === 'jira' && !process.mas) {
