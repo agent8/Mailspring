@@ -40,7 +40,14 @@ const GMAIL_SCOPES = [
 
 const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
 const JIRA_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE';
-const JIRA_SCOPES = ['read:me', 'read:jira-user', 'read:jira-work', 'write:jira-work', 'offline_access', 'manage:jira-project'];
+const JIRA_SCOPES = [
+  'read:me',
+  'read:jira-user',
+  'read:jira-work',
+  'write:jira-work',
+  'offline_access',
+  'manage:jira-project',
+];
 
 const YAHOO_CLIENT_ID =
   'dj0yJmk9c3IxR3h4VG5GTXBYJmQ9WVdrOVlVeHZNVXh1TkhVbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
@@ -475,20 +482,21 @@ export async function buildJiraAccountFromAuthResponse(code) {
   const json = (await resp.json()) || {};
   if (!resp.ok) {
     throw new Error(
-      `Jira OAuth Code exchange returned ${resp.status} ${resp.statusText}: ${JSON.stringify(
-        json
-      )}`
+      `Jira OAuth Code exchange returned ${resp.status} ${resp.statusText}: ${JSON.stringify(json)}`
     );
   }
   const { access_token, refresh_token } = json;
 
-  const resourcesResp = await edisonFetch('https://api.atlassian.com/oauth/token/accessible-resources', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-      Accept: 'application/json'
-    },
-  });
+  const resourcesResp = await edisonFetch(
+    'https://api.atlassian.com/oauth/token/accessible-resources',
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        Accept: 'application/json',
+      },
+    }
+  );
   const resources = await resourcesResp.json();
   if (!resourcesResp.ok) {
     throw new Error(
@@ -544,11 +552,15 @@ export async function buildYahooAccountFromAuthResponse(code) {
   const me = await meResp.json();
   if (!meResp.ok) {
     AppEnv.trackingEvent('oauth-yahoo-profile-failed');
-    AppEnv.reportError(new Error(`Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`));
+    AppEnv.reportError(
+      new Error(
+        `Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
+      )
+    );
     me = {
       given_name: '',
-      family_name: ''
-    }
+      family_name: '',
+    };
   }
 
   const { given_name, family_name } = me;
