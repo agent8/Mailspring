@@ -150,11 +150,11 @@ class OnboardingStore extends MailspringStore {
     // const isFirstAccount = AccountStore.accounts().length === 0;
     const { provider, emailAddress } = account;
     const domain = emailAddress ? emailAddress.split('@')[1] : '';
-    if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
-      AppEnv.trackingEvent('Invite-AddAccount-Success', { provider, domain });
-    } else {
-      AppEnv.trackingEvent('AddAccount-Success', { provider, domain });
-    }
+    // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
+    //   AppEnv.trackingEvent('Invite-AddAccount-Success', { provider, domain });
+    // } else {
+    AppEnv.trackingEvent('AddAccount-Success', { provider, domain });
+    // }
     try {
       await fetch(`https://web-marketing.edison.tech/markBetaUserInstall?type=mac&apiKey=bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR&email=${emailAddress}`, {
         method: 'GET'

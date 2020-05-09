@@ -1,9 +1,7 @@
 import React from 'react';
 import OnboardingActions from './onboarding-actions';
 import { AccountStore } from 'mailspring-exports';
-import {
-  RetinaImg
-} from 'mailspring-component-kit';
+import { RetinaImg } from 'mailspring-component-kit';
 
 export default class OptInTrendsResearchPage extends React.Component {
   static displayName = 'OptInTrendsResearchPage';
@@ -12,12 +10,11 @@ export default class OptInTrendsResearchPage extends React.Component {
     super(props);
   }
 
-  componentDidMount() {
-
-  }
+  componentDidMount() {}
 
   _onFinish = agree => {
     AppEnv.config.set('core.privacy.dataShare.optOut', agree);
+    AppEnv.trackingEvent('Onboarding-OptIn', { agree: !agree });
     OnboardingActions.moveToPage('initial-done');
   };
 
@@ -25,11 +22,7 @@ export default class OptInTrendsResearchPage extends React.Component {
     return (
       <div className={`page trends-research`}>
         <div className="trends-research-container">
-          <img
-            className="logo"
-            src={`edisonmail://onboarding/assets/trends-research.png`}
-            alt=""
-          />
+          <img className="logo" src={`edisonmail://onboarding/assets/trends-research.png`} alt="" />
           <h1>Your Privacy is Important.</h1>
           <p className="description">
             Your data makes Edison Mail work and, when permitted,
@@ -47,11 +40,15 @@ export default class OptInTrendsResearchPage extends React.Component {
           <button key="no" className="btn btn-large btn-ghost" onClick={() => this._onFinish(true)}>
             No, Thanks
           </button>
-          <button key="agree" className="btn btn-large btn-agree" onClick={() => this._onFinish(false)}>
+          <button
+            key="agree"
+            className="btn btn-large btn-agree"
+            onClick={() => this._onFinish(false)}
+          >
             Agree
           </button>
         </div>
-      </div >
+      </div>
     );
   }
 }

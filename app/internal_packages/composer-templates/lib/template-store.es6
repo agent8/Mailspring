@@ -107,16 +107,18 @@ class TemplateStore extends MailspringStore {
     });
   }
 
-  _onCreateTemplate({ headerMessageId, name, contents } = {}, callback) {
-    if (headerMessageId) {
-      this._onCreateTemplateFromDraft(headerMessageId);
+  _onCreateTemplate({ messageId, name, contents } = {}, callback) {
+    if (messageId) {
+      this._onCreateTemplateFromDraft(messageId);
       return;
     }
     if (!name || name.length === 0) {
       this._displayError('You must provide a name for your template.');
+      return;
     }
     if (!contents || contents.length === 0) {
       this._displayError('You must provide contents for your template.');
+      return;
     }
     this.saveNewTemplate(name, contents, template => {
       this._onShowTemplates();
@@ -126,9 +128,17 @@ class TemplateStore extends MailspringStore {
     });
   }
 
-  _onCreateTemplateFromDraft(headerMessageId) {
-    DraftStore.sessionForClientId(headerMessageId).then(session => {
+  _onCreateTemplateFromDraft(messageId) {
+    DraftStore.sessionForClientId(messageId).then(session => {
+      if (!session) {
+        this._displayError(`Draft Session for ${messageId} not available`);
+        return;
+      }
       const draft = session.draft();
+      if (!draft) {
+        this._displayError(`Draft for ${messageId} not available`);
+        return;
+      }
       const draftName = draft.subject.replace(INVALID_TEMPLATE_NAME_REGEX, '');
 
       let draftContents = QuotedHTMLTransformer.removeQuotedHTML(draft.body);
@@ -162,6 +172,7 @@ class TemplateStore extends MailspringStore {
   }
 
   _displayError(message) {
+    AppEnv.reportError(new Error('Template Creation Error'), { errorData: message });
     remote.dialog.showErrorBox('Template Creation Error', message);
   }
 
@@ -266,10 +277,19 @@ class TemplateStore extends MailspringStore {
     });
   }
 
-  _onInsertTemplateId({ templateId, headerMessageId } = {}) {
+  _onInsertTemplateId({ templateId, messageId } = {}) {
     const template = this._items.find(t => t.id === templateId);
     const templateBody = fs.readFileSync(template.path).toString();
-    DraftStore.sessionForClientId(headerMessageId).then(async session => {
+    DraftStore.sessionForClientId(messageId).then(async session => {
+      if (!session) {
+        this._displayError(`Draft Session for ${messageId} not available`);
+        return;
+      }
+      const draft = session.draft();
+      if (!draft) {
+        this._displayError(`Draft for ${messageId} not available`);
+        return;
+      }
       let proceed = true;
       if (!session.draft().pristine && !session.draft().hasEmptyBody()) {
         proceed = await this._displayDialog(

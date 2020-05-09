@@ -5,7 +5,9 @@ import DraftListSendStatus from './draft-list-send-status';
 import { DraftDeleteButton } from './draft-toolbar-buttons';
 
 export function activate() {
-  WorkspaceStore.defineSheet('Drafts', { root: true }, { list: ['RootSidebar', 'DraftList'] });
+  if (!WorkspaceStore.Location.DraftList) {
+    WorkspaceStore.defineSheet('Drafts', { root: true }, { list: ['RootSidebar', 'DraftList'] });
+  }
   if (
     AppEnv.savedState.perspective &&
     AppEnv.savedState.perspective.type === 'DraftsMailboxPerspective'
@@ -16,7 +18,7 @@ export function activate() {
   ComponentRegistry.register(DraftList, { location: WorkspaceStore.Location.DraftList });
   ComponentRegistry.register(DraftListToolbar, {
     location: WorkspaceStore.Location.DraftList.Toolbar,
-    role: 'DraftListToolbar'
+    role: 'DraftListToolbar',
   });
   ComponentRegistry.register(DraftDeleteButton, { role: 'DraftActionsToolbarButton' });
   ComponentRegistry.register(DraftListSendStatus, { role: 'DraftList:DraftStatus' });

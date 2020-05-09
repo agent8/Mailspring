@@ -102,10 +102,33 @@ function AfterPlugin() {
   function onBeforeInput(event, change, editor) {
     debug('onBeforeInput', { event: event });
 
+    var window = (0, _getWindow2.default)(event.target);
+    var native = window.getSelection();
+
     event.preventDefault();
     // if using CJK input, do nothing
     if (editor.state.isComposing) {
-      return true;
+      if (!native.isCollapsed) {
+        console.log(`****after.js onBeforeInput native.deleteFromDocument`);
+        native.deleteFromDocument();
+      }
+      return;
+    }
+    var value = change.value;
+    var selection = value.selection;
+    // slate selection [isCollapsed] but real dom it's not [isCollapsed]
+    if (selection.isCollapsed && !native.isCollapsed) {
+      if (native.anchorOffset !== selection.anchorOffset) {
+        const delta = native.focusOffset - native.anchorOffset;
+        const distance = selection.anchorOffset - native.anchorOffset;
+        const range = {
+          anchorKey: selection.anchorKey,
+          anchorOffset: native.anchorOffset + distance - delta,
+          focusKey: selection.focusKey,
+          focusOffset: native.anchorOffset + distance,
+        };
+        change.select(range).delete();
+      }
     }
     change.insertText(event.data);
   }
