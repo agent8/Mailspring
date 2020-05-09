@@ -1,17 +1,14 @@
 import MailspringStore from 'mailspring-store';
-import { Actions, AccountStore, FocusedPerspectiveStore, WorkspaceStore } from 'mailspring-exports';
+import {
+  Actions,
+  AccountStore,
+  FocusedPerspectiveStore,
+  WorkspaceStore,
+  SearchQueryParser,
+  SearchQueryAST,
+} from 'mailspring-exports';
 import _ from 'underscore';
 import SearchMailboxPerspective from './search-mailbox-perspective';
-let searchQueryParser = null;
-let searchQueryAST = null;
-const SearchQueryAST = () => {
-  searchQueryAST = searchQueryAST || require('mailspring-exports').SeachQueryAST;
-  return searchQueryAST;
-};
-const SearchQueryParser = () => {
-  searchQueryParser = searchQueryParser || require('mailspring-exports').SeachQueryParser;
-  return searchQueryParser;
-};
 
 // Stores should closely match the needs of a particular part of the front end.
 // For example, we might create a "MessageStore" that observes this store
@@ -40,9 +37,9 @@ class SearchStore extends MailspringStore {
       return false;
     }
     return (
-      query instanceof SearchQueryAST().GenericQueryExpression ||
-      query instanceof SearchQueryAST().SubjectQueryExpression ||
-      query instanceof SearchQueryAST().FromQueryExpression
+      query instanceof SearchQueryAST.GenericQueryExpression ||
+      query instanceof SearchQueryAST.SubjectQueryExpression ||
+      query instanceof SearchQueryAST.FromQueryExpression
     );
   };
   getSearchText() {
@@ -50,8 +47,8 @@ class SearchStore extends MailspringStore {
     const query = this._preSearchQuery;
     let parsedQuery = {};
     try {
-      parsedQuery = query ? SearchQueryParser().parse(query) : {};
-      if (parsedQuery instanceof SearchQueryAST().AndQueryExpression) {
+      parsedQuery = query ? SearchQueryParser.parse(query) : {};
+      if (parsedQuery instanceof SearchQueryAST.AndQueryExpression) {
         for (const k in parsedQuery) {
           if (this._isMatchedExpression(parsedQuery[k])) {
             searchValue = parsedQuery[k].text.token.s;
@@ -62,7 +59,12 @@ class SearchStore extends MailspringStore {
         searchValue = parsedQuery.text.token.s;
       }
     } catch (err) {
-      console.info('Failed to parse local search query, falling back to generic query', query);
+      console.info(
+        'Failed to parse local search query, falling back to generic query',
+        query,
+        'error',
+        err
+      );
       searchValue = query;
     }
     return searchValue;
@@ -142,7 +144,7 @@ class SearchStore extends MailspringStore {
     this.trigger();
   }, 500);
 
-  _throttleOnQuerySubmitted = _.throttle((query, forceQuery) => {
+  _throttleOnQuerySubmitted = _.debounce((query, forceQuery) => {
     this._onQuerySubmitted(query, forceQuery);
   }, 500);
 

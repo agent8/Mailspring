@@ -50,7 +50,7 @@ class ThreadListEmptyFolderBar extends React.Component {
 
   render() {
     const { role, busy, total } = this.props;
-    if (!role || total === 0) {
+    if (!role || total <= 0) {
       return false;
     }
     return (
