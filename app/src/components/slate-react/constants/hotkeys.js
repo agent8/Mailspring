@@ -131,7 +131,8 @@ var COMPOSING = function COMPOSING(e) {
     e.key == 'ArrowRight' ||
     e.key == 'ArrowUp' ||
     e.key == 'Backspace' ||
-    e.key == 'Enter'
+    e.key == 'Enter' ||
+    e.key == 'Tab'
   );
 };
 
