@@ -225,8 +225,10 @@ export const BLOCK_CONFIG = {
       iconClass: 'dt-icon dt-icon-increase-indent',
       isActive: value => false,
       onToggle: (value, active, event) => {
-        if (isMoreThanTabs(10, value)) {
+        if (!isMoreThanTabs(10, value)) {
           return Handlers.onTab({ lineType: 'div' }, event, value.change());
+        } else {
+          return value.change();
         }
       },
     },
