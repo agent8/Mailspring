@@ -64,6 +64,9 @@ export default class OAuthSignInPage extends React.Component {
 
   needOpenInBrowser(serviceName) {
     serviceName = serviceName.toLowerCase();
+    if (serviceName === 'google' && !AppEnv.inDevMode()) {
+      return true;
+    }
     if (serviceName === 'jira' && !process.mas) {
       return true;
     }
