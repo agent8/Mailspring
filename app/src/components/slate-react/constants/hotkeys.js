@@ -1,7 +1,7 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
+Object.defineProperty(exports, '__esModule', {
+  value: true,
 });
 
 var _isHotkey = require('../is-hotkey');
@@ -45,10 +45,10 @@ var DELETE_FORWARD = function DELETE_FORWARD(e) {
 var DELETE_CHAR_BACKWARD_MAC = (0, _isHotkey.isKeyHotkey)('ctrl+h');
 var DELETE_CHAR_FORWARD_MAC = (0, _isHotkey.isKeyHotkey)('ctrl+d');
 var DELETE_CHAR_BACKWARD = function DELETE_CHAR_BACKWARD(e) {
-  return DELETE_BACKWARD(e) || IS_APPLE && DELETE_CHAR_BACKWARD_MAC(e);
+  return DELETE_BACKWARD(e) || (IS_APPLE && DELETE_CHAR_BACKWARD_MAC(e));
 };
 var DELETE_CHAR_FORWARD = function DELETE_CHAR_FORWARD(e) {
-  return DELETE_FORWARD(e) || IS_APPLE && DELETE_CHAR_FORWARD_MAC(e);
+  return DELETE_FORWARD(e) || (IS_APPLE && DELETE_CHAR_FORWARD_MAC(e));
 };
 
 var DELETE_LINE_BACKWARD_MAC = (0, _isHotkey.isKeyHotkey)('cmd+backspace');
@@ -108,11 +108,32 @@ var TRANSPOSE_CHARACTER = function TRANSPOSE_CHARACTER(e) {
 };
 
 var CONTENTEDITABLE = function CONTENTEDITABLE(e) {
-  return BOLD(e) || DELETE_CHAR_BACKWARD(e) || DELETE_CHAR_FORWARD(e) || DELETE_LINE_BACKWARD(e) || DELETE_LINE_FORWARD(e) || DELETE_WORD_BACKWARD(e) || DELETE_WORD_FORWARD(e) || ITALIC(e) || REDO(e) || SPLIT_BLOCK(e) || TRANSPOSE_CHARACTER(e) || UNDO(e);
+  return (
+    BOLD(e) ||
+    DELETE_CHAR_BACKWARD(e) ||
+    DELETE_CHAR_FORWARD(e) ||
+    DELETE_LINE_BACKWARD(e) ||
+    DELETE_LINE_FORWARD(e) ||
+    DELETE_WORD_BACKWARD(e) ||
+    DELETE_WORD_FORWARD(e) ||
+    ITALIC(e) ||
+    REDO(e) ||
+    SPLIT_BLOCK(e) ||
+    TRANSPOSE_CHARACTER(e) ||
+    UNDO(e)
+  );
 };
 
 var COMPOSING = function COMPOSING(e) {
-  return e.key == 'ArrowDown' || e.key == 'ArrowLeft' || e.key == 'ArrowRight' || e.key == 'ArrowUp' || e.key == 'Backspace' || e.key == 'Enter';
+  return (
+    e.key == 'ArrowDown' ||
+    e.key == 'ArrowLeft' ||
+    e.key == 'ArrowRight' ||
+    e.key == 'ArrowUp' ||
+    e.key == 'Backspace' ||
+    e.key == 'Enter' ||
+    e.key == 'Tab'
+  );
 };
 
 /**
@@ -142,5 +163,5 @@ exports.default = {
   ITALIC: ITALIC,
   REDO: REDO,
   SPLIT_BLOCK: SPLIT_BLOCK,
-  UNDO: UNDO
+  UNDO: UNDO,
 };
