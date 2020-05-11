@@ -131,7 +131,9 @@ class DraftList extends React.Component {
     if (!this.state.isDeleting && !this._deletingTimer) {
       this._changeBackToNotDeleting();
       this.setState({ isDeleting: true });
-      Actions.destroyDraft(DraftListStore.dataSource().selection.items());
+      Actions.destroyDraft(DraftListStore.dataSource().selection.items(), {
+        source: 'DraftList:_onRemoveFromView',
+      });
     }
   };
 }
