@@ -10,7 +10,6 @@ import {
   CalendarStore,
   FocusedPerspectiveStore,
   TrashFromSenderTask,
-  OutboxStore,
 } from 'mailspring-exports';
 import {
   RetinaImg,
@@ -35,6 +34,7 @@ export default class MessageItem extends React.Component {
     messages: PropTypes.array,
     collapsed: PropTypes.bool,
     pending: PropTypes.bool,
+    disableDraftEdit: PropTypes.bool,
     isMostRecent: PropTypes.bool,
     className: PropTypes.string,
     threadPopedOut: PropTypes.bool,
@@ -269,29 +269,33 @@ export default class MessageItem extends React.Component {
             />
           </div>
         ) : (
-            <div className="download-all-action" onClick={this._onDownloadAll}>
-              <RetinaImg
-                name="download.svg"
-                isIcon
-                style={{ width: 18, height: 18 }}
-                mode={RetinaImg.Mode.ContentIsMask}
-              />
-              <span>Download all</span>
-            </div>
-          )}
+          <div className="download-all-action" onClick={this._onDownloadAll}>
+            <RetinaImg
+              name="download.svg"
+              isIcon
+              style={{ width: 18, height: 18 }}
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+            <span>Download all</span>
+          </div>
+        )}
       </div>
     );
   }
 
   _renderAttachments() {
     const { files = [], body, id, accountId } = this.props.message;
-    if(!body){
+    if (!body) {
       console.log('message have no body');
       return null;
     }
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
-      return !f.contentId || !(body || '').includes(`cid:${f.contentId}`) || (f.contentId && !Utils.shouldDisplayAsImage(f));
+      return (
+        !f.contentId ||
+        !(body || '').includes(`cid:${f.contentId}`) ||
+        (f.contentId && !Utils.shouldDisplayAsImage(f))
+      );
     });
 
     return (
@@ -362,7 +366,7 @@ export default class MessageItem extends React.Component {
   }
 
   _renderHeader() {
-    const { message, thread, messages } = this.props;
+    const { message, thread, messages, disableDraftEdit } = this.props;
     const { trackers, isBlocked } = this.state;
     return (
       <header
@@ -390,6 +394,14 @@ export default class MessageItem extends React.Component {
               >
                 {this._renderHeaderDetailToggle()}
               </MessageParticipants>
+              {disableDraftEdit && (
+                <RetinaImg
+                  name={`pencil.svg`}
+                  className={'draft-indicator'}
+                  isIcon={true}
+                  mode={RetinaImg.Mode.ContentIsMask}
+                />
+              )}
               <div className="message-header-right">
                 {!this.props.isOutboxDraft ? (
                   <InjectedComponentSet
@@ -432,7 +444,7 @@ export default class MessageItem extends React.Component {
           </div>
         </div>
         {/* {this._renderFolder()} */}
-      </header >
+      </header>
     );
   }
 
