@@ -490,6 +490,15 @@ export default {
           },
         },
       },
+      outbox: {
+        type: 'object',
+        properties: {
+          failingUnlockInMs: {
+            type: 'number',
+            default: 300000,
+          },
+        },
+      },
       sending: {
         type: 'object',
         properties: {
