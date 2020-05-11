@@ -22,6 +22,9 @@
         "fetchEmailRange": 365,
         "fetchEmailInterval": 1
       },
+      "outbox": {
+        "failingUnlockInMs": 300000
+      },
       "task": {
         "delayInMs": 5000
       }
