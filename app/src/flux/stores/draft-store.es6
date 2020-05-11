@@ -220,7 +220,9 @@ class DraftStore extends MailspringStore {
     const newDraft = DraftFactory.createNewDraftForEdit(draft);
     await this._finalizeAndPersistNewMessage(newDraft);
     const session = this._draftSessions[newDraft.id];
-    session.needUpload = true;
+    if (session) {
+      session.needUpload = true;
+    }
     return session;
   }
 
@@ -372,7 +374,7 @@ class DraftStore extends MailspringStore {
           })
         ),
       ],
-      { switchingAccount: true, canBeUndone: false }
+      { switchingAccount: true, canBeUndone: false, source: 'onDraftAccountChange' }
     );
   };
 
@@ -672,7 +674,9 @@ class DraftStore extends MailspringStore {
         // thus if main window is closed, we should be closing all other windows.
         if (draft.pristine && !draft.savedOnRemote) {
           if (!this._draftsDeleting[draft.id]) {
-            promises.push(Actions.destroyDraft([draft], { canBeUndone: false }));
+            promises.push(
+              Actions.destroyDraft([draft], { canBeUndone: false, source: 'onBeforeUnload' })
+            );
           }
         } else {
           promises.push(session.closeSession({ reason: 'onBeforeUnload' }));
@@ -1328,6 +1332,9 @@ class DraftStore extends MailspringStore {
       });
       Actions.queueTask(task);
     }, SendDraftTimeout);
+    AppEnv.logDebug(
+      `Started SendingDraftFailedTimeout, draftID: ${draft.id}, taskId: ${taskId}, source: ${source} `
+    );
   };
   _cancelDraftFailedTimeout = ({ messageId, source = '' } = {}) => {
     if (this._draftSendingTimeouts[messageId]) {
