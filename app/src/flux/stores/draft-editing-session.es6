@@ -14,6 +14,7 @@ import QuotedHTMLTransformer from '../../services/quoted-html-transformer';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import uuid from 'uuid';
 import _ from 'underscore';
+import RestoreDraftTask from '../tasks/restore-draft-task';
 
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
@@ -269,6 +270,7 @@ export default class DraftEditingSession extends MailspringStore {
     });
 
     this._registerListeners();
+    const needUpload = DraftStore.clearSaveOnRemoteTaskTimer(messageId);
     if (draft) {
       hotwireDraftBodyState(draft);
       if (!Array.isArray(draft.from) || draft.from.length === 0) {
@@ -283,6 +285,9 @@ export default class DraftEditingSession extends MailspringStore {
         draft.from[0].accountId = draft.accountId;
       }
       this._draft = draft;
+      if (needUpload) {
+        this.needUpload = true;
+      }
       this._draftPromise = Promise.resolve(draft);
       this._isDraftMissingAttachments();
       const thread = FocusedContentStore.focused('thread');
@@ -360,6 +365,9 @@ export default class DraftEditingSession extends MailspringStore {
           draft.setOrigin(Message.EditExistingDraft);
         }
         this._draft = draft;
+        if (needUpload) {
+          this.needUpload = true;
+        }
         this._threadId = draft.threadId;
         this._isDraftMissingAttachments();
         const thread = FocusedContentStore.focused('thread');
@@ -432,12 +440,37 @@ export default class DraftEditingSession extends MailspringStore {
   resumeSession() {
     this._registerListeners();
   }
+  _restoreDraft = () => {
+    if (
+      this._draft &&
+      !this._draft.savedOnRemote &&
+      this._draft.refOldDraftMessageId &&
+      AppEnv.isMainWindow()
+    ) {
+      const task = new RestoreDraftTask({
+        deleteMessageId: this._draft.id,
+        restoreMessageId: this._draft.refOldDraftMessageId,
+        accountId: this._draft.accountId,
+      });
+      Actions.queueTask(task);
+      return true;
+    }
+    AppEnv.logDebug(`no need to restore draft`);
+    return false;
+  };
   closeSession({ cancelCommits = false, reason = 'unknown' } = {}) {
     if (cancelCommits) {
       this.changes.cancelCommit();
     } else {
       if (this.changes.isDirty() || this.needUpload) {
         this.changeSetCommit('unload');
+        // } else if (this.needUpload) {
+        //   if (!this._restoreDraft()) {
+        //     console.warn('no need to restore draft');
+        //     this.changeSetCommit('unload');
+        //   }
+      } else {
+        this._restoreDraft();
       }
     }
     AppEnv.logDebug(
@@ -738,13 +771,21 @@ export default class DraftEditingSession extends MailspringStore {
     if (reason === 'unload') {
       this._draft.hasNewID = false;
       this.needUpload = false;
-      this._draft.savedOnRemote = true;
+      // this._draft.savedOnRemote = true;
     }
     if (this.changes._draftDirty) {
       this.changes._draftDirty = false;
     }
     const task = new SyncbackDraftTask({ draft: this._draft, source: reason });
-    task.saveOnRemote = reason === 'unload';
+    // We delay saveOnRemote
+    if (reason === 'unload' && AppEnv.isMainWindow()) {
+      DraftStore.pushSaveOnRemoteTask(task);
+    } else {
+      const needUpload = DraftStore.clearSaveOnRemoteTaskTimer(this._draft.id);
+      if (needUpload) {
+        this.needUpload = true;
+      }
+    }
     try {
       await TaskQueue.waitForPerformLocal(task, { sendTask: true });
     } catch (e) {
@@ -885,7 +926,7 @@ export default class DraftEditingSession extends MailspringStore {
         JSON.stringify(this._draft.to) === JSON.stringify(syncData.to) &&
         JSON.stringify(this._draft.bcc) === JSON.stringify(syncData.bcc) &&
         JSON.stringify(this._draft.cc) === JSON.stringify(syncData.cc) &&
-        JSON.stringify(this._draft.files) === JSON.stringify(syncData.files) &&
+        this._draft.files.map(f => f.id).join('-') === syncData.files.map(f => f.id).join('-') &&
         this._draft.subject === syncData.subject;
       for (const key of Object.getOwnPropertyNames(syncData)) {
         if (key === 'body' || key === 'bodyEditorState' || key === 'waitingForAttachment') {
