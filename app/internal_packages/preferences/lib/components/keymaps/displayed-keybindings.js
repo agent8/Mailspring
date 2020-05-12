@@ -1,10 +1,7 @@
 module.exports = [
   {
     title: 'APPLICATION',
-    items: [
-      ['application:new-message', 'New Message'],
-      ['core:focus-search', 'Search'],
-    ],
+    items: [['application:new-message', 'New Message'], ['core:focus-search', 'Search']],
   },
   {
     title: 'EMAILS',
@@ -72,6 +69,8 @@ module.exports = [
       ['navigation:go-to-all-sent', 'Go to "Sent"'],
       ['navigation:go-to-drafts', 'Go to "Drafts"'],
       ['navigation:go-to-all', 'Go to "Archive"'],
+      ['core:undo', 'Undo'],
+      ['core:redo', 'Redo'],
     ],
   },
 ];
