@@ -69,8 +69,6 @@ module.exports = [
       ['navigation:go-to-all-sent', 'Go to "Sent"'],
       ['navigation:go-to-drafts', 'Go to "Drafts"'],
       ['navigation:go-to-all', 'Go to "Archive"'],
-      ['core:undo', 'Undo'],
-      ['core:redo', 'Redo'],
     ],
   },
 ];
