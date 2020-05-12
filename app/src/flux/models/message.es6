@@ -48,6 +48,7 @@ export default class Message extends ModelWithMetadata {
     'waitingForBody',
     'calCurStat',
     'calTarStat',
+    'lastUpdateTimestamp',
   ];
   static NewDraft = 1;
   static EditExistingDraft = 2;
@@ -129,7 +130,7 @@ export default class Message extends ModelWithMetadata {
     }),
 
     listUnsubscribe: Attributes.String({
-      modelKey: 'listUnsubscribe',
+      modelKey: 'ListUnsub',
       queryable: false,
     }),
 
@@ -200,6 +201,10 @@ export default class Message extends ModelWithMetadata {
     }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
+      queryable: false,
+    }),
+    lastUpdateTimestamp: Attributes.DateTime({
+      modelKey: 'lastUpdateTimestamp',
       queryable: false,
     }),
     needUpload: Attributes.Boolean({

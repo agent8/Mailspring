@@ -291,18 +291,19 @@ export default class MessageControls extends React.Component {
     };
 
     const ret = [];
-
-    if (!this.props.message.canReplyAll()) {
-      ret.push(reply);
-    } else {
-      const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
-      if (defaultReplyType === 'reply-all') {
-        ret.push(replyAll, reply);
+    if (this.props.message && !this.props.message.draft) {
+      if (!this.props.message.canReplyAll()) {
+        ret.push(reply);
       } else {
-        ret.push(reply, replyAll);
+        const defaultReplyType = AppEnv.config.get('core.sending.defaultReplyType');
+        if (defaultReplyType === 'reply-all') {
+          ret.push(replyAll, reply);
+        } else {
+          ret.push(reply, replyAll);
+        }
       }
+      ret.push(forward);
     }
-    ret.push(forward);
 
     if (!this.props.message.draft) {
       ret.push(trash);
@@ -370,10 +371,26 @@ export default class MessageControls extends React.Component {
       />
     );
   }
+  _isInTrashOrSpamView = () => {
+    const perspective = FocusedPerspectiveStore.current();
+    if (perspective && (perspective.isTrash() || perspective.isSpam())) {
+      AppEnv.showMessageBox({
+        title: 'Cannot create draft',
+        detail: `Cannot create draft in ${
+          perspective.isTrash() ? 'Trash' : 'Spam'
+        } view, please move message out.`,
+      });
+      return true;
+    }
+    return false;
+  };
 
   _onReply = () => {
     const { thread, message } = this.props;
     if (!this.state.isReplying && !this._replyTimer) {
+      if (this._isInTrashOrSpamView()) {
+        return;
+      }
       this._timeoutButton('reply');
       this.setState({ isReplying: true });
       Actions.composeReply({
@@ -388,6 +405,9 @@ export default class MessageControls extends React.Component {
   _onReplyAll = () => {
     const { thread, message } = this.props;
     if (!this.state.isReplyAlling && !this._replyAllTimer) {
+      if (this._isInTrashOrSpamView()) {
+        return;
+      }
       this._timeoutButton('reply-all');
       this.setState({ isReplyAlling: true });
       Actions.composeReply({
@@ -402,6 +422,9 @@ export default class MessageControls extends React.Component {
   _onForward = () => {
     const { thread, message } = this.props;
     if (!this.state.isForwarding && !this._forwardTimer) {
+      if (this._isInTrashOrSpamView()) {
+        return;
+      }
       this._timeoutButton('forward');
       this.setState({ isForwarding: true });
       Actions.composeForward({ thread, message });
@@ -660,7 +683,7 @@ export default class MessageControls extends React.Component {
           </div>
         ) : null}
         <MessageTimestamp className="message-time" isDetailed date={this.props.message.date} />
-        {!this.props.hideControls ? (
+        {!this.props.hideControls && this.props.message && !this.props.message.draft ? (
           <div className="replyBtn" title={items[0].name} onClick={items[0].select}>
             <RetinaImg
               name={items[0].image}
@@ -671,7 +694,7 @@ export default class MessageControls extends React.Component {
           </div>
         ) : null}
         {this._renderBlockBtn()}
-        {!this.props.hideControls ? (
+        {!this.props.hideControls && items.length > 1 ? (
           <ButtonDropdown
             primaryClick={() => {}}
             closeOnMenuClick

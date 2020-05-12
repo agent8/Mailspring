@@ -1,12 +1,12 @@
 import classNames from 'classnames';
 import {
-  Actions,
   React,
   PropTypes,
   Utils,
   DraftStore,
   ComponentRegistry,
   Message,
+  FocusedPerspectiveStore,
 } from 'mailspring-exports';
 
 import MessageItem from './message-item';
@@ -84,13 +84,14 @@ export default class MessageItemContainer extends React.Component {
     return { isSending };
   }
 
-  _renderMessage({ pending }) {
+  _renderMessage({ pending, disableDraftEdit = false }) {
     return (
       <MessageItem
         ref={cm => {
           this._messageComponent = cm;
         }}
         pending={pending}
+        disableDraftEdit={disableDraftEdit}
         thread={this.props.thread}
         message={this.props.message}
         messages={this.props.messages}
@@ -140,8 +141,22 @@ export default class MessageItemContainer extends React.Component {
     }
     return this.state.isSending || this._isMessageSendingState();
   }
+  _disableDraftEditInTrashSpam() {
+    if (!this.props.message.draft) {
+      return false;
+    }
+    const perspective = FocusedPerspectiveStore.current();
+    if (!perspective) {
+      return false;
+    }
+    return perspective.isTrash() || perspective.isSpam();
+  }
 
   render() {
+    if (this._disableDraftEditInTrashSpam()) {
+      const draftPending = this._draftNotReady();
+      return this._renderMessage({ pending: draftPending, disableDraftEdit: true });
+    }
     if (this._draftNotReady()) {
       return this._renderMessage({ pending: true });
     }
