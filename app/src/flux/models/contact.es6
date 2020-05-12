@@ -510,6 +510,9 @@ export default class Contact extends Model {
     }
     return this.isMePhrase({ forceAccountLabel, includeAccountLabel }) || fallback;
   }
+  fullOriginal() {
+    return this.name;
+  }
 
   fullName() {
     return this._nameParts().join(' ');
