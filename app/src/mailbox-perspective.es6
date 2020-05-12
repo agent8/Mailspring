@@ -291,6 +291,10 @@ export default class MailboxPerspective {
     return this.categoriesSharedRole() === 'trash';
   }
 
+  isSpam() {
+    return this.categoriesSharedRole() === 'spam';
+  }
+
   isArchive() {
     return false;
   }

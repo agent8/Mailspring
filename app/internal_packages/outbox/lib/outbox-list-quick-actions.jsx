@@ -1,5 +1,5 @@
-const { Actions, React, PropTypes, FocusedPerspectiveStore } = require('mailspring-exports');
 import { RetinaImg } from 'mailspring-component-kit';
+const { Actions, React, PropTypes, FocusedPerspectiveStore } = require('mailspring-exports');
 
 class OutboxTrashQuickAction extends React.Component {
   static displayName = 'OutboxTrashQuickAction';
