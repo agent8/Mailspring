@@ -1317,6 +1317,12 @@ class AttachmentStore extends MailspringStore {
       if (!savePath) {
         return;
       }
+      if (typeof savePath !== 'string') {
+        this._catchFSErrors(savePath).catch(error => {
+          this._presentError({ file, error });
+        });
+        return;
+      }
 
       const saveExtension = path.extname(savePath);
       const newDownloadDirectory = path.dirname(savePath);
@@ -1358,6 +1364,9 @@ class AttachmentStore extends MailspringStore {
     const lastSavePaths = [];
     const savePromises = files.map(file => {
       const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName());
+      if (typeof fileSaveName !== 'string') {
+        throw new Error(fileSaveName);
+      }
       const savePath = path.join(dirPath, fileSaveName);
       return this._prepareAndResolveFilePath(file)
         .then(filePath => this._writeToExternalPath(filePath, savePath))
