@@ -1219,7 +1219,12 @@ export default class AppEnvConstructor {
       } else {
         const fileName = path.basename(options.defaultPath || 'untitled');
         const fileNewName = autoGenerateFileName(downloadPath, fileName);
-        callback(path.join(downloadPath, fileNewName));
+        if (typeof fileNewName === 'string') {
+          callback(path.join(downloadPath, fileNewName));
+        } else {
+          this.logError(fileNewName);
+          callback(fileNewName);
+        }
       }
     } else {
       if (options.title == null) {
