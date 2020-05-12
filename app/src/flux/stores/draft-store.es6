@@ -27,6 +27,7 @@ let AttachmentStore = null;
 const { DefaultSendActionKey } = SendActionsStore;
 const SendDraftTimeout = 300000;
 const DraftFailingBaseTimeout = 120000;
+const SaveOnRemoteDelayInMs = 5000;
 
 /*
 Public: DraftStore responds to Actions that interact with Drafts and exposes
@@ -119,6 +120,7 @@ class DraftStore extends MailspringStore {
     this._draftsSending = {};
     this._draftSendingTimeouts = {};
     this._draftFailingTimeouts = {};
+    this._draftSaveOnRemoteDelays = {};
     this._draftsDeleting = {}; //Using messageId
     this._draftsDeleted = {};
     this._draftsOpenCount = {};
@@ -217,6 +219,15 @@ class DraftStore extends MailspringStore {
   }
 
   async sessionForServerDraft(draft) {
+    if (this.isDraftWaitingSaveOnRemote(draft.id)) {
+      AppEnv.logWarning(`Draft ${draft.id} is still waiting for saveOnRemote`);
+      const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
+      const session = await this.sessionForClientId(draft.id);
+      if (session && needUpload) {
+        session.needUpload = true;
+      }
+      return session;
+    }
     const newDraft = DraftFactory.createNewDraftForEdit(draft);
     await this._finalizeAndPersistNewMessage(newDraft);
     const session = this._draftSessions[newDraft.id];
@@ -231,6 +242,53 @@ class DraftStore extends MailspringStore {
   isSendingDraft(messageId) {
     return !!this._draftsSending[messageId] || false;
   }
+  isDraftWaitingSaveOnRemote = messageId => {
+    return this._draftSaveOnRemoteDelays[messageId];
+  };
+  clearSaveOnRemoteTaskTimer = messageId => {
+    if (!messageId) {
+      AppEnv.logError(new Error('MessageId is empty'));
+      return false;
+    }
+    if (this._draftSaveOnRemoteDelays[messageId]) {
+      if (this._draftSaveOnRemoteDelays[messageId].timer) {
+        AppEnv.logDebug(`Clearing draftSaveOnRemoteDelays timer for ${messageId}`);
+        clearTimeout(this._draftSaveOnRemoteDelays[messageId].timer);
+      }
+      AppEnv.logDebug(`Clearing draftSaveOnRemoteDelays cache for ${messageId}`);
+      delete this._draftSaveOnRemoteDelays[messageId];
+      return true;
+    }
+    return false;
+  };
+  pushSaveOnRemoteTask = task => {
+    if (!AppEnv.isMainWindow()) {
+      AppEnv.logDebug('Not in main window, ignoring saveOnRemote');
+      return;
+    }
+    if (!task) {
+      AppEnv.logError(new Error('Task is empty'));
+      return;
+    }
+    this.clearSaveOnRemoteTaskTimer(task.messageId);
+    const messageId = task.messageId;
+    this._draftSaveOnRemoteDelays[messageId] = {
+      timer: null,
+      task: new SyncbackDraftTask({ draft: task.draft, ...task }),
+    };
+    this._draftSaveOnRemoteDelays[messageId].timer = setTimeout(() => {
+      if (
+        this._draftSaveOnRemoteDelays[messageId] &&
+        this._draftSaveOnRemoteDelays[messageId].task
+      ) {
+        this._draftSaveOnRemoteDelays[messageId].task.saveOnRemote = true;
+        AppEnv.logDebug(`Sending save on remote task for ${messageId}`);
+        Actions.queueTasks([this._draftSaveOnRemoteDelays[messageId].task]);
+      }
+      AppEnv.logDebug(`Clearing draftSaveOnRemoteDelays cache for ${messageId}`);
+      delete this._draftSaveOnRemoteDelays[messageId];
+    }, SaveOnRemoteDelayInMs);
+  };
 
   _restartTimerForOldSendDraftTasks() {
     if (!this._startTime) {
@@ -916,9 +974,12 @@ class DraftStore extends MailspringStore {
 
     // Optimistically create a draft session and hand it the draft so that it
     // doesn't need to do a query for it a second from now when the composer wants it.
-    this._createSession(draft.id, draft);
+    const session = this._createSession(draft.id, draft);
     const task = new SyncbackDraftTask({ draft });
-
+    const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
+    if (needUpload) {
+      session.needUpload = true;
+    }
     return TaskQueue.waitForPerformLocal(task, { sendTask: true })
       .then(() => {
         if (popout) {

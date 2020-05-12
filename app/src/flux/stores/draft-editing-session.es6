@@ -269,6 +269,7 @@ export default class DraftEditingSession extends MailspringStore {
     });
 
     this._registerListeners();
+    const needUpload = DraftStore.clearSaveOnRemoteTaskTimer(messageId);
     if (draft) {
       hotwireDraftBodyState(draft);
       if (!Array.isArray(draft.from) || draft.from.length === 0) {
@@ -283,6 +284,9 @@ export default class DraftEditingSession extends MailspringStore {
         draft.from[0].accountId = draft.accountId;
       }
       this._draft = draft;
+      if (needUpload) {
+        this.needUpload = true;
+      }
       this._draftPromise = Promise.resolve(draft);
       this._isDraftMissingAttachments();
       const thread = FocusedContentStore.focused('thread');
@@ -360,6 +364,9 @@ export default class DraftEditingSession extends MailspringStore {
           draft.setOrigin(Message.EditExistingDraft);
         }
         this._draft = draft;
+        if (needUpload) {
+          this.needUpload = true;
+        }
         this._threadId = draft.threadId;
         this._isDraftMissingAttachments();
         const thread = FocusedContentStore.focused('thread');
@@ -738,13 +745,21 @@ export default class DraftEditingSession extends MailspringStore {
     if (reason === 'unload') {
       this._draft.hasNewID = false;
       this.needUpload = false;
-      this._draft.savedOnRemote = true;
+      // this._draft.savedOnRemote = true;
     }
     if (this.changes._draftDirty) {
       this.changes._draftDirty = false;
     }
     const task = new SyncbackDraftTask({ draft: this._draft, source: reason });
-    task.saveOnRemote = reason === 'unload';
+    // We delay saveOnRemote
+    if (reason === 'unload' && AppEnv.isMainWindow()) {
+      DraftStore.pushSaveOnRemoteTask(task);
+    } else {
+      const needUpload = DraftStore.clearSaveOnRemoteTaskTimer(this._draft.id);
+      if (needUpload) {
+        this.needUpload = true;
+      }
+    }
     try {
       await TaskQueue.waitForPerformLocal(task, { sendTask: true });
     } catch (e) {
