@@ -157,8 +157,12 @@ class RetinaImg extends React.Component {
     }
 
     if (this.props.mode === Mode.ContentIsMask) {
-      className += ` content-mask ${this._iconClassName(this.props.name)}`;
-      return <i alt={this.props.name} className={className} style={style} {...otherProps}></i>;
+      if (this.props.isIcon) {
+        className += ` content-mask ${this._iconClassName(this.props.name)}`;
+        return <i alt={this.props.name} className={className} style={style} {...otherProps}></i>;
+      } else {
+        className += ` content-mask`;
+      }
     } else if (this.props.mode === Mode.ContentDark) {
       className += ' content-dark';
     } else if (this.props.mode === Mode.ContentLight) {
