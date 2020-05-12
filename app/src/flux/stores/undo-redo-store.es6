@@ -19,6 +19,7 @@ class UndoRedoStore extends MailspringStore {
       medium: [],
       low: [],
     };
+    this.undoQueuing = [];
     this._redo = [];
     this._timeouts = {};
 
@@ -138,6 +139,7 @@ class UndoRedoStore extends MailspringStore {
       default:
         this._undo.low.push(block);
     }
+    this.undoQueuing.push(block);
     this._timeouts[block.id] = setTimeout(
       this._onBlockTimedOut.bind(this, { block }),
       block.delayDuration
@@ -198,6 +200,12 @@ class UndoRedoStore extends MailspringStore {
       default:
         priority = 'low';
     }
+    for (let i = 0; i < this.undoQueuing.length; i++) {
+      if (this.undoQueuing[i].id === block.id) {
+        this.undoQueuing[i] = Object.assign({}, block);
+        break;
+      }
+    }
     for (let i = 0; i < this._undo[priority].length; i++) {
       if (this._undo[priority][i].id === block.id) {
         this._undo[priority][i] = Object.assign({}, block);
@@ -219,6 +227,14 @@ class UndoRedoStore extends MailspringStore {
     this.trigger();
   };
 
+  undoLastOne = () => {
+    const block = this.undoQueuing.pop();
+    if (!block) {
+      return;
+    }
+    this.undo({ block });
+  };
+
   redo = () => {
     const block = this._redo.pop();
     if (!block) {
@@ -226,7 +242,7 @@ class UndoRedoStore extends MailspringStore {
     }
     block.redo ? block.redo() : block.do();
     this._mostRecentBlock = block;
-    this._undo.push(block);
+    this._pushToUndo({ block });
     this.trigger();
   };
 
@@ -267,6 +283,9 @@ class UndoRedoStore extends MailspringStore {
         priority = 'low';
     }
     this._undo[priority] = this._undo[priority].filter(b => {
+      return b.id !== block.id;
+    });
+    this.undoQueuing = this.undoQueuing.filter(b => {
       return b.id !== block.id;
     });
     clearTimeout(this._timeouts[block.id]);
