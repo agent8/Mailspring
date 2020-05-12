@@ -220,7 +220,7 @@ export default class MailsyncProcess extends EventEmitter {
         if (AppEnv.enabledToNativeLog) {
           console.log('--------------------To native---------------');
           AppEnv.logDebug(
-            `to native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`
+            `to-native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`
           );
           console.log('-----------------------------To native END-----------------------');
         }
@@ -461,7 +461,7 @@ export default class MailsyncProcess extends EventEmitter {
       if (AppEnv.enabledToNativeLog) {
         console.log('--------------------To native ---------------');
         AppEnv.logDebug(
-          `to native: flushing queue: ${this.account ? this.account.pid : 'no account'} - ${
+          `to-native: flushing queue: ${this.account ? this.account.pid : 'no account'} - ${
             this._sendMessageQueue[i]
           }`
         );
@@ -484,7 +484,7 @@ export default class MailsyncProcess extends EventEmitter {
     if (AppEnv.enabledToNativeLog) {
       console.log('--------------------To native---------------');
       AppEnv.logDebug(
-        `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
+        `to-${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
           this.account ? this.account.pid || this.account.id : 'no account'
         } - ${msg}`
       );

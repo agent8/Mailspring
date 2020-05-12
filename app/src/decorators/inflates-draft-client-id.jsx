@@ -43,7 +43,7 @@ function InflatesDraftClientId(ComposedComponent) {
         this.props.draft.savedOnRemote &&
         !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.sending) &&
         !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failing) &&
-        !Message.compareMessageState((this.props.draft.state, Message.messageSyncState.failed))
+        !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failed)
       ) {
         this._prepareServerDraftForEdit(this.props.draft);
       } else {
