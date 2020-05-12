@@ -611,7 +611,6 @@ class MessageList extends React.Component {
     if (e.target.className && e.target.className.indexOf('message-subject') === -1) {
       return;
     }
-
     const textNode = e.currentTarget.childNodes[0];
     const range = document.createRange();
     range.setStart(textNode, 0);
@@ -681,7 +680,7 @@ class MessageList extends React.Component {
         <div style={{ flex: 1, flexWrap: 'wrap' }}>
           <span
             className="message-subject"
-            onClick={this._onSelectText}
+            onDoubleClick={this._onSelectText}
             onContextMenu={this._onContactContextMenu.bind(this, subject)}
           >
             {subject}

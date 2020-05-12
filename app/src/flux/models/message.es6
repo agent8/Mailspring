@@ -130,7 +130,7 @@ export default class Message extends ModelWithMetadata {
     }),
 
     listUnsubscribe: Attributes.String({
-      modelKey: 'listUnsubscribe',
+      modelKey: 'ListUnsub',
       queryable: false,
     }),
 
