@@ -1,10 +1,7 @@
 module.exports = [
   {
     title: 'APPLICATION',
-    items: [
-      ['application:new-message', 'New Message'],
-      ['core:focus-search', 'Search'],
-    ],
+    items: [['application:new-message', 'New Message'], ['core:focus-search', 'Search']],
   },
   {
     title: 'EMAILS',
