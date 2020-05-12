@@ -379,6 +379,7 @@ export default class MessageControls extends React.Component {
         detail: `Cannot create draft in ${
           perspective.isTrash() ? 'Trash' : 'Spam'
         } view, please move message out.`,
+        buttons: ['Okay'],
       });
       return true;
     }
