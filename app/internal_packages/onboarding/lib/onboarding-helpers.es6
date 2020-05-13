@@ -687,6 +687,9 @@ export async function finalizeAndValidateAccount(account) {
   const { response } = await proc.test();
   const newAccount = response.account;
   newAccount.settings.provider_key = account.settings.provider_key;
+  if (account.settings && account.settings.refresh_client_id) {
+    newAccount.settings.refresh_client_id = account.settings.refresh_client_id;
+  }
   if (account.mailsync) {
     newAccount.mailsync = account.mailsync;
     delete newAccount.mailsync.accounts;
