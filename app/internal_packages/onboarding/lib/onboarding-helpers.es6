@@ -50,8 +50,8 @@ const JIRA_SCOPES = [
 ];
 
 const YAHOO_CLIENT_ID =
-  'dj0yJmk9c3IxR3h4VG5GTXBYJmQ9WVdrOVlVeHZNVXh1TkhVbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
-const YAHOO_CLIENT_SECRET = '8a267b9f897da839465ff07a712f9735550ed412';
+  'dj0yJmk9VDB0enNwSE54Tk1CJmQ9WVdrOU1saDZNRWt4TmpJbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD1jZA--';
+const YAHOO_CLIENT_SECRET = '5edd54d7240d0ae74594d4806cdf69c72a6e9fa5';
 
 const OFFICE365_CLIENT_ID = '62db40a4-2c7e-4373-a609-eda138798962';
 const OFFICE365_CLIENT_SECRET = 'lj9US4uHiIYYs]ew?vU6C?E0?zt:qw41';
@@ -520,7 +520,7 @@ export async function buildYahooAccountFromAuthResponse(code) {
     `client_secret=${encodeURIComponent(YAHOO_CLIENT_SECRET)}`,
     `code=${encodeURIComponent(code)}`,
     'grant_type=authorization_code',
-    `redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}`,
+    `redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}`,
   ].join('&');
 
   const resp = await edisonFetch('https://api.login.yahoo.com/oauth2/get_token', {
@@ -627,7 +627,7 @@ export function buildYahooAuthURL() {
     `https://api.login.yahoo.com/oauth2/request_auth` +
     `?` +
     `client_id=${YAHOO_CLIENT_ID}` +
-    `&redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
     `&response_type=code`
   );
