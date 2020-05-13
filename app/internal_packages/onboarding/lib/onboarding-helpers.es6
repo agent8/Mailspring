@@ -40,7 +40,14 @@ const GMAIL_SCOPES = [
 
 const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
 const JIRA_CLIENT_SECRET = 'cSTiX-4hpKKgwHSGdwgRSK5moMypv_v1-CIfTcWWJC8BkA2E0O0vK7CYhdglbIDE';
-const JIRA_SCOPES = ['read:me', 'read:jira-user', 'read:jira-work', 'write:jira-work', 'offline_access', 'manage:jira-project'];
+const JIRA_SCOPES = [
+  'read:me',
+  'read:jira-user',
+  'read:jira-work',
+  'write:jira-work',
+  'offline_access',
+  'manage:jira-project',
+];
 
 const YAHOO_CLIENT_ID =
   'dj0yJmk9c3IxR3h4VG5GTXBYJmQ9WVdrOVlVeHZNVXh1TkhVbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD02OQ--';
@@ -48,7 +55,7 @@ const YAHOO_CLIENT_SECRET = '8a267b9f897da839465ff07a712f9735550ed412';
 
 const OFFICE365_CLIENT_ID = '62db40a4-2c7e-4373-a609-eda138798962';
 const OFFICE365_CLIENT_SECRET = 'lj9US4uHiIYYs]ew?vU6C?E0?zt:qw41';
-const OFFICE365_SCOPES = ['user.read', 'mail.read'];
+const OFFICE365_SCOPES = ['user.read', 'mail.read', 'mail.send', 'offline_access'];
 
 const OUTLOOK_CLIENT_ID = '000000004818114B';
 const OUTLOOK_CLIENT_SECRET = 'jXRAIb5CxLHI5MsVy9kb5okP9mGDZaqw';
@@ -270,7 +277,7 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   body.push(`code=${encodeURIComponent(code)}`);
   body.push(`client_id=${encodeURIComponent(OFFICE365_CLIENT_ID)}`);
   body.push(`client_secret=${encodeURIComponent(OFFICE365_CLIENT_SECRET)}`);
-  body.push(`redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}`);
+  body.push(`redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
   const resp = await edisonFetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
@@ -305,10 +312,32 @@ export async function buildOffice365AccountFromAuthResponse(code) {
       `Office365 profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
     );
   }
+  console.log('****json', json, me);
+
+  // get user self picture
+  let picturePath;
+  try {
+    const photoResp = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
+      method: 'GET',
+      headers: {
+        Authorization: `${access_token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (photoResp.ok) {
+      const buffer = await photoResp.arrayBuffer();
+      picturePath = path.join(AppEnv.getConfigDirPath(), 'logo_cache', `${me.mail}.png`);
+      await writeFile(picturePath, Buffer.from(buffer), { encoding: 'binary' });
+    }
+  } catch (err) {
+    picturePath = null;
+    console.log('This office365 account have no photo', err);
+  }
+  console.log('*****picturePath', picturePath);
   const account = await expandAccountWithCommonSettings(
     new Account({
-      name: me.name,
-      emailAddress: me.email,
+      name: me.displayName,
+      emailAddress: me.mail,
       provider: 'office365',
       settings: {
         refresh_client_id: OFFICE365_CLIENT_ID,
@@ -318,6 +347,9 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   );
 
   account.id = idForAccount(me.email, account.settings);
+  if (picturePath) {
+    account.picture = picturePath;
+  }
 
   // test the account locally to ensure the All Mail folder is enabled
   // and the refresh token can be exchanged for an account token.
@@ -475,20 +507,21 @@ export async function buildJiraAccountFromAuthResponse(code) {
   const json = (await resp.json()) || {};
   if (!resp.ok) {
     throw new Error(
-      `Jira OAuth Code exchange returned ${resp.status} ${resp.statusText}: ${JSON.stringify(
-        json
-      )}`
+      `Jira OAuth Code exchange returned ${resp.status} ${resp.statusText}: ${JSON.stringify(json)}`
     );
   }
   const { access_token, refresh_token } = json;
 
-  const resourcesResp = await edisonFetch('https://api.atlassian.com/oauth/token/accessible-resources', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-      Accept: 'application/json'
-    },
-  });
+  const resourcesResp = await edisonFetch(
+    'https://api.atlassian.com/oauth/token/accessible-resources',
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        Accept: 'application/json',
+      },
+    }
+  );
   const resources = await resourcesResp.json();
   if (!resourcesResp.ok) {
     throw new Error(
@@ -544,11 +577,15 @@ export async function buildYahooAccountFromAuthResponse(code) {
   const me = await meResp.json();
   if (!meResp.ok) {
     AppEnv.trackingEvent('oauth-yahoo-profile-failed');
-    AppEnv.reportError(new Error(`Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`));
+    AppEnv.reportError(
+      new Error(
+        `Yahoo profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
+      )
+    );
     me = {
       given_name: '',
-      family_name: ''
-    }
+      family_name: '',
+    };
   }
 
   const { given_name, family_name } = me;
@@ -591,7 +628,7 @@ export function buildOffice365AuthURL() {
     `?` +
     `client_id=${OFFICE365_CLIENT_ID}` +
     `&scope=${encodeURIComponent(OFFICE365_SCOPES.join(' '))}` +
-    `&redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
     `&response_type=code`
   );

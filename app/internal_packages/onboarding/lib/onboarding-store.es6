@@ -3,7 +3,7 @@ import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
 
-const OAUTH_LIST = ['gmail', 'yahoo', 'outlook', 'hotmail', 'jira-plugin'];
+const OAUTH_LIST = ['gmail', 'yahoo', 'outlook', 'hotmail', 'office365', 'jira-plugin'];
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
 class OnboardingStore extends MailspringStore {
@@ -41,7 +41,7 @@ class OnboardingStore extends MailspringStore {
     //     this._pageStack = ['login'];
     //   }
     // }
-    // else 
+    // else
     if (existingAccountJSON) {
       // Used when re-adding an account after re-connecting, take the user back
       // to the best page with the most details
@@ -156,9 +156,12 @@ class OnboardingStore extends MailspringStore {
     AppEnv.trackingEvent('AddAccount-Success', { provider, domain });
     // }
     try {
-      await fetch(`https://web-marketing.edison.tech/markBetaUserInstall?type=mac&apiKey=bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR&email=${emailAddress}`, {
-        method: 'GET'
-      })
+      await fetch(
+        `https://web-marketing.edison.tech/markBetaUserInstall?type=mac&apiKey=bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR&email=${emailAddress}`,
+        {
+          method: 'GET',
+        }
+      );
     } catch (err) {
       console.log('add tracing failed', err);
     }
