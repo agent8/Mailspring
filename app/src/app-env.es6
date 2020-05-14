@@ -1339,12 +1339,19 @@ export default class AppEnvConstructor {
     detail = '',
     type = 'question',
     buttons = ['Okay', 'Cancel'],
+    defaultId = 0,
   } = {}) {
     let winToShow = null;
     if (showInMainWindow) {
       winToShow = remote.getGlobal('application').getMainWindow();
     }
-    return remote.dialog.showMessageBox(winToShow, { type, buttons, message: title, detail });
+    return remote.dialog.showMessageBox(winToShow, {
+      type,
+      buttons,
+      message: title,
+      detail,
+      defaultId,
+    });
   }
 
   // Delegate to the browser's process fileListCache
