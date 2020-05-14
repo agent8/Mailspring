@@ -171,7 +171,7 @@ const onEditItem = function(item, value) {
       accountId: category.accountId,
       path: category.path,
       newName: newDisplayName,
-      isExchange: account && account.provider === 'exchange',
+      isExchange: account && account.provider.includes('exchange'),
     })
   );
 };
@@ -631,7 +631,7 @@ class SidebarItem {
     if (!account) {
       throw new Error(`Cannot find account for ${accountId}`);
     }
-    const isExchange = account.provider === 'exchange';
+    const isExchange = account.provider.includes('exchange');
     const seenItems = {};
     seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
