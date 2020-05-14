@@ -205,6 +205,13 @@ export default {
             default: true,
             title: 'Automatically load images in open emails',
           },
+          actionAfterRemove: {
+            type: 'string',
+            default: 'return',
+            enum: ['return', 'next', 'previous'],
+            enumLabels: ['Return to email list', 'Open next', 'Open previous'],
+            title: 'When mail is Archived or Deleted',
+          },
           // backspaceDelete: {
           //   type: 'boolean',
           //   default: false,

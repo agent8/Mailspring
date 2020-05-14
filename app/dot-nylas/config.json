@@ -25,6 +25,9 @@
       "outbox": {
         "failingUnlockInMs": 300000
       },
+      "reading": {
+        "actionAfterRemove": "return"
+      },
       "task": {
         "delayInMs": 5000
       }
