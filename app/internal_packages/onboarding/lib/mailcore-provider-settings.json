@@ -2284,7 +2284,7 @@
             ]
         }
     },
-    "office365": {
+    "office365-exchange": {
         "auto-copy-to-sent": true,
         "domain-match": [
             "(.+\\.)?office365\\.com",
