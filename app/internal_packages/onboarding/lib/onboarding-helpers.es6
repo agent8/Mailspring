@@ -338,7 +338,7 @@ export async function buildOffice365AccountFromAuthResponse(code) {
     new Account({
       name: me.displayName,
       emailAddress: me.mail,
-      provider: 'office365',
+      provider: 'office365-exchange',
       settings: {
         refresh_client_id: OFFICE365_CLIENT_ID,
         refresh_token: refresh_token,

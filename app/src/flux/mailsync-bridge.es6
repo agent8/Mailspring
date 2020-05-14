@@ -745,7 +745,7 @@ export default class MailsyncBridge {
       });
       if (AppEnv.enabledFromNativeLog) {
         console.log('----------------From native-------------------');
-        AppEnv.logDebug(`from native: ${msg}`);
+        AppEnv.logDebug(`from-native: ${msg}`);
         console.log('---------------------From native END------------------------');
       }
       const promises = [];
@@ -1107,7 +1107,7 @@ export default class MailsyncBridge {
         type: 'need-attachments',
         ids: ids,
         needProgress: true,
-        source
+        source,
       });
     }
   }
