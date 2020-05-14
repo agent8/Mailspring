@@ -208,8 +208,8 @@ export default {
           actionAfterRemove: {
             type: 'string',
             default: 'return',
-            enum: ['return', 'next', 'previous'],
-            enumLabels: ['Return to email list', 'Open next', 'Open previous'],
+            enum: ['next', 'previous', 'return'],
+            enumLabels: ['Open next', 'Open previous', 'Return to email list'],
             title: 'When mail is Archived or Deleted',
           },
           // backspaceDelete: {
