@@ -34,7 +34,7 @@ const PageComponents = {
   'account-choose': AccountChoosePage,
   'account-settings': AccountSettingsPage,
   'account-settings-gmail': AccountSettingsPageGmail,
-  'account-settings-office365': AccountSettingsPageOffice365,
+  'account-settings-office365-exchange': AccountSettingsPageOffice365,
   'account-settings-outlook': AccountSettingsPageOutlook,
   'account-settings-hotmail': AccountSettingsPageOutlook,
   'account-settings-yahoo': AccountSettingsPageYahoo,
@@ -101,9 +101,9 @@ export default class OnboardingRoot extends React.Component {
       'account-add-another',
       'account-choose',
       'login-error',
-      'account-settings-jira-plugin'
-    ].includes(this.state.page)
-  }
+      'account-settings-jira-plugin',
+    ].includes(this.state.page);
+  };
 
   render() {
     const Component = PageComponents[this.state.page];
@@ -113,10 +113,7 @@ export default class OnboardingRoot extends React.Component {
 
     return (
       <div className="page-frame">
-        <PageTopBar
-          pageDepth={this.state.pageDepth}
-          allowMoveBack={this._allowMoveBack()}
-        />
+        <PageTopBar pageDepth={this.state.pageDepth} allowMoveBack={this._allowMoveBack()} />
         <CSSTransitionGroup
           transitionName="alpha-fade"
           transitionLeaveTimeout={150}
