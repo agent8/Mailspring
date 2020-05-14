@@ -86,6 +86,22 @@ const isSameAccount = items => {
   return true;
 };
 
+const nextActionForRemoveFromView = source => {
+  if (!AppEnv.isMainWindow()) {
+    AppEnv.logDebug('Not main window, no next action for remove from view');
+    return;
+  }
+  const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
+  AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
+  if (nextAction === 'next') {
+    AppEnv.commands.dispatch('core:show-next');
+  } else if (nextAction === 'previous') {
+    AppEnv.commands.dispatch('core:show-previous');
+  } else {
+    Actions.popSheet({ reason: source });
+  }
+};
+
 export function ArchiveButton(props) {
   const _onShortCut = event => {
     _onArchive(event, threadSelectionScope(props, props.selection));
@@ -97,7 +113,7 @@ export function ArchiveButton(props) {
       currentPerspective: FocusedPerspectiveStore.current(),
     });
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:archive' });
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:archive');
     if (event) {
       event.stopPropagation();
     }
@@ -175,7 +191,7 @@ export function TrashButton(props) {
     });
     const tasks = [...moveTasks, ...expungeTasks];
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:remove' });
+    nextActionForRemoveFromView('Toolbar Button: Search');
     if (event) {
       event.stopPropagation();
     }
@@ -209,7 +225,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:remove' });
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:remove');
     if (event) {
       event.stopPropagation();
     }
@@ -251,7 +267,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:expunge' });
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:expunge');
     if (event) {
       event.stopPropagation();
     }
@@ -684,7 +700,7 @@ class HiddenGenericRemoveButton extends React.Component {
       const tasks = current.tasksForRemovingItems(items, 'Keyboard Shortcut');
       if (Array.isArray(tasks) && tasks.length > 0) {
         Actions.queueTasks(tasks);
-        Actions.popSheet({ reason: 'ToolbarButton:HiddenGenericRemoveButton:removeFromView' });
+        nextActionForRemoveFromView('ToolbarButton:HiddenGenericRemoveButton:removeFromView');
         if (AppEnv.isThreadWindow()) {
           AppEnv.debugLog(`Closing window because in ThreadWindow`);
           AppEnv.close();

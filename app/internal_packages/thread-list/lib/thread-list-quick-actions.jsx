@@ -1,14 +1,29 @@
-const {
+import {
   Actions,
   React,
   PropTypes,
   TaskFactory,
   FocusedPerspectiveStore,
+  FocusedContentStore,
   CategoryStore,
-} = require('mailspring-exports');
+  ChangeMailTask,
+} from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 const ToolbarCategoryPicker = require('../../category-picker/lib/toolbar-category-picker');
-
+const nextActionForTrashOrArchive = task => {
+  const focusedThread = FocusedContentStore.focused('thread');
+  if (focusedThread && task instanceof ChangeMailTask) {
+    if (task.threadIds.includes(focusedThread.id)) {
+      const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
+      AppEnv.logDebug(`nextAction on removeFromView: ${nextAction} for ${focusedThread.id}`);
+      if (nextAction === 'next') {
+        AppEnv.commands.dispatch('core:show-next');
+      } else if (nextAction === 'previous') {
+        AppEnv.commands.dispatch('core:show-previous');
+      }
+    }
+  }
+};
 class ThreadMoveQuickAction extends ToolbarCategoryPicker {
   render() {
     if (!this._account) {
@@ -94,7 +109,9 @@ class ThreadArchiveQuickAction extends React.Component {
       });
     }
     Actions.queueTasks(tasks);
-
+    if (tasks.length > 0) {
+      nextActionForTrashOrArchive(tasks[0]);
+    }
     // Don't trigger the thread row click
     event.stopPropagation();
   };
@@ -180,6 +197,7 @@ class ThreadTrashQuickAction extends React.Component {
     });
     if (Array.isArray(tasks) && tasks.length > 0) {
       Actions.queueTasks(tasks);
+      nextActionForTrashOrArchive(tasks[0]);
     }
     // Don't trigger the thread row click
     event.stopPropagation();
@@ -206,7 +224,9 @@ class ThreadTrashQuickAction extends React.Component {
       });
     }
     Actions.queueTasks(tasks);
-
+    if (tasks.length > 0) {
+      nextActionForTrashOrArchive(tasks[0]);
+    }
     // Don't trigger the thread row click
     event.stopPropagation();
   };
