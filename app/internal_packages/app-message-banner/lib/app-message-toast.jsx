@@ -31,7 +31,7 @@ class BasicContent extends React.Component {
       <RetinaImg
         name={this.props.icon}
         fallback={'alert.svg'}
-        style={{ width: 24, height: 24, fontSize: '24px', marginLeft: '-6px', marginRight: '10px' }}
+        style={{ width: 24, height: 24, fontSize: 24, marginLeft: '-6px', marginRight: '10px' }}
         isIcon={isIcon}
         mode={RetinaImg.Mode.ContentIsMask}
       />
@@ -63,7 +63,7 @@ class BasicContent extends React.Component {
           key="close"
           name="close_1.svg"
           isIcon={true}
-          style={{ width: 10, height: 10, fontSize: '10px' }}
+          style={{ width: 10, height: 10, fontSize: 10 }}
           mode={RetinaImg.Mode.ContentIsMask}
           onClick={() => this.props.onClose()}
         />
