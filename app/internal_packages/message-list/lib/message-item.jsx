@@ -269,29 +269,33 @@ export default class MessageItem extends React.Component {
             />
           </div>
         ) : (
-            <div className="download-all-action" onClick={this._onDownloadAll}>
-              <RetinaImg
-                name="download.svg"
-                isIcon
-                style={{ width: 18, height: 18 }}
-                mode={RetinaImg.Mode.ContentIsMask}
-              />
-              <span>Download all</span>
-            </div>
-          )}
+          <div className="download-all-action" onClick={this._onDownloadAll}>
+            <RetinaImg
+              name="download.svg"
+              isIcon
+              style={{ width: 18, height: 18 }}
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+            <span>Download all</span>
+          </div>
+        )}
       </div>
     );
   }
 
   _renderAttachments() {
     const { files = [], body, id, accountId } = this.props.message;
-    if(!body){
+    if (!body) {
       console.log('message have no body');
       return null;
     }
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
-      return !f.contentId || !(body || '').includes(`cid:${f.contentId}`) || (f.contentId && !Utils.shouldDisplayAsImage(f));
+      return (
+        !f.contentId ||
+        !(body || '').includes(`cid:${f.contentId}`) ||
+        (f.contentId && !Utils.shouldDisplayAsImage(f))
+      );
     });
 
     return (
@@ -432,7 +436,7 @@ export default class MessageItem extends React.Component {
           </div>
         </div>
         {/* {this._renderFolder()} */}
-      </header >
+      </header>
     );
   }
 
@@ -485,8 +489,10 @@ export default class MessageItem extends React.Component {
       className,
     } = this.props;
 
+    const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
+    const pencilClassName = Utils.iconClassName('pencil.svg');
     const attachmentIcon = Utils.showIconForAttachments(files) ? (
-      <div className="collapsed-attachment" />
+      <div className={`collapsed-attachment ${attachmentClassName}`} />
     ) : null;
 
     return (
@@ -499,7 +505,7 @@ export default class MessageItem extends React.Component {
                 <div className="collapsed-from">
                   {from && from[0] && from[0].displayName({ compact: true })}
                 </div>
-                {draft && <div className="collapsed-pencil" />}
+                {draft && <div className={`collapsed-pencil ${pencilClassName}`} />}
                 {attachmentIcon}
                 <div className="collapsed-timestamp">
                   <MessageTimestamp date={date} />

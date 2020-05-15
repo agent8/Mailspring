@@ -5,14 +5,6 @@
 @message-max-width: 1800px;
 @message-spacing: 6px;
 
-.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 15px) {
-  -webkit-mask-image: url(@svg-url);
-  -webkit-mask-size: @bgSize;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  background-color: @bgColor;
-}
-
 .tag-picker {
   .menu {
     .content-container {
@@ -231,7 +223,7 @@ body.platform-win32 {
         margin-right: 6px;
         margin-left: 6px;
         position: relative;
-        top: 4px;
+        top: 2px;
       }
       .mail-label {
         position: relative;
@@ -402,7 +394,6 @@ body.platform-win32 {
         margin-left: 0.5em;
         position: relative;
         top: -2px;
-        .icon-mixin('../static/icons/feed-attachments.svg');
       }
 
       .collapsed-pencil {
@@ -412,7 +403,7 @@ body.platform-win32 {
         margin-left: 0.5em;
         position: relative;
         top: -2px;
-        .icon-mixin('../static/icons/pencil.svg', @red);
+        color: @red;
       }
 
       .collapsed-from {

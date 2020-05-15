@@ -119,12 +119,6 @@ class RetinaImg extends React.Component {
     return Utils.imageNamed(pathName, this.props.resourcePath);
   };
 
-  _iconClassName = name => {
-    const path = require('path');
-    const fileName = path.basename(name, '.svg');
-    return `edison-icon edison-icon-${fileName}`;
-  };
-
   onError = e => {
     const path = this._pathFor(this.props.name) || this._pathFor(this.props.fallback) || '';
     e.target.src = path;
@@ -136,7 +130,15 @@ class RetinaImg extends React.Component {
     const pathIsRetina = path.indexOf('@2x') > 0;
     let className = this.props.className || '';
 
+    const otherProps = Utils.fastOmit(this.props, Object.keys(this.constructor.propTypes));
     const style = this.props.style ? Object.assign({}, this.props.style) : {};
+
+    // if img is use static/icons/*.svg change to icon font
+    if (this.props.mode === Mode.ContentIsMask && this.props.isIcon) {
+      className += ` ${Utils.iconClassName(this.props.name)}`;
+      return <div alt={this.props.name} className={className} style={style} {...otherProps}></div>;
+    }
+
     style.WebkitUserDrag = 'none';
     style.zoom = pathIsRetina ? 0.5 : 1;
     if (style.width) style.width /= style.zoom;
@@ -151,18 +153,15 @@ class RetinaImg extends React.Component {
       }
     }
 
-    const otherProps = Utils.fastOmit(this.props, Object.keys(this.constructor.propTypes));
     if (!path) {
       return null;
     }
 
     if (this.props.mode === Mode.ContentIsMask) {
-      if (this.props.isIcon) {
-        className += ` content-mask ${this._iconClassName(this.props.name)}`;
-        return <i alt={this.props.name} className={className} style={style} {...otherProps}></i>;
-      } else {
-        className += ` content-mask`;
-      }
+      style.WebkitMaskImage = `url('${path}')`;
+      style.WebkitMaskRepeat = 'no-repeat';
+      style.objectPosition = '10000px';
+      className += ' content-mask';
     } else if (this.props.mode === Mode.ContentDark) {
       className += ' content-dark';
     } else if (this.props.mode === Mode.ContentLight) {

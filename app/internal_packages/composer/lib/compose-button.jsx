@@ -94,7 +94,7 @@ export default class ComposeButton extends React.Component {
           ) : (
             <RetinaImg
               name="pencil.svg"
-              style={{ width: 20 }}
+              style={{ width: 20, height: 20 }}
               isIcon={true}
               mode={RetinaImg.Mode.ContentIsMask}
             />

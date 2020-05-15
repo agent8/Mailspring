@@ -227,7 +227,9 @@ class OutlineViewItem extends Component {
     event.preventDefault();
     this._runCallback('onSelect');
     if (this.props.item.selected) {
-      if (!this.props.item.children.some(i => i.selected && i.perspective && !i.perspective.isInbox())) {
+      if (
+        !this.props.item.children.some(i => i.selected && i.perspective && !i.perspective.isInbox())
+      ) {
         this._onCollapseToggled();
       }
     }
@@ -279,7 +281,7 @@ class OutlineViewItem extends Component {
         new MenuItem({
           label: `Rename ${contextMenuLabel}`,
           click: this._onEdit,
-        }),
+        })
       );
     }
 
@@ -288,7 +290,7 @@ class OutlineViewItem extends Component {
         new MenuItem({
           label: `Delete ${contextMenuLabel}`,
           click: this._onDelete,
-        }),
+        })
       );
     }
     menu.popup({});
@@ -317,11 +319,19 @@ class OutlineViewItem extends Component {
 
   _renderIcon(item = this.props.item) {
     const styles = { width: 18, height: 18 };
+    let color;
     if (item.iconColor) {
-      styles.backgroundColor = item.iconColor;
+      color = item.iconColor;
     } else if (item.bgColor) {
-      styles.backgroundColor = item.bgColor;
+      color = item.bgColor;
     }
+
+    if (color && item.url) {
+      styles.backgroundColor = color;
+    } else if (color && !item.url) {
+      styles.color = color;
+    }
+
     if (item.iconStyles) {
       Object.assign(styles, item.iconStyles);
     }
@@ -331,7 +341,7 @@ class OutlineViewItem extends Component {
         <RetinaImg
           url={item.url}
           name={item.iconName}
-          isIcon={true}
+          isIcon={!item.url}
           style={styles}
           fallback={item.fallback || 'folder.svg'}
           mode={item.mode || RetinaImg.Mode.ContentIsMask}
@@ -400,7 +410,14 @@ class OutlineViewItem extends Component {
     if (item.children.length > 0 && !item.collapsed) {
       return (
         <section className="item-children" key={`${item.id}-children`}>
-          {item.children.map((child, idx) => <OutlineViewItem key={child.id === DIVIDER_KEY ? idx : child.id} provider={acc.provider} index={idx} item={child} />)}
+          {item.children.map((child, idx) => (
+            <OutlineViewItem
+              key={child.id === DIVIDER_KEY ? idx : child.id}
+              provider={acc.provider}
+              index={idx}
+              item={child}
+            />
+          ))}
         </section>
       );
     }
@@ -411,9 +428,7 @@ class OutlineViewItem extends Component {
     const item = this.props.item;
 
     if (item.id && item.id === DIVIDER_KEY) {
-      return (
-        <Divider key={this.props.index || 100} />
-      );
+      return <Divider key={this.props.index || 100} />;
     }
 
     const containerClasses = classnames({

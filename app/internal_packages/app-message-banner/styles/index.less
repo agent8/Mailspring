@@ -31,14 +31,16 @@
       margin-right: auto;
       .content-mask {
         background-color: @text-color-inverse;
-        margin-left: -6px;
-        margin-right: 10px;
+      }
+      .edison-icon::before {
+        font-size: 24px;
+        color: @text-color-inverse;
       }
     }
-    .error{
+    .error {
       background: @red;
     }
-    .info{
+    .info {
       background: @background-color-info;
     }
 
@@ -71,11 +73,12 @@
         padding-right: 14.5px;
       }
 
-      .content-mask {
-        height: 10px;
-        width: 10px;
-        background-color: fade(@black, 30%);
+      .edison-icon {
         margin-left: unset;
+        &::before {
+          font-size: 10px;
+          color: fade(@black, 30%);
+        }
       }
     }
   }

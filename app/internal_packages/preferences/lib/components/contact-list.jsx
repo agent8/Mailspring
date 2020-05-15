@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'underscore';
-import { EmailAvatar, ContactStore } from 'mailspring-exports';
+import { EmailAvatar, ContactStore, Utils } from 'mailspring-exports';
 import { InputSearch, Menu, RetinaImg } from 'mailspring-component-kit';
 
 class ContactList extends React.Component {
@@ -69,6 +69,19 @@ class ContactList extends React.Component {
       return 'some-selected';
     }
     return '';
+  };
+
+  _selectStatusClassName = select => {
+    const checkEmptyClassName = Utils.iconClassName('check-empty.svg');
+    const checkClassName = Utils.iconClassName('check.svg');
+    const checkSomeClassName = Utils.iconClassName('some-selected.svg');
+
+    if (select === 'selected') {
+      return checkClassName;
+    } else if (select === 'some-selected') {
+      return checkSomeClassName;
+    }
+    return checkEmptyClassName;
   };
 
   _checkStatus = id => {
@@ -213,12 +226,16 @@ class ContactList extends React.Component {
   render() {
     const { filterList, showAddContact } = this.state;
     const selectAllStatus = this._checkAllStatus();
+    const selectAllStatusCLassName = this._selectStatusClassName(selectAllStatus);
     const { checkmarkNote = 'select', handleName } = this.props;
     return (
       <div className="contact-list">
         <ul>
           <div className="header">
-            <div className={`checkmark ${selectAllStatus}`} onClick={this._onToggleSelectAll}></div>
+            <div
+              className={`checkmark ${selectAllStatus} ${selectAllStatusCLassName}`}
+              onClick={this._onToggleSelectAll}
+            ></div>
             <div className="checkmark-note">{`${
               filterList && filterList.length ? filterList.length : 0
             } ${checkmarkNote}`}</div>
@@ -262,11 +279,12 @@ class ContactList extends React.Component {
           ) : null}
           {filterList.map(contact => {
             const selectStatus = this._checkStatus(contact.id);
+            const selectStatusCLassName = this._selectStatusClassName(selectStatus);
 
             return (
               <li key={contact.id} className={`${selectStatus}`}>
                 <div
-                  className={`checkmark ${selectStatus}`}
+                  className={`checkmark ${selectStatus} ${selectStatusCLassName}`}
                   onClick={() => this._onToggleSelect(contact.id)}
                 ></div>
                 <EmailAvatar

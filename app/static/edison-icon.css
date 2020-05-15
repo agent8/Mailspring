@@ -2,11 +2,16 @@
 	font-family: "EdisonIcons";
 	src: url('./fonts/EdisonIcons.eot');
 	src: url('./fonts/EdisonIcons.eot?#iefix') format('eot'),
-		url('./fonts/EdisonIcons.woff2') format('woff2'),
 		url('./fonts/EdisonIcons.woff') format('woff'),
 		url('./fonts/EdisonIcons.ttf') format('truetype'),
 		url('./fonts/EdisonIcons.svg#EdisonIcons') format('svg');
 }
+
+.edison-icon {
+  text-align: center;
+  display: inline-block;
+}
+
 
 .edison-icon:before {
 	font-family: "EdisonIcons";

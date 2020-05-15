@@ -346,7 +346,7 @@ export default class MessageControls extends React.Component {
     const itemContent = item => {
       const style = { width: 18, height: 18, marginTop: 3 };
       if (item.iconHidden) {
-        style.background = 'transparent';
+        style.color = 'transparent';
       }
       return (
         <span>
