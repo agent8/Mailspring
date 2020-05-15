@@ -318,7 +318,7 @@ class OutlineViewItem extends Component {
   };
 
   _renderIcon(item = this.props.item) {
-    const styles = { width: 18, height: 18 };
+    const styles = { width: 18, height: 18, fontSize: 18 };
     let color;
     if (item.iconColor) {
       color = item.iconColor;
