@@ -25,7 +25,7 @@ class ThreadMoveQuickAction extends ToolbarCategoryPicker {
       >
         <RetinaImg
           name={'folder.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -56,7 +56,7 @@ class ThreadArchiveQuickAction extends React.Component {
       >
         <RetinaImg
           name="archive.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -130,7 +130,7 @@ class ThreadTrashQuickAction extends React.Component {
         >
           <RetinaImg
             name="trash.svg"
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -161,7 +161,7 @@ class ThreadTrashQuickAction extends React.Component {
       >
         <RetinaImg
           name="trash.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -229,7 +229,7 @@ class ThreadStarQuickAction extends React.Component {
       >
         <RetinaImg
           name="flag.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -279,7 +279,7 @@ class ThreadUnreadQuickAction extends React.Component {
       >
         <RetinaImg
           name={imgName}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
