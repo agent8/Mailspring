@@ -16,6 +16,14 @@
   opacity: 0;
 }
 
+.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 100%) {
+  -webkit-mask-image: url(@svg-url);
+  -webkit-mask-size: @bgSize;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  background-color: @bgColor;
+}
+
 .thread-list-wide,
 .sift-list-wide {
   .list-tabular .selection-bar,
