@@ -406,6 +406,7 @@ class DatabaseStore extends MailspringStore {
   }
 
   _executeInBackground(query, values, dbKey = 'main') {
+    let _queryForLog = query;
     if (AppEnv.enabledBackgroundQueryLog) {
       console.log(`-------------------background query for ${dbKey}----------------`);
       AppEnv.logDebug(`background query - ${query}`);
@@ -421,7 +422,13 @@ class DatabaseStore extends MailspringStore {
         }
       );
       this._agent.stdout.on('data', data => console.log(data.toString()));
-      this._agent.stderr.on('data', data => console.error(data.toString()));
+      this._agent.stderr.on('data', data => {
+        AppEnv.reportError(new Error(`database-store._executeInBackground error`), {
+          errorData: data.toString(),
+          query: _queryForLog,
+        });
+        console.error(data.toString(), _queryForLog);
+      });
       this._agent.on('close', code => {
         debug(`Query Agent: exited with code ${code}`);
         this._agent = null;
