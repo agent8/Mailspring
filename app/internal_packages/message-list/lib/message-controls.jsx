@@ -344,8 +344,8 @@ export default class MessageControls extends React.Component {
 
   _dropdownMenu(items) {
     const itemContent = item => {
-      const style = { width: 18, height: 18, marginTop: 3 };
-      if (item.iconHidden) {
+      const style = { width: 18, height: 18 };
+      if (item.iconHidden || item.disabledIcon) {
         style.color = 'transparent';
       }
       return (
@@ -353,7 +353,7 @@ export default class MessageControls extends React.Component {
           <RetinaImg
             name={item.image}
             style={style}
-            isIcon={!item.disabledIcon}
+            isIcon={true}
             mode={RetinaImg.Mode.ContentIsMask}
           />
           {item.name}

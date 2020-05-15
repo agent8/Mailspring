@@ -132,7 +132,7 @@ class ButtonDropdown extends React.Component {
     if (target != null && ReactDOM.findDOMNode(this.refs.button).contains(target)) {
       return;
     }
-    this.setState({ open: false });
+    // this.setState({ open: false });
   };
 }
 

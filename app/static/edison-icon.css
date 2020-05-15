@@ -10,6 +10,8 @@
 .edison-icon {
   text-align: center;
   display: inline-block;
+  font-size: 20px;
+  line-height: 1;
 }
 
 
@@ -24,8 +26,8 @@
 	text-decoration: none;
   text-transform: none;
   vertical-align: top;
-  font-size: 20px;
-  line-height: 1;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 

@@ -536,8 +536,9 @@ body.platform-win32 {
         display: inline-block;
         position: relative;
         cursor: pointer;
-        img {
-          background: @gray-light;
+        .edison-icon {
+          color: @gray-light;
+          vertical-align: middle;
         }
         .remove-tracker-popover {
           display: none;
@@ -632,8 +633,8 @@ body.platform-win32 {
       border: 0;
       background: @background-primary;
 
-      img.content-mask {
-        background-color: @gray-light;
+      .edison-icon {
+        color: @gray-light;
         z-index: 2;
         position: relative;
       }
@@ -1114,7 +1115,7 @@ body.platform-win32 {
     position: absolute;
     top: 15px;
     right: 20px;
-    background-color: @gray;
+    color: @gray;
     cursor: pointer;
   }
 
