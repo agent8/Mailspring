@@ -328,7 +328,7 @@ class MovePicker extends React.Component {
           >
             <RetinaImg
               name={'folder.svg'}
-              style={{ width: 24, height: 24 }}
+              style={{ width: 24, height: 24, fontSize: '24px' }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
@@ -344,7 +344,7 @@ class MovePicker extends React.Component {
             >
               <RetinaImg
                 name={'label.svg'}
-                style={{ width: 24, height: 24 }}
+                style={{ width: 24, height: 24, fontSize: '24px' }}
                 isIcon
                 mode={RetinaImg.Mode.ContentIsMask}
               />
