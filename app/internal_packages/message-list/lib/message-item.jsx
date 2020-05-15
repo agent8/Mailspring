@@ -263,7 +263,7 @@ export default class MessageItem extends React.Component {
             <RetinaImg
               name="refresh.svg"
               className="infinite-rotation-linear"
-              style={{ width: 24, height: 24 }}
+              style={{ width: 24, height: 24, fontSize: 24 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
