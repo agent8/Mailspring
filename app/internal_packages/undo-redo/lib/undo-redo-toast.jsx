@@ -22,61 +22,61 @@ function isUndoSend(block) {
     block.tasks[0] instanceof SendDraftTask
   );
 }
+//
+// function getUndoSendExpiration(block) {
+//   return block.tasks[0].value.expiration * 1000;
+// }
+//
+// function getDisplayDuration(block) {
+//   return isUndoSend(block) ? Math.max(400, getUndoSendExpiration(block) - Date.now()) : 3000;
+// }
 
-function getUndoSendExpiration(block) {
-  return block.tasks[0].value.expiration * 1000;
-}
-
-function getDisplayDuration(block) {
-  return isUndoSend(block) ? Math.max(400, getUndoSendExpiration(block) - Date.now()) : 3000;
-}
-
-class Countdown extends React.Component {
-  constructor(props) {
-    super(props);
-    this.animationDuration = `${props.expiration - Date.now()}ms`;
-    this.state = { x: 0 };
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    if (nextProps.expiration !== this.props.expiration) {
-      this.animationDuration = `${nextProps.expiration - Date.now()}ms`;
-    }
-  }
-
-  componentDidMount() {
-    this._tickStart = setTimeout(() => {
-      this.setState({ x: this.state.x + 1 });
-      this._tick = setInterval(() => {
-        this.setState({ x: this.state.x + 1 });
-      }, 1000);
-    }, this.props.expiration % 1000);
-  }
-
-  componentWillUnmount() {
-    clearTimeout(this._tickStart);
-    clearInterval(this._tick);
-  }
-
-  render() {
-    // subtract a few ms so we never round up to start time + 1 by accident
-    let diff = Math.min(
-      Math.max(0, this.props.expiration - Date.now()),
-      AppEnv.config.get('core.task.delayInMs')
-    );
-
-    return (
-      <div className="countdown">
-        <div className="countdown-number">{Math.ceil(diff / 1000)}</div>
-        {diff > 0 && (
-          <svg>
-            <circle r="14" cx="15" cy="15" style={{ animationDuration: this.animationDuration }} />
-          </svg>
-        )}
-      </div>
-    );
-  }
-}
+// class Countdown extends React.Component {
+//   constructor(props) {
+//     super(props);
+//     this.animationDuration = `${props.expiration - Date.now()}ms`;
+//     this.state = { x: 0 };
+//   }
+//
+//   UNSAFE_componentWillReceiveProps(nextProps) {
+//     if (nextProps.expiration !== this.props.expiration) {
+//       this.animationDuration = `${nextProps.expiration - Date.now()}ms`;
+//     }
+//   }
+//
+//   componentDidMount() {
+//     this._tickStart = setTimeout(() => {
+//       this.setState({ x: this.state.x + 1 });
+//       this._tick = setInterval(() => {
+//         this.setState({ x: this.state.x + 1 });
+//       }, 1000);
+//     }, this.props.expiration % 1000);
+//   }
+//
+//   componentWillUnmount() {
+//     clearTimeout(this._tickStart);
+//     clearInterval(this._tick);
+//   }
+//
+//   render() {
+//     // subtract a few ms so we never round up to start time + 1 by accident
+//     let diff = Math.min(
+//       Math.max(0, this.props.expiration - Date.now()),
+//       AppEnv.config.get('core.task.delayInMs')
+//     );
+//
+//     return (
+//       <div className="countdown">
+//         <div className="countdown-number">{Math.ceil(diff / 1000)}</div>
+//         {diff > 0 && (
+//           <svg>
+//             <circle r="14" cx="15" cy="15" style={{ animationDuration: this.animationDuration }} />
+//           </svg>
+//         )}
+//       </div>
+//     );
+//   }
+// }
 
 class BasicContent extends React.Component {
   constructor(props) {
@@ -239,8 +239,15 @@ class UndoSendContent extends BasicContent {
       } else {
         recipiant = { name: '', email: '' };
       }
-      const additional =
-        OutboxStore.count().failed > 1 ? `+ ${OutboxStore.count().failed} more` : '';
+      const outboxCount = OutboxStore.count();
+      let failedCount = outboxCount.failed;
+      const currentMessageInOutbox = OutboxStore.dataSource().getById(
+        this.props.block.tasks[0].modelMessageId
+      );
+      if (currentMessageInOutbox) {
+        failedCount--;
+      }
+      const additional = failedCount > 0 ? `+ ${failedCount} more drafts` : '';
       return `Mail to ${recipiant.name || recipiant.email} ${additional} failed to send.`;
     }
   }

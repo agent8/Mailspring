@@ -9,6 +9,7 @@ import url from 'url';
 import FormErrorMessage from './form-error-message';
 import { LOCAL_SERVER_PORT } from './onboarding-helpers';
 const INVITE_COUNT_KEY = 'invite.count';
+const OPEN_BROWSER_PROVIDERS = ['google', 'outlook', 'yahoo'];
 
 export default class OAuthSignInPage extends React.Component {
   static displayName = 'OAuthSignInPage';
@@ -38,7 +39,7 @@ export default class OAuthSignInPage extends React.Component {
       open: false,
       url: null,
       loading: true,
-      isYahoo: /yahoo/g.test(props.providerAuthPageUrl)
+      isYahoo: /yahoo/g.test(props.providerAuthPageUrl),
     };
   }
 
@@ -64,7 +65,7 @@ export default class OAuthSignInPage extends React.Component {
 
   needOpenInBrowser(serviceName) {
     serviceName = serviceName.toLowerCase();
-    if (serviceName === 'google' && !AppEnv.inDevMode()) {
+    if (OPEN_BROWSER_PROVIDERS.includes(serviceName)) {
       return true;
     }
     if (serviceName === 'jira' && !process.mas) {
@@ -90,7 +91,7 @@ export default class OAuthSignInPage extends React.Component {
       if (this.needOpenInBrowser(serviceName)) {
         this.openBrowser();
       } else {
-        this._openInWebView(this.props.providerAuthPageUrl)
+        this._openInWebView(this.props.providerAuthPageUrl);
       }
     }, 600);
     this._warnTimer = setTimeout(() => {
@@ -108,12 +109,10 @@ export default class OAuthSignInPage extends React.Component {
           // when oauth succeed, display Edison homepage
           response.writeHead(302, { Location: 'http://email.easilydo.com' });
           response.end();
-        }
-        else if (query.error === 'access_denied') {
+        } else if (query.error === 'access_denied') {
           OnboardingActions.moveToPage('account-choose');
           return;
-        }
-        else {
+        } else {
           response.end('Unknown Request');
         }
       });
@@ -129,13 +128,13 @@ export default class OAuthSignInPage extends React.Component {
     }
   }
 
-  processRedirectUrlFromBrowser = (redirectUrl) => {
+  processRedirectUrlFromBrowser = redirectUrl => {
     const { query } = url.parse(redirectUrl, { querystring: true });
     if (query.code) {
       this._onReceivedCode(query.code);
       return;
     }
-  }
+  };
 
   componentWillUnmount() {
     this._mounted = false;
@@ -184,7 +183,9 @@ export default class OAuthSignInPage extends React.Component {
     if (authStage === 'initial') {
       return (
         <h2>
-          Sign in with {this.props.serviceName} in<br />your browser.
+          Sign in with {this.props.serviceName} in
+          <br />
+          your browser.
         </h2>
       );
     }
@@ -250,21 +251,20 @@ export default class OAuthSignInPage extends React.Component {
     // console.log('*****webview: ' + e.message);
     if (e.message === 'move-to-account-choose') {
       OnboardingActions.moveToPage('account-choose');
-    }
-    else if (e.message === 'oauth page go to blur') {
+    } else if (e.message === 'oauth page go to blur') {
       this.refs.webview.blur();
     }
-  }
+  };
   _pasteIntoWebview = () => {
     const contents = this.refs.webview;
     contents.insertText(clipboard.readText());
-  }
+  };
   _selectAllInWebview = () => {
     const contents = this.refs.webview;
     contents.selectAll();
-  }
+  };
 
-  _webviewDidFailLoad = (event) => {
+  _webviewDidFailLoad = event => {
     // if running in mas mode
     if (event.validatedURL && event.validatedURL.indexOf('127.0.0.1') !== -1) {
       if (!this._mounted) return;
@@ -272,8 +272,7 @@ export default class OAuthSignInPage extends React.Component {
       if (query.code) {
         this._onReceivedCode(query.code);
         return;
-      }
-      else if (query.error === 'access_denied') {
+      } else if (query.error === 'access_denied') {
         OnboardingActions.moveToPage('account-choose');
         return;
       }
@@ -289,21 +288,28 @@ export default class OAuthSignInPage extends React.Component {
     // -102:ERR_CONNECTION_REFUSED Gmail oauth try to connect youtube
     // -324:ERR_EMPTY_RESPONSE Gmail oauth try to connect youtube
     // navigating to permission granting view. Thus we want to capture that and ignore it.
-    if (event && (
-      event.errorCode === -3 ||
-      event.errorCode === -324 ||
-      event.validatedURL.includes('youtube.com') ||
-      event.validatedURL.includes('analytics.yahoo')
-    )) {
-      AppEnv.reportError(new Error('webview failed to load skip this error'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
+    if (
+      event &&
+      (event.errorCode === -3 ||
+        event.errorCode === -324 ||
+        event.validatedURL.includes('youtube.com') ||
+        event.validatedURL.includes('analytics.yahoo'))
+    ) {
+      AppEnv.reportError(new Error('webview failed to load skip this error'), {
+        oAuthURL: this.props.providerAuthPageUrl,
+        oAuthEvent: event,
+      });
       return;
     }
     let errorMessage = `${event.errorCode}:${event.errorDescription}`;
     this.moveToLoginError({
       authStage: 'error',
-      errorMessage
+      errorMessage,
     });
-    AppEnv.reportError(new Error('webview failed to load'), { oAuthURL: this.props.providerAuthPageUrl, oAuthEvent: event });
+    AppEnv.reportError(new Error('webview failed to load'), {
+      oAuthURL: this.props.providerAuthPageUrl,
+      oAuthEvent: event,
+    });
   };
 
   _setupWebview = () => {
@@ -317,7 +323,7 @@ export default class OAuthSignInPage extends React.Component {
       // 'did-get-response-details': this._webviewDidGetResponseDetails,
       'console-message': this._onConsoleMessage,
       'core:paste': this._pasteIntoWebview,
-      'core:select-all': this._selectAllInWebview
+      'core:select-all': this._selectAllInWebview,
     };
 
     for (const event of Object.keys(listeners)) {
@@ -347,7 +353,7 @@ export default class OAuthSignInPage extends React.Component {
     //     webview.reload();
     //   });
     // }
-  }
+  };
 
   _loaded = () => {
     if (this.refs.webview.src.indexOf('signin/rejected') !== -1) {
@@ -356,13 +362,13 @@ export default class OAuthSignInPage extends React.Component {
       );
     }
     this.setState({
-      loading: false
+      loading: false,
     });
-  }
+  };
 
   openBrowser = () => {
     remote.shell.openExternal(this.props.providerAuthPageUrl);
-  }
+  };
 
   render() {
     const { authStage, loading, isYahoo } = this.state;
@@ -372,7 +378,7 @@ export default class OAuthSignInPage extends React.Component {
       position: 'fixed',
       top: 0,
       bottom: 0,
-      zIndex: 2
+      zIndex: 2,
     };
     const yahooOptions = {
       width: '80%',
@@ -381,16 +387,21 @@ export default class OAuthSignInPage extends React.Component {
       top: 0,
       left: '10%',
       zIndex: 2,
-      paddingTop: 20
-    }
+      paddingTop: 20,
+    };
     const Validating = (
       <div className="validating">
         <h2>Validating...</h2>
-        <p>Please wait while we validate<br />
-          your account.</p>
-        <LottieImg name='loading-spinner-blue'
+        <p>
+          Please wait while we validate
+          <br />
+          your account.
+        </p>
+        <LottieImg
+          name="loading-spinner-blue"
           size={{ width: 65, height: 65 }}
-          style={{ margin: '0 auto' }} />
+          style={{ margin: '0 auto' }}
+        />
       </div>
     );
     const Success = (
@@ -400,62 +411,57 @@ export default class OAuthSignInPage extends React.Component {
           style={{ width: 65, height: 65 }}
           isIcon
           name="check-alone.svg"
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
     const serviceName = this.props.serviceName.toLowerCase();
     let wbView;
     let loadingImg;
     if (this.needOpenInBrowser(serviceName)) {
-      wbView = <div className="jira-oauth-title">
-        <h2>
-          Sign in with your browser.
-        </h2>
-      </div>;
+      wbView = (
+        <div className="jira-oauth-title">
+          <h2>Sign in with your browser.</h2>
+        </div>
+      );
     } else {
-      wbView = <webview
-        useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
-        key={this.randomNum}
-        ref='webview'
-        src={this.state.url}
-        partition={`in-memory-only${this.randomNum}`}
-        style={
-          isYahoo ? yahooOptions : defaultOptions
-        }
-      />
-      loadingImg = <LottieImg name='loading-spinner-blue'
-        size={{ width: 65, height: 65 }}
-        style={{ margin: '200px auto 0' }} />
+      wbView = (
+        <webview
+          useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+          key={this.randomNum}
+          ref="webview"
+          src={this.state.url}
+          partition={`in-memory-only${this.randomNum}`}
+          style={isYahoo ? yahooOptions : defaultOptions}
+        />
+      );
+      loadingImg = (
+        <LottieImg
+          name="loading-spinner-blue"
+          size={{ width: 65, height: 65 }}
+          style={{ margin: '200px auto 0' }}
+        />
+      );
     }
     return (
       <div className={`page account-setup oauth ${serviceName}`}>
-        {
-          !process.mas && (
-            <div
-              title="Open browser"
-              className="oauth-browser-btn"
-              onClick={this.openBrowser}
-            >
-              <RetinaImg
-                name="popout.svg"
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-                style={{ width: 24 }}
-              />
-            </div>
-          )
-        }
+        {!process.mas && (
+          <div title="Open browser" className="oauth-browser-btn" onClick={this.openBrowser}>
+            <RetinaImg
+              name="popout.svg"
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+              style={{ width: 24 }}
+            />
+          </div>
+        )}
         {authStage === 'buildingAccount' && Validating}
         {authStage === 'accountSuccess' && Success}
-        {!(['buildingAccount', 'accountSuccess', 'error'].includes(authStage)) && (
-          wbView
-        )}
-        {loading && !(['buildingAccount', 'accountSuccess', 'error'].includes(authStage)) && (
-          loadingImg
-        )}
-        {authStage === 'error' && (
-          <LoginErrorPage errorMessage={this.state.errorMessage} />
-        )}
+        {!['buildingAccount', 'accountSuccess', 'error'].includes(authStage) && wbView}
+        {loading &&
+          !['buildingAccount', 'accountSuccess', 'error'].includes(authStage) &&
+          loadingImg}
+        {authStage === 'error' && <LoginErrorPage errorMessage={this.state.errorMessage} />}
       </div>
     );
   }

@@ -9,17 +9,9 @@ class Lottie extends React.Component {
     this.timer = null;
   }
   componentDidMount = () => {
-    const {
-      options,
-      eventListeners,
-    } = this.props;
+    const { options, eventListeners } = this.props;
 
-    const {
-      loop,
-      animationData,
-      rendererSettings,
-      segments,
-    } = options;
+    const { loop, animationData, rendererSettings, segments } = options;
 
     this.options = {
       container: this.el,
@@ -27,7 +19,7 @@ class Lottie extends React.Component {
       loop: loop !== false,
       segments: segments !== false,
       animationData,
-      rendererSettings
+      rendererSettings,
     };
 
     this.options = { ...this.options, ...options };
@@ -43,7 +35,19 @@ class Lottie extends React.Component {
       this.next();
       this.registNav();
     }, 100);
-  }
+    window.onblur = () => {
+      if (this.timer) {
+        clearInterval(this.timer);
+      }
+    };
+    window.onfocus = () => {
+      if (this.timer) {
+        clearInterval(this.timer);
+      }
+      this.timer = setInterval(this.next, 5000);
+      this.next();
+    };
+  };
 
   registNav = () => {
     const { navigation, pagination, data } = this.props;
@@ -54,7 +58,7 @@ class Lottie extends React.Component {
           clearInterval(this.timer);
           this.prev();
           this.timer = setInterval(this.next, 5000);
-        }
+        };
       }
       const nextEl = document.querySelector(navigation.nextEl);
       if (nextEl) {
@@ -62,7 +66,7 @@ class Lottie extends React.Component {
           clearInterval(this.timer);
           this.next();
           this.timer = setInterval(this.next, 5000);
-        }
+        };
       }
     }
     if (pagination) {
@@ -71,7 +75,7 @@ class Lottie extends React.Component {
         const bullets = document.createElement('div');
         bullets.className = 'swiper-pagination-bullets';
         for (let i = 0; i < data.length - 1; i++) {
-          const bullet = document.createElement("div");
+          const bullet = document.createElement('div');
           bullet.className = 'swiper-pagination-bullet';
           bullet.onclick = () => {
             this.jumpTo(i);
@@ -82,9 +86,9 @@ class Lottie extends React.Component {
         this.setCurrentIndex();
       }
     }
-  }
+  };
 
-  jumpTo = (idx) => {
+  jumpTo = idx => {
     const data = this.props.data;
     clearInterval(this.timer);
     this.currentIndex = idx;
@@ -93,7 +97,7 @@ class Lottie extends React.Component {
     this.anim.playSegments(frames);
     // start autoplay
     this.timer = setInterval(this.next, 5000);
-  }
+  };
 
   UNSAFE_componentWillUpdate(nextProps /* , nextState */) {
     /* Recreate the animation handle if the data is changed */
@@ -114,7 +118,6 @@ class Lottie extends React.Component {
     // } else {
     //   this.play();
     // }
-
     // this.pause();
     // this.setSpeed();
     // this.setDirection();
@@ -128,7 +131,9 @@ class Lottie extends React.Component {
     if (this.timer) {
       clearInterval(this.timer);
     }
-  }
+    window.onblur = null;
+    window.onfocus = null;
+  };
 
   setSpeed() {
     this.anim.setSpeed(this.props.speed);
@@ -151,7 +156,7 @@ class Lottie extends React.Component {
     const frames = [...data[this.currentIndex].frameRange];
     this.anim.playSegments(frames);
     this.setCurrentIndex();
-  }
+  };
 
   prev = () => {
     this.currentIndex--;
@@ -162,7 +167,7 @@ class Lottie extends React.Component {
     const frames = [...data[this.currentIndex + 1].frameRange];
     this.anim.playSegments(frames.reverse());
     this.setCurrentIndex();
-  }
+  };
 
   setCurrentIndex = () => {
     const setIndex = this.options.setCurrentIndex;
@@ -178,7 +183,7 @@ class Lottie extends React.Component {
       const current = this.currentIndex % (data.length - 1);
       bullets[current].className += ' swiper-pagination-bullet-active';
     }
-  }
+  };
 
   play() {
     this.anim.play();
@@ -201,13 +206,13 @@ class Lottie extends React.Component {
   }
 
   registerEvents(eventListeners) {
-    eventListeners.forEach((eventListener) => {
+    eventListeners.forEach(eventListener => {
       this.anim.addEventListener(eventListener.eventName, eventListener.callback);
     });
   }
 
   deRegisterEvents(eventListeners) {
-    eventListeners.forEach((eventListener) => {
+    eventListeners.forEach(eventListener => {
       this.anim.removeEventListener(eventListener.eventName, eventListener.callback);
     });
   }
@@ -220,19 +225,12 @@ class Lottie extends React.Component {
     // } else {
     //   this.pause();
     // }
-  }
+  };
 
   render() {
-    const {
-      width,
-      height,
-      ariaRole,
-      ariaLabel,
-      isClickToPauseDisabled,
-      title,
-    } = this.props;
+    const { width, height, ariaRole, ariaLabel, isClickToPauseDisabled, title } = this.props;
 
-    const getSize = (initial) => {
+    const getSize = initial => {
       let size;
 
       if (typeof initial === 'number') {
@@ -259,7 +257,7 @@ class Lottie extends React.Component {
       // Bug with eslint rules https://github.com/airbnb/javascript/issues/1374
       // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       <div
-        ref={(c) => {
+        ref={c => {
           this.el = c;
         }}
         style={lottieStyles}
@@ -320,18 +318,17 @@ export default class LottieImg extends React.Component {
       loop: false,
       autoplay: false,
       rendererSettings: {
-        preserveAspectRatio: 'xMidYMid slice'
-      }
+        preserveAspectRatio: 'xMidYMid slice',
+      },
     },
     resourcePath: null,
-    style: { margin: 'none' }
+    style: { margin: 'none' },
   };
 
   constructor(props) {
     super(props);
     this.animationData = null;
   }
-
 
   shouldComponentUpdate = nextProps => {
     return !_.isEqual(this.props, nextProps);
@@ -356,12 +353,16 @@ export default class LottieImg extends React.Component {
     this.animationData = this.animationData || require(this._pathFor(this.props.name));
     options.animationData = this.animationData;
     options.setCurrentIndex = this.props.setCurrentIndex;
-    return <Lottie options={options}
-      data={this.props.data}
-      height={this.props.size.height}
-      width={this.props.size.width}
-      navigation={this.props.navigation}
-      pagination={this.props.pagination}
-      style={this.props.style} />
+    return (
+      <Lottie
+        options={options}
+        data={this.props.data}
+        height={this.props.size.height}
+        width={this.props.size.width}
+        navigation={this.props.navigation}
+        pagination={this.props.pagination}
+        style={this.props.style}
+      />
+    );
   }
 }
