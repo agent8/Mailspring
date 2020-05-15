@@ -557,13 +557,12 @@ input:focus {
     margin-left: 11px;
     position: relative;
     &.flagged {
-      img.content-mask {
-        background-color: @orange;
+      .edison-icon {
+        color: @orange;
       }
     }
-    img.content-mask {
-      margin-top: -3px;
-      background-color: @gray-light;
+    .edison-icon {
+      color: @gray-light;
       position: relative;
       z-index: 2;
     }
@@ -576,7 +575,7 @@ input:focus {
         background: @icon-hover-bg-color;
         display: block;
         position: absolute;
-        top: 10px;
+        top: 8px;
         left: -6px;
         .grow-up-animation-mixin();
       }
@@ -763,6 +762,9 @@ body.platform-win32 {
       .btn-toolbar:hover {
         img.content-mask {
           background-color: @text-color-inverse;
+        }
+        .edison-icon {
+          color: @text-color-inverse;
         }
         &:after {
           background: fade(@off-white, 13);
