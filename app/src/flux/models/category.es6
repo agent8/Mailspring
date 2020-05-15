@@ -95,7 +95,7 @@ const toDelimiterJSONMappings = val => {
   }
   return val.charCodeAt(0);
 };
-const ignoredPrefixes = ['[Gmail]', '[Google Mail]', '[Mailspring]'];
+const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]', '[Mailspring]'];
 export default class Category extends Model {
   get displayName() {
     return Category.pathToDisplayName(this.name);
@@ -108,6 +108,13 @@ export default class Category extends Model {
 
     for (const prefix of ignoredPrefixes) {
       if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {
+        return decoded.substr(prefix.length + 1); // + delimiter
+      }
+      if (
+        prefix === 'INBOX' &&
+        decoded.toLocaleLowerCase().startsWith(prefix.toLocaleLowerCase()) &&
+        decoded.length > prefix.length + 1
+      ) {
         return decoded.substr(prefix.length + 1); // + delimiter
       }
     }
