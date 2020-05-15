@@ -13,28 +13,28 @@ const ToObject = arr => {
   }, {});
 };
 const mappings = {
-  'none': 0,
-  'inbox': 1,
-  'sent': 2,
-  'drafts': 3,
-  'flagged': 4,
-  'important': 5,
-  'spam': 6,
-  'archive': 7,
-  'trash': 8,
-  'all': 9,
-  'snoozed': 10,
+  none: 0,
+  inbox: 1,
+  sent: 2,
+  drafts: 3,
+  flagged: 4,
+  important: 5,
+  spam: 6,
+  archive: 7,
+  trash: 8,
+  all: 9,
+  snoozed: 10,
   '[Mailspring]': 11,
 };
 
 const toJSONMapping = val => {
-  if (!val){
-    return 0
+  if (!val) {
+    return 0;
   }
   return mappings[val];
 };
 const fromJSONMapping = val => {
-  if( val === -1){
+  if (val === -1) {
     return undefined;
   }
   const keys = Object.keys(mappings);
@@ -90,11 +90,12 @@ const fromDelimiterJsonMappings = val => {
   return String.fromCharCode(val);
 };
 const toDelimiterJSONMappings = val => {
-  if(typeof val !== 'string' || val.length === 0){
+  if (typeof val !== 'string' || val.length === 0) {
     return 47;
   }
   return val.charCodeAt(0);
 };
+const ignoredPrefixes = ['[Gmail]', '[Google Mail]', '[Mailspring]'];
 export default class Category extends Model {
   get displayName() {
     return Category.pathToDisplayName(this.name);
@@ -105,14 +106,14 @@ export default class Category extends Model {
     }
     const decoded = utf7.imap.decode(pathString);
 
-    for (const prefix of ['INBOX', '[Gmail]', '[Google Mail]', '[Mailspring]']) {
+    for (const prefix of ignoredPrefixes) {
       if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {
         return decoded.substr(prefix.length + 1); // + delimiter
       }
     }
-    if (decoded.startsWith('Mailspring/') || decoded.startsWith('Mailspring.')) {
-      return decoded.substr(11);
-    }
+    // if (decoded.startsWith('Mailspring/') || decoded.startsWith('Mailspring.')) {
+    //   return decoded.substr(11);
+    // }
     if (decoded === 'INBOX') {
       return 'Inbox';
     }
@@ -131,7 +132,7 @@ export default class Category extends Model {
       modelKey: 'role',
       loadFromColumn: true,
       toJSONMapping,
-      fromJSONMapping
+      fromJSONMapping,
     }),
     name: Attributes.String({
       queryable: true,
@@ -164,7 +165,7 @@ export default class Category extends Model {
       loadFromColumn: true,
       fromJSONMapping: fromDelimiterJsonMappings,
       toJSONMapping: toDelimiterJSONMappings,
-    })
+    }),
   });
 
   static Types = {
@@ -204,11 +205,11 @@ export default class Category extends Model {
   }
 
   static inboxNotOtherCategorys() {
-    const isStrictOtherCategorys = Category.inboxOtherCategorys(true)
+    const isStrictOtherCategorys = Category.inboxOtherCategorys(true);
     const notOtherCategorys = Object.values(Category.InboxCategoryState).filter(item => {
-      return !isStrictOtherCategorys.some(other => item === other)
-    })
-    return notOtherCategorys
+      return !isStrictOtherCategorys.some(other => item === other);
+    });
+    return notOtherCategorys;
   }
 
   static StandardRoles = Object.keys(StandardRoleMap);
