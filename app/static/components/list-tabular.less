@@ -126,7 +126,7 @@
         &:hover {
           &:after {
             display: block;
-            .grow-up-animation-mixin()
+            .grow-up-animation-mixin();
           }
         }
         &:after {
@@ -206,12 +206,24 @@
           img.content-mask {
             background-color: @orange;
           }
+          .edison-icon {
+            color: @orange;
+          }
         }
         img.content-mask {
           background-color: @text-color-inverse;
           position: relative;
           z-index: 2;
           transition: background-color 0.4s;
+        }
+        .edison-icon {
+          color: @text-color-inverse;
+          position: relative;
+          z-index: 2;
+          transition: color 0.4s;
+          &::before {
+            font-size: 24px;
+          }
         }
         &.btn-selection-filter {
           position: absolute;
@@ -236,18 +248,21 @@
           img.content-mask {
             background-color: @text-color-inverse;
           }
+          .edison-icon {
+            color: @text-color-inverse;
+          }
           &:after {
             content: '';
             height: 32px;
             width: 32px;
             border-radius: 50%;
             // background: @icon-hover-bg-color;
-            background: fade(@off-white, 13);;
+            background: fade(@off-white, 13);
             display: block;
             position: absolute;
             top: -3px;
             left: 1px;
-            .grow-up-animation-mixin()
+            .grow-up-animation-mixin();
           }
         }
         &:active {
@@ -430,7 +445,7 @@
             display: none;
           }
         }
-     }
+      }
     }
   }
 
@@ -511,7 +526,7 @@
         &:hover {
           &:after {
             display: block;
-            .grow-up-animation-mixin()
+            .grow-up-animation-mixin();
           }
         }
       }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Utils } from 'mailspring-exports';
 
 export default class FontSizePopover extends React.Component {
   static displayName = 'FontSizePopover';
@@ -7,7 +8,7 @@ export default class FontSizePopover extends React.Component {
     super(props);
   }
 
-  onSelect = (value) => {
+  onSelect = value => {
     if (this.props.onSelect) {
       this.props.onSelect(value);
     }
@@ -17,13 +18,15 @@ export default class FontSizePopover extends React.Component {
     return this.props.options.map(option => {
       let className = `option ${option.name.toLowerCase()} `;
       if (this.props.selectedValue === option.value) {
-        className += 'selected';
+        const iconClassName = Utils.iconClassName('check-alone.svg');
+        className += `selected ${iconClassName}`;
       }
       return (
         <div
           key={option.value}
           className={className}
-          onClick={this.onSelect.bind(this, option.value)}>
+          onClick={this.onSelect.bind(this, option.value)}
+        >
           {option.name}
         </div>
       );

@@ -1,13 +1,6 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 
-.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 15px) {
-  -webkit-mask-image: url(@svg-url);
-  -webkit-mask-size: @bgSize;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  background-color: @bgColor;
-}
 // Preferences Specific
 
 .preferences-wrap {
@@ -54,6 +47,14 @@
       background: @blue;
       vertical-align: top;
       margin: 4px 10px 0 0;
+    }
+    .edison-icon {
+      color: @blue;
+      margin: 4px 10px 0 0;
+      vertical-align: top;
+      &::before {
+        font-size: 19px;
+      }
     }
   }
 
@@ -301,10 +302,10 @@
     min-height: 350px;
 
     .checkmark {
-      height: 18px;
-      width: 18px;
+      height: 24px;
+      width: 24px;
       border: none;
-      margin-right: 21px;
+      margin-right: 15px;
       display: inline-block;
       vertical-align: top;
       cursor: pointer;
@@ -321,24 +322,25 @@
         border-radius: 50%;
         background: rgba(0, 0, 0, 0.15);
         display: none;
-        margin-top: -18px;
+        margin-top: -21px;
+        margin-left: 3px;
       }
       &:before {
-        content: '';
         display: block;
-        height: 18px;
-        width: 18px;
-        .icon-mixin('../static/icons/check-empty.svg', @gray-light, 24px);
+        height: 24px;
+        width: 24px;
+        font-size: 24px;
+        color: @gray-light;
       }
     }
     .checkmark.selected {
       &:before {
-        .icon-mixin('../static/icons/check.svg', @blue, 24px);
+        color: @blue;
       }
     }
     .checkmark.some-selected {
       &:before {
-        .icon-mixin('../static/icons/some-selected.svg', @blue, 24px);
+        color: @blue;
       }
     }
 
@@ -478,7 +480,8 @@
         height: 20px;
         width: 20px;
         border: none;
-        margin-right: 19px;
+        margin-right: 17px;
+        margin-left: 2px;
         display: inline-block;
         vertical-align: top;
         line-height: 20px;
