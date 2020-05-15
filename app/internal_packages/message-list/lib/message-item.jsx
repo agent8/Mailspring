@@ -252,7 +252,7 @@ export default class MessageItem extends React.Component {
           <RetinaImg
             name="feed-attachments.svg"
             isIcon
-            style={{ width: 18, height: 18 }}
+            style={{ width: 18, height: 18, fontSize: 18 }}
             mode={RetinaImg.Mode.ContentIsMask}
           />
           <span>{this.props.message.files.length} attachments</span>
@@ -273,7 +273,7 @@ export default class MessageItem extends React.Component {
             <RetinaImg
               name="download.svg"
               isIcon
-              style={{ width: 18, height: 18 }}
+              style={{ width: 18, height: 18, fontSize: 18 }}
               mode={RetinaImg.Mode.ContentIsMask}
             />
             <span>Download all</span>
