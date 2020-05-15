@@ -194,6 +194,9 @@ class CategoryStore extends MailspringStore {
           let k = 1;
           while (!parent && k <= parentComponents.length - 1) {
             parent = this.getCategoryByPath(parentComponents.slice(0, k).join(category.delimiter));
+            if (parent && parent.role === 'inbox') {
+              parent = null;
+            }
             k++;
           }
         }
