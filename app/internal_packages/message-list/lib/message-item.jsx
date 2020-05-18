@@ -456,7 +456,7 @@ export default class MessageItem extends React.Component {
         >
           <RetinaImg
             name={'down-arrow.svg'}
-            style={{ width: 16, height: 16 }}
+            style={{ width: 16, height: 16, fontSize: 16 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -475,7 +475,7 @@ export default class MessageItem extends React.Component {
       >
         <RetinaImg
           name={'down-arrow.svg'}
-          style={{ width: 16, height: 16 }}
+          style={{ width: 16, height: 16, fontSize: 16 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

@@ -36,7 +36,7 @@ class ConditionalQuotedTextControl extends React.Component {
         <span className="dots">
           <RetinaImg
             name={'expand-more.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -180,7 +180,8 @@ export default class MessageItemBody extends React.Component {
     if (
       typeof message.body === 'string' &&
       message.body.length > 0 &&
-      typeof processedBody === 'string' && processedBody.length > 0
+      typeof processedBody === 'string' &&
+      processedBody.length > 0
     ) {
       return (
         <EmailFrame
