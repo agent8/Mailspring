@@ -66,6 +66,10 @@ body.platform-win32 {
     background-color: @gray;
   }
 
+  .edison-icon {
+    color: @gray;
+  }
+
   // Use 4 box shadows to create a 0.5px hairline around the button, and another
   // for the actual shadow. Pending https://code.google.com/p/chromium/issues/detail?id=236371
   // Yes, 1px border looks really bad on retina.
@@ -108,6 +112,9 @@ body.platform-win32 {
     img.content-mask {
       background-color: @btn-action-text-color;
     }
+    .edison-icon {
+      color: @btn-action-text-color;
+    }
   }
 
   &.btn-disabled {
@@ -125,6 +132,10 @@ body.platform-win32 {
 
     img.content-mask {
       background-color: @btn-emphasis-text-color;
+    }
+
+    .edison-icon {
+      color: @btn-emphasis-text-color;
     }
 
     background: linear-gradient(to bottom, #6bb1f9 0%, #0a80ff 100%);
@@ -164,6 +175,9 @@ body.platform-win32 {
     img.content-mask {
       background-color: @btn-danger-text-color;
     }
+    .edison-icon {
+      color: @btn-danger-text-color;
+    }
   }
 }
 
@@ -201,6 +215,9 @@ body.platform-win32 {
   img.content-mask {
     background-color: @gray;
   }
+  .edison-icon {
+    color: @gray;
+  }
   margin-right: 10px;
   outline: none !important;
   font-size: 20px;
@@ -215,6 +232,10 @@ body.platform-win32 {
       background-color: @text-color-inverse;
     }
 
+    .edison-icon {
+      color: @text-color-inverse;
+    }
+
     &:hover {
       color: white;
     }
@@ -223,6 +244,9 @@ body.platform-win32 {
       color: @text-color-inverse;
       img.content-mask {
         background-color: @text-color-inverse;
+      }
+      .edison-icon {
+        color: @text-color-inverse;
       }
     }
   }
@@ -233,12 +257,18 @@ body.platform-win32 {
     img.content-mask {
       background-color: @text-color-link;
     }
+    .edison-icon {
+      color: @text-color-link;
+    }
     box-shadow: none;
   }
   &:active {
     color: @text-color-link-active;
     img.content-mask {
       background-color: @text-color-link-active;
+    }
+    .edison-icon {
+      color: @text-color-link-active;
     }
     box-shadow: none;
   }

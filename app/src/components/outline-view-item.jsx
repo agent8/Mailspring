@@ -333,12 +333,20 @@ class OutlineViewItem extends Component {
   };
 
   _renderIcon(item = this.props.item) {
-    const styles = { width: 18, height: 18 };
+    const styles = { width: 18, height: 18, fontSize: 18 };
+    let color;
     if (item.iconColor) {
-      styles.backgroundColor = item.iconColor;
+      color = item.iconColor;
     } else if (item.bgColor) {
-      styles.backgroundColor = item.bgColor;
+      color = item.bgColor;
     }
+
+    if (color && item.url) {
+      styles.backgroundColor = color;
+    } else if (color && !item.url) {
+      styles.color = color;
+    }
+
     if (item.iconStyles) {
       Object.assign(styles, item.iconStyles);
     }
@@ -348,7 +356,7 @@ class OutlineViewItem extends Component {
         <RetinaImg
           url={item.url}
           name={item.iconName}
-          isIcon={true}
+          isIcon={!item.url}
           style={styles}
           fallback={item.fallback || 'folder.svg'}
           mode={item.mode || RetinaImg.Mode.ContentIsMask}

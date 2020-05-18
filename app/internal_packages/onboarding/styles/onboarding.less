@@ -207,8 +207,8 @@
     top: 41px;
     left: 11px;
     cursor: pointer;
-    img {
-      background-color: #b6bdc2;
+    .edison-icon {
+      color: #b6bdc2;
       position: relative;
       z-index: 2;
     }
@@ -221,12 +221,12 @@
         background: @icon-hover-bg-color;
         display: block;
         position: absolute;
-        top: -3px;
+        top: -4px;
         left: -4px;
-        .grow-up-animation-mixin()
+        .grow-up-animation-mixin();
       }
-      img.content-mask {
-        background-color: #797d80;
+      .edison-icon {
+        color: #797d80;
       }
     }
   }
@@ -273,12 +273,13 @@
       position: absolute;
       top: 41px;
       right: 18px;
-      img.content-mask {
-        background-color: #b6bdc2;
+      .edison-icon {
+        vertical-align: middle;
+        color: #b6bdc2;
       }
       &.show {
-        img.content-mask {
-          background-color: #39f;
+        .edison-icon {
+          color: #39f;
         }
       }
     }
@@ -363,12 +364,6 @@
     width: 120px;
     margin: 40px auto 20px;
   }
-  img.check {
-    background-color: #3b99fc;
-  }
-  img.empty {
-    background-color: #e8ebed;
-  }
   h1 {
     color: #000;
     font-size: 24px;
@@ -407,6 +402,12 @@
     }
     .label {
       cursor: pointer;
+    }
+    .edison-icon.check {
+      color: #3b99fc;
+    }
+    .edison-icon.empty {
+      color: #e8ebed;
     }
     &.check-all div {
       color: #39f;
@@ -572,8 +573,9 @@
       &:nth-child(n + 2) {
         border-top: 1px solid #e8ebed;
       }
-      img.content-mask {
-        background-color: #3b99fc;
+      .edison-icon {
+        color: #3b99fc;
+        vertical-align: middle;
         margin-right: 23px;
       }
     }
@@ -613,7 +615,7 @@
   .description {
     width: 440px;
     color: #252525;
-    font-family: "SF UI Text";
+    font-family: 'SF UI Text';
     font-size: 15px;
     text-align: left;
     letter-spacing: -0.3px;
@@ -870,9 +872,9 @@
     }
   }
   .success {
-    img.content-mask {
+    .edison-icon {
       margin: 125px auto 0 auto;
-      background-color: #39f;
+      color: #39f;
     }
   }
   .error {
@@ -900,6 +902,9 @@
     cursor: pointer;
     img.content-mask {
       background-color: #b6bdc2;
+    }
+    .edison-icon {
+      color: #b6bdc2;
     }
   }
   form {
@@ -1069,12 +1074,13 @@
         position: absolute;
         top: 41px;
         right: 18px;
-        img.content-mask {
-          background-color: #b6bdc2;
+        .edison-icon {
+          vertical-align: middle;
+          color: #b6bdc2;
         }
         &.show {
-          img.content-mask {
-            background-color: #39f;
+          .edison-icon {
+            color: #39f;
           }
         }
       }

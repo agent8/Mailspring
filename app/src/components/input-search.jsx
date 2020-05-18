@@ -3,7 +3,7 @@ import { React, PropTypes } from 'mailspring-exports';
 import RetinaImg from './retina-img';
 
 export default class InputSearch extends React.Component {
-  static displayName = 'ButtonDropdown';
+  static displayName = 'InputSearch';
   static propTypes = {
     className: PropTypes.string,
     showPreIcon: PropTypes.bool,

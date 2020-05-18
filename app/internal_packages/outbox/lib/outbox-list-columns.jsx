@@ -85,8 +85,9 @@ const ContentsColumn = new ListTabular.Column({
   flex: 4,
   resolver: draft => {
     let attachments = [];
+    const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
     if (draft.files && draft.files.length > 0) {
-      attachments = <div className="thread-icon thread-icon-attachment" />;
+      attachments = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
     return (
       <span className="details">
@@ -172,12 +173,14 @@ const cNarrow = new ListTabular.Column({
     let calendar = null;
     const hasCalendar = draft.hasCalendar;
     if (hasCalendar) {
-      calendar = <div className="thread-icon thread-icon-calendar" />;
+      const calendarClassName = Utils.iconClassName('feed-calendar.svg');
+      calendar = <div className={`thread-icon thread-icon-calendar ${calendarClassName}`} />;
     }
 
     const hasAttachments = draft.files.length > 0;
     if (hasAttachments) {
-      attachment = <div className="thread-icon thread-icon-attachment" />;
+      const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
+      attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
     const actions = [];
     if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {

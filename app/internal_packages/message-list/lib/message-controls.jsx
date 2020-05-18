@@ -345,16 +345,16 @@ export default class MessageControls extends React.Component {
 
   _dropdownMenu(items) {
     const itemContent = item => {
-      const style = { width: 18, height: 18, marginTop: 3 };
-      if (item.iconHidden) {
-        style.background = 'transparent';
+      const style = { width: 18, height: 18, fontSize: 18 };
+      if (item.iconHidden || item.disabledIcon) {
+        style.color = 'transparent';
       }
       return (
         <span>
           <RetinaImg
             name={item.image}
             style={style}
-            isIcon={!item.disabledIcon}
+            isIcon={true}
             mode={RetinaImg.Mode.ContentIsMask}
           />
           {item.name}
@@ -656,7 +656,7 @@ export default class MessageControls extends React.Component {
           <div className="remove-tracker">
             <RetinaImg
               name={'readReceipts.svg'}
-              style={{ width: 16, height: 16 }}
+              style={{ width: 16, height: 16, fontSize: 16 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
@@ -688,7 +688,7 @@ export default class MessageControls extends React.Component {
           <div className="replyBtn" title={items[0].name} onClick={items[0].select}>
             <RetinaImg
               name={items[0].image}
-              style={{ width: 24, height: 24 }}
+              style={{ width: 24, height: 24, fontSize: 24, verticalAlign: 'middle' }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />

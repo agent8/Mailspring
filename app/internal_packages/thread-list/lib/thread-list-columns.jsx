@@ -159,12 +159,14 @@ const c2 = new ListTabular.Column({
     let calendar = null;
     const hasCalendar = thread.hasCalendar;
     if (hasCalendar) {
-      calendar = <div className="thread-icon thread-icon-calendar" />;
+      const calendarClassName = Utils.iconClassName('feed-calendar.svg');
+      calendar = <div className={`thread-icon thread-icon-calendar ${calendarClassName}`} />;
     }
 
     let attachment = null;
     if (thread.hasAttachments) {
-      attachment = <div className="thread-icon thread-icon-attachment" />;
+      const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
+      attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
     return (
       <div style={{ display: 'flex' }}>
@@ -243,13 +245,15 @@ const cNarrow = new ListTabular.Column({
     let calendar = null;
     const hasCalendar = thread.hasCalendar;
     if (hasCalendar) {
-      calendar = <div className="thread-icon thread-icon-calendar" />;
+      const calendarClassName = Utils.iconClassName('feed-calendar.svg');
+      calendar = <div className={`thread-icon thread-icon-calendar ${calendarClassName}`} />;
     }
 
     const hasAttachments =
       thread.hasAttachments && messages.find(m => Utils.showIconForAttachments(m.files));
     if (hasAttachments) {
-      attachment = <div className="thread-icon thread-icon-attachment" />;
+      const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
+      attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
 
     const hasDraft = messages.find(m => m.draft && !DraftStore().isSendingDraft(m.id));

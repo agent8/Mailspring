@@ -27,7 +27,7 @@ class SiftTrashQuickAction extends React.Component {
       >
         <RetinaImg
           name="trash.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -56,9 +56,7 @@ class SiftTrashQuickAction extends React.Component {
                   thread: JSON.stringify(thread),
                 },
               });
-            } catch (e) {
-
-            }
+            } catch (e) {}
           }
         });
       }
@@ -81,14 +79,15 @@ class SiftStarQuickAction extends React.Component {
         key="remove"
         title={title}
         style={{ order: 109 }}
-        className={"action action-flag " + className}
+        className={'action action-flag ' + className}
         onClick={this._onToggleStar}
       >
         <RetinaImg
           name="flag.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
@@ -109,9 +108,7 @@ class SiftStarQuickAction extends React.Component {
                   thread: JSON.stringify(thread),
                 },
               });
-            } catch (e) {
-
-            }
+            } catch (e) {}
           }
         });
       }
@@ -137,7 +134,12 @@ class SiftUnreadQuickAction extends React.Component {
         className="action action-flag"
         onClick={this._onToggleUnread}
       >
-        <RetinaImg name={imgName} style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name={imgName}
+          style={{ width: 24, height: 24, fontSize: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </div>
     );
   }
@@ -156,9 +158,7 @@ class SiftUnreadQuickAction extends React.Component {
               thread: JSON.stringify(thread),
             },
           });
-        } catch (e) {
-
-        }
+        } catch (e) {}
       }
       Actions.queueTasks([task]);
     });

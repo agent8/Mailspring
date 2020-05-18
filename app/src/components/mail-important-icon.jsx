@@ -8,6 +8,7 @@ const {
   CategoryStore,
   FocusedPerspectiveStore,
   AccountStore,
+  Utils,
 } = require('mailspring-exports');
 
 const ShowImportantKey = 'core.workspace.showImportant';
@@ -84,12 +85,14 @@ class MailImportantIcon extends React.Component {
     if (!this.state.visible) {
       return <span> </span>;
     }
-
-    const classes = classNames({
+    const importClassName = Utils.iconClassName('important.svg');
+    const classNameObj = {
       'mail-important-icon': true,
       enabled: this.state.category != null,
       active: this.state.isImportant,
-    });
+    };
+    classNameObj[importClassName] = true;
+    const classes = classNames(classNameObj);
 
     if (!this.state.category) {
       title = 'No important folder / label';

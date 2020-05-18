@@ -47,7 +47,9 @@ const ContentsColumn = new ListTabular.Column({
     return (
       <span className="details">
         <span className="subject">{subject(draft.subject)}</span>
-        <span className="snippet">{Utils.superTrim(draft.snippet ? draft.snippet : snippet(draft.body))}</span>
+        <span className="snippet">
+          {Utils.superTrim(draft.snippet ? draft.snippet : snippet(draft.body))}
+        </span>
       </span>
     );
   },
@@ -58,8 +60,9 @@ const AttachmentsColumn = new ListTabular.Column({
   width: 32,
   resolver: draft => {
     let attachments = [];
+    const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
     if (draft.files && draft.files.length > 0) {
-      attachments = <div className="thread-icon thread-icon-attachment" />;
+      attachments = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
     return attachments;
   },

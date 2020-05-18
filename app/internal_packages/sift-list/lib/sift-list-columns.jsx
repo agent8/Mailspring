@@ -1,10 +1,6 @@
 import React from 'react';
 import { Utils, DateUtils, EmailAvatar } from 'mailspring-exports';
-import {
-  InjectedComponentSet,
-  ListTabular,
-  InjectedComponent
-} from 'mailspring-component-kit';
+import { InjectedComponentSet, ListTabular, InjectedComponent } from 'mailspring-component-kit';
 import {
   SiftUnreadQuickAction,
   SiftTrashQuickAction,
@@ -32,7 +28,7 @@ const SenderColumn = new ListTabular.Column({
   name: 'Avatar',
   resolver: message => {
     return <EmailAvatar key="email-avatar" mode="list" message={message} />;
-  }
+  },
 });
 
 const ParticipantsColumn = new ListTabular.Column({
@@ -54,17 +50,17 @@ const ParticipantsColumn = new ListTabular.Column({
   },
 });
 
-const renderIcons = (message) => {
+const renderIcons = message => {
+  const dotIconClassName = Utils.iconClassName('menu-unread.svg');
   if (message.starred) {
-    return <div className='thread-icon thread-icon-star' />;
-  }
-  else if (message.unread) {
-    return <div className='thread-icon thread-icon-unread' />;
+    return <div className={`thread-icon thread-icon-star ${dotIconClassName}`} />;
+  } else if (message.unread) {
+    return <div className={`thread-icon thread-icon-unread ${dotIconClassName}`} />;
   }
   return null;
-}
+};
 
-const participants = (message) => {
+const participants = message => {
   const list = [].concat(message.to, message.cc, message.bcc);
 
   if (list.length > 0) {
@@ -74,7 +70,7 @@ const participants = (message) => {
         <div className="participants-inner">
           <span>{list.map(p => p.displayName()).join(', ')}</span>
         </div>
-      </div >
+      </div>
     );
   } else {
     return <div className="participants no-recipients">(No Recipients)</div>;
@@ -88,7 +84,9 @@ const ContentsColumn = new ListTabular.Column({
     return (
       <span className="details">
         <span className="subject">{subject(message.subject)}</span>
-        <span className="snippet">{Utils.superTrim(message.snippet ? message.snippet : snippet(message.body))}</span>
+        <span className="snippet">
+          {Utils.superTrim(message.snippet ? message.snippet : snippet(message.body))}
+        </span>
       </span>
     );
   },
@@ -100,7 +98,8 @@ const AttachmentsColumn = new ListTabular.Column({
   resolver: message => {
     let attachments = [];
     if (message.files && message.files.length > 0) {
-      attachments = <div className="thread-icon thread-icon-attachment" />;
+      const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
+      attachments = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
     return attachments;
   },
@@ -145,7 +144,7 @@ const HoverActions = new ListTabular.Column({
   },
 });
 
-const getSnippet = function (message) {
+const getSnippet = function(message) {
   if (message.snippet) {
     return message.snippet;
   }
@@ -156,7 +155,7 @@ const getSnippet = function (message) {
     </div>
   );
 };
-const SiftMessageTimestamp = function ({ message }) {
+const SiftMessageTimestamp = function({ message }) {
   const timestamp = message.date ? DateUtils.shortTimeString(message.date) : 'No Date';
   return <span className="timestamp">{timestamp}</span>;
 };
@@ -170,12 +169,14 @@ const cNarrow = new ListTabular.Column({
     let calendar = null;
     const hasCalendar = message.hasCalendar;
     if (hasCalendar) {
-      calendar = <div className="thread-icon thread-icon-calendar" />;
+      const calendarClassName = Utils.iconClassName('feed-calendar.svg');
+      calendar = <div className={`thread-icon thread-icon-calendar ${calendarClassName}`} />;
     }
 
     const hasAttachments = message.files.length > 0;
     if (hasAttachments) {
-      attachment = <div className="thread-icon thread-icon-attachment" />;
+      const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
+      attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
     const actions = [
       <SiftTrashQuickAction message={message} key="sift-trash-quick-action" />,
@@ -227,6 +228,13 @@ const cNarrow = new ListTabular.Column({
 });
 
 module.exports = {
-  Wide: [SenderColumn, ParticipantsColumn, AttachmentsColumn, ContentsColumn, TimeColumn, HoverActions],
+  Wide: [
+    SenderColumn,
+    ParticipantsColumn,
+    AttachmentsColumn,
+    ContentsColumn,
+    TimeColumn,
+    HoverActions,
+  ],
   Narrow: [cNarrow],
 };
