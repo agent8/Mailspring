@@ -91,10 +91,19 @@ export default class AppEnvConstructor {
     LOG.transports.file.file = path.join(
       this.getConfigDirPath(),
       'ui-log',
-      `ui-log-${Date.now()}.log`
+      `ui-log-${this.isMainWindow() ? 'main-' : ''}${Date.now()}.log`
     );
     LOG.transports.console.level = false;
     LOG.transports.file.maxSize = 20485760;
+    LOG.transports.file.archiveLog = file => {
+      file = file.toString();
+      const info = path.parse(file);
+      try {
+        fs.renameSync(file, path.join(info.dir, `${info.name}-${Date.now()}.old${info.ext}`));
+      } catch (e) {
+        console.warn('Could not rotate log', e);
+      }
+    };
     // if (devMode) {
     //   LOG.transports.file.appName = 'EdisonMail-dev';
     // } else {
@@ -333,11 +342,6 @@ export default class AppEnvConstructor {
     return extra;
   }
 
-  // Public: report an error through the `ErrorLogger`
-  //
-  // The difference between this and `ErrorLogger.reportError` is that
-  // `AppEnv.reportError` hooks into test failures and dev tool popups.
-  //
   reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
     if (grabLogs) {
       this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
