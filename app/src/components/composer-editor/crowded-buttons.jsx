@@ -7,7 +7,7 @@ import MoreComposerButtonsPopover from './more-composer-buttons-popover';
 import RetinaImg from '../retina-img';
 
 const CrowdedButton = ({ value, onChange, isCrowded = false }) => {
-  if(!isCrowded){
+  if (!isCrowded) {
     return [];
   }
   const buttons = [
@@ -17,7 +17,7 @@ const CrowdedButton = ({ value, onChange, isCrowded = false }) => {
         .map(BuildToggleButton),
     },
   ];
-  const closePopover = () =>{
+  const closePopover = () => {
     Actions.closePopover();
   };
   const _onChange = value => {
@@ -32,15 +32,32 @@ const CrowdedButton = ({ value, onChange, isCrowded = false }) => {
       key="more_buttons"
       className="show-when-crowded pull-right"
       onClick={e => {
-        Actions.openPopover(<MoreComposerButtonsPopover buttons={buttons} value={value} onChange={_onChange} closePopover={closePopover} anchorEl={e.target.getBoundingClientRect()}/>, {
-          originRect: e.target.getBoundingClientRect(),
-          direction: 'down',
-          closeOnAppBlur: true
-        });
+        Actions.openPopover(
+          <MoreComposerButtonsPopover
+            buttons={buttons}
+            value={value}
+            onChange={_onChange}
+            closePopover={closePopover}
+            anchorEl={e.target.getBoundingClientRect()}
+          />,
+          {
+            originRect: e.target.getBoundingClientRect(),
+            direction: 'down',
+            closeOnAppBlur: true,
+          }
+        );
       }}
     >
-      <RetinaImg isIcon name="arrow-dropdown.svg" mode={RetinaImg.Mode.ContentIsMask} />
-    </button>
+      <RetinaImg
+        isIcon
+        name="arrow-dropdown.svg"
+        mode={RetinaImg.Mode.ContentIsMask}
+        style={{
+          height: 20,
+          width: 20,
+        }}
+      />
+    </button>,
   ];
 };
 

@@ -119,10 +119,10 @@ class RetinaImg extends React.Component {
     return Utils.imageNamed(pathName, this.props.resourcePath);
   };
 
-  onError = (e) => {
+  onError = e => {
     const path = this._pathFor(this.props.name) || this._pathFor(this.props.fallback) || '';
     e.target.src = path;
-  }
+  };
 
   render() {
     const path =
@@ -130,11 +130,32 @@ class RetinaImg extends React.Component {
     const pathIsRetina = path.indexOf('@2x') > 0;
     let className = this.props.className || '';
 
+    const otherProps = Utils.fastOmit(this.props, Object.keys(this.constructor.propTypes));
     const style = this.props.style ? Object.assign({}, this.props.style) : {};
+
+    // if img is use static/icons/*.svg change to icon font
+    if (this.props.mode === Mode.ContentIsMask && this.props.isIcon) {
+      className += ` ${Utils.iconClassName(this.props.name)}`;
+      return <div alt={this.props.name} className={className} style={style} {...otherProps}></div>;
+    }
+
     style.WebkitUserDrag = 'none';
     style.zoom = pathIsRetina ? 0.5 : 1;
     if (style.width) style.width /= style.zoom;
     if (style.height) style.height /= style.zoom;
+
+    for (const key of Object.keys(style)) {
+      if (style[key]) {
+        const val = style[key].toString();
+        if (StylesImpactedByZoom.indexOf(key) !== -1 && val.indexOf('%') === -1) {
+          style[key] = val.replace('px', '') / style.zoom;
+        }
+      }
+    }
+
+    if (!path) {
+      return null;
+    }
 
     if (this.props.mode === Mode.ContentIsMask) {
       style.WebkitMaskImage = `url('${path}')`;
@@ -147,21 +168,15 @@ class RetinaImg extends React.Component {
       className += ' content-light';
     }
 
-    for (const key of Object.keys(style)) {
-      if (style[key]) {
-        const val = style[key].toString();
-        if (StylesImpactedByZoom.indexOf(key) !== -1 && val.indexOf('%') === -1) {
-          style[key] = val.replace('px', '') / style.zoom;
-        }
-      }
-    }
-
-    const otherProps = Utils.fastOmit(this.props, Object.keys(this.constructor.propTypes));
-    if (!path) {
-      return null;
-    }
     return (
-      <img onError={this.onError} alt={this.props.name} className={className} src={path} style={style} {...otherProps} />
+      <img
+        onError={this.onError}
+        alt={this.props.name}
+        className={className}
+        src={path}
+        style={style}
+        {...otherProps}
+      />
     );
   }
 }

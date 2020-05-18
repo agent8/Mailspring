@@ -140,7 +140,7 @@ class TranslateButton extends React.Component {
           name="translate.svg"
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
-          style={{ width: 24 }}
+          style={{ width: 24, verticalAlign: 'middle', fontSize: 24 }}
         />
         &nbsp;
         <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />

@@ -212,7 +212,10 @@ export class AttachmentItem extends Component {
 
   _onClick = e => {
     if (this.state.isDownloading) {
-      AttachmentStore.refreshAttachmentsState({fileId: this.props.fileId, filePath: this.props.filePath});
+      AttachmentStore.refreshAttachmentsState({
+        fileId: this.props.fileId,
+        filePath: this.props.filePath,
+      });
       return;
     }
     if (this.props.isDownloading || this.props.missing) {
@@ -347,7 +350,7 @@ export class AttachmentItem extends Component {
                     ref={cm => {
                       this._fileIconComponent = cm;
                     }}
-                    style={{ backgroundColor: color }}
+                    style={{ color: color }}
                     className="file-icon"
                     fallback="drafts.svg"
                     name={iconName}
@@ -419,7 +422,7 @@ export class ImageAttachmentItem extends Component {
   componentDidMount() {
     this._storeUnlisten = [
       AttachmentStore.listen(this._onDownloadStoreChange),
-      Actions.broadcastDraftAttachmentState.listen(this._onAttachmentStateChange, this)
+      Actions.broadcastDraftAttachmentState.listen(this._onAttachmentStateChange, this),
     ];
     this._mounted = true;
   }
@@ -433,16 +436,16 @@ export class ImageAttachmentItem extends Component {
     }
   }
 
-  _onAttachmentStateChange = ({fileId, fileState} = {}) => {
-    if(!this._mounted){
+  _onAttachmentStateChange = ({ fileId, fileState } = {}) => {
+    if (!this._mounted) {
       return;
     }
-    if(!fileId || !fileState){
+    if (!fileId || !fileState) {
       return;
     }
     console.log(`file ${fileId} state changed ${fileState}`);
-    if(fileId === this.props.fileId && fileState === 1 && this.state.notReady){
-      this.setState({notReady: false});
+    if (fileId === this.props.fileId && fileState === 1 && this.state.notReady) {
+      this.setState({ notReady: false });
       this._onImgLoaded();
     }
   };
@@ -478,8 +481,8 @@ export class ImageAttachmentItem extends Component {
   };
 
   _onImageError = () => {
-    if(this._mounted){
-      this.setState({notReady: true});
+    if (this._mounted) {
+      this.setState({ notReady: true });
     }
   };
 
@@ -503,7 +506,16 @@ export class ImageAttachmentItem extends Component {
         </div>
       );
     }
-    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={Utils.safeBrowserPath(filePath)} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
+    return (
+      <img
+        key={`${this.fileId}:${this.state.notReady}`}
+        draggable={draggable}
+        src={Utils.safeBrowserPath(filePath)}
+        alt={`${this.state.notReady}`}
+        onLoad={this._onImgLoaded}
+        onError={this._onImageError}
+      />
+    );
   }
 
   render() {
