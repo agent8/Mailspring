@@ -753,8 +753,9 @@ body.platform-win32 {
     color: @blue;
     font-size: 11px;
     cursor: pointer;
-    .content-mask {
-      background-color: @gray-light;
+    .edison-icon {
+      vertical-align: middle;
+      color: @gray-light;
     }
   }
   .message-item-wrap:hover {
@@ -799,13 +800,14 @@ body.platform-win32 {
       font-weight: bold;
       transition: background-color 0.2s;
       color: @gray;
-      img,
+      .edison-icon,
       span {
         position: relative;
         z-index: 2;
       }
-      img.content-mask {
-        background-color: @gray-light;
+      .edison-icon {
+        color: @gray-light;
+        vertical-align: middle;
         transition: background-color 0.15s;
       }
       span {
@@ -826,8 +828,8 @@ body.platform-win32 {
           background-color: @off-white;
         }
         color: @blue;
-        img.content-mask {
-          background-color: @blue;
+        .edison-icon {
+          color: @blue;
         }
       }
     }
