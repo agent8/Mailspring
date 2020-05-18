@@ -63,11 +63,7 @@ export default class OutboxSender extends React.Component {
       }
       return (
         <div className="avatar-icon" style={styles}>
-          <RetinaImg
-            mode={RetinaImg.Mode.ContentPreserve}
-            name={accountLogo}
-            style={avatarStyle}
-          />
+          <RetinaImg mode={RetinaImg.Mode.ContentPreserve} name={accountLogo} style={avatarStyle} />
           <LottieImg
             name={'loading-spinner-blue'}
             size={{ width: 50, height: 50 }}
@@ -77,11 +73,10 @@ export default class OutboxSender extends React.Component {
         </div>
       );
     }
-    return <div className="avatar-icon" style={styles}>
-      <RetinaImg mode={RetinaImg.Mode.ContentPreserve}
-        name={accountLogo}
-        style={avatarStyle}
-      />
-    </div>;
+    return (
+      <div className="avatar-icon" style={styles}>
+        <RetinaImg mode={RetinaImg.Mode.ContentPreserve} name={accountLogo} style={avatarStyle} />
+      </div>
+    );
   }
 }

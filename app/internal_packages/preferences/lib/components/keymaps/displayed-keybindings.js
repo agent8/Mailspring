@@ -4,6 +4,7 @@ module.exports = [
     items: [
       ['application:new-message', 'New Message'],
       ['core:focus-search', 'Search'],
+      ['core:undo', 'Undo'],
     ],
   },
   {

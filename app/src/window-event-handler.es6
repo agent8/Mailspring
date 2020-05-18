@@ -138,7 +138,7 @@ export default class WindowEventHandler {
       'core:cut': () => (isSelectionPresent() ? webContents.cut() : null),
       'core:paste': () => webContents.paste(),
       'core:paste-and-match-style': () => webContents.pasteAndMatchStyle(),
-      'core:undo': e => (isTextInput(e.target) ? webContents.undo() : getUndoStore().undo()),
+      'core:undo': e => (isTextInput(e.target) ? webContents.undo() : getUndoStore().undoLastOne()),
       'core:redo': e => (isTextInput(e.target) ? webContents.redo() : getUndoStore().redo()),
       'core:select-all': e => (isTextInput(e.target) ? webContents.selectAll() : null),
     });
@@ -325,7 +325,7 @@ export default class WindowEventHandler {
     });
   }
 
-  openSpellingMenuFor(word, hasSelectedText, { onCorrect, onRestoreSelection = () => { } }) {
+  openSpellingMenuFor(word, hasSelectedText, { onCorrect, onRestoreSelection = () => {} }) {
     const { Menu, MenuItem } = remote;
     const menu = new Menu();
 
@@ -375,11 +375,11 @@ export default class WindowEventHandler {
     if (!AppEnv.inDevMode()) {
       console.log(
         "%c Welcome to Edison Mail! If you're exploring the source or building a " +
-        "plugin, you should enable debug flags. It's slower, but " +
-        'gives you better exceptions, the debug version of React, ' +
-        'and more. Choose %c Developer > Run with Debug Flags %c ' +
-        'from the menu. Also, check out http://Foundry376.github.io/Mailspring/ ' +
-        'for documentation and sample code!',
+          "plugin, you should enable debug flags. It's slower, but " +
+          'gives you better exceptions, the debug version of React, ' +
+          'and more. Choose %c Developer > Run with Debug Flags %c ' +
+          'from the menu. Also, check out http://Foundry376.github.io/Mailspring/ ' +
+          'for documentation and sample code!',
         'background-color: antiquewhite;',
         'background-color: antiquewhite; font-weight:bold;',
         'background-color: antiquewhite; font-weight:normal;'

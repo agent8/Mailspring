@@ -149,6 +149,7 @@ class OutlineViewItem extends Component {
     this.state = {
       isDropping: false,
       editing: props.item.editing || false,
+      originalText: '',
     };
   }
 
@@ -197,7 +198,7 @@ class OutlineViewItem extends Component {
   };
 
   _clearEditingState = event => {
-    this.setState({ editing: false });
+    this.setState({ editing: false, originalText: '' });
     this._runCallback('onInputCleared', event);
   };
 
@@ -245,7 +246,7 @@ class OutlineViewItem extends Component {
 
   _onEdit = () => {
     if (this.props.item.onEdited) {
-      this.setState({ editing: true });
+      this.setState({ editing: true, originalText: this.props.item.name });
     }
   };
 
@@ -255,6 +256,20 @@ class OutlineViewItem extends Component {
   };
 
   _onInputBlur = event => {
+    if (this.state.originalText.length > 0 && event.target.value !== this.state.originalText) {
+      const value = event.target.value;
+      AppEnv.showMessageBox({
+        title: 'Do you want save your edit?',
+        buttons: ['Yes', 'No'],
+        defaultId: 0,
+      }).then(response => {
+        if (response && response.response === 0) {
+          this._onEdited(value);
+        }
+        this._clearEditingState();
+      });
+      return;
+    }
     this._clearEditingState(event);
   };
 

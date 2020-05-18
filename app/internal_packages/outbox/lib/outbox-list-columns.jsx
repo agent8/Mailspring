@@ -11,6 +11,7 @@ import {
   OutboxTrashQuickAction,
   OutboxEditQuickAction,
 } from './outbox-list-quick-actions';
+const failingElapsedTimeout = AppEnv.config.get('core.outbox.failingUnlockInMs');
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -35,7 +36,7 @@ const SenderColumn = new ListTabular.Column({
     return (
       <OutboxSender
         draft={draft}
-        lottieStyle={{ left: 10, top: 11, width: 45, height: 45 }}
+        lottieStyle={{ left: 11, top: 10, width: 42, height: 42 }}
         avatarStyle={{ width: 35, height: 35 }}
       />
     );
@@ -123,6 +124,13 @@ const HoverActions = new ListTabular.Column({
       actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
       actions.unshift(<OutboxEditQuickAction draft={draft} key="outbox-edit-quick-action" />);
       actions.unshift(<OutboxResendQuickAction draft={draft} key="outbox-resend-quick-action" />);
+    } else if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
+      const timeLapsed = draft.lastUpdateTimestamp
+        ? Date.now() - draft.lastUpdateTimestamp.getTime()
+        : 0;
+      if (timeLapsed > failingElapsedTimeout) {
+        actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
+      }
     }
     return (
       <div className="inner">
@@ -179,6 +187,13 @@ const cNarrow = new ListTabular.Column({
       actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
       actions.unshift(<OutboxEditQuickAction draft={draft} key="outbox-edit-quick-action" />);
       actions.unshift(<OutboxResendQuickAction draft={draft} key="outbox-resend-quick-action" />);
+    } else if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
+      const timeLapsed = draft.lastUpdateTimestamp
+        ? Date.now() - draft.lastUpdateTimestamp.getTime()
+        : 0;
+      if (timeLapsed > failingElapsedTimeout) {
+        actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
+      }
     }
     const snippet = Utils.superTrim(getSnippet(draft));
     return (

@@ -172,6 +172,17 @@ class ThreadListParticipants extends React.Component {
       }
     }
 
+    // remove from last, if it's the same with the first one
+    while (tokens.length > 1) {
+      const lastContact = tokens[tokens.length - 1].contact;
+      const firstContact = tokens[0].contact;
+      if (lastContact.email === firstContact.email) {
+        tokens.pop();
+      } else {
+        break;
+      }
+    }
+
     return tokens;
   };
 

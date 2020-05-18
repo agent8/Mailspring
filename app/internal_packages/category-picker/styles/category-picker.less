@@ -95,9 +95,14 @@ body.platform-win32 {
   padding-top: 4px;
   .menu {
     background: @background-primary;
-    width: @popover-width;
+    min-width: @popover-width;
+    max-width: 400px;
     border-radius: 10px;
     padding-right: 4px;
+
+    .scroll-region .scroll-region-content {
+      position: relative;
+    }
 
     .content-container {
       background-color: inherit;
@@ -200,7 +205,7 @@ body.platform-win32 {
     font-size: 13px;
     display: flex;
     align-items: center;
-    height: 19.5px;
+    height: 22px;
   }
 
   .category-create-new {
