@@ -166,7 +166,7 @@ export default class Application extends EventEmitter {
     if (!fs.existsSync(avatarPath)) {
       fs.mkdirSync(avatarPath);
     }
-    this.clearOldLogs();
+    this.makeLogFolders();
     this.initSupportInfo();
 
     // subscribe event of dark mode change
@@ -182,6 +182,8 @@ export default class Application extends EventEmitter {
         console.error('Error: systemPreferences.subscribeNotification', err);
       }
     }
+    this.cleaningOldFilesTimer = null;
+    this._triggerCleanOldLogs(true);
   }
   getOpenWindows() {
     return this.windowManager.getOpenWindows();
@@ -242,37 +244,37 @@ export default class Application extends EventEmitter {
     }
   }
 
-  clearOldLogs() {
-    const logPath = path.join(this.configDirPath, 'ui-log');
-    const uploadPath = path.join(this.configDirPath, 'upload-log');
-    rimraf(uploadPath, err => {
-      if (err) {
-        console.log('\n------\npath cannot be removed');
-        console.log(err);
-      } else {
-        console.log('\n------\npath removed');
-      }
-      fs.mkdir(uploadPath, err => {
-        if (err) {
-          console.log('\n------\npath cannot be made');
-          console.log(err);
-        } else {
-          console.log('\n------\npath made');
-        }
-      });
-    });
-    if (!fs.existsSync(logPath)) {
-      fs.mkdirSync(logPath);
-    } else {
-      console.log('\n-----\nremoving ui logs');
-      rimraf(logPath, () => {
-        console.log('\n-----\nremoved ui logs');
-        fs.mkdir(logPath, err => {
-          console.log(`\n-----\nui log path creaded \n${err}`);
-        });
-      });
-    }
-  }
+  // clearOldLogs() {
+  //   const logPath = path.join(this.configDirPath, 'ui-log');
+  //   const uploadPath = path.join(this.configDirPath, 'upload-log');
+  //   rimraf(uploadPath, err => {
+  //     if (err) {
+  //       console.log('\n------\npath cannot be removed');
+  //       console.log(err);
+  //     } else {
+  //       console.log('\n------\npath removed');
+  //     }
+  //     fs.mkdir(uploadPath, err => {
+  //       if (err) {
+  //         console.log('\n------\npath cannot be made');
+  //         console.log(err);
+  //       } else {
+  //         console.log('\n------\npath made');
+  //       }
+  //     });
+  //   });
+  //   if (!fs.existsSync(logPath)) {
+  //     fs.mkdirSync(logPath);
+  //   } else {
+  //     console.log('\n-----\nremoving ui logs');
+  //     rimraf(logPath, () => {
+  //       console.log('\n-----\nremoved ui logs');
+  //       fs.mkdir(logPath, err => {
+  //         console.log(`\n-----\nui log path creaded \n${err}`);
+  //       });
+  //     });
+  //   }
+  // }
   reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
     if (grabLogs && !this.devMode) {
       this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
@@ -466,16 +468,16 @@ export default class Application extends EventEmitter {
         zlib: { level: 9 }, // Sets the compression level.
       });
 
-      output.on('close', function () {
+      output.on('close', function() {
         console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
         console.log('archiver has been finalized and the output file descriptor has closed.');
         resolve(outputPath);
       });
-      output.on('end', function () {
+      output.on('end', function() {
         console.log('\n----->\nData has been drained');
         resolve(outputPath);
       });
-      archive.on('warning', function (err) {
+      archive.on('warning', function(err) {
         if (err.code === 'ENOENT') {
           console.log(err);
         } else {
@@ -484,14 +486,16 @@ export default class Application extends EventEmitter {
           reject(err);
         }
       });
-      archive.on('error', function (err) {
+      archive.on('error', function(err) {
         output.close();
         console.log(err);
         reject(err);
       });
       archive.pipe(output);
       archive.directory(logPath, 'uiLog');
-      archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
+      archive.directory(path.join(resourcePath, 'ms-log'), 'nativeLog');
+      archive.directory(path.join(resourcePath, 'ms-crash'), 'nativeCrash');
+      // archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
       archive.finalize();
     });
   }
@@ -602,7 +606,7 @@ export default class Application extends EventEmitter {
   // we close windows and log out, we need to wait for these processes to completely
   // exit and then delete the file. It's hard to tell when this happens, so we just
   // retry the deletion a few times.
-  deleteFileWithRetry(filePath, callback = () => { }, retries = 5) {
+  deleteFileWithRetry(filePath, callback = () => {}, retries = 5) {
     glob(filePath, (err, files) => {
       if (err) {
         return;
@@ -651,7 +655,7 @@ export default class Application extends EventEmitter {
     });
   }
 
-  renameFileWithRetry(filePath, newPath, callback = () => { }, retries = 5) {
+  renameFileWithRetry(filePath, newPath, callback = () => {}, retries = 5) {
     const callbackWithRetry = err => {
       if (err && err.message.indexOf('no such file') === -1) {
         console.log(`File Error: ${err.message} - retrying in 150msec`);
@@ -729,6 +733,85 @@ export default class Application extends EventEmitter {
       }
     }
   }
+
+  _removeOldFiles = (files, dirPath, cleanAll = false) => {
+    const now = Date.now();
+    const removeList = [];
+    const sortAndDelete = () => {
+      console.log('sort and delete');
+      removeList.sort((a, b) => {
+        return a.stats.mtimeMs - b.stats.mtimeMs;
+      });
+      const maxDelete = cleanAll ? removeList.length : 10;
+      removeList.slice(0, maxDelete).forEach(fileObj => {
+        fs.unlink(fileObj.path, err => {
+          if (err) {
+            console.log(`Deleting ${fileObj.path} failed, ${err}`);
+          } else {
+            console.log(`Deleting ${fileObj.path} success`);
+          }
+        });
+      });
+    };
+    if (Array.isArray(files)) {
+      const total = files.length;
+      let processed = 0;
+      const olderThanADay = 48 * 60 * 60 * 1000;
+      files.forEach(dirent => {
+        if (dirent.isFile()) {
+          console.log(`log file name: ${dirent.name}`);
+          const filePath = path.join(dirPath, dirent.name);
+          fs.stat(filePath, (err, stats) => {
+            processed++;
+            console.log(`file last modified is ${stats.mtimeMs}, now is ${now}`);
+            if (now - stats.mtimeMs > olderThanADay) {
+              removeList.push({ path: filePath, stats });
+            }
+            if (processed === total) {
+              sortAndDelete();
+            }
+          });
+        }
+      });
+    }
+  };
+  _triggerCleanOldLogs = (initial = false) => {
+    if (initial) {
+      const initialTime = 3 * 60 * 1000;
+      clearTimeout(this.cleaningOldFilesTimer);
+      console.log('setting timeout for clearOldLogs');
+      this.cleaningOldFilesTimer = setTimeout(this.clearOldLogs, initialTime);
+      this._triggerCleanOldLogs();
+    } else {
+      const reoccurrenceTime = 4 * 60 * 60 * 1000;
+      clearInterval(this.cleaningOldFilesTimer);
+      console.log('setting interval for clearOldLogs');
+      this.cleaningOldFilesTimer = setInterval(this.clearOldLogs, reoccurrenceTime);
+    }
+  };
+  makeLogFolders = () => {
+    fs.mkdirSync(path.join(this.configDirPath, 'ui-log'), { recursive: true });
+    fs.mkdirSync(path.join(this.configDirPath, 'upload-log'), { recursive: true });
+  };
+
+  clearOldLogs = (cleanAll = false) => {
+    const uiLogPath = path.join(this.configDirPath, 'ui-log');
+    const uploadPath = path.join(this.configDirPath, 'upload-log');
+    const nativeLogPath = path.join(this.configDirPath, 'ms-log');
+    const clearLogs = path => {
+      console.log(`###################cleaning old logs in ${path}`);
+      fs.readdir(path, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        this._removeOldFiles(files, path, cleanAll);
+      });
+    };
+    clearLogs(uploadPath);
+    clearLogs(uiLogPath);
+    clearLogs(nativeLogPath);
+  };
 
   _resetDatabaseAndRelaunch = ({ errorMessage, source = 'Unknown' } = {}) => {
     if (this._resettingAndRelaunching) return;
