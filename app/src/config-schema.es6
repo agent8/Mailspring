@@ -205,6 +205,13 @@ export default {
             default: true,
             title: 'Automatically load images in open emails',
           },
+          actionAfterRemove: {
+            type: 'string',
+            default: 'return',
+            enum: ['next', 'previous', 'return'],
+            enumLabels: ['Open next', 'Open previous', 'Return to email list'],
+            title: 'When mail is Archived or Deleted',
+          },
           // backspaceDelete: {
           //   type: 'boolean',
           //   default: false,
@@ -487,6 +494,15 @@ export default {
             enum: [5000, 15000, 30000, 60000, 0],
             enumLabels: ['5 seconds', '15 seconds', '30 seconds', '60 seconds', 'Disable'],
             title: 'Undo time window',
+          },
+        },
+      },
+      outbox: {
+        type: 'object',
+        properties: {
+          failingUnlockInMs: {
+            type: 'number',
+            default: 300000,
           },
         },
       },

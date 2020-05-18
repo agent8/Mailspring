@@ -16,7 +16,7 @@ export default class BugReportRoot extends React.PureComponent {
       submitting: false,
       submitButtonText: 'Submit',
     };
-    this.logID = '';
+    this.logID = uuid();
     this.mounted = false;
     this.minimizeTimeout = null;
     this.failSafeTimeout = null;
@@ -39,7 +39,7 @@ export default class BugReportRoot extends React.PureComponent {
   }
 
   _onReportUploaded = (event, data) => {
-    if(!this.mounted){
+    if (!this.mounted) {
       return;
     }
     if (data.payload.logID === this.logID) {
@@ -59,7 +59,7 @@ export default class BugReportRoot extends React.PureComponent {
       } else if (data.status === 'uploading') {
         this.setState({ submitButtonText: 'Uploading...' });
       } else {
-        if(this.failSafeTimeout){
+        if (this.failSafeTimeout) {
           clearTimeout(this.failSafeTimeout);
         }
         if (this.minimizeTimeout) {
@@ -67,7 +67,10 @@ export default class BugReportRoot extends React.PureComponent {
         }
         AppEnv.displayWindow();
         this.setState({ submitting: false, submitButtonText: 'Try Again' });
-        AppEnv.showErrorDialog({ title: 'Reporting bug failed', message: 'Uploading to server failed. Please try again'});
+        AppEnv.showErrorDialog({
+          title: 'Reporting bug failed',
+          message: 'Uploading to server failed. Please try again',
+        });
       }
     } else {
       console.log(`logID: ${this.logID}, data: ${data.payload.logID}`);
@@ -86,7 +89,7 @@ export default class BugReportRoot extends React.PureComponent {
       { errorData: this.state.description, logID: this.logID },
       { grabLogs: this.state.uploadLogs }
     );
-    Actions.sendBugDraft({ logId: this.logID, userFeedback: this.state.description});
+    Actions.sendBugDraft({ logId: this.logID, userFeedback: this.state.description });
     clearTimeout(this.minimizeTimeout);
     this.minimizeTimeout = setTimeout(() => {
       if (this.mounted) {
@@ -110,22 +113,32 @@ export default class BugReportRoot extends React.PureComponent {
     this.setState({ description: event.target.value });
   };
   renderSubmitButton() {
-    if(!this.state.submitting){
-      return <div>
-        <button className="btn btn-large btn-report-bug" onClick={this.onSubmit}>
+    if (!this.state.submitting) {
+      return (
+        <div>
+          <button className="btn btn-large btn-report-bug" onClick={this.onSubmit}>
+            {this.state.submitButtonText}
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <button className="btn btn-large btn-report-bug">
+          <LottieImg
+            name="loading-spinner-white"
+            size={{ width: 32, height: 32 }}
+            style={{
+              marginRight: '12px',
+              marginLeft: '-44px',
+              display: 'inline-block',
+              float: 'left',
+            }}
+          />
           {this.state.submitButtonText}
         </button>
       </div>
-    }
-    return <div>
-      <button className="btn btn-large btn-report-bug">
-        <LottieImg
-          name="loading-spinner-white"
-          size={{ width: 32, height: 32 }}
-          style={{ marginRight: '12px', marginLeft: '-44px', display: 'inline-block', float: 'left' }}
-        />
-        {this.state.submitButtonText}</button>
-    </div>
+    );
   }
 
   render() {

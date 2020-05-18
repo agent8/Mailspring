@@ -624,7 +624,7 @@ class MessageStore extends MailspringStore {
         accountId: accountId,
         missingItems: missingList,
         needProgress: true,
-        source: "Click"
+        source: 'Click',
       });
     }
   }
@@ -665,7 +665,7 @@ class MessageStore extends MailspringStore {
         accountId: message.accountId,
         missingItems: missing,
         needProgress: true,
-        source: "Click"
+        source: 'Click',
       });
     }
     if (change) {

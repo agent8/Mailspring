@@ -259,6 +259,9 @@ class MessageList extends React.Component {
     const handlers = {
       'core:reply': () => {
         if (this._mounted && !this.state.isReplying && !this._replyTimer) {
+          if (this._isInTrashOrSpamView()) {
+            return;
+          }
           this._timeoutButton('reply');
           this.safeSetState({ isReplying: true });
           Actions.composeReply({
@@ -271,6 +274,9 @@ class MessageList extends React.Component {
       },
       'core:reply-all': () => {
         if (this._mounted && !this.state.isReplyAlling && !this._replyAllTimer) {
+          if (this._isInTrashOrSpamView()) {
+            return;
+          }
           this._timeoutButton('reply-all');
           this.safeSetState({ isReplyAlling: true });
           Actions.composeReply({
@@ -316,6 +322,9 @@ class MessageList extends React.Component {
       !this._mounted ||
       this._forwardTimer
     ) {
+      return;
+    }
+    if (this._isInTrashOrSpamView()) {
       return;
     }
     this._timeoutButton('forward');
@@ -380,6 +389,21 @@ class MessageList extends React.Component {
     Actions.popSheet({ reason: 'MessageList:_onPopoutThread' });
   };
 
+  _isInTrashOrSpamView = () => {
+    const perspective = FocusedPerspectiveStore.current();
+    if (perspective && (perspective.isTrash() || perspective.isSpam())) {
+      AppEnv.showMessageBox({
+        title: 'Cannot create draft',
+        detail: `Cannot create draft in ${
+          perspective.isTrash() ? 'Trash' : 'Spam'
+        } view, please move message out.`,
+        buttons: ['Okay'],
+      });
+      return true;
+    }
+    return false;
+  };
+
   _onClickReplyArea = (replyType = 'reply') => {
     if (
       !this.state.currentThread ||
@@ -387,6 +411,9 @@ class MessageList extends React.Component {
       this.state.isReplyAlling ||
       !this._mounted
     ) {
+      return;
+    }
+    if (this._isInTrashOrSpamView()) {
       return;
     }
     if (replyType === 'reply-all') {
@@ -585,7 +612,6 @@ class MessageList extends React.Component {
     if (e.target.className && e.target.className.indexOf('message-subject') === -1) {
       return;
     }
-
     const textNode = e.currentTarget.childNodes[0];
     const range = document.createRange();
     range.setStart(textNode, 0);
@@ -655,7 +681,7 @@ class MessageList extends React.Component {
         <div style={{ flex: 1, flexWrap: 'wrap' }}>
           <span
             className="message-subject"
-            onClick={this._onSelectText}
+            onDoubleClick={this._onSelectText}
             onContextMenu={this._onContactContextMenu.bind(this, subject)}
           >
             {subject}

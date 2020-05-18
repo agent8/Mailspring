@@ -10,7 +10,6 @@ import {
   CalendarStore,
   FocusedPerspectiveStore,
   TrashFromSenderTask,
-  OutboxStore,
 } from 'mailspring-exports';
 import {
   RetinaImg,
@@ -35,6 +34,7 @@ export default class MessageItem extends React.Component {
     messages: PropTypes.array,
     collapsed: PropTypes.bool,
     pending: PropTypes.bool,
+    disableDraftEdit: PropTypes.bool,
     isMostRecent: PropTypes.bool,
     className: PropTypes.string,
     threadPopedOut: PropTypes.bool,
@@ -366,7 +366,7 @@ export default class MessageItem extends React.Component {
   }
 
   _renderHeader() {
-    const { message, thread, messages } = this.props;
+    const { message, thread, messages, disableDraftEdit } = this.props;
     const { trackers, isBlocked } = this.state;
     return (
       <header
@@ -394,6 +394,14 @@ export default class MessageItem extends React.Component {
               >
                 {this._renderHeaderDetailToggle()}
               </MessageParticipants>
+              {disableDraftEdit && (
+                <RetinaImg
+                  name={`pencil.svg`}
+                  className={'draft-indicator'}
+                  isIcon={true}
+                  mode={RetinaImg.Mode.ContentIsMask}
+                />
+              )}
               <div className="message-header-right">
                 {!this.props.isOutboxDraft ? (
                   <InjectedComponentSet

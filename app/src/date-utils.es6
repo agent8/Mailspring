@@ -3,6 +3,8 @@ import moment from 'moment-timezone';
 // Init locale for moment
 moment.locale(navigator.language);
 
+const EN_US_LOCALES = ['en_US', 'en_US_POSIX', 'haw_US', 'es_US', 'chr_US'];
+
 // Initialise moment timezone
 const tz = moment.tz.guess();
 if (!tz) {
@@ -319,7 +321,7 @@ const DateUtils = {
     // Append meridian if not using 24 hour clock
     if (!use24HourClock) {
       if (opts && opts.upperCase) {
-        console.error('upperCase time format no longer used')
+        console.error('upperCase time format no longer used');
       }
       timeFormat += 'a';
     }
@@ -355,7 +357,11 @@ const DateUtils = {
       format = 'MMM D';
     } else {
       // Month, day and year if over a year old
-      format = 'M/D/YY';
+      if (EN_US_LOCALES.includes(navigator.language)) {
+        format = 'M/D/YY';
+      } else {
+        format = 'D/M/YY';
+      }
     }
 
     return moment(datetime).format(format);
@@ -385,15 +391,19 @@ const DateUtils = {
         format = `[Yesterday]`;
       } else {
         let lastDayFormat = moment.localeData().calendar('lastDay', moment());
-        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '')
+        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '');
         format = `[${lastDayFormat}]`;
       }
     } else if (isSameYear) {
       // Month and day up to 1 year old
       format = 'MMM D';
     } else {
-      // Month, day and year if over a year old
-      format = 'M/D/YY';
+      // Month, day and year if over a year olds
+      if (EN_US_LOCALES.includes(navigator.language)) {
+        format = 'M/D/YY';
+      } else {
+        format = 'D/M/YY';
+      }
     }
 
     return moment(datetime).format(format);
@@ -428,7 +438,7 @@ const DateUtils = {
         format = `[Yesterday]`;
       } else {
         let lastDayFormat = moment.localeData().calendar('lastDay', moment());
-        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '')
+        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '');
         format = `[${lastDayFormat}]`;
       }
     } else if (isSameYear) {
@@ -436,7 +446,13 @@ const DateUtils = {
       format = 'MMM D';
     } else {
       // Month, day and year if over a year old
-      format = full ? 'MMMM D, YYYY' : 'M/D/YY';
+      let shortFormat;
+      if (EN_US_LOCALES.includes(navigator.language)) {
+        shortFormat = 'M/D/YY';
+      } else {
+        shortFormat = 'D/M/YY';
+      }
+      format = full ? 'MMMM D, YYYY' : shortFormat;
     }
     return format;
   },
