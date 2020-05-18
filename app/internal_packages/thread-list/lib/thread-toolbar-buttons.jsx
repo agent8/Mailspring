@@ -130,7 +130,7 @@ export function ArchiveButton(props) {
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onArchive}>
         <RetinaImg
           name={'archive.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -359,7 +359,7 @@ export function TrashButton(props) {
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={actionCallBack}>
         <RetinaImg
           name={'trash.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -445,7 +445,7 @@ export function MarkAsSpamButton(props) {
         >
           <RetinaImg
             name="not-junk.svg"
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -480,7 +480,7 @@ export function MarkAsSpamButton(props) {
       >
         <RetinaImg
           name={'junk.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -511,7 +511,7 @@ export function PrintThreadButton(props) {
     <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onPrintThread}>
       <RetinaImg
         name={'print.svg'}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24 }}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
       />
@@ -560,7 +560,7 @@ export function ToggleStarredButton(props) {
       >
         <RetinaImg
           name="flag.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -621,7 +621,7 @@ export function ToggleUnreadButton(props) {
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
         <RetinaImg
           name={`${fragment === 'unread' ? 'unread' : 'read'}.svg`}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -943,7 +943,7 @@ export class ThreadListMoreButton extends React.Component {
       >
         <RetinaImg
           name="more.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -1031,7 +1031,7 @@ export class MoreButton extends React.Component {
       >
         <RetinaImg
           name="more.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -1088,7 +1088,7 @@ class ThreadArrowButton extends React.Component {
         <RetinaImg
           name={`${direction === 'up' ? 'back' : 'next'}.svg`}
           isIcon
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       </div>
@@ -1231,7 +1231,7 @@ export const PopoutButton = () => {
       >
         <RetinaImg
           name={'popout.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -1339,7 +1339,7 @@ class MoreActionsButton extends React.Component {
       >
         <RetinaImg
           name="more.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

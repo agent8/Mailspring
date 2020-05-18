@@ -58,7 +58,7 @@ class OutboxDeleteButton extends React.Component {
       >
         <RetinaImg
           name={'trash.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -135,7 +135,7 @@ class ReSendButton extends React.Component {
       >
         <RetinaImg
           name={'sent.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

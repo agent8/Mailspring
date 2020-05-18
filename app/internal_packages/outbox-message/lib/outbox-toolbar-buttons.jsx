@@ -30,7 +30,7 @@ export class ResendButton extends React.Component {
         <button tabIndex={-1} className="btn btn-toolbar" title="Resend" onClick={this._onResend}>
           <RetinaImg
             name={'sent.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -69,7 +69,7 @@ export class TrashButton extends React.Component {
         <button tabIndex={-1} className="btn btn-toolbar" title="Cancel" onClick={this._onRemove}>
           <RetinaImg
             name={'trash.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -106,7 +106,7 @@ export class EditButton extends React.Component {
         >
           <RetinaImg
             name={'pencil.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />

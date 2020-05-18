@@ -93,10 +93,10 @@
     left: 16px;
     z-index: 9999;
     cursor: pointer;
-    img.content-mask {
+    .edison-icon {
       position: relative;
       z-index: 2;
-      background-color: @gray-light;
+      color: @gray-light;
     }
 
     &:hover:after {
@@ -190,7 +190,7 @@
         width: 17px;
         overflow: hidden;
         transition: width 600ms linear;
-        img {
+        .edison-icon {
           vertical-align: top;
           transform-origin: left center;
           transition: transform 600ms linear;
@@ -200,14 +200,14 @@
       &.name-only {
         .transition-box {
           width: 0;
-          img {
+          .edison-icon {
             transform: scale(0.01);
           }
         }
       }
 
-      img {
-        background: @light-grey;
+      .edison-icon {
+        color: @light-grey;
       }
 
       .name {
@@ -227,8 +227,8 @@
           color: @text-color;
           opacity: 0.87;
         }
-        img {
-          background: @text-color;
+        .edison-icon {
+          color: @text-color;
         }
       }
     }
@@ -398,8 +398,8 @@
 
         .avatar-icon {
           overflow: hidden;
-          img {
-            background: #e8e8ed;
+          .edison-icon {
+            color: #e8e8ed;
             margin-left: -2px;
             margin-top: -2px;
           }
