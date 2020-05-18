@@ -46,7 +46,7 @@ class PreferencesTabItem extends React.Component {
             name={`preference-${displayName.replace(/\s/g, '').toLocaleLowerCase()}.svg`}
             className="preferences-icon"
             mode={RetinaImg.Mode.ContentIsMask}
-            style={{ height: 17, width: 17 }}
+            style={{ height: 17, width: 17, fontSize: 17 }}
           />
         </div>
         <div className="name">{displayName}</div>

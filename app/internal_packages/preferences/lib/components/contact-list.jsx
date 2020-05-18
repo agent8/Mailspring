@@ -260,7 +260,7 @@ class ContactList extends React.Component {
               <div className="avatar-icon">
                 <RetinaImg
                   isIcon
-                  style={{ width: 24 }}
+                  style={{ width: 24, height: 24, fontSize: 24 }}
                   name="contacts.svg"
                   mode={RetinaImg.Mode.ContentIsMask}
                 />

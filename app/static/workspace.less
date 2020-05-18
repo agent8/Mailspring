@@ -74,7 +74,7 @@ mailspring-workspace {
   .toolbar-ThreadList {
     .title-search-bar {
       .thread-title {
-        max-width: calc(~'100% - 400px')
+        max-width: calc(~'100% - 400px');
       }
     }
   }
@@ -824,8 +824,9 @@ body.platform-win32 {
     .item-spacer {
       display: none;
     }
-    img.content-mask {
-      background-color: @gray-light;
+    .edison-icon {
+      color: @gray-light;
+      vertical-align: middle;
     }
     .btn-list-more {
       display: none;
@@ -849,8 +850,8 @@ body.platform-win32 {
       background: none;
       cursor: pointer;
       &.flagged {
-        img.content-mask {
-          background-color: @orange;
+        .edison-icon {
+          color: @orange;
         }
       }
       &.disabled {
@@ -861,10 +862,10 @@ body.platform-win32 {
           }
         }
       }
-      img {
+      .edison-icon {
         position: relative;
         z-index: 2;
-        transition: background-color 0.4s;
+        transition: color 0.4s;
       }
       &:active {
         background-color: @white;
@@ -887,8 +888,8 @@ body.platform-win32 {
         &:after {
           background: @extra-light-grey;
         }
-        img {
-          background-color: @dark-grey;
+        .edison-icon {
+          color: @dark-grey;
         }
       }
     }
