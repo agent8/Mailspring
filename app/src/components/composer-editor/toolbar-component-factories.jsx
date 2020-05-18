@@ -108,7 +108,17 @@ export function applyValueForMark(value, type, markValue) {
 
 // React Component Factories
 
-export function BuildToggleButton({ type, button: { iconClass, isActive, onToggle, svgName = '', isVisible = () => true, hideWhenCrowded = false } }) {
+export function BuildToggleButton({
+  type,
+  button: {
+    iconClass,
+    isActive,
+    onToggle,
+    svgName = '',
+    isVisible = () => true,
+    hideWhenCrowded = false,
+  },
+}) {
   return ({ value, onChange, className = '' }) => {
     if (!isVisible()) {
       return null;
@@ -119,12 +129,29 @@ export function BuildToggleButton({ type, button: { iconClass, isActive, onToggl
       e.preventDefault();
     };
     if (svgName) {
-      return (<button className={`${className} ${active ? 'active' : ''} ${hideWhenCrowded ? 'hide-when-crowded' : ''}`} onMouseDown={onMouseDown}>
-        <RetinaImg style={{ width: 18 }} name={svgName} isIcon mode={RetinaImg.Mode.ContentIsMask} />
-      </button>)
+      return (
+        <button
+          className={`${className} ${active ? 'active' : ''} ${
+            hideWhenCrowded ? 'hide-when-crowded' : ''
+          }`}
+          onMouseDown={onMouseDown}
+        >
+          <RetinaImg
+            style={{ width: 18, height: 18, fontSize: 18 }}
+            name={svgName}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </button>
+      );
     }
     return (
-      <button className={`${className} ${active ? 'active' : ''} ${hideWhenCrowded ? 'hide-when-crowded' : ''}`} onMouseDown={onMouseDown}>
+      <button
+        className={`${className} ${active ? 'active' : ''} ${
+          hideWhenCrowded ? 'hide-when-crowded' : ''
+        }`}
+        onMouseDown={onMouseDown}
+      >
         <i title={type} className={iconClass} />
       </button>
     );
@@ -185,7 +212,6 @@ export function BuildMarkButtonWithValuePicker(
     };
 
     onConfirm = inputValue => {
-
       // attach the URL value to the LINK that was created when we opened the link modal
       const { value, onChange } = this.props;
       const fieldValue = inputValue;
@@ -265,10 +291,10 @@ export function BuildMarkButtonWithValuePicker(
               <i className={config.iconClassOn} />
             </button>
           ) : (
-              <button onMouseDown={this.onPrompt}>
-                <i className={config.iconClassOff} />
-              </button>
-            )}
+            <button onMouseDown={this.onPrompt}>
+              <i className={config.iconClassOff} />
+            </button>
+          )}
           {/*{expanded && (*/}
           {/*  <div className="dropdown">*/}
           {/*    <input*/}
@@ -387,16 +413,18 @@ export function BuildFontSizePicker(config) {
     }
     onClick = e => {
       const value = getActiveValueForMark(this.props.value, config.type) || config.default;
-      Actions.openPopover((
+      Actions.openPopover(
         <FontSizePopover
           options={config.options}
           selectedValue={value}
-          onSelect={this._onSetValue} />
-      ), {
+          onSelect={this._onSetValue}
+        />,
+        {
           originRect: this.fontSizeBtn.getBoundingClientRect(),
           direction: 'down',
-          closeOnAppBlur: true
-        });
+          closeOnAppBlur: true,
+        }
+      );
     };
 
     render() {
@@ -405,7 +433,7 @@ export function BuildFontSizePicker(config) {
           style={{ padding: '6px, 0px', width: 40 }}
           className={`${this.props.className || ''} pull-right with-popup`}
           onClick={this.onClick}
-          ref={el => this.fontSizeBtn = el}
+          ref={el => (this.fontSizeBtn = el)}
         >
           <i className={config.iconClass} />
           <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />

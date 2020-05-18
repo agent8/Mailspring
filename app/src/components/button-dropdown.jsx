@@ -65,7 +65,7 @@ class ButtonDropdown extends React.Component {
             <RetinaImg
               name={'more.svg'}
               isIcon
-              style={{ width: 24, height: 24 }}
+              style={{ width: 24, height: 24, fontSize: 24 }}
               mode={RetinaImg.Mode.ContentIsMask}
             />
           </div>

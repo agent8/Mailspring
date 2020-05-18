@@ -255,46 +255,46 @@ class MultiselectToolbar extends Component {
     }
   };
 
-  renderRefreshButton(perspective) {
-    if (!this.props.renderRefresh) {
-      return null;
-    }
-    if (!perspective) {
-      return null;
-    }
-    if (perspective.starred) {
-      return null;
-    }
-    if (this.state.refreshingMessages) {
-      return (
-        <div style={{ padding: '0 5px' }}>
-          <RetinaImg
-            name="refresh.svg"
-            className="infinite-rotation-linear"
-            style={{ width: 24, height: 24 }}
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        </div>
-      );
-    }
-    return (
-      <button
-        tabIndex={-1}
-        style={{ cursor: 'pointer' }}
-        className="btn btn-toolbar btn-list-more"
-        title="Refresh"
-        onClick={this.refreshPerspective}
-      >
-        <RetinaImg
-          name="refresh.svg"
-          style={{ width: 24, height: 24 }}
-          isIcon
-          mode={RetinaImg.Mode.ContentIsMask}
-        />
-      </button>
-    );
-  }
+  // renderRefreshButton(perspective) {
+  //   if (!this.props.renderRefresh) {
+  //     return null;
+  //   }
+  //   if (!perspective) {
+  //     return null;
+  //   }
+  //   if (perspective.starred) {
+  //     return null;
+  //   }
+  //   if (this.state.refreshingMessages) {
+  //     return (
+  //       <div style={{ padding: '0 5px' }}>
+  //         <RetinaImg
+  //           name="refresh.svg"
+  //           className="infinite-rotation-linear"
+  //           style={{ width: 24, height: 24 }}
+  //           isIcon
+  //           mode={RetinaImg.Mode.ContentIsMask}
+  //         />
+  //       </div>
+  //     );
+  //   }
+  //   return (
+  //     <button
+  //       tabIndex={-1}
+  //       style={{ cursor: 'pointer' }}
+  //       className="btn btn-toolbar btn-list-more"
+  //       title="Refresh"
+  //       onClick={this.refreshPerspective}
+  //     >
+  //       <RetinaImg
+  //         name="refresh.svg"
+  //         style={{ width: 24, height: 24 }}
+  //         isIcon
+  //         mode={RetinaImg.Mode.ContentIsMask}
+  //       />
+  //     </button>
+  //   );
+  // }
 
   _switchSingleDomDisplay(selector, shouldShow, displayType) {
     const el = document.querySelector(selector);
