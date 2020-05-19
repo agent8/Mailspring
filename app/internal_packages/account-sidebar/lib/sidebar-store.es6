@@ -189,7 +189,16 @@ class SidebarStore extends MailspringStore {
     if (accounts == null) {
       accounts = AccountStore.accounts();
     }
-    AccountCommands.registerMenuItems(accounts, FocusedPerspectiveStore.sidebarAccountIds());
+    const currentPerspective = FocusedPerspectiveStore.current();
+    let currentSelectedAccountIds = [];
+    if (currentPerspective) {
+      if (Array.isArray(currentPerspective.accountIds)) {
+        currentSelectedAccountIds = currentPerspective.accountIds;
+      } else if (currentPerspective.accountIds) {
+        currentSelectedAccountIds = [currentPerspective.accountIds];
+      }
+    }
+    AccountCommands.registerMenuItems(accounts, currentSelectedAccountIds);
   };
 
   _registerTrayItems = () => {
