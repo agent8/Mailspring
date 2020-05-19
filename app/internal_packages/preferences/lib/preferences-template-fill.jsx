@@ -99,6 +99,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'When mail is Archived or Deleted',
+              configSchema: configSchema =>
+                configSchema.properties.reading.properties.actionAfterRemove,
+              keyPath: 'core.reading.actionAfterRemove',
+              keywords: [],
+            },
+            {
               label: 'Send new mail from',
               component: DefaultAccountSending,
               configSchema: configSchema => configSchema,

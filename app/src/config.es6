@@ -568,7 +568,7 @@ class Config {
       AppEnv.trackingEvent &&
       typeof AppEnv.trackingEvent === 'function'
     ) {
-      AppEnv.trackingEvent('Preferences-Config-Set', { keyPath, value });
+      AppEnv.trackingEvent('Preferences-Config-Set', { keyPath: `${keyPath}:${value}`, value });
     }
     return true;
   }

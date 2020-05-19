@@ -51,30 +51,30 @@ export default class MessageParticipants extends React.Component {
   };
   _chooseRange = (e, selectParent = false) => {
     let children;
-    if(selectParent){
+    if (selectParent) {
       children = [e.currentTarget.parentNode];
-    }else{
+    } else {
       children = e.currentTarget.childNodes;
     }
     const range = document.createRange();
-    if(children.length > 1){
+    if (children.length > 1) {
       const firstChild = e.currentTarget.firstElementChild;
       const lastChild = e.currentTarget.lastElementChild;
       range.setStart(firstChild, 0);
-      if(lastChild.childNodes.length > 3){
+      if (lastChild.childNodes.length > 3) {
         range.setEnd(lastChild, 3);
-      } else if (lastChild.childNodes.length === 2){
+      } else if (lastChild.childNodes.length === 2) {
         range.setEnd(lastChild, 1);
       } else {
         range.setEndAfter(lastChild);
       }
-    }else {
+    } else {
       const textNode = children[0];
       range.setStart(textNode, 0);
       range.setEndAfter(textNode);
     }
     return range;
-  }
+  };
 
   _onContactContextMenu = (contact, e) => {
     const menu = new Menu();
@@ -97,12 +97,15 @@ export default class MessageParticipants extends React.Component {
 
       if (c.name && c.name.length > 0 && c.name !== c.email) {
         return (
-          <div key={`${c.email}-${i}`} className="participant selectable"
-               onClick={this._onSelectText.bind(this, false)}
-               onDoubleClick={this._onSelectText.bind(this, true)}
-               onContextMenu={this._onContactContextMenu.bind(this, c)}>
-            <div className="participant-primary" >
-              {c.fullName()}
+          <div
+            key={`${c.email}-${i}`}
+            className="participant selectable"
+            onClick={this._onSelectText.bind(this, false)}
+            onDoubleClick={this._onSelectText.bind(this, true)}
+            onContextMenu={this._onContactContextMenu.bind(this, c)}
+          >
+            <div className="participant-primary">
+              {this.props.isDetailed ? c.fullOriginal() : c.fullName()}
             </div>
             <div className="participant-secondary">
               {' <'}
@@ -114,9 +117,12 @@ export default class MessageParticipants extends React.Component {
         );
       }
       return (
-        <div key={`${c.email}-${i}`} className="participant selectable"
-             onDoubleClick={this._onSelectText.bind(this, true)}
-             onContextMenu={this._onContactContextMenu.bind(this, c)}>
+        <div
+          key={`${c.email}-${i}`}
+          className="participant selectable"
+          onDoubleClick={this._onSelectText.bind(this, true)}
+          onContextMenu={this._onContactContextMenu.bind(this, c)}
+        >
           <div className="participant-primary">
             <span onClick={this._onSelectText.bind(this, false)}>{c.email}</span>
             {comma}
@@ -130,7 +136,9 @@ export default class MessageParticipants extends React.Component {
     return (
       <div className="participant-type" key={`participant-type-${name}`}>
         {includeLabel ? (
-          <div className={`participant-label ${name}-label`}>{name === 'detail-from' ? 'from' : name}:</div>
+          <div className={`participant-label ${name}-label`}>
+            {name === 'detail-from' ? 'from' : name}:
+          </div>
         ) : null}
         <div className={`participant-name ${name}-contact`}>{this._renderFullContacts(field)}</div>
       </div>

@@ -1,5 +1,5 @@
-const { Actions, React, PropTypes, FocusedPerspectiveStore } = require('mailspring-exports');
 import { RetinaImg } from 'mailspring-component-kit';
+const { Actions, React, PropTypes, FocusedPerspectiveStore } = require('mailspring-exports');
 
 class OutboxTrashQuickAction extends React.Component {
   static displayName = 'OutboxTrashQuickAction';
@@ -21,7 +21,7 @@ class OutboxTrashQuickAction extends React.Component {
       >
         <RetinaImg
           name="trash.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -53,7 +53,7 @@ class OutboxEditQuickAction extends React.Component {
       >
         <RetinaImg
           name="pencil.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -82,7 +82,7 @@ class OutboxResendQuickAction extends React.Component {
       >
         <RetinaImg
           name="sent.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

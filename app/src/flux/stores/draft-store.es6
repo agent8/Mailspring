@@ -27,6 +27,7 @@ let AttachmentStore = null;
 const { DefaultSendActionKey } = SendActionsStore;
 const SendDraftTimeout = 300000;
 const DraftFailingBaseTimeout = 120000;
+const SaveOnRemoteDelayInMs = 5000;
 
 /*
 Public: DraftStore responds to Actions that interact with Drafts and exposes
@@ -119,6 +120,7 @@ class DraftStore extends MailspringStore {
     this._draftsSending = {};
     this._draftSendingTimeouts = {};
     this._draftFailingTimeouts = {};
+    this._draftSaveOnRemoteDelays = {};
     this._draftsDeleting = {}; //Using messageId
     this._draftsDeleted = {};
     this._draftsOpenCount = {};
@@ -217,10 +219,22 @@ class DraftStore extends MailspringStore {
   }
 
   async sessionForServerDraft(draft) {
+    if (this.isDraftWaitingSaveOnRemote(draft.id)) {
+      AppEnv.logWarning(`Draft ${draft.id} is still waiting for saveOnRemote`);
+      const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
+      const session = await this.sessionForClientId(draft.id);
+      if (session && needUpload) {
+        session.needUpload = true;
+      }
+      return session;
+    }
     const newDraft = DraftFactory.createNewDraftForEdit(draft);
     await this._finalizeAndPersistNewMessage(newDraft);
     const session = this._draftSessions[newDraft.id];
-    session.needUpload = true;
+    // if (session) {
+    //   console.warn('need upload');
+    //   session.needUpload = true;
+    // }
     return session;
   }
 
@@ -229,6 +243,53 @@ class DraftStore extends MailspringStore {
   isSendingDraft(messageId) {
     return !!this._draftsSending[messageId] || false;
   }
+  isDraftWaitingSaveOnRemote = messageId => {
+    return this._draftSaveOnRemoteDelays[messageId];
+  };
+  clearSaveOnRemoteTaskTimer = messageId => {
+    if (!messageId) {
+      AppEnv.logError(new Error('MessageId is empty'));
+      return false;
+    }
+    if (this._draftSaveOnRemoteDelays[messageId]) {
+      if (this._draftSaveOnRemoteDelays[messageId].timer) {
+        AppEnv.logDebug(`Clearing draftSaveOnRemoteDelays timer for ${messageId}`);
+        clearTimeout(this._draftSaveOnRemoteDelays[messageId].timer);
+      }
+      AppEnv.logDebug(`Clearing draftSaveOnRemoteDelays cache for ${messageId}`);
+      delete this._draftSaveOnRemoteDelays[messageId];
+      return true;
+    }
+    return false;
+  };
+  pushSaveOnRemoteTask = task => {
+    if (!AppEnv.isMainWindow()) {
+      AppEnv.logDebug('Not in main window, ignoring saveOnRemote');
+      return;
+    }
+    if (!task) {
+      AppEnv.logError(new Error('Task is empty'));
+      return;
+    }
+    this.clearSaveOnRemoteTaskTimer(task.messageId);
+    const messageId = task.messageId;
+    this._draftSaveOnRemoteDelays[messageId] = {
+      timer: null,
+      task: new SyncbackDraftTask({ draft: task.draft, ...task }),
+    };
+    this._draftSaveOnRemoteDelays[messageId].timer = setTimeout(() => {
+      if (
+        this._draftSaveOnRemoteDelays[messageId] &&
+        this._draftSaveOnRemoteDelays[messageId].task
+      ) {
+        this._draftSaveOnRemoteDelays[messageId].task.saveOnRemote = true;
+        AppEnv.logDebug(`Sending save on remote task for ${messageId}`);
+        Actions.queueTasks([this._draftSaveOnRemoteDelays[messageId].task]);
+      }
+      AppEnv.logDebug(`Clearing draftSaveOnRemoteDelays cache for ${messageId}`);
+      delete this._draftSaveOnRemoteDelays[messageId];
+    }, SaveOnRemoteDelayInMs);
+  };
 
   _restartTimerForOldSendDraftTasks() {
     if (!this._startTime) {
@@ -372,7 +433,7 @@ class DraftStore extends MailspringStore {
           })
         ),
       ],
-      { switchingAccount: true, canBeUndone: false }
+      { switchingAccount: true, canBeUndone: false, source: 'onDraftAccountChange' }
     );
   };
 
@@ -672,7 +733,9 @@ class DraftStore extends MailspringStore {
         // thus if main window is closed, we should be closing all other windows.
         if (draft.pristine && !draft.savedOnRemote) {
           if (!this._draftsDeleting[draft.id]) {
-            promises.push(Actions.destroyDraft([draft], { canBeUndone: false }));
+            promises.push(
+              Actions.destroyDraft([draft], { canBeUndone: false, source: 'onBeforeUnload' })
+            );
           }
         } else {
           promises.push(session.closeSession({ reason: 'onBeforeUnload' }));
@@ -912,9 +975,12 @@ class DraftStore extends MailspringStore {
 
     // Optimistically create a draft session and hand it the draft so that it
     // doesn't need to do a query for it a second from now when the composer wants it.
-    this._createSession(draft.id, draft);
+    const session = this._createSession(draft.id, draft);
     const task = new SyncbackDraftTask({ draft });
-
+    const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
+    if (needUpload) {
+      session.needUpload = true;
+    }
     return TaskQueue.waitForPerformLocal(task, { sendTask: true })
       .then(() => {
         if (popout) {
@@ -1031,7 +1097,8 @@ class DraftStore extends MailspringStore {
       this.sessionForServerDraft(draft).then(newSession => {
         const newDraft = newSession.draft();
         newSession.setPopout(true);
-        newSession.needUpload = true;
+        // console.warn('need upload');
+        // newSession.needUpload = true;
         const draftJSON = newSession.draft().toJSON();
         AppEnv.newWindow({
           hidden: true, // We manually show in ComposerWithWindowProps::onDraftReady
@@ -1328,6 +1395,9 @@ class DraftStore extends MailspringStore {
       });
       Actions.queueTask(task);
     }, SendDraftTimeout);
+    AppEnv.logDebug(
+      `Started SendingDraftFailedTimeout, draftID: ${draft.id}, taskId: ${taskId}, source: ${source} `
+    );
   };
   _cancelDraftFailedTimeout = ({ messageId, source = '' } = {}) => {
     if (this._draftSendingTimeouts[messageId]) {

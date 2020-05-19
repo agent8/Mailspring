@@ -259,6 +259,9 @@ class MessageList extends React.Component {
     const handlers = {
       'core:reply': () => {
         if (this._mounted && !this.state.isReplying && !this._replyTimer) {
+          if (this._isInTrashOrSpamView()) {
+            return;
+          }
           this._timeoutButton('reply');
           this.safeSetState({ isReplying: true });
           Actions.composeReply({
@@ -271,6 +274,9 @@ class MessageList extends React.Component {
       },
       'core:reply-all': () => {
         if (this._mounted && !this.state.isReplyAlling && !this._replyAllTimer) {
+          if (this._isInTrashOrSpamView()) {
+            return;
+          }
           this._timeoutButton('reply-all');
           this.safeSetState({ isReplyAlling: true });
           Actions.composeReply({
@@ -316,6 +322,9 @@ class MessageList extends React.Component {
       !this._mounted ||
       this._forwardTimer
     ) {
+      return;
+    }
+    if (this._isInTrashOrSpamView()) {
       return;
     }
     this._timeoutButton('forward');
@@ -380,6 +389,21 @@ class MessageList extends React.Component {
     Actions.popSheet({ reason: 'MessageList:_onPopoutThread' });
   };
 
+  _isInTrashOrSpamView = () => {
+    const perspective = FocusedPerspectiveStore.current();
+    if (perspective && (perspective.isTrash() || perspective.isSpam())) {
+      AppEnv.showMessageBox({
+        title: 'Cannot create draft',
+        detail: `Cannot create draft in ${
+          perspective.isTrash() ? 'Trash' : 'Spam'
+        } view, please move message out.`,
+        buttons: ['Okay'],
+      });
+      return true;
+    }
+    return false;
+  };
+
   _onClickReplyArea = (replyType = 'reply') => {
     if (
       !this.state.currentThread ||
@@ -387,6 +411,9 @@ class MessageList extends React.Component {
       this.state.isReplyAlling ||
       !this._mounted
     ) {
+      return;
+    }
+    if (this._isInTrashOrSpamView()) {
       return;
     }
     if (replyType === 'reply-all') {
@@ -585,7 +612,6 @@ class MessageList extends React.Component {
     if (e.target.className && e.target.className.indexOf('message-subject') === -1) {
       return;
     }
-
     const textNode = e.currentTarget.childNodes[0];
     const range = document.createRange();
     range.setStart(textNode, 0);
@@ -655,7 +681,7 @@ class MessageList extends React.Component {
         <div style={{ flex: 1, flexWrap: 'wrap' }}>
           <span
             className="message-subject"
-            onClick={this._onSelectText}
+            onDoubleClick={this._onSelectText}
             onContextMenu={this._onContactContextMenu.bind(this, subject)}
           >
             {subject}
@@ -672,70 +698,6 @@ class MessageList extends React.Component {
             )}
           </span>
         </div>
-        {/* {this._renderIcons()} */}
-      </div>
-    );
-  }
-
-  _renderIcons() {
-    return (
-      <div className="message-icons-wrap">
-        {this._renderExpandToggle()}
-        <div onClick={this._onPrintThread}>
-          <RetinaImg
-            name={'print.svg'}
-            title="Print Thread"
-            style={{ width: 24, height: 24 }}
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        </div>
-        {this._renderPopoutToggle()}
-      </div>
-    );
-  }
-
-  _renderExpandToggle() {
-    if (!this.state.canCollapse) {
-      return <span />;
-    }
-
-    return (
-      <div onClick={this._onToggleAllMessagesExpanded}>
-        <RetinaImg
-          name={this.state.hasCollapsedItems ? 'expand.svg' : 'collapse.svg'}
-          title={this.state.hasCollapsedItems ? 'Expand All' : 'Collapse All'}
-          style={{ width: 24, height: 24 }}
-          isIcon
-          mode={RetinaImg.Mode.ContentIsMask}
-        />
-      </div>
-    );
-  }
-
-  _renderPopoutToggle() {
-    if (AppEnv.isThreadWindow()) {
-      return (
-        <div onClick={this._onPopThreadIn}>
-          <RetinaImg
-            name={'pop-in.svg'}
-            style={{ width: 24, height: 24 }}
-            title="Pop thread in"
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        </div>
-      );
-    }
-    return (
-      <div onClick={this._onPopoutThread}>
-        <RetinaImg
-          name={'popout.svg'}
-          style={{ width: 24, height: 24 }}
-          title="Pop thread out"
-          isIcon
-          mode={RetinaImg.Mode.ContentIsMask}
-        />
       </div>
     );
   }
@@ -750,7 +712,7 @@ class MessageList extends React.Component {
         <div className="btn" onClick={() => this._onClickReplyArea('reply')}>
           <RetinaImg
             name={`reply.svg`}
-            style={{ width: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -760,7 +722,7 @@ class MessageList extends React.Component {
           <div className="btn" onClick={() => this._onClickReplyArea('reply-all')}>
             <RetinaImg
               name={`reply-all.svg`}
-              style={{ width: 24 }}
+              style={{ width: 24, height: 24, fontSize: 24 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
@@ -770,7 +732,7 @@ class MessageList extends React.Component {
         <div className="btn" onClick={this._onForward}>
           <RetinaImg
             name={`forward.svg`}
-            style={{ width: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />

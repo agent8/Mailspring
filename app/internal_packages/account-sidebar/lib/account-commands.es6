@@ -8,11 +8,11 @@ const { Actions, MenuHelpers } = require('mailspring-exports');
 
 let _commandsDisposable = null;
 
-function _isSelected(account, sidebarAccountIds) {
-  if (sidebarAccountIds.length > 1) {
+function _isSelected(account, currentSelectedAccountIds) {
+  if (currentSelectedAccountIds.length > 1) {
     return account instanceof Array;
-  } else if (sidebarAccountIds.length === 1) {
-    return (account != null ? account.id : undefined) === sidebarAccountIds[0];
+  } else if (currentSelectedAccountIds.length === 1) {
+    return (account != null ? account.id : undefined) === currentSelectedAccountIds[0];
   } else {
     return false;
   }
@@ -36,13 +36,13 @@ function menuItem(account, idx, { isSelected, clickHandlers } = {}) {
   return item;
 }
 
-function menuTemplate(accounts, sidebarAccountIds, { clickHandlers } = {}) {
+function menuTemplate(accounts, currentSelectedAccountIds, { clickHandlers } = {}) {
   let isSelected;
   let template = [];
   const multiAccount = accounts.length > 1;
 
   if (multiAccount) {
-    isSelected = _isSelected(accounts, sidebarAccountIds);
+    isSelected = _isSelected(accounts, currentSelectedAccountIds);
     template = [menuItem(accounts, 0, { isSelected, clickHandlers })];
   }
 
@@ -50,7 +50,7 @@ function menuTemplate(accounts, sidebarAccountIds, { clickHandlers } = {}) {
     accounts.map((account, idx) => {
       // If there's only one account, it should be mapped to command+1, not command+2
       const accIdx = multiAccount ? idx + 1 : idx;
-      isSelected = _isSelected(account, sidebarAccountIds);
+      isSelected = _isSelected(account, currentSelectedAccountIds);
       return menuItem(account, accIdx, { isSelected, clickHandlers });
     })
   );
@@ -85,7 +85,7 @@ function registerCommands(accounts) {
   _commandsDisposable = AppEnv.commands.add(document.body, commands);
 }
 
-function registerMenuItems(accounts, sidebarAccountIds) {
+function registerMenuItems(accounts, currentSelectedAccountIds) {
   const windowMenu = AppEnv.menu.template.find(
     ({ label }) => MenuHelpers.normalizeLabel(label) === 'Window'
   );
@@ -103,7 +103,7 @@ function registerMenuItems(accounts, sidebarAccountIds) {
     return;
   }
 
-  const template = menuTemplate(accounts, sidebarAccountIds);
+  const template = menuTemplate(accounts, currentSelectedAccountIds);
   submenu.splice(idx + 1, 0, ...template);
   windowMenu.submenu = submenu;
   AppEnv.menu.update();
@@ -113,9 +113,9 @@ function registerTrayItems() {
   ipcRenderer.send('update-system-tray-account-menu');
 }
 
-function register(accounts, sidebarAccountIds) {
+function register(accounts, currentSelectedAccountIds) {
   registerCommands(accounts);
-  registerMenuItems(accounts, sidebarAccountIds);
+  registerMenuItems(accounts, currentSelectedAccountIds);
   registerTrayItems();
 }
 

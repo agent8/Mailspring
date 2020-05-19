@@ -163,12 +163,18 @@ export default class PreferencesSignatures extends React.Component {
     let checkedAccountLength = 0;
     let checkedAliasLength = 0;
     this.state.accounts.forEach(account => {
-      let signatureId = typeof account.signatureId === 'function' ? account.signatureId() : `local-${account.id}-${account.emailAddress}-${account.name}`;
+      let signatureId =
+        typeof account.signatureId === 'function'
+          ? account.signatureId()
+          : `local-${account.id}-${account.emailAddress}-${account.name}`;
       if (this.state.defaults[signatureId] === sig.id) {
         checkedAccountLength += 1;
       }
       (account.getAllAliasContacts() || []).forEach(alias => {
-        signatureId = typeof account.signatureId === 'function' ? alias.signatureId() : `local-${alias.accountId}-${alias.email}-${alias.name}`;
+        signatureId =
+          typeof account.signatureId === 'function'
+            ? alias.signatureId()
+            : `local-${alias.accountId}-${alias.email}-${alias.name}`;
         if (this.state.defaults[signatureId] === sig.id) {
           checkedAliasLength += 1;
         }
@@ -208,7 +214,7 @@ export default class PreferencesSignatures extends React.Component {
       <div className="btn-primary buttons-add" onClick={this._onAddSignature}>
         <RetinaImg
           name={`add.svg`}
-          style={{ width: 19, height: 19 }}
+          style={{ width: 19, height: 19, fontSize: 19 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

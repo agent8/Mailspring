@@ -14,7 +14,7 @@ export function autoGenerateFileName(dirPath, fileName) {
   try {
     files = fs.readdirSync(dirPath);
   } catch (error) {
-    console.error(`autoGenerateFileName error: readdir "${dirPath}" fail`);
+    return error;
   }
 
   if (!files || files.indexOf(fileName) < 0) {

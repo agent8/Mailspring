@@ -42,13 +42,6 @@ class OutboxDeleteButton extends React.Component {
   };
 
   render() {
-    if (
-      !this.props.selection.items().every(selection => {
-        return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
-      })
-    ) {
-      return null;
-    }
     return (
       <button
         style={{ order: -100 }}
@@ -58,7 +51,7 @@ class OutboxDeleteButton extends React.Component {
       >
         <RetinaImg
           name={'trash.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -120,8 +113,8 @@ class ReSendButton extends React.Component {
   render() {
     const items = this.props.selection.items();
     if (
-      !items.every(selection => {
-        return Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
+      items.some(selection => {
+        return !Message.compareMessageState(selection.syncState, Message.messageSyncState.failed);
       })
     ) {
       return null;
@@ -135,7 +128,7 @@ class ReSendButton extends React.Component {
       >
         <RetinaImg
           name={'sent.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

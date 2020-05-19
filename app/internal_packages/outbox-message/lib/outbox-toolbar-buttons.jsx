@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg, CreateButtonGroup } from 'mailspring-component-kit';
 import { OutboxStore, Actions, Message } from 'mailspring-exports';
+import { OutboxTrashQuickAction } from '../../outbox/lib/outbox-list-quick-actions';
 
 export class ResendButton extends React.Component {
   static displayName = 'ResendButton';
@@ -30,7 +31,7 @@ export class ResendButton extends React.Component {
         <button tabIndex={-1} className="btn btn-toolbar" title="Resend" onClick={this._onResend}>
           <RetinaImg
             name={'sent.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -64,12 +65,27 @@ export class TrashButton extends React.Component {
 
   render() {
     const draft = OutboxStore.selectedDraft();
-    if (draft && Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
+    if (!draft) {
+      return <span />;
+    }
+    let showTrashButton = !!draft;
+    if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
+      const timeLapsed = draft.lastUpdateTimestamp
+        ? Date.now() - draft.lastUpdateTimestamp.getTime()
+        : 0;
+      showTrashButton = timeLapsed > AppEnv.config.get('core.outbox.failingUnlockInMs');
+    } else {
+      showTrashButton = Message.compareMessageState(
+        draft.syncState,
+        Message.messageSyncState.failed
+      );
+    }
+    if (showTrashButton) {
       return (
         <button tabIndex={-1} className="btn btn-toolbar" title="Cancel" onClick={this._onRemove}>
           <RetinaImg
             name={'trash.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -106,7 +122,7 @@ export class EditButton extends React.Component {
         >
           <RetinaImg
             name={'pencil.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />

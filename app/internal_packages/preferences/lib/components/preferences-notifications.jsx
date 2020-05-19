@@ -151,7 +151,7 @@ export class PreferencesMutedNotifacations extends React.Component {
         <RetinaImg
           isIcon
           className="close-icon"
-          style={{ width: '20', height: '20' }}
+          style={{ width: 20, height: 20 }}
           name="close.svg"
           mode={RetinaImg.Mode.ContentIsMask}
           onClick={this._onToggleMutePopup}
@@ -198,7 +198,7 @@ export class PreferencesMutedNotifacations extends React.Component {
           <div className="btn-primary buttons-add" onClick={this._onToggleMutePopup}>
             <RetinaImg
               name={`add.svg`}
-              style={{ width: 19, height: 19 }}
+              style={{ width: 19, height: 19, fontSize: 19 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
