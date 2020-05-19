@@ -444,9 +444,9 @@ export class ImageAttachmentItem extends Component {
       return;
     }
     console.log(`file ${fileId} state changed ${fileState}`);
-    if (fileId === this.props.fileId && fileState === 1 && this.state.notReady) {
+    if (fileId === this.props.fileId && fileState === 1) {
       this.setState({ notReady: false });
-      this._onImgLoaded();
+      this._onImgLoaded({ forceReload: true });
     }
   };
 
@@ -486,7 +486,7 @@ export class ImageAttachmentItem extends Component {
     }
   };
 
-  _onImgLoaded = () => {
+  _onImgLoaded = ({ forceReload = false } = {}) => {
     // on load, modify our DOM just /slightly/. This causes DOM mutation listeners
     // watching the DOM to trigger. This is a good thing, because the image may
     // change dimensions. (We use this to reflow the draft body when this component
@@ -494,6 +494,11 @@ export class ImageAttachmentItem extends Component {
     const el = ReactDOM.findDOMNode(this);
     if (el) {
       el.classList.add('loaded');
+    }
+    if (this._imgRef && forceReload && !this._imageReloaded) {
+      const imgSrc = `${Utils.safeBrowserPath(this.props.filePath)}?forceReload=forced`;
+      this._imgRef.setAttribute('src', imgSrc);
+      this._imageReloaded = true;
     }
   };
 
@@ -508,6 +513,7 @@ export class ImageAttachmentItem extends Component {
     }
     return (
       <img
+        ref={ref => (this._imgRef = ref)}
         key={`${this.fileId}:${this.state.notReady}`}
         draggable={draggable}
         src={Utils.safeBrowserPath(filePath)}
