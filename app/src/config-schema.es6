@@ -15,7 +15,7 @@ function actionOption(iconName, label) {
     <span>
       <RetinaImg
         name={`${iconName}.svg`}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24 }}
         className={`color_${iconName}`}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
@@ -214,6 +214,13 @@ export default {
             type: 'boolean',
             default: true,
             title: 'Automatically load images in open emails',
+          },
+          actionAfterRemove: {
+            type: 'string',
+            default: 'return',
+            enum: ['next', 'previous', 'return'],
+            enumLabels: ['Open next', 'Open previous', 'Return to email list'],
+            title: 'When mail is Archived or Deleted',
           },
           // backspaceDelete: {
           //   type: 'boolean',
@@ -497,6 +504,15 @@ export default {
             enum: [5000, 15000, 30000, 60000, 0],
             enumLabels: ['5 seconds', '15 seconds', '30 seconds', '60 seconds', 'Disable'],
             title: 'Undo time window',
+          },
+        },
+      },
+      outbox: {
+        type: 'object',
+        properties: {
+          failingUnlockInMs: {
+            type: 'number',
+            default: 300000,
           },
         },
       },

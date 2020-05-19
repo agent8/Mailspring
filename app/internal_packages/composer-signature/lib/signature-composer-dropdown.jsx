@@ -26,7 +26,9 @@ export default class SignatureComposerDropdown extends React.Component {
         mode={RetinaImg.Mode.ContentIsMask}
         style={{
           width: 30,
-          display: 'inline-block',
+          height: 30,
+          fontSize: 30,
+          display: 'block',
           marginRight: -3,
           marginTop: -4,
         }}

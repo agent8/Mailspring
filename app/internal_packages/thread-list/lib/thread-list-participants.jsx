@@ -27,30 +27,32 @@ class ThreadListParticipants extends React.Component {
     const messages =
       this.props.thread.__messages != null
         ? this.props.thread.__messages.filter(message => {
-          return !message.deleted;
-        }) : [];
+            return !message.deleted;
+          })
+        : [];
     if (messages.length > 1) {
-      return <div className='messages-count'>({messages.length})</div>;
+      return <div className="messages-count">({messages.length})</div>;
     }
     return null;
-  }
+  };
 
   renderIcons = () => {
+    const dotIconClassName = Utils.iconClassName('menu-unread.svg');
+
     if (this.props.thread.starred) {
-      return <div className='thread-icon thread-icon-star' />;
-    }
-    else if (this.props.thread.unread) {
-      return <div className='thread-icon thread-icon-unread' />;
+      return <div className={`thread-icon thread-icon-star ${dotIconClassName}`} />;
+    } else if (this.props.thread.unread) {
+      return <div className={`thread-icon thread-icon-unread ${dotIconClassName}`} />;
     }
     return null;
-  }
+  };
 
   renderSpans(items) {
     const spans = [];
     let accumulated = null;
     let accumulatedUnread = false;
 
-    const flush = function () {
+    const flush = function() {
       if (accumulated) {
         spans.push(
           <span key={spans.length} className={`unread-${accumulatedUnread}`}>
@@ -170,6 +172,17 @@ class ThreadListParticipants extends React.Component {
       }
     }
 
+    // remove from last, if it's the same with the first one
+    while (tokens.length > 1) {
+      const lastContact = tokens[tokens.length - 1].contact;
+      const firstContact = tokens[0].contact;
+      if (lastContact.email === firstContact.email) {
+        tokens.pop();
+      } else {
+        break;
+      }
+    }
+
     return tokens;
   };
 
@@ -178,7 +191,11 @@ class ThreadListParticipants extends React.Component {
     contacts = contacts.filter(
       contact => !contact.isMe({ meAccountId: this.props.thread.accountId })
     );
-    return contacts.map(contact => ({ contact, unread: false, fromOtherAccounts:  contact.isMyOtherAccount({ meAccountId: this.props.thread.accountId })}));
+    return contacts.map(contact => ({
+      contact,
+      unread: false,
+      fromOtherAccounts: contact.isMyOtherAccount({ meAccountId: this.props.thread.accountId }),
+    }));
   };
 
   getTokens = () => {
@@ -193,7 +210,7 @@ class ThreadListParticipants extends React.Component {
     if (
       list.length === 0 &&
       (this.props.thread.participants != null ? this.props.thread.participants.length : undefined) >
-      0
+        0
     ) {
       list.push({ contact: this.props.thread.participants[0], unread: false });
     }

@@ -285,7 +285,7 @@ export default class MovePickerPopover extends Component {
     // }
     return (
       <div key={item.id} className="category-item">
-        <div className="category-display-name">
+        <div className="category-display-name" title={item.displayName}>
           <BoldedSearchResult value={item.displayName} query={this.state.searchValue || ''} />
         </div>
       </div>

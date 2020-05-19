@@ -47,9 +47,7 @@ class PreferencesAccountList extends Component {
           </div>
           <div className="account-item">
             <div className="account-name">{label}</div>
-            <div className="account-subtext">
-              {accountSub}
-            </div>
+            <div className="account-subtext">{accountSub}</div>
           </div>
         </Flexbox>
       </div>
@@ -65,7 +63,7 @@ class PreferencesAccountList extends Component {
       <div className="btn-primary buttons-add" onClick={this.props.onAddAccount}>
         <RetinaImg
           name={`add.svg`}
-          style={{ width: 19, height: 19 }}
+          style={{ width: 19, height: 19, fontSize: 19 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

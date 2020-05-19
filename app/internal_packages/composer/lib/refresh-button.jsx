@@ -3,7 +3,7 @@ import {
   CategoryStore,
   FocusedPerspectiveStore,
   SiftStore,
-  Actions
+  Actions,
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import React, { Component } from 'react';
@@ -107,7 +107,7 @@ class RefreshButton extends Component {
   refreshPerspective = () => {
     if (!this.state.refreshingMessages) {
       const current = FocusedPerspectiveStore.current();
-      const accounts = FocusedPerspectiveStore.refreshPerspectiveMessages({source: 'folderList'});
+      const accounts = FocusedPerspectiveStore.refreshPerspectiveMessages({ source: 'folderList' });
       this.setState({ refreshingMessages: true, cachedSyncFolderData: accounts });
       this.stopRefreshingTimer = setTimeout(this.stopRefreshing, STOP_REFRESHING_DELAY);
 
@@ -149,7 +149,7 @@ class RefreshButton extends Component {
         <RetinaImg
           name="refresh.svg"
           className={this.state.refreshingMessages ? 'infinite-rotation-linear' : ''}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -159,9 +159,7 @@ class RefreshButton extends Component {
 
   render() {
     const current = FocusedPerspectiveStore.current();
-    return (
-      this.renderRefreshButton(current)
-    );
+    return this.renderRefreshButton(current);
   }
 }
 

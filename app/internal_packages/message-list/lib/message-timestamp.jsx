@@ -27,7 +27,7 @@ class MessageTimestamp extends React.Component {
         title={DateUtils.fullTimeString(this.props.date)}
         onClick={this.props.onClick}
       >
-        {formattedDate}
+        <span>{formattedDate}</span>
       </div>
     );
   }

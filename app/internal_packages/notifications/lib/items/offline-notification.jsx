@@ -6,11 +6,11 @@ class OfflineNotification extends Component {
   componentDidMount = () => {
     // set offline notification left position
     this._resetLeftPosition();
-  }
+  };
   componentDidUpdate = () => {
     // set offline notification left position
     this._resetLeftPosition();
-  }
+  };
   _resetLeftPosition() {
     // set offline notification left position
     const offlineNotifs = document.querySelectorAll('.network-offline');
@@ -28,10 +28,12 @@ class OfflineNotification extends Component {
     }
     return (
       <div className="network-offline email-offline">
-        <RetinaImg name={'no-network.svg'}
-          style={{ width: 24 }}
+        <RetinaImg
+          name={'no-network.svg'}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
         <span>Edison Mail is offline. Please check your network connection.</span>
       </div>
     );

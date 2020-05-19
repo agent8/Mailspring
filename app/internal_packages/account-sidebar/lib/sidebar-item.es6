@@ -305,7 +305,12 @@ class SidebarItem {
     if (cats.length === 0) {
       return null;
     }
-    const perspective = MailboxPerspective.forCategories(cats);
+    let perspective;
+    if (Array.isArray(accountIds) && accountIds.length > 1) {
+      perspective = MailboxPerspective.forAllSent(cats);
+    } else {
+      perspective = MailboxPerspective.forCategories(cats);
+    }
     let id = 'sent';
     if (opts.key) {
       id += `-${opts.key}`;
@@ -601,7 +606,7 @@ class SidebarItem {
     opts.categoryIds = [category.id];
     const id = `Trash-${accountId}`;
     return SidebarItem.appendSubPathByAccounts(
-      accountId,
+      [accountId],
       this.forPerspective(id, perspective, opts)
     );
   }
@@ -611,6 +616,11 @@ class SidebarItem {
       const paths = parentPerspective.path.filter(p => p.accountId === accountId);
       if (paths.length === 1) {
         SidebarItem.appendSubPathByAccount(accountId, parentPerspective, paths[0]);
+      } else {
+        AppEnv.logWarning(
+          `paths is not 1, children not seeked, ${accountId}, ${parentPerspective &&
+            parentPerspective.id}`
+        );
       }
     }
     return parentPerspective;

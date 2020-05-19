@@ -149,6 +149,7 @@ class OutlineViewItem extends Component {
     this.state = {
       isDropping: false,
       editing: props.item.editing || false,
+      originalText: '',
     };
   }
 
@@ -197,7 +198,7 @@ class OutlineViewItem extends Component {
   };
 
   _clearEditingState = event => {
-    this.setState({ editing: false });
+    this.setState({ editing: false, originalText: '' });
     this._runCallback('onInputCleared', event);
   };
 
@@ -227,7 +228,9 @@ class OutlineViewItem extends Component {
     event.preventDefault();
     this._runCallback('onSelect');
     if (this.props.item.selected) {
-      if (!this.props.item.children.some(i => i.selected && i.perspective && !i.perspective.isInbox())) {
+      if (
+        !this.props.item.children.some(i => i.selected && i.perspective && !i.perspective.isInbox())
+      ) {
         this._onCollapseToggled();
       }
     }
@@ -243,7 +246,7 @@ class OutlineViewItem extends Component {
 
   _onEdit = () => {
     if (this.props.item.onEdited) {
-      this.setState({ editing: true });
+      this.setState({ editing: true, originalText: this.props.item.name });
     }
   };
 
@@ -253,6 +256,20 @@ class OutlineViewItem extends Component {
   };
 
   _onInputBlur = event => {
+    if (this.state.originalText.length > 0 && event.target.value !== this.state.originalText) {
+      const value = event.target.value;
+      AppEnv.showMessageBox({
+        title: 'Do you want save your edit?',
+        buttons: ['Yes', 'No'],
+        defaultId: 0,
+      }).then(response => {
+        if (response && response.response === 0) {
+          this._onEdited(value);
+        }
+        this._clearEditingState();
+      });
+      return;
+    }
     this._clearEditingState(event);
   };
 
@@ -279,7 +296,7 @@ class OutlineViewItem extends Component {
         new MenuItem({
           label: `Rename ${contextMenuLabel}`,
           click: this._onEdit,
-        }),
+        })
       );
     }
 
@@ -288,7 +305,7 @@ class OutlineViewItem extends Component {
         new MenuItem({
           label: `Delete ${contextMenuLabel}`,
           click: this._onDelete,
-        }),
+        })
       );
     }
     menu.popup({});
@@ -316,12 +333,20 @@ class OutlineViewItem extends Component {
   };
 
   _renderIcon(item = this.props.item) {
-    const styles = { width: 18, height: 18 };
+    const styles = { width: 18, height: 18, fontSize: 18 };
+    let color;
     if (item.iconColor) {
-      styles.backgroundColor = item.iconColor;
+      color = item.iconColor;
     } else if (item.bgColor) {
-      styles.backgroundColor = item.bgColor;
+      color = item.bgColor;
     }
+
+    if (color && item.url) {
+      styles.backgroundColor = color;
+    } else if (color && !item.url) {
+      styles.color = color;
+    }
+
     if (item.iconStyles) {
       Object.assign(styles, item.iconStyles);
     }
@@ -331,7 +356,7 @@ class OutlineViewItem extends Component {
         <RetinaImg
           url={item.url}
           name={item.iconName}
-          isIcon={true}
+          isIcon={!item.url}
           style={styles}
           fallback={item.fallback || 'folder.svg'}
           mode={item.mode || RetinaImg.Mode.ContentIsMask}
@@ -400,7 +425,14 @@ class OutlineViewItem extends Component {
     if (item.children.length > 0 && !item.collapsed) {
       return (
         <section className="item-children" key={`${item.id}-children`}>
-          {item.children.map((child, idx) => <OutlineViewItem key={child.id === DIVIDER_KEY ? idx : child.id} provider={acc.provider} index={idx} item={child} />)}
+          {item.children.map((child, idx) => (
+            <OutlineViewItem
+              key={child.id === DIVIDER_KEY ? idx : child.id}
+              provider={acc.provider}
+              index={idx}
+              item={child}
+            />
+          ))}
         </section>
       );
     }
@@ -411,9 +443,7 @@ class OutlineViewItem extends Component {
     const item = this.props.item;
 
     if (item.id && item.id === DIVIDER_KEY) {
-      return (
-        <Divider key={this.props.index || 100} />
-      );
+      return <Divider key={this.props.index || 100} />;
     }
 
     const containerClasses = classnames({

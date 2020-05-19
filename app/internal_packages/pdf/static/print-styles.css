@@ -70,8 +70,14 @@ h1,
 .header-toggle-control {
   display: none !important;
 }
-.message-actions-wrap {
+.message-actions-wrap > *:not(.message-time) {
+  display: none !important;
+}
+.message-actions-wrap > .message-time > span {
   display: none;
+}
+.message-actions-wrap > .message-time::after {
+  content: attr(title);
 }
 .collapsed.message-item-wrap,
 .draft.message-item-wrap {

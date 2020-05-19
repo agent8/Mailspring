@@ -20,7 +20,7 @@ export class CustomizeQuickActions extends React.Component {
     return (
       <RetinaImg
         name={`${iconName}.svg`}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24 }}
         className={`action_icon action_${idx}`}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
@@ -174,7 +174,7 @@ export class CustomizeEmailActions extends React.Component {
     return (
       <RetinaImg
         name={`${iconName}.svg`}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24 }}
         className={`action_icon action_${idx}`}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}

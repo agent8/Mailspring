@@ -1,5 +1,5 @@
 import { RetinaImg } from 'mailspring-component-kit';
-import { React, PropTypes, Actions, } from 'mailspring-exports';
+import { React, PropTypes, Actions } from 'mailspring-exports';
 
 const buttonTimer = 500;
 
@@ -49,10 +49,12 @@ class DraftDeleteButton extends React.Component {
         title="Delete"
         onClick={this._onDestroySelected}
       >
-        <RetinaImg name={'trash.svg'}
-                   style={{ width: 24, height: 24 }}
-                   isIcon
-                   mode={RetinaImg.Mode.ContentIsMask}/>
+        <RetinaImg
+          name={'trash.svg'}
+          style={{ width: 24, height: 24, fontSize: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </button>
     );
   }
@@ -61,7 +63,10 @@ class DraftDeleteButton extends React.Component {
     if (!this.state.isDeleting && !this._deletingTimer) {
       this._changeBackToNotDeleting();
       this.setState({ isDeleting: true });
-      Actions.destroyDraft(this.props.selection.items(), {allowNewDraft: true});
+      Actions.destroyDraft(this.props.selection.items(), {
+        allowNewDraft: true,
+        source: 'DraftToolbarButtons:_onDestroySelected',
+      });
       this.props.selection.clear();
     }
     return;

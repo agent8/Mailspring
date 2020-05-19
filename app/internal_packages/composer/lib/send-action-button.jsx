@@ -190,7 +190,7 @@ class SendActionButton extends React.Component {
         ) : (
           <RetinaImg
             name={'sent.svg'}
-            style={{ width: 27, height: 27 }}
+            style={{ width: 27, height: 27, fontSize: 27 }}
             isIcon={true}
             mode={RetinaImg.Mode.ContentIsMask}
           />

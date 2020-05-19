@@ -9,13 +9,6 @@
 
 @blurred-primary-color: mix(@background-primary, #ffbb00, 96%);
 @blurred-off-primary-color: mix(@background-off-primary, #ffbb00, 96%);
-.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 15px) {
-  -webkit-mask-image: url(@svg-url);
-  -webkit-mask-size: @bgSize;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  background-color: @bgColor;
-}
 
 .sheet-toolbar .btn-toolbar.item-compose {
   position: relative;
@@ -50,6 +43,10 @@
     float: left;
     background-color: @accent-primary;
   }
+  .edison-icon {
+    float: left;
+    color: @accent-primary;
+  }
   &:hover {
     box-shadow: -2px 2.5px 10px rgba(0, 0, 0, 0.35);
   }
@@ -73,6 +70,11 @@
     position: relative;
     z-index: 2;
   }
+  .edison-icon {
+    color: @gray-light;
+    position: relative;
+    z-index: 2;
+  }
   &:hover {
     &:after {
       content: '';
@@ -86,6 +88,9 @@
     }
     img.content-mask {
       background-color: @gray-light;
+    }
+    .edison-icon {
+      color: @gray-light;
     }
   }
   &:active {
@@ -256,6 +261,9 @@
       img.content-mask {
         background-color: @medium-grey;
       }
+      .edison-icon {
+        color: @medium-grey;
+      }
     }
     &:active {
       color: @dark-grey;
@@ -263,6 +271,9 @@
 
       img.content-mask {
         background-color: @dark-grey;
+      }
+      .edison-icon {
+        color: @dark-grey;
       }
     }
     &.with-select {
@@ -304,6 +315,9 @@
     img.content-mask {
       background-color: @medium-grey;
     }
+    .edison-icon {
+      color: @medium-grey;
+    }
     &.hide {
       display: none;
     }
@@ -313,6 +327,9 @@
     color: @component-active-color;
     img.content-mask {
       background-color: @component-active-color;
+    }
+    .edison-icon {
+      color: @component-active-color;
     }
   }
 
@@ -453,6 +470,11 @@ body.platform-win32 {
       z-index: 2;
       background-color: @medium-grey;
     }
+    .edison-icon {
+      position: relative;
+      z-index: 2;
+      color: @medium-grey;
+    }
     &:hover {
       &:after {
         content: '';
@@ -469,16 +491,25 @@ body.platform-win32 {
       img.content-mask {
         background-color: @medium-grey;
       }
+      .edison-icon {
+        color: @medium-grey;
+      }
     }
     &:active {
       img.content-mask {
         background-color: @dark-grey;
+      }
+      .edison-icon {
+        color: @dark-grey;
       }
     }
     &.btn-enabled {
       color: @component-active-color;
       img.content-mask {
         background-color: @component-active-color;
+      }
+      .edison-icon {
+        color: @component-active-color;
       }
     }
   }
@@ -525,6 +556,11 @@ body.platform-win32 {
       img.content-mask {
         float: left;
         background-color: @blue !important;
+        margin-top: 3px;
+      }
+      .edison-icon {
+        color: @blue !important;
+        float: left;
         margin-top: 3px;
       }
       span {
@@ -689,9 +725,6 @@ body.platform-win32 {
     .action {
       cursor: pointer;
       color: @text-color-very-subtle;
-      img.content-mask {
-        background-color: @text-color-very-subtle;
-      }
       font-size: @font-size-small;
       padding: 10px 6px;
       &:first-child {
@@ -705,9 +738,6 @@ body.platform-win32 {
       }
       &:hover {
         color: @text-color-link;
-        img.content-mask {
-          background-color: @text-color-link;
-        }
       }
       &.show-popout {
         position: absolute;
@@ -1136,8 +1166,9 @@ body.platform-win32 {
         height: 20px;
         position: absolute;
         width: 20px;
-        content: '';
-        .icon-mixin('../static/icons/check-alone.svg', @text-color, 24px);
+        color: @text-color;
+        font-size: 20px;
+        line-height: 1;
       }
     }
     &.small {
@@ -1172,13 +1203,13 @@ body.platform-win32 {
       box-shadow: @standard-shadow;
     }
     .emoji-tab {
-      background-color: @gray-light;
+      color: @gray-light;
       cursor: pointer;
       &:hover {
-        background-color: @component-active-color;
+        color: @component-active-color;
       }
       &.active {
-        background-color: @component-active-color;
+        color: @component-active-color;
       }
     }
   }

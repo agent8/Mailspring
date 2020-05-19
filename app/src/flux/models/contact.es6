@@ -418,12 +418,13 @@ export default class Contact extends Model {
     if (typeof this.email !== 'string' || this.email.length === 0) {
       return false;
     }
-    // If longer than 30 characters, it's probably robot email
-    if (this.email.length > 30) {
-      return true;
-    }
     const parts = this.email.split('@');
     if (parts.length > 0) {
+      // If longer than 30 characters, it's probably robot email
+      if (parts[0].length > 30) {
+        return true;
+      }
+
       const emailRegex = RegExpUtils.robotEmailRegex();
       return emailRegex.exec(this.email);
     }
@@ -509,6 +510,9 @@ export default class Contact extends Model {
       return this.name;
     }
     return this.isMePhrase({ forceAccountLabel, includeAccountLabel }) || fallback;
+  }
+  fullOriginal() {
+    return this.name;
   }
 
   fullName() {

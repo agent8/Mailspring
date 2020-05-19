@@ -654,6 +654,11 @@ module.exports = Utils = {
     return null;
   },
 
+  iconClassName: name => {
+    const fileName = path.basename(name, '.svg');
+    return ` edison-icon edison-icon-${fileName}`;
+  },
+
   subjectWithPrefix(subject, prefix) {
     if (subject.search(/fwd:/i) === 0) {
       return subject.replace(/fwd:/i, prefix);
