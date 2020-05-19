@@ -84,6 +84,10 @@ export default class MailboxPerspective {
       : this.forNothing();
   }
 
+  static forAllSent(categories) {
+    return categories.length > 0 ? new AllSentMailboxPerspective(categories) : this.forNothing();
+  }
+
   static forCategories(categories) {
     return categories.length > 0 ? new CategoryMailboxPerspective(categories) : this.forNothing();
   }
@@ -154,7 +158,9 @@ export default class MailboxPerspective {
       }
     }
     const perspective = this.forCategories(cats);
-
+    if (Array.isArray(accountsOrIds) && accountsOrIds.length > 1) {
+      perspective.displayName = 'All Sent';
+    }
     perspective.iconName = 'sent.svg';
     perspective.categoryIds = this.getCategoryIds(accountsOrIds, 'sent');
     return perspective;
@@ -181,9 +187,13 @@ export default class MailboxPerspective {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
         return this.forInboxOther(categories);
       }
-      if (json.type === CategoryMailboxPerspective.name) {
+      if (json.type === TodayMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
-        return this.forCategories(categories);
+        return MailboxPerspective.forToday(categories.map(cat => cat.accountId));
+      }
+      if (json.type === AllSentMailboxPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return MailboxPerspective.forAllSent(categories);
       }
       if (json.type === AllArchiveCategoryMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -205,6 +215,10 @@ export default class MailboxPerspective {
           siftCategory: data.siftCategory,
           accountsOrIds: json.accountIds,
         });
+      }
+      if (json.type === CategoryMailboxPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forCategories(categories);
       }
       return this.forInbox(json.accountIds);
     } catch (error) {
@@ -527,6 +541,9 @@ class DraftsMailboxPerspective extends MailboxPerspective {
       if (cat) {
         this._categories.push(cat);
       }
+    }
+    if (Array.isArray(accountIds) && accountIds.length > 1) {
+      this.displayName = 'All Drafts';
     }
   }
 
@@ -1064,6 +1081,22 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 }
 
+class AllSentMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(props) {
+    super(props);
+    this.name = 'All Sent';
+    this.iconName = 'sent.svg';
+    this.isAllSent = true;
+  }
+  toJSON() {
+    const json = super.toJSON();
+    json.isAllSent = true;
+    return json;
+  }
+  isEqual(other) {
+    return other.isAllSent;
+  }
+}
 class TodayMailboxPerspective extends CategoryMailboxPerspective {
   constructor(accountIds) {
     const categories = [];
@@ -1146,6 +1179,7 @@ class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
   constructor(data) {
     super(data);
     this.isAllArchive = true;
+    this.displayName = 'All Archive';
   }
   toJSON() {
     const json = super.toJSON();

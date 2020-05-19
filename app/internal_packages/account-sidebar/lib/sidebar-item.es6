@@ -305,7 +305,12 @@ class SidebarItem {
     if (cats.length === 0) {
       return null;
     }
-    const perspective = MailboxPerspective.forCategories(cats);
+    let perspective;
+    if (Array.isArray(accountIds) && accountIds.length > 1) {
+      perspective = MailboxPerspective.forAllSent(cats);
+    } else {
+      perspective = MailboxPerspective.forCategories(cats);
+    }
     let id = 'sent';
     if (opts.key) {
       id += `-${opts.key}`;
