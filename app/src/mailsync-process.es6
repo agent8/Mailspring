@@ -320,8 +320,7 @@ export default class MailsyncProcess extends EventEmitter {
             reject(error);
           } else {
             console.error(`Error while parsing native buffer ${buffer}`);
-            AppEnv.debugLog(buffer.toString('UTF-8'));
-            resolve({ response: {}, buffer });
+            resolve({ response: {}, buffer: '{}' });
           }
         }
       });
