@@ -300,6 +300,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.appearance.previewLines',
               keywords: [],
             },
+            {
+              label: 'Date format',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.dateFormat,
+              keyPath: 'core.appearance.dateFormat',
+              keywords: [],
+            },
           ],
         },
         {

@@ -24,6 +24,11 @@ const Days = {
   ThisWeekend: day => (day === 6 ? 13 : 6),
 };
 
+function getDateFormatFromConfig() {
+  const configDateFormat = AppEnv.config.get('core.appearance.dateFormat');
+  return configDateFormat;
+}
+
 function oclock(momentDate) {
   return momentDate.minute(0).second(0);
 }
@@ -319,7 +324,7 @@ const DateUtils = {
     // Append meridian if not using 24 hour clock
     if (!use24HourClock) {
       if (opts && opts.upperCase) {
-        console.error('upperCase time format no longer used')
+        console.error('upperCase time format no longer used');
       }
       timeFormat += 'a';
     }
@@ -355,7 +360,7 @@ const DateUtils = {
       format = 'MMM D';
     } else {
       // Month, day and year if over a year old
-      format = 'M/D/YY';
+      format = getDateFormatFromConfig();
     }
 
     return moment(datetime).format(format);
@@ -385,7 +390,7 @@ const DateUtils = {
         format = `[Yesterday]`;
       } else {
         let lastDayFormat = moment.localeData().calendar('lastDay', moment());
-        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '')
+        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '');
         format = `[${lastDayFormat}]`;
       }
     } else if (isSameYear) {
@@ -393,7 +398,7 @@ const DateUtils = {
       format = 'MMM D';
     } else {
       // Month, day and year if over a year old
-      format = 'M/D/YY';
+      format = getDateFormatFromConfig();
     }
 
     return moment(datetime).format(format);
@@ -428,7 +433,7 @@ const DateUtils = {
         format = `[Yesterday]`;
       } else {
         let lastDayFormat = moment.localeData().calendar('lastDay', moment());
-        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '')
+        lastDayFormat = lastDayFormat.replace(/(\[|\]+.*)/g, '');
         format = `[${lastDayFormat}]`;
       }
     } else if (isSameYear) {
@@ -436,7 +441,7 @@ const DateUtils = {
       format = 'MMM D';
     } else {
       // Month, day and year if over a year old
-      format = full ? 'MMMM D, YYYY' : 'M/D/YY';
+      format = full ? 'MMMM D, YYYY' : getDateFormatFromConfig();
     }
     return format;
   },
