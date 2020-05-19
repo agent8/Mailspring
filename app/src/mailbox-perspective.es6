@@ -1121,9 +1121,13 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
 
   unreadCount() {
     if (this.accountIds.length > 1) {
-      return ThreadCountsStore.unreadCountForCategoryId('today-all');
+      let sum = 0;
+      this.accountIds.forEach(accountId => {
+        sum += ThreadCountsStore.unreadCountForCategoryId(`${accountId}_Today`);
+      });
+      return sum;
     } else {
-      return ThreadCountsStore.unreadCountForCategoryId(`today-${this.accountIds[0]}`);
+      return ThreadCountsStore.unreadCountForCategoryId(`${this.accountIds[0]}_Today`);
     }
   }
 
