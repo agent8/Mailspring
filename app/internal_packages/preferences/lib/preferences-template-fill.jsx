@@ -300,13 +300,6 @@ const preferencesTemplateFill = {
               keyPath: 'core.appearance.previewLines',
               keywords: [],
             },
-            {
-              label: 'Enable Adaptive Coloring for emails.',
-              configSchema: configSchema =>
-                configSchema.properties.appearance.properties.adaptiveEmailColor,
-              keyPath: 'core.appearance.adaptiveEmailColor',
-              keywords: [],
-            },
           ],
         },
         {
@@ -331,6 +324,13 @@ const preferencesTemplateFill = {
               label: 'Theme',
               component: AppearanceThemeSwitch,
               keywords: ['Light Mode', 'Dark Mode', 'background'],
+            },
+            {
+              label: 'Enable Adaptive Coloring for emails.',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.adaptiveEmailColor,
+              keyPath: 'core.appearance.adaptiveEmailColor',
+              keywords: [],
             },
           ],
         },
