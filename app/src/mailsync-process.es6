@@ -65,8 +65,13 @@ export default class MailsyncProcess extends EventEmitter {
     this.verbose = verbose;
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
-    this.binaryPath = path.join(resourcePath, 'mailsync').replace('app.asar', 'app.asar.unpacked');
-    // this.binaryPath = path.join('/Users/bumblebee/Library/Developer/Xcode/DerivedData/EdisonMailSync-azgzmucfxprjdgbzddxewvyuqyfa/Build/Products/Debug', 'mailsync').replace('app.asar', 'app.asar.unpacked');
+    // this.binaryPath = path.join(resourcePath, 'mailsync').replace('app.asar', 'app.asar.unpacked');
+    this.binaryPath = path
+      .join(
+        '/Users/bumblebee/Library/Developer/Xcode/DerivedData/EdisonMailSync-azgzmucfxprjdgbzddxewvyuqyfa/Build/Products/Debug',
+        'mailsync'
+      )
+      .replace('app.asar', 'app.asar.unpacked');
     this.killNativeScript = path
       .join(
         resourcePath,
@@ -320,8 +325,7 @@ export default class MailsyncProcess extends EventEmitter {
             reject(error);
           } else {
             console.error(`Error while parsing native buffer ${buffer}`);
-            AppEnv.debugLog(buffer.toString('UTF-8'));
-            resolve({ response: {}, buffer });
+            resolve({ response: {}, buffer: '{}' });
           }
         }
       });
