@@ -3,8 +3,6 @@ import moment from 'moment-timezone';
 // Init locale for moment
 moment.locale(navigator.language);
 
-const EN_US_LOCALES = ['en_US', 'en_US_POSIX', 'haw_US', 'es_US', 'chr_US'];
-
 // Initialise moment timezone
 const tz = moment.tz.guess();
 if (!tz) {
@@ -25,6 +23,11 @@ const Days = {
   NextMonday: day => (day === 0 ? 1 : 8),
   ThisWeekend: day => (day === 6 ? 13 : 6),
 };
+
+function getDateFormatFromConfig() {
+  const configDateFormat = AppEnv.config.get('core.appearance.dateFormat');
+  return configDateFormat;
+}
 
 function oclock(momentDate) {
   return momentDate.minute(0).second(0);
@@ -357,11 +360,7 @@ const DateUtils = {
       format = 'MMM D';
     } else {
       // Month, day and year if over a year old
-      if (EN_US_LOCALES.includes(navigator.language)) {
-        format = 'M/D/YY';
-      } else {
-        format = 'D/M/YY';
-      }
+      format = getDateFormatFromConfig();
     }
 
     return moment(datetime).format(format);
@@ -398,12 +397,8 @@ const DateUtils = {
       // Month and day up to 1 year old
       format = 'MMM D';
     } else {
-      // Month, day and year if over a year olds
-      if (EN_US_LOCALES.includes(navigator.language)) {
-        format = 'M/D/YY';
-      } else {
-        format = 'D/M/YY';
-      }
+      // Month, day and year if over a year old
+      format = getDateFormatFromConfig();
     }
 
     return moment(datetime).format(format);
@@ -446,13 +441,7 @@ const DateUtils = {
       format = 'MMM D';
     } else {
       // Month, day and year if over a year old
-      let shortFormat;
-      if (EN_US_LOCALES.includes(navigator.language)) {
-        shortFormat = 'M/D/YY';
-      } else {
-        shortFormat = 'D/M/YY';
-      }
-      format = full ? 'MMMM D, YYYY' : shortFormat;
+      format = full ? 'MMMM D, YYYY' : getDateFormatFromConfig();
     }
     return format;
   },
