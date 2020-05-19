@@ -460,7 +460,7 @@ export default class Application extends EventEmitter {
       const resourcePath = this.configDirPath;
       const logPath = path.dirname(LOG.transports.file.findLogPath());
       if (fileName === '') {
-        fileName = parseInt(Date.now());
+        fileName = Date.now();
       }
       const outputPath = path.join(resourcePath, 'upload-log', `logs-${fileName}.zip`);
       const output = fs.createWriteStream(outputPath);
@@ -534,6 +534,9 @@ export default class Application extends EventEmitter {
   }
 
   initSupportInfo() {
+    LOG.transports.file.file = path.join(this.configDirPath, 'ui-log', 'application.log');
+    LOG.transports.console.level = false;
+    LOG.transports.file.maxSize = 20485760;
     if (this.config) {
       this.config.set('core.support.native', this.nativeVersion);
     }
@@ -547,13 +550,10 @@ export default class Application extends EventEmitter {
           this.config.set('core.support.id', id);
         })
         .catch(e => {
-          AppEnv.reportError(new Error('failed to init support id'));
+          this.reportError(new Error('failed to init support id'));
           this.config.set('core.support.id', 'Unknown');
         });
     }
-    LOG.transports.file.file = path.join(this.configDirPath, 'ui-log', 'application.log');
-    LOG.transports.console.level = false;
-    LOG.transports.file.maxSize = 20485760;
   }
 
   autoStartRestore() {
