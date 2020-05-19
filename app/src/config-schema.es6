@@ -564,7 +564,7 @@ export default {
             default: true,
             title: 'Enable Adaptive Coloring for emails.',
             note:
-              'Email content automatically adapts to the background color of the theme to preserve screen brightness. This can alter the original background and text color of emails in dark mode vs light mode.',
+              'Email content automatically adapts to the background color of the theme to preserve screen brightness. This can alter the original background and text color of emails in dark mode vs light mode. Turn this off to always view the original email when the app is in dark mode.',
           },
         },
       },
