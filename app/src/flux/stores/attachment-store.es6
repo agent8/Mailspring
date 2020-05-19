@@ -301,14 +301,14 @@ class DraftAttachment {
         AppEnv.logError(err, { errorData: this }, { grabLogs: true });
         this.setState({ state: AttachmentState.ready, extra: rest });
         if (cb) {
-          cb();
+          cb({ fileId: this.fileId, filePath: this.filePath });
         }
         return;
       }
       this.setState({ state: AttachmentState.ready, extra: rest });
       AppEnv.logDebug(`File copied, state set ${this.fileId}`);
       if (cb) {
-        cb();
+        cb({ fileId: this.fileId, filePath: this.filePath });
       }
     });
   }
@@ -317,11 +317,11 @@ class DraftAttachment {
       AppEnv.logError(new Error('target Attachment is null'));
       return;
     }
-    const done = () => {
+    const done = data => {
       this.setState({ state: AttachmentState.ready, ...rest });
       sourceAttachment.setState({ state: AttachmentState.ready, ...rest });
       if (cb) {
-        cb();
+        cb(data);
       }
     };
     const originalPath = sourceAttachment.filePath;
@@ -442,10 +442,10 @@ class DraftAttachments {
       AppEnv.logError('missing attachment');
       return;
     }
-    const done = () => {
+    const done = data => {
       this.setState({ state: DraftAttachmentState.ready, ...rest });
       if (cb) {
-        cb();
+        cb(data);
       }
     };
     this.setState({ state: DraftAttachmentState.busy, ...rest });
@@ -682,14 +682,16 @@ class AccountDrafts {
       });
       this.accounts.push(draft);
     }
-    const doneFromOutside = () => {
+    const doneFromOutside = data => {
       if (cb) {
-        cb();
+        cb(data);
       }
       this.trigger({ accountId, messageId, headerMessageId, dstFile, sourceFile, originalPath });
     };
     if (draft.isDeleted()) {
-      done();
+      if (cb) {
+        cb();
+      }
       AppEnv.logError(
         new Error(
           `Draft ${messageId},${headerMessageId} is already deleted, will not add attachment`
@@ -736,6 +738,7 @@ class AccountDrafts {
         if (cb) {
           cb();
         }
+        this.trigger({ accountId, messageId, headerMessageId, dstFile, sourceFile, originalPath });
       };
       sourceDraft.setState({ state: DraftAttachmentState.busy });
       console.log(
