@@ -519,8 +519,14 @@ export default class MailsyncProcess extends EventEmitter {
           if (str.includes('running vacuum')) this._showStatusWindow('vacuum');
         },
       });
-      const migrateReturn = buffer.toString().trim();
-      const ret = JSON.parse(migrateReturn);
+      let ret = {};
+      let migrateReturn;
+      try {
+        migrateReturn = buffer.toString().trim();
+        ret = JSON.parse(migrateReturn);
+      } catch (err) {
+        console.log(`migrate() json parse error ${migrateReturn}`);
+      }
       this._closeStatusWindow();
       if (ret && ret.version) {
         return ret.version;
