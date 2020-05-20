@@ -367,7 +367,7 @@ export default class ComposerView extends React.Component {
         <span className="dots">
           <RetinaImg
             name={'expand-more.svg'}
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -601,7 +601,7 @@ export default class ComposerView extends React.Component {
               >
                 <RetinaImg
                   name={'attachments.svg'}
-                  style={{ width: 24, height: 24 }}
+                  style={{ width: 24, height: 24, fontSize: 24 }}
                   isIcon
                   mode={RetinaImg.Mode.ContentIsMask}
                 />
@@ -616,7 +616,7 @@ export default class ComposerView extends React.Component {
               >
                 <RetinaImg
                   name={'inline-image.svg'}
-                  style={{ width: 24, height: 24 }}
+                  style={{ width: 24, height: 24, fontSize: 24 }}
                   isIcon
                   mode={RetinaImg.Mode.ContentIsMask}
                 />
@@ -635,7 +635,7 @@ export default class ComposerView extends React.Component {
                 ) : (
                   <RetinaImg
                     name={'trash.svg'}
-                    style={{ width: 24, height: 24 }}
+                    style={{ width: 24, height: 24, fontSize: 24 }}
                     isIcon
                     mode={RetinaImg.Mode.ContentIsMask}
                   />

@@ -86,6 +86,22 @@ const isSameAccount = items => {
   return true;
 };
 
+const nextActionForRemoveFromView = source => {
+  if (!AppEnv.isMainWindow()) {
+    AppEnv.logDebug('Not main window, no next action for remove from view');
+    return;
+  }
+  const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
+  AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
+  if (nextAction === 'next') {
+    AppEnv.commands.dispatch('core:show-next');
+  } else if (nextAction === 'previous') {
+    AppEnv.commands.dispatch('core:show-previous');
+  } else {
+    Actions.popSheet({ reason: source });
+  }
+};
+
 export function ArchiveButton(props) {
   const _onShortCut = event => {
     _onArchive(event, threadSelectionScope(props, props.selection));
@@ -97,7 +113,7 @@ export function ArchiveButton(props) {
       currentPerspective: FocusedPerspectiveStore.current(),
     });
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:archive' });
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:archive');
     if (event) {
       event.stopPropagation();
     }
@@ -130,7 +146,7 @@ export function ArchiveButton(props) {
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onArchive}>
         <RetinaImg
           name={'archive.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -175,7 +191,7 @@ export function TrashButton(props) {
     });
     const tasks = [...moveTasks, ...expungeTasks];
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:remove' });
+    nextActionForRemoveFromView('Toolbar Button: Search');
     if (event) {
       event.stopPropagation();
     }
@@ -209,7 +225,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:remove' });
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:remove');
     if (event) {
       event.stopPropagation();
     }
@@ -251,7 +267,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:ThreadList:expunge' });
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:expunge');
     if (event) {
       event.stopPropagation();
     }
@@ -359,7 +375,7 @@ export function TrashButton(props) {
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={actionCallBack}>
         <RetinaImg
           name={'trash.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -445,7 +461,7 @@ export function MarkAsSpamButton(props) {
         >
           <RetinaImg
             name="not-junk.svg"
-            style={{ width: 24, height: 24 }}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -480,7 +496,7 @@ export function MarkAsSpamButton(props) {
       >
         <RetinaImg
           name={'junk.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -511,7 +527,7 @@ export function PrintThreadButton(props) {
     <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onPrintThread}>
       <RetinaImg
         name={'print.svg'}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24 }}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
       />
@@ -560,7 +576,7 @@ export function ToggleStarredButton(props) {
       >
         <RetinaImg
           name="flag.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -621,7 +637,7 @@ export function ToggleUnreadButton(props) {
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onClick}>
         <RetinaImg
           name={`${fragment === 'unread' ? 'unread' : 'read'}.svg`}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -684,7 +700,7 @@ class HiddenGenericRemoveButton extends React.Component {
       const tasks = current.tasksForRemovingItems(items, 'Keyboard Shortcut');
       if (Array.isArray(tasks) && tasks.length > 0) {
         Actions.queueTasks(tasks);
-        Actions.popSheet({ reason: 'ToolbarButton:HiddenGenericRemoveButton:removeFromView' });
+        nextActionForRemoveFromView('ToolbarButton:HiddenGenericRemoveButton:removeFromView');
         if (AppEnv.isThreadWindow()) {
           AppEnv.debugLog(`Closing window because in ThreadWindow`);
           AppEnv.close();
@@ -943,7 +959,7 @@ export class ThreadListMoreButton extends React.Component {
       >
         <RetinaImg
           name="more.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -1031,7 +1047,7 @@ export class MoreButton extends React.Component {
       >
         <RetinaImg
           name="more.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -1088,7 +1104,7 @@ class ThreadArrowButton extends React.Component {
         <RetinaImg
           name={`${direction === 'up' ? 'back' : 'next'}.svg`}
           isIcon
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       </div>
@@ -1231,7 +1247,7 @@ export const PopoutButton = () => {
       >
         <RetinaImg
           name={'popout.svg'}
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -1339,7 +1355,7 @@ class MoreActionsButton extends React.Component {
       >
         <RetinaImg
           name="more.svg"
-          style={{ width: 24, height: 24 }}
+          style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />

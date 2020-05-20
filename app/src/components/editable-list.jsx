@@ -117,9 +117,9 @@ class EditableList extends Component {
     className: '',
     createInputProps: {},
     showEditIcon: false,
-    onDeleteItem: () => { },
-    onItemEdited: () => { },
-    onItemCreated: () => { },
+    onDeleteItem: () => {},
+    onItemEdited: () => {},
+    onItemCreated: () => {},
   };
 
   constructor(props) {
@@ -178,7 +178,7 @@ class EditableList extends Component {
     this._setStateAndFocus({ creatingItem: false }, callback);
   };
 
-  _setStateAndFocus = (state, callback = () => { }) => {
+  _setStateAndFocus = (state, callback = () => {}) => {
     this.setState(state, () => {
       this._focusSelf();
       callback();
@@ -491,8 +491,8 @@ class EditableList extends Component {
             <div className="icon-item close-icon">
               <RetinaImg
                 isIcon
-                name="close.svg"
-                style={{ width: 12, height: 12 }}
+                name={'close.svg'}
+                style={{ width: 12, height: 12, fontSize: 12 }}
                 mode={RetinaImg.Mode.ContentIsMask}
                 onClick={_.partial(onDelete, _, item, idx)}
               />
@@ -566,17 +566,17 @@ class EditableList extends Component {
             {items}
           </ScrollRegion>
         ) : (
-            <div
-              ref={el => {
-                this._itemsWrapperEl = el;
-              }}
-              onDragOver={this._onDragOver}
-              onDragLeave={this._onDragLeave}
-              onDrop={this._onDrop}
-            >
-              {items}
-            </div>
-          )}
+          <div
+            ref={el => {
+              this._itemsWrapperEl = el;
+            }}
+            onDragOver={this._onDragOver}
+            onDragLeave={this._onDragLeave}
+            onDrop={this._onDrop}
+          >
+            {items}
+          </div>
+        )}
         {this._renderButtons()}
       </KeyCommandsRegion>
     );

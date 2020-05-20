@@ -2,6 +2,23 @@
 
 .color_icon() {
   .color_archive {
+    color: @action-color-green;
+  }
+  .color_trash {
+    color: @action-color-red;
+  }
+  .color_flag {
+    color: @action-color-orange;
+  }
+  .color_read {
+    color: @action-color-blue;
+  }
+  .color_folder {
+    color: @action-color-purple;
+  }
+}
+.color_bg() {
+  .color_archive {
     background-color: @action-color-green;
   }
   .color_trash {
@@ -27,15 +44,16 @@
       .only-item {
         min-width: 160px;
       }
-      .content-mask {
+      .edison-icon {
+        vertical-align: middle;
         margin-right: 5px;
       }
     }
     .quick-action-preview {
       position: relative;
       width: 500px;
-      .content-mask {
-        background-color: @gray;
+      .edison-icon {
+        color: @gray;
       }
       .action_icon {
         position: absolute;
@@ -57,8 +75,8 @@
     .email-action-preview {
       position: relative;
       width: 500px;
-      .content-mask {
-        background-color: @gray;
+      .edison-icon {
+        color: @gray;
       }
       .action_icon {
         position: absolute;
@@ -80,8 +98,8 @@
         right: 36px;
       }
     }
-    .email-actions .content-mask {
-      background-color: @gray;
+    .email-actions span > .edison-icon {
+      color: @gray;
     }
     .swipe-action-preview {
       position: relative;
@@ -90,7 +108,7 @@
         position: relative;
         z-index: 2;
       }
-      .color_icon();
+      .color_bg();
       .action_color {
         position: absolute;
         left: 18px;

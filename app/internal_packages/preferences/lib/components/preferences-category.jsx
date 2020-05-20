@@ -64,7 +64,8 @@ export default class PreferencesCategory extends React.Component {
     if (account.provider === 'gmail' && role === 'archive') {
       return false;
     }
-    const old = this.state.old_assignments ? this.state.old_assignments[role] : false;
+    // const old = this.state.old_assignments ? this.state.old_assignments[role] : false;
+    const old = account.provider === 'gmail' ? true : false;
     return (
       <div className={'role-section ' + role} key={`${account.id}-${role}`}>
         <div className="col-left">{`${role[0].toUpperCase()}${role.substr(1)}`}:</div>

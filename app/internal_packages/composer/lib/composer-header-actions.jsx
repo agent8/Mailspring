@@ -69,7 +69,7 @@ export default class ComposerHeaderActions extends React.Component {
             name="popout.svg"
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
-            style={{ position: 'relative', top: '-2px', width: 20 }}
+            style={{ position: 'relative', top: '-2px', width: 20, height: 20 }}
           />
         </span>
       );

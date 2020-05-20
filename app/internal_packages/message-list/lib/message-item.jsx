@@ -252,7 +252,7 @@ export default class MessageItem extends React.Component {
           <RetinaImg
             name="feed-attachments.svg"
             isIcon
-            style={{ width: 18, height: 18 }}
+            style={{ width: 18, height: 18, fontSize: 18 }}
             mode={RetinaImg.Mode.ContentIsMask}
           />
           <span>{this.props.message.files.length} attachments</span>
@@ -263,7 +263,7 @@ export default class MessageItem extends React.Component {
             <RetinaImg
               name="refresh.svg"
               className="infinite-rotation-linear"
-              style={{ width: 24, height: 24 }}
+              style={{ width: 24, height: 24, fontSize: 24 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
@@ -273,7 +273,7 @@ export default class MessageItem extends React.Component {
             <RetinaImg
               name="download.svg"
               isIcon
-              style={{ width: 18, height: 18 }}
+              style={{ width: 18, height: 18, fontSize: 18 }}
               mode={RetinaImg.Mode.ContentIsMask}
             />
             <span>Download all</span>
@@ -464,7 +464,7 @@ export default class MessageItem extends React.Component {
         >
           <RetinaImg
             name={'down-arrow.svg'}
-            style={{ width: 16, height: 16 }}
+            style={{ width: 16, height: 16, fontSize: 16 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -483,7 +483,7 @@ export default class MessageItem extends React.Component {
       >
         <RetinaImg
           name={'down-arrow.svg'}
-          style={{ width: 16, height: 16 }}
+          style={{ width: 16, height: 16, fontSize: 16 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -497,8 +497,10 @@ export default class MessageItem extends React.Component {
       className,
     } = this.props;
 
+    const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
+    const pencilClassName = Utils.iconClassName('pencil.svg');
     const attachmentIcon = Utils.showIconForAttachments(files) ? (
-      <div className="collapsed-attachment" />
+      <div className={`collapsed-attachment ${attachmentClassName}`} />
     ) : null;
 
     return (
@@ -511,7 +513,7 @@ export default class MessageItem extends React.Component {
                 <div className="collapsed-from">
                   {from && from[0] && from[0].displayName({ compact: true })}
                 </div>
-                {draft && <div className="collapsed-pencil" />}
+                {draft && <div className={`collapsed-pencil ${pencilClassName}`} />}
                 {attachmentIcon}
                 <div className="collapsed-timestamp">
                   <MessageTimestamp date={date} />

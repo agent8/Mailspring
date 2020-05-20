@@ -101,13 +101,8 @@ class PreferencesRoot extends React.Component {
     IFrameSearcher.highlightSearchInDocument(this._regionId, searchValue, node, null);
   };
 
-  toggleMaximize = (e) => {
-    if (e.target &&
-      (
-        e.target.contentEditable === 'true' ||
-        e.target.tagName === 'INPUT'
-      )
-    ) {
+  toggleMaximize = e => {
+    if (e.target && (e.target.contentEditable === 'true' || e.target.tagName === 'INPUT')) {
       return;
     }
     const win = AppEnv.getCurrentWindow();
@@ -118,7 +113,7 @@ class PreferencesRoot extends React.Component {
     }
     e.stopPropagation();
     e.preventDefault();
-  }
+  };
 
   render() {
     const { tab, selection, tabs } = this.props;
@@ -133,7 +128,7 @@ class PreferencesRoot extends React.Component {
           <div className="item-back" onClick={this.onBack}>
             <RetinaImg
               name={'arrow.svg'}
-              style={{ width: 24, height: 24 }}
+              style={{ width: 24, height: 24, fontSize: 24 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />

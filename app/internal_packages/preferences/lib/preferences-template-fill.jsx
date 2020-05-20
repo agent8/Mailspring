@@ -99,6 +99,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'When mail is Archived or Deleted',
+              configSchema: configSchema =>
+                configSchema.properties.reading.properties.actionAfterRemove,
+              keyPath: 'core.reading.actionAfterRemove',
+              keywords: [],
+            },
+            {
               label: 'Send new mail from',
               component: DefaultAccountSending,
               configSchema: configSchema => configSchema,
@@ -301,10 +308,10 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
-              label: 'Enable Adaptive Coloring for emails.',
+              label: 'Date format',
               configSchema: configSchema =>
-                configSchema.properties.appearance.properties.adaptiveEmailColor,
-              keyPath: 'core.appearance.adaptiveEmailColor',
+                configSchema.properties.appearance.properties.dateFormat,
+              keyPath: 'core.appearance.dateFormat',
               keywords: [],
             },
           ],
@@ -331,6 +338,13 @@ const preferencesTemplateFill = {
               label: 'Theme',
               component: AppearanceThemeSwitch,
               keywords: ['Light Mode', 'Dark Mode', 'background'],
+            },
+            {
+              label: 'Enable Adaptive Coloring for emails.',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.adaptiveEmailColor,
+              keyPath: 'core.appearance.adaptiveEmailColor',
+              keywords: [],
             },
           ],
         },

@@ -1,11 +1,21 @@
 import { RetinaImg } from 'mailspring-component-kit';
 import React from 'react';
+import moment from 'moment';
+
+moment.locale(navigator.language);
+// get the default date format like 'MM/DD/YYYY'、'DD/MM/YYYY'
+const defaultDateFormat = moment.localeData().longDateFormat('L');
+const dateFormatOption = ['MM/DD/YY', 'DD/MM/YY'];
+const defaultDateFormatOption = dateFormatOption.includes(defaultDateFormat.replace('YYYY', 'YY'))
+  ? defaultDateFormat.replace('YYYY', 'YY')
+  : dateFormatOption[0];
+
 function actionOption(iconName, label) {
   return (
     <span>
       <RetinaImg
         name={`${iconName}.svg`}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24 }}
         className={`color_${iconName}`}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
@@ -204,6 +214,13 @@ export default {
             type: 'boolean',
             default: true,
             title: 'Automatically load images in open emails',
+          },
+          actionAfterRemove: {
+            type: 'string',
+            default: 'return',
+            enum: ['next', 'previous', 'return'],
+            enumLabels: ['Open next', 'Open previous', 'Return to email list'],
+            title: 'When mail is Archived or Deleted',
           },
           // backspaceDelete: {
           //   type: 'boolean',
@@ -573,7 +590,14 @@ export default {
             default: true,
             title: 'Enable Adaptive Coloring for emails.',
             note:
-              'Email content automatically adapts to the background color of the theme to preserve screen brightness. This can alter the original background and text color of emails in dark mode vs light mode.',
+              'Email content automatically adapts to the background color of the theme to preserve screen brightness. This can alter the original background and text color of emails in dark mode vs light mode. Turn this off to always view the original email when the app is in dark mode.',
+          },
+          dateFormat: {
+            type: 'string',
+            default: defaultDateFormatOption,
+            enum: dateFormatOption,
+            enumLabels: dateFormatOption,
+            title: 'Date format',
           },
         },
       },
