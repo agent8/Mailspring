@@ -302,6 +302,7 @@ export default class AppEnvConstructor {
   }
 
   debugLog(msg) {
+    console.warn('Deprecated, use logDebug');
     this.logDebug(msg);
   }
 

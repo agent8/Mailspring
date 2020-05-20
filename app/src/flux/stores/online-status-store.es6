@@ -7,7 +7,7 @@ const messageBlock = {
   description: 'Edison Mail is offline. Please check your network connection.',
   icon: 'no-network.svg',
   delayDuration: 0,
-  allowClose: false,
+  allowClose: true,
   priority: 0,
   actions: [],
 };
@@ -19,7 +19,7 @@ class OnlineStatusStore extends MailspringStore {
     if (AppEnv.isMainWindow()) {
       window.addEventListener('online', this._onlineStatusChange);
       window.addEventListener('offline', this._onlineStatusChange);
-      if(!this._online){
+      if (!this._online) {
         // Because at this point, store listening is not setup
         AppMessageStore._onQueue(messageBlock);
       }
@@ -45,7 +45,6 @@ class OnlineStatusStore extends MailspringStore {
   isOnline() {
     return this._online;
   }
-
 }
 
 export default new OnlineStatusStore();
