@@ -1,4 +1,4 @@
-const { React, PropTypes, Utils } = require('mailspring-exports');
+import { React, PropTypes, Utils, Message } from 'mailspring-exports';
 
 class ThreadListParticipants extends React.Component {
   static displayName = 'ThreadListParticipants';
@@ -135,7 +135,7 @@ class ThreadListParticipants extends React.Component {
     }
 
     for (let idx = 0; idx < messages.length; idx++) {
-      const message = Object.assign({}, messages[idx]);
+      const message = new Message(messages[idx]);
       if (message.draft && message.unread) {
         // If message is draft and unread, force contact from name to be 'Draft'
         let tmp = message['from'];
