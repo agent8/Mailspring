@@ -13,7 +13,6 @@ export default class ThreadReplyForwardButton extends React.Component {
     thread: PropTypes.object,
   };
 
-
   constructor(props) {
     super(props);
     this.state = {};
@@ -50,7 +49,7 @@ export default class ThreadReplyForwardButton extends React.Component {
     clearTimeout(this._delayReplyTimer);
   }
 
-  _timeoutButton = (type) => {
+  _timeoutButton = type => {
     this._delayTimeout(type);
     if (type === 'reply') {
       if (!this._replyTimer) {
@@ -81,7 +80,7 @@ export default class ThreadReplyForwardButton extends React.Component {
       }
     }
   };
-  _delayTimeout = (type) => {
+  _delayTimeout = type => {
     if (type === 'reply') {
       if (!this._delayReplyTimer) {
         this._delayReplyTimer = setTimeout(() => {
@@ -216,19 +215,24 @@ export default class ThreadReplyForwardButton extends React.Component {
           style={{ marginRight: 0 }}
           onClick={this._reply}
         >
-          <RetinaImg name={'reply.svg'}
-            style={{ width: 24, height: 24 }}
+          <RetinaImg
+            name={'reply.svg'}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon={true}
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </button>
         <button
-          className={`btn btn-toolbar thread-reply-all-button ${this.canReplyAll() ? '' : 'disabled'}`}
+          className={`btn btn-toolbar thread-reply-all-button ${
+            this.canReplyAll() ? '' : 'disabled'
+          }`}
           title="Reply All"
           style={{ marginRight: 0 }}
           onClick={this._replyAll}
         >
-          <RetinaImg name={'reply-all.svg'}
-            style={{ width: 24, height: 24 }}
+          <RetinaImg
+            name={'reply-all.svg'}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon={true}
             mode={RetinaImg.Mode.ContentIsMask}
           />
@@ -239,10 +243,12 @@ export default class ThreadReplyForwardButton extends React.Component {
           style={{ marginRight: 0 }}
           onClick={this._forward}
         >
-          <RetinaImg name={'forward.svg'}
-            style={{ width: 24, height: 24 }}
+          <RetinaImg
+            name={'forward.svg'}
+            style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon={true}
-            mode={RetinaImg.Mode.ContentIsMask} />
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </button>
       </div>
     );

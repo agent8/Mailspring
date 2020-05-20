@@ -197,7 +197,7 @@ export default class CreateNewFolderPopover extends Component {
               name="close_1.svg"
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
-              style={{ width: 20 }}
+              style={{ width: 20, height: 20 }}
             />
           </span>
         </div>

@@ -9,7 +9,9 @@
       visibility: inherit;
       .item {
         & > span {
-          img {
+          img,
+          .edison-icon {
+            line-height: 24px;
             float: left;
           }
           line-height: 24px;
@@ -65,6 +67,10 @@
     img.content-mask {
       background-color: @gray-light;
     }
+    .edison-icon {
+      vertical-align: middle;
+      color: @gray-light;
+    }
   }
   .primary-item {
     border-radius: @border-radius-base 0 0 @border-radius-base;
@@ -73,7 +79,8 @@
   .primary-item,
   .secondary-picker {
     position: relative;
-    img {
+    img,
+    .edison-icon {
       z-index: 2;
       position: relative;
     }
@@ -99,6 +106,9 @@
       img {
         background-color: @light-grey;
       }
+      .edison-icon {
+        color: @light-grey;
+      }
     }
   }
   .secondary-picker {
@@ -120,10 +130,18 @@
     img.content-mask {
       background-color: @gray-light;
     }
+    .edison-icon {
+      vertical-align: middle;
+      color: @gray-light;
+    }
   }
   .secondary-items {
     img.content-mask {
       background-color: @gray;
+    }
+    .edison-icon {
+      vertical-align: middle;
+      color: @gray;
     }
     &:hover {
       cursor: default;
@@ -159,8 +177,9 @@
         &:last-child {
           padding-bottom: 6px;
         }
-        img {
+        img.content-mask {
           margin-right: 4px;
+          margin-top: 3px;
           vertical-align: text-bottom;
         }
         &.selected {

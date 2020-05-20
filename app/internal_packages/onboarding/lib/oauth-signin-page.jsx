@@ -408,7 +408,7 @@ export default class OAuthSignInPage extends React.Component {
       <div className="success">
         <h2>Success!</h2>
         <RetinaImg
-          style={{ width: 65, height: 65 }}
+          style={{ width: 65, height: 65, fontSize: 65 }}
           isIcon
           name="check-alone.svg"
           mode={RetinaImg.Mode.ContentIsMask}
@@ -451,7 +451,7 @@ export default class OAuthSignInPage extends React.Component {
               name="popout.svg"
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
-              style={{ width: 24 }}
+              style={{ width: 24, height: 24, fontSize: 24 }}
             />
           </div>
         )}

@@ -87,7 +87,7 @@ export default class FullScreenModal extends React.Component {
             <RetinaImg
               isIcon
               className="modal-close"
-              style={{ width: '24', height: '24' }}
+              style={{ width: 24, height: 24, fontSize: 24 }}
               name="close.svg"
               mode={RetinaImg.Mode.ContentIsMask}
               onClick={this._onClickClose}
