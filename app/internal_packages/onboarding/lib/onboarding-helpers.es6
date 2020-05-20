@@ -5,6 +5,7 @@ import { Account, IdentityStore, MailsyncProcess, Actions, AccountStore } from '
 import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
 import dns from 'dns';
+import path from 'path';
 const regexpForDomain = test => new RegExp(`(^${test}$)|(\\.${test}$)`);
 
 const queryStringify = (data, encoded = false) => {
