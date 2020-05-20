@@ -65,36 +65,6 @@ export default class Application extends EventEmitter {
       safeMode,
     });
 
-    try {
-      const mailsync = new MailsyncProcess(options);
-      this.nativeVersion = await mailsync.migrate();
-    } catch (err) {
-      let message = null;
-      let buttons = ['Quit'];
-      if (err.toString().includes('ENOENT')) {
-        message = `Edison Mail could find the mailsync process. If you're building Edison Mail from source, make sure mailsync.tar.gz has been downloaded and unpacked in your working copy.`;
-      } else if (err.toString().includes('spawn')) {
-        message = `Edison Mail could not spawn the mailsync process. ${err.toString()}`;
-      } else {
-        message = `We encountered a problem with your local email database. ${err.toString()}\n\nCheck that no other copies of Edison Mail are running and click Rebuild to reset your local cache.`;
-        buttons = ['Quit', 'Rebuild'];
-      }
-
-      dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
-        if (response === 0) {
-          app.quit();
-        } else {
-          this._deleteDatabase(() => {
-            if (!process.mas) {
-              app.relaunch();
-            }
-            app.quit();
-          }, true);
-        }
-      });
-      return;
-    }
-
     const Config = require('../config');
     const config = new Config();
     this.config = config;
@@ -184,6 +154,35 @@ export default class Application extends EventEmitter {
     }
     this.cleaningOldFilesTimer = null;
     this._triggerCleanOldLogs(true);
+    try {
+      const mailsync = new MailsyncProcess(options);
+      this.nativeVersion = await mailsync.migrate();
+    } catch (err) {
+      let message = null;
+      let buttons = ['Quit'];
+      if (err.toString().includes('ENOENT')) {
+        message = `Edison Mail could find the mailsync process. If you're building Edison Mail from source, make sure mailsync.tar.gz has been downloaded and unpacked in your working copy.`;
+      } else if (err.toString().includes('spawn')) {
+        message = `Edison Mail could not spawn the mailsync process. ${err.toString()}`;
+      } else {
+        message = `We encountered a problem with your local email database. ${err.toString()}\n\nCheck that no other copies of Edison Mail are running and click Rebuild to reset your local cache.`;
+        buttons = ['Quit', 'Rebuild'];
+      }
+
+      dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
+        if (response === 0) {
+          app.quit();
+        } else {
+          this._deleteDatabase(() => {
+            if (!process.mas) {
+              app.relaunch();
+            }
+            app.quit();
+          }, true);
+        }
+      });
+      return;
+    }
   }
   getOpenWindows() {
     return this.windowManager.getOpenWindows();
@@ -534,7 +533,11 @@ export default class Application extends EventEmitter {
   }
 
   initSupportInfo() {
-    LOG.transports.file.file = path.join(this.configDirPath, 'ui-log', 'application.log');
+    LOG.transports.file.file = path.join(
+      this.configDirPath,
+      'ui-log',
+      `application-${Date.now()}.log`
+    );
     LOG.transports.console.level = false;
     LOG.transports.file.maxSize = 20485760;
     if (this.config) {
