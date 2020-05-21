@@ -19,6 +19,7 @@ const DEBUG_QUERY_PLANS = AppEnv.inDevMode();
 
 const BASE_RETRY_LOCK_DELAY = 50;
 const MAX_RETRY_LOCK_DELAY = 500;
+const SLOW_QUERY_THRESH_HOLD = 500;
 export const AuxDBs = {
   MessageBody: 'embody.db',
 };
@@ -295,9 +296,9 @@ class DatabaseStore extends MailspringStore {
       if (!background) {
         const results = await this._executeLocally(query, values, dbKey);
         const msec = Date.now() - start;
-        if (msec > 100) {
+        if (msec > SLOW_QUERY_THRESH_HOLD) {
           this._prettyConsoleLog(
-            `DatabaseStore._executeLocally took more than 100ms - ${msec}msec: ${query}`
+            `DatabaseStore._executeLocally took more than ${SLOW_QUERY_THRESH_HOLD}ms - ${msec}msec: ${query}`
           );
         }
         resolve(results);
@@ -309,9 +310,8 @@ class DatabaseStore extends MailspringStore {
             debugVerbose(trimTo(q));
           }
 
-          if (msec > 100) {
-            const msgPrefix =
-              msec > 100 ? 'DatabaseStore._executeInBackground took more than 100ms - ' : '';
+          if (msec > SLOW_QUERY_THRESH_HOLD) {
+            const msgPrefix = `DatabaseStore._executeInBackground took more than ${SLOW_QUERY_THRESH_HOLD}ms - `;
             this._prettyConsoleLog(
               `${msgPrefix}${msec}msec (${backgroundTime}msec in background): ${query}`
             );
@@ -368,8 +368,8 @@ class DatabaseStore extends MailspringStore {
           debugVerbose(trimTo(q));
         }
 
-        if (msec > 100) {
-          const msgPrefix = msec > 100 ? 'DatabaseStore: query took more than 100ms - ' : '';
+        if (msec > SLOW_QUERY_THRESH_HOLD) {
+          const msgPrefix = `DatabaseStore: query took more than ${SLOW_QUERY_THRESH_HOLD}ms - `;
           if (query.startsWith(`SELECT `) && DEBUG_QUERY_PLANS) {
             const plan = this._db[dbKey].prepare(`EXPLAIN QUERY PLAN ${query}`).all(values);
             const planString = `${plan.map(row => row.detail).join('\n')} for ${query}`;
