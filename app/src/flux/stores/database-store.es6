@@ -421,6 +421,14 @@ class DatabaseStore extends MailspringStore {
           silent: true,
         }
       );
+      const clearOpenQueries = () => {
+        for (const id in this._agentOpenQueries) {
+          if (this._agentOpenQueries[id]) {
+            this._agentOpenQueries[id]({ results: [] });
+          }
+        }
+        this._agentOpenQueries = {};
+      };
       this._agent.stdout.on('data', data => console.log(data.toString()));
       this._agent.stderr.on('data', data => {
         AppEnv.reportError(new Error(`database-store._executeInBackground error`), {
@@ -432,6 +440,7 @@ class DatabaseStore extends MailspringStore {
       this._agent.on('close', code => {
         debug(`Query Agent: exited with code ${code}`);
         this._agent = null;
+        clearOpenQueries();
       });
       this._agent.on('error', err => {
         AppEnv.reportError(
@@ -439,6 +448,7 @@ class DatabaseStore extends MailspringStore {
         );
         this._agent.kill('SIGTERM');
         this._agent = null;
+        clearOpenQueries();
       });
       this._agent.on('message', ({ type, id, results, agentTime }) => {
         if (type === 'results') {
