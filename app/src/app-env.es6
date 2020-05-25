@@ -11,6 +11,7 @@ import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 import { autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
+import RegExpUtils from './regexp-utils';
 const LOG = require('electron-log');
 // const archiver = require('archiver');
 // let getOSInfo = null;
@@ -670,7 +671,11 @@ export default class AppEnvConstructor {
     this.emitter.emit('window-props-received', this.loadSettings.windowProps);
   }
   setWindowTitle(title) {
-    this.getCurrentWindow().setTitle(title);
+    try {
+      this.getCurrentWindow().setTitle(title.replace(RegExpUtils.nonPrintableUnicodeRegex(), ''));
+    } catch (e) {
+      this.reportError(e);
+    }
   }
 
   /*
