@@ -837,13 +837,17 @@ export default class MailsyncBridge {
               if (m[pseudoPrimaryKey] === model[pseudoPrimaryKey]) {
                 duplicate = true;
                 let correctLastMessageTimestamp;
+                let inboxCategory;
                 if (index === threadIndex) {
                   correctLastMessageTimestamp = model.lastMessageTimestamp;
+                  inboxCategory = model.inboxCategory;
                 } else {
                   correctLastMessageTimestamp = m.lastMessageTimestamp;
+                  inboxCategory = m.inboxCategory;
                 }
                 Object.assign(m, model);
                 m.lastMessageTimestamp = correctLastMessageTimestamp;
+                m.inboxCategory = inboxCategory;
                 break;
               }
             }
