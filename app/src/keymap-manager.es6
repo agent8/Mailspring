@@ -220,4 +220,7 @@ export default class KeymapManager {
   getBindingsForCommand(command) {
     return this._bindingsCache[command] || [];
   }
+  getCommandsForKeystroke(keystrokes) {
+    return this._commandsCache[keystrokes];
+  }
 }

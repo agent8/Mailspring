@@ -4,9 +4,17 @@ import PropTypes from 'prop-types';
 import _ from 'underscore';
 import { Flexbox } from 'mailspring-component-kit';
 import fs from 'fs';
+import displayedKeybindings from './displayed-keybindings';
 
 import { keyAndModifiersForEvent } from './mousetrap-keybinding-helpers';
 
+const commandMappingTitle = new Map();
+displayedKeybindings.forEach(group => {
+  group.items.forEach(item => {
+    const [command, label] = item;
+    commandMappingTitle.set(command, label);
+  });
+});
 export default class CommandKeybinding extends React.Component {
   static propTypes = {
     label: PropTypes.string,
@@ -101,6 +109,18 @@ export default class CommandKeybinding extends React.Component {
 
   _onFinishedEditing = () => {
     if (this.state.editingBinding) {
+      const commands = AppEnv.keymaps.getCommandsForKeystroke(this.state.editingBinding) || [];
+      const otherCommands = commands.filter(command => command !== this.props.command);
+      if (otherCommands.length) {
+        const otherTitle = otherCommands.map(
+          command => commandMappingTitle.get(command) || 'system'
+        );
+        AppEnv.showErrorDialog(
+          `This shortcut has been used by the "${[...new Set(otherTitle)].join('","')}"!`
+        );
+        this._afterFinishedEditing();
+        return;
+      }
       const keymapPath = AppEnv.keymaps.getUserKeymapPath();
       let keymaps = {};
 
@@ -123,6 +143,10 @@ export default class CommandKeybinding extends React.Component {
         );
       }
     }
+    this._afterFinishedEditing();
+  };
+
+  _afterFinishedEditing = () => {
     this.setState({ editing: false, editingBinding: null });
     AppEnv.keymaps.resumeAllKeymaps();
   };
