@@ -45,12 +45,13 @@ const getDeviceHash = () => {
 };
 const getOSInfo = () => {
   let cpuModel = os.cpus();
-  if(Array.isArray(cpuModel) && cpuModel.length > 0){
+  if (Array.isArray(cpuModel) && cpuModel.length > 0) {
     cpuModel = cpuModel[0].model;
   }
   return {
     cpuModel: cpuModel,
     platform: os.platform(),
+    hostname: os.hostname(),
     arch: os.arch(),
     release: os.release(),
     uptime: os.uptime(),

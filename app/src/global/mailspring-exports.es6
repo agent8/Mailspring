@@ -187,6 +187,7 @@ lazyLoad('MuteNotificationStore', 'flux/stores/mute-notification-store');
 lazyLoad('SearchStore', '../internal_packages/thread-search/lib/search-store');
 
 lazyLoad(`ServiceRegistry`, `registries/service-registry`);
+lazyLoad(`RESTful`, `rest/index`);
 
 // Decorators
 lazyLoad(`InflatesDraftClientId`, 'decorators/inflates-draft-client-id');
