@@ -116,7 +116,7 @@ export default class CommandKeybinding extends React.Component {
           command => commandMappingTitle.get(command) || 'system'
         );
         AppEnv.showErrorDialog(
-          `This shortcut has been used by the "${[...new Set(otherTitle)].join('","')}"!`
+          `This shortcut is currently being used by "${[...new Set(otherTitle)].join('",and"')}"!`
         );
         this._afterFinishedEditing();
         return;
