@@ -22,6 +22,8 @@
 	<string>banner</string>
 	<key>NSRequiresAquaSystemAppearance</key>
 	<false/>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.12</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
