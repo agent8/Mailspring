@@ -1113,6 +1113,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
     this.name = 'Today';
     this.iconName = 'today.svg';
     this._categories = categories;
+    this.isToday = true;
   }
   categories() {
     return this._categories;
