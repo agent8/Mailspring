@@ -6,14 +6,14 @@ class FormField extends React.Component {
   constructor() {
     super();
     this.state = {
-      show_password: false
-    }
+      show_password: false,
+    };
   }
   toggleShowPassword = () => {
     this.setState({
-      show_password: !this.state.show_password
-    })
-  }
+      show_password: !this.state.show_password,
+    });
+  };
   render() {
     const props = this.props;
     const field = props.field;
@@ -28,7 +28,10 @@ class FormField extends React.Component {
     }
     return (
       <span className="form-field">
-        <label htmlFor={props.field}>{props.title}{props.hideColon ? '' : ':'}</label>
+        <label htmlFor={props.field}>
+          {props.title}
+          {props.hideColon ? '' : ':'}
+        </label>
         <input
           type={type}
           id={props.field}
@@ -41,26 +44,23 @@ class FormField extends React.Component {
           onChange={props.onFieldChange}
           onBlur={props.onFieldChange}
         />
-        {
-          props.type === 'password' && (
-            <span
-              className={'show-password ' + (this.state.show_password ? 'show' : 'hiden')}
-              onClick={this.toggleShowPassword}
-            >
-              <RetinaImg
-                name={this.state.show_password ? 'show-password.svg' : 'readReceipts.svg'}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-                style={{ width: 20 }}
-              />
-            </span>
-          )
-        }
+        {props.type === 'password' && (
+          <span
+            className={'show-password ' + (this.state.show_password ? 'show' : 'hiden')}
+            onClick={this.toggleShowPassword}
+          >
+            <RetinaImg
+              name={this.state.show_password ? 'show-password.svg' : 'readReceipts.svg'}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+              style={{ width: 20, height: 20 }}
+            />
+          </span>
+        )}
       </span>
     );
   }
 }
-
 
 FormField.propTypes = {
   field: PropTypes.string,

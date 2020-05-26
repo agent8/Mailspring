@@ -22,8 +22,8 @@
     font-size: @font-size-smaller * 0.8;
     top: -1px;
     position: relative;
-    img {
-      background-color: @gray-light;
+    .edison-icon {
+      color: @gray-light;
     }
   }
 }
@@ -93,33 +93,20 @@ body.platform-win32 {
 //  }
 //}
 
-.icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 100%) {
-  -webkit-mask-image: url(@svg-url);
-  -webkit-mask-size: @bgSize;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  background-color: @bgColor;
-}
-
 .mail-important-icon {
   width: 25px;
   height: 25px;
+  font-size: 25px;
   display: inline-block;
-  .icon-mixin('../static/icons/important.svg', @gray-lighter, 24px);
+  color: @gray-lighter;
 }
 .mail-important-icon.enabled.active {
-  // background-image: url(../static/images/important/Icon-Important-Active@2x.png);
-  // background-size: 16px;
-  .icon-mixin('../static/icons/important.svg',@yellow, 24px);
+  color: @yellow;
 }
 .mail-important-icon.enabled:hover {
-  // background-image: url(../static/images/important/Icon-Important-HoverActive@2x.png);
-  // background-size: 16px;
-  .icon-mixin('../static/icons/important.svg',darken(@yellow, 5%), 24px);
+  color: darken(@yellow, 5%);
 }
 .mail-important-icon.enabled.active:hover {
-  // background-image: url(../static/images/important/Icon-Important-Active@2x.png);
-  // background-size: 16px;
-  .icon-mixin('../static/icons/important.svg',@yellow, 24px);
+  color: @yellow;
   -webkit-filter: brightness(90%);
 }

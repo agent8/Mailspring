@@ -286,13 +286,13 @@ const ToolbarEmojiButton = ({ value, onChange, anchorEl = null, closePopover = n
     if (closePopover) {
       closePopover();
       setTimeout(() => {
-        Actions.openPopover(<EmojiToolbarPopover onInsertEmoji={onInsertEmoji}/>, {
+        Actions.openPopover(<EmojiToolbarPopover onInsertEmoji={onInsertEmoji} />, {
           originRect: originRect,
           direction: 'up',
         });
       });
     } else {
-      Actions.openPopover(<EmojiToolbarPopover onInsertEmoji={onInsertEmoji}/>, {
+      Actions.openPopover(<EmojiToolbarPopover onInsertEmoji={onInsertEmoji} />, {
         originRect: originRect,
         direction: 'up',
       });
@@ -322,7 +322,7 @@ export default [
     renderMark,
     renderNode,
     rules,
-    onKeyDown,
-    onKeyUp,
+    // onKeyDown,
+    // onKeyUp,
   },
 ];

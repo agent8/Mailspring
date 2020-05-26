@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Actions, } from 'mailspring-exports';
+import { Actions } from 'mailspring-exports';
 
 import RetinaImg from './retina-img';
 let Category = null;
@@ -47,8 +47,18 @@ export default class ToolbarBack extends React.Component {
     }
     return (
       <div className="button-group">
-        <div style={{ marginLeft: 0 }} className="item-back btn-toolbar" onClick={this._onClick} title={`Return to ${title}`}>
-          <RetinaImg name={'arrow.svg'} style={{ width: 24, height: 24 }} isIcon mode={RetinaImg.Mode.ContentIsMask} />
+        <div
+          style={{ marginLeft: 0 }}
+          className="item-back btn-toolbar"
+          onClick={this._onClick}
+          title={`Return to ${title}`}
+        >
+          <RetinaImg
+            name={'arrow.svg'}
+            style={{ width: 24, height: 24, fontSize: 24 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </div>
       </div>
     );

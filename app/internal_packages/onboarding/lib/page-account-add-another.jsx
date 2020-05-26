@@ -1,9 +1,7 @@
 import React from 'react';
 import OnboardingActions from './onboarding-actions';
 import { AccountStore } from 'mailspring-exports';
-import {
-  RetinaImg
-} from 'mailspring-component-kit';
+import { RetinaImg } from 'mailspring-component-kit';
 
 export default class AddAnotherAccountPage extends React.Component {
   static displayName = 'AddAnotherAccountPage';
@@ -12,12 +10,10 @@ export default class AddAnotherAccountPage extends React.Component {
     super(props);
   }
 
-  componentDidMount() {
-
-  }
+  componentDidMount() {}
 
   _onFinish = () => {
-    if (AppEnv.config.get("agree")) {
+    if (AppEnv.config.get('agree')) {
       OnboardingActions.moveToPage('initial-preferences');
     } else {
       OnboardingActions.moveToPage('gdpr-terms');
@@ -26,7 +22,7 @@ export default class AddAnotherAccountPage extends React.Component {
 
   _onAddNow = () => {
     OnboardingActions.moveToPage('account-choose');
-  }
+  };
 
   render() {
     const accounts = AccountStore.accounts() || [];
@@ -43,29 +39,33 @@ export default class AddAnotherAccountPage extends React.Component {
           <h4>Access all of your accounts in one app.</h4>
           <div className="email-list">
             <div className="email-wrapper">
-              {
-                accounts.map(acc => (
-                  <div key={acc.emailAddress} className="email-item">
-                    <RetinaImg name={'check.svg'}
-                      style={{ width: 28, height: 28 }}
-                      isIcon
-                      mode={RetinaImg.Mode.ContentIsMask} />
-                    <span>{acc.emailAddress}</span>
-                  </div>
-                ))
-              }
+              {accounts.map(acc => (
+                <div key={acc.emailAddress} className="email-item">
+                  <RetinaImg
+                    name={'check.svg'}
+                    style={{ width: 28, height: 28, fontSize: 28 }}
+                    isIcon
+                    mode={RetinaImg.Mode.ContentIsMask}
+                  />
+                  <span>{acc.emailAddress}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
         <div className="footer">
-          <button key="later" className="btn btn-large btn-ghost btn-later" onClick={this._onFinish}>
+          <button
+            key="later"
+            className="btn btn-large btn-ghost btn-later"
+            onClick={this._onFinish}
+          >
             {lebelText}
           </button>
           <button key="now" className="btn btn-large btn-now" onClick={this._onAddNow}>
             Add More!
           </button>
         </div>
-      </div >
+      </div>
     );
   }
 }

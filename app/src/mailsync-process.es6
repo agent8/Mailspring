@@ -90,7 +90,51 @@ export default class MailsyncProcess extends EventEmitter {
     this.dataPrivacyOptions = { isGDPR: false, optOut: false };
     this.supportId = '';
   }
-
+  isInRenderer() {
+    return process && process.type === 'renderer';
+  }
+  reportError = (...restArgs) => {
+    if (this.isInRenderer()) {
+      AppEnv.reportError(...restArgs);
+    } else if (global && global.application && global.application.reportError) {
+      global.application.reportError(...restArgs);
+    }
+  };
+  reportWarning = (...restArgs) => {
+    if (this.isInRenderer()) {
+      AppEnv.reportWarning(...restArgs);
+    } else if (global && global.application && global.application.reportWarning) {
+      global.application.reportWarning(...restArgs);
+    }
+  };
+  reportLog = (...restArgs) => {
+    if (this.isInRenderer()) {
+      AppEnv.reportLog(...restArgs);
+    } else if (global && global.application && global.application.reportLog) {
+      global.application.reportLog(...restArgs);
+    }
+  };
+  logDebug = data => {
+    if (this.isInRenderer()) {
+      AppEnv.logDebug(data);
+    } else if (global && global.application && global.application.logDebug) {
+      global.application.logDebug(data);
+    }
+  };
+  logWarn = data => {
+    if (this.isInRenderer()) {
+      AppEnv.logWarning(data);
+    } else if (global && global.application && global.application.logWarn) {
+      global.application.logWarn(data);
+    }
+  };
+  logError = data => {
+    if (this.isInRenderer()) {
+      AppEnv.logError(data);
+    } else if (global && global.application && global.application.logError) {
+      global.application.logError(data);
+    }
+  };
   _showStatusWindow(mode) {
     if (this._win) return;
     const { BrowserWindow } = require('electron');
@@ -217,10 +261,10 @@ export default class MailsyncProcess extends EventEmitter {
         rs.push(`${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`);
         rs.push(null);
         rs.pipe(this._proc.stdin, { end: false });
-        if (AppEnv.enabledToNativeLog) {
+        if (this.isInRenderer() && AppEnv.enabledToNativeLog) {
           console.log('--------------------To native---------------');
-          AppEnv.logDebug(
-            `to native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`
+          this.logDebug(
+            `to-native: ${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`
           );
           console.log('-----------------------------To native END-----------------------');
         }
@@ -319,7 +363,7 @@ export default class MailsyncProcess extends EventEmitter {
             error.rawLog = stripSecrets(buffer.toString());
             reject(error);
           } else {
-            console.error(`Error while parsing native buffer ${buffer}`);
+            this.logError(`Error while parsing native buffer ${buffer}`);
             resolve({ response: {}, buffer: '{}' });
           }
         }
@@ -406,7 +450,7 @@ export default class MailsyncProcess extends EventEmitter {
       try {
         lastJSON = outBuffer.length && JSON.parse(outBuffer);
       } catch (err) {
-        AppEnv.reportError(new Error(`parse outBuffer failed: ${outBuffer}`));
+        this.reportError(new Error(`parse outBuffer failed: ${outBuffer}`));
       } finally {
         if (lastJSON) {
           if (lastJSON.error) {
@@ -457,10 +501,10 @@ export default class MailsyncProcess extends EventEmitter {
       return false;
     }
     for (let i = 0; i < this._sendMessageQueue.length; i++) {
-      if (AppEnv.enabledToNativeLog) {
+      if (this.isInRenderer() && AppEnv.enabledToNativeLog) {
         console.log('--------------------To native ---------------');
-        AppEnv.logDebug(
-          `to native: flushing queue: ${this.account ? this.account.pid : 'no account'} - ${
+        this.logDebug(
+          `to-native: flushing queue: ${this.account ? this.account.pid : 'no account'} - ${
             this._sendMessageQueue[i]
           }`
         );
@@ -480,10 +524,10 @@ export default class MailsyncProcess extends EventEmitter {
       Utils = require('mailspring-exports').Utils;
     }
     const msg = `${JSON.stringify(json)}\n`;
-    if (AppEnv.enabledToNativeLog) {
+    if (this.isInRenderer() && AppEnv.enabledToNativeLog) {
       console.log('--------------------To native---------------');
-      AppEnv.logDebug(
-        `to ${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
+      this.logDebug(
+        `to-${this._mode === mailSyncModes.SIFT ? 'native: sift' : 'native'}: ${
           this.account ? this.account.pid || this.account.id : 'no account'
         } - ${msg}`
       );
@@ -496,14 +540,14 @@ export default class MailsyncProcess extends EventEmitter {
       if (this._proc && this._proc.pid) {
         id = this._proc.pid;
       }
-      AppEnv.logDebug(`@pid ${id} mailsync write error: ${error.message}`);
+      this.logDebug(`@pid ${id} mailsync write error: ${error.message}`);
       if (error && error.message.includes('socket has been ended')) {
         // but try to kill it anyway and then force-emit a 'close' to trigger
         // the bridge to restart us.
         // The process probably already exited and we missed it somehow,
 
         this.kill();
-        AppEnv.logDebug(`pid@${id} mailsync-process sendMessage error:  ${error.message}`);
+        this.logDebug(`pid@${id} mailsync-process sendMessage error:  ${error.message}`);
         this.emit('close', { code: -2, error, signal: null });
       }
     }

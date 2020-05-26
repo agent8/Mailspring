@@ -5,7 +5,7 @@
   z-index: 100;
   text-align: center;
   pointer-events: none;
-  max-width: calc(~"100% - 90px");
+  max-width: calc(~'100% - 90px');
   .undo-redo-toast {
     display: flex;
     flex-direction: column-reverse;
@@ -31,7 +31,7 @@
       margin-left: 20px;
       margin-right: auto;
     }
-    .failed{
+    .failed {
       background: @red;
     }
 
@@ -80,6 +80,12 @@
         height: 14px;
         width: 14px;
         background-color: fade(@black, 30%);
+      }
+      .edison-icon {
+        height: 14px;
+        width: 14px;
+        font-size: 14px;
+        color: fade(@black, 30%);
       }
     }
   }

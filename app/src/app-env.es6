@@ -11,6 +11,7 @@ import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 import { autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
+import RegExpUtils from './regexp-utils';
 const LOG = require('electron-log');
 // const archiver = require('archiver');
 // let getOSInfo = null;
@@ -91,10 +92,19 @@ export default class AppEnvConstructor {
     LOG.transports.file.file = path.join(
       this.getConfigDirPath(),
       'ui-log',
-      `ui-log-${Date.now()}.log`
+      `ui-log-${this.isMainWindow() ? 'main-' : ''}${Date.now()}.log`
     );
     LOG.transports.console.level = false;
     LOG.transports.file.maxSize = 20485760;
+    LOG.transports.file.archiveLog = file => {
+      file = file.toString();
+      const info = path.parse(file);
+      try {
+        fs.renameSync(file, path.join(info.dir, `${info.name}-${Date.now()}.old${info.ext}`));
+      } catch (e) {
+        console.warn('Could not rotate log', e);
+      }
+    };
     // if (devMode) {
     //   LOG.transports.file.appName = 'EdisonMail-dev';
     // } else {
@@ -293,6 +303,7 @@ export default class AppEnvConstructor {
   }
 
   debugLog(msg) {
+    console.warn('Deprecated, use logDebug');
     this.logDebug(msg);
   }
 
@@ -333,11 +344,6 @@ export default class AppEnvConstructor {
     return extra;
   }
 
-  // Public: report an error through the `ErrorLogger`
-  //
-  // The difference between this and `ErrorLogger.reportError` is that
-  // `AppEnv.reportError` hooks into test failures and dev tool popups.
-  //
   reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
     if (grabLogs) {
       this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
@@ -665,7 +671,11 @@ export default class AppEnvConstructor {
     this.emitter.emit('window-props-received', this.loadSettings.windowProps);
   }
   setWindowTitle(title) {
-    this.getCurrentWindow().setTitle(title);
+    try {
+      this.getCurrentWindow().setTitle(title.replace(RegExpUtils.nonPrintableUnicodeRegex(), ''));
+    } catch (e) {
+      this.reportError(e);
+    }
   }
 
   /*
@@ -1339,12 +1349,19 @@ export default class AppEnvConstructor {
     detail = '',
     type = 'question',
     buttons = ['Okay', 'Cancel'],
+    defaultId = 0,
   } = {}) {
     let winToShow = null;
     if (showInMainWindow) {
       winToShow = remote.getGlobal('application').getMainWindow();
     }
-    return remote.dialog.showMessageBox(winToShow, { type, buttons, message: title, detail });
+    return remote.dialog.showMessageBox(winToShow, {
+      type,
+      buttons,
+      message: title,
+      detail,
+      defaultId,
+    });
   }
 
   // Delegate to the browser's process fileListCache

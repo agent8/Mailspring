@@ -31,7 +31,7 @@ class BasicContent extends React.Component {
       <RetinaImg
         name={this.props.icon}
         fallback={'alert.svg'}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24, marginLeft: '-6px', marginRight: '10px' }}
         isIcon={isIcon}
         mode={RetinaImg.Mode.ContentIsMask}
       />
@@ -63,6 +63,7 @@ class BasicContent extends React.Component {
           key="close"
           name="close_1.svg"
           isIcon={true}
+          style={{ width: 10, height: 10, fontSize: 10 }}
           mode={RetinaImg.Mode.ContentIsMask}
           onClick={() => this.props.onClose()}
         />
@@ -226,18 +227,22 @@ export default class AppMessageToast extends React.Component {
           transitionEnterTimeout={150}
           transitionName="app-message-toast-fade"
         >
-          {blocks.filter(b => !b.hide).map(block => {
-            return <BasicContent
-              key={block.id}
-              level={block.priority}
-              actions={block.actions}
-              icon={block.icon}
-              block={block}
-              onMouseEnter={this._onMouseEnter}
-              onMouseLeave={this._onMouseLeave}
-              onClose={this._closeToaster.bind(this, block)}
-            />;
-          })}
+          {blocks
+            .filter(b => !b.hide)
+            .map(block => {
+              return (
+                <BasicContent
+                  key={block.id}
+                  level={block.priority}
+                  actions={block.actions}
+                  icon={block.icon}
+                  block={block}
+                  onMouseEnter={this._onMouseEnter}
+                  onMouseLeave={this._onMouseLeave}
+                  onClose={this._closeToaster.bind(this, block)}
+                />
+              );
+            })}
         </CSSTransitionGroup>
       </div>
     );

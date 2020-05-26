@@ -57,9 +57,10 @@ export default class ModeToggle extends React.Component {
       >
         <RetinaImg
           isIcon
-          style={{ width: 22 }}
+          style={{ width: 22, height: 22, fontSize: 22 }}
           name="contacts.svg"
-          mode={RetinaImg.Mode.ContentIsMask} />
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </button>
     );
   }

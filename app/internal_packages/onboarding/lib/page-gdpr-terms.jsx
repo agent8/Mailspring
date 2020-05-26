@@ -20,8 +20,8 @@ class GdprTerms extends Component {
       gdpr_checks: [false, false],
       continueGDPR: false,
       terms_check_all: false,
-      terms_error: false
-    }
+      terms_error: false,
+    };
   }
 
   componentDidMount() {
@@ -37,15 +37,15 @@ class GdprTerms extends Component {
     this.setState({
       gdpr_check_all: result,
       gdpr_checks: [result, result],
-    })
-  }
+    });
+  };
 
   toggleTerms = () => {
     this.setState({
       terms_check_all: !this.state.terms_check_all,
-      terms_error: this.state.terms_check_all
-    })
-  }
+      terms_error: this.state.terms_check_all,
+    });
+  };
 
   _renderCheckbox(check) {
     return (
@@ -53,10 +53,10 @@ class GdprTerms extends Component {
         name={check ? 'check.svg' : 'check-empty.svg'}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
-        style={{ width: 24 }}
+        style={{ width: 24, height: 24, fontSize: 24, verticalAlign: 'middle' }}
         className={check ? 'check' : 'empty'}
       />
-    )
+    );
   }
 
   toggleCheckbox = (key, index, allCheckKey) => {
@@ -64,76 +64,92 @@ class GdprTerms extends Component {
     const allCheck = this.state[key].indexOf(false) === -1;
     this.setState({
       [key]: this.state[key],
-      [allCheckKey]: allCheck
+      [allCheckKey]: allCheck,
     });
-  }
+  };
 
   _onGDPRContinue = () => {
     if (!this.state.gdpr_checks[0]) {
       return;
     }
     this.setState({
-      continueGDPR: true
-    })
-  }
+      continueGDPR: true,
+    });
+  };
 
   _onAgree = () => {
     if (!this.state.terms_check_all) {
       this.setState({
-        terms_error: true
-      })
+        terms_error: true,
+      });
       return;
     }
     AppEnv.config.set('core.privacy.isGDPR', this.state.isEU);
     if (this.state.isEU) {
       AppEnv.config.set(
         'core.privacy.dataShare.optOut',
-        !this.state.gdpr_check_all || !this.state.gdpr_checks[1],
+        !this.state.gdpr_check_all || !this.state.gdpr_checks[1]
       );
     } else {
       AppEnv.config.set('core.privacy.dataShare.optOut', false);
     }
     AppEnv.trackingEvent('Onboarding-TermsAgreed');
-    AppEnv.config.set("agree", true);
+    AppEnv.config.set('agree', true);
     OnboardingActions.moveToPage('initial-preferences');
-  }
+  };
 
   render() {
-    const { isEU, gdpr_check_all, gdpr_checks, continueGDPR, terms_check_all, terms_error } = this.state;
+    const {
+      isEU,
+      gdpr_check_all,
+      gdpr_checks,
+      continueGDPR,
+      terms_check_all,
+      terms_error,
+    } = this.state;
     const GDPR = (
       <div className="gdpr">
         <h1>We Care About Your Privacy</h1>
         <h4>
-          Edison Mail respects your right to control data and we protect<br />
-          your privacy, <a href="http://www.edison.tech/privacy.html" target="_blank">read how</a>. In compliance with GDPR regulations,<br />
-          please grant us the required permissions to process your data.<br />
+          Edison Mail respects your right to control data and we protect
+          <br />
+          your privacy,{' '}
+          <a href="http://www.edison.tech/privacy.html" target="_blank">
+            read how
+          </a>
+          . In compliance with GDPR regulations,
+          <br />
+          please grant us the required permissions to process your data.
+          <br />
           You can update them anytime.
         </h4>
         <div className="row check-all" onClick={this.toggleGDPRAll}>
-          <a>
-            {this._renderCheckbox(gdpr_check_all)}
-          </a>
-          <div>
-            Select All
-          </div>
+          <a>{this._renderCheckbox(gdpr_check_all)}</a>
+          <div>Select All</div>
         </div>
-        <div className="row" onClick={() => this.toggleCheckbox('gdpr_checks', 0, 'gdpr_check_all')}>
-          <a>
-            {this._renderCheckbox(gdpr_checks[0])}
-          </a>
+        <div
+          className="row"
+          onClick={() => this.toggleCheckbox('gdpr_checks', 0, 'gdpr_check_all')}
+        >
+          <a>{this._renderCheckbox(gdpr_checks[0])}</a>
           <div className="label">
-            Access email accounts connected and process personal data to<br />
+            Access email accounts connected and process personal data to
+            <br />
             use the smart features in the Edison Mail app.
           </div>
         </div>
-        <div className="row" onClick={() => this.toggleCheckbox('gdpr_checks', 1, 'gdpr_check_all')}>
-          <a>
-            {this._renderCheckbox(gdpr_checks[1])}
-          </a>
+        <div
+          className="row"
+          onClick={() => this.toggleCheckbox('gdpr_checks', 1, 'gdpr_check_all')}
+        >
+          <a>{this._renderCheckbox(gdpr_checks[1])}</a>
           <div className="label">
-            Process data as part of Edison Trends Research. We use the<br />
-            information we collect to understand new and interesting<br />
-            consumer trends. We may share these anonymized trends with<br />
+            Process data as part of Edison Trends Research. We use the
+            <br />
+            information we collect to understand new and interesting
+            <br />
+            consumer trends. We may share these anonymized trends with
+            <br />
             third parties outside Edison. Keep Email free!
           </div>
         </div>
@@ -141,26 +157,27 @@ class GdprTerms extends Component {
           <button
             key="next"
             className={'btn btn-large btn-continue ' + (gdpr_checks[0] ? '' : 'btn-disabled')}
-            onClick={this._onGDPRContinue}>
+            onClick={this._onGDPRContinue}
+          >
             Continue
           </button>
         </div>
-      </div>);
+      </div>
+    );
 
     const Terms = (
       <div className="terms">
         <h1>Terms & Conditions</h1>
         <p className="these-terms-condition">
-          These Terms & Conditions govern your use of the Edison Software (“Edison”)
-          services and mobile applications. By accessing or using the Service, you signify
-          that you have read, understood, and agree to be bound by this Terms &
-          Conditions Agreement (“Agreement”), whether or not you are a registered user of
-          our Service. We reserve the right to update this Agreement at any time. If we
-          make any material changes to this Agreement, we will announce these changes
-          on our Site and notify registered users via email. Your continued use of the
-          Service after any such changes constitutes your acceptance of the new
-          Agreement. If you do not agree to abide by these or any future Terms &
-          Conditions, do not use or access the Service.
+          These Terms & Conditions govern your use of the Edison Software (“Edison”) services and
+          mobile applications. By accessing or using the Service, you signify that you have read,
+          understood, and agree to be bound by this Terms & Conditions Agreement (“Agreement”),
+          whether or not you are a registered user of our Service. We reserve the right to update
+          this Agreement at any time. If we make any material changes to this Agreement, we will
+          announce these changes on our Site and notify registered users via email. Your continued
+          use of the Service after any such changes constitutes your acceptance of the new
+          Agreement. If you do not agree to abide by these or any future Terms & Conditions, do not
+          use or access the Service.
         </p>
         <div className="terms-links">
           <a href="http://www.edison.tech/terms.html" targe="_blank">
@@ -171,13 +188,13 @@ class GdprTerms extends Component {
           </a>
         </div>
         <div className="row terms-check" onClick={this.toggleTerms}>
-          <a>
-            {this._renderCheckbox(terms_check_all)}
-          </a>
+          <a>{this._renderCheckbox(terms_check_all)}</a>
           <div className="label">
             I have read and agree to the Terms & Conditions
             {terms_error && (
-              <div className="error">You must agree to the Terms & Conditions before continuing.</div>
+              <div className="error">
+                You must agree to the Terms & Conditions before continuing.
+              </div>
             )}
           </div>
         </div>
@@ -185,19 +202,17 @@ class GdprTerms extends Component {
           <button
             key="agree"
             className={'btn btn-large btn-agree ' + (terms_check_all ? '' : 'btn-disabled')}
-            onClick={this._onAgree}>
+            onClick={this._onAgree}
+          >
             Agree
           </button>
         </div>
-      </div>);;
+      </div>
+    );
 
     return (
       <div className={`page gdpr-terms`}>
-        <img
-          className="logo"
-          src={`edisonmail://onboarding/assets/manage-privacy.png`}
-          alt=""
-        />
+        <img className="logo" src={`edisonmail://onboarding/assets/manage-privacy.png`} alt="" />
         {isEU && !continueGDPR ? GDPR : Terms}
       </div>
     );

@@ -212,7 +212,10 @@ export class AttachmentItem extends Component {
 
   _onClick = e => {
     if (this.state.isDownloading) {
-      AttachmentStore.refreshAttachmentsState({fileId: this.props.fileId, filePath: this.props.filePath});
+      AttachmentStore.refreshAttachmentsState({
+        fileId: this.props.fileId,
+        filePath: this.props.filePath,
+      });
       return;
     }
     if (this.props.isDownloading || this.props.missing) {
@@ -347,7 +350,7 @@ export class AttachmentItem extends Component {
                     ref={cm => {
                       this._fileIconComponent = cm;
                     }}
-                    style={{ backgroundColor: color }}
+                    style={{ color: color }}
                     className="file-icon"
                     fallback="drafts.svg"
                     name={iconName}
@@ -419,7 +422,7 @@ export class ImageAttachmentItem extends Component {
   componentDidMount() {
     this._storeUnlisten = [
       AttachmentStore.listen(this._onDownloadStoreChange),
-      Actions.broadcastDraftAttachmentState.listen(this._onAttachmentStateChange, this)
+      Actions.broadcastDraftAttachmentState.listen(this._onAttachmentStateChange, this),
     ];
     this._mounted = true;
   }
@@ -433,17 +436,17 @@ export class ImageAttachmentItem extends Component {
     }
   }
 
-  _onAttachmentStateChange = ({fileId, fileState} = {}) => {
-    if(!this._mounted){
+  _onAttachmentStateChange = ({ fileId, fileState } = {}) => {
+    if (!this._mounted) {
       return;
     }
-    if(!fileId || !fileState){
+    if (!fileId || !fileState) {
       return;
     }
     console.log(`file ${fileId} state changed ${fileState}`);
-    if(fileId === this.props.fileId && fileState === 1 && this.state.notReady){
-      this.setState({notReady: false});
-      this._onImgLoaded();
+    if (fileId === this.props.fileId && fileState === 1) {
+      this.setState({ notReady: false });
+      this._onImgLoaded({ forceReload: true });
     }
   };
 
@@ -478,12 +481,12 @@ export class ImageAttachmentItem extends Component {
   };
 
   _onImageError = () => {
-    if(this._mounted){
-      this.setState({notReady: true});
+    if (this._mounted) {
+      this.setState({ notReady: true });
     }
   };
 
-  _onImgLoaded = () => {
+  _onImgLoaded = ({ forceReload = false } = {}) => {
     // on load, modify our DOM just /slightly/. This causes DOM mutation listeners
     // watching the DOM to trigger. This is a good thing, because the image may
     // change dimensions. (We use this to reflow the draft body when this component
@@ -491,6 +494,11 @@ export class ImageAttachmentItem extends Component {
     const el = ReactDOM.findDOMNode(this);
     if (el) {
       el.classList.add('loaded');
+    }
+    if (this._imgRef && forceReload && !this._imageReloaded) {
+      const imgSrc = `${Utils.safeBrowserPath(this.props.filePath)}?forceReload=forced`;
+      this._imgRef.setAttribute('src', imgSrc);
+      this._imageReloaded = true;
     }
   };
 
@@ -503,7 +511,17 @@ export class ImageAttachmentItem extends Component {
         </div>
       );
     }
-    return <img key={`${this.fileId}:${this.state.notReady}`} draggable={draggable} src={Utils.safeBrowserPath(filePath)} alt={`${this.state.notReady}`} onLoad={this._onImgLoaded} onError={this._onImageError} />;
+    return (
+      <img
+        ref={ref => (this._imgRef = ref)}
+        key={`${this.fileId}:${this.state.notReady}`}
+        draggable={draggable}
+        src={Utils.safeBrowserPath(filePath)}
+        alt={`${this.state.notReady}`}
+        onLoad={this._onImgLoaded}
+        onError={this._onImageError}
+      />
+    );
   }
 
   render() {

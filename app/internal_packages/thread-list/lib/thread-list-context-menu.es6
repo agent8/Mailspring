@@ -51,7 +51,7 @@ export default class ThreadListContextMenu {
     return {
       label: `Search for ${from.email}`,
       click: () => {
-        Actions.searchQuerySubmitted(`"${from.email.replace('"', '""')}"`, true);
+        Actions.searchQuerySubmitted(`from: "${from.email.replace('"', '""')}"`, true);
       },
     };
   }
@@ -138,7 +138,7 @@ export default class ThreadListContextMenu {
         const tasks = TaskFactory.tasksForArchiving({
           source: 'Context Menu: Thread List',
           threads: this.threads,
-          currentPerspective: FocusedPerspectiveStore.current()
+          currentPerspective: FocusedPerspectiveStore.current(),
         });
         Actions.queueTasks(tasks);
       },
@@ -167,9 +167,7 @@ export default class ThreadListContextMenu {
                         threads: JSON.stringify(this.threads),
                       },
                     });
-                  } catch (e) {
-
-                  }
+                  } catch (e) {}
                 }
               });
             }
@@ -197,9 +195,7 @@ export default class ThreadListContextMenu {
                     threads: JSON.stringify(this.threads),
                   },
                 });
-              } catch (e) {
-
-              }
+              } catch (e) {}
             }
           });
         }
@@ -219,7 +215,7 @@ export default class ThreadListContextMenu {
           TaskFactory.taskForInvertingUnread({
             source: 'Context Menu: Thread List',
             threads: this.threads,
-          }),
+          })
         );
       },
     };
@@ -240,7 +236,7 @@ export default class ThreadListContextMenu {
           TaskFactory.taskForInvertingStarred({
             source: 'Context Menu: Thread List',
             threads: this.threads,
-          }),
+          })
         );
       },
     };
