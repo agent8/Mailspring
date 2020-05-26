@@ -11,7 +11,7 @@ import TaskFactory from '../tasks/task-factory';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import FocusedContentStore from './focused-content-store';
 import * as ExtensionRegistry from '../../registries/extension-registry';
-import electron, { ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import fs from 'fs';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
@@ -464,7 +464,7 @@ class MessageStore extends MailspringStore {
     if (title && title.length > 37) {
       title = `${title.slice(0, 37).trim()}...`;
     }
-    electron.remote.getCurrentWindow().setTitle(title);
+    AppEnv.setWindowTitle(title);
   }
 
   _setWindowTitle() {
@@ -479,7 +479,7 @@ class MessageStore extends MailspringStore {
     if (title.length > 37) {
       title = `${title.slice(0, 37).trim()}...`;
     }
-    electron.remote.getCurrentWindow().setTitle(title);
+    AppEnv.setWindowTitle(title);
   }
 
   _markAsRead() {
@@ -624,7 +624,7 @@ class MessageStore extends MailspringStore {
         accountId: accountId,
         missingItems: missingList,
         needProgress: true,
-        source: "Click"
+        source: 'Click',
       });
     }
   }
@@ -665,7 +665,7 @@ class MessageStore extends MailspringStore {
         accountId: message.accountId,
         missingItems: missing,
         needProgress: true,
-        source: "Click"
+        source: 'Click',
       });
     }
     if (change) {

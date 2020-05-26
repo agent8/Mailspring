@@ -41,7 +41,7 @@ export const LabelColorizer = {
   },
 
   color(label) {
-    if (label.bgColor == "0") {
+    if (label.bgColor == '0') {
       return null;
     }
     LabelColorizer.sanitize(label);
@@ -94,30 +94,28 @@ export class MailLabel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      showLabels: AppEnv.config.get(SHOW_LABEL_KEY)
-    }
+      showLabels: AppEnv.config.get(SHOW_LABEL_KEY),
+    };
   }
 
   componentDidMount = () => {
     const configDisposer = AppEnv.config.onDidChange(SHOW_LABEL_KEY, this._onChange);
-    this._unsubscribers = [
-      configDisposer.dispose,
-    ];
-  }
+    this._unsubscribers = [configDisposer.dispose];
+  };
 
   componentWillUnmount = () => {
     for (const unsubscribe of this._unsubscribers) {
       unsubscribe();
     }
-  }
+  };
 
   _onChange = () => {
     this.setState({
-      showLabels: AppEnv.config.get(SHOW_LABEL_KEY)
+      showLabels: AppEnv.config.get(SHOW_LABEL_KEY),
     });
     // sometimes, this component don't render automaticlly, so add forceUpdate
     this.forceUpdate();
-  }
+  };
 
   shouldComponentUpdate(nextProps) {
     if (nextProps.label.id === this.props.label.id) {
@@ -135,7 +133,7 @@ export class MailLabel extends React.Component {
       return null;
     }
     let classname = 'mail-label';
-    let content = <span className="inner">{this.props.label.displayName}</span >;
+    let content = <span className="inner">{this.props.label.displayName}</span>;
 
     let x = null;
     if (this._removable()) {
@@ -146,7 +144,12 @@ export class MailLabel extends React.Component {
           className="x"
           isIcon
           name="close_1.svg"
-          style={{ width: 10, backgroundColor: LabelColorizer.color(this.props.label) }}
+          style={{
+            width: 10,
+            height: 10,
+            fontSize: 10,
+            color: LabelColorizer.color(this.props.label),
+          }}
           mode={RetinaImg.Mode.ContentIsMask}
           onClick={this.props.onRemove}
         />

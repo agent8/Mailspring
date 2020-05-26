@@ -91,7 +91,7 @@ input:focus {
       background: @text-color-search-current-match;
     }
   }
-  
+
   font-family: 'SF UI Text', 'Nylas-Pro', 'Helvetica', sans-serif;
   .list-container,
   .scroll-region {
@@ -188,7 +188,7 @@ input:focus {
       &.confirmed {
         background-color: @action-color-orange;
         &::after {
-          .swipe-hover-after-css()
+          .swipe-hover-after-css();
         }
       }
     }
@@ -214,7 +214,7 @@ input:focus {
       &.confirmed {
         background-color: @action-color-blue;
         &::after {
-          .swipe-hover-after-css()
+          .swipe-hover-after-css();
         }
       }
     }
@@ -239,7 +239,7 @@ input:focus {
       &.confirmed {
         background-color: @action-color-red;
         &::after {
-          .swipe-hover-after-css()
+          .swipe-hover-after-css();
         }
       }
     }
@@ -255,7 +255,7 @@ input:focus {
       &.confirmed {
         background-color: @action-color-purple;
         &::after {
-          .swipe-hover-after-css()
+          .swipe-hover-after-css();
         }
       }
     }
@@ -272,7 +272,7 @@ input:focus {
       &.confirmed {
         background-color: @action-color-green;
         &::after {
-          .swipe-hover-after-css()
+          .swipe-hover-after-css();
         }
       }
     }
@@ -287,7 +287,7 @@ input:focus {
       }
       &.confirmed {
         &::after {
-          .swipe-hover-after-css()
+          .swipe-hover-after-css();
         }
       }
     }
@@ -464,37 +464,31 @@ input:focus {
     background-size: 12px;
     display: inline-block;
 
-    .icon-mixin(@svg-url, @bgColor: @gray-light, @bgSize: 16px 16px) {
-      -webkit-mask-image: url(@svg-url);
-      -webkit-mask-size: @bgSize;
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-position: center;
-      background-color: @bgColor;
-    }
-
     &.thread-icon-attachment {
-      .icon-mixin('../static/icons/feed-attachments.svg');
       margin: auto;
+      color: @gray-light;
+      line-height: 24px;
+      font-size: 16px;
     }
     &.thread-icon-calendar {
-      .icon-mixin('../static/icons/feed-calendar.svg');
+      color: @gray-light;
+      line-height: 24px;
+      font-size: 16px;
       margin: auto;
     }
     &.thread-icon-unread {
       margin-left: -6px;
       height: 18px;
-      .icon-mixin('../static/icons/menu-unread.svg', @blue, 24px 24px);
-    }
-    &.thread-icon-replied {
-      .icon-mixin('../static/icons/feed-reply.svg', @gray-light);
-    }
-    &.thread-icon-forwarded {
-      .icon-mixin('../static/icons/feed-forward.svg', @gray-light);
+      font-size: 24px;
+      line-height: 18px;
+      color: @blue;
     }
     &.thread-icon-star {
       margin-left: -6px;
       height: 18px;
-      .icon-mixin('../static/icons/menu-unread.svg', @orange, 24px); // display as a dot, not a flag
+      font-size: 24px;
+      line-height: 18px;
+      color: @orange;
     }
   }
   .star-button {
@@ -563,13 +557,13 @@ input:focus {
     margin-left: 11px;
     position: relative;
     &.flagged {
-      img.content-mask {
-        background-color: @orange;
+      .edison-icon {
+        color: @orange;
       }
     }
-    img.content-mask {
-      margin-top: -3px;
-      background-color: @gray-light;
+    .edison-icon {
+      color: @gray-light;
+      vertical-align: middle;
       position: relative;
       z-index: 2;
     }
@@ -584,7 +578,7 @@ input:focus {
         position: absolute;
         top: 10px;
         left: -6px;
-        .grow-up-animation-mixin()
+        .grow-up-animation-mixin();
       }
     }
     &:active {
@@ -666,12 +660,6 @@ body.platform-win32 {
   }
 }
 
-// stars
-
-.sift-list .thread-icon-star:hover,
-.thread-list .thread-icon-star:hover {
-  -webkit-filter: brightness(90%);
-}
 // quanzs comment out
 .mode-split {
   .sift-list .list-item .thread-icon-none,
@@ -717,15 +705,6 @@ body.platform-win32 {
 .sift-list .list-item:hover .mail-important-icon.enabled,
 .thread-list .list-item:hover .mail-important-icon.enabled {
   visibility: inherit;
-}
-.sift-list .thread-icon-star-on-hover:hover,
-.thread-list .thread-icon-star-on-hover:hover {
-  -webkit-mask-image: url(../static/icons/flag.svg);
-  -webkit-mask-size: 16px 16px;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  background-color: @gray;
-  -webkit-filter: brightness(150%);
 }
 
 .sift-list .avatar-icon,
@@ -784,6 +763,9 @@ body.platform-win32 {
       .btn-toolbar:hover {
         img.content-mask {
           background-color: @text-color-inverse;
+        }
+        .edison-icon {
+          color: @text-color-inverse;
         }
         &:after {
           background: fade(@off-white, 13);
@@ -894,7 +876,7 @@ body.platform-win32 {
     span {
       color: @gray-darker;
     }
-    &>span {
+    & > span {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -905,6 +887,8 @@ body.platform-win32 {
       // top: 0;
       width: 20px;
       -webkit-mask-size: 18px;
+      font-size: 18px;
+      line-height: 24px;
     }
   }
   .snippet-and-labels {

@@ -1,10 +1,14 @@
 import MailspringStore from 'mailspring-store';
 import fs from 'fs';
 import path from 'path';
-import { Utils, MessageBodyProcessor, CategoryStore } from 'mailspring-exports';
+import { Utils, MessageBodyProcessor } from 'mailspring-exports';
 import AutoloadImagesActions from './autoload-images-actions';
 
-const ImagesRegexp = /((?:src|background|placeholder|icon|background|poster|srcset)\s*=\s*['"]?(?=\w*:\/\/)|:\s*url\()+([^"')]*)/gi;
+const ImagesRegexp = () => {
+  return new RegExp(
+    /((?:src|background|placeholder|icon|background|poster|srcset)\s*=\s*['"]?(?=\w*:\/\/)|:\s*url\()+([^"')]*)/gi
+  );
+};
 
 class AutoloadImagesStore extends MailspringStore {
   constructor() {
@@ -44,7 +48,7 @@ class AutoloadImagesStore extends MailspringStore {
       return false;
     }
 
-    return ImagesRegexp.test(message.body);
+    return ImagesRegexp().test(message.body);
   };
 
   _loadWhitelist = () => {

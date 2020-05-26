@@ -30,12 +30,12 @@ const PageTopBar = props => {
   );
 
   let backButton = (
-    <div className='back' onClick={backAction}>
+    <div className="back" onClick={backAction}>
       <RetinaImg
         name="arrow.svg"
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
-        style={{ width: 28 }}
+        style={{ width: 28, height: 28, fontSize: 28 }}
       />
     </div>
   );

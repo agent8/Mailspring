@@ -145,6 +145,7 @@ export default class MailsyncBridge {
     ipcRenderer.on('mailsync-config', this._onMailsyncConfigUpdate);
     ipcRenderer.on('client-config', this._onClientConfigUpdate);
     ipcRenderer.on('thread-new-window', this._onNewWindowOpened);
+    ipcRenderer.on('refresh-start-of-day', this._refreshStartOfDay);
     // ipcRenderer.on('thread-close-window', this._onNewWindowClose);
 
     this._crashTracker = new CrashTracker();
@@ -745,7 +746,7 @@ export default class MailsyncBridge {
       });
       if (AppEnv.enabledFromNativeLog) {
         console.log('----------------From native-------------------');
-        AppEnv.logDebug(`from native: ${msg}`);
+        AppEnv.logDebug(`from-native: ${msg}`);
         console.log('---------------------From native END------------------------');
       }
       const promises = [];
@@ -1107,7 +1108,7 @@ export default class MailsyncBridge {
         type: 'need-attachments',
         ids: ids,
         needProgress: true,
-        source
+        source,
       });
     }
   }
@@ -1185,6 +1186,19 @@ export default class MailsyncBridge {
       this.sendMessageToAccount(accountId, {
         type: 'config-change',
         settings: clientConfig,
+      });
+    }
+  };
+  _refreshStartOfDay = (event, { startOfDay = 0 } = {}) => {
+    if (startOfDay === 0) {
+      const now = new Date();
+      const tmp = new Date(now.toDateString());
+      startOfDay = tmp.now();
+    }
+    for (const accountId of Object.keys(this._clients)) {
+      this.sendMessageToAccount(accountId, {
+        type: 'refresh-startOfDay',
+        startOfDay: startOfDay,
       });
     }
   };

@@ -103,7 +103,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => { }) => {
+  _setState = (updates, callback = () => {}) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -302,7 +302,7 @@ class PreferencesAccountDetails extends Component {
   }
   _onUpdateMailSyncSettings = ({ value, key }) => {
     try {
-      const defalutMailsyncSettings = this._getDefalutMailsyncSettings();;
+      const defalutMailsyncSettings = this._getDefalutMailsyncSettings();
       let mailsyncSettings = this.state.account.mailsync;
       if (defalutMailsyncSettings && !mailsyncSettings) {
         mailsyncSettings = defalutMailsyncSettings;
@@ -412,7 +412,7 @@ class PreferencesAccountDetails extends Component {
       fetchEmailInterval: 1,
     };
     return defalutMailsyncSettings;
-  }
+  };
 
   _onCopyToSentUpdate = event => {
     try {
@@ -422,7 +422,9 @@ class PreferencesAccountDetails extends Component {
         key: 'copyToSent',
       });
       if (newSettings) {
-        this._setState({ mailsync: newSettings });
+        this._setState({ mailsync: newSettings }, () => {
+          this._saveChanges();
+        });
       }
     } catch (e) {
       AppEnv.reportError(e);

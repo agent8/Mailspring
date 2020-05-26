@@ -30,6 +30,18 @@ import {
   PreferencesKeymapsContent,
 } from './components/preferences-keymaps';
 
+const configurationNotSupportedByMAS = [
+  {
+    label: 'Make Edison Mail your default mail client',
+    component: DefaultMailClientItem,
+    keywords: [],
+  },
+  {
+    label: 'Launch on system start',
+    component: LaunchSystemStartItem,
+    keywords: [],
+  },
+];
 const preferencesTemplateFill = {
   tables: [
     {
@@ -41,16 +53,7 @@ const preferencesTemplateFill = {
         {
           groupName: 'EMAIL',
           groupItem: [
-            // {
-            //   label: 'Make Edison Mail your default mail client',
-            //   component: DefaultMailClientItem,
-            //   keywords: [],
-            // },
-            {
-              label: 'Launch on system start',
-              component: LaunchSystemStartItem,
-              keywords: [],
-            },
+            ...(process.mas ? [] : configurationNotSupportedByMAS),
             {
               label: 'Show icon in menu bar',
               configSchema: configSchema => configSchema.properties.workspace.properties.systemTray,
@@ -96,6 +99,13 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.workspace.properties.sendUsageData,
               keyPath: 'core.workspace.sendUsageData',
+              keywords: [],
+            },
+            {
+              label: 'When mail is Archived or Deleted',
+              configSchema: configSchema =>
+                configSchema.properties.reading.properties.actionAfterRemove,
+              keyPath: 'core.reading.actionAfterRemove',
               keywords: [],
             },
             {
@@ -301,10 +311,10 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
-              label: 'Enable Adaptive Coloring for emails.',
+              label: 'Date format',
               configSchema: configSchema =>
-                configSchema.properties.appearance.properties.adaptiveEmailColor,
-              keyPath: 'core.appearance.adaptiveEmailColor',
+                configSchema.properties.appearance.properties.dateFormat,
+              keyPath: 'core.appearance.dateFormat',
               keywords: [],
             },
           ],
@@ -331,6 +341,13 @@ const preferencesTemplateFill = {
               label: 'Theme',
               component: AppearanceThemeSwitch,
               keywords: ['Light Mode', 'Dark Mode', 'background'],
+            },
+            {
+              label: 'Enable Adaptive Coloring for emails.',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.adaptiveEmailColor,
+              keyPath: 'core.appearance.adaptiveEmailColor',
+              keywords: [],
             },
           ],
         },

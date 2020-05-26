@@ -12,12 +12,12 @@ import {
 } from 'electron';
 
 import fs from 'fs-plus';
-import rimraf from 'rimraf';
 import url from 'url';
 import path from 'path';
 import glob from 'glob';
-import proc, { execSync } from 'child_process';
+import proc from 'child_process';
 import { EventEmitter } from 'events';
+import _ from 'underscore';
 
 import WindowManager from './window-manager';
 import FileListCache from './file-list-cache';
@@ -40,6 +40,11 @@ let clipboard = null;
 
 // The application's singleton class.
 //
+const getStartOfDay = () => {
+  const now = new Date();
+  const startOfDay = new Date(now.toDateString());
+  return startOfDay.getTime();
+};
 export default class Application extends EventEmitter {
   async start(options) {
     const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
@@ -53,47 +58,16 @@ export default class Application extends EventEmitter {
     this.specMode = specMode;
     this.safeMode = safeMode;
     this.nativeVersion = '';
-
-    // if (devMode) {
-    //   require('electron-reload')(resourcePath);
-    // }
-
+    this.startOfDay = getStartOfDay();
+    this.refreshStartOfDay = _.throttle(this._refreshStartOfDay, 1000);
+    this._triggerRefreshStartOfDayTimer = null;
+    this._setStartOfDayTimeout();
     this.fileListCache = new FileListCache();
     this.mailspringProtocolHandler = new MailspringProtocolHandler({
       configDirPath,
       resourcePath,
       safeMode,
     });
-
-    try {
-      const mailsync = new MailsyncProcess(options);
-      this.nativeVersion = await mailsync.migrate();
-    } catch (err) {
-      let message = null;
-      let buttons = ['Quit'];
-      if (err.toString().includes('ENOENT')) {
-        message = `Edison Mail could find the mailsync process. If you're building Edison Mail from source, make sure mailsync.tar.gz has been downloaded and unpacked in your working copy.`;
-      } else if (err.toString().includes('spawn')) {
-        message = `Edison Mail could not spawn the mailsync process. ${err.toString()}`;
-      } else {
-        message = `We encountered a problem with your local email database. ${err.toString()}\n\nCheck that no other copies of Edison Mail are running and click Rebuild to reset your local cache.`;
-        buttons = ['Quit', 'Rebuild'];
-      }
-
-      dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
-        if (response === 0) {
-          app.quit();
-        } else {
-          this._deleteDatabase(() => {
-            if (!process.mas) {
-              app.relaunch();
-            }
-            app.quit();
-          }, true);
-        }
-      });
-      return;
-    }
 
     const Config = require('../config');
     const config = new Config();
@@ -166,7 +140,7 @@ export default class Application extends EventEmitter {
     if (!fs.existsSync(avatarPath)) {
       fs.mkdirSync(avatarPath);
     }
-    this.clearOldLogs();
+    this.makeLogFolders();
     this.initSupportInfo();
 
     // subscribe event of dark mode change
@@ -182,7 +156,66 @@ export default class Application extends EventEmitter {
         console.error('Error: systemPreferences.subscribeNotification', err);
       }
     }
+    this.cleaningOldFilesTimer = null;
+    this._triggerCleanOldLogs(true);
+    try {
+      const mailsync = new MailsyncProcess(options);
+      this.nativeVersion = await mailsync.migrate();
+    } catch (err) {
+      let message = null;
+      let buttons = ['Quit'];
+      if (err.toString().includes('ENOENT')) {
+        message = `Edison Mail could find the mailsync process. If you're building Edison Mail from source, make sure mailsync.tar.gz has been downloaded and unpacked in your working copy.`;
+      } else if (err.toString().includes('spawn')) {
+        message = `Edison Mail could not spawn the mailsync process. ${err.toString()}`;
+      } else {
+        message = `We encountered a problem with your local email database. ${err.toString()}\n\nCheck that no other copies of Edison Mail are running and click Rebuild to reset your local cache.`;
+        buttons = ['Quit', 'Rebuild'];
+      }
+
+      dialog.showMessageBox({ type: 'warning', buttons, message }).then(({ response }) => {
+        if (response === 0) {
+          app.quit();
+        } else {
+          this._deleteDatabase(() => {
+            if (!process.mas) {
+              app.relaunch();
+            }
+            app.quit();
+          }, true);
+        }
+      });
+      return;
+    }
   }
+  _setStartOfDayTimeout = () => {
+    const nextStartOfDay = getStartOfDay() + 24 * 60 * 60 * 1000;
+    const timeout = nextStartOfDay - Date.now();
+    if (this._triggerRefreshStartOfDayTimer) {
+      clearTimeout(this._triggerRefreshStartOfDayTimer);
+      this._triggerRefreshStartOfDayTimer = null;
+    }
+    if (timeout > 0) {
+      this._triggerRefreshStartOfDayTimer = setTimeout(this._triggerRefreshStartOfDay, timeout);
+    } else {
+      this._triggerRefreshStartOfDay();
+    }
+  };
+  _triggerRefreshStartOfDay = () => {
+    this._refreshStartOfDay();
+    this._setStartOfDayTimeout();
+  };
+  _refreshStartOfDay = () => {
+    const newStartOfDay = getStartOfDay();
+    this.logDebug(`start of day ${newStartOfDay}`);
+    if (this.startOfDay < newStartOfDay) {
+      this.startOfDay = newStartOfDay;
+      const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (main) {
+        main.sendMessage('refresh-start-of-day', { startOfDay: this.startOfDay });
+      }
+    }
+  };
   getOpenWindows() {
     return this.windowManager.getOpenWindows();
   }
@@ -242,37 +275,37 @@ export default class Application extends EventEmitter {
     }
   }
 
-  clearOldLogs() {
-    const logPath = path.join(this.configDirPath, 'ui-log');
-    const uploadPath = path.join(this.configDirPath, 'upload-log');
-    rimraf(uploadPath, err => {
-      if (err) {
-        console.log('\n------\npath cannot be removed');
-        console.log(err);
-      } else {
-        console.log('\n------\npath removed');
-      }
-      fs.mkdir(uploadPath, err => {
-        if (err) {
-          console.log('\n------\npath cannot be made');
-          console.log(err);
-        } else {
-          console.log('\n------\npath made');
-        }
-      });
-    });
-    if (!fs.existsSync(logPath)) {
-      fs.mkdirSync(logPath);
-    } else {
-      console.log('\n-----\nremoving ui logs');
-      rimraf(logPath, () => {
-        console.log('\n-----\nremoved ui logs');
-        fs.mkdir(logPath, err => {
-          console.log(`\n-----\nui log path creaded \n${err}`);
-        });
-      });
-    }
-  }
+  // clearOldLogs() {
+  //   const logPath = path.join(this.configDirPath, 'ui-log');
+  //   const uploadPath = path.join(this.configDirPath, 'upload-log');
+  //   rimraf(uploadPath, err => {
+  //     if (err) {
+  //       console.log('\n------\npath cannot be removed');
+  //       console.log(err);
+  //     } else {
+  //       console.log('\n------\npath removed');
+  //     }
+  //     fs.mkdir(uploadPath, err => {
+  //       if (err) {
+  //         console.log('\n------\npath cannot be made');
+  //         console.log(err);
+  //       } else {
+  //         console.log('\n------\npath made');
+  //       }
+  //     });
+  //   });
+  //   if (!fs.existsSync(logPath)) {
+  //     fs.mkdirSync(logPath);
+  //   } else {
+  //     console.log('\n-----\nremoving ui logs');
+  //     rimraf(logPath, () => {
+  //       console.log('\n-----\nremoved ui logs');
+  //       fs.mkdir(logPath, err => {
+  //         console.log(`\n-----\nui log path creaded \n${err}`);
+  //       });
+  //     });
+  //   }
+  // }
   reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
     if (grabLogs && !this.devMode) {
       this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
@@ -466,16 +499,16 @@ export default class Application extends EventEmitter {
         zlib: { level: 9 }, // Sets the compression level.
       });
 
-      output.on('close', function () {
+      output.on('close', function() {
         console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
         console.log('archiver has been finalized and the output file descriptor has closed.');
         resolve(outputPath);
       });
-      output.on('end', function () {
+      output.on('end', function() {
         console.log('\n----->\nData has been drained');
         resolve(outputPath);
       });
-      archive.on('warning', function (err) {
+      archive.on('warning', function(err) {
         if (err.code === 'ENOENT') {
           console.log(err);
         } else {
@@ -484,14 +517,16 @@ export default class Application extends EventEmitter {
           reject(err);
         }
       });
-      archive.on('error', function (err) {
+      archive.on('error', function(err) {
         output.close();
         console.log(err);
         reject(err);
       });
       archive.pipe(output);
       archive.directory(logPath, 'uiLog');
-      archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
+      archive.directory(path.join(resourcePath, 'ms-log'), 'nativeLog');
+      archive.directory(path.join(resourcePath, 'ms-crash'), 'nativeCrash');
+      // archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
       archive.finalize();
     });
   }
@@ -530,7 +565,11 @@ export default class Application extends EventEmitter {
   }
 
   initSupportInfo() {
-    LOG.transports.file.file = path.join(this.configDirPath, 'ui-log', 'application.log');
+    LOG.transports.file.file = path.join(
+      this.configDirPath,
+      'ui-log',
+      `application-${Date.now()}.log`
+    );
     LOG.transports.console.level = false;
     LOG.transports.file.maxSize = 20485760;
     if (this.config) {
@@ -602,7 +641,7 @@ export default class Application extends EventEmitter {
   // we close windows and log out, we need to wait for these processes to completely
   // exit and then delete the file. It's hard to tell when this happens, so we just
   // retry the deletion a few times.
-  deleteFileWithRetry(filePath, callback = () => { }, retries = 5) {
+  deleteFileWithRetry(filePath, callback = () => {}, retries = 5) {
     glob(filePath, (err, files) => {
       if (err) {
         return;
@@ -651,7 +690,7 @@ export default class Application extends EventEmitter {
     });
   }
 
-  renameFileWithRetry(filePath, newPath, callback = () => { }, retries = 5) {
+  renameFileWithRetry(filePath, newPath, callback = () => {}, retries = 5) {
     const callbackWithRetry = err => {
       if (err && err.message.indexOf('no such file') === -1) {
         console.log(`File Error: ${err.message} - retrying in 150msec`);
@@ -729,6 +768,85 @@ export default class Application extends EventEmitter {
       }
     }
   }
+
+  _removeOldFiles = (files, dirPath, cleanAll = false) => {
+    const now = Date.now();
+    const removeList = [];
+    const sortAndDelete = () => {
+      console.log('sort and delete');
+      removeList.sort((a, b) => {
+        return a.stats.mtimeMs - b.stats.mtimeMs;
+      });
+      const maxDelete = cleanAll ? removeList.length : 10;
+      removeList.slice(0, maxDelete).forEach(fileObj => {
+        fs.unlink(fileObj.path, err => {
+          if (err) {
+            console.log(`Deleting ${fileObj.path} failed, ${err}`);
+          } else {
+            console.log(`Deleting ${fileObj.path} success`);
+          }
+        });
+      });
+    };
+    if (Array.isArray(files)) {
+      const total = files.length;
+      let processed = 0;
+      const olderThanADay = 48 * 60 * 60 * 1000;
+      files.forEach(dirent => {
+        if (dirent.isFile()) {
+          console.log(`log file name: ${dirent.name}`);
+          const filePath = path.join(dirPath, dirent.name);
+          fs.stat(filePath, (err, stats) => {
+            processed++;
+            console.log(`file last modified is ${stats.mtimeMs}, now is ${now}`);
+            if (now - stats.mtimeMs > olderThanADay) {
+              removeList.push({ path: filePath, stats });
+            }
+            if (processed === total) {
+              sortAndDelete();
+            }
+          });
+        }
+      });
+    }
+  };
+  _triggerCleanOldLogs = (initial = false) => {
+    if (initial) {
+      const initialTime = 3 * 60 * 1000;
+      clearTimeout(this.cleaningOldFilesTimer);
+      console.log('setting timeout for clearOldLogs');
+      this.cleaningOldFilesTimer = setTimeout(this.clearOldLogs, initialTime);
+      this._triggerCleanOldLogs();
+    } else {
+      const reoccurrenceTime = 4 * 60 * 60 * 1000;
+      clearInterval(this.cleaningOldFilesTimer);
+      console.log('setting interval for clearOldLogs');
+      this.cleaningOldFilesTimer = setInterval(this.clearOldLogs, reoccurrenceTime);
+    }
+  };
+  makeLogFolders = () => {
+    fs.mkdirSync(path.join(this.configDirPath, 'ui-log'), { recursive: true });
+    fs.mkdirSync(path.join(this.configDirPath, 'upload-log'), { recursive: true });
+  };
+
+  clearOldLogs = (cleanAll = false) => {
+    const uiLogPath = path.join(this.configDirPath, 'ui-log');
+    const uploadPath = path.join(this.configDirPath, 'upload-log');
+    const nativeLogPath = path.join(this.configDirPath, 'ms-log');
+    const clearLogs = path => {
+      console.log(`###################cleaning old logs in ${path}`);
+      fs.readdir(path, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+        this._removeOldFiles(files, path, cleanAll);
+      });
+    };
+    clearLogs(uploadPath);
+    clearLogs(uiLogPath);
+    clearLogs(nativeLogPath);
+  };
 
   _resetDatabaseAndRelaunch = ({ errorMessage, source = 'Unknown' } = {}) => {
     if (this._resettingAndRelaunching) return;
@@ -1106,6 +1224,13 @@ export default class Application extends EventEmitter {
       }
       event.preventDefault();
     });
+    app.on('browser-window-focus', (event, window) => {
+      this.refreshStartOfDay();
+      const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (main) {
+        main.sendMessage('application-activate');
+      }
+    });
 
     // System Tray
     ipcMain.on('update-system-tray', (event, ...args) => {
@@ -1437,6 +1562,7 @@ export default class Application extends EventEmitter {
         this.openWindowsForTokenState();
       }
       this.ensureMainWindowVisible();
+      this.refreshStartOfDay();
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
         main.sendMessage('application-activate');
