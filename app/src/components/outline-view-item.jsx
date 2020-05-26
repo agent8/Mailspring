@@ -2,7 +2,7 @@
 /* eslint jsx-a11y/tabindex-no-positive:0 */
 
 import _ from 'underscore';
-import { Utils, AccountStore } from 'mailspring-exports';
+import { Utils, AccountStore, Actions } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
@@ -10,13 +10,14 @@ import DisclosureTriangle from './disclosure-triangle';
 import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import PropTypes from 'prop-types';
-import { Divider, DIVIDER_KEY } from './outline-view';
+import { Divider, DIVIDER_KEY, MORE_TOGGLE } from './outline-view';
 
 /*
  * Enum for counter styles
  * @readonly
  * @enum {string}
  */
+const notFolderIds = [DIVIDER_KEY, MORE_TOGGLE];
 const CounterStyles = {
   Default: 'def',
   Alt: 'alt',
@@ -150,22 +151,35 @@ class OutlineViewItem extends Component {
       isDropping: false,
       editing: props.item.editing || false,
       originalText: '',
+      showAllChildren: false,
     };
+    this._mounted = false;
   }
+  checkCurrentShowAllChildren = props => {
+    if (props.item && Array.isArray(props.item.children) && this._mounted) {
+      const moreOrLess = props.item.children.find(item => item.id === 'moreToggle');
+      if (moreOrLess) {
+        this.setState({ showAllChildren: moreOrLess.collapsed });
+      }
+    }
+  };
 
   componentDidMount() {
+    this._mounted = true;
     if (this._shouldShowContextMenu()) {
       ReactDOM.findDOMNode(this).addEventListener('contextmenu', this._onShowContextMenu);
     }
     this.setState({
       targetDiv: ReactDOM.findDOMNode(this.refs[`${this.props.item.id}-span`]),
     });
+    this.checkCurrentShowAllChildren(this.props);
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
     if (newProps.editing) {
       this.setState({ editing: newProps.editing });
     }
+    this.checkCurrentShowAllChildren(newProps);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -173,6 +187,7 @@ class OutlineViewItem extends Component {
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     clearTimeout(this._expandTimeout);
     if (this._shouldShowContextMenu()) {
       ReactDOM.findDOMNode(this).removeEventListener('contextmenu', this._onShowContextMenu);
@@ -222,6 +237,27 @@ class OutlineViewItem extends Component {
 
   _onCollapseToggled = () => {
     this._runCallback('onCollapseToggled');
+  };
+
+  _onToggleShowAllFolder = () => {
+    if (this._mounted) {
+      // this.setState({ showAllChildren: !this.state.showAllChildren });
+      // if (this.props.item.id !== 'moreToggle') {
+      //   const current = FocusedPerspectiveStore.current();
+      //   if (current && current.hideWhenCrowded) {
+      //     AppEnv.savedState.sidebarKeysCollapsed[`${this.props.item.id}-moreToggle`] = !this.state
+      //       .showAllChildren;
+      //   }
+      // }
+      if (this.props.item.id === 'moreToggle') {
+        Actions.setMoreOrLessCollapsed(this.props.item.name, !this.props.item.collapsed);
+      } else {
+        this.setState({ showAllChildren: !this.state.showAllChildren });
+      }
+      if (typeof this.props.onToggleShowAllFolder === 'function') {
+        this.props.onToggleShowAllFolder();
+      }
+    }
   };
 
   _onClick = event => {
@@ -425,14 +461,20 @@ class OutlineViewItem extends Component {
     if (item.children.length > 0 && !item.collapsed) {
       return (
         <section className="item-children" key={`${item.id}-children`}>
-          {item.children.map((child, idx) => (
-            <OutlineViewItem
-              key={child.id === DIVIDER_KEY ? idx : child.id}
-              provider={acc.provider}
-              index={idx}
-              item={child}
-            />
-          ))}
+          {item.children.map((child, idx) => {
+            if (this.state.showAllChildren || !child.hideWhenCrowded) {
+              return (
+                <OutlineViewItem
+                  key={notFolderIds.includes(child.id) ? idx : child.id}
+                  provider={acc.provider}
+                  index={idx}
+                  item={child}
+                  onToggleShowAllFolder={this._onToggleShowAllFolder}
+                />
+              );
+            }
+            return null;
+          })}
         </section>
       );
     }
@@ -451,6 +493,26 @@ class OutlineViewItem extends Component {
       selected: item.selected,
       dropping: this.state.isDropping,
     });
+
+    if (item.id && item.id === MORE_TOGGLE) {
+      const text = this.props.item.collapsed ? 'less' : 'more';
+      return (
+        <div onClick={this._onToggleShowAllFolder}>
+          <span className="item-container">
+            <div className="item more-or-less-item">
+              <div className="name more-or-less">{text}</div>
+              <DisclosureTriangle
+                className={'more-or-less-triangle'}
+                collapsed={!this.props.item.collapsed}
+                image={'icon-composer-dropdown.png'}
+                visible={true}
+                onCollapseToggled={this._onToggleShowAllFolder}
+              />
+            </div>
+          </span>
+        </div>
+      );
+    }
     return (
       <div className={item.classnames ? item.classnames : null}>
         <span className={containerClasses} ref={`${item.id}-span`}>
