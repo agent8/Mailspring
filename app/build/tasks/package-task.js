@@ -231,7 +231,13 @@ module.exports = grunt => {
       // Our own extra.plist gets extended on top of the
       // Electron.app/Contents/Info.plist. A majority of the defaults are
       // left in the Electron Info.plist file
-      extendInfo: path.resolve(grunt.config('appDir'), 'build', 'resources', 'mac', 'extra.plist'),
+      extendInfo: path.resolve(
+        grunt.config('appDir'),
+        'build',
+        'resources',
+        'mac',
+        isMas ? 'extra.plist' : 'non-store-extra.plist'
+      ),
       appBundleId: 'com.edisonmail.edisonmail',
       // helperBundleId: 'com.edisonmail.edisonmail',
       afterCopy: [
