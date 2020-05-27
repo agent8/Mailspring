@@ -1,6 +1,6 @@
-const _ = require('underscore');
-const MailspringStore = require('mailspring-store').default;
-const {
+import _ from 'underscore';
+import MailspringStore from 'mailspring-store';
+import {
   Actions,
   AccountStore,
   ThreadCountsStore,
@@ -8,11 +8,10 @@ const {
   OutboxStore,
   FocusedPerspectiveStore,
   CategoryStore,
-} = require('mailspring-exports');
-
-const SidebarSection = require('./sidebar-section');
-const SidebarActions = require('./sidebar-actions');
-const AccountCommands = require('./account-commands');
+} from 'mailspring-exports';
+import SidebarSection, { nonFolderIds } from './sidebar-section';
+import SidebarActions from './sidebar-actions';
+import AccountCommands from './account-commands';
 
 const Sections = {
   Standard: 'Standard',
@@ -30,6 +29,7 @@ class SidebarStore extends MailspringStore {
     this._sections = {};
     this._sections[Sections.Standard] = {};
     this._sections[Sections.User] = [];
+    this._itemShowAllChildern = {};
     this._keyboardFocusKey = null;
     this._registerCommands();
     this._registerMenuItems();
@@ -57,13 +57,17 @@ class SidebarStore extends MailspringStore {
   flattenStandardSections(sections) {
     const ret = [];
     if (!Array.isArray(sections)) {
-      sections = Object.values(this.standardSection().items).filter(i => i.id !== 'divider');
+      sections = Object.values(this.standardSection().items).filter(
+        i => !nonFolderIds.includes(i.id)
+      );
     }
     sections.forEach(section => {
       if (!section) {
         return;
       }
-      ret.push(section);
+      if (!nonFolderIds.includes(section.id)) {
+        ret.push(section);
+      }
       if (Array.isArray(section.children) && section.children.length > 0 && !section.collapsed) {
         const tmp = this.flattenStandardSections(section.children);
         ret.push(...tmp);
@@ -74,6 +78,14 @@ class SidebarStore extends MailspringStore {
 
   onShift(delta, cb) {
     this._onShiftItemThrottle(delta, cb);
+  }
+  setItemShowAllChildren(id, value) {
+    this._itemShowAllChildern[id] = value;
+    AppEnv.savedState.sidebarKeysCollapsed[id] = value;
+    this._updateSections();
+  }
+  itemShowAllChildren(id) {
+    return !!this._itemShowAllChildern[id];
   }
   _findKeyboardFocusKeyFromCurrentSelected = () => {
     const getLowestSelected = sections => {
@@ -120,16 +132,25 @@ class SidebarStore extends MailspringStore {
       nextIndex = sections.length - 1;
     }
     if (currentIndex !== nextIndex || forceUpdate) {
-      this._keyboardFocusKey = sections[nextIndex].id;
-      sections[nextIndex].onSelect(sections[nextIndex]);
+      const nextItem = sections[nextIndex];
+      this._keyboardFocusKey = nextItem.id;
+      sections[nextIndex].onSelect(nextItem);
       if (cb) {
         cb(this._keyboardFocusKey);
+      }
+      if (
+        nextItem.hideWhenCrowded &&
+        Array.isArray(nextItem.accountIds) &&
+        nextItem.accountIds.length === 1
+      ) {
+        this.setItemShowAllChildren(`${nextItem.accountIds[0]}-single-moreToggle`, true);
       }
     }
   };
 
   _registerListeners() {
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
+    this.listenTo(Actions.setMoreOrLessCollapsed, this.setItemShowAllChildren);
     this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
     this.listenTo(AccountStore, this._onAccountsChanged);
     this.listenTo(FocusedPerspectiveStore, this._onFocusedPerspectiveChanged);
@@ -156,7 +177,7 @@ class SidebarStore extends MailspringStore {
     const sections = this.standardSection();
     const items = sections ? sections.items : [];
     items.forEach(item => {
-      if (item && item.id !== 'divider') {
+      if (item && !nonFolderIds.includes(item.id)) {
         this._onSetCollapsedByKey(item.id, true);
       }
     });

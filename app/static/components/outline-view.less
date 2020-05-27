@@ -153,7 +153,35 @@
     // The overflow needs to be `hidden` in order for the name to flex
     // fit within the contained space.
     overflow: hidden;
+  &.more-or-less-item{
+    justify-content: flex-start;
 
+    &:hover {
+      .more-or-less-triangle {
+        &.visible {
+          visibility: visible;
+        }
+      }
+    }
+    .more-or-less-triangle{
+      order: 2;
+      margin-left: 4px;
+      &.visible {
+        visibility: hidden;
+      }
+      img{
+        width: 10px;
+        height: 10px;
+        transform: rotate(180deg);
+        filter: opacity(0.4);
+      }
+      &.collapsed {
+        img {
+          transform: rotate(0deg);
+        }
+      }
+    }
+  }
     img.content-mask {
       background-color: @light-grey;
       vertical-align: text-bottom;
@@ -222,6 +250,16 @@
       line-height: 28px;
       white-space: nowrap;
       flex: 1;
+    }
+    .more-or-less {
+      order: 1;
+      flex: unset;
+      height: 14px;
+      width: fit-content;
+      color: @gray-light;
+      font-size: 12px;
+      letter-spacing: -0.26px;
+      line-height: 14px;
     }
     .item-count-box {
       order: 3;

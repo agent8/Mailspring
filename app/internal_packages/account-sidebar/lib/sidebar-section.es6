@@ -19,7 +19,8 @@ const {
 const SidebarItem = require('./sidebar-item');
 const SidebarActions = require('./sidebar-actions');
 const DIVIDER_OBJECT = { id: 'divider' };
-
+const MORE_TOGGLE = { id: 'moreToggle' };
+export const nonFolderIds = [DIVIDER_OBJECT.id, MORE_TOGGLE.id];
 function isSectionCollapsed(title) {
   if (AppEnv.savedState.sidebarKeysCollapsed[title] !== undefined) {
     return AppEnv.savedState.sidebarKeysCollapsed[title];
@@ -35,7 +36,7 @@ function toggleSectionCollapsed(section) {
   SidebarActions.setKeyCollapsed(section.title, !isSectionCollapsed(section.title));
 }
 
-class SidebarSection {
+export default class SidebarSection {
   static empty(title) {
     return {
       title,
@@ -287,9 +288,19 @@ class SidebarSection {
       //     }
       //   }
       // }
-      item = SidebarItem.forCategories([category], {}, false);
+      item = SidebarItem.forCategories([category], { hideWhenCrowded: items.length >= 3 }, false);
       if (item) {
+        if (items.length === 3) {
+          const moreOrLess = Object.assign({}, MORE_TOGGLE, {
+            collapsed: AppEnv.savedState.sidebarKeysCollapsed[`${account.id}-single-moreToggle`],
+            name: `${account.id}-single-moreToggle`,
+          });
+          items.push(moreOrLess);
+        }
         items.push(item);
+        // if (items.length > 4 && item.selected) {
+        //   items[3].collapsed = false;
+        // }
       }
     }
     return items;
@@ -413,5 +424,3 @@ class SidebarSection {
     }
   }
 }
-
-module.exports = SidebarSection;
