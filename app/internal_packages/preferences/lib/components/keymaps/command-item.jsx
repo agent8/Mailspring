@@ -112,12 +112,22 @@ export default class CommandKeybinding extends React.Component {
       const commands = AppEnv.keymaps.getCommandsForKeystroke(this.state.editingBinding) || [];
       const otherCommands = commands.filter(command => command !== this.props.command);
       if (otherCommands.length) {
-        const otherTitle = otherCommands.map(
-          command => commandMappingTitle.get(command) || 'system'
-        );
-        AppEnv.showErrorDialog(
-          `This shortcut is currently being used by "${[...new Set(otherTitle)].join('",and"')}"!`
-        );
+        const otherTitle = [];
+        otherCommands.forEach(command => {
+          if (commandMappingTitle.get(command)) {
+            otherTitle.push(commandMappingTitle.get(command));
+          }
+        });
+        if (otherTitle.length === otherCommands.length) {
+          AppEnv.showErrorDialog(
+            `This shortcut is currently being used by "${[...new Set(otherTitle)].join('",and"')}".`
+          );
+        } else {
+          AppEnv.showErrorDialog(
+            `This shortcut conflicts with builtin shortcut(s), changes will be discarded.`
+          );
+        }
+
         this._afterFinishedEditing();
         return;
       }
