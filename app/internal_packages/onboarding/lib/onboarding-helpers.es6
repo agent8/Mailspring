@@ -631,6 +631,7 @@ export function buildOffice365AuthURL() {
     `https://login.microsoftonline.com/common/oauth2/v2.0/authorize` +
     `?` +
     `client_id=${OFFICE365_CLIENT_ID}` +
+    `&prompt=consent` +
     `&scope=${encodeURIComponent(OFFICE365_SCOPES.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
