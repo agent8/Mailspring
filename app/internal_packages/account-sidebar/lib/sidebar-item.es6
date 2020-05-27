@@ -33,7 +33,7 @@ const isChildrenSelected = (children = [], currentPerspective) => {
     return false;
   }
   for (let p of children) {
-    if (isItemSelected(p.perspective, p.children)) {
+    if (p.id !== 'moreToggle' && isItemSelected(p.perspective, p.children)) {
       return true;
     }
   }
@@ -41,6 +41,9 @@ const isChildrenSelected = (children = [], currentPerspective) => {
 };
 
 const isTabSelected = (perspective, currentPerspective) => {
+  if (!perspective) {
+    console.error(new Error('no perspective'));
+  }
   if (!perspective.tab || perspective.tab.length === 0) {
     return false;
   }
@@ -211,6 +214,7 @@ class SidebarItem {
         perspective,
         selected: isItemSelected(perspective, opts.children),
         collapsed: collapsed != null ? collapsed : true,
+        hideWhenCrowded: !!opts.hideWhenCrowded,
         counterStyle,
         onDelete: opts.deletable ? onDeleteItem : undefined,
         onEdited: opts.editable ? onEditItem : undefined,

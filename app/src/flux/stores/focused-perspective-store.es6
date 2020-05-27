@@ -25,6 +25,8 @@ class FocusedPerspectiveStore extends MailspringStore {
     this.listenTo(Actions.ensureCategoryIsFocused, this._onEnsureCategoryIsFocused);
     this._listenToCommands();
     AppEnv.config.onDidChange('core.workspace.enableFocusedInbox', this._onFocusedInboxToggle);
+    AppEnv.config.onDidChange('core.appearance.dateFormat', this._onDateFormatChange);
+    AppEnv.config.onDidChange('core.workspace.use24HourClock', this._onDateFormatChange);
   }
 
   current() {
@@ -312,6 +314,13 @@ class FocusedPerspectiveStore extends MailspringStore {
       this._current = newPerspective;
     }
     this.trigger();
+  };
+
+  _onDateFormatChange = () => {
+    Actions.popToRootSheet({ reason: 'date format change' });
+    const accountsIds = AccountStore.accountIds();
+    const perspective = this._defaultPerspective(accountsIds);
+    this._setPerspective(perspective, accountsIds || perspective.accountIds, true);
   };
 
   refreshPerspectiveMessages({ perspective = null, source = 'folderItem' } = {}) {

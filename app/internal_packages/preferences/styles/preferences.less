@@ -67,9 +67,9 @@
       position: relative;
       border-radius: 5px;
       padding-right: 0;
-      // span + img {
-      //   visibility: hidden;
-      // }
+      span + .edison-icon {
+        visibility: hidden;
+      }
       &::after {
         content: '';
         display: block;
@@ -231,6 +231,10 @@
           color: @text-color;
         }
       }
+    }
+    .flexbox-handle-horizontal {
+      // stagger sheet-toolbar
+      top: 63px;
     }
   }
 

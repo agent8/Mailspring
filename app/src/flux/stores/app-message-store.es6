@@ -1,7 +1,7 @@
 import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
 import uuid from 'uuid';
-const silentTTL = 300000;
+const silentTTL = 30 * 60 * 1000;
 class AppMessageStore extends MailspringStore {
   static priority = {
     critical: 0,
@@ -115,7 +115,7 @@ class AppMessageStore extends MailspringStore {
     if (block.delayDuration > 0) {
       this._timeouts[block.id] = setTimeout(
         this._onBlockTimedOut.bind(this, { block }),
-        block.delayDuration,
+        block.delayDuration
       );
     }
   };
@@ -138,7 +138,7 @@ class AppMessageStore extends MailspringStore {
     this.trigger();
   };
   _parseActions = task => {
-    if(!task.actions){
+    if (!task.actions) {
       return [];
     }
     if (!Array.isArray(task.actions)) {

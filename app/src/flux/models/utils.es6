@@ -581,7 +581,7 @@ module.exports = Utils = {
     }
     return null;
   },
-  imageNamed(fullname, resourcePath) {
+  imageNamed(fullname, resourcePath, forceRatio = false) {
     const [name, ext] = fullname.split('.');
 
     if (DefaultResourcePath == null) {
@@ -617,7 +617,12 @@ module.exports = Utils = {
     }
 
     const plat = process.platform != null ? process.platform : '';
-    const ratio = window.devicePixelRatio != null ? window.devicePixelRatio : 1;
+    let ratio;
+    if (forceRatio) {
+      ratio = 2;
+    } else {
+      ratio = window.devicePixelRatio != null ? window.devicePixelRatio : 1;
+    }
 
     let attempt = `${name}-${plat}@${ratio}x.${ext}`;
     if (Utils.images[resourcePath][attempt]) {
