@@ -30,6 +30,18 @@ import {
   PreferencesKeymapsContent,
 } from './components/preferences-keymaps';
 
+const configurationNotSupportedByMAS = [
+  {
+    label: 'Make Edison Mail your default mail client',
+    component: DefaultMailClientItem,
+    keywords: [],
+  },
+  {
+    label: 'Launch on system start',
+    component: LaunchSystemStartItem,
+    keywords: [],
+  },
+];
 const preferencesTemplateFill = {
   tables: [
     {
@@ -41,16 +53,7 @@ const preferencesTemplateFill = {
         {
           groupName: 'EMAIL',
           groupItem: [
-            // {
-            //   label: 'Make Edison Mail your default mail client',
-            //   component: DefaultMailClientItem,
-            //   keywords: [],
-            // },
-            {
-              label: 'Launch on system start',
-              component: LaunchSystemStartItem,
-              keywords: [],
-            },
+            ...(process.mas ? [] : configurationNotSupportedByMAS),
             {
               label: 'Show icon in menu bar',
               configSchema: configSchema => configSchema.properties.workspace.properties.systemTray,

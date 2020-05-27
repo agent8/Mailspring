@@ -37,7 +37,9 @@ class CategoryStore extends MailspringStore {
         this._onCategoriesChanged(this._categoryResult);
       }
     });
-    DatabaseStore.findAll(Folder, { state: 0 }).then(this._onCategoriesChanged);
+    DatabaseStore.findAll(Folder, { state: 0 })
+      .order(Folder.attributes.name.ascending())
+      .then(this._onCategoriesChanged);
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
@@ -323,19 +325,27 @@ class CategoryStore extends MailspringStore {
       }
       return result;
     };
+    const sortByName = (a, b) => {
+      return (a.name || '').localeCompare(b.name || '');
+    };
     if (accountId) {
       this._standardCategories[accountId] = filteredByAccount(
         cat => cat && cat.isStandardCategory()
       )[accountId];
       this._userCategories[accountId] = filteredByAccount(cat => cat && cat.isUserCategory())[
         accountId
-      ];
+      ].sort(sortByName);
       this._hiddenCategories[accountId] = filteredByAccount(cat => cat && cat.isHiddenCategory())[
         accountId
       ];
     } else {
       this._standardCategories = filteredByAccount(cat => cat && cat.isStandardCategory());
       this._userCategories = filteredByAccount(cat => cat && cat.isUserCategory());
+      Object.values(this._userCategories).forEach(cats => {
+        if (Array.isArray(cats)) {
+          cats.sort(sortByName);
+        }
+      });
       this._hiddenCategories = filteredByAccount(cat => cat && cat.isHiddenCategory());
     }
 
