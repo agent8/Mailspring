@@ -20,6 +20,9 @@ export default class ThreadCategory extends Model {
       state: Attributes.Number({
         modelKey: 'state',
       }),
+      primary: Attributes.Number({
+        modelKey: 'primary',
+      }),
       lastMessageTimestamp: Attributes.DateTime({
         modelKey: 'lastDate',
       }),
