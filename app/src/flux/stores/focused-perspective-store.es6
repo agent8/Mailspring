@@ -26,6 +26,7 @@ class FocusedPerspectiveStore extends MailspringStore {
     this._listenToCommands();
     AppEnv.config.onDidChange('core.workspace.enableFocusedInbox', this._onFocusedInboxToggle);
     AppEnv.config.onDidChange('core.appearance.dateFormat', this._onDateFormatChange);
+    AppEnv.config.onDidChange('core.workspace.use24HourClock', this._onDateFormatChange);
   }
 
   current() {
