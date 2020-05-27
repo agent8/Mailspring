@@ -6,7 +6,10 @@ import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
 import dns from 'dns';
 import path from 'path';
+import util from 'util';
+import fs from 'fs';
 const regexpForDomain = test => new RegExp(`(^${test}$)|(\\.${test}$)`);
+const writeFile = util.promisify(fs.writeFile);
 
 const queryStringify = (data, encoded = false) => {
   const queryString = Object.keys(data)
