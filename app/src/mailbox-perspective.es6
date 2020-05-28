@@ -1337,7 +1337,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
       .where(
         new Matcher.JoinAnd([
           Thread.attributes.categories.containsAny(categoryIds),
-          JoinTable.useAttribute('primary', 'Number').in(notOtherCategories),
+          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories),
           Thread.attributes.state.equal(0),
         ])
       )
@@ -1396,7 +1396,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
       .where(
         new Matcher.JoinAnd([
           Thread.attributes.categories.containsAny(categoryIds),
-          JoinTable.useAttribute('primary', 'Number').in(otherCategories),
+          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(otherCategories),
           Thread.attributes.state.equal(0),
         ])
       )
