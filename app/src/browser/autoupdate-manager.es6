@@ -67,6 +67,21 @@ export default class AutoUpdateManager extends EventEmitter {
     this.feedURL = `${host}?platform=desktop-${params.platform}-full&clientVersion=${params.version}&supportId=${this.supportId}`;
     return this.feedURL;
   };
+  getVersionInfoUrl = async () => {
+    const devHost = 'https://cp.stag.easilydo.cc/api/ota/common/getInfoByVer';
+    const proHose = 'https://cp.edison.tech/api/ota/common/getInfoByVer';
+    const host = devHost;
+    const platform = process.platform === 'darwin' ? 'mac' : process.platform;
+    if (this.supportId === '') {
+      try {
+        this.supportId = await getDeviceHash();
+      } catch (err) {
+        this.supportId = '';
+      }
+    }
+    this.feedURL = `${host}?platform=desktop-${platform}-full&clientVersion=${this.version}`;
+    return this.feedURL;
+  };
 
   updateFeedURL = async () => {
     this.feedURL = await this.getFeedUrl();
@@ -213,7 +228,7 @@ export default class AutoUpdateManager extends EventEmitter {
 
   checkForce = async () => {
     try {
-      const { data } = await axios.get(await this.getFeedUrl());
+      const { data } = await axios.get(await this.getVersionInfoUrl());
       if (data && data.info) {
         const { priority, message, title, detail, url } = JSON.parse(data.info);
         if (priority !== PRIORITYENUM.HEIGHT) {
