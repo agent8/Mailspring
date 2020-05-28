@@ -1,5 +1,6 @@
 import Task from './task';
 import Attributes from '../attributes';
+import thread from '../models/thread';
 
 /*
 Public: The ChangeMailTask is a base class for all tasks that modify sets
@@ -27,14 +28,41 @@ export default class ChangeMailTask extends Task {
     isUndo: Attributes.Boolean({
       modelKey: 'isUndo',
     }),
+    inboxCategories: Attributes.Collection({
+      modelKey: 'inboxCategories',
+    }),
   });
 
   constructor({ threads = [], messages = [], ...rest } = {}) {
     super(rest);
 
     // we actually only keep a small bit of data now
-    this.threadIds = this.threadIds || threads.map(i => i.id);
-    this.messageIds = this.messageIds || messages.map(i => i.id);
+    const threadIds = [];
+    const inboxCategories = [];
+    threads.forEach(thread => {
+      if (thread) {
+        threadIds.push(thread.id);
+        inboxCategories.push({
+          inboxCategory: `${thread.inboxCategory}`,
+          type: 'thread',
+          id: thread.id,
+        });
+      }
+    });
+    this.threadIds = this.threadIds || threadIds;
+    const messageIds = [];
+    messages.forEach(msg => {
+      if (msg) {
+        messageIds.push(msg.id);
+        inboxCategories.push({
+          inboxCategory: `${msg.inboxCategory}`,
+          type: 'message',
+          id: msg.id,
+        });
+      }
+    });
+    this.messageIds = this.messageIds || messageIds;
+    this.inboxCategories = this.inboxCategories || inboxCategories;
     this.accountId = this.accountId || (threads[0] || messages[0] || {}).accountId;
     if (this.canBeUndone === undefined) {
       this.canBeUndone = true;
