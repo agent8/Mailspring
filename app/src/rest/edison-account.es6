@@ -1,7 +1,21 @@
 import axios from 'axios';
-import { AccountStore } from 'mailspring-exports';
+import crypto from 'crypto';
+import { AccountStore, Constant } from 'mailspring-exports';
 import RESTResult from './result-data-format';
 import { getOSInfo } from '../system-utils';
+import KeyManager from '../key-manager';
+
+const { OAuthList } = Constant;
+
+const aesEncode = data => {
+  const password = 'effa43461f128bee';
+  const algorithm = 'aes-128-ecb';
+  const cipher = crypto.createCipheriv(algorithm, password, null);
+  let encrypted = cipher.update(data, 'utf-8', 'base64');
+  encrypted += cipher.final('base64');
+  return encrypted;
+};
+
 export default class EdisonAccount {
   constructor(host) {
     this.host = host;
@@ -55,6 +69,76 @@ export default class EdisonAccount {
       const { data } = await axios.post(url, [postData]);
       const isChecked = data.data && data.data.includes(account.emailAddress) ? true : false;
       return new RESTResult(data.code === 0, data.message, isChecked);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async register(aid) {
+    const url = `${this.host}/account/register`;
+    const account = AccountStore.accountForId(aid);
+    if (!account) {
+      return new RESTResult(false, 'accountId is unexpected');
+    }
+    const { hostname, release } = getOSInfo();
+    const supportId = AppEnv.config.get('core.support.id');
+    const device = {
+      id: supportId,
+      name: hostname,
+      platform: process.platform === 'darwin' ? 'mac' : process.platform,
+      model: release,
+      screenType: 'computer',
+      pushToken: 'string',
+    };
+    const emailAccount = {
+      name: account.name,
+      emailAddress: account.emailAddress,
+      provider: account.provider,
+      incoming: {
+        username: account.settings.imap_username,
+        host: account.settings.imap_host,
+        port: account.settings.imap_port,
+        ssl: account.settings.imap_security && account.settings.imap_security !== 'none',
+      },
+    };
+    if (OAuthList.includes(account.provider)) {
+      emailAccount['type'] = 'oauth';
+      emailAccount['oauthClientId'] = account.settings.refresh_client_id;
+      emailAccount['incoming'] = {
+        ...emailAccount['incoming'],
+        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-refresh-token`)),
+      };
+    } else if (account.provider.endsWith('-exchange')) {
+      emailAccount['type'] = 'exchange';
+      emailAccount['incoming'] = {
+        ...emailAccount['incoming'],
+        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-imap`)),
+        // To do
+        domain: null,
+      };
+    } else {
+      emailAccount['type'] = 'imap';
+      emailAccount['incoming'] = {
+        ...emailAccount['incoming'],
+        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-imap`)),
+      };
+      emailAccount['outgoing'] = {
+        username: account.settings.smtp_username,
+        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-smtp`)),
+        host: account.settings.smtp_host,
+        port: account.settings.smtp_port,
+        ssl: account.settings.smtp_security && account.settings.smtp_security !== 'none',
+      };
+    }
+
+    const postData = {
+      device,
+      emailAccount,
+    };
+
+    try {
+      const { data } = await axios.post(url, postData);
+      return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
     }

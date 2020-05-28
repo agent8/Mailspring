@@ -47,6 +47,9 @@ const lazyLoadAndRegisterTask = (klassName, path) => {
   DatabaseObjectRegistry.register(klassName, () => exports[klassName]);
 };
 
+//constant
+lazyLoad(`Constant`, 'constant');
+
 // Actions
 lazyLoad(`Actions`, 'flux/actions');
 
