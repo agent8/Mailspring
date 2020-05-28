@@ -143,6 +143,7 @@ lazyLoadAndRegisterTask('SiftExportUserDataTask', 'sift-export-user-data-task');
 lazyLoadAndRegisterTask('SiftChangeSharingOptTask', 'sift-change-sharing-opt-task');
 lazyLoadAndRegisterTask('IMAPSearchTask', 'imap-search-task');
 lazyLoadAndRegisterTask('NativeReportTask', 'native-report-task');
+lazyLoadAndRegisterTask('AppendToSentTask', 'append-to-sent-task');
 // Stores
 // These need to be required immediately since some Stores are
 // listen-only and not explicitly required from anywhere. Stores

@@ -12,12 +12,12 @@ import {
 } from 'electron';
 
 import fs from 'fs-plus';
-import rimraf from 'rimraf';
 import url from 'url';
 import path from 'path';
 import glob from 'glob';
-import proc, { execSync } from 'child_process';
+import proc from 'child_process';
 import { EventEmitter } from 'events';
+import _ from 'underscore';
 
 import WindowManager from './window-manager';
 import FileListCache from './file-list-cache';
@@ -40,6 +40,11 @@ let clipboard = null;
 
 // The application's singleton class.
 //
+const getStartOfDay = () => {
+  const now = new Date();
+  const startOfDay = new Date(now.toDateString());
+  return startOfDay.getTime();
+};
 export default class Application extends EventEmitter {
   async start(options) {
     const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
@@ -53,11 +58,10 @@ export default class Application extends EventEmitter {
     this.specMode = specMode;
     this.safeMode = safeMode;
     this.nativeVersion = '';
-
-    // if (devMode) {
-    //   require('electron-reload')(resourcePath);
-    // }
-
+    this.startOfDay = getStartOfDay();
+    this.refreshStartOfDay = _.throttle(this._refreshStartOfDay, 1000);
+    this._triggerRefreshStartOfDayTimer = null;
+    this._setStartOfDayTimeout();
     this.fileListCache = new FileListCache();
     this.mailspringProtocolHandler = new MailspringProtocolHandler({
       configDirPath,
@@ -184,6 +188,34 @@ export default class Application extends EventEmitter {
       return;
     }
   }
+  _setStartOfDayTimeout = () => {
+    const nextStartOfDay = getStartOfDay() + 24 * 60 * 60 * 1000;
+    const timeout = nextStartOfDay - Date.now();
+    if (this._triggerRefreshStartOfDayTimer) {
+      clearTimeout(this._triggerRefreshStartOfDayTimer);
+      this._triggerRefreshStartOfDayTimer = null;
+    }
+    if (timeout > 0) {
+      this._triggerRefreshStartOfDayTimer = setTimeout(this._triggerRefreshStartOfDay, timeout);
+    } else {
+      this._triggerRefreshStartOfDay();
+    }
+  };
+  _triggerRefreshStartOfDay = () => {
+    this._refreshStartOfDay();
+    this._setStartOfDayTimeout();
+  };
+  _refreshStartOfDay = () => {
+    const newStartOfDay = getStartOfDay();
+    this.logDebug(`start of day ${newStartOfDay}`);
+    if (this.startOfDay < newStartOfDay) {
+      this.startOfDay = newStartOfDay;
+      const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (main) {
+        main.sendMessage('refresh-start-of-day', { startOfDay: this.startOfDay });
+      }
+    }
+  };
   getOpenWindows() {
     return this.windowManager.getOpenWindows();
   }
@@ -1192,6 +1224,13 @@ export default class Application extends EventEmitter {
       }
       event.preventDefault();
     });
+    app.on('browser-window-focus', (event, window) => {
+      this.refreshStartOfDay();
+      const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
+      if (main) {
+        main.sendMessage('application-activate');
+      }
+    });
 
     // System Tray
     ipcMain.on('update-system-tray', (event, ...args) => {
@@ -1523,6 +1562,7 @@ export default class Application extends EventEmitter {
         this.openWindowsForTokenState();
       }
       this.ensureMainWindowVisible();
+      this.refreshStartOfDay();
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
         main.sendMessage('application-activate');

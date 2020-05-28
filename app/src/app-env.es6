@@ -11,6 +11,7 @@ import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 import { autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
+import RegExpUtils from './regexp-utils';
 const LOG = require('electron-log');
 // const archiver = require('archiver');
 // let getOSInfo = null;
@@ -88,6 +89,7 @@ export default class AppEnvConstructor {
     this.enabledLocalQueryLog = true;
     this.enabledChangeRecordLog = false;
     this.enabledXmppLog = true;
+    this.showQueryResults = false;
     LOG.transports.file.file = path.join(
       this.getConfigDirPath(),
       'ui-log',
@@ -670,7 +672,11 @@ export default class AppEnvConstructor {
     this.emitter.emit('window-props-received', this.loadSettings.windowProps);
   }
   setWindowTitle(title) {
-    this.getCurrentWindow().setTitle(title);
+    try {
+      this.getCurrentWindow().setTitle(title.replace(RegExpUtils.nonPrintableUnicodeRegex(), ''));
+    } catch (e) {
+      this.reportError(e);
+    }
   }
 
   /*
@@ -1803,4 +1809,25 @@ export default class AppEnvConstructor {
     const app = remote.getGlobal('application');
     app.autoUpdateManager.setState('update-available');
   }
+  // openExternal() {
+  //   const { spawn, exec } = require('child_process');
+  //   exec(
+  //     '"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" https://outlook.live.com --incognito',
+  //     (err, stdout, stderr) => {
+  //       if (err) {
+  //         this.logError(err);
+  //         return;
+  //       }
+  //     }
+  //   );
+  //   exec(
+  //     '"/Applications/Firefox.app/Contents/MacOS/firefox" -private-window https://outlook.live.com',
+  //     (err, stdout, stderr) => {
+  //       if (err) {
+  //         this.logError(err);
+  //         return;
+  //       }
+  //     }
+  //   );
+  // }
 }

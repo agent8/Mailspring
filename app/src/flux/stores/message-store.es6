@@ -11,7 +11,7 @@ import TaskFactory from '../tasks/task-factory';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import FocusedContentStore from './focused-content-store';
 import * as ExtensionRegistry from '../../registries/extension-registry';
-import electron, { ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import fs from 'fs';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
@@ -317,40 +317,67 @@ class MessageStore extends MailspringStore {
     if (change.objectClass === Message.name) {
       const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
       if (!inDisplayedThread && change.type === 'persist') return;
-
-      if (
-        change.objects.length === 1 &&
-        change.objects[0].draft === true &&
-        !change.objects[0].calendarReply &&
-        !change.objects[0].ignoreSift
-      ) {
-        const item = change.objects[0];
-        const itemIndex = this._items.findIndex(msg => msg.id === item.id);
-
-        if (
-          change.type === 'persist' &&
-          itemIndex === -1 &&
-          !Message.compareMessageState(item.syncState, Message.messageSyncState.failed)
-        ) {
-          this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+      const messages = change.objects.filter(msg => msg.threadId === this._thread.id);
+      const drafts = messages.filter(msg => msg.draft && !msg.calendarReply && !msg.ignoreSift);
+      if (drafts.length > 0) {
+        if (change.type === 'persist') {
+          drafts.forEach(item => {
+            const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+            if (itemIndex === -1) {
+              this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+            }
+          });
           this._items = this._sortItemsForDisplay(this._items);
-          this._expandItemsToDefault();
-          this.trigger();
-          this._closeWindowIfNoMessage();
-          return;
+        } else if (change.type === 'unpersist') {
+          drafts.forEach(item => {
+            const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+            if (itemIndex !== -1) {
+              this._items.splice(itemIndex, 1);
+            }
+          });
         }
-
-        if (change.type === 'unpersist' && itemIndex !== -1) {
-          this._items = [].concat(this._items).filter(m => !m.isHidden());
-          this._items.splice(itemIndex, 1);
-          this._expandItemsToDefault();
-          this.trigger();
-          this._closeWindowIfNoMessage();
-          return;
-        }
+        this._expandItemsToDefault();
+        this.trigger();
       }
-      this._fetchFromCache();
+      if (messages.length !== drafts.length) {
+        this._fetchFromCache();
+      }
       this._closeWindowIfNoMessage();
+      return;
+
+      // if (
+      //   change.objects.length === 1 &&
+      //   change.objects[0].draft === true &&
+      //   !change.objects[0].calendarReply &&
+      //   !change.objects[0].ignoreSift
+      // ) {
+      //   const item = change.objects[0];
+      //   const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+      //
+      //   if (
+      //     change.type === 'persist' &&
+      //     itemIndex === -1 &&
+      //     !Message.compareMessageState(item.syncState, Message.messageSyncState.failed)
+      //   ) {
+      //     this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+      //     this._items = this._sortItemsForDisplay(this._items);
+      //     this._expandItemsToDefault();
+      //     this.trigger();
+      //     this._closeWindowIfNoMessage();
+      //     return;
+      //   }
+      //
+      //   if (change.type === 'unpersist' && itemIndex !== -1) {
+      //     this._items = [].concat(this._items).filter(m => !m.isHidden());
+      //     this._items.splice(itemIndex, 1);
+      //     this._expandItemsToDefault();
+      //     this.trigger();
+      //     this._closeWindowIfNoMessage();
+      //     return;
+      //   }
+      // }
+      // this._fetchFromCache();
+      // this._closeWindowIfNoMessage();
     }
 
     if (change.objectClass === Thread.name) {
@@ -464,7 +491,7 @@ class MessageStore extends MailspringStore {
     if (title && title.length > 37) {
       title = `${title.slice(0, 37).trim()}...`;
     }
-    electron.remote.getCurrentWindow().setTitle(title);
+    AppEnv.setWindowTitle(title);
   }
 
   _setWindowTitle() {
@@ -479,7 +506,7 @@ class MessageStore extends MailspringStore {
     if (title.length > 37) {
       title = `${title.slice(0, 37).trim()}...`;
     }
-    electron.remote.getCurrentWindow().setTitle(title);
+    AppEnv.setWindowTitle(title);
   }
 
   _markAsRead() {

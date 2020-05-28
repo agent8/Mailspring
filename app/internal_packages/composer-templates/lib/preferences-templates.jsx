@@ -84,11 +84,12 @@ class TemplateEditor extends React.Component {
           />
         </div>
         <div className="section note">
-          Changes are saved automatically. View the{' '}
+          Changes are saved automatically.
+          {/* View the{' '}
           <a href="https://mailsupport.edison.tech/hc/en-us/articles/360037710531">
             Templates Guide
           </a>{' '}
-          for tips and tricks.
+          for tips and tricks. */}
         </div>
       </div>
     );

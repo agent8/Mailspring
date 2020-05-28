@@ -78,9 +78,10 @@ export default class Thread extends ModelWithMetadata {
     // }),
     inboxCategory: Attributes.Number({
       queryable: true,
-      loadFromColumn: true,
       modelKey: 'primary',
       jsModelKey: 'inboxCategory',
+      loadFromColumn: true,
+      modelTable: 'ThreadCategory',
     }),
 
     categories: Attributes.Collection({
@@ -90,7 +91,7 @@ export default class Thread extends ModelWithMetadata {
       joinTableColumn: 'categoryId',
       joinTableName: 'ThreadCategory',
       joinOnWhere: { state: 0 },
-      joinQueryableBy: ['inAllMail', 'lastDate', 'unread'],
+      joinQueryableBy: ['inAllMail', 'lastDate', 'unread', 'primary'],
       itemClass: Category,
       queryable: true,
     }),

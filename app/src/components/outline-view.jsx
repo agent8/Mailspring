@@ -162,7 +162,9 @@ class OutlineView extends Component {
   }
 
   _renderItems() {
-    return this.props.items.map((item, idx) => item.name ? <OutlineViewItem key={item.id} item={item} index={idx} /> : <Divider key={idx} />);
+    return this.props.items.map((item, idx) =>
+      item.name ? <OutlineViewItem key={item.id} item={item} index={idx} /> : <Divider key={idx} />
+    );
   }
 
   _renderOutline(allowCreate, collapsed) {
@@ -195,9 +197,12 @@ class OutlineView extends Component {
 }
 
 export const DIVIDER_KEY = 'divider';
+export const MORE_TOGGLE = 'moreToggle';
 export const Divider = () => {
   return <div className="sidebar-divider" />;
-}
-
+};
+const More = props => {
+  return <div className="sidebar-more" onClick={props.onClick} />;
+};
 
 export default OutlineView;
