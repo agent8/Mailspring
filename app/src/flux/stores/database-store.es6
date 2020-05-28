@@ -603,6 +603,13 @@ class DatabaseStore extends MailspringStore {
   //
   run(modelQuery, options = { format: true }) {
     return this._query(modelQuery.sql(), [], modelQuery._background).then(result => {
+      if (AppEnv.showQueryResults) {
+        try {
+          AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
+        } catch (e) {
+          AppEnv.logError(`Show query results failed ${e}`);
+        }
+      }
       let transformed = modelQuery.inflateResult(result);
       const crossDBs = modelQuery.crossDBs();
       const links = modelQuery.crossDBLink();
@@ -631,6 +638,13 @@ class DatabaseStore extends MailspringStore {
         }
         return new Promise(resolve => {
           Promise.all(promises).then(rets => {
+            if (AppEnv.showQueryResults) {
+              try {
+                AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
+              } catch (e) {
+                AppEnv.logError(`Show query results failed ${e}`);
+              }
+            }
             for (let i = 0; i < rets.length; i++) {
               if (rets[i]) {
                 transformed = modelQuery.inflateResult(rets[i], auxDBQueries[i]);
