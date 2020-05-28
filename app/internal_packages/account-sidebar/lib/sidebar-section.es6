@@ -258,6 +258,11 @@ export default class SidebarSection {
     // if (isExchange) {
     //   exchangeInboxCategory = CategoryStore.getInboxCategory(account.id);
     // }
+    const isShowAll = AppEnv.savedState.sidebarKeysCollapsed[`${account.id}-single-moreToggle`];
+    const moreOrLess = Object.assign({}, MORE_TOGGLE, {
+      collapsed: isShowAll,
+      name: `${account.id}-single-moreToggle`,
+    });
     for (let category of CategoryStore.userCategories(account)) {
       let item;
       const parent = CategoryStore.getCategoryParent(category);
@@ -290,11 +295,7 @@ export default class SidebarSection {
       // }
       item = SidebarItem.forCategories([category], { hideWhenCrowded: items.length >= 3 }, false);
       if (item) {
-        if (items.length === 3) {
-          const moreOrLess = Object.assign({}, MORE_TOGGLE, {
-            collapsed: AppEnv.savedState.sidebarKeysCollapsed[`${account.id}-single-moreToggle`],
-            name: `${account.id}-single-moreToggle`,
-          });
+        if (items.length === 3 && !isShowAll) {
           items.push(moreOrLess);
         }
         items.push(item);
@@ -302,6 +303,9 @@ export default class SidebarSection {
         //   items[3].collapsed = false;
         // }
       }
+    }
+    if (isShowAll && items.length > 3) {
+      items.push(moreOrLess);
     }
     return items;
   }
