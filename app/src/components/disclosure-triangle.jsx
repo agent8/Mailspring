@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Utils } from 'mailspring-exports';
+import { RetinaImg } from 'mailspring-component-kit';
 
 class DisclosureTriangle extends React.Component {
   static displayName = 'DisclosureTriangle';
@@ -10,47 +10,35 @@ class DisclosureTriangle extends React.Component {
     visible: PropTypes.bool,
     onCollapseToggled: PropTypes.func,
     className: PropTypes.string,
-    image: PropTypes.string,
+    iconName: PropTypes.string,
+    isIcon: PropTypes.bool,
   };
 
-  static defaultProps = { onCollapseToggled() {}, className: '', image: '' };
-  _pathFor = name => {
-    if (!name || typeof name !== 'string') return null;
-    let pathName = name;
-
-    const [basename, ext] = name.split('.');
-    if (this.props.active === true) {
-      pathName = `${basename}-active.${ext}`;
-    }
-    if (this.props.selected === true) {
-      pathName = `${basename}-selected.${ext}`;
-    }
-    if (this.props.isIcon) {
-      const svgPath = Utils.iconNamed(pathName, this.props.resourcePath);
-      if (svgPath) {
-        return svgPath;
-      }
-    }
-    return Utils.imageNamed(pathName, this.props.resourcePath, true);
-  };
+  static defaultProps = { onCollapseToggled() {}, className: '', iconName: '' };
   _renderImage() {
-    let classNames = this.props.className;
+    let classNames = `${this.props.className}`;
     if (this.props.visible) {
       classNames += ' visible';
     }
+    let retinaClassName = '';
     if (this.props.collapsed) {
-      classNames += ' collapsed';
+      retinaClassName = ' collapsed';
     }
-    const imgPath = this._pathFor(this.props.image);
     return (
       <div className={classNames} onClick={this.props.onCollapseToggled}>
-        <img src={imgPath} />
+        <RetinaImg
+          className={retinaClassName}
+          name={this.props.iconName}
+          isIcon={true}
+          mode={RetinaImg.Mode.ContentIsMask}
+          style={{ fontSize: 14 }}
+        />
       </div>
     );
   }
 
   render() {
-    if (this.props.image) {
+    if (this.props.isIcon) {
       return this._renderImage();
     }
     let classnames = `${this.props.className} disclosure-triangle`;

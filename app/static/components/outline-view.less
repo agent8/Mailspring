@@ -166,19 +166,12 @@
     .more-or-less-triangle{
       order: 2;
       margin-left: 4px;
-      &.visible {
-        visibility: hidden;
-      }
-      img{
-        width: 10px;
-        height: 10px;
+      .edison-icon-down-arrow{
         transform: rotate(180deg);
-        filter: opacity(0.4);
-      }
-      &.collapsed {
-        img {
+        color: @gray-light;
+        &.collapsed {
           transform: rotate(0deg);
-        }
+      }
       }
     }
   }
@@ -257,7 +250,7 @@
       height: 14px;
       width: fit-content;
       color: @gray-light;
-      font-size: 12px;
+      font-size: 14px;
       letter-spacing: -0.26px;
       line-height: 14px;
     }
