@@ -504,7 +504,8 @@ class OutlineViewItem extends Component {
               <DisclosureTriangle
                 className={'more-or-less-triangle'}
                 collapsed={!this.props.item.collapsed}
-                image={'icon-composer-dropdown.png'}
+                iconName={'down-arrow.svg'}
+                isIcon={true}
                 visible={true}
                 onCollapseToggled={this._onToggleShowAllFolder}
               />
