@@ -30,12 +30,14 @@ const buildQuery = (categoryIds, isOther) => {
     ];
     const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
     if (enableFocusedInboxKey) {
-      const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+      const notOtherCategories = Category.inboxNotOtherCategorys().map(
         categoryNum => `${categoryNum}`
       );
-      const otherCategorys = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+      const otherCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
       whereOptions.push(
-        JoinTable.useAttribute('primary', 'Number').in(isOther ? otherCategorys : notOtherCategorys)
+        JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(
+          isOther ? otherCategories : notOtherCategories
+        )
       );
     }
     query.where(
