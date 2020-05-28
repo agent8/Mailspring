@@ -23,7 +23,7 @@
 	<key>NSRequiresAquaSystemAppearance</key>
 	<false/>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.12</string>
+	<string>10.11</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

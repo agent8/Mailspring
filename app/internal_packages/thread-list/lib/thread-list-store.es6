@@ -1,22 +1,30 @@
-const MailspringStore = require('mailspring-store').default;
-
-const {
+import {
   Rx,
   Actions,
   WorkspaceStore,
   FocusedContentStore,
   FocusedPerspectiveStore,
-} = require('mailspring-exports');
-const { ListTabular } = require('mailspring-component-kit');
-
-const ThreadListDataSource = require('./thread-list-data-source').default;
+} from 'mailspring-exports';
+import { ListTabular } from 'mailspring-component-kit';
+import ThreadListDataSource from './thread-list-data-source';
+import { ipcRenderer } from 'electron';
+import MailspringStore from 'mailspring-store';
 
 class ThreadListStore extends MailspringStore {
   constructor() {
     super();
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
+    ipcRenderer.on('refresh-start-of-day', this._onRefreshStartOfDay);
     this.createListDataSource();
   }
+  _onRefreshStartOfDay = () => {
+    const perspective = FocusedPerspectiveStore.current();
+    if (AppEnv.isMainWindow() && perspective && perspective.isToday) {
+      AppEnv.logDebug('Force Refresh today thread list in 100ms');
+      // Set timeout to give native time to update today count
+      setTimeout(this.createListDataSource, 100);
+    }
+  };
 
   dataSource = () => {
     return this._dataSource;
@@ -51,7 +59,7 @@ class ThreadListStore extends MailspringStore {
   // Inbound Events
 
   _onPerspectiveChanged = () => {
-    if(AppEnv.isMainWindow()){
+    if (AppEnv.isMainWindow()) {
       this.createListDataSource();
     } else {
       AppEnv.logDebug('not main window ignoring perspective change');
@@ -72,7 +80,11 @@ class ThreadListStore extends MailspringStore {
       // If next query returns empty results, we set all focus to null;
       if (next.empty() || next._ids.length === 0) {
         AppEnv.logDebug('Next query returns empty results');
-        Actions.setFocus({ collection: 'thread', item: null, reason: 'Next query returns empty results' });
+        Actions.setFocus({
+          collection: 'thread',
+          item: null,
+          reason: 'Next query returns empty results',
+        });
         Actions.setCursorPosition({ collection: 'thread', item: null });
         return;
       }

@@ -15,16 +15,7 @@ const buildQuery = (categoryIds, isOther) => {
     Thread.attributes.state.equal(0),
   ]);
 
-  const whereOption = {};
-  const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
-  if (enableFocusedInboxKey) {
-    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
-      categoryNum => `${categoryNum}`
-    );
-    const otherCategorys = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
-    whereOption['inboxCategory'] = isOther ? otherCategorys : notOtherCategorys;
-  }
-  const query = DatabaseStore.findAll(Thread, whereOption).limit(0);
+  const query = DatabaseStore.findAll(Thread).limit(0);
 
   // The "Unread" view shows all threads which are unread. When you read a thread,
   // it doesn't disappear until you leave the view and come back. This behavior
@@ -33,14 +24,25 @@ const buildQuery = (categoryIds, isOther) => {
   if (RecentlyReadStore.ids.length === 0) {
     query.where(unreadMatchers);
   } else {
+    const whereOptions = [
+      JoinTable.useAttribute('unread', 'Number').equal(1),
+      Thread.attributes.state.equal(0),
+    ];
+    const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
+    if (enableFocusedInboxKey) {
+      const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+        categoryNum => `${categoryNum}`
+      );
+      const otherCategorys = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+      whereOptions.push(
+        JoinTable.useAttribute('primary', 'Number').in(isOther ? otherCategorys : notOtherCategorys)
+      );
+    }
     query.where(
       new Matcher.JoinAnd([
         Thread.attributes.categories.containsAny(categoryIds),
         new Matcher.JoinOr([
-          new Matcher.JoinAnd([
-            JoinTable.useAttribute('unread', 'Number').equal(1),
-            Thread.attributes.state.equal(0),
-          ]),
+          new Matcher.JoinAnd(whereOptions),
           new Matcher.JoinAnd([
             JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids),
             JoinTable.useAttribute('state', 'Number').equal(0),

@@ -217,7 +217,7 @@ export default {
           },
           actionAfterRemove: {
             type: 'string',
-            default: 'return',
+            default: 'next',
             enum: ['next', 'previous', 'return'],
             enumLabels: ['Open next', 'Open previous', 'Return to email list'],
             title: 'When mail is Archived or Deleted',

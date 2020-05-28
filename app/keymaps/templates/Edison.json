@@ -45,7 +45,7 @@
   "core:gmail-remove-from-view": "y",
   "core:archive-item": "ctrl+mod+a",
   "core:report-as-spam": "mod+shift+j",
-  "core:delete-item": "shift+backspace",
+  "core:delete-item": ["backspace", "del"],
 
   "core:reply": ["r", "mod+r"],
   "core:reply-new-window": "shift+r",

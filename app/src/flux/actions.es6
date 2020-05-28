@@ -492,6 +492,7 @@ class Actions {
 
   // Account Sidebar
   static setCollapsedSidebarItem = ActionScopeWindow;
+  static setMoreOrLessCollapsed = ActionScopeWindow;
 
   // File Actions
   // Some file actions only need to be processed in their current window
