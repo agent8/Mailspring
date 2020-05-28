@@ -8,7 +8,7 @@ import JoinTable from '../models/join-table';
 
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
-const buildQuery = categoryIds => {
+const buildQuery = (categoryIds, isOther) => {
   const unreadMatchers = new Matcher.JoinAnd([
     Thread.attributes.categories.containsAny(categoryIds),
     JoinTable.useAttribute('unread', 'Number').equal(1),
@@ -30,10 +30,13 @@ const buildQuery = categoryIds => {
     ];
     const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
     if (enableFocusedInboxKey) {
-      const notOtherCategories = Category.inboxNotOtherCategorys().map(
+      const notOtherCategorys = Category.inboxNotOtherCategorys().map(
         categoryNum => `${categoryNum}`
       );
-      whereOptions.push(JoinTable.useAttribute('primary', 'Number').in(notOtherCategories));
+      const otherCategorys = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+      whereOptions.push(
+        JoinTable.useAttribute('primary', 'Number').in(isOther ? otherCategorys : notOtherCategorys)
+      );
     }
     query.where(
       new Matcher.JoinAnd([
@@ -53,15 +56,16 @@ const buildQuery = categoryIds => {
 };
 
 export default class UnreadQuerySubscription extends MutableQuerySubscription {
-  constructor(categoryIds) {
-    super(buildQuery(categoryIds), { emitResultSet: true });
+  constructor(categoryIds, isOther = false) {
+    super(buildQuery(categoryIds, isOther), { emitResultSet: true });
+    this.isOther = isOther;
     this._categoryIds = categoryIds;
     this._unlisten = RecentlyReadStore.listen(this.onRecentlyReadChanged);
   }
 
   onRecentlyReadChanged = () => {
     const { limit, offset } = this._query.range();
-    this._query = buildQuery(this._categoryIds)
+    this._query = buildQuery(this._categoryIds, this.isOther)
       .limit(limit)
       .offset(offset);
   };
