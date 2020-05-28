@@ -722,7 +722,7 @@ class HiddenGenericRemoveButton extends React.Component {
       <BindGlobalCommands
         commands={{
           // 'core:gmail-remove-from-view': event => commandCb(event, this._onShortcutRemoveFromView),
-          'core:remove-from-view': event => commandCb(event, this._onShortcutRemoveFromView),
+          // 'core:remove-from-view': event => commandCb(event, this._onShortcutRemoveFromView),
           'core:remove-and-previous': event =>
             commandCb(event, this._onShortcutRemoveAndShift, { offset: -1 }),
           'core:remove-and-next': event =>

@@ -90,7 +90,10 @@ class CalendarStore extends MailspringStore {
     if (!e.organizer || e.organizer.email === '') {
       return false;
     }
-    return account.getAllEmails().map(email => e.needToRsvpByEmail(email)).some(ret => ret);
+    return account
+      .getAllEmails()
+      .map(email => e.needToRsvpByEmail(email))
+      .some(ret => ret);
   }
   _rsvpEventFailed(task) {
     AppEnv.showErrorDialog({ title: 'RSVP Event failed', message: `${task.source} failed.` });
@@ -119,7 +122,7 @@ class CalendarStore extends MailspringStore {
         CalendarStore.replyTemplate({
           eventString: e.toString(),
           timezoneString: cal.getTimeZoneString(),
-        }),
+        })
       );
       const replyEvent = newCal.getFirstEvent();
       replyEvent.created = Date.now() / 1000;
@@ -164,7 +167,7 @@ class CalendarStore extends MailspringStore {
               messageId: message.id,
               draft: newMessage,
               targetStatus: reply,
-            }),
+            })
           );
         });
       });
@@ -176,15 +179,30 @@ class CalendarStore extends MailspringStore {
 
   _onMessageDataChange = change => {
     if (change.objectClass === Message.name) {
-      if (change.objects.length === 1 && change.objects[0].draft === true) {
-        const item = change.objects[0];
-        const itemIndex = Object.keys(this._calendarCache).indexOf(item.id);
-
-        if (change.type === 'unpersist' && itemIndex !== -1) {
-          this._removeMessage(item);
+      if (change.type === 'unpersist' && this._currentThreadId) {
+        const drafts = change.objects.filter(
+          msg => msg.draft && msg.threadId === this._currentThreadId
+        );
+        let changed = false;
+        drafts.forEach(msg => {
+          const itemIndex = Object.keys(this._calendarCache).indexOf(msg.id);
+          if (itemIndex !== -1) {
+            changed = true;
+            this._removeMessage(msg);
+          }
+        });
+        if (changed) {
           this.trigger();
         }
       }
+      // if (change.objects.length === 1 && change.objects[0].draft === true) {
+      //   const item = change.objects[0];
+      //   const itemIndex = Object.keys(this._calendarCache).indexOf(item.id);
+      //
+      //   if (change.type === 'unpersist' && itemIndex !== -1) {
+      //     this.trigger();
+      //   }
+      // }
     } else if (change.objectClass === Thread.name) {
       const updatedThread = change.objects.find(t => t.id === this._currentThreadId);
       if (updatedThread) {
@@ -213,7 +231,7 @@ class CalendarStore extends MailspringStore {
     MessageStore.getAllItems().forEach(this._updateCache);
   }
 
-  _updateCache = (message) => {
+  _updateCache = message => {
     if (message.hasCalendar) {
       this._processMessage(message);
     }
@@ -230,7 +248,7 @@ class CalendarStore extends MailspringStore {
           break;
         }
       }
-      if(appendToCache) {
+      if (appendToCache) {
         this._calendarCache[message.id] = {
           processing: false,
           file,
@@ -240,7 +258,7 @@ class CalendarStore extends MailspringStore {
         };
       }
     }
-    if(!this._calendarCache[message.id]){
+    if (!this._calendarCache[message.id]) {
       return;
     }
     if (
@@ -340,7 +358,6 @@ class CalendarStore extends MailspringStore {
   _isMessageInCache(messageId) {
     return !!this._calendarCache[messageId];
   }
-
 }
 
 export default new CalendarStore();

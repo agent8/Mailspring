@@ -1329,16 +1329,18 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
       }
     });
 
-    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
+    const notOtherCategories = Category.inboxNotOtherCategorys().map(
       categoryNum => `${categoryNum}`
     );
 
     const query = DatabaseStore.findAll(Thread)
-      .where([Thread.attributes.categories.containsAny(categoryIds)])
-      .where({
-        state: 0,
-        inboxCategory: notOtherCategorys,
-      })
+      .where(
+        new Matcher.JoinAnd([
+          Thread.attributes.categories.containsAny(categoryIds),
+          JoinTable.useAttribute('primary', 'Number').in(notOtherCategories),
+          Thread.attributes.state.equal(0),
+        ])
+      )
       .limit(0);
 
     if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
@@ -1388,14 +1390,16 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
       }
     });
 
-    const otherCategorys = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+    const otherCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
 
     const query = DatabaseStore.findAll(Thread)
-      .where([Thread.attributes.categories.containsAny(categoryIds)])
-      .where({
-        state: 0,
-        inboxCategory: otherCategorys,
-      })
+      .where(
+        new Matcher.JoinAnd([
+          Thread.attributes.categories.containsAny(categoryIds),
+          JoinTable.useAttribute('primary', 'Number').in(otherCategories),
+          Thread.attributes.state.equal(0),
+        ])
+      )
       .limit(0);
 
     if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
