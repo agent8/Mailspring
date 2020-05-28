@@ -89,6 +89,7 @@ export default class AppEnvConstructor {
     this.enabledLocalQueryLog = true;
     this.enabledChangeRecordLog = false;
     this.enabledXmppLog = true;
+    this.showQueryResults = false;
     LOG.transports.file.file = path.join(
       this.getConfigDirPath(),
       'ui-log',
@@ -1808,4 +1809,25 @@ export default class AppEnvConstructor {
     const app = remote.getGlobal('application');
     app.autoUpdateManager.setState('update-available');
   }
+  // openExternal() {
+  //   const { spawn, exec } = require('child_process');
+  //   exec(
+  //     '"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" https://outlook.live.com --incognito',
+  //     (err, stdout, stderr) => {
+  //       if (err) {
+  //         this.logError(err);
+  //         return;
+  //       }
+  //     }
+  //   );
+  //   exec(
+  //     '"/Applications/Firefox.app/Contents/MacOS/firefox" -private-window https://outlook.live.com',
+  //     (err, stdout, stderr) => {
+  //       if (err) {
+  //         this.logError(err);
+  //         return;
+  //       }
+  //     }
+  //   );
+  // }
 }
