@@ -72,7 +72,12 @@ class TemplatePopover extends React.Component {
     const filteredTemplates = this._filteredTemplates();
 
     const headerComponents = [
-      <InputSearch showPreIcon placeholder="" onChange={this._onSearchValueChange} />,
+      <InputSearch
+        showPreIcon
+        className="template-picker-input"
+        placeholder=""
+        onChange={this._onSearchValueChange}
+      />,
     ];
 
     // note: these are using onMouseDown to avoid clearing focus in the composer (I think)
