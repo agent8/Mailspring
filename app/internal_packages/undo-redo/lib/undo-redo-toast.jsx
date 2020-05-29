@@ -13,6 +13,7 @@ import {
 import { RetinaImg } from 'mailspring-component-kit';
 import { CSSTransitionGroup } from 'react-transition-group';
 import SendDraftTask from '../../../src/flux/tasks/send-draft-task';
+import DestroyDraftTask from '../../../src/flux/tasks/destroy-draft-task';
 
 function isUndoSend(block) {
   return (
@@ -112,6 +113,9 @@ class BasicContent extends React.Component {
         const firstChangeFolderTask = tasks.find(task => task instanceof ChangeFolderTask);
         const folderText = ` to ${firstChangeFolderTask.folder.displayName}`;
         description = `Moved ${total} threads${folderText}`;
+      } else if (tasks.every(task => task instanceof DestroyDraftTask)) {
+        const total = tasks.reduce((sum, task) => sum + task.messageIds.length, 0);
+        description = `Deleting ${total} drafts`;
       }
     } else {
       // if TrashFromSenderTask
