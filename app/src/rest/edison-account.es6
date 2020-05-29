@@ -105,7 +105,7 @@ export default class EdisonAccount {
       emailAccount['type'] = 'oauth';
       emailAccount['oauthClientId'] = account.settings.refresh_client_id;
       emailAccount['incoming'] = {
-        ...emailAccount['incoming'],
+        username: account.settings.imap_username,
         password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-refresh-token`)),
       };
     } else if (account.provider.endsWith('-exchange')) {
@@ -138,6 +138,16 @@ export default class EdisonAccount {
 
     try {
       const { data } = await axios.post(url, postData);
+      return new RESTResult(data.code === 0, data.message, data.data);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async deleteAccount() {
+    const url = `${this.host}/account/me`;
+    try {
+      const { data } = await axios.delete(url);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
