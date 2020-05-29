@@ -459,7 +459,9 @@ export default class Message extends ModelWithMetadata {
     const excludeMeAndFroms = cc =>
       _.reject(
         cc,
-        p => p.isMe() || _.contains(excludedFroms, Utils.toEquivalentEmailForm(p.email))
+        p =>
+          p.isMe({ meAccountId: this.accountId }) ||
+          _.contains(excludedFroms, Utils.toEquivalentEmailForm(p.email))
       );
 
     let to = null;
@@ -470,7 +472,7 @@ export default class Message extends ModelWithMetadata {
       // sending the message to yourself, use it.
       to = this.replyTo;
       cc = excludeMeAndFroms([].concat(this.to, this.cc));
-    } else if (this.isFromMe()) {
+    } else if (this.isFromMe({ ignoreOtherAccounts: true })) {
       // If the message is from you to others, reply-all should send to the
       // same people.
       to = this.to;
