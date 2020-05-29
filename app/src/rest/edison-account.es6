@@ -11,8 +11,8 @@ const aesEncode = data => {
   const password = 'effa43461f128bee';
   const algorithm = 'aes-128-ecb';
   const cipher = crypto.createCipheriv(algorithm, password, null);
-  let encrypted = cipher.update(data, 'utf-8', 'base64');
-  encrypted += cipher.final('base64');
+  let encrypted = cipher.update(data, 'utf-8', 'hex');
+  encrypted += cipher.final('hex');
   return encrypted;
 };
 
