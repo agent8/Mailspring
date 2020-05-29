@@ -85,7 +85,7 @@ const processInlineAttachment = change => {
           contentIds.push(inline.data.get('contentId'));
           // DC-1725 Because inlineImage have a void node with the same key
           // that is not deleted when this inline is removed
-          // We manually removes one of them so Slate can automatically removes the next one.
+          // We manually removes it.
           change.removeNodeByKey(inline.key);
         }
       }
@@ -118,7 +118,7 @@ const processNearestInlineAttachment = (change, offSet) => {
             contentIds.push(inlineImage.data.get('contentId'));
             // DC-1725 Because inlineImage have a void node with the same key
             // that is not deleted when this inline is removed
-            // We manually removes one of them so Slate can automatically removes the next one.
+            // We manually removes it.
             change.removeNodeByKey(inlineImage.key);
           }
         }
@@ -167,9 +167,9 @@ const onDelete = (event, change) => {
   if (contentIds.length === 0) {
     const haveInlineDeleted = processNearestInlineAttachment(change, 1).length > 0;
     if (haveInlineDeleted) {
-      return;
-    } else {
       return change;
+    } else {
+      return;
     }
   } else {
     if (isEmptySelection(change.value)) {
