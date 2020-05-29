@@ -120,6 +120,18 @@ export default class MailboxPerspective {
     return categories.length > 0 ? new InboxMailboxOtherPerspective(categories) : this.forNothing();
   }
 
+  static forUnreadFocused(categories) {
+    return categories.length > 0
+      ? new UnreadMailboxFocusedPerspective(categories)
+      : this.forNothing();
+  }
+
+  static forUnreadOther(categories) {
+    return categories.length > 0
+      ? new UnreadMailboxOtherPerspective(categories)
+      : this.forNothing();
+  }
+
   static forUnreadByAccounts(accountIds) {
     let categories = accountIds.map(accId => {
       return CategoryStore.getCategoryByRole(accId, 'inbox');
@@ -186,6 +198,14 @@ export default class MailboxPerspective {
       if (json.type === InboxMailboxOtherPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
         return this.forInboxOther(categories);
+      }
+      if (json.type === UnreadMailboxFocusedPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forUnreadFocused(categories);
+      }
+      if (json.type === UnreadMailboxOtherPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forUnreadOther(categories);
       }
       if (json.type === TodayMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -812,10 +832,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(
-        this.categories().map(c => c.id),
-        other.categories().map(c => c.id)
-      )
+      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
     );
   }
 
@@ -1254,6 +1271,16 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
     this.unread = true;
     this.name = 'Unread';
     this.iconName = 'unread.svg';
+    if (
+      this.isInbox() &&
+      this.constructor === UnreadMailboxPerspective &&
+      AppEnv.config.get(EnableFocusedInboxKey)
+    ) {
+      this.tab = [
+        new UnreadMailboxFocusedPerspective(this._categories),
+        new UnreadMailboxOtherPerspective(this._categories),
+      ];
+    }
   }
 
   threads() {
@@ -1304,10 +1331,9 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
 
   isTabOfPerspective(other) {
     const tab = other.tab || [];
-    const equalTab = tab.filter(per => {
+    return tab.some(per => {
       return this.isEqual(per);
     });
-    return equalTab.length > 0;
   }
 
   unreadCount() {
@@ -1337,7 +1363,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
       .where(
         new Matcher.JoinAnd([
           Thread.attributes.categories.containsAny(categoryIds),
-          JoinTable.useAttribute('primary', 'Number').in(notOtherCategories),
+          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories),
           Thread.attributes.state.equal(0),
         ])
       )
@@ -1366,10 +1392,9 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
 
   isTabOfPerspective(other) {
     const tab = other.tab || [];
-    const equalTab = tab.filter(per => {
+    return tab.some(per => {
       return this.isEqual(per);
     });
-    return equalTab.length > 0;
   }
 
   unreadCount() {
@@ -1396,7 +1421,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
       .where(
         new Matcher.JoinAnd([
           Thread.attributes.categories.containsAny(categoryIds),
-          JoinTable.useAttribute('primary', 'Number').in(otherCategories),
+          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(otherCategories),
           Thread.attributes.state.equal(0),
         ])
       )
@@ -1411,5 +1436,54 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     }
 
     return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class UnreadMailboxFocusedPerspective extends UnreadMailboxPerspective {
+  constructor(categories) {
+    super(categories);
+    this.name = `Focused`;
+    this.isTab = true;
+  }
+
+  isTabOfPerspective(other) {
+    const tab = other.tab || [];
+    return tab.some(per => {
+      return this.isEqual(per);
+    });
+  }
+
+  unreadCount() {
+    // Unread tab hidden the num of unread
+    return 0;
+  }
+
+  threads() {
+    return new UnreadQuerySubscription(this.categories().map(c => c.id));
+  }
+}
+
+class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
+  constructor(categories) {
+    super(categories);
+    this.name = `Other`;
+    this.isTab = true;
+    this.isOther = true;
+  }
+
+  isTabOfPerspective(other) {
+    const tab = other.tab || [];
+    return tab.some(per => {
+      return this.isEqual(per);
+    });
+  }
+
+  unreadCount() {
+    // Unread tab hidden the num of unread
+    return 0;
+  }
+
+  threads() {
+    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
   }
 }
