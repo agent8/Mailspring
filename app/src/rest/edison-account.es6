@@ -22,7 +22,7 @@ export default class EdisonAccount {
   }
 
   async checkAccounts(aids = []) {
-    const url = `${this.host}/account/queryMainAccounts`;
+    const url = `${this.host}/api/charge/account/queryMainAccounts`;
     const accounts = AccountStore.accounts();
     const checkAccount = (accounts || []).filter(a => aids.includes(a.id));
     if (checkAccount.length <= 0) {
@@ -53,7 +53,7 @@ export default class EdisonAccount {
   }
 
   async checkAccount(aid) {
-    const url = `${this.host}/account/queryMainAccounts`;
+    const url = `${this.host}/api/charge/account/queryMainAccounts`;
     const account = AccountStore.accountForId(aid);
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
@@ -78,7 +78,7 @@ export default class EdisonAccount {
   }
 
   async register(aid) {
-    const url = `${this.host}/account/register`;
+    const url = `${this.host}/api/charge/account/register`;
     const account = AccountStore.accountForId(aid);
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
@@ -159,7 +159,7 @@ export default class EdisonAccount {
   }
 
   async deleteAccount(aid) {
-    const url = `${this.host}/account/me`;
+    const url = `${this.host}/api/charge/account/me`;
     const account = AccountStore.accountForId(aid);
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
@@ -184,7 +184,7 @@ export default class EdisonAccount {
   }
 
   async setPasswordByAccount(aid, password) {
-    const url = `${this.host}/account/password`;
+    const url = `${this.host}/api/charge/account/password`;
     const account = AccountStore.accountForId(aid);
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
