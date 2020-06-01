@@ -1,6 +1,7 @@
-import { React } from 'mailspring-exports';
+import { React, RESTful } from 'mailspring-exports';
 import { FullScreenModal, RetinaImg } from 'mailspring-component-kit';
 
+const { AppUpdate } = RESTful;
 export default class WhatsNew extends React.Component {
   static displayName = 'WhatsNew';
 
