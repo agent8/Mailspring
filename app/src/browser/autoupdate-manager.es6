@@ -1,5 +1,5 @@
 /* eslint global-require: 0*/
-import { dialog } from 'electron';
+import { dialog, shell, app } from 'electron';
 import { EventEmitter } from 'events';
 import path from 'path';
 import fs from 'fs';
@@ -18,6 +18,12 @@ const UnsupportedState = 'unsupported';
 const ErrorState = 'error';
 const preferredChannel = 'stable';
 
+const PRIORITYENUM = {
+  HEIGHT: 1,
+  MEDIUM: 2,
+  LOW: 3,
+};
+
 export default class AutoUpdateManager extends EventEmitter {
   constructor(version, config, specMode, devMode) {
     super();
@@ -29,6 +35,7 @@ export default class AutoUpdateManager extends EventEmitter {
     this.devMode = devMode;
     this.preferredChannel = preferredChannel;
     this.supportId = syncGetDeviceHash();
+    this._hasForceUpdateMessageDialog = false;
 
     this.updateFeedURL().then(() => {
       setTimeout(() => this.setupAutoUpdater(), 0);
@@ -47,7 +54,9 @@ export default class AutoUpdateManager extends EventEmitter {
     if (params.platform === 'darwin') {
       params.platform = 'mac';
     }
-    const host = process.env.updateServer || `https://cp.edison.tech/api/ota/checkUpdate`;
+    const devHost = 'https://cp.stag.easilydo.cc/api/ota/checkUpdate';
+    const proHose = 'https://cp.edison.tech/api/ota/checkUpdate';
+    const host = process.env.updateServer || proHose;
     if (this.supportId === '') {
       try {
         this.supportId = await getDeviceHash();
@@ -57,7 +66,22 @@ export default class AutoUpdateManager extends EventEmitter {
     }
     this.feedURL = `${host}?platform=desktop-${params.platform}-full&clientVersion=${params.version}&supportId=${this.supportId}`;
     return this.feedURL;
-  }
+  };
+  getVersionInfoUrl = async () => {
+    const devHost = 'https://cp.stag.easilydo.cc/api/ota/common/getInfoByVer';
+    const proHost = 'https://cp.edison.tech/api/ota/common/getInfoByVer';
+    const host = proHost;
+    const platform = process.platform === 'darwin' ? 'mac' : process.platform;
+    if (this.supportId === '') {
+      try {
+        this.supportId = await getDeviceHash();
+      } catch (err) {
+        this.supportId = '';
+      }
+    }
+    this.feedURL = `${host}?platform=desktop-${platform}-full&clientVersion=${this.version}`;
+    return this.feedURL;
+  };
 
   updateFeedURL = async () => {
     this.feedURL = await this.getFeedUrl();
@@ -200,7 +224,52 @@ export default class AutoUpdateManager extends EventEmitter {
         this.onUpdateNotAvailable();
       }
     }
-  }
+  };
+
+  checkForce = async () => {
+    try {
+      const { data } = await axios.get(await this.getVersionInfoUrl());
+      if (data && data.data && data.data.info) {
+        const { priority, message, title, detail, url } = JSON.parse(data.data.info);
+        if (priority !== PRIORITYENUM.HEIGHT) {
+          // if message is not in height level, only show only one at a time
+          if (this._hasForceUpdateMessageDialog) {
+            return;
+          }
+          this._hasForceUpdateMessageDialog = true;
+        }
+        const choice = dialog.showMessageBoxSync({
+          type: 'info',
+          buttons: ['OK'],
+          icon: this.iconURL(),
+          message: message,
+          title: title,
+          detail: detail,
+        });
+        if (priority !== PRIORITYENUM.HEIGHT) {
+          this._hasForceUpdateMessageDialog = false;
+        }
+        if (choice === 0) {
+          switch (priority) {
+            case PRIORITYENUM.HEIGHT:
+              if (url) {
+                shell.openExternal(url);
+              }
+              app.quit();
+              break;
+            case PRIORITYENUM.MEDIUM:
+              if (url) {
+                shell.openExternal(url);
+              }
+              break;
+            case PRIORITYENUM.LOW:
+            default:
+              break;
+          }
+        }
+      }
+    } catch (err) {}
+  };
 
   install() {
     autoUpdater.quitAndInstall();
