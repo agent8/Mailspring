@@ -88,6 +88,7 @@ export default class Application extends EventEmitter {
     this.autoStartRestore();
 
     this.autoUpdateManager = new AutoUpdateManager(version, config, specMode, devMode);
+    this._checkUpdateInfoForce();
     this.applicationMenu = new ApplicationMenu(version);
     this.windowManager = new WindowManager({
       resourcePath: this.resourcePath,
@@ -328,6 +329,14 @@ export default class Application extends EventEmitter {
       this._reportLog(error, extra, { noWindows }, 'log');
     }
   }
+
+  _checkUpdateInfoForce = () => {
+    const reCheckUndateInfoTime = 60 * 60 * 1000;
+    this.autoUpdateManager.checkForce();
+    setInterval(() => {
+      this.autoUpdateManager.checkForce();
+    }, reCheckUndateInfoTime);
+  };
 
   _grabLogAndReportLog(error, extra, { noWindows } = {}, type = '') {
     this.grabLogs()
