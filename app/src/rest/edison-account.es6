@@ -22,7 +22,7 @@ export default class EdisonAccount {
   }
 
   async checkAccounts(aids = []) {
-    const url = `${this.host}/account/check`;
+    const url = `${this.host}/account/queryMainAccounts`;
     const accounts = AccountStore.accounts();
     const checkAccount = (accounts || []).filter(a => aids.includes(a.id));
     if (checkAccount.length <= 0) {
@@ -42,7 +42,7 @@ export default class EdisonAccount {
       const { data } = await axios.post(url, postParams);
       const checkedAccountIds = [];
       checkAccount.forEach(a => {
-        if (data.data && data.data.includes(a.emailAddress)) {
+        if (data.data && data.data.includes(`${a.emailAddress}:${a.settings.imap_host}`)) {
           checkedAccountIds.push(a.id);
         }
       });
@@ -53,7 +53,7 @@ export default class EdisonAccount {
   }
 
   async checkAccount(aid) {
-    const url = `${this.host}/account/check`;
+    const url = `${this.host}/account/queryMainAccounts`;
     const account = AccountStore.accountForId(aid);
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
@@ -67,7 +67,10 @@ export default class EdisonAccount {
     }
     try {
       const { data } = await axios.post(url, [postData]);
-      const isChecked = data.data && data.data.includes(account.emailAddress) ? true : false;
+      const isChecked =
+        data.data && data.data.includes(`${account.emailAddress}:${account.settings.imap_host}`)
+          ? true
+          : false;
       return new RESTResult(data.code === 0, data.message, isChecked);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -144,10 +147,18 @@ export default class EdisonAccount {
     }
   }
 
-  async deleteAccount() {
+  async deleteAccount(token) {
     const url = `${this.host}/account/me`;
     try {
-      const { data } = await axios.delete(url);
+      const res = await axios({
+        url,
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json, text/plain, */*',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = res.data;
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
