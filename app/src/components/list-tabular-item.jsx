@@ -52,6 +52,7 @@ class ListTabularItem extends React.Component {
           top: this.props.metrics.top,
           width: '100%',
           height: this.props.metrics.height,
+          zIndex: className.includes('keyboard-cursor') ? 9 : null,
         }}
       >
         <div className={className} style={{ height: this.props.metrics.height }}>
@@ -66,9 +67,7 @@ class ListTabularItem extends React.Component {
     return (this.props.columns || []).map(column => {
       if (names[column.name]) {
         console.warn(
-          `ListTabular: Columns do not have distinct names, will cause React error! \`${
-            column.name
-          }\` twice.`
+          `ListTabular: Columns do not have distinct names, will cause React error! \`${column.name}\` twice.`
         );
       }
       names[column.name] = true;
