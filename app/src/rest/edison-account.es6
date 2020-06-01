@@ -1,6 +1,6 @@
 import axios from 'axios';
 import crypto from 'crypto';
-import { AccountStore, Constant } from 'mailspring-exports';
+import { AccountStore, Constant, Actions } from 'mailspring-exports';
 import RESTResult from './result-data-format';
 import { getOSInfo } from '../system-utils';
 import KeyManager from '../key-manager';
@@ -141,25 +141,70 @@ export default class EdisonAccount {
 
     try {
       const { data } = await axios.post(url, postData);
+      if (data.code === 0 && data.data) {
+        const newAccount = {
+          ...account,
+          settings: {
+            ...account.settings,
+            edisonId: data.data.edisonId,
+            edison_token: data.data.token,
+          },
+        };
+        Actions.updateAccount(aid, newAccount);
+      }
+      return new RESTResult(data.code === 0, data.message);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async deleteAccount(aid) {
+    const url = `${this.host}/account/me`;
+    const account = AccountStore.accountForId(aid);
+    if (!account) {
+      return new RESTResult(false, 'accountId is unexpected');
+    }
+    const token = account.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'this account has no token');
+    }
+    try {
+      const res = await axios({
+        url,
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = res.data;
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
     }
   }
 
-  async deleteAccount(token) {
-    const url = `${this.host}/account/me`;
+  async setPasswordByAccount(aid, password) {
+    const url = `${this.host}/account/password`;
+    const account = AccountStore.accountForId(aid);
+    if (!account) {
+      return new RESTResult(false, 'accountId is unexpected');
+    }
+    const token = account.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'this account has no token');
+    }
+    const postData = {
+      emailAddress: account.emailAddress,
+      password: password,
+    };
     try {
-      const res = await axios({
-        url,
-        method: 'DELETE',
+      const { data } = await axios.post(url, postData, {
         headers: {
-          Accept: 'application/json, text/plain, */*',
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
-      const data = res.data;
-      return new RESTResult(data.code === 0, data.message, data.data);
+      return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
     }
