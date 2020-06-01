@@ -164,7 +164,10 @@ const c2 = new ListTabular.Column({
     }
 
     let attachment = null;
-    if (thread.hasAttachments) {
+    const messages = thread.__messages || [];
+    const hasAttachments =
+      thread.hasAttachments && messages.find(m => Utils.showIconForAttachments(m.files));
+    if (hasAttachments) {
       const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
       attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
