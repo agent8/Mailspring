@@ -111,14 +111,6 @@ export default class EdisonAccount {
         username: account.settings.imap_username,
         password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-refresh-token`)),
       };
-    } else if (account.provider.endsWith('-exchange')) {
-      emailAccount['type'] = 'exchange';
-      emailAccount['incoming'] = {
-        ...emailAccount['incoming'],
-        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-imap`)),
-        // To do
-        domain: null,
-      };
     } else {
       emailAccount['type'] = 'imap';
       emailAccount['incoming'] = {
@@ -131,6 +123,14 @@ export default class EdisonAccount {
         host: account.settings.smtp_host,
         port: account.settings.smtp_port,
         ssl: account.settings.smtp_security && account.settings.smtp_security !== 'none',
+      };
+    }
+    if (account.provider.endsWith('-exchange')) {
+      emailAccount['type'] = 'exchange';
+      emailAccount['incoming'] = {
+        ...emailAccount['incoming'],
+        // To do
+        domain: null,
       };
     }
 
