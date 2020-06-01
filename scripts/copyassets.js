@@ -112,6 +112,14 @@ const file_mappings = [
     'veyron-design/images/desktop/focused-inbox.png',
     './app/static/images/notification/focused-inbox.png',
   ],
+  [
+    'veyron-design/images/desktop/whatsnew-snooze.png',
+    './app/static/images/notification/whatsnew-snooze.png',
+  ],
+  [
+    'veyron-design/images/desktop/whatsnew-rating.png',
+    './app/static/images/notification/whatsnew-rating.png',
+  ],
 ];
 
 let errorCommands = [];
