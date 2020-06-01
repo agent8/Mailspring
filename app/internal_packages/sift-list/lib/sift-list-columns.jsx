@@ -97,7 +97,8 @@ const AttachmentsColumn = new ListTabular.Column({
   width: 32,
   resolver: message => {
     let attachments = [];
-    if (message.files && message.files.length > 0) {
+    const showAttachmentIcon = Utils.showIconForAttachments(message.files);
+    if (showAttachmentIcon) {
       const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
       attachments = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
@@ -173,8 +174,8 @@ const cNarrow = new ListTabular.Column({
       calendar = <div className={`thread-icon thread-icon-calendar ${calendarClassName}`} />;
     }
 
-    const hasAttachments = message.files.length > 0;
-    if (hasAttachments) {
+    const showAttachmentIcon = Utils.showIconForAttachments(message.files);
+    if (showAttachmentIcon) {
       const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
       attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }

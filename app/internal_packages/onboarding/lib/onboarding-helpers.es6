@@ -237,6 +237,9 @@ export async function expandAccountWithCommonSettings(account, forceDomain = nul
     };
     populated.settings = Object.assign(defaults, populated.settings);
     populated.mailsync = Object.assign(AppEnv.config.get('core.mailsync'), populated.mailsync);
+    if (populated.mailsync.accounts) {
+      delete populated.mailsync.accounts;
+    }
     return populated;
   }
 

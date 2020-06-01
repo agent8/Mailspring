@@ -61,7 +61,8 @@ const AttachmentsColumn = new ListTabular.Column({
   resolver: draft => {
     let attachments = [];
     const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
-    if (draft.files && draft.files.length > 0) {
+    const showAttachmentIcon = Utils.showIconForAttachments(draft.files);
+    if (showAttachmentIcon) {
       attachments = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
     return attachments;
