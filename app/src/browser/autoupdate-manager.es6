@@ -229,8 +229,8 @@ export default class AutoUpdateManager extends EventEmitter {
   checkForce = async () => {
     try {
       const { data } = await axios.get(await this.getVersionInfoUrl());
-      if (data && data.info) {
-        const { priority, message, title, detail, url } = JSON.parse(data.info);
+      if (data && data.data && data.data.info) {
+        const { priority, message, title, detail, url } = JSON.parse(data.data.info);
         if (priority !== PRIORITYENUM.HEIGHT) {
           // if message is not in height level, only show only one at a time
           if (this._hasForceUpdateMessageDialog) {
