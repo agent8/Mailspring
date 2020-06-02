@@ -7,6 +7,7 @@ import {
   FocusedContentStore,
   CategoryStore,
   ChangeMailTask,
+  WorkspaceStore,
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 const ToolbarCategoryPicker = require('../../category-picker/lib/toolbar-category-picker');
@@ -14,6 +15,15 @@ const nextActionForTrashOrArchive = task => {
   const focusedThread = FocusedContentStore.focused('thread');
   if (focusedThread && task instanceof ChangeMailTask) {
     if (task.threadIds.includes(focusedThread.id)) {
+      const topSheet = WorkspaceStore.topSheet();
+      const layoutMode = WorkspaceStore.layoutMode();
+      if (
+        topSheet &&
+        (topSheet.id === 'Threads' || topSheet.id === 'Sift') &&
+        layoutMode === 'list'
+      ) {
+        return;
+      }
       const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
       AppEnv.logDebug(`nextAction on removeFromView: ${nextAction} for ${focusedThread.id}`);
       if (nextAction === 'next') {
