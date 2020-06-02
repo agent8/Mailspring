@@ -928,16 +928,24 @@ export default class MailsyncBridge {
     if (nativeReportTask instanceof NativeReportTask) {
       if (nativeReportTask.level === NativeReportTask.errorLevel.info) {
         console.log(nativeReportTask);
-        AppEnv.reportLog(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportLog(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { grabLogs: nativeReportTask.uploadLogs }
+        );
       } else if (nativeReportTask.level === NativeReportTask.errorLevel.warning) {
         console.warn(nativeReportTask);
-        AppEnv.reportWarning(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportWarning(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { grabLogs: nativeReportTask.uploadLogs }
+        );
       } else {
         console.error(nativeReportTask);
         AppEnv.reportError(
           new Error(nativeReportTask.key),
           { errorData: nativeReportTask },
-          { grabLogs: true }
+          { grabLogs: nativeReportTask.uploadLogs }
         );
       }
     }
