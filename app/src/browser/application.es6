@@ -1566,6 +1566,10 @@ export default class Application extends EventEmitter {
       event.sender.send('inline-styles-result', { html: out, key });
     });
 
+    ipcMain.on('open-url', (event, url) => {
+      require('electron').shell.openExternal(url);
+    });
+
     app.on('activate', (event, hasVisibleWindows) => {
       if (!hasVisibleWindows) {
         this.openWindowsForTokenState();
