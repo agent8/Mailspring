@@ -1,0 +1,56 @@
+@import 'ui-variables';
+
+.swiper-container {
+  position: relative;
+  overflow: hidden;
+  .swiper-wrapper {
+    position: absolute;
+    top: 0;
+
+    &.transition {
+      transition: left 1000ms ease;
+    }
+
+    .swiper-slide {
+      display: flex;
+      flex: 0;
+      justify-content: center;
+      align-items: center;
+      img {
+        max-height: 100%;
+        max-width: 100%;
+      }
+    }
+  }
+
+  .swiper-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .swiper-dots {
+      width: 10px;
+      height: 10px;
+      cursor: pointer;
+      border-radius: 50%;
+      background: rgba(51, 153, 255, 0.15);
+      opacity: 1;
+      margin: 0 6px;
+
+      &.active {
+        background: #39f;
+      }
+    }
+
+    .swiper-ctrl {
+      height: 24px;
+      width: 24px;
+      font-size: 24px;
+      line-height: 1;
+      color: #39f;
+      text-align: center;
+      cursor: pointer;
+      margin: 0 12px;
+    }
+  }
+}
