@@ -401,6 +401,7 @@ export class ImageAttachmentItem extends Component {
 
   static propTypes = {
     imgProps: PropTypes.object,
+    onHover: PropTypes.func,
     ...propTypes,
   };
 
@@ -501,6 +502,11 @@ export class ImageAttachmentItem extends Component {
       this._imageReloaded = true;
     }
   };
+  _onImageHover = event => {
+    if (this.props.onHover) {
+      this.props.onHover(event.target);
+    }
+  };
 
   renderImage() {
     const { isDownloading, filePath, draggable } = this.props;
@@ -528,7 +534,7 @@ export class ImageAttachmentItem extends Component {
     const { className, displayName, disabled, ...extraProps } = this.props;
     const classes = `nylas-attachment-item image-attachment-item ${className || ''}`;
     return (
-      <div className={classes} {...pickHTMLProps(extraProps)}>
+      <div className={classes} {...pickHTMLProps(extraProps)} onMouseUp={this._onImageHover}>
         <div>
           <div
             className="popup"
