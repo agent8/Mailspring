@@ -91,11 +91,15 @@ const nextActionForRemoveFromView = source => {
     AppEnv.logDebug('Not main window, no next action for remove from view');
     return;
   }
+  const topSheet = WorkspaceStore.topSheet();
+  const layoutMode = WorkspaceStore.layoutMode();
+  const ignoreNextActions =
+    topSheet && (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
   const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
   AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
-  if (nextAction === 'next') {
+  if (nextAction === 'next' && !ignoreNextActions) {
     AppEnv.commands.dispatch('core:show-next');
-  } else if (nextAction === 'previous') {
+  } else if (nextAction === 'previous' && !ignoreNextActions) {
     AppEnv.commands.dispatch('core:show-previous');
   } else {
     Actions.popSheet({ reason: source });
