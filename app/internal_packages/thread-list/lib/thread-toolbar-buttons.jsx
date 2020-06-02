@@ -901,7 +901,7 @@ export class ThreadListMoreButton extends React.Component {
       if (isAllAccountsUseLabels) {
         const isAllImportant = this.props.items.every(item => {
           const category = CategoryStore.getCategoryByRole(item.accountId, 'important');
-          return _.findWhere(item.labels, { id: category.id }) != null;
+          return category && _.findWhere(item.labels, { id: category.id }) != null;
         });
         if (isAllImportant) {
           menu.append(
