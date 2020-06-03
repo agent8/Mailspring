@@ -161,6 +161,11 @@ export default class Category extends Model {
       queryable: true,
       loadFromColumn: true,
     }),
+    selectable: Attributes.Boolean({
+      modelKey: 'selectable',
+      queryable: true,
+      loadFromColumn: true,
+    }),
     type: Attributes.Number({
       modelKey: 'type',
       queryable: true,

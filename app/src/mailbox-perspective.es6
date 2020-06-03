@@ -91,6 +91,9 @@ export default class MailboxPerspective {
   static forCategories(categories) {
     return categories.length > 0 ? new CategoryMailboxPerspective(categories) : this.forNothing();
   }
+  static forNoneSelectableCategories(categories) {
+    return categories.length > 0 ? new NoneSelectablePerspective(categories) : this.forNothing();
+  }
 
   static forStandardCategories(accountsOrIds, ...names) {
     // TODO this method is broken
@@ -1101,6 +1104,34 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 }
 
+class NoneSelectablePerspective extends CategoryMailboxPerspective {
+  constructor(data) {
+    super(data);
+    this.noneSelectable = true;
+  }
+  threads() {
+    // We need a Thread query that will not return any results and take no time.
+    // We use lastMessageReceivedTimestamp because it is the first column on an
+    // index so this returns zero items nearly instantly. In the future, we might
+    // want to make a Query.forNothing() to go along with MailboxPerspective.forNothing()
+    const query = DatabaseStore.findAll(Thread)
+      .where({ lastMessageTimestamp: -1 })
+      .limit(0);
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+  unreadCount() {
+    return 0;
+  }
+  canReceiveThreadsFromAccountIds() {
+    return false;
+  }
+  receiveThreadIds(threadIds) {
+    return;
+  }
+  actionsForReceivingThreads(threads, accountId) {
+    return;
+  }
+}
 class AllSentMailboxPerspective extends CategoryMailboxPerspective {
   constructor(props) {
     super(props);
