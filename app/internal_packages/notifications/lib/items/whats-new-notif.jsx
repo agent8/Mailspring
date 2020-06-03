@@ -1,15 +1,17 @@
 import { React, RESTful, Constant } from 'mailspring-exports';
 import { FullScreenModal, Banner } from 'mailspring-component-kit';
-import { ipcRenderer } from 'electron';
+import { remote, ipcRenderer } from 'electron';
 
 const { UserReviewUrl, UserCheckUpdateTimeHappyLine, ServerInfoPriorityEnum } = Constant;
 const { AppUpdateRest } = RESTful;
+const SETTINGS_KEY = 'mailto.user-know-update-info-version';
 
 export default class WhatsNew extends React.Component {
   static displayName = 'WhatsNew';
 
   constructor() {
     super();
+    this.version = remote.getGlobal('application').version;
     this.state = {
       showUserReview: false,
       finished: true,
@@ -29,9 +31,34 @@ export default class WhatsNew extends React.Component {
     this._getUpdateInformation();
   }
 
+  isLessThenNowVersion = version => {
+    const nowVersion = this.version.split('.');
+    const configVersion = version.split('.');
+    let i = 0;
+    const maxI = Math.max(nowVersion.length - 1, configVersion.length - 1);
+    while (nowVersion[i] === configVersion[i] && i < maxI) {
+      i++;
+    }
+    if (!configVersion[i]) {
+      return true;
+    } else if (!nowVersion[i]) {
+      return false;
+    } else {
+      return Number(configVersion[i]) < Number(nowVersion[i]);
+    }
+  };
+
   _getUpdateInformation = async () => {
+    // If the user has updated it manually at least three times,
+    // we think that the user has used our app in depth and happy
     const checkUpdateTime = AppEnv.getEventTriggerTime('UserCheckUpdate');
     if (checkUpdateTime <= UserCheckUpdateTimeHappyLine) {
+      return;
+    }
+    // if the version user has know the update info is less than now
+    // We shouldn show this pop-up
+    const userKnowUpdateInfoVersion = AppEnv.config.get(SETTINGS_KEY);
+    if (!this.isLessThenNowVersion(userKnowUpdateInfoVersion)) {
       return;
     }
     const result = await AppUpdateRest.getUpdateInformation();
@@ -60,6 +87,7 @@ export default class WhatsNew extends React.Component {
     this.setState({
       showUserReview: false,
     });
+    AppEnv.config.set(SETTINGS_KEY, this.version);
   };
 
   _onNext = () => {
