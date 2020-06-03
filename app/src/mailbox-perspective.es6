@@ -832,7 +832,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
+      _.isEqual(
+        this.categories().map(c => c.id),
+        other.categories().map(c => c.id)
+      )
     );
   }
 
@@ -1137,16 +1140,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
   }
 
   threads() {
-    const whereOption = { state: 0 };
-    const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
-    if (enableFocusedInboxKey) {
-      const notOtherCategorys = Category.inboxNotOtherCategorys().map(
-        categoryNum => `${categoryNum}`
-      );
-      whereOption['inboxCategory'] = notOtherCategorys;
-    }
-
-    let query = DatabaseStore.findAll(Thread, whereOption).limit(0);
+    let query = DatabaseStore.findAll(Thread, { state: 0 }).limit(0);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
     const categoryIds = [];
@@ -1156,14 +1150,23 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
       }
     });
     if (categoryIds.length > 0) {
-      const conditions = new Matcher.JoinAnd([
+      const conditions = [
         Thread.attributes.categories.containsAny(categoryIds),
         JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(
           startOfDay / 1000
         ),
         Thread.attributes.state.equal(0),
-      ]);
-      query = query.where([conditions]);
+      ];
+      const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
+      if (enableFocusedInboxKey) {
+        const notOtherCategories = Category.inboxNotOtherCategorys().map(
+          categoryNum => `${categoryNum}`
+        );
+        conditions.push(
+          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories)
+        );
+      }
+      query = query.where([new Matcher.JoinAnd(conditions)]);
     } else {
       query = query.where([Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay / 1000)]);
     }
@@ -1484,6 +1487,9 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
+    return new UnreadQuerySubscription(
+      this.categories().map(c => c.id),
+      this.isOther
+    );
   }
 }
