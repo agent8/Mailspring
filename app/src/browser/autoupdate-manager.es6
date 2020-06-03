@@ -265,6 +265,7 @@ export default class AutoUpdateManager extends EventEmitter {
   };
 
   install() {
+    global.application.eventTriggers.eventTrigger('UserInstallUpdate');
     autoUpdater.quitAndInstall();
   }
 

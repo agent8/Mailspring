@@ -11,7 +11,7 @@ export const UserReviewText = '♥ Love it? Let us know.';
 export const UserReviewUrl =
   'itms-apps://apps.apple.com/cn/app/email-edison-mail/id1489591003?action=write-review';
 
-export const UserCheckUpdateTimeHappyLine = 3;
+export const UserInstallUpdateTimeHappyLine = 3;
 
 export const ServerInfoPriorityEnum = {
   // 紧急的通知，需要退出app

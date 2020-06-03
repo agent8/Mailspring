@@ -1128,7 +1128,6 @@ export default class Application extends EventEmitter {
 
     this.on('application:check-for-update', () => {
       this.autoUpdateManager.check({ manuallyCheck: true });
-      this.eventTriggers.eventTrigger('UserCheckUpdate');
     });
 
     this.on('application:install-update', () => {
