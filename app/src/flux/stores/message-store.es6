@@ -15,7 +15,7 @@ import { ipcRenderer } from 'electron';
 import fs from 'fs';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
-
+const AutoDownloadSizeThreshHold = 2 * 1024 * 1024;
 class MessageStore extends MailspringStore {
   constructor() {
     super();
@@ -736,9 +736,14 @@ class MessageStore extends MailspringStore {
         fs.access(tmpPath, fs.constants.R_OK, err => {
           const tempExists = !err;
           if (!tempExists) {
-            const aId = message.accountId;
-            const oldAIdMap = missingAidMap.get(aId) || [];
-            missingAidMap.set(aId, [...oldAIdMap, f.id]);
+            if (
+              f.isInline ||
+              (f.size < AutoDownloadSizeThreshHold && f.size > 0 && this._itemsExpanded[message.id])
+            ) {
+              const aId = message.accountId;
+              const oldAIdMap = missingAidMap.get(aId) || [];
+              missingAidMap.set(aId, [...oldAIdMap, f.id]);
+            }
             if (!this.isAttachmentMissing(f.id)) {
               this._missingAttachmentIds.push(f.id);
               change = true;
@@ -802,9 +807,22 @@ class MessageStore extends MailspringStore {
   }
 
   _fetchExpandedAttachments(items) {
+    const fileIds = [];
     for (let item of items) {
       if (!this._itemsExpanded[item.id]) continue;
-      item.files.map(file => Actions.fetchFile(file));
+      item.files.forEach(file => {
+        if (this.isAttachmentMissing(file.id)) {
+          fileIds.push(file.id);
+        }
+      });
+    }
+    if (items.length > 0 && items[0] && fileIds.length > 0) {
+      Actions.fetchAttachments({
+        accountId: items[0].accountId,
+        missingItems: fileIds,
+        needProgress: true,
+        source: 'Click',
+      });
     }
   }
 
