@@ -770,6 +770,23 @@ export default class AppEnvConstructor {
       return [];
     }
   }
+  getOpenWindowsCountByAccountId(accountId) {
+    if (!accountId) {
+      return;
+    }
+    const wins = remote.getGlobal('application').windowManager.findWindowsByAccountId(accountId);
+    return (wins || []).length;
+  }
+  closeWindowsByAccountId(accountId, reason = 'unknow') {
+    if (!accountId) {
+      return;
+    }
+    this.logDebug(`Closing all window for account ${accountId} because ${reason}`);
+    const wins = remote.getGlobal('application').windowManager.findWindowsByAccountId(accountId);
+    (wins || []).forEach(win => {
+      win.close();
+    });
+  }
 
   getOpenWindowCount() {
     let ret = 0;
@@ -1072,6 +1089,10 @@ export default class AppEnvConstructor {
   // `options` are documented in browser/WindowLauncher
   newWindow(options = {}) {
     return ipcRenderer.send('new-window', options);
+  }
+  updateWindowKey({ oldKey, newKey, newOptions = {} } = {}) {
+    const opts = { oldKey, newKey, newOptions };
+    return ipcRenderer.send('update-window-key', opts);
   }
 
   saveWindowStateAndUnload() {

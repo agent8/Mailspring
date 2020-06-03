@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { RetinaImg, Flexbox, EditableList } from 'mailspring-component-kit';
+import { DraftStore } from 'mailspring-exports';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
 
@@ -75,10 +76,18 @@ class PreferencesAccountList extends Component {
         className="account-list"
         showDelIcon
         showFooter
-        getConfirmMessage={account => ({
-          message: 'Are you sure?',
-          detail: `Delete this account ${account.emailAddress}`,
-        })}
+        getConfirmMessage={account => {
+          const drafts = DraftStore.findDraftsByAccountId(account.id);
+          let detail = `Do you want to delete this account ${account.emailAddress}?`;
+          if (drafts.length > 0) {
+            detail = `There ${drafts.length > 1 ? 'are' : 'is'} ${drafts.length} draft${
+              drafts.length > 1 ? 's' : ''
+            } for this account that is currently open. Do you want to delete account ${
+              account.emailAddress
+            }?`;
+          }
+          return { message: 'Are you sure?', detail };
+        }}
         items={this.props.accounts}
         itemContent={this._renderAccount}
         selected={this.props.selected}
