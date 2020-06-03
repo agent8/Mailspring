@@ -171,6 +171,22 @@ class DraftStore extends MailspringStore {
     });
   }
 
+  findDraftsByAccountId = accountId => {
+    const drafts = [];
+    if (!accountId) {
+      return [];
+    }
+    Object.values(this._draftSessions).forEach(session => {
+      if (session) {
+        const draft = session.draft();
+        if (draft && draft.accountId === accountId) {
+          drafts.push(draft);
+        }
+      }
+    });
+    return drafts;
+  };
+
   /**
    Fetch a {DraftEditingSession} for displaying and/or editing the
    draft with `messageId`.
@@ -419,6 +435,11 @@ class DraftStore extends MailspringStore {
     const newDraft = await DraftFactory.copyDraftToAccount(oldDraft, newParticipants.from);
     const draftCount = this._draftsOpenCount[originalMessageId];
     await this._finalizeAndPersistNewMessage(newDraft, { popout: !draftCount[3] });
+    AppEnv.updateWindowKey({
+      oldKey: `composer-${originalMessageId}`,
+      newKey: `composer-${newDraft.id}`,
+      newOptions: { accountId: newDraft.accountId },
+    });
     Actions.changeDraftAccountComplete({
       newDraftJSON: newDraft.toJSON(),
       originalHeaderMessageId,
@@ -1111,6 +1132,7 @@ class DraftStore extends MailspringStore {
           }),
           title: ' ',
           threadId: newSession.draft().threadId,
+          accountId: newDraft.accountId,
         });
         AttachmentStore = AttachmentStore || require('./attachment-store').default;
         AttachmentStore.removeDraftAttachmentCache({
@@ -1148,6 +1170,7 @@ class DraftStore extends MailspringStore {
         windowProps: Object.assign(options, { messageId, draftJSON }),
         title: ' ',
         threadId: session.draft().threadId,
+        accountId: session.draft().accountId,
       });
     }
   };
