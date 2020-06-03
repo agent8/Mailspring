@@ -2,7 +2,6 @@ import React from 'react';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
 import { AttachmentStore, Actions } from 'mailspring-exports';
 import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
-import select from 'eslint-plugin-jsx-a11y/lib/util/implicitRoles/select';
 
 const IMAGE_TYPE = 'image';
 
