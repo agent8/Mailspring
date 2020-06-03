@@ -338,12 +338,14 @@ class FocusedPerspectiveStore extends MailspringStore {
         }
         accounts[cat.accountId].push(cat.id);
       });
-      for (let key of Object.keys(accounts)) {
-        Actions.syncFolders({
-          accountId: key,
-          foldersIds: accounts[key],
-          source,
-        });
+      if (!perspective.noneSelectable) {
+        for (let key of Object.keys(accounts)) {
+          Actions.syncFolders({
+            accountId: key,
+            foldersIds: accounts[key],
+            source,
+          });
+        }
       }
     } else if (
       perspective.categoryIds &&
@@ -351,11 +353,13 @@ class FocusedPerspectiveStore extends MailspringStore {
     ) {
       for (let i = 0; i < perspective.categoryIds.length; i++) {
         accounts[perspective.accountIds[i]] = [perspective.categoryIds[i]];
-        Actions.syncFolders({
-          accountId: perspective.accountIds[i],
-          foldersIds: [perspective.categoryIds[i]],
-          source,
-        });
+        if (!perspective.noneSelectable) {
+          Actions.syncFolders({
+            accountId: perspective.accountIds[i],
+            foldersIds: [perspective.categoryIds[i]],
+            source,
+          });
+        }
       }
     }
     return accounts;
