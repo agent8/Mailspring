@@ -1,5 +1,5 @@
 import { React, RESTful, Constant } from 'mailspring-exports';
-import { FullScreenModal, RetinaImg } from 'mailspring-component-kit';
+import { FullScreenModal, Banner } from 'mailspring-component-kit';
 import { ipcRenderer } from 'electron';
 
 const { UserReviewUrl } = Constant;
@@ -13,11 +13,12 @@ export default class WhatsNew extends React.Component {
     this.state = {
       showUserReview: false,
       finished: true,
+      pageIdx: 0,
       pages: [
         {
           image: 'whatsnew-rating.png',
           title: 'Thanks for Using Email!',
-          message:
+          description:
             'If you have a moment to leave a review in the App Store, we would really appreciate it.',
         },
       ],
@@ -61,9 +62,14 @@ export default class WhatsNew extends React.Component {
     ipcRenderer.send('open-url', UserReviewUrl);
   };
 
+  _setCurrentIndex = idx => {
+    this.setState({ pageIdx: idx });
+  };
+
   render() {
-    const { showUserReview, finished, pages } = this.state;
-    const nowPage = pages[0];
+    const { showUserReview, finished, pages, pageIdx } = this.state;
+    const currentPage = pages[pageIdx];
+
     return (
       <FullScreenModal
         visible={showUserReview}
@@ -72,15 +78,20 @@ export default class WhatsNew extends React.Component {
         mask
         closable={finished}
       >
-        <div className="focused-inbox-notif">
-          <RetinaImg
-            name={nowPage.image}
-            mode={RetinaImg.Mode.ContentPreserve}
-            style={{ width: 260, height: 200 }}
+        <div className="whats-new-notif">
+          <Banner
+            afterChange={this._setCurrentIndex}
+            autoplay
+            dots
+            data={pages.map(page => page.image)}
+            height={250}
+            width={500}
           />
-          <h2>{nowPage.title}</h2>
-          <p>{nowPage.message}</p>
-          <div className="btn-list">
+          <div className="text-container">
+            <h2>{currentPage.title}</h2>
+            <p>{currentPage.description}</p>
+          </div>
+          <div className="footer">
             {finished ? (
               <div className="btn modal-btn-enable" onClick={() => this._onClickReview()}>
                 Leave a Review
