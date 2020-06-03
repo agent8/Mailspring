@@ -97,7 +97,7 @@ export default class WhatsNew extends React.Component {
                 Leave a Review
               </div>
             ) : (
-              <div className="btn modal-btn-enable" onClick={() => this._onNext()}>
+              <div className="btn modal-btn-disable" onClick={() => this._onNext()}>
                 Next
               </div>
             )}

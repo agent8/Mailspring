@@ -182,4 +182,32 @@
       width: 350px;
     }
   }
+
+  .footer {
+    padding-top: 24px;
+    .btn {
+      margin: 0 10px;
+      box-sizing: border-box;
+      height: 36px;
+      background-color: #fff;
+      opacity: 0.98;
+      border-radius: 20px;
+      border: 1px solid @blue;
+      line-height: 34px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      padding: 0 50px;
+
+      &.modal-btn-disable {
+        color: @blue;
+      }
+
+      &.modal-btn-enable {
+        color: @text-color-inverse;
+        background: @blue;
+      }
+    }
+  }
 }
