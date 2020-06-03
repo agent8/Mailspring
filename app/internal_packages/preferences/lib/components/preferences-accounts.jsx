@@ -57,6 +57,10 @@ class PreferencesAccounts extends React.Component {
   };
 
   _onRemoveAccount(account) {
+    const openWindowsCount = AppEnv.getOpenWindowsCountByAccountId(account.id);
+    if (openWindowsCount > 0) {
+      AppEnv.closeWindowsByAccountId(account.id, 'account deleted');
+    }
     Actions.removeAccount(account.id);
   }
 
