@@ -63,6 +63,7 @@ class ThreadList extends React.Component {
 
     window.addEventListener('resize', this._onResize, true);
     ReactDOM.findDOMNode(this).addEventListener('contextmenu', this._onShowContextMenu);
+    ReactDOM.findDOMNode(this).addEventListener('mousemove', this._onMouseMove);
     this._onResize();
   }
 
@@ -74,6 +75,7 @@ class ThreadList extends React.Component {
     this.unsub();
     window.removeEventListener('resize', this._onResize, true);
     ReactDOM.findDOMNode(this).removeEventListener('contextmenu', this._onShowContextMenu);
+    ReactDOM.findDOMNode(this).removeEventListener('mousemove', this._onMouseMove);
     this.disposable.dispose();
   }
 
@@ -374,6 +376,27 @@ class ThreadList extends React.Component {
       return;
     }
     new ThreadListContextMenu(data).displayMenu();
+  };
+
+  _onMouseMove = event => {
+    if (WorkspaceStore.layoutMode() === 'split') {
+      return;
+    }
+    const itemThreadId = this.refs.list.itemIdAtPoint(event.clientX, event.clientY);
+    if (!itemThreadId || this._preCursorThreadId === itemThreadId) {
+      return;
+    }
+    const dataSource = ThreadListStore.dataSource();
+    const thread = dataSource.getById(itemThreadId);
+    if (!thread) {
+      return;
+    }
+    this._preCursorThreadId = itemThreadId;
+    Actions.setCursorPosition({
+      collection: 'thread',
+      item: thread,
+      source: 'thread list mouse move',
+    });
   };
 
   _onDragStart = event => {

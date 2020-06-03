@@ -2,6 +2,7 @@ import React from 'react';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
 import { AttachmentStore, Actions } from 'mailspring-exports';
 import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
+import select from 'eslint-plugin-jsx-a11y/lib/util/implicitRoles/select';
 
 const IMAGE_TYPE = 'image';
 
@@ -39,6 +40,19 @@ function ImageNode(props) {
           return change.removeNodeByKey(node.key);
         })
       }
+      onHover={node => {
+        const selection = window.getSelection();
+        if (
+          selection &&
+          node &&
+          selection.type === 'Range' &&
+          selection.anchorNode === selection.focusNode &&
+          selection.anchorOffset === selection.focusOffset
+        ) {
+          AppEnv.logDebug(`extending selection for inline ${file.id}`);
+          selection.extend(node);
+        }
+      }}
     />
   );
 }
