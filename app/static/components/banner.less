@@ -2,23 +2,26 @@
 
 .swiper-component-container {
   position: relative;
-  overflow: hidden;
-  .swiper-wrapper {
-    position: absolute;
-    top: 0;
+  .swiper-container {
+    position: relative;
+    overflow: hidden;
+    .swiper-wrapper {
+      position: absolute;
+      top: 0;
 
-    &.transition {
-      transition: left 1000ms ease;
-    }
+      &.transition {
+        transition: left 1000ms ease;
+      }
 
-    .swiper-slide {
-      display: flex;
-      flex: 0;
-      justify-content: center;
-      align-items: center;
-      img {
-        max-height: 100%;
-        max-width: 100%;
+      .swiper-slide {
+        display: flex;
+        flex: 0;
+        justify-content: center;
+        align-items: center;
+        img {
+          max-height: 100%;
+          max-width: 100%;
+        }
       }
     }
   }
