@@ -39,7 +39,7 @@ export default class PreferencesCategory extends React.Component {
 
   _getStateFromStores(account) {
     const assignments = {};
-    const all = CategoryStore.categories(account);
+    const all = CategoryStore.categories(account).filter(cat => cat.selectable);
     all.forEach(cat => {
       if (SELECTABLE_ROLES.includes(cat.role)) {
         assignments[cat.role] = cat;
