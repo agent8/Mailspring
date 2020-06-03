@@ -344,40 +344,6 @@ class MessageStore extends MailspringStore {
       }
       this._closeWindowIfNoMessage();
       return;
-
-      // if (
-      //   change.objects.length === 1 &&
-      //   change.objects[0].draft === true &&
-      //   !change.objects[0].calendarReply &&
-      //   !change.objects[0].ignoreSift
-      // ) {
-      //   const item = change.objects[0];
-      //   const itemIndex = this._items.findIndex(msg => msg.id === item.id);
-      //
-      //   if (
-      //     change.type === 'persist' &&
-      //     itemIndex === -1 &&
-      //     !Message.compareMessageState(item.syncState, Message.messageSyncState.failed)
-      //   ) {
-      //     this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
-      //     this._items = this._sortItemsForDisplay(this._items);
-      //     this._expandItemsToDefault();
-      //     this.trigger();
-      //     this._closeWindowIfNoMessage();
-      //     return;
-      //   }
-      //
-      //   if (change.type === 'unpersist' && itemIndex !== -1) {
-      //     this._items = [].concat(this._items).filter(m => !m.isHidden());
-      //     this._items.splice(itemIndex, 1);
-      //     this._expandItemsToDefault();
-      //     this.trigger();
-      //     this._closeWindowIfNoMessage();
-      //     return;
-      //   }
-      // }
-      // this._fetchFromCache();
-      // this._closeWindowIfNoMessage();
     }
 
     if (change.objectClass === Thread.name) {
@@ -413,13 +379,29 @@ class MessageStore extends MailspringStore {
     }
   };
 
+  _resetAutoMarkAsRead = () => {
+    this._lastMarkedAsReadThreadId = null;
+    if (this._markAsReadTimer) {
+      clearTimeout(this._markAsReadTimer);
+      this._markAsReadTimer = null;
+    }
+  };
+
+  _shouldAutoMarkAsRead = () => {
+    const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
+    if (markAsReadDelay < 0) {
+      return false;
+    }
+    return this._thread && this._lastMarkedAsReadThreadId !== this._thread.id;
+  };
+
   _onFocusChanged(change) {
     if (change.impactsCollection('sift')) {
+      this._resetAutoMarkAsRead();
       this._expandItemsToDefault();
       this.trigger();
     }
     if (!change.impactsCollection('thread')) return;
-
     //DC-400 Because the way list mode is
     if (WorkspaceStore.layoutMode() === 'list') {
       this._onApplyFocusChange();
@@ -450,9 +432,6 @@ class MessageStore extends MailspringStore {
 
   _onApplyFocusChange() {
     const focused = FocusedContentStore.focused('thread');
-    if (!focused) {
-      this._lastMarkedAsReadThreadId = null;
-    }
     if (WorkspaceStore.layoutMode() === 'list' && AppEnv.isMainWindow()) {
       const currentSheet = WorkspaceStore.topSheet();
       if (!focused && this.thread() && currentSheet && currentSheet.id === 'Thread') {
@@ -463,6 +442,7 @@ class MessageStore extends MailspringStore {
 
     // if we already match the desired state, no need to trigger
     if (this.threadId() === (focused || {}).id) return;
+    this._resetAutoMarkAsRead();
     this._setStoreDefaults();
     this._updateThread(focused);
     // this._thread = focused;
@@ -508,6 +488,9 @@ class MessageStore extends MailspringStore {
     }
     AppEnv.setWindowTitle(title);
   }
+  markAsRead = () => {
+    this._markAsRead();
+  };
 
   _markAsRead() {
     // Mark the thread as read if necessary. Make sure it's still the
@@ -516,26 +499,31 @@ class MessageStore extends MailspringStore {
     // Override canBeUndone to return false so that we don't see undo
     // prompts (since this is a passive action vs. a user-triggered
     // action.)
+    if (!this._shouldAutoMarkAsRead()) {
+      return;
+    }
     if (!this._thread) return;
-    if (this._lastMarkedAsReadThreadId === this._thread.id) return;
+    // if (this._lastMarkedAsReadThreadId === this._thread.id) return;
     this._lastMarkedAsReadThreadId = this._thread.id;
 
     if (this._thread.unread) {
       const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
       const markAsReadId = this._thread.id;
       if (markAsReadDelay < 0) return;
-
-      setTimeout(() => {
-        if (markAsReadId !== this.threadId() || !this._thread.unread) return;
-        Actions.queueTask(
-          TaskFactory.taskForInvertingUnread({
-            threads: [this._thread],
-            source: 'Thread Selected',
-            canBeUndone: false,
-            unread: false,
-          })
-        );
-      }, markAsReadDelay);
+      if (!this._markAsReadTimer) {
+        this._markAsReadTimer = setTimeout(() => {
+          this._markAsReadTimer = null;
+          if (markAsReadId !== this.threadId() || !this._thread.unread) return;
+          Actions.queueTask(
+            TaskFactory.taskForInvertingUnread({
+              threads: [this._thread],
+              source: 'Thread Selected',
+              canBeUndone: false,
+              unread: false,
+            })
+          );
+        }, markAsReadDelay);
+      }
     }
   }
 
@@ -606,7 +594,7 @@ class MessageStore extends MailspringStore {
     // const query = DatabaseStore.findAll(Message);
     // query.where({ threadId: loadedThreadId, state: 0 });
     // query.include(Message.attributes.body);
-
+    const prevMessageLength = this._items.length;
     return query.then(items => {
       // Check to make sure that our thread is still the thread we were
       // loading items for. Necessary because this takes a while.
