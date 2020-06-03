@@ -52,7 +52,7 @@ class ListTabularItem extends React.Component {
           top: this.props.metrics.top,
           width: '100%',
           height: this.props.metrics.height,
-          zIndex: className.includes('keyboard-cursor') ? 9 : null,
+          zIndex: className.includes('keyboard-cursor') ? 10 : null,
         }}
       >
         <div className={className} style={{ height: this.props.metrics.height }}>

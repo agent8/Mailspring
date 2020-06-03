@@ -2,7 +2,14 @@ const _ = require('underscore');
 const classNames = require('classnames');
 const ListTabular = require('./list-tabular').default;
 const Spinner = require('./spinner');
-const { React, ReactDOM, PropTypes, Utils, WorkspaceStore } = require('mailspring-exports');
+const {
+  React,
+  ReactDOM,
+  PropTypes,
+  Utils,
+  WorkspaceStore,
+  FocusedContentStore,
+} = require('mailspring-exports');
 const { KeyCommandsRegion } = require('mailspring-component-kit');
 
 const MultiselectListInteractionHandler = require('./multiselect-list-interaction-handler');
@@ -64,6 +71,9 @@ class MultiselectList extends React.Component {
         ReactDOM.findDOMNode(this).querySelector('.focused') ||
         ReactDOM.findDOMNode(this).querySelector('.keyboard-cursor');
       if (!(item instanceof Node)) {
+        return;
+      }
+      if (FocusedContentStore._keyboardSource === 'thread list mouse move') {
         return;
       }
       this.refs.list.scrollTo(item);

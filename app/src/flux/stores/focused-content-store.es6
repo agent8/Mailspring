@@ -89,7 +89,7 @@ class FocusedContentStore extends MailspringStore {
     }
   };
 
-  _onFocusKeyboard = ({ collection, item }) => {
+  _onFocusKeyboard = ({ collection, item, source = '' }) => {
     if (item && !(item instanceof Model)) {
       throw new Error('focusKeyboard() requires a Model or null');
     }
@@ -105,6 +105,7 @@ class FocusedContentStore extends MailspringStore {
     }
 
     this._keyboardCursor[collection] = item;
+    this._keyboardSource = source;
     this.triggerAfterAnimationFrame({ impactsCollection: c => c === collection });
   };
 
