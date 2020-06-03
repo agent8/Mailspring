@@ -2,7 +2,7 @@ import { React, RESTful, Constant } from 'mailspring-exports';
 import { FullScreenModal, Banner } from 'mailspring-component-kit';
 import { ipcRenderer } from 'electron';
 
-const { UserReviewUrl } = Constant;
+const { UserReviewUrl, UserCheckUpdateTimeHappyLine, ServerInfoPriorityEnum } = Constant;
 const { AppUpdateRest } = RESTful;
 
 export default class WhatsNew extends React.Component {
@@ -30,19 +30,29 @@ export default class WhatsNew extends React.Component {
   }
 
   _getUpdateInformation = async () => {
+    const checkUpdateTime = AppEnv.getEventTriggerTime('UserCheckUpdate');
+    if (checkUpdateTime <= UserCheckUpdateTimeHappyLine) {
+      return;
+    }
     const result = await AppUpdateRest.getUpdateInformation();
-    const updateList = [];
+    const updateInfoList = [];
     try {
-      const data = JSON.parse(result.data);
-      if (data && data.updateList && data.updateList.length) {
-        updateList.push(...data.updateList);
+      const { priority, updateList } = JSON.parse(result.data);
+      if (!priority || priority !== ServerInfoPriorityEnum.UpdateInfo) {
+        return;
       }
-    } catch (e) {}
+      if (updateList && updateList.length) {
+        updateInfoList.push(...updateList);
+      }
+    } catch (e) {
+      console.error(e.message);
+      return;
+    }
 
     this.setState({
       showUserReview: true,
-      finished: updateList.length <= 0,
-      pages: [...updateList, ...this.state.pages],
+      finished: updateInfoList.length <= 0,
+      pages: [...updateInfoList, ...this.state.pages],
     });
   };
 
@@ -59,6 +69,7 @@ export default class WhatsNew extends React.Component {
   };
 
   _onClickReview = () => {
+    this._onCloseUserReview();
     ipcRenderer.send('open-url', UserReviewUrl);
   };
 

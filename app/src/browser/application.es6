@@ -30,6 +30,7 @@ import MailspringProtocolHandler from './mailspring-protocol-handler';
 import ConfigPersistenceManager from './config-persistence-manager';
 import moveToApplications from './move-to-applications';
 import MailsyncProcess from '../mailsync-process';
+import EventTriggers from './event-triggers';
 import { createHash } from 'crypto';
 const LOG = require('electron-log');
 const archiver = require('archiver');
@@ -74,6 +75,8 @@ export default class Application extends EventEmitter {
     this.config = config;
     this.configPersistenceManager = new ConfigPersistenceManager({ configDirPath, resourcePath });
     config.load();
+
+    this.eventTriggers = new EventTriggers(configDirPath);
 
     this.configMigrator = new ConfigMigrator(this.config);
     this.configMigrator.migrate();
@@ -1125,6 +1128,7 @@ export default class Application extends EventEmitter {
 
     this.on('application:check-for-update', () => {
       this.autoUpdateManager.check({ manuallyCheck: true });
+      this.eventTriggers.eventTrigger('UserCheckUpdate');
     });
 
     this.on('application:install-update', () => {

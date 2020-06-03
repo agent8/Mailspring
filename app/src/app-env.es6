@@ -1809,6 +1809,16 @@ export default class AppEnvConstructor {
     const app = remote.getGlobal('application');
     app.autoUpdateManager.setState('update-available');
   }
+
+  getEventTriggerTime(eventName) {
+    const app = remote.getGlobal('application');
+    return app.eventTriggers.getEventTriggerTime(eventName);
+  }
+
+  eventTrigger(eventName) {
+    const app = remote.getGlobal('application');
+    app.eventTriggers.eventTrigger(eventName);
+  }
   // openExternal() {
   //   const { spawn, exec } = require('child_process');
   //   exec(
