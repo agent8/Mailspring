@@ -38,7 +38,7 @@ export default class WindowLauncher {
       bootstrapScript: require.resolve('../secondary-window-bootstrap'),
       resourcePath,
       configDirPath,
-      width: 880
+      width: 880,
     };
     this.config = config;
     this.onCreatedHotWindow = onCreatedHotWindow;
@@ -76,7 +76,7 @@ export default class WindowLauncher {
         this.createHotWindow(opts);
       }
       win = this.hotWindow;
-
+      win.updateAccountId(opts.accountId);
       const newLoadSettings = Object.assign({}, win.loadSettings(), opts);
       if (newLoadSettings.windowType === WindowLauncher.EMPTY_WINDOW) {
         throw new Error('Must specify a windowType');
