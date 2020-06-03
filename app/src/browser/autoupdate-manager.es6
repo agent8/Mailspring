@@ -6,6 +6,7 @@ import fs from 'fs';
 import { getDeviceHash, syncGetDeviceHash } from '../system-utils';
 import axios from 'axios';
 import moment from 'moment';
+import { ServerInfoPriorityEnum } from '../constant';
 
 let autoUpdater = null;
 
@@ -17,12 +18,6 @@ const NoUpdateAvailableState = 'no-update-available';
 const UnsupportedState = 'unsupported';
 const ErrorState = 'error';
 const preferredChannel = 'stable';
-
-const PRIORITYENUM = {
-  HEIGHT: 1,
-  MEDIUM: 2,
-  LOW: 3,
-};
 
 export default class AutoUpdateManager extends EventEmitter {
   constructor(version, config, specMode, devMode) {
@@ -231,7 +226,11 @@ export default class AutoUpdateManager extends EventEmitter {
       const { data } = await axios.get(await this.getVersionInfoUrl());
       if (data && data.data && data.data.info) {
         const { priority, message, title, detail, url } = JSON.parse(data.data.info);
-        if (priority !== PRIORITYENUM.HEIGHT) {
+        if (priority === ServerInfoPriorityEnum.UpdateInfo) {
+          // if message is update info for what's new, skip
+          return;
+        }
+        if (priority !== ServerInfoPriorityEnum.Extraordinary) {
           // if message is not in height level, only show only one at a time
           if (this._hasForceUpdateMessageDialog) {
             return;
@@ -246,23 +245,17 @@ export default class AutoUpdateManager extends EventEmitter {
           title: title,
           detail: detail,
         });
-        if (priority !== PRIORITYENUM.HEIGHT) {
+        if (priority !== ServerInfoPriorityEnum.Extraordinary) {
           this._hasForceUpdateMessageDialog = false;
         }
         if (choice === 0) {
+          if (url) {
+            shell.openExternal(url);
+          }
           switch (priority) {
-            case PRIORITYENUM.HEIGHT:
-              if (url) {
-                shell.openExternal(url);
-              }
+            case ServerInfoPriorityEnum.Extraordinary:
               app.quit();
               break;
-            case PRIORITYENUM.MEDIUM:
-              if (url) {
-                shell.openExternal(url);
-              }
-              break;
-            case PRIORITYENUM.LOW:
             default:
               break;
           }
