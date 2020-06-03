@@ -2,7 +2,7 @@ import { React, RESTful, Constant } from 'mailspring-exports';
 import { FullScreenModal, Banner } from 'mailspring-component-kit';
 import { remote, ipcRenderer } from 'electron';
 
-const { UserReviewUrl, UserCheckUpdateTimeHappyLine, ServerInfoPriorityEnum } = Constant;
+const { UserReviewUrl, UserInstallUpdateTimeHappyLine, ServerInfoPriorityEnum } = Constant;
 const { AppUpdateRest } = RESTful;
 const SETTINGS_KEY = 'mailto.user-know-update-info-version';
 
@@ -51,14 +51,14 @@ export default class WhatsNew extends React.Component {
   _getUpdateInformation = async () => {
     // If the user has updated it manually at least three times,
     // we think that the user has used our app in depth and happy
-    const checkUpdateTime = AppEnv.getEventTriggerTime('UserCheckUpdate');
-    if (checkUpdateTime <= UserCheckUpdateTimeHappyLine) {
+    const installUpdateTime = AppEnv.getEventTriggerTime('UserInstallUpdate');
+    if (installUpdateTime < UserInstallUpdateTimeHappyLine) {
       return;
     }
     // if the version user has know the update info is less than now
     // We shouldn show this pop-up
     const userKnowUpdateInfoVersion = AppEnv.config.get(SETTINGS_KEY);
-    if (!this.isLessThenNowVersion(userKnowUpdateInfoVersion)) {
+    if (userKnowUpdateInfoVersion && !this.isLessThenNowVersion(userKnowUpdateInfoVersion)) {
       return;
     }
     const result = await AppUpdateRest.getUpdateInformation();
