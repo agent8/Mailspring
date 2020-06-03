@@ -118,7 +118,7 @@ export default class Banner extends React.Component {
 
     return (
       <div className="swiper-component-container" style={{ width: width, height: height + 24 }}>
-        <div style={{ height: height, width: width }}>
+        <div className="swiper-container" style={{ height: height, width: width }}>
           <div
             className={`swiper-wrapper${translateX ? ' transition' : ''}`}
             style={{
