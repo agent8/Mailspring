@@ -45,7 +45,14 @@ input:focus {
 }
 
 .mode-list {
-  .list-item {
+  .list-container .list-item {
+    &:hover {
+      box-shadow: none;
+    }
+    &.keyboard-cursor {
+      background-color: @white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    }
     .participants {
       width: 172px;
       padding-right: 2px;
