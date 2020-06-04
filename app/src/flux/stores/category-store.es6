@@ -332,9 +332,10 @@ class CategoryStore extends MailspringStore {
       this._standardCategories[accountId] = filteredByAccount(
         cat => cat && cat.isStandardCategory()
       )[accountId];
-      this._userCategories[accountId] = filteredByAccount(cat => cat && cat.isUserCategory())[
-        accountId
-      ].sort(sortByName);
+      const userCategories = filteredByAccount(cat => cat && cat.isUserCategory())[accountId];
+      this._userCategories[accountId] = Array.isArray(userCategories)
+        ? userCategories.sort(sortByName)
+        : userCategories;
       this._hiddenCategories[accountId] = filteredByAccount(cat => cat && cat.isHiddenCategory())[
         accountId
       ];

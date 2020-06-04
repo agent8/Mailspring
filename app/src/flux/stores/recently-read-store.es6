@@ -12,9 +12,9 @@ import Actions from '../actions';
 class RecentlyReadStore extends MailspringStore {
   constructor() {
     super();
-    this.ids = [];
+    this.inboxCategories = [];
     this.listenTo(Actions.focusMailboxPerspective, () => {
-      this.ids = [];
+      this.inboxCategories = [];
       this.trigger();
     });
     this.listenTo(Actions.queueTasks, tasks => {
@@ -24,21 +24,39 @@ class RecentlyReadStore extends MailspringStore {
       this.tasksQueued([task]);
     });
   }
+  ids(categories = 'all') {
+    const ret = [];
+    this.inboxCategories.forEach(item => {
+      if (item && item.type === 'thread') {
+        if (categories === 'all') {
+          ret.push(item.id);
+        } else {
+          if (categories.includes(item.inboxCategory)) {
+            ret.push(item.id);
+          }
+        }
+      }
+    });
+    return ret;
+  }
 
   tasksQueued(tasks) {
     let changed = false;
 
     tasks
       .filter(task => task instanceof ChangeUnreadTask)
-      .forEach(({ threadIds }) => {
-        this.ids = this.ids.concat(threadIds);
+      .forEach(({ inboxCategories }) => {
+        this.inboxCategories = this.inboxCategories.concat(inboxCategories);
         changed = true;
       });
 
     tasks
       .filter(task => task instanceof ChangeLabelsTask || task instanceof ChangeFolderTask)
-      .forEach(({ threadIds }) => {
-        this.ids = this.ids.filter(id => !threadIds.includes(id));
+      .forEach(({ inboxCategories }) => {
+        this.inboxCategories = this.inboxCategories.filter(item => {
+          const ids = inboxCategories.map(inboxCat => inboxCat.id);
+          return !ids.includes(item.id);
+        });
         changed = true;
       });
 

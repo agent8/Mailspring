@@ -395,12 +395,13 @@ export default class MessageItem extends React.Component {
                 {this._renderHeaderDetailToggle()}
               </MessageParticipants>
               {disableDraftEdit && (
-                <RetinaImg
-                  name={`pencil.svg`}
-                  className={'draft-indicator'}
-                  isIcon={true}
-                  mode={RetinaImg.Mode.ContentIsMask}
-                />
+                <span className="draft-icon draft-indicator">Draft</span>
+                // <RetinaImg
+                //   name={`pencil.svg`}
+                //   className={'draft-indicator'}
+                //   isIcon={true}
+                //   mode={RetinaImg.Mode.ContentIsMask}
+                // />
               )}
               <div className="message-header-right">
                 {!this.props.isOutboxDraft ? (

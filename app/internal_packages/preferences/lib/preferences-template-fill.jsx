@@ -121,6 +121,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Default reply behavior',
+              configSchema: configSchema =>
+                configSchema.properties.sending.properties.defaultReplyType,
+              keyPath: 'core.sending.defaultReplyType',
+              keywords: [],
+            },
+            {
               label: 'Undo time window',
               configSchema: configSchema => configSchema.properties.task.properties.delayInMs,
               component: TaskDelay,

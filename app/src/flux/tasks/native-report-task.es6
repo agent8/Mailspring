@@ -3,9 +3,9 @@ import Attributes from '../attributes';
 
 export default class NativeReportTask extends Task {
   static errorLevel = {
-    'info': 0,
-    'warning': 1,
-    'error': 2,
+    info: 0,
+    warning: 1,
+    error: 2,
   };
   static attributes = Object.assign({}, Task.attributes, {
     key: Attributes.String({
@@ -19,7 +19,11 @@ export default class NativeReportTask extends Task {
     level: Attributes.Number({
       modelKey: 'level',
       queryable: false,
-    })
+    }),
+    uploadLogs: Attributes.Boolean({
+      modelKey: 'uploadLogs',
+      queryable: false,
+    }),
   });
   constructor({ accountId, ...rest } = {}) {
     super(rest);
