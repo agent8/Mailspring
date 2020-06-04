@@ -711,7 +711,7 @@ export default class MessageControls extends React.Component {
         <FullScreenModal
           visible={this.state.showMuteEmailModal}
           style={{
-            height: '192px',
+            height: 'auto',
             width: '400px',
             top: '165px',
             right: '255px',
@@ -724,7 +724,7 @@ export default class MessageControls extends React.Component {
         <FullScreenModal
           visible={this.state.showMoveFocusedOtherModal}
           style={{
-            height: '192px',
+            height: 'auto',
             width: '400px',
             top: '165px',
             right: '255px',
