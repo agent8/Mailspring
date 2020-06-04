@@ -126,7 +126,7 @@ class SearchStore extends MailspringStore {
 
     if (this.queryPopulated()) {
       this._isSearching = true;
-      if (this._perspectiveBeforeSearch == null) {
+      if (!(current instanceof SearchMailboxPerspective)) {
         this._perspectiveBeforeSearch = current;
       }
       const next = new SearchMailboxPerspective(current, this._searchQuery);
