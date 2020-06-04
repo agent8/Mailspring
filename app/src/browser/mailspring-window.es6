@@ -26,6 +26,7 @@ module.exports = class MailspringWindow extends EventEmitter {
       // toolbar, present but passed through to client-side
       resizable,
       pathToOpen,
+      accountId: this.accountId,
       isSpec: this.isSpec,
       devMode: this.devMode,
       windowKey: this.windowKey,
@@ -38,7 +39,9 @@ module.exports = class MailspringWindow extends EventEmitter {
       configDirPath: this.configDirPath,
       autoHideMenuBar,
     } = settings);
-
+    if (!this.accountId) {
+      this.accountId = 'all';
+    }
     if (!this.windowKey) {
       this.windowKey = `${this.windowType}-${idNum}`;
       idNum += 1;
@@ -60,7 +63,7 @@ module.exports = class MailspringWindow extends EventEmitter {
       webPreferences: {
         directWrite: true,
         nodeIntegration: true,
-        webviewTag: true
+        webviewTag: true,
       },
       autoHideMenuBar,
       backgroundColor: settings.backgroundColor || '#ffffff',
@@ -150,6 +153,13 @@ module.exports = class MailspringWindow extends EventEmitter {
     this.browserWindow.loadURL(this.getURL(loadSettings));
     if (this.isSpec) {
       this.browserWindow.focusOnWebView();
+    }
+  }
+  updateAccountId(accountId) {
+    if (!accountId) {
+      this.accountId = 'all';
+    } else {
+      this.accountId = accountId;
     }
   }
   updateWindowKey(key) {
@@ -255,7 +265,7 @@ module.exports = class MailspringWindow extends EventEmitter {
           : 'browserWindow not available',
         grabLogs: true,
       };
-      ipcMain.emit('report-error', {extraJSON});
+      ipcMain.emit('report-error', { extraJSON });
       console.log('\n----\nunresponsive\n\n');
       const chosen = dialog.showMessageBoxSync(this.browserWindow, {
         type: 'warning',

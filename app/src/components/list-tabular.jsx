@@ -158,7 +158,7 @@ class ListTabular extends Component {
     this.mounted = true;
     window.addEventListener('resize', this.onWindowResize, true);
     this.setupDataSource(this.props.dataSource);
-    this.updateRangeState();
+    // this.updateRangeState();
     this._regionId = Utils.generateTempId();
   }
 

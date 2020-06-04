@@ -826,68 +826,75 @@ export default class MailsyncBridge {
           `Primary key ${construct.pseudoPrimaryJsKey} have no value for class ${construct.name}`
         );
       }
-      if (promises.length > 0) {
-        Promise.all(promises).then((models, index) => {
-          const parsedModels = [];
-          models[0].forEach(model => {
-            if (!model) {
-              return;
-            }
-            const pseudoPrimaryKey = model.constructor.pseudoPrimaryJsKey || 'id';
-            let duplicate = false;
-            for (let m of parsedModels) {
-              if (!m) {
-                AppEnv.reportError(
-                  new Error(`There is an null is the parsed change record models send to UI`)
-                );
-                continue;
-              }
-              if (m[pseudoPrimaryKey] === model[pseudoPrimaryKey]) {
-                duplicate = true;
-                let correctLastMessageTimestamp;
-                let inboxCategory;
-                if (index === threadIndex) {
-                  correctLastMessageTimestamp = model.lastMessageTimestamp;
-                  inboxCategory = model.inboxCategory;
-                } else {
-                  correctLastMessageTimestamp = m.lastMessageTimestamp;
-                  inboxCategory = m.inboxCategory;
-                }
-                Object.assign(m, model);
-                m.lastMessageTimestamp = correctLastMessageTimestamp;
-                m.inboxCategory = inboxCategory;
-                break;
-              }
-            }
-            if (!duplicate) {
-              // if(index === threadIndex){
-              //   model.categories = threadCategories;
-              // }
-              parsedModels.push(model);
-            }
-          });
-          if (parsedModels.length === 0) {
+      const parseQueryPromises = (models, index) => {
+        const parsedModels = [];
+        models.forEach(model => {
+          if (!model) {
             return;
           }
-          // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+          const pseudoPrimaryKey = model.constructor.pseudoPrimaryJsKey || 'id';
+          let duplicate = false;
+          for (let m of parsedModels) {
+            if (!m) {
+              AppEnv.reportError(
+                new Error(`There is an null is the parsed change record models send to UI`)
+              );
+              continue;
+            }
+            if (m[pseudoPrimaryKey] === model[pseudoPrimaryKey]) {
+              duplicate = true;
+              let correctLastMessageTimestamp;
+              let inboxCategory;
+              if (index === threadIndex) {
+                correctLastMessageTimestamp = model.lastMessageTimestamp;
+                inboxCategory = model.inboxCategory;
+              } else {
+                correctLastMessageTimestamp = m.lastMessageTimestamp;
+                inboxCategory = m.inboxCategory;
+              }
+              Object.assign(m, model);
+              m.lastMessageTimestamp = correctLastMessageTimestamp;
+              m.inboxCategory = inboxCategory;
+              break;
+            }
+          }
+          if (!duplicate) {
+            parsedModels.push(model);
+          }
+        });
+        if (parsedModels.length === 0 && index === promises.length - 1) {
+          return;
+        }
+        // dispatch the message to other windows
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+          type,
+          modelClass,
+          modelJSONs: parsedModels.map(m => m.toJSON()),
+          processAccountId: accountId,
+        });
+        this._onIncomingChangeRecord(
+          new DatabaseChangeRecord({
             type,
-            modelClass,
-            modelJSONs: parsedModels.map(m => m.toJSON()),
+            objectClass: modelClass,
+            objects: parsedModels,
             processAccountId: accountId,
-          });
-          this._onIncomingChangeRecord(
-            new DatabaseChangeRecord({
-              type,
-              objectClass: modelClass,
-              objects: parsedModels,
-              processAccountId: accountId,
-            })
-          );
+          })
+        );
+      };
+      if (promises.length > 0) {
+        Promise.all(promises).then(queries => {
+          if (promises.length > 1) {
+            queries.forEach((models, index) => {
+              parseQueryPromises(models, index);
+            });
+          } else {
+            parseQueryPromises(queries[0], 0);
+          }
         });
       }
     }
   };
+
   _recordErrorToConsole = task => {
     const warningKeys = ['ErrorConnection', 'ErrorAuthentication'];
     let errorAccount = {};
@@ -928,16 +935,24 @@ export default class MailsyncBridge {
     if (nativeReportTask instanceof NativeReportTask) {
       if (nativeReportTask.level === NativeReportTask.errorLevel.info) {
         console.log(nativeReportTask);
-        AppEnv.reportLog(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportLog(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { grabLogs: nativeReportTask.uploadLogs }
+        );
       } else if (nativeReportTask.level === NativeReportTask.errorLevel.warning) {
         console.warn(nativeReportTask);
-        AppEnv.reportWarning(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportWarning(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { grabLogs: nativeReportTask.uploadLogs }
+        );
       } else {
         console.error(nativeReportTask);
         AppEnv.reportError(
           new Error(nativeReportTask.key),
           { errorData: nativeReportTask },
-          { grabLogs: true }
+          { grabLogs: nativeReportTask.uploadLogs }
         );
       }
     }
