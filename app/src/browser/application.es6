@@ -49,7 +49,7 @@ export default class Application extends EventEmitter {
   async start(options) {
     const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
     //BrowserWindow.addDevToolsExtension('~/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/3.4.2_0');
-    //BrowserWindow.addDevToolsExtension('/Users/xingmingcao/Library/Application Support/Google/Chrome/Default/Extensions/lmhkpmbekcpmknklioeibfkpmmfibljd/2.15.5_0');
+    // BrowserWindow.addDevToolsExtension('/Users/gtkrab/edisonSoftware/react_extension');
     //Normalize to make sure drive letter case is consistent on Windows
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
@@ -1458,6 +1458,18 @@ export default class Application extends EventEmitter {
     //     }
     //   }
     // });
+    ipcMain.on('update-window-key', (event, options) => {
+      const win = options.oldKey ? this.windowManager.get(options.oldKey) : null;
+      if (win) {
+        if (options.newKey) {
+          win.updateWindowKey(options.newKey);
+        }
+        const newOptions = options.newOptions;
+        if (newOptions && newOptions.accountId) {
+          win.updateAccountId(newOptions.accountId);
+        }
+      }
+    });
 
     ipcMain.on('new-window', (event, options) => {
       const win = options.windowKey ? this.windowManager.get(options.windowKey) : null;

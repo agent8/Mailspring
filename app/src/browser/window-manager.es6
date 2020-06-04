@@ -38,6 +38,18 @@ export default class WindowManager {
   get(windowKey) {
     return this._windows[windowKey];
   }
+  findWindowsByAccountId(accountId) {
+    if (!accountId) {
+      accountId = 'all';
+    }
+    const ret = [];
+    Object.values(this._windows).forEach(win => {
+      if (win && win.accountId === accountId) {
+        ret.push(win);
+      }
+    });
+    return ret;
+  }
 
   getOpenWindows(type = 'all') {
     const values = [];
