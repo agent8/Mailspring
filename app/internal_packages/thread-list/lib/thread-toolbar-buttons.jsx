@@ -655,15 +655,6 @@ ToggleUnreadButton.containerRequired = false;
 class HiddenGenericRemoveButton extends React.Component {
   static displayName = 'HiddenGenericRemoveButton';
 
-  _onShortcutRemoveAndShift = ({ offset }) => {
-    this._onShift({ offset });
-    this._onRemoveFromView(threadSelectionScope(this.props, this.props.selection));
-  };
-
-  _onRemoveAndShift = ({ offset }) => {
-    this._onShift({ offset });
-    this._onRemoveFromView();
-  };
   _onShift = ({ offset }) => {
     const currentPerspective = FocusedPerspectiveStore.current();
     const isInSift = currentPerspective && currentPerspective.sift;
@@ -693,44 +684,10 @@ class HiddenGenericRemoveButton extends React.Component {
     }
   };
 
-  _onShortcutRemoveFromView = event => {
-    this._onRemoveFromView(threadSelectionScope(this.props, this.props.selection));
-  };
-
-  _onRemoveFromView = threads => {
-    const current = FocusedPerspectiveStore.current();
-    const items = hiddenButtonSelectionScope(this.props, threads);
-    if (Array.isArray(items) && items.length > 0) {
-      const tasks = current.tasksForRemovingItems(items, 'Keyboard Shortcut');
-      if (Array.isArray(tasks) && tasks.length > 0) {
-        Actions.queueTasks(tasks);
-        nextActionForRemoveFromView('ToolbarButton:HiddenGenericRemoveButton:removeFromView');
-        if (AppEnv.isThreadWindow()) {
-          AppEnv.debugLog(`Closing window because in ThreadWindow`);
-          AppEnv.close();
-        }
-        return;
-      }
-    }
-    AppEnv.reportWarning(new Error('Tasks is empty'), {
-      errorData: {
-        threads,
-        props: this.props,
-        perspective: current,
-      },
-    });
-  };
-
   render() {
     return (
       <BindGlobalCommands
         commands={{
-          // 'core:gmail-remove-from-view': event => commandCb(event, this._onShortcutRemoveFromView),
-          // 'core:remove-from-view': event => commandCb(event, this._onShortcutRemoveFromView),
-          'core:remove-and-previous': event =>
-            commandCb(event, this._onShortcutRemoveAndShift, { offset: -1 }),
-          'core:remove-and-next': event =>
-            commandCb(event, this._onShortcutRemoveAndShift, { offset: 1 }),
           'core:show-previous': event => commandCb(event, this._onShift, { offset: -1 }),
           'core:show-next': event => commandCb(event, this._onShift, { offset: 1 }),
         }}
