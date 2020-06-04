@@ -288,6 +288,18 @@ class Actions {
   static printThread = ActionScopeWindow;
 
   /*
+  Public: Print the currently selected message.
+
+  *Scope: Window*
+
+  ```
+  thread = <Thread>
+  Actions.printThread(thread)
+  ```
+  */
+  static printMessage = ActionScopeWindow;
+
+  /*
   Public: Export the currently selected thread to pdf.
 
   *Scope: Window*
