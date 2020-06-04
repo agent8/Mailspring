@@ -5,25 +5,17 @@ import ICAL from 'ical.js';
 
  Section: Models
  */
-class VFreeBusy {
-
-}
+class VFreeBusy {}
 
 class VTimeZone extends ICAL.Timezone {
   constructor(comp, tzid) {
     super({ component: comp, tzid });
   }
-
-
 }
 
-class VTodo {
+class VTodo {}
 
-}
-
-class VJournal {
-
-}
+class VJournal {}
 
 class Attendee {
   static roles = ['CHAIR', 'REQ-PARTICIPANT', 'OPT-PARTICIPANT', 'NON-PARTICIPANT'];
@@ -242,8 +234,7 @@ class Attendee {
   static _parseEmailTo(str) {
     if (
       typeof str !== 'string' ||
-      (!str.toLocaleLowerCase().includes('mailto:') &&
-      !str.toLocaleLowerCase().includes('email:') )
+      (!str.toLocaleLowerCase().includes('mailto:') && !str.toLocaleLowerCase().includes('email:'))
     ) {
       return '';
     }
@@ -397,7 +388,7 @@ class VEvent extends ICAL.Event {
     this._lastMod = this.getFirstPropertyValue('last-modified');
     this._location = this.getFirstProperty('location');
     this._attendees = this.getAllProperties('attendee').map(
-      attendee => new Attendee(attendee, 'event'),
+      attendee => new Attendee(attendee, 'event')
     );
     this._organizer = this._parseOrganizer(this.getFirstProperty('organizer'));
     this._priority = this.getFirstPropertyValue('priority');
@@ -678,15 +669,36 @@ class VEvent extends ICAL.Event {
   }
 
   isAllDay() {
-    return this.duration.days === 1 && this.duration.weeks === 0 && this.duration.hours === 0;
+    let ret;
+    try {
+      ret = this.duration.days === 1 && this.duration.weeks === 0 && this.duration.hours === 0;
+    } catch (e) {
+      AppEnv.reportError(e);
+      ret = false;
+    }
+    return ret;
   }
 
   isAllWeek() {
-    return this.duration.days === 0 && this.duration.weeks === 1;
+    let ret;
+    try {
+      ret = this.duration.days === 0 && this.duration.weeks === 1;
+    } catch (e) {
+      AppEnv.reportError(e);
+      ret = false;
+    }
+    return ret;
   }
 
   isLessThanADay() {
-    return this.duration.weeks === 0 && this.duration.days === 0 && this.duration.hours <= 23;
+    let ret;
+    try {
+      ret = this.duration.weeks === 0 && this.duration.days === 0 && this.duration.hours <= 23;
+    } catch (e) {
+      AppEnv.reportError(e);
+      ret = false;
+    }
+    return ret;
   }
 
   get attaches() {
@@ -709,7 +721,7 @@ class VEvent extends ICAL.Event {
     if (!['role', 'type', 'participationStatus', 'rsvp'].includes(criteria)) {
       return this.attendees;
     }
-    if(Array.isArray(values) && values.length > 0){
+    if (Array.isArray(values) && values.length > 0) {
       return this.attendees.filter(attendees => values.includes(attendees[criteria]));
     }
     return this.attendees.filter(attendees => attendees[criteria] === value);
@@ -821,12 +833,14 @@ export default class Calendar {
     }
     if (!this._VEvents) {
       try {
-        this._VEvents = this._vCalendar.getAllSubcomponents('vevent').map(e => new VEvent(e, this.VTimeZones));
+        this._VEvents = this._vCalendar
+          .getAllSubcomponents('vevent')
+          .map(e => new VEvent(e, this.VTimeZones));
       } catch (e) {
         AppEnv.reportError(e, {
           errorData: {
             message: 'Could not parse calendar vevent',
-            calendarString: this.toString()
+            calendarString: this.toString(),
           },
         });
         return [];
@@ -850,7 +864,7 @@ export default class Calendar {
     if (!this._vCalendar) {
       return [];
     }
-    if (!this._VTodos){
+    if (!this._VTodos) {
       this._VTodos = this._vCalendar.getAllSubcomponents('vtodo').map(todo => new VTodo(todo));
     }
     return this._VTodos;
@@ -861,7 +875,9 @@ export default class Calendar {
       return [];
     }
     if (!this._VJournals) {
-      this._VJournals = this._vCalendar.getAllSubcomponents('vjournal').map(journal => new VJournal(journal));
+      this._VJournals = this._vCalendar
+        .getAllSubcomponents('vjournal')
+        .map(journal => new VJournal(journal));
     }
     return this._VJournals;
   }

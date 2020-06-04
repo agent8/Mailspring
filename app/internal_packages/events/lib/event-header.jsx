@@ -70,7 +70,21 @@ class EventHeader extends React.Component {
     } else if (this.state.event.isAllWeek()) {
       duration = 'All Week, ';
     }
-    const startDate = moment(this.state.event.startDate.toJSDate())
+    let eventStartDate;
+    try {
+      eventStartDate = this.state.event.startDate.toJSDate();
+    } catch (e) {
+      AppEnv.reportError(e);
+      return 'Unknown';
+    }
+    let eventEndDate;
+    try {
+      eventEndDate = this.state.event.endDate.toJSDate();
+    } catch (e) {
+      AppEnv.reportError(e);
+      return 'Unknown';
+    }
+    const startDate = moment(eventStartDate)
       .tz(DateUtils.timeZone)
       .format('dddd, MMMM Do');
     let startTime = '';
@@ -78,23 +92,23 @@ class EventHeader extends React.Component {
     if (duration.length === 0) {
       startTime =
         ', ' +
-        moment(this.state.event.startDate.toJSDate())
+        moment(eventStartDate)
           .tz(DateUtils.timeZone)
           .format(DateUtils.getTimeFormat({ timeZone: false }));
       if (this.state.event.isLessThanADay()) {
         end =
           ' - ' +
-          moment(this.state.event.endDate.toJSDate())
+          moment(eventEndDate)
             .tz(DateUtils.timeZone)
             .format(DateUtils.getTimeFormat({ timeZone: true }));
       } else {
         end =
           ' - ' +
-          moment(this.state.event.endDate.toJSDate())
+          moment(eventEndDate)
             .tz(DateUtils.timeZone)
             .format('dddd, MMMM Do') +
           ' ' +
-          moment(this.state.event.endDate.toJSDate())
+          moment(eventEndDate)
             .tz(DateUtils.timeZone)
             .format(DateUtils.getTimeFormat({ timeZone: true }));
       }
