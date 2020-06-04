@@ -1330,6 +1330,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     const isAllInbox = categories && categories.length > 1;
     this.name = `${isAllInbox ? 'All ' : ''}Focused`;
     this.isTab = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {
@@ -1391,6 +1392,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     this.name = `${isAllInbox ? 'All ' : ''}Other`;
     this.isTab = true;
     this.isOther = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {
@@ -1447,6 +1449,7 @@ class UnreadMailboxFocusedPerspective extends UnreadMailboxPerspective {
     super(categories);
     this.name = `Focused`;
     this.isTab = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {
@@ -1472,6 +1475,7 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
     this.name = `Other`;
     this.isTab = true;
     this.isOther = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {
