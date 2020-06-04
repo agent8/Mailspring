@@ -657,7 +657,8 @@ class MessageStore extends MailspringStore {
   }
 
   fetchMissingAttachmentsByMessage({ messageId } = {}) {
-    const missing = [];
+    const missingInline = [];
+    const missingNormal = [];
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
     const message = this._items.find(item => item.id === messageId);
@@ -669,7 +670,11 @@ class MessageStore extends MailspringStore {
       const tmpPath = AttachmentStore.pathForFile(f);
       const tempExists = fs.existsSync(tmpPath);
       if (!tempExists) {
-        missing.push(f.id);
+        if (f.isInline) {
+          missingInline.push(f.id);
+        } else {
+          missingNormal.push(f.id);
+        }
         if (!this.isAttachmentMissing(f.id)) {
           this._missingAttachmentIds.push(f.id);
           change = true;
@@ -687,11 +692,19 @@ class MessageStore extends MailspringStore {
       }
     });
 
-    if (missing.length > 0) {
+    if (missingNormal.length > 0) {
       Actions.fetchAttachments({
         accountId: message.accountId,
-        missingItems: missing,
+        missingItems: missingNormal,
         needProgress: true,
+        source: 'Click',
+      });
+    }
+    if (missingInline.length > 0) {
+      Actions.fetchAttachments({
+        accountId: message.accountId,
+        missingItems: missingInline,
+        needProgress: false,
         source: 'Click',
       });
     }
@@ -719,6 +732,7 @@ class MessageStore extends MailspringStore {
           Actions.fetchAttachments({
             accountId: aid,
             missingItems: value,
+            source: 'message store auto fetch attachment',
           });
         }
       });
@@ -807,22 +821,37 @@ class MessageStore extends MailspringStore {
   }
 
   _fetchExpandedAttachments(items) {
-    const fileIds = [];
+    const inLineFileIds = [];
+    const normalFileIds = [];
     for (let item of items) {
       if (!this._itemsExpanded[item.id]) continue;
       item.files.forEach(file => {
         if (this.isAttachmentMissing(file.id)) {
-          fileIds.push(file.id);
+          if (file.isInline) {
+            inLineFileIds.push(file.id);
+          } else {
+            normalFileIds.push(file.id);
+          }
         }
       });
     }
-    if (items.length > 0 && items[0] && fileIds.length > 0) {
-      Actions.fetchAttachments({
-        accountId: items[0].accountId,
-        missingItems: fileIds,
-        needProgress: true,
-        source: 'Click',
-      });
+    if (items.length > 0 && items[0]) {
+      if (inLineFileIds.length > 0) {
+        Actions.fetchAttachments({
+          accountId: items[0].accountId,
+          missingItems: inLineFileIds,
+          needProgress: false,
+          source: 'Expand message attachments',
+        });
+      }
+      if (normalFileIds.length > 0) {
+        Actions.fetchAttachments({
+          accountId: items[0].accountId,
+          missingItems: normalFileIds,
+          needProgress: true,
+          source: 'Expand message attachments',
+        });
+      }
     }
   }
 
