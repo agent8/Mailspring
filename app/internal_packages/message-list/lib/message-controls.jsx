@@ -173,11 +173,17 @@ export default class MessageControls extends React.Component {
     if (!emailWrap) {
       return;
     }
-    const printNode = document.createElement('div');
-    printNode.setAttribute('id', 'message-list');
-    printNode.classList.add('print-message', 'message-list');
-    printNode.appendChild(emailWrap.cloneNode(true));
-    Actions.printThread(this.props.thread, printNode.outerHTML);
+
+    const messageIframe = emailWrap.getElementsByTagName('iframe');
+    if (!messageIframe || !messageIframe[0]) {
+      return;
+    }
+
+    const iframeHtml = messageIframe[0].contentDocument
+      ? messageIframe[0].contentDocument.body.innerHTML
+      : '';
+
+    Actions.printMessage(this.props.thread, emailWrap.outerHTML, iframeHtml);
   };
 
   _onToggleMuteEmail = () => {
