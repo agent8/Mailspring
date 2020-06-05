@@ -777,105 +777,124 @@ export default class MailsyncBridge {
       }
       let threadIndex = -1;
       let threadCategories = [];
+      if (tmpModels.length < 1) {
+        return;
+      }
+      const klass = tmpModels[0].constructor;
+      const where = {};
+      const construct = tmpModels[0].constructor;
+      const primaryKey = tmpModels[0].constructor.pseudoPrimaryJsKey;
       tmpModels.forEach(m => {
         if (m.constructor.name !== modelClass) {
           return;
         }
-        const where = {};
-        where[m.constructor.pseudoPrimaryJsKey] = m[m.constructor.pseudoPrimaryJsKey];
-        const klass = m.constructor;
-        if (where[m.constructor.pseudoPrimaryJsKey]) {
-          let tmp = DatabaseStore.findBy(klass, where);
-          if (m.constructor.name === 'Message') {
-            tmp.linkDB(Message.attributes.body);
-          } else if (m.constructor.name === 'Thread') {
-            FocusedPerspectiveStore =
-              FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
-            const perspective = FocusedPerspectiveStore.current();
-            if (perspective) {
-              const categoryIds = Array.isArray(perspective.categories())
-                ? perspective.categories().map(cat => cat.id)
-                : [];
-              if (Array.isArray(categoryIds) && categoryIds.length > 0) {
-                // console.log(`adding category constrain, ${categoryIds}`);
-                Thread = Thread || require('./models/thread').default;
-                const threadPromise = DatabaseStore.findBy(Thread, where).where([
-                  Thread.attributes.categories.containsAny(categoryIds),
-                ]);
-                promises.push(threadPromise);
-                threadIndex = promises.length - 1;
-              } else {
-                console.log(`Cannot get category Ids, using data purely from thread`);
-              }
-            } else {
-              console.log(`No current perspective, using data purely from thread`);
-            }
-          }
-          promises.push(tmp);
-        } else {
-          console.error(
-            `Primary key ${m.constructor.pseudoPrimaryJsKey} have no value for class ${m.constructor.name}`
-          );
+        if (!where[primaryKey]) {
+          where[primaryKey] = [];
         }
+        where[primaryKey].push(m[primaryKey]);
       });
-      if (promises.length > 0) {
-        Promise.all(promises).then(models => {
-          const parsedModels = [];
-          models.forEach((model, index) => {
-            if (!model) {
-              return;
+      if (where[primaryKey]) {
+        let tmp = DatabaseStore.findAll(klass, where);
+        if (construct.name === 'Message') {
+          tmp.linkDB(Message.attributes.body);
+        } else if (construct.name === 'Thread') {
+          FocusedPerspectiveStore =
+            FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
+          const perspective = FocusedPerspectiveStore.current();
+          if (perspective) {
+            const categoryIds = Array.isArray(perspective.categories())
+              ? perspective.categories().map(cat => cat.id)
+              : [];
+            if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+              // console.log(`adding category constrain, ${categoryIds}`);
+              Thread = Thread || require('./models/thread').default;
+              const threadPromise = DatabaseStore.findAll(Thread, where).where([
+                Thread.attributes.categories.containsAny(categoryIds),
+              ]);
+              promises.push(threadPromise);
+              threadIndex = promises.length - 1;
+            } else {
+              console.log(`Cannot get category Ids, using data purely from thread`);
             }
-            const pseudoPrimaryKey = model.constructor.pseudoPrimaryJsKey || 'id';
-            let duplicate = false;
-            for (let m of parsedModels) {
-              if (!m) {
-                AppEnv.reportError(
-                  new Error(`There is an null is the parsed change record models send to UI`)
-                );
-                continue;
-              }
-              if (m[pseudoPrimaryKey] === model[pseudoPrimaryKey]) {
-                duplicate = true;
-                let correctLastMessageTimestamp;
-                if (index === threadIndex) {
-                  correctLastMessageTimestamp = model.lastMessageTimestamp;
-                } else {
-                  correctLastMessageTimestamp = m.lastMessageTimestamp;
-                }
-                Object.assign(m, model);
-                m.lastMessageTimestamp = correctLastMessageTimestamp;
-                break;
-              }
-            }
-            if (!duplicate) {
-              // if(index === threadIndex){
-              //   model.categories = threadCategories;
-              // }
-              parsedModels.push(model);
-            }
-          });
-          if (parsedModels.length === 0) {
+          } else {
+            console.log(`No current perspective, using data purely from thread`);
+          }
+        }
+        promises.push(tmp);
+      } else {
+        console.error(
+          `Primary key ${construct.pseudoPrimaryJsKey} have no value for class ${construct.name}`
+        );
+      }
+      const parseQueryPromises = (models, index) => {
+        const parsedModels = [];
+        models.forEach(model => {
+          if (!model) {
             return;
           }
-          // dispatch the message to other windows
-          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+          const pseudoPrimaryKey = model.constructor.pseudoPrimaryJsKey || 'id';
+          let duplicate = false;
+          for (let m of parsedModels) {
+            if (!m) {
+              AppEnv.reportError(
+                new Error(`There is an null is the parsed change record models send to UI`)
+              );
+              continue;
+            }
+            if (m[pseudoPrimaryKey] === model[pseudoPrimaryKey]) {
+              duplicate = true;
+              let correctLastMessageTimestamp;
+              let inboxCategory;
+              if (index === threadIndex) {
+                correctLastMessageTimestamp = model.lastMessageTimestamp;
+                inboxCategory = model.inboxCategory;
+              } else {
+                correctLastMessageTimestamp = m.lastMessageTimestamp;
+                inboxCategory = m.inboxCategory;
+              }
+              Object.assign(m, model);
+              m.lastMessageTimestamp = correctLastMessageTimestamp;
+              m.inboxCategory = inboxCategory;
+              break;
+            }
+          }
+          if (!duplicate) {
+            parsedModels.push(model);
+          }
+        });
+        if (parsedModels.length === 0 && index === promises.length - 1) {
+          return;
+        }
+        // dispatch the message to other windows
+        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+          type,
+          modelClass,
+          modelJSONs: parsedModels.map(m => m.toJSON()),
+          processAccountId: accountId,
+        });
+        this._onIncomingChangeRecord(
+          new DatabaseChangeRecord({
             type,
-            modelClass,
-            modelJSONs: parsedModels.map(m => m.toJSON()),
+            objectClass: modelClass,
+            objects: parsedModels,
             processAccountId: accountId,
-          });
-          this._onIncomingChangeRecord(
-            new DatabaseChangeRecord({
-              type,
-              objectClass: modelClass,
-              objects: parsedModels,
-              processAccountId: accountId,
-            })
-          );
+          })
+        );
+      };
+      if (promises.length > 0) {
+        Promise.all(promises).then(queries => {
+          if (promises.length > 1) {
+            queries.forEach((models, index) => {
+              parseQueryPromises(models, index);
+            });
+          } else {
+            parseQueryPromises(queries[0], 0);
+          }
         });
       }
     }
   };
+
   _recordErrorToConsole = task => {
     const warningKeys = ['ErrorConnection', 'ErrorAuthentication'];
     let errorAccount = {};
@@ -916,16 +935,24 @@ export default class MailsyncBridge {
     if (nativeReportTask instanceof NativeReportTask) {
       if (nativeReportTask.level === NativeReportTask.errorLevel.info) {
         console.log(nativeReportTask);
-        AppEnv.reportLog(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportLog(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { grabLogs: nativeReportTask.uploadLogs }
+        );
       } else if (nativeReportTask.level === NativeReportTask.errorLevel.warning) {
         console.warn(nativeReportTask);
-        AppEnv.reportWarning(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportWarning(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { grabLogs: nativeReportTask.uploadLogs }
+        );
       } else {
         console.error(nativeReportTask);
         AppEnv.reportError(
           new Error(nativeReportTask.key),
           { errorData: nativeReportTask },
-          { grabLogs: true }
+          { grabLogs: nativeReportTask.uploadLogs }
         );
       }
     }

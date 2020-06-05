@@ -15,7 +15,7 @@ import { ipcRenderer } from 'electron';
 import fs from 'fs';
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
-
+const AutoDownloadSizeThreshHold = 2 * 1024 * 1024;
 class MessageStore extends MailspringStore {
   constructor() {
     super();
@@ -317,40 +317,67 @@ class MessageStore extends MailspringStore {
     if (change.objectClass === Message.name) {
       const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
       if (!inDisplayedThread && change.type === 'persist') return;
-
-      if (
-        change.objects.length === 1 &&
-        change.objects[0].draft === true &&
-        !change.objects[0].calendarReply &&
-        !change.objects[0].ignoreSift
-      ) {
-        const item = change.objects[0];
-        const itemIndex = this._items.findIndex(msg => msg.id === item.id);
-
-        if (
-          change.type === 'persist' &&
-          itemIndex === -1 &&
-          !Message.compareMessageState(item.syncState, Message.messageSyncState.failed)
-        ) {
-          this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+      const messages = change.objects.filter(msg => msg.threadId === this._thread.id);
+      const drafts = messages.filter(msg => msg.draft && !msg.calendarReply && !msg.ignoreSift);
+      if (drafts.length > 0) {
+        if (change.type === 'persist') {
+          drafts.forEach(item => {
+            const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+            if (itemIndex === -1) {
+              this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+            }
+          });
           this._items = this._sortItemsForDisplay(this._items);
-          this._expandItemsToDefault();
-          this.trigger();
-          this._closeWindowIfNoMessage();
-          return;
+        } else if (change.type === 'unpersist') {
+          drafts.forEach(item => {
+            const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+            if (itemIndex !== -1) {
+              this._items.splice(itemIndex, 1);
+            }
+          });
         }
-
-        if (change.type === 'unpersist' && itemIndex !== -1) {
-          this._items = [].concat(this._items).filter(m => !m.isHidden());
-          this._items.splice(itemIndex, 1);
-          this._expandItemsToDefault();
-          this.trigger();
-          this._closeWindowIfNoMessage();
-          return;
-        }
+        this._expandItemsToDefault();
+        this.trigger();
       }
-      this._fetchFromCache();
+      if (messages.length !== drafts.length) {
+        this._fetchFromCache();
+      }
       this._closeWindowIfNoMessage();
+      return;
+
+      // if (
+      //   change.objects.length === 1 &&
+      //   change.objects[0].draft === true &&
+      //   !change.objects[0].calendarReply &&
+      //   !change.objects[0].ignoreSift
+      // ) {
+      //   const item = change.objects[0];
+      //   const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+      //
+      //   if (
+      //     change.type === 'persist' &&
+      //     itemIndex === -1 &&
+      //     !Message.compareMessageState(item.syncState, Message.messageSyncState.failed)
+      //   ) {
+      //     this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+      //     this._items = this._sortItemsForDisplay(this._items);
+      //     this._expandItemsToDefault();
+      //     this.trigger();
+      //     this._closeWindowIfNoMessage();
+      //     return;
+      //   }
+      //
+      //   if (change.type === 'unpersist' && itemIndex !== -1) {
+      //     this._items = [].concat(this._items).filter(m => !m.isHidden());
+      //     this._items.splice(itemIndex, 1);
+      //     this._expandItemsToDefault();
+      //     this.trigger();
+      //     this._closeWindowIfNoMessage();
+      //     return;
+      //   }
+      // }
+      // this._fetchFromCache();
+      // this._closeWindowIfNoMessage();
     }
 
     if (change.objectClass === Thread.name) {
@@ -630,7 +657,8 @@ class MessageStore extends MailspringStore {
   }
 
   fetchMissingAttachmentsByMessage({ messageId } = {}) {
-    const missing = [];
+    const missingInline = [];
+    const missingNormal = [];
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
     const message = this._items.find(item => item.id === messageId);
@@ -642,7 +670,11 @@ class MessageStore extends MailspringStore {
       const tmpPath = AttachmentStore.pathForFile(f);
       const tempExists = fs.existsSync(tmpPath);
       if (!tempExists) {
-        missing.push(f.id);
+        if (f.isInline) {
+          missingInline.push(f.id);
+        } else {
+          missingNormal.push(f.id);
+        }
         if (!this.isAttachmentMissing(f.id)) {
           this._missingAttachmentIds.push(f.id);
           change = true;
@@ -660,11 +692,19 @@ class MessageStore extends MailspringStore {
       }
     });
 
-    if (missing.length > 0) {
+    if (missingNormal.length > 0) {
       Actions.fetchAttachments({
         accountId: message.accountId,
-        missingItems: missing,
+        missingItems: missingNormal,
         needProgress: true,
+        source: 'Click',
+      });
+    }
+    if (missingInline.length > 0) {
+      Actions.fetchAttachments({
+        accountId: message.accountId,
+        missingItems: missingInline,
+        needProgress: false,
         source: 'Click',
       });
     }
@@ -692,6 +732,7 @@ class MessageStore extends MailspringStore {
           Actions.fetchAttachments({
             accountId: aid,
             missingItems: value,
+            source: 'message store auto fetch attachment',
           });
         }
       });
@@ -709,9 +750,14 @@ class MessageStore extends MailspringStore {
         fs.access(tmpPath, fs.constants.R_OK, err => {
           const tempExists = !err;
           if (!tempExists) {
-            const aId = message.accountId;
-            const oldAIdMap = missingAidMap.get(aId) || [];
-            missingAidMap.set(aId, [...oldAIdMap, f.id]);
+            if (
+              f.isInline ||
+              (this._itemsExpanded[message.id] && f.size < AutoDownloadSizeThreshHold && f.size > 0)
+            ) {
+              const aId = message.accountId;
+              const oldAIdMap = missingAidMap.get(aId) || [];
+              missingAidMap.set(aId, [...oldAIdMap, f.id]);
+            }
             if (!this.isAttachmentMissing(f.id)) {
               this._missingAttachmentIds.push(f.id);
               change = true;
@@ -775,9 +821,37 @@ class MessageStore extends MailspringStore {
   }
 
   _fetchExpandedAttachments(items) {
+    const inLineFileIds = [];
+    const normalFileIds = [];
     for (let item of items) {
       if (!this._itemsExpanded[item.id]) continue;
-      item.files.map(file => Actions.fetchFile(file));
+      item.files.forEach(file => {
+        if (this.isAttachmentMissing(file.id)) {
+          if (file.isInline) {
+            inLineFileIds.push(file.id);
+          } else {
+            normalFileIds.push(file.id);
+          }
+        }
+      });
+    }
+    if (items.length > 0 && items[0]) {
+      if (inLineFileIds.length > 0) {
+        Actions.fetchAttachments({
+          accountId: items[0].accountId,
+          missingItems: inLineFileIds,
+          needProgress: false,
+          source: 'Expand message attachments',
+        });
+      }
+      if (normalFileIds.length > 0) {
+        Actions.fetchAttachments({
+          accountId: items[0].accountId,
+          missingItems: normalFileIds,
+          needProgress: true,
+          source: 'Expand message attachments',
+        });
+      }
     }
   }
 

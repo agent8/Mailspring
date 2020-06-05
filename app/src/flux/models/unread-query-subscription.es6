@@ -8,40 +8,50 @@ import JoinTable from '../models/join-table';
 
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
-const buildQuery = categoryIds => {
-  const unreadMatchers = new Matcher.JoinAnd([
+const buildQuery = (categoryIds, isOther) => {
+  const unreadWhereOptions = [
     Thread.attributes.categories.containsAny(categoryIds),
     JoinTable.useAttribute('unread', 'Number').equal(1),
     Thread.attributes.state.equal(0),
-  ]);
-
-  const whereOption = {};
-  const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
-  if (enableFocusedInboxKey) {
-    const notOtherCategorys = Category.inboxNotOtherCategorys().map(
-      categoryNum => `${categoryNum}`
-    );
-    whereOption['inboxCategory'] = notOtherCategorys;
-  }
-  const query = DatabaseStore.findAll(Thread, whereOption).limit(0);
+  ];
 
   // The "Unread" view shows all threads which are unread. When you read a thread,
   // it doesn't disappear until you leave the view and come back. This behavior
   // is implemented by keeping track of messages being read and manually
   // whitelisting them in the query.
-  if (RecentlyReadStore.ids.length === 0) {
+  let inboxCategories = 'all';
+  const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
+  if (enableFocusedInboxKey) {
+    if (isOther) {
+      inboxCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+    } else {
+      inboxCategories = Category.inboxNotOtherCategorys().map(categoryNum => `${categoryNum}`);
+    }
+    unreadWhereOptions.push(
+      JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
+    );
+  }
+  const unreadMatchers = new Matcher.JoinAnd(unreadWhereOptions);
+  const query = DatabaseStore.findAll(Thread).limit(0);
+  if (RecentlyReadStore.ids(inboxCategories).length === 0) {
     query.where(unreadMatchers);
   } else {
+    const whereOptions = [
+      JoinTable.useAttribute('unread', 'Number').equal(1),
+      Thread.attributes.state.equal(0),
+    ];
+    if (enableFocusedInboxKey) {
+      whereOptions.push(
+        JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
+      );
+    }
     query.where(
       new Matcher.JoinAnd([
         Thread.attributes.categories.containsAny(categoryIds),
         new Matcher.JoinOr([
+          new Matcher.JoinAnd(whereOptions),
           new Matcher.JoinAnd([
-            JoinTable.useAttribute('unread', 'Number').equal(1),
-            Thread.attributes.state.equal(0),
-          ]),
-          new Matcher.JoinAnd([
-            JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids),
+            JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids(inboxCategories)),
             JoinTable.useAttribute('state', 'Number').equal(0),
           ]),
         ]),
@@ -53,15 +63,16 @@ const buildQuery = categoryIds => {
 };
 
 export default class UnreadQuerySubscription extends MutableQuerySubscription {
-  constructor(categoryIds) {
-    super(buildQuery(categoryIds), { emitResultSet: true });
+  constructor(categoryIds, isOther = false) {
+    super(buildQuery(categoryIds, isOther), { emitResultSet: true });
+    this.isOther = isOther;
     this._categoryIds = categoryIds;
     this._unlisten = RecentlyReadStore.listen(this.onRecentlyReadChanged);
   }
 
   onRecentlyReadChanged = () => {
     const { limit, offset } = this._query.range();
-    this._query = buildQuery(this._categoryIds)
+    this._query = buildQuery(this._categoryIds, this.isOther)
       .limit(limit)
       .offset(offset);
   };

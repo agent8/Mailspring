@@ -93,7 +93,7 @@ module.exports = class MultiselectListInteractionHandler {
     if (options.select) {
       this.props.dataSource.selection.walk({ current, next });
     } else {
-      this.props.dataSource.selection.clear();
+      // this.props.dataSource.selection.clear();
     }
   };
 

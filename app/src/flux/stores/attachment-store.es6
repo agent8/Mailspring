@@ -1446,7 +1446,7 @@ class AttachmentStore extends MailspringStore {
     if (fileIds.length) {
       fileIds.forEach(id => {
         const oldProcess = this._fileProcess.get(id);
-        if (oldProcess && oldProcess.state === 'downloading') {
+        if (oldProcess && (oldProcess.state === 'downloading' || oldProcess.state === 'done')) {
           return;
         }
         this._fileProcess.set(id, {
