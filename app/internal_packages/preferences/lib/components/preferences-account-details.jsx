@@ -1,8 +1,8 @@
 /* eslint global-require: 0 */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { shell, ipcRenderer, remote } from 'electron';
-import { RegExpUtils, KeyManager, Account, Utils } from 'mailspring-exports';
+import { ipcRenderer, remote } from 'electron';
+import { DraftStore, RegExpUtils, KeyManager, Account, Utils } from 'mailspring-exports';
 import { EditableList } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 
@@ -215,16 +215,25 @@ class PreferencesAccountDetails extends Component {
 
   _onDeleteAccount = () => {
     const { account, onRemoveAccount, onSelectAccount } = this.props;
+    const drafts = DraftStore.findDraftsByAccountId(account.id);
+    let details = `Do you want to delete this account ${account.emailAddress}?`;
+    if (drafts.length > 0) {
+      details = `There are ${drafts.length} draft(s) for this account that are currently open.\n Do you want to proceed with deleting account ${account.emailAddress}?\n Deleting account will also close these drafts.`;
+    }
     const chosen = remote.dialog.showMessageBoxSync({
       type: 'info',
       message: 'Are you sure?',
-      detail: `Delete this account ${account.emailAddress}`,
+      detail: details,
       buttons: ['Delete', 'Cancel'],
       defaultId: 0,
       cancelId: 1,
     });
     if (chosen !== 0) {
       return;
+    }
+    const openWindowsCount = AppEnv.getOpenWindowsCountByAccountId(account.id);
+    if (openWindowsCount > 0) {
+      AppEnv.closeWindowsByAccountId(account.id, 'account deleted');
     }
     const index = this.props.accounts.indexOf(account);
     if (account && typeof onRemoveAccount === 'function') {
@@ -235,10 +244,6 @@ class PreferencesAccountDetails extends Component {
         onSelectAccount(this.props.accounts[newIndex]);
       }
     }
-  };
-
-  _onContactSupport = () => {
-    shell.openExternal('https://support.getmailspring.com/hc/en-us/requests/new');
   };
 
   // Renderers

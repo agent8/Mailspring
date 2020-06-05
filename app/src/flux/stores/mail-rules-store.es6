@@ -47,7 +47,6 @@ class MailRulesStore extends MailspringStore {
     this.listenTo(Actions.disableMailRule, this._onDisableMailRule);
     this.listenTo(Actions.startReprocessingMailRules, this._onStartReprocessing);
     this.listenTo(Actions.stopReprocessingMailRules, this._onStopReprocessing);
-
     this.listenTo(DatabaseStore, this._onDatabaseChanged);
   }
 
@@ -206,7 +205,6 @@ class MailRulesStore extends MailspringStore {
         this._onStopReprocessing(accountId);
         return;
       }
-
 
       // DatabaseStore.findAll(Message, {
       //   threadId: threads.map(t => t.id),

@@ -288,6 +288,18 @@ class Actions {
   static printThread = ActionScopeWindow;
 
   /*
+  Public: Print the currently selected message.
+
+  *Scope: Window*
+
+  ```
+  thread = <Thread>
+  Actions.printThread(thread)
+  ```
+  */
+  static printMessage = ActionScopeWindow;
+
+  /*
   Public: Export the currently selected thread to pdf.
 
   *Scope: Window*
@@ -492,6 +504,7 @@ class Actions {
 
   // Account Sidebar
   static setCollapsedSidebarItem = ActionScopeWindow;
+  static setMoreOrLessCollapsed = ActionScopeWindow;
 
   // File Actions
   // Some file actions only need to be processed in their current window
