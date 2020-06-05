@@ -118,7 +118,7 @@ const onDeleteItem = function(item) {
     return;
   }
   DatabaseStore.findAll(ThreadCategory)
-    .where({ categoryId: category.id })
+    .where({ categoryId: category.id, state: 0 })
     .count()
     .then(count => {
       if (count === 0) {
