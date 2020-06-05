@@ -294,14 +294,25 @@ async function downloadImage(url, logoPath, domain) {
 }
 
 const logoCache = {};
+const localExists = {};
 export const getLogo = async email => {
   if (email) {
     let domain = email.split('@')[1];
+    let logoPath = getLogoFromLocalCache(domain);
+    if (logoPath) {
+      return logoPath;
+    }
+
+    if (localExists[domain]) {
+      return localExists[domain];
+    }
+
     // domain = /\w+\.\w+$/g.exec(domain);
     // find in localFolder
-    let logoPath = path.join(logoDirPath, domain + '.png');
+    logoPath = path.join(logoDirPath, domain + '.png');
     if (await exists(logoPath)) {
-      return `file:${logoPath}`;
+      localExists[domain] = `file:${logoPath}`;
+      return localExists[domain];
     }
 
     // find from cache first
@@ -319,6 +330,12 @@ export const getLogo = async email => {
     return result;
   }
 };
+
+function getLogoFromLocalCache(domain) {
+  if (domain === 'gmail.com' || domain === 'google.com') {
+    return '../static/images/preferences/providers/account-logo-gmail.png';
+  }
+}
 
 export default {
   register,
