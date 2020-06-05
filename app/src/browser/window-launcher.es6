@@ -101,7 +101,8 @@ export default class WindowLauncher {
       setTimeout(() => {
         // We need to regen a hot window, but do it in the next event
         // loop to not hang the opening of the current window.
-        this.createHotWindow(opts);
+        const newOpts = Object.assign({}, opts, { title: '' });
+        this.createHotWindow(newOpts);
       }, 0);
     }
 
