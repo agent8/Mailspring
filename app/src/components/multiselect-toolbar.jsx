@@ -47,7 +47,7 @@ class MultiselectToolbar extends Component {
     renderRefresh: true,
     renderCheckMark: true,
     selectAllSelectionFilter: null,
-    renderHiddenToolbar: false
+    renderHiddenToolbar: false,
   };
 
   constructor(props) {
@@ -336,14 +336,20 @@ class MultiselectToolbar extends Component {
   }
   renderFilterSelection() {
     if (this.props.renderFilterSelection) {
-      return <div onClick={this.onSelectWithFilter} title="Select" className="btn btn-toolbar btn-selection-filter">
-        <RetinaImg
-          name="arrow-dropdown.svg"
-          isIcon
-          mode={RetinaImg.Mode.ContentIsMask}
-          style={{ width: 20 }}
-        />
-      </div>;
+      return (
+        <div
+          onClick={this.onSelectWithFilter}
+          title="Select"
+          className="btn btn-toolbar btn-selection-filter"
+        >
+          <RetinaImg
+            name="arrow-dropdown.svg"
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+            style={{ width: 20 }}
+          />
+        </div>
+      );
     }
     return null;
   }
@@ -399,7 +405,7 @@ class MultiselectToolbar extends Component {
           <div className="flex-row">
             <div className="selection-label">{this.selectionLabel()}</div>
             <button className="btn clickable btn-toggle-select-all" onClick={this._selectAll}>
-              Select All ({this._formatNumber(totalCount)})
+              Select All ({this._formatNumber(Math.min(totalCount, 200))})
             </button>
             <button className="btn clickable btn-clear-all" onClick={this._clearSelection}>
               Cancel
@@ -410,19 +416,19 @@ class MultiselectToolbar extends Component {
       </div>
     );
   }
-  renderHiddenToolbar(){
-    if(!this.props.renderHiddenToolbar){
+  renderHiddenToolbar() {
+    if (!this.props.renderHiddenToolbar) {
       return;
     }
     const classes = classnames({
       'multiselect-toolbar-root': true,
       'thread-list-toolbar': true,
     });
-    return <div className={classes} >
-      <div className="inner">
-        {this.props.toolbarElement}
+    return (
+      <div className={classes}>
+        <div className="inner">{this.props.toolbarElement}</div>
       </div>
-    </div>;
+    );
   }
 
   render() {
