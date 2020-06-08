@@ -1,7 +1,6 @@
 import _ from 'underscore';
 import moment from 'moment';
 import fs from 'fs';
-import util from 'util';
 import File from './file';
 import Utils from './utils';
 import Contact from './contact';
@@ -15,7 +14,6 @@ import CategoryStore from '../stores/category-store';
 import Category from './category';
 let AttachmentStore = null;
 
-const fsExists = util.promisify(fs.exists);
 const mapping = {
   attachmentIdsFromJSON: json => {
     if (!Array.isArray(json)) {
@@ -602,18 +600,12 @@ export default class Message extends ModelWithMetadata {
       let processed = 0;
       (this.files || []).forEach(f => {
         const path = AttachmentStore.pathForFile(f);
-        fsExists(path)
-          .then(() => {
-            processed += 2;
-            if (processed === total) {
-              resolve(ret);
-            }
-          })
-          .catch(error => {
+        fs.access(path, fs.constants.R_OK, err => {
+          if (err) {
             processed++;
-            fsExists(`${path}.part`)
-              .then(() => {
-                processed++;
+            fs.access(`${path}.part`, fs.constants.R_OK, err => {
+              processed++;
+              if (!err) {
                 if (f.isInline) {
                   ret.inline.downloading.push(f);
                 } else {
@@ -621,10 +613,9 @@ export default class Message extends ModelWithMetadata {
                 }
                 if (processed === total) {
                   resolve(ret);
+                  return;
                 }
-              })
-              .catch(error => {
-                processed++;
+              } else {
                 if (f.isInline) {
                   ret.inline.needToDownload.push(f);
                 } else {
@@ -632,9 +623,18 @@ export default class Message extends ModelWithMetadata {
                 }
                 if (processed === total) {
                   resolve(ret);
+                  return;
                 }
-              });
-          });
+              }
+            });
+          } else {
+            processed += 2;
+            if (processed === total) {
+              resolve(ret);
+              return;
+            }
+          }
+        });
       });
     });
   }
