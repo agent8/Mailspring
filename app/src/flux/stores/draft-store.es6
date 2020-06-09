@@ -588,14 +588,24 @@ class DraftStore extends MailspringStore {
     });
   };
 
-  _onResendDraft = async ({ messages = [], source = '' } = {}) => {
+  _onResendDraft = async ({ messages = [], messageIds = [], source = '' } = {}) => {
+    const ids = [];
     for (let i = 0; i < messages.length; i++) {
-      const message = messages[i];
-      const session = this._draftSessions[message.id];
-      if (!session) {
-        await this.sessionForClientId(message.id, { showFailed: true });
+      if (messages[i] && messages[i].id) {
+        ids.push(messages[i].id);
       }
-      this._onSendDraft(message.id);
+    }
+    for (let i = 0; i < messageIds.length; i++) {
+      if (messageIds[i]) {
+        ids.push(messageIds[i]);
+      }
+    }
+    for (let i = 0; i < ids.length; i++) {
+      const session = this._draftSessions[ids[i]];
+      if (!session) {
+        await this.sessionForClientId(ids[i], { showFailed: true });
+      }
+      this._onSendDraft(ids[i]);
     }
   };
   _onDraftOpenCount = ({ messageId, windowLevel = 0, source = '' }) => {
