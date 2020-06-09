@@ -2,9 +2,10 @@ import { React, RESTful, Constant } from 'mailspring-exports';
 import { FullScreenModal, Banner } from 'mailspring-component-kit';
 import { remote, ipcRenderer } from 'electron';
 
-const { UserReviewUrl, UserInstallUpdateTimeHappyLine, ServerInfoPriorityEnum } = Constant;
+const { UserReviewUrl, UserUseAppDaysHappyLine, ServerInfoPriorityEnum } = Constant;
 const { AppUpdateRest } = RESTful;
-const SETTINGS_KEY = 'mailto.user-know-update-info-version';
+const SETTINGS_KEY = 'update.user-know-update-info-version';
+const AppInstallConfigKey = 'identity.createdAt';
 
 export default class WhatsNew extends React.Component {
   static displayName = 'WhatsNew';
@@ -49,10 +50,14 @@ export default class WhatsNew extends React.Component {
   };
 
   _getUpdateInformation = async () => {
-    // If the user has updated it manually at least three times,
+    // If the user has use our app at least xxx days,
     // we think that the user has used our app in depth and happy
-    const installUpdateTime = AppEnv.getEventTriggerTime('UserInstallUpdate');
-    if (installUpdateTime < UserInstallUpdateTimeHappyLine) {
+    const appInstallAt = AppEnv.config.get(AppInstallConfigKey);
+    if (!appInstallAt) {
+      return;
+    }
+    const sinceInstall = new Date() - new Date(appInstallAt);
+    if (sinceInstall < UserUseAppDaysHappyLine * 24 * 60 * 60 * 1000) {
       return;
     }
     // if the version user has know the update info is less than now
