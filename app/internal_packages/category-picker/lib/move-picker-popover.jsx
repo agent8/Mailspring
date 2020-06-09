@@ -102,8 +102,8 @@ export default class MovePickerPopover extends Component {
       .concat(this._userCategories)
       .filter(
         cat =>
-          // remove categories that are part of the current perspective or locked
-          !hidden.includes(cat.role) && !currentCategoryIds.includes(cat.id)
+          // remove categories that are part of the current perspective or locked or none-selectable
+          !hidden.includes(cat.role) && !currentCategoryIds.includes(cat.id) && cat.selectable
       )
       .filter(cat => Utils.wordSearchRegExp(searchValue).test(cat.displayName))
       .map(cat => {

@@ -282,8 +282,14 @@ class SidebarItem {
     const contextMenuLabel = _str.capitalize(
       categories[0] != null ? categories[0].displayType() : undefined
     );
-    const perspective = MailboxPerspective.forCategories(categories);
-
+    let perspective;
+    if (categories.every(cat => !cat.selectable)) {
+      perspective = MailboxPerspective.forNoneSelectableCategories(categories);
+      opts.editable = false;
+      opts.deletable = false;
+    } else {
+      perspective = MailboxPerspective.forCategories(categories);
+    }
     if (opts.deletable == null) {
       opts.deletable = true;
     }
