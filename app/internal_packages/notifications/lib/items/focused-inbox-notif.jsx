@@ -35,7 +35,7 @@ export default class FocusedInboxNotif extends React.Component {
     if (
       AppEnv.config.get(PromptedFocusedInboxKey) ||
       !focusedPerspective ||
-      focusedPerspective.name !== 'Inbox' ||
+      !focusedPerspective.isInbox() ||
       this.state.showEnableFocusedInbox
     ) {
       return;

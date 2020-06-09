@@ -1,8 +1,6 @@
 import Message from './message';
 import Contact from './contact';
-// import Folder from './folder';
 import File from './file';
-// import Label from './label';
 import Category from './category';
 import Attributes from '../attributes';
 import DatabaseStore from '../stores/database-store';
@@ -233,6 +231,20 @@ export default class Thread extends ModelWithMetadata {
 
   get folders() {
     return this.labels;
+  }
+  isSameInboxCategory(inboxCategory) {
+    let val = inboxCategory;
+    if (typeof inboxCategory !== 'number') {
+      try {
+        val = parseInt(inboxCategory, 10);
+      } catch (e) {
+        return false;
+      }
+    }
+    return (
+      Category.inboxNotOtherCategorys().includes(this.inboxCategory) ===
+      Category.inboxNotOtherCategorys().includes(val)
+    );
   }
 
   /**
