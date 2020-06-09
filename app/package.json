@@ -96,6 +96,7 @@
     "rc-editor-mention": "^1.1.12",
     "rc-select": "^9.1.5",
     "react": "^16.9.0",
+    "react-ace": "^9.0.0",
     "react-autosize-textarea": "^4.0.0",
     "react-bootstrap": "^0.32.4",
     "react-color": "^2.13.8",
