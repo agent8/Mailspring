@@ -1,10 +1,35 @@
 @import 'onboarding-reset';
-@import '../node_modules/swiper/dist/css/swiper.min.css';
 
 .tutorial-container.swiper-container {
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  overflow: hidden;
+  list-style: none;
+  padding: 0;
+  z-index: 1;
   color: #fff;
   width: 100%;
   height: 385px;
+
+  .swiper-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    display: flex;
+    transition-property: transform, -webkit-transform;
+    box-sizing: content-box;
+    transform: translate3d(0, 0, 0);
+
+    .swiper-slide {
+      flex-shrink: 0;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition-property: transform, -webkit-transform;
+    }
+  }
   img {
     width: 100%;
   }
@@ -15,6 +40,11 @@
     top: initial;
   }
   .swiper-pagination {
+    position: absolute;
+    text-align: center;
+    transition: 0.3s opacity;
+    transform: translate3d(0, 0, 0);
+    z-index: 10;
     margin-bottom: -2px;
     width: 100%;
   }
@@ -28,12 +58,15 @@
 
   .swiper-button-prev,
   .swiper-button-next {
-    background-image: none;
     height: 24px;
     width: 24px;
     font-size: 24px;
     color: #39f;
     text-align: center;
+    position: absolute;
+    margin-top: -22px;
+    z-index: 10;
+    cursor: pointer;
   }
   .swiper-button-disabled {
     color: #e0e0e0;
@@ -42,6 +75,8 @@
     width: 10px;
     height: 10px;
     cursor: pointer;
+    display: inline-block;
+    border-radius: 100%;
   }
   .swiper-pagination-bullet {
     background: rgba(51, 153, 255, 0.15);
