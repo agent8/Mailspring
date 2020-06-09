@@ -191,14 +191,28 @@ class UndoSendContent extends BasicContent {
       UndoRedoStore.undo({ block: this.props.block });
     } else if (this.state.sendStatus === 'failed') {
       clearTimeout(this.timer);
-      setTimeout(() => {
-        AppEnv.reportError(
-          new Error(
-            `Sending email failed, and user clicked view. messageId: ${this.props.block.tasks[0].modelMessageId}`
-          )
-        );
-        Actions.gotoOutbox();
-      }, 300);
+      if (this._getAdditionalFailedCount() > 0) {
+        setTimeout(() => {
+          AppEnv.reportError(
+            new Error(
+              `Sending email failed, and user clicked view. messageId: ${this.props.block.tasks[0].modelMessageId}`
+            )
+          );
+          Actions.gotoOutbox();
+        }, 300);
+      } else {
+        setTimeout(() => {
+          AppEnv.reportError(
+            new Error(
+              `Sending email failed, and user clicked retry. messageId: ${this.props.block.tasks[0].modelMessageId}`
+            )
+          );
+          Actions.resendDrafts({
+            messageIds: [this.props.block.tasks[0].modelMessageId],
+            source: 'UndoRedo:Failed:Resend',
+          });
+        }, 300);
+      }
       this.props.onClose(true);
     }
   };
@@ -212,9 +226,10 @@ class UndoSendContent extends BasicContent {
       );
     }
     if (this.state.sendStatus === 'failed') {
+      const additionalFailed = this._getAdditionalFailedCount();
       return (
         <div className="undo-action-text" onClick={this.onActionClicked}>
-          View
+          {additionalFailed > 0 ? 'View' : 'Retry'}
         </div>
       );
     }
@@ -228,6 +243,17 @@ class UndoSendContent extends BasicContent {
     if (this.state.sendStatus !== 'sending') {
       this.timer = setTimeout(() => this.props.onClose(), 400);
     }
+  };
+  _getAdditionalFailedCount = () => {
+    const outboxCount = OutboxStore.count();
+    let additionalFailedCount = outboxCount.failed;
+    const currentMessageInOutbox = OutboxStore.dataSource().getById(
+      this.props.block.tasks[0].modelMessageId
+    );
+    if (currentMessageInOutbox) {
+      additionalFailedCount--;
+    }
+    return additionalFailedCount;
   };
 
   _generateFailedSendDraftMessage() {
@@ -243,15 +269,8 @@ class UndoSendContent extends BasicContent {
       } else {
         recipiant = { name: '', email: '' };
       }
-      const outboxCount = OutboxStore.count();
-      let failedCount = outboxCount.failed;
-      const currentMessageInOutbox = OutboxStore.dataSource().getById(
-        this.props.block.tasks[0].modelMessageId
-      );
-      if (currentMessageInOutbox) {
-        failedCount--;
-      }
-      const additional = failedCount > 0 ? `+ ${failedCount} more drafts` : '';
+      const additionalFailedCount = this._getAdditionalFailedCount();
+      const additional = additionalFailedCount > 0 ? `+ ${additionalFailedCount} more drafts` : '';
       return `Mail to ${recipiant.name || recipiant.email} ${additional} failed to send.`;
     }
   }
@@ -263,8 +282,6 @@ class UndoSendContent extends BasicContent {
       messageStatus = 'Message sent.';
     } else if (this.state.sendStatus === 'failed') {
       messageStatus = this._generateFailedSendDraftMessage();
-    } else if (!block.due) {
-      messageStatus = 'Prepare to send';
     }
     return (
       <div
