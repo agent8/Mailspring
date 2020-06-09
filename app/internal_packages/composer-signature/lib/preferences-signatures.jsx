@@ -7,6 +7,7 @@ import {
   ComposerSupport,
 } from 'mailspring-component-kit';
 import SignatureAccountDefaultPicker from './signature-account-default-picker';
+import { CodeBlockPlugin } from './code-block';
 
 const {
   Conversion: { convertFromHTML, convertToHTML },
@@ -19,7 +20,15 @@ class SignatureEditor extends React.Component {
     const body = SignatureStore.getBodyById(signatureId);
     this.state = {
       editorState: convertFromHTML(body),
+      editCode: false,
+      CodeEditor: () => {},
     };
+  }
+
+  componentDidMount() {
+    // lazy loader
+    const CodeEditor = require('./code-editor').default;
+    this.setState({ CodeEditor });
   }
 
   _onBaseFieldChange = event => {
@@ -40,9 +49,26 @@ class SignatureEditor extends React.Component {
     }
   };
 
+  _onToggleCodeBlockEditor = () => {
+    this.setState({
+      editCode: !this.state.editCode,
+    });
+  };
+
+  _onSubmitEditHTML = html => {
+    const value = convertFromHTML(html || '<br />');
+    this.setState({ editorState: value }, this._onSave);
+    this._onToggleCodeBlockEditor();
+  };
+
+  _onCancelEditHTML = () => {
+    this._onToggleCodeBlockEditor();
+  };
+
   render() {
     const { accounts, defaults } = this.props;
-    const { editorState } = this.state;
+    const { editorState, editCode, CodeEditor } = this.state;
+    const editorHTML = convertToHTML(editorState);
 
     let signature = this.props.signature;
     let empty = false;
@@ -65,26 +91,34 @@ class SignatureEditor extends React.Component {
           />
         </div>
 
-        <div className="section editor" onClick={this._onFocusEditor}>
-          <ComposerEditor
-            ref={c => (this._composer = c)}
-            readOnly={false}
-            value={editorState}
-            propsForPlugins={{}}
-            onChange={change => {
-              const changeHtml = convertToHTML(change.value);
-              if (changeHtml) {
-                this.setState({ editorState: change.value });
-              } else {
-                this.setState({ editorState: convertFromHTML('<br />') });
-              }
-            }}
-            onBlur={this._onSave}
-            onFileReceived={() => {
-              // This method ensures that HTML can be pasted.
-            }}
+        {editCode ? (
+          <CodeEditor
+            value={editorHTML}
+            onSubmit={this._onSubmitEditHTML}
+            onCancel={this._onCancelEditHTML}
           />
-        </div>
+        ) : (
+          <div className="section editor" onClick={this._onFocusEditor}>
+            <ComposerEditor
+              ref={c => (this._composer = c)}
+              readOnly={false}
+              value={editorState}
+              outerPlugin={CodeBlockPlugin(this._onToggleCodeBlockEditor)}
+              onChange={change => {
+                const changeHtml = convertToHTML(change.value);
+                if (changeHtml) {
+                  this.setState({ editorState: change.value });
+                } else {
+                  this.setState({ editorState: convertFromHTML('<br />') });
+                }
+              }}
+              onBlur={this._onSave}
+              onFileReceived={() => {
+                // This method ensures that HTML can be pasted.
+              }}
+            />
+          </div>
+        )}
         <SignatureAccountDefaultPicker
           signature={signature}
           accounts={accounts}
