@@ -36,13 +36,13 @@ var _onSelectAll2 = _interopRequireDefault(_onSelectAll);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var isModA = (0, _isHotkey.isKeyHotkey)('mod+a');
+var isModA = (0, _isHotkey.isHotkey)('mod+a');
 
-var isShiftTab = (0, _isHotkey.isKeyHotkey)('shift+tab');
-var isTab = (0, _isHotkey.isKeyHotkey)('tab');
-var isModEnter = (0, _isHotkey.isKeyHotkey)('mod+enter');
-var isEnter = (0, _isHotkey.isKeyHotkey)('enter');
-var isBackspace = (0, _isHotkey.isKeyHotkey)('backspace');
+var isShiftTab = (0, _isHotkey.isHotkey)('shift+tab');
+var isTab = (0, _isHotkey.isHotkey)('tab');
+var isModEnter = (0, _isHotkey.isHotkey)('mod+enter');
+var isEnter = (0, _isHotkey.isHotkey)('enter');
+var isBackspace = (0, _isHotkey.isHotkey)('backspace');
 
 /**
  * User is pressing a key in the editor

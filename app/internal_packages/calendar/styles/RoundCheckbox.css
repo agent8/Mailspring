@@ -1,0 +1,66 @@
+.roundcheckbox-container {
+  display: block;
+  position: relative;
+  padding-left: 35px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.roundcheckbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Create a custom checkbox */
+.roundcheckbox-checkmark {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: #fff;
+  border: 1.5px solid #e9eced;
+  border-radius: 50%;
+  color: white;
+}
+
+
+/* When the checkbox is checked, add a blue background */
+.roundcheckbox-container input:checked ~ .roundcheckbox-checkmark {
+  background-color: #3887eb;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.roundcheckbox-checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.roundcheckbox-container input:checked ~ .roundcheckbox-checkmark::after {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.roundcheckbox-container .roundcheckbox-checkmark::after {
+  left: 8px;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  -webkit-transform: rotate(40deg);
+  -ms-transform: rotate(40deg);
+  transform: rotate(40deg);
+}

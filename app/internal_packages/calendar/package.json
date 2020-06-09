@@ -1,0 +1,18 @@
+{
+  "name": "edison-mail-calendar",
+  "main": "./lib/main",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "mailspring": ">=1.0.31"
+  },
+  "windowTypes": {
+    "default": true,
+    "composer": true
+  },
+  "description": "Enter a description of your package!",
+  "license": "MIT"
+}
