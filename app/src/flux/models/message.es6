@@ -789,7 +789,7 @@ export default class Message extends ModelWithMetadata {
     }
 
     // https://regex101.com/r/hR7zN3/1
-    const re = /(?:<edo\-signature [\w="]*>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
+    const re = /(?:<edo\-signature [\w\-="]*>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
     return this.body.replace(re, '').length === 0;
   }
 
