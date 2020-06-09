@@ -172,12 +172,17 @@ export default class MailboxPerspective {
         cats.push(tmp);
       }
     }
-    const perspective = this.forCategories(cats);
+    let perspective;
+    if (cats.length > 1) {
+      perspective = MailboxPerspective.forAllSent(cats);
+    } else {
+      perspective = MailboxPerspective.forCategories(cats);
+    }
     if (Array.isArray(accountsOrIds) && accountsOrIds.length > 1) {
       perspective.displayName = 'All Sent';
     }
     perspective.iconName = 'sent.svg';
-    perspective.categoryIds = this.getCategoryIds(accountsOrIds, 'sent');
+    perspective.categoryIds = MailboxPerspective.getCategoryIds(accountsOrIds, 'sent');
     return perspective;
   }
 
