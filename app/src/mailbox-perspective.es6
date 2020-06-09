@@ -639,6 +639,9 @@ class SiftMailboxPerspective extends MailboxPerspective {
       .distinct();
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
+  canArchiveThreads() {
+    return false;
+  }
 
   canReceiveThreadsFromAccountIds() {
     return false;
