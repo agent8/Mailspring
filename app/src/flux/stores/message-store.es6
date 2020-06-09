@@ -429,6 +429,33 @@ class MessageStore extends MailspringStore {
       this._onApplyFocusChange();
     }, 100);
   }
+  _shouldSetFocusContentToNullOnInboxCategoryChange = newFocusedThread => {
+    if (!AppEnv.isMainWindow()) {
+      return;
+    }
+    if (!newFocusedThread) {
+      return false;
+    }
+    const enabledFocusedInbox = AppEnv.config.get('core.workspace.enableFocusedInbox');
+    if (!enabledFocusedInbox) {
+      return false;
+    }
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (!currentPerspective || !currentPerspective.isFocusedOtherPerspective) {
+      return false;
+    }
+    const currentThread = this.thread();
+    if (!currentThread || currentThread.id !== newFocusedThread.id) {
+      return false;
+    }
+    if (typeof currentThread.isSameInboxCategory !== 'function') {
+      AppEnv.reportError(new Error('currentThread does not have isSameInboxCategory method'), {
+        errorData: currentThread,
+      });
+      return false;
+    }
+    return !currentThread.isSameInboxCategory(newFocusedThread.inboxCategory);
+  };
 
   _onApplyFocusChange() {
     const focused = FocusedContentStore.focused('thread');
@@ -438,6 +465,11 @@ class MessageStore extends MailspringStore {
         console.log('current thread is gone, and no replacement');
         Actions.popSheet({ reason: 'Message-Store, current Thread is no longer available' });
       }
+    }
+    if (this._shouldSetFocusContentToNullOnInboxCategoryChange(focused)) {
+      AppEnv.logDebug(`Setting focus content to null because inbox category changed`);
+      Actions.setFocus({ collection: 'thread', item: null, reason: 'Inbox Category Changed' });
+      return;
     }
 
     // if we already match the desired state, no need to trigger

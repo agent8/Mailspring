@@ -387,6 +387,20 @@ export default class Message extends ModelWithMetadata {
       this.hasRefOldDraftOnRemote = true;
     }
   }
+  isSameInboxCategory(inboxCategory) {
+    let val = inboxCategory;
+    if (typeof inboxCategory !== 'number') {
+      try {
+        val = parseInt(inboxCategory, 10);
+      } catch (e) {
+        return false;
+      }
+    }
+    return (
+      Category.inboxNotOtherCategorys().includes(this.inboxCategory) ===
+      Category.inboxNotOtherCategorys().includes(val)
+    );
+  }
 
   toJSON(options) {
     const json = super.toJSON(options);

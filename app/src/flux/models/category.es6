@@ -196,32 +196,32 @@ export default class Category extends Model {
   };
 
   static inboxFocusedCategorys(strict = false) {
-    const focusedCategorys = [
+    const focusedCategories = [
       Category.InboxCategoryState.MsgCandidate,
       Category.InboxCategoryState.MsgPrimary,
     ];
     if (strict) {
-      return focusedCategorys;
+      return focusedCategories;
     }
 
-    return [...focusedCategorys, Category.InboxCategoryState.MsgPrimaryAndOther];
+    return [...focusedCategories, Category.InboxCategoryState.MsgPrimaryAndOther];
   }
 
   static inboxOtherCategorys(strict = false) {
-    const otherCategorys = [Category.InboxCategoryState.MsgOther];
+    const otherCategories = [Category.InboxCategoryState.MsgOther];
     if (strict) {
-      return otherCategorys;
+      return otherCategories;
     }
 
-    return [...otherCategorys, Category.InboxCategoryState.MsgPrimaryAndOther];
+    return [...otherCategories, Category.InboxCategoryState.MsgPrimaryAndOther];
   }
 
   static inboxNotOtherCategorys() {
-    const isStrictOtherCategorys = Category.inboxOtherCategorys(true);
-    const notOtherCategorys = Object.values(Category.InboxCategoryState).filter(item => {
-      return !isStrictOtherCategorys.some(other => item === other);
+    const isStrictOtherCategories = Category.inboxOtherCategorys(true);
+    const notOtherCategories = Object.values(Category.InboxCategoryState).filter(item => {
+      return !isStrictOtherCategories.some(other => item === other);
     });
-    return notOtherCategorys;
+    return notOtherCategories;
   }
 
   static StandardRoles = Object.keys(StandardRoleMap);
