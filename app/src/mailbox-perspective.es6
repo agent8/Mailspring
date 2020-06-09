@@ -91,6 +91,9 @@ export default class MailboxPerspective {
   static forCategories(categories) {
     return categories.length > 0 ? new CategoryMailboxPerspective(categories) : this.forNothing();
   }
+  static forNoneSelectableCategories(categories) {
+    return categories.length > 0 ? new NoneSelectablePerspective(categories) : this.forNothing();
+  }
 
   static forStandardCategories(accountsOrIds, ...names) {
     // TODO this method is broken
@@ -169,12 +172,17 @@ export default class MailboxPerspective {
         cats.push(tmp);
       }
     }
-    const perspective = this.forCategories(cats);
+    let perspective;
+    if (cats.length > 1) {
+      perspective = MailboxPerspective.forAllSent(cats);
+    } else {
+      perspective = MailboxPerspective.forCategories(cats);
+    }
     if (Array.isArray(accountsOrIds) && accountsOrIds.length > 1) {
       perspective.displayName = 'All Sent';
     }
     perspective.iconName = 'sent.svg';
-    perspective.categoryIds = this.getCategoryIds(accountsOrIds, 'sent');
+    perspective.categoryIds = MailboxPerspective.getCategoryIds(accountsOrIds, 'sent');
     return perspective;
   }
 
@@ -635,6 +643,9 @@ class SiftMailboxPerspective extends MailboxPerspective {
       .page(0, 1)
       .distinct();
     return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+  canArchiveThreads() {
+    return false;
   }
 
   canReceiveThreadsFromAccountIds() {
@@ -1101,6 +1112,34 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 }
 
+class NoneSelectablePerspective extends CategoryMailboxPerspective {
+  constructor(data) {
+    super(data);
+    this.noneSelectable = true;
+  }
+  threads() {
+    // We need a Thread query that will not return any results and take no time.
+    // We use lastMessageReceivedTimestamp because it is the first column on an
+    // index so this returns zero items nearly instantly. In the future, we might
+    // want to make a Query.forNothing() to go along with MailboxPerspective.forNothing()
+    const query = DatabaseStore.findAll(Thread)
+      .where({ lastMessageTimestamp: -1 })
+      .limit(0);
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+  unreadCount() {
+    return 0;
+  }
+  canReceiveThreadsFromAccountIds() {
+    return false;
+  }
+  receiveThreadIds(threadIds) {
+    return;
+  }
+  actionsForReceivingThreads(threads, accountId) {
+    return;
+  }
+}
 class AllSentMailboxPerspective extends CategoryMailboxPerspective {
   constructor(props) {
     super(props);
@@ -1330,6 +1369,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     const isAllInbox = categories && categories.length > 1;
     this.name = `${isAllInbox ? 'All ' : ''}Focused`;
     this.isTab = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {
@@ -1391,6 +1431,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     this.name = `${isAllInbox ? 'All ' : ''}Other`;
     this.isTab = true;
     this.isOther = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {
@@ -1447,6 +1488,7 @@ class UnreadMailboxFocusedPerspective extends UnreadMailboxPerspective {
     super(categories);
     this.name = `Focused`;
     this.isTab = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {
@@ -1472,6 +1514,7 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
     this.name = `Other`;
     this.isTab = true;
     this.isOther = true;
+    this.isFocusedOtherPerspective = true;
   }
 
   isTabOfPerspective(other) {

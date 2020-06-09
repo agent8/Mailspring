@@ -12,7 +12,6 @@ import { adjustImages } from './adjust-images';
 import EmailFrameStylesStore from './email-frame-styles-store';
 import { remote } from 'electron';
 import fs from 'fs';
-import sharp from 'sharp';
 import { removeTrackers } from './body-remove-trackers';
 
 export default class EmailFrame extends React.Component {
@@ -237,6 +236,7 @@ export default class EmailFrame extends React.Component {
         return newFilePath;
       } else if (fs.existsSync(filePath)) {
         // dont has new .png file, transform old file
+        const sharp = require('sharp');
         const fileBuffer = await sharp(filePath)
           .png()
           .toBuffer();

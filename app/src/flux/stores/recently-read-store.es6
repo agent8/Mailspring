@@ -2,6 +2,9 @@ import MailspringStore from 'mailspring-store';
 import ChangeUnreadTask from '../tasks/change-unread-task';
 import ChangeLabelsTask from '../tasks/change-labels-task';
 import ChangeFolderTask from '../tasks/change-folder-task';
+import MakeOtherTask from '../tasks/make-other-task';
+import MakePrimaryTask from '../tasks/make-primary-task';
+import Category from '../models/category';
 import Actions from '../actions';
 
 // The "Unread" view shows all threads which are unread. When you read a thread,
@@ -49,6 +52,27 @@ class RecentlyReadStore extends MailspringStore {
         this.inboxCategories = this.inboxCategories.concat(inboxCategories);
         changed = true;
       });
+    tasks.forEach(task => {
+      if (task instanceof MakeOtherTask) {
+        task.effectedThreadIds.forEach(threadId => {
+          this.inboxCategories.forEach(item => {
+            if (item && item.type === 'thread' && item.id === threadId) {
+              item.inboxCategory = `${Category.InboxCategoryState.MsgOther}`;
+              changed = true;
+            }
+          });
+        });
+      } else if (task instanceof MakePrimaryTask) {
+        task.effectedThreadIds.forEach(threadId => {
+          this.inboxCategories.forEach(item => {
+            if (item && item.type === 'thread' && item.id === threadId) {
+              item.inboxCategory = `${Category.InboxCategoryState.MsgPrimary}`;
+              changed = true;
+            }
+          });
+        });
+      }
+    });
 
     tasks
       .filter(task => task instanceof ChangeLabelsTask || task instanceof ChangeFolderTask)

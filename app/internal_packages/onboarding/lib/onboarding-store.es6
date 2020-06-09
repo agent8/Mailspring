@@ -1,9 +1,9 @@
-import { AccountStore, Account, IdentityStore } from 'mailspring-exports';
+import { AccountStore, Account, IdentityStore, Constant } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
 
-const OAUTH_LIST = ['gmail', 'yahoo', 'outlook', 'hotmail', 'office365-exchange', 'jira-plugin'];
+const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
 class OnboardingStore extends MailspringStore {
@@ -46,7 +46,7 @@ class OnboardingStore extends MailspringStore {
       // Used when re-adding an account after re-connecting, take the user back
       // to the best page with the most details
       this._account = new Account(existingAccountJSON);
-      if (OAUTH_LIST.includes(this._account.provider)) {
+      if (OAuthList.includes(this._account.provider)) {
         this._pageStack = ['account-choose', `account-settings-${this._account.provider}`];
       } else if (this._account.provider === 'imap') {
         this._pageStack = ['account-choose', 'account-settings', 'account-settings-imap'];
@@ -85,7 +85,7 @@ class OnboardingStore extends MailspringStore {
 
   _onChooseAccountProvider = provider => {
     let nextPage = 'account-settings';
-    if (OAUTH_LIST.includes(provider)) {
+    if (OAuthList.includes(provider)) {
       nextPage += `-${provider}`;
     }
 

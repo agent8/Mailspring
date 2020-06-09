@@ -5,7 +5,7 @@ import { clipboard as ElectronClipboard } from 'electron';
 
 import KeyCommandsRegion from '../key-commands-region';
 import ComposerEditorToolbar from './composer-editor-toolbar';
-import { plugins, convertFromHTML, convertToHTML } from './conversion';
+import { plugins as insidePlugins, convertFromHTML, convertToHTML } from './conversion';
 import { lastUnquotedNode } from './base-block-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
 import { shortCutsUtils } from './system-text-replacements-plugins';
@@ -29,7 +29,8 @@ export default class ComposerEditor extends React.Component {
     // Note that we cache these between renders so we don't remove and re-add them
     // every render.
     this._pluginKeyHandlers = {};
-    plugins.forEach(plugin => {
+    this.plugins = [...insidePlugins, ...(props.outerPlugin || [])];
+    this.plugins.forEach(plugin => {
       Object.entries(plugin.commands || {}).forEach(([command, handler]) => {
         this._pluginKeyHandlers[command] = event => {
           if (!this._mounted) return;
@@ -196,7 +197,7 @@ export default class ComposerEditor extends React.Component {
         const tmpPath = path.join(tmpFolder, `Pasted File${ext}`);
         fs.mkdir(tmpFolder, () => {
           fs.writeFile(tmpPath, buffer, () => {
-            console.log('copying file from clipboard')
+            console.log('copying file from clipboard');
             onFileReceived(tmpPath);
           });
         });
@@ -283,7 +284,7 @@ export default class ComposerEditor extends React.Component {
         <ComposerEditorToolbar
           value={value}
           onChange={this.onChange}
-          plugins={plugins}
+          plugins={this.plugins}
           readOnly={this.props.readOnly}
           isCrowded={this.state.isCrowded}
         />
@@ -292,7 +293,7 @@ export default class ComposerEditor extends React.Component {
           onClick={this.onFocusIfBlurred}
           onContextMenu={this.onContextMenu}
         >
-          {plugins
+          {this.plugins
             .filter(p => p.topLevelComponent)
             .map((p, idx) => (
               <p.topLevelComponent key={idx} value={value} onChange={this.onChange} />
@@ -307,10 +308,10 @@ export default class ComposerEditor extends React.Component {
             onPaste={this.onPaste}
             spellCheck={false}
             readOnly={this.props.readOnly}
-            plugins={plugins}
+            plugins={this.plugins}
             propsForPlugins={propsForPlugins}
           />
-          {plugins
+          {this.plugins
             .reduce((arr, p) => (p.topLevelComponents ? arr.concat(p.topLevelComponents) : arr), [])
             .map((Component, idx) => (
               <Component key={idx} />

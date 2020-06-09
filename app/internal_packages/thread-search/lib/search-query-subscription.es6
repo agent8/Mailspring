@@ -42,19 +42,19 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     let parsedQuery = null;
     try {
       parsedQuery = SearchQueryParser.parse(this._searchQuery);
-      const firstInQueryExpression = parsedQuery.getFirstInQueryExpression();
-      if (!firstInQueryExpression) {
-        const defaultFolder = new Set();
-        this._accountIds.forEach(accountId => {
-          if (CategoryStore.getAllMailCategory(accountId)) {
-            defaultFolder.add('in:"All Mail"');
-          } else if (CategoryStore.getCategoryByRole(accountId, 'inbox')) {
-            defaultFolder.add('in:"Inbox"');
-          }
-        });
-        const defaultFolderStr = [...defaultFolder].join(` or `);
-        parsedQuery = SearchQueryParser.parse(`${defaultFolderStr} ${this._searchQuery}`);
-      }
+      // const firstInQueryExpression = parsedQuery.getFirstInQueryExpression();
+      // if (!firstInQueryExpression) {
+      //   const defaultFolder = new Set();
+      //   this._accountIds.forEach(accountId => {
+      //     if (CategoryStore.getAllMailCategory(accountId)) {
+      //       defaultFolder.add('in:"All Mail"');
+      //     } else if (CategoryStore.getCategoryByRole(accountId, 'inbox')) {
+      //       defaultFolder.add('in:"Inbox"');
+      //     }
+      //   });
+      //   const defaultFolderStr = [...defaultFolder].join(` or `);
+      //   parsedQuery = SearchQueryParser.parse(`${defaultFolderStr} ${this._searchQuery}`);
+      // }
       dbQuery = dbQuery.structuredSearch(parsedQuery);
     } catch (e) {
       console.info('Failed to parse local search query, falling back to generic query', e);

@@ -12,12 +12,16 @@ export default class MakePrimaryTask extends Task {
     messageIds: Attributes.Collection({
       modelKey: 'messageIds',
     }),
+    effectedThreadIds: Attributes.Collection({
+      modelKey: 'effectedThreadIds',
+    }),
   });
-  constructor({ accountId, threadIds, messageIds, ...rest } = {}) {
+  constructor({ accountId, threadIds, messageIds, effectedThreadIds, ...rest } = {}) {
     super(rest);
     this.aid = accountId;
     this.threadIds = threadIds || [];
     this.messageIds = messageIds || [];
+    this.effectedThreadIds = effectedThreadIds || [];
   }
 
   get accountId() {

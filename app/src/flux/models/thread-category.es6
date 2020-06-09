@@ -19,6 +19,7 @@ export default class ThreadCategory extends Model {
       }),
       state: Attributes.Number({
         modelKey: 'state',
+        queryable: true,
       }),
       primary: Attributes.Number({
         modelKey: 'primary',

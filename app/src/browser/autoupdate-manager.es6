@@ -1,11 +1,12 @@
 /* eslint global-require: 0*/
-import { dialog } from 'electron';
+import { dialog, shell, app } from 'electron';
 import { EventEmitter } from 'events';
 import path from 'path';
 import fs from 'fs';
 import { getDeviceHash, syncGetDeviceHash } from '../system-utils';
 import axios from 'axios';
 import moment from 'moment';
+import { ServerInfoPriorityEnum } from '../constant';
 
 let autoUpdater = null;
 
@@ -29,6 +30,7 @@ export default class AutoUpdateManager extends EventEmitter {
     this.devMode = devMode;
     this.preferredChannel = preferredChannel;
     this.supportId = syncGetDeviceHash();
+    this._hasForceUpdateMessageDialog = false;
 
     this.updateFeedURL().then(() => {
       setTimeout(() => this.setupAutoUpdater(), 0);
@@ -47,7 +49,9 @@ export default class AutoUpdateManager extends EventEmitter {
     if (params.platform === 'darwin') {
       params.platform = 'mac';
     }
-    const host = process.env.updateServer || `https://cp.edison.tech/api/ota/checkUpdate`;
+    const devHost = 'https://cp.stag.easilydo.cc/api/ota/checkUpdate';
+    const proHose = 'https://cp.edison.tech/api/ota/checkUpdate';
+    const host = process.env.updateServer || proHose;
     if (this.supportId === '') {
       try {
         this.supportId = await getDeviceHash();
@@ -57,7 +61,22 @@ export default class AutoUpdateManager extends EventEmitter {
     }
     this.feedURL = `${host}?platform=desktop-${params.platform}-full&clientVersion=${params.version}&supportId=${this.supportId}`;
     return this.feedURL;
-  }
+  };
+  getVersionInfoUrl = async () => {
+    const devHost = 'https://cp.stag.easilydo.cc/api/ota/common/getInfoByVer';
+    const proHost = 'https://cp.edison.tech/api/ota/common/getInfoByVer';
+    const host = proHost;
+    const platform = process.platform === 'darwin' ? 'mac' : process.platform;
+    if (this.supportId === '') {
+      try {
+        this.supportId = await getDeviceHash();
+      } catch (err) {
+        this.supportId = '';
+      }
+    }
+    this.feedURL = `${host}?platform=desktop-${platform}-full&clientVersion=${this.version}`;
+    return this.feedURL;
+  };
 
   updateFeedURL = async () => {
     this.feedURL = await this.getFeedUrl();
@@ -200,9 +219,53 @@ export default class AutoUpdateManager extends EventEmitter {
         this.onUpdateNotAvailable();
       }
     }
-  }
+  };
+
+  checkForce = async () => {
+    try {
+      const { data } = await axios.get(await this.getVersionInfoUrl());
+      if (data && data.data && data.data.info) {
+        const { priority, message, title, detail, url } = JSON.parse(data.data.info);
+        if (priority === ServerInfoPriorityEnum.UpdateInfo) {
+          // if message is update info for what's new, skip
+          return;
+        }
+        if (priority !== ServerInfoPriorityEnum.Extraordinary) {
+          // if message is not in height level, only show only one at a time
+          if (this._hasForceUpdateMessageDialog) {
+            return;
+          }
+          this._hasForceUpdateMessageDialog = true;
+        }
+        const choice = dialog.showMessageBoxSync({
+          type: 'info',
+          buttons: ['OK'],
+          icon: this.iconURL(),
+          message: message,
+          title: title,
+          detail: detail,
+        });
+        if (priority !== ServerInfoPriorityEnum.Extraordinary) {
+          this._hasForceUpdateMessageDialog = false;
+        }
+        if (choice === 0) {
+          if (url) {
+            shell.openExternal(url);
+          }
+          switch (priority) {
+            case ServerInfoPriorityEnum.Extraordinary:
+              app.quit();
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    } catch (err) {}
+  };
 
   install() {
+    global.application.eventTriggers.eventTrigger('UserInstallUpdate');
     autoUpdater.quitAndInstall();
   }
 

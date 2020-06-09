@@ -1,5 +1,6 @@
 import { ipcRenderer, remote } from 'electron';
 import MailspringStore from 'mailspring-store';
+import UndoTask from '../tasks/undo-task';
 import DraftEditingSession, { cloneForSyncDraftData } from './draft-editing-session';
 import DraftFactory from './draft-factory';
 import DatabaseStore from './database-store';
@@ -73,6 +74,8 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.draftOpenCount, this._onDraftOpenCount);
       this.listenTo(Actions.draftWindowClosing, this._onDraftWindowClosing);
       this.listenTo(TaskQueue, this._restartTimerForOldSendDraftTasks);
+      Actions.queueTasks.listen(this._onTaskQueue, this);
+      Actions.queueTask.listen(this._onTaskQueue, this);
       this._startTime = Date.now();
       ipcRenderer.on('new-message', () => {
         // From app menu and shortcut
@@ -259,6 +262,18 @@ class DraftStore extends MailspringStore {
   isSendingDraft(messageId) {
     return !!this._draftsSending[messageId] || false;
   }
+  findDraftWaitingSaveOnRemoteByDestroyDraftTaskId = destroyDraftTaskId => {
+    if (!destroyDraftTaskId) {
+      return null;
+    }
+    const delays = Object.values(this._draftSaveOnRemoteDelays);
+    for (let i = 0; i < delays.length; i++) {
+      if (delays[i] && delays[i].destroyDraftTaskId === destroyDraftTaskId) {
+        return delays[i];
+      }
+    }
+    return null;
+  };
   isDraftWaitingSaveOnRemote = messageId => {
     return this._draftSaveOnRemoteDelays[messageId];
   };
@@ -278,7 +293,7 @@ class DraftStore extends MailspringStore {
     }
     return false;
   };
-  pushSaveOnRemoteTask = task => {
+  pushSaveOnRemoteTask = (task, { delayInMs = SaveOnRemoteDelayInMs, destroyDraftTaskId } = {}) => {
     if (!AppEnv.isMainWindow()) {
       AppEnv.logDebug('Not in main window, ignoring saveOnRemote');
       return;
@@ -292,7 +307,9 @@ class DraftStore extends MailspringStore {
     this._draftSaveOnRemoteDelays[messageId] = {
       timer: null,
       task: new SyncbackDraftTask({ draft: task.draft, ...task }),
+      destroyDraftTaskId: destroyDraftTaskId,
     };
+    AppEnv.logDebug(`Starting draftSaveOnRemoteDelay for ${messageId}`);
     this._draftSaveOnRemoteDelays[messageId].timer = setTimeout(() => {
       if (
         this._draftSaveOnRemoteDelays[messageId] &&
@@ -304,7 +321,48 @@ class DraftStore extends MailspringStore {
       }
       AppEnv.logDebug(`Clearing draftSaveOnRemoteDelays cache for ${messageId}`);
       delete this._draftSaveOnRemoteDelays[messageId];
-    }, SaveOnRemoteDelayInMs);
+    }, delayInMs);
+  };
+  _onTaskQueue = task => {
+    let tasks;
+    if (Array.isArray(task)) {
+      tasks = task;
+    } else {
+      tasks = [task];
+    }
+    tasks.forEach(t => {
+      if (t instanceof DestroyDraftTask) {
+        t.messageIds.forEach(msgId => {
+          if (this.isDraftWaitingSaveOnRemote(msgId)) {
+            const delayInMs = t.undoDelay;
+            const saveOnRemoteDelay = this._draftSaveOnRemoteDelays[msgId];
+            if (saveOnRemoteDelay) {
+              clearTimeout(saveOnRemoteDelay.timer);
+              saveOnRemoteDelay.destroyDraftTaskId = t.id;
+              saveOnRemoteDelay.timer = setTimeout(() => {
+                //In case we are in the same cycle as undo task
+                AppEnv.logDebug(`Clearing clearSaveOnRemoteDelay delay ${msgId}`);
+                if (this._draftSaveOnRemoteDelays[msgId].destroyDraftTaskId) {
+                  this.clearSaveOnRemoteTaskTimer(msgId);
+                }
+              }, delayInMs);
+            }
+          }
+        });
+      } else if (t instanceof UndoTask) {
+        const saveOnRemoteDelay = this.findDraftWaitingSaveOnRemoteByDestroyDraftTaskId(
+          t.referenceTaskId
+        );
+        if (saveOnRemoteDelay && saveOnRemoteDelay.task) {
+          //Remove destroyDraftTaskId to indicate draft is no longer destroyed
+          saveOnRemoteDelay.destroyDraftTaskId = null;
+          AppEnv.logDebug(
+            `Restarting original SaveOnRemoteTaskDelay ${saveOnRemoteDelay.task.messageId}`
+          );
+          this.pushSaveOnRemoteTask(saveOnRemoteDelay.task);
+        }
+      }
+    });
   };
 
   _restartTimerForOldSendDraftTasks() {
@@ -530,14 +588,24 @@ class DraftStore extends MailspringStore {
     });
   };
 
-  _onResendDraft = async ({ messages = [], source = '' } = {}) => {
+  _onResendDraft = async ({ messages = [], messageIds = [], source = '' } = {}) => {
+    const ids = [];
     for (let i = 0; i < messages.length; i++) {
-      const message = messages[i];
-      const session = this._draftSessions[message.id];
-      if (!session) {
-        await this.sessionForClientId(message.id, { showFailed: true });
+      if (messages[i] && messages[i].id) {
+        ids.push(messages[i].id);
       }
-      this._onSendDraft(message.id);
+    }
+    for (let i = 0; i < messageIds.length; i++) {
+      if (messageIds[i]) {
+        ids.push(messageIds[i]);
+      }
+    }
+    for (let i = 0; i < ids.length; i++) {
+      const session = this._draftSessions[ids[i]];
+      if (!session) {
+        await this.sessionForClientId(ids[i], { showFailed: true });
+      }
+      this._onSendDraft(ids[i]);
     }
   };
   _onDraftOpenCount = ({ messageId, windowLevel = 0, source = '' }) => {

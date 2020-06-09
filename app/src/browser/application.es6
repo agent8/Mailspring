@@ -30,6 +30,7 @@ import MailspringProtocolHandler from './mailspring-protocol-handler';
 import ConfigPersistenceManager from './config-persistence-manager';
 import moveToApplications from './move-to-applications';
 import MailsyncProcess from '../mailsync-process';
+import EventTriggers from './event-triggers';
 import { createHash } from 'crypto';
 const LOG = require('electron-log');
 const archiver = require('archiver');
@@ -75,6 +76,8 @@ export default class Application extends EventEmitter {
     this.configPersistenceManager = new ConfigPersistenceManager({ configDirPath, resourcePath });
     config.load();
 
+    this.eventTriggers = new EventTriggers(configDirPath);
+
     this.configMigrator = new ConfigMigrator(this.config);
     this.configMigrator.migrate();
 
@@ -88,6 +91,7 @@ export default class Application extends EventEmitter {
     this.autoStartRestore();
 
     this.autoUpdateManager = new AutoUpdateManager(version, config, specMode, devMode);
+    this._checkUpdateInfoForce();
     this.applicationMenu = new ApplicationMenu(version);
     this.windowManager = new WindowManager({
       resourcePath: this.resourcePath,
@@ -328,6 +332,14 @@ export default class Application extends EventEmitter {
       this._reportLog(error, extra, { noWindows }, 'log');
     }
   }
+
+  _checkUpdateInfoForce = () => {
+    const reCheckUndateInfoTime = 60 * 60 * 1000;
+    this.autoUpdateManager.checkForce();
+    setInterval(() => {
+      this.autoUpdateManager.checkForce();
+    }, reCheckUndateInfoTime);
+  };
 
   _grabLogAndReportLog(error, extra, { noWindows } = {}, type = '') {
     this.grabLogs()
@@ -1567,6 +1579,10 @@ export default class Application extends EventEmitter {
       }
       // win = BrowserWindow.fromWebContents(event.sender)
       event.sender.send('inline-styles-result', { html: out, key });
+    });
+
+    ipcMain.on('open-url', (event, url) => {
+      require('electron').shell.openExternal(url);
     });
 
     app.on('activate', (event, hasVisibleWindows) => {

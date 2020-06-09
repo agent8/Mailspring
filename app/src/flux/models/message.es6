@@ -1,7 +1,6 @@
 import _ from 'underscore';
 import moment from 'moment';
 import fs from 'fs';
-import util from 'util';
 import File from './file';
 import Utils from './utils';
 import Contact from './contact';
@@ -15,7 +14,6 @@ import CategoryStore from '../stores/category-store';
 import Category from './category';
 let AttachmentStore = null;
 
-const fsExists = util.promisify(fs.exists);
 const mapping = {
   attachmentIdsFromJSON: json => {
     if (!Array.isArray(json)) {
@@ -389,6 +387,20 @@ export default class Message extends ModelWithMetadata {
       this.hasRefOldDraftOnRemote = true;
     }
   }
+  isSameInboxCategory(inboxCategory) {
+    let val = inboxCategory;
+    if (typeof inboxCategory !== 'number') {
+      try {
+        val = parseInt(inboxCategory, 10);
+      } catch (e) {
+        return false;
+      }
+    }
+    return (
+      Category.inboxNotOtherCategorys().includes(this.inboxCategory) ===
+      Category.inboxNotOtherCategorys().includes(val)
+    );
+  }
 
   toJSON(options) {
     const json = super.toJSON(options);
@@ -602,18 +614,12 @@ export default class Message extends ModelWithMetadata {
       let processed = 0;
       (this.files || []).forEach(f => {
         const path = AttachmentStore.pathForFile(f);
-        fsExists(path)
-          .then(() => {
-            processed += 2;
-            if (processed === total) {
-              resolve(ret);
-            }
-          })
-          .catch(error => {
+        fs.access(path, fs.constants.R_OK, err => {
+          if (err) {
             processed++;
-            fsExists(`${path}.part`)
-              .then(() => {
-                processed++;
+            fs.access(`${path}.part`, fs.constants.R_OK, err => {
+              processed++;
+              if (!err) {
                 if (f.isInline) {
                   ret.inline.downloading.push(f);
                 } else {
@@ -621,10 +627,9 @@ export default class Message extends ModelWithMetadata {
                 }
                 if (processed === total) {
                   resolve(ret);
+                  return;
                 }
-              })
-              .catch(error => {
-                processed++;
+              } else {
                 if (f.isInline) {
                   ret.inline.needToDownload.push(f);
                 } else {
@@ -632,9 +637,18 @@ export default class Message extends ModelWithMetadata {
                 }
                 if (processed === total) {
                   resolve(ret);
+                  return;
                 }
-              });
-          });
+              }
+            });
+          } else {
+            processed += 2;
+            if (processed === total) {
+              resolve(ret);
+              return;
+            }
+          }
+        });
       });
     });
   }
@@ -775,7 +789,7 @@ export default class Message extends ModelWithMetadata {
     }
 
     // https://regex101.com/r/hR7zN3/1
-    const re = /(?:<edo\-signature>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
+    const re = /(?:<edo\-signature [\w="]*>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
     return this.body.replace(re, '').length === 0;
   }
 

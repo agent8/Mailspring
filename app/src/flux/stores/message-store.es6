@@ -344,40 +344,6 @@ class MessageStore extends MailspringStore {
       }
       this._closeWindowIfNoMessage();
       return;
-
-      // if (
-      //   change.objects.length === 1 &&
-      //   change.objects[0].draft === true &&
-      //   !change.objects[0].calendarReply &&
-      //   !change.objects[0].ignoreSift
-      // ) {
-      //   const item = change.objects[0];
-      //   const itemIndex = this._items.findIndex(msg => msg.id === item.id);
-      //
-      //   if (
-      //     change.type === 'persist' &&
-      //     itemIndex === -1 &&
-      //     !Message.compareMessageState(item.syncState, Message.messageSyncState.failed)
-      //   ) {
-      //     this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
-      //     this._items = this._sortItemsForDisplay(this._items);
-      //     this._expandItemsToDefault();
-      //     this.trigger();
-      //     this._closeWindowIfNoMessage();
-      //     return;
-      //   }
-      //
-      //   if (change.type === 'unpersist' && itemIndex !== -1) {
-      //     this._items = [].concat(this._items).filter(m => !m.isHidden());
-      //     this._items.splice(itemIndex, 1);
-      //     this._expandItemsToDefault();
-      //     this.trigger();
-      //     this._closeWindowIfNoMessage();
-      //     return;
-      //   }
-      // }
-      // this._fetchFromCache();
-      // this._closeWindowIfNoMessage();
     }
 
     if (change.objectClass === Thread.name) {
@@ -413,13 +379,29 @@ class MessageStore extends MailspringStore {
     }
   };
 
+  _resetAutoMarkAsRead = () => {
+    this._lastMarkedAsReadThreadId = null;
+    if (this._markAsReadTimer) {
+      clearTimeout(this._markAsReadTimer);
+      this._markAsReadTimer = null;
+    }
+  };
+
+  _shouldAutoMarkAsRead = () => {
+    const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
+    if (markAsReadDelay < 0) {
+      return false;
+    }
+    return this._thread && this._lastMarkedAsReadThreadId !== this._thread.id;
+  };
+
   _onFocusChanged(change) {
     if (change.impactsCollection('sift')) {
+      this._resetAutoMarkAsRead();
       this._expandItemsToDefault();
       this.trigger();
     }
     if (!change.impactsCollection('thread')) return;
-
     //DC-400 Because the way list mode is
     if (WorkspaceStore.layoutMode() === 'list') {
       this._onApplyFocusChange();
@@ -447,12 +429,36 @@ class MessageStore extends MailspringStore {
       this._onApplyFocusChange();
     }, 100);
   }
+  _shouldSetFocusContentToNullOnInboxCategoryChange = newFocusedThread => {
+    if (!AppEnv.isMainWindow()) {
+      return;
+    }
+    if (!newFocusedThread) {
+      return false;
+    }
+    const enabledFocusedInbox = AppEnv.config.get('core.workspace.enableFocusedInbox');
+    if (!enabledFocusedInbox) {
+      return false;
+    }
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (!currentPerspective || !currentPerspective.isFocusedOtherPerspective) {
+      return false;
+    }
+    const currentThread = this.thread();
+    if (!currentThread || currentThread.id !== newFocusedThread.id) {
+      return false;
+    }
+    if (typeof currentThread.isSameInboxCategory !== 'function') {
+      AppEnv.reportError(new Error('currentThread does not have isSameInboxCategory method'), {
+        errorData: currentThread,
+      });
+      return false;
+    }
+    return !currentThread.isSameInboxCategory(newFocusedThread.inboxCategory);
+  };
 
   _onApplyFocusChange() {
     const focused = FocusedContentStore.focused('thread');
-    if (!focused) {
-      this._lastMarkedAsReadThreadId = null;
-    }
     if (WorkspaceStore.layoutMode() === 'list' && AppEnv.isMainWindow()) {
       const currentSheet = WorkspaceStore.topSheet();
       if (!focused && this.thread() && currentSheet && currentSheet.id === 'Thread') {
@@ -460,9 +466,15 @@ class MessageStore extends MailspringStore {
         Actions.popSheet({ reason: 'Message-Store, current Thread is no longer available' });
       }
     }
+    if (this._shouldSetFocusContentToNullOnInboxCategoryChange(focused)) {
+      AppEnv.logDebug(`Setting focus content to null because inbox category changed`);
+      Actions.setFocus({ collection: 'thread', item: null, reason: 'Inbox Category Changed' });
+      return;
+    }
 
     // if we already match the desired state, no need to trigger
     if (this.threadId() === (focused || {}).id) return;
+    this._resetAutoMarkAsRead();
     this._setStoreDefaults();
     this._updateThread(focused);
     // this._thread = focused;
@@ -508,6 +520,9 @@ class MessageStore extends MailspringStore {
     }
     AppEnv.setWindowTitle(title);
   }
+  markAsRead = () => {
+    this._markAsRead();
+  };
 
   _markAsRead() {
     // Mark the thread as read if necessary. Make sure it's still the
@@ -516,26 +531,31 @@ class MessageStore extends MailspringStore {
     // Override canBeUndone to return false so that we don't see undo
     // prompts (since this is a passive action vs. a user-triggered
     // action.)
+    if (!this._shouldAutoMarkAsRead()) {
+      return;
+    }
     if (!this._thread) return;
-    if (this._lastMarkedAsReadThreadId === this._thread.id) return;
+    // if (this._lastMarkedAsReadThreadId === this._thread.id) return;
     this._lastMarkedAsReadThreadId = this._thread.id;
 
     if (this._thread.unread) {
       const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
       const markAsReadId = this._thread.id;
       if (markAsReadDelay < 0) return;
-
-      setTimeout(() => {
-        if (markAsReadId !== this.threadId() || !this._thread.unread) return;
-        Actions.queueTask(
-          TaskFactory.taskForInvertingUnread({
-            threads: [this._thread],
-            source: 'Thread Selected',
-            canBeUndone: false,
-            unread: false,
-          })
-        );
-      }, markAsReadDelay);
+      if (!this._markAsReadTimer) {
+        this._markAsReadTimer = setTimeout(() => {
+          this._markAsReadTimer = null;
+          if (markAsReadId !== this.threadId() || !this._thread.unread) return;
+          Actions.queueTask(
+            TaskFactory.taskForInvertingUnread({
+              threads: [this._thread],
+              source: 'Thread Selected',
+              canBeUndone: false,
+              unread: false,
+            })
+          );
+        }, markAsReadDelay);
+      }
     }
   }
 
@@ -606,7 +626,7 @@ class MessageStore extends MailspringStore {
     // const query = DatabaseStore.findAll(Message);
     // query.where({ threadId: loadedThreadId, state: 0 });
     // query.include(Message.attributes.body);
-
+    const prevMessageLength = this._items.length;
     return query.then(items => {
       // Check to make sure that our thread is still the thread we were
       // loading items for. Necessary because this takes a while.
@@ -657,7 +677,8 @@ class MessageStore extends MailspringStore {
   }
 
   fetchMissingAttachmentsByMessage({ messageId } = {}) {
-    const missing = [];
+    const missingInline = [];
+    const missingNormal = [];
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
     const message = this._items.find(item => item.id === messageId);
@@ -669,7 +690,11 @@ class MessageStore extends MailspringStore {
       const tmpPath = AttachmentStore.pathForFile(f);
       const tempExists = fs.existsSync(tmpPath);
       if (!tempExists) {
-        missing.push(f.id);
+        if (f.isInline) {
+          missingInline.push(f.id);
+        } else {
+          missingNormal.push(f.id);
+        }
         if (!this.isAttachmentMissing(f.id)) {
           this._missingAttachmentIds.push(f.id);
           change = true;
@@ -687,11 +712,19 @@ class MessageStore extends MailspringStore {
       }
     });
 
-    if (missing.length > 0) {
+    if (missingNormal.length > 0) {
       Actions.fetchAttachments({
         accountId: message.accountId,
-        missingItems: missing,
+        missingItems: missingNormal,
         needProgress: true,
+        source: 'Click',
+      });
+    }
+    if (missingInline.length > 0) {
+      Actions.fetchAttachments({
+        accountId: message.accountId,
+        missingItems: missingInline,
+        needProgress: false,
         source: 'Click',
       });
     }
@@ -719,6 +752,7 @@ class MessageStore extends MailspringStore {
           Actions.fetchAttachments({
             accountId: aid,
             missingItems: value,
+            source: 'message store auto fetch attachment',
           });
         }
       });
@@ -807,22 +841,37 @@ class MessageStore extends MailspringStore {
   }
 
   _fetchExpandedAttachments(items) {
-    const fileIds = [];
+    const inLineFileIds = [];
+    const normalFileIds = [];
     for (let item of items) {
       if (!this._itemsExpanded[item.id]) continue;
       item.files.forEach(file => {
         if (this.isAttachmentMissing(file.id)) {
-          fileIds.push(file.id);
+          if (file.isInline) {
+            inLineFileIds.push(file.id);
+          } else {
+            normalFileIds.push(file.id);
+          }
         }
       });
     }
-    if (items.length > 0 && items[0] && fileIds.length > 0) {
-      Actions.fetchAttachments({
-        accountId: items[0].accountId,
-        missingItems: fileIds,
-        needProgress: true,
-        source: 'Click',
-      });
+    if (items.length > 0 && items[0]) {
+      if (inLineFileIds.length > 0) {
+        Actions.fetchAttachments({
+          accountId: items[0].accountId,
+          missingItems: inLineFileIds,
+          needProgress: false,
+          source: 'Expand message attachments',
+        });
+      }
+      if (normalFileIds.length > 0) {
+        Actions.fetchAttachments({
+          accountId: items[0].accountId,
+          missingItems: normalFileIds,
+          needProgress: true,
+          source: 'Expand message attachments',
+        });
+      }
     }
   }
 
