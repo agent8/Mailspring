@@ -47,8 +47,12 @@ class PreferencesAccountList extends Component {
             />
           </div>
           <div className="account-item">
-            <div className="account-name">{label}</div>
-            <div className="account-subtext">{accountSub}</div>
+            <div className="account-name" title={label}>
+              {label}
+            </div>
+            <div className="account-subtext" title={accountSub}>
+              {accountSub}
+            </div>
           </div>
         </Flexbox>
       </div>
