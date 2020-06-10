@@ -65,7 +65,7 @@ export default class AutoUpdateManager extends EventEmitter {
   getVersionInfoUrl = async () => {
     const devHost = 'https://cp.stag.easilydo.cc/api/ota/common/getInfoByVer';
     const proHost = 'https://cp.edison.tech/api/ota/common/getInfoByVer';
-    const host = proHost;
+    const host = devHost;
     const platform = process.platform === 'darwin' ? 'mac' : process.platform;
     if (this.supportId === '') {
       try {
