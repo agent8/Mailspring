@@ -25,7 +25,6 @@
   "core:snooze-item": "z",
   "core:print-thread": "mod+p",
   "core:focus-item": "enter",
-  "core:remove-from-view": ["backspace", "del"],
   "core:pop-sheet": "escape",
   "core:show-keybindings": "?",
 
