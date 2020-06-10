@@ -962,10 +962,12 @@ export default class MailsyncBridge {
           this._uploadNativeReport(task);
           continue;
         }
-        if (task.status !== Task.Status.Complete) {
+        if (task.status !== Task.Status.Complete && task.status !== Task.Status.Cancelled) {
           continue;
         }
-        if (task.error != null) {
+        if (task.status === Task.Status.Cancelled) {
+          task.onCancelled();
+        } else if (task.error != null) {
           task.onError(task.error);
           this._recordErrorToConsole(task);
         } else {
