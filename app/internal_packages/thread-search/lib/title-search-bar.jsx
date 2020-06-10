@@ -80,7 +80,7 @@ class TitleSearchBar extends Component {
                 }}
                 key={tab.name}
               >
-                <h1>
+                <h1 title={tab.name}>
                   {tab.name}
                   {unreadCount > 0 ? <span>({unreadCount > 99 ? '99+' : unreadCount})</span> : null}
                 </h1>
@@ -109,6 +109,7 @@ class TitleSearchBar extends Component {
               textOverflow: 'ellipsis',
             }}
             ref={el => (this.titleEl = el)}
+            title={title}
           >
             {title}
           </h1>
