@@ -146,7 +146,7 @@ export default class Application extends EventEmitter {
     }
     this.makeLogFolders();
     this.initSupportInfo();
-
+    this._fixMailsyncTaskDelayInconsistency();
     // subscribe event of dark mode change
     if (process.platform === 'darwin') {
       try {
@@ -780,6 +780,24 @@ export default class Application extends EventEmitter {
       }
     }
   }
+  _fixMailsyncTaskDelayInconsistency = () => {
+    const taskDelay = this.config.get('core.mailsync.taskDelay');
+    if (taskDelay !== undefined) {
+      const accounts = this.config.get('accounts');
+      if (Array.isArray(accounts)) {
+        let changed = false;
+        accounts.forEach(account => {
+          if (account && account.mailsync && account.mailsync.taskDelay !== taskDelay) {
+            changed = true;
+            account.mailsync.taskDelay = taskDelay;
+          }
+        });
+        if (changed) {
+          this.config.set('accounts', accounts);
+        }
+      }
+    }
+  };
 
   _removeOldFiles = (files, dirPath, cleanAll = false) => {
     const now = Date.now();
