@@ -315,8 +315,10 @@ export class PreferencesAccountNotifacations extends React.Component {
             />
           </div>
           <div className="account-item">
-            <div className="account-name">{label}</div>
-            <div className="account-subtext">
+            <div className="account-name" title={label}>
+              {label}
+            </div>
+            <div className="account-subtext" title={`${accountSub}(${account.displayProvider()})`}>
               {accountSub} ({account.displayProvider()})
             </div>
           </div>

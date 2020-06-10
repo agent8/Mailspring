@@ -71,6 +71,7 @@ export default class CodeEditor extends React.Component {
           showGutter={true}
           minLines={6}
           highlightActiveLine={true}
+          showPrintMargin={false}
           setOptions={{
             enableBasicAutocompletion: true,
             enableLiveAutocompletion: true,
