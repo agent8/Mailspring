@@ -349,8 +349,20 @@ class MessageStore extends MailspringStore {
     if (change.objectClass === Thread.name) {
       const updatedThread = change.objects.find(t => t.id === this._thread.id);
       if (updatedThread) {
-        // this._thread = updatedThread;
-        ThreadStore.findBy({ threadId: this._thread.id }).then(thread => {
+        const query = ThreadStore.findBy({ threadId: this._thread.id });
+        const perspective = FocusedPerspectiveStore.current();
+        if (perspective && perspective.isFocusedOtherPerspective) {
+          const categoryIds = [];
+          perspective.categories().forEach(cat => {
+            if (cat && cat.id) {
+              categoryIds.push(cat.id);
+            }
+          });
+          if (categoryIds.length > 0) {
+            query.where([Thread.attributes.categories.containsAny(categoryIds)]);
+          }
+        }
+        query.then(thread => {
           this._updateThread(thread);
           this._fetchFromCache();
         });

@@ -826,8 +826,8 @@ export default class MailsyncBridge {
           `Primary key ${construct.pseudoPrimaryJsKey} have no value for class ${construct.name}`
         );
       }
+      const parsedModels = [];
       const parseQueryPromises = (models, index) => {
-        const parsedModels = [];
         models.forEach(model => {
           if (!model) {
             return;
@@ -862,24 +862,6 @@ export default class MailsyncBridge {
             parsedModels.push(model);
           }
         });
-        if (parsedModels.length === 0 && index === promises.length - 1) {
-          return;
-        }
-        // dispatch the message to other windows
-        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
-          type,
-          modelClass,
-          modelJSONs: parsedModels.map(m => m.toJSON()),
-          processAccountId: accountId,
-        });
-        this._onIncomingChangeRecord(
-          new DatabaseChangeRecord({
-            type,
-            objectClass: modelClass,
-            objects: parsedModels,
-            processAccountId: accountId,
-          })
-        );
       };
       if (promises.length > 0) {
         Promise.all(promises).then(queries => {
@@ -890,6 +872,24 @@ export default class MailsyncBridge {
           } else {
             parseQueryPromises(queries[0], 0);
           }
+          if (parsedModels.length === 0) {
+            return;
+          }
+          // dispatch the message to other windows
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+            type,
+            modelClass,
+            modelJSONs: parsedModels.map(m => m.toJSON()),
+            processAccountId: accountId,
+          });
+          this._onIncomingChangeRecord(
+            new DatabaseChangeRecord({
+              type,
+              objectClass: modelClass,
+              objects: parsedModels,
+              processAccountId: accountId,
+            })
+          );
         });
       }
     }
