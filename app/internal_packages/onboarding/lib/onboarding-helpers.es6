@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { Account, IdentityStore, MailsyncProcess, Actions, AccountStore } from 'mailspring-exports';
 import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
+import OnboardingActions from './onboarding-actions';
 import dns from 'dns';
 import path from 'path';
 import util from 'util';
@@ -352,6 +353,17 @@ export async function buildOffice365AccountFromAuthResponse(code) {
       },
     })
   );
+
+  // check if there is an old Office365 account
+  const oldOffice365Acc = AccountStore.accountForEmail({ email: me.mail });
+  if (oldOffice365Acc && oldOffice365Acc.settings.provider_key === 'office365') {
+    OnboardingActions.moveToPage('account-choose');
+    AppEnv.showErrorDialog({
+      title: 'Unable to Add Account',
+      message: `Please remove your ${me.mail} account first, and try again.`,
+    });
+    return;
+  }
 
   account.id = idForAccount(me.email, account.settings);
   if (picturePath) {
