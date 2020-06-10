@@ -18,7 +18,6 @@
   "core:focus-search": "/",
   "core:change-category": ".",
   "core:select-item": "x",
-  "core:gmail-remove-from-view": "y",
   "core:archive-item": "e",
   "core:report-as-spam": "!",
   "core:delete-item": "#",
