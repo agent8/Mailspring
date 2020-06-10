@@ -129,7 +129,7 @@ class PreferencesUIStore extends MailspringStore {
     this._filterSearchTabsDebounced();
     ipcRenderer.send('command', 'application:show-main-window');
     if (WorkspaceStore.topSheet() !== WorkspaceStore.Sheet.Preferences) {
-      document.querySelector('#Center').style.zIndex = 9;
+      document.querySelector('#Center').style.zIndex = 4;
       Actions.pushSheet(WorkspaceStore.Sheet.Preferences);
     }
   };
