@@ -357,6 +357,15 @@ export class TaskDelay extends React.Component {
   _onChangeValue = ([value, label]) => {
     this.props.config.set(this.props.keyPath, value);
     this.props.config.set('core.mailsync.taskDelay', value);
+    const accounts = this.props.config.get('accounts');
+    if (Array.isArray(accounts)) {
+      accounts.forEach(account => {
+        if (account && account.mailsync) {
+          account.mailsync.taskDelay = value;
+        }
+      });
+      this.props.config.set('accounts', accounts);
+    }
     this._dropdownComponent.toggleDropdown();
     ipcRenderer.send('mailsync-config');
   };
