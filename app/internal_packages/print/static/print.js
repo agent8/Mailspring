@@ -39,11 +39,11 @@
 
   function continueAndPrint() {
     document.getElementById('print-button').style.display = 'none';
-    window.requestAnimationFrame(function () {
+    window.requestAnimationFrame(function() {
+      window.onafterprint = function() {
+        setTimeout(window.close, 1500);
+      };
       window.print();
-      // Close this print window after selecting to print
-      // This is really hackish but appears to be the only working solution
-      setTimeout(window.close, 500);
     });
   }
 
