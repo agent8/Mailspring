@@ -96,10 +96,12 @@ const nextActionForRemoveFromView = source => {
   const ignoreNextActions =
     topSheet && (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
   const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
-  AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
-  if (nextAction === 'next' && !ignoreNextActions) {
+  const perspective = FocusedPerspectiveStore.current();
+  const isInUnread = perspective && perspective.unread;
+  AppEnv.logDebug(`is in unread: ${isInUnread} nextAction on removeFromView: ${nextAction}`);
+  if (nextAction === 'next' && !ignoreNextActions && !isInUnread) {
     AppEnv.commands.dispatch('core:show-next');
-  } else if (nextAction === 'previous' && !ignoreNextActions) {
+  } else if (nextAction === 'previous' && !ignoreNextActions && !isInUnread) {
     AppEnv.commands.dispatch('core:show-previous');
   } else {
     Actions.popSheet({ reason: source });
@@ -594,7 +596,7 @@ ToggleStarredButton.containerRequired = false;
 export function ToggleUnreadButton(props) {
   const _onClick = event => {
     const targetUnread = props.items.every(t => t.unread === false);
-    _onChangeUnread(targetUnread);
+    _onChangeUnread(targetUnread, null, 'Toolbar Button:onClick:Thread List');
     if (event) {
       event.stopPropagation();
     }
@@ -602,15 +604,19 @@ export function ToggleUnreadButton(props) {
   };
 
   const _onShortcutChangeUnread = targetUnread => {
-    _onChangeUnread(targetUnread, threadSelectionScope(props, props.selection));
+    _onChangeUnread(
+      targetUnread,
+      threadSelectionScope(props, props.selection),
+      'Toolbar Button:Shortcut:Thread List'
+    );
   };
 
-  const _onChangeUnread = (targetUnread, threads) => {
+  const _onChangeUnread = (targetUnread, threads, source = 'Toolbar Button: Thread List') => {
     Actions.queueTasks(
       TaskFactory.taskForSettingUnread({
         threads: Array.isArray(threads) ? threads : props.items,
         unread: targetUnread,
-        source: 'Toolbar Button: Thread List',
+        source,
       })
     );
     Actions.popSheet({ reason: 'ToolbarButton:ToggleUnread:changeUnread' });

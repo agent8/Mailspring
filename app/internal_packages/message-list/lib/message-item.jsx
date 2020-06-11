@@ -203,7 +203,7 @@ export default class MessageItem extends React.Component {
     if (!this.props.message.unread || this.props.message.draft) {
       return;
     }
-    MessageStore.markAsRead();
+    MessageStore.markAsRead('Message-Item:OnMouseEnter');
     // if (this.markAsReadTimer) {
     //   return;
     // }
