@@ -1,6 +1,5 @@
 import Rx from 'rx-lite';
 import Folder from '../flux/models/folder';
-import Label from '../flux/models/label';
 import QuerySubscriptionPool from '../flux/models/query-subscription-pool';
 import DatabaseStore from '../flux/stores/database-store';
 
@@ -33,7 +32,7 @@ const CategoryOperators = {
 
 const CategoryObservables = {
   forAllAccounts() {
-    const folders = Rx.Observable.fromQuery(DatabaseStore.findAll(Folder).where({state: 0}));
+    const folders = Rx.Observable.fromQuery(DatabaseStore.findAll(Folder).where({ state: 0 }));
     // const labels = Rx.Observable.fromQuery(DatabaseStore.findAll(Label));
     // const joined = Rx.Observable.combineLatest(folders, labels, (f, l) => [].concat(f, l));
     Object.assign(folders, CategoryOperators);
@@ -43,7 +42,9 @@ const CategoryObservables = {
   forAccount(account) {
     const scoped = account ? q => q.where({ accountId: account.id }) : q => q;
 
-    const folders = Rx.Observable.fromQuery(scoped(DatabaseStore.findAll(Folder).where({state: 0})));
+    const folders = Rx.Observable.fromQuery(
+      scoped(DatabaseStore.findAll(Folder).where({ state: 0 }))
+    );
     // const labels = Rx.Observable.fromQuery(scoped(DatabaseStore.findAll(Label)));
     // const joined = Rx.Observable.combineLatest(folders, labels, (f, l) => [].concat(f, l));
     Object.assign(folders, CategoryOperators);
