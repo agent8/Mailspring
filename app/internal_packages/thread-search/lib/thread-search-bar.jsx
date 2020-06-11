@@ -63,7 +63,7 @@ class ThreadSearchBar extends Component {
     for (const i in rolesAndPaths) {
       let path = rolesAndPaths[i];
       if (!path.startsWith(`"`)) {
-        rolesAndPaths[i] = `"${path}"`
+        rolesAndPaths[i] = `"${path}"`;
       }
     }
     if (rolesAndPaths.length > 1) {
@@ -240,6 +240,9 @@ class ThreadSearchBar extends Component {
       ]
         .filter(s => s.length)
         .join(' ');
+    } else if (suggestion.role === 'contact') {
+      // if sug is contact, default is search email from this contact
+      nextQuery = `from:${suggestion.term}`;
     } else {
       nextQuery = suggestion.term;
     }
@@ -344,14 +347,14 @@ class ThreadSearchBar extends Component {
             mode={RetinaImg.Mode.ContentPreserve}
           />
         ) : (
-            <RetinaImg
-              className="search-accessory search"
-              name="search.svg"
-              isIcon
-              mode={RetinaImg.Mode.ContentIsMask}
-              onClick={() => this._fieldElFocus()}
-            />
-          )}
+          <RetinaImg
+            className="search-accessory search"
+            name="search.svg"
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+            onClick={() => this._fieldElFocus()}
+          />
+        )}
         <TokenizingContenteditable
           ref={el => (this._fieldEl = el)}
           value={showPlaceholder ? this._placeholder() : utf7.decode(query)}
