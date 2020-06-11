@@ -443,7 +443,7 @@ class MessageStore extends MailspringStore {
   }
   _shouldSetFocusContentToNullOnInboxCategoryChange = newFocusedThread => {
     if (!AppEnv.isMainWindow()) {
-      return;
+      return false;
     }
     if (!newFocusedThread) {
       return false;
@@ -478,11 +478,11 @@ class MessageStore extends MailspringStore {
         Actions.popSheet({ reason: 'Message-Store, current Thread is no longer available' });
       }
     }
-    if (this._shouldSetFocusContentToNullOnInboxCategoryChange(focused)) {
-      AppEnv.logDebug(`Setting focus content to null because inbox category changed`);
-      Actions.setFocus({ collection: 'thread', item: null, reason: 'Inbox Category Changed' });
-      return;
-    }
+    // if (this._shouldSetFocusContentToNullOnInboxCategoryChange(focused)) {
+    //   AppEnv.logDebug(`Setting focus content to null because inbox category changed`);
+    //   Actions.setFocus({ collection: 'thread', item: null, reason: 'Inbox Category Changed' });
+    //   return;
+    // }
 
     // if we already match the desired state, no need to trigger
     if (this.threadId() === (focused || {}).id) return;

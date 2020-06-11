@@ -120,16 +120,24 @@ class ThreadListStore extends MailspringStore {
         }
       };
 
+      const perspective = FocusedPerspectiveStore.current();
       if (viewModeAutofocuses && focused && notInSet(focused)) {
-        // Actions.setFocus({ collection: 'thread', item: null });
-        Actions.setFocus({ collection: 'thread', item: nextItemFromIndex(focusedIndex) });
+        if (perspective && perspective.unread) {
+          Actions.setFocus({ collection: 'thread', item: null });
+        } else {
+          Actions.setFocus({ collection: 'thread', item: nextItemFromIndex(focusedIndex) });
+        }
       }
 
       if (keyboard && notInSet(keyboard)) {
-        Actions.setCursorPosition({
-          collection: 'thread',
-          item: nextItemFromIndex(keyboardIndex),
-        });
+        if (perspective && perspective.unread) {
+          Actions.setCursorPosition({ collection: 'thread', item: null });
+        } else {
+          Actions.setCursorPosition({
+            collection: 'thread',
+            item: nextItemFromIndex(keyboardIndex),
+          });
+        }
       }
     }
   };

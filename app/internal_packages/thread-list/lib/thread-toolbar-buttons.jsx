@@ -96,10 +96,12 @@ const nextActionForRemoveFromView = source => {
   const ignoreNextActions =
     topSheet && (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
   const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
-  AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
-  if (nextAction === 'next' && !ignoreNextActions) {
+  const perspective = FocusedPerspectiveStore.current();
+  const isInUnread = perspective && perspective.unread;
+  AppEnv.logDebug(`is in unread: ${isInUnread} nextAction on removeFromView: ${nextAction}`);
+  if (nextAction === 'next' && !ignoreNextActions && !isInUnread) {
     AppEnv.commands.dispatch('core:show-next');
-  } else if (nextAction === 'previous' && !ignoreNextActions) {
+  } else if (nextAction === 'previous' && !ignoreNextActions && !isInUnread) {
     AppEnv.commands.dispatch('core:show-previous');
   } else {
     Actions.popSheet({ reason: source });

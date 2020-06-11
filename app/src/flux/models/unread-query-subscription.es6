@@ -33,15 +33,22 @@ const buildQuery = (categoryIds, isOther) => {
   }
   const unreadMatchers = new Matcher.JoinAnd(unreadWhereOptions);
   const query = DatabaseStore.findAll(Thread).limit(0);
-  if (RecentlyReadStore.ids(inboxCategories).length === 0) {
+  if (RecentlyReadStore.ids.length === 0) {
     query.where(unreadMatchers);
   } else {
     const whereOptions = [
       JoinTable.useAttribute('unread', 'Number').equal(1),
       Thread.attributes.state.equal(0),
     ];
+    const recentlyReadStoreWhereOptions = [
+      JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids),
+      JoinTable.useAttribute('state', 'Number').equal(0),
+    ];
     if (enableFocusedInboxKey) {
       whereOptions.push(
+        JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
+      );
+      recentlyReadStoreWhereOptions.push(
         JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
       );
     }
@@ -50,10 +57,7 @@ const buildQuery = (categoryIds, isOther) => {
         Thread.attributes.categories.containsAny(categoryIds),
         new Matcher.JoinOr([
           new Matcher.JoinAnd(whereOptions),
-          new Matcher.JoinAnd([
-            JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids(inboxCategories)),
-            JoinTable.useAttribute('state', 'Number').equal(0),
-          ]),
+          new Matcher.JoinAnd(recentlyReadStoreWhereOptions),
         ]),
       ])
     );
@@ -67,14 +71,26 @@ export default class UnreadQuerySubscription extends MutableQuerySubscription {
     super(buildQuery(categoryIds, isOther), { emitResultSet: true });
     this.isOther = isOther;
     this._categoryIds = categoryIds;
+    this.inboxCategories = 'all';
+    const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
+    if (enableFocusedInboxKey) {
+      if (isOther) {
+        this.inboxCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+      } else {
+        this.inboxCategories = Category.inboxNotOtherCategorys().map(
+          categoryNum => `${categoryNum}`
+        );
+      }
+    }
     this._unlisten = RecentlyReadStore.listen(this.onRecentlyReadChanged);
   }
 
   onRecentlyReadChanged = () => {
     const { limit, offset } = this._query.range();
-    this._query = buildQuery(this._categoryIds, this.isOther)
+    const query = buildQuery(this._categoryIds, this.isOther)
       .limit(limit)
       .offset(offset);
+    this.replaceQuery(query);
   };
 
   onLastCallbackRemoved() {

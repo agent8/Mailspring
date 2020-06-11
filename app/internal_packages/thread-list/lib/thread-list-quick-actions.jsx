@@ -25,10 +25,14 @@ const nextActionForTrashOrArchive = task => {
         return;
       }
       const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
-      AppEnv.logDebug(`nextAction on removeFromView: ${nextAction} for ${focusedThread.id}`);
-      if (nextAction === 'next') {
+      const perspective = FocusedPerspectiveStore.current();
+      const isInUnread = perspective && perspective.unread;
+      AppEnv.logDebug(
+        `is in unread: ${isInUnread} nextAction on removeFromView: ${nextAction} for ${focusedThread.id}`
+      );
+      if (nextAction === 'next' && !isInUnread) {
         AppEnv.commands.dispatch('core:show-next');
-      } else if (nextAction === 'previous') {
+      } else if (nextAction === 'previous' && !isInUnread) {
         AppEnv.commands.dispatch('core:show-previous');
       }
     }
