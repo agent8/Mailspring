@@ -26,6 +26,31 @@
       select {
         width: 75%;
       }
+      .values {
+        min-width: 100px;
+      }
+      .clear {
+        display: none;
+        position: relative;
+        color: @gray-light;
+        margin-left: 5px;
+        &:hover:after {
+          content: '';
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: @gray-lighter;
+          display: block;
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          z-index: -1;
+          .grow-up-animation-mixin();
+        }
+      }
+      &:hover .clear {
+        display: inline-block;
+      }
     }
     .shortcut {
       padding: 3px 0;

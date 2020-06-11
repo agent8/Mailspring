@@ -1434,14 +1434,14 @@ class DraftStore extends MailspringStore {
           triggerMessageIds.push(messageId);
           delete this._draftsDeleting[messageId];
           delete this._draftsDeleting[id];
-          if (AppEnv.isMainWindow()) {
-            AttachmentStore = AttachmentStore || require('./attachment-store').default;
-            AttachmentStore.removeDraftAttachmentCache({
-              id,
-              accountId,
-              reason: 'Destroy draft failed',
-            });
-          }
+          // if (AppEnv.isMainWindow()) {
+          //   AttachmentStore = AttachmentStore || require('./attachment-store').default;
+          //   AttachmentStore.removeDraftAttachmentCache({
+          //     id,
+          //     accountId,
+          //     reason: 'Destroy draft failed',
+          //   });
+          // }
         }
       });
       this.trigger({ messageIds: triggerMessageIds });
