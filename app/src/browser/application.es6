@@ -59,6 +59,8 @@ export default class Application extends EventEmitter {
     this.specMode = specMode;
     this.safeMode = safeMode;
     this.nativeVersion = '';
+    this.edisonServerHost = 'https://cp.stag.easilydo.cc';
+    // this.edisonServerHost = 'https://cp.edison.tech';
     this.startOfDay = getStartOfDay();
     this.refreshStartOfDay = _.throttle(this._refreshStartOfDay, 1000);
     this._triggerRefreshStartOfDayTimer = null;
@@ -90,7 +92,13 @@ export default class Application extends EventEmitter {
     await this.oneTimeAddToDock();
     this.autoStartRestore();
 
-    this.autoUpdateManager = new AutoUpdateManager(version, config, specMode, devMode);
+    this.autoUpdateManager = new AutoUpdateManager(
+      version,
+      config,
+      specMode,
+      devMode,
+      this.edisonServerHost
+    );
     this._checkUpdateInfoForce();
     this.applicationMenu = new ApplicationMenu(version);
     this.windowManager = new WindowManager({
