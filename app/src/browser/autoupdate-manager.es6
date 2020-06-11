@@ -250,7 +250,9 @@ export default class AutoUpdateManager extends EventEmitter {
         }
         if (choice === 0) {
           if (url) {
-            shell.openExternal(url);
+            try {
+              await shell.openExternal(url);
+            } catch (err) {}
           }
           switch (priority) {
             case ServerInfoPriorityEnum.Extraordinary:
