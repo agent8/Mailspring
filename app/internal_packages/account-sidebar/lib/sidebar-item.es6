@@ -694,7 +694,11 @@ class SidebarItem {
       if (parent) {
         let itemDisplayName = category.displayName.substr(parentKey.length + 1);
         if (isExchange) {
-          itemDisplayName = category.displayName.substr(parentCategory.displayName.length + 1);
+          if (parentCategory.role === 'inbox') {
+            itemDisplayName = category.displayName;
+          } else {
+            itemDisplayName = category.displayName.substr(parentCategory.displayName.length + 1);
+          }
         }
         item = SidebarItem.forCategories([category], { name: itemDisplayName }, false);
         if (item) {
