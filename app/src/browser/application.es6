@@ -821,7 +821,7 @@ export default class Application extends EventEmitter {
     if (Array.isArray(files)) {
       const total = files.length;
       let processed = 0;
-      const olderThanADay = 48 * 60 * 60 * 1000;
+      const olderThanADay = 5 * 24 * 60 * 60 * 1000;
       files.forEach(dirent => {
         if (dirent.isFile()) {
           console.log(`log file name: ${dirent.name}`);
