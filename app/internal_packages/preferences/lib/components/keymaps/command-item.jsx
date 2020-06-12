@@ -181,8 +181,7 @@ export default class CommandKeybinding extends React.Component {
         `Nylas was unable to modify your keymaps at ${keymapPath}. ${err.toString()}`
       );
     }
-
-    this._afterFinishedEditing();
+    this._onEdit();
   };
 
   _onKey = event => {
