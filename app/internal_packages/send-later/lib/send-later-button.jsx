@@ -20,7 +20,6 @@ class SendLaterButton extends Component {
   static propTypes = {
     draft: PropTypes.object.isRequired,
     session: PropTypes.object.isRequired,
-    isValidDraft: PropTypes.func,
   };
 
   constructor() {
@@ -58,9 +57,9 @@ class SendLaterButton extends Component {
   }
 
   onAssignSendLaterDate = async (sendLaterDate, dateLabel) => {
-    if (!this.props.isValidDraft()) {
-      return;
-    }
+    // if (!this.props.isValidDraft()) {
+    //   return;
+    // }
     Actions.closePopover();
 
     const currentSendLaterDate = sendLaterDateForDraft(this.props.draft);
