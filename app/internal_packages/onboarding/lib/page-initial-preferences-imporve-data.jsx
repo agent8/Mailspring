@@ -1,35 +1,39 @@
 const React = require('react');
 const PropTypes = require('prop-types');
-const { RetinaImg, Flexbox, ConfigPropContainer } = require('mailspring-component-kit');
-const { AccountStore } = require('mailspring-exports');
+const path = require('path');
+const fs = require('fs');
+const { RetinaImg, Flexbox, ConfigPropContainer, LottieImg } = require('mailspring-component-kit');
+const { AccountStore, Utils } = require('mailspring-exports');
 const OnboardingActions = require('./onboarding-actions').default;
+const ConfigKey = 'core.workspace.sendUsageData';
+const PromptedConfigKey = 'core.workspace.promptedSendUsageData';
 
 // NOTE: Temporarily copied from preferences module
 class AppearanceModeOption extends React.Component {
   static propTypes = {
     mode: PropTypes.string.isRequired,
+    isDark: PropTypes.bool,
     active: PropTypes.bool,
     onClick: PropTypes.func,
   };
 
   render() {
     let classname = 'appearance-mode';
-    let active = '';
+
     if (this.props.active) {
       classname += ' active';
-      active = '-active';
     }
 
     const label = {
-      show: 'Show',
-      hide: 'Hide',
+      true: 'Share crash and usage data',
+      false: 'No Thanks',
     }[this.props.mode];
 
     return (
       <div className={classname}>
         <div className={'imgbox'} onClick={this.props.onClick}>
           <RetinaImg
-            name={`profile-${this.props.mode}${active}.png`}
+            name={`preference-data-${this.props.mode}${this.props.isDark ? '-dark' : ''}.png`}
             mode={RetinaImg.Mode.ContentPreserve}
           />
         </div>
@@ -39,7 +43,7 @@ class AppearanceModeOption extends React.Component {
   }
 }
 
-class InitialPreferencesProfileOptions extends React.Component {
+class InitialPreferencesOptions extends React.Component {
   static propTypes = { config: PropTypes.object };
 
   constructor(props) {
@@ -54,15 +58,25 @@ class InitialPreferencesProfileOptions extends React.Component {
     return (
       <div className="preferences">
         <div>
-          <p>2 of 3</p>
-          <h1>Want to view profile images?</h1>
+          <p>3 of 3</p>
+          <h1>Share crash & usage data with app developers?</h1>
+          <div className="description">
+            Help the Edison development team squash bugs and improve its products and services by
+            automatically sending anonymous usage data.
+          </div>
           <Flexbox direction="row" style={{ alignItems: 'center', width: 578 }}>
-            {['show', 'hide'].map(mode => (
+            {[true, false].map(mode => (
               <AppearanceModeOption
-                mode={mode}
-                key={mode}
-                active={this.props.config.get('core.appearance.profile') === (mode === 'show')}
-                onClick={() => this.props.config.set('core.appearance.profile', mode === 'show')}
+                mode={mode.toString()}
+                key={mode.toString()}
+                active={this.props.config.get(ConfigKey) === mode}
+                isDark={AppEnv.isDarkTheme()}
+                onClick={() => {
+                  this.props.config.set(ConfigKey, mode);
+                  if (!this.props.config.get(PromptedConfigKey)) {
+                    this.props.config.set(PromptedConfigKey, true);
+                  }
+                }}
               />
             ))}
           </Flexbox>
@@ -72,8 +86,8 @@ class InitialPreferencesProfileOptions extends React.Component {
   }
 }
 
-class InitialPreferencesProfilePage extends React.Component {
-  static displayName = 'InitialPreferencesProfilePage';
+class InitialPreferencesImproveData extends React.Component {
+  static displayName = 'InitialPreferencesImproveData';
 
   constructor(props) {
     super(props);
@@ -102,7 +116,7 @@ class InitialPreferencesProfilePage extends React.Component {
       <div className="page opaque" style={{ width: 900, height: '100%' }}>
         <div className="configure">
           <ConfigPropContainer>
-            <InitialPreferencesProfileOptions account={this.state.account} />
+            <InitialPreferencesOptions account={this.state.account} />
           </ConfigPropContainer>
         </div>
         <div className="footer">
@@ -115,13 +129,22 @@ class InitialPreferencesProfilePage extends React.Component {
   }
 
   _onFinished = () => {
-    if (AppEnv.config.get('core.appearance.profile')) {
-      AppEnv.trackingEvent('Onboarding-Profile-show');
-    } else {
-      AppEnv.trackingEvent('Onboarding-Profile-hide');
+    if (!AppEnv.config.get(PromptedConfigKey)) {
+      AppEnv.config.set(PromptedConfigKey, true);
     }
-    OnboardingActions.moveToPage('initial-preferences-imporove-data');
+    if (AppEnv.config.get(ConfigKey)) {
+      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: true });
+    } else {
+      AppEnv.config.set(ConfigKey, true);
+      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: false });
+      AppEnv.config.set(ConfigKey, false);
+    }
+    if (!Utils.needGDPR()) {
+      OnboardingActions.moveToPage('optin-trends-research');
+      return;
+    }
+    OnboardingActions.moveToPage('initial-done');
   };
 }
 
-module.exports = InitialPreferencesProfilePage;
+module.exports = InitialPreferencesImproveData;
