@@ -17,6 +17,7 @@ import AccountSettingsPageJira from './page-account-settings-jira-plugin';
 import AccountOnboardingSuccess from './page-account-onboarding-success';
 import InitialPreferencesPage from './page-initial-preferences';
 import InitialPreferencesProfilePage from './page-initial-preferences-profile';
+import InitialPreferencesImproveData from './page-initial-preferences-imporve-data';
 import InitialDonePage from './page-initial-done';
 import LoginErrorPage from './page-login-error';
 import AddAnotherAccountPage from './page-account-add-another';
@@ -44,6 +45,7 @@ const PageComponents = {
   'account-add-another': AddAnotherAccountPage,
   'initial-preferences': InitialPreferencesPage,
   'initial-preferences-profile': InitialPreferencesProfilePage,
+  'initial-preferences-imporove-data': InitialPreferencesImproveData,
   'initial-done': InitialDonePage,
   'gdpr-terms': GdprTerms,
   'login-error': LoginErrorPage,
@@ -101,9 +103,9 @@ export default class OnboardingRoot extends React.Component {
       'account-add-another',
       'account-choose',
       'login-error',
-      'account-settings-jira-plugin'
-    ].includes(this.state.page)
-  }
+      'account-settings-jira-plugin',
+    ].includes(this.state.page);
+  };
 
   render() {
     const Component = PageComponents[this.state.page];
@@ -113,10 +115,7 @@ export default class OnboardingRoot extends React.Component {
 
     return (
       <div className="page-frame">
-        <PageTopBar
-          pageDepth={this.state.pageDepth}
-          allowMoveBack={this._allowMoveBack()}
-        />
+        <PageTopBar pageDepth={this.state.pageDepth} allowMoveBack={this._allowMoveBack()} />
         <CSSTransitionGroup
           transitionName="alpha-fade"
           transitionLeaveTimeout={150}
