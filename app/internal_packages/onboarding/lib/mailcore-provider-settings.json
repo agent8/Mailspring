@@ -283,6 +283,7 @@
         }
     },
     "aol": {
+        "auto-copy-to-sent": true,
         "domain-match": [
             "aim\\.com",
             "aol\\..*",
