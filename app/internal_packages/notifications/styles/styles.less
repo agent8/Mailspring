@@ -159,3 +159,137 @@
     }
   }
 }
+
+.improve-data-notif {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 40px 0px;
+  text-align: center;
+  font-family: 'SF UI Text';
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 29px;
+    margin-bottom: 15px;
+  }
+  .description {
+    color: fade(@text-color, 90%);
+    font-size: 15px;
+    letter-spacing: -0.3px;
+    line-height: 20px;
+    margin-bottom: 30px;
+  }
+  .tabs {
+    display: flex;
+    flex-direction: row;
+    .appearance-mode {
+      cursor: pointer;
+      flex: 1;
+      .imgbox {
+        border-radius: 10px;
+        border: 1.5px solid #e1e4e6;
+        text-align: center;
+        flex: 1;
+        padding: 12.5px 25px;
+        margin: 0 10px;
+        img {
+          width: 200px;
+          height: 130px;
+          margin-top: 0;
+          background-color: none;
+        }
+      }
+      .label {
+        color: @text-color-very-subtle;
+        font-size: 13px;
+        line-height: 66px;
+        text-align: center;
+        text-transform: capitalize;
+        cursor: default;
+      }
+      &.active {
+        .imgbox {
+          border-color: @blue;
+        }
+        .label {
+          color: #39f;
+          font-weight: 700;
+        }
+      }
+    }
+  }
+  .next-btn {
+    color: @text-color-inverse;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 36px;
+    margin-top: 10px;
+    padding: 0 64px;
+    border-radius: 20px;
+    background-color: @blue;
+  }
+}
+
+.whats-new-notif {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .swiper-component-container .swiper-pagination {
+    position: relative;
+    top: 136px;
+  }
+
+  .text-container {
+    text-align: center;
+    position: relative;
+    top: -24px;
+    h2 {
+      font-size: 22px;
+      line-height: 22px;
+      margin: 27px 0 17px;
+      font-weight: bold;
+      color: @text-color;
+    }
+    p {
+      font-size: 17px;
+      color: @gray-dark;
+      line-height: 20px;
+      height: 60px;
+      width: 350px;
+    }
+  }
+
+  .footer {
+    padding-top: 24px;
+    .btn {
+      margin: 0 10px;
+      box-sizing: border-box;
+      height: 36px;
+      background-color: #fff;
+      opacity: 0.98;
+      border-radius: 20px;
+      border: 1px solid @blue;
+      line-height: 34px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      padding: 0 50px;
+
+      &.modal-btn-disable {
+        color: @blue;
+      }
+
+      &.modal-btn-enable {
+        color: @text-color-inverse;
+        background: @blue;
+      }
+    }
+  }
+}
