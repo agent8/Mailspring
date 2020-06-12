@@ -6,6 +6,7 @@ import {
   QuerySubscription,
 } from 'mailspring-exports';
 import UnreadQuerySubscription from '../../../src/flux/models/unread-query-subscription';
+import { allInboxCategories } from '../../../src/constant';
 
 const _observableForThreadMessages = (id, initialModels) => {
   const subscription = new QuerySubscription(MessageStore.findAllByThreadId({ threadId: id }), {
@@ -94,7 +95,7 @@ class ThreadListDataSource extends ObservableListDataSource {
     if (subscription instanceof UnreadQuerySubscription) {
       this._inboxCategories = subscription.inboxCategories;
     } else {
-      this._inboxCategories = 'all';
+      this._inboxCategories = allInboxCategories({ toString: true });
     }
   }
 }
