@@ -3,8 +3,8 @@ import DatabaseStore from '../stores/database-store';
 import RecentlyReadStore from '../stores/recently-read-store';
 import Matcher from '../attributes/matcher';
 import Thread from '../models/thread';
-import Category from '../models/category';
 import JoinTable from '../models/join-table';
+import { allInboxCategories, inboxOtherCategories, inboxNotOtherCategories } from '../../constant';
 
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
@@ -19,13 +19,13 @@ const buildQuery = (categoryIds, isOther) => {
   // it doesn't disappear until you leave the view and come back. This behavior
   // is implemented by keeping track of messages being read and manually
   // whitelisting them in the query.
-  let inboxCategories = 'all';
+  let inboxCategories = allInboxCategories({ toString: true });
   const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
   if (enableFocusedInboxKey) {
     if (isOther) {
-      inboxCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+      inboxCategories = inboxOtherCategories(false, { toString: true });
     } else {
-      inboxCategories = Category.inboxNotOtherCategorys().map(categoryNum => `${categoryNum}`);
+      inboxCategories = inboxNotOtherCategories({ toString: true });
     }
     unreadWhereOptions.push(
       JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
@@ -71,15 +71,13 @@ export default class UnreadQuerySubscription extends MutableQuerySubscription {
     super(buildQuery(categoryIds, isOther), { emitResultSet: true });
     this.isOther = isOther;
     this._categoryIds = categoryIds;
-    this.inboxCategories = 'all';
+    this.inboxCategories = allInboxCategories({ toString: true });
     const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
     if (enableFocusedInboxKey) {
       if (isOther) {
-        this.inboxCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
+        this.inboxCategories = inboxOtherCategories(false, { toString: true });
       } else {
-        this.inboxCategories = Category.inboxNotOtherCategorys().map(
-          categoryNum => `${categoryNum}`
-        );
+        this.inboxCategories = inboxNotOtherCategories({ toString: true });
       }
     }
     this._unlisten = RecentlyReadStore.listen(this.onRecentlyReadChanged);

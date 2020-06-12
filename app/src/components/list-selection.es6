@@ -121,7 +121,7 @@ export default class ListSelection {
     }
   }
 
-  removeItemsNotMatching(matchers, inboxCategories = 'all') {
+  removeItemsNotMatching(matchers, inboxCategories = null) {
     const count = this._items.length;
     this._items = this._items.filter(t => {
       let matching = t.matches(matchers);
