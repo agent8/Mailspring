@@ -133,9 +133,11 @@ class InitialPreferencesImproveData extends React.Component {
       AppEnv.config.set(PromptedConfigKey, true);
     }
     if (AppEnv.config.get(ConfigKey)) {
-      AppEnv.trackingEvent('Onboarding-send-usage-data-true');
+      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: true });
     } else {
-      AppEnv.trackingEvent('Onboarding-send-usage-data-false');
+      AppEnv.config.set(ConfigKey, true);
+      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: false });
+      AppEnv.config.set(ConfigKey, false);
     }
     if (!Utils.needGDPR()) {
       OnboardingActions.moveToPage('optin-trends-research');

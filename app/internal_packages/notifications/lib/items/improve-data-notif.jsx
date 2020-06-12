@@ -34,6 +34,13 @@ export default class ImproveDataNotif extends React.Component {
     if (!AppEnv.config.get(PromptedConfigKey)) {
       AppEnv.config.set(PromptedConfigKey, true);
     }
+    if (AppEnv.config.get(ConfigKey)) {
+      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: true });
+    } else {
+      AppEnv.config.set(ConfigKey, true);
+      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: false });
+      AppEnv.config.set(ConfigKey, false);
+    }
     this.setState({
       showImproveConfigInbox: false,
     });
