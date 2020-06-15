@@ -374,7 +374,7 @@ class MessageStore extends MailspringStore {
   _updateThread = thread => {
     if (thread) {
       this._thread = thread;
-      this._lastThreadChangeTimestamp = thread.lastMessageTimestamp;
+      this._lastThreadChangeTimestamp = Date.now();
       // console.log('sending out thread arp');
       ipcRenderer.send('arp', {
         threadId: thread.id,
