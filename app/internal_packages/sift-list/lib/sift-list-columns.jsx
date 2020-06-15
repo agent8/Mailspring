@@ -61,7 +61,16 @@ const renderIcons = message => {
 };
 
 const participants = message => {
-  const list = [].concat(message.to, message.cc, message.bcc);
+  let isSent = false;
+  if (Array.isArray(message.labels)) {
+    isSent = message.labels.some(label => label && label.role === 'sent');
+  }
+  let from = message.from;
+  if (Array.isArray(message.replyTo) && message.replyTo.length > 0) {
+    from = message.replyTo;
+  }
+  const list =
+    message.draft || isSent ? [].concat(message.to, message.cc, message.bcc) : [].concat(from);
 
   if (list.length > 0) {
     return (
