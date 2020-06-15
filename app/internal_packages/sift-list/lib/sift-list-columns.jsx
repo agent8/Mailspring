@@ -24,42 +24,6 @@ function subject(subj) {
   return Utils.extractTextFromHtml(subj);
 }
 
-const SenderColumn = new ListTabular.Column({
-  name: 'Avatar',
-  resolver: message => {
-    return <EmailAvatar key="email-avatar" mode="list" message={message} />;
-  },
-});
-
-const ParticipantsColumn = new ListTabular.Column({
-  name: 'Participants',
-  width: 180,
-  resolver: message => {
-    const list = [].concat(message.to, message.cc, message.bcc);
-
-    if (list.length > 0) {
-      return (
-        <div className="participants">
-          {renderIcons(message)}
-          <span>{list.map(p => p.displayName()).join(', ')}</span>
-        </div>
-      );
-    } else {
-      return <div className="participants no-recipients">(No Recipients)</div>;
-    }
-  },
-});
-
-const renderIcons = message => {
-  const dotIconClassName = Utils.iconClassName('menu-unread.svg');
-  if (message.starred) {
-    return <div className={`thread-icon thread-icon-star ${dotIconClassName}`} />;
-  } else if (message.unread) {
-    return <div className={`thread-icon thread-icon-unread ${dotIconClassName}`} />;
-  }
-  return null;
-};
-
 const participants = message => {
   let isSent = false;
   if (Array.isArray(message.labels)) {
@@ -84,6 +48,31 @@ const participants = message => {
   } else {
     return <div className="participants no-recipients">(No Recipients)</div>;
   }
+};
+
+const SenderColumn = new ListTabular.Column({
+  name: 'Avatar',
+  resolver: message => {
+    return <EmailAvatar key="email-avatar" mode="list" message={message} />;
+  },
+});
+
+const ParticipantsColumn = new ListTabular.Column({
+  name: 'Participants',
+  width: 180,
+  resolver: message => {
+    return participants(message);
+  },
+});
+
+const renderIcons = message => {
+  const dotIconClassName = Utils.iconClassName('menu-unread.svg');
+  if (message.starred) {
+    return <div className={`thread-icon thread-icon-star ${dotIconClassName}`} />;
+  } else if (message.unread) {
+    return <div className={`thread-icon thread-icon-unread ${dotIconClassName}`} />;
+  }
+  return null;
 };
 
 const ContentsColumn = new ListTabular.Column({
