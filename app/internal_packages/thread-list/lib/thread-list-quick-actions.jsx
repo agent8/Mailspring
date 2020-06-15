@@ -142,9 +142,20 @@ class ThreadTrashQuickAction extends React.Component {
       this.props.thread &&
       Array.isArray(this.props.thread.labelIds)
     ) {
-      allInTrashOrSpam = this.props.thread.labelIds
-        .map(labelId => CategoryStore.byId(this.props.thread.accountId, labelId))
-        .every(folder => folder.role === 'trash' || folder.role === 'spam');
+      allInTrashOrSpam =
+        this.props.thread.labelIds
+          .map(labelId => {
+            const cat = CategoryStore.byId(this.props.thread.accountId, labelId);
+            if (!cat) {
+              AppEnv.logError(
+                `Category for ${this.props.thread.accountId} with label id ${labelId} is null`
+              );
+              return {};
+            }
+            return cat;
+          })
+          .every(folder => folder.role === 'trash' || folder.role === 'spam') &&
+        this.props.thread.labelIds.length > 0;
     }
     if (canExpungeThread || allInTrashOrSpam) {
       return (
