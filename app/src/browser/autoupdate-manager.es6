@@ -20,7 +20,7 @@ const ErrorState = 'error';
 const preferredChannel = 'stable';
 
 export default class AutoUpdateManager extends EventEmitter {
-  constructor(version, config, specMode, devMode) {
+  constructor(version, config, specMode, devMode, host) {
     super();
 
     this.state = IdleState;
@@ -28,6 +28,7 @@ export default class AutoUpdateManager extends EventEmitter {
     this.config = config;
     this.specMode = specMode;
     this.devMode = devMode;
+    this.host = host;
     this.preferredChannel = preferredChannel;
     this.supportId = syncGetDeviceHash();
     this._hasForceUpdateMessageDialog = false;
@@ -49,9 +50,7 @@ export default class AutoUpdateManager extends EventEmitter {
     if (params.platform === 'darwin') {
       params.platform = 'mac';
     }
-    const devHost = 'https://cp.stag.easilydo.cc/api/ota/checkUpdate';
-    const proHose = 'https://cp.edison.tech/api/ota/checkUpdate';
-    const host = process.env.updateServer || proHose;
+    const host = `${this.host}/api/ota/checkUpdate`;
     if (this.supportId === '') {
       try {
         this.supportId = await getDeviceHash();
@@ -63,9 +62,7 @@ export default class AutoUpdateManager extends EventEmitter {
     return this.feedURL;
   };
   getVersionInfoUrl = async () => {
-    const devHost = 'https://cp.stag.easilydo.cc/api/ota/common/getInfoByVer';
-    const proHost = 'https://cp.edison.tech/api/ota/common/getInfoByVer';
-    const host = devHost;
+    const host = `${this.host}/api/ota/common/getInfoByVer`;
     const platform = process.platform === 'darwin' ? 'mac' : process.platform;
     if (this.supportId === '') {
       try {
@@ -250,7 +247,9 @@ export default class AutoUpdateManager extends EventEmitter {
         }
         if (choice === 0) {
           if (url) {
-            shell.openExternal(url);
+            try {
+              await shell.openExternal(url);
+            } catch (err) {}
           }
           switch (priority) {
             case ServerInfoPriorityEnum.Extraordinary:
