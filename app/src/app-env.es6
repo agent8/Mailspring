@@ -345,32 +345,32 @@ export default class AppEnvConstructor {
     return extra;
   }
 
-  reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportError(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'error');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'error');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'error');
     }
   }
 
-  reportWarning(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportWarning(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'warning');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'warning');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'warning');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'warning');
     }
   }
-  reportLog(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportLog(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'log');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'log');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'log');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'log');
     }
   }
 
-  _grabLogAndReportLog(error, extra, { noWindows } = {}, type = '') {
+  _grabLogAndReportLog(error, extra, { noWindows, noAppConfig } = {}, type = '') {
     extra.grabLogs = true;
-    this._reportLog(error, extra, { noWindows }, type);
+    this._reportLog(error, extra, { noWindows, noAppConfig }, type);
     // this.grabLogs()
     //   .then(filename => {
     //     extra.files = [filename];
@@ -382,9 +382,9 @@ export default class AppEnvConstructor {
     //   });
   }
 
-  _reportLog(error, extra = {}, { noWindows } = {}, type = '') {
+  _reportLog(error, extra = {}, { noWindows, noAppConfig } = {}, type = '') {
     extra = this._expandReportLog(error, extra);
-
+    extra.noAppConfig = noAppConfig;
     if (error instanceof APIError) {
       // API Errors are logged by our backend and happen all the time (offline, etc.)
       // Don't clutter the front-end metrics with these.
