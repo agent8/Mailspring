@@ -617,7 +617,7 @@ export function ToggleUnreadButton(props) {
         source,
       })
     );
-    Actions.popSheet({ reason: 'ToolbarButton:ToggleUnread:changeUnread' });
+    // Actions.popSheet({ reason: 'ToolbarButton:ToggleUnread:changeUnread' });
     if (props.selection) {
       props.selection.clear();
     }
