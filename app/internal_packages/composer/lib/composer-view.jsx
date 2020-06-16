@@ -571,11 +571,7 @@ export default class ComposerView extends React.Component {
           <div className="composer-action-bar-wrap" data-tooltips-anchor>
             <div className="tooltips-container" />
             <div className="composer-action-bar-content">
-              <ActionBarPlugins
-                draft={this.props.draft}
-                session={this.props.session}
-                isValidDraft={this._isValidDraft}
-              />
+              <ActionBarPlugins draft={this.props.draft} session={this.props.session} />
               <SendActionButton
                 ref={el => {
                   if (el) {
@@ -587,7 +583,6 @@ export default class ComposerView extends React.Component {
                 draft={this.props.draft}
                 messageId={this.props.draft.id}
                 session={this.props.session}
-                isValidDraft={this._isValidDraft}
                 disabled={this.props.session.isPopout() || this._draftNotReady()}
               />
               <div className="divider-line" style={{ order: -51 }} />
@@ -750,6 +745,7 @@ export default class ComposerView extends React.Component {
       return;
     }
     const { draft, session } = this.props;
+    const inlineFile = [];
     for (let i = 0; i < fileObjs.length; i++) {
       const fileObj = fileObjs[i];
       if (Utils.shouldDisplayAsImage(fileObj)) {
@@ -757,18 +753,21 @@ export default class ComposerView extends React.Component {
         if (!match) {
           return;
         }
+        inlineFile.push(fileObj);
         // match.contentId = Utils.generateContentId();
         // match.isInline = true;
-        console.log(`update attachment in _onAttachmentsCreated`);
         // session.updateAttachments([].concat(draft.files));
         // session.changes.add({
         //   files: [].concat(draft.files),
         // });
-        if (this._els[Fields.Body]) {
-          this._els[Fields.Body].insertInlineAttachments(fileObjs);
-        }
-        session.changes.commit();
       }
+    }
+    if (inlineFile.length > 0) {
+      if (this._els[Fields.Body]) {
+        console.log(`update attachment in _onAttachmentsCreated`);
+        this._els[Fields.Body].insertInlineAttachments(inlineFile);
+      }
+      session.changes.commit();
     }
   };
 
@@ -802,52 +801,6 @@ export default class ComposerView extends React.Component {
       accountId: this.props.draft.accountId,
       onCreated: this._onAttachmentCreated,
     });
-  };
-
-  _isValidDraft = (options = {}) => {
-    // We need to check the `DraftStore` because the `DraftStore` is
-    // immediately and synchronously updated as soon as this function
-    // fires. Since `setState` is asynchronous, if we used that as our only
-    // check, then we might get a false reading.
-    if (DraftStore.isSendingDraft(this.props.draft.id)) {
-      return false;
-    }
-
-    const dialog = remote.dialog;
-    const { session } = this.props;
-    const { errors, warnings } = session.validateDraftForSending();
-
-    if (errors.length > 0) {
-      dialog.showMessageBox(remote.getCurrentWindow(), {
-        type: 'warning',
-        buttons: ['Edit Message', 'Cancel'],
-        defaultId: 0,
-        cancelId: 1,
-        message: 'Cannot Send',
-        detail: errors[0],
-      });
-      return false;
-    }
-
-    if (warnings.length > 0 && !options.force) {
-      dialog
-        .showMessageBox(remote.getCurrentWindow(), {
-          type: 'warning',
-          buttons: ['Send Anyway', 'Cancel'],
-          defaultId: 0,
-          cancelId: 1,
-          message: 'Are you sure?',
-          detail: `Send ${warnings.join(' and ')}?`,
-        })
-        .then(({ response } = {}) => {
-          if (response === 0) {
-            this._onPrimarySend({ disableDraftCheck: true });
-            return true;
-          }
-        });
-      return false;
-    }
-    return true;
   };
 
   _onPrimarySend = ({ disableDraftCheck = false } = {}) => {
