@@ -147,7 +147,7 @@ class ThreadTrashQuickAction extends React.Component {
           .map(labelId => {
             const cat = CategoryStore.byId(this.props.thread.accountId, labelId);
             if (!cat) {
-              AppEnv.logError(
+              AppEnv.reportError(
                 `Category for ${this.props.thread.accountId} with label id ${labelId} is null`
               );
               return {};
