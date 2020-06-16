@@ -12,6 +12,8 @@ import {
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import { CSSTransitionGroup } from 'react-transition-group';
+import DeleteThreadsTask from '../../../src/flux/tasks/delete-threads-task';
+import ExpungeMessagesTask from '../../../src/flux/tasks/expunge-messages-task';
 import SendDraftTask from '../../../src/flux/tasks/send-draft-task';
 import DestroyDraftTask from '../../../src/flux/tasks/destroy-draft-task';
 
@@ -116,6 +118,13 @@ class BasicContent extends React.Component {
       } else if (tasks.every(task => task instanceof DestroyDraftTask)) {
         const total = tasks.reduce((sum, task) => sum + task.messageIds.length, 0);
         description = `Deleting ${total} drafts`;
+      } else if (
+        tasks.every(
+          task => task instanceof ExpungeMessagesTask || task instanceof DeleteThreadsTask
+        )
+      ) {
+        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
+        description = `Expunging ${total} threads`;
       }
     } else {
       // if TrashFromSenderTask

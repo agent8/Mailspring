@@ -6,6 +6,9 @@ export default class ExpungeMessagesTask extends Task {
     messageIds: Attributes.Collection({
       modelKey: 'messageIds',
     }),
+    threadIds: Attributes.Collection({
+      modelKey: 'threadIds',
+    }),
     source: Attributes.String({
       modelKey: 'source',
     }),
@@ -18,9 +21,10 @@ export default class ExpungeMessagesTask extends Task {
     data.canBeUndone = true;
     super(data);
     this.messageIds = data.messageIds || [];
+    this.threadIds = data.threadIds || [];
     this.accountId = data.accountId || '';
     this.source = data.source || '';
-    if (this.canBeUndone === undefined){
+    if (this.canBeUndone === undefined) {
       this.canBeUndone = true;
     }
   }

@@ -244,16 +244,20 @@ export function TrashButton(props) {
   };
   const _onExpunge = (event, threads) => {
     let messages = [];
+    const missingMessagesThreads = [];
     if (!Array.isArray(threads)) {
       threads = props.items;
     }
     threads.forEach(thread => {
       if (Array.isArray(thread.__messages) && thread.__messages.length > 0) {
         messages = messages.concat(thread.__messages);
+      } else {
+        missingMessagesThreads.push(thread);
       }
     });
     const tasks = TaskFactory.tasksForExpungingThreadsOrMessages({
       messages: messages,
+      threads: missingMessagesThreads,
       source: 'Toolbar Button: Thread List',
     });
     if (Array.isArray(tasks) && tasks.length > 0) {
