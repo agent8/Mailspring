@@ -424,35 +424,37 @@ class DraftStore extends MailspringStore {
       AppEnv.logError(`no originalMessageId session`);
       return;
     }
-    const { errors, warnings } = session.validateDraftForChangeAccount();
-    const dialog = remote.dialog;
-    if (warnings.length > 0) {
-      dialog
-        .showMessageBox(remote.getCurrentWindow(), {
-          type: 'warning',
-          buttons: ['Yes', 'Cancel'],
-          message: 'Draft not ready, change anyways? This will remove all draft attachments.',
-          detail: `${warnings.join(' and ')}?`,
-        })
-        .then(({ response } = {}) => {
-          if (response === 0) {
-            session.changes.add({ files: [] });
-            session.updateAttachments([]);
-            if (AppEnv.isMainWindow()) {
-              this._onDraftAccountChange(data);
-            } else {
-              this._onDraftAccountChanged_NotMainWindow(data);
+    session.validateDraftForChangeAccount().then(ret => {
+      const { errors, warnings } = ret;
+      const dialog = remote.dialog;
+      if (warnings.length > 0) {
+        dialog
+          .showMessageBox(remote.getCurrentWindow(), {
+            type: 'warning',
+            buttons: ['Yes', 'Cancel'],
+            message: 'Draft not ready, change anyways? This will remove all draft attachments.',
+            detail: `${warnings.join(' and ')}?`,
+          })
+          .then(({ response } = {}) => {
+            if (response === 0) {
+              session.changes.add({ files: [] });
+              session.updateAttachments([]);
+              if (AppEnv.isMainWindow()) {
+                this._onDraftAccountChange(data);
+              } else {
+                this._onDraftAccountChanged_NotMainWindow(data);
+              }
+              return true;
             }
-            return true;
-          }
-        });
-      return false;
-    }
-    if (AppEnv.isMainWindow()) {
-      this._onDraftAccountChange(data);
-    } else {
-      this._onDraftAccountChanged_NotMainWindow(data);
-    }
+          });
+        return false;
+      }
+      if (AppEnv.isMainWindow()) {
+        this._onDraftAccountChange(data);
+      } else {
+        this._onDraftAccountChanged_NotMainWindow(data);
+      }
+    });
   };
 
   _onDraftAccountChanged_NotMainWindow = ({
@@ -1557,7 +1559,7 @@ class DraftStore extends MailspringStore {
       this.trigger({ messageId });
     }
   };
-  _onSendDraftAction = (messageId, options = {}) => {
+  _reRouteSendDraftAction = (messageId, options = {}) => {
     if (AppEnv.isMainWindow()) {
       this._onSendDraft(messageId, options);
     } else {
@@ -1582,6 +1584,54 @@ class DraftStore extends MailspringStore {
       }
     }
     return;
+  };
+  _onSendDraftAction = (messageId, options = {}) => {
+    if (options.disableDraftCheck) {
+      this._reRouteSendDraftAction(messageId, options);
+    } else {
+      const session = this._draftSessions[messageId];
+      if (session) {
+        session.validateDraftForSending().then(({ errors, warnings }) => {
+          const dialog = remote.dialog;
+          if (errors.length > 0) {
+            dialog.showMessageBox(remote.getCurrentWindow(), {
+              type: 'warning',
+              buttons: ['Edit Message', 'Cancel'],
+              defaultId: 0,
+              cancelId: 1,
+              message: 'Cannot Send',
+              detail: errors[0],
+            });
+            Actions.draftDeliveryCancelled({ messageId });
+            return;
+          }
+
+          if (warnings.length > 0 && !options.force) {
+            dialog
+              .showMessageBox(remote.getCurrentWindow(), {
+                type: 'warning',
+                buttons: ['Send Anyway', 'Cancel'],
+                defaultId: 0,
+                cancelId: 1,
+                message: 'Are you sure?',
+                detail: `Send ${warnings.join(' and ')}?`,
+              })
+              .then(({ response } = {}) => {
+                if (response === 0) {
+                  options.disableDraftCheck = true;
+                  this._onSendDraftAction(messageId, options);
+                } else {
+                  Actions.draftDeliveryCancelled({ messageId });
+                }
+              });
+            return false;
+          }
+          this._reRouteSendDraftAction(messageId, options);
+        });
+      } else {
+        this._reRouteSendDraftAction(messageId, options);
+      }
+    }
   };
 
   _onSendDraft = async (messageId, options = {}, syncData) => {
@@ -1715,6 +1765,9 @@ class DraftStore extends MailspringStore {
     await MessageBodyProcessor.updateCacheForMessage(draft);
 
     this._doneWithSession(session, 'onSendDraft');
+    if (AppEnv.config.get('core.sending.sounds')) {
+      SoundRegistry.playSound('hit-send');
+    }
     // Notify all windows that draft is being send out.
     Actions.sendingDraft({ messageId, windowLevel: this._getCurrentWindowLevel() });
     this._draftsSending[draft.id] = true;

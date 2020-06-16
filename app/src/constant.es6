@@ -7,9 +7,27 @@ export const OAuthList = [
   'jira-plugin',
 ];
 
+let ses;
+if (process.type === 'renderer') {
+  const webContents = AppEnv.getMainWindow().webContents;
+  ses = webContents.session;
+} else {
+  const { session } = require('electron');
+  ses = session.defaultSession;
+}
+
+const userAgent = ses.getUserAgent() || '';
+const macOSVersionGroup = userAgent.match(/.*(10_\d{1,2}_\d{1,2}).*/);
+const macOSVersionInUA = macOSVersionGroup ? macOSVersionGroup[1] : '';
+export const macOSVersion = macOSVersionInUA.replace(/_/g, '.');
+
+const secondVersion = Number(macOSVersion.split('.')[1]) || 11;
+export const appStoreLink = `${
+  secondVersion < 14 ? 'https' : 'itms-apps'
+}://apps.apple.com/app/id1489591003`;
+
 export const UserReviewText = '♥ Love it? Let us know.';
-export const UserReviewUrl =
-  'itms-apps://apps.apple.com/cn/app/email-edison-mail/id1489591003?action=write-review';
+export const UserReviewUrl = `${appStoreLink}?action=write-review`;
 
 export const UserUseAppDaysHappyLine = 7;
 
@@ -22,4 +40,86 @@ export const ServerInfoPriorityEnum = {
   AverageInfo: 3,
   // 版本更新后的what's new
   UpdateInfo: 4,
+};
+
+export const InboxCategoryStates = {
+  MsgNone: -1, //message not in INBOX
+  MsgOther: 0,
+  MsgCandidate: 1,
+  MsgPrimary: 2,
+  MsgPrimaryAndOther: 3,
+};
+
+export const allInboxCategories = (opts = { toString: false, radix: 10 }) => {
+  if (!opts) {
+    opts = { toString: false, radix: 10 };
+  }
+  let { toString, radix } = opts;
+  if (!radix) {
+    radix = 10;
+  }
+  const ret = Object.values(InboxCategoryStates);
+  if (!toString) {
+    return ret;
+  } else {
+    return ret.map(item => item.toString(radix));
+  }
+};
+
+export const inboxFocusedCategories = (strict = false, opts = { toString: false, radix: 10 }) => {
+  if (!opts) {
+    opts = { toString: false, radix: 10 };
+  }
+  let { toString, radix } = opts;
+  if (!radix) {
+    radix = 10;
+  }
+  const ret = [InboxCategoryStates.MsgCandidate, InboxCategoryStates.MsgPrimary];
+  if (!strict) {
+    ret.push(InboxCategoryStates.MsgPrimaryAndOther);
+  }
+  if (!toString) {
+    return ret;
+  }
+  return ret.map(i => i.toString(radix));
+};
+
+export const inboxOtherCategories = (strict = false, opts = { toString: false, radix: 10 }) => {
+  if (!opts) {
+    opts = { toString: false, radix: 10 };
+  }
+  let { toString, radix } = opts;
+  if (!radix) {
+    radix = 10;
+  }
+  const ret = [InboxCategoryStates.MsgOther];
+  if (!strict) {
+    ret.push(InboxCategoryStates.MsgPrimaryAndOther);
+  }
+  if (!toString) {
+    return ret;
+  }
+  return ret.map(i => i.toString(radix));
+};
+
+export const inboxNotOtherCategories = (opts = { toString: false, radix: 10 }) => {
+  if (!opts) {
+    opts = { toString: false, radix: 10 };
+  }
+  let { toString, radix } = opts;
+  if (!radix) {
+    radix = 10;
+  }
+  const isStrictOtherCategories = inboxOtherCategories(true, { toString: false, radix });
+  const ret = [];
+  Object.values(InboxCategoryStates).forEach(item => {
+    if (!isStrictOtherCategories.some(other => item === other)) {
+      if (toString) {
+        ret.push(item.toString(radix));
+      } else {
+        ret.push(item);
+      }
+    }
+  });
+  return ret;
 };

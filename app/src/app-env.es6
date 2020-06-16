@@ -1245,10 +1245,17 @@ export default class AppEnvConstructor {
     const downloadPath = this.getSaveDirPath();
 
     if (downloadPath) {
-      if (!fs.existsSync(downloadPath)) {
+      let pathExist = '';
+      try {
+        pathExist = fs.existsSync(downloadPath).toString();
+      } catch (e) {
+        pathExist = 'error';
+      }
+      if (pathExist === 'false') {
         remote.dialog.showErrorBox('File Save Error', `directory: ${downloadPath} doesn't exist`);
         callback(null);
-      } else {
+        return;
+      } else if (pathExist === 'true') {
         const fileName = path.basename(options.defaultPath || 'untitled');
         const fileNewName = autoGenerateFileName(downloadPath, fileName);
         if (typeof fileNewName === 'string') {
@@ -1257,61 +1264,70 @@ export default class AppEnvConstructor {
           this.logError(fileNewName);
           callback(fileNewName);
         }
+        return;
       }
-    } else {
-      if (options.title == null) {
-        options.title = 'Save File';
-      }
-      return remote.dialog
-        .showSaveDialog(this.getCurrentWindow(), options)
-        .then(({ canceled, filePath }) => {
-          if (canceled) {
-            callback(null);
-          } else {
-            callback(filePath);
-          }
-        });
     }
+    if (options.title == null) {
+      options.title = 'Save File';
+    }
+    return remote.dialog
+      .showSaveDialog(this.getCurrentWindow(), options)
+      .then(({ canceled, filePath }) => {
+        if (canceled) {
+          callback(null);
+        } else {
+          callback(filePath);
+        }
+      });
   }
 
   showSaveDirDialog(options, callback) {
     const downloadPath = this.getSaveDirPath();
 
     if (downloadPath) {
-      if (!fs.existsSync(downloadPath)) {
+      let pathExist = '';
+      try {
+        pathExist = fs.existsSync(downloadPath).toString();
+      } catch (e) {
+        pathExist = 'error';
+      }
+      if (pathExist === 'false') {
         remote.dialog.showErrorBox('Files Save Error', `directory: ${downloadPath} doesn't exist`);
         callback(null);
-      } else {
+        return;
+      } else if (pathExist === 'true') {
         callback(downloadPath);
+        return;
+      } else {
+        // error mean that Insufficient authority
       }
-    } else {
-      const home = this.getUserDirPath();
-      let downloadDir = path.join(home, 'Downloads');
-      if (!fs.existsSync(downloadDir)) {
-        downloadDir = os.tmpdir();
-      }
-
-      const optionTmp = {
-        ...options,
-        defaultPath: options.defaultPath || downloadDir,
-        title: options.title || 'Save Into...',
-        properties: ['openDirectory', 'createDirectory'],
-      };
-
-      return remote.dialog
-        .showOpenDialog(this.getCurrentWindow(), optionTmp)
-        .then(({ canceled, filePaths }) => {
-          if (canceled) {
-            callback(null);
-            return;
-          }
-          if (filePaths && filePaths.length) {
-            callback(filePaths[0]);
-          } else {
-            callback(null);
-          }
-        });
     }
+    const home = this.getUserDirPath();
+    let downloadDir = path.join(home, 'Downloads');
+    if (!fs.existsSync(downloadDir)) {
+      downloadDir = os.tmpdir();
+    }
+
+    const optionTmp = {
+      ...options,
+      defaultPath: options.defaultPath || downloadDir,
+      title: options.title || 'Save Into...',
+      properties: ['openDirectory', 'createDirectory'],
+    };
+
+    return remote.dialog
+      .showOpenDialog(this.getCurrentWindow(), optionTmp)
+      .then(({ canceled, filePaths }) => {
+        if (canceled) {
+          callback(null);
+          return;
+        }
+        if (filePaths && filePaths.length) {
+          callback(filePaths[0]);
+        } else {
+          callback(null);
+        }
+      });
   }
 
   getMainWindow() {
