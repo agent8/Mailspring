@@ -205,6 +205,8 @@ export class Notifier {
       onActivate: ({ response, activationType }) => {
         if (activationType === 'replied' && response && typeof response === 'string') {
           Actions.sendQuickReply({ thread, message }, response);
+          // DC-2078:Should not open email detail after reply from notification
+          return;
         } else {
           AppEnv.displayWindow();
         }
@@ -214,7 +216,8 @@ export class Notifier {
           return;
         }
         Actions.ensureCategoryIsFocused('inbox', thread.accountId, true);
-        Actions.setFocus({ collection: 'thread', item: thread });
+        // DC-2073: Fail to open email from notification when read panel off
+        setImmediate(() => Actions.setFocus({ collection: 'thread', item: thread }));
       },
     });
 
