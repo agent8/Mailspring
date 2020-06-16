@@ -1856,6 +1856,9 @@ export default class AppEnvConstructor {
     const app = remote.getGlobal('application');
     app.eventTriggers.eventTrigger(eventName);
   }
+  getLocale(env = process.env) {
+    return env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE || env.LC_CTYPE;
+  }
   // openExternal() {
   //   const { spawn, exec } = require('child_process');
   //   exec(
