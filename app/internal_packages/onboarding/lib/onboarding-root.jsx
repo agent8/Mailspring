@@ -17,6 +17,7 @@ import AccountSettingsPageJira from './page-account-settings-jira-plugin';
 import AccountOnboardingSuccess from './page-account-onboarding-success';
 import InitialPreferencesPage from './page-initial-preferences';
 import InitialPreferencesProfilePage from './page-initial-preferences-profile';
+import InitialPreferencesImproveData from './page-initial-preferences-imporve-data';
 import InitialDonePage from './page-initial-done';
 import LoginErrorPage from './page-login-error';
 import AddAnotherAccountPage from './page-account-add-another';
@@ -44,6 +45,7 @@ const PageComponents = {
   'account-add-another': AddAnotherAccountPage,
   'initial-preferences': InitialPreferencesPage,
   'initial-preferences-profile': InitialPreferencesProfilePage,
+  'initial-preferences-imporove-data': InitialPreferencesImproveData,
   'initial-done': InitialDonePage,
   'gdpr-terms': GdprTerms,
   'login-error': LoginErrorPage,

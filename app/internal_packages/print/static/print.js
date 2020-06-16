@@ -41,7 +41,7 @@
     document.getElementById('print-button').style.display = 'none';
     window.requestAnimationFrame(function() {
       window.onafterprint = function() {
-        setTimeout(window.close, 1500);
+        setTimeout(window.close, 2000);
       };
       window.print();
     });

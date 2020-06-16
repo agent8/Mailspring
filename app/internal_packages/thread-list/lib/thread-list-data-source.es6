@@ -1,12 +1,12 @@
 import {
   Rx,
   ObservableListDataSource,
-  DatabaseStore,
   MessageStore,
-  Message,
   QueryResultSet,
   QuerySubscription,
 } from 'mailspring-exports';
+import UnreadQuerySubscription from '../../../src/flux/models/unread-query-subscription';
+import { allInboxCategories } from '../../../src/constant';
 
 const _observableForThreadMessages = (id, initialModels) => {
   const subscription = new QuerySubscription(MessageStore.findAllByThreadId({ threadId: id }), {
@@ -92,6 +92,11 @@ class ThreadListDataSource extends ObservableListDataSource {
     );
     $resultSetObservable = _flatMapJoiningMessages($resultSetObservable);
     super($resultSetObservable, subscription.replaceRange.bind(subscription));
+    if (subscription instanceof UnreadQuerySubscription) {
+      this._inboxCategories = subscription.inboxCategories;
+    } else {
+      this._inboxCategories = allInboxCategories({ toString: true });
+    }
   }
 }
 

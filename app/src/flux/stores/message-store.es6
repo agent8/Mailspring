@@ -374,7 +374,7 @@ class MessageStore extends MailspringStore {
   _updateThread = thread => {
     if (thread) {
       this._thread = thread;
-      this._lastThreadChangeTimestamp = thread.lastMessageTimestamp;
+      this._lastThreadChangeTimestamp = Date.now();
       // console.log('sending out thread arp');
       ipcRenderer.send('arp', {
         threadId: thread.id,
@@ -443,7 +443,7 @@ class MessageStore extends MailspringStore {
   }
   _shouldSetFocusContentToNullOnInboxCategoryChange = newFocusedThread => {
     if (!AppEnv.isMainWindow()) {
-      return;
+      return false;
     }
     if (!newFocusedThread) {
       return false;
@@ -478,11 +478,11 @@ class MessageStore extends MailspringStore {
         Actions.popSheet({ reason: 'Message-Store, current Thread is no longer available' });
       }
     }
-    if (this._shouldSetFocusContentToNullOnInboxCategoryChange(focused)) {
-      AppEnv.logDebug(`Setting focus content to null because inbox category changed`);
-      Actions.setFocus({ collection: 'thread', item: null, reason: 'Inbox Category Changed' });
-      return;
-    }
+    // if (this._shouldSetFocusContentToNullOnInboxCategoryChange(focused)) {
+    //   AppEnv.logDebug(`Setting focus content to null because inbox category changed`);
+    //   Actions.setFocus({ collection: 'thread', item: null, reason: 'Inbox Category Changed' });
+    //   return;
+    // }
 
     // if we already match the desired state, no need to trigger
     if (this.threadId() === (focused || {}).id) return;
@@ -532,11 +532,11 @@ class MessageStore extends MailspringStore {
     }
     AppEnv.setWindowTitle(title);
   }
-  markAsRead = () => {
-    this._markAsRead();
+  markAsRead = source => {
+    this._markAsRead(source);
   };
 
-  _markAsRead() {
+  _markAsRead(source = 'MessageStore:Thread Selected') {
     // Mark the thread as read if necessary. Make sure it's still the
     // current thread after the timeout.
     //
@@ -561,7 +561,7 @@ class MessageStore extends MailspringStore {
           Actions.queueTask(
             TaskFactory.taskForInvertingUnread({
               threads: [this._thread],
-              source: 'Thread Selected',
+              source,
               canBeUndone: false,
               unread: false,
             })
@@ -660,7 +660,7 @@ class MessageStore extends MailspringStore {
       // and once when ready. Many third-party stores will observe
       // MessageStore and they'll be stupid and re-render constantly.
       this._itemsLoading = false;
-      this._markAsRead();
+      this._markAsRead('fetchFromCache');
       this.trigger(this);
     });
   }
