@@ -10,50 +10,22 @@ export default class ImproveDataNotif extends React.Component {
   constructor() {
     super();
     this.state = {
-      showImproveConfigInbox: false,
-      enable: AppEnv.config.get(ConfigKey),
+      showImproveConfigInbox: !AppEnv.config.get(PromptedConfigKey),
     };
   }
-  componentDidMount = () => {
-    this.setState({
-      showImproveConfigInbox: !AppEnv.config.get(PromptedConfigKey),
-    });
-  };
 
-  _onClickTabs = enable => {
-    if (AppEnv.config.get(ConfigKey) === enable) {
-      return;
-    }
-    AppEnv.config.set(ConfigKey, enable);
-    this.setState({
-      enable,
-    });
-  };
-
-  _onclose = () => {
+  _onFinish = enable => {
     if (!AppEnv.config.get(PromptedConfigKey)) {
       AppEnv.config.set(PromptedConfigKey, true);
     }
-    if (AppEnv.config.get(ConfigKey)) {
-      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: true });
-    } else {
-      AppEnv.config.set(ConfigKey, true);
-      AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: false });
-      AppEnv.config.set(ConfigKey, false);
-    }
+    AppEnv.trackingEvent('Onboarding-send-usage-data', { enable: enable });
+    AppEnv.config.set(ConfigKey, enable);
     this.setState({
       showImproveConfigInbox: false,
     });
   };
 
   render() {
-    const isDark = AppEnv.isDarkTheme();
-    const { enable } = this.state;
-    const tabs = {
-      true: 'Share crash and usage data',
-      false: 'No Thanks',
-    };
-
     return (
       <FullScreenModal
         visible={this.state.showImproveConfigInbox}
@@ -61,32 +33,24 @@ export default class ImproveDataNotif extends React.Component {
         mask
       >
         <div className="improve-data-notif">
+          <RetinaImg
+            className="logo"
+            name={`preference-data-true${AppEnv.isDarkTheme() ? '-dark' : ''}.png`}
+            mode={RetinaImg.Mode.ContentPreserve}
+            style={{ height: 200, width: 200 }}
+          />
           <h1>Share crash & usage data with app developers?</h1>
           <p className="description">
             Help the Edison development team squash bugs and improve its products and services by
             automatically sending anonymous usage data.
           </p>
-          <div className="tabs">
-            {Object.keys(tabs).map(tab => {
-              return (
-                <div
-                  className={`${enable.toString() === tab ? 'active' : ''} appearance-mode`}
-                  key={tab}
-                >
-                  <div className={'imgbox'} onClick={() => this._onClickTabs(tab === 'true')}>
-                    <RetinaImg
-                      name={`preference-data-${tab}${isDark ? '-dark' : ''}.png`}
-                      style={{ height: 150, width: 200 }}
-                      mode={RetinaImg.Mode.ContentPreserve}
-                    />
-                  </div>
-                  <div className={'label'}>{tabs[tab]}</div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="btn next-btn" onClick={this._onclose}>
-            Continue
+          <div className="btn-list">
+            <div className="btn modal-btn-disable" onClick={() => this._onFinish(false)}>
+              No, Thanks
+            </div>
+            <div className="btn modal-btn-enable" onClick={() => this._onFinish(true)}>
+              Agree
+            </div>
           </div>
         </div>
       </FullScreenModal>
