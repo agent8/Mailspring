@@ -1619,7 +1619,9 @@ class DraftStore extends MailspringStore {
               .then(({ response } = {}) => {
                 if (response === 0) {
                   options.disableDraftCheck = true;
-                  this._onSendDraftAction(messageId, options);
+                  session.removeMissingAttachments().then(() => {
+                    this._onSendDraftAction(messageId, options);
+                  });
                 } else {
                   Actions.draftDeliveryCancelled({ messageId });
                 }

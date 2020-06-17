@@ -1,3 +1,4 @@
+import fs from 'fs';
 import EventEmitter from 'events';
 import MailspringStore from 'mailspring-store';
 import { Conversion } from '../../components/composer-editor/composer-support';
@@ -19,7 +20,11 @@ import RestoreDraftTask from '../tasks/restore-draft-task';
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
 let DraftStore = null;
-
+let attachmentStore = null;
+const AttachmentStore = () => {
+  attachmentStore = attachmentStore || require('./attachment-store').default;
+  return attachmentStore;
+};
 /**
  Public: As the user interacts with the draft, changes are accumulated in the
  DraftChangeSet associated with the store session.
@@ -845,6 +850,30 @@ export default class DraftEditingSession extends MailspringStore {
       console.error(`either draft or files data incorrect, attachments for draft not updated`);
     }
   }
+  removeMissingAttachments = () => {
+    if (this._draft && Array.isArray(this._draft.files)) {
+      return new Promise(resolve => {
+        let processed = 0;
+        const total = this._draft.files.length;
+        const ret = [];
+        this._draft.files.forEach(f => {
+          const path = AttachmentStore().pathForFile(f);
+          fs.access(path, fs.constants.R_OK, err => {
+            processed++;
+            if (!err) {
+              ret.push(f);
+            }
+            if (processed === total) {
+              this.updateAttachments(ret);
+              resolve();
+            }
+          });
+        });
+      });
+    } else {
+      return Promise.resolve();
+    }
+  };
 
   changeSetApplyChanges = changes => {
     if (this._destroyed) {
