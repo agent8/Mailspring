@@ -1,4 +1,3 @@
-import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
