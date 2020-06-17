@@ -1,7 +1,7 @@
 const React = require('react');
 const PropTypes = require('prop-types');
 const { RetinaImg, Flexbox, ConfigPropContainer } = require('mailspring-component-kit');
-const { AccountStore } = require('mailspring-exports');
+const { AccountStore, Utils } = require('mailspring-exports');
 const OnboardingActions = require('./onboarding-actions').default;
 
 // NOTE: Temporarily copied from preferences module
@@ -54,7 +54,7 @@ class InitialPreferencesProfileOptions extends React.Component {
     return (
       <div className="preferences">
         <div>
-          <p>2 of 3</p>
+          <p>2 of 2</p>
           <h1>Want to view profile images?</h1>
           <Flexbox direction="row" style={{ alignItems: 'center', width: 578 }}>
             {['show', 'hide'].map(mode => (
@@ -120,7 +120,11 @@ class InitialPreferencesProfilePage extends React.Component {
     } else {
       AppEnv.trackingEvent('Onboarding-Profile-hide');
     }
-    OnboardingActions.moveToPage('initial-preferences-imporove-data');
+    if (!Utils.needGDPR()) {
+      OnboardingActions.moveToPage('optin-trends-research');
+      return;
+    }
+    OnboardingActions.moveToPage('imporove-data');
   };
 }
 

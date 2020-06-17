@@ -45,7 +45,7 @@ const PageComponents = {
   'account-add-another': AddAnotherAccountPage,
   'initial-preferences': InitialPreferencesPage,
   'initial-preferences-profile': InitialPreferencesProfilePage,
-  'initial-preferences-imporove-data': InitialPreferencesImproveData,
+  'imporove-data': InitialPreferencesImproveData,
   'initial-done': InitialDonePage,
   'gdpr-terms': GdprTerms,
   'login-error': LoginErrorPage,
