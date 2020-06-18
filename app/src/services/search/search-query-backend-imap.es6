@@ -97,6 +97,9 @@ class IMAPSearchQueryFolderFinderVisitor extends SearchQueryExpressionVisitor {
   visitHasAttachment(/* node */) {
     this._result = TOP;
   }
+  visitSpecialCharacter(node) {
+    this._result = TOP;
+  }
 
   visitDate(node) {
     this._result = TOP;
@@ -188,6 +191,10 @@ class IMAPSearchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
       ['HEADER', 'Content-Type', 'multipart/mixed'],
       ['HEADER', 'Content-Type', 'multipart/related'],
     ];
+  }
+
+  visitSpecialCharacter(node) {
+    this._result = TOP;
   }
 }
 
