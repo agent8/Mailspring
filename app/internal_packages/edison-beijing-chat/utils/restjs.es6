@@ -332,8 +332,10 @@ export const getLogo = async email => {
 };
 
 function getLogoFromLocalCache(domain) {
-  if (domain === 'gmail.com' || domain === 'google.com') {
+  if (/\.?(gmail|google|googlemail)\.com$/.test(domain)) {
     return '../static/images/preferences/providers/account-logo-gmail.png';
+  } else if (/\.?(msn|outlook|microsoft)\.com$/.test(domain)) {
+    return '../static/images/preferences/providers/account-logo-outlook.png';
   }
 }
 
