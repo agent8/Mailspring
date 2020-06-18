@@ -12,6 +12,7 @@ import {
   DateQueryExpression,
   InQueryExpression,
   HasAttachmentQueryExpression,
+  SpecialCharacterQueryExpression,
 } from './search-query-ast';
 import { CategoryStore, FocusedPerspectiveStore } from 'mailspring-exports';
 var utf7 = require('utf7').imap;
@@ -380,7 +381,66 @@ const parseQueryWrapper = text => {
       result = new AndQueryExpression(exps[i], result);
     }
   }
+  result = handleSpecialCharacter(result);
   return result;
+};
+
+const handleSpecialCharacter = queryResult => {
+  function handleAllTextQueryList(query, texts = []) {
+    if (query instanceof AndQueryExpression) {
+      const andTexts = handleAllTextQueryList(query.e1, texts);
+      return handleAllTextQueryList(query.e2, andTexts);
+    } else if (query instanceof OrQueryExpression) {
+      const orTexts1 = handleAllTextQueryList(query.e1, texts);
+      const orTexts2 = handleAllTextQueryList(query.e2, texts);
+      return [...orTexts1, ...orTexts2];
+    } else if (query instanceof GenericQueryExpression) {
+      const str = query.text && query.text.token && query.text.token.s ? query.text.token.s : '';
+      if (texts.length) {
+        return texts.map(t => [...t, str]);
+      } else {
+        return [[str]];
+      }
+    }
+    return texts.map(t => [...t, '']);
+  }
+  const textList = handleAllTextQueryList(queryResult);
+
+  const hasSpecialCharacter = textList.filter(tokens => {
+    // if query is `a and subject: b and c and d or &`
+    // the textList is[["a", "", "c", "d"],["a", "", "c", "&"], ["a", "&"]]
+    // delete the list has ""
+    // then the result is [["a", "&"]]
+    const noHaveEmpty = tokens.every(token => token !== '');
+    // this list is like [["a"], ["c", "d"], ["a"], ["c", "&"]], we should find the list that
+    // some item in all special character
+    // the result is [["c", "&"]]
+    const someSpecialCharacter = tokens.some(token => isAllSpecialCharacter(token));
+    return noHaveEmpty && someSpecialCharacter;
+  });
+
+  let query = queryResult;
+  if (hasSpecialCharacter.length) {
+    const tokenList = hasSpecialCharacter.map(list => {
+      const token = new SearchQueryToken(`%${list.join('%')}%`);
+      const text = new TextQueryExpression(token);
+      return new SpecialCharacterQueryExpression(text);
+    });
+    for (let i = tokenList.length - 1; i >= 0; --i) {
+      query = new OrQueryExpression(tokenList[i], query);
+    }
+  }
+
+  return query;
+};
+
+const isAllSpecialCharacter = str => {
+  return (
+    str &&
+    str.split('').every(char => {
+      return /[^A-Za-z0-9]/.test(char) && char.codePointAt(0) < 128;
+    })
+  );
 };
 
 export default class SearchQueryParser {
