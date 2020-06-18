@@ -249,6 +249,11 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    XGMLabels: Attributes.Collection({
+      modelKey: 'XGMLabels',
+      queryable: true,
+      loadFromColumn: true,
+    }),
     files: Attributes.Collection({
       modelKey: 'files',
       queryable: true,
