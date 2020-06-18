@@ -50,6 +50,9 @@ class SearchQueryExpressionVisitor {
   visitHasAttachment(node) {
     throw new Error('Abstract function not implemented!', node);
   }
+  visitSpecialCharacter(node) {
+    throw new Error('Abstract function not implemented!', node);
+  }
 }
 
 class QueryExpression {
@@ -375,6 +378,28 @@ class HasAttachmentQueryExpression extends QueryExpression {
   }
 }
 
+class SpecialCharacterQueryExpression extends QueryExpression {
+  constructor(text) {
+    super();
+    this.text = text;
+  }
+
+  accept(visitor) {
+    visitor.visitSpecialCharacter(this);
+  }
+
+  _computeIsMatchCompatible() {
+    return false;
+  }
+
+  equals(other) {
+    if (!(other instanceof SpecialCharacterQueryExpression)) {
+      return false;
+    }
+    return this.text.equals(other.text);
+  }
+}
+
 /*
  * Intermediate representation for multiple match-compatible nodes. Used when
  * translating the initial query AST into the proper SQL-compatible query.
@@ -434,4 +459,5 @@ module.exports = {
   InQueryExpression,
   DateQueryExpression,
   HasAttachmentQueryExpression,
+  SpecialCharacterQueryExpression,
 };
