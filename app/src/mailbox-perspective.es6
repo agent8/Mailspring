@@ -383,9 +383,11 @@ export default class MailboxPerspective {
           accountId: category.accountId,
           path: category.path.replace('[Gmail]/', ''),
           displayName: category.displayName,
+          role: category.role,
         });
       } else {
         ret.push({
+          role: category.role,
           accountId: category.accountId,
           path: category.path,
           parentId: category.parentId,
