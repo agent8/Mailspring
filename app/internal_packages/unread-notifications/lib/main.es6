@@ -139,7 +139,7 @@ export class Notifier {
       case 'All':
         return true;
       case 'Important':
-        const isImportant = msg.labels.some(label => label.role === 'important');
+        const isImportant = msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Important');
         return isImportant;
       default:
         return true;
