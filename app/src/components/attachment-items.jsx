@@ -80,7 +80,7 @@ function AttachmentActionIcon(props) {
   } = props;
 
   const isRemovable = onRemoveAttachment != null && !disabled;
-  const actionIconName = isRemovable || isDownloading ? removeIcon : downloadIcon;
+  const actionIconName = isRemovable ? removeIcon : downloadIcon;
 
   const onClickActionIcon = event => {
     if (missing || isDownloading) {
@@ -89,9 +89,7 @@ function AttachmentActionIcon(props) {
     event.stopPropagation(); // Prevent 'onOpenAttachment'
     if (isRemovable) {
       onRemoveAttachment();
-    } else if (isDownloading && onAbortDownload != null) {
-      onAbortDownload();
-    } else if (!isDownloading && onDownloadAttachment != null) {
+    } else if (onDownloadAttachment != null) {
       onDownloadAttachment();
     }
   };
@@ -104,9 +102,7 @@ function AttachmentActionIcon(props) {
 
   return (
     <div className="file-action-icon" onClick={onClickActionIcon} style={fileActionIconStyle}>
-      {!isDownloading ? (
-        <RetinaImg isIcon={isIcon} style={style} name={actionIconName} mode={retinaImgMode} />
-      ) : null}
+      <RetinaImg isIcon={isIcon} style={style} name={actionIconName} mode={retinaImgMode} />
     </div>
   );
 }
@@ -163,7 +159,11 @@ export class AttachmentItem extends Component {
   };
 
   _canPreview() {
-    const { filePath, previewable } = this.props;
+    const { fileId, filePath, previewable } = this.props;
+    AttachmentStore.refreshAttachmentsState({
+      fileId: fileId,
+      filePath: filePath,
+    });
     return previewable && process.platform === 'darwin' && fs.existsSync(filePath);
   }
 
@@ -216,7 +216,6 @@ export class AttachmentItem extends Component {
         fileId: this.props.fileId,
         filePath: this.props.filePath,
       });
-      return;
     }
     if (this.props.isDownloading || this.props.missing) {
       MessageStore.fetchMissingAttachmentsByFileIds({
