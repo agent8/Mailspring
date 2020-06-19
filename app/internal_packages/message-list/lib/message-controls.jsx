@@ -560,7 +560,14 @@ export default class MessageControls extends React.Component {
     Actions.openPopover(this._renderTrackingPopup(), {
       disablePointer: true,
       direction: 'left',
-      originRect: originRect,
+      originRect: {
+        bottom: originRect.bottom - 149,
+        top: originRect.top + 149,
+        right: originRect.right - 38,
+        left: originRect.left + 38,
+        height: originRect.height,
+        width: originRect.width,
+      },
       className: 'remove-tracker-popover',
     });
   };
