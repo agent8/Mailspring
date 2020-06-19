@@ -419,7 +419,7 @@ const handleSpecialCharacter = queryResult => {
     return noHaveEmpty && someSpecialCharacter;
   });
 
-  let query = queryResult;
+  let query = delAllSpecialCharacterQuery(queryResult);
   if (hasSpecialCharacter.length) {
     const tokenList = hasSpecialCharacter.map(list => {
       const token = new SearchQueryToken(`%${list.join('%')}%`);
@@ -432,6 +432,47 @@ const handleSpecialCharacter = queryResult => {
   }
 
   return query;
+};
+
+const delAllSpecialCharacterQuery = query => {
+  function handleAllQuery(query) {
+    if (query instanceof AndQueryExpression) {
+      const e1 = handleAllQuery(query.e1);
+      const e2 = handleAllQuery(query.e2);
+      if (e1 && e2) {
+        return new AndQueryExpression(e1, e2);
+      } else if (e1 && !e2) {
+        return e1;
+      } else if (!e1 && e2) {
+        return e2;
+      }
+      return null;
+    } else if (query instanceof OrQueryExpression) {
+      const e1 = handleAllQuery(query.e1);
+      const e2 = handleAllQuery(query.e2);
+      if (e1 && e2) {
+        return new OrQueryExpression(e1, e2);
+      } else if (e1 && !e2) {
+        return e1;
+      } else if (!e1 && e2) {
+        return e2;
+      }
+      return null;
+    } else if (query instanceof GenericQueryExpression) {
+      const str = query.text && query.text.token && query.text.token.s ? query.text.token.s : '';
+      if (!str || isAllSpecialCharacter(str)) {
+        return null;
+      }
+    }
+    return query;
+  }
+  const queryResult = handleAllQuery(query);
+  if (queryResult) {
+    return queryResult;
+  }
+  const token = new SearchQueryToken('');
+  const text = new TextQueryExpression(token);
+  return new SubjectQueryExpression(text);
 };
 
 const isAllSpecialCharacter = str => {
