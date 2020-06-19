@@ -106,6 +106,9 @@ export default class Category extends Model {
   get displayName() {
     return Category.pathToDisplayName(this.name);
   }
+  get fullDisplayName() {
+    return utf7.imap.decode(this.name);
+  }
   static pathToDisplayName(pathString) {
     if (!pathString) {
       return '';

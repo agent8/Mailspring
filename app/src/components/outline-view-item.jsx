@@ -276,8 +276,8 @@ class OutlineViewItem extends Component {
     this._runCallback('onDelete');
   };
 
-  _onEdited = value => {
-    this._runCallback('onEdited', value);
+  _onEdited = (value, originalText) => {
+    this._runCallback('onEdited', value, originalText);
   };
 
   _onEdit = () => {
@@ -300,7 +300,7 @@ class OutlineViewItem extends Component {
         defaultId: 0,
       }).then(response => {
         if (response && response.response === 0) {
-          this._onEdited(value);
+          this._onEdited(value, this.state.originalText);
         }
         this._clearEditingState();
       });
@@ -314,7 +314,7 @@ class OutlineViewItem extends Component {
       this._clearEditingState(event);
     }
     if (_.includes(['Enter', 'Return'], event.key)) {
-      this._onEdited(event.target.value);
+      this._onEdited(event.target.value, this.state.originalText);
       this._clearEditingState(event);
     }
   };
