@@ -18,7 +18,7 @@ export const DEFAULT_FONT_OPTIONS = [
   { name: 'Huge', value: 6 },
 ];
 
-export const DEFAULT_FONT_FACE = 'sans-serif';
+export const DEFAULT_FONT_FACE = AppEnv.config.get('core.fontface');
 export const DEFAULT_FONT_FACE_OPTIONS = [
   { name: 'Sans Serif', value: 'sans-serif' },
   { name: 'Serif', value: 'serif' },
@@ -30,7 +30,6 @@ export const DEFAULT_FONT_FACE_OPTIONS = [
   { name: 'Trebuchet MS', value: 'trebuchet ms' },
   { name: 'Verdana', value: 'verdana' },
 ];
-
 const PT_TO_SIZE = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 7];
 
 let plugins = null;
@@ -131,8 +130,8 @@ export const MARK_CONFIG = {
       return typeof v === 'string' ? (
         <font style={{ fontSize: v }}>{children}</font>
       ) : (
-        <font size={v}>{children}</font>
-      );
+          <font size={v}>{children}</font>
+        );
     },
   },
   face: {

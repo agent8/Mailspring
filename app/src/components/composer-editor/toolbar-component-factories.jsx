@@ -133,7 +133,7 @@ export function BuildToggleButton({
         <button
           className={`${className} ${active ? 'active' : ''} ${
             hideWhenCrowded ? 'hide-when-crowded' : ''
-          }`}
+            }`}
           onMouseDown={onMouseDown}
         >
           <RetinaImg
@@ -149,7 +149,7 @@ export function BuildToggleButton({
       <button
         className={`${className} ${active ? 'active' : ''} ${
           hideWhenCrowded ? 'hide-when-crowded' : ''
-        }`}
+          }`}
         onMouseDown={onMouseDown}
       >
         <i title={type} className={iconClass} />
@@ -291,10 +291,10 @@ export function BuildMarkButtonWithValuePicker(
               <i className={config.iconClassOn} />
             </button>
           ) : (
-            <button onMouseDown={this.onPrompt}>
-              <i className={config.iconClassOff} />
-            </button>
-          )}
+              <button onMouseDown={this.onPrompt}>
+                <i className={config.iconClassOff} />
+              </button>
+            )}
           {/*{expanded && (*/}
           {/*  <div className="dropdown">*/}
           {/*    <input*/}
@@ -446,11 +446,13 @@ export function BuildFontSizePicker(config) {
 export function BuildFontPicker(config) {
   return class FontPicker extends React.Component {
     _onSetValue = e => {
+      AppEnv.config.set('core.fontface', e.target.value);
       const { onChange, value } = this.props;
       let markValue = e.target.value !== config.default ? e.target.value : null;
       if (!(typeof config.options[0].value === 'string')) {
         markValue = markValue / 1;
       }
+
       onChange(applyValueForMark(value, config.type, markValue));
     };
 
