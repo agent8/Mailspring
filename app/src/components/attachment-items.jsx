@@ -160,10 +160,12 @@ export class AttachmentItem extends Component {
 
   _canPreview() {
     const { fileId, filePath, previewable } = this.props;
-    AttachmentStore.refreshAttachmentsState({
-      fileId: fileId,
-      filePath: filePath,
-    });
+    if (previewable) {
+      AttachmentStore.refreshAttachmentsState({
+        fileId: fileId,
+        filePath: filePath,
+      });
+    }
     return previewable && process.platform === 'darwin' && fs.existsSync(filePath);
   }
 
