@@ -90,9 +90,9 @@ class FocusedPerspectiveStore extends MailspringStore {
         this._setPerspective(MailboxPerspective.forCategories(categories));
       },
       'navigation:go-to-chat': () => this.gotoChat(),
-      'navigation:go-to-contacts': () => {}, // TODO,
-      'navigation:go-to-tasks': () => {}, // TODO,
-      'navigation:go-to-label': () => {}, // TODO,
+      // 'navigation:go-to-contacts': () => {}, // TODO,
+      // 'navigation:go-to-tasks': () => {}, // TODO,
+      // 'navigation:go-to-label': () => {}, // TODO,
     });
   }
   gotoOutbox = () => {
