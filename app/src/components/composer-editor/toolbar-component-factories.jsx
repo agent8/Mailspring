@@ -445,7 +445,19 @@ export function BuildFontSizePicker(config) {
 
 export function BuildFontPicker(config) {
   return class FontPicker extends React.Component {
+    constructor(props) {
+      super(props);
+      console.log("DADA");
+      console.log(config);
+      console.log(AppEnv.config.get('core.fontface'))
+      this.state = {
+        default: AppEnv.config.get('core.fontface')
+      }
+    }
     _onSetValue = e => {
+      this.setState({
+        default: e.target.value
+      })
       AppEnv.config.set('core.fontface', e.target.value);
       const { onChange, value } = this.props;
       let markValue = e.target.value !== config.default ? e.target.value : null;
@@ -464,7 +476,7 @@ export function BuildFontPicker(config) {
     }
 
     render() {
-      const value = getActiveValueForMark(this.props.value, config.type) || config.default;
+      const value = getActiveValueForMark(this.props.value, config.type) || this.state.default;
       const displayed = config.convert(value);
 
       return (
