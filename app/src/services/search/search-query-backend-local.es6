@@ -7,6 +7,7 @@ import {
   StarredStatusQueryExpression,
   HasAttachmentQueryExpression,
   MatchQueryExpression,
+  SpecialCharacterQueryExpression,
 } from './search-query-ast';
 import { DateUtils } from 'mailspring-exports';
 
@@ -83,6 +84,8 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
   visitHasAttachment(node) {
     this._assertIsMatchCompatible(node);
   }
+
+  visitSpecialCharacter(node) {}
 }
 
 /*
@@ -160,6 +163,10 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
   visitHasAttachment(/* node */) {
     this._result = new HasAttachmentQueryExpression();
   }
+
+  visitSpecialCharacter(node) {
+    this._result = new SpecialCharacterQueryExpression(node.text);
+  }
 }
 
 /*
@@ -225,6 +232,11 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
   visitHasAttachment(/* node */) {
     this._result = `(\`${this._className}\`.\`hasAttachments\` = 1)`;
+  }
+
+  visitSpecialCharacter(node) {
+    const text = node.text.token.s;
+    this._result = `(\`${this._className}\`.\`subject\` like '${text}')`;
   }
 
   visitDate(node) {

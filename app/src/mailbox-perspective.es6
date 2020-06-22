@@ -383,9 +383,11 @@ export default class MailboxPerspective {
           accountId: category.accountId,
           path: category.path.replace('[Gmail]/', ''),
           displayName: category.displayName,
+          role: category.role,
         });
       } else {
         ret.push({
+          role: category.role,
           accountId: category.accountId,
           path: category.path,
           parentId: category.parentId,
@@ -1198,9 +1200,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
       ];
       const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
       if (enableFocusedInboxKey) {
-        const notOtherCategories = Category.inboxNotOtherCategorys().map(
-          categoryNum => `${categoryNum}`
-        );
+        const notOtherCategories = Category.inboxNotOtherCategorys({ toString: true });
         conditions.push(
           JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories)
         );
@@ -1398,9 +1398,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
       }
     });
 
-    const notOtherCategories = Category.inboxNotOtherCategorys().map(
-      categoryNum => `${categoryNum}`
-    );
+    const notOtherCategories = Category.inboxNotOtherCategorys({ toString: true });
 
     const query = DatabaseStore.findAll(Thread)
       .where(

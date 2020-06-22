@@ -2,6 +2,12 @@
 import utf7 from 'utf7';
 import Model from './model';
 import Attributes from '../attributes';
+import {
+  InboxCategoryStates,
+  inboxFocusedCategories,
+  inboxNotOtherCategories,
+  inboxOtherCategories,
+} from '../../constant';
 
 // We look for a few standard categories and display them in the Mailboxes
 // portion of the left sidebar. Note that these may not all be present on
@@ -100,6 +106,9 @@ export default class Category extends Model {
   get displayName() {
     return Category.pathToDisplayName(this.name);
   }
+  get fullDisplayName() {
+    return utf7.imap.decode(this.name);
+  }
   static pathToDisplayName(pathString) {
     if (!pathString) {
       return '';
@@ -187,42 +196,13 @@ export default class Category extends Model {
     Hidden: 'hidden',
   };
 
-  static InboxCategoryState = {
-    MsgNone: -1, //message not in INBOX
-    MsgOther: 0,
-    MsgCandidate: 1,
-    MsgPrimary: 2,
-    MsgPrimaryAndOther: 3,
-  };
+  static InboxCategoryState = InboxCategoryStates;
 
-  static inboxFocusedCategorys(strict = false) {
-    const focusedCategories = [
-      Category.InboxCategoryState.MsgCandidate,
-      Category.InboxCategoryState.MsgPrimary,
-    ];
-    if (strict) {
-      return focusedCategories;
-    }
+  static inboxFocusedCategorys = inboxFocusedCategories;
 
-    return [...focusedCategories, Category.InboxCategoryState.MsgPrimaryAndOther];
-  }
+  static inboxOtherCategorys = inboxOtherCategories;
 
-  static inboxOtherCategorys(strict = false) {
-    const otherCategories = [Category.InboxCategoryState.MsgOther];
-    if (strict) {
-      return otherCategories;
-    }
-
-    return [...otherCategories, Category.InboxCategoryState.MsgPrimaryAndOther];
-  }
-
-  static inboxNotOtherCategorys() {
-    const isStrictOtherCategories = Category.inboxOtherCategorys(true);
-    const notOtherCategories = Object.values(Category.InboxCategoryState).filter(item => {
-      return !isStrictOtherCategories.some(other => item === other);
-    });
-    return notOtherCategories;
-  }
+  static inboxNotOtherCategorys = inboxNotOtherCategories;
 
   static StandardRoles = Object.keys(StandardRoleMap);
   static LockedRoles = Object.keys(LockedRoleMap);

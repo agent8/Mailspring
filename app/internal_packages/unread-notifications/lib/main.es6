@@ -137,9 +137,12 @@ export class Notifier {
       case 'None':
         return false;
       case 'All':
-        return true;
+        const isInbox =
+          (msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Inbox')) ||
+          msg.labels.some(label => label.role === 'inbox'); // for Gmail we check the XGMLabels, for other providers's label role
+        return isInbox;
       case 'Important':
-        const isImportant = msg.labels.some(label => label.role === 'important');
+        const isImportant = msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Important');
         return isImportant;
       default:
         return true;
@@ -205,6 +208,8 @@ export class Notifier {
       onActivate: ({ response, activationType }) => {
         if (activationType === 'replied' && response && typeof response === 'string') {
           Actions.sendQuickReply({ thread, message }, response);
+          // DC-2078:Should not open email detail after reply from notification
+          return;
         } else {
           AppEnv.displayWindow();
         }
@@ -214,7 +219,8 @@ export class Notifier {
           return;
         }
         Actions.ensureCategoryIsFocused('inbox', thread.accountId, true);
-        Actions.setFocus({ collection: 'thread', item: thread });
+        // DC-2073: Fail to open email from notification when read panel off
+        setImmediate(() => Actions.setFocus({ collection: 'thread', item: thread }));
       },
     });
 

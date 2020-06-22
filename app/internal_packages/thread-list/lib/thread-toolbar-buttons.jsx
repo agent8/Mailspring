@@ -86,23 +86,34 @@ const isSameAccount = items => {
   return true;
 };
 
-const nextActionForRemoveFromView = source => {
+const nextActionForRemoveFromView = (source, affectedThreads) => {
   if (!AppEnv.isMainWindow()) {
     AppEnv.logDebug('Not main window, no next action for remove from view');
     return;
   }
-  const topSheet = WorkspaceStore.topSheet();
-  const layoutMode = WorkspaceStore.layoutMode();
-  const ignoreNextActions =
-    topSheet && (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
-  const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
-  AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
-  if (nextAction === 'next' && !ignoreNextActions) {
-    AppEnv.commands.dispatch('core:show-next');
-  } else if (nextAction === 'previous' && !ignoreNextActions) {
-    AppEnv.commands.dispatch('core:show-previous');
-  } else {
-    Actions.popSheet({ reason: source });
+  const focusedThread = FocusedContentStore.focused('thread');
+  if (focusedThread) {
+    const affectedThreadIds = [];
+    affectedThreads.forEach(t => {
+      if (t && t.id) {
+        affectedThreadIds.push(t.id);
+      }
+    });
+    if (affectedThreadIds.includes(focusedThread.id)) {
+      const topSheet = WorkspaceStore.topSheet();
+      const layoutMode = WorkspaceStore.layoutMode();
+      const ignoreNextActions =
+        topSheet && (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
+      const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
+      AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
+      if (nextAction === 'next' && !ignoreNextActions) {
+        AppEnv.commands.dispatch('core:show-next');
+      } else if (nextAction === 'previous' && !ignoreNextActions) {
+        AppEnv.commands.dispatch('core:show-previous');
+      } else {
+        Actions.popSheet({ reason: source });
+      }
+    }
   }
 };
 
@@ -111,13 +122,14 @@ export function ArchiveButton(props) {
     _onArchive(event, threadSelectionScope(props, props.selection));
   };
   const _onArchive = (event, threads) => {
+    const archivingThreads = Array.isArray(threads) ? threads : props.items;
     const tasks = TaskFactory.tasksForArchiving({
-      threads: Array.isArray(threads) ? threads : props.items,
+      threads: archivingThreads,
       source: 'Toolbar Button: Thread List',
       currentPerspective: FocusedPerspectiveStore.current(),
     });
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('ToolbarButton:ThreadList:archive');
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:archive', archivingThreads);
     if (event) {
       event.stopPropagation();
     }
@@ -195,7 +207,7 @@ export function TrashButton(props) {
     });
     const tasks = [...moveTasks, ...expungeTasks];
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('Toolbar Button: Search');
+    nextActionForRemoveFromView('Toolbar Button: Search', threads);
     if (event) {
       event.stopPropagation();
     }
@@ -209,8 +221,9 @@ export function TrashButton(props) {
     return;
   };
   const _onRemove = (event, threads) => {
+    const affectedThreads = Array.isArray(threads) ? threads : props.items;
     const tasks = TaskFactory.tasksForMovingToTrash({
-      threads: Array.isArray(threads) ? threads : props.items,
+      threads: affectedThreads,
       currentPerspective: FocusedPerspectiveStore.current(),
       source: 'Toolbar Button: Thread List',
     });
@@ -229,7 +242,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('ToolbarButton:ThreadList:remove');
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:remove', affectedThreads);
     if (event) {
       event.stopPropagation();
     }
@@ -244,16 +257,20 @@ export function TrashButton(props) {
   };
   const _onExpunge = (event, threads) => {
     let messages = [];
+    const missingMessagesThreads = [];
     if (!Array.isArray(threads)) {
       threads = props.items;
     }
     threads.forEach(thread => {
       if (Array.isArray(thread.__messages) && thread.__messages.length > 0) {
         messages = messages.concat(thread.__messages);
+      } else {
+        missingMessagesThreads.push(thread);
       }
     });
     const tasks = TaskFactory.tasksForExpungingThreadsOrMessages({
       messages: messages,
+      threads: missingMessagesThreads,
       source: 'Toolbar Button: Thread List',
     });
     if (Array.isArray(tasks) && tasks.length > 0) {
@@ -271,7 +288,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('ToolbarButton:ThreadList:expunge');
+    nextActionForRemoveFromView('ToolbarButton:ThreadList:expunge', threads);
     if (event) {
       event.stopPropagation();
     }
@@ -419,13 +436,14 @@ export function MarkAsSpamButton(props) {
     _onMarkAsSpam(event, threadSelectionScope(props, props.selection));
   };
   const _onMarkAsSpam = (event, threads) => {
+    const affectedThreads = Array.isArray(threads) ? threads : props.items;
     const tasks = TaskFactory.tasksForMarkingAsSpam({
-      threads: Array.isArray(threads) ? threads : props.items,
+      threads: affectedThreads,
       source: 'Toolbar Button: Thread List',
       currentPerspective: FocusedPerspectiveStore.current(),
     });
     Actions.queueTasks(tasks);
-    Actions.popSheet({ reason: 'ToolbarButton:MarkAsSpamButton:Spam' });
+    nextActionForRemoveFromView('ToolbarButton:MarkAsSpamButton:Spam', affectedThreads);
     if (event) {
       event.stopPropagation();
     }
@@ -594,7 +612,7 @@ ToggleStarredButton.containerRequired = false;
 export function ToggleUnreadButton(props) {
   const _onClick = event => {
     const targetUnread = props.items.every(t => t.unread === false);
-    _onChangeUnread(targetUnread);
+    _onChangeUnread(targetUnread, null, 'Toolbar Button:onClick:Thread List');
     if (event) {
       event.stopPropagation();
     }
@@ -602,18 +620,22 @@ export function ToggleUnreadButton(props) {
   };
 
   const _onShortcutChangeUnread = targetUnread => {
-    _onChangeUnread(targetUnread, threadSelectionScope(props, props.selection));
+    _onChangeUnread(
+      targetUnread,
+      threadSelectionScope(props, props.selection),
+      'Toolbar Button:Shortcut:Thread List'
+    );
   };
 
-  const _onChangeUnread = (targetUnread, threads) => {
+  const _onChangeUnread = (targetUnread, threads, source = 'Toolbar Button: Thread List') => {
     Actions.queueTasks(
       TaskFactory.taskForSettingUnread({
         threads: Array.isArray(threads) ? threads : props.items,
         unread: targetUnread,
-        source: 'Toolbar Button: Thread List',
+        source,
       })
     );
-    Actions.popSheet({ reason: 'ToolbarButton:ToggleUnread:changeUnread' });
+    // Actions.popSheet({ reason: 'ToolbarButton:ToggleUnread:changeUnread' });
     if (props.selection) {
       props.selection.clear();
     }

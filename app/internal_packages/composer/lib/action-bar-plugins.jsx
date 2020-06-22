@@ -10,7 +10,6 @@ export default class ActionBarPlugins extends React.Component {
   static propTypes = {
     draft: PropTypes.object,
     session: PropTypes.object,
-    isValidDraft: PropTypes.func,
   };
 
   constructor(props) {
@@ -78,7 +77,6 @@ export default class ActionBarPlugins extends React.Component {
             threadId: this.props.draft.threadId,
             messageId: this.props.draft.id,
             session: this.props.session,
-            isValidDraft: this.props.isValidDraft,
           }}
         />
       </span>

@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import _ from 'underscore';
-import { Flexbox } from 'mailspring-component-kit';
+import { Flexbox, RetinaImg } from 'mailspring-component-kit';
 import fs from 'fs';
 import displayedKeybindings from './displayed-keybindings';
 
@@ -161,6 +161,29 @@ export default class CommandKeybinding extends React.Component {
     AppEnv.keymaps.resumeAllKeymaps();
   };
 
+  _clearBinding = () => {
+    const keymapPath = AppEnv.keymaps.getUserKeymapPath();
+    let keymaps = {};
+    try {
+      const exists = fs.existsSync(keymapPath);
+      if (exists) {
+        keymaps = JSON.parse(fs.readFileSync(keymapPath));
+      }
+    } catch (err) {
+      AppEnv.reportError(err);
+    }
+
+    keymaps[this.props.command] = 'None';
+    try {
+      fs.writeFileSync(keymapPath, JSON.stringify(keymaps, null, 2));
+    } catch (err) {
+      AppEnv.showErrorDialog(
+        `Nylas was unable to modify your keymaps at ${keymapPath}. ${err.toString()}`
+      );
+    }
+    this._onEdit();
+  };
+
   _onKey = event => {
     if (!this.state.editing) {
       return;
@@ -212,6 +235,14 @@ export default class CommandKeybinding extends React.Component {
         <div className="col-left shortcut-name">{this.props.label}</div>
         <div className="col-right">
           <div className="values">{value}</div>
+          <RetinaImg
+            isIcon
+            name="close.svg"
+            className="clear"
+            mode={RetinaImg.Mode.ContentIsMask}
+            style={{ width: 12, height: 12, fontSize: '12px' }}
+            onClick={this._clearBinding}
+          />
         </div>
       </Flexbox>
     );
