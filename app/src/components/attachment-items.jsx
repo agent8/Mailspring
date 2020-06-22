@@ -134,6 +134,13 @@ export class AttachmentItem extends Component {
 
   componentDidMount() {
     this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+    const { fileId, filePath, previewable } = this.props;
+    if (previewable) {
+      AttachmentStore.refreshAttachmentsState({
+        fileId: fileId,
+        filePath: filePath,
+      });
+    }
   }
 
   componentWillUnmount() {
@@ -159,13 +166,7 @@ export class AttachmentItem extends Component {
   };
 
   _canPreview() {
-    const { fileId, filePath, previewable } = this.props;
-    if (previewable) {
-      AttachmentStore.refreshAttachmentsState({
-        fileId: fileId,
-        filePath: filePath,
-      });
-    }
+    const { filePath, previewable } = this.props;
     return previewable && process.platform === 'darwin' && fs.existsSync(filePath);
   }
 
