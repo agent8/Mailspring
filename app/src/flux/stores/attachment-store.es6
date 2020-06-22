@@ -1,4 +1,3 @@
-import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
@@ -1693,53 +1692,93 @@ class AttachmentStore extends MailspringStore {
     this._assertIdPresent(messageId);
     try {
       const total = filePaths.length;
-      const createdFiles = [];
-      filePaths.forEach(async filePath => {
-        const filename = path.basename(filePath);
-        const stats = await this._getFileStats(filePath);
-        if (stats.isDirectory()) {
-          throw new Error(`${filename} is a directory. Try compressing it and attaching it again.`);
-        } else if (stats.size > 25 * 1000000) {
-          AppEnv.trackingEvent('largeAttachmentSize');
-          throw new Error(`${filename} cannot be attached because it is larger than 25MB.`);
-        }
-
-        const file = new File({
-          id: `local-${uuid()}`,
-          messageId,
-          accountId,
-          filename: filename,
-          size: stats.size,
-          contentType: null,
-          contentId: inline ? Utils.generateContentId() : null,
-          isInline: inline,
-        });
-        const dstPath = this.pathForFile(file);
-        const tmpData = {
-          accountId,
-          messageId,
-          originalPath: filePath,
-          dstFile: { fileId: file.id, filePath: dstPath },
-        };
-        if (AppEnv.isMainWindow()) {
-          this.copyAttachmentToDraft(tmpData);
-        } else {
-          Actions.syncAttachmentToMain(tmpData);
-        }
-        // await mkdirpAsync(path.dirname(dstPath));
-        // await this._copyToInternalPath(filePath, dstPath);
-
-        await this._applySessionChanges(messageId, files => {
-          if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
+      // const createdFiles = [];
+      const newFiles = [];
+      let processed = 0;
+      const bulkUpdateDraftFiles = () => {
+        const newFilesSize = newFiles.reduce((c, f) => c + f.size, 0);
+        this._applySessionChanges(messageId, files => {
+          if (files.reduce((c, f) => c + f.size, 0) + newFilesSize >= 25 * 1000000) {
             AppEnv.trackingEvent('largeAttachmentSize');
             throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
           }
-          createdFiles.push(file);
-          return files.concat([file]);
-        });
-        if (createdFiles.length >= total) {
-          onCreated(createdFiles);
-        }
+          return files.concat(newFiles);
+        })
+          .then(() => {
+            onCreated(newFiles);
+          })
+          .catch(e => {
+            AppEnv.showErrorDialog({
+              title: 'Attachments not added',
+              message: e.message,
+            });
+          });
+      };
+      filePaths.forEach(filePath => {
+        const filename = path.basename(filePath);
+        this._getFileStats(filePath)
+          .then(stats => {
+            if (stats.isDirectory()) {
+              throw new Error(
+                `${filename} is a directory. Try compressing it and attaching it again.`
+              );
+            } else if (stats.size > 25 * 1000000) {
+              AppEnv.trackingEvent('largeAttachmentSize');
+              throw new Error(`${filename} cannot be attached because it is larger than 25MB.`);
+            }
+            const file = new File({
+              id: `local-${uuid()}`,
+              messageId,
+              accountId,
+              filename: filename,
+              size: stats.size,
+              contentType: null,
+              contentId: inline ? Utils.generateContentId() : null,
+              isInline: inline,
+            });
+            const dstPath = this.pathForFile(file);
+            const tmpData = {
+              accountId,
+              messageId,
+              originalPath: filePath,
+              dstFile: { fileId: file.id, filePath: dstPath },
+            };
+            if (AppEnv.isMainWindow()) {
+              this.copyAttachmentToDraft(tmpData);
+            } else {
+              Actions.syncAttachmentToMain(tmpData);
+            }
+            processed++;
+            newFiles.push(file);
+            if (processed === total) {
+              bulkUpdateDraftFiles();
+              if (newFiles.length < total) {
+                const num = total - newFiles.length;
+                AppEnv.showErrorDialog({
+                  title: 'Not all attachments are added',
+                  message: `${total - newFiles.length} attachment ${
+                    num > 1 ? 's are' : ''
+                  } not added`,
+                });
+              }
+            }
+          })
+          .catch(e => {
+            processed++;
+            if (processed === total) {
+              bulkUpdateDraftFiles();
+              if (newFiles.length < total) {
+                const num = total - newFiles.length;
+                AppEnv.showErrorDialog({
+                  title: 'Not all attachments are added',
+                  message: `${total - newFiles.length} attachment ${
+                    num > 1 ? 's are' : ''
+                  } not added`,
+                });
+              }
+            }
+            AppEnv.logError(e);
+          });
       });
     } catch (err) {
       AppEnv.logError(err);

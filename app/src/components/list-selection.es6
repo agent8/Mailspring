@@ -121,12 +121,15 @@ export default class ListSelection {
     }
   }
 
-  removeItemsNotMatching(matchers) {
+  removeItemsNotMatching(matchers, inboxCategories = null) {
     const count = this._items.length;
     this._items = this._items.filter(t => {
       let matching = t.matches(matchers);
       if (!matching && !t.unread) {
         matching = Array.isArray(RecentlyReadStore().ids) && RecentlyReadStore().ids.includes(t.id);
+        if (matching && Array.isArray(inboxCategories) && t.hasOwnProperty('inboxCategory')) {
+          matching = inboxCategories.includes(`${t.inboxCategory}`);
+        }
       }
       return matching;
     });

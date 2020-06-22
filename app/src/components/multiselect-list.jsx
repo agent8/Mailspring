@@ -73,7 +73,10 @@ class MultiselectList extends React.Component {
       if (!(item instanceof Node)) {
         return;
       }
-      if (FocusedContentStore._keyboardSource === 'thread list mouse move') {
+      if (
+        FocusedContentStore._keyboardSource === 'thread list mouse move' &&
+        WorkspaceStore.layoutMode() === 'list'
+      ) {
         return;
       }
       this.refs.list.scrollTo(item);

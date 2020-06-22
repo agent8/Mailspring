@@ -99,7 +99,7 @@ class InitialPreferencesOptions extends React.Component {
     return (
       <div className="preferences">
         <div>
-          <p>1 of 3</p>
+          <p>1 of 2</p>
           <h1>How do you want to view your inbox?</h1>
           {/* <p>
             This will be the default view for your

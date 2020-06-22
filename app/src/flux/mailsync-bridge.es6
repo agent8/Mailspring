@@ -826,8 +826,8 @@ export default class MailsyncBridge {
           `Primary key ${construct.pseudoPrimaryJsKey} have no value for class ${construct.name}`
         );
       }
+      const parsedModels = [];
       const parseQueryPromises = (models, index) => {
-        const parsedModels = [];
         models.forEach(model => {
           if (!model) {
             return;
@@ -862,24 +862,6 @@ export default class MailsyncBridge {
             parsedModels.push(model);
           }
         });
-        if (parsedModels.length === 0 && index === promises.length - 1) {
-          return;
-        }
-        // dispatch the message to other windows
-        ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
-          type,
-          modelClass,
-          modelJSONs: parsedModels.map(m => m.toJSON()),
-          processAccountId: accountId,
-        });
-        this._onIncomingChangeRecord(
-          new DatabaseChangeRecord({
-            type,
-            objectClass: modelClass,
-            objects: parsedModels,
-            processAccountId: accountId,
-          })
-        );
       };
       if (promises.length > 0) {
         Promise.all(promises).then(queries => {
@@ -890,6 +872,24 @@ export default class MailsyncBridge {
           } else {
             parseQueryPromises(queries[0], 0);
           }
+          if (parsedModels.length === 0) {
+            return;
+          }
+          // dispatch the message to other windows
+          ipcRenderer.send('mailsync-bridge-rebroadcast-to-all', {
+            type,
+            modelClass,
+            modelJSONs: parsedModels.map(m => m.toJSON()),
+            processAccountId: accountId,
+          });
+          this._onIncomingChangeRecord(
+            new DatabaseChangeRecord({
+              type,
+              objectClass: modelClass,
+              objects: parsedModels,
+              processAccountId: accountId,
+            })
+          );
         });
       }
     }
@@ -935,13 +935,25 @@ export default class MailsyncBridge {
     if (nativeReportTask instanceof NativeReportTask) {
       if (nativeReportTask.level === NativeReportTask.errorLevel.info) {
         console.log(nativeReportTask);
-        AppEnv.reportLog(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportLog(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { noAppConfig: true }
+        );
       } else if (nativeReportTask.level === NativeReportTask.errorLevel.warning) {
         console.warn(nativeReportTask);
-        AppEnv.reportWarning(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportWarning(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { noAppConfig: true }
+        );
       } else {
         console.error(nativeReportTask);
-        AppEnv.reportError(new Error(nativeReportTask.key), { errorData: nativeReportTask });
+        AppEnv.reportError(
+          new Error(nativeReportTask.key),
+          { errorData: nativeReportTask },
+          { noAppConfig: true }
+        );
       }
     }
   };
@@ -962,10 +974,12 @@ export default class MailsyncBridge {
           this._uploadNativeReport(task);
           continue;
         }
-        if (task.status !== Task.Status.Complete) {
+        if (task.status !== Task.Status.Complete && task.status !== Task.Status.Cancelled) {
           continue;
         }
-        if (task.error != null) {
+        if (task.status === Task.Status.Cancelled) {
+          task.onCancelled();
+        } else if (task.error != null) {
           task.onError(task.error);
           this._recordErrorToConsole(task);
         } else {
@@ -1122,7 +1136,6 @@ export default class MailsyncBridge {
       this.sendMessageToAccount(accountId, {
         type: 'need-attachments',
         ids: ids,
-        needProgress: true,
         source,
       });
     }

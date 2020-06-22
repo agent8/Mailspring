@@ -24,7 +24,6 @@ class SendActionButton extends React.Component {
 
   static propTypes = {
     draft: PropTypes.object,
-    isValidDraft: PropTypes.func,
     sendActions: PropTypes.array,
     disabled: PropTypes.bool,
   };
@@ -130,27 +129,22 @@ class SendActionButton extends React.Component {
   };
 
   _onSendWithAction = (sendAction, disableDraftCheck = false, noDelay = false) => {
-    if (
-      (disableDraftCheck || this.props.isValidDraft()) &&
-      !this.state.isSending &&
-      !this._sendButtonTimer
-    ) {
+    if (!this.state.isSending && !this._sendButtonTimer) {
       this._timoutButton();
       this._delayShowLoading();
       this.setState({ isSending: true });
-      if (AppEnv.config.get('core.sending.sounds')) {
-        SoundRegistry.playSound('hit-send');
-      }
       if (noDelay) {
         Actions.sendDraft(this.props.draft.id, {
           actionKey: sendAction.configKey,
           delay: 0,
           source: 'No Delay',
+          disableDraftCheck,
         });
       } else {
         Actions.sendDraft(this.props.draft.id, {
           actionKey: sendAction.configKey,
           source: 'User Trigger',
+          disableDraftCheck,
         });
       }
     }

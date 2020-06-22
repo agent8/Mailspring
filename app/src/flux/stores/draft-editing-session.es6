@@ -1,3 +1,4 @@
+import fs from 'fs';
 import EventEmitter from 'events';
 import MailspringStore from 'mailspring-store';
 import { Conversion } from '../../components/composer-editor/composer-support';
@@ -19,7 +20,11 @@ import RestoreDraftTask from '../tasks/restore-draft-task';
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
 let DraftStore = null;
-
+let attachmentStore = null;
+const AttachmentStore = () => {
+  attachmentStore = attachmentStore || require('./attachment-store').default;
+  return attachmentStore;
+};
 /**
  Public: As the user interacts with the draft, changes are accumulated in the
  DraftChangeSet associated with the store session.
@@ -500,10 +505,18 @@ export default class DraftEditingSession extends MailspringStore {
   validateDraftForChangeAccount() {
     const warnings = [];
     const errors = [];
-    if (this._draft.waitingForAttachment) {
-      warnings.push(`Attachments are still processing`);
-    }
-    return { errors, warnings };
+    return new Promise(resolve => {
+      if (this._draft) {
+        this._draft.missingAttachments().then(ret => {
+          if (ret && ret.totalMissing().length > 0) {
+            warnings.push(`Attachments are still processing`);
+          }
+          resolve({ errors, warnings });
+        });
+      } else {
+        resolve({ errors, warnings });
+      }
+    });
   }
 
   validateDraftForSending() {
@@ -511,9 +524,6 @@ export default class DraftEditingSession extends MailspringStore {
     const errors = [];
     const allRecipients = [].concat(this._draft.to, this._draft.cc, this._draft.bcc);
     const hasAttachment = Array.isArray(this._draft.files) && this._draft.files.length > 0;
-    if (this._draft.waitingForAttachment) {
-      warnings.push(`Attachments are still processing`);
-    }
 
     const allNames = [].concat(Utils.commonlyCapitalizedSalutations);
     let unnamedRecipientPresent = false;
@@ -545,7 +555,7 @@ export default class DraftEditingSession extends MailspringStore {
     }
 
     if (errors.length > 0) {
-      return { errors, warnings };
+      return Promise.resolve({ errors, warnings });
     }
 
     if (this._draft.subject.length === 0) {
@@ -587,44 +597,54 @@ export default class DraftEditingSession extends MailspringStore {
       }
       warnings.push(...extension.warningsForSending({ draft: this._draft }));
     }
-
-    return { errors, warnings };
+    return new Promise(resolve => {
+      if (this._draft) {
+        this._draft.missingAttachments().then(ret => {
+          if (ret && ret.totalMissing().length > 0) {
+            warnings.push(`Attachments are still processing`);
+          }
+          resolve({ errors, warnings });
+        });
+      } else {
+        resolve({ errors, warnings });
+      }
+    });
   }
 
   _isDraftMissingAttachments = () => {
-    if (typeof this._draft.missingAttachments !== 'function') {
-      console.error('missing attachments is not a function');
-      return;
-    }
-    this._draft.missingAttachments().then(missingAttachments => {
-      if (!this) {
-        return;
-      }
-      if (!this._draft) {
-        return;
-      }
-      if (this._destroyed) {
-        return;
-      }
-      let totalMissing =
-        missingAttachments.inline.needToDownload.length +
-        missingAttachments.inline.downloading.length +
-        missingAttachments.normal.needToDownload.length +
-        missingAttachments.normal.downloading.length;
-      if (totalMissing > 0) {
-        if (!this._draft.waitingForAttachment) {
-          this._draft.waitingForAttachment = true;
-          console.log('attachment state changed');
-          this.trigger();
-        }
-      } else {
-        if (this._draft.waitingForAttachment || this._draft.waitingForAttachment === undefined) {
-          this._draft.waitingForAttachment = false;
-          console.log('attachment state changed to false');
-          this.trigger();
-        }
-      }
-    });
+    // if (typeof this._draft.missingAttachments !== 'function') {
+    //   console.error('missing attachments is not a function');
+    //   return;
+    // }
+    // this._draft.missingAttachments().then(missingAttachments => {
+    //   if (!this) {
+    //     return;
+    //   }
+    //   if (!this._draft) {
+    //     return;
+    //   }
+    //   if (this._destroyed) {
+    //     return;
+    //   }
+    //   let totalMissing =
+    //     missingAttachments.inline.needToDownload.length +
+    //     missingAttachments.inline.downloading.length +
+    //     missingAttachments.normal.needToDownload.length +
+    //     missingAttachments.normal.downloading.length;
+    //   if (totalMissing > 0) {
+    //     if (!this._draft.waitingForAttachment) {
+    //       this._draft.waitingForAttachment = true;
+    //       console.log('attachment state changed');
+    //       this.trigger();
+    //     }
+    //   } else {
+    //     if (this._draft.waitingForAttachment || this._draft.waitingForAttachment === undefined) {
+    //       this._draft.waitingForAttachment = false;
+    //       console.log('attachment state changed to false');
+    //       this.trigger();
+    //     }
+    //   }
+    // });
   };
   _onPastMessageChange = pastMsgId => {
     if (!this._draft || !pastMsgId) {
@@ -830,6 +850,30 @@ export default class DraftEditingSession extends MailspringStore {
       console.error(`either draft or files data incorrect, attachments for draft not updated`);
     }
   }
+  removeMissingAttachments = () => {
+    if (this._draft && Array.isArray(this._draft.files)) {
+      return new Promise(resolve => {
+        let processed = 0;
+        const total = this._draft.files.length;
+        const ret = [];
+        this._draft.files.forEach(f => {
+          const path = AttachmentStore().pathForFile(f);
+          fs.access(path, fs.constants.R_OK, err => {
+            processed++;
+            if (!err) {
+              ret.push(f);
+            }
+            if (processed === total) {
+              this.updateAttachments(ret);
+              resolve();
+            }
+          });
+        });
+      });
+    } else {
+      return Promise.resolve();
+    }
+  };
 
   changeSetApplyChanges = changes => {
     if (this._destroyed) {
@@ -893,6 +937,7 @@ export default class DraftEditingSession extends MailspringStore {
       console.log(`${messageId} is not current draft ${this._draft.id}`);
       return;
     }
+    this.trigger();
     this._isDraftMissingAttachments();
     // const iswaitingForAttachment = draftState === DraftAttachmentState.busy;
     // if(iswaitingForAttachment !== this._draft.waitingForAttachment){

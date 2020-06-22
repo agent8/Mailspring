@@ -291,7 +291,8 @@ class TemplateStore extends MailspringStore {
         return;
       }
       let proceed = true;
-      if (!session.draft().pristine && !session.draft().hasEmptyBody()) {
+      const pureBody = this._getPureBodyForDraft(session.draft().body);
+      if (!session.draft().pristine && !this._isBodyEmpty(pureBody)) {
         proceed = await this._displayDialog(
           'Replace draft contents?',
           'It looks like your draft already has some content. Loading this template will ' +
@@ -307,6 +308,7 @@ class TemplateStore extends MailspringStore {
           '<edo-signature',
           '<div class="gmail_quote_attribution"',
           '<blockquote class="gmail_quote"',
+          '<div class="gmail_quote"',
         ]) {
           const i = current.indexOf(s);
           if (i !== -1) {
@@ -316,6 +318,49 @@ class TemplateStore extends MailspringStore {
         session.changes.add({ body: `${templateBody}${current.substr(insertion)}` });
       }
     });
+  }
+
+  _isBodyEmpty(body) {
+    if (!body) {
+      return true;
+    }
+
+    const re = /(?:<.+?>)|\s/gim;
+    return body.replace(re, '').length === 0;
+  }
+
+  _getPureBodyForDraft(body) {
+    if (!body) {
+      return '';
+    }
+
+    const bodyDom = document.createRange().createContextualFragment(body);
+    // remove signature
+    const signatures = bodyDom.querySelectorAll('edo-signature');
+    signatures.forEach(dom => {
+      dom.parentNode.removeChild(dom);
+    });
+    // remove gmail_quote_attribution that is replay
+    const gmail_quotes = bodyDom.querySelectorAll('.gmail_quote_attribution');
+    gmail_quotes.forEach(dom => {
+      dom.parentNode.removeChild(dom);
+    });
+    // remove blockquote that is replay
+    const block_quotes = bodyDom.querySelectorAll('blockquote.gmail_quote');
+    block_quotes.forEach(dom => {
+      dom.parentNode.removeChild(dom);
+    });
+    // remove gmail_quote that is forward
+    const gmail_quote = bodyDom.querySelectorAll('.gmail_quote');
+    gmail_quote.forEach(dom => {
+      dom.parentNode.removeChild(dom);
+    });
+
+    const tmpNode = document.createElement('div');
+    tmpNode.appendChild(bodyDom);
+    const str = tmpNode.innerHTML;
+
+    return str || '';
   }
 }
 

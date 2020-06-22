@@ -46,24 +46,44 @@ class IMAPSearchQueryFolderFinderVisitor extends SearchQueryExpressionVisitor {
     this._result = TOP;
   }
 
-  visitFrom(/* node */) {
-    this._result = TOP;
+  visitFrom(node) {
+    if (!node || !node.text) {
+      this._result = TOP;
+    } else {
+      this._result = this.visitAndGetResult(node.text);
+    }
   }
 
-  visitTo(/* node */) {
-    this._result = TOP;
+  visitTo(node) {
+    if (!node || !node.text) {
+      this._result = TOP;
+    } else {
+      this._result = this.visitAndGetResult(node.text);
+    }
   }
 
-  visitSubject(/* node */) {
-    this._result = TOP;
+  visitSubject(node) {
+    if (!node || !node.text) {
+      this._result = TOP;
+    } else {
+      this._result = this.visitAndGetResult(node.text);
+    }
   }
 
   visitGeneric(node) {
-    this._result = this.visitAndGetResult(node.text);
+    if (!node || !node.text) {
+      this._result = TOP;
+    } else {
+      this._result = this.visitAndGetResult(node.text);
+    }
   }
 
   visitText(node) {
-    this._result = node.token.s;
+    if (!node || !node.token) {
+      this._result = TOP;
+    } else {
+      this._result = node.token.s;
+    }
   }
 
   visitUnread(/* node */) {
@@ -75,6 +95,9 @@ class IMAPSearchQueryFolderFinderVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitHasAttachment(/* node */) {
+    this._result = TOP;
+  }
+  visitSpecialCharacter(node) {
     this._result = TOP;
   }
 
@@ -168,6 +191,10 @@ class IMAPSearchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
       ['HEADER', 'Content-Type', 'multipart/mixed'],
       ['HEADER', 'Content-Type', 'multipart/related'],
     ];
+  }
+
+  visitSpecialCharacter(node) {
+    this._result = TOP;
   }
 }
 

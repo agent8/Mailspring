@@ -89,27 +89,28 @@ export default class EmailAvatar extends Component {
     }
   };
 
-  static _findLastMessage = (props, messages) => {
-    const currentPerspective = FocusedPerspectiveStore.current();
-    if (currentPerspective && props.mode && props.mode === 'list') {
-      const cats = currentPerspective.categories();
-      if (cats.length > 0 && cats.some(cat => cat.role === 'sent')) {
-        return messages[messages.length - 1];
-      } else {
-        for (let i = messages.length - 1; i >= 0; i--) {
-          const message = messages[i];
-          const account = AccountStore.accountForId(message.accountId);
-          let from = message.from;
-          if (account && Array.isArray(from) && from.length > 0) {
-            from = message.from[0];
-            if (from && !account.isMyEmail(from.email)) {
-              return message;
-            }
-          }
-        }
+  static _getThreadAvatar = (props, messages) => {
+    if (props.mode && props.mode === 'list') {
+      const fromList = [],
+        toList = [],
+        ccList = [],
+        bccList = [];
+      messages.forEach(msg => {
+        const account = AccountStore.accountForId(msg.accountId);
+        const filterCurrent = contact => !account.isMyEmail(contact.email);
+        fromList.push(...(msg.from || []).filter(filterCurrent));
+        toList.push(...(msg.to || []).filter(filterCurrent));
+        ccList.push(...(msg.cc || []).filter(filterCurrent));
+        bccList.push(...(msg.bcc || []).filter(filterCurrent));
+      });
+      const fullList = [...bccList, ...ccList, ...toList, ...fromList];
+      if (fullList.length) {
+        return fullList[fullList.length - 1];
       }
     }
-    return messages[messages.length - 1];
+    const chooseMessage = messages[messages.length - 1];
+    const from = chooseMessage.from && chooseMessage.from[0];
+    return from;
   };
 
   static _processProps = (props, changeBgColor) => {
@@ -117,15 +118,7 @@ export default class EmailAvatar extends Component {
     if (props.thread) {
       const messages = props.thread.__messages;
       if (messages && messages.length) {
-        let message = EmailAvatar._findLastMessage(props, messages);
-        if (message) {
-          from = message.from && message.from[0];
-          let to = message.to && message.to[0];
-          if (!from && to) {
-            from = to;
-          }
-        }
-        from = EmailAvatar._parseAvatarForSendMessage(messages, from, props);
+        from = EmailAvatar._getThreadAvatar(props, messages);
       }
       from = from || {};
     } else if (props.message) {
@@ -170,59 +163,6 @@ export default class EmailAvatar extends Component {
     return state;
   };
 
-  static _parseAvatarForSendMessage = (messages, from, props) => {
-    const currentPerspective = FocusedPerspectiveStore.current();
-    if (currentPerspective && props.mode && props.mode === 'list') {
-      const cats = currentPerspective.categories();
-      if (cats.length > 0 && cats[0].role === 'sent') {
-        const message = EmailAvatar._findLatestSendMessage(messages);
-        if (message) {
-          const to = message.to && message.to[0];
-          const cc = message.cc && message.cc[0];
-          const bcc = message.bcc && message.bcc[0];
-          from = to || cc || bcc || {};
-          console.log('using last sent');
-        }
-      }
-    }
-    return from;
-  };
-  static _findLatestSendMessage(messages) {
-    let sendMessage = null;
-    const replaceSendMessage = newMessage => {
-      if (!sendMessage) {
-        sendMessage = newMessage;
-      } else {
-        if (
-          newMessage.date &&
-          sendMessage.date &&
-          newMessage.date.getTime() > sendMessage.date.getTime()
-        ) {
-          sendMessage = newMessage;
-        }
-      }
-    };
-    messages.forEach(message => {
-      if (message) {
-        if (!message.from || message.from.length === 0) {
-          replaceSendMessage(message);
-        } else {
-          const email = message.from[0].email;
-          const account = AccountStore.accountForEmail(email);
-          if (account) {
-            if (account.id === message.accountId) {
-              replaceSendMessage(message);
-            }
-          }
-        }
-      }
-    });
-    if (!sendMessage) {
-      return messages[messages.length - 1];
-    }
-    return sendMessage;
-  }
-
   render() {
     const { name, bgColor, hasImage, showPicture } = this.state;
     if (!showPicture) {
@@ -231,7 +171,8 @@ export default class EmailAvatar extends Component {
     let styles = {
       backgroundImage: bgColor,
       backgroundPosition: 'center',
-      backgroundSize: 'cover',
+      backgroundSize: '100% auto',
+      backgroundRepeat: 'no-repeat',
     };
     if (this.props.styles) {
       styles = Object.assign(styles, this.props.styles);
