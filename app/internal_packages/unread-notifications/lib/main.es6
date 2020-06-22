@@ -137,7 +137,10 @@ export class Notifier {
       case 'None':
         return false;
       case 'All':
-        return true;
+        const isInbox =
+          (msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Inbox')) ||
+          msg.labels.some(label => label.role === 'inbox'); // for Gmail we check the XGMLabels, for other providers's label role
+        return isInbox;
       case 'Important':
         const isImportant = msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Important');
         return isImportant;
