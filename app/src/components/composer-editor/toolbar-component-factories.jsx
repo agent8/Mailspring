@@ -447,9 +447,6 @@ export function BuildFontPicker(config) {
   return class FontPicker extends React.Component {
     constructor(props) {
       super(props);
-      console.log("DADA");
-      console.log(config);
-      console.log(AppEnv.config.get('core.fontface'))
       this.state = {
         default: AppEnv.config.get('core.fontface')
       }
