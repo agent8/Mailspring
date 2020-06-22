@@ -1572,7 +1572,7 @@ class DraftStore extends MailspringStore {
     }
     const session = this._draftSessions[messageId];
     if (session && session.draft()) {
-      AppEnv.logInfo('syncing draft data to main window');
+      AppEnv.logInfo(`syncing draft data to main window ${messageId}`);
       const syncData = cloneForSyncDraftData(session.draft());
       Actions.toMainSendDraft(messageId, options, syncData);
       if (AppEnv.isComposerWindow()) {
@@ -1714,13 +1714,13 @@ class DraftStore extends MailspringStore {
     try {
       if (syncData) {
         AppEnv.logInfo(
-          'We have syncData from none main window and main window draft data is not updated yet'
+          `We have syncData from none main window ${messageId} and main window draft data is not updated yet`
         );
-        session.localApplySyncDraftData({ syncData });
+        session.localSyncDraftDataBeforeSent({ syncData });
       }
     } catch (e) {
       AppEnv.reportError(
-        new Error('localApplySyncDraftData failed'),
+        new Error(`localSyncDraftDataBeforeSent failed ${messageId}`),
         { errorData: { error: e, syncData } },
         { grabLogs: true }
       );
