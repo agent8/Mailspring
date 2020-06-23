@@ -1136,6 +1136,7 @@ export default class MailsyncBridge {
       this.sendMessageToAccount(accountId, {
         type: 'need-attachments',
         ids: ids,
+        needProgress,
         source,
       });
     }

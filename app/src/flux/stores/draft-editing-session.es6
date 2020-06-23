@@ -948,12 +948,13 @@ export default class DraftEditingSession extends MailspringStore {
     //   console.log(`Attachment state not changed because target is ${iswaitingForAttachment} current is ${this._draft.waitingForAttachment}`);
     // }
   };
-  localApplySyncDraftData = ({ syncData = {} } = {}) => {
-    if (syncData && typeof syncData.lastSync === 'number' && syncData.lastSync > this.lastSync) {
-      this._applySyncDraftData({ syncData, sourceLevel: 0, broadcastDraftData: false });
-    } else {
-      AppEnv.logInfo(`syncData.lastSync ${syncData.lastSync}, local lastSync ${this.lastSync}`);
-    }
+  localSyncDraftDataBeforeSent = ({ syncData = {} } = {}) => {
+    // DC-2104 we no longer need lastSync data, as localSyncDraftDataBeforeSent is only called right before send draft, thus this data is the newest
+    // The original Date.now() is not always reliable since system time can be automatically updated by OS
+    AppEnv.logDebug(
+      `Applying draft sync data before sent draft ${syncData ? syncData.id : 'undefined'}`
+    );
+    this._applySyncDraftData({ syncData, sourceLevel: 0, broadcastDraftData: false });
   };
 
   _applySyncDraftData({
@@ -964,7 +965,7 @@ export default class DraftEditingSession extends MailspringStore {
     forceCommit = false,
   } = {}) {
     if (sourceLevel !== this.currentWindowLevel && syncData.id === this._draft.id) {
-      AppEnv.logDebug('apply sync draft data');
+      AppEnv.logDebug(`apply sync draft data ${syncData.id} sourceLevel ${sourceLevel}`);
       const nothingChanged =
         this._draft['body'] === syncData.body &&
         JSON.stringify(this._draft.from) === JSON.stringify(syncData.from) &&
@@ -993,7 +994,7 @@ export default class DraftEditingSession extends MailspringStore {
         }
 
         if (!nothingChanged) {
-          AppEnv.logDebug('things changed');
+          AppEnv.logDebug(`things changed ${syncData.id}`);
           this.needUpload = true;
           if (forceCommit) {
             this.changeSetCommit('forced to commit by applySyncDraftData');
@@ -1019,7 +1020,7 @@ export default class DraftEditingSession extends MailspringStore {
   onDraftOpenCountChange = ({ messageId, data = {} }) => {
     AppEnv.logDebug(`draft open count change ${messageId}`);
     if (this._draft && messageId === this._draft.id) {
-      AppEnv.logDebug('draft open count change');
+      AppEnv.logDebug(`draft open count change processing ${messageId} `);
       let level = 3;
       let changedToTrue = false;
       while (level > this.currentWindowLevel) {

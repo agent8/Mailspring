@@ -6,9 +6,6 @@
   "navigation:go-to-all-sent": "command+ctrl+3",
   "navigation:go-to-drafts": "command+ctrl+4",
   "navigation:go-to-all": "command+ctrl+5",
-  "navigation:go-to-contacts": "command+ctrl+6",
-  "navigation:go-to-tasks": "command+ctrl+7",
-  "navigation:go-to-label": "command+ctrl+8",
 
   "multiselect-list:select-all": "command+a",
 
