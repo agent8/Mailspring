@@ -314,6 +314,9 @@ export default class ComposerView extends React.Component {
             onMouseUp={this._onMouseUpComposerBody}
             onMouseDown={this._onMouseDownComposerBody}
             onContextMenu={this._onEditorBodyContextMenu}
+            onFocus={() => {
+              this._onFocusedEditor();
+            }}
           >
             {this._renderBodyRegions()}
             {this._renderFooterRegions()}
@@ -396,12 +399,43 @@ export default class ComposerView extends React.Component {
     );
   }
 
+  _getDisableCommands = () => {
+    return [
+      'core:reply',
+      'core:reply-all',
+      'core:forward',
+      'core:star-item',
+      'core:delete-item',
+      'core:archive-item',
+      'core:change-folders',
+      'core:snooze-item',
+      'core:mark-as-unread',
+      'core:report-as-spam',
+      'core:pop-sheet',
+    ];
+  };
+
+  _disableThreadCommand = () => {
+    const disableCommands = this._getDisableCommands();
+    AppEnv.commands.disableCommand(disableCommands);
+  };
+
+  _enableThreadCommand = () => {
+    const disableCommands = this._getDisableCommands();
+    AppEnv.commands.enableCommand(disableCommands);
+  };
+
+  _onFocusedEditor = () => {
+    this._disableThreadCommand();
+  };
+
   _onEditorBlur = (event, editor, next) => {
     this.setState({
       editorSelection: editor.value.selection,
       editorSelectedText: editor.value.fragment.text,
     });
     this._onEditorChange(editor);
+    this._enableThreadCommand();
   };
   _onEditorChange = change => {
     // We minimize thrashing and disable editors in multiple windows by ensuring
