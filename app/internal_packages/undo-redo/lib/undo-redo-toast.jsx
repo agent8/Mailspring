@@ -322,10 +322,7 @@ export default class UndoRedoToast extends React.Component {
 
     this._timeout = [];
     this._unlisten = null;
-
-    // Note: we explicitly do /not/ set initial state to the state of
-    // the UndoRedoStore here because "getMostRecent" might be more
-    // than 3000ms old.
+    this._mounted = false;
     this.state = {
       block: null,
       blocks: [],
@@ -333,7 +330,11 @@ export default class UndoRedoToast extends React.Component {
   }
 
   componentDidMount() {
+    this._mounted = true;
     this._unlisten = UndoRedoStore.listen(() => {
+      if (!this._mounted) {
+        return;
+      }
       const blocks = UndoRedoStore.getUndos();
       this.setState({
         blocks: [...blocks.critical, ...blocks.high, ...blocks.medium, ...blocks.low],
@@ -342,6 +343,7 @@ export default class UndoRedoToast extends React.Component {
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this._unlisten) {
       this._unlisten();
     }
@@ -387,7 +389,7 @@ export default class UndoRedoToast extends React.Component {
               const Component = block && (isUndoSend(block) ? UndoSendContent : BasicContent);
               return (
                 <Component
-                  key={block.id}
+                  key={block.displayId}
                   block={block}
                   onMouseEnter={this._onMouseEnter}
                   onMouseLeave={this._onMouseLeave}
