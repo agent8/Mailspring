@@ -163,7 +163,7 @@ const preferencesTemplateFill = {
             {
               label: 'When I reply to a message, automatically open my reply in a new window',
               configSchema: configSchema =>
-                configSchema.properties.reading.properties.autoloadImages,
+                configSchema.properties.reading.properties.openReplyInNewWindow,
               keyPath: 'core.reading.openReplyInNewWindow',
               keywords: [],
             },
