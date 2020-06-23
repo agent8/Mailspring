@@ -505,6 +505,11 @@ export default {
             enumLabels: ['5 seconds', '15 seconds', '30 seconds', '60 seconds', 'Disable'],
             title: 'Undo time window',
           },
+          undoQueueOnlyShowOne: {
+            type: 'boolean',
+            default: true,
+            title: 'Only show one Undo',
+          },
         },
       },
       outbox: {
@@ -562,6 +567,7 @@ export default {
             enum: ['hide', 'unread', 'total'],
             enumLabels: ['Hide Badge', 'Show Unread Count', 'Show Total Count'],
             title: 'Dock badge count',
+            notifyNative: true,
           },
         },
       },

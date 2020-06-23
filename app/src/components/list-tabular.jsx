@@ -10,6 +10,7 @@ import {
 } from 'mailspring-exports';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
+import { LottieImg } from 'mailspring-component-kit';
 
 import ScrollRegion from './scroll-region';
 import Spinner from './spinner';
@@ -537,7 +538,19 @@ class ListTabular extends Component {
           {/* when display EmptyComponent, do not display footer */}
           <div className="footer">{!(loaded && empty) ? footer : null}</div>
         </ScrollRegion>
-        <Spinner visible={!loaded && empty} />
+        {!loaded && empty ? (
+          <LottieImg
+            name="loading-spinner-blue"
+            size={{ width: 40, height: 40 }}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              zIndex: 1001,
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        ) : null}
         <EmptyComponent visible={loaded && empty} />
       </div>
     );
