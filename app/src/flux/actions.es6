@@ -488,6 +488,8 @@ class Actions {
   static draftWindowClosing = ActionScopeMainWindow;
   static draftOpenCount = ActionScopeMainWindow;
   static draftOpenCountBroadcast = ActionScopeGlobal;
+  static requestDraftCacheFromMain = ActionScopeMainWindow;
+  static broadcastDraftCache = ActionScopeGlobal;
   static gotoOutbox = ActionScopeWindow;
 
   /*

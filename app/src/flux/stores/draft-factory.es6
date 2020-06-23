@@ -199,6 +199,9 @@ class DraftFactory {
     };
 
     const merged = Object.assign(defaults, fields);
+    if (!merged.threadId) {
+      merged.threadId = `T${uniqueId}`;
+    }
     // if (merged.replyToMessageId) {
     //   merged.referenceMessageId = merged.replyToMessageId;
     //   delete merged.replyToMessageId;
@@ -362,7 +365,7 @@ class DraftFactory {
       draft: true,
       pristine: false,
       replyType: Message.draftType.new,
-      threadId: '',
+      threadId: `T${uniqueId}`,
       replyToMessageId: '',
       refOldDraftMessageId: '',
       pastMessageIds: draft.pastMessageIds || [],

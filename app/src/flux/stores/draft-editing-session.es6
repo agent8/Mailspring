@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import MailspringStore from 'mailspring-store';
 import { Conversion } from '../../components/composer-editor/composer-support';
 import RegExpUtils from '../../regexp-utils';
+import DraftCacheStore from './draft-cache-store';
 import TaskQueue from './task-queue';
 import Message from '../models/message';
 import Utils from '../models/utils';
@@ -335,7 +336,11 @@ export default class DraftEditingSession extends MailspringStore {
           return;
         }
         if (!draft) {
-          AppEnv.reportWarning(`Draft ${this.messageId} could not be found. Just deleted?`);
+          AppEnv.reportWarning(`Draft ${this.messageId} could not be found in DB. Just deleted?`);
+          draft = DraftCacheStore.findDraftById(this.messageId);
+        }
+        if (!draft) {
+          AppEnv.reportWarning(`Draft ${this.messageId} could not be found in draft cache.`);
           return;
         }
         // if (Message.compareMessageState(draft.state, Message.messageState.failed)) {
@@ -439,6 +444,7 @@ export default class DraftEditingSession extends MailspringStore {
   }
 
   freezeSession() {
+    AppEnv.logDebug(`Freezing sessions ${this.messageId}`);
     this._removeListeners();
   }
 
@@ -806,15 +812,31 @@ export default class DraftEditingSession extends MailspringStore {
         this.needUpload = true;
       }
     }
-    try {
-      await TaskQueue.waitForPerformLocal(task, { sendTask: true });
-    } catch (e) {
-      AppEnv.reportError(
-        new Error('SyncbackDraft Task not returned'),
-        { errorData: task },
-        { grabLogs: true }
-      );
-    }
+    const taskPromise = TaskQueue.waitForPerformLocal(task, { sendTask: true });
+    const draftCachePromise = new Promise(resolve => {
+      //We give Actions.queueTasks time to trigger DraftCacheStore
+      setTimeout(() => {
+        const cache = DraftCacheStore.findDraft(this._draft);
+        if (cache) {
+          resolve({ draftCache: true });
+        }
+      }, 300);
+    });
+    return Promise.race([taskPromise, draftCachePromise]).then(data => {
+      if (data && data.draftCache) {
+        AppEnv.reportLog(`For ${this._draft.id}, draftCache returned first in commit 300ms`);
+      }
+      return Promise.resolve();
+    });
+    // try {
+    //   await TaskQueue.waitForPerformLocal(task, { sendTask: true });
+    // } catch (e) {
+    //   AppEnv.reportError(
+    //     new Error('SyncbackDraft Task not returned'),
+    //     { errorData: task },
+    //     { grabLogs: true }
+    //   );
+    // }
   }
   set needUpload(val) {
     this._draft.needUpload = val;

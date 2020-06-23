@@ -4,6 +4,7 @@ import UndoTask from '../tasks/undo-task';
 import DraftEditingSession, { cloneForSyncDraftData } from './draft-editing-session';
 import DraftFactory from './draft-factory';
 import DatabaseStore from './database-store';
+import DraftCacheStore from './draft-cache-store';
 import SendActionsStore from './send-actions-store';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import SyncbackMetadataTask from '../tasks/syncback-metadata-task';
@@ -760,6 +761,7 @@ class DraftStore extends MailspringStore {
     if (!cancelCommits) {
       AttachmentStore = AttachmentStore || require('./attachment-store').default;
       AttachmentStore.removeDraftAttachmentCache(draft);
+      DraftCacheStore.clearDraftFromCache(draft);
     }
   };
   _syncSessionDataToMain = () => {
@@ -1072,8 +1074,21 @@ class DraftStore extends MailspringStore {
     if (needUpload) {
       session.needUpload = true;
     }
-    return TaskQueue.waitForPerformLocal(task, { sendTask: true })
-      .then(() => {
+    const taskPromise = TaskQueue.waitForPerformLocal(task, { sendTask: true });
+    const draftCachePromise = new Promise(resolve => {
+      //We give Actions.queueTasks time to trigger DraftCacheStore
+      setTimeout(() => {
+        const cache = DraftCacheStore.findDraft(draft);
+        if (cache) {
+          resolve({ draftCache: true });
+        }
+      }, 300);
+    });
+    return Promise.race([taskPromise, draftCachePromise])
+      .then(data => {
+        if (data && data.draftCache) {
+          AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
+        }
         if (popout) {
           console.log('\n-------\n draft popout\n');
           this._onPopoutDraft(draft.id);
@@ -1085,7 +1100,7 @@ class DraftStore extends MailspringStore {
       })
       .catch(t => {
         AppEnv.reportError(
-          new Error('SyncbackDraft Task not returned'),
+          new Error('SyncbackDraft Task not returned, and draft cache have no value'),
           { errorData: task },
           { grabLogs: true }
         );
