@@ -87,45 +87,49 @@ function InflatesDraftClientId(ComposedComponent) {
 
     _prepareServerDraftForEdit(draft) {
       if (draft.savedOnRemote) {
-        DraftStore.sessionForServerDraft(draft).then(session => {
-          const shouldSetState = () => {
-            if (!session) {
-              AppEnv.reportError(new Error('session not available'));
-              return false;
-            }
-            const newDraft = session.draft();
-            let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
-            if (newDraft && newDraft.refOldDraftMessageId) {
-              sameDraftWithNewID = newDraft.refOldDraftMessageId === this.props.messageId;
-            }
-            return (
-              this._mounted &&
-              (newDraft.refOldDraftMessageId === this.props.messageId || sameDraftWithNewID)
-            );
-          };
-          if (!shouldSetState()) {
-            return;
-          }
-          this._sessionUnlisten = session.listen(() => {
-            // console.log('inflates, data change');
-            if (!shouldSetState()) {
-              console.log('-------------------inflate-draft-cilent-id--------------- ');
-              console.log('did not update state');
-              console.log('------------------------------------- ');
-              return;
-            }
-            if (this._mounted) {
-              this.setState({ draft: session.draft() });
-            }
-          });
-          if (this._mounted) {
-            this.setState({
-              session: session,
-              draft: session.draft(),
-            });
-            this.props.onDraftReady();
-          }
-        });
+        AppEnv.logDebug(`Session for server draft ${draft.id}`);
+        DraftStore.sessionForServerDraft(draft);
+        //   .then(session => {
+        //   const shouldSetState = () => {
+        //     if (!session) {
+        //       AppEnv.reportError(new Error('session not available'));
+        //       return false;
+        //     }
+        //     const newDraft = session.draft();
+        //     let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
+        //     if (newDraft && newDraft.refOldDraftMessageId) {
+        //       sameDraftWithNewID = newDraft.refOldDraftMessageId === this.props.messageId;
+        //     }
+        //     return (
+        //       this._mounted &&
+        //       (newDraft.refOldDraftMessageId === this.props.messageId || sameDraftWithNewID)
+        //     );
+        //   };
+        //   if (!shouldSetState()) {
+        //     return;
+        //   }
+        //   // this._sessionUnlisten = session.listen(() => {
+        //   //   // console.log('inflates, data change');
+        //   //   if (!shouldSetState()) {
+        //   //     console.log('-------------------inflate-draft-cilent-id--------------- ');
+        //   //     console.log('did not update state');
+        //   //     console.log('------------------------------------- ');
+        //   //     return;
+        //   //   }
+        //   //   if (this._mounted) {
+        //   //     console.error(`updated inflate draft ${draft.id}`);
+        //   //     this.setState({ draft: session.draft() });
+        //   //   }
+        //   // });
+        //   if (this._mounted) {
+        //     console.error(`updated inflate draft outside session ${draft.id}`);
+        //     this.setState({
+        //       session: session,
+        //       draft: session.draft(),
+        //     });
+        //     this.props.onDraftReady();
+        //   }
+        // });
       }
     }
 
@@ -139,14 +143,12 @@ function InflatesDraftClientId(ComposedComponent) {
             AppEnv.reportError(new Error('session not available'));
             return false;
           }
-          const draft = session.draft();
-          let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
-          if (draft && draft.refOldDraftMessageId) {
-            sameDraftWithNewID = draft.refOldDraftMessageId === messageId;
-          }
-          return (
-            this._mounted && (session.messageId === this.props.messageId || sameDraftWithNewID)
-          );
+          // const draft = session.draft();
+          // let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
+          // if (draft && draft.refOldDraftMessageId) {
+          //   sameDraftWithNewID = draft.refOldDraftMessageId === messageId;
+          // }
+          return this._mounted && session.messageId === this.props.messageId;
         };
         if (!shouldSetState()) {
           console.log('-------------------inflate-draft-cilent-id--------------- ');
@@ -166,12 +168,14 @@ function InflatesDraftClientId(ComposedComponent) {
             return;
           }
           if (this._mounted) {
+            console.log(`update inflate id ${messageId}`);
             this.setState({ draft: session.draft() });
           } else {
             console.error(`component unmounted, session draft ${session.draft()}`);
           }
         });
         if (this._mounted) {
+          console.log(`update inflate id ${messageId} outside session`);
           this.setState({
             session: session,
             draft: session.draft(),
