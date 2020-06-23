@@ -132,7 +132,14 @@ const preferencesTemplateFill = {
               configSchema: configSchema => configSchema.properties.task.properties.delayInMs,
               component: TaskDelay,
               keyPath: 'core.task.delayInMs',
-              keywords: [],
+              keywords: ['delay'],
+            },
+            {
+              label: 'Show only one undo',
+              configSchema: configSchema =>
+                configSchema.properties.task.properties.undoQueueOnlyShowOne,
+              keyPath: 'core.task.undoQueueOnlyShowOne',
+              keywords: ['undo'],
             },
           ],
         },
