@@ -567,6 +567,7 @@ export default {
             enum: ['hide', 'unread', 'total'],
             enumLabels: ['Hide Badge', 'Show Unread Count', 'Show Total Count'],
             title: 'Dock badge count',
+            notifyNative: true,
           },
         },
       },
