@@ -10,7 +10,7 @@ const {
   WorkspaceStore,
   FocusedContentStore,
 } = require('mailspring-exports');
-const { KeyCommandsRegion } = require('mailspring-component-kit');
+const { KeyCommandsRegion, LottieImg } = require('mailspring-component-kit');
 
 const MultiselectListInteractionHandler = require('./multiselect-list-interaction-handler');
 const MultiselectSplitInteractionHandler = require('./multiselect-split-interaction-handler');
@@ -190,7 +190,17 @@ class MultiselectList extends React.Component {
     } else {
       return (
         <div className={className} {...otherProps}>
-          <Spinner visible={true} />
+          <LottieImg
+            name="loading-spinner-blue"
+            size={{ width: 40, height: 40 }}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              zIndex: 1001,
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
         </div>
       );
     }
