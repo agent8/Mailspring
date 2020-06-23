@@ -649,11 +649,10 @@ class MessageStore extends MailspringStore {
 
       this._expandItemsToDefault();
       this._fetchMissingBodies(this._items);
-      this._fetchMissingAttachments(this._items);
-
-      // Download the attachments on expanded messages.
-      this._fetchExpandedAttachments(this._items);
-
+      this._fetchMissingAttachments(this._items, () => {
+        // Download the attachments on expanded messages.
+        this._fetchExpandedAttachments(this._items);
+      });
       // Normally, we would trigger often and let the view's
       // shouldComponentUpdate decide whether to re-render, but if we
       // know we're not ready, don't even bother.  Trigger once at start
@@ -749,7 +748,7 @@ class MessageStore extends MailspringStore {
     }
   }
 
-  _fetchMissingAttachments(messages) {
+  _fetchMissingAttachments(messages, callback) {
     const missingAidMap = new Map();
     const noLongerMissing = [];
     let change = this._missingAttachmentIds.length === 0;
@@ -759,16 +758,19 @@ class MessageStore extends MailspringStore {
     });
     let processed = 0;
     const processMissingData = missingIds => {
-      missingIds.forEach((value, aid) => {
-        if (value && value.length && aid) {
-          Actions.fetchAttachments({
-            accountId: aid,
-            missingItems: value,
-            needProgress: false,
-            source: 'message store auto fetch attachment',
-          });
-        }
-      });
+      // missingIds.forEach((value, aid) => {
+      //   if (value && value.length && aid) {
+      //     Actions.fetchAttachments({
+      //       accountId: aid,
+      //       missingItems: value,
+      //       needProgress: false,
+      //       source: 'message store auto fetch attachment',
+      //     });
+      //   }
+      // });
+      if (callback) {
+        callback();
+      }
       if (change) {
         this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
           return !noLongerMissing.includes(id);
