@@ -68,7 +68,9 @@ export default class MenuManager {
 
       MenuHelpers.forEachMenuItem(this.template, item => {
         if (item.command && item.command.startsWith('application:') === false) {
-          item.enabled = AppEnv.commands.listenerCountForCommand(item.command) > 0;
+          item.enabled =
+            AppEnv.commands.isEnabledForCommand(item.command) &&
+            AppEnv.commands.listenerCountForCommand(item.command) > 0;
         }
         if (item.submenu != null) {
           item.enabled = !item.submenu.every(subitem => subitem.enabled === false);
