@@ -851,7 +851,7 @@ export default class DraftEditingSession extends MailspringStore {
     }
   }
   removeMissingAttachments = () => {
-    if (this._draft && Array.isArray(this._draft.files)) {
+    if (this._draft && Array.isArray(this._draft.files) && this._draft.files.length > 0) {
       return new Promise(resolve => {
         let processed = 0;
         const total = this._draft.files.length;
