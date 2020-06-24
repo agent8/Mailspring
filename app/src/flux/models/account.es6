@@ -221,7 +221,7 @@ export default class Account extends ModelWithMetadata {
       return 'Yahoo';
     } else if (this.provider === 'imap') {
       return 'IMAP';
-    } else if (this.provider === 'office365') {
+    } else if (this.provider.includes('office365')) {
       return 'Office 365';
     }
     return this.provider;

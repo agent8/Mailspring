@@ -182,7 +182,7 @@ class CategoryStore extends MailspringStore {
   getCategoryParent = category => {
     const account = AccountStore.accountForId(category.accountId);
     if (account && category) {
-      const isExchange = account.provider === 'exchange';
+      const isExchange = account.provider.includes('exchange');
       let parent = null;
       if (isExchange) {
         const inboxCategory = this.getInboxCategory(account.id);
