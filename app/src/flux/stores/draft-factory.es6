@@ -59,7 +59,7 @@ async function prepareBodyForQuoting(body) {
   // Regex explanation here: https://regex101.com/r/vO6eN2/1
   // let transformed = (body || '').replace(new RegExp(`<img.*${cidRE}[\\s\\S]*?>`, 'igm'), '');
   // We no longer remove inline attachments from quoted body
-  let transformed = body;
+  let transformed = body || '';
   transformed = await SanitizeTransformer.run(transformed, SanitizeTransformer.Preset.UnsafeOnly);
   transformed = await InlineStyleTransformer.run(transformed);
   return transformed;
