@@ -44,6 +44,12 @@ export const ServerInfoPriorityEnum = {
   UpdateInfo: 4,
 };
 
+export const AttachmentDownloadState = {
+  fail: -1,
+  downloading: 1,
+  done: 2,
+};
+
 export const InboxCategoryStates = {
   MsgNone: -1, //message not in INBOX
   MsgOther: 0,
