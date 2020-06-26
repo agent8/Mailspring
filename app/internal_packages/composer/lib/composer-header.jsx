@@ -1,4 +1,4 @@
-import { React, ReactDOM, PropTypes, Actions, AccountStore } from 'mailspring-exports';
+import { React, ReactDOM, PropTypes, Actions, AccountStore, Constant } from 'mailspring-exports';
 import {
   KeyCommandsRegion,
   ParticipantsTextField,
@@ -64,23 +64,23 @@ export default class ComposerHeader extends React.Component {
       }
       const inLines = [];
       ret.inline.downloading.forEach(f => {
-        if (f && f.size > 4) {
+        if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
           inLines.push(f.id);
         }
       });
       ret.inline.needToDownload.forEach(f => {
-        if (f && f.size > 4) {
+        if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
           inLines.push(f.id);
         }
       });
       const normal = [];
       ret.normal.downloading.forEach(f => {
-        if (f && f.size > 4) {
+        if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
           normal.push(f.id);
         }
       });
       ret.normal.needToDownload.map(f => {
-        if (f && f.size > 4) {
+        if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
           normal.push(f.id);
         }
       });

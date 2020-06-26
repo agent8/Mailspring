@@ -49,6 +49,7 @@ export const AttachmentDownloadState = {
   downloading: 1,
   done: 2,
 };
+export const AttachmentFileSizeIgnoreThreshold = 4; //4 Bytes;
 
 export const InboxCategoryStates = {
   MsgNone: -1, //message not in INBOX
