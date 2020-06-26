@@ -7,6 +7,10 @@ export const OAuthList = [
   'jira-plugin',
 ];
 
+export function DisableAttachmentProgressProvider(provider) {
+  return provider.includes('exchange');
+}
+
 export function macOSVersion() {
   let userAgent;
   if (process.type === 'renderer') {
