@@ -6,6 +6,8 @@ import {
   Utils,
   QuotedHTMLTransformer,
   MessageStore,
+  AttachmentStore,
+  Constant,
 } from 'mailspring-exports';
 import { autolink } from './autolinker';
 import { adjustImages } from './adjust-images';
@@ -13,6 +15,9 @@ import EmailFrameStylesStore from './email-frame-styles-store';
 import { remote } from 'electron';
 import fs from 'fs';
 import { removeTrackers } from './body-remove-trackers';
+import _ from 'underscore';
+
+const { AttachmentDownloadState } = Constant;
 
 export default class EmailFrame extends React.Component {
   static displayName = 'EmailFrame';
@@ -23,6 +28,7 @@ export default class EmailFrame extends React.Component {
     showQuotedText: PropTypes.bool,
     setTrackers: PropTypes.func,
     viewOriginalEmail: PropTypes.bool,
+    downloads: PropTypes.object,
   };
 
   background = {
@@ -61,7 +67,8 @@ export default class EmailFrame extends React.Component {
         nextMessage.version > message.version &&
         content === nextProps.content) ||
       !Utils.isEqualReact(message.pluginMetadata, nextMessage.pluginMetadata) ||
-      nextProps.viewOriginalEmail !== viewOriginalEmail
+      nextProps.viewOriginalEmail !== viewOriginalEmail ||
+      !_.isEqual(this.props.downloads, nextProps.downloads)
     );
   }
 
@@ -205,7 +212,18 @@ export default class EmailFrame extends React.Component {
     // img fallback
     const imgFallbackList = doc.querySelectorAll('img');
     imgFallbackList.forEach(async img => {
-      if (img.src !== '' && (img.height === 0 || img.width === 0)) {
+      if (img.src === '' || !/^file:\/\/.*/.test(img.src)) {
+        return;
+      }
+
+      if (img.height === 0 || img.width === 0) {
+        const filePath = decodeURIComponent(img.src.replace('file://', ''));
+        const fileId = AttachmentStore.fileIdForPath(filePath);
+        const fileState = this.props.downloads[fileId];
+        if (fileState && fileState.state === AttachmentDownloadState.fail) {
+          img.src = '../static/images/chat/image-not-found.png';
+          return;
+        }
         let fallbackSrc;
         if (/^file:\/\/.*\.tiff$/.test(img.src)) {
           fallbackSrc = await this._transformTiffToPng(img.src);
@@ -213,9 +231,7 @@ export default class EmailFrame extends React.Component {
         if (fallbackSrc) {
           img.src = fallbackSrc;
         } else {
-          img.src = '../static/images/chat/image-not-found.png';
-          img.height = 25;
-          img.width = 25;
+          img.src = '../static/icons/empty.svg';
         }
       }
     });

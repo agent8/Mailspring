@@ -8,8 +8,10 @@ import { pickHTMLProps } from 'pick-react-known-prop';
 import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
-import { AttachmentStore, MessageStore, Utils } from 'mailspring-exports';
+import { AttachmentStore, MessageStore, Utils, Constant } from 'mailspring-exports';
 import Actions from '../flux/actions';
+
+const { AttachmentDownloadState } = Constant;
 
 const propTypes = {
   className: PropTypes.string,
@@ -154,7 +156,10 @@ export class AttachmentItem extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.download) {
       const download = nextProps.download;
-      this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
+      this.setState({
+        isDownloading: download.state === AttachmentDownloadState.downloading,
+        percent: download.percent,
+      });
     }
   }
 
@@ -463,7 +468,10 @@ export class ImageAttachmentItem extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.download) {
       const download = nextProps.download;
-      this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
+      this.setState({
+        isDownloading: download.state === AttachmentDownloadState.downloading,
+        percent: download.percent,
+      });
     }
   }
 
