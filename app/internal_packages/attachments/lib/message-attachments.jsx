@@ -71,7 +71,7 @@ class MessageAttachments extends Component {
     const displayFilePreview = AppEnv.config.get('core.attachments.displayFilePreview');
     const filePreviewPath = displayFilePreview ? filePreviewPaths[file.id] : null;
     const provider = AccountStore.accountForId(this.props.accountId).provider;
-    const disableProgress = DisableAttachmentProgressProvider.includes(provider);
+    const disableProgress = DisableAttachmentProgressProvider(provider);
 
     return (
       <AttachmentRenderer
