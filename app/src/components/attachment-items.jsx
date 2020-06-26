@@ -25,7 +25,7 @@ const propTypes = {
   accountId: PropTypes.string,
   contentType: PropTypes.string,
   download: PropTypes.shape({
-    state: PropTypes.string,
+    state: PropTypes.number,
     percent: PropTypes.number,
   }),
   displayName: PropTypes.string,
