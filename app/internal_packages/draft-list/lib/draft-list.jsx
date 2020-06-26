@@ -1,5 +1,5 @@
 import React from 'react';
-import { Actions, DraftStore } from 'mailspring-exports';
+import { Actions, DraftStore, Constant } from 'mailspring-exports';
 import {
   FluxContainer,
   FocusContainer,
@@ -87,23 +87,23 @@ class DraftList extends React.Component {
         }
         const inLines = [];
         ret.inline.downloading.forEach(f => {
-          if (f && f.size > 4) {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
             inLines.push(f.id);
           }
         });
         ret.inline.needToDownload.forEach(f => {
-          if (f && f.size > 4) {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
             inLines.push(f.id);
           }
         });
         const normal = [];
         ret.normal.downloading.forEach(f => {
-          if (f && f.size > 4) {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
             normal.push(f.id);
           }
         });
         ret.normal.needToDownload.map(f => {
-          if (f && f.size > 4) {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
             normal.push(f.id);
           }
         });
