@@ -20,6 +20,7 @@ const propTypes = {
   previewable: PropTypes.bool,
   disabled: PropTypes.bool,
   missing: PropTypes.bool,
+  disableProgress: PropTypes.bool,
   fileId: PropTypes.string,
   filePath: PropTypes.string,
   accountId: PropTypes.string,
@@ -47,7 +48,7 @@ const defaultProps = {
 const SPACE = ' ';
 
 function ProgressBar(props) {
-  const { isDownloading, percent } = props;
+  const { isDownloading, percent, disableProgress } = props;
 
   if (!isDownloading) {
     return <span />;
@@ -59,7 +60,11 @@ function ProgressBar(props) {
   return (
     <span className={`progress-bar-wrap state-downloading`}>
       <span className="progress-background" />
-      <span className="progress-foreground " style={downloadProgressStyle} />
+      {disableProgress ? (
+        <span className="progress-loading"></span>
+      ) : (
+        <span className="progress-foreground" style={downloadProgressStyle} />
+      )}
     </span>
   );
 }
@@ -342,7 +347,11 @@ export class AttachmentItem extends Component {
           >
             Download Success
           </div>
-          <ProgressBar isDownloading={this.state.isDownloading} percent={this.state.percent} />
+          <ProgressBar
+            isDownloading={this.state.isDownloading}
+            percent={this.state.percent}
+            disableProgress={this.props.disableProgress}
+          />
           <Flexbox direction="row" style={{ alignItems: 'center' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
@@ -554,7 +563,11 @@ export class ImageAttachmentItem extends Component {
           >
             Download Success
           </div>
-          <ProgressBar isDownloading={this.state.isDownloading} percent={this.state.percent} />
+          <ProgressBar
+            isDownloading={this.state.isDownloading}
+            percent={this.state.percent}
+            disableProgress={this.props.disableProgress}
+          />
           <AttachmentActionIcon
             {...this.props}
             removeIcon="image-cancel-button.png"
