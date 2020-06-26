@@ -7,6 +7,8 @@ export const OAuthList = [
   'jira-plugin',
 ];
 
+export const DisableAttachmentProgressProvider = ['office365-exchange', 'office365'];
+
 export function macOSVersion() {
   let userAgent;
   if (process.type === 'renderer') {
