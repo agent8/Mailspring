@@ -135,32 +135,15 @@ export default class MessageItemBody extends React.Component {
     this.props.message.files
       .filter(f => f.contentId)
       .forEach(file => {
-        const download = this.props.downloads[file.id];
         const safeContentId = Utils.escapeRegExp(file.contentId);
-
-        // Note: I don't like doing this with RegExp before the body is inserted into
-        // the DOM, but we want to avoid "could not load cid://" in the console.
-
-        if (download && download.state !== 'done') {
-          const inlineImgRegexp = new RegExp(
-            `<\\s*img.*src=['"]cid:${safeContentId}['"][^>]*>`,
-            'gi'
-          );
-          // Render a spinner
-          merged = merged.replace(
-            inlineImgRegexp,
-            () =>
-              '<img alt="spinner.gif" src="edisonmail://message-list/assets/spinner.gif" style="-webkit-user-drag: none;">'
-          );
-        } else {
-          const cidRegexp = new RegExp(`"cid:${safeContentId}(@[^'"]+)?"`, 'gi');
-          merged = merged.replace(
-            cidRegexp,
-            `"file://${Utils.safeBrowserPath(
-              AttachmentStore.pathForFile(file)
-            )}" class='inline-image'`
-          );
-        }
+        const cidRegexp = new RegExp(`"cid:${safeContentId}(@[^'"]+)?"`, 'gi');
+        merged = merged.replace(
+          cidRegexp,
+          `"file://${Utils.safeBrowserPath(
+            AttachmentStore.pathForFile(file)
+          )}" class='inline-image'`
+        );
+        // }
       });
 
     // Replace remaining cid: references - we will not display them since they'll
@@ -174,7 +157,7 @@ export default class MessageItemBody extends React.Component {
   }
 
   _renderBody() {
-    const { message } = this.props;
+    const { message, downloads } = this.props;
     const { showQuotedText, processedBody } = this.state;
 
     if (
@@ -190,6 +173,7 @@ export default class MessageItemBody extends React.Component {
           message={message}
           viewOriginalEmail={this.props.viewOriginalEmail}
           setTrackers={this.props.setTrackers}
+          downloads={downloads}
         />
       );
     }
