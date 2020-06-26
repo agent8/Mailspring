@@ -62,14 +62,47 @@ export default class ComposerHeader extends React.Component {
       if (!this._mounted) {
         return;
       }
-      const missing = ret.totalMissing();
-      if (missing.length !== 0) {
+      const inLines = [];
+      ret.inline.downloading.forEach(f => {
+        if (f && f.size > 4) {
+          inLines.push(f.id);
+        }
+      });
+      ret.inline.needToDownload.forEach(f => {
+        if (f && f.size > 4) {
+          inLines.push(f.id);
+        }
+      });
+      const normal = [];
+      ret.normal.downloading.forEach(f => {
+        if (f && f.size > 4) {
+          normal.push(f.id);
+        }
+      });
+      ret.normal.needToDownload.map(f => {
+        if (f && f.size > 4) {
+          normal.push(f.id);
+        }
+      });
+      if (inLines.length > 0 || normal.length > 0) {
         if (!this.state.missingAttachments) {
           this.setState({ missingAttachments: true });
-          Actions.fetchAttachments({
-            accountId: props.draft.accountId,
-            missingItems: missing.map(f => f.id),
-          });
+          if (inLines.length > 0) {
+            Actions.pushToFetchAttachmentsQueue({
+              accountId: props.draft.accountId,
+              missingItems: inLines,
+              needProgress: false,
+              source: 'Click',
+            });
+          }
+          if (normal.length > 0) {
+            Actions.pushToFetchAttachmentsQueue({
+              accountId: props.draft.accountId,
+              missingItems: normal,
+              needProgress: true,
+              source: 'Click',
+            });
+          }
         }
       } else {
         this.setState({ missingAttachments: false });

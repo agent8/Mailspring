@@ -206,6 +206,7 @@ class MessageStore extends MailspringStore {
     this._popedOut = false;
     this._lastThreadChangeTimestamp = 0;
     this._missingAttachmentIds = [];
+    this._attachmentRequestsCache = [];
   }
 
   _registerListeners() {
@@ -233,8 +234,37 @@ class MessageStore extends MailspringStore {
     this.listenTo(Actions.fetchAttachmentsByMessage, this.fetchMissingAttachmentsByMessage);
     this.listenTo(Actions.setCurrentWindowTitle, this.setWindowTitle);
     this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
-    return this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
+    this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
+    this.listenTo(Actions.pushToFetchAttachmentsQueue, this._onRequestAttachmentQueue);
   }
+  _onRequestAttachmentQueue = (
+    data = { accountId: '', missingItems: [], needProgress: false, source: '' }
+  ) => {
+    if (!data) {
+      console.log('MessageStore:_onRequestAttachmentQueue: data is null');
+      return;
+    }
+    if ((data.source || '').toLocaleLowerCase() === 'click') {
+      console.log('MessageStore:_onRequestAttachmentQueue:source is click, ignoring cache');
+      Actions.fetchAttachments(data);
+      return;
+    }
+    if (!Array.isArray(data.missingItems)) {
+      console.log('MessageStore:_onRequestAttachmentQueue:missingItems is not array');
+      return;
+    }
+    const filteredIds = [];
+    const oldAttachmentRequestCache = this._attachmentRequestsCache.slice();
+    data.missingItems.forEach(id => {
+      if (!oldAttachmentRequestCache.includes(id)) {
+        filteredIds.push(id);
+        this._attachmentRequestsCache.push(id);
+      }
+    });
+    if (filteredIds.length > 0) {
+      Actions.fetchAttachments(Object.assign({}, data, { missingItems: filteredIds }));
+    }
+  };
 
   _onThreadARPReply = (event, options) => {
     // console.log('received arp reply', options);
@@ -678,7 +708,7 @@ class MessageStore extends MailspringStore {
       return this._missingAttachmentIds.includes(id);
     });
     if (missingList && missingList.length && accountId) {
-      Actions.fetchAttachments({
+      this._onRequestAttachmentQueue({
         accountId: accountId,
         missingItems: missingList,
         needProgress: true,
@@ -724,7 +754,7 @@ class MessageStore extends MailspringStore {
     });
 
     if (missingNormal.length > 0) {
-      Actions.fetchAttachments({
+      this._onRequestAttachmentQueue({
         accountId: message.accountId,
         missingItems: missingNormal,
         needProgress: true,
@@ -732,7 +762,7 @@ class MessageStore extends MailspringStore {
       });
     }
     if (missingInline.length > 0) {
-      Actions.fetchAttachments({
+      this._onRequestAttachmentQueue({
         accountId: message.accountId,
         missingItems: missingInline,
         needProgress: false,
@@ -872,7 +902,7 @@ class MessageStore extends MailspringStore {
     }
     if (items.length > 0 && items[0]) {
       if (inLineFileIds.length > 0) {
-        Actions.fetchAttachments({
+        this._onRequestAttachmentQueue({
           accountId: items[0].accountId,
           missingItems: inLineFileIds,
           needProgress: false,
@@ -880,7 +910,7 @@ class MessageStore extends MailspringStore {
         });
       }
       if (normalFileIds.length > 0) {
-        Actions.fetchAttachments({
+        this._onRequestAttachmentQueue({
           accountId: items[0].accountId,
           missingItems: normalFileIds,
           needProgress: true,
