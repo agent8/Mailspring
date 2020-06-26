@@ -1,5 +1,5 @@
 import React from 'react';
-import { Actions, DraftStore } from 'mailspring-exports';
+import { Actions, DraftStore, Constant } from 'mailspring-exports';
 import {
   FluxContainer,
   FocusContainer,
@@ -85,16 +85,45 @@ class DraftList extends React.Component {
         if (!this._mounted) {
           return;
         }
-        const totalMissing = ret.totalMissing().map(f => f.id);
-        if (totalMissing.length === 0) {
-          Actions.composePopoutDraft(draft.id);
-        } else {
-          Actions.fetchAttachments({ accountId: draft.accountId, missingItems: totalMissing });
-          AppEnv.showErrorDialog('Draft is still downloading, cannot edit', {
-            showInMainWindow: true,
-            async: true,
+        const inLines = [];
+        ret.inline.downloading.forEach(f => {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
+            inLines.push(f.id);
+          }
+        });
+        ret.inline.needToDownload.forEach(f => {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
+            inLines.push(f.id);
+          }
+        });
+        const normal = [];
+        ret.normal.downloading.forEach(f => {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
+            normal.push(f.id);
+          }
+        });
+        ret.normal.needToDownload.map(f => {
+          if (f && f.size > Constant.AttachmentFileSizeIgnoreThreshold) {
+            normal.push(f.id);
+          }
+        });
+        if (inLines.length > 0) {
+          Actions.fetchAttachments({
+            accountId: draft.accountId,
+            missingItems: inLines,
+            needProgress: false,
+            source: 'Click',
           });
         }
+        if (normal.length > 0) {
+          Actions.fetchAttachments({
+            accountId: draft.accountId,
+            missingItems: normal,
+            needProgress: true,
+            source: 'Click',
+          });
+        }
+        Actions.composePopoutDraft(draft.id);
       });
     } else {
       Actions.fetchBodies({ messages: [draft], source: 'draft' });
