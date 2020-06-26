@@ -1446,16 +1446,16 @@ class AttachmentStore extends MailspringStore {
     return;
   };
 
-  _onFetchAttachments = ({ missingItems, needProgress }) => {
-    if (!needProgress) {
-      return;
+  _onFetchAttachments = ({ missingItems, needProgress, source }) => {
+    if (needProgress && (source || '').toLocaleLowerCase() === 'click') {
+      this._onPresentStart(missingItems);
     }
-    this._onPresentStart(missingItems);
   };
 
-  _onPresentStart = ids => {
+  _onPresentStart = (ids, trigger = true) => {
     const fileIds = ids || [];
     if (fileIds.length) {
+      let changed = false;
       fileIds.forEach(id => {
         const oldProcess = this._fileProcess.get(id);
         if (
@@ -1465,12 +1465,15 @@ class AttachmentStore extends MailspringStore {
         ) {
           return;
         }
+        changed = true;
         this._fileProcess.set(id, {
           state: AttachmentDownloadState.downloading,
           percent: 0,
         });
       });
-      this.trigger();
+      if (changed && trigger) {
+        this.trigger();
+      }
     }
   };
 
@@ -1482,9 +1485,9 @@ class AttachmentStore extends MailspringStore {
           if (!pid) {
             return;
           }
-          const matchGroup = (obj.errormsg || '').match(/errCode\s*=\s*([0-9]*)\s*,(.*)/);
-          const errCode = matchGroup && matchGroup[1] ? Number(matchGroup[1]) : 0;
-          const errMsg = matchGroup && matchGroup[2] ? matchGroup[2].trim() : '';
+          // const matchGroup = (obj.errormsg || '').match(/errCode\s*=\s*([0-9]*)\s*,(.*)/);
+          // const errCode = matchGroup && matchGroup[1] ? Number(matchGroup[1]) : 0;
+          // const errMsg = matchGroup && matchGroup[2] ? matchGroup[2].trim() : '';
           if (obj.cursize < 0) {
             // download faild
             this._fileProcess.set(pid, {
@@ -1493,6 +1496,7 @@ class AttachmentStore extends MailspringStore {
             });
             return;
           }
+          this._onPresentStart([pid], false);
           const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
           const nowState = this.getDownloadDataForFile(pid);
           const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
