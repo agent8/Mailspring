@@ -144,7 +144,7 @@ class Token extends React.Component {
     let actionButton = null;
     if (this.props.onAction && !this.props.disabled) {
       actionButton = (
-        <button type="button" className="action" onClick={this._onAction} tabIndex={-1}>
+        <button type="button" className="action" onClick={this._onClickAction} tabIndex={-1}>
           <RetinaImg mode={RetinaImg.Mode.ContentIsMask} name="composer-caret.png" />
         </button>
       );
@@ -192,6 +192,15 @@ class Token extends React.Component {
     }
   };
 
+  _onClickAction = event => {
+    event.stopPropagation();
+    this._onClick(event);
+    setImmediate(() => {
+      // do this after the setState of select this token is finish
+      this._onAction();
+    });
+  };
+
   _onEditKeydown = event => {
     if (this.props.disabled) return;
     if (event.key === 'Enter' && this.props.selected && this.props.onEditMotion) {
@@ -213,7 +222,9 @@ class Token extends React.Component {
   _onAction = event => {
     if (this.props.disabled) return;
     this.props.onAction(this.props.item);
-    event.preventDefault();
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
   };
 
   render() {
@@ -736,12 +747,15 @@ export default class TokenizingTextField extends React.Component {
   };
 
   _showDefaultTokenMenu = token => {
+    const { tokenKey, onTokenAction } = this.props;
     const selectedTokens = this._selectedTokens();
-    if (this.props.onTokenAction) {
-      if (selectedTokens.length === 0) {
-        this.props.onTokenAction([token]);
+    if (onTokenAction) {
+      const currentIsSelected = selectedTokens.some(contact => contact.email === token.email);
+      if (currentIsSelected) {
+        onTokenAction(selectedTokens);
       } else {
-        this.props.onTokenAction(selectedTokens);
+        onTokenAction([token]);
+        this.setState({ selectedKeys: [tokenKey(token)] });
       }
       return;
     }
