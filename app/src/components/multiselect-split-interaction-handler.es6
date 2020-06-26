@@ -67,8 +67,8 @@ module.exports = class MultiselectSplitInteractionHandler {
   };
 
   onShiftClick = item => {
-    this.props.dataSource.selection.clear();
-    this._addFocusIntoSelection();
+    // this.props.dataSource.selection.clear();
+    // this._addFocusIntoSelection();
     if (!this.props.focused) {
       this.onFocusItem(item);
     }
