@@ -379,6 +379,9 @@ class MessageStore extends MailspringStore {
           }
           const itemIndex = this._items.findIndex(msg => msg.id === item.id);
           if (itemIndex !== -1) {
+            AppEnv.logDebug(
+              `MessageStore:Draft cache item ${item.id} removed, updating message store`
+            );
             this._items.splice(itemIndex, 1);
           }
         });
