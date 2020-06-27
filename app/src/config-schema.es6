@@ -234,6 +234,10 @@ export default {
           },
         },
       },
+      fontface: {
+        type: 'string',
+        default: 'sans-serif'
+      },
       composing: {
         type: 'object',
         properties: {

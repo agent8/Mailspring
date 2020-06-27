@@ -7,6 +7,10 @@ export const OAuthList = [
   'jira-plugin',
 ];
 
+export function DisableAttachmentProgressProvider(provider) {
+  return provider.includes('exchange');
+}
+
 export function macOSVersion() {
   let userAgent;
   if (process.type === 'renderer') {
@@ -43,6 +47,13 @@ export const ServerInfoPriorityEnum = {
   // 版本更新后的what's new
   UpdateInfo: 4,
 };
+
+export const AttachmentDownloadState = {
+  fail: -1,
+  downloading: 1,
+  done: 2,
+};
+export const AttachmentFileSizeIgnoreThreshold = 4; //4 Bytes;
 
 export const InboxCategoryStates = {
   MsgNone: -1, //message not in INBOX

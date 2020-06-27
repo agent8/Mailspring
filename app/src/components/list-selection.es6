@@ -164,11 +164,20 @@ export default class ListSelection {
       const indexes = new Array(count)
         .fill(0)
         .map((val, idx) => (startIdx > endIdx ? startIdx - idx : startIdx + idx));
+      const handleItems = [];
+      const handleIds = [];
       indexes.forEach(idx => {
-        const idxItem = this._view.get(idx);
-        this._items = _.reject(this._items, t => t.id === idxItem.id);
-        this._items.push(idxItem);
+        const item = this._view.get(idx);
+        handleItems.push(item);
+        handleIds.push(item.id);
       });
+      const ids = this.ids();
+      if (handleIds.every(handleId => ids.includes(handleId))) {
+        this._items = this._items.filter(t => !handleIds.includes(t.id));
+      } else {
+        const addItems = handleItems.filter(t => !ids.includes(t.id));
+        this._items.push(...addItems);
+      }
     }
     this.trigger();
   }
