@@ -1,5 +1,6 @@
 import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
+import CancelOutboxDraftTask from '../tasks/cancel-outbox-draft-task';
 import DestroyDraftTask from '../tasks/destroy-draft-task';
 import RestoreDraftTask from '../tasks/restore-draft-task';
 import SendDraftTask from '../tasks/send-draft-task';
@@ -20,8 +21,30 @@ class DraftCacheStore extends MailspringStore {
     this.listenTo(Actions.queueTask, task => this._taskQueue([task]));
     this.listenTo(Actions.requestDraftCacheFromMain, this._onRequestForDraftCache);
     this.listenTo(Actions.broadcastDraftCache, this._onBroadcastDraftCacheReceived);
+    this.listenTo(Actions.draftDeliverySucceeded, this._onSendDraftSuccess);
+    this.listenTo(Actions.draftDeliveryFailed, this._onSendDraftFailed);
     this.listenTo(DatabaseStore, this._onDBDataChange);
   }
+  _onSendDraftSuccess = ({ messageId }) => {
+    AppEnv.logDebug(`DraftCacheStore: Draft ${messageId} sent success, finding draft in cache`);
+    const draft = this.findDraftById(messageId);
+    if (draft) {
+      AppEnv.logDebug(
+        `DraftCacheStore:_onSendDraftSuccess Draft ${messageId} found in cache, removing`
+      );
+      this.removeDraftFromCache(draft);
+    }
+  };
+  _onSendDraftFailed = ({ messageId }) => {
+    AppEnv.logDebug(`DraftCacheStore: Draft ${messageId} sent failed, finding draft in cache`);
+    const draft = this.findDraftById(messageId);
+    if (draft) {
+      AppEnv.logDebug(
+        `DraftCacheStore:_onSendDraftFailed Draft ${messageId} found in cache, clearing only`
+      );
+      this.clearDraftFromCache(draft, false);
+    }
+  };
   _onDBDataChange = change => {
     if (change.objectClass === Message.name) {
       const messages = [];
@@ -164,13 +187,13 @@ class DraftCacheStore extends MailspringStore {
     const threadId = draft.threadId;
     const messageId = draft.id;
     if (!this.cache[threadId]) {
-      AppEnv.logWarning(`Draft ${messageId} with thread ${threadId} updated to cache`);
+      AppEnv.logDebug(`Draft ${messageId} with thread ${threadId} updated to cache`);
       this.cache[threadId] = { state: state.normal, messages: {} };
     }
     if (this.cache[threadId].messages[messageId]) {
       AppEnv.logDebug(`Draft ${messageId} updated to cache`);
     } else {
-      AppEnv.logWarning(`Draft ${messageId} not in cache`);
+      AppEnv.logDebug(`Draft ${messageId} not in cache`);
     }
     this.cache[threadId].messages[messageId] = draft;
     if (trigger) {
@@ -207,7 +230,9 @@ class DraftCacheStore extends MailspringStore {
       for (let k = 0; k < messages.length; k++) {
         const draft = messages[k];
         if (draft && draft.id === messageId) {
-          AppEnv.logWarning(`MessageId ${messageId} found, removed cache from draft cache`);
+          AppEnv.logDebug(
+            `DraftCacheStore:removeDraftCacheByMessageId:MessageId ${messageId} found, removed cache from draft cache`
+          );
           const draft = this.cache[threadId].messages[messageId];
           delete this.cache[threadId].messages[messageId];
           this._ifThreadCacheEmptyRemove(threadId, false);
@@ -241,7 +266,7 @@ class DraftCacheStore extends MailspringStore {
       return;
     }
     if (this.cache[threadId] && this.cache[threadId].messages[messageId]) {
-      AppEnv.logWarning(
+      AppEnv.logDebug(
         `ThreadId ${threadId} MessageId ${messageId} found, clear cache from draft cache`
       );
       delete this.cache[threadId].messages[messageId];
@@ -262,8 +287,8 @@ class DraftCacheStore extends MailspringStore {
       return;
     }
     if (this.cache[threadId] && this.cache[threadId].messages[messageId]) {
-      AppEnv.logWarning(
-        `ThreadId ${threadId} MessageId ${messageId} found, removed cache from draft cache`
+      AppEnv.logDebug(
+        `DraftCacheStore:removeDraftFromCache:ThreadId ${threadId} MessageId ${messageId} found, removed cache from draft cache`
       );
       const removed = this.cache[threadId].messages[messageId];
       delete this.cache[threadId].messages[messageId];
@@ -294,7 +319,7 @@ class DraftCacheStore extends MailspringStore {
       return;
     }
     if (Object.keys(this.cache[threadId].messages).length === 0) {
-      AppEnv.logWarning(
+      AppEnv.logDebug(
         `ThreadId ${threadId} cache have no more messages, removing, trigger ${trigger}`
       );
       delete this.cache[threadId];
@@ -302,7 +327,7 @@ class DraftCacheStore extends MailspringStore {
         this.trigger();
       }
     } else {
-      AppEnv.logWarning(`ThreadId ${threadId} cache have messages, ignoring`);
+      AppEnv.logDebug(`ThreadId ${threadId} cache have messages, ignoring`);
     }
   };
   _taskQueue = tasks => {
@@ -319,6 +344,16 @@ class DraftCacheStore extends MailspringStore {
             unpersists.push(removed);
           }
         });
+      } else if (task instanceof CancelOutboxDraftTask) {
+        const messageIds = task.messageIds;
+        messageIds.forEach(id => {
+          AppEnv.logDebug(`Removing ${id} from cache because CancelOutboxDraftTask`);
+          const removed = this.removeDraftCacheByMessageId(id, false);
+          if (removed) {
+            AppEnv.logDebug(`Removed ${id} from cache CancelOutboxDraftTask`);
+            unpersists.push(removed);
+          }
+        });
       } else if (task instanceof RestoreDraftTask) {
         const id = task.deleteMessageId;
         AppEnv.logDebug(`Removing ${id} from cache because RestoreDraftTask`);
@@ -327,9 +362,32 @@ class DraftCacheStore extends MailspringStore {
           AppEnv.logDebug(`Removed ${id} from cache RestoreDraftTask`);
           unpersists.push(removed);
         }
-      } else if (task instanceof SyncbackDraftTask || task instanceof SendDraftTask) {
+      } else if (task instanceof SyncbackDraftTask) {
         const draft = task.draft;
-        AppEnv.logDebug(`Updating ${draft.id} in cache`);
+        if (task.saveOnRemote) {
+          AppEnv.logDebug(
+            `Updating ${draft.id} in cache ignored because of SyncbackDraftTask is upload`
+          );
+        } else if (task.source === 'unload') {
+          AppEnv.logDebug(
+            `Updating ${draft.id} in cache remove because of SyncbackDraftTask is unload`
+          );
+          const removed = this.removeDraftCacheByMessageId(draft.id, false);
+          if (removed) {
+            AppEnv.logDebug(`Removed ${draft.id} from cache SyncbackDraftTask source unload`);
+            unpersists.push(removed);
+          }
+        } else {
+          AppEnv.logDebug(`Updating ${draft.id} in cache because of SyncbackDraftTask`);
+          const updated = this.updateDraftCache(draft, false);
+          if (updated) {
+            AppEnv.logDebug(`Updated ${draft.id} in cache`);
+            persists.push(updated);
+          }
+        }
+      } else if (task instanceof SendDraftTask) {
+        const draft = task.draft;
+        AppEnv.logDebug(`Updating ${draft.id} in cache because of SendDraftTask`);
         const updated = this.updateDraftCache(draft, false);
         if (updated) {
           AppEnv.logDebug(`Updated ${draft.id} in cache`);
