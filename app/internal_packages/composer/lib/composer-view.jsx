@@ -163,33 +163,34 @@ export default class ComposerView extends React.Component {
   };
 
   _isDraftMissingAttachments = props => {
-    if (!props.draft) {
-      this.setState({ missingAttachments: false });
-      return;
-    }
-    props.draft.missingAttachments().then(ret => {
-      if (!this._mounted) {
-        return;
-      }
-      const missing = ret.totalMissing();
-      if (missing.length !== 0) {
-        if (!this.state.missingAttachments) {
-          this.setState({ missingAttachments: true });
-          Actions.fetchAttachments({
-            accountId: props.draft.accountId,
-            missingItems: missing.map(f => f.id),
-          });
-        } else {
-          console.warn('state already missing attachments');
-        }
-      } else {
-        if (this.state.missingAttachments) {
-          this.setState({ missingAttachments: false });
-        } else {
-          console.warn('state already not missing attachments');
-        }
-      }
-    });
+    console.error('calling composer-view draft missing attachments');
+    // if (!props.draft) {
+    //   this.setState({ missingAttachments: false });
+    //   return;
+    // }
+    // props.draft.missingAttachments().then(ret => {
+    //   if (!this._mounted) {
+    //     return;
+    //   }
+    //   const missing = ret.totalMissing();
+    //   if (missing.length !== 0) {
+    //     if (!this.state.missingAttachments) {
+    //       this.setState({ missingAttachments: true });
+    //       Actions.pushToFetchAttachmentsQueue({
+    //         accountId: props.draft.accountId,
+    //         missingItems: missing.map(f => f.id),
+    //       });
+    //     } else {
+    //       console.warn('state already missing attachments');
+    //     }
+    //   } else {
+    //     if (this.state.missingAttachments) {
+    //       this.setState({ missingAttachments: false });
+    //     } else {
+    //       console.warn('state already not missing attachments');
+    //     }
+    //   }
+    // });
   };
 
   focus() {

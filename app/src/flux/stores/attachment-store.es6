@@ -4,6 +4,7 @@ import { exec } from 'child_process';
 import { remote } from 'electron';
 import mkdirp from 'mkdirp';
 import MailspringStore from 'mailspring-store';
+import { Constant } from 'mailspring-exports';
 import DraftStore from './draft-store';
 import Actions from '../actions';
 import File from '../models/file';
@@ -14,6 +15,7 @@ import AttachmentProgress from '../models/attachment-progress';
 import { autoGenerateFileName } from '../../fs-utils';
 import uuid from 'uuid';
 
+const { AttachmentDownloadState } = Constant;
 Promise.promisifyAll(fs);
 
 const mkdirpAsync = Promise.promisify(mkdirp);
@@ -1140,6 +1142,12 @@ class AttachmentStore extends MailspringStore {
     );
   }
 
+  fileIdForPath(filePath) {
+    const relative = path.relative(this._filesDirectory, filePath);
+    const fileId = relative.split('/')[2];
+    return fileId;
+  }
+
   filterOutMissingAttachments = files => {
     if (!Array.isArray(files)) {
       return [];
@@ -1187,6 +1195,11 @@ class AttachmentStore extends MailspringStore {
   }
 
   getDownloadDataForFile = fileId => {
+    return this._fileProcess.get(fileId);
+  };
+
+  getDownloadDataForFileByPath = filePath => {
+    const fileId = this.fileIdForPath(filePath);
     return this._fileProcess.get(fileId);
   };
 
@@ -1433,27 +1446,34 @@ class AttachmentStore extends MailspringStore {
     return;
   };
 
-  _onFetchAttachments = ({ missingItems, needProgress }) => {
-    if (!needProgress) {
-      return;
+  _onFetchAttachments = ({ missingItems, needProgress, source }) => {
+    if (needProgress && (source || '').toLocaleLowerCase() === 'click') {
+      this._onPresentStart(missingItems);
     }
-    this._onPresentStart(missingItems);
   };
 
-  _onPresentStart = ids => {
+  _onPresentStart = (ids, trigger = true) => {
     const fileIds = ids || [];
     if (fileIds.length) {
+      let changed = false;
       fileIds.forEach(id => {
         const oldProcess = this._fileProcess.get(id);
-        if (oldProcess && (oldProcess.state === 'downloading' || oldProcess.state === 'done')) {
+        if (
+          oldProcess &&
+          (oldProcess.state === AttachmentDownloadState.downloading ||
+            oldProcess.state === AttachmentDownloadState.done)
+        ) {
           return;
         }
+        changed = true;
         this._fileProcess.set(id, {
-          state: 'downloading',
+          state: AttachmentDownloadState.downloading,
           percent: 0,
         });
       });
-      this.trigger();
+      if (changed && trigger) {
+        this.trigger();
+      }
     }
   };
 
@@ -1462,13 +1482,31 @@ class AttachmentStore extends MailspringStore {
       changes.forEach(obj => {
         if (obj) {
           const pid = obj.pid;
+          if (!pid) {
+            return;
+          }
+          // const matchGroup = (obj.errormsg || '').match(/errCode\s*=\s*([0-9]*)\s*,(.*)/);
+          // const errCode = matchGroup && matchGroup[1] ? Number(matchGroup[1]) : 0;
+          // const errMsg = matchGroup && matchGroup[2] ? matchGroup[2].trim() : '';
+          if (obj.cursize < 0) {
+            // download faild
+            this._fileProcess.set(pid, {
+              state: AttachmentDownloadState.fail,
+              percent: 0,
+            });
+            return;
+          }
+          this._onPresentStart([pid], false);
           const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
           const nowState = this.getDownloadDataForFile(pid);
           const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
           const maxPercent = Math.max(parseInt(percent * 100), nowPercent);
-          if (pid && maxPercent) {
+          if (maxPercent) {
             this._fileProcess.set(pid, {
-              state: maxPercent >= 100 ? 'done' : 'downloading',
+              state:
+                maxPercent >= 100
+                  ? AttachmentDownloadState.done
+                  : AttachmentDownloadState.downloading,
               percent: maxPercent,
             });
           }
@@ -1483,7 +1521,7 @@ class AttachmentStore extends MailspringStore {
     if (fileIds.length) {
       fileIds.forEach(id => {
         this._fileProcess.set(id, {
-          state: 'done',
+          state: AttachmentDownloadState.done,
           percent: 100,
         });
       });

@@ -67,6 +67,9 @@ export default class WhatsNew extends React.Component {
       return;
     }
     const result = await AppUpdateRest.getUpdateInformation();
+    if (!result.data) {
+      return;
+    }
     const updateInfoList = [];
     try {
       const { priority, updateList } = JSON.parse(result.data);
