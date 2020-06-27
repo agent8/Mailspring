@@ -92,17 +92,11 @@ export default class File extends Model {
     if (this.mimeType && !this.contentType) {
       this.contentType = this.mimeType;
     }
-    if (!(this.id || '').includes('local-')) {
-      this.size = Math.floor(((this.size || 0) * 3) / 4);
-    }
   }
   fromJSON(json) {
     const ret = super.fromJSON(json);
     if (ret.mimeType && !ret.contentType) {
       ret.contentType = ret.mimeType;
-    }
-    if (!(ret.id || '').includes('local-')) {
-      ret.size = Math.floor(((ret.size || 0) * 3) / 4);
     }
     return ret;
   }
