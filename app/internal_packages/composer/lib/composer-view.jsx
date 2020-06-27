@@ -90,7 +90,7 @@ export default class ComposerView extends React.Component {
       }
     });
 
-    const isBrandNew = this.props.draft.date >= MessageStore.lastThreadChangeTimestamp();
+    const isBrandNew = this.props.draft.pristine && !this.props.draft.hasRefOldDraftOnRemote;
     if (isBrandNew) {
       ReactDOM.findDOMNode(this).scrollIntoView(false);
       this._animationFrameTimer = window.requestAnimationFrame(() => {
