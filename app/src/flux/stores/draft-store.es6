@@ -239,6 +239,7 @@ class DraftStore extends MailspringStore {
   }
 
   async sessionForServerDraft(draft) {
+    console.warn('sever draft');
     if (this.isDraftWaitingSaveOnRemote(draft.id)) {
       AppEnv.logWarning(`Draft ${draft.id} is still waiting for saveOnRemote`);
       const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
@@ -555,6 +556,10 @@ class DraftStore extends MailspringStore {
   }
 
   _onOutboxCancelDraft = ({ messages = [], source } = {}) => {
+    if (!AppEnv.isMainWindow()) {
+      AppEnv.logWarning(`DraftStore:OutboxCancelDraft captured in none main window`);
+      return;
+    }
     const tasks = TaskFactory.tasksForCancellingOutboxDrafts({ messages, source });
     if (tasks && tasks.length > 0) {
       Actions.queueTasks(tasks);

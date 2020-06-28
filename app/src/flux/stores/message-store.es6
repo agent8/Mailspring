@@ -368,15 +368,6 @@ class MessageStore extends MailspringStore {
         this._items = this._sortItemsForDisplay(this._items);
       } else if (type === 'unpersist') {
         drafts.forEach(item => {
-          const isInThread = this.threadId() && item.threadId === this.threadId();
-          if (!isInThread) {
-            AppEnv.logDebug(
-              `MessageStore: Draft ${item.id} not in thread ${
-                item.threadId
-              }, current thread ${this.threadId()}`
-            );
-            return;
-          }
           const itemIndex = this._items.findIndex(msg => msg.id === item.id);
           if (itemIndex !== -1) {
             AppEnv.logDebug(

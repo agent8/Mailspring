@@ -23,8 +23,26 @@ class DraftCacheStore extends MailspringStore {
     this.listenTo(Actions.broadcastDraftCache, this._onBroadcastDraftCacheReceived);
     this.listenTo(Actions.draftDeliverySucceeded, this._onSendDraftSuccess);
     this.listenTo(Actions.draftDeliveryFailed, this._onSendDraftFailed);
+    this.listenTo(Actions.cancelOutboxDrafts, this._onOutboxCancelled);
     this.listenTo(DatabaseStore, this._onDBDataChange);
   }
+  _onOutboxCancelled = ({ messages = [] } = {}) => {
+    if (!Array.isArray(messages)) {
+      AppEnv.logWarning(`OutboxCancelDraft action messages is not array`);
+      return;
+    }
+    const ret = [];
+    messages.forEach(msg => {
+      if (msg) {
+        AppEnv.log(`OutboxCancelDraft action message ${msg.id} to be removed from cache`);
+        this.removeDraftFromCache(msg, false);
+        ret.push(msg);
+      }
+    });
+    if (ret.length > 0) {
+      this.trigger({ drafts: ret, type: 'unpersist' });
+    }
+  };
   _onSendDraftSuccess = ({ messageId }) => {
     AppEnv.logDebug(`DraftCacheStore: Draft ${messageId} sent success, finding draft in cache`);
     const draft = this.findDraftById(messageId);
@@ -49,17 +67,17 @@ class DraftCacheStore extends MailspringStore {
     if (change.objectClass === Message.name) {
       const messages = [];
       change.objects.forEach(msg => {
-        if (msg && msg.draft && !msg.calendarReply && !msg.ignoreSift) {
-          if (change.type === 'persist') {
+        if (change.type === 'persist') {
+          if (msg && msg.draft && !msg.calendarReply && !msg.ignoreSift) {
             const cache = this.findDraft(msg);
             if (cache) {
               messages.push(msg);
               this.updateDraftCache(msg, false);
             }
-          } else {
-            messages.push(msg);
-            this.removeDraftFromCache(msg, false);
           }
+        } else {
+          messages.push(msg);
+          this.removeDraftCacheByMessageId(msg.id, false);
         }
       });
       if (messages.length > 0) {
