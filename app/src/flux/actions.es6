@@ -374,7 +374,7 @@ class Actions {
   }
    */
   static changeDraftAccount = ActionScopeWindow;
-  static notMainChangeDraftAccount = ActionScopeWindow;
+  static broadcastChangeAccount = ActionScopeGlobal;
   static toMainChangeDraftAccount = ActionScopeMainWindow;
 
   /*

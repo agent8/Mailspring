@@ -108,7 +108,7 @@ class DraftChangeSet extends EventEmitter {
     }
     this.cancelCommit();
     this._timerStarted = now;
-    this._timer = setTimeout(() => this.commit(), SaveAfterIdleMSec);
+    this._timer = setTimeout(() => this.commit('debounceCommit'), SaveAfterIdleMSec);
   }
 
   async commit(arg) {
@@ -253,6 +253,7 @@ export default class DraftEditingSession extends MailspringStore {
     this._destroyed = false;
     this._popedOut = false;
     this._needsSyncWithMain = false;
+    this._isChangingAccount = false;
     this.lastSync = Date.now();
     let currentWindowLevel = 3;
     if (AppEnv.isMainWindow()) {
@@ -426,12 +427,15 @@ export default class DraftEditingSession extends MailspringStore {
   isDestroyed() {
     return this._destroyed;
   }
+  changingAccount() {
+    this._isChangingAccount = true;
+  }
 
   setPopout(val) {
     if (val !== this._popedOut) {
       if (this.changes && !val) {
         this.changes.cancelCommit();
-        this.changeSetCommit();
+        this.changeSetCommit('setPopout');
       }
       this._popedOut = val;
       this.trigger();
@@ -781,11 +785,15 @@ export default class DraftEditingSession extends MailspringStore {
   }
 
   async changeSetCommit(reason = '') {
+    if (this._isChangingAccount) {
+      AppEnv.logDebug(`${this.messageId} is changing account thus ${reason} for commit is ignored`);
+      return Promise.resolve();
+    }
     // if (this._destroyed || !this._draft || this._popedOut) {
     //   return;
     // }
     if (!this._draft) {
-      return;
+      return Promise.resolve();
     }
     //if id is empty, we assign uuid to id;
     if (!this._draft.id || this._draft.id === '') {
