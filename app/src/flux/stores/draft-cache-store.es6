@@ -1,7 +1,5 @@
 import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
-import CancelOutboxDraftTask from '../tasks/cancel-outbox-draft-task';
-import DestroyDraftTask from '../tasks/destroy-draft-task';
 import RestoreDraftTask from '../tasks/restore-draft-task';
 import SendDraftTask from '../tasks/send-draft-task';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
@@ -23,18 +21,19 @@ class DraftCacheStore extends MailspringStore {
     this.listenTo(Actions.broadcastDraftCache, this._onBroadcastDraftCacheReceived);
     this.listenTo(Actions.draftDeliverySucceeded, this._onSendDraftSuccess);
     this.listenTo(Actions.draftDeliveryFailed, this._onSendDraftFailed);
-    this.listenTo(Actions.cancelOutboxDrafts, this._onOutboxCancelled);
+    this.listenTo(Actions.cancelOutboxDrafts, this._onRemoveDraft);
+    this.listenTo(Actions.destroyDraft, this._onRemoveDraft);
     this.listenTo(DatabaseStore, this._onDBDataChange);
   }
-  _onOutboxCancelled = ({ messages = [] } = {}) => {
+  _onRemoveDraft = ({ messages = [] } = {}) => {
     if (!Array.isArray(messages)) {
-      AppEnv.logWarning(`OutboxCancelDraft action messages is not array`);
-      return;
+      AppEnv.logWarning(`RemoveDraft action messages is not array`);
+      messages = [messages];
     }
     const ret = [];
     messages.forEach(msg => {
-      if (msg) {
-        AppEnv.log(`OutboxCancelDraft action message ${msg.id} to be removed from cache`);
+      if (msg && msg.id) {
+        AppEnv.logDebug(`RemoveDraft action message ${msg.id} to be removed from cache`);
         this.removeDraftFromCache(msg, false);
         ret.push(msg);
       }
@@ -103,7 +102,12 @@ class DraftCacheStore extends MailspringStore {
       return;
     }
     if (!this.cache[threadId]) {
-      this.cache[threadId] = { state: state.normal, messages: {} };
+      AppEnv.logDebug(`DraftCacheStore:onBroadCast: ThreadId ${threadId}, type: ${type}`);
+      if (type === 'persist') {
+        this.cache[threadId] = { state: state.normal, messages: {} };
+      } else {
+        return;
+      }
     }
     if (!Array.isArray(messages)) {
       AppEnv.logWarning(`ThreadId ${threadId} messages is not array, ignoring`);
@@ -352,27 +356,7 @@ class DraftCacheStore extends MailspringStore {
     const persists = [];
     const unpersists = [];
     tasks.forEach(task => {
-      if (task instanceof DestroyDraftTask) {
-        const messageIds = task.messageIds;
-        messageIds.forEach(id => {
-          AppEnv.logDebug(`Removing ${id} from cache because DestroyDraftTask`);
-          const removed = this.removeDraftCacheByMessageId(id, false);
-          if (removed) {
-            AppEnv.logDebug(`Removed ${id} from cache DestroyDraftTask`);
-            unpersists.push(removed);
-          }
-        });
-      } else if (task instanceof CancelOutboxDraftTask) {
-        const messageIds = task.messageIds;
-        messageIds.forEach(id => {
-          AppEnv.logDebug(`Removing ${id} from cache because CancelOutboxDraftTask`);
-          const removed = this.removeDraftCacheByMessageId(id, false);
-          if (removed) {
-            AppEnv.logDebug(`Removed ${id} from cache CancelOutboxDraftTask`);
-            unpersists.push(removed);
-          }
-        });
-      } else if (task instanceof RestoreDraftTask) {
+      if (task instanceof RestoreDraftTask) {
         const id = task.deleteMessageId;
         AppEnv.logDebug(`Removing ${id} from cache because RestoreDraftTask`);
         const removed = this.removeDraftCacheByMessageId(id, false);
