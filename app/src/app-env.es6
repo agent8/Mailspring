@@ -562,6 +562,21 @@ export default class AppEnvConstructor {
   Section: Event Subscription
   */
 
+  getWindowLevel() {
+    if (this.isComposerWindow()) {
+      return 3;
+    }
+    if (this.isThreadWindow()) {
+      return 2;
+    }
+    if (this.isOnboardingWindow()) {
+      return 4;
+    }
+    if (this.isBugReportingWindow()) {
+      return 5;
+    }
+    return 1;
+  }
   isMainWindow() {
     return !!this.getLoadSettings().mainWindow;
   }
@@ -687,13 +702,7 @@ export default class AppEnvConstructor {
   close(options) {
     if (options) {
       if (!options.windowLevel) {
-        if (this.isComposerWindow()) {
-          options.windowLevel = 3;
-        } else if (this.isThreadWindow()) {
-          options.windowLevel = 2;
-        } else {
-          options.windowLevel = 1;
-        }
+        options.windowLevel = this.getWindowLevel();
       }
       ipcRenderer.send(`close-window`, options);
     } else {

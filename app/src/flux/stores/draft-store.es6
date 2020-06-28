@@ -55,6 +55,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.sendDraft, this._onSendDraftAction);
     this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChangeAction);
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
+    this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.toMainSendDraft, this._onSendDraft);
       this.listenTo(Actions.toMainChangeDraftAccount, this._onDraftAccountChange);
@@ -441,22 +442,31 @@ class DraftStore extends MailspringStore {
             if (response === 0) {
               session.changes.add({ files: [] });
               session.updateAttachments([]);
-              if (AppEnv.isMainWindow()) {
-                this._onDraftAccountChange(data);
-              } else {
-                this._onDraftAccountChanged_NotMainWindow(data);
-              }
+              session.changingAccount();
+              Actions.broadcastChangeAccount(data, AppEnv.getWindowLevel());
               return true;
             }
           });
         return false;
       }
-      if (AppEnv.isMainWindow()) {
-        this._onDraftAccountChange(data);
-      } else {
-        this._onDraftAccountChanged_NotMainWindow(data);
-      }
+      session.changingAccount();
+      Actions.broadcastChangeAccount(data, AppEnv.getWindowLevel());
     });
+  };
+  _onBroadcastChangeAccount = (data, windowLevel) => {
+    const msgId = data.originalMessageId;
+    if (msgId) {
+      const session = this._draftSessions[msgId];
+      if (session) {
+        AppEnv.logDebug(`DraftStore:Draft ${msgId} changing account windowLevel ${windowLevel}`);
+        session.changingAccount();
+      }
+    }
+    if (AppEnv.isMainWindow() && this._getCurrentWindowLevel() === windowLevel) {
+      this._onDraftAccountChange(data);
+    } else if (this._getCurrentWindowLevel() === windowLevel) {
+      this._onDraftAccountChanged_NotMainWindow(data);
+    }
   };
 
   _onDraftAccountChanged_NotMainWindow = ({
@@ -467,6 +477,17 @@ class DraftStore extends MailspringStore {
     const session = this._draftSessions[originalMessageId];
     if (AppEnv.isComposerWindow() || AppEnv.isThreadWindow()) {
       if (session) {
+        const oldDraft = session.draft();
+        if (oldDraft) {
+          Actions.toMainChangeDraftAccount({
+            originalHeaderMessageId,
+            originalMessageId,
+            newParticipants,
+            oldDraft,
+          });
+          return;
+        }
+        AppEnv.logDebug(`OldDraft ${originalMessageId} is missing from session`);
         session.syncDraftDataToMainNow();
         this._doneWithSession(session, 'draft account change');
       }
@@ -483,11 +504,16 @@ class DraftStore extends MailspringStore {
     originalMessageId,
     originalHeaderMessageId,
     newParticipants,
+    oldDraft,
   }) => {
+    this.clearSaveOnRemoteTaskTimer(originalMessageId);
     const session = this._draftSessions[originalMessageId];
-    await session.changes.commit();
+    session.changingAccount();
     session.freezeSession();
-    const oldDraft = session.draft();
+    if (!oldDraft) {
+      console.log('Old draft not passed, reading old draft from session');
+      oldDraft = session.draft();
+    }
     if (!oldDraft) {
       console.error('How can old not available');
       return;
@@ -1244,7 +1270,7 @@ class DraftStore extends MailspringStore {
       if (options.forceCommit) {
         await session.changes.commit('force');
       } else {
-        await session.changes.commit();
+        await session.changes.commit('popOutDraft');
       }
       session.setPopout(true);
       const draftJSON = session.draft().toJSON();
