@@ -481,7 +481,7 @@ class Actions {
   static broadcastDraftData = ActionScopeGlobal;
   static editOutboxDraft = ActionScopeMainWindow;
   static resendDrafts = ActionScopeMainWindow;
-  static cancelOutboxDrafts = ActionScopeMainWindow;
+  static cancelOutboxDrafts = ActionScopeGlobal;
   static destroyDraft = ActionScopeGlobal;
   static destroyDraftSucceeded = ActionScopeMainWindow;
   static destroyDraftFailed = ActionScopeMainWindow;

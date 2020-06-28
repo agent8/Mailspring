@@ -515,7 +515,7 @@ export default class DraftEditingSession extends MailspringStore {
       if (this._draft) {
         this._draft.missingAttachments().then(ret => {
           if (ret && ret.totalMissing().length > 0) {
-            warnings.push(`Attachments are still processing`);
+            warnings.push(`while attachments are still processing`);
           }
           resolve({ errors, warnings });
         });
@@ -607,7 +607,7 @@ export default class DraftEditingSession extends MailspringStore {
       if (this._draft) {
         this._draft.missingAttachments().then(ret => {
           if (ret && ret.totalMissing().length > 0) {
-            warnings.push(`Attachments are still processing`);
+            warnings.push(`while attachments are still processing`);
           }
           resolve({ errors, warnings });
         });
