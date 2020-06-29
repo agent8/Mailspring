@@ -90,13 +90,12 @@ function AttachmentActionIcon(props) {
   const actionIconName = isRemovable ? removeIcon : downloadIcon;
 
   const onClickActionIcon = event => {
-    if (missing || isDownloading) {
+    event.stopPropagation();
+    if (isRemovable && typeof onRemoveAttachment === 'function' && !missing && !isDownloading) {
+      onRemoveAttachment();
       return;
     }
-    event.stopPropagation(); // Prevent 'onOpenAttachment'
-    if (isRemovable) {
-      onRemoveAttachment();
-    } else if (onDownloadAttachment != null) {
+    if (!isRemovable && typeof onDownloadAttachment === 'function') {
       onDownloadAttachment();
     }
   };
