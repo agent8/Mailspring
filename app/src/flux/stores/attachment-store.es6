@@ -1581,7 +1581,7 @@ class AttachmentStore extends MailspringStore {
             return;
           }
           const nowState = this.getDownloadDataForFile(pid);
-          if (nowState.state === AttachmentDownloadState.done) {
+          if (nowState && nowState.state === AttachmentDownloadState.done) {
             return;
           }
           // const matchGroup = (obj.errormsg || '').match(/errCode\s*=\s*([0-9]*)\s*,(.*)/);
