@@ -125,11 +125,10 @@ export default class MessageItem extends React.Component {
   };
 
   _onDownloadAll = () => {
-    if (MessageStore.isMessageMissingAttachment(this.props.message)) {
-      Actions.fetchAttachmentsByMessage({ messageId: this.props.message.id });
-    } else {
-      Actions.fetchAndSaveAllFiles(this.props.message.files);
-    }
+    Actions.fetchAndSaveAllFiles({
+      files: this.props.message.files,
+      accountId: this.state.accountId,
+    });
   };
 
   _onToggleCollapsed = () => {

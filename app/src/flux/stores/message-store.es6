@@ -230,7 +230,6 @@ class MessageStore extends MailspringStore {
     this.listenTo(Actions.toggleAllMessagesExpanded, this._onToggleAllMessagesExpanded);
     this.listenTo(Actions.toggleHiddenMessages, this._onToggleHiddenMessages);
     this.listenTo(Actions.popoutThread, this._onPopoutThread);
-    this.listenTo(Actions.fetchAttachmentsByMessage, this.fetchMissingAttachmentsByMessage);
     this.listenTo(Actions.setCurrentWindowTitle, this.setWindowTitle);
     this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
     return this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
@@ -684,67 +683,6 @@ class MessageStore extends MailspringStore {
         needProgress: true,
         source: 'Click',
       });
-    }
-  }
-
-  fetchMissingAttachmentsByMessage({ messageId } = {}) {
-    const missingInline = [];
-    const missingNormal = [];
-    const noLongerMissing = [];
-    let change = this._missingAttachmentIds.length === 0;
-    const message = this._items.find(item => item.id === messageId);
-    if (!message) {
-      return;
-    }
-
-    message.files.forEach((f, fileIndex) => {
-      const tmpPath = AttachmentStore.pathForFile(f);
-      const tempExists = fs.existsSync(tmpPath);
-      if (!tempExists) {
-        if (f.isInline) {
-          missingInline.push(f.id);
-        } else {
-          missingNormal.push(f.id);
-        }
-        if (!this.isAttachmentMissing(f.id)) {
-          this._missingAttachmentIds.push(f.id);
-          change = true;
-        }
-        const partExists = fs.existsSync(`${tmpPath}.part`);
-        if (message.files[fileIndex].isDownloading !== partExists) {
-          change = true;
-          message.files[fileIndex].isDownloading = partExists;
-        }
-      } else {
-        if (this.isAttachmentMissing(f.id)) {
-          noLongerMissing.push(f.id);
-          change = true;
-        }
-      }
-    });
-
-    if (missingNormal.length > 0) {
-      Actions.fetchAttachments({
-        accountId: message.accountId,
-        missingItems: missingNormal,
-        needProgress: true,
-        source: 'Click',
-      });
-    }
-    if (missingInline.length > 0) {
-      Actions.fetchAttachments({
-        accountId: message.accountId,
-        missingItems: missingInline,
-        needProgress: false,
-        source: 'Click',
-      });
-    }
-    if (change) {
-      this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
-        return !noLongerMissing.includes(id);
-      });
-      console.log('updating missingAttachmentIds');
-      this.trigger();
     }
   }
 
