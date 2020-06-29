@@ -14,6 +14,7 @@ import DatabaseStore from './database-store';
 import AttachmentProgress from '../models/attachment-progress';
 import { autoGenerateFileName } from '../../fs-utils';
 import uuid from 'uuid';
+import _ from 'underscore';
 
 const { AttachmentDownloadState } = Constant;
 Promise.promisifyAll(fs);
@@ -870,6 +871,7 @@ class AttachmentStore extends MailspringStore {
         this._onPresentChange(change.objects);
       }
     });
+    this._triggerDebounced = _.debounce(() => this.trigger(), 20);
   }
   _onDraftAttachmentStateChanged = data => {
     console.log(`draft attachment state changed `, data);
@@ -1236,7 +1238,9 @@ class AttachmentStore extends MailspringStore {
       // this allows us to handle obscure edge cases where the sync engine
       // the file with an altered name.
       const dir = path.dirname(filePath);
-      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store');
+      const items = fs
+        .readdirSync(dir)
+        .filter(i => i !== '.DS_Store' && !i.endsWith('.part') && !i.endsWith('.partns'));
       if (items.length === 1) {
         filePath = path.join(dir, items[0]);
       }
@@ -1456,7 +1460,7 @@ class AttachmentStore extends MailspringStore {
       .then(filePath => this._writeToExternalPath(filePath, savePath))
       .then(() => {
         if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
-          remote.shell.showItemInFolder(actualSavePath);
+          remote.shell.showItemInFolder(savePath);
         }
         this._onSaveSuccess([file]);
       })
@@ -1541,7 +1545,7 @@ class AttachmentStore extends MailspringStore {
     }
   };
 
-  _onPresentStart = (ids, trigger = true) => {
+  _onPresentStart = ids => {
     const fileIds = ids || [];
     if (fileIds.length) {
       let changed = false;
@@ -1560,14 +1564,15 @@ class AttachmentStore extends MailspringStore {
           percent: 0,
         });
       });
-      if (changed && trigger) {
-        this.trigger();
+      if (changed) {
+        this._triggerDebounced();
       }
     }
   };
 
   _onPresentChange = changes => {
     if (changes && changes.length) {
+      const failFileIds = [];
       const successFileIds = [];
       changes.forEach(obj => {
         if (obj) {
@@ -1575,40 +1580,39 @@ class AttachmentStore extends MailspringStore {
           if (!pid) {
             return;
           }
+          const nowState = this.getDownloadDataForFile(pid);
+          if (nowState.state === AttachmentDownloadState.done) {
+            return;
+          }
           // const matchGroup = (obj.errormsg || '').match(/errCode\s*=\s*([0-9]*)\s*,(.*)/);
           // const errCode = matchGroup && matchGroup[1] ? Number(matchGroup[1]) : 0;
           // const errMsg = matchGroup && matchGroup[2] ? matchGroup[2].trim() : '';
-          if (obj.cursize < 0) {
+          if (obj.state === AttachmentDownloadState.fail) {
             // download faild
-            this._fileProcess.set(pid, {
-              state: AttachmentDownloadState.fail,
-              percent: 0,
-            });
+            failFileIds.push(pid);
             return;
           }
-          this._onPresentStart([pid], false);
-          const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
-          const nowState = this.getDownloadDataForFile(pid);
-          const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
-          const maxPercent = Math.max(parseInt(percent * 100), nowPercent);
-          if (maxPercent >= 100) {
-            this._fileProcess.set(pid, {
-              state: AttachmentDownloadState.done,
-              percent: 100,
-            });
+          if (obj.state === AttachmentDownloadState.done) {
+            // download success
             successFileIds.push(pid);
-          } else {
-            this._fileProcess.set(pid, {
-              state: AttachmentDownloadState.downloading,
-              percent: maxPercent,
-            });
+            return;
           }
+          const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
+          const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
+          const maxPercent = Math.min(Math.max(parseInt(percent * 100), nowPercent), 100);
+          this._fileProcess.set(pid, {
+            state: AttachmentDownloadState.downloading,
+            percent: maxPercent,
+          });
         }
       });
-      if (successFileIds.length) {
-        this._consumeSaveQueue();
+      if (failFileIds.length) {
+        this._onPresentFail(failFileIds);
       }
-      this.trigger();
+      if (successFileIds.length) {
+        this._onPresentSuccess(successFileIds);
+      }
+      this._triggerDebounced();
     }
   };
 
@@ -1622,7 +1626,20 @@ class AttachmentStore extends MailspringStore {
         });
       });
       this._consumeSaveQueue();
-      this.trigger();
+      this._triggerDebounced();
+    }
+  };
+
+  _onPresentFail = ids => {
+    const fileIds = ids || [];
+    if (fileIds.length) {
+      fileIds.forEach(id => {
+        this._fileProcess.set(id, {
+          state: AttachmentDownloadState.fail,
+          percent: 0,
+        });
+      });
+      this._triggerDebounced();
     }
   };
 
