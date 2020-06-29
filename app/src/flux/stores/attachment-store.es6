@@ -1199,12 +1199,12 @@ class AttachmentStore extends MailspringStore {
   }
 
   getDownloadDataForFile = fileId => {
-    return this._fileProcess.get(fileId);
+    return this._fileProcess.get(fileId) || {};
   };
 
   getDownloadDataForFileByPath = filePath => {
     const fileId = this.fileIdForPath(filePath);
-    return this._fileProcess.get(fileId);
+    return this._fileProcess.get(fileId) || {};
   };
 
   // Returns a hash of download objects keyed by fileId
@@ -1550,7 +1550,7 @@ class AttachmentStore extends MailspringStore {
     if (fileIds.length) {
       let changed = false;
       fileIds.forEach(id => {
-        const oldProcess = this._fileProcess.get(id);
+        const oldProcess = this.getDownloadDataForFile(id);
         if (
           oldProcess &&
           (oldProcess.state === AttachmentDownloadState.downloading ||
