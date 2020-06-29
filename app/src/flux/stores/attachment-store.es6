@@ -1580,6 +1580,10 @@ class AttachmentStore extends MailspringStore {
           if (!pid) {
             return;
           }
+          const nowState = this.getDownloadDataForFile(pid);
+          if (nowState.state === AttachmentDownloadState.done) {
+            return;
+          }
           // const matchGroup = (obj.errormsg || '').match(/errCode\s*=\s*([0-9]*)\s*,(.*)/);
           // const errCode = matchGroup && matchGroup[1] ? Number(matchGroup[1]) : 0;
           // const errMsg = matchGroup && matchGroup[2] ? matchGroup[2].trim() : '';
@@ -1593,7 +1597,6 @@ class AttachmentStore extends MailspringStore {
             successFileIds.push(pid);
             return;
           }
-          const nowState = this.getDownloadDataForFile(pid);
           const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
           const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
           const maxPercent = Math.min(Math.max(parseInt(percent * 100), nowPercent), 100);
