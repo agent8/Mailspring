@@ -97,7 +97,9 @@ class EventedIFrame extends React.Component {
     const node = ReactDOM.findDOMNode(this);
     const doc =
       (node.contentDocument != null ? node.contentDocument.body : undefined) != null
-        ? node.contentDocument != null ? node.contentDocument.body : undefined
+        ? node.contentDocument != null
+          ? node.contentDocument.body
+          : undefined
         : node.contentDocument;
     const searchIndex = SearchableComponentStore.getCurrentRegionIndex(this._regionId);
     const { searchTerm } = SearchableComponentStore.getCurrentSearchData();
@@ -356,14 +358,14 @@ class EventedIFrame extends React.Component {
         new MenuItem({
           label: 'Save Image...',
           click() {
-            AppEnv.showSaveDialog({ defaultPath: srcFilename }, function (path) {
+            AppEnv.getFilePathForSaveFile({ defaultPath: srcFilename }).then(function(path) {
               if (!path) {
                 return;
               }
               const oReq = new XMLHttpRequest();
               oReq.open('GET', src, true);
               oReq.responseType = 'arraybuffer';
-              oReq.onload = function () {
+              oReq.onload = function() {
                 const buffer = Buffer.from(new Uint8Array(oReq.response));
                 fs.writeFile(path, buffer, err => shell.showItemInFolder(path));
               };
@@ -379,7 +381,7 @@ class EventedIFrame extends React.Component {
             let img = new Image();
             img.addEventListener(
               'load',
-              function () {
+              function() {
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
