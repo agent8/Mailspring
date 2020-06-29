@@ -1236,7 +1236,7 @@ class AttachmentStore extends MailspringStore {
       // this allows us to handle obscure edge cases where the sync engine
       // the file with an altered name.
       const dir = path.dirname(filePath);
-      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store');
+      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store' && !i.endsWith('.part'));
       if (items.length === 1) {
         filePath = path.join(dir, items[0]);
       }
@@ -1456,7 +1456,7 @@ class AttachmentStore extends MailspringStore {
       .then(filePath => this._writeToExternalPath(filePath, savePath))
       .then(() => {
         if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
-          remote.shell.showItemInFolder(actualSavePath);
+          remote.shell.showItemInFolder(savePath);
         }
         this._onSaveSuccess([file]);
       })
