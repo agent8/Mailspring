@@ -14,6 +14,7 @@ import DatabaseStore from './database-store';
 import AttachmentProgress from '../models/attachment-progress';
 import { autoGenerateFileName } from '../../fs-utils';
 import uuid from 'uuid';
+import _ from 'underscore';
 
 const { AttachmentDownloadState } = Constant;
 Promise.promisifyAll(fs);
@@ -870,6 +871,7 @@ class AttachmentStore extends MailspringStore {
         this._onPresentChange(change.objects);
       }
     });
+    this._triggerDebounced = _.debounce(() => this.trigger(), 20);
   }
   _onDraftAttachmentStateChanged = data => {
     console.log(`draft attachment state changed `, data);
@@ -1543,7 +1545,7 @@ class AttachmentStore extends MailspringStore {
     }
   };
 
-  _onPresentStart = (ids, trigger = true) => {
+  _onPresentStart = ids => {
     const fileIds = ids || [];
     if (fileIds.length) {
       let changed = false;
@@ -1562,8 +1564,8 @@ class AttachmentStore extends MailspringStore {
           percent: 0,
         });
       });
-      if (changed && trigger) {
-        this.trigger();
+      if (changed) {
+        this._triggerDebounced();
       }
     }
   };
@@ -1602,16 +1604,16 @@ class AttachmentStore extends MailspringStore {
         }
       });
       if (failFileIds.length) {
-        this._onPresentFail(failFileIds, false);
+        this._onPresentFail(failFileIds);
       }
       if (successFileIds.length) {
-        this._onPresentSuccess(successFileIds, false);
+        this._onPresentSuccess(successFileIds);
       }
-      this.trigger();
+      this._triggerDebounced();
     }
   };
 
-  _onPresentSuccess = (ids, trigger = true) => {
+  _onPresentSuccess = ids => {
     const fileIds = ids || [];
     if (fileIds.length) {
       fileIds.forEach(id => {
@@ -1621,13 +1623,11 @@ class AttachmentStore extends MailspringStore {
         });
       });
       this._consumeSaveQueue();
-      if (trigger) {
-        this.trigger();
-      }
+      this._triggerDebounced();
     }
   };
 
-  _onPresentFail = (ids, trigger = true) => {
+  _onPresentFail = ids => {
     const fileIds = ids || [];
     if (fileIds.length) {
       fileIds.forEach(id => {
@@ -1636,9 +1636,7 @@ class AttachmentStore extends MailspringStore {
           percent: 0,
         });
       });
-      if (trigger) {
-        this.trigger();
-      }
+      this._triggerDebounced();
     }
   };
 
