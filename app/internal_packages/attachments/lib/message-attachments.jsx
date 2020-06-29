@@ -53,7 +53,7 @@ class MessageAttachments extends Component {
   };
 
   onDownloadAttachment = file => {
-    Actions.fetchAndSaveFile(file);
+    Actions.fetchAndSaveFile({ file, accountId: this.props.accountId });
   };
 
   onAbortDownload = file => {
