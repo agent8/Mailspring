@@ -71,7 +71,11 @@ class DraftCacheStore extends MailspringStore {
             const cache = this.findDraft(msg);
             if (cache) {
               messages.push(msg);
-              this.updateDraftCache(msg, false);
+              if (msg.deleted) {
+                this.removeDraftCacheByMessageId(msg.id, false);
+              } else {
+                this.updateDraftCache(msg, false);
+              }
             }
           }
         } else {

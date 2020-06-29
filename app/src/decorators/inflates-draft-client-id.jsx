@@ -45,7 +45,7 @@ function InflatesDraftClientId(ComposedComponent) {
         !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failing) &&
         !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failed)
       ) {
-        this._prepareServerDraftForEdit(this.props.draft);
+        this._prepareServerDraftForEdit(this.props.draft, 'didMount');
       } else {
         if (
           this.props.draft &&
@@ -57,7 +57,7 @@ function InflatesDraftClientId(ComposedComponent) {
             { errorData: this.props.draft }
           );
         } else {
-          this._prepareForDraft(this.props.messageId);
+          this._prepareForDraft(this.props.messageId, 'didMount');
         }
       }
     }
@@ -69,7 +69,9 @@ function InflatesDraftClientId(ComposedComponent) {
 
     UNSAFE_componentWillReceiveProps(newProps) {
       if (newProps.messageId !== this.props.messageId) {
-        // console.log(`new props: ${JSON.stringify(newProps)}`);
+        AppEnv.logDebug(
+          `Inflate-Draft:new props: ${newProps.messageId}, oldProps ${this.props.messageId}`
+        );
         this._teardownForDraft({ messageId: this.props.messageId });
         if (
           newProps.draft &&
@@ -78,16 +80,18 @@ function InflatesDraftClientId(ComposedComponent) {
           !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.failing) &&
           !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.failed)
         ) {
-          this._prepareServerDraftForEdit(newProps.draft);
+          this._prepareServerDraftForEdit(newProps.draft, 'receiveProps');
         } else {
-          this._prepareForDraft(newProps.messageId);
+          this._prepareForDraft(newProps.messageId, 'receiveProps');
         }
       }
     }
 
-    _prepareServerDraftForEdit(draft) {
+    _prepareServerDraftForEdit(draft, trace) {
+      AppEnv.logDebug(
+        `Session for server draft ${draft.id}, savedOnRemote ${draft.savedOnRemote}, stack: ${trace}`
+      );
       if (draft.savedOnRemote) {
-        AppEnv.logDebug(`Session for server draft ${draft.id}`);
         DraftStore.sessionForServerDraft(draft);
         //   .then(session => {
         //   const shouldSetState = () => {
@@ -133,10 +137,14 @@ function InflatesDraftClientId(ComposedComponent) {
       }
     }
 
-    _prepareForDraft(messageId) {
+    _prepareForDraft(messageId, trace) {
       if (!messageId) {
+        AppEnv.logWarning(
+          new Error(`Inflate-Draft:_prepareForDraft: No messageId ${messageId}, stack: ${trace}`)
+        );
         return;
       }
+      AppEnv.logDebug(`Inflate-Draft:_prepareForDraft: ${messageId}, stack: ${trace}`);
       DraftStore.sessionForClientId(messageId).then(session => {
         const shouldSetState = () => {
           if (!session) {
