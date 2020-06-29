@@ -1236,7 +1236,9 @@ class AttachmentStore extends MailspringStore {
       // this allows us to handle obscure edge cases where the sync engine
       // the file with an altered name.
       const dir = path.dirname(filePath);
-      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store' && !i.endsWith('.part'));
+      const items = fs
+        .readdirSync(dir)
+        .filter(i => i !== '.DS_Store' && !i.endsWith('.part') && !i.endsWith('.partns'));
       if (items.length === 1) {
         filePath = path.join(dir, items[0]);
       }
