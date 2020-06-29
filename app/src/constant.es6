@@ -50,8 +50,8 @@ export const ServerInfoPriorityEnum = {
 
 export const AttachmentDownloadState = {
   fail: -1,
-  downloading: 1,
-  done: 2,
+  downloading: 0,
+  done: 1,
 };
 export const AttachmentFileSizeIgnoreThreshold = 4; //4 Bytes;
 
