@@ -56,7 +56,9 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChangeAction);
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
     this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
+    this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
     if (AppEnv.isMainWindow()) {
+      this.listenTo(Actions.requestSessionForServerDraft, this._onServerDraftSessionRequest);
       this.listenTo(Actions.toMainSendDraft, this._onSendDraft);
       this.listenTo(Actions.toMainChangeDraftAccount, this._onDraftAccountChange);
       this.listenTo(Actions.composeReply, this._onComposeReply);
@@ -238,9 +240,28 @@ class DraftStore extends MailspringStore {
     }
     return this._draftSessions[messageId];
   }
+  _onServerDraftSessionRequest = draft => {
+    if (!AppEnv.isMainWindow()) {
+      return;
+    }
+    if (!draft) {
+      return;
+    }
+    AppEnv.logDebug(`on Server draft session request ${draft.id}`);
+    this.sessionForServerDraft(draft);
+  };
+  _findExistingServerDraftSession = oldDraftId => {
+    const sessions = Object.values(this._draftSessions);
+    for (let i = 0; i < sessions.length; i++) {
+      const session = sessions[i];
+      if (session.refOldDraftMessageId === oldDraftId) {
+        return session;
+      }
+    }
+    return null;
+  };
 
   async sessionForServerDraft(draft) {
-    console.warn('sever draft');
     if (this.isDraftWaitingSaveOnRemote(draft.id)) {
       AppEnv.logWarning(`Draft ${draft.id} is still waiting for saveOnRemote`);
       const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
@@ -250,15 +271,46 @@ class DraftStore extends MailspringStore {
       }
       return session;
     }
+    if (!AppEnv.isMainWindow()) {
+      AppEnv.logDebug(`Request server draft session ${draft.id}`);
+      Actions.requestSessionForServerDraft(draft);
+      return;
+    }
+    let existingSession = this._findExistingServerDraftSession(draft.id);
+    if (existingSession) {
+      AppEnv.logDebug(`Existing server draft session exist for ${draft.id}`);
+      const newDraft = existingSession.draft();
+      if (newDraft) {
+        AppEnv.logDebug(
+          `Broadcasting existing server draft session from main oldId: ${draft.id}, new draft: ${newDraft.id}`
+        );
+        Actions.broadcastServerDraftSession({ oldDraftId: draft.id, newDraft });
+      } else {
+        AppEnv.logWarning(`Existing server draft session for ${draft.id} have no draft`);
+      }
+      return existingSession;
+    }
     const newDraft = DraftFactory.createNewDraftForEdit(draft);
     await this._finalizeAndPersistNewMessage(newDraft);
     const session = this._draftSessions[newDraft.id];
-    // if (session) {
-    //   console.warn('need upload');
-    //   session.needUpload = true;
-    // }
+    AppEnv.logDebug(
+      `Broadcasting server draft session from main oldId: ${draft.id}, new draft: ${newDraft.id}`
+    );
+    Actions.broadcastServerDraftSession({ oldDraftId: draft.id, newDraft });
     return session;
   }
+
+  _onSessionForServerDraftReply = ({ newDraft, oldDraftId }) => {
+    if (AppEnv.isThreadWindow() && newDraft) {
+      const currentThreadId = AppEnv.getWindowProps().threadId;
+      AppEnv.logDebug(
+        `Session for draft ${oldDraftId} is back, new draft ${newDraft.id}, threadId: ${newDraft.threadId}, current threadId ${currentThreadId}`
+      );
+      if (newDraft.threadId === currentThreadId) {
+        this._finalizeAndPersistNewMessage(newDraft);
+      }
+    }
+  };
 
   // Public: Look up the sending state of the given draft messageId.
   // In popout windows the existence of the window is the sending state.
@@ -1232,6 +1284,12 @@ class DraftStore extends MailspringStore {
     if (draft.savedOnRemote) {
       this._doneWithSession(session, 'savedOnRemote');
       this.sessionForServerDraft(draft).then(newSession => {
+        if (!newSession) {
+          AppEnv.logError(
+            `We should get session, ${draft.id}, windowLevel ${this._getCurrentWindowLevel()}`
+          );
+          return;
+        }
         const newDraft = newSession.draft();
         newSession.setPopout(true);
         // console.warn('need upload');

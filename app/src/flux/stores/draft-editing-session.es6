@@ -254,6 +254,7 @@ export default class DraftEditingSession extends MailspringStore {
     this._popedOut = false;
     this._needsSyncWithMain = false;
     this._isChangingAccount = false;
+    this.refOldDraftMessageId = '';
     this.lastSync = Date.now();
     let currentWindowLevel = 3;
     if (AppEnv.isMainWindow()) {
@@ -292,6 +293,7 @@ export default class DraftEditingSession extends MailspringStore {
         draft.from[0].accountId = draft.accountId;
       }
       this._draft = draft;
+      this.refOldDraftMessageId = draft.refOldDraftMessageId;
       if (needUpload) {
         this.needUpload = true;
       }
@@ -376,6 +378,7 @@ export default class DraftEditingSession extends MailspringStore {
           draft.setOrigin(Message.EditExistingDraft);
         }
         this._draft = draft;
+        this.refOldDraftMessageId = draft.refOldDraftMessageId;
         if (needUpload) {
           this.needUpload = true;
         }
