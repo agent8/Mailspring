@@ -837,8 +837,8 @@ class AttachmentStore extends MailspringStore {
     // viewing messages
     this.listenTo(Actions.fetchFile, this._fetch);
     this.listenTo(Actions.fetchAndOpenFile, this._fetchAndOpen);
-    this.listenTo(Actions.fetchAndSaveFile, this._fetchAndSave);
-    this.listenTo(Actions.fetchAndSaveAllFiles, this._fetchAndSaveAll);
+    this.listenTo(Actions.fetchAndSaveFile, this._saveFileToUserDir);
+    this.listenTo(Actions.fetchAndSaveAllFiles, this._saveAllFilesToUserDir);
     this.listenTo(Actions.abortFetchFile, this._abortFetchFile);
     this.listenTo(Actions.fetchAttachments, this._onFetchAttachments);
 
@@ -859,6 +859,8 @@ class AttachmentStore extends MailspringStore {
     this._queryFileDBTimer = null;
     this._filePreviewPaths = {};
     this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
+    this._saveFileQueue = [];
+    this._saveAllFilesQueue = [];
     this._fileProcess = new Map();
     this._fileSaveSuccess = new Map();
     mkdirp(this._filesDirectory);
@@ -1324,64 +1326,151 @@ class AttachmentStore extends MailspringStore {
     });
   };
 
-  _fetchAndSave = file => {
-    const defaultPath = file.safeDisplayName();
-    const defaultExtension = path.extname(defaultPath);
-
-    AppEnv.showSaveDialog({ defaultPath }, savePath => {
-      if (!savePath) {
-        return;
-      }
-      if (typeof savePath !== 'string') {
-        this._catchFSErrors(savePath).catch(error => {
-          this._presentError({ file, error });
-        });
-        return;
-      }
-
-      const saveExtension = path.extname(savePath);
-      const newDownloadDirectory = path.dirname(savePath);
-      const didLoseExtension = defaultExtension !== '' && saveExtension === '';
-      let actualSavePath = savePath;
-      if (didLoseExtension) {
-        actualSavePath += defaultExtension;
-      }
-
-      this._prepareAndResolveFilePath(file)
-        .then(filePath => this._writeToExternalPath(filePath, actualSavePath))
-        .then(() => {
-          if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
-            remote.shell.showItemInFolder(actualSavePath);
-          }
-          this._onSaveSuccess([file]);
-        })
-        .catch(this._catchFSErrors)
-        .catch(error => {
-          this._presentError({ file, error });
-        });
+  _saveFileToUserDir = async ({ file, accountId }) => {
+    const defaultFileName = file.safeDisplayName();
+    const savePath = await AppEnv.getFilePathForSaveFile({ defaultPath: defaultFileName });
+    if (!savePath) {
+      return;
+    }
+    const defaultExtension = path.extname(defaultFileName);
+    const saveExtension = path.extname(savePath);
+    const didLoseExtension = defaultExtension !== '' && saveExtension === '';
+    const actualSavePath = `${savePath}${didLoseExtension ? defaultExtension : ''}`;
+    this._pushSaveFileToQueue({
+      file: file,
+      accountId,
+      savePath: actualSavePath,
     });
   };
 
-  _fetchAndSaveAll = files => {
+  _saveAllFilesToUserDir = async ({ files, accountId }) => {
     const options = {
       title: 'Save Into...',
       buttonLabel: 'Download All',
     };
-    AppEnv.showSaveDirDialog(options, dirPath => {
-      if (!dirPath) {
-        return;
-      }
-      this._saveAllFilesToDir(files, dirPath);
-    });
+    const saveDirPath = await AppEnv.getDirPathForSaveFile(options);
+    if (!saveDirPath) {
+      return;
+    }
+    const saveTask = {
+      files: files,
+      // File save path must be generated when saving
+      // Because different files may have the same path
+      dirPath: saveDirPath,
+      accountId,
+    };
+
+    this._pushSaveAllFilesToQueue(saveTask);
   };
 
-  _saveAllFilesToDir = (files, dirPath) => {
+  _filesNotDownloaded(files) {
+    return files.filter(file => {
+      const filePath = this.pathForFile(file);
+      if (filePath && fs.existsSync(filePath)) {
+        this._onPresentSuccess([file.id]);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  _pushSaveFileToQueue(task) {
+    const taskFileId = task && task.file && task.file.id ? task.file.id : '';
+    const filesNotDownloaded = this._filesNotDownloaded([task.file]);
+    // del the old task that has some file with now task
+    const pureTasks = this._saveFileQueue.filter(
+      t => t && t.file && t.file.id && t.file.id !== taskFileId
+    );
+    if (filesNotDownloaded.length > 0) {
+      this._saveFileQueue = [...pureTasks, task];
+      Actions.fetchAttachments({
+        accountId: task.accountId,
+        missingItems: filesNotDownloaded.map(f => f.id),
+        needProgress: true,
+        source: 'Click',
+      });
+    } else {
+      this._saveFileQueue = [...pureTasks];
+      this._saveFileForTask(task);
+    }
+  }
+
+  _pushSaveAllFilesToQueue(task) {
+    const taskFilesId = task.files.map(file => file.id).join('|');
+    const filesNotDownloaded = this._filesNotDownloaded(task.files);
+    // del the old task that has some files with now task
+    const pureTasks = this._saveAllFilesQueue.filter(t => {
+      let strDelFilesId = taskFilesId;
+      t.files.forEach(file => {
+        strDelFilesId = strDelFilesId.replace(file.id, '');
+      });
+      return strDelFilesId.replace(/\|/g, '') !== '';
+    });
+    if (filesNotDownloaded.length > 0) {
+      this._saveAllFilesQueue = [...pureTasks, task];
+      Actions.fetchAttachments({
+        accountId: task.accountId,
+        missingItems: filesNotDownloaded.map(f => f.id),
+        needProgress: true,
+        source: 'Click',
+      });
+    } else {
+      this._saveAllFilesQueue = [...pureTasks];
+      this._saveAllFilesForTask(task);
+    }
+  }
+
+  _consumeSaveQueue() {
+    this._consumeSaveFileQueue();
+    this._consumeSaveAllFilesQueue();
+  }
+
+  _consumeSaveFileQueue() {
+    this._saveFileQueue = this._saveFileQueue.filter(task => {
+      const downloadState = this.getDownloadDataForFile(task.file.id);
+      if (downloadState.state === AttachmentDownloadState.done) {
+        this._saveFileForTask(task);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  _consumeSaveAllFilesQueue() {
+    this._saveAllFilesQueue = this._saveAllFilesQueue.filter(task => {
+      const allFileDownload = task.files.every(file => {
+        const downloadState = this.getDownloadDataForFile(file.id);
+        return downloadState.state === AttachmentDownloadState.done;
+      });
+      if (allFileDownload) {
+        this._saveAllFilesForTask(task);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  _saveFileForTask(task) {
+    const { file, savePath } = task;
+    this._prepareAndResolveFilePath(file)
+      .then(filePath => this._writeToExternalPath(filePath, savePath))
+      .then(() => {
+        if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
+          remote.shell.showItemInFolder(actualSavePath);
+        }
+        this._onSaveSuccess([file]);
+      })
+      .catch(this._catchFSErrors)
+      .catch(error => {
+        this._presentError({ file, error });
+      });
+  }
+
+  _saveAllFilesForTask(task) {
+    const { files, dirPath } = task;
     const lastSavePaths = [];
     const savePromises = files.map(file => {
       const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName());
-      if (typeof fileSaveName !== 'string') {
-        throw new Error(fileSaveName);
-      }
       const savePath = path.join(dirPath, fileSaveName);
       return this._prepareAndResolveFilePath(file)
         .then(filePath => this._writeToExternalPath(filePath, savePath))
@@ -1402,7 +1491,7 @@ class AttachmentStore extends MailspringStore {
       .catch(error => {
         return this._presentError({ error });
       });
-  };
+  }
 
   _onSaveSuccess = files => {
     if (files && files.length) {
@@ -1479,6 +1568,7 @@ class AttachmentStore extends MailspringStore {
 
   _onPresentChange = changes => {
     if (changes && changes.length) {
+      const successFileIds = [];
       changes.forEach(obj => {
         if (obj) {
           const pid = obj.pid;
@@ -1501,17 +1591,23 @@ class AttachmentStore extends MailspringStore {
           const nowState = this.getDownloadDataForFile(pid);
           const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
           const maxPercent = Math.max(parseInt(percent * 100), nowPercent);
-          if (maxPercent) {
+          if (maxPercent >= 100) {
             this._fileProcess.set(pid, {
-              state:
-                maxPercent >= 100
-                  ? AttachmentDownloadState.done
-                  : AttachmentDownloadState.downloading,
+              state: AttachmentDownloadState.done,
+              percent: 100,
+            });
+            successFileIds.push(pid);
+          } else {
+            this._fileProcess.set(pid, {
+              state: AttachmentDownloadState.downloading,
               percent: maxPercent,
             });
           }
         }
       });
+      if (successFileIds.length) {
+        this._consumeSaveQueue();
+      }
       this.trigger();
     }
   };
@@ -1525,6 +1621,7 @@ class AttachmentStore extends MailspringStore {
           percent: 100,
         });
       });
+      this._consumeSaveQueue();
       this.trigger();
     }
   };

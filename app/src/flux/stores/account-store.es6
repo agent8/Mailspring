@@ -200,7 +200,7 @@ class AccountStore extends MailspringStore {
             AppEnv.reportError(e);
           }
         }
-        this._updateWakeWorkerTimer(json.id, fetchEmailInterval);
+        // this._updateWakeWorkerTimer(json.pid, fetchEmailInterval);
       }
       this._removeDeleteAccountTimers();
       // Run a few checks on account consistency. We want to display useful error

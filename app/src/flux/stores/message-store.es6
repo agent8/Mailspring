@@ -233,7 +233,6 @@ class MessageStore extends MailspringStore {
     this.listenTo(Actions.toggleAllMessagesExpanded, this._onToggleAllMessagesExpanded);
     this.listenTo(Actions.toggleHiddenMessages, this._onToggleHiddenMessages);
     this.listenTo(Actions.popoutThread, this._onPopoutThread);
-    this.listenTo(Actions.fetchAttachmentsByMessage, this.fetchMissingAttachmentsByMessage);
     this.listenTo(Actions.setCurrentWindowTitle, this.setWindowTitle);
     this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
     this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);

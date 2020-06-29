@@ -100,9 +100,7 @@ export default class PackageManager {
     if (!pkg.json.engines.mailspring) {
       // don't use AppEnv.reportError, I don't want to know about these.
       console.error(
-        `This plugin or theme ${
-        pkg.name
-        } does not list "mailspring" in it's package.json's "engines" field. Ask the developer to test the plugin with Mailspring and add it, or follow the instructions here: http://support.getmailspring.com/hc/en-us/articles/115001918391`
+        `This plugin or theme ${pkg.name} does not list "mailspring" in it's package.json's "engines" field. Ask the developer to test the plugin with Mailspring and add it, or follow the instructions here: http://support.getmailspring.com/hc/en-us/articles/115001918391`
       );
       return;
     }
@@ -111,7 +109,7 @@ export default class PackageManager {
     pkg.activate();
   }
 
-  deactivatePackages() { }
+  deactivatePackages() {}
 
   getAvailablePackages() {
     return Object.values(this.available);
@@ -208,68 +206,65 @@ export default class PackageManager {
     const devPackagesDir = path.join(this.configDirPath, 'dev', 'packages');
     fs.makeTreeSync(devPackagesDir);
 
-    AppEnv.showSaveDialog(
-      {
-        title: 'Save New Package',
-        defaultPath: devPackagesDir,
-        properties: ['createDirectory'],
-      },
-      newPackagePath => {
-        if (!newPackagePath) return;
+    AppEnv.getFilePathForSaveFile({
+      title: 'Save New Package',
+      defaultPath: devPackagesDir,
+      properties: ['createDirectory'],
+    }).then(newPackagePath => {
+      if (!newPackagePath) return;
 
-        const newName = path.basename(newPackagePath);
+      const newName = path.basename(newPackagePath);
 
-        if (!newPackagePath.startsWith(devPackagesDir)) {
-          return AppEnv.showErrorDialog({
-            title: 'Invalid plugin location',
-            message: 'Sorry, you must create plugins in the dev/packages folder.',
-          });
-        }
-
-        if (this.available[newName]) {
-          return AppEnv.showErrorDialog({
-            title: 'Invalid plugin name',
-            message: 'Sorry, you must give your plugin a unique name.',
-          });
-        }
-
-        if (newName.indexOf(' ') !== -1) {
-          return AppEnv.showErrorDialog({
-            title: 'Invalid plugin name',
-            message: 'Sorry, plugin names cannot contain spaces.',
-          });
-        }
-
-        fs.mkdir(newPackagePath, err => {
-          if (err) {
-            return AppEnv.showErrorDialog({
-              title: 'Could not create plugin',
-              message: err.toString(),
-            });
-          }
-
-          const templatePath = path.join(this.resourcePath, 'static', 'package-template');
-          fs.copySync(templatePath, newPackagePath);
-
-          const packageJSON = require(path.join(templatePath, 'package.json'));
-          packageJSON.name = newName;
-          packageJSON.engines.mailspring = `>=${AppEnv.getVersion().split('-')[0]}`;
-          fs.writeFileSync(
-            path.join(newPackagePath, 'package.json'),
-            JSON.stringify(packageJSON, null, 2)
-          );
-
-          setTimeout(() => {
-            // show the package in the finder
-            shell.showItemInFolder(newPackagePath);
-
-            // load the package into the app
-            const pkg = new Package(newPackagePath);
-            this.available[pkg.name] = pkg;
-            this.activatePackage(pkg);
-          }, 0);
+      if (!newPackagePath.startsWith(devPackagesDir)) {
+        return AppEnv.showErrorDialog({
+          title: 'Invalid plugin location',
+          message: 'Sorry, you must create plugins in the dev/packages folder.',
         });
       }
-    );
+
+      if (this.available[newName]) {
+        return AppEnv.showErrorDialog({
+          title: 'Invalid plugin name',
+          message: 'Sorry, you must give your plugin a unique name.',
+        });
+      }
+
+      if (newName.indexOf(' ') !== -1) {
+        return AppEnv.showErrorDialog({
+          title: 'Invalid plugin name',
+          message: 'Sorry, plugin names cannot contain spaces.',
+        });
+      }
+
+      fs.mkdir(newPackagePath, err => {
+        if (err) {
+          return AppEnv.showErrorDialog({
+            title: 'Could not create plugin',
+            message: err.toString(),
+          });
+        }
+
+        const templatePath = path.join(this.resourcePath, 'static', 'package-template');
+        fs.copySync(templatePath, newPackagePath);
+
+        const packageJSON = require(path.join(templatePath, 'package.json'));
+        packageJSON.name = newName;
+        packageJSON.engines.mailspring = `>=${AppEnv.getVersion().split('-')[0]}`;
+        fs.writeFileSync(
+          path.join(newPackagePath, 'package.json'),
+          JSON.stringify(packageJSON, null, 2)
+        );
+
+        setTimeout(() => {
+          // show the package in the finder
+          shell.showItemInFolder(newPackagePath);
+
+          // load the package into the app
+          const pkg = new Package(newPackagePath);
+          this.available[pkg.name] = pkg;
+          this.activatePackage(pkg);
+        }, 0);
+      });
+    });
   }
 }

@@ -2,6 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import Utils from './flux/models/utils';
 
+export function dirExists(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    const stat = fs.lstatSync(dirPath);
+    if (stat.isDirectory()) {
+      return { exists: true };
+    } else {
+      return { exists: false, errorMsg: `directory: ${dirPath} is not a folder` };
+    }
+  } else {
+    return { exists: false, errorMsg: `directory: ${dirPath} doesn't exist` };
+  }
+}
+
 export function atomicWriteFileSync(filepath, content) {
   const randomId = Utils.generateTempId();
   const backupPath = `${filepath}.${randomId}.bak`;
@@ -10,12 +23,7 @@ export function atomicWriteFileSync(filepath, content) {
 }
 
 export function autoGenerateFileName(dirPath, fileName) {
-  let files;
-  try {
-    files = fs.readdirSync(dirPath);
-  } catch (error) {
-    return error;
-  }
+  const files = fs.readdirSync(dirPath);
 
   if (!files || files.indexOf(fileName) < 0) {
     return fileName;
