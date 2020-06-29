@@ -13,6 +13,9 @@ export default class AttachmentProgress extends Model {
     maxsize: Attributes.Number({
       modelKey: 'maxsize',
     }),
+    state: Attributes.Number({
+      modelKey: 'state',
+    }),
   });
   constructor() {
     super();
