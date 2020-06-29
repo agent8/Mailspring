@@ -33,7 +33,7 @@ class MessageAttachments extends Component {
 
   onOpenAttachment = file => {
     if (MessageStore.isAttachmentMissing(file.id)) {
-      Actions.fetchAttachments({
+      Actions.pushToFetchAttachmentsQueue({
         accountId: this.props.accountId,
         missingItems: [file.id],
         needProgress: true,
