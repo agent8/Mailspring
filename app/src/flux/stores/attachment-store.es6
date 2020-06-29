@@ -1236,7 +1236,7 @@ class AttachmentStore extends MailspringStore {
       // this allows us to handle obscure edge cases where the sync engine
       // the file with an altered name.
       const dir = path.dirname(filePath);
-      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store');
+      const items = fs.readdirSync(dir).filter(i => i !== '.DS_Store' && !i.endsWith('.part'));
       if (items.length === 1) {
         filePath = path.join(dir, items[0]);
       }
@@ -1456,7 +1456,7 @@ class AttachmentStore extends MailspringStore {
       .then(filePath => this._writeToExternalPath(filePath, savePath))
       .then(() => {
         if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
-          remote.shell.showItemInFolder(actualSavePath);
+          remote.shell.showItemInFolder(savePath);
         }
         this._onSaveSuccess([file]);
       })
@@ -1568,6 +1568,7 @@ class AttachmentStore extends MailspringStore {
 
   _onPresentChange = changes => {
     if (changes && changes.length) {
+      const failFileIds = [];
       const successFileIds = [];
       changes.forEach(obj => {
         if (obj) {
@@ -1578,41 +1579,37 @@ class AttachmentStore extends MailspringStore {
           // const matchGroup = (obj.errormsg || '').match(/errCode\s*=\s*([0-9]*)\s*,(.*)/);
           // const errCode = matchGroup && matchGroup[1] ? Number(matchGroup[1]) : 0;
           // const errMsg = matchGroup && matchGroup[2] ? matchGroup[2].trim() : '';
-          if (obj.cursize < 0) {
+          if (obj.state === AttachmentDownloadState.fail) {
             // download faild
-            this._fileProcess.set(pid, {
-              state: AttachmentDownloadState.fail,
-              percent: 0,
-            });
+            failFileIds.push(pid);
             return;
           }
-          this._onPresentStart([pid], false);
-          const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
+          if (obj.state === AttachmentDownloadState.done) {
+            // download success
+            successFileIds.push(pid);
+            return;
+          }
           const nowState = this.getDownloadDataForFile(pid);
           const nowPercent = nowState && nowState.percent ? nowState.percent : 0;
-          const maxPercent = Math.max(parseInt(percent * 100), nowPercent);
-          if (maxPercent >= 100) {
-            this._fileProcess.set(pid, {
-              state: AttachmentDownloadState.done,
-              percent: 100,
-            });
-            successFileIds.push(pid);
-          } else {
-            this._fileProcess.set(pid, {
-              state: AttachmentDownloadState.downloading,
-              percent: maxPercent,
-            });
-          }
+          const percent = obj.cursize && obj.maxsize ? obj.cursize / obj.maxsize : 0;
+          const maxPercent = Math.min(Math.max(parseInt(percent * 100), nowPercent), 100);
+          this._fileProcess.set(pid, {
+            state: AttachmentDownloadState.downloading,
+            percent: maxPercent,
+          });
         }
       });
+      if (failFileIds.length) {
+        this._onPresentFail(failFileIds, false);
+      }
       if (successFileIds.length) {
-        this._consumeSaveQueue();
+        this._onPresentSuccess(successFileIds, false);
       }
       this.trigger();
     }
   };
 
-  _onPresentSuccess = ids => {
+  _onPresentSuccess = (ids, trigger = true) => {
     const fileIds = ids || [];
     if (fileIds.length) {
       fileIds.forEach(id => {
@@ -1622,7 +1619,24 @@ class AttachmentStore extends MailspringStore {
         });
       });
       this._consumeSaveQueue();
-      this.trigger();
+      if (trigger) {
+        this.trigger();
+      }
+    }
+  };
+
+  _onPresentFail = (ids, trigger = true) => {
+    const fileIds = ids || [];
+    if (fileIds.length) {
+      fileIds.forEach(id => {
+        this._fileProcess.set(id, {
+          state: AttachmentDownloadState.fail,
+          percent: 0,
+        });
+      });
+      if (trigger) {
+        this.trigger();
+      }
     }
   };
 
