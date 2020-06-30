@@ -133,7 +133,9 @@ class UndoRedoStore extends MailspringStore {
           Actions.queueTasks(tasks.map(t => t.createIdenticalTask()));
           this._queueingTasks = false;
         },
-        priority: this._findHighestPriority({ tasks }),
+        // priority: this._findHighestPriority({ tasks }),
+        // DC-2117, Because we only want to show one, we set all to one priority
+        priority: this.priority.critical,
         timestamp: Date.now(),
         due: 0,
       };
@@ -149,11 +151,9 @@ class UndoRedoStore extends MailspringStore {
   };
   _pushNewBlockToUndoQueue = (block, priority) => {
     if (this._maxQueueLength > 0 && this._undo[priority].length >= this._maxQueueLength) {
-      block.displayId = this._undo[priority][0].displayId;
-      this._undo[priority][0] = block;
-    } else {
-      this._undo[priority].push(block);
+      block.displayId = this._undo[priority][this._maxQueueLength - 1].displayId;
     }
+    this._undo[priority].push(block);
   };
   _pushToUndo = ({ block }) => {
     switch (block.priority) {
@@ -178,6 +178,7 @@ class UndoRedoStore extends MailspringStore {
   _onBlockTimedOut = ({ block }) => {
     const currentBlock = this.findBlock({ block });
     if (!currentBlock) {
+      AppEnv.logWarning(`UndoRedoStore:Undo block ${block.id} not found in undo queue`);
       clearTimeout(this._timeouts[block.id]);
       delete this._timeouts[block.id];
       return;
@@ -279,7 +280,7 @@ class UndoRedoStore extends MailspringStore {
   getMostRecent = () => {
     return this._mostRecentBlock;
   };
-  getUndos = ({ critical = 0, high = 3, medium = 2, low = 5 } = {}) => {
+  getUndos = ({ critical = 1, high = 1, medium = 1, low = 1 } = {}) => {
     return {
       critical:
         critical === 0 ? this._undo.critical.slice() : this._undo.critical.slice(critical * -1),
