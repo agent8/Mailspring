@@ -249,7 +249,19 @@ export const BLOCK_CONFIG = {
   blockquote: {
     type: 'blockquote',
     tagNames: ['blockquote'],
-    render: props => <blockquote {...props.attributes}>{props.children}</blockquote>,
+    render: props => {
+      const className =
+        (props &&
+          props.node &&
+          props.node.data &&
+          (props.node.data.className || props.node.data.get('className'))) ||
+        '';
+      return (
+        <blockquote {...props.attributes} className={className}>
+          {props.children}
+        </blockquote>
+      );
+    },
     button: {
       hideWhenCrowded: true,
       iconClass: 'dt-icon dt-icon-quote',

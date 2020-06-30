@@ -4,8 +4,13 @@ import crypto from 'crypto';
 import { Account, IdentityStore, MailsyncProcess, Actions, AccountStore } from 'mailspring-exports';
 import MailspringProviderSettings from './mailspring-provider-settings';
 import MailcoreProviderSettings from './mailcore-provider-settings';
+import OnboardingActions from './onboarding-actions';
 import dns from 'dns';
+import path from 'path';
+import util from 'util';
+import fs from 'fs';
 const regexpForDomain = test => new RegExp(`(^${test}$)|(\\.${test}$)`);
+const writeFile = util.promisify(fs.writeFile);
 
 const queryStringify = (data, encoded = false) => {
   const queryString = Object.keys(data)
@@ -55,7 +60,7 @@ const YAHOO_CLIENT_SECRET = '5edd54d7240d0ae74594d4806cdf69c72a6e9fa5';
 
 const OFFICE365_CLIENT_ID = '62db40a4-2c7e-4373-a609-eda138798962';
 const OFFICE365_CLIENT_SECRET = 'lj9US4uHiIYYs]ew?vU6C?E0?zt:qw41';
-const OFFICE365_SCOPES = ['user.read', 'mail.read'];
+const OFFICE365_SCOPES = ['user.read', 'mail.read', 'mail.send', 'offline_access'];
 
 const OUTLOOK_CLIENT_ID = '00000000443D1B02';
 const OUTLOOK_CLIENT_SECRET = 'rpCRHB7(-hiexsVPN1351}{';
@@ -280,7 +285,7 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   body.push(`code=${encodeURIComponent(code)}`);
   body.push(`client_id=${encodeURIComponent(OFFICE365_CLIENT_ID)}`);
   body.push(`client_secret=${encodeURIComponent(OFFICE365_CLIENT_SECRET)}`);
-  body.push(`redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}`);
+  body.push(`redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
   const resp = await edisonFetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
@@ -315,11 +320,33 @@ export async function buildOffice365AccountFromAuthResponse(code) {
       `Office365 profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
     );
   }
+  console.log('****json', json, me);
+
+  // get user self picture
+  let picturePath;
+  try {
+    const photoResp = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
+      method: 'GET',
+      headers: {
+        Authorization: `${access_token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (photoResp.ok) {
+      const buffer = await photoResp.arrayBuffer();
+      picturePath = path.join(AppEnv.getConfigDirPath(), 'logo_cache', `${me.mail}.png`);
+      await writeFile(picturePath, Buffer.from(buffer), { encoding: 'binary' });
+    }
+  } catch (err) {
+    picturePath = null;
+    console.log('This office365 account have no photo', err);
+  }
+  console.log('*****picturePath', picturePath);
   const account = await expandAccountWithCommonSettings(
     new Account({
-      name: me.name,
-      emailAddress: me.email,
-      provider: 'office365',
+      name: me.displayName,
+      emailAddress: me.mail,
+      provider: 'office365-exchange',
       settings: {
         refresh_client_id: OFFICE365_CLIENT_ID,
         refresh_token: refresh_token,
@@ -327,7 +354,21 @@ export async function buildOffice365AccountFromAuthResponse(code) {
     })
   );
 
+  // check if there is an old Office365 account
+  const oldOffice365Acc = AccountStore.accountForEmail({ email: me.mail });
+  if (oldOffice365Acc && oldOffice365Acc.settings.provider_key === 'office365') {
+    OnboardingActions.moveToPage('account-choose');
+    AppEnv.showErrorDialog({
+      title: 'Unable to Add Account',
+      message: `Please remove your ${me.mail} account first, and try again.`,
+    });
+    return;
+  }
+
   account.id = idForAccount(me.email, account.settings);
+  if (picturePath) {
+    account.picture = picturePath;
+  }
 
   // test the account locally to ensure the All Mail folder is enabled
   // and the refresh token can be exchanged for an account token.
@@ -605,8 +646,9 @@ export function buildOffice365AuthURL() {
     `https://login.microsoftonline.com/common/oauth2/v2.0/authorize` +
     `?` +
     `client_id=${OFFICE365_CLIENT_ID}` +
+    `&prompt=consent` +
     `&scope=${encodeURIComponent(OFFICE365_SCOPES.join(' '))}` +
-    `&redirect_uri=${encodeURIComponent(EDISON_REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
     `&response_type=code`
   );

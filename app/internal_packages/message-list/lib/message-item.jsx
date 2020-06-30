@@ -22,7 +22,6 @@ import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
 import MessageTimestamp from './message-timestamp';
 import MessageControls from './message-controls';
-import TaskFactory from '../../../src/flux/tasks/task-factory';
 
 export default class MessageItem extends React.Component {
   static displayName = 'MessageItem';
@@ -126,11 +125,10 @@ export default class MessageItem extends React.Component {
   };
 
   _onDownloadAll = () => {
-    if (MessageStore.isMessageMissingAttachment(this.props.message)) {
-      Actions.fetchAttachmentsByMessage({ messageId: this.props.message.id });
-    } else {
-      Actions.fetchAndSaveAllFiles(this.props.message.files);
-    }
+    Actions.fetchAndSaveAllFiles({
+      files: this.props.message.files,
+      accountId: this.state.accountId,
+    });
   };
 
   _onToggleCollapsed = () => {
@@ -204,32 +202,33 @@ export default class MessageItem extends React.Component {
     if (!this.props.message.unread || this.props.message.draft) {
       return;
     }
-    if (this.markAsReadTimer) {
-      return;
-    }
-    const messageId = this.props.message.id;
-    const threadId = this.props.message.threadId;
-    const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
-    this.markAsReadTimer = setTimeout(() => {
-      this.markAsReadTimer = null;
-      if (!this.props.message || !this.mounted || this.props.pending) {
-        return;
-      }
-      if (threadId !== this.props.message.threadId || messageId !== this.props.message.id) {
-        return;
-      }
-      if (!this.props.message.unread) {
-        return;
-      }
-      Actions.queueTask(
-        TaskFactory.taskForInvertingUnread({
-          threads: [this.props.thread],
-          source: 'Thread Selected',
-          canBeUndone: false,
-          unread: false,
-        })
-      );
-    }, markAsReadDelay);
+    MessageStore.markAsRead('Message-Item:OnMouseEnter');
+    // if (this.markAsReadTimer) {
+    //   return;
+    // }
+    // const messageId = this.props.message.id;
+    // const threadId = this.props.message.threadId;
+    // const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
+    // this.markAsReadTimer = setTimeout(() => {
+    //   this.markAsReadTimer = null;
+    //   if (!this.props.message || !this.mounted || this.props.pending) {
+    //     return;
+    //   }
+    //   if (threadId !== this.props.message.threadId || messageId !== this.props.message.id) {
+    //     return;
+    //   }
+    //   if (!this.props.message.unread) {
+    //     return;
+    //   }
+    //   Actions.queueTask(
+    //     TaskFactory.taskForInvertingUnread({
+    //       threads: [this.props.thread],
+    //       source: 'Thread Selected',
+    //       canBeUndone: false,
+    //       unread: false,
+    //     })
+    //   );
+    // }, markAsReadDelay);
   };
 
   _setTrackers = trackers => {

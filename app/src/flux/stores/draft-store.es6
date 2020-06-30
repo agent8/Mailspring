@@ -424,35 +424,37 @@ class DraftStore extends MailspringStore {
       AppEnv.logError(`no originalMessageId session`);
       return;
     }
-    const { errors, warnings } = session.validateDraftForChangeAccount();
-    const dialog = remote.dialog;
-    if (warnings.length > 0) {
-      dialog
-        .showMessageBox(remote.getCurrentWindow(), {
-          type: 'warning',
-          buttons: ['Yes', 'Cancel'],
-          message: 'Draft not ready, change anyways? This will remove all draft attachments.',
-          detail: `${warnings.join(' and ')}?`,
-        })
-        .then(({ response } = {}) => {
-          if (response === 0) {
-            session.changes.add({ files: [] });
-            session.updateAttachments([]);
-            if (AppEnv.isMainWindow()) {
-              this._onDraftAccountChange(data);
-            } else {
-              this._onDraftAccountChanged_NotMainWindow(data);
+    session.validateDraftForChangeAccount().then(ret => {
+      const { errors, warnings } = ret;
+      const dialog = remote.dialog;
+      if (warnings.length > 0) {
+        dialog
+          .showMessageBox(remote.getCurrentWindow(), {
+            type: 'warning',
+            buttons: ['Yes', 'Cancel'],
+            message: 'Draft not ready, change anyways? This will remove all draft attachments.',
+            detail: `${warnings.join(' and ')}?`,
+          })
+          .then(({ response } = {}) => {
+            if (response === 0) {
+              session.changes.add({ files: [] });
+              session.updateAttachments([]);
+              if (AppEnv.isMainWindow()) {
+                this._onDraftAccountChange(data);
+              } else {
+                this._onDraftAccountChanged_NotMainWindow(data);
+              }
+              return true;
             }
-            return true;
-          }
-        });
-      return false;
-    }
-    if (AppEnv.isMainWindow()) {
-      this._onDraftAccountChange(data);
-    } else {
-      this._onDraftAccountChanged_NotMainWindow(data);
-    }
+          });
+        return false;
+      }
+      if (AppEnv.isMainWindow()) {
+        this._onDraftAccountChange(data);
+      } else {
+        this._onDraftAccountChanged_NotMainWindow(data);
+      }
+    });
   };
 
   _onDraftAccountChanged_NotMainWindow = ({
@@ -588,14 +590,24 @@ class DraftStore extends MailspringStore {
     });
   };
 
-  _onResendDraft = async ({ messages = [], source = '' } = {}) => {
+  _onResendDraft = async ({ messages = [], messageIds = [], source = '' } = {}) => {
+    const ids = [];
     for (let i = 0; i < messages.length; i++) {
-      const message = messages[i];
-      const session = this._draftSessions[message.id];
-      if (!session) {
-        await this.sessionForClientId(message.id, { showFailed: true });
+      if (messages[i] && messages[i].id) {
+        ids.push(messages[i].id);
       }
-      this._onSendDraft(message.id);
+    }
+    for (let i = 0; i < messageIds.length; i++) {
+      if (messageIds[i]) {
+        ids.push(messageIds[i]);
+      }
+    }
+    for (let i = 0; i < ids.length; i++) {
+      const session = this._draftSessions[ids[i]];
+      if (!session) {
+        await this.sessionForClientId(ids[i], { showFailed: true });
+      }
+      this._onSendDraft(ids[i]);
     }
   };
   _onDraftOpenCount = ({ messageId, windowLevel = 0, source = '' }) => {
@@ -1424,14 +1436,14 @@ class DraftStore extends MailspringStore {
           triggerMessageIds.push(messageId);
           delete this._draftsDeleting[messageId];
           delete this._draftsDeleting[id];
-          if (AppEnv.isMainWindow()) {
-            AttachmentStore = AttachmentStore || require('./attachment-store').default;
-            AttachmentStore.removeDraftAttachmentCache({
-              id,
-              accountId,
-              reason: 'Destroy draft failed',
-            });
-          }
+          // if (AppEnv.isMainWindow()) {
+          //   AttachmentStore = AttachmentStore || require('./attachment-store').default;
+          //   AttachmentStore.removeDraftAttachmentCache({
+          //     id,
+          //     accountId,
+          //     reason: 'Destroy draft failed',
+          //   });
+          // }
         }
       });
       this.trigger({ messageIds: triggerMessageIds });
@@ -1547,7 +1559,7 @@ class DraftStore extends MailspringStore {
       this.trigger({ messageId });
     }
   };
-  _onSendDraftAction = (messageId, options = {}) => {
+  _reRouteSendDraftAction = (messageId, options = {}) => {
     if (AppEnv.isMainWindow()) {
       this._onSendDraft(messageId, options);
     } else {
@@ -1560,7 +1572,7 @@ class DraftStore extends MailspringStore {
     }
     const session = this._draftSessions[messageId];
     if (session && session.draft()) {
-      AppEnv.logInfo('syncing draft data to main window');
+      AppEnv.logInfo(`syncing draft data to main window ${messageId}`);
       const syncData = cloneForSyncDraftData(session.draft());
       Actions.toMainSendDraft(messageId, options, syncData);
       if (AppEnv.isComposerWindow()) {
@@ -1572,6 +1584,56 @@ class DraftStore extends MailspringStore {
       }
     }
     return;
+  };
+  _onSendDraftAction = (messageId, options = {}) => {
+    if (options.disableDraftCheck) {
+      this._reRouteSendDraftAction(messageId, options);
+    } else {
+      const session = this._draftSessions[messageId];
+      if (session) {
+        session.validateDraftForSending().then(({ errors, warnings }) => {
+          const dialog = remote.dialog;
+          if (errors.length > 0) {
+            dialog.showMessageBox(remote.getCurrentWindow(), {
+              type: 'warning',
+              buttons: ['Edit Message', 'Cancel'],
+              defaultId: 0,
+              cancelId: 1,
+              message: 'Cannot Send',
+              detail: errors[0],
+            });
+            Actions.draftDeliveryCancelled({ messageId });
+            return;
+          }
+
+          if (warnings.length > 0 && !options.force) {
+            dialog
+              .showMessageBox(remote.getCurrentWindow(), {
+                type: 'warning',
+                buttons: ['Send Anyway', 'Cancel'],
+                defaultId: 0,
+                cancelId: 1,
+                message: 'Are you sure?',
+                detail: `Send ${warnings.join(' and ')}?`,
+              })
+              .then(({ response } = {}) => {
+                if (response === 0) {
+                  options.disableDraftCheck = true;
+                  session.removeMissingAttachments().then(() => {
+                    this._onSendDraftAction(messageId, options);
+                  });
+                } else {
+                  Actions.draftDeliveryCancelled({ messageId });
+                }
+              });
+            return false;
+          }
+          this._reRouteSendDraftAction(messageId, options);
+        });
+      } else {
+        this._reRouteSendDraftAction(messageId, options);
+      }
+    }
   };
 
   _onSendDraft = async (messageId, options = {}, syncData) => {
@@ -1652,13 +1714,13 @@ class DraftStore extends MailspringStore {
     try {
       if (syncData) {
         AppEnv.logInfo(
-          'We have syncData from none main window and main window draft data is not updated yet'
+          `We have syncData from none main window ${messageId} and main window draft data is not updated yet`
         );
-        session.localApplySyncDraftData({ syncData });
+        session.localSyncDraftDataBeforeSent({ syncData });
       }
     } catch (e) {
       AppEnv.reportError(
-        new Error('localApplySyncDraftData failed'),
+        new Error(`localSyncDraftDataBeforeSent failed ${messageId}`),
         { errorData: { error: e, syncData } },
         { grabLogs: true }
       );
@@ -1705,6 +1767,9 @@ class DraftStore extends MailspringStore {
     await MessageBodyProcessor.updateCacheForMessage(draft);
 
     this._doneWithSession(session, 'onSendDraft');
+    if (AppEnv.config.get('core.sending.sounds')) {
+      SoundRegistry.playSound('hit-send');
+    }
     // Notify all windows that draft is being send out.
     Actions.sendingDraft({ messageId, windowLevel: this._getCurrentWindowLevel() });
     this._draftsSending[draft.id] = true;

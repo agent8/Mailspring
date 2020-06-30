@@ -1,7 +1,16 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Actions, Utils, AttachmentStore, MessageStore } from 'mailspring-exports';
+import {
+  Actions,
+  Utils,
+  AttachmentStore,
+  MessageStore,
+  AccountStore,
+  Constant,
+} from 'mailspring-exports';
 import { AttachmentItem } from 'mailspring-component-kit';
+
+const { DisableAttachmentProgressProvider } = Constant;
 
 class MessageAttachments extends Component {
   static displayName = 'MessageAttachments';
@@ -24,11 +33,11 @@ class MessageAttachments extends Component {
 
   onOpenAttachment = file => {
     if (MessageStore.isAttachmentMissing(file.id)) {
-      Actions.fetchAttachments({
+      Actions.pushToFetchAttachmentsQueue({
         accountId: this.props.accountId,
         missingItems: [file.id],
         needProgress: true,
-        source: "Click"
+        source: 'Click',
       });
     } else {
       Actions.fetchAndOpenFile(file);
@@ -44,7 +53,7 @@ class MessageAttachments extends Component {
   };
 
   onDownloadAttachment = file => {
-    Actions.fetchAndSaveFile(file);
+    Actions.fetchAndSaveFile({ file, accountId: this.props.accountId });
   };
 
   onAbortDownload = file => {
@@ -61,6 +70,8 @@ class MessageAttachments extends Component {
     const contentType = file.contentType;
     const displayFilePreview = AppEnv.config.get('core.attachments.displayFilePreview');
     const filePreviewPath = displayFilePreview ? filePreviewPaths[file.id] : null;
+    const provider = AccountStore.accountForId(this.props.accountId).provider;
+    const disableProgress = DisableAttachmentProgressProvider(provider);
 
     return (
       <AttachmentRenderer
@@ -72,6 +83,7 @@ class MessageAttachments extends Component {
         filePath={filePath}
         download={download}
         isDownloading={file.isDownloading}
+        disableProgress={disableProgress}
         missing={MessageStore.isAttachmentMissing(file.id)}
         contentType={contentType}
         displayName={displayName}

@@ -249,6 +249,11 @@ export default class Message extends ModelWithMetadata {
       queryable: true,
       loadFromColumn: true,
     }),
+    XGMLabels: Attributes.Collection({
+      modelKey: 'XGMLabels',
+      queryable: true,
+      loadFromColumn: true,
+    }),
     files: Attributes.Collection({
       modelKey: 'files',
       queryable: true,
@@ -386,6 +391,20 @@ export default class Message extends ModelWithMetadata {
     if (this.refOldDraftMessageId) {
       this.hasRefOldDraftOnRemote = true;
     }
+  }
+  isSameInboxCategory(inboxCategory) {
+    let val = inboxCategory;
+    if (typeof inboxCategory !== 'number') {
+      try {
+        val = parseInt(inboxCategory, 10);
+      } catch (e) {
+        return false;
+      }
+    }
+    return (
+      Category.inboxNotOtherCategorys().includes(this.inboxCategory) ===
+      Category.inboxNotOtherCategorys().includes(val)
+    );
   }
 
   toJSON(options) {
@@ -774,8 +793,7 @@ export default class Message extends ModelWithMetadata {
       return true;
     }
 
-    // https://regex101.com/r/hR7zN3/1
-    const re = /(?:<edo\-signature>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
+    const re = /(?:<edo\-signature [^>]*>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
     return this.body.replace(re, '').length === 0;
   }
 

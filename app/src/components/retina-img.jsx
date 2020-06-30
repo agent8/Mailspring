@@ -66,7 +66,7 @@ Section: Component Kit
 */
 class RetinaImg extends React.Component {
   static displayName = 'RetinaImg';
-
+  retryCnt = 0;
   /*
   Public: React `props` supported by RetinaImg:
 
@@ -120,8 +120,14 @@ class RetinaImg extends React.Component {
   };
 
   onError = e => {
+    if (this.retryCnt && this.retryCnt > 2) {
+      e.target.style.visibility = 'hidden';
+      AppEnv.reportError(new Error(`RetinaImg load resource error: ${e.target.src}`));
+      return;
+    }
     const path = this._pathFor(this.props.name) || this._pathFor(this.props.fallback) || '';
     e.target.src = path;
+    this.retryCnt++;
   };
 
   render() {

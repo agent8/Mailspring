@@ -30,12 +30,12 @@ import MailspringProtocolHandler from './mailspring-protocol-handler';
 import ConfigPersistenceManager from './config-persistence-manager';
 import moveToApplications from './move-to-applications';
 import MailsyncProcess from '../mailsync-process';
+import EventTriggers from './event-triggers';
 import { createHash } from 'crypto';
 const LOG = require('electron-log');
 const archiver = require('archiver');
 let getOSInfo = null;
 let getDeviceHash = null;
-
 let clipboard = null;
 
 // The application's singleton class.
@@ -45,6 +45,8 @@ const getStartOfDay = () => {
   const startOfDay = new Date(now.toDateString());
   return startOfDay.getTime();
 };
+const logFileRetainThreshHoldInMs = 30 * 24 * 60 * 60 * 1000;
+const logFileUploadThreshHoldInMs = 48 * 60 * 60 * 1000;
 export default class Application extends EventEmitter {
   async start(options) {
     const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
@@ -58,6 +60,8 @@ export default class Application extends EventEmitter {
     this.specMode = specMode;
     this.safeMode = safeMode;
     this.nativeVersion = '';
+    this.edisonServerHost = 'https://cp.stag.easilydo.cc';
+    // this.edisonServerHost = 'https://cp.edison.tech';
     this.startOfDay = getStartOfDay();
     this.refreshStartOfDay = _.throttle(this._refreshStartOfDay, 1000);
     this._triggerRefreshStartOfDayTimer = null;
@@ -75,6 +79,8 @@ export default class Application extends EventEmitter {
     this.configPersistenceManager = new ConfigPersistenceManager({ configDirPath, resourcePath });
     config.load();
 
+    this.eventTriggers = new EventTriggers(configDirPath);
+
     this.configMigrator = new ConfigMigrator(this.config);
     this.configMigrator.migrate();
 
@@ -87,7 +93,14 @@ export default class Application extends EventEmitter {
     await this.oneTimeAddToDock();
     this.autoStartRestore();
 
-    this.autoUpdateManager = new AutoUpdateManager(version, config, specMode, devMode);
+    this.autoUpdateManager = new AutoUpdateManager(
+      version,
+      config,
+      specMode,
+      devMode,
+      this.edisonServerHost
+    );
+    this._checkUpdateInfoForce();
     this.applicationMenu = new ApplicationMenu(version);
     this.windowManager = new WindowManager({
       resourcePath: this.resourcePath,
@@ -142,7 +155,7 @@ export default class Application extends EventEmitter {
     }
     this.makeLogFolders();
     this.initSupportInfo();
-
+    this._fixMailsyncTaskDelayInconsistency();
     // subscribe event of dark mode change
     if (process.platform === 'darwin') {
       try {
@@ -306,43 +319,51 @@ export default class Application extends EventEmitter {
   //     });
   //   }
   // }
-  reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportError(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs && !this.devMode) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'error');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'error');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'error');
     }
   }
 
-  reportWarning(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportWarning(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs && !this.devMode) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'warning');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'warning');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'warning');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'warning');
     }
   }
-  reportLog(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportLog(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs && !this.devMode) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'log');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'log');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'log');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'log');
     }
   }
 
-  _grabLogAndReportLog(error, extra, { noWindows } = {}, type = '') {
+  _checkUpdateInfoForce = () => {
+    const reCheckUndateInfoTime = 60 * 60 * 1000;
+    this.autoUpdateManager.checkForce();
+    setInterval(() => {
+      this.autoUpdateManager.checkForce();
+    }, reCheckUndateInfoTime);
+  };
+
+  _grabLogAndReportLog(error, extra, { noWindows, noAppConfig } = {}, type = '') {
     this.grabLogs()
       .then(filename => {
         extra.files = [filename];
-        this._reportLog(error, extra, { noWindows }, type);
+        this._reportLog(error, extra, { noWindows, noAppConfig }, type);
       })
       .catch(e => {
         extra.grabLogError = e;
-        this._reportLog(error, extra, { noWindows }, type);
+        this._reportLog(error, extra, { noWindows, noAppConfig }, type);
       });
   }
 
-  _reportLog(error, extra = {}, { noWindows } = {}, type = '') {
-    extra = this._expandReportLog(extra);
+  _reportLog(error, extra = {}, { noWindows, noAppConfig = false } = {}, type = '') {
+    extra = this._expandReportLog(extra, noAppConfig);
     if (!extra.noUILog) {
       //We only log application log. Individual window log is written in AppEnv
       if (type.toLocaleLowerCase() === 'error') {
@@ -376,12 +397,14 @@ export default class Application extends EventEmitter {
       global.errorLogger.reportLog(error, extra);
     }
   }
-  _expandReportLog = (extra = {}) => {
+  _expandReportLog = (extra = {}, noAppConfig = false) => {
     try {
       getOSInfo = getOSInfo || require('../system-utils').getOSInfo;
       extra.osInfo = getOSInfo();
       extra.native = this.nativeVersion;
-      extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
+      if (!noAppConfig) {
+        extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
+      }
       if (!!extra.errorData && typeof extra.errorData !== 'string') {
         extra.errorData = JSON.stringify(extra.errorData);
       }
@@ -498,6 +521,35 @@ export default class Application extends EventEmitter {
       const archive = archiver('zip', {
         zlib: { level: 9 }, // Sets the compression level.
       });
+      const appendFiles = (dirPath, prefix = '') => {
+        return new Promise((resolve, reject) => {
+          const uploadFiles = [];
+          const appendToArchive = () => {
+            uploadFiles.forEach(fileObj => {
+              if (fileObj.path && fileObj.fileName) {
+                console.log(`appending file ${fileObj.fileName} to archive ${fileObj.path}`);
+                archive.file(fileObj.path, { prefix, name: fileObj.fileName });
+              }
+            });
+            resolve();
+          };
+          fs.readdir(dirPath, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
+            if (err) {
+              console.log(err);
+              return resolve();
+            }
+            console.log(`getting files data for ${dirPath}`);
+            this._filterFilesOnThreshold({
+              files,
+              dirPath,
+              threshHold: logFileUploadThreshHoldInMs,
+              resultArray: uploadFiles,
+              isNewerThan: true,
+              onDone: appendToArchive,
+            });
+          });
+        });
+      };
 
       output.on('close', function() {
         console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
@@ -523,11 +575,14 @@ export default class Application extends EventEmitter {
         reject(err);
       });
       archive.pipe(output);
-      archive.directory(logPath, 'uiLog');
-      archive.directory(path.join(resourcePath, 'ms-log'), 'nativeLog');
-      archive.directory(path.join(resourcePath, 'ms-crash'), 'nativeCrash');
-      // archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
-      archive.finalize();
+      Promise.all([
+        appendFiles(logPath, 'uiLog'),
+        appendFiles(path.join(resourcePath, 'ms-log'), 'nativeLog'),
+        appendFiles(path.join(resourcePath, 'ms-crash'), 'nativeCrash'),
+      ]).then(() => {
+        console.log('finalize');
+        archive.finalize();
+      });
     });
   }
 
@@ -552,11 +607,20 @@ export default class Application extends EventEmitter {
       }
       err = Object.assign(err, errorParams);
       if (level === 'error') {
-        this.reportError(err, extraParams, { grabLogs: extraParams.grabLogs });
+        this.reportError(err, extraParams, {
+          grabLogs: extraParams.grabLogs,
+          noAppConfig: extraParams.noAppConfig,
+        });
       } else if (level === 'warning') {
-        this.reportWarning(err, extraParams, { grabLogs: extraParams.grabLogs });
+        this.reportWarning(err, extraParams, {
+          grabLogs: extraParams.grabLogs,
+          noAppConfig: extraParams.noAppConfig,
+        });
       } else {
-        this.reportLog(err, extraParams, { grabLogs: extraParams.grabLogs });
+        this.reportLog(err, extraParams, {
+          grabLogs: extraParams.grabLogs,
+          noAppConfig: extraParams.noAppConfig,
+        });
       }
     } catch (parseError) {
       console.error(parseError);
@@ -768,9 +832,70 @@ export default class Application extends EventEmitter {
       }
     }
   }
+  _fixMailsyncTaskDelayInconsistency = () => {
+    const taskDelay = this.config.get('core.mailsync.taskDelay');
+    if (taskDelay !== undefined) {
+      const accounts = this.config.get('accounts');
+      if (Array.isArray(accounts)) {
+        let changed = false;
+        accounts.forEach(account => {
+          if (account && account.mailsync && account.mailsync.taskDelay !== taskDelay) {
+            changed = true;
+            account.mailsync.taskDelay = taskDelay;
+          }
+        });
+        if (changed) {
+          this.config.set('accounts', accounts);
+        }
+      }
+    }
+  };
+  _filterFilesOnThreshold = ({
+    files = [],
+    dirPath = '',
+    threshHold,
+    onDone = () => {},
+    isOlderThan,
+    isNewerThan,
+    resultArray = [],
+  } = {}) => {
+    if (Array.isArray(files)) {
+      const now = Date.now();
+      const total = files.length;
+      let processed = 0;
+      files.forEach(dirent => {
+        if (dirent.isFile()) {
+          console.log(`log file name: ${dirent.name}`);
+          const filePath = path.join(dirPath, dirent.name);
+          fs.stat(filePath, (err, stats) => {
+            processed++;
+            if (!err) {
+              console.log(
+                `file ${dirent.name} last modified is ${stats.mtimeMs}, now is ${now}, threshhold ${threshHold}`
+              );
+              if (isOlderThan && now - stats.mtimeMs > threshHold) {
+                resultArray.push({ path: filePath, stats, fileName: dirent.name });
+              } else if (isNewerThan && now - stats.mtimeMs < threshHold) {
+                resultArray.push({ path: filePath, stats, fileName: dirent.name });
+              }
+            }
+            if (processed === total) {
+              onDone();
+            }
+          });
+        } else {
+          processed++;
+          if (processed === total) {
+            onDone();
+          }
+        }
+      });
+    } else {
+      onDone();
+    }
+  };
 
   _removeOldFiles = (files, dirPath, cleanAll = false) => {
-    const now = Date.now();
     const removeList = [];
     const sortAndDelete = () => {
       console.log('sort and delete');
@@ -788,27 +913,14 @@ export default class Application extends EventEmitter {
         });
       });
     };
-    if (Array.isArray(files)) {
-      const total = files.length;
-      let processed = 0;
-      const olderThanADay = 48 * 60 * 60 * 1000;
-      files.forEach(dirent => {
-        if (dirent.isFile()) {
-          console.log(`log file name: ${dirent.name}`);
-          const filePath = path.join(dirPath, dirent.name);
-          fs.stat(filePath, (err, stats) => {
-            processed++;
-            console.log(`file last modified is ${stats.mtimeMs}, now is ${now}`);
-            if (now - stats.mtimeMs > olderThanADay) {
-              removeList.push({ path: filePath, stats });
-            }
-            if (processed === total) {
-              sortAndDelete();
-            }
-          });
-        }
-      });
-    }
+    this._filterFilesOnThreshold({
+      files,
+      dirPath,
+      threshHold: logFileRetainThreshHoldInMs,
+      resultArray: removeList,
+      isOlderThan: true,
+      onDone: sortAndDelete,
+    });
   };
   _triggerCleanOldLogs = (initial = false) => {
     if (initial) {
@@ -1567,6 +1679,10 @@ export default class Application extends EventEmitter {
       }
       // win = BrowserWindow.fromWebContents(event.sender)
       event.sender.send('inline-styles-result', { html: out, key });
+    });
+
+    ipcMain.on('open-url', (event, url) => {
+      require('electron').shell.openExternal(url);
     });
 
     app.on('activate', (event, hasVisibleWindows) => {

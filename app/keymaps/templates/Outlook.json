@@ -1,5 +1,5 @@
 {
-  "core:change-category": "mod+shift+v",
+  "core:change-folders": "mod+shift+v",
   "core:focus-search": ["f3", "mod+e"],
   "core:forward": "mod+f",
   "core:delete-item": "mod+d",
@@ -8,7 +8,6 @@
   "core:reply": "mod+r",
   "core:reply-all": "mod+shift+r",
   "application:new-message": ["mod+n", "mod+shift+m"],
-  "send": "mod+enter",
   "core:find-in-thread": "f4",
   "core:find-in-thread-next": "shift+f4",
   "core:find-in-thread-previous": "ctrl+shift+f4",

@@ -520,8 +520,8 @@ class Actions {
   static syncFolderList = ActionScopeMainWindow;
   static syncSiftFolder = ActionScopeMainWindow;
   static fetchBodies = ActionScopeMainWindow;
-  static fetchAttachmentsByMessage = ActionScopeWindow;
   static fetchAttachments = ActionScopeMainWindow;
+  static pushToFetchAttachmentsQueue = ActionScopeWindow;
   static fetchAndOpenFile = ActionScopeWindow;
   static fetchAndSaveFile = ActionScopeWindow;
   static fetchAndSaveAllFiles = ActionScopeWindow;

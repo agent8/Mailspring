@@ -16,9 +16,7 @@ export default class Task extends Model {
   static Status = Status;
   static SubclassesUseModelTable = Task;
   static passAsIs = true;
-  static mappingFunc={
-
-  };
+  static mappingFunc = {};
 
   static attributes = Object.assign({}, Model.attributes, {
     // version: Attributes.String({
@@ -66,7 +64,7 @@ export default class Task extends Model {
       modelKey: 'undoDelay',
       queryable: false,
       loadFromColumn: false,
-    })
+    }),
   });
 
   // Public: Override the constructor to pass initial args to your Task and
@@ -124,6 +122,10 @@ export default class Task extends Model {
   }
 
   onError(err) {
+    // noop
+  }
+
+  onCancelled() {
     // noop
   }
 

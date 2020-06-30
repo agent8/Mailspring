@@ -37,7 +37,7 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
       // are removed from the selection.
       const query = nextResultSet.query();
       if (query) {
-        this.selection.removeItemsNotMatching(query.matchers());
+        this.selection.removeItemsNotMatching(query.matchers(), this._inboxCategories);
       }
 
       this.trigger({ previous: previousResultSet, next: nextResultSet });
@@ -150,7 +150,10 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
     Object.keys(accounts).forEach(accountId => {
       const threadIds = Object.keys(accounts[accountId].threadIds);
       const messageIds = Object.keys(accounts[accountId].messageIds);
-      Actions.setObservableRange(accountId, { missingThreadIds: threadIds, missingMessageIds: messageIds });
+      Actions.setObservableRange(accountId, {
+        missingThreadIds: threadIds,
+        missingMessageIds: messageIds,
+      });
     });
   };
 }

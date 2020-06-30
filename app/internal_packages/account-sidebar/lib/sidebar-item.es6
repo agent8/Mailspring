@@ -140,9 +140,9 @@ const onDeleteItem = function(item) {
     });
 };
 
-const onEditItem = function(item, value) {
+const onEditItem = function(item, newEnteredValue, originalText) {
   let newDisplayName;
-  if (!value) {
+  if (!newEnteredValue) {
     return;
   }
   if (item.deleted === true) {
@@ -152,29 +152,43 @@ const onEditItem = function(item, value) {
   if (!category) {
     return;
   }
-  const re = RegExpUtils.subcategorySplitRegex();
-  let match = re.exec(category.displayName);
-  let lastMatch = match;
-  while (match) {
-    lastMatch = match;
-    match = re.exec(category.displayName);
-  }
-  if (lastMatch) {
-    newDisplayName = category.displayName.slice(0, lastMatch.index + 1) + value;
+  const account = AccountStore.accountForId(category.accountId);
+  const isExchange = account && account.provider.includes('exchange');
+  if (isExchange) {
+    newDisplayName = newEnteredValue;
   } else {
-    newDisplayName = value;
+    let index = (category.fullDisplayName || '').lastIndexOf(originalText);
+    if (index === -1) {
+      index = category.fullDisplayName.length;
+      AppEnv.logError(
+        new Error(
+          `Original Text not in original path text: ${originalText}, path: ${category.path}`
+        )
+      );
+    }
+    newDisplayName = `${(category.fullDisplayName || '').substring(0, index)}${newEnteredValue}`;
   }
+  // const re = RegExpUtils.subcategorySplitRegex();
+  // let match = re.exec(category.displayName);
+  // let lastMatch = match;
+  // while (match) {
+  //   lastMatch = match;
+  //   match = re.exec(category.displayName);
+  // }
+  // if (lastMatch) {
+  //   newDisplayName = category.displayName.slice(0, lastMatch.index + 1) + value;
+  // } else {
+  //   newDisplayName = value;
+  // }
   if (newDisplayName === category.displayName) {
     return;
   }
-
-  const account = AccountStore.accountForId(category.accountId);
   Actions.queueTask(
     SyncbackCategoryTask.forRenaming({
       accountId: category.accountId,
       path: category.path,
       newName: newDisplayName,
-      isExchange: account && account.provider === 'exchange',
+      isExchange: account && account.provider.includes('exchange'),
     })
   );
 };
@@ -282,8 +296,14 @@ class SidebarItem {
     const contextMenuLabel = _str.capitalize(
       categories[0] != null ? categories[0].displayType() : undefined
     );
-    const perspective = MailboxPerspective.forCategories(categories);
-
+    let perspective;
+    if (categories.every(cat => !cat.selectable)) {
+      perspective = MailboxPerspective.forNoneSelectableCategories(categories);
+      opts.editable = false;
+      opts.deletable = false;
+    } else {
+      perspective = MailboxPerspective.forCategories(categories);
+    }
     if (opts.deletable == null) {
       opts.deletable = true;
     }
@@ -645,13 +665,12 @@ class SidebarItem {
     if (!account) {
       throw new Error(`Cannot find account for ${accountId}`);
     }
-    const isExchange = account.provider === 'exchange';
+    const isExchange = account.provider.includes('exchange');
     const seenItems = {};
     seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
       // https://regex101.com/r/jK8cC2/1
       let item, parentKey;
-      const re = RegExpUtils.subcategorySplitRegex();
       let itemKey;
 
       let parent = null;
@@ -688,7 +707,7 @@ class SidebarItem {
       if (parent) {
         let itemDisplayName = category.displayName.substr(parentKey.length + 1);
         if (isExchange) {
-          itemDisplayName = category.displayName.substr(parentCategory.displayName.length + 1);
+          itemDisplayName = category.displayName;
         }
         item = SidebarItem.forCategories([category], { name: itemDisplayName }, false);
         if (item) {

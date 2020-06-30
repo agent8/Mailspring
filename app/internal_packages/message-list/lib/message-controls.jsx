@@ -13,14 +13,9 @@ import {
   FocusedPerspectiveStore,
   MuteNotificationStore,
 } from 'mailspring-exports';
-import {
-  RetinaImg,
-  ButtonDropdown,
-  Menu,
-  FixedPopover,
-  FullScreenModal,
-} from 'mailspring-component-kit';
+import { RetinaImg, ButtonDropdown, Menu, FullScreenModal } from 'mailspring-component-kit';
 import MessageTimestamp from './message-timestamp';
+import UserViewBtn from '../../../src/components/user-review-button';
 
 const buttonTimeout = 700;
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
@@ -208,8 +203,10 @@ export default class MessageControls extends React.Component {
   };
 
   _onMoveToFocused = event => {
-    const { accountId, id } = this.props.message;
-    Actions.queueTask(new MakePrimaryTask({ accountId: accountId, messageIds: [id] }));
+    const { accountId, id, threadId } = this.props.message;
+    Actions.queueTask(
+      new MakePrimaryTask({ accountId: accountId, messageIds: [id], effectedThreadIds: [threadId] })
+    );
     if (event) {
       event.stopPropagation();
     }
@@ -222,8 +219,10 @@ export default class MessageControls extends React.Component {
   };
 
   _onMoveToOther = event => {
-    const { accountId, id } = this.props.message;
-    Actions.queueTask(new MakeOtherTask({ accountId: accountId, messageIds: [id] }));
+    const { accountId, id, threadId } = this.props.message;
+    Actions.queueTask(
+      new MakeOtherTask({ accountId: accountId, messageIds: [id], effectedThreadIds: [threadId] })
+    );
     if (event) {
       event.stopPropagation();
     }
@@ -556,6 +555,46 @@ export default class MessageControls extends React.Component {
     clipboard.writeText(data);
   };
 
+  _onClickTrackingIcon = event => {
+    const originRect = event.target.getBoundingClientRect();
+    Actions.openPopover(this._renderTrackingPopup(), {
+      disablePointer: true,
+      direction: 'left',
+      originRect: {
+        bottom: originRect.bottom - 149,
+        top: originRect.top + 149,
+        right: originRect.right - 38,
+        left: originRect.left + 38,
+        height: originRect.height,
+        width: originRect.width,
+      },
+      className: 'remove-tracker-popover',
+    });
+  };
+
+  _onCloseTrackingPopup = () => {
+    Actions.closePopover();
+  };
+
+  _renderTrackingPopup = () => {
+    return (
+      <div className="remove-tracker">
+        <RetinaImg name={'emailtracking-popup-image.png'} mode="" />
+        <h3>Email tracking is Blocked</h3>
+        <p>Senders won't see when and where you read messages.</p>
+        <UserViewBtn />
+        <RetinaImg
+          className="close"
+          style={{ width: 20 }}
+          name={'close.svg'}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onCloseTrackingPopup}
+        />
+      </div>
+    );
+  };
+
   _renderMuteEmailPopup = () => {
     const { message } = this.props;
     const email = message.from && message.from[0] ? message.from[0].email : '';
@@ -665,28 +704,8 @@ export default class MessageControls extends React.Component {
               style={{ width: 16, height: 16, fontSize: 16 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
+              onClick={this._onClickTrackingIcon}
             />
-            <div className="remove-tracker-popover">
-              <FixedPopover
-                direction="down"
-                originRect={{
-                  top: 8,
-                  left: 8,
-                }}
-              >
-                <div className="remove-tracker-notice">
-                  <RetinaImg
-                    name={'emailtracking-popup-image.png'}
-                    mode=""
-                    style={{ width: 300, height: 300, marginTop: 20 }}
-                  />
-                  <p>
-                    <b>Email tracking is Blocked</b> Senders won't see when and where you read
-                    messages.
-                  </p>
-                </div>
-              </FixedPopover>
-            </div>
           </div>
         ) : null}
         <MessageTimestamp className="message-time" isDetailed date={this.props.message.date} />
@@ -717,7 +736,7 @@ export default class MessageControls extends React.Component {
         <FullScreenModal
           visible={this.state.showMuteEmailModal}
           style={{
-            height: '192px',
+            height: 'auto',
             width: '400px',
             top: '165px',
             right: '255px',
@@ -730,7 +749,7 @@ export default class MessageControls extends React.Component {
         <FullScreenModal
           visible={this.state.showMoveFocusedOtherModal}
           style={{
-            height: '192px',
+            height: 'auto',
             width: '400px',
             top: '165px',
             right: '255px',

@@ -12,6 +12,8 @@ import {
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import { CSSTransitionGroup } from 'react-transition-group';
+import DeleteThreadsTask from '../../../src/flux/tasks/delete-threads-task';
+import ExpungeMessagesTask from '../../../src/flux/tasks/expunge-messages-task';
 import SendDraftTask from '../../../src/flux/tasks/send-draft-task';
 import DestroyDraftTask from '../../../src/flux/tasks/destroy-draft-task';
 
@@ -116,6 +118,13 @@ class BasicContent extends React.Component {
       } else if (tasks.every(task => task instanceof DestroyDraftTask)) {
         const total = tasks.reduce((sum, task) => sum + task.messageIds.length, 0);
         description = `Deleting ${total} drafts`;
+      } else if (
+        tasks.every(
+          task => task instanceof ExpungeMessagesTask || task instanceof DeleteThreadsTask
+        )
+      ) {
+        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
+        description = `Expunging ${total} threads`;
       }
     } else {
       // if TrashFromSenderTask
@@ -191,14 +200,28 @@ class UndoSendContent extends BasicContent {
       UndoRedoStore.undo({ block: this.props.block });
     } else if (this.state.sendStatus === 'failed') {
       clearTimeout(this.timer);
-      setTimeout(() => {
-        AppEnv.reportError(
-          new Error(
-            `Sending email failed, and user clicked view. messageId: ${this.props.block.tasks[0].modelMessageId}`
-          )
-        );
-        Actions.gotoOutbox();
-      }, 300);
+      if (this._getAdditionalFailedCount() > 0) {
+        setTimeout(() => {
+          AppEnv.reportError(
+            new Error(
+              `Sending email failed, and user clicked view. messageId: ${this.props.block.tasks[0].modelMessageId}`
+            )
+          );
+          Actions.gotoOutbox();
+        }, 300);
+      } else {
+        setTimeout(() => {
+          AppEnv.reportError(
+            new Error(
+              `Sending email failed, and user clicked retry. messageId: ${this.props.block.tasks[0].modelMessageId}`
+            )
+          );
+          Actions.resendDrafts({
+            messageIds: [this.props.block.tasks[0].modelMessageId],
+            source: 'UndoRedo:Failed:Resend',
+          });
+        }, 300);
+      }
       this.props.onClose(true);
     }
   };
@@ -212,9 +235,10 @@ class UndoSendContent extends BasicContent {
       );
     }
     if (this.state.sendStatus === 'failed') {
+      const additionalFailed = this._getAdditionalFailedCount();
       return (
         <div className="undo-action-text" onClick={this.onActionClicked}>
-          View
+          {additionalFailed > 0 ? 'View' : 'Retry'}
         </div>
       );
     }
@@ -228,6 +252,17 @@ class UndoSendContent extends BasicContent {
     if (this.state.sendStatus !== 'sending') {
       this.timer = setTimeout(() => this.props.onClose(), 400);
     }
+  };
+  _getAdditionalFailedCount = () => {
+    const outboxCount = OutboxStore.count();
+    let additionalFailedCount = outboxCount.failed;
+    const currentMessageInOutbox = OutboxStore.dataSource().getById(
+      this.props.block.tasks[0].modelMessageId
+    );
+    if (currentMessageInOutbox) {
+      additionalFailedCount--;
+    }
+    return additionalFailedCount;
   };
 
   _generateFailedSendDraftMessage() {
@@ -243,15 +278,8 @@ class UndoSendContent extends BasicContent {
       } else {
         recipiant = { name: '', email: '' };
       }
-      const outboxCount = OutboxStore.count();
-      let failedCount = outboxCount.failed;
-      const currentMessageInOutbox = OutboxStore.dataSource().getById(
-        this.props.block.tasks[0].modelMessageId
-      );
-      if (currentMessageInOutbox) {
-        failedCount--;
-      }
-      const additional = failedCount > 0 ? `+ ${failedCount} more drafts` : '';
+      const additionalFailedCount = this._getAdditionalFailedCount();
+      const additional = additionalFailedCount > 0 ? `+ ${additionalFailedCount} more drafts` : '';
       return `Mail to ${recipiant.name || recipiant.email} ${additional} failed to send.`;
     }
   }
@@ -263,8 +291,6 @@ class UndoSendContent extends BasicContent {
       messageStatus = 'Message sent.';
     } else if (this.state.sendStatus === 'failed') {
       messageStatus = this._generateFailedSendDraftMessage();
-    } else if (!block.due) {
-      messageStatus = 'Prepare to send';
     }
     return (
       <div
@@ -296,10 +322,7 @@ export default class UndoRedoToast extends React.Component {
 
     this._timeout = [];
     this._unlisten = null;
-
-    // Note: we explicitly do /not/ set initial state to the state of
-    // the UndoRedoStore here because "getMostRecent" might be more
-    // than 3000ms old.
+    this._mounted = false;
     this.state = {
       block: null,
       blocks: [],
@@ -307,7 +330,11 @@ export default class UndoRedoToast extends React.Component {
   }
 
   componentDidMount() {
+    this._mounted = true;
     this._unlisten = UndoRedoStore.listen(() => {
+      if (!this._mounted) {
+        return;
+      }
       const blocks = UndoRedoStore.getUndos();
       this.setState({
         blocks: [...blocks.critical, ...blocks.high, ...blocks.medium, ...blocks.low],
@@ -316,6 +343,7 @@ export default class UndoRedoToast extends React.Component {
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this._unlisten) {
       this._unlisten();
     }
@@ -361,7 +389,7 @@ export default class UndoRedoToast extends React.Component {
               const Component = block && (isUndoSend(block) ? UndoSendContent : BasicContent);
               return (
                 <Component
-                  key={block.id}
+                  key={block.displayId}
                   block={block}
                   onMouseEnter={this._onMouseEnter}
                   onMouseLeave={this._onMouseLeave}

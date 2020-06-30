@@ -231,6 +231,7 @@ class WorkspaceStore extends MailspringStore {
     this.popToRootSheet({ reason: 'WorkspaceStore:onSelectLayoutMode' });
     if (focused) {
       Actions.setFocus({ collection: 'thread', item: focused });
+      Actions.setCursorPosition({ collection: 'thread', item: focused });
     }
     this.trigger();
   };
