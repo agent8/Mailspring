@@ -1,11 +1,15 @@
 import { React } from 'mailspring-exports';
-const twoStep = (<div className="two-step">
-  <span>Use two-step verification on your account? make sure to enter your
-app-specific password or check with your mail provider about your
-app-specific password. </span>
-  <br /><br />
-  <span>POP accounts are not supported in this version. </span>
-</div>);
+const twoStep = (
+  <div className="two-step">
+    <span>
+      Use two-step verification on your account? make sure to enter your app-specific password or
+      check with your mail provider about your app-specific password.{' '}
+    </span>
+    <br />
+    <br />
+    <span>POP accounts are not supported in this version. </span>
+  </div>
+);
 const AccountProviders = [
   {
     provider: 'gmail',
@@ -26,9 +30,13 @@ const AccountProviders = [
     displayName: 'iCloud',
     note: (
       <span>
-        Apple requires all third-party apps that access iCloud information to utilize app-specific passwords, this includes our Email app.
-        <br /><br />
-        <a href="https://support.apple.com/en-us/HT204397"><strong>iCloud App-Specific Passwords Help</strong></a>
+        Apple requires all third-party apps that access iCloud information to utilize app-specific
+        passwords, this includes our Email app.
+        <br />
+        <br />
+        <a href="https://support.apple.com/en-us/HT204397">
+          <strong>iCloud App-Specific Passwords Help</strong>
+        </a>
       </span>
     ),
     icon: 'account-logo-icloud.png',
@@ -44,15 +52,23 @@ const AccountProviders = [
     icon: 'account-logo-outlook.png',
     headerIcon: 'setup-icon-provider-outlook.png',
     color: '#0078d7',
-    twoStep
+    twoStep,
   },
+  // {
+  //   provider: 'office365',
+  //   displayName: 'Office365',
+  //   icon: 'account-logo-office365.png',
+  //   headerIcon: 'setup-icon-provider-office365.png',
+  //   color: '#D83B01',
+  //   twoStep,
+  // },
   {
-    provider: 'office365',
+    provider: 'office365-exchange',
     displayName: 'Office365',
     icon: 'account-logo-office365.png',
     headerIcon: 'setup-icon-provider-office365.png',
     color: '#D83B01',
-    twoStep
+    twoStep,
   },
   // {
   //   provider: 'fastmail',
@@ -121,7 +137,7 @@ const AccountProviders = [
     icon: 'account-logo-other.png',
     headerIcon: 'setup-icon-provider-imap.png',
     color: '#aaa',
-    twoStep
+    twoStep,
   },
 ];
 
