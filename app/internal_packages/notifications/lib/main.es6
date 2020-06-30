@@ -13,6 +13,7 @@ import UpdateNotification from './items/update-notification';
 import DiskUsageNotification from './items/disk-usage-notification';
 import FocusedInboxNotif from './items/focused-inbox-notif';
 import ImproveDataNotif from './items/improve-data-notif';
+import WhatsNew from './items/whats-new-notif';
 
 const notifications = [
   // DefaultClientNotification,
@@ -24,6 +25,7 @@ const notifications = [
   DiskUsageNotification,
   FocusedInboxNotif,
   ImproveDataNotif,
+  WhatsNew,
 ];
 
 export function activate() {

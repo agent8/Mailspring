@@ -1,4 +1,4 @@
-import { React, PropTypes, Utils, Message } from 'mailspring-exports';
+import { React, PropTypes, Utils, Message, Contact } from 'mailspring-exports';
 
 class ThreadListParticipants extends React.Component {
   static displayName = 'ThreadListParticipants';
@@ -130,21 +130,47 @@ class ThreadListParticipants extends React.Component {
     const tokens = [];
 
     let field = 'from';
-    if (messages.every(message => message.isFromMe({ ignoreOtherAccounts: true }))) {
+    let isAllFromMe = true;
+    let isAllDrafts = true;
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      if (message) {
+        if (isAllFromMe) {
+          isAllFromMe = message.isFromMe({ ignoreOtherAccounts: true });
+        }
+        if (isAllDrafts) {
+          isAllDrafts = message.draft;
+        }
+      }
+      if (!isAllFromMe && !isAllDrafts) {
+        break;
+      }
+    }
+    if (isAllFromMe) {
       field = 'to';
     }
 
     for (let idx = 0; idx < messages.length; idx++) {
       const message = new Message(messages[idx]);
-      if (message.draft && message.unread) {
-        // If message is draft and unread, force contact from name to be 'Draft'
-        let tmp = message['from'];
-        if (Array.isArray(tmp) && tmp.length > 0) {
-          message['from'][0].name = 'Draft';
+      let msgField = field;
+      if (isAllDrafts) {
+        if (Array.isArray(message.to) && message.to.length > 0) {
+          msgField = 'to';
+        } else if (Array.isArray(message.cc) && message.cc.length > 0) {
+          msgField = 'cc';
+        } else if (Array.isArray(message.bcc) && message.bcc.length > 0) {
+          msgField = 'bcc';
+        } else {
+          message['NoOne'] = [
+            new Contact({ name: 'No Recipients' }, { accountId: message.accountId }),
+          ];
+          msgField = 'NoOne';
         }
+      } else if (message.draft) {
+        continue;
       }
 
-      for (let contact of message[field]) {
+      for (let contact of message[msgField]) {
         if (tokens.length === 0) {
           tokens.push({
             contact,

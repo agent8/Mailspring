@@ -2,6 +2,12 @@
 import utf7 from 'utf7';
 import Model from './model';
 import Attributes from '../attributes';
+import {
+  InboxCategoryStates,
+  inboxFocusedCategories,
+  inboxNotOtherCategories,
+  inboxOtherCategories,
+} from '../../constant';
 
 // We look for a few standard categories and display them in the Mailboxes
 // portion of the left sidebar. Note that these may not all be present on
@@ -98,9 +104,12 @@ const toDelimiterJSONMappings = val => {
 const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]', '[Mailspring]'];
 export default class Category extends Model {
   get displayName() {
-    return Category.pathToDisplayName(this.name);
+    return Category.pathToDisplayName(this.name, !this.role || this.role === 'none');
   }
-  static pathToDisplayName(pathString) {
+  get fullDisplayName() {
+    return utf7.imap.decode(this.name);
+  }
+  static pathToDisplayName(pathString, ignoreGmailPrefix = false) {
     if (!pathString) {
       return '';
     }
@@ -108,6 +117,9 @@ export default class Category extends Model {
 
     for (const prefix of ignoredPrefixes) {
       if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {
+        if (prefix !== 'INBOX' && ignoreGmailPrefix) {
+          return decoded;
+        }
         return decoded.substr(prefix.length + 1); // + delimiter
       }
       if (
@@ -161,6 +173,11 @@ export default class Category extends Model {
       queryable: true,
       loadFromColumn: true,
     }),
+    selectable: Attributes.Boolean({
+      modelKey: 'selectable',
+      queryable: true,
+      loadFromColumn: true,
+    }),
     type: Attributes.Number({
       modelKey: 'type',
       queryable: true,
@@ -182,42 +199,13 @@ export default class Category extends Model {
     Hidden: 'hidden',
   };
 
-  static InboxCategoryState = {
-    MsgNone: -1, //message not in INBOX
-    MsgOther: 0,
-    MsgCandidate: 1,
-    MsgPrimary: 2,
-    MsgPrimaryAndOther: 3,
-  };
+  static InboxCategoryState = InboxCategoryStates;
 
-  static inboxFocusedCategorys(strict = false) {
-    const focusedCategorys = [
-      Category.InboxCategoryState.MsgCandidate,
-      Category.InboxCategoryState.MsgPrimary,
-    ];
-    if (strict) {
-      return focusedCategorys;
-    }
+  static inboxFocusedCategorys = inboxFocusedCategories;
 
-    return [...focusedCategorys, Category.InboxCategoryState.MsgPrimaryAndOther];
-  }
+  static inboxOtherCategorys = inboxOtherCategories;
 
-  static inboxOtherCategorys(strict = false) {
-    const otherCategorys = [Category.InboxCategoryState.MsgOther];
-    if (strict) {
-      return otherCategorys;
-    }
-
-    return [...otherCategorys, Category.InboxCategoryState.MsgPrimaryAndOther];
-  }
-
-  static inboxNotOtherCategorys() {
-    const isStrictOtherCategorys = Category.inboxOtherCategorys(true);
-    const notOtherCategorys = Object.values(Category.InboxCategoryState).filter(item => {
-      return !isStrictOtherCategorys.some(other => item === other);
-    });
-    return notOtherCategorys;
-  }
+  static inboxNotOtherCategorys = inboxNotOtherCategories;
 
   static StandardRoles = Object.keys(StandardRoleMap);
   static LockedRoles = Object.keys(LockedRoleMap);

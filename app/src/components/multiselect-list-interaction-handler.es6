@@ -49,10 +49,10 @@ module.exports = class MultiselectListInteractionHandler {
       this._addClickIntoSelection(item);
       this.onSetCursorPosition(item);
     } else {
-      const { keyboardCursorId } = this.props;
-      const keyboardItem = this.props.dataSource.getById(keyboardCursorId);
-      this.props.dataSource.selection.clear();
-      this.props.dataSource.selection.add(keyboardItem);
+      // const { keyboardCursorId } = this.props;
+      // const keyboardItem = this.props.dataSource.getById(keyboardCursorId);
+      // this.props.dataSource.selection.clear();
+      // this.props.dataSource.selection.add(keyboardItem);
       this.props.dataSource.selection.expandTo(item);
     }
   };

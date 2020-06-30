@@ -10,7 +10,7 @@ import stream from 'stream';
 import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
-import { autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
+import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
 import RegExpUtils from './regexp-utils';
 const LOG = require('electron-log');
 // const archiver = require('archiver');
@@ -345,32 +345,32 @@ export default class AppEnvConstructor {
     return extra;
   }
 
-  reportError(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportError(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'error');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'error');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'error');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'error');
     }
   }
 
-  reportWarning(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportWarning(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'warning');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'warning');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'warning');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'warning');
     }
   }
-  reportLog(error, extra = {}, { noWindows, grabLogs = false } = {}) {
+  reportLog(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows }, 'log');
+      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'log');
     } else {
-      this._reportLog(error, extra, { noWindows }, 'log');
+      this._reportLog(error, extra, { noWindows, noAppConfig }, 'log');
     }
   }
 
-  _grabLogAndReportLog(error, extra, { noWindows } = {}, type = '') {
+  _grabLogAndReportLog(error, extra, { noWindows, noAppConfig } = {}, type = '') {
     extra.grabLogs = true;
-    this._reportLog(error, extra, { noWindows }, type);
+    this._reportLog(error, extra, { noWindows, noAppConfig }, type);
     // this.grabLogs()
     //   .then(filename => {
     //     extra.files = [filename];
@@ -382,9 +382,9 @@ export default class AppEnvConstructor {
     //   });
   }
 
-  _reportLog(error, extra = {}, { noWindows } = {}, type = '') {
+  _reportLog(error, extra = {}, { noWindows, noAppConfig } = {}, type = '') {
     extra = this._expandReportLog(error, extra);
-
+    extra.noAppConfig = noAppConfig;
     if (error instanceof APIError) {
       // API Errors are logged by our backend and happen all the time (offline, etc.)
       // Don't clutter the front-end metrics with these.
@@ -646,6 +646,20 @@ export default class AppEnvConstructor {
     } else {
       return downloadFolderOption;
     }
+  }
+
+  getDownloadsPath() {
+    const home = this.getUserDirPath();
+    let downloadDir = path.join(home, 'Downloads');
+    try {
+      const { exists } = dirExists(downloadDir);
+      if (exists) {
+        return downloadDir;
+      }
+    } catch (e) {
+      this.logError(e);
+    }
+    return os.tmpdir();
   }
 
   // Public: Get the time taken to completely load the current window.
@@ -1241,59 +1255,66 @@ export default class AppEnvConstructor {
       });
   }
 
-  showSaveDialog(options, callback) {
-    const downloadPath = this.getSaveDirPath();
-
-    if (downloadPath) {
-      if (!fs.existsSync(downloadPath)) {
-        remote.dialog.showErrorBox('File Save Error', `directory: ${downloadPath} doesn't exist`);
-        callback(null);
-      } else {
-        const fileName = path.basename(options.defaultPath || 'untitled');
-        const fileNewName = autoGenerateFileName(downloadPath, fileName);
-        if (typeof fileNewName === 'string') {
-          callback(path.join(downloadPath, fileNewName));
-        } else {
-          this.logError(fileNewName);
-          callback(fileNewName);
-        }
-      }
-    } else {
-      if (options.title == null) {
-        options.title = 'Save File';
-      }
-      return remote.dialog
-        .showSaveDialog(this.getCurrentWindow(), options)
-        .then(({ canceled, filePath }) => {
-          if (canceled) {
-            callback(null);
+  getFilePathForSaveFile(options) {
+    return new Promise(resolve => {
+      const downloadPath = this.getSaveDirPath();
+      if (downloadPath) {
+        // need to make sure this dir exists
+        try {
+          const { exists, errorMsg } = dirExists(downloadPath);
+          if (exists) {
+            const fileOldName = path.basename(options.defaultPath || 'untitled');
+            const fileNewName = autoGenerateFileName(downloadPath, fileOldName);
+            resolve(path.join(downloadPath, fileNewName));
           } else {
-            callback(filePath);
+            resolve('');
+            remote.dialog.showErrorBox('File Save Error', errorMsg);
           }
-        });
-    }
-  }
-
-  showSaveDirDialog(options, callback) {
-    const downloadPath = this.getSaveDirPath();
-
-    if (downloadPath) {
-      if (!fs.existsSync(downloadPath)) {
-        remote.dialog.showErrorBox('Files Save Error', `directory: ${downloadPath} doesn't exist`);
-        callback(null);
-      } else {
-        callback(downloadPath);
-      }
-    } else {
-      const home = this.getUserDirPath();
-      let downloadDir = path.join(home, 'Downloads');
-      if (!fs.existsSync(downloadDir)) {
-        downloadDir = os.tmpdir();
+          return;
+        } catch (e) {
+          this.logError(e);
+        }
       }
 
       const optionTmp = {
         ...options,
-        defaultPath: options.defaultPath || downloadDir,
+        defaultPath: options.defaultPath || this.getDownloadsPath(),
+        title: options.title || 'Save File',
+      };
+      remote.dialog
+        .showSaveDialog(this.getCurrentWindow(), optionTmp)
+        .then(({ canceled, filePath }) => {
+          if (canceled) {
+            resolve('');
+          } else {
+            resolve(filePath);
+          }
+        });
+    });
+  }
+
+  getDirPathForSaveFile(options) {
+    return new Promise(resolve => {
+      const downloadPath = this.getSaveDirPath();
+      if (downloadPath) {
+        // need to make sure this dir exists
+        try {
+          const { exists, errorMsg } = dirExists(downloadPath);
+          if (exists) {
+            resolve(downloadPath);
+          } else {
+            resolve('');
+            remote.dialog.showErrorBox('File Save Error', errorMsg);
+          }
+          return;
+        } catch (e) {
+          this.logError(e);
+        }
+      }
+
+      const optionTmp = {
+        ...options,
+        defaultPath: options.defaultPath || this.getDownloadsPath(),
         title: options.title || 'Save Into...',
         properties: ['openDirectory', 'createDirectory'],
       };
@@ -1302,16 +1323,16 @@ export default class AppEnvConstructor {
         .showOpenDialog(this.getCurrentWindow(), optionTmp)
         .then(({ canceled, filePaths }) => {
           if (canceled) {
-            callback(null);
+            resolve('');
             return;
           }
           if (filePaths && filePaths.length) {
-            callback(filePaths[0]);
+            resolve(filePaths[0]);
           } else {
-            callback(null);
+            resolve('');
           }
         });
-    }
+    });
   }
 
   getMainWindow() {
@@ -1829,6 +1850,19 @@ export default class AppEnvConstructor {
   mockUpdateAvailable() {
     const app = remote.getGlobal('application');
     app.autoUpdateManager.setState('update-available');
+  }
+
+  getEventTriggerTime(eventName) {
+    const app = remote.getGlobal('application');
+    return app.eventTriggers.getEventTriggerTime(eventName);
+  }
+
+  eventTrigger(eventName) {
+    const app = remote.getGlobal('application');
+    app.eventTriggers.eventTrigger(eventName);
+  }
+  getLocale(env = process.env) {
+    return env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE || env.LC_CTYPE;
   }
   // openExternal() {
   //   const { spawn, exec } = require('child_process');

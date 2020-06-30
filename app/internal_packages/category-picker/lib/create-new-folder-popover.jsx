@@ -119,7 +119,7 @@ export default class CreateNewFolderPopover extends Component {
     const syncbackTask = SyncbackCategoryTask.forCreating({
       name: this.state.newName,
       accountId: this.props.account.id,
-      isExchange: account && account.provider === 'exchange',
+      isExchange: account && account.provider.includes('exchange'),
     });
     this._onResultReturned();
     TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {

@@ -8,8 +8,10 @@ import { pickHTMLProps } from 'pick-react-known-prop';
 import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
-import { AttachmentStore, MessageStore, Utils } from 'mailspring-exports';
+import { AttachmentStore, MessageStore, Utils, Constant } from 'mailspring-exports';
 import Actions from '../flux/actions';
+
+const { AttachmentDownloadState } = Constant;
 
 const propTypes = {
   className: PropTypes.string,
@@ -18,12 +20,13 @@ const propTypes = {
   previewable: PropTypes.bool,
   disabled: PropTypes.bool,
   missing: PropTypes.bool,
+  disableProgress: PropTypes.bool,
   fileId: PropTypes.string,
   filePath: PropTypes.string,
   accountId: PropTypes.string,
   contentType: PropTypes.string,
   download: PropTypes.shape({
-    state: PropTypes.string,
+    state: PropTypes.number,
     percent: PropTypes.number,
   }),
   displayName: PropTypes.string,
@@ -45,7 +48,7 @@ const defaultProps = {
 const SPACE = ' ';
 
 function ProgressBar(props) {
-  const { isDownloading, percent } = props;
+  const { isDownloading, percent, disableProgress } = props;
 
   if (!isDownloading) {
     return <span />;
@@ -57,7 +60,11 @@ function ProgressBar(props) {
   return (
     <span className={`progress-bar-wrap state-downloading`}>
       <span className="progress-background" />
-      <span className="progress-foreground " style={downloadProgressStyle} />
+      {disableProgress ? (
+        <span className="progress-loading"></span>
+      ) : (
+        <span className="progress-foreground" style={downloadProgressStyle} />
+      )}
     </span>
   );
 }
@@ -80,18 +87,15 @@ function AttachmentActionIcon(props) {
   } = props;
 
   const isRemovable = onRemoveAttachment != null && !disabled;
-  const actionIconName = isRemovable || isDownloading ? removeIcon : downloadIcon;
+  const actionIconName = isRemovable ? removeIcon : downloadIcon;
 
   const onClickActionIcon = event => {
-    if (missing || isDownloading) {
+    event.stopPropagation();
+    if (isRemovable && typeof onRemoveAttachment === 'function' && !missing && !isDownloading) {
+      onRemoveAttachment();
       return;
     }
-    event.stopPropagation(); // Prevent 'onOpenAttachment'
-    if (isRemovable) {
-      onRemoveAttachment();
-    } else if (isDownloading && onAbortDownload != null) {
-      onAbortDownload();
-    } else if (!isDownloading && onDownloadAttachment != null) {
+    if (!isRemovable && typeof onDownloadAttachment === 'function') {
       onDownloadAttachment();
     }
   };
@@ -104,9 +108,7 @@ function AttachmentActionIcon(props) {
 
   return (
     <div className="file-action-icon" onClick={onClickActionIcon} style={fileActionIconStyle}>
-      {!isDownloading ? (
-        <RetinaImg isIcon={isIcon} style={style} name={actionIconName} mode={retinaImgMode} />
-      ) : null}
+      <RetinaImg isIcon={isIcon} style={style} name={actionIconName} mode={retinaImgMode} />
     </div>
   );
 }
@@ -138,6 +140,13 @@ export class AttachmentItem extends Component {
 
   componentDidMount() {
     this._storeUnlisten = [AttachmentStore.listen(this._onDownloadStoreChange)];
+    const { fileId, filePath, previewable } = this.props;
+    if (previewable) {
+      AttachmentStore.refreshAttachmentsState({
+        fileId: fileId,
+        filePath: filePath,
+      });
+    }
   }
 
   componentWillUnmount() {
@@ -151,7 +160,10 @@ export class AttachmentItem extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.download) {
       const download = nextProps.download;
-      this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
+      this.setState({
+        isDownloading: download.state === AttachmentDownloadState.downloading,
+        percent: download.percent,
+      });
     }
   }
 
@@ -216,7 +228,6 @@ export class AttachmentItem extends Component {
         fileId: this.props.fileId,
         filePath: this.props.filePath,
       });
-      return;
     }
     if (this.props.isDownloading || this.props.missing) {
       MessageStore.fetchMissingAttachmentsByFileIds({
@@ -335,7 +346,11 @@ export class AttachmentItem extends Component {
           >
             Download Success
           </div>
-          <ProgressBar isDownloading={this.state.isDownloading} percent={this.state.percent} />
+          <ProgressBar
+            isDownloading={this.state.isDownloading}
+            percent={this.state.percent}
+            disableProgress={this.props.disableProgress}
+          />
           <Flexbox direction="row" style={{ alignItems: 'center' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
@@ -461,7 +476,10 @@ export class ImageAttachmentItem extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.download) {
       const download = nextProps.download;
-      this.setState({ isDownloading: download.state === 'downloading', percent: download.percent });
+      this.setState({
+        isDownloading: download.state === AttachmentDownloadState.downloading,
+        percent: download.percent,
+      });
     }
   }
 
@@ -544,7 +562,11 @@ export class ImageAttachmentItem extends Component {
           >
             Download Success
           </div>
-          <ProgressBar isDownloading={this.state.isDownloading} percent={this.state.percent} />
+          <ProgressBar
+            isDownloading={this.state.isDownloading}
+            percent={this.state.percent}
+            disableProgress={this.props.disableProgress}
+          />
           <AttachmentActionIcon
             {...this.props}
             removeIcon="image-cancel-button.png"

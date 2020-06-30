@@ -2,7 +2,8 @@ import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
 import { SyncbackMetadataTask, TaskFactory } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
-
+import uuid from 'uuid';
+const undoOnlyShowOne = 'core.task.undoQueueOnlyShowOne';
 class UndoRedoStore extends MailspringStore {
   priority = {
     critical: 0,
@@ -22,6 +23,7 @@ class UndoRedoStore extends MailspringStore {
     this.undoQueuing = [];
     this._redo = [];
     this._timeouts = {};
+    this._maxQueueLength = AppEnv.config.get(undoOnlyShowOne);
 
     this._mostRecentBlock = null;
     this._queueingTasks = false;
@@ -31,8 +33,26 @@ class UndoRedoStore extends MailspringStore {
       this.listenTo(Actions.queueTasks, this._onQueue);
       this.listenTo(Actions.queueUndoOnlyTask, this._onQueue);
       this.listenTo(Actions.removeAccount, this._onAccountRemoved);
+      AppEnv.config.observe(undoOnlyShowOne, this._onConfigChange);
     }
   }
+  _onConfigChange = () => {
+    const oldMax = this._maxQueueLength;
+    this._maxQueueLength = AppEnv.config.get(undoOnlyShowOne) ? 1 : 0;
+    if (this._maxQueueLength === 1 && this._maxQueueLength !== oldMax) {
+      let changed = false;
+      Object.keys(this._undo).forEach(priority => {
+        if (this._undo[priority].length > 0) {
+          const tmp = this._undo[priority][0];
+          this._undo[priority] = [tmp];
+          changed = true;
+        }
+      });
+      if (changed) {
+        this.trigger();
+      }
+    }
+  };
 
   _onQueue = taskOrTasks => {
     if (this._queueingTasks) {
@@ -45,8 +65,10 @@ class UndoRedoStore extends MailspringStore {
     }
 
     if (tasks.every(t => t.canBeUndone)) {
+      const id = uuid();
       const block = {
-        id: tasks.map(t => t.id).join('-'),
+        id: id,
+        displayId: id,
         ids: tasks.map(t => t.id),
         tasks: tasks,
         hide: false,
@@ -125,19 +147,27 @@ class UndoRedoStore extends MailspringStore {
     this._pushToUndo({ block });
     this.trigger();
   };
+  _pushNewBlockToUndoQueue = (block, priority) => {
+    if (this._maxQueueLength > 0 && this._undo[priority].length >= this._maxQueueLength) {
+      block.displayId = this._undo[priority][0].displayId;
+      this._undo[priority][0] = block;
+    } else {
+      this._undo[priority].push(block);
+    }
+  };
   _pushToUndo = ({ block }) => {
     switch (block.priority) {
       case this.priority.critical:
-        this._undo.critical.push(block);
+        this._pushNewBlockToUndoQueue(block, 'critical');
         break;
       case this.priority.high:
-        this._undo.high.push(block);
+        this._pushNewBlockToUndoQueue(block, 'high');
         break;
       case this.priority.medium:
-        this._undo.medium.push(block);
+        this._pushNewBlockToUndoQueue(block, 'medium');
         break;
       default:
-        this._undo.low.push(block);
+        this._pushNewBlockToUndoQueue(block, 'low');
     }
     this.undoQueuing.push(block);
     this._timeouts[block.id] = setTimeout(

@@ -90,7 +90,7 @@ export default class ComposerView extends React.Component {
       }
     });
 
-    const isBrandNew = this.props.draft.date >= MessageStore.lastThreadChangeTimestamp();
+    const isBrandNew = this.props.draft.pristine && !this.props.draft.hasRefOldDraftOnRemote;
     if (isBrandNew) {
       ReactDOM.findDOMNode(this).scrollIntoView(false);
       this._animationFrameTimer = window.requestAnimationFrame(() => {
@@ -163,33 +163,34 @@ export default class ComposerView extends React.Component {
   };
 
   _isDraftMissingAttachments = props => {
-    if (!props.draft) {
-      this.setState({ missingAttachments: false });
-      return;
-    }
-    props.draft.missingAttachments().then(ret => {
-      if (!this._mounted) {
-        return;
-      }
-      const missing = ret.totalMissing();
-      if (missing.length !== 0) {
-        if (!this.state.missingAttachments) {
-          this.setState({ missingAttachments: true });
-          Actions.fetchAttachments({
-            accountId: props.draft.accountId,
-            missingItems: missing.map(f => f.id),
-          });
-        } else {
-          console.warn('state already missing attachments');
-        }
-      } else {
-        if (this.state.missingAttachments) {
-          this.setState({ missingAttachments: false });
-        } else {
-          console.warn('state already not missing attachments');
-        }
-      }
-    });
+    console.error('calling composer-view draft missing attachments');
+    // if (!props.draft) {
+    //   this.setState({ missingAttachments: false });
+    //   return;
+    // }
+    // props.draft.missingAttachments().then(ret => {
+    //   if (!this._mounted) {
+    //     return;
+    //   }
+    //   const missing = ret.totalMissing();
+    //   if (missing.length !== 0) {
+    //     if (!this.state.missingAttachments) {
+    //       this.setState({ missingAttachments: true });
+    //       Actions.pushToFetchAttachmentsQueue({
+    //         accountId: props.draft.accountId,
+    //         missingItems: missing.map(f => f.id),
+    //       });
+    //     } else {
+    //       console.warn('state already missing attachments');
+    //     }
+    //   } else {
+    //     if (this.state.missingAttachments) {
+    //       this.setState({ missingAttachments: false });
+    //     } else {
+    //       console.warn('state already not missing attachments');
+    //     }
+    //   }
+    // });
   };
 
   focus() {
@@ -314,6 +315,9 @@ export default class ComposerView extends React.Component {
             onMouseUp={this._onMouseUpComposerBody}
             onMouseDown={this._onMouseDownComposerBody}
             onContextMenu={this._onEditorBodyContextMenu}
+            onFocus={() => {
+              this._onFocusedEditor();
+            }}
           >
             {this._renderBodyRegions()}
             {this._renderFooterRegions()}
@@ -396,12 +400,43 @@ export default class ComposerView extends React.Component {
     );
   }
 
+  _getDisableCommands = () => {
+    return [
+      'core:reply',
+      'core:reply-all',
+      'core:forward',
+      'core:star-item',
+      'core:delete-item',
+      'core:archive-item',
+      'core:change-folders',
+      'core:snooze-item',
+      'core:mark-as-unread',
+      'core:report-as-spam',
+      'core:pop-sheet',
+    ];
+  };
+
+  _disableThreadCommand = () => {
+    const disableCommands = this._getDisableCommands();
+    AppEnv.commands.disableCommand(disableCommands);
+  };
+
+  _enableThreadCommand = () => {
+    const disableCommands = this._getDisableCommands();
+    AppEnv.commands.enableCommand(disableCommands);
+  };
+
+  _onFocusedEditor = () => {
+    this._disableThreadCommand();
+  };
+
   _onEditorBlur = (event, editor, next) => {
     this.setState({
       editorSelection: editor.value.selection,
       editorSelectedText: editor.value.fragment.text,
     });
     this._onEditorChange(editor);
+    this._enableThreadCommand();
   };
   _onEditorChange = change => {
     // We minimize thrashing and disable editors in multiple windows by ensuring
@@ -571,11 +606,7 @@ export default class ComposerView extends React.Component {
           <div className="composer-action-bar-wrap" data-tooltips-anchor>
             <div className="tooltips-container" />
             <div className="composer-action-bar-content">
-              <ActionBarPlugins
-                draft={this.props.draft}
-                session={this.props.session}
-                isValidDraft={this._isValidDraft}
-              />
+              <ActionBarPlugins draft={this.props.draft} session={this.props.session} />
               <SendActionButton
                 ref={el => {
                   if (el) {
@@ -587,7 +618,6 @@ export default class ComposerView extends React.Component {
                 draft={this.props.draft}
                 messageId={this.props.draft.id}
                 session={this.props.session}
-                isValidDraft={this._isValidDraft}
                 disabled={this.props.session.isPopout() || this._draftNotReady()}
               />
               <div className="divider-line" style={{ order: -51 }} />
@@ -750,6 +780,7 @@ export default class ComposerView extends React.Component {
       return;
     }
     const { draft, session } = this.props;
+    const inlineFile = [];
     for (let i = 0; i < fileObjs.length; i++) {
       const fileObj = fileObjs[i];
       if (Utils.shouldDisplayAsImage(fileObj)) {
@@ -757,18 +788,21 @@ export default class ComposerView extends React.Component {
         if (!match) {
           return;
         }
+        inlineFile.push(fileObj);
         // match.contentId = Utils.generateContentId();
         // match.isInline = true;
-        console.log(`update attachment in _onAttachmentsCreated`);
         // session.updateAttachments([].concat(draft.files));
         // session.changes.add({
         //   files: [].concat(draft.files),
         // });
-        if (this._els[Fields.Body]) {
-          this._els[Fields.Body].insertInlineAttachments(fileObjs);
-        }
-        session.changes.commit();
       }
+    }
+    if (inlineFile.length > 0) {
+      if (this._els[Fields.Body]) {
+        console.log(`update attachment in _onAttachmentsCreated`);
+        this._els[Fields.Body].insertInlineAttachments(inlineFile);
+      }
+      session.changes.commit();
     }
   };
 
@@ -802,52 +836,6 @@ export default class ComposerView extends React.Component {
       accountId: this.props.draft.accountId,
       onCreated: this._onAttachmentCreated,
     });
-  };
-
-  _isValidDraft = (options = {}) => {
-    // We need to check the `DraftStore` because the `DraftStore` is
-    // immediately and synchronously updated as soon as this function
-    // fires. Since `setState` is asynchronous, if we used that as our only
-    // check, then we might get a false reading.
-    if (DraftStore.isSendingDraft(this.props.draft.id)) {
-      return false;
-    }
-
-    const dialog = remote.dialog;
-    const { session } = this.props;
-    const { errors, warnings } = session.validateDraftForSending();
-
-    if (errors.length > 0) {
-      dialog.showMessageBox(remote.getCurrentWindow(), {
-        type: 'warning',
-        buttons: ['Edit Message', 'Cancel'],
-        defaultId: 0,
-        cancelId: 1,
-        message: 'Cannot Send',
-        detail: errors[0],
-      });
-      return false;
-    }
-
-    if (warnings.length > 0 && !options.force) {
-      dialog
-        .showMessageBox(remote.getCurrentWindow(), {
-          type: 'warning',
-          buttons: ['Send Anyway', 'Cancel'],
-          defaultId: 0,
-          cancelId: 1,
-          message: 'Are you sure?',
-          detail: `Send ${warnings.join(' and ')}?`,
-        })
-        .then(({ response } = {}) => {
-          if (response === 0) {
-            this._onPrimarySend({ disableDraftCheck: true });
-            return true;
-          }
-        });
-      return false;
-    }
-    return true;
   };
 
   _onPrimarySend = ({ disableDraftCheck = false } = {}) => {

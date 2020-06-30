@@ -257,7 +257,8 @@
       }
     }
 
-    .progress-foreground {
+    .progress-foreground,
+    .progress-loading {
       position: absolute;
       left: 4px;
       bottom: 0;
@@ -271,6 +272,11 @@
       border-bottom-left-radius: 4px;
       transition: width 0.3s;
     }
+
+    .progress-loading {
+      animation: move-progress-through 1s linear infinite;
+    }
+
     .progress-background {
       position: absolute;
       left: 4px;

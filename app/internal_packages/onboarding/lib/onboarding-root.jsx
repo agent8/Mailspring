@@ -35,7 +35,7 @@ const PageComponents = {
   'account-choose': AccountChoosePage,
   'account-settings': AccountSettingsPage,
   'account-settings-gmail': AccountSettingsPageGmail,
-  'account-settings-office365': AccountSettingsPageOffice365,
+  'account-settings-office365-exchange': AccountSettingsPageOffice365,
   'account-settings-outlook': AccountSettingsPageOutlook,
   'account-settings-hotmail': AccountSettingsPageOutlook,
   'account-settings-yahoo': AccountSettingsPageYahoo,
