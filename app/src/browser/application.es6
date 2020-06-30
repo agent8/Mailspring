@@ -60,8 +60,8 @@ export default class Application extends EventEmitter {
     this.specMode = specMode;
     this.safeMode = safeMode;
     this.nativeVersion = '';
-    this.edisonServerHost = 'https://cp.stag.easilydo.cc';
-    // this.edisonServerHost = 'https://cp.edison.tech';
+    // this.edisonServerHost = 'https://cp.stag.easilydo.cc';
+    this.edisonServerHost = 'https://cp.edison.tech';
     this.startOfDay = getStartOfDay();
     this.refreshStartOfDay = _.throttle(this._refreshStartOfDay, 1000);
     this._triggerRefreshStartOfDayTimer = null;
