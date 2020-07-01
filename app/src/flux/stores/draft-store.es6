@@ -649,6 +649,9 @@ class DraftStore extends MailspringStore {
         messageId: messageId,
         data: this._draftsOpenCount[messageId],
       });
+      if (this.isSendingDraft(messageId)) {
+        Actions.sendingDraft({ messageId, windowLevel: this._getCurrentWindowLevel() });
+      }
     }
   };
 
