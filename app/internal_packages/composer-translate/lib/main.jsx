@@ -88,7 +88,7 @@ class TranslateButton extends React.Component {
       // automatically marshalls changes to the database and ensures that others accessing
       // the same draft are notified of changes.
       this.props.session.changes.add({ body: translated });
-      this.props.session.changes.commit();
+      this.props.session.changes.commit('onTranslate');
     } catch (error) {
       this._onError(error);
     }

@@ -150,6 +150,10 @@ class OutboxStore extends MailspringStore {
     }
   };
   _onCancelOutboxDraft = ({ messages = [] }) => {
+    if (!AppEnv.isMainWindow()) {
+      AppEnv.logWarning(`OutboxStore:OutboxCancelDraft captured in none main window`);
+      return;
+    }
     if (!this._selectedDraft) {
       return;
     }

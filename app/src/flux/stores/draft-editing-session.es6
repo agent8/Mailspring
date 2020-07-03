@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import MailspringStore from 'mailspring-store';
 import { Conversion } from '../../components/composer-editor/composer-support';
 import RegExpUtils from '../../regexp-utils';
+import DraftCacheStore from './draft-cache-store';
 import TaskQueue from './task-queue';
 import Message from '../models/message';
 import Utils from '../models/utils';
@@ -107,7 +108,7 @@ class DraftChangeSet extends EventEmitter {
     }
     this.cancelCommit();
     this._timerStarted = now;
-    this._timer = setTimeout(() => this.commit(), SaveAfterIdleMSec);
+    this._timer = setTimeout(() => this.commit('debounceCommit'), SaveAfterIdleMSec);
   }
 
   async commit(arg) {
@@ -252,6 +253,8 @@ export default class DraftEditingSession extends MailspringStore {
     this._destroyed = false;
     this._popedOut = false;
     this._needsSyncWithMain = false;
+    this._isChangingAccount = false;
+    this.refOldDraftMessageId = '';
     this.lastSync = Date.now();
     let currentWindowLevel = 3;
     if (AppEnv.isMainWindow()) {
@@ -290,6 +293,7 @@ export default class DraftEditingSession extends MailspringStore {
         draft.from[0].accountId = draft.accountId;
       }
       this._draft = draft;
+      this.refOldDraftMessageId = draft.refOldDraftMessageId;
       if (needUpload) {
         this.needUpload = true;
       }
@@ -335,7 +339,11 @@ export default class DraftEditingSession extends MailspringStore {
           return;
         }
         if (!draft) {
-          AppEnv.reportWarning(`Draft ${this.messageId} could not be found. Just deleted?`);
+          AppEnv.reportWarning(`Draft ${this.messageId} could not be found in DB. Just deleted?`);
+          draft = DraftCacheStore.findDraftById(this.messageId);
+        }
+        if (!draft) {
+          AppEnv.reportWarning(`Draft ${this.messageId} could not be found in draft cache.`);
           return;
         }
         // if (Message.compareMessageState(draft.state, Message.messageState.failed)) {
@@ -370,6 +378,7 @@ export default class DraftEditingSession extends MailspringStore {
           draft.setOrigin(Message.EditExistingDraft);
         }
         this._draft = draft;
+        this.refOldDraftMessageId = draft.refOldDraftMessageId;
         if (needUpload) {
           this.needUpload = true;
         }
@@ -421,12 +430,15 @@ export default class DraftEditingSession extends MailspringStore {
   isDestroyed() {
     return this._destroyed;
   }
+  changingAccount() {
+    this._isChangingAccount = true;
+  }
 
   setPopout(val) {
     if (val !== this._popedOut) {
       if (this.changes && !val) {
         this.changes.cancelCommit();
-        this.changeSetCommit();
+        this.changeSetCommit('setPopout');
       }
       this._popedOut = val;
       this.trigger();
@@ -439,6 +451,7 @@ export default class DraftEditingSession extends MailspringStore {
   }
 
   freezeSession() {
+    AppEnv.logDebug(`Freezing sessions ${this.messageId}`);
     this._removeListeners();
   }
 
@@ -509,7 +522,7 @@ export default class DraftEditingSession extends MailspringStore {
       if (this._draft) {
         this._draft.missingAttachments().then(ret => {
           if (ret && ret.totalMissing().length > 0) {
-            warnings.push(`Attachments are still processing`);
+            warnings.push(`while attachments are still processing`);
           }
           resolve({ errors, warnings });
         });
@@ -601,7 +614,7 @@ export default class DraftEditingSession extends MailspringStore {
       if (this._draft) {
         this._draft.missingAttachments().then(ret => {
           if (ret && ret.totalMissing().length > 0) {
-            warnings.push(`Attachments are still processing`);
+            warnings.push(`while attachments are still processing`);
           }
           resolve({ errors, warnings });
         });
@@ -775,11 +788,15 @@ export default class DraftEditingSession extends MailspringStore {
   }
 
   async changeSetCommit(reason = '') {
+    if (this._isChangingAccount) {
+      AppEnv.logDebug(`${this.messageId} is changing account thus ${reason} for commit is ignored`);
+      return Promise.resolve();
+    }
     // if (this._destroyed || !this._draft || this._popedOut) {
     //   return;
     // }
     if (!this._draft) {
-      return;
+      return Promise.resolve();
     }
     //if id is empty, we assign uuid to id;
     if (!this._draft.id || this._draft.id === '') {
@@ -806,15 +823,31 @@ export default class DraftEditingSession extends MailspringStore {
         this.needUpload = true;
       }
     }
-    try {
-      await TaskQueue.waitForPerformLocal(task, { sendTask: true });
-    } catch (e) {
-      AppEnv.reportError(
-        new Error('SyncbackDraft Task not returned'),
-        { errorData: task },
-        { grabLogs: true }
-      );
-    }
+    const taskPromise = TaskQueue.waitForPerformLocal(task, { sendTask: true });
+    const draftCachePromise = new Promise(resolve => {
+      //We give Actions.queueTasks time to trigger DraftCacheStore
+      setTimeout(() => {
+        const cache = DraftCacheStore.findDraft(this._draft);
+        if (cache) {
+          resolve({ draftCache: true });
+        }
+      }, 300);
+    });
+    return Promise.race([taskPromise, draftCachePromise]).then(data => {
+      if (data && data.draftCache) {
+        AppEnv.reportLog(`For ${this._draft.id}, draftCache returned first in commit 300ms`);
+      }
+      return Promise.resolve();
+    });
+    // try {
+    //   await TaskQueue.waitForPerformLocal(task, { sendTask: true });
+    // } catch (e) {
+    //   AppEnv.reportError(
+    //     new Error('SyncbackDraft Task not returned'),
+    //     { errorData: task },
+    //     { grabLogs: true }
+    //   );
+    // }
   }
   set needUpload(val) {
     this._draft.needUpload = val;
