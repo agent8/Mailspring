@@ -306,7 +306,10 @@ class FocusedPerspectiveStore extends MailspringStore {
   _onFocusedInboxToggle = () => {
     Actions.popToRootSheet({ reason: 'focused inbox toggle' });
     const json = this.currentSidebar().toJSON();
-    const newPerspective = MailboxPerspective.fromJSON(json);
+    let newPerspective = MailboxPerspective.fromJSON(json);
+    if (!newPerspective || !this._isValidPerspective(newPerspective)) {
+      newPerspective = this._defaultPerspective();
+    }
     this._currentSidebar = newPerspective;
     if (newPerspective.tab && newPerspective.tab.length) {
       this._current = newPerspective.tab[0];
