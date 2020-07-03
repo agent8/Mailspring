@@ -156,7 +156,7 @@ class OutboxList extends React.Component {
       this._changeBackToNotDeleting();
       this.setState({ isDeleting: true });
       for (const draft of OutboxStore.dataSource().selection.items()) {
-        Actions.destroyDraft(draft, { source: 'OutboxList:onRemoveFromView' });
+        Actions.destroyDraft([draft], { source: 'OutboxList:onRemoveFromView' });
       }
     }
   };

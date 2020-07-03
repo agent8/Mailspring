@@ -374,7 +374,7 @@ class Actions {
   }
    */
   static changeDraftAccount = ActionScopeWindow;
-  static notMainChangeDraftAccount = ActionScopeWindow;
+  static broadcastChangeAccount = ActionScopeGlobal;
   static toMainChangeDraftAccount = ActionScopeMainWindow;
 
   /*
@@ -481,13 +481,17 @@ class Actions {
   static broadcastDraftData = ActionScopeGlobal;
   static editOutboxDraft = ActionScopeMainWindow;
   static resendDrafts = ActionScopeMainWindow;
-  static cancelOutboxDrafts = ActionScopeMainWindow;
+  static cancelOutboxDrafts = ActionScopeGlobal;
   static destroyDraft = ActionScopeGlobal;
   static destroyDraftSucceeded = ActionScopeMainWindow;
   static destroyDraftFailed = ActionScopeMainWindow;
   static draftWindowClosing = ActionScopeMainWindow;
   static draftOpenCount = ActionScopeMainWindow;
   static draftOpenCountBroadcast = ActionScopeGlobal;
+  static requestSessionForServerDraft = ActionScopeMainWindow;
+  static broadcastServerDraftSession = ActionScopeGlobal;
+  static requestDraftCacheFromMain = ActionScopeMainWindow;
+  static broadcastDraftCache = ActionScopeGlobal;
   static gotoOutbox = ActionScopeWindow;
 
   /*
