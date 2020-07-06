@@ -57,12 +57,14 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
     this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
     this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
+    this.listenTo(Actions.composeReply, this._onReply);
+    this.listenTo(Actions.composeForward, this._onForward);
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.requestSessionForServerDraft, this._onServerDraftSessionRequest);
       this.listenTo(Actions.toMainSendDraft, this._onSendDraft);
       this.listenTo(Actions.toMainChangeDraftAccount, this._onDraftAccountChange);
-      this.listenTo(Actions.composeReply, this._onComposeReply);
-      this.listenTo(Actions.composeForward, this._onComposeForward);
+      this.listenTo(Actions.composeReplyMainWindow, this._onComposeReply);
+      this.listenTo(Actions.composeForwardMainWindow, this._onComposeForward);
       this.listenTo(Actions.cancelOutboxDrafts, this._onOutboxCancelDraft);
       this.listenTo(Actions.resendDrafts, this._onResendDraft);
       this.listenTo(Actions.editOutboxDraft, this._onEditOutboxDraft);
@@ -1071,39 +1073,165 @@ class DraftStore extends MailspringStore {
           });
       });
   };
-
-  _onComposeReply = ({ thread, threadId, message, messageId, popout, type, behavior }) => {
-    return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
-      .then(({ message: m, thread: t }) => {
-        return DraftFactory.createOrUpdateDraftForReply({ message: m, thread: t, type, behavior });
-      })
-      .then(draft => {
-        return this._finalizeAndPersistNewMessage(
-          draft,
-          { popout },
-          {
-            originalMessageId: message ? message.id : null,
-            messageType: type,
-          }
-        );
+  _onReply = (data = {}) => {
+    if (data.message && !data.message.body) {
+      AppEnv.showMessageBox({
+        title: 'Message info incomplete',
+        detail: "Message's content is still downloading, do you still want to reply?",
+        buttons: ['No', 'Yes'],
+      }).then(({ response } = {}) => {
+        if (response === 0) {
+          AppEnv.logDebug(`Message missing body, user clicked no ${data.message.id}`);
+          return;
+        }
+        data.ignoreEmptyBody = true;
+        Actions.composeReplyMainWindow(data);
       });
+    } else {
+      Actions.composeReplyMainWindow(data);
+    }
+  };
+  _onForward = (data = {}) => {
+    if (data.message && !data.message.body) {
+      AppEnv.showMessageBox({
+        title: 'Message info incomplete',
+        detail: "Message's content is still downloading, do you still want to forward?",
+        buttons: ['No', 'Yes'],
+      }).then(({ response } = {}) => {
+        if (response === 0) {
+          AppEnv.logDebug(`Message missing body, user clicked no ${data.message.id}`);
+          return;
+        }
+        data.ignoreEmptyBody = true;
+        Actions.composeForwardMainWindow(data);
+      });
+    } else {
+      Actions.composeForwardMainWindow(data);
+    }
   };
 
-  _onComposeForward = async ({ thread, threadId, message, messageId, popout }) => {
+  _onComposeReply = ({
+    thread,
+    threadId,
+    message,
+    messageId,
+    popout,
+    type,
+    behavior,
+    ignoreEmptyBody = false,
+  }) => {
+    return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
+      .then(({ message: m, thread: t }) => {
+        if (m && (m.body || ignoreEmptyBody)) {
+          return DraftFactory.createOrUpdateDraftForReply({
+            message: m,
+            thread: t,
+            type,
+            behavior,
+          });
+        } else {
+          return new Promise((resolve, reject) => {
+            AppEnv.showMessageBox({
+              title: 'Message info incomplete',
+              detail: "Message's content is still downloading, do you still want to reply?",
+              buttons: ['No', 'Yes'],
+            }).then(({ response } = {}) => {
+              if (response !== 0) {
+                AppEnv.logDebug(
+                  `Message missing body, user accepted forward draft, message ${
+                    message ? message.id : messageId
+                  }, thread: ${thread ? thread.id : threadId}`
+                );
+                DraftFactory.createOrUpdateDraftForReply({
+                  message: m,
+                  thread: t,
+                  type,
+                  behavior,
+                }).then(data => {
+                  resolve(data);
+                });
+              } else {
+                reject();
+              }
+            });
+          });
+        }
+      })
+      .then(
+        draft => {
+          return this._finalizeAndPersistNewMessage(
+            draft,
+            { popout },
+            {
+              originalMessageId: message ? message.id : null,
+              messageType: type,
+            }
+          );
+        },
+        () => {
+          AppEnv.logDebug(
+            `Message missing body, user rejected reply draft, message ${
+              message ? message.id : messageId
+            }, thread: ${thread ? thread.id : threadId}`
+          );
+        }
+      );
+  };
+
+  _onComposeForward = async ({
+    thread,
+    threadId,
+    message,
+    messageId,
+    popout,
+    ignoreEmptyBody = false,
+  }) => {
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ thread: t, message: m }) => {
-        return DraftFactory.createDraftForForward({ thread: t, message: m });
+        if (m && (m.body || ignoreEmptyBody)) {
+          return DraftFactory.createDraftForForward({ thread: t, message: m });
+        } else {
+          return new Promise((resolve, reject) => {
+            AppEnv.showMessageBox({
+              title: 'Message info incomplete',
+              detail: "Message's content is still downloading, do you still want to forward?",
+              buttons: ['No', 'Yes'],
+            }).then(({ response } = {}) => {
+              if (response !== 0) {
+                AppEnv.logDebug(
+                  `Message missing body, user accepted forward draft, message ${
+                    message ? message.id : messageId
+                  }, thread: ${thread ? thread.id : threadId}`
+                );
+                DraftFactory.createDraftForForward({ thread: t, message: m }).then(data => {
+                  resolve(data);
+                });
+              } else {
+                reject();
+              }
+            });
+          });
+        }
       })
-      .then(draft => {
-        return this._finalizeAndPersistNewMessage(
-          draft,
-          { popout },
-          {
-            originalMessageId: message ? message.id : null,
-            messageType: 'forward',
-          }
-        );
-      });
+      .then(
+        draft => {
+          return this._finalizeAndPersistNewMessage(
+            draft,
+            { popout },
+            {
+              originalMessageId: message ? message.id : null,
+              messageType: 'forward',
+            }
+          );
+        },
+        () => {
+          AppEnv.logDebug(
+            `Message missing body, user rejected forward draft, message ${
+              message ? message.id : messageId
+            }, thread: ${thread ? thread.id : threadId}`
+          );
+        }
+      );
   };
 
   _modelifyContext({ thread, threadId, message, messageId }) {
