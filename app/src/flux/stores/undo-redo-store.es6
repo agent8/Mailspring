@@ -3,7 +3,18 @@ import Actions from '../actions';
 import { SyncbackMetadataTask, TaskFactory } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 import uuid from 'uuid';
+import SendDraftTask from '../tasks/send-draft-task';
 const undoOnlyShowOne = 'core.task.undoQueueOnlyShowOne';
+const isUndoSend = block => {
+  return (
+    (block.tasks.length === 1 &&
+      block.tasks[0] instanceof SyncbackMetadataTask &&
+      block.tasks[0].value.isUndoSend) ||
+    block.tasks[0] instanceof SendDraftTask
+  );
+};
+const sendDraftSuccessTimeout = 3000;
+const sendDRaftFailedTimeout = 10000;
 class UndoRedoStore extends MailspringStore {
   priority = {
     critical: 0,
@@ -33,24 +44,52 @@ class UndoRedoStore extends MailspringStore {
       this.listenTo(Actions.queueTasks, this._onQueue);
       this.listenTo(Actions.queueUndoOnlyTask, this._onQueue);
       this.listenTo(Actions.removeAccount, this._onAccountRemoved);
+      this.listenTo(Actions.draftDeliverySucceeded, this._onDraftSendSuccess);
+      this.listenTo(Actions.draftDeliveryFailed, this._onDraftSendFailed);
       AppEnv.config.observe(undoOnlyShowOne, this._onConfigChange);
     }
   }
+  _findBlockBySendDraftMessageId = messageId => {
+    if (!messageId) {
+      return null;
+    }
+    const blocks = this._undo.critical;
+    for (let i = 0; i < blocks.length; i++) {
+      if (isUndoSend(blocks[i])) {
+        if (messageId === blocks[i].tasks[0].modelMessageId) {
+          return blocks[i];
+        }
+      }
+    }
+    return null;
+  };
+  _onDraftSendSuccess = ({ messageId }) => {
+    const block = this._findBlockBySendDraftMessageId(messageId);
+    if (block) {
+      block.sendStatus = 'success';
+      this.findAndReplace({ block });
+      setTimeout(() => this.removeTaskFromUndo({ block }), sendDraftSuccessTimeout);
+    }
+  };
+  _onDraftSendFailed = ({ messageId, draft }) => {
+    const block = this._findBlockBySendDraftMessageId(messageId);
+    if (block) {
+      block.sendStatus = 'failed';
+      block.failedDraft = draft;
+      this.findAndReplace({ block });
+      setTimeout(() => this.removeTaskFromUndo({ block }), sendDRaftFailedTimeout);
+    }
+  };
   _onConfigChange = () => {
     const oldMax = this._maxQueueLength;
     this._maxQueueLength = AppEnv.config.get(undoOnlyShowOne) ? 1 : 0;
-    if (this._maxQueueLength === 1 && this._maxQueueLength !== oldMax) {
-      let changed = false;
+    if (this._maxQueueLength === 0 && this._maxQueueLength !== oldMax) {
       Object.keys(this._undo).forEach(priority => {
-        if (this._undo[priority].length > 0) {
-          const tmp = this._undo[priority][0];
-          this._undo[priority] = [tmp];
-          changed = true;
-        }
+        this._undo[priority].forEach(block => {
+          block.displayId = block.id;
+        });
       });
-      if (changed) {
-        this.trigger();
-      }
+      this.trigger();
     }
   };
 
@@ -280,7 +319,7 @@ class UndoRedoStore extends MailspringStore {
   getMostRecent = () => {
     return this._mostRecentBlock;
   };
-  getUndos = ({ critical = 1, high = 1, medium = 1, low = 1 } = {}) => {
+  getUndos = ({ critical = 1, high = 0, medium = 0, low = 0 } = {}) => {
     return {
       critical:
         critical === 0 ? this._undo.critical.slice() : this._undo.critical.slice(critical * -1),
@@ -299,7 +338,7 @@ class UndoRedoStore extends MailspringStore {
     }
   };
   removeTaskFromUndo = ({ block, noTrigger = false, purgeTask = false }) => {
-    let priority = 'low';
+    let priority;
     switch (block.priority) {
       case this.priority.critical:
         priority = 'critical';
