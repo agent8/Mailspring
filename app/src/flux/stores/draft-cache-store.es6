@@ -49,7 +49,7 @@ class DraftCacheStore extends MailspringStore {
       AppEnv.logDebug(
         `DraftCacheStore:_onSendDraftSuccess Draft ${messageId} found in cache, removing`
       );
-      this.removeDraftFromCache(draft);
+      this.clearDraftFromCache(draft);
     }
   };
   _onSendDraftFailed = ({ messageId }) => {
@@ -59,7 +59,7 @@ class DraftCacheStore extends MailspringStore {
       AppEnv.logDebug(
         `DraftCacheStore:_onSendDraftFailed Draft ${messageId} found in cache, clearing only`
       );
-      this.clearDraftFromCache(draft, false);
+      this.clearDraftFromCache(draft);
     }
   };
   _onDBDataChange = change => {
