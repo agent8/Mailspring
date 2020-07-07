@@ -1175,7 +1175,7 @@ class DraftStore extends MailspringStore {
         if (data && data.draftCache) {
           AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
         }
-        if (popout) {
+        if (AppEnv.config.get('core.reading.openReplyInNewWindow') || popout) {
           console.log('\n-------\n draft popout\n');
           this._onPopoutDraft(draft.id);
         }
