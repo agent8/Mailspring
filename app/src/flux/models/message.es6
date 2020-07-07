@@ -30,6 +30,8 @@ const mapping = {
   },
 };
 
+const isMessageView = AppEnv.getDisableThread();
+
 export default class Message extends ModelWithMetadata {
   static fieldsNotInDB = [
     'calendarReply',
@@ -288,7 +290,7 @@ export default class Message extends ModelWithMetadata {
     threadId: Attributes.String({
       queryable: true,
       loadFromColumn: true,
-      modelKey: 'threadId',
+      modelKey: isMessageView ? 'pid' : 'threadId',
     }),
 
     headerMessageId: Attributes.String({

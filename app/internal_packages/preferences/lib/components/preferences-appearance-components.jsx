@@ -2,8 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
+import { Actions } from 'mailspring-exports';
 import ModeSwitch from './mode-switch';
 import { remote } from 'electron';
+import ConfigSchemaItem from './config-schema-item';
 
 export class AppearanceScaleSlider extends React.Component {
   static displayName = 'AppearanceScaleSlider';
@@ -179,6 +181,44 @@ export class AppearanceThemeSwitch extends React.Component {
         config={this.props.config}
         activeValue={this.state.activeTheme}
         onSwitchOption={this.switchTheme}
+      />
+    );
+  }
+}
+
+export class AppearanceViewOptions extends React.Component {
+  static displayName = 'AppearanceThemeSwitch';
+
+  static propTypes = {
+    keyPath: PropTypes.string,
+    config: PropTypes.object,
+    configSchema: PropTypes.object,
+  };
+
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount() {
+    const { keyPath } = this.props;
+    this.disposable = AppEnv.config.onDidChange(keyPath, this._onRelaunch);
+  }
+
+  componentWillUnmount() {
+    this.disposable.dispose();
+  }
+
+  _onRelaunch = () => {
+    Actions.forceRelaunchClients();
+  };
+
+  render() {
+    return (
+      <ConfigSchemaItem
+        configSchema={this.props.configSchema}
+        keyPath={this.props.keyPath}
+        config={this.props.config}
+        label={'disable thread'}
       />
     );
   }

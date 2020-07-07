@@ -141,6 +141,7 @@ export default class MailsyncBridge {
     Actions.setObservableRange.listen(this._onSetObservableRange, this);
     Actions.debugFakeNativeMessage.listen(this.fakeEmit, this);
     Actions.forceKillAllClients.listen(this.forceKillClients, this);
+    Actions.forceRelaunchClients.listen(this.forceRelaunchClients, this);
     Actions.forceDatabaseTrigger.listen(this._onIncomingChangeRecord, this);
     Actions.dataShareOptions.listen(this.onDataShareOptionsChange, this);
     Actions.remoteSearch.listen(this._onRemoteSearch, this);
@@ -283,6 +284,23 @@ export default class MailsyncBridge {
     ipcRenderer.send('command', 'application:reset-database', {
       source: `forceKillClients:${source}`,
     });
+  }
+
+  forceRelaunchClients() {
+    if (!AppEnv.isMainWindow()) {
+      return;
+    }
+    this._noRelaunch = true;
+    for (const client of Object.values(this.clients())) {
+      if (client) {
+        if (client._proc && client._proc.pid) {
+          const id = client._proc.pid;
+          AppEnv.logWarning(`\n\n@pid ${id} was forced to die, it shall not re-spawn\n\n`);
+          client.kill();
+        }
+      }
+    }
+    ipcRenderer.send('command', 'application:app-relaunch', {});
   }
 
   forceRelaunchClient(account) {
@@ -478,12 +496,13 @@ export default class MailsyncBridge {
 
   _getClientConfiguration(account) {
     const { configDirPath, resourcePath } = AppEnv.getLoadSettings();
+    const disableThread = AppEnv.getDisableThread();
     const verboseUntil = AppEnv.config.get(VERBOSE_UNTIL_KEY) || 0;
     const verbose = verboseUntil && verboseUntil / 1 > Date.now();
     if (verbose) {
       console.warn(`Verbose mailsync logging is enabled until ${new Date(verboseUntil)}`);
     }
-    return { configDirPath, resourcePath, verbose };
+    return { configDirPath, resourcePath, verbose, disableThread };
   }
 
   startSift(reason = 'Unknown') {
@@ -774,6 +793,18 @@ export default class MailsyncBridge {
         AppEnv.logDebug(`from-native: ${msg}`);
         console.log('---------------------From native END------------------------');
       }
+
+      // Under message view, thread has no native notification,
+      // when receive a message model notification, a corresponding thread notification should be generated
+      if (AppEnv.getDisableThread() && modelClass === 'Message') {
+        const threadMsgTmp = {
+          modelClass: 'Thread',
+          modelJSONs: modelJSONs.map(json => ({ ...json, __cls: 'Thread' })),
+          type,
+        };
+        this._onIncomingMessages([JSON.stringify(threadMsgTmp)]);
+      }
+
       const promises = [];
       const tmpModels = modelJSONs.map(Utils.convertToModel);
       let passAsIs = false;

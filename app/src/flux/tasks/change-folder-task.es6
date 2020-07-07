@@ -71,29 +71,15 @@ export default class ChangeFolderTask extends ChangeMailTask {
     }
 
     const folderText = ` to ${this.folder.displayName}`;
-
-    if (this.threadIds.length > 1) {
-      return `Moved ${this.threadIds.length} threads${folderText}`;
-    } else if (this.messageIds.length > 1) {
-      return `Moved ${this.messageIds.length} messages${folderText}`;
-    }
-    return `Moved${folderText}`;
+    const paramsText = super.description();
+    return `Moved ${paramsText} ${folderText}`;
   }
 
   willBeQueued() {
     if (!this.folder) {
       throw new Error('Must specify a `folder`');
     }
-    if (this.threadIds.length > 0 && this.messageIds.length > 0) {
-      throw new Error('ChangeFolderTask: You can move `threads` or `messages` but not both');
-    }
-    if (this.threadIds.length === 0 && this.messageIds.length === 0) {
-      throw new Error(
-        'ChangeFolderTask: You must provide a `threads` or `messages` Array of models or IDs.'
-      );
-    }
-
-    super.willBeQueued();
+    super.willBeQueued('ChangeFolderTask');
   }
 
   _isArchive() {

@@ -603,6 +603,10 @@ export default class AppEnvConstructor {
     return this.getLoadSettings().disableZoom;
   }
 
+  getDisableThread() {
+    return this.config.get('core.workspace.disableThread');
+  }
+
   getWindowType() {
     return this.getLoadSettings().windowType;
   }
