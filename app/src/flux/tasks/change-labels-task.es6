@@ -1,3 +1,4 @@
+import Category from '../models/category';
 import Label from '../models/label';
 import ChangeMailTask from './change-mail-task';
 import Attributes from '../attributes';
@@ -21,6 +22,57 @@ export default class ChangeLabelsTask extends ChangeMailTask {
       itemClass: Label,
     }),
   });
+  constructor(data) {
+    super(data);
+    if (data) {
+      let ret = [];
+      (data.labelsToAdd || []).forEach(i => {
+        if (i) {
+          if (i instanceof Category && typeof i.isLabel === 'function' && i.isLabel()) {
+            ret.push(i);
+          } else {
+            AppEnv.reportError(
+              new Error(
+                `ChangeLabelsTask: Labels to add contains none Label, source: ${data.source}`
+              ),
+              { errorData: data }
+            );
+          }
+        } else {
+          AppEnv.reportError(
+            new Error(
+              `ChangeLabelsTask: Labels to add contains null items, source: ${data.source}`
+            ),
+            { errorData: data }
+          );
+        }
+      });
+      this.labelsToAdd = ret;
+      ret = [];
+      (data.labelsToRemove || []).forEach(i => {
+        if (i) {
+          if (i instanceof Category && typeof i.isLabel === 'function' && i.isLabel()) {
+            ret.push(i);
+          } else {
+            AppEnv.reportError(
+              new Error(
+                `ChangeLabelsTask: Labels to remove contains none Label, source: ${data.source}`
+              ),
+              { errorData: data }
+            );
+          }
+        } else {
+          AppEnv.reportError(
+            new Error(
+              `ChangeLabelsTask: Labels to remove contains null items, source: ${data.source}`
+            ),
+            { errorData: data }
+          );
+        }
+      });
+      this.labelsToRemove = ret;
+    }
+  }
 
   label() {
     return 'Applying labels';
