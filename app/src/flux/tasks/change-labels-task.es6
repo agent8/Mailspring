@@ -29,7 +29,16 @@ export default class ChangeLabelsTask extends ChangeMailTask {
       (data.labelsToAdd || []).forEach(i => {
         if (i) {
           if (i instanceof Category && typeof i.isLabel === 'function' && i.isLabel()) {
-            ret.push(i);
+            if (!i.id) {
+              AppEnv.reportError(
+                new Error(
+                  `ChangeLabelsTask: Labels to add contains label without id, source: ${data.source}`
+                ),
+                { errorData: data }
+              );
+            } else {
+              ret.push(i);
+            }
           } else {
             AppEnv.reportError(
               new Error(
@@ -52,7 +61,16 @@ export default class ChangeLabelsTask extends ChangeMailTask {
       (data.labelsToRemove || []).forEach(i => {
         if (i) {
           if (i instanceof Category && typeof i.isLabel === 'function' && i.isLabel()) {
-            ret.push(i);
+            if (!i.id) {
+              AppEnv.reportError(
+                new Error(
+                  `ChangeLabelsTask: Labels to remove contains label without id, source: ${data.source}`
+                ),
+                { errorData: data }
+              );
+            } else {
+              ret.push(i);
+            }
           } else {
             AppEnv.reportError(
               new Error(
