@@ -232,6 +232,11 @@ export default {
             default: false,
             title: 'Display conversations in descending chronological order',
           },
+          openReplyInNewWindow: {
+            type: 'boolean',
+            default: false,
+            title: 'Open reply in new window',
+          },
         },
       },
       fontface: {
