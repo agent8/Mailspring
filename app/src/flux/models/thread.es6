@@ -35,14 +35,45 @@ This class also inherits attributes from {Model}
 Section: Models
 @class Thread
 */
+const isMessageView = AppEnv.getDisableThread();
+const threadDiffAttributes = isMessageView
+  ? {
+      to: Attributes.Collection({
+        modelKey: 'to',
+        jsonKey: 'to',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
 
-const threadInboxCategory = {
-  primary: 0,
-  others: 1,
-};
+      cc: Attributes.Collection({
+        modelKey: 'cc',
+        jsonKey: 'cc',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
 
+      bcc: Attributes.Collection({
+        modelKey: 'bcc',
+        jsonKey: 'bcc',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
+
+      from: Attributes.Collection({
+        modelKey: 'from',
+        jsonKey: 'from',
+        queryable: true,
+        loadFromColumn: true,
+        itemClass: Contact,
+      }),
+    }
+  : {};
 export default class Thread extends ModelWithMetadata {
-  static attributes = Object.assign({}, ModelWithMetadata.attributes, {
+  static tableName = isMessageView ? 'Message' : 'Thread';
+  static attributes = Object.assign({}, ModelWithMetadata.attributes, threadDiffAttributes, {
     snippet: Attributes.String({
       modelKey: 'snippet',
       queryable: true,
@@ -54,14 +85,20 @@ export default class Thread extends ModelWithMetadata {
       loadFromColumn: true,
       modelKey: 'subject',
     }),
-
-    unread: Attributes.Boolean({
-      modelKey: 'unread',
-      jsonKey: 'unread',
-      queryable: true,
-      loadFromColumn: true,
-      modelTable: 'ThreadCategory',
-    }),
+    unread: isMessageView
+      ? Attributes.Boolean({
+          modelKey: 'unread',
+          jsonKey: 'unread',
+          queryable: true,
+          loadFromColumn: true,
+        })
+      : Attributes.Boolean({
+          modelKey: 'unread',
+          jsonKey: 'unread',
+          queryable: true,
+          loadFromColumn: true,
+          modelTable: 'ThreadCategory',
+        }),
 
     starred: Attributes.Boolean({
       queryable: true,
@@ -69,60 +106,61 @@ export default class Thread extends ModelWithMetadata {
       modelKey: 'starred',
     }),
 
-    // version: Attributes.Number({
-    //   queryable: true,
-    //   jsonKey: 'v',
-    //   modelKey: 'version',
-    // }),
-    inboxCategory: Attributes.Number({
-      queryable: true,
-      modelKey: 'primary',
-      jsModelKey: 'inboxCategory',
-      loadFromColumn: true,
-      modelTable: 'ThreadCategory',
-    }),
+    inboxCategory: isMessageView
+      ? Attributes.Number({
+          queryable: true,
+          modelKey: 'primary',
+          loadFromColumn: true,
+        })
+      : Attributes.Number({
+          queryable: true,
+          modelKey: 'primary',
+          jsModelKey: 'inboxCategory',
+          loadFromColumn: true,
+          modelTable: 'ThreadCategory',
+        }),
+    categories: isMessageView
+      ? Attributes.Collection({
+          modelKey: 'categories',
+          joinTableOnField: 'messageId',
+          joinModelOnField: 'pid',
+          joinTableColumn: 'categoryId',
+          joinTableName: 'MessageCategory',
+          joinOnWhere: { state: 0 },
+          itemClass: Category,
+          queryable: true,
+        })
+      : Attributes.Collection({
+          modelKey: 'categories',
+          joinTableOnField: 'threadId',
+          joinModelOnField: 'pid',
+          joinTableColumn: 'categoryId',
+          joinTableName: 'ThreadCategory',
+          joinOnWhere: { state: 0 },
+          joinQueryableBy: ['inAllMail', 'lastDate', 'unread', 'primary'],
+          itemClass: Category,
+          queryable: true,
+        }),
 
-    categories: Attributes.Collection({
-      modelKey: 'categories',
-      joinTableOnField: 'threadId',
-      joinModelOnField: 'pid',
-      joinTableColumn: 'categoryId',
-      joinTableName: 'ThreadCategory',
-      joinOnWhere: { state: 0 },
-      joinQueryableBy: ['inAllMail', 'lastDate', 'unread', 'primary'],
-      itemClass: Category,
-      queryable: true,
-    }),
-
-    // folders: Attributes.Collection({
-    //   modelKey: 'folders',
-    //   itemClass: Folder,
-    // }),
     labelIds: Attributes.Collection({
       modelKey: 'labelIds',
       queryable: true,
       loadFromColumn: true,
     }),
 
-    // labels: Attributes.Collection({
-    //   modelKey: 'labels',
-    //   joinTableOnField: 'id',
-    //   joinTableName: 'ThreadCategory',
-    //   joinQueryableBy: [
-    //     'inAllMail',
-    //     'lastMessageReceivedTimestamp',
-    //     'lastMessageSentTimestamp',
-    //     'unread',
-    //   ],
-    //   itemClass: Label,
-    // }),
-
-    participants: Attributes.Collection({
-      modelKey: 'participants',
-      itemClass: Contact,
-      queryable: true,
-      loadFromColumn: true,
-    }),
+    participants: isMessageView
+      ? Attributes.Collection({
+          modelKey: 'participants',
+          itemClass: Contact,
+          queryable: false,
+          loadFromColumn: false,
+        })
+      : Attributes.Collection({
+          modelKey: 'participants',
+          itemClass: Contact,
+          queryable: true,
+          loadFromColumn: true,
+        }),
 
     files: Attributes.Collection({
       modelKey: 'files',
@@ -135,40 +173,39 @@ export default class Thread extends ModelWithMetadata {
       loadFromColumn: true,
     }),
 
-    // lastMessageReceivedTimestamp: Attributes.DateTime({
-    //   queryable: true,
-    //   jsonKey: 'lmrt',
-    //   modelKey: 'lastMessageReceivedTimestamp',
-    //   modelTable: 'ThreadCategory',
-    //   loadFromColumn: true
-    // }),
-    //
-    // lastMessageSentTimestamp: Attributes.DateTime({
-    //   queryable: true,
-    //   jsonKey: 'lmst',
-    //   modelKey: 'lastMessageSentTimestamp',
-    //   modelTable: 'ThreadCategory',
-    //   loadFromColumn: true
-    // }),
-    lastMessageTimestamp: Attributes.DateTime({
-      queryable: true,
-      jsModelKey: 'lastMessageTimestamp',
-      jsonKey: 'lastDate',
-      modelKey: 'lastDate',
-      loadFromColumn: true,
-      modelTable: 'ThreadCategory',
-    }),
+    lastMessageTimestamp: isMessageView
+      ? Attributes.DateTime({
+          queryable: true,
+          jsModelKey: 'lastMessageTimestamp',
+          jsonKey: 'date',
+          modelKey: 'date',
+          loadFromColumn: true,
+        })
+      : Attributes.DateTime({
+          queryable: true,
+          jsModelKey: 'lastMessageTimestamp',
+          jsonKey: 'lastDate',
+          modelKey: 'lastDate',
+          loadFromColumn: true,
+          modelTable: 'ThreadCategory',
+        }),
 
     inAllMail: Attributes.Boolean({
       modelKey: 'inAllMail',
       queryable: true,
       loadFromColumn: true,
     }),
-    state: Attributes.Number({
-      modelKey: 'state',
-      queryable: true,
-      loadFromColumn: true,
-    }),
+    state: isMessageView
+      ? Attributes.Number({
+          modelKey: 'deleted',
+          queryable: true,
+          loadFromColumn: true,
+        })
+      : Attributes.Number({
+          modelKey: 'state',
+          queryable: true,
+          loadFromColumn: true,
+        }),
     hasCalendar: Attributes.Number({
       modelKey: 'hasCalendar',
       queryable: true,
@@ -181,6 +218,18 @@ export default class Thread extends ModelWithMetadata {
     }),
   });
 
+  constructor(...args) {
+    super(...args);
+    if (isMessageView) {
+      this.participants = [
+        ...(this.to || []),
+        ...(this.cc || []),
+        ...(this.bcc || []),
+        ...(this.from || []),
+      ];
+    }
+  }
+
   static sortOrderAttribute = () => {
     return Thread.attributes.lastMessageTimestamp;
   };
@@ -190,14 +239,14 @@ export default class Thread extends ModelWithMetadata {
   };
 
   async messages({ includeHidden } = {}) {
-    const messages = await DatabaseStore.findAll(Message)
-      .where({ threadId: this.id, deleted: false })
-      .where([
-        Message.attributes.syncState.in([
-          Message.messageSyncState.saving,
-          Message.messageSyncState.normal,
-        ]),
-      ]);
+    const messages = await DatabaseStore.findAll(Message).where([
+      Message.attributes.threadId.equal(this.id),
+      Message.attributes.deleted.equal(false),
+      Message.attributes.syncState.in([
+        Message.messageSyncState.saving,
+        Message.messageSyncState.normal,
+      ]),
+    ]);
 
     if (!includeHidden) {
       return messages.filter(message => !message.isHidden());

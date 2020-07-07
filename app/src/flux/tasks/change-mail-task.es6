@@ -11,6 +11,8 @@ Subclasses implement {ChangeMailTask::changesToModel} and
 they provide, and override {ChangeMailTask::performLocal} to perform
 additional consistency checks.
 */
+const isMessageView = AppEnv.getDisableThread();
+
 export default class ChangeMailTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
     taskDescription: Attributes.String({
@@ -62,6 +64,13 @@ export default class ChangeMailTask extends Task {
       }
     });
     this.messageIds = this.messageIds || messageIds;
+
+    if (isMessageView) {
+      this.threadIds = [];
+      const messageIdSet = new Set([...threadIds, ...messageIds]);
+      this.messageIds = [...messageIdSet];
+    }
+
     this.inboxCategories = this.inboxCategories || inboxCategories;
     this.accountId = this.accountId || (threads[0] || messages[0] || {}).accountId;
     if (this.canBeUndone === undefined) {
@@ -90,5 +99,36 @@ export default class ChangeMailTask extends Task {
 
   numberOfImpactedItems() {
     return this.threadIds.length || this.messageIds.length;
+  }
+
+  description() {
+    // If the parames has both messageIds and threadIds, threadIds will not work in native
+    if (this.messageIds.length) {
+      const count = this.messageIds.length;
+      return count > 1 ? `${count} messages` : 'message';
+    }
+    if (this.threadIds.length) {
+      const count = this.threadIds.length;
+      return count > 1 ? `${count} threads` : 'thread';
+    }
+  }
+
+  willBeQueued(taskName) {
+    if (this.threadIds.length > 0 && this.messageIds.length > 0) {
+      throw new Error(
+        `${
+          taskName ? `${taskName}: ` : ''
+        }You can provide \`threads\` or \`messages\` but not both.`
+      );
+    }
+    if (this.threadIds.length === 0 && this.messageIds.length === 0) {
+      throw new Error(
+        `${
+          taskName ? `${taskName}: ` : ''
+        }You must provide a \`threads\` or \`messages\` Array of models or IDs.`
+      );
+    }
+
+    super.willBeQueued();
   }
 }

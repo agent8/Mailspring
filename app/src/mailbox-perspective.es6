@@ -892,10 +892,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(
-        this.categories().map(c => c.id),
-        other.categories().map(c => c.id)
-      )
+      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
     );
   }
 
@@ -1237,10 +1234,14 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
       ];
       const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
       if (enableFocusedInboxKey) {
+        const isMessageView = AppEnv.getDisableThread();
         const notOtherCategories = Category.inboxNotOtherCategorys({ toString: true });
-        conditions.push(
-          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories)
-        );
+        const inboxCategoryAttr = isMessageView
+          ? Thread.attributes.inboxCategory.in(notOtherCategories)
+          : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(
+              notOtherCategories
+            );
+        conditions.push(inboxCategoryAttr);
       }
       query = query.where([new Matcher.JoinAnd(conditions)]);
     } else {
@@ -1436,12 +1437,15 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     });
 
     const notOtherCategories = Category.inboxNotOtherCategorys({ toString: true });
-
+    const isMessageView = AppEnv.getDisableThread();
+    const inboxCategoryAttr = isMessageView
+      ? Thread.attributes.inboxCategory.in(notOtherCategories)
+      : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories);
     const query = DatabaseStore.findAll(Thread)
       .where(
         new Matcher.JoinAnd([
           Thread.attributes.categories.containsAny(categoryIds),
-          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories),
+          inboxCategoryAttr,
           Thread.attributes.state.equal(0),
         ])
       )
@@ -1495,12 +1499,15 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     });
 
     const otherCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
-
+    const isMessageView = AppEnv.getDisableThread();
+    const inboxCategoryAttr = isMessageView
+      ? Thread.attributes.inboxCategory.in(otherCategories)
+      : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(otherCategories);
     const query = DatabaseStore.findAll(Thread)
       .where(
         new Matcher.JoinAnd([
           Thread.attributes.categories.containsAny(categoryIds),
-          JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(otherCategories),
+          inboxCategoryAttr,
           Thread.attributes.state.equal(0),
         ])
       )
@@ -1565,9 +1572,6 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(
-      this.categories().map(c => c.id),
-      this.isOther
-    );
+    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
   }
 }

@@ -172,7 +172,10 @@ export default class Application extends EventEmitter {
     this.cleaningOldFilesTimer = null;
     this._triggerCleanOldLogs(true);
     try {
-      const mailsync = new MailsyncProcess(options);
+      const mailsync = new MailsyncProcess({
+        ...options,
+        disableThread: this.config.get('core.workspace.disableThread'),
+      });
       this.nativeVersion = await mailsync.migrate();
     } catch (err) {
       let message = null;
@@ -1023,6 +1026,16 @@ export default class Application extends EventEmitter {
       });
   };
 
+  _appRelaunch = () => {
+    if (this._onAppRelaunch) {
+      return;
+    }
+    this._onAppRelaunch = true;
+    this.windowManager.destroyAllWindows();
+    app.relaunch();
+    app.quit();
+  };
+
   _deleteDatabase = (callback, rebuild) => {
     this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db*'), () => {
       console.log('\nedisonmail.db* deleted\n');
@@ -1101,6 +1114,8 @@ export default class Application extends EventEmitter {
     this.on('application:reset-database', this._resetDatabaseAndRelaunch);
 
     this.on('application:window-relaunch', this._relaunch);
+
+    this.on('application:app-relaunch', this._appRelaunch);
 
     this.on('application:quit', () => {
       app.quit();

@@ -161,6 +161,10 @@ export default {
             default: 1,
             advanced: true,
           },
+          disableThread: {
+            type: 'boolean',
+            default: false,
+          },
         },
       },
       disabledPackages: {
@@ -236,7 +240,7 @@ export default {
       },
       fontface: {
         type: 'string',
-        default: 'sans-serif'
+        default: 'sans-serif',
       },
       composing: {
         type: 'object',
