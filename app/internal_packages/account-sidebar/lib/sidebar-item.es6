@@ -667,7 +667,7 @@ class SidebarItem {
     }
     const isExchange = account.provider.includes('exchange');
     const seenItems = {};
-    seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentPerspective;
+    seenItems[CategoryStore.decodePath(path)] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
       // https://regex101.com/r/jK8cC2/1
       let item, parentKey;
@@ -694,7 +694,7 @@ class SidebarItem {
           // if (path === 'bba.d' && itemKey === 'bba.d/a1') {
           //   debugger;
           // }
-          parent = seenItems[parentKey.toLocaleLowerCase()];
+          parent = seenItems[parentKey];
         }
         // for (let i = parentComponents.length; i >= 1; i--) {
         //   parentKey = parentComponents.slice(0, i).join(category.delimiter);
