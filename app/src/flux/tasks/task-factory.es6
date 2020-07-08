@@ -11,6 +11,7 @@ import DeleteThreadsTask from './delete-threads-task';
 import ExpungeMessagesTask from './expunge-messages-task';
 import DestroyDraftTask from './destroy-draft-task';
 import CancelOutboxDraftTask from './cancel-outbox-draft-task';
+import SyncbackCategoryTask from './syncback-category-task';
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -388,6 +389,47 @@ const TaskFactory = {
         previousFolder,
       }),
     ];
+  },
+
+  tasksForRenamingPath({ existingPath, newName, accountId, isExchange = false } = {}) {
+    const existingCategories = CategoryStore.categories(accountId);
+    if (existingCategories.length > 0) {
+      for (let i = 0; i < existingCategories.length; i++) {
+        const displayName = existingCategories[i].displayName;
+        if (displayName === newName) {
+          AppEnv.logWarning(
+            `TaskFactory:Renaming folder ${newName} is in conflict with existing folder ${displayName}`
+          );
+          AppEnv.showMessageBox({
+            title: 'Cannot rename',
+            detail: `${newName} already exists`,
+            buttons: ['Ok'],
+          });
+          return;
+        }
+      }
+    }
+    return SyncbackCategoryTask.forRenaming({ path: existingPath, accountId, newName, isExchange });
+  },
+  tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
+    const existingCategories = CategoryStore.categories(accountId);
+    if (existingCategories.length > 0) {
+      for (let i = 0; i < existingCategories.length; i++) {
+        const displayName = existingCategories[i].displayName;
+        if (displayName === name) {
+          AppEnv.logWarning(
+            `TaskFactory:Creating folder ${name} is in conflict with existing folder ${displayName}`
+          );
+          AppEnv.showMessageBox({
+            title: 'Cannot create',
+            detail: `${name} already exists`,
+            buttons: ['Ok'],
+          });
+          return;
+        }
+      }
+    }
+    return SyncbackCategoryTask.forCreating({ name, accountId, bgColor, parentId, isExchange });
   },
 
   taskForUndo({ task }) {
