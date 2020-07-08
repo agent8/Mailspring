@@ -369,9 +369,6 @@ class MessageStore extends MailspringStore {
             this._items[itemIndex].syncState = item.syncState;
           }
         });
-        if (changed) {
-          this._items = this._sortItemsForDisplay(this._items);
-        }
       } else if (type === 'unpersist') {
         drafts.forEach(item => {
           const itemIndex = this._items.findIndex(msg => msg.id === item.id);
@@ -385,6 +382,7 @@ class MessageStore extends MailspringStore {
         });
       }
       if (changed) {
+        this._items = this._sortItemsForDisplay(this._items);
         this._expandItemsToDefault();
         this._closeWindowIfNoMessage();
         this.trigger();

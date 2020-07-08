@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg, LabelColorizer } from 'mailspring-component-kit';
-import { Actions, SyncbackCategoryTask, ChangeLabelsTask, TaskQueue } from 'mailspring-exports';
+import { Actions, TaskFactory, ChangeLabelsTask, TaskQueue } from 'mailspring-exports';
 
 export default class CreateNewFolderPopover extends Component {
   static propTypes = {
@@ -104,36 +104,38 @@ export default class CreateNewFolderPopover extends Component {
   };
   _onCreateCategory = () => {
     this.setState({ isBusy: true });
-    const syncbackTask = SyncbackCategoryTask.forCreating({
+    const syncbackTask = TaskFactory.tasksForCreatingPath({
       name: this.state.newName,
       bgColor: this.state.bgColor,
       accountId: this.props.account.id,
     });
     this._onResultReturned();
-    Actions.queueTask(syncbackTask);
-    TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
-      if (finishedTask.error) {
-        AppEnv.showErrorDialog({
-          title: 'Error',
-          message: `Could not create label.${finishedTask.error && finishedTask.error.debuginfo}`,
-        });
-        return;
-      }
-      if (this.props.isMoveAction) {
-        this._onMoveToCategory(finishedTask.created);
-      } else {
-        Actions.queueTask(
-          new ChangeLabelsTask({
-            source: 'Category Picker: New Label',
-            threads: this.props.threads,
-            labelsToRemove: [],
-            labelsToAdd: [finishedTask.created],
-          })
-        );
-        this._onActionCallback({ addedLabels: [finishedTask.created] });
-      }
-    });
-    Actions.closePopover();
+    if (syncbackTask) {
+      Actions.queueTask(syncbackTask);
+      TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
+        if (finishedTask.error) {
+          AppEnv.showErrorDialog({
+            title: 'Error',
+            message: `Could not create label.${finishedTask.error && finishedTask.error.debuginfo}`,
+          });
+          return;
+        }
+        if (this.props.isMoveAction) {
+          this._onMoveToCategory(finishedTask.created);
+        } else {
+          Actions.queueTask(
+            new ChangeLabelsTask({
+              source: 'Category Picker: New Label',
+              threads: this.props.threads,
+              labelsToRemove: [],
+              labelsToAdd: [finishedTask.created],
+            })
+          );
+          this._onActionCallback({ addedLabels: [finishedTask.created] });
+        }
+      });
+      Actions.closePopover();
+    }
   };
 
   _onMoveToCategory = category => {
