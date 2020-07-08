@@ -8,6 +8,7 @@ import DatabaseStore from '../stores/database-store';
 import MessageStore from '../stores/message-store';
 import CategoryStore from '../stores/category-store';
 import MailRulesProcessor from '../../mail-rules-processor';
+import Matcher from '../attributes/matcher';
 
 import { ConditionMode, ConditionTemplates, ActionTemplates } from '../../mail-rules-templates';
 
@@ -194,7 +195,13 @@ class MailRulesStore extends MailspringStore {
       .limit(50);
 
     if (lastTimestamp !== null) {
-      query.where(Thread.attributes.lastMessageTimestamp.lessThan(lastTimestamp));
+      const isMessageView = AppEnv.getDisableThread();
+      const lastMessageTimestampAttr = isMessageView
+        ? Thread.attributes.lastMessageTimestamp.lessThan(lastTimestamp)
+        : JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').lessThan(
+            lastTimestamp
+          );
+      query.where(new Matcher.JoinAnd([lastMessageTimestampAttr]));
     }
 
     query.then(threads => {

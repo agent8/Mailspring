@@ -9,9 +9,13 @@ import { allInboxCategories, inboxOtherCategories, inboxNotOtherCategories } fro
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
 const buildQuery = (categoryIds, isOther) => {
+  const isMessageView = AppEnv.getDisableThread();
+  const unreadAttr = isMessageView
+    ? Thread.attributes.unread.equal(true)
+    : JoinTable.useAttribute(Thread.attributes.unread, 'Boolean').equal(true);
   const unreadWhereOptions = [
     Thread.attributes.categories.containsAny(categoryIds),
-    JoinTable.useAttribute('unread', 'Number').equal(1),
+    unreadAttr,
     Thread.attributes.state.equal(0),
   ];
 
@@ -27,30 +31,30 @@ const buildQuery = (categoryIds, isOther) => {
     } else {
       inboxCategories = inboxNotOtherCategories({ toString: true });
     }
-    unreadWhereOptions.push(
-      JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
-    );
+    const inboxCategoryAttr = isMessageView
+      ? Thread.attributes.inboxCategory.in(inboxCategories)
+      : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories);
+    unreadWhereOptions.push(inboxCategoryAttr);
   }
   const unreadMatchers = new Matcher.JoinAnd(unreadWhereOptions);
   const query = DatabaseStore.findAll(Thread).limit(0);
   if (RecentlyReadStore.ids.length === 0) {
     query.where(unreadMatchers);
   } else {
-    const whereOptions = [
-      JoinTable.useAttribute('unread', 'Number').equal(1),
-      Thread.attributes.state.equal(0),
-    ];
+    const unreadAttr = isMessageView
+      ? Thread.attributes.unread.equal(true)
+      : JoinTable.useAttribute(Thread.attributes.unread, 'Boolean').equal(true);
+    const whereOptions = [unreadAttr, Thread.attributes.state.equal(0)];
     const recentlyReadStoreWhereOptions = [
       JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids),
       JoinTable.useAttribute('state', 'Number').equal(0),
     ];
     if (enableFocusedInboxKey) {
-      whereOptions.push(
-        JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
-      );
-      recentlyReadStoreWhereOptions.push(
-        JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories)
-      );
+      const inboxCategoryAttr = isMessageView
+        ? Thread.attributes.inboxCategory.in(inboxCategories)
+        : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(inboxCategories);
+      whereOptions.push(inboxCategoryAttr);
+      recentlyReadStoreWhereOptions.push(inboxCategoryAttr);
     }
     query.where(
       new Matcher.JoinAnd([

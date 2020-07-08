@@ -1215,6 +1215,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
   }
 
   threads() {
+    const isMessageView = AppEnv.getDisableThread();
     let query = DatabaseStore.findAll(Thread, { state: 0 }).limit(0);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
@@ -1225,16 +1226,18 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
       }
     });
     if (categoryIds.length > 0) {
+      const lastMessageTimestampAttr = isMessageView
+        ? Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay / 1000)
+        : JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(
+            startOfDay / 1000
+          );
       const conditions = [
         Thread.attributes.categories.containsAny(categoryIds),
-        JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(
-          startOfDay / 1000
-        ),
+        lastMessageTimestampAttr,
         Thread.attributes.state.equal(0),
       ];
       const enableFocusedInboxKey = AppEnv.config.get(EnableFocusedInboxKey);
       if (enableFocusedInboxKey) {
-        const isMessageView = AppEnv.getDisableThread();
         const notOtherCategories = Category.inboxNotOtherCategorys({ toString: true });
         const inboxCategoryAttr = isMessageView
           ? Thread.attributes.inboxCategory.in(notOtherCategories)
