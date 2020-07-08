@@ -169,20 +169,20 @@ const TaskFactory = {
     if (messages.length > 0 && messages[0] instanceof Message) {
       tasks.push(
         ...this.tasksForMessagesByAccount(messages, ({ accountId, messages }) => {
-          const threadIds = {};
+          const threadIds = new Set();
           const messageIds = [];
           messages.forEach(msg => {
             if (msg && msg.id) {
               messageIds.push(msg.id);
-              if (!threadIds[msg.threadId]) {
-                threadIds[msg.threadId] = true;
+              if (msg.threadId) {
+                threadIds.add(msg.threadId);
               }
             }
           });
           return new ExpungeMessagesTask({
             accountId: accountId,
             messageIds,
-            threadIds: Object.keys(threadIds),
+            threadIds: [...threadIds],
             source,
           });
         })
