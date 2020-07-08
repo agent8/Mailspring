@@ -32,8 +32,8 @@ const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
 export default class MailboxPerspective {
   // Factory Methods
-  static forNothing() {
-    return new EmptyMailboxPerspective();
+  static forNothing(data) {
+    return new EmptyMailboxPerspective(data);
   }
 
   static forSingleAccount(accountId) {
@@ -828,10 +828,10 @@ class AttachementMailboxPerspective extends MailboxPerspective {
 }
 
 class EmptyMailboxPerspective extends MailboxPerspective {
-  constructor() {
+  constructor({ name = '', iconName = 'folder.svg' } = {}) {
     super([]);
-    this.name = 'Empty';
-    this.iconName = 'folder.svg';
+    this.name = name;
+    this.iconName = iconName;
   }
 
   threads() {
