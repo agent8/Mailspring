@@ -232,19 +232,20 @@ const CreatePageForForm = FormComponent => {
         remote.dialog
           .showMessageBox(null, {
             type: 'warning',
-            buttons: ['Go Back', 'Continue'],
-            defaultId: 1,
-            cancelId: 0,
+            buttons: ['Google OAuth', 'Continue', 'Go back'],
+            defaultId: 0,
+            cancelId: 2,
             message: 'Are you sure?',
             detail:
               `This looks like a Gmail account! While it's possible to setup an App ` +
-              `Password and connect to Gmail via IMAP, EdisonMail also supports Google OAuth. Go ` +
-              `back and select "Gmail & Google Apps" from the provider screen.`,
+              `Password and connect to Gmail via IMAP, EdisonMail also supports "Google OAuth".`,
           })
           .then(({ response }) => {
-            if (response === 0) {
+            if (response === 2) {
               OnboardingActions.moveToPage('account-choose');
               return;
+            } else if (response === 0) {
+              OnboardingActions.chooseAccountProvider('gmail');
             } else {
               proceedWithAccount();
             }
