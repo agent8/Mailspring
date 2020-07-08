@@ -269,30 +269,6 @@ export default class SidebarSection {
       if (parent) {
         continue;
       }
-      // if (isExchange) {
-      //   if (exchangeInboxCategory && category.parentId !== exchangeInboxCategory.parentId) {
-      //     continue;
-      //   }
-      // } else {
-      //   const itemKey = category.displayName;
-      //   if (itemKey.toLocaleLowerCase().includes('inbox/')) {
-      //     continue;
-      //   }
-      //   const parentComponents = category.path.split(category.delimiter);
-      //   if (parentComponents.length > 1) {
-      //     let parent = null;
-      //     let k = 1;
-      //     while (!parent && k <= parentComponents.length - 1) {
-      //       parent = CategoryStore.getCategoryByPath(
-      //         parentComponents.slice(0, k).join(category.delimiter)
-      //       );
-      //       k++;
-      //     }
-      //     if (parent) {
-      //       continue;
-      //     }
-      //   }
-      // }
       item = SidebarItem.forCategories([category], { hideWhenCrowded: items.length >= 3 }, false);
       if (item) {
         if (items.length === 3 && !isShowAll) {
