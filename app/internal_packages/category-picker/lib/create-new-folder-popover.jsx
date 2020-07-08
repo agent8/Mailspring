@@ -3,10 +3,8 @@ import PropTypes from 'prop-types';
 import { RetinaImg, LottieImg } from 'mailspring-component-kit';
 import {
   Actions,
-  SyncbackCategoryTask,
   TaskFactory,
   TaskQueue,
-  Folder,
   FocusedPerspectiveStore,
   AccountStore,
 } from 'mailspring-exports';
@@ -116,22 +114,26 @@ export default class CreateNewFolderPopover extends Component {
   _onCreateCategory = () => {
     this.setState({ isBusy: true });
     const account = AccountStore.accountForId(this.props.account.id);
-    const syncbackTask = SyncbackCategoryTask.forCreating({
+    const syncbackTask = TaskFactory.tasksForCreatingPath({
       name: this.state.newName,
       accountId: this.props.account.id,
       isExchange: account && account.provider.includes('exchange'),
     });
     this._onResultReturned();
-    TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
-      if (!finishedTask.created) {
-        this._onBusyTimeout();
-        this.setState({ newName: '' });
-        AppEnv.showErrorDialog({ title: 'Error', message: `Could not create folder.` });
-        return;
-      }
-      this._onMoveToCategory({ category: finishedTask.created });
-    });
-    Actions.queueTask(syncbackTask);
+    if (syncbackTask) {
+      TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
+        if (!finishedTask.created) {
+          this._onBusyTimeout();
+          this.setState({ newName: '' });
+          AppEnv.showErrorDialog({ title: 'Error', message: `Could not create folder.` });
+          return;
+        }
+        this._onMoveToCategory({ category: finishedTask.created });
+      });
+      Actions.queueTask(syncbackTask);
+    } else {
+      this._onBusyTimeout();
+    }
   };
 
   _onMoveToCategory = ({ category }) => {

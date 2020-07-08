@@ -151,19 +151,20 @@ export default class MovePickerPopover extends Component {
   };
 
   _onCreateCategory = () => {
-    const syncbackTask = SyncbackCategoryTask.forCreating({
+    const syncbackTask = TaskFactory.tasksForCreatingPath({
       name: this.state.searchValue,
       accountId: this.props.account.id,
     });
-
-    TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
-      if (!finishedTask.created) {
-        AppEnv.showErrorDialog({ title: 'Error', message: `Could not create folder.` });
-        return;
-      }
-      this._onMoveToCategory({ category: finishedTask.created });
-    });
-    Actions.queueTask(syncbackTask);
+    if (syncbackTask) {
+      TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
+        if (!finishedTask.created) {
+          AppEnv.showErrorDialog({ title: 'Error', message: `Could not create folder.` });
+          return;
+        }
+        this._onMoveToCategory({ category: finishedTask.created });
+      });
+      Actions.queueTask(syncbackTask);
+    }
   };
 
   _onMoveToCategory = ({ category }) => {
