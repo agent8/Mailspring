@@ -1079,6 +1079,7 @@ class DraftStore extends MailspringStore {
         title: 'Message info incomplete',
         detail: "Message's content is still downloading, do you still want to reply?",
         buttons: ['No', 'Yes'],
+        cancelId: 0,
       }).then(({ response } = {}) => {
         if (response === 0) {
           AppEnv.logDebug(`Message missing body, user clicked no ${data.message.id}`);
@@ -1098,6 +1099,7 @@ class DraftStore extends MailspringStore {
         title: 'Message info incomplete',
         detail: "Message's content is still downloading, do you still want to forward?",
         buttons: ['No', 'Yes'],
+        cancelId: 0,
       }).then(({ response } = {}) => {
         if (response === 0) {
           AppEnv.logDebug(`Message missing body, user clicked no ${data.message.id}`);
