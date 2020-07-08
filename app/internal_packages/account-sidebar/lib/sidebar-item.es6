@@ -6,14 +6,13 @@ const { OutlineViewItem, RetinaImg } = require('mailspring-component-kit');
 const {
   MailboxPerspective,
   FocusedPerspectiveStore,
-  SyncbackCategoryTask,
   DestroyCategoryTask,
   CategoryStore,
   WorkspaceStore,
   Actions,
-  RegExpUtils,
   AccountStore,
   DatabaseStore,
+  TaskFactory,
 } = require('mailspring-exports');
 
 const SidebarActions = require('./sidebar-actions');
@@ -183,14 +182,15 @@ const onEditItem = function(item, newEnteredValue, originalText) {
   if (newDisplayName === category.displayName) {
     return;
   }
-  Actions.queueTask(
-    SyncbackCategoryTask.forRenaming({
-      accountId: category.accountId,
-      path: category.path,
-      newName: newDisplayName,
-      isExchange: account && account.provider.includes('exchange'),
-    })
-  );
+  const task = TaskFactory.tasksForRenamingPath({
+    existingPath: category.path,
+    newName: newDisplayName,
+    accountId: category.accountId,
+    isExchange: account && account.provider.includes('exchange'),
+  });
+  if (task) {
+    Actions.queueTask(task);
+  }
 };
 
 class SidebarItem {
