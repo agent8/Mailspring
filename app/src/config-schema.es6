@@ -161,9 +161,9 @@ export default {
             default: 1,
             advanced: true,
           },
-          disableThread: {
+          threadView: {
             type: 'boolean',
-            default: false,
+            default: true,
           },
         },
       },

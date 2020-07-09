@@ -174,7 +174,7 @@ export default class Application extends EventEmitter {
     try {
       const mailsync = new MailsyncProcess({
         ...options,
-        disableThread: this.config.get('core.workspace.disableThread'),
+        disableThread: !this.config.get('core.workspace.threadView'),
       });
       this.nativeVersion = await mailsync.migrate();
     } catch (err) {

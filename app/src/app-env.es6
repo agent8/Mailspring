@@ -604,7 +604,7 @@ export default class AppEnvConstructor {
   }
 
   getDisableThread() {
-    return this.config.get('core.workspace.disableThread');
+    return !this.config.get('core.workspace.threadView');
   }
 
   getWindowType() {

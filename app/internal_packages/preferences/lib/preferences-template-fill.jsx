@@ -176,6 +176,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Group messages by conversation',
+              configSchema: configSchema => configSchema.properties.workspace.properties.threadView,
+              keyPath: 'core.workspace.threadView',
+              component: AppearanceViewOptions,
+              keywords: [],
+            },
+            {
               label: 'Check messages for spelling',
               configSchema: configSchema => configSchema.properties.composing.properties.spellcheck,
               keyPath: 'core.composing.spellcheck',
@@ -346,14 +353,6 @@ const preferencesTemplateFill = {
               label: 'Panel',
               component: AppearancePanelOptions,
               keywords: ['Single Panel', 'Two Panels', 'preview'],
-            },
-            {
-              label: 'Disable thread',
-              configSchema: configSchema =>
-                configSchema.properties.workspace.properties.disableThread,
-              keyPath: 'core.workspace.disableThread',
-              component: AppearanceViewOptions,
-              keywords: [],
             },
           ],
         },
