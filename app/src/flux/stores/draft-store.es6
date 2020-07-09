@@ -439,7 +439,7 @@ class DraftStore extends MailspringStore {
     pastSendDraftTasks.forEach(t => {
       if (t && t.draft) {
         AppEnv.logDebug(`Restarted SendDraft for draft: ${t.draft.id}`);
-        this._draftsSending[t.draft.id] = true;
+        this._draftsSending[t.draft.id] = t.draft.threadId;
         this._startSendingDraftTimeouts({
           draft: t.draft,
           taskId: t.id,
@@ -713,6 +713,7 @@ class DraftStore extends MailspringStore {
         3: false,
       };
     }
+    const prevOpen = this._draftsOpenCount[messageId][windowLevel];
     this._draftsOpenCount[messageId][windowLevel] = true;
     if (AppEnv.isMainWindow()) {
       if (windowLevel > 1) {
@@ -723,20 +724,32 @@ class DraftStore extends MailspringStore {
           AppEnv.debugLog(
             `No session but draft is open in none main window, ${messageId} from window ${windowLevel}`
           );
-          this.sessionForClientId(messageId).then(session => {
+          if (this.isSendingDraft(messageId)) {
             AppEnv.debugLog(
-              `Session created in main because none main window draft open ${messageId}, window ${windowLevel}`
+              `DraftStore: No session for ${messageId}, but draft is sending, so ignore open cout from window ${windowLevel}`
             );
-            session.setPopout(true);
-          });
+          } else {
+            this.sessionForClientId(messageId).then(session => {
+              AppEnv.debugLog(
+                `Session created in main because none main window draft open ${messageId}, window ${windowLevel}`
+              );
+              session.setPopout(true);
+            });
+          }
         }
       }
       Actions.draftOpenCountBroadcast({
         messageId: messageId,
         data: this._draftsOpenCount[messageId],
       });
-      if (this.isSendingDraft(messageId)) {
-        Actions.sendingDraft({ messageId, windowLevel: this._getCurrentWindowLevel() });
+      if (!prevOpen) {
+        if (this.isSendingDraft(messageId)) {
+          Actions.sendingDraft({
+            messageId,
+            threadId: this._draftsSending[messageId],
+            windowLevel: this._getCurrentWindowLevel(),
+          });
+        }
       }
     }
   };
@@ -1756,7 +1769,7 @@ class DraftStore extends MailspringStore {
       }
     });
   };
-  _onSendingDraft = async ({ messageId, windowLevel }) => {
+  _onSendingDraft = async ({ messageId, threadId, windowLevel }) => {
     if (AppEnv.isComposerWindow()) {
       if (this._draftSessions[messageId]) {
         AppEnv.close({
@@ -1768,13 +1781,22 @@ class DraftStore extends MailspringStore {
       }
       return;
     }
+    if (AppEnv.isThreadWindow()) {
+      const props = AppEnv.getWindowProps();
+      if (props && props.threadId && props.threadId !== threadId) {
+        AppEnv.logDebug(
+          `${messageId} in thread: ${threadId} not in this thread window ${props.threadId}, igonring`
+        );
+        return;
+      }
+    }
     if (this._getCurrentWindowLevel() !== windowLevel) {
-      const session = await this.sessionForClientId(messageId);
+      let session = this._draftSessions[messageId];
       if (session) {
         if (AppEnv.isMainWindow()) {
           const draft = session.draft();
           if (draft) {
-            this._draftsSending[draft.id] = true;
+            this._draftsSending[draft.id] = draft.threadId;
             // this._startSendingDraftTimeouts({ draft: session.draft });
           } else {
             AppEnv.reportWarning(
@@ -1784,7 +1806,8 @@ class DraftStore extends MailspringStore {
         } else {
           // At this point it is thread
           AppEnv.debugLog(`Thread window triggered send ${messageId}`);
-          this._draftsSending[messageId] = true;
+          const props = AppEnv.getWindowProps();
+          this._draftsSending[messageId] = (props || {}).threadId || threadId;
         }
         this._doneWithSession(session, 'onSendingDraft');
       } else {
@@ -2009,9 +2032,13 @@ class DraftStore extends MailspringStore {
     if (AppEnv.config.get('core.sending.sounds')) {
       SoundRegistry.playSound('hit-send');
     }
+    this._draftsSending[draft.id] = draft.threadId;
     // Notify all windows that draft is being send out.
-    Actions.sendingDraft({ messageId, windowLevel: this._getCurrentWindowLevel() });
-    this._draftsSending[draft.id] = true;
+    Actions.sendingDraft({
+      messageId,
+      threadId: draft.threadId,
+      windowLevel: this._getCurrentWindowLevel(),
+    });
     // At this point the message UI enters the sending state and the composer is unmounted.
     this.trigger({ messageId });
     // To be able to undo the send, we need to pretend that we added the send-later
