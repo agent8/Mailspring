@@ -1464,7 +1464,7 @@ class AttachmentStore extends MailspringStore {
       };
     };
 
-    this._SaveAllFiles([beforeSaveFn]);
+    this._saveAllFiles([beforeSaveFn]);
   }
 
   _saveAllFilesForTask(task) {
@@ -1480,10 +1480,10 @@ class AttachmentStore extends MailspringStore {
         };
       };
     });
-    this._SaveAllFiles(beforeSaveFns);
+    this._saveAllFiles(beforeSaveFns);
   }
 
-  _SaveAllFiles(beforeSaveFns) {
+  _saveAllFiles(beforeSaveFns) {
     const files = [];
     const lastSavePaths = [];
     const savePromises = beforeSaveFns.map(fn => {
