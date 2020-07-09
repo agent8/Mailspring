@@ -190,6 +190,7 @@ export class AppearanceViewOptions extends React.Component {
   static displayName = 'AppearanceThemeSwitch';
 
   static propTypes = {
+    label: PropTypes.string,
     keyPath: PropTypes.string,
     config: PropTypes.object,
     configSchema: PropTypes.object,
@@ -218,7 +219,7 @@ export class AppearanceViewOptions extends React.Component {
         configSchema={this.props.configSchema}
         keyPath={this.props.keyPath}
         config={this.props.config}
-        label={'disable thread'}
+        label={this.props.label}
       />
     );
   }
