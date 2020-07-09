@@ -338,7 +338,7 @@ class CategoryStore extends MailspringStore {
           if (cat.areStrangers(lastCategory)) {
             ret.unshift(...this._generateParents(lastCategory));
           } else if (cat.isAncestorOf(lastCategory)) {
-            const tmp = this._generateParents(lastCategory, layers.length - 1);
+            const tmp = this._generateParents(lastCategory, layers.length);
             // console.warn(cat, 'is ancestor of ', lastCategory, tmp);
             ret.unshift(...tmp);
           } else if (cat.areRelatives(lastCategory)) {
