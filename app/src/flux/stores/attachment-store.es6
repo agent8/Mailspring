@@ -1456,31 +1456,48 @@ class AttachmentStore extends MailspringStore {
 
   _saveFileForTask(task) {
     const { file, savePath } = task;
-    this._prepareAndResolveFilePath(file)
-      .then(filePath => this._writeToExternalPath(filePath, savePath))
-      .then(() => {
-        if (AppEnv.config.get('core.attachments.openFolderAfterDownload')) {
-          remote.shell.showItemInFolder(savePath);
-        }
-        this._onSaveSuccess([file]);
-      })
-      .catch(this._catchFSErrors)
-      .catch(error => {
-        this._presentError({ file, error });
-      });
+    // Return a method is for to handle errors in promise's catch
+    const beforeSaveFn = () => {
+      return {
+        file: file,
+        fileSavePath: savePath,
+      };
+    };
+
+    this._SaveAllFiles([beforeSaveFn]);
   }
 
   _saveAllFilesForTask(task) {
     const { files, dirPath } = task;
-    const lastSavePaths = [];
-    const savePromises = files.map(file => {
-      const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName());
-      const savePath = path.join(dirPath, fileSaveName);
-      return this._prepareAndResolveFilePath(file)
-        .then(filePath => this._writeToExternalPath(filePath, savePath))
-        .then(() => lastSavePaths.push(savePath));
+    const beforeSaveFns = files.map(file => {
+      // Return a method is for to handle errors in promise's catch
+      return () => {
+        const fileSaveName = autoGenerateFileName(dirPath, file.safeDisplayName());
+        const savePath = path.join(dirPath, fileSaveName);
+        return {
+          file: file,
+          fileSavePath: savePath,
+        };
+      };
     });
+    this._SaveAllFiles(beforeSaveFns);
+  }
 
+  _SaveAllFiles(beforeSaveFns) {
+    const files = [];
+    const lastSavePaths = [];
+    const savePromises = beforeSaveFns.map(fn => {
+      return (async () => {
+        const { file, fileSavePath } = fn();
+        if (!file || !fileSavePath) {
+          return;
+        }
+        const filePath = await this._prepareAndResolveFilePath(file);
+        await this._writeToExternalPath(filePath, fileSavePath);
+        files.push(file);
+        lastSavePaths.push(fileSavePath);
+      })();
+    });
     Promise.all(savePromises)
       .then(() => {
         if (
