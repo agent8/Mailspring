@@ -309,7 +309,7 @@ export default class Category extends Model {
     const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
     return (
       otherLayers.length - currentLayers.length >= 2 &&
-      currentLayers.displayName === otherLayers.slice(0, currentLayers.length).join(this.delimiter)
+      this.displayName === otherLayers.slice(0, currentLayers.length).join(this.delimiter)
     );
   }
   areSiblings(otherCategory) {
