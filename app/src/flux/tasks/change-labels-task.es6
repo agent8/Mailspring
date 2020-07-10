@@ -2,6 +2,7 @@ import Category from '../models/category';
 import Label from '../models/label';
 import ChangeMailTask from './change-mail-task';
 import Attributes from '../attributes';
+import AccountStore from '../stores/account-store';
 
 // Public: Create a new task to apply labels to a message or thread.
 //
@@ -89,6 +90,9 @@ export default class ChangeLabelsTask extends ChangeMailTask {
         }
       });
       this.labelsToRemove = ret;
+
+      // Remember the labels that users often use
+      AccountStore.setHighFrequencyFolder(this.accountId, this.labelsToAdd.map(label => label.id));
     }
   }
 
