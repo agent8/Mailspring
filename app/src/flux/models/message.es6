@@ -197,6 +197,11 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'pastMessageIds',
       queryable: false,
     }),
+    messageReferences: Attributes.Collection({
+      modelKey: 'messageReferences',
+      jsonKey: 'references',
+      queryable: false,
+    }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
       queryable: false,
