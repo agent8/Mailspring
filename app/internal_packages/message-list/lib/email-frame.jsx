@@ -49,17 +49,19 @@ export default class EmailFrame extends React.Component {
     if (
       nextProps.message.id === this.props.message.id &&
       nextProps.content === this.props.content &&
-      nextProps.message.version > this.props.message.version
+      (nextProps.message.version > this.props.message.version ||
+        this.props.messageIndex !== nextProps.messageIndex)
     ) {
       this._writeContent();
     }
   }
 
   shouldComponentUpdate(nextProps) {
-    const { content, showQuotedText, message = {}, viewOriginalEmail } = this.props;
+    const { content, showQuotedText, message = {}, viewOriginalEmail, messageIndex } = this.props;
     const nextMessage = nextProps.message || {};
 
     return (
+      messageIndex !== nextProps.messageIndex ||
       content !== nextProps.content ||
       showQuotedText !== nextProps.showQuotedText ||
       message.id !== nextMessage.id ||
@@ -413,6 +415,7 @@ export default class EmailFrame extends React.Component {
         style={{ height: this._lastComputedHeight }}
       >
         <EventedIFrame
+          key={this.props.message.id}
           ref={cm => {
             this._iframeComponent = cm;
           }}
