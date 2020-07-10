@@ -395,7 +395,7 @@ const TaskFactory = {
     const existingCategories = CategoryStore.categories(accountId);
     if (existingCategories.length > 0) {
       for (let i = 0; i < existingCategories.length; i++) {
-        const displayName = existingCategories[i].displayName;
+        const displayName = existingCategories[i].fullDisplayName;
         if (displayName === newName) {
           AppEnv.logWarning(
             `TaskFactory:Renaming folder ${newName} is in conflict with existing folder ${displayName}`
@@ -415,7 +415,7 @@ const TaskFactory = {
     const existingCategories = CategoryStore.categories(accountId);
     if (existingCategories.length > 0) {
       for (let i = 0; i < existingCategories.length; i++) {
-        const displayName = existingCategories[i].displayName;
+        const displayName = existingCategories[i].fullDisplayName;
         if (displayName === name) {
           AppEnv.logWarning(
             `TaskFactory:Creating folder ${name} is in conflict with existing folder ${displayName}`
