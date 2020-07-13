@@ -453,7 +453,7 @@ class MessageList extends React.Component {
       messages = messages.reverse();
     }
 
-    messages.forEach(message => {
+    messages.forEach((message, index) => {
       if (message.type === 'minifiedBundle') {
         elements.push(this._renderMinifiedBundle(message));
         return;
@@ -469,6 +469,7 @@ class MessageList extends React.Component {
           ref={`message-container-${message.headerMessageId}`}
           thread={currentThread}
           message={message}
+          messageIndex={index}
           messages={messages}
           collapsed={collapsed}
           isMostRecent={isMostRecent}

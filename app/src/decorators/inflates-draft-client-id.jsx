@@ -209,12 +209,12 @@ function InflatesDraftClientId(ComposedComponent) {
             `MessageId is inconsisstent, input: ${messageId}, state: ${this.state.draft.id}`
           );
         }
-        Actions.draftWindowClosing({
-          messageIds: [messageId],
-          windowLevel: this._windowLevel,
-          source: 'componentWillUnmount',
-        });
       }
+      Actions.draftWindowClosing({
+        messageIds: [messageId],
+        windowLevel: this._windowLevel,
+        source: 'componentWillUnmount',
+      });
     }
 
     // Returns a promise for use in composer/main.es6, to show the window
