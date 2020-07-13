@@ -183,7 +183,10 @@ class MovePicker extends React.Component {
       />,
       {
         isFixedToWindow: true,
-        originRect: this._labelEl ? this._labelEl.getBoundingClientRect() : {},
+        originRect: {
+          top: 0,
+          left: 0,
+        },
         position: { top: '13%', left: '49%' },
         disablePointer: true,
       }
@@ -201,7 +204,10 @@ class MovePicker extends React.Component {
       />,
       {
         isFixedToWindow: true,
-        originRect: this._moveEl.getBoundingClientRect(),
+        originRect: {
+          top: 0,
+          left: 0,
+        },
         position: { top: '13%', left: '49%' },
         disablePointer: true,
       }
