@@ -363,7 +363,8 @@ class Actions {
   Actions.composeReply({threadId: '123', messageId: '123'})
   ```
   */
-  static composeReply = ActionScopeMainWindow;
+  static composeReply = ActionScopeWindow;
+  static composeReplyMainWindow = ActionScopeMainWindow;
 
   /*
   Change the account of current draft.
@@ -374,7 +375,7 @@ class Actions {
   }
    */
   static changeDraftAccount = ActionScopeWindow;
-  static notMainChangeDraftAccount = ActionScopeWindow;
+  static broadcastChangeAccount = ActionScopeGlobal;
   static toMainChangeDraftAccount = ActionScopeMainWindow;
 
   /*
@@ -391,7 +392,8 @@ class Actions {
 
   *Scope: Window*
   */
-  static composeForward = ActionScopeMainWindow;
+  static composeForward = ActionScopeWindow;
+  static composeForwardMainWindow = ActionScopeMainWindow;
 
   /*
   Public: Send a draft created action back to components, so disabled buttons can be enabled.
@@ -481,13 +483,17 @@ class Actions {
   static broadcastDraftData = ActionScopeGlobal;
   static editOutboxDraft = ActionScopeMainWindow;
   static resendDrafts = ActionScopeMainWindow;
-  static cancelOutboxDrafts = ActionScopeMainWindow;
+  static cancelOutboxDrafts = ActionScopeGlobal;
   static destroyDraft = ActionScopeGlobal;
   static destroyDraftSucceeded = ActionScopeMainWindow;
   static destroyDraftFailed = ActionScopeMainWindow;
   static draftWindowClosing = ActionScopeMainWindow;
   static draftOpenCount = ActionScopeMainWindow;
   static draftOpenCountBroadcast = ActionScopeGlobal;
+  static requestSessionForServerDraft = ActionScopeMainWindow;
+  static broadcastServerDraftSession = ActionScopeGlobal;
+  static requestDraftCacheFromMain = ActionScopeMainWindow;
+  static broadcastDraftCache = ActionScopeGlobal;
   static gotoOutbox = ActionScopeWindow;
 
   /*

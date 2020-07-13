@@ -422,6 +422,14 @@ export default class OAuthSignInPage extends React.Component {
       wbView = (
         <div className="jira-oauth-title">
           <h2>Sign in with your browser.</h2>
+          {serviceName === 'office365' && (
+            <a
+              className="sign-with-imap"
+              onClick={() => OnboardingActions.chooseAccountProvider('imap')}
+            >
+              Want to sign in with username/password?
+            </a>
+          )}
         </div>
       );
     } else {

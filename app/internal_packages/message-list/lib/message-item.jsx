@@ -30,6 +30,7 @@ export default class MessageItem extends React.Component {
     isOutboxDraft: PropTypes.bool,
     thread: PropTypes.object,
     message: PropTypes.object,
+    messageIndex: PropTypes.number,
     messages: PropTypes.array,
     collapsed: PropTypes.bool,
     pending: PropTypes.bool,
@@ -540,6 +541,7 @@ export default class MessageItem extends React.Component {
             {this._renderHeader()}
             <MessageItemBody
               message={this.props.message}
+              messageIndex={this.props.messageIndex}
               downloads={this.state.downloads}
               calendar={this.state.calendar}
               setTrackers={this._setTrackers}
@@ -560,6 +562,7 @@ export default class MessageItem extends React.Component {
             {this._renderHeader()}
             <MessageItemBody
               message={this.props.message}
+              messageIndex={this.props.messageIndex}
               downloads={this.state.downloads}
               setTrackers={this._setTrackers}
               viewOriginalEmail={this.state.viewOriginalEmail}

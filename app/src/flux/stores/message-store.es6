@@ -4,6 +4,7 @@ import Message from '../models/message';
 import Thread from '../models/thread';
 import Category from '../models/category';
 import DatabaseStore from './database-store';
+import DraftCacheStore from './draft-cache-store';
 import ThreadStore from './thread-store';
 import AttachmentStore from './attachment-store';
 import WorkspaceStore from './workspace-store';
@@ -225,6 +226,7 @@ class MessageStore extends MailspringStore {
     }
     this.listenTo(ExtensionRegistry.MessageView, this._onExtensionsChanged);
     this.listenTo(DatabaseStore, this._onDataChanged);
+    this.listenTo(DraftCacheStore, this._onDraftCacheChange);
     this.listenTo(FocusedContentStore, this._onFocusChanged);
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
     this.listenTo(Actions.toggleMessageIdExpanded, this._onToggleMessageIdExpanded);
@@ -334,11 +336,59 @@ class MessageStore extends MailspringStore {
   _closeWindowIfNoMessage() {
     if (AppEnv.isThreadWindow()) {
       if (Array.isArray(this._items) && this._items.length === 0 && !this._thread) {
-        AppEnv.debugLog('Closing window because no message in thread and in ThreadWindow');
+        AppEnv.logDebug('Closing window because no message in thread and in ThreadWindow');
         AppEnv.close();
       }
     }
   }
+
+  _onDraftCacheChange = ({ drafts = [], type = 'persist' } = {}) => {
+    if (drafts.length > 0) {
+      let changed = false;
+      if (type === 'persist') {
+        drafts.forEach(item => {
+          const isInThread = this.threadId() && item.threadId === this.threadId();
+          if (!isInThread) {
+            AppEnv.logDebug(
+              `MessageStore: Draft ${item.id} not in thread ${
+                item.threadId
+              }, current thread ${this.threadId()}`
+            );
+            return;
+          }
+          const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+          if (itemIndex === -1) {
+            AppEnv.logDebug(
+              `MessageStore: Draft ${item.id} added in cache, updating items deleted ${item.deleted}`
+            );
+            changed = true;
+            this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+          } else if (item.syncState !== this._items[itemIndex].syncState) {
+            changed = true;
+            AppEnv.logDebug(`MessageStore: Draft ${item.id} cache change, updating sync state`);
+            this._items[itemIndex].syncState = item.syncState;
+          }
+        });
+      } else if (type === 'unpersist') {
+        drafts.forEach(item => {
+          const itemIndex = this._items.findIndex(msg => msg.id === item.id);
+          if (itemIndex !== -1) {
+            changed = true;
+            AppEnv.logDebug(
+              `MessageStore:Draft cache item ${item.id} removed, updating message store`
+            );
+            this._items.splice(itemIndex, 1);
+          }
+        });
+      }
+      if (changed) {
+        this._items = this._sortItemsForDisplay(this._items);
+        this._expandItemsToDefault();
+        this._closeWindowIfNoMessage();
+        this.trigger();
+      }
+    }
+  };
 
   _onDataChanged(change) {
     if (!this._thread) return;
@@ -353,7 +403,13 @@ class MessageStore extends MailspringStore {
           drafts.forEach(item => {
             const itemIndex = this._items.findIndex(msg => msg.id === item.id);
             if (itemIndex === -1) {
+              AppEnv.logDebug(
+                `MessageStore: Draft ${item.id} added in db, updating items deleted ${item.deleted}`
+              );
               this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+            } else {
+              AppEnv.logDebug(`MessageStore: Draft ${item.id} db change, updating sync state`);
+              this._items[itemIndex].syncState = item.syncState;
             }
           });
           this._items = this._sortItemsForDisplay(this._items);
@@ -503,7 +559,7 @@ class MessageStore extends MailspringStore {
     if (WorkspaceStore.layoutMode() === 'list' && AppEnv.isMainWindow()) {
       const currentSheet = WorkspaceStore.topSheet();
       if (!focused && this.thread() && currentSheet && currentSheet.id === 'Thread') {
-        console.log('current thread is gone, and no replacement');
+        AppEnv.logDebug('current thread is gone, and no replacement');
         Actions.popSheet({ reason: 'Message-Store, current Thread is no longer available' });
       }
     }
@@ -529,6 +585,9 @@ class MessageStore extends MailspringStore {
 
     this._fetchFromCache();
     this._closeWindowIfNoMessage();
+    if (AppEnv.isThreadWindow()) {
+      DraftCacheStore.getDraftsFromMain();
+    }
   }
 
   setWindowTitle(title) {
@@ -664,16 +723,15 @@ class MessageStore extends MailspringStore {
 
     const loadedThreadId = this._thread.id;
     const query = this.findAllByThreadIdWithBody({ threadId: loadedThreadId });
-    // const query = DatabaseStore.findAll(Message);
-    // query.where({ threadId: loadedThreadId, state: 0 });
-    // query.include(Message.attributes.body);
-    const prevMessageLength = this._items.length;
     return query.then(items => {
       // Check to make sure that our thread is still the thread we were
       // loading items for. Necessary because this takes a while.
       if (loadedThreadId !== this.threadId()) return;
 
-      this._items = items.filter(m => !m.isHidden());
+      this._items = items
+        .concat(...DraftCacheStore.findDraftsByThreadId(loadedThreadId))
+        .filter(m => !m.isHidden())
+        .filter(this.filterOutDuplicateDraft);
       this._items = this._sortItemsForDisplay(this._items);
 
       this._expandItemsToDefault();
@@ -772,7 +830,7 @@ class MessageStore extends MailspringStore {
       this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
         return !noLongerMissing.includes(id);
       });
-      console.log('updating missingAttachmentIds');
+      AppEnv.logDebug(`MessageStore: updating missingAttachmentIds ${this.threadId()}`);
       this.trigger();
     }
   }
@@ -804,7 +862,7 @@ class MessageStore extends MailspringStore {
         this._missingAttachmentIds = this._missingAttachmentIds.filter(id => {
           return !noLongerMissing.includes(id);
         });
-        console.log('updating missingAttachmentIds');
+        AppEnv.logDebug('updating missingAttachmentIds');
         this.trigger();
       }
     };
@@ -970,13 +1028,13 @@ class MessageStore extends MailspringStore {
   //   return false;
   // }
   //
-  // filterOutDuplicateDraftHeaderMessage(value, index, array) {
-  //   return (
-  //     array.findIndex(el => {
-  //       return el.id == value.id;
-  //     }) === index || !value.draft
-  //   );
-  // }
+  filterOutDuplicateDraft(value, index, array) {
+    return (
+      array.findIndex(el => {
+        return el.id === value.id;
+      }) === index || !value.draft
+    );
+  }
 
   _sortItemsForDisplay(items) {
     // Re-sort items in the list so that drafts appear after the message that

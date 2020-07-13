@@ -48,11 +48,15 @@ function handleMetadataExpiration(change) {
     // clear the metadata
     const session = await DraftStore.sessionForClientId(message.headerMessageId);
     session.changes.addPluginMetadata(PLUGIN_ID, { expiration: null });
-    session.changes.commit();
+    session.changes.commit('handleMetaExpiration');
 
     // send the draft
     const actionKey = metadata.actionKey || SendActionsStore.DefaultSendActionKey;
-    Actions.sendDraft(message.headerMessageId, { actionKey, delay: 0, source: 'handleMetadataExpiration' });
+    Actions.sendDraft(message.headerMessageId, {
+      actionKey,
+      delay: 0,
+      source: 'handleMetadataExpiration',
+    });
   });
 }
 

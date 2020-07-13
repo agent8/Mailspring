@@ -197,6 +197,11 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'pastMessageIds',
       queryable: false,
     }),
+    messageReferences: Attributes.Collection({
+      modelKey: 'messageReferences',
+      jsonKey: 'references',
+      queryable: false,
+    }),
     lastSync: Attributes.Number({
       modelKey: 'lastSync',
       queryable: false,
@@ -829,7 +834,7 @@ export default class Message extends ModelWithMetadata {
       (this.from[0].name || '').endsWith('via Mailspring');
     const isDraftBeingDeleted = this.id.startsWith('deleted-');
 
-    return isReminder || isDraftBeingDeleted || this.isCalendarReply();
+    return isReminder || isDraftBeingDeleted || this.isCalendarReply() || this.isDeleted();
   }
 
   setOrigin(val) {

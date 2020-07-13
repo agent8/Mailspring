@@ -185,6 +185,7 @@ load('DebugStore', 'flux/stores/debug-store');
 load('SystemInfoStore', 'flux/stores/system-info-store');
 load('CalendarStore', 'flux/stores/calendar-store');
 load('SiftStore', 'flux/stores/sift-store');
+load('DraftCacheStore', 'flux/stores/draft-cache-store');
 lazyLoad('RuntimeInfoStore', 'flux/stores/runtime-info-store');
 lazyLoad('ThreadStore', 'flux/stores/thread-store');
 lazyLoad('BlockedSendersStore', 'flux/stores/blocked-senders-store');

@@ -1,16 +1,16 @@
 import { ipcRenderer } from 'electron';
-import ChatButton from './lib/chat-button';
-import ChatView from './lib/chat-view';
-import NewConversation from './components/new/NewConversation';
-import ChatViewLeft from './lib/chat-view-left';
-import ChatAccountSidebarFiller from './lib/chat-account-sidebar-filler';
 import { LocalStorage } from 'chat-exports';
-import { ContactModel, AppStore } from 'chat-exports';
+import { AppStore } from 'chat-exports';
 import startXmpp from './xmpp/startXmpp';
 import xmpp from './xmpp';
 import Mousetrap from 'mousetrap';
 import bindMousetrap from './shortcuts/bindMousetrap';
 const { ComponentRegistry, WorkspaceStore } = require('mailspring-exports');
+let ChatButton;
+let ChatView;
+let NewConversation;
+let ChatViewLeft;
+let ChatAccountSidebarFiller;
 
 const osLocale = require('os-locale');
 
@@ -59,6 +59,12 @@ module.exports = {
     LocalStorage.loadFromLocalStorage();
     window.edisonChatServerDiffTime = 0;
     if (true || devMode || isChatTest) {
+      ChatButton = require('./lib/chat-button');
+      ChatView = require('./lib/chat-view');
+      NewConversation = require('./components/new/NewConversation');
+      ChatViewLeft = require('./lib/chat-view-left');
+      ChatAccountSidebarFiller = require('./lib/chat-account-sidebar-filler');
+
       ComponentRegistry.register(ChatView, { location: WorkspaceStore.Location.ChatView });
       ComponentRegistry.register(NewConversation, {
         location: WorkspaceStore.Location.NewConversation,
@@ -88,13 +94,12 @@ module.exports = {
     if (AppEnv.config.get(`core.workspace.enableChat`)) {
       const { devMode } = AppEnv.getLoadSettings();
       if (true || devMode || isChatTest) {
+        ComponentRegistry.unregister(ChatView);
+        ComponentRegistry.unregister(NewConversation);
         if (AppEnv.isMainWindow()) {
           ComponentRegistry.unregister(ChatButton);
           ComponentRegistry.unregister(ChatViewLeft);
           ComponentRegistry.unregister(ChatAccountSidebarFiller);
-        } else {
-          ComponentRegistry.unregister(ChatView);
-          ComponentRegistry.unregister(NewConversation);
         }
       }
     }

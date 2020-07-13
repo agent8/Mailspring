@@ -32,8 +32,8 @@ const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
 export default class MailboxPerspective {
   // Factory Methods
-  static forNothing() {
-    return new EmptyMailboxPerspective();
+  static forNothing(data) {
+    return new EmptyMailboxPerspective(data);
   }
 
   static forSingleAccount(accountId) {
@@ -72,7 +72,39 @@ export default class MailboxPerspective {
   }
 
   static forToday(accountIds) {
-    return new TodayMailboxPerspective(accountIds);
+    const categories = [];
+    accountIds.forEach(accountId => {
+      const account = AccountStore.accountForId(accountId);
+      if (account) {
+        const category = CategoryStore.getCategoryByRole(accountId, 'inbox');
+        if (category) {
+          categories.push(category);
+        }
+      }
+    });
+    if (categories.length === 0) {
+      AppEnv.reportError(new Error('Today view cannot find inbox category'), {
+        errorData: {
+          accountIds,
+          categories: CategoryStore.categories(),
+        },
+      });
+      return this.forNothing();
+    }
+    let ret;
+    try {
+      ret = new TodayMailboxPerspective(categories);
+    } catch (e) {
+      ret = this.forNothing();
+      AppEnv.reportError(new Error('Today view perspective error'), {
+        errorData: {
+          error: e,
+          accountIds,
+          categories: CategoryStore.categories(),
+        },
+      });
+    }
+    return ret;
   }
 
   static forCategory(category) {
@@ -96,13 +128,24 @@ export default class MailboxPerspective {
   }
 
   static forStandardCategories(accountsOrIds, ...names) {
-    // TODO this method is broken
     const categories = CategoryStore.getCategoriesWithRoles(accountsOrIds, ...names);
-    return this.forCategories(categories);
+    if (Array.isArray(categories) && categories.length > 0) {
+      return this.forCategories(categories);
+    } else {
+      return this.forNothing();
+    }
   }
 
-  static forStarred(accountsOrIds) {
-    return new StarredMailboxPerspective(accountsOrIds);
+  static forStarred(accountIds) {
+    if (
+      Array.isArray(accountIds) &&
+      accountIds.length > 0 &&
+      accountIds.every(id => typeof id === 'string')
+    ) {
+      return new StarredMailboxPerspective(accountIds);
+    } else {
+      return this.forNothing();
+    }
   }
 
   static forUnread(categories) {
@@ -217,7 +260,9 @@ export default class MailboxPerspective {
       }
       if (json.type === TodayMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
-        return MailboxPerspective.forToday(categories.map(cat => cat.accountId));
+        if (Array.isArray(categories) && categories.length > 0) {
+          return MailboxPerspective.forToday(categories.map(cat => cat.accountId));
+        }
       }
       if (json.type === AllSentMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -783,8 +828,10 @@ class AttachementMailboxPerspective extends MailboxPerspective {
 }
 
 class EmptyMailboxPerspective extends MailboxPerspective {
-  constructor() {
+  constructor({ name = '', iconName = 'folder.svg' } = {}) {
     super([]);
+    this.name = name;
+    this.iconName = iconName;
   }
 
   threads() {
@@ -1159,17 +1206,7 @@ class AllSentMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 class TodayMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(accountIds) {
-    const categories = [];
-    accountIds.forEach(accountId => {
-      const account = AccountStore.accountForId(accountId);
-      if (account) {
-        const category = CategoryStore.getCategoryByRole(accountId, 'inbox');
-        if (category) {
-          categories.push(category);
-        }
-      }
-    });
+  constructor(categories) {
     super(categories);
     this.name = 'Today';
     this.iconName = 'today.svg';

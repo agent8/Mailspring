@@ -50,6 +50,7 @@ export default class MessageItemBody extends React.Component {
   static displayName = 'MessageItemBody';
   static propTypes = {
     message: PropTypes.object.isRequired,
+    messageIndex: PropTypes.number,
     downloads: PropTypes.object.isRequired,
     calendar: PropTypes.object,
     setTrackers: PropTypes.func,
@@ -171,6 +172,7 @@ export default class MessageItemBody extends React.Component {
           showQuotedText={showQuotedText}
           content={this._mergeBodyWithFiles(processedBody)}
           message={message}
+          messageIndex={this.props.messageIndex}
           viewOriginalEmail={this.props.viewOriginalEmail}
           setTrackers={this.props.setTrackers}
           downloads={downloads}

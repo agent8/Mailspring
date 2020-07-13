@@ -77,6 +77,11 @@ const CreatePageForForm = FormComponent => {
       if (event.target.id.includes('.')) {
         const [parent, key] = event.target.id.split('.');
         next[parent][key] = val;
+        // change emailAddress field
+        if (event.target.id === 'settings.imap_username') {
+          next['emailAddress'] = val;
+          next['name'] = val;
+        }
       } else {
         next[event.target.id] = val;
         // fill name field
@@ -154,9 +159,8 @@ const CreatePageForForm = FormComponent => {
             } else if (/certificate/i.test(err.message)) {
               errorFieldNames.push('settings.imap_allow_insecure_ssl');
               errorFieldNames.push('settings.smtp_allow_insecure_ssl');
-              remote.dialog.showMessageBox(
-                remote.getCurrentWindow(),
-                {
+              remote.dialog
+                .showMessageBox(remote.getCurrentWindow(), {
                   type: 'warning',
                   buttons: ['Go Back', 'Continue'],
                   defaultId: 1,
@@ -232,19 +236,20 @@ const CreatePageForForm = FormComponent => {
         remote.dialog
           .showMessageBox(null, {
             type: 'warning',
-            buttons: ['Go Back', 'Continue'],
-            defaultId: 1,
-            cancelId: 0,
+            buttons: ['Google OAuth', 'Continue', 'Go back'],
+            defaultId: 0,
+            cancelId: 2,
             message: 'Are you sure?',
             detail:
               `This looks like a Gmail account! While it's possible to setup an App ` +
-              `Password and connect to Gmail via IMAP, EdisonMail also supports Google OAuth. Go ` +
-              `back and select "Gmail & Google Apps" from the provider screen.`,
+              `Password and connect to Gmail via IMAP, EdisonMail also supports "Google OAuth".`,
           })
           .then(({ response }) => {
-            if (response === 0) {
+            if (response === 2) {
               OnboardingActions.moveToPage('account-choose');
               return;
+            } else if (response === 0) {
+              OnboardingActions.chooseAccountProvider('gmail');
             } else {
               proceedWithAccount();
             }
@@ -258,7 +263,7 @@ const CreatePageForForm = FormComponent => {
       const { account, submitting } = this.state;
       let buttonLabel = 'Sign In';
       if (account.provider === 'imap' && FormComponent.displayName !== 'AccountIMAPSettingsForm') {
-        buttonLabel = 'Continue'
+        buttonLabel = 'Continue';
       }
 
       // We're not on the last page.
@@ -301,8 +306,7 @@ const CreatePageForForm = FormComponent => {
           'http://support.getmailspring.com/hc/en-us/articles/115001882372-Authorizing-Use-with-Yahoo';
       } else {
         message = 'Some providers require an app password.';
-        articleURL =
-          'https://mailsupport.edison.tech/hc/en-us/articles/360037293392';
+        articleURL = 'https://mailsupport.edison.tech/hc/en-us/articles/360037293392';
       }
       // We don't use a FormErrorMessage component because the content
       // we need to display has HTML.
@@ -342,9 +346,7 @@ const CreatePageForForm = FormComponent => {
             />
             <h2>{providerConfig.displayName}</h2>
           </div>
-          <FormErrorMessage
-            empty={FormComponent.subtitleLabel(providerConfig)}
-          />
+          <FormErrorMessage empty={FormComponent.subtitleLabel(providerConfig)} />
           <FormComponent
             ref={el => {
               this._formEl = el;
@@ -357,22 +359,17 @@ const CreatePageForForm = FormComponent => {
             onConnect={this.onConnect}
             providerConfig={providerConfig}
           />
-          <FormErrorMessage
-            log={errorLog}
-            message={errorMessage}
-          />
+          <FormErrorMessage log={errorLog} message={errorMessage} />
           {/* {this._renderCredentialsNote()} */}
-          <div>
-            {this._renderButton()}
-          </div>
+          <div>{this._renderButton()}</div>
           {providerConfig.twoStep}
-          {
-            submitting && (
-              <LottieImg name='loading-spinner-blue'
-                size={{ width: 24, height: 24 }}
-                style={{ margin: '20px auto 0' }} />
-            )
-          }
+          {submitting && (
+            <LottieImg
+              name="loading-spinner-blue"
+              size={{ width: 24, height: 24 }}
+              style={{ margin: '20px auto 0' }}
+            />
+          )}
         </ScrollRegion>
       );
     }
