@@ -45,7 +45,7 @@ function InflatesDraftClientId(ComposedComponent) {
         !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failing) &&
         !Message.compareMessageState(this.props.draft.state, Message.messageSyncState.failed)
       ) {
-        this._prepareServerDraftForEdit(this.props.draft);
+        this._prepareServerDraftForEdit(this.props.draft, 'didMount');
       } else {
         if (
           this.props.draft &&
@@ -57,7 +57,7 @@ function InflatesDraftClientId(ComposedComponent) {
             { errorData: this.props.draft }
           );
         } else {
-          this._prepareForDraft(this.props.messageId);
+          this._prepareForDraft(this.props.messageId, 'didMount');
         }
       }
     }
@@ -69,7 +69,9 @@ function InflatesDraftClientId(ComposedComponent) {
 
     UNSAFE_componentWillReceiveProps(newProps) {
       if (newProps.messageId !== this.props.messageId) {
-        // console.log(`new props: ${JSON.stringify(newProps)}`);
+        AppEnv.logDebug(
+          `Inflate-Draft:new props: ${newProps.messageId}, oldProps ${this.props.messageId}`
+        );
         this._teardownForDraft({ messageId: this.props.messageId });
         if (
           newProps.draft &&
@@ -78,75 +80,83 @@ function InflatesDraftClientId(ComposedComponent) {
           !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.failing) &&
           !Message.compareMessageState(newProps.draft.state, Message.messageSyncState.failed)
         ) {
-          this._prepareServerDraftForEdit(newProps.draft);
+          this._prepareServerDraftForEdit(newProps.draft, 'receiveProps');
         } else {
-          this._prepareForDraft(newProps.messageId);
+          this._prepareForDraft(newProps.messageId, 'receiveProps');
         }
       }
     }
 
-    _prepareServerDraftForEdit(draft) {
+    _prepareServerDraftForEdit(draft, trace) {
+      AppEnv.logDebug(
+        `Session for server draft ${draft.id}, savedOnRemote ${draft.savedOnRemote}, stack: ${trace}`
+      );
       if (draft.savedOnRemote) {
-        DraftStore.sessionForServerDraft(draft).then(session => {
-          const shouldSetState = () => {
-            if (!session) {
-              AppEnv.reportError(new Error('session not available'));
-              return false;
-            }
-            const newDraft = session.draft();
-            let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
-            if (newDraft && newDraft.refOldDraftMessageId) {
-              sameDraftWithNewID = newDraft.refOldDraftMessageId === this.props.messageId;
-            }
-            return (
-              this._mounted &&
-              (newDraft.refOldDraftMessageId === this.props.messageId || sameDraftWithNewID)
-            );
-          };
-          if (!shouldSetState()) {
-            return;
-          }
-          this._sessionUnlisten = session.listen(() => {
-            // console.log('inflates, data change');
-            if (!shouldSetState()) {
-              console.log('-------------------inflate-draft-cilent-id--------------- ');
-              console.log('did not update state');
-              console.log('------------------------------------- ');
-              return;
-            }
-            if (this._mounted) {
-              this.setState({ draft: session.draft() });
-            }
-          });
-          if (this._mounted) {
-            this.setState({
-              session: session,
-              draft: session.draft(),
-            });
-            this.props.onDraftReady();
-          }
-        });
+        DraftStore.sessionForServerDraft(draft);
+        //   .then(session => {
+        //   const shouldSetState = () => {
+        //     if (!session) {
+        //       AppEnv.reportError(new Error('session not available'));
+        //       return false;
+        //     }
+        //     const newDraft = session.draft();
+        //     let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
+        //     if (newDraft && newDraft.refOldDraftMessageId) {
+        //       sameDraftWithNewID = newDraft.refOldDraftMessageId === this.props.messageId;
+        //     }
+        //     return (
+        //       this._mounted &&
+        //       (newDraft.refOldDraftMessageId === this.props.messageId || sameDraftWithNewID)
+        //     );
+        //   };
+        //   if (!shouldSetState()) {
+        //     return;
+        //   }
+        //   // this._sessionUnlisten = session.listen(() => {
+        //   //   // console.log('inflates, data change');
+        //   //   if (!shouldSetState()) {
+        //   //     console.log('-------------------inflate-draft-cilent-id--------------- ');
+        //   //     console.log('did not update state');
+        //   //     console.log('------------------------------------- ');
+        //   //     return;
+        //   //   }
+        //   //   if (this._mounted) {
+        //   //     console.error(`updated inflate draft ${draft.id}`);
+        //   //     this.setState({ draft: session.draft() });
+        //   //   }
+        //   // });
+        //   if (this._mounted) {
+        //     console.error(`updated inflate draft outside session ${draft.id}`);
+        //     this.setState({
+        //       session: session,
+        //       draft: session.draft(),
+        //     });
+        //     this.props.onDraftReady();
+        //   }
+        // });
       }
     }
 
-    _prepareForDraft(messageId) {
+    _prepareForDraft(messageId, trace) {
       if (!messageId) {
+        AppEnv.logWarning(
+          new Error(`Inflate-Draft:_prepareForDraft: No messageId ${messageId}, stack: ${trace}`)
+        );
         return;
       }
+      AppEnv.logDebug(`Inflate-Draft:_prepareForDraft: ${messageId}, stack: ${trace}`);
       DraftStore.sessionForClientId(messageId).then(session => {
         const shouldSetState = () => {
           if (!session) {
             AppEnv.reportError(new Error('session not available'));
             return false;
           }
-          const draft = session.draft();
-          let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
-          if (draft && draft.refOldDraftMessageId) {
-            sameDraftWithNewID = draft.refOldDraftMessageId === messageId;
-          }
-          return (
-            this._mounted && (session.messageId === this.props.messageId || sameDraftWithNewID)
-          );
+          // const draft = session.draft();
+          // let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
+          // if (draft && draft.refOldDraftMessageId) {
+          //   sameDraftWithNewID = draft.refOldDraftMessageId === messageId;
+          // }
+          return this._mounted && session.messageId === this.props.messageId;
         };
         if (!shouldSetState()) {
           console.log('-------------------inflate-draft-cilent-id--------------- ');
@@ -166,12 +176,14 @@ function InflatesDraftClientId(ComposedComponent) {
             return;
           }
           if (this._mounted) {
+            console.log(`update inflate id ${messageId}`);
             this.setState({ draft: session.draft() });
           } else {
             console.error(`component unmounted, session draft ${session.draft()}`);
           }
         });
         if (this._mounted) {
+          console.log(`update inflate id ${messageId} outside session`);
           this.setState({
             session: session,
             draft: session.draft(),
@@ -197,12 +209,12 @@ function InflatesDraftClientId(ComposedComponent) {
             `MessageId is inconsisstent, input: ${messageId}, state: ${this.state.draft.id}`
           );
         }
-        Actions.draftWindowClosing({
-          messageIds: [messageId],
-          windowLevel: this._windowLevel,
-          source: 'componentWillUnmount',
-        });
       }
+      Actions.draftWindowClosing({
+        messageIds: [messageId],
+        windowLevel: this._windowLevel,
+        source: 'componentWillUnmount',
+      });
     }
 
     // Returns a promise for use in composer/main.es6, to show the window

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import { AccountStore, ContactStore, Actions, SignatureStore } from 'mailspring-exports';
+import { AccountStore, Actions, SignatureStore } from 'mailspring-exports';
 import { Menu, ButtonDropdown, InjectedComponentSet } from 'mailspring-component-kit';
 import { applySignature } from '../../composer-signature/lib/signature-utils';
 
@@ -18,7 +18,7 @@ export default class AccountContactField extends React.Component {
   };
 
   _onChooseContact = async contact => {
-    const { draft, session, onChange } = this.props;
+    const { draft, onChange } = this.props;
     // const { autoaddress } = AccountStore.accountForEmail(contact.email);
 
     // const existing = [].concat(draft.to, draft.cc, draft.bcc).map(c => c.email);
@@ -96,7 +96,10 @@ export default class AccountContactField extends React.Component {
 
   _renderAccountSpan = label => {
     return (
-      <span className="from-accounts from-single-name" style={{ position: 'relative', left: '0.5em' }}>
+      <span
+        className="from-accounts from-single-name"
+        style={{ position: 'relative', left: '0.5em' }}
+      >
         {label}
       </span>
     );

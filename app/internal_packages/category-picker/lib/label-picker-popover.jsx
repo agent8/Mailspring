@@ -48,7 +48,7 @@ export default class LabelPickerPopover extends Component {
   };
 
   _recalculateState = (props = this.props, { searchValue = this.state.searchValue || '' } = {}) => {
-    const { threads } = props;
+    const { threads, account } = props;
 
     if (threads.length === 0) {
       return { categoryData: [], searchValue };
@@ -74,7 +74,25 @@ export default class LabelPickerPopover extends Component {
         id: 'category-create-new',
       });
     }
-    return { categoryData, searchValue };
+
+    // sort the labels that users often use
+    const highFrequencyFolders = account.highFrequencyFolders || [];
+    const heightUsing = [];
+    const lowUsing = [];
+    categoryData.forEach(category => {
+      if (highFrequencyFolders.includes(category.id)) {
+        heightUsing.push(category);
+      } else {
+        lowUsing.push(category);
+      }
+    });
+    const sortMethod = (a, b) => {
+      const aIdx = highFrequencyFolders.indexOf(a.id);
+      const bIdx = highFrequencyFolders.indexOf(b.id);
+      return aIdx - bIdx;
+    };
+    const sortCategoryData = [...heightUsing.sort(sortMethod), ...lowUsing];
+    return { categoryData: sortCategoryData, searchValue };
   };
 
   _onLabelsChanged = categories => {

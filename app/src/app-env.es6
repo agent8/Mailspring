@@ -562,6 +562,21 @@ export default class AppEnvConstructor {
   Section: Event Subscription
   */
 
+  getWindowLevel() {
+    if (this.isComposerWindow()) {
+      return 3;
+    }
+    if (this.isThreadWindow()) {
+      return 2;
+    }
+    if (this.isOnboardingWindow()) {
+      return 4;
+    }
+    if (this.isBugReportingWindow()) {
+      return 5;
+    }
+    return 1;
+  }
   isMainWindow() {
     return !!this.getLoadSettings().mainWindow;
   }
@@ -701,13 +716,7 @@ export default class AppEnvConstructor {
   close(options) {
     if (options) {
       if (!options.windowLevel) {
-        if (this.isComposerWindow()) {
-          options.windowLevel = 3;
-        } else if (this.isThreadWindow()) {
-          options.windowLevel = 2;
-        } else {
-          options.windowLevel = 1;
-        }
+        options.windowLevel = this.getWindowLevel();
       }
       ipcRenderer.send(`close-window`, options);
     } else {
@@ -1393,10 +1402,23 @@ export default class AppEnvConstructor {
     type = 'question',
     buttons = ['Okay', 'Cancel'],
     defaultId = 0,
+    cancelId = 1,
   } = {}) {
     let winToShow = null;
     if (showInMainWindow) {
       winToShow = remote.getGlobal('application').getMainWindow();
+    }
+    if (!Array.isArray(buttons)) {
+      buttons = ['Okay', 'Cancel'];
+    }
+    if (cancelId < 0) {
+      cancelId = 0;
+    }
+    if (cancelId > buttons.length - 1) {
+      cancelId = buttons.length - 1;
+    }
+    if (defaultId < 0 || defaultId > buttons.length - 1) {
+      defaultId = 0;
     }
     return remote.dialog.showMessageBox(winToShow, {
       type,
@@ -1404,6 +1426,7 @@ export default class AppEnvConstructor {
       message: title,
       detail,
       defaultId,
+      cancelId,
     });
   }
 

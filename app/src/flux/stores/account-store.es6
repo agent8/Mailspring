@@ -669,6 +669,28 @@ class AccountStore extends MailspringStore {
   current() {
     throw new Error('AccountStore.current() has been deprecated.');
   }
+
+  setHighFrequencyFolder(aid, folderIdsOrLabelIds=[]) {
+    if (!aid || !folderIdsOrLabelIds.length) {
+      return
+    }
+    const account = this.accountForId(aid)
+    const newHighFrequencyFolders = [...folderIdsOrLabelIds, ...(account.highFrequencyFolders || [])]
+    const accoundHighFrequencyFolders = [...new Set(newHighFrequencyFolders)].slice(0,5)
+    this._onUpdateAccount(aid, {
+      ...account,
+      highFrequencyFolders: accoundHighFrequencyFolders
+    })
+  }
+
+  getHighFrequencyFolder(aid) {
+    if (!aid) {
+      return []
+    }
+    const account = this.accountForId(aid)
+    return account.highFrequencyFolders || []
+  }
+
 }
 
 export default new AccountStore();

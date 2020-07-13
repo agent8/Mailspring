@@ -2,6 +2,9 @@ import path from 'path';
 import fs from 'fs';
 import { ipcRenderer, remote } from 'electron';
 import _ from 'underscore';
+// import DestroyDraftTask from './tasks/destroy-draft-task';
+// import RestoreDraftTask from './tasks/restore-draft-task';
+// import SyncbackDraftTask from './tasks/syncback-draft-task';
 
 import Task from './tasks/task';
 import SetObservableRange from './models/set-observable-range';
@@ -665,6 +668,28 @@ export default class MailsyncBridge {
         ipcRenderer.sendSync(`mainProcess-sync-call`, task.needToBroadcastBeforeSendTask);
       }
     }
+    // if (
+    //   task instanceof SyncbackDraftTask ||
+    //   task instanceof DestroyDraftTask ||
+    //   task instanceof RestoreDraftTask
+    // ) {
+    //   AppEnv.logDebug(`delaying syncback/destroy draft tasks`);
+    //   setTimeout(() => {
+    //     task.willBeQueued();
+    //
+    //     task.status = Task.Status.Local;
+    //     task.origin = new Error().stack
+    //       .split('\n')
+    //       .slice(2)
+    //       .join('\n');
+    //     this.sendMessageToAccount(
+    //       task.accountId,
+    //       { type: 'queue-task', task: task },
+    //       task.mailsyncMode
+    //     );
+    //   }, 5000);
+    //   return;
+    // }
 
     task.willBeQueued();
 
