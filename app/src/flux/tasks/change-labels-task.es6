@@ -92,7 +92,10 @@ export default class ChangeLabelsTask extends ChangeMailTask {
       this.labelsToRemove = ret;
 
       // Remember the labels that users often use
-      AccountStore.setHighFrequencyFolder(this.accountId, this.labelsToAdd.map(label => label.id));
+      AccountStore.setHighFrequencyFolder(
+        this.accountId,
+        this.labelsToAdd.map(label => label.id).reverse()
+      );
     }
   }
 
