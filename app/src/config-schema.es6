@@ -241,7 +241,7 @@ export default {
       },
       fontface: {
         type: 'string',
-        default: 'sans-serif'
+        default: 'sans-serif',
       },
       composing: {
         type: 'object',
@@ -497,7 +497,7 @@ export default {
           },
           mailAction5: {
             type: 'string',
-            default: 'spam',
+            default: 'folder',
             enum: emailActionValues,
             enumLabels: emailActionLabels,
             title: 'Action 5',

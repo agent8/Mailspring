@@ -2,6 +2,7 @@ import ChangeMailTask from './change-mail-task';
 import Attributes from '../attributes';
 import Folder from '../models/folder';
 import Category from '../models/category';
+import AccountStore from '../stores/account-store';
 
 // Public: Create a new task to apply labels to a message or thread.
 //
@@ -56,6 +57,9 @@ export default class ChangeFolderTask extends ChangeMailTask {
     if (this.folder && !(this.folder instanceof Category)) {
       throw new Error('ChangeFolderTask: You must provide a single folder.');
     }
+
+    // Remember the folder that users often use
+    AccountStore.setHighFrequencyFolder(this.accountId, [this.folder.id]);
   }
 
   label() {

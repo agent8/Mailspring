@@ -86,6 +86,9 @@ export default class Account extends ModelWithMetadata {
     notifacation: Attributes.Object({
       modelKey: 'notifacation',
     }),
+    highFrequencyFolders: Attributes.Object({
+      modelKey: 'highFrequencyFolders',
+    }),
   });
 
   constructor(args) {
