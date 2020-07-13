@@ -25,6 +25,7 @@ import ConfigMigrator from './config-migrator';
 import ApplicationMenu from './application-menu';
 import ApplicationTouchBar from './application-touch-bar';
 import AutoUpdateManager from './autoupdate-manager';
+import SecurityScopedResource from './security-scoped-resource';
 import SystemTrayManager from './system-tray-manager';
 import MailspringProtocolHandler from './mailspring-protocol-handler';
 import ConfigPersistenceManager from './config-persistence-manager';
@@ -88,6 +89,8 @@ export default class Application extends EventEmitter {
     if (initializeInBackground === undefined) {
       initializeInBackground = false;
     }
+
+    this.securityScopedResource = new SecurityScopedResource({ configDirPath });
 
     await this.oneTimeMoveToApplications();
     await this.oneTimeAddToDock();
