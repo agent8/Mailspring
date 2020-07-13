@@ -65,10 +65,10 @@ class MovePicker extends React.Component {
       if (topSheet && topSheet.id === 'Threads' && !inThreadList) {
         return;
       }
-      if (inMessageList) {
-        next();
-      } else if (threadListAnchor && inThreadList) {
+      if (threadListAnchor && inThreadList) {
         next(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+      } else {
+        next();
       }
     } else {
       if (inMessageList && threadListAnchor) {
