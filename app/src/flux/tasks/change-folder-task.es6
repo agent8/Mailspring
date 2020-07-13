@@ -59,7 +59,9 @@ export default class ChangeFolderTask extends ChangeMailTask {
     }
 
     // Remember the folder that users often use
-    AccountStore.setHighFrequencyFolder(this.accountId, [this.folder.id]);
+    if (this.folder) {
+      AccountStore.setHighFrequencyFolder(this.accountId, [this.folder.id]);
+    }
   }
 
   label() {
