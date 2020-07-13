@@ -65,10 +65,10 @@ class MovePicker extends React.Component {
       if (topSheet && topSheet.id === 'Threads' && !inThreadList) {
         return;
       }
-      if (inMessageList) {
-        next();
-      } else if (threadListAnchor && inThreadList) {
+      if (threadListAnchor && inThreadList) {
         next(null, threadListAnchor, threadSelectionScope(this.props, this.selection));
+      } else {
+        next();
       }
     } else {
       if (inMessageList && threadListAnchor) {
@@ -183,7 +183,10 @@ class MovePicker extends React.Component {
       />,
       {
         isFixedToWindow: true,
-        originRect: this._labelEl ? this._labelEl.getBoundingClientRect() : {},
+        originRect: {
+          top: 0,
+          left: 0,
+        },
         position: { top: '13%', left: '49%' },
         disablePointer: true,
       }
@@ -201,7 +204,10 @@ class MovePicker extends React.Component {
       />,
       {
         isFixedToWindow: true,
-        originRect: this._moveEl.getBoundingClientRect(),
+        originRect: {
+          top: 0,
+          left: 0,
+        },
         position: { top: '13%', left: '49%' },
         disablePointer: true,
       }
