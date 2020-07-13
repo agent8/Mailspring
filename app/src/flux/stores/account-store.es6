@@ -675,7 +675,7 @@ class AccountStore extends MailspringStore {
       return
     }
     const account = this.accountForId(aid)
-    const newHighFrequencyFolders = [...folderIdsOrLabelIds.reverse(), ...(account.highFrequencyFolders || [])]
+    const newHighFrequencyFolders = [...folderIdsOrLabelIds, ...(account.highFrequencyFolders || [])]
     const accoundHighFrequencyFolders = [...new Set(newHighFrequencyFolders)].slice(0,5)
     this._onUpdateAccount(aid, {
       ...account,
