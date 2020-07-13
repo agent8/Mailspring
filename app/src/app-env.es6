@@ -1279,9 +1279,6 @@ export default class AppEnvConstructor {
             stopAccessingSecurityScopedResource = this.startAccessingForFile(downloadPath);
             const fileOldName = path.basename(options.defaultPath || 'untitled');
             const fileNewName = autoGenerateFileName(downloadPath, fileOldName);
-            if (stopAccessingSecurityScopedResource) {
-              stopAccessingSecurityScopedResource();
-            }
             resolve(path.join(downloadPath, fileNewName));
           } else {
             resolve('');
@@ -1289,10 +1286,11 @@ export default class AppEnvConstructor {
           }
           return;
         } catch (e) {
+          this.logError(e);
+        } finally {
           if (stopAccessingSecurityScopedResource) {
             stopAccessingSecurityScopedResource();
           }
-          this.logError(e);
         }
       }
 
@@ -1329,9 +1327,6 @@ export default class AppEnvConstructor {
             stopAccessingSecurityScopedResource = this.startAccessingForFile(downloadPath);
             // test accessing
             fs.readdirSync(downloadPath);
-            if (stopAccessingSecurityScopedResource) {
-              stopAccessingSecurityScopedResource();
-            }
             resolve(downloadPath);
           } else {
             resolve('');
@@ -1339,10 +1334,11 @@ export default class AppEnvConstructor {
           }
           return;
         } catch (e) {
+          this.logError(e);
+        } finally {
           if (stopAccessingSecurityScopedResource) {
             stopAccessingSecurityScopedResource();
           }
-          this.logError(e);
         }
       }
 
