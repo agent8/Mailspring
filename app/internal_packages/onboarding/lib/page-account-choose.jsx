@@ -32,7 +32,7 @@ export default class AccountChoosePage extends React.Component {
   }
 
   _renderProviders() {
-    return AccountProviders.map(({ icon, displayName, provider }) => (
+    return AccountProviders.filter(({ hide }) => !hide).map(({ icon, displayName, provider }) => (
       <div
         key={provider}
         className={`provider ${provider}`}
