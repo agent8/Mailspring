@@ -90,7 +90,7 @@ class ComponentRegistry extends MailspringStore {
   }
 
   unregister(component) {
-    if (typeof component === 'string') {
+    if (!component || typeof component === 'string') {
       throw new Error('ComponentRegistry.unregister() must be called with a component.');
     }
     this._cache = {};

@@ -36,6 +36,9 @@ export default class CancelOutboxDraftTask extends Task {
       messageIds: this.messageIds,
     });
   }
+  onCancelled() {
+    this.onError({});
+  }
 
   onError({ key, debuginfo, retryable }) {
     if (!retryable) {

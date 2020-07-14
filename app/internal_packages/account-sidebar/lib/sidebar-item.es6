@@ -6,14 +6,13 @@ const { OutlineViewItem, RetinaImg } = require('mailspring-component-kit');
 const {
   MailboxPerspective,
   FocusedPerspectiveStore,
-  SyncbackCategoryTask,
   DestroyCategoryTask,
   CategoryStore,
   WorkspaceStore,
   Actions,
-  RegExpUtils,
   AccountStore,
   DatabaseStore,
+  TaskFactory,
 } = require('mailspring-exports');
 
 const SidebarActions = require('./sidebar-actions');
@@ -183,14 +182,15 @@ const onEditItem = function(item, newEnteredValue, originalText) {
   if (newDisplayName === category.displayName) {
     return;
   }
-  Actions.queueTask(
-    SyncbackCategoryTask.forRenaming({
-      accountId: category.accountId,
-      path: category.path,
-      newName: newDisplayName,
-      isExchange: account && account.provider.includes('exchange'),
-    })
-  );
+  const task = TaskFactory.tasksForRenamingPath({
+    existingPath: category.path,
+    newName: newDisplayName,
+    accountId: category.accountId,
+    isExchange: account && account.provider.includes('exchange'),
+  });
+  if (task) {
+    Actions.queueTask(task);
+  }
 };
 
 class SidebarItem {
@@ -667,7 +667,7 @@ class SidebarItem {
     }
     const isExchange = account.provider.includes('exchange');
     const seenItems = {};
-    seenItems[CategoryStore.decodePath(path).toLocaleLowerCase()] = parentPerspective;
+    seenItems[CategoryStore.decodePath(path)] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
       // https://regex101.com/r/jK8cC2/1
       let item, parentKey;
@@ -694,7 +694,7 @@ class SidebarItem {
           // if (path === 'bba.d' && itemKey === 'bba.d/a1') {
           //   debugger;
           // }
-          parent = seenItems[parentKey.toLocaleLowerCase()];
+          parent = seenItems[parentKey];
         }
         // for (let i = parentComponents.length; i >= 1; i--) {
         //   parentKey = parentComponents.slice(0, i).join(category.delimiter);
