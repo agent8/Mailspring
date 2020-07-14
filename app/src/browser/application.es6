@@ -1032,7 +1032,15 @@ export default class Application extends EventEmitter {
     }
     this._onAppRelaunch = true;
     this.windowManager.destroyAllWindows();
-    app.relaunch();
+    if (!process.mas) {
+      app.relaunch();
+    } else {
+      dialog.showMessageBoxSync({
+        type: 'info',
+        buttons: ['Okay'],
+        message: 'Please restart Edison Mail manually.',
+      });
+    }
     app.quit();
   };
 
