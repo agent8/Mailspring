@@ -1197,7 +1197,10 @@ export default class AppEnvConstructor {
 
   showOpenDialog(options, callback) {
     return remote.dialog
-      .showOpenDialog(this.getCurrentWindow(), { ...options, securityScopedBookmarks: true })
+      .showOpenDialog(this.getCurrentWindow(), {
+        ...options,
+        securityScopedBookmarks: !!process.mas,
+      })
       .then(({ canceled, filePaths, bookmarks }) => {
         if (canceled) {
           callback(null);
@@ -1298,7 +1301,7 @@ export default class AppEnvConstructor {
         ...options,
         defaultPath: options.defaultPath || this.getDownloadsPath(),
         title: options.title || 'Save File',
-        securityScopedBookmarks: true,
+        securityScopedBookmarks: !!process.mas,
       };
       remote.dialog
         .showSaveDialog(this.getCurrentWindow(), optionTmp)
@@ -1347,7 +1350,7 @@ export default class AppEnvConstructor {
         defaultPath: options.defaultPath || this.getDownloadsPath(),
         title: options.title || 'Save Into...',
         properties: ['openDirectory', 'createDirectory'],
-        securityScopedBookmarks: true,
+        securityScopedBookmarks: !!process.mas,
       };
 
       return remote.dialog
