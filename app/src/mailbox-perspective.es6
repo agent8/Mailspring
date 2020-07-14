@@ -858,7 +858,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     if (this._categories.length === 0) {
       throw new Error('CategoryMailboxPerspective: You must provide at least one category.');
     }
-
+    this._parseCategories();
+  }
+  _parseCategories = () => {
     // Note: We pick the display name and icon assuming that you won't create a
     // perspective with Inbox and Sent or anything crazy like that... todo?
     this.name = this._categories[0].displayName;
@@ -881,7 +883,17 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         new InboxMailboxOtherPerspective(this._categories),
       ];
     }
-  }
+  };
+  updateCategories = categories => {
+    if (!Array.isArray(categories) || categories.length === 0) {
+      AppEnv.logError(
+        new Error('CategoryMailboxPerspective: You must provide at least one category.')
+      );
+      return;
+    }
+    this._categories = categories;
+    this.name = this._categories[0].displayName;
+  };
 
   toJSON() {
     const json = super.toJSON();
