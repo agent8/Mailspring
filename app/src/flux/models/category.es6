@@ -265,6 +265,99 @@ export default class Category extends Model {
   isDeleted() {
     return this.state === 1;
   }
+  areStrangers(otherCategory) {
+    if (!(otherCategory instanceof Category)) {
+      return false;
+    }
+    if (this.accountId !== otherCategory.accountId) {
+      //Since this relationship only applies to same account,
+      return false;
+    }
+    const currentLayers = this.displayName.split(this.delimiter);
+    const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
+    return otherLayers[0] !== currentLayers[0];
+  }
+  isParentOf(otherCategory) {
+    if (!(otherCategory instanceof Category)) {
+      return false;
+    }
+    if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    const currentLayers = this.displayName.split(this.delimiter);
+    const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
+    if (otherLayers.length - 1 !== currentLayers.length) {
+      return false;
+    }
+    return (
+      otherLayers.length - 1 === currentLayers.length &&
+      otherCategory.displayName.startsWith(this.displayName) &&
+      this.displayName.length ===
+        otherCategory.displayName.length -
+          otherLayers[otherLayers.length - 1].length -
+          otherCategory.delimiter.length
+    );
+  }
+  isAncestorOf(otherCategory) {
+    if (!(otherCategory instanceof Category)) {
+      return false;
+    }
+    if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    const currentLayers = this.displayName.split(this.delimiter);
+    const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
+    return (
+      otherLayers.length - currentLayers.length >= 2 &&
+      this.displayName === otherLayers.slice(0, currentLayers.length).join(this.delimiter)
+    );
+  }
+  areSiblings(otherCategory) {
+    if (!(otherCategory instanceof Category)) {
+      return false;
+    }
+    if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    const currentLayers = this.displayName.split(this.delimiter);
+    const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
+    if (otherLayers.length !== currentLayers.length) {
+      return false;
+    }
+    if (currentLayers.length > 1) {
+      const indexOfLastCurrentLayer = this.displayName.lastIndexOf(
+        currentLayers[currentLayers.length - 1]
+      );
+      if (indexOfLastCurrentLayer === -1) {
+        return false;
+      }
+      const indexOfLastOtherLayer = otherCategory.displayName.lastIndexOf(
+        otherLayers[otherLayers.length - 1]
+      );
+      if (indexOfLastOtherLayer === -1) {
+        return false;
+      }
+      const currentParentName = this.displayName.slice(0, indexOfLastCurrentLayer);
+      const otherParentName = otherCategory.displayName.slice(0, indexOfLastOtherLayer);
+      return currentParentName === otherParentName;
+    } else {
+      return false;
+    }
+  }
+  areRelatives(otherCategory) {
+    if (!(otherCategory instanceof Category)) {
+      return false;
+    }
+    if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    return (
+      !this.areStrangers(otherCategory) &&
+      !this.isAncestorOf(otherCategory) &&
+      !this.isParentOf(otherCategory) &&
+      !this.areSiblings(otherCategory)
+    );
+  }
 
   isArchive() {
     return ['all', 'archive'].includes(this.role);

@@ -76,11 +76,17 @@ export default class ComposerEditor extends React.Component {
 
   focus = () => {
     const { onChange, value } = this.props;
+    const defaultFont = AppEnv.config.get('core.fontface') || 'sans-serif';
     onChange(
       value
         .change()
         .selectAll()
         .collapseToStart()
+        .addMark({
+          object: 'mark',
+          type: 'face',
+          data: { value: defaultFont },
+        })
         .focus()
     );
   };

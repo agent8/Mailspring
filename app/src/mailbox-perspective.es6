@@ -32,8 +32,8 @@ const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
 export default class MailboxPerspective {
   // Factory Methods
-  static forNothing() {
-    return new EmptyMailboxPerspective();
+  static forNothing(data) {
+    return new EmptyMailboxPerspective(data);
   }
 
   static forSingleAccount(accountId) {
@@ -535,9 +535,18 @@ export default class MailboxPerspective {
     if (this.categoriesSharedRole() === 'trash') {
       return true;
     }
+
     // if searching in trash
     if (this.sourcePerspective && this.sourcePerspective.categoriesSharedRole() === 'trash') {
       return true;
+    }
+    // Searching if current category decent of trash
+    const categories = this.categories();
+    if (Array.isArray(categories) && categories.length === 1 && categories[0]) {
+      const trashFolder = CategoryStore.getTrashCategory(categories[0].accountId);
+      if (trashFolder) {
+        return trashFolder.isParentOf(categories[0]) || trashFolder.isAncestorOf(categories[0]);
+      }
     }
     return false;
   }
@@ -828,10 +837,10 @@ class AttachementMailboxPerspective extends MailboxPerspective {
 }
 
 class EmptyMailboxPerspective extends MailboxPerspective {
-  constructor() {
+  constructor({ name = '', iconName = 'folder.svg' } = {}) {
     super([]);
-    this.name = 'Empty';
-    this.iconName = 'folder.svg';
+    this.name = name;
+    this.iconName = iconName;
   }
 
   threads() {
@@ -858,7 +867,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     if (this._categories.length === 0) {
       throw new Error('CategoryMailboxPerspective: You must provide at least one category.');
     }
-
+    this._parseCategories();
+  }
+  _parseCategories = () => {
     // Note: We pick the display name and icon assuming that you won't create a
     // perspective with Inbox and Sent or anything crazy like that... todo?
     this.name = this._categories[0].displayName;
@@ -881,7 +892,17 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         new InboxMailboxOtherPerspective(this._categories),
       ];
     }
-  }
+  };
+  updateCategories = categories => {
+    if (!Array.isArray(categories) || categories.length === 0) {
+      AppEnv.logError(
+        new Error('CategoryMailboxPerspective: You must provide at least one category.')
+      );
+      return;
+    }
+    this._categories = categories;
+    this.name = this._categories[0].displayName;
+  };
 
   toJSON() {
     const json = super.toJSON();

@@ -17,6 +17,7 @@ export default class MessageItemContainer extends React.Component {
   static propTypes = {
     thread: PropTypes.object.isRequired,
     message: PropTypes.object.isRequired,
+    messageIndex: PropTypes.number,
     messages: PropTypes.array.isRequired,
     collapsed: PropTypes.bool,
     isMostRecent: PropTypes.bool,
@@ -94,6 +95,7 @@ export default class MessageItemContainer extends React.Component {
         disableDraftEdit={disableDraftEdit}
         thread={this.props.thread}
         message={this.props.message}
+        messageIndex={this.props.messageIndex}
         messages={this.props.messages}
         className={this._classNames()}
         collapsed={this.props.collapsed}
