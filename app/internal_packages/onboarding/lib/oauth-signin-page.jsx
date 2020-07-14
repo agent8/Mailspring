@@ -425,7 +425,7 @@ export default class OAuthSignInPage extends React.Component {
           {serviceName === 'office365' && (
             <a
               className="sign-with-imap"
-              onClick={() => OnboardingActions.chooseAccountProvider('imap')}
+              onClick={() => OnboardingActions.chooseAccountProvider('office365')}
             >
               Want to sign in with username/password?
             </a>
