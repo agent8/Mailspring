@@ -12,6 +12,7 @@ import ExpungeMessagesTask from './expunge-messages-task';
 import DestroyDraftTask from './destroy-draft-task';
 import CancelOutboxDraftTask from './cancel-outbox-draft-task';
 import SyncbackCategoryTask from './syncback-category-task';
+import { bannedPathNames } from '../../constant';
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -392,6 +393,15 @@ const TaskFactory = {
   },
 
   tasksForRenamingPath({ existingPath, newName, accountId, isExchange = false } = {}) {
+    if (bannedPathNames.includes(newName)) {
+      AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in banned`);
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `${newName} is a reserved path`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     const existingCategories = CategoryStore.categories(accountId);
     if (existingCategories.length > 0) {
       for (let i = 0; i < existingCategories.length; i++) {
@@ -412,6 +422,15 @@ const TaskFactory = {
     return SyncbackCategoryTask.forRenaming({ path: existingPath, accountId, newName, isExchange });
   },
   tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
+    if (bannedPathNames.includes(name)) {
+      AppEnv.logWarning(`TaskFactory:Creating folder ${name} is in banned`);
+      AppEnv.showMessageBox({
+        title: 'Cannot creatie',
+        detail: `${name} is a reserved path`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     const existingCategories = CategoryStore.categories(accountId);
     if (existingCategories.length > 0) {
       for (let i = 0; i < existingCategories.length; i++) {
