@@ -54,14 +54,15 @@ const AccountProviders = [
     color: '#0078d7',
     twoStep,
   },
-  // {
-  //   provider: 'office365',
-  //   displayName: 'Office365',
-  //   icon: 'account-logo-office365.png',
-  //   headerIcon: 'setup-icon-provider-office365.png',
-  //   color: '#D83B01',
-  //   twoStep,
-  // },
+  {
+    provider: 'office365',
+    displayName: 'Office365',
+    icon: 'account-logo-office365.png',
+    headerIcon: 'setup-icon-provider-office365.png',
+    color: '#D83B01',
+    twoStep,
+    hide: true,
+  },
   {
     provider: 'office365-exchange',
     displayName: 'Office365',
