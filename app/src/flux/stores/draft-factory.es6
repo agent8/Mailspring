@@ -209,7 +209,7 @@ class DraftFactory {
 
     const merged = Object.assign(defaults, fields);
     if (!merged.threadId) {
-      merged.threadId = `T${uniqueId}`;
+      merged.threadId = AppEnv.getDisableThread() ? uniqueId : `T${uniqueId}`;
     }
     // if (merged.replyToMessageId) {
     //   merged.referenceMessageId = merged.replyToMessageId;
