@@ -18,7 +18,7 @@ const FormErrorMessage = props => {
     };
     rawLogLink = (
       <a href="" onClick={onViewLog} style={{ paddingLeft: 5 }}>
-        Error details: {log}
+        Error details: {log}. {message}
       </a>
     );
   }
