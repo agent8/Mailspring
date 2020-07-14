@@ -363,7 +363,8 @@ class Actions {
   Actions.composeReply({threadId: '123', messageId: '123'})
   ```
   */
-  static composeReply = ActionScopeMainWindow;
+  static composeReply = ActionScopeWindow;
+  static composeReplyMainWindow = ActionScopeMainWindow;
 
   /*
   Change the account of current draft.
@@ -391,7 +392,8 @@ class Actions {
 
   *Scope: Window*
   */
-  static composeForward = ActionScopeMainWindow;
+  static composeForward = ActionScopeWindow;
+  static composeForwardMainWindow = ActionScopeMainWindow;
 
   /*
   Public: Send a draft created action back to components, so disabled buttons can be enabled.

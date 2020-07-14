@@ -125,6 +125,15 @@ const mergeDefaultBccAndCCs = async (message, account) => {
 };
 
 class DraftFactory {
+  getBlankContentWithDefaultFontFamily() {
+    const defaultFont = AppEnv.config.get('core.fontface') || 'sans-serif';
+    return `
+    <font style="font-family:${defaultFont}">
+      ${'\u200b'}
+      <br/>
+    </font>
+    `;
+  }
   static updateFiles(message, refMessageIsDraft = false, noCopy = false) {
     if (!message) {
       return;
@@ -180,7 +189,7 @@ class DraftFactory {
     // const uniqueId = `${Math.floor(Date.now() / 1000)}.${Utils.generateTempId()}`;
     const uniqueId = uuid();
     const defaults = {
-      body: '<br/>',
+      body: `${this.getBlankContentWithDefaultFontFamily()}`,
       subject: '',
       version: 0,
       unread: false,
@@ -476,7 +485,7 @@ class DraftFactory {
     }
     const accountId = findAccountIdFrom(message, thread);
     const body = `
-        <br/>
+        ${this.getBlankContentWithDefaultFontFamily()}
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
           message.replyAttributionLine()
         )}</div>
@@ -541,7 +550,7 @@ class DraftFactory {
       msgOrigin: Message.ForwardDraft,
       pastMessageIds: [message.id],
       body: `
-        <br/>
+        ${this.getBlankContentWithDefaultFontFamily()}
         <div class="gmail_quote">
           <br>
           ---------- Forwarded message ---------
