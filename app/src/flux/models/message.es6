@@ -295,6 +295,7 @@ export default class Message extends ModelWithMetadata {
     threadId: Attributes.String({
       queryable: true,
       loadFromColumn: true,
+      jsModelKey: 'threadId',
       modelKey: isMessageView ? 'pid' : 'threadId',
     }),
 
