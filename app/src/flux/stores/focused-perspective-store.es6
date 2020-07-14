@@ -169,6 +169,8 @@ class FocusedPerspectiveStore extends MailspringStore {
       this._initializeFromSavedState();
     } else if (!this._isValidPerspective(this._current)) {
       this._setPerspective(this._defaultPerspective(this._current.accountIds));
+    } else {
+      this._onCurrentPerspectiveCategoryNameChange();
     }
   };
 
@@ -324,6 +326,30 @@ class FocusedPerspectiveStore extends MailspringStore {
     const accountsIds = AccountStore.accountIds();
     const perspective = this._defaultPerspective(accountsIds);
     this._setPerspective(perspective, accountsIds || perspective.accountIds, true);
+  };
+  _onCurrentPerspectiveCategoryNameChange = () => {
+    const currentPerspective = this.current();
+    const currentSidebar = this.currentSidebar();
+    const updatePerspective = perspective => {
+      if (perspective && typeof perspective.updateCategories === 'function') {
+        const categories = perspective.categories();
+        if (Array.isArray(categories) && categories.length === 1) {
+          const currentCategory = categories[0];
+          if (currentCategory && !currentCategory.role) {
+            const newCategory = CategoryStore.byId(currentCategory.accountId, currentCategory.id);
+            if (newCategory && newCategory.displayName !== currentCategory.displayName) {
+              perspective.updateCategories([newCategory]);
+              return true;
+            }
+          }
+        }
+      }
+    };
+    let changed = updatePerspective(currentPerspective);
+    changed = changed || updatePerspective(currentSidebar);
+    if (changed) {
+      this.trigger();
+    }
   };
 
   refreshPerspectiveMessages({ perspective = null, source = 'folderItem' } = {}) {
