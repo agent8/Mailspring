@@ -19,11 +19,11 @@ export default class SecurityScopedResource {
         return;
       }
       const json = JSON.parse(fs.readFileSync(this.bookMarkFilePath));
-      if (!json || !json['bookMarks'] || !Array.isArray(json['bookMarks'])) {
+      if (!json || !json['bookMarks']) {
         return;
       }
-      json['bookMarks'].forEach(bookmarkData => {
-        const { path, bookMark } = bookmarkData;
+      Object.keys(json['bookMarks']).forEach(path => {
+        const bookMark = json['bookMarks'][path];
         if (!this.bookMarkMapForPath.get(path)) {
           this.bookMarkMapForPath.set(path, bookMark);
         }
@@ -41,14 +41,11 @@ export default class SecurityScopedResource {
   }
 
   save() {
-    const bookMarks = [];
+    const bookMarks = {};
     this.bookMarkMapForPath.forEach((bookMark, path) => {
-      bookMarks.push({
-        path,
-        bookMark,
-      });
+      bookMarks[path] = bookMark;
     });
-    const allSettings = { bookMarks: bookMarks };
+    const allSettings = { bookMarks };
     const allSettingsJSON = JSON.stringify(allSettings, null, 2);
     try {
       atomicWriteFileSync(this.bookMarkFilePath, allSettingsJSON);
