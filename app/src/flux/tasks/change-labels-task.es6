@@ -1,6 +1,8 @@
+import Category from '../models/category';
 import Label from '../models/label';
 import ChangeMailTask from './change-mail-task';
 import Attributes from '../attributes';
+import AccountStore from '../stores/account-store';
 
 // Public: Create a new task to apply labels to a message or thread.
 //
@@ -21,6 +23,81 @@ export default class ChangeLabelsTask extends ChangeMailTask {
       itemClass: Label,
     }),
   });
+  constructor(data) {
+    super(data);
+    if (data) {
+      let ret = [];
+      (data.labelsToAdd || []).forEach(i => {
+        if (i) {
+          if (i instanceof Category && typeof i.isLabel === 'function' && i.isLabel()) {
+            if (!i.id) {
+              AppEnv.reportError(
+                new Error(
+                  `ChangeLabelsTask: Labels to add contains label without id, source: ${data.source}`
+                ),
+                { errorData: data }
+              );
+            } else {
+              ret.push(i);
+            }
+          } else {
+            AppEnv.reportError(
+              new Error(
+                `ChangeLabelsTask: Labels to add contains none Label, source: ${data.source}`
+              ),
+              { errorData: data }
+            );
+          }
+        } else {
+          AppEnv.reportError(
+            new Error(
+              `ChangeLabelsTask: Labels to add contains null items, source: ${data.source}`
+            ),
+            { errorData: data }
+          );
+        }
+      });
+      this.labelsToAdd = ret;
+      ret = [];
+      (data.labelsToRemove || []).forEach(i => {
+        if (i) {
+          if (i instanceof Category && typeof i.isLabel === 'function' && i.isLabel()) {
+            if (!i.id) {
+              AppEnv.reportError(
+                new Error(
+                  `ChangeLabelsTask: Labels to remove contains label without id, source: ${data.source}`
+                ),
+                { errorData: data }
+              );
+            } else {
+              ret.push(i);
+            }
+          } else {
+            AppEnv.reportError(
+              new Error(
+                `ChangeLabelsTask: Labels to remove contains none Label, source: ${data.source}`
+              ),
+              { errorData: data }
+            );
+          }
+        } else {
+          AppEnv.reportError(
+            new Error(
+              `ChangeLabelsTask: Labels to remove contains null items, source: ${data.source}`
+            ),
+            { errorData: data }
+          );
+        }
+      });
+      this.labelsToRemove = ret;
+
+      // Remember the labels that users often use
+      AccountStore.setHighFrequencyFolder(
+        this.accountId,
+        this.labelsToAdd.map(label => label.id).reverse()
+      );
+    }
+  }
 
   label() {
     return 'Applying labels';

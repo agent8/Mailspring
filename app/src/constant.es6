@@ -11,6 +11,8 @@ export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
 
+export const bannedPathNames = ['Trash', 'Spam', 'Inbox', 'All Mail', 'Sent'];
+
 export function macOSVersion() {
   let userAgent;
   if (process.type === 'renderer') {

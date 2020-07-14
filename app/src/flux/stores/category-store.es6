@@ -7,6 +7,7 @@ import Category from '../models/category';
 import Actions from '../actions';
 import FolderState from '../models/folder-state';
 import Folder from '../models/folder';
+import crypto from 'crypto';
 const asAccount = a => {
   if (!a) {
     throw new Error('You must pass an Account or Account Id');
@@ -195,7 +196,10 @@ class CategoryStore extends MailspringStore {
         if (parentComponents.length > 1) {
           let k = 1;
           while (!parent && k <= parentComponents.length - 1) {
-            parent = this.getCategoryByPath(parentComponents.slice(0, k).join(category.delimiter));
+            parent = this.getCategoryByPath(
+              parentComponents.slice(0, k).join(category.delimiter),
+              account.id
+            );
             if (parent && parent.role === 'inbox') {
               parent = null;
             }
@@ -283,21 +287,98 @@ class CategoryStore extends MailspringStore {
       this.trigger();
     }
   };
+  _generateParents(category, stopAtAncestor = 0) {
+    if (!category.selectable || !!category.role) {
+      return [];
+    }
+    const paths = category.path.split(category.delimiter);
+    const ret = [];
+    if (paths.length > 1) {
+      let i = paths.length - 2;
+      while (i >= 0 && i >= stopAtAncestor) {
+        const path = paths.slice(0, i + 1).join(category.delimiter);
+        const id = crypto
+          .createHash('md5')
+          .update(`${category.accountId}${path}`)
+          .digest('hex');
+        ret.unshift(
+          new Folder({
+            id,
+            path,
+            accountId: category.accountId,
+            name: path,
+            type: category.type,
+            selectable: false,
+            delimiter: category.delimiter,
+            state: 0,
+            role: '',
+          })
+        );
+        i--;
+      }
+    }
+    return ret;
+  }
+  _createMissingParentPathAfterSortedByName(categories) {
+    if (!Array.isArray(categories) || categories.length === 0) {
+      return [];
+    }
+    if (categories.length === 1) {
+      return this._generateParents(categories[0]);
+    }
+    const ret = [];
+    let lastCategory = categories[categories.length - 1];
+    let lastLayers = lastCategory.displayName.split(lastCategory.delimiter);
+    ret.push(lastCategory);
+    for (let i = categories.length - 2; i > -1; i--) {
+      const cat = categories[i];
+      if (cat) {
+        const layers = cat.displayName.split(cat.delimiter);
+        if (cat.selectable && !cat.role) {
+          if (cat.areStrangers(lastCategory)) {
+            ret.unshift(...this._generateParents(lastCategory));
+          } else if (cat.isAncestorOf(lastCategory)) {
+            const tmp = this._generateParents(lastCategory, layers.length);
+            // console.warn(cat, 'is ancestor of ', lastCategory, tmp);
+            ret.unshift(...tmp);
+          } else if (cat.areRelatives(lastCategory)) {
+            let k = 0;
+            while (layers[k] === lastLayers[k] && k < layers.length && k < lastLayers.length) {
+              k++;
+            }
+            const tmp = this._generateParents(lastCategory, k);
+            // console.warn(cat, 'are relatives', lastCategory, k, tmp);
+            ret.unshift(...tmp);
+          } else if (cat.areSiblings(lastCategory)) {
+            // console.warn(cat, 'are siblings', lastCategory);
+          } else if (cat.isParentOf(lastCategory)) {
+            // console.warn(cat, 'is parent of', lastCategory);
+          } else {
+            // console.error('should not happen', lastCategory, cat);
+          }
+        }
+        ret.unshift(cat);
+        lastCategory = cat;
+        lastLayers = layers;
+      }
+    }
+    if (ret[0] && ret[0].selectable && !ret[0].role) {
+      ret.unshift(...this._generateParents(ret[0]));
+    }
+    return ret;
+  }
 
   _onCategoriesChanged = (categories, accountId = '') => {
-    console.log('On Categories change');
     if (!this._categoryResult) {
       this._categoryResult = [];
     }
-    if (accountId) {
-      this._categoryResult = this._categoryResult.filter(cat => cat.accountId !== accountId);
-      this._categoryResult = this._categoryResult.concat(categories);
-    } else {
-      this._categoryResult = categories;
-    }
-    const categoryCache = {};
+    const sortByName = (a, b) => {
+      return (a.name || '').localeCompare(b.name || '');
+    };
+
+    const categoryResults = {};
     for (const cat of categories) {
-      categoryCache[cat.accountId] = categoryCache[cat.accountId] || {};
+      categoryResults[cat.accountId] = categoryResults[cat.accountId] || [];
       // don't overwrite bgColor
       const oldCat = this._categoryCache[cat.accountId]
         ? this._categoryCache[cat.accountId][cat.id]
@@ -305,49 +386,82 @@ class CategoryStore extends MailspringStore {
       if (oldCat && oldCat.bgColor && oldCat.id === cat.id) {
         cat.bgColor = oldCat.bgColor;
       }
-      categoryCache[cat.accountId][cat.id] = cat;
+      categoryResults[cat.accountId].push(cat);
       this._onCategoryFinishedSyncing(cat, false);
     }
+    const categoryCache = {};
+    Object.keys(categoryResults).forEach(accountId => {
+      categoryResults[accountId].sort(sortByName);
+      const account = AccountStore.accountForId(accountId);
+      const isExchange = account && account.provider.includes('exchange');
+      if (!isExchange) {
+        categoryResults[accountId] = this._createMissingParentPathAfterSortedByName(
+          categoryResults[accountId]
+        );
+      }
+      categoryCache[accountId] = {};
+      Object.values(categoryResults[accountId]).forEach(cat => {
+        categoryCache[accountId][cat.id] = cat;
+      });
+    });
     if (accountId) {
-      this._categoryCache[accountId] = categoryCache[accountId];
+      this._categoryResult = this._categoryResult.filter(cat => cat.accountId !== accountId);
+      const cats = categoryResults[accountId];
+      if (Array.isArray(cats) && cats.length > 0) {
+        this._categoryResult = this._categoryResult.concat(cats);
+      }
+    } else {
+      this._categoryResult = [];
+      Object.keys(categoryResults).forEach(accountId => {
+        const cats = categoryResults[accountId];
+        if (Array.isArray(cats) && cats.length > 0) {
+          this._categoryResult = this._categoryResult.concat(cats);
+        }
+      });
+    }
+    if (accountId) {
+      this._categoryCache[accountId] = categoryCache[accountId] || {};
     } else {
       this._categoryCache = categoryCache;
     }
 
-    const filteredByAccount = fn => {
-      const result = {};
-      for (const cat of categories) {
-        if (!fn(cat)) {
-          continue;
-        }
-        result[cat.accountId] = result[cat.accountId] || [];
-        result[cat.accountId].push(cat);
+    const filteredByAccount = accountId => {
+      const cats = categoryResults[accountId];
+      if (!Array.isArray(cats) || cats.length === 0) {
+        return;
       }
-      return result;
-    };
-    const sortByName = (a, b) => {
-      return (a.name || '').localeCompare(b.name || '');
+      if (!this._standardCategories) {
+        this._standardCategories = {};
+      }
+      this._standardCategories[accountId] = [];
+      if (!this._userCategories) {
+        this._userCategories = {};
+      }
+      this._userCategories[accountId] = [];
+      if (!this._hiddenCategories) {
+        this._hiddenCategories = {};
+      }
+      this._hiddenCategories[accountId] = [];
+      for (const cat of cats) {
+        if (cat && cat.isStandardCategory()) {
+          this._standardCategories[accountId].push(cat);
+        }
+        if (cat && cat.isUserCategory()) {
+          this._userCategories[accountId].push(cat);
+        }
+        if (cat && cat.isHiddenCategory()) {
+          this._hiddenCategories[accountId].push(cat);
+        }
+      }
     };
     if (accountId) {
-      this._standardCategories[accountId] = filteredByAccount(
-        cat => cat && cat.isStandardCategory()
-      )[accountId];
-      const userCategories = filteredByAccount(cat => cat && cat.isUserCategory())[accountId];
-      this._userCategories[accountId] = Array.isArray(userCategories)
-        ? userCategories.sort(sortByName)
-        : userCategories;
-      this._hiddenCategories[accountId] = filteredByAccount(cat => cat && cat.isHiddenCategory())[
-        accountId
-      ];
+      filteredByAccount(accountId);
     } else {
-      this._standardCategories = filteredByAccount(cat => cat && cat.isStandardCategory());
-      this._userCategories = filteredByAccount(cat => cat && cat.isUserCategory());
-      Object.values(this._userCategories).forEach(cats => {
-        if (Array.isArray(cats)) {
-          cats.sort(sortByName);
+      Object.keys(categoryResults).forEach(id => {
+        if (id) {
+          filteredByAccount(id);
         }
       });
-      this._hiddenCategories = filteredByAccount(cat => cat && cat.isHiddenCategory());
     }
 
     // Ensure standard categories are always sorted in the correct order

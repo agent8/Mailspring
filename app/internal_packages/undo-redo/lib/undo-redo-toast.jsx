@@ -25,61 +25,6 @@ function isUndoSend(block) {
     block.tasks[0] instanceof SendDraftTask
   );
 }
-//
-// function getUndoSendExpiration(block) {
-//   return block.tasks[0].value.expiration * 1000;
-// }
-//
-// function getDisplayDuration(block) {
-//   return isUndoSend(block) ? Math.max(400, getUndoSendExpiration(block) - Date.now()) : 3000;
-// }
-
-// class Countdown extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.animationDuration = `${props.expiration - Date.now()}ms`;
-//     this.state = { x: 0 };
-//   }
-//
-//   UNSAFE_componentWillReceiveProps(nextProps) {
-//     if (nextProps.expiration !== this.props.expiration) {
-//       this.animationDuration = `${nextProps.expiration - Date.now()}ms`;
-//     }
-//   }
-//
-//   componentDidMount() {
-//     this._tickStart = setTimeout(() => {
-//       this.setState({ x: this.state.x + 1 });
-//       this._tick = setInterval(() => {
-//         this.setState({ x: this.state.x + 1 });
-//       }, 1000);
-//     }, this.props.expiration % 1000);
-//   }
-//
-//   componentWillUnmount() {
-//     clearTimeout(this._tickStart);
-//     clearInterval(this._tick);
-//   }
-//
-//   render() {
-//     // subtract a few ms so we never round up to start time + 1 by accident
-//     let diff = Math.min(
-//       Math.max(0, this.props.expiration - Date.now()),
-//       AppEnv.config.get('core.task.delayInMs')
-//     );
-//
-//     return (
-//       <div className="countdown">
-//         <div className="countdown-number">{Math.ceil(diff / 1000)}</div>
-//         {diff > 0 && (
-//           <svg>
-//             <circle r="14" cx="15" cy="15" style={{ animationDuration: this.animationDuration }} />
-//           </svg>
-//         )}
-//       </div>
-//     );
-//   }
-// }
 
 class BasicContent extends React.Component {
   constructor(props) {
@@ -140,7 +85,7 @@ class BasicContent extends React.Component {
             name="close_1.svg"
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
-            onClick={() => onClose()}
+            onClick={() => onClose(this.props.block)}
           />
           <div className="undo-action-text" onClick={() => UndoRedoStore.undo({ block })}>
             Undo
@@ -154,11 +99,6 @@ class BasicContent extends React.Component {
 class UndoSendContent extends BasicContent {
   constructor(props) {
     super(props);
-    this.state = { sendStatus: 'sending', failedDraft: null };
-    this.unlisten = [
-      Actions.draftDeliverySucceeded.listen(this.onSendSuccess, this),
-      Actions.draftDeliveryFailed.listen(this.onSendFailed, this),
-    ];
     this.timer = null;
     this.mounted = false;
   }
@@ -166,39 +106,21 @@ class UndoSendContent extends BasicContent {
   componentDidMount() {
     this.mounted = true;
   }
+  componentWillReceiveProps(nextProps, nextContext) {
+    if (nextProps.block && this.props.block && nextProps.block.id !== this.props.block.id) {
+      clearTimeout(this.timer);
+    }
+  }
 
   componentWillUnmount() {
     this.mounted = false;
     clearTimeout(this.timer);
-    for (let unlisten of this.unlisten) {
-      unlisten();
-    }
   }
-
-  onSendSuccess = ({ messageId }) => {
-    if (this.mounted && messageId && this.props.block.tasks[0].modelMessageId === messageId) {
-      this.setState({ sendStatus: 'success' });
-      clearTimeout(this.timer);
-      this.timer = setTimeout(() => {
-        this.props.onClose(true);
-      }, 3000);
-    }
-  };
-
-  onSendFailed = ({ messageId, draft }) => {
-    if (this.mounted && messageId && this.props.block.tasks[0].modelMessageId === messageId) {
-      this.setState({ sendStatus: 'failed', failedDraft: draft });
-      clearTimeout(this.timer);
-      this.timer = setTimeout(() => {
-        this.props.onClose(true);
-      }, 10000);
-    }
-  };
 
   onActionClicked = () => {
     if (!this.props.block.due) {
       UndoRedoStore.undo({ block: this.props.block });
-    } else if (this.state.sendStatus === 'failed') {
+    } else if (this.props.block.sendStatus === 'failed') {
       clearTimeout(this.timer);
       if (this._getAdditionalFailedCount() > 0) {
         setTimeout(() => {
@@ -222,19 +144,22 @@ class UndoSendContent extends BasicContent {
           });
         }, 300);
       }
-      this.props.onClose(true);
+      this.props.onClose(this.props.block, true);
     }
   };
 
-  renderActionArea(block) {
-    if (!block.due) {
+  renderActionArea() {
+    if (!this.props.block) {
+      return null;
+    }
+    if (!this.props.block.due) {
       return (
         <div className="undo-action-text" onClick={this.onActionClicked}>
           Undo
         </div>
       );
     }
-    if (this.state.sendStatus === 'failed') {
+    if (this.props.block.sendStatus === 'failed') {
       const additionalFailed = this._getAdditionalFailedCount();
       return (
         <div className="undo-action-text" onClick={this.onActionClicked}>
@@ -249,8 +174,8 @@ class UndoSendContent extends BasicContent {
     clearTimeout(this.timer);
   };
   onMouseLeave = () => {
-    if (this.state.sendStatus !== 'sending') {
-      this.timer = setTimeout(() => this.props.onClose(), 400);
+    if (this.props.block.sendStatus !== 'sending') {
+      this.timer = setTimeout(() => this.props.onClose(this.props.block), 400);
     }
   };
   _getAdditionalFailedCount = () => {
@@ -266,8 +191,8 @@ class UndoSendContent extends BasicContent {
   };
 
   _generateFailedSendDraftMessage() {
-    if (this.state.failedDraft) {
-      const { to, bcc, cc } = this.state.failedDraft;
+    if (this.props.block.failedDraft) {
+      const { to, bcc, cc } = this.props.block.failedDraft;
       let recipiant;
       if (to.length > 0) {
         recipiant = to[0];
@@ -285,16 +210,18 @@ class UndoSendContent extends BasicContent {
   }
 
   render() {
-    const block = this.props.block;
+    if (!this.props.block) {
+      return <span />;
+    }
     let messageStatus = 'Sending message...';
-    if (this.state.sendStatus === 'success') {
+    if (this.props.block.sendStatus === 'success') {
       messageStatus = 'Message sent.';
-    } else if (this.state.sendStatus === 'failed') {
+    } else if (this.props.block.sendStatus === 'failed') {
       messageStatus = this._generateFailedSendDraftMessage();
     }
     return (
       <div
-        className={`content ${this.state.sendStatus === 'failed' ? 'failed' : ''}`}
+        className={`content ${this.props.block.sendStatus === 'failed' ? 'failed' : ''}`}
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
       >
@@ -304,9 +231,9 @@ class UndoSendContent extends BasicContent {
             name="close_1.svg"
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
-            onClick={() => this.props.onClose()}
+            onClick={() => this.props.onClose(this.props.block)}
           />
-          {this.renderActionArea(block)}
+          {this.renderActionArea(this.props.block)}
         </div>
       </div>
     );
@@ -335,7 +262,9 @@ export default class UndoRedoToast extends React.Component {
       if (!this._mounted) {
         return;
       }
-      const blocks = UndoRedoStore.getUndos();
+      const blocks = UndoRedoStore.getUndos({
+        critical: AppEnv.config.get('core.task.undoQueueOnlyShowOne') ? 1 : 0,
+      });
       this.setState({
         blocks: [...blocks.critical, ...blocks.high, ...blocks.medium, ...blocks.low],
       });
@@ -393,7 +322,7 @@ export default class UndoRedoToast extends React.Component {
                   block={block}
                   onMouseEnter={this._onMouseEnter}
                   onMouseLeave={this._onMouseLeave}
-                  onClose={this._closeToaster.bind(this, block)}
+                  onClose={this._closeToaster}
                 />
               );
             })}

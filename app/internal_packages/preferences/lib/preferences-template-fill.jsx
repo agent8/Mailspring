@@ -161,6 +161,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.reading.autoloadImages',
               keywords: [],
             },
+            {
+              label: 'When I reply to a message, automatically open my reply in a new window',
+              configSchema: configSchema =>
+                configSchema.properties.reading.properties.openReplyInNewWindow,
+              keyPath: 'core.reading.openReplyInNewWindow',
+              keywords: [],
+            },
             // {
             //   label: 'Use the backspace/delete key to move emails to the trash',
             //   configSchema: configSchema =>

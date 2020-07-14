@@ -236,6 +236,11 @@ export default {
             default: false,
             title: 'Display conversations in descending chronological order',
           },
+          openReplyInNewWindow: {
+            type: 'boolean',
+            default: false,
+            title: 'Open reply in new window',
+          },
         },
       },
       fontface: {
@@ -496,7 +501,7 @@ export default {
           },
           mailAction5: {
             type: 'string',
-            default: 'spam',
+            default: 'folder',
             enum: emailActionValues,
             enumLabels: emailActionLabels,
             title: 'Action 5',
