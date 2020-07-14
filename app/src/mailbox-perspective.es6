@@ -535,9 +535,18 @@ export default class MailboxPerspective {
     if (this.categoriesSharedRole() === 'trash') {
       return true;
     }
+
     // if searching in trash
     if (this.sourcePerspective && this.sourcePerspective.categoriesSharedRole() === 'trash') {
       return true;
+    }
+    // Searching if current category decent of trash
+    const categories = this.categories();
+    if (Array.isArray(categories) && categories.length === 1 && categories[0]) {
+      const trashFolder = CategoryStore.getTrashCategory(categories[0].accountId);
+      if (trashFolder) {
+        return trashFolder.isParentOf(categories[0]) || trashFolder.isAncestorOf(categories[0]);
+      }
     }
     return false;
   }
