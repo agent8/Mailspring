@@ -303,17 +303,37 @@ export function TrashButton(props) {
     if (!Array.isArray(labelIds) || !accountId) {
       return false;
     }
+    const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
+    const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
-      .every(folder => folder.role === 'trash' || folder.role === 'spam');
+      .every(
+        folder =>
+          folder.role === 'trash' ||
+          folder.role === 'spam' ||
+          (trashCategory &&
+            (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))) ||
+          (spamCategory && (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder)))
+      );
   };
   const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
     if (!Array.isArray(labelIds) || !accountId) {
       return false;
     }
+    const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
+    const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
-      .some(folder => folder.role !== 'trash' && folder.role !== 'spam');
+      .some(
+        folder =>
+          folder.role !== 'trash' &&
+          folder.role !== 'spam' &&
+          !(
+            trashCategory &&
+            (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
+          ) &&
+          !(spamCategory && (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder)))
+      );
   };
   const isMixed = threads => {
     let notInTrashOrSpam = undefined;
@@ -354,7 +374,10 @@ export function TrashButton(props) {
   }
   let actionCallBack = null;
   let title;
-  if (canMove) {
+  if (canExpunge) {
+    actionCallBack = _onShortCutExpunge;
+    title = 'Expunge Thread';
+  } else if (canMove) {
     actionCallBack = _onShortCutRemove;
     title = 'Move to Trash';
     if (
@@ -366,9 +389,6 @@ export function TrashButton(props) {
       actionCallBack = _onShortCutExpunge;
       title = 'Expunge Thread';
     }
-  } else if (canExpunge) {
-    actionCallBack = _onShortCutExpunge;
-    title = 'Expunge Thread';
   }
   if (isInSearch(props) && !props.thread) {
     const threads = threadSelectionScope(props, props.selection);
