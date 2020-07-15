@@ -43,13 +43,17 @@ class ThreadListStore extends MailspringStore {
     const threadsSubscription = FocusedPerspectiveStore.current().threads();
     if (threadsSubscription) {
       this._dataSource = new ThreadListDataSource(threadsSubscription);
-      this._dataSourceUnlisten = this._dataSource.listen(this._onDataChanged, this);
+      this._dataSourceUnlisten = this._dataSource.listen(this._onDataChanged);
     } else {
       this._dataSource = new ListTabular.DataSource.Empty();
     }
 
     this.trigger(this);
-    Actions.setFocus({ collection: 'thread', item: null, reason: 'onCreateThreadListDataSource' });
+    Actions.setFocus({
+      collection: 'thread',
+      item: null,
+      reason: 'ThreadListStore:onCreateThreadListDataSource',
+    });
   };
 
   selectionObservable = () => {
@@ -79,37 +83,27 @@ class ThreadListStore extends MailspringStore {
       const keyboard = FocusedContentStore.keyboardCursor('thread');
       // If next query returns empty results, we set all focus to null;
       if (next.empty() || next._ids.length === 0) {
-        AppEnv.logDebug('Next query returns empty results');
         Actions.setFocus({
           collection: 'thread',
           item: null,
-          reason: 'Next query returns empty results',
+          reason: 'ThreadListStore:Next query returns empty results',
         });
         Actions.setCursorPosition({ collection: 'thread', item: null });
         return;
       }
-      const viewModeAutofocuses =
-        WorkspaceStore.layoutMode() === 'split' || WorkspaceStore.topSheet().root === true;
 
+      // const topSheet = WorkspaceStore.topSheet();
+      // const layoutMode = WorkspaceStore.layoutMode();
+      // const viewModeAutofocuses =
+      //   (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
       const nextQ = next.query();
       const matchers = nextQ && nextQ.matchers();
 
       const focusedIndex = focused ? previous.offsetOfId(focused.id) : -1;
       const keyboardIndex = keyboard ? previous.offsetOfId(keyboard.id) : -1;
-
       const nextItemFromIndex = i => {
-        let nextIndex;
-        if (
-          i > 0 &&
-          ((next.modelAtOffset(i - 1) && next.modelAtOffset(i - 1).unread) || i >= next.count())
-        ) {
-          nextIndex = i - 1;
-        } else {
-          nextIndex = i;
-        }
-
-        // May return null if no thread is loaded at the next index
-        return next.modelAtOffset(nextIndex);
+        const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
+        return ThreadListDataSource.nextItemFromIndex(i, next, nextAction);
       };
 
       const notInSet = function(model) {
@@ -120,9 +114,13 @@ class ThreadListStore extends MailspringStore {
         }
       };
 
-      if (viewModeAutofocuses && focused && notInSet(focused)) {
+      if (focused && notInSet(focused)) {
         // Actions.setFocus({ collection: 'thread', item: null });
-        Actions.setFocus({ collection: 'thread', item: nextItemFromIndex(focusedIndex) });
+        Actions.setFocus({
+          collection: 'thread',
+          item: nextItemFromIndex(focusedIndex),
+          reason: 'ThreadlistStore:onDataChange',
+        });
       }
 
       if (keyboard && notInSet(keyboard)) {
