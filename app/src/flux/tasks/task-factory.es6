@@ -445,6 +445,7 @@ const TaskFactory = {
       if (!provider) {
         AppEnv.reportError(new Error('no provider found'), {
           errorData: {
+            currentPerspective: currentPerspective.toJSON(),
             accountId: accountId,
             previousFolder: previousFolder,
           },
