@@ -540,14 +540,18 @@ export default class MailboxPerspective {
     if (this.sourcePerspective && this.sourcePerspective.categoriesSharedRole() === 'trash') {
       return true;
     }
-    // Searching if current category decent of trash
+
     const categories = this.categories();
     if (Array.isArray(categories) && categories.length === 1 && categories[0]) {
-      const trashFolder = CategoryStore.getTrashCategory(categories[0].accountId);
-      if (trashFolder) {
-        return trashFolder.isParentOf(categories[0]) || trashFolder.isAncestorOf(categories[0]);
+      const category = categories[0];
+      const trashCategory = CategoryStore.getCategoryByRole(category.accountId, 'trash');
+      if (trashCategory) {
+        if (trashCategory.isParentOf(category) || trashCategory.isAncestorOf(category)) {
+          return true;
+        }
       }
     }
+
     return false;
   }
 
@@ -1024,85 +1028,6 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       previousFolder,
       source: 'Dragged into List',
     });
-    // if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
-    //   // dragging from a label into All Mail? Make this an "archive" by removing the
-    //   // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
-    //   return [
-    //     new ChangeLabelsTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       labelsToAdd: [],
-    //       labelsToRemove: [currentCat],
-    //       previousFolder,
-    //     }),
-    //   ];
-    // }
-    // if(myCat.isLabel() && currentCat && currentCat.isLabel() && (currentCat.role === 'important' || currentCat.role === 'flagged')){
-    //   return [
-    //       new ChangeLabelsTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       labelsToAdd: [myCat],
-    //       labelsToRemove: [],
-    //       previousFolder,
-    //     })
-    //     ]
-    // }
-    // if (myCat.isFolder()) {
-    //   // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
-    //   return [
-    //     new ChangeFolderTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       folder: myCat,
-    //       previousFolder,
-    //     }),
-    //   ];
-    // }
-    //
-    // if (myCat.isLabel() && currentCat && currentCat.isFolder()) {
-    //   // dragging from trash or spam into a label? We need to both apply the label and
-    //   // move to the "All Mail" folder.
-    //   if (currentCat.role === 'all') {
-    //     return [
-    //       new ChangeLabelsTask({
-    //         threads,
-    //         source: 'Dragged into list',
-    //         labelsToAdd: [myCat],
-    //         labelsToRemove: [],
-    //         previousFolder,
-    //       })];
-    //   }
-    //   return [
-    //     new ChangeFolderTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       folder: myCat,
-    //       currentPerspective: current,
-    //     }),
-    //   ];
-    // }
-    // // label to label
-    // if(myCat.role === 'inbox'){
-    //   return [
-    //     new ChangeLabelsTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       labelsToAdd: [myCat],
-    //       labelsToRemove: [],
-    //       previousFolder,
-    //     }),
-    //   ];
-    // }
-    // return [
-    //   new ChangeLabelsTask({
-    //     threads,
-    //     source: 'Dragged into list',
-    //     labelsToAdd: [myCat],
-    //     labelsToRemove: currentCat ? [currentCat] : [],
-    //     previousFolder,
-    //   }),
-    // ];
   }
 
   // Public:

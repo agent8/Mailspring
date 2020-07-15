@@ -958,7 +958,8 @@ export default class MailsyncBridge {
       const accounts = AppEnv.config.get('accounts');
       if (Array.isArray(accounts)) {
         for (let acc of accounts) {
-          if (acc.id === task.aid || acc.id === task.accountId) {
+          const accountId = acc.id || acc.pid;
+          if (accountId && (accountId === task.aid || accountId === task.accountId)) {
             errorAccount = AppEnv.anonymizeAccount(acc);
             break;
           }
@@ -1059,16 +1060,16 @@ export default class MailsyncBridge {
     );
   };
 
-  _getFocusedThreadId = () => {
+  _getFocusedThreadId = accountId => {
     const currentThread = FocusedContentStore().focused('thread');
-    if (currentThread) {
+    if (currentThread && currentThread.accountId === accountId) {
       return currentThread.id;
     }
     return null;
   };
-  _getOpenThreadWindowIds = () => {
+  _getOpenThreadWindowIds = accountId => {
     const threadIds = [];
-    const openWindows = AppEnv.getOpenWindows();
+    const openWindows = AppEnv.getOpenWindowsByAccountId(accountId);
     if (Array.isArray(openWindows)) {
       openWindows.forEach(win => {
         if (win && win.windowKey && win.windowKey.includes('thread-')) {
@@ -1324,11 +1325,11 @@ export default class MailsyncBridge {
       this._cachedObservableThreadIds,
       this._cachedObservableTTL
     );
-    const currentThreadId = this._getFocusedThreadId();
+    const currentThreadId = this._getFocusedThreadId(accountId);
     if (currentThreadId) {
       threadIds.push(currentThreadId);
     }
-    const openThreadWindowIds = this._getOpenThreadWindowIds();
+    const openThreadWindowIds = this._getOpenThreadWindowIds(accountId);
     if (Array.isArray(openThreadWindowIds)) {
       threadIds.push(...openThreadWindowIds);
     }
