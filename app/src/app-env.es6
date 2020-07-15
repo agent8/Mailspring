@@ -793,6 +793,12 @@ export default class AppEnvConstructor {
       return [];
     }
   }
+  getOpenWindowsByAccountId(accountId) {
+    if (!accountId) {
+      return [];
+    }
+    return remote.getGlobal('application').windowManager.findWindowsByAccountId(accountId);
+  }
   getOpenWindowsCountByAccountId(accountId) {
     if (!accountId) {
       return;
