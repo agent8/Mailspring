@@ -230,7 +230,11 @@ class WorkspaceStore extends MailspringStore {
     this._rebuildShortcuts();
     this.popToRootSheet({ reason: 'WorkspaceStore:onSelectLayoutMode' });
     if (focused) {
-      Actions.setFocus({ collection: 'thread', item: focused });
+      Actions.setFocus({
+        collection: 'thread',
+        item: focused,
+        reason: 'WorkspaceStore:_onSelectLayoutMode',
+      });
       Actions.setCursorPosition({ collection: 'thread', item: focused });
     }
     this.trigger();
@@ -401,7 +405,7 @@ class WorkspaceStore extends MailspringStore {
       }, 150);
     }
     if (Sheet.Thread && sheet === Sheet.Thread) {
-      Actions.setFocus({ collection: 'thread', item: null });
+      Actions.setFocus({ collection: 'thread', item: null, reason: 'WorkspaceStore:popSheet' });
     }
   };
 
@@ -421,7 +425,11 @@ class WorkspaceStore extends MailspringStore {
       }
     }, 150);
     if (Sheet.Thread && sheet === Sheet.Thread) {
-      Actions.setFocus({ collection: 'thread', item: null });
+      Actions.setFocus({
+        collection: 'thread',
+        item: null,
+        reason: 'WorkspaceStore:popToRootSheet',
+      });
     }
   };
 }

@@ -4,36 +4,22 @@ import {
   PropTypes,
   TaskFactory,
   FocusedPerspectiveStore,
-  FocusedContentStore,
   CategoryStore,
-  ChangeMailTask,
-  WorkspaceStore,
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 const ToolbarCategoryPicker = require('../../category-picker/lib/toolbar-category-picker');
-const nextActionForTrashOrArchive = task => {
-  const focusedThread = FocusedContentStore.focused('thread');
-  if (focusedThread && task instanceof ChangeMailTask) {
-    if (task.threadIds.includes(focusedThread.id)) {
-      const topSheet = WorkspaceStore.topSheet();
-      const layoutMode = WorkspaceStore.layoutMode();
-      if (
-        topSheet &&
-        (topSheet.id === 'Threads' || topSheet.id === 'Sift') &&
-        layoutMode === 'list'
-      ) {
-        return;
-      }
-      const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
-      AppEnv.logDebug(`nextAction on removeFromView: ${nextAction} for ${focusedThread.id}`);
-      if (nextAction === 'next') {
-        AppEnv.commands.dispatch('core:show-next');
-      } else if (nextAction === 'previous') {
-        AppEnv.commands.dispatch('core:show-previous');
-      }
-    }
-  }
-};
+// const nextActionForTrashOrArchive = ({ source, affectedItems } = {}) => {
+//   const focusedThread = FocusedContentStore.focused('thread');
+//   const topSheet = WorkspaceStore.topSheet();
+//   const layoutMode = WorkspaceStore.layoutMode();
+//   // AppEnv.nextActionAfterRemoveFromView({
+//   //   source,
+//   //   affectedItems,
+//   //   currentFocus: focusedThread,
+//   //   topSheet,
+//   //   layoutMode,
+//   // });
+// };
 class ThreadMoveQuickAction extends ToolbarCategoryPicker {
   render() {
     if (!this._account) {
@@ -119,9 +105,12 @@ class ThreadArchiveQuickAction extends React.Component {
       });
     }
     Actions.queueTasks(tasks);
-    if (tasks.length > 0) {
-      nextActionForTrashOrArchive(tasks[0]);
-    }
+    // if (tasks.length > 0) {
+    //   nextActionForTrashOrArchive({
+    //     source: 'Quick Actions: Thread List: Archive',
+    //     affectedItems: [this.props.thread],
+    //   });
+    // }
     // Don't trigger the thread row click
     event.stopPropagation();
   };
@@ -218,7 +207,10 @@ class ThreadTrashQuickAction extends React.Component {
     });
     if (Array.isArray(tasks) && tasks.length > 0) {
       Actions.queueTasks(tasks);
-      nextActionForTrashOrArchive(tasks[0]);
+      // nextActionForTrashOrArchive({
+      //   source: 'Quick Actions: Thread List: Expunge',
+      //   affectedItems: [this.props.thread],
+      // });
     }
     // Don't trigger the thread row click
     event.stopPropagation();
@@ -245,9 +237,12 @@ class ThreadTrashQuickAction extends React.Component {
       });
     }
     Actions.queueTasks(tasks);
-    if (tasks.length > 0) {
-      nextActionForTrashOrArchive(tasks[0]);
-    }
+    // if (tasks.length > 0) {
+    //   nextActionForTrashOrArchive({
+    //     source: 'Quick Actions: Thread List: Trash',
+    //     affectedItems: [this.props.thread],
+    //   });
+    // }
     // Don't trigger the thread row click
     event.stopPropagation();
   };

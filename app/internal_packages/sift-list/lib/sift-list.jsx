@@ -88,10 +88,14 @@ class SiftList extends React.Component {
     return { className: classes };
   };
   _onFocusItem = (message, queryDB = true) => {
-    Actions.setFocus({ collection: 'sift', item: message });
+    Actions.setFocus({ collection: 'sift', item: message, reason: 'SiftList:onFocusItem' });
     if (queryDB) {
       ThreadStore.findBy({ threadId: message.threadId }).then(result => {
-        Actions.setFocus({ collection: 'thread', item: result });
+        Actions.setFocus({
+          collection: 'thread',
+          item: result,
+          reason: 'SiftList:onFocusItem:dbResult',
+        });
       });
       this._onSetCursorPosition(message, false);
     }

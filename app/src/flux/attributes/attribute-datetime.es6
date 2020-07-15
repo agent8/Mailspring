@@ -12,17 +12,17 @@ export default class AttributeDateTime extends Attribute {
       return null;
     }
     if (!(val instanceof Date) && isFinite(val)) {
-      console.warn('converting val from integer to Date');
+      // console.warn('converting val from integer to Date');
       val = new Date(val);
     }
     if (!(val instanceof Date)) {
-      console.warn('converting val from string to Date');
+      // console.warn('converting val from string to Date');
       val = Date.parse(val);
       if (!isFinite(val)) {
         AppEnv.reportError(
           new Error(
-            `Attempting to toJSON AttributeDateTime which is not a date: ${this.modelKey} = ${val}`,
-          ),
+            `Attempting to toJSON AttributeDateTime which is not a date: ${this.modelKey} = ${val}`
+          )
         );
         return null;
       }
