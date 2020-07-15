@@ -392,7 +392,6 @@ class MessageStore extends MailspringStore {
 
   _onDataChanged(change) {
     if (!this._thread) return;
-
     if (change.objectClass === Message.name) {
       const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
       if (!inDisplayedThread && change.type === 'persist') return;
@@ -425,7 +424,14 @@ class MessageStore extends MailspringStore {
         this.trigger();
       }
       if (messages.length !== drafts.length) {
-        this._fetchFromCache();
+        const newMessages = messages.some(
+          msg => !msg.draft && !msg.ignoreSift && !this._items.find(m => m.id === msg.id)
+        );
+        if (newMessages) {
+          AppEnv.logDebug(`New message found for ${this.threadId()}`);
+          this._resetAutoMarkAsRead();
+        }
+        this._fetchFromCache({ skipAutoMarkAsRead: true });
       }
       this._closeWindowIfNoMessage();
       return;
@@ -449,7 +455,7 @@ class MessageStore extends MailspringStore {
         }
         query.then(thread => {
           this._updateThread(thread);
-          this._fetchFromCache();
+          this._fetchFromCache({ skipAutoMarkAsRead: true });
         });
       }
       this._closeWindowIfNoMessage();
@@ -583,7 +589,7 @@ class MessageStore extends MailspringStore {
 
     this._setWindowTitle();
 
-    this._fetchFromCache();
+    this._fetchFromCache({ skipAutoMarkAsRead: false });
     this._closeWindowIfNoMessage();
     if (AppEnv.isThreadWindow()) {
       DraftCacheStore.getDraftsFromMain();
@@ -712,12 +718,12 @@ class MessageStore extends MailspringStore {
     }
     if (dataChange) {
       console.warn(`attachment cache updated`);
-      this._fetchFromCache();
+      this._fetchFromCache({ skipAutoMarkAsRead: true });
       return;
     }
   };
 
-  _fetchFromCache(options) {
+  _fetchFromCache(options = { skipAutoMarkAsRead: true }) {
     if (options == null) options = {};
     if (!this._thread) return;
 
@@ -746,7 +752,9 @@ class MessageStore extends MailspringStore {
       // and once when ready. Many third-party stores will observe
       // MessageStore and they'll be stupid and re-render constantly.
       this._itemsLoading = false;
-      this._markAsRead('fetchFromCache');
+      if (!options.skipAutoMarkAsRead) {
+        this._markAsRead('fetchFromCache');
+      }
       this.trigger(this);
     });
   }
