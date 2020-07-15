@@ -1464,7 +1464,7 @@ class AttachmentStore extends MailspringStore {
       };
     };
 
-    this._saveAllFiles([beforeSaveFn]);
+    this._saveAllFiles({ beforeSaveFns: [beforeSaveFn], dirPath: path.dirname(savePath) });
   }
 
   _saveAllFilesForTask(task) {
@@ -1480,12 +1480,14 @@ class AttachmentStore extends MailspringStore {
         };
       };
     });
-    this._saveAllFiles(beforeSaveFns);
+    this._saveAllFiles({ beforeSaveFns: beforeSaveFns, dirPath: dirPath });
   }
 
-  _saveAllFiles(beforeSaveFns) {
+  _saveAllFiles(SaveData) {
+    const { beforeSaveFns, dirPath } = SaveData;
     const files = [];
     const lastSavePaths = [];
+    const stopAccessingSecurityScopedResource = AppEnv.startAccessingForFile(dirPath);
     const savePromises = beforeSaveFns.map(fn => {
       return (async () => {
         const { file, fileSavePath } = fn();
@@ -1507,9 +1509,15 @@ class AttachmentStore extends MailspringStore {
           remote.shell.showItemInFolder(lastSavePaths[0]);
         }
         this._onSaveSuccess(files);
+        if (stopAccessingSecurityScopedResource) {
+          stopAccessingSecurityScopedResource();
+        }
       })
       .catch(this._catchFSErrors)
       .catch(error => {
+        if (stopAccessingSecurityScopedResource) {
+          stopAccessingSecurityScopedResource();
+        }
         return this._presentError({ error });
       });
   }
