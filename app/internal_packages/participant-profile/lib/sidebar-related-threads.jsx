@@ -19,7 +19,11 @@ export default class RelatedThreads extends React.Component {
   }
 
   _onClick(thread) {
-    Actions.setFocus({ collection: 'thread', item: thread });
+    Actions.setFocus({
+      collection: 'thread',
+      item: thread,
+      reason: 'sidebarRelatedThread:onClick',
+    });
   }
 
   _toggle = () => {

@@ -235,7 +235,7 @@ class MessageStore extends MailspringStore {
     this.listenTo(Actions.popoutThread, this._onPopoutThread);
     this.listenTo(Actions.setCurrentWindowTitle, this.setWindowTitle);
     this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
-    this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
+    // this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
     this.listenTo(Actions.pushToFetchAttachmentsQueue, this._onRequestAttachmentQueue);
   }
   _onRequestAttachmentQueue = (
@@ -1102,15 +1102,15 @@ class MessageStore extends MailspringStore {
     });
   };
 
-  _onFocusThreadMainWindow(thread) {
-    if (AppEnv.isMainWindow()) {
-      Actions.setFocus({ collection: 'thread', item: thread });
-      this._setPopout(false);
-      return AppEnv.focus();
-    } else {
-      this._onWindowClose();
-    }
-  }
+  // _onFocusThreadMainWindow(thread) {
+  //   if (AppEnv.isMainWindow()) {
+  //     Actions.setFocus({ collection: 'thread', item: thread });
+  //     this._setPopout(false);
+  //     return AppEnv.focus();
+  //   } else {
+  //     this._onWindowClose();
+  //   }
+  // }
 }
 
 const store = new MessageStore();
