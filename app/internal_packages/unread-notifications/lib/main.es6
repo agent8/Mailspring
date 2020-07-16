@@ -220,7 +220,13 @@ export class Notifier {
         }
         Actions.ensureCategoryIsFocused('inbox', thread.accountId, true);
         // DC-2073: Fail to open email from notification when read panel off
-        setImmediate(() => Actions.setFocus({ collection: 'thread', item: thread }));
+        setImmediate(() =>
+          Actions.setFocus({
+            collection: 'thread',
+            item: thread,
+            reason: 'UnreadNotification:onActivate',
+          })
+        );
       },
     });
 
