@@ -535,10 +535,31 @@ export default class MailboxPerspective {
     if (this.categoriesSharedRole() === 'trash') {
       return true;
     }
+
     // if searching in trash
     if (this.sourcePerspective && this.sourcePerspective.categoriesSharedRole() === 'trash') {
       return true;
     }
+
+    const categories = this.categories();
+    if (Array.isArray(categories) && categories.length === 1 && categories[0]) {
+      const category = categories[0];
+      const account = AccountStore.accountForId(category.accountId);
+      const isExchange = AccountStore.isExchangeAccount(account);
+      const trashCategory = CategoryStore.getCategoryByRole(category.accountId, 'trash');
+      if (!isExchange) {
+        if (trashCategory) {
+          if (trashCategory.isParentOf(category) || trashCategory.isAncestorOf(category)) {
+            return true;
+          }
+        }
+      } else {
+        if (CategoryStore.isCategoryAParentOfB(trashCategory, category)) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
@@ -858,7 +879,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     if (this._categories.length === 0) {
       throw new Error('CategoryMailboxPerspective: You must provide at least one category.');
     }
-
+    this._parseCategories();
+  }
+  _parseCategories = () => {
     // Note: We pick the display name and icon assuming that you won't create a
     // perspective with Inbox and Sent or anything crazy like that... todo?
     this.name = this._categories[0].displayName;
@@ -881,7 +904,17 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         new InboxMailboxOtherPerspective(this._categories),
       ];
     }
-  }
+  };
+  updateCategories = categories => {
+    if (!Array.isArray(categories) || categories.length === 0) {
+      AppEnv.logError(
+        new Error('CategoryMailboxPerspective: You must provide at least one category.')
+      );
+      return;
+    }
+    this._categories = categories;
+    this.name = this._categories[0].displayName;
+  };
 
   toJSON() {
     const json = super.toJSON();
@@ -1006,85 +1039,6 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       previousFolder,
       source: 'Dragged into List',
     });
-    // if (myCat.role === 'all' && currentCat && currentCat.isLabel()) {
-    //   // dragging from a label into All Mail? Make this an "archive" by removing the
-    //   // label. Otherwise (Since labels are subsets of All Mail) it'd have no effect.
-    //   return [
-    //     new ChangeLabelsTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       labelsToAdd: [],
-    //       labelsToRemove: [currentCat],
-    //       previousFolder,
-    //     }),
-    //   ];
-    // }
-    // if(myCat.isLabel() && currentCat && currentCat.isLabel() && (currentCat.role === 'important' || currentCat.role === 'flagged')){
-    //   return [
-    //       new ChangeLabelsTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       labelsToAdd: [myCat],
-    //       labelsToRemove: [],
-    //       previousFolder,
-    //     })
-    //     ]
-    // }
-    // if (myCat.isFolder()) {
-    //   // dragging to a folder like spam, trash or any IMAP folder? Just change the folder.
-    //   return [
-    //     new ChangeFolderTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       folder: myCat,
-    //       previousFolder,
-    //     }),
-    //   ];
-    // }
-    //
-    // if (myCat.isLabel() && currentCat && currentCat.isFolder()) {
-    //   // dragging from trash or spam into a label? We need to both apply the label and
-    //   // move to the "All Mail" folder.
-    //   if (currentCat.role === 'all') {
-    //     return [
-    //       new ChangeLabelsTask({
-    //         threads,
-    //         source: 'Dragged into list',
-    //         labelsToAdd: [myCat],
-    //         labelsToRemove: [],
-    //         previousFolder,
-    //       })];
-    //   }
-    //   return [
-    //     new ChangeFolderTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       folder: myCat,
-    //       currentPerspective: current,
-    //     }),
-    //   ];
-    // }
-    // // label to label
-    // if(myCat.role === 'inbox'){
-    //   return [
-    //     new ChangeLabelsTask({
-    //       threads,
-    //       source: 'Dragged into list',
-    //       labelsToAdd: [myCat],
-    //       labelsToRemove: [],
-    //       previousFolder,
-    //     }),
-    //   ];
-    // }
-    // return [
-    //   new ChangeLabelsTask({
-    //     threads,
-    //     source: 'Dragged into list',
-    //     labelsToAdd: [myCat],
-    //     labelsToRemove: currentCat ? [currentCat] : [],
-    //     previousFolder,
-    //   }),
-    // ];
   }
 
   // Public:
