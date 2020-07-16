@@ -257,7 +257,11 @@ class ThreadSearchBar extends Component {
     }
 
     if (suggestion.thread && WorkspaceStore.layoutMode() !== 'list') {
-      Actions.setFocus({ collection: 'thread', item: suggestion.thread });
+      Actions.setFocus({
+        collection: 'thread',
+        item: suggestion.thread,
+        reason: 'ThreadSearch:onChooseSuggestion',
+      });
     }
   };
 
