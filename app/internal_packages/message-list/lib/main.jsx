@@ -38,7 +38,11 @@ export function activate() {
 
     // We need to locate the thread and focus it so that the MessageList displays it
     DatabaseStore.find(Thread, threadId).then(thread =>
-      Actions.setFocus({ collection: 'thread', item: thread })
+      Actions.setFocus({
+        collection: 'thread',
+        item: thread,
+        reason: 'message-list thread window init',
+      })
     );
 
     // Set the focused perspective and hide the proper messages

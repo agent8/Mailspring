@@ -10,7 +10,7 @@ import {
   MutableQueryResultSet,
   ObservableListDataSource,
   FocusedContentStore,
-  AccountStore,
+  ThreadStore,
 } from 'mailspring-exports';
 import ListTabular from '../../components/list-tabular';
 import DatabaseChangeRecord from './database-change-record';
@@ -26,13 +26,9 @@ class SiftStore extends MailspringStore {
     this._selectedSift = null;
     this._siftCategory = '';
     if (AppEnv.isMainWindow()) {
-      // this.listenTo(TaskQueue, this._populate);
       this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
       this.listenTo(FocusedContentStore, this._onFocusedContentChanged);
       this.listenTo(DatabaseStore, this._onDataChanged);
-      // this.listenTo(Actions.gotoOutbox, this._gotoOutbox);
-      // this.listenTo(Actions.cancelOutboxDrafts, this._onCancelOutboxDraft);
-      // this.listenTo(Actions.editOutboxDraft, this._onEditOutboxDraft);
       this._createListDataSource();
     }
   }
@@ -165,7 +161,11 @@ class SiftStore extends MailspringStore {
     const current = FocusedPerspectiveStore.current();
     if (!current.sift) {
       if (this.selectedSift()) {
-        Actions.setFocus({ collection: 'sift', item: null });
+        Actions.setFocus({
+          collection: 'sift',
+          item: null,
+          reason: 'SiftStore:onPerspectiveChange',
+        });
       }
       this._selectedSift = null;
       this._siftCategory = '';
@@ -214,30 +214,68 @@ class SiftStore extends MailspringStore {
     this.trigger(this);
   };
   _onDataSourceChanged = ({ previous, next } = {}) => {
-    console.log('on datasource change');
     if (previous && next) {
       const focused = FocusedContentStore.focused('sift');
       const keyboard = FocusedContentStore.keyboardCursor('sift');
-      const nextQ = next.query();
-      const matchers = nextQ && nextQ.matchers();
-
       const notInSet = function(model) {
-        if (matchers) {
-          return model.matches(matchers) === false && next.offsetOfId(model.id) === -1;
-        } else {
-          return next.offsetOfId(model.id) === -1;
-        }
+        // if (matchers) {
+        //   return model.matches(matchers) === false && next.offsetOfId(model.id) === -1;
+        // } else {
+        return next.offsetOfId(model.id) === -1;
+        // }
+      };
+      const focusedIndex = focused ? previous.offsetOfId(focused.id) : -1;
+      const keyboardIndex = keyboard ? previous.offsetOfId(keyboard.id) : -1;
+      const nextItemFromIndex = i => {
+        const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
+        return ObservableListDataSource.nextItemFromIndex(i, next, nextAction);
       };
 
       if (focused && notInSet(focused)) {
-        Actions.setFocus({ collection: 'sift', item: null });
+        const sift = nextItemFromIndex(focusedIndex);
+        Actions.setFocus({
+          collection: 'sift',
+          item: sift,
+          reason: 'SiftStore:onDataChange',
+        });
+        if (sift) {
+          ThreadStore.findBy({ threadId: sift.threadId }).then(result => {
+            Actions.setFocus({
+              collection: 'thread',
+              item: result,
+              reason: 'SiftStore:onDataChange:dbResult',
+            });
+          });
+        } else {
+          Actions.setFocus({
+            collection: 'thread',
+            item: null,
+            reason: 'SiftStore:onDataChange:dbResult',
+          });
+        }
       }
 
       if (keyboard && notInSet(keyboard)) {
+        const sift = nextItemFromIndex(keyboardIndex);
         Actions.setCursorPosition({
           collection: 'sift',
-          item: null,
+          item: sift,
         });
+        if (sift) {
+          ThreadStore.findBy({ threadId: sift.threadId }).then(result => {
+            Actions.setCursorPosition({
+              collection: 'thread',
+              item: result,
+              reason: 'SiftStore:onDataChange:dbResult',
+            });
+          });
+        } else {
+          Actions.setCursorPosition({
+            collection: 'thread',
+            item: null,
+            reason: 'SiftStore:onDataChange:dbResult',
+          });
+        }
       }
     }
   };
