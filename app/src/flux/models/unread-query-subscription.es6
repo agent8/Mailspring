@@ -41,12 +41,15 @@ const buildQuery = (categoryIds, isOther) => {
   if (RecentlyReadStore.ids.length === 0) {
     query.where(unreadMatchers);
   } else {
-    const unreadAttr = isMessageView
-      ? Thread.attributes.unread.equal(true)
-      : JoinTable.useAttribute(Thread.attributes.unread, 'Boolean').equal(true);
+    let idKey = 'threadId';
+    let unreadAttr = JoinTable.useAttribute(Thread.attributes.unread, 'Boolean').equal(true);
+    if (isMessageView) {
+      idKey = 'messageId';
+      unreadAttr = Thread.attributes.unread.equal(true);
+    }
     const whereOptions = [unreadAttr, Thread.attributes.state.equal(0)];
     const recentlyReadStoreWhereOptions = [
-      JoinTable.useAttribute('threadId', 'String').in(RecentlyReadStore.ids),
+      JoinTable.useAttribute(idKey, 'String').in(RecentlyReadStore.ids),
       JoinTable.useAttribute('state', 'Number').equal(0),
     ];
     if (enableFocusedInboxKey) {
