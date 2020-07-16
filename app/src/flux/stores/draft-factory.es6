@@ -260,6 +260,9 @@ class DraftFactory {
       refOldDraftMessageId: draft.id,
       pastMessageIds,
     });
+    if (AppEnv.getDisableThread()) {
+      defaults.threadId = defaults.id;
+    }
     const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);
     return message;
@@ -323,6 +326,9 @@ class DraftFactory {
       hasRefOldDraftOnRemote: false,
       refOldDraftMessageId: '',
     });
+    if (AppEnv.getDisableThread()) {
+      defaults.threadId = defaults.id;
+    }
     const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);
     return message;
