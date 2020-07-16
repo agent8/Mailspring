@@ -53,7 +53,10 @@ class ContactStore extends MailspringStore {
         ])
       )
       .limit(limit * accountCount)
-      .order(Contact.attributes.refs.descending());
+      .order([
+        Contact.attributes.sentToFrequency.descending(),
+        Contact.attributes.fromFrequency.descending(),
+      ]);
 
     return query.then(async _results => {
       // remove query results that were already found in ranked contacts
@@ -75,7 +78,10 @@ class ContactStore extends MailspringStore {
     const accountCount = AccountStore.accounts().length;
     return DatabaseStore.findAll(Contact)
       .limit(limit * accountCount)
-      .order(Contact.attributes.refs.descending())
+      .order([
+        Contact.attributes.sentToFrequency.descending(),
+        Contact.attributes.fromFrequency.descending(),
+      ])
       .then(async _results => {
         let results = this._distinctByEmail(_results);
         if (results.length > limit) {
