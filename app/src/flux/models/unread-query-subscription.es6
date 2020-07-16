@@ -9,7 +9,7 @@ import { allInboxCategories, inboxOtherCategories, inboxNotOtherCategories } fro
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
 const buildQuery = (categoryIds, isOther) => {
-  const isMessageView = AppEnv.getDisableThread();
+  const isMessageView = AppEnv.isDisableThreading();
   const unreadAttr = isMessageView
     ? Thread.attributes.unread.equal(true)
     : JoinTable.useAttribute(Thread.attributes.unread, 'Boolean').equal(true);

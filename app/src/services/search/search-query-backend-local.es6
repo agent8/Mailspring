@@ -11,7 +11,7 @@ import {
 } from './search-query-ast';
 import { DateUtils } from 'mailspring-exports';
 
-const isMessageView = AppEnv.getDisableThread();
+const isMessageView = AppEnv.isDisableThreading();
 
 /*
  * This class visits a match-compatible subtree and condenses it into a single

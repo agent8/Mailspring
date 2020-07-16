@@ -1,7 +1,7 @@
 import Task from './task';
 import Attributes from '../attributes';
 
-const isMessageView = AppEnv.getDisableThread();
+const isMessageView = AppEnv.isDisableThreading();
 
 export default class DeleteThreadsTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {

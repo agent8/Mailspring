@@ -211,7 +211,7 @@ class DraftFactory {
     if (!merged.threadId) {
       merged.threadId = `T${uniqueId}`;
     }
-    if (AppEnv.getDisableThread()) {
+    if (AppEnv.isDisableThreading()) {
       merged.threadId = merged.id;
     }
     // if (merged.replyToMessageId) {
@@ -260,7 +260,7 @@ class DraftFactory {
       refOldDraftMessageId: draft.id,
       pastMessageIds,
     });
-    if (AppEnv.getDisableThread()) {
+    if (AppEnv.isDisableThreading()) {
       defaults.threadId = defaults.id;
     }
     const message = new Message(defaults);
@@ -326,7 +326,7 @@ class DraftFactory {
       hasRefOldDraftOnRemote: false,
       refOldDraftMessageId: '',
     });
-    if (AppEnv.getDisableThread()) {
+    if (AppEnv.isDisableThreading()) {
       defaults.threadId = defaults.id;
     }
     const message = new Message(defaults);
@@ -393,7 +393,7 @@ class DraftFactory {
       accountId: account.id,
       needUpload: true,
     });
-    if (AppEnv.getDisableThread()) {
+    if (AppEnv.isDisableThreading()) {
       defaults.threadId = defaults.id;
     }
     await mergeDefaultBccAndCCs(defaults, account);

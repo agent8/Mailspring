@@ -1323,7 +1323,7 @@ class DraftStore extends MailspringStore {
         if (
           AppEnv.config.get('core.reading.openReplyInNewWindow') ||
           popout ||
-          AppEnv.getDisableThread()
+          AppEnv.isDisableThreading()
         ) {
           console.log('\n-------\n draft popout\n');
           this._onPopoutDraft(draft.id);

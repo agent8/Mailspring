@@ -1169,7 +1169,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
   }
 
   threads() {
-    const isMessageView = AppEnv.getDisableThread();
+    const isMessageView = AppEnv.isDisableThreading();
     let query = DatabaseStore.findAll(Thread, { state: 0 }).limit(0);
     const now = new Date();
     const startOfDay = new Date(now.toDateString());
@@ -1394,7 +1394,7 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     });
 
     const notOtherCategories = Category.inboxNotOtherCategorys({ toString: true });
-    const isMessageView = AppEnv.getDisableThread();
+    const isMessageView = AppEnv.isDisableThreading();
     const inboxCategoryAttr = isMessageView
       ? Thread.attributes.inboxCategory.in(notOtherCategories)
       : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(notOtherCategories);
@@ -1456,7 +1456,7 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     });
 
     const otherCategories = Category.inboxOtherCategorys().map(categoryNum => `${categoryNum}`);
-    const isMessageView = AppEnv.getDisableThread();
+    const isMessageView = AppEnv.isDisableThreading();
     const inboxCategoryAttr = isMessageView
       ? Thread.attributes.inboxCategory.in(otherCategories)
       : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(otherCategories);
