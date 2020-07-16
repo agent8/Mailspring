@@ -1030,12 +1030,14 @@ export class MoreButton extends React.Component {
         click: () => this._onPrintThread(),
       })
     );
-    menu.append(
-      new MenuItem({
-        label: expandTitle,
-        click: () => Actions.toggleAllMessagesExpanded(),
-      })
-    );
+    if (!AppEnv.getDisableThread()) {
+      menu.append(
+        new MenuItem({
+          label: expandTitle,
+          click: () => Actions.toggleAllMessagesExpanded(),
+        })
+      );
+    }
     menu.popup({});
   };
 
@@ -1328,13 +1330,14 @@ class MoreActionsButton extends React.Component {
         }
       }
     });
-    menu.append(
-      new MenuItem({
-        label: expandTitle,
-        click: () => Actions.toggleAllMessagesExpanded(),
-      })
-    );
-
+    if (!AppEnv.getDisableThread()) {
+      menu.append(
+        new MenuItem({
+          label: expandTitle,
+          click: () => Actions.toggleAllMessagesExpanded(),
+        })
+      );
+    }
     const previousThread = UpButton({ ...this.props, isMenuItem: true });
     const nextThread = DownButton({ ...this.props, isMenuItem: true });
     if (previousThread) {
