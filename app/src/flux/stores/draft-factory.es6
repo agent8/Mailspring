@@ -212,7 +212,7 @@ class DraftFactory {
       merged.threadId = `T${uniqueId}`;
     }
     if (AppEnv.getDisableThread()) {
-      merged.threadId = uniqueId;
+      merged.threadId = merged.id;
     }
     // if (merged.replyToMessageId) {
     //   merged.referenceMessageId = merged.replyToMessageId;
@@ -377,7 +377,7 @@ class DraftFactory {
       draft: true,
       pristine: false,
       replyType: Message.draftType.new,
-      threadId: AppEnv.getDisableThread() ? uniqueId : `T${uniqueId}`,
+      threadId: `T${uniqueId}`,
       replyToMessageId: '',
       refOldDraftMessageId: '',
       pastMessageIds: draft.pastMessageIds || [],
@@ -387,6 +387,9 @@ class DraftFactory {
       accountId: account.id,
       needUpload: true,
     });
+    if (AppEnv.getDisableThread()) {
+      defaults.threadId = defaults.id;
+    }
     await mergeDefaultBccAndCCs(defaults, account);
     const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);
