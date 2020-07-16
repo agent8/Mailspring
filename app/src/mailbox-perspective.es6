@@ -544,9 +544,17 @@ export default class MailboxPerspective {
     const categories = this.categories();
     if (Array.isArray(categories) && categories.length === 1 && categories[0]) {
       const category = categories[0];
+      const account = AccountStore.accountForId(category.accountId);
+      const isExchange = AccountStore.isExchangeAccount(account);
       const trashCategory = CategoryStore.getCategoryByRole(category.accountId, 'trash');
-      if (trashCategory) {
-        if (trashCategory.isParentOf(category) || trashCategory.isAncestorOf(category)) {
+      if (!isExchange) {
+        if (trashCategory) {
+          if (trashCategory.isParentOf(category) || trashCategory.isAncestorOf(category)) {
+            return true;
+          }
+        }
+      } else {
+        if (CategoryStore.isCategoryAParentOfB(trashCategory, category)) {
           return true;
         }
       }
