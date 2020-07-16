@@ -152,7 +152,7 @@ const onEditItem = function(item, newEnteredValue, originalText) {
     return;
   }
   const account = AccountStore.accountForId(category.accountId);
-  const isExchange = account && account.provider.includes('exchange');
+  const isExchange = AccountStore.isExchangeAccount(account);
   if (isExchange) {
     newDisplayName = newEnteredValue;
   } else {
@@ -186,7 +186,7 @@ const onEditItem = function(item, newEnteredValue, originalText) {
     existingPath: category.path,
     newName: newDisplayName,
     accountId: category.accountId,
-    isExchange: account && account.provider.includes('exchange'),
+    isExchange: AccountStore.isExchangeAccount(account),
   });
   if (task) {
     Actions.queueTask(task);
@@ -665,7 +665,7 @@ class SidebarItem {
     if (!account) {
       throw new Error(`Cannot find account for ${accountId}`);
     }
-    const isExchange = account.provider.includes('exchange');
+    const isExchange = AccountStore.isExchangeAccount(account);
     const seenItems = {};
     seenItems[CategoryStore.decodePath(path)] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {

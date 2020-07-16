@@ -305,16 +305,27 @@ export function TrashButton(props) {
     }
     const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
     const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
+    const isExchange = CategoryStore.isExchangeAccountId(accountId);
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
-      .every(
-        folder =>
-          folder.role === 'trash' ||
-          folder.role === 'spam' ||
-          (trashCategory &&
-            (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))) ||
-          (spamCategory && (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder)))
-      );
+      .every(folder => {
+        let ret = folder.role === 'trash' || folder.role === 'spam';
+        if (ret) {
+          return true;
+        }
+        if (!isExchange) {
+          return (
+            (trashCategory &&
+              (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))) ||
+            (spamCategory && (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder)))
+          );
+        } else {
+          return (
+            (trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) ||
+            (spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
+          );
+        }
+      });
   };
   const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
     if (!Array.isArray(labelIds) || !accountId) {
@@ -322,18 +333,32 @@ export function TrashButton(props) {
     }
     const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
     const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
+    const isExchange = CategoryStore.isExchangeAccountId(accountId);
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
-      .some(
-        folder =>
-          folder.role !== 'trash' &&
-          folder.role !== 'spam' &&
-          !(
-            trashCategory &&
-            (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
-          ) &&
-          !(spamCategory && (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder)))
-      );
+      .some(folder => {
+        let ret = folder.role !== 'trash' && folder.role !== 'spam';
+        if (!ret) {
+          return false;
+        }
+        if (!isExchange) {
+          return (
+            !(
+              trashCategory &&
+              (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
+            ) &&
+            !(
+              spamCategory &&
+              (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder))
+            )
+          );
+        } else {
+          return (
+            !(trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) &&
+            !(spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
+          );
+        }
+      });
   };
   const isMixed = threads => {
     let notInTrashOrSpam = undefined;
