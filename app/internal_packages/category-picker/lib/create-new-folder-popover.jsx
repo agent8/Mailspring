@@ -113,11 +113,10 @@ export default class CreateNewFolderPopover extends Component {
   };
   _onCreateCategory = () => {
     this.setState({ isBusy: true });
-    const account = AccountStore.accountForId(this.props.account.id);
     const syncbackTask = TaskFactory.tasksForCreatingPath({
       name: this.state.newName,
       accountId: this.props.account.id,
-      isExchange: account && account.provider.includes('exchange'),
+      isExchange: AccountStore.isExchangeAccount(this.props.account),
     });
     this._onResultReturned();
     if (syncbackTask) {

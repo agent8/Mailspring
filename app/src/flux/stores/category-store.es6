@@ -181,17 +181,46 @@ class CategoryStore extends MailspringStore {
   getSpamCategory(accountOrId) {
     return this.getCategoryByRole(accountOrId, 'spam');
   }
+  _categoriesRelationSanityCheckPass(catA, catB) {
+    if (!(catA instanceof Category) || !(catB instanceof Category)) {
+      AppEnv.logError(`Either catA or catB is not instance of Category`);
+      return false;
+    }
+    if (catA.accountId !== catB.accountId) {
+      AppEnv.logDebug(`catA ${catA.accountId} is not catB ${catB.accountId} account id`);
+      return false;
+    }
+    const account = AccountStore.accountForId(catA.accountId);
+    if (!account) {
+      AppEnv.reportError(new Error(`catA ${catA.accountId} dose not exist in AccountStore`), {
+        errorData: { account: AccountStore.accountIds(), accountId: catA.accountId },
+      });
+      return false;
+    }
+    return true;
+  }
+  isCategoryAParentOfB(catA, catB) {
+    if (!this._categoriesRelationSanityCheckPass(catA, catB)) {
+      return false;
+    }
+    const isExchange = AccountStore.isExchangeAccountId(catA.accountId);
+    if (!isExchange) {
+      return catA.isParentOf(catB);
+    } else {
+      return catA.path === catB.parentId;
+    }
+  }
   getCategoryParent = category => {
     const account = AccountStore.accountForId(category.accountId);
     if (account && category) {
-      const isExchange = account.provider.includes('exchange');
+      const isExchange = AccountStore.isExchangeAccount(account);
       let parent = null;
       if (isExchange) {
         const inboxCategory = this.getInboxCategory(account.id);
         if (inboxCategory && category.parentId === inboxCategory.parentId) {
           return null;
         }
-        parent = this.getCategoryByPath(category.parentId);
+        parent = this.getCategoryByPath(category.parentId, account.id);
       } else {
         const parentComponents = category.path.split(category.delimiter);
         if (parentComponents.length > 1) {
@@ -390,8 +419,7 @@ class CategoryStore extends MailspringStore {
     const categoryCache = {};
     Object.keys(categoryResults).forEach(accountId => {
       categoryResults[accountId].sort(sortByName);
-      const account = AccountStore.accountForId(accountId);
-      const isExchange = account && account.provider.includes('exchange');
+      const isExchange = AccountStore.isExchangeAccountId(accountId);
       if (!isExchange) {
         categoryResults[accountId] = this._createMissingParentPathAfterSortedByName(
           categoryResults[accountId]

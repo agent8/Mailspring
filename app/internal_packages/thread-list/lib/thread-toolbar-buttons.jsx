@@ -303,17 +303,62 @@ export function TrashButton(props) {
     if (!Array.isArray(labelIds) || !accountId) {
       return false;
     }
+    const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
+    const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
+    const isExchange = CategoryStore.isExchangeAccountId(accountId);
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
-      .every(folder => folder.role === 'trash' || folder.role === 'spam');
+      .every(folder => {
+        let ret = folder.role === 'trash' || folder.role === 'spam';
+        if (ret) {
+          return true;
+        }
+        if (!isExchange) {
+          return (
+            (trashCategory &&
+              (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))) ||
+            (spamCategory && (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder)))
+          );
+        } else {
+          return (
+            (trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) ||
+            (spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
+          );
+        }
+      });
   };
   const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
     if (!Array.isArray(labelIds) || !accountId) {
       return false;
     }
+    const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
+    const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
+    const isExchange = CategoryStore.isExchangeAccountId(accountId);
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
-      .some(folder => folder.role !== 'trash' && folder.role !== 'spam');
+      .some(folder => {
+        let ret = folder.role !== 'trash' && folder.role !== 'spam';
+        if (!ret) {
+          return false;
+        }
+        if (!isExchange) {
+          return (
+            !(
+              trashCategory &&
+              (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
+            ) &&
+            !(
+              spamCategory &&
+              (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder))
+            )
+          );
+        } else {
+          return (
+            !(trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) &&
+            !(spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
+          );
+        }
+      });
   };
   const isMixed = threads => {
     let notInTrashOrSpam = undefined;
@@ -354,7 +399,10 @@ export function TrashButton(props) {
   }
   let actionCallBack = null;
   let title;
-  if (canMove) {
+  if (canExpunge) {
+    actionCallBack = _onShortCutExpunge;
+    title = 'Expunge Thread';
+  } else if (canMove) {
     actionCallBack = _onShortCutRemove;
     title = 'Move to Trash';
     if (
@@ -366,9 +414,6 @@ export function TrashButton(props) {
       actionCallBack = _onShortCutExpunge;
       title = 'Expunge Thread';
     }
-  } else if (canExpunge) {
-    actionCallBack = _onShortCutExpunge;
-    title = 'Expunge Thread';
   }
   if (isInSearch(props) && !props.thread) {
     const threads = threadSelectionScope(props, props.selection);
