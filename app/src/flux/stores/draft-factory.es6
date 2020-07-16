@@ -377,7 +377,7 @@ class DraftFactory {
       draft: true,
       pristine: false,
       replyType: Message.draftType.new,
-      threadId: `T${uniqueId}`,
+      threadId: AppEnv.getDisableThread() ? uniqueId : `T${uniqueId}`,
       replyToMessageId: '',
       refOldDraftMessageId: '',
       pastMessageIds: draft.pastMessageIds || [],
