@@ -117,7 +117,7 @@ export default class Model {
       }
       json[attr.jsonKey || attr.modelKey || key] = attr.toJSON(attrValue);
     }
-    json.__cls = this.constructor.getTableName();
+    json.__cls = this.constructor.name;
     return json;
   }
 
