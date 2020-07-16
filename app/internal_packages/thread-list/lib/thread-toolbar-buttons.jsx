@@ -1057,7 +1057,7 @@ export class MoreButton extends React.Component {
         click: () => this._onPrintThread(),
       })
     );
-    if (!AppEnv.getDisableThread()) {
+    if (!AppEnv.isDisableThreading()) {
       menu.append(
         new MenuItem({
           label: expandTitle,
@@ -1357,7 +1357,7 @@ class MoreActionsButton extends React.Component {
         }
       }
     });
-    if (!AppEnv.getDisableThread()) {
+    if (!AppEnv.isDisableThreading()) {
       menu.append(
         new MenuItem({
           label: expandTitle,

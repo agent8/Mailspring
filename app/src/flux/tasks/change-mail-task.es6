@@ -11,7 +11,7 @@ Subclasses implement {ChangeMailTask::changesToModel} and
 they provide, and override {ChangeMailTask::performLocal} to perform
 additional consistency checks.
 */
-const isMessageView = AppEnv.getDisableThread();
+const isMessageView = AppEnv.isDisableThreading();
 
 export default class ChangeMailTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {

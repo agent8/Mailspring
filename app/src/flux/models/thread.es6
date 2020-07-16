@@ -35,7 +35,7 @@ This class also inherits attributes from {Model}
 Section: Models
 @class Thread
 */
-const isMessageView = AppEnv.getDisableThread();
+const isMessageView = AppEnv.isDisableThreading();
 const threadDiffAttributes = isMessageView
   ? {
       to: Attributes.Collection({

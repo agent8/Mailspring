@@ -30,7 +30,7 @@ const mapping = {
   },
 };
 
-const isMessageView = AppEnv.getDisableThread();
+const isMessageView = AppEnv.isDisableThreading();
 
 export default class Message extends ModelWithMetadata {
   static fieldsNotInDB = [

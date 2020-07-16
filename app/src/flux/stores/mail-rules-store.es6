@@ -195,7 +195,7 @@ class MailRulesStore extends MailspringStore {
       .limit(50);
 
     if (lastTimestamp !== null) {
-      const isMessageView = AppEnv.getDisableThread();
+      const isMessageView = AppEnv.isDisableThreading();
       const lastMessageTimestampAttr = isMessageView
         ? Thread.attributes.lastMessageTimestamp.lessThan(lastTimestamp)
         : JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').lessThan(

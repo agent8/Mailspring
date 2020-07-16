@@ -496,7 +496,7 @@ export default class MailsyncBridge {
 
   _getClientConfiguration(account) {
     const { configDirPath, resourcePath } = AppEnv.getLoadSettings();
-    const disableThread = AppEnv.getDisableThread();
+    const disableThread = AppEnv.isDisableThreading();
     const verboseUntil = AppEnv.config.get(VERBOSE_UNTIL_KEY) || 0;
     const verbose = verboseUntil && verboseUntil / 1 > Date.now();
     if (verbose) {
@@ -796,7 +796,7 @@ export default class MailsyncBridge {
 
       // Under message view, thread has no native notification,
       // when receive a message model notification, a corresponding thread notification should be generated
-      if (AppEnv.getDisableThread() && modelClass === 'Message') {
+      if (AppEnv.isDisableThreading() && modelClass === 'Message') {
         const threadMsgTmp = {
           modelClass: 'Thread',
           modelJSONs: modelJSONs.map(json => ({ ...json, __cls: 'Thread' })),
