@@ -99,6 +99,16 @@ class AccountStore extends MailspringStore {
       }
     });
   }
+  isExchangeAccountId = id => {
+    return this.isExchangeAccount(this.accountForId(id));
+  };
+  isExchangeAccount = account => {
+    if (account instanceof Account) {
+      return account.isExchange();
+    } else {
+      return account && (account.provider || '').includes('exchange');
+    }
+  };
 
   isMyEmail(emailOrEmails = []) {
     const myEmails = this.emailAddresses();
@@ -670,27 +680,29 @@ class AccountStore extends MailspringStore {
     throw new Error('AccountStore.current() has been deprecated.');
   }
 
-  setHighFrequencyFolder(aid, folderIdsOrLabelIds=[]) {
+  setHighFrequencyFolder(aid, folderIdsOrLabelIds = []) {
     if (!aid || !folderIdsOrLabelIds.length) {
-      return
+      return;
     }
-    const account = this.accountForId(aid)
-    const newHighFrequencyFolders = [...folderIdsOrLabelIds, ...(account.highFrequencyFolders || [])]
-    const accoundHighFrequencyFolders = [...new Set(newHighFrequencyFolders)].slice(0,5)
+    const account = this.accountForId(aid);
+    const newHighFrequencyFolders = [
+      ...folderIdsOrLabelIds,
+      ...(account.highFrequencyFolders || []),
+    ];
+    const accoundHighFrequencyFolders = [...new Set(newHighFrequencyFolders)].slice(0, 5);
     this._onUpdateAccount(aid, {
       ...account,
-      highFrequencyFolders: accoundHighFrequencyFolders
-    })
+      highFrequencyFolders: accoundHighFrequencyFolders,
+    });
   }
 
   getHighFrequencyFolder(aid) {
     if (!aid) {
-      return []
+      return [];
     }
-    const account = this.accountForId(aid)
-    return account.highFrequencyFolders || []
+    const account = this.accountForId(aid);
+    return account.highFrequencyFolders || [];
   }
-
 }
 
 export default new AccountStore();

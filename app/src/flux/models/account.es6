@@ -5,7 +5,10 @@ import ModelWithMetadata from './model-with-metadata';
 let CategoryStore = null;
 let Contact = null;
 
-const noticeTypeEnum = [{ type: 'None', title: 'None/Mute' }, { type: 'All', title: 'All mail' }];
+const noticeTypeEnum = [
+  { type: 'None', title: 'None/Mute' },
+  { type: 'All', title: 'All mail' },
+];
 const noticeTypeImportant = [{ type: 'Important', title: 'Marked as Important' }];
 /*
  * Public: The Account model represents a Account served by the Nylas Platform API.
@@ -196,6 +199,9 @@ export default class Account extends ModelWithMetadata {
       }
     }
     return ret;
+  }
+  isExchange() {
+    return (this.provider || '').includes('exchange');
   }
   isMyEmail(emailAddress) {
     return this.getAllEmails().includes(emailAddress);
