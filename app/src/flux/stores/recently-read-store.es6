@@ -8,7 +8,7 @@ import Actions from '../actions';
 // it doesn't disappear until you leave the view and come back. This behavior
 // is implemented by keeping track of messages being rea and manually
 // whitelisting them in the query.
-const isMessageView = AppEnv.getDisableThread();
+const isMessageView = AppEnv.isDisableThreading();
 class RecentlyReadStore extends MailspringStore {
   constructor() {
     super();
