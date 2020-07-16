@@ -110,6 +110,7 @@ export default class Thread extends ModelWithMetadata {
       ? Attributes.Number({
           queryable: true,
           modelKey: 'primary',
+          jsModelKey: 'inboxCategory',
           loadFromColumn: true,
         })
       : Attributes.Number({
@@ -198,6 +199,7 @@ export default class Thread extends ModelWithMetadata {
     state: isMessageView
       ? Attributes.Number({
           modelKey: 'deleted',
+          jsModelKey: 'state',
           queryable: true,
           loadFromColumn: true,
         })
