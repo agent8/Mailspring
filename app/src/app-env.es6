@@ -1577,6 +1577,53 @@ export default class AppEnvConstructor {
       return this.propagationStopped;
     };
   }
+  // nextActionAfterRemoveFromView({
+  //   source = 'unknown',
+  //   affectedItems = [],
+  //   currentFocus,
+  //   topSheet,
+  //   layoutMode,
+  //   popSheet,
+  //   emptyFocusContent,
+  // }) {
+  //   if (!currentFocus || !topSheet || !['list', 'split'].includes(layoutMode)) {
+  //     return;
+  //   }
+  //   const affectedIds = [];
+  //   affectedItems.forEach(item => {
+  //     if (item && item.id) {
+  //       affectedIds.push(item.id);
+  //     }
+  //   });
+  //   const focusEffected = affectedIds.includes(currentFocus.id);
+  //   if (!focusEffected) {
+  //     return;
+  //   }
+  //   const ignoreNextActions =
+  //     (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
+  //   if (ignoreNextActions && topSheet.id === 'Thread') {
+  //     if (typeof popSheet === 'function') {
+  //       this.logDebug(`ignore nextAction on removeFromView popSheet`);
+  //       popSheet({ reason: `${source}:ignoreNextActions` });
+  //     } else {
+  //       this.logDebug(`ignore nextAction on removeFromView popSheet is not a function`);
+  //     }
+  //     return;
+  //   }
+  //   const nextAction = this.config.get('core.reading.actionAfterRemove');
+  //   this.logDebug(`nextAction on removeFromView: ${nextAction}`);
+  //   if (nextAction === 'next' && !ignoreNextActions) {
+  //     this.commands.dispatch('core:show-next');
+  //   } else if (nextAction === 'previous' && !ignoreNextActions) {
+  //     this.commands.dispatch('core:show-previous');
+  //   } else if (nextAction === 'return' && !ignoreNextActions) {
+  //     if (typeof emptyFocusContent === 'function') {
+  //       emptyFocusContent({ reason: `${source}:return` });
+  //     } else {
+  //       this.logDebug(`ignore nextAction on removeFromView emptyFocusContent is not a function`);
+  //     }
+  //   }
+  // }
 
   captureScreen() {
     return new Promise((resolve, reject) => {
@@ -1631,44 +1678,6 @@ export default class AppEnvConstructor {
   grabLogs(fileName = '') {
     return new Promise((resolve, reject) => {
       resolve();
-      // const resourcePath = this.getConfigDirPath();
-      // const logPath = path.dirname(LOG.transports.file.findLogPath());
-      // if (fileName === '') {
-      //   fileName = parseInt(Date.now());
-      // }
-      // const outputPath = path.join(resourcePath, 'upload-log', `logs-${fileName}.zip`);
-      // const output = fs.createWriteStream(outputPath);
-      // const archive = archiver('zip', {
-      //   zlib: { level: 9 }, // Sets the compression level.
-      // });
-      //
-      // output.on('close', function () {
-      //   console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
-      //   console.log('archiver has been finalized and the output file descriptor has closed.');
-      //   resolve(outputPath);
-      // });
-      // output.on('end', function () {
-      //   console.log('\n----->\nData has been drained');
-      //   resolve(outputPath);
-      // });
-      // archive.on('warning', function (err) {
-      //   if (err.code === 'ENOENT') {
-      //     console.log(err);
-      //   } else {
-      //     output.close();
-      //     console.log(err);
-      //     reject(err);
-      //   }
-      // });
-      // archive.on('error', function (err) {
-      //   output.close();
-      //   console.log(err);
-      //   reject(err);
-      // });
-      // archive.pipe(output);
-      // archive.directory(logPath, 'uiLog');
-      // archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
-      // archive.finalize();
     });
   }
 

@@ -371,13 +371,13 @@ class MessageList extends React.Component {
     Actions.printThread(this.state.currentThread, node.outerHTML);
   };
 
-  _onPopThreadIn = () => {
-    if (!this.state.currentThread) {
-      return;
-    }
-    Actions.focusThreadMainWindow(this.state.currentThread);
-    AppEnv.close({ threadId: this.state.currentThread.id });
-  };
+  // _onPopThreadIn = () => {
+  //   if (!this.state.currentThread) {
+  //     return;
+  //   }
+  //   Actions.focusThreadMainWindow(this.state.currentThread);
+  //   AppEnv.close({ threadId: this.state.currentThread.id });
+  // };
 
   _onPopoutThread = () => {
     if (!this.state.currentThread) {
@@ -635,23 +635,27 @@ class MessageList extends React.Component {
     menu.popup({});
   };
   _onLabelsRemoved = removedCategories => {
-    if (!AppEnv.isMainWindow()) {
-      return;
-    }
-    if (Array.isArray(removedCategories)) {
-      const currentPerspective = FocusedPerspectiveStore.current();
-      if (currentPerspective && Array.isArray(currentPerspective.categories())) {
-        const currentCategories = currentPerspective.categories();
-        for (let removedCat of removedCategories) {
-          for (let cat of currentCategories) {
-            if (cat.id === removedCat.id) {
-              Actions.setFocus({ collection: 'thread', item: null });
-              break;
-            }
-          }
-        }
-      }
-    }
+    // if (!AppEnv.isMainWindow()) {
+    //   return;
+    // }
+    // if (Array.isArray(removedCategories)) {
+    //   const currentPerspective = FocusedPerspectiveStore.current();
+    //   if (currentPerspective && Array.isArray(currentPerspective.categories())) {
+    //     const currentCategories = currentPerspective.categories();
+    //     for (let removedCat of removedCategories) {
+    //       for (let cat of currentCategories) {
+    //         if (cat.id === removedCat.id) {
+    //           Actions.setFocus({
+    //             collection: 'thread',
+    //             item: null,
+    //             reason: 'MessageList:threadWindow label removed',
+    //           });
+    //           break;
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
   };
   _onCategoriesChange = ({ type, data }) => {
     if (type === 'labelChange' && data) {
