@@ -603,6 +603,11 @@ export default {
             default: false,
             title: 'Show icons in the left-hand menu.',
           },
+          accountcolors: {
+            type: 'boolean',
+            default: false,
+            title: 'Show account colors',
+          },
           previewLines: {
             type: 'number',
             default: '2',
