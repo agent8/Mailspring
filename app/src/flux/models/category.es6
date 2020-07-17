@@ -107,13 +107,15 @@ export default class Category extends Model {
     return Category.pathToDisplayName(this.name, !this.role || this.role === 'none');
   }
   get fullDisplayName() {
-    return utf7.imap.decode(this.name);
+    // return utf7.imap.decode(this.name);
+    return this.name;
   }
   static pathToDisplayName(pathString, ignoreGmailPrefix = false) {
     if (!pathString) {
       return '';
     }
-    const decoded = utf7.imap.decode(pathString);
+    // const decoded = utf7.imap.decode(pathString);
+    const decoded = pathString;
 
     for (const prefix of ignoredPrefixes) {
       if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {
