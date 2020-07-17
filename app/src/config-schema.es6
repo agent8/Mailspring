@@ -37,7 +37,7 @@ const emailActionValues = [...actionValues, 'spam', 'print'];
 const emailActionLabels = [
   ...actionLabels,
   actionOption('spam', 'Mark as Spam'),
-  actionOption('print', 'Print Thread'),
+  actionOption('print', 'Print Thread/Message'),
 ];
 
 export default {

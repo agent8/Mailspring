@@ -571,7 +571,7 @@ export function PrintThreadButton(props) {
     Actions.printThread(currentThread, node.outerHTML);
   };
 
-  const title = 'Print Thread';
+  const title = `Print ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
 
   if (props.isMenuItem) {
     return new MenuItem({
@@ -1053,7 +1053,7 @@ export class MoreButton extends React.Component {
     }
     menu.append(
       new MenuItem({
-        label: `Print Thread`,
+        label: `Print ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`,
         click: () => this._onPrintThread(),
       })
     );
