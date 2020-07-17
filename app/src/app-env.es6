@@ -1379,15 +1379,15 @@ export default class AppEnvConstructor {
   }
 
   // Start accessing the file.
-  startAccessingForFile(path) {
+  startAccessingForFile(filepath) {
     if (!process.mas) {
       return () => {};
     }
-    const bookmark = this.getBookMarkForPath(path);
+    const bookmark = this.getBookMarkForPath(filepath);
     if (!bookmark) {
       const home = this.getUserDirPath();
       const downloadDir = path.join(home, 'Downloads');
-      if (path === downloadDir) {
+      if (filepath === downloadDir) {
         return () => {};
       }
       return null;
@@ -1397,19 +1397,19 @@ export default class AppEnvConstructor {
     if (typeof stopAccessingSecurityScopedResource !== 'function') {
       return null;
     }
-    this.logDebug(`startAccessingSecurityScopedResource for:${path}`);
+    this.logDebug(`startAccessingSecurityScopedResource for:${filepath}`);
     return stopAccessingSecurityScopedResource;
   }
 
-  setBookMarkForPath(path, bookMark) {
+  setBookMarkForPath(filepath, bookMark) {
     const securityScopedResource = remote.getGlobal('application').securityScopedResource;
-    this.logDebug(`setBookMark for:${path}`);
-    securityScopedResource.setBookMark(path, bookMark);
+    this.logDebug(`setBookMark for:${filepath}`);
+    securityScopedResource.setBookMark(filepath, bookMark);
   }
 
-  getBookMarkForPath(path) {
+  getBookMarkForPath(filepath) {
     const securityScopedResource = remote.getGlobal('application').securityScopedResource;
-    return securityScopedResource.getBookMark(path);
+    return securityScopedResource.getBookMark(filepath);
   }
 
   getMainWindow() {
