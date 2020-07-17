@@ -78,6 +78,9 @@ class PreferencesUIStore extends MailspringStore {
           }
           // filter item's label and keywords
           const itemList = group.groupItem.filter(item => {
+            if (item.hidden) {
+              return false;
+            }
             // use zero-widthjoiner break up the string
             // To avoid finding error
             const keywordsStr = [item.label || '', ...(item.keywords || [])]
