@@ -152,7 +152,7 @@ const onEditItem = function(item, newEnteredValue, originalText) {
     return;
   }
   const account = AccountStore.accountForId(category.accountId);
-  const isExchange = account && account.provider.includes('exchange');
+  const isExchange = AccountStore.isExchangeAccount(account);
   if (isExchange) {
     newDisplayName = newEnteredValue;
   } else {
@@ -186,7 +186,7 @@ const onEditItem = function(item, newEnteredValue, originalText) {
     existingPath: category.path,
     newName: newDisplayName,
     accountId: category.accountId,
-    isExchange: account && account.provider.includes('exchange'),
+    isExchange: AccountStore.isExchangeAccount(account),
   });
   if (task) {
     Actions.queueTask(task);
@@ -637,13 +637,14 @@ class SidebarItem {
 
   static appendSubPathByAccounts(accountIds, parentPerspective) {
     for (const accountId of accountIds) {
-      const paths = parentPerspective.path.filter(p => p.accountId === accountId);
-      if (paths.length === 1) {
-        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, paths[0]);
+      const categories = parentPerspective ? parentPerspective.perspective.categories() : [];
+      if (categories.length === 1) {
+        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0]);
       } else {
-        AppEnv.logWarning(
+        AppEnv.logDebug(
           `paths is not 1, children not seeked, ${accountId}, ${parentPerspective &&
-            parentPerspective.id}`
+            parentPerspective.perspective &&
+            JSON.stringify(parentPerspective.perspective.toJSON())}`
         );
       }
     }
@@ -653,29 +654,32 @@ class SidebarItem {
   static appendSubPathByAccount(accountId, parentPerspective, parentCategory) {
     const { path } = parentCategory;
     if (!path) {
-      throw new Error('path must not be empty');
+      AppEnv.logError(new Error('path must not be empty'));
+      return;
     }
     if (!parentPerspective) {
-      throw new Error('parentItem must not be empty');
+      AppEnv.logError(new Error('parentItem must not be empty'));
+      return;
     }
     if (!accountId) {
-      throw new Error('accountId must not be empty');
+      AppEnv.logError(new Error('accountId must not be empty'));
+      return;
     }
     const account = AccountStore.accountForId(accountId);
     if (!account) {
-      throw new Error(`Cannot find account for ${accountId}`);
+      AppEnv.logError(new Error(`Cannot find account for ${accountId}`));
+      return;
     }
-    const isExchange = account.provider.includes('exchange');
-    const seenItems = {};
-    seenItems[CategoryStore.decodePath(path)] = parentPerspective;
+    const isExchange = AccountStore.isExchangeAccount(account);
+    // const seenItems = {};
+    // seenItems[CategoryStore.decodePath(path)] = parentPerspective;
     for (let category of CategoryStore.userCategories(accountId)) {
-      // https://regex101.com/r/jK8cC2/1
       let item, parentKey;
-      let itemKey;
+      // let itemKey;
 
       let parent = null;
       if (isExchange) {
-        itemKey = CategoryStore.decodePath(category.path);
+        // itemKey = CategoryStore.decodePath(category.path);
         if (category.parentId === path && path !== category.path) {
           parentKey = path;
           parent = parentPerspective;
@@ -683,25 +687,19 @@ class SidebarItem {
           continue;
         }
       } else {
-        itemKey = category.displayName;
-        const parentComponents = itemKey.split(category.delimiter);
-        if (parentComponents.length === 1) {
-          continue;
-        } else {
-          parentKey = parentComponents
-            .slice(0, parentComponents.length - 1)
-            .join(category.delimiter);
-          // if (path === 'bba.d' && itemKey === 'bba.d/a1') {
-          //   debugger;
-          // }
-          parent = seenItems[parentKey];
+        if (parentCategory.isParentOf(category)) {
+          parentKey = parentCategory.displayName;
+          parent = parentPerspective;
         }
-        // for (let i = parentComponents.length; i >= 1; i--) {
-        //   parentKey = parentComponents.slice(0, i).join(category.delimiter);
-        //   parent = seenItems[parentKey.toLocaleLowerCase()];
-        //   if (parent) {
-        //     break;
-        //   }
+        // itemKey = category.fullDisplayName;
+        // const parentComponents = itemKey.split(category.delimiter);
+        // if (parentComponents.length === 1) {
+        //   continue;
+        // } else {
+        //   parentKey = parentComponents
+        //     .slice(0, parentComponents.length - 1)
+        //     .join(category.delimiter);
+        //   parent = seenItems[parentKey];
         // }
       }
       if (parent) {
@@ -716,19 +714,14 @@ class SidebarItem {
           parent.children.push(item);
           if (item.selected) {
             parent.selected = true;
-            for (let key of Object.keys(seenItems)) {
-              if (parentKey.includes(key)) {
-                seenItems[key].selected = true;
-              }
-            }
+            // for (let key of Object.keys(seenItems)) {
+            //   if (parentKey.includes(key)) {
+            //     seenItems[key].selected = true;
+            //   }
+            // }
           }
         }
-      } else {
-        // item = SidebarItem.forCategories([category]);
       }
-      // if (item) {
-      //   seenItems[itemKey.toLocaleLowerCase()] = item;
-      // }
     }
   }
 
