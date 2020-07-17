@@ -29,7 +29,7 @@ class KeyManager {
       delete keys[`${account.emailAddress}-refresh-token`];
       await this._writeKeyHash(keys);
     } catch (err) {
-      this._reportFatalError(err);
+      this._reportFatalError(err, { account });
     }
   }
 
@@ -41,7 +41,7 @@ class KeyManager {
       keys[`${account.emailAddress}-refresh-token`] = account.settings.refresh_token;
       await this._writeKeyHash(keys);
     } catch (err) {
-      this._reportFatalError(err);
+      this._reportFatalError(err, { account });
     }
     const next = account.clone();
     delete next.settings.imap_password;
@@ -59,7 +59,7 @@ class KeyManager {
     return next;
   }
 
-  accTokenCache = {}
+  accTokenCache = {};
   async getAccessTokenByEmail(email) {
     let accToken = null;
     // cache the access_token
@@ -71,7 +71,7 @@ class KeyManager {
       accToken = keys[`${email}-accessToken`];
       this.accTokenCache[email] = accToken;
     } catch (err) {
-      this._reportFatalError(err);
+      this._reportFatalError(err, { email });
     }
     return accToken;
   }
@@ -83,7 +83,7 @@ class KeyManager {
       keys[`${account.email}-accessToken`] = account.accessToken;
       await this._writeKeyHash(keys, this.CHAT_PREFIX);
     } catch (err) {
-      this._reportFatalError(err);
+      this._reportFatalError(err, { account });
     }
     const next = account.clone();
     delete next.password;
@@ -109,7 +109,7 @@ class KeyManager {
       keys[keyName] = newVal;
       await this._writeKeyHash(keys);
     } catch (err) {
-      this._reportFatalError(err);
+      this._reportFatalError(err, { keyName, newVal });
     }
   }
 
@@ -119,7 +119,7 @@ class KeyManager {
       delete keys[keyName];
       await this._writeKeyHash(keys);
     } catch (err) {
-      this._reportFatalError(err);
+      this._reportFatalError(err, { keyName });
     }
   }
 
@@ -128,7 +128,7 @@ class KeyManager {
       const keys = await this._getKeyHash();
       return keys[keyName];
     } catch (err) {
-      this._reportFatalError(err);
+      this._reportFatalError(err, { keyName });
     }
   }
 
@@ -140,7 +140,12 @@ class KeyManager {
         let bytes = aes.decrypt(cipherText, weakPassword);
         raw = bytes.toString(utf8);
       } catch (err) {
-        console.log('decrypt account credentials failed: ', err);
+        AppEnv.logError(
+          new Error(
+            `decrypt account credentials failed: prefix: ${prefix},cipherText: ${cipherText}`
+          )
+        );
+        AppEnv.logError(err);
       }
     }
     if (raw === '{}') {
@@ -148,13 +153,16 @@ class KeyManager {
         raw = (await keytar.getPassword(this.SERVICE_NAME, prefix + this.KEY_NAME)) || '{}';
         AppEnv.config.unset(prefix + this.CONFIGKEY);
       } catch (err) {
-        console.log('keychain access failed: ', err);
+        AppEnv.logError(new Error(`keychain access failed: raw is ${raw}, prefix: ${prefix}`));
+        AppEnv.logError(err);
         throw err;
       }
     }
     try {
       return JSON.parse(raw);
     } catch (err) {
+      AppEnv.logError(new Error(`Parse raw ${raw} error`));
+      AppEnv.logError(err);
       return {};
     }
   }
@@ -164,17 +172,22 @@ class KeyManager {
       await keytar.setPassword(this.SERVICE_NAME, prefix + this.KEY_NAME, JSON.stringify(keys));
       AppEnv.config.unset(prefix + this.CONFIGKEY);
     } catch (err) {
-      console.log('Failed to write to keychain: ', err);
+      AppEnv.logError(`Failed to write to keychain: prefix: ${prefix}`);
+      AppEnv.logError(err);
       try {
         const encryptedText = aes.encrypt(JSON.stringify(keys), weakPassword).toString();
         AppEnv.config.set(prefix + this.CONFIGKEY, encryptedText);
       } catch (err) {
+        AppEnv.logError(`Failed to encrypt with password`);
+        AppEnv.logError(err);
         return Promise.reject('Storing credentials failed');
       }
     }
   }
 
-  _reportFatalError(err) {
+  _reportFatalError(err, errorData) {
+    AppEnv.logError(err);
+    AppEnv.reportError(err, { errorData });
     let more = '';
     if (process.platform === 'linux') {
       more = 'Make sure you have `libsecret` installed and a keyring is present. ';
