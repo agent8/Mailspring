@@ -54,6 +54,16 @@ export default {
           },
         },
       },
+      account: {
+        type: 'object',
+        properties: {
+          colors: {
+            type: 'object',
+            default: {},
+
+          },
+        },
+      },
       support: {
         type: 'object',
         properties: {

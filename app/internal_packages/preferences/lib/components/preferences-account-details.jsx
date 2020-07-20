@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ipcRenderer, remote } from 'electron';
 import { DraftStore, RegExpUtils, KeyManager, Account, Utils } from 'mailspring-exports';
-import { EditableList } from 'mailspring-component-kit';
+import { EditableList, RetinaImg, LabelColorizer } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 
 class AutoaddressControl extends Component {
@@ -103,7 +103,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => {}) => {
+  _setState = (updates, callback = () => { }) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -454,6 +454,13 @@ class PreferencesAccountDetails extends Component {
     );
   }
 
+  onCheckColor = bgColor => {
+    const { account } = this.state;
+    const colors = AppEnv.config.get("core.account.colors");
+    colors[account.id] = bgColor
+    AppEnv.config.set('core.account.colors', colors)
+  };
+
   render() {
     const { account } = this.state;
     const aliasPlaceholder = this._makeAlias(
@@ -484,6 +491,33 @@ class PreferencesAccountDetails extends Component {
               onChange={this._onAccountNameUpdated}
             />
           </div>
+          {AppEnv.config.get("core.appearance.accountcolors") ?
+            <div className="item">
+              <div><label style={{ display: "block" }} htmlFor={'Account Color'}>Color</label></div>
+
+              <div className="color-choice">
+                {LabelColorizer.colors.map((color, idx) => {
+                  const className = AppEnv.config.get("core.account.colors")[account.id] === idx ? 'checked' : '';
+                  return (
+                    <div
+                      key={color}
+                      className={className}
+                      style={{ background: color }}
+                      onClick={() => this.onCheckColor(idx)}
+                    >
+                      <RetinaImg
+                        className="check-img check"
+                        name="tagging-checkmark.png"
+                        mode={RetinaImg.Mode.ContentPreserve}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div> :
+            null
+          }
+
 
           <AutoaddressControl
             autoaddress={account.autoaddress}
