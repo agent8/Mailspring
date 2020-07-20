@@ -336,7 +336,7 @@ class MessageStore extends MailspringStore {
   _closeWindowIfNoMessage() {
     if (AppEnv.isThreadWindow()) {
       const items = this.items();
-      if (Array.isArray(items) && items.length === 0 && !this._thread) {
+      if ((Array.isArray(items) && items.length === 0) || !this._thread) {
         AppEnv.logDebug('Closing window because no message in thread and in ThreadWindow');
         AppEnv.close();
       }
@@ -591,7 +591,6 @@ class MessageStore extends MailspringStore {
     this._setWindowTitle();
 
     this._fetchFromCache({ skipAutoMarkAsRead: false });
-    this._closeWindowIfNoMessage();
     if (AppEnv.isThreadWindow()) {
       DraftCacheStore.getDraftsFromMain();
     }
