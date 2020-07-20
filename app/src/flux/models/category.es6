@@ -101,19 +101,37 @@ const toDelimiterJSONMappings = val => {
   }
   return val.charCodeAt(0);
 };
-const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]', '[Mailspring]'];
+const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]'];
 export default class Category extends Model {
   get displayName() {
-    return Category.pathToDisplayName(this.name, !this.role || this.role === 'none');
+    return Category.pathToDisplayName(this.name);
   }
   get fullDisplayName() {
-    return utf7.imap.decode(this.name);
+    // return utf7.imap.decode(this.name);
+    return this.name;
+  }
+  pathWithPrefixStripped(ignoreGmailPrefix) {
+    const name = this.fullDisplayName;
+    for (const prefix of ignoredPrefixes) {
+      if (prefix !== 'INBOX' && !ignoreGmailPrefix) {
+        if (name.startsWith(prefix)) {
+          return name.substr(name.indexOf(prefix) + prefix.length + 1); // + delimiter
+        }
+      }
+      if (prefix === 'INBOX') {
+        if (name.toLocaleUpperCase().startsWith(prefix)) {
+          return name.substr(name.indexOf(prefix) + prefix.length + 1); // + delimiter;
+        }
+      }
+    }
+    return name;
   }
   static pathToDisplayName(pathString, ignoreGmailPrefix = false) {
     if (!pathString) {
       return '';
     }
-    const decoded = utf7.imap.decode(pathString);
+    // const decoded = utf7.imap.decode(pathString);
+    const decoded = pathString;
 
     for (const prefix of ignoredPrefixes) {
       if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {
