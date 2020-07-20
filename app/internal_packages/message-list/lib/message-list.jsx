@@ -36,7 +36,7 @@ const { Menu, MenuItem } = remote;
 
 const buttonTimeout = 700;
 const TOOLBAR_MIN_WIDTH = 595;
-
+const inMessageView = AppEnv.isDisableThreading();
 class MessageListScrollTooltip extends React.Component {
   static displayName = 'MessageListScrollTooltip';
   static propTypes = {
@@ -90,7 +90,6 @@ class MessageList extends React.Component {
 
   static default = {
     buttonTimeout: 700, // in milliseconds
-    inOubox: false,
   };
 
   constructor(props) {
@@ -100,11 +99,13 @@ class MessageList extends React.Component {
     this.state.isReplyAlling = false;
     this.state.isReplying = false;
     this.state.isForwarding = false;
+    this.state.isEditing = false;
     this.state.hideButtons = false;
     this.state.hideMessageList = false;
     this._replyTimer = null;
     this._replyAllTimer = null;
     this._forwardTimer = null;
+    this._editTimer = null;
     this._mounted = false;
     this._draftScrollInProgress = false;
     this.MINIFY_THRESHOLD = 3;
@@ -200,11 +201,18 @@ class MessageList extends React.Component {
           this._replyAllTimer = null;
         }, buttonTimeout);
       }
-    } else {
+    } else if (type === 'forward') {
       if (!this._forwardTimer) {
         this._forwardTimer = setTimeout(() => {
           this.safeSetState({ isForwarding: false });
           this._forwardTimer = null;
+        }, buttonTimeout);
+      }
+    } else if (type === 'edit') {
+      if (!this._editTimer) {
+        this._editTimer = setTimeout(() => {
+          this.safeSetState({ isEditing: false });
+          this._editTimer = null;
         }, buttonTimeout);
       }
     }
@@ -428,6 +436,15 @@ class MessageList extends React.Component {
       behavior: 'prefer-existing-if-pristine',
     });
   };
+  _onClickPopout = () => {
+    if (!this.state.currentThread || this.state.isEditing || !this._mounted) {
+      return;
+    }
+    this.safeSetState({ isEditing: true }, this._timeoutButton.bind(this, 'edit'));
+    Actions.composePopoutDraft(this.state.messages[0].id, {
+      source: 'MessageView:MessageList:EditDraft',
+    });
+  };
 
   _renderDraftElement() {
     const { selectedDraft } = this.state;
@@ -462,6 +479,11 @@ class MessageList extends React.Component {
       const collapsed = !messagesExpandedState[message.id];
       const isMostRecent = message === mostRecentMessage;
       const isBeforeReplyArea = isMostRecent && hasReplyArea;
+      const renderDraftEditArea =
+        inMessageView &&
+        mostRecentMessage &&
+        mostRecentMessage.draft &&
+        !mostRecentMessage.calendarReply;
 
       elements.push(
         <MessageItemContainer
@@ -478,8 +500,9 @@ class MessageList extends React.Component {
           threadPopedOut={this.state.popedOut}
         />
       );
-
-      if (isBeforeReplyArea) {
+      if (renderDraftEditArea) {
+        elements.push(this._renderDraftEditArea());
+      } else if (isBeforeReplyArea) {
         elements.push(this._renderReplyArea());
       }
     });
@@ -707,6 +730,25 @@ class MessageList extends React.Component {
     );
   }
 
+  _renderDraftEditArea() {
+    return (
+      <div
+        className="footer-reply-area-wrap"
+        onClick={this.state.popedOut ? this._onPopoutThread : null}
+        key="reply-area"
+      >
+        <div className="btn" onClick={this._onClickPopout}>
+          <RetinaImg
+            name={`popout.svg`}
+            style={{ width: 24, height: 24, fontSize: 24 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+          <span className="reply-text">Edit</span>
+        </div>
+      </div>
+    );
+  }
   _renderReplyArea() {
     return (
       <div

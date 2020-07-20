@@ -11,6 +11,7 @@ import {
 
 import MessageItem from './message-item';
 
+const inMessageView = AppEnv.isDisableThreading();
 export default class MessageItemContainer extends React.Component {
   static displayName = 'MessageItemContainer';
 
@@ -162,7 +163,12 @@ export default class MessageItemContainer extends React.Component {
     if (this._draftNotReady()) {
       return this._renderMessage({ pending: true });
     }
-    if (this.props.message.draft && !this.props.collapsed && this.props.message.body) {
+    if (
+      !inMessageView &&
+      this.props.message.draft &&
+      !this.props.collapsed &&
+      this.props.message.body
+    ) {
       return this._renderComposer();
     }
     return this._renderMessage({ pending: false });
