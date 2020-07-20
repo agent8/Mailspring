@@ -60,7 +60,14 @@ const YAHOO_CLIENT_SECRET = '5edd54d7240d0ae74594d4806cdf69c72a6e9fa5';
 
 const OFFICE365_CLIENT_ID = '62db40a4-2c7e-4373-a609-eda138798962';
 const OFFICE365_CLIENT_SECRET = 'lj9US4uHiIYYs]ew?vU6C?E0?zt:qw41';
-const OFFICE365_SCOPES = ['user.read', 'mail.read', 'mail.send', 'offline_access'];
+// const OFFICE365_SCOPES = ['user.read', 'mail.read', 'mail.send', 'offline_access'];
+const OFFICE365_SCOPES = [
+  'user.read',
+  'EWS.AccessAsUser.All',
+  'offline_access',
+  'profile',
+  'openid',
+];
 
 const OUTLOOK_CLIENT_ID = '00000000443D1B02';
 const OUTLOOK_CLIENT_SECRET = 'rpCRHB7(-hiexsVPN1351}{';
@@ -322,6 +329,8 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   }
   console.log('****json', json, me);
 
+  const emailAddress = me.mail || me.userPrincipalName;
+
   // get user self picture
   let picturePath;
   try {
@@ -334,7 +343,7 @@ export async function buildOffice365AccountFromAuthResponse(code) {
     });
     if (photoResp.ok) {
       const buffer = await photoResp.arrayBuffer();
-      picturePath = path.join(AppEnv.getConfigDirPath(), 'logo_cache', `${me.mail}.png`);
+      picturePath = path.join(AppEnv.getConfigDirPath(), 'logo_cache', `${emailAddress}.png`);
       await writeFile(picturePath, Buffer.from(buffer), { encoding: 'binary' });
     }
   } catch (err) {
@@ -345,7 +354,7 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   const account = await expandAccountWithCommonSettings(
     new Account({
       name: me.displayName,
-      emailAddress: me.mail,
+      emailAddress: emailAddress,
       provider: 'office365-exchange',
       settings: {
         refresh_client_id: OFFICE365_CLIENT_ID,
@@ -355,17 +364,17 @@ export async function buildOffice365AccountFromAuthResponse(code) {
   );
 
   // check if there is an old Office365 account
-  const oldOffice365Acc = AccountStore.accountForEmail({ email: me.mail });
+  const oldOffice365Acc = AccountStore.accountForEmail({ email: emailAddress });
   if (oldOffice365Acc && oldOffice365Acc.settings.provider_key === 'office365') {
     OnboardingActions.moveToPage('account-choose');
     AppEnv.showErrorDialog({
       title: 'Unable to Add Account',
-      message: `Please remove your ${me.mail} account first, and try again.`,
+      message: `Please remove your ${emailAddress} account first, and try again.`,
     });
     return;
   }
 
-  account.id = idForAccount(me.email, account.settings);
+  account.id = idForAccount(emailAddress, account.settings);
   if (picturePath) {
     account.picture = picturePath;
   }
