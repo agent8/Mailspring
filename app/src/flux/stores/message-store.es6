@@ -1086,6 +1086,12 @@ class MessageStore extends MailspringStore {
 
   _onPopoutThread = thread => {
     this._setPopout(true);
+    const sidebarPerspective = FocusedPerspectiveStore.currentSidebar();
+    const currentPerspective = FocusedPerspectiveStore.current();
+    let currentPerspectiveJson = '';
+    if (!sidebarPerspective.isEqual(currentPerspective)) {
+      currentPerspectiveJson = currentPerspective.toJSON();
+    }
     return AppEnv.newWindow({
       title: thread.subject,
       hidden: false,
@@ -1097,7 +1103,8 @@ class MessageStore extends MailspringStore {
       windowLevel: this._currentWindowLevel,
       windowProps: {
         threadId: thread.id,
-        perspectiveJSON: FocusedPerspectiveStore.current().toJSON(),
+        sidebarPerspectiveJson: sidebarPerspective.toJSON(),
+        currentPerspectiveJson: currentPerspectiveJson,
       },
     });
   };
