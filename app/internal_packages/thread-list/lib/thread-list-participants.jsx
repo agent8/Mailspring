@@ -2,33 +2,64 @@ import { React, PropTypes, Utils, Message, Contact } from 'mailspring-exports';
 import { LabelColorizer } from 'mailspring-component-kit';
 
 class ThreadListParticipants extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
+      color: AppEnv.config.get('core.account.colors')[this.props.thread.accoundId]
+    }
+  }
   static displayName = 'ThreadListParticipants';
 
   static propTypes = { thread: PropTypes.object.isRequired };
 
-  shouldComponentUpdate(nextProps) {
-    if (nextProps.thread === this.props.thread) {
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextProps.thread === this.props.thread && nextState === this.state) {
       return false;
     }
     return true;
   }
 
+  componentDidMount() {
+    AppEnv.config.onDidChange(
+      'core.appearance.accountcolors',
+      () => {
+        this.setState({
+          showAccountColor: AppEnv.config.get('core.appearance.accountcolors')
+        })
+      }
+    );
+    AppEnv.config.onDidChange(
+      'core.account.colors',
+      () => {
+        const colorId = AppEnv.config.get("core.account.colors")[this.props.thread.accountId]
+        this.setState({
+          color: LabelColorizer.colors[colorId]
+        })
+      }
+    )
+  }
+
   render() {
     const items = this.getTokens();
-    const colorId = AppEnv.config.get("core.account.colors")[this.props.thread.accountId]
-    const color = LabelColorizer.colors[colorId];
     return (
       <div className="participants">
         {this.renderIcons()}
         <div className="participants-inner">
-          {AppEnv.config.get("core.appearance.accountcolors") ?
-            <span className={`account-color`} style={{ color: color }}>|</span> :
-            null
-          }
+          {this.renderAccountColors()}
           {this.renderSpans(items)}</div>
         {this.renderMessageCount()}
       </div>
     );
+  }
+
+  renderAccountColors = () => {
+    const { showAccountColor, color } = this.state;
+    if (showAccountColor) {
+      return <span className={`account-color`} style={{ color: color }}>|</span>
+    } else {
+      return null;
+    }
   }
 
   renderMessageCount = () => {

@@ -2,6 +2,7 @@
 /* eslint jsx-a11y/tabindex-no-positive:0 */
 
 import _ from 'underscore';
+import { LabelColorizer } from 'mailspring-component-kit';
 import { Utils, AccountStore, Actions } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
@@ -152,6 +153,8 @@ class OutlineViewItem extends Component {
       editing: props.item.editing || false,
       originalText: '',
       showAllChildren: false,
+      showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
+      colors: AppEnv.config.get('core.account.colors')
     };
     this._mounted = false;
   }
@@ -173,6 +176,22 @@ class OutlineViewItem extends Component {
       targetDiv: ReactDOM.findDOMNode(this.refs[`${this.props.item.id}-span`]),
     });
     this.checkCurrentShowAllChildren(this.props);
+    AppEnv.config.onDidChange(
+      'core.appearance.accountcolors',
+      () => {
+        this.setState({
+          showAccountColor: AppEnv.config.get('core.appearance.accountcolors')
+        })
+      }
+    );
+    AppEnv.config.onDidChange(
+      'core.account.colors',
+      () => {
+        this.setState({
+          colors: AppEnv.config.get("core.account.colors")
+        })
+      }
+    )
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -428,6 +447,23 @@ class OutlineViewItem extends Component {
     );
   }
 
+  _renderAccountColor(item = this.props.item) {
+    const { showAccountColor, colors } = this.state
+    if (
+      showAccountColor &&
+      item.mode === 'original' &&
+      item.children &&
+      item.children.length > 0
+    ) {
+      const colorId = colors[item.accountIds[0]];
+      const color = LabelColorizer.colors[colorId];
+      return <span className="account-color" style={{ color: color }}>|</span>
+    }
+    else {
+      return null;
+    }
+  }
+
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
       item: true,
@@ -446,6 +482,7 @@ class OutlineViewItem extends Component {
         shouldAcceptDrop={this._shouldAcceptDrop}
         onDragStateChange={this._onDragStateChange}
       >
+        {this._renderAccountColor()}
         {this._renderCount()}
         {this._renderIcon()}
         {this._renderItemContent()}
