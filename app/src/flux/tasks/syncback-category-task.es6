@@ -23,7 +23,7 @@ export default class SyncbackCategoryTask extends Task {
 
   static forCreating({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
     return new SyncbackCategoryTask({
-      name: utf7.imap.encode(name),
+      name: name,
       path: isExchange ? '' : utf7.imap.encode(name),
       bgColor: bgColor,
       accountId: accountId,
@@ -35,7 +35,7 @@ export default class SyncbackCategoryTask extends Task {
     return new SyncbackCategoryTask({
       existingPath: path,
       path: isExchange ? '' : utf7.imap.encode(newName),
-      name: utf7.imap.encode(newName),
+      name: newName,
       accountId: accountId,
     });
   }
