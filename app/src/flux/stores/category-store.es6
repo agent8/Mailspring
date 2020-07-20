@@ -45,9 +45,9 @@ class CategoryStore extends MailspringStore {
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
-  decodePath(pathString) {
-    return Category.pathToDisplayName(pathString);
-  }
+  // decodePath(pathString) {
+  //   return Category.pathToDisplayName(pathString);
+  // }
   byFolderId(categoryId) {
     const accountIds = Object.keys(this._categoryCache);
     for (let accountId of accountIds) {
@@ -331,7 +331,7 @@ class CategoryStore extends MailspringStore {
           id,
           path,
           accountId: category.accountId,
-          name: utf7.imap.encode(path),
+          name: utf7.imap.decode(path),
           type: category.type,
           selectable: false,
           delimiter: category.delimiter,
