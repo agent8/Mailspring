@@ -8,6 +8,7 @@ import Actions from '../actions';
 import FolderState from '../models/folder-state';
 import Folder from '../models/folder';
 import crypto from 'crypto';
+import utf7 from 'utf7';
 const asAccount = a => {
   if (!a) {
     throw new Error('You must pass an Account or Account Id');
@@ -216,15 +217,11 @@ class CategoryStore extends MailspringStore {
     if (accountId) {
       const cache = this._categoryCache && this._categoryCache[accountId];
       if (cache) {
-        return Object.values(cache).find(
-          cat => cat && this.decodePath(cat.path) === this.decodePath(path)
-        );
+        return Object.values(cache).find(cat => cat && cat.path === path);
       }
     }
     if (Array.isArray(this._categoryResult)) {
-      return this._categoryResult.find(
-        cat => cat && this.decodePath(cat.path) === this.decodePath(path)
-      );
+      return this._categoryResult.find(cat => cat && cat.path === path);
     }
     return null;
   }
@@ -305,7 +302,7 @@ class CategoryStore extends MailspringStore {
           id,
           path,
           accountId: category.accountId,
-          name: path,
+          name: utf7.imap.encode(path),
           type: category.type,
           selectable: false,
           delimiter: category.delimiter,
