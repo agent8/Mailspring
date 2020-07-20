@@ -1,4 +1,5 @@
 import { React, PropTypes, Utils, Message, Contact } from 'mailspring-exports';
+import { LabelColorizer } from 'mailspring-component-kit';
 
 class ThreadListParticipants extends React.Component {
   static displayName = 'ThreadListParticipants';
@@ -14,10 +15,19 @@ class ThreadListParticipants extends React.Component {
 
   render() {
     const items = this.getTokens();
+    const colorId = AppEnv.config.get("core.account.colors")[this.props.thread.accountId]
+    const color = LabelColorizer.colors[colorId];
+    console.log("PANDA");
+    console.log(color)
     return (
       <div className="participants">
         {this.renderIcons()}
-        <div className="participants-inner">{this.renderSpans(items)}</div>
+        <div className="participants-inner">
+          {AppEnv.config.get("core.appearance.accountcolors") ?
+            <span className={`account-color`} style={{ color: color }}>|</span> :
+            null
+          }
+          {this.renderSpans(items)}</div>
         {this.renderMessageCount()}
       </div>
     );
@@ -27,8 +37,8 @@ class ThreadListParticipants extends React.Component {
     const messages =
       this.props.thread.__messages != null
         ? this.props.thread.__messages.filter(message => {
-            return !message.deleted;
-          })
+          return !message.deleted;
+        })
         : [];
     if (messages.length > 1) {
       return <div className="messages-count">({messages.length})</div>;
@@ -52,7 +62,7 @@ class ThreadListParticipants extends React.Component {
     let accumulated = null;
     let accumulatedUnread = false;
 
-    const flush = function() {
+    const flush = function () {
       if (accumulated) {
         spans.push(
           <span key={spans.length} className={`unread-${accumulatedUnread}`}>
@@ -64,7 +74,7 @@ class ThreadListParticipants extends React.Component {
       accumulatedUnread = false;
     };
 
-    const accumulate = function(text, unread) {
+    const accumulate = function (text, unread) {
       if (accumulated && unread && accumulatedUnread !== unread) {
         flush();
       }
@@ -236,7 +246,7 @@ class ThreadListParticipants extends React.Component {
     if (
       list.length === 0 &&
       (this.props.thread.participants != null ? this.props.thread.participants.length : undefined) >
-        0
+      0
     ) {
       list.push({ contact: this.props.thread.participants[0], unread: false });
     }
