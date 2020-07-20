@@ -14,15 +14,15 @@ export default class DestroyCategoryTask extends Task {
 
   constructor(data) {
     super(data);
-    this.name = this.name || this.path;
+    this.name = this.name || utf7.imap.decode(this.path || '');
   }
   onError({ key, debuginfo, retryable }) {
-    const errorMessage = `Delete folder ${utf7.imap.decode(this.name)} failed`;
+    const errorMessage = `Delete folder ${this.name || utf7.imap.decode(this.path || '')} failed`;
     const errorDetail = debuginfo;
-    AppEnv.showErrorDialog({title: errorMessage, message: errorDetail});
+    AppEnv.showErrorDialog({ title: errorMessage, message: errorDetail });
   }
 
   label() {
-    return `Deleting ${utf7.imap.decode(this.name)}`;
+    return `Deleting ${this.name || utf7.imap.decode(this.path || '')}`;
   }
 }
