@@ -143,48 +143,52 @@ function hotwireDraftBodyState(draft) {
       return _bodyHTMLCache;
     },
     set: function(inHTML) {
-      let nextValue = convertFromHTML(inHTML);
-      if (draft.bodyEditorState) {
-        // DC-1243 When doing full body replace, we first get the first block, and if it's not a div, we upwrap it, insert fragment, and then rewrap it, otherwise the first line will be unwrapped for some unknown reason.
-        const firstBlock = draft.bodyEditorState
-          .change()
-          .value.document.getBlocks()
-          .get(0);
-        const firstParentBlock = draft.bodyEditorState
-          .change()
-          .value.document.getFurthestBlock(firstBlock.key);
-        let blockType = 'div';
-        if (firstParentBlock) {
-          blockType = firstParentBlock.type;
-        } else if (firstBlock) {
-          blockType = firstBlock.type;
-        }
-        let newEditor = draft.bodyEditorState
-          .change()
-          .selectAll()
-          .delete()
-          .selectAll()
-          .collapseToStart();
-        if (blockType !== 'div') {
-          newEditor = newEditor
-            .unwrapBlock(blockType)
+      _bodyHTMLCache = inHTML;
+      try {
+        let nextValue = convertFromHTML(inHTML);
+        if (draft.bodyEditorState) {
+          // DC-1243 When doing full body replace, we first get the first block, and if it's not a div, we upwrap it, insert fragment, and then rewrap it, otherwise the first line will be unwrapped for some unknown reason.
+          const firstBlock = draft.bodyEditorState
+            .change()
+            .value.document.getBlocks()
+            .get(0);
+          const firstParentBlock = draft.bodyEditorState
+            .change()
+            .value.document.getFurthestBlock(firstBlock.key);
+          let blockType = 'div';
+          if (firstParentBlock) {
+            blockType = firstParentBlock.type;
+          } else if (firstBlock) {
+            blockType = firstBlock.type;
+          }
+          let newEditor = draft.bodyEditorState
+            .change()
             .selectAll()
-            .delete();
-        }
-        nextValue = newEditor
-          .insertFragment(nextValue.document)
-          .selectAll()
-          .collapseToStart();
-        if (blockType !== 'div') {
-          nextValue = nextValue
-            .wrapBlock(blockType)
+            .delete()
             .selectAll()
             .collapseToStart();
+          if (blockType !== 'div') {
+            newEditor = newEditor
+              .unwrapBlock(blockType)
+              .selectAll()
+              .delete();
+          }
+          nextValue = newEditor
+            .insertFragment(nextValue.document)
+            .selectAll()
+            .collapseToStart();
+          if (blockType !== 'div') {
+            nextValue = nextValue
+              .wrapBlock(blockType)
+              .selectAll()
+              .collapseToStart();
+          }
+          nextValue = nextValue.value;
         }
-        nextValue = nextValue.value;
+        draft.bodyEditorState = nextValue;
+      } catch (e) {
+        AppEnv.reportError(e, { errorData: { htm: inHTML, id: (draft || {}).id } });
       }
-      draft.bodyEditorState = nextValue;
-      _bodyHTMLCache = inHTML;
     },
   };
 
