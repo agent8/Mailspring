@@ -17,8 +17,6 @@ class ThreadListParticipants extends React.Component {
     const items = this.getTokens();
     const colorId = AppEnv.config.get("core.account.colors")[this.props.thread.accountId]
     const color = LabelColorizer.colors[colorId];
-    console.log("PANDA");
-    console.log(color)
     return (
       <div className="participants">
         {this.renderIcons()}
