@@ -330,19 +330,20 @@ class CategoryStore extends MailspringStore {
           .createHash('md5')
           .update(`${category.accountId}${path}`)
           .digest('hex');
-        ret.unshift(
-          new Folder({
-            id,
-            path,
-            accountId: category.accountId,
-            name: path,
-            type: category.type,
-            selectable: false,
-            delimiter: category.delimiter,
-            state: 0,
-            role: '',
-          })
-        );
+        const newFolder = new Folder({
+          id,
+          path,
+          accountId: category.accountId,
+          name: path,
+          type: category.type,
+          selectable: false,
+          delimiter: category.delimiter,
+          state: 0,
+          role: '',
+        });
+        if (newFolder.pathWithPrefixStripped().length > 0) {
+          ret.unshift(newFolder);
+        }
         i--;
       }
     }
@@ -363,7 +364,7 @@ class CategoryStore extends MailspringStore {
       const cat = categories[i];
       if (cat) {
         const layers = cat.displayName.split(cat.delimiter);
-        if (cat.selectable && !cat.role) {
+        if (lastCategory.selectable && !lastCategory.role) {
           if (cat.areStrangers(lastCategory)) {
             ret.unshift(...this._generateParents(lastCategory));
           } else if (cat.isAncestorOf(lastCategory)) {
