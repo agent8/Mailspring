@@ -335,7 +335,8 @@ class MessageStore extends MailspringStore {
 
   _closeWindowIfNoMessage() {
     if (AppEnv.isThreadWindow()) {
-      if (Array.isArray(this._items) && this._items.length === 0 && !this._thread) {
+      const items = this.items();
+      if (Array.isArray(items) && items.length === 0 && !this._thread) {
         AppEnv.logDebug('Closing window because no message in thread and in ThreadWindow');
         AppEnv.close();
       }
