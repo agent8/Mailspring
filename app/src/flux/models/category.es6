@@ -1,5 +1,4 @@
 /* eslint global-require: 0 */
-import utf7 from 'utf7';
 import Model from './model';
 import Attributes from '../attributes';
 import {
