@@ -11,6 +11,7 @@ import DisclosureTriangle from './disclosure-triangle';
 import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import PropTypes from 'prop-types';
+import AccountColorPopout from './account-color-popout';
 import { Divider, DIVIDER_KEY, MORE_TOGGLE } from './outline-view';
 
 /*
@@ -154,7 +155,8 @@ class OutlineViewItem extends Component {
       originalText: '',
       showAllChildren: false,
       showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
-      colors: AppEnv.config.get('core.account.colors')
+      colors: AppEnv.config.get('core.account.colors'),
+      showPopOut: false
     };
     this._mounted = false;
   }
@@ -464,6 +466,29 @@ class OutlineViewItem extends Component {
     }
   }
 
+  onCheckColor = bgColor => {
+    const { item } = this.props;
+    const colors = AppEnv.config.get("core.account.colors");
+    colors[item.accountIds[0]] = bgColor
+    AppEnv.config.set('core.account.colors', colors)
+  };
+
+  _onRightClick = () => {
+    const { item } = this.props;
+    if (
+      AppEnv.config.get('core.appearance.accountcolors') &&
+      item.mode === 'original' &&
+      item.children &&
+      item.children.length > 0
+    ) {
+      this.setState({ showPopOut: !this.state.showPopOut })
+    }
+  }
+
+  _hideAccountColorPopout = () => {
+    this.setState({ showPopOut: false });
+  }
+
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
       item: true,
@@ -473,20 +498,33 @@ class OutlineViewItem extends Component {
     });
 
     return (
-      <DropZone
-        id={item.id}
-        className={containerClass}
-        onDrop={this._onDrop}
-        onClick={this._onClick}
-        onDoubleClick={this._onEdit}
-        shouldAcceptDrop={this._shouldAcceptDrop}
-        onDragStateChange={this._onDragStateChange}
-      >
-        {this._renderAccountColor()}
-        {this._renderCount()}
-        {this._renderIcon()}
-        {this._renderItemContent()}
-      </DropZone>
+      <div>
+        <DropZone
+          id={item.id}
+          className={containerClass}
+          onDrop={this._onDrop}
+          onClick={this._onClick}
+          onDoubleClick={this._onEdit}
+          onContextMenu={this._onRightClick}
+          shouldAcceptDrop={this._shouldAcceptDrop}
+          onDragStateChange={this._onDragStateChange}
+        >
+
+          {this._renderAccountColor()}
+          {this._renderCount()}
+          {this._renderIcon()}
+          {this._renderItemContent()}
+
+        </DropZone>
+        {state.showPopOut ?
+          <AccountColorPopout
+            onCheckColor={this.onCheckColor}
+            item={item}
+            _hideAccountColorPopout={this._hideAccountColorPopout}
+          />
+          : null}
+      </div>
+
     );
   }
 

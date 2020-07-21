@@ -6,7 +6,7 @@ class ThreadListParticipants extends React.Component {
     super(props);
     this.state = {
       showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
-      color: AppEnv.config.get('core.account.colors')[this.props.thread.accoundId]
+      color: LabelColorizer.colors[AppEnv.config.get('core.account.colors')[this.props.thread.accountId]]
     }
   }
   static displayName = 'ThreadListParticipants';
