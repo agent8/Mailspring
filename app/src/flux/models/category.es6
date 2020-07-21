@@ -296,6 +296,9 @@ export default class Category extends Model {
       //Since this relationship only applies to same account,
       return false;
     }
+    if (this.id === otherCategory.id) {
+      return false;
+    }
     const currentLayers = this.displayName.split(this.delimiter);
     const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
     return otherLayers[0] !== currentLayers[0];
@@ -305,6 +308,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     const currentLayers = this.displayName.split(this.delimiter);
@@ -328,6 +334,9 @@ export default class Category extends Model {
     if (this.accountId !== otherCategory.accountId) {
       return false;
     }
+    if (this.id === otherCategory.id) {
+      return false;
+    }
     const currentLayers = this.displayName.split(this.delimiter);
     const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
     return (
@@ -340,6 +349,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     const currentLayers = this.displayName.split(this.delimiter);
@@ -372,6 +384,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     return (
