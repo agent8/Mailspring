@@ -1,5 +1,4 @@
 /* eslint global-require: 0 */
-import utf7 from 'utf7';
 import Model from './model';
 import Attributes from '../attributes';
 import {
@@ -101,16 +100,38 @@ const toDelimiterJSONMappings = val => {
   }
   return val.charCodeAt(0);
 };
-const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]', '[Mailspring]'];
+const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]'];
 export default class Category extends Model {
   get displayName() {
-    return Category.pathToDisplayName(this.name, !this.role || this.role === 'none');
+    return Category.pathToDisplayName(this.name, this.delimiter);
   }
   get fullDisplayName() {
     // return utf7.imap.decode(this.name);
     return this.name;
   }
-  static pathToDisplayName(pathString, ignoreGmailPrefix = false) {
+  pathWithPrefixStripped(ignoreGmailPrefix) {
+    const name = this.fullDisplayName;
+    for (const prefix of ignoredPrefixes) {
+      if (prefix !== 'INBOX' && !ignoreGmailPrefix) {
+        if (name.startsWith(`${prefix}${this.delimiter}`)) {
+          return name.substr(prefix.length + 1); // + delimiter
+        }
+        if (name === prefix) {
+          return name.substr(prefix.length + 1); // + delimiter;
+        }
+      }
+      if (prefix === 'INBOX') {
+        if (name.toLocaleUpperCase().startsWith(`${prefix}${this.delimiter}`)) {
+          return name.substr(prefix.length + 1); // + delimiter;
+        }
+        if (name.toLocaleUpperCase() === prefix) {
+          return name.substr(prefix.length + 1); // + delimiter;
+        }
+      }
+    }
+    return name;
+  }
+  static pathToDisplayName(pathString, delimiter = '', ignoreGmailPrefix = false) {
     if (!pathString) {
       return '';
     }
@@ -118,7 +139,7 @@ export default class Category extends Model {
     const decoded = pathString;
 
     for (const prefix of ignoredPrefixes) {
-      if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {
+      if (decoded.startsWith(`${prefix}${delimiter}`) && decoded.length > prefix.length + 2) {
         if (prefix !== 'INBOX' && ignoreGmailPrefix) {
           return decoded;
         }
@@ -126,8 +147,8 @@ export default class Category extends Model {
       }
       if (
         prefix === 'INBOX' &&
-        decoded.toLocaleLowerCase().startsWith(prefix.toLocaleLowerCase()) &&
-        decoded.length > prefix.length + 1
+        decoded.toLocaleUpperCase().startsWith(`${prefix}${delimiter}`) &&
+        decoded.length > prefix.length + 2
       ) {
         return decoded.substr(prefix.length + 1); // + delimiter
       }
@@ -275,6 +296,9 @@ export default class Category extends Model {
       //Since this relationship only applies to same account,
       return false;
     }
+    if (this.id === otherCategory.id) {
+      return false;
+    }
     const currentLayers = this.displayName.split(this.delimiter);
     const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
     return otherLayers[0] !== currentLayers[0];
@@ -284,6 +308,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     const currentLayers = this.displayName.split(this.delimiter);
@@ -307,6 +334,9 @@ export default class Category extends Model {
     if (this.accountId !== otherCategory.accountId) {
       return false;
     }
+    if (this.id === otherCategory.id) {
+      return false;
+    }
     const currentLayers = this.displayName.split(this.delimiter);
     const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
     return (
@@ -319,6 +349,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     const currentLayers = this.displayName.split(this.delimiter);
@@ -351,6 +384,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     return (
