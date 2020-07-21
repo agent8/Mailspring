@@ -8,6 +8,7 @@ const fs = require('fs-plus');
 const glob = require('glob');
 const babel = require('babel-core');
 const { execSync } = require('child_process');
+const setLanguages = require('electron-packager-languages');
 const symlinkedPackages = [];
 
 module.exports = grunt => {
@@ -241,6 +242,7 @@ module.exports = grunt => {
       appBundleId: 'com.edisonmail.edisonmail',
       // helperBundleId: 'com.edisonmail.edisonmail',
       afterCopy: [
+        setLanguages([]),
         runCopyPlatformSpecificResources,
         runWriteCommitHashIntoPackage,
         runCopySymlinkedPackages,

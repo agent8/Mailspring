@@ -8,6 +8,7 @@ import Actions from '../actions';
 import FolderState from '../models/folder-state';
 import Folder from '../models/folder';
 import crypto from 'crypto';
+import utf7 from 'utf7';
 const asAccount = a => {
   if (!a) {
     throw new Error('You must pass an Account or Account Id');
@@ -44,9 +45,9 @@ class CategoryStore extends MailspringStore {
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
-  decodePath(pathString) {
-    return Category.pathToDisplayName(pathString);
-  }
+  // decodePath(pathString) {
+  //   return Category.pathToDisplayName(pathString);
+  // }
   byFolderId(categoryId) {
     const accountIds = Object.keys(this._categoryCache);
     for (let accountId of accountIds) {
@@ -202,6 +203,9 @@ class CategoryStore extends MailspringStore {
     if (!this._categoriesRelationSanityCheckPass(catA, catB)) {
       return false;
     }
+    if (catA.id === catB.id) {
+      return false;
+    }
     const isExchange = AccountStore.isExchangeAccountId(catA.accountId);
     if (!isExchange) {
       return catA.isParentOf(catB);
@@ -245,15 +249,11 @@ class CategoryStore extends MailspringStore {
     if (accountId) {
       const cache = this._categoryCache && this._categoryCache[accountId];
       if (cache) {
-        return Object.values(cache).find(
-          cat => cat && this.decodePath(cat.path) === this.decodePath(path)
-        );
+        return Object.values(cache).find(cat => cat && cat.path === path);
       }
     }
     if (Array.isArray(this._categoryResult)) {
-      return this._categoryResult.find(
-        cat => cat && this.decodePath(cat.path) === this.decodePath(path)
-      );
+      return this._categoryResult.find(cat => cat && cat.path === path);
     }
     return null;
   }
@@ -334,7 +334,7 @@ class CategoryStore extends MailspringStore {
           id,
           path,
           accountId: category.accountId,
-          name: path,
+          name: utf7.imap.decode(path),
           type: category.type,
           selectable: false,
           delimiter: category.delimiter,
