@@ -116,7 +116,7 @@ export default class Category extends Model {
         if (name.startsWith(`${prefix}${this.delimiter}`)) {
           return name.substr(prefix.length + 1); // + delimiter
         }
-        if (name.length === prefix.length && name === prefix) {
+        if (name === prefix) {
           return name.substr(prefix.length + 1); // + delimiter;
         }
       }
@@ -124,7 +124,7 @@ export default class Category extends Model {
         if (name.toLocaleUpperCase().startsWith(`${prefix}${this.delimiter}`)) {
           return name.substr(prefix.length + 1); // + delimiter;
         }
-        if (name.length === prefix.length && name.toLocaleUpperCase() === prefix) {
+        if (name.toLocaleUpperCase() === prefix) {
           return name.substr(prefix.length + 1); // + delimiter;
         }
       }
