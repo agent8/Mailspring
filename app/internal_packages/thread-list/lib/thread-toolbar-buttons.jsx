@@ -305,7 +305,7 @@ export function TrashButton(props) {
     }
     const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
     const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
-    const isExchange = CategoryStore.isExchangeAccountId(accountId);
+    const isExchange = AccountStore.isExchangeAccountId(accountId);
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
       .every(folder => {
@@ -333,7 +333,7 @@ export function TrashButton(props) {
     }
     const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
     const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
-    const isExchange = CategoryStore.isExchangeAccountId(accountId);
+    const isExchange = AccountStore.isExchangeAccountId(accountId);
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
       .some(folder => {
