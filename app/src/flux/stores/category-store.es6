@@ -8,6 +8,7 @@ import Actions from '../actions';
 import FolderState from '../models/folder-state';
 import Folder from '../models/folder';
 import crypto from 'crypto';
+import utf7 from 'utf7';
 const asAccount = a => {
   if (!a) {
     throw new Error('You must pass an Account or Account Id');
@@ -44,9 +45,9 @@ class CategoryStore extends MailspringStore {
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
-  decodePath(pathString) {
-    return Category.pathToDisplayName(pathString);
-  }
+  // decodePath(pathString) {
+  //   return Category.pathToDisplayName(pathString);
+  // }
   byFolderId(categoryId) {
     const accountIds = Object.keys(this._categoryCache);
     for (let accountId of accountIds) {
@@ -180,17 +181,49 @@ class CategoryStore extends MailspringStore {
   getSpamCategory(accountOrId) {
     return this.getCategoryByRole(accountOrId, 'spam');
   }
+  _categoriesRelationSanityCheckPass(catA, catB) {
+    if (!(catA instanceof Category) || !(catB instanceof Category)) {
+      AppEnv.logError(`Either catA or catB is not instance of Category`);
+      return false;
+    }
+    if (catA.accountId !== catB.accountId) {
+      AppEnv.logDebug(`catA ${catA.accountId} is not catB ${catB.accountId} account id`);
+      return false;
+    }
+    const account = AccountStore.accountForId(catA.accountId);
+    if (!account) {
+      AppEnv.reportError(new Error(`catA ${catA.accountId} dose not exist in AccountStore`), {
+        errorData: { account: AccountStore.accountIds(), accountId: catA.accountId },
+      });
+      return false;
+    }
+    return true;
+  }
+  isCategoryAParentOfB(catA, catB) {
+    if (!this._categoriesRelationSanityCheckPass(catA, catB)) {
+      return false;
+    }
+    if (catA.id === catB.id) {
+      return false;
+    }
+    const isExchange = AccountStore.isExchangeAccountId(catA.accountId);
+    if (!isExchange) {
+      return catA.isParentOf(catB);
+    } else {
+      return catA.path === catB.parentId;
+    }
+  }
   getCategoryParent = category => {
     const account = AccountStore.accountForId(category.accountId);
     if (account && category) {
-      const isExchange = account.provider.includes('exchange');
+      const isExchange = AccountStore.isExchangeAccount(account);
       let parent = null;
       if (isExchange) {
         const inboxCategory = this.getInboxCategory(account.id);
         if (inboxCategory && category.parentId === inboxCategory.parentId) {
           return null;
         }
-        parent = this.getCategoryByPath(category.parentId);
+        parent = this.getCategoryByPath(category.parentId, account.id);
       } else {
         const parentComponents = category.path.split(category.delimiter);
         if (parentComponents.length > 1) {
@@ -216,15 +249,11 @@ class CategoryStore extends MailspringStore {
     if (accountId) {
       const cache = this._categoryCache && this._categoryCache[accountId];
       if (cache) {
-        return Object.values(cache).find(
-          cat => cat && this.decodePath(cat.path) === this.decodePath(path)
-        );
+        return Object.values(cache).find(cat => cat && cat.path === path);
       }
     }
     if (Array.isArray(this._categoryResult)) {
-      return this._categoryResult.find(
-        cat => cat && this.decodePath(cat.path) === this.decodePath(path)
-      );
+      return this._categoryResult.find(cat => cat && cat.path === path);
     }
     return null;
   }
@@ -301,19 +330,20 @@ class CategoryStore extends MailspringStore {
           .createHash('md5')
           .update(`${category.accountId}${path}`)
           .digest('hex');
-        ret.unshift(
-          new Folder({
-            id,
-            path,
-            accountId: category.accountId,
-            name: path,
-            type: category.type,
-            selectable: false,
-            delimiter: category.delimiter,
-            state: 0,
-            role: '',
-          })
-        );
+        const newFolder = new Folder({
+          id,
+          path,
+          accountId: category.accountId,
+          name: utf7.imap.decode(path),
+          type: category.type,
+          selectable: false,
+          delimiter: category.delimiter,
+          state: 0,
+          role: '',
+        });
+        if (newFolder.pathWithPrefixStripped().length > 0) {
+          ret.unshift(newFolder);
+        }
         i--;
       }
     }
@@ -334,7 +364,7 @@ class CategoryStore extends MailspringStore {
       const cat = categories[i];
       if (cat) {
         const layers = cat.displayName.split(cat.delimiter);
-        if (cat.selectable && !cat.role) {
+        if (lastCategory.selectable && !lastCategory.role) {
           if (cat.areStrangers(lastCategory)) {
             ret.unshift(...this._generateParents(lastCategory));
           } else if (cat.isAncestorOf(lastCategory)) {
@@ -392,8 +422,7 @@ class CategoryStore extends MailspringStore {
     const categoryCache = {};
     Object.keys(categoryResults).forEach(accountId => {
       categoryResults[accountId].sort(sortByName);
-      const account = AccountStore.accountForId(accountId);
-      const isExchange = account && account.provider.includes('exchange');
+      const isExchange = AccountStore.isExchangeAccountId(accountId);
       if (!isExchange) {
         categoryResults[accountId] = this._createMissingParentPathAfterSortedByName(
           categoryResults[accountId]
