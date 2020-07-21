@@ -203,6 +203,9 @@ class CategoryStore extends MailspringStore {
     if (!this._categoriesRelationSanityCheckPass(catA, catB)) {
       return false;
     }
+    if (catA.id === catB.id) {
+      return false;
+    }
     const isExchange = AccountStore.isExchangeAccountId(catA.accountId);
     if (!isExchange) {
       return catA.isParentOf(catB);
