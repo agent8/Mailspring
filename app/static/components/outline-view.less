@@ -358,3 +358,47 @@
     }
   }
 }
+.popout {
+  position: absolute;
+  padding: 8px 8px;
+  background-color: #333;
+  color: #fff;
+  z-index: 2;  
+  width: 85%;
+  top: 20px;
+  left: 35px;
+  text-align: center;
+}
+
+.color-choice {
+  display: flex;
+  flex-flow: row wrap;
+  margin: 0 0 0 0;
+  & > div {
+    flex: 0 1 20px;
+    height: 20px;
+    width: 20px;
+    margin: 2.5px;
+    border-radius: 50%;
+    text-align: center;
+    img {
+      visibility: hidden;
+      margin-top: 2px;
+    }
+    &.checked {
+      img {
+        visibility: visible;
+      }
+    }
+    &:nth-child(8n + 1) {
+      margin-left: 0;
+    }
+    &:nth-child(8n + 8) {
+      margin-right: 0;
+    }
+  }
+}
+
+img.check-img {
+  margin-bottom: 5px;
+}
