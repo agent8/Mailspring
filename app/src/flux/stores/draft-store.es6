@@ -1073,7 +1073,7 @@ class DraftStore extends MailspringStore {
         // Actions.queueTask(t);
         // TaskQueue.waitForPerformLocal(t)
 
-        this._finalizeAndPersistNewMessage(draft)
+        this._finalizeAndPersistNewMessage(draft, { popout: false })
           .then(() => {
             Actions.sendDraft(draft.id, { source: 'SendQuickReply' });
           })
@@ -1288,7 +1288,11 @@ class DraftStore extends MailspringStore {
     return queries;
   }
 
-  _finalizeAndPersistNewMessage(draft, { popout } = {}, { originalMessageId, messageType } = {}) {
+  _finalizeAndPersistNewMessage(
+    draft,
+    { popout = AppEnv.isDisableThreading() } = {},
+    { originalMessageId, messageType } = {}
+  ) {
     // Give extensions an opportunity to perform additional setup to the draft
     ExtensionRegistry.Composer.extensions().forEach(extension => {
       if (!extension.prepareNewDraft) {
@@ -1320,11 +1324,7 @@ class DraftStore extends MailspringStore {
         if (data && data.draftCache) {
           AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
         }
-        if (
-          AppEnv.config.get('core.reading.openReplyInNewWindow') ||
-          popout ||
-          AppEnv.isDisableThreading()
-        ) {
+        if (AppEnv.config.get('core.reading.openReplyInNewWindow') || popout) {
           console.log('\n-------\n draft popout\n');
           this._onPopoutDraft(draft.id);
         }
