@@ -117,7 +117,7 @@ export default class Category extends Model {
           return name.substr(prefix.length + 1); // + delimiter
         }
         if (name === prefix) {
-          return name.substr(prefix.length + 1); // + delimiter;
+          return '';
         }
       }
       if (prefix === 'INBOX') {
@@ -125,7 +125,7 @@ export default class Category extends Model {
           return name.substr(prefix.length + 1); // + delimiter;
         }
         if (name.toLocaleUpperCase() === prefix) {
-          return name.substr(prefix.length + 1); // + delimiter;
+          return '';
         }
       }
     }

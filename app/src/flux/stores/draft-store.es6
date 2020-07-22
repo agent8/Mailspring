@@ -55,6 +55,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.sendDraft, this._onSendDraftAction);
     this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChangeAction);
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
+    this.listenTo(Actions.removeAllNoReferenceInLines, this._onRemoveAllNoReferenceInLines);
     this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
     this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
     this.listenTo(Actions.composeReply, this._onReply);
@@ -460,14 +461,44 @@ class DraftStore extends MailspringStore {
       }
       const draft = session.draft();
       if (draft && Array.isArray(draft.files)) {
-        const matching = draft.files.some(f => f.contentId === contentId);
-        if (matching) {
-          console.log('match found for draft', draft.id);
-          session.updateAttachments(draft.files.filter(f => f.contentId !== contentId));
-          break;
+        const file = draft.files.find(f => f.contentId === contentId);
+        if (file) {
+          Actions.removeAttachment({
+            accountId: draft.accountId,
+            messageId: draft.id,
+            fileToRemove: file,
+          });
+          return;
         }
       }
     }
+  };
+  _onRemoveAllNoReferenceInLines = messageId => {
+    if (!messageId) {
+      return;
+    }
+    const session = this._draftSessions[messageId];
+    if (session) {
+      const draft = session.draft();
+      if (draft && Array.isArray(draft.files)) {
+        //We are assuming this is called after draft body is updated
+        const filesToRemove = draft.files.filter(
+          f => f.contentId && f.isInline && !draft.body.includes(f.contentId)
+        );
+        Actions.removeAttachments({ accountId: draft.accountId, messageId, filesToRemove });
+        return;
+      }
+      AppEnv.logError(
+        new Error(
+          `Draft ${messageId} session ${
+            draft ? 'draft files is not array' : 'have no draft'
+          } , windowLevel ${this._getCurrentWindowLevel()}`
+        )
+      );
+    }
+    AppEnv.logError(
+      new Error(`Draft ${messageId} have no session, windowLevel ${this._getCurrentWindowLevel()}`)
+    );
   };
 
   _onDraftAccountChangeAction = (data = {}) => {
