@@ -1,7 +1,7 @@
 import _ from 'underscore';
 import classnames from 'classnames';
 import { React, PropTypes, Actions } from 'mailspring-exports';
-import { remote } from 'electron';
+import { remote, clipboard } from 'electron';
 
 const { Menu, MenuItem } = remote;
 const MAX_COLLAPSED = 5;
@@ -79,6 +79,12 @@ export default class MessageParticipants extends React.Component {
   _onContactContextMenu = (contact, e) => {
     const menu = new Menu();
     menu.append(new MenuItem({ role: 'copy' }));
+    menu.append(
+      new MenuItem({
+        label: 'Copy Address',
+        click: () => clipboard.writeText(contact.email)
+      })
+    );
     menu.append(
       new MenuItem({
         label: `Email ${contact.email}`,
