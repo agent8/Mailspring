@@ -518,8 +518,11 @@ class Actions {
   static addAttachments = ActionScopeWindow;
   static selectAttachment = ActionScopeWindow;
   static removeAttachment = ActionScopeWindow;
+  static removeAttachments = ActionScopeWindow;
   static removeAttachmentToMain = ActionScopeMainWindow;
+  static removeAttachmentsToMain = ActionScopeMainWindow;
   static draftInlineAttachmentRemoved = ActionScopeWindow;
+  static removeAllNoReferenceInLines = ActionScopeWindow;
   static broadcastDraftAttachmentState = ActionScopeGlobal;
 
   static syncFolders = ActionScopeMainWindow;
