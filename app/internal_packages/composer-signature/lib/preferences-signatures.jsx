@@ -19,6 +19,7 @@ class SignatureEditor extends React.Component {
     const signatureId = this.props.signature ? this.props.signature.id : '';
     const body = SignatureStore.getBodyById(signatureId);
     this.state = {
+      body,
       editorState: convertFromHTML(body),
       editCode: false,
       CodeEditor: () => {},
@@ -39,7 +40,7 @@ class SignatureEditor extends React.Component {
 
   _onSave = () => {
     const sig = Object.assign({}, this.props.signature);
-    sig.body = convertToHTML(this.state.editorState);
+    sig.body = this.state.body;
     Actions.upsertSignature(sig, sig.id);
   };
 
@@ -49,6 +50,11 @@ class SignatureEditor extends React.Component {
     }
   };
 
+  _onBlurEditor = () => {
+    const { editorState } = this.state;
+    this._updateBodyAndEditorHTMLByEditorHTML(convertToHTML(editorState));
+  };
+
   _onToggleCodeBlockEditor = () => {
     this.setState({
       editCode: !this.state.editCode,
@@ -56,8 +62,8 @@ class SignatureEditor extends React.Component {
   };
 
   _onSubmitEditHTML = html => {
-    const value = convertFromHTML(html || '<br />');
-    this.setState({ editorState: value }, this._onSave);
+    const value = html || '<br />';
+    this._updateBodyAndEditorHTMLByBodyHTML(value);
     this._onToggleCodeBlockEditor();
   };
 
@@ -65,10 +71,23 @@ class SignatureEditor extends React.Component {
     this._onToggleCodeBlockEditor();
   };
 
+  _updateBodyAndEditorHTMLByBodyHTML = value => {
+    this.setState({ body: value, editorState: convertFromHTML(value) }, this._onSave);
+  };
+
+  _updateBodyAndEditorHTMLByEditorHTML = value => {
+    const { body } = this.state;
+    const bodyTransformByEditor = convertToHTML(convertFromHTML(body));
+    // If the html of body that is converted by editor is different from the EditorHTML
+    // update the body and editorState, otherwise skip it
+    if (bodyTransformByEditor !== value) {
+      this.setState({ body: value, editorState: convertFromHTML(value) }, this._onSave);
+    }
+  };
+
   render() {
     const { accounts, defaults } = this.props;
-    const { editorState, editCode, CodeEditor } = this.state;
-    const editorHTML = convertToHTML(editorState);
+    const { editorState, body, editCode, CodeEditor } = this.state;
 
     let signature = this.props.signature;
     let empty = false;
@@ -93,7 +112,7 @@ class SignatureEditor extends React.Component {
 
         {editCode ? (
           <CodeEditor
-            value={editorHTML}
+            value={body}
             onSubmit={this._onSubmitEditHTML}
             onCancel={this._onCancelEditHTML}
           />
@@ -112,7 +131,7 @@ class SignatureEditor extends React.Component {
                   this.setState({ editorState: convertFromHTML('<br />') });
                 }
               }}
-              onBlur={this._onSave}
+              onBlur={this._onBlurEditor}
               onFileReceived={() => {
                 // This method ensures that HTML can be pasted.
               }}
