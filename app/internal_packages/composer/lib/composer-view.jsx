@@ -386,6 +386,7 @@ export default class ComposerView extends React.Component {
             session.changes.add({ bodyEditorState: change.value });
             if (draft) {
               Actions.removeQuoteText({ messageId: draft.id });
+              Actions.removeAllNoReferenceInLines(draft.id);
             }
             this.setState({ quotedTextHidden: false });
           }}
