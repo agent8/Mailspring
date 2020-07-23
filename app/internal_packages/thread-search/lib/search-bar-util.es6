@@ -48,7 +48,7 @@ export const getContactSuggestions = async (term, accountIds) => {
 
   contacts.forEach(c => results.push(c.email, c.name));
 
-  return _.uniq(results).filter(r => r.toLowerCase().startsWith(term));
+  return _.uniq(results).filter(r => r && r.toLowerCase().startsWith(term));
 };
 
 export const getCategorySuggestions = async (term, accountIds) =>
