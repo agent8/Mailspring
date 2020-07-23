@@ -1137,6 +1137,10 @@ export default class Application extends EventEmitter {
     this.on('application:new-conversation', () => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('new-conversation');
       }
     });
@@ -1144,6 +1148,10 @@ export default class Application extends EventEmitter {
     this.on('application:select-conversation', jid => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('select-conversation', jid);
       }
     });
@@ -1196,6 +1204,10 @@ export default class Application extends EventEmitter {
     this.on('application:open-preferences', () => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('open-preferences');
       }
     });
@@ -1208,6 +1220,10 @@ export default class Application extends EventEmitter {
       this.openWindowsForTokenState();
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('command', 'navigation:go-to-all-inbox');
       }
     });
@@ -1222,6 +1238,10 @@ export default class Application extends EventEmitter {
       this.openWindowsForTokenState();
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('command', 'navigation:go-to-chat');
       }
     });
