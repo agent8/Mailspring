@@ -222,11 +222,6 @@ export default {
             enumLabels: ['Open next', 'Open previous', 'Return to email list'],
             title: 'When mail is Archived or Deleted',
           },
-          // backspaceDelete: {
-          //   type: 'boolean',
-          //   default: false,
-          //   title: 'Use the backspace/delete key to move emails to the trash',
-          // },
           descendingOrderMessageList: {
             type: 'boolean',
             default: false,
@@ -246,6 +241,18 @@ export default {
       composing: {
         type: 'object',
         properties: {
+          showCcAndBcc: {
+            type: 'string',
+            default: 'cc',
+            enum: ['none', 'cc', 'cc+bcc'],
+            enumLabels: ['None', 'CC', 'CC and BCC'],
+            title: 'Show CC, BCC when forwarding or composing new draft',
+          },
+          includeOriginalEmailInReply: {
+            type: 'boolean',
+            default: true,
+            title: 'Include original email when replying to a message',
+          },
           spellcheck: {
             type: 'boolean',
             default: true,
