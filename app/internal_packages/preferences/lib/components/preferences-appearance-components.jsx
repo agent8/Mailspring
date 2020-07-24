@@ -7,6 +7,7 @@ import ModeSwitch from './mode-switch';
 import { remote } from 'electron';
 import ConfigSchemaItem from './config-schema-item';
 
+const { dialog } = remote;
 export class AppearanceScaleSlider extends React.Component {
   static displayName = 'AppearanceScaleSlider';
 
@@ -186,6 +187,17 @@ export class AppearanceThemeSwitch extends React.Component {
   }
 }
 
+class ConfigSchemaItemForMessageView extends ConfigSchemaItem {
+  constructor(props) {
+    super(props);
+  }
+
+  _onChangeChecked = event => {
+    this.props.onChange();
+    event.target.blur();
+  };
+}
+
 export class AppearanceViewOptions extends React.Component {
   static displayName = 'AppearanceThemeSwitch';
 
@@ -200,26 +212,35 @@ export class AppearanceViewOptions extends React.Component {
     super(props);
   }
 
-  componentDidMount() {
+  onChange = () => {
     const { keyPath } = this.props;
-    this.disposable = AppEnv.config.onDidChange(keyPath, this._onRelaunch);
-  }
-
-  componentWillUnmount() {
-    this.disposable.dispose();
-  }
-
-  _onRelaunch = () => {
-    Actions.forceRelaunchClients();
+    dialog
+      .showMessageBox({
+        type: 'info',
+        buttons: ['Okay', 'Cancel'],
+        defaultId: 0,
+        cancelId: 1,
+        message:
+          'All your messages will be re-downloaded. This might take sometime. You can still use Edison Mail while the messages are downloaded. Do you want to proceed?',
+      })
+      .then(({ response }) => {
+        if (response === 0) {
+          this.props.config.toggle(keyPath);
+          setImmediate(() => {
+            Actions.forceKillAllClients('onToggleMessageView');
+          });
+        }
+      });
   };
 
   render() {
     return (
-      <ConfigSchemaItem
+      <ConfigSchemaItemForMessageView
         configSchema={this.props.configSchema}
         keyPath={this.props.keyPath}
         config={this.props.config}
         label={this.props.label}
+        onChange={this.onChange}
       />
     );
   }

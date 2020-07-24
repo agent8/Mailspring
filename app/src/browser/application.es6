@@ -1029,24 +1029,6 @@ export default class Application extends EventEmitter {
       });
   };
 
-  _appRelaunch = () => {
-    if (this._onAppRelaunch) {
-      return;
-    }
-    this._onAppRelaunch = true;
-    this.windowManager.destroyAllWindows();
-    if (!process.mas) {
-      app.relaunch();
-    } else {
-      dialog.showMessageBoxSync({
-        type: 'info',
-        buttons: ['Okay'],
-        message: 'Please restart Edison Mail manually.',
-      });
-    }
-    app.quit();
-  };
-
   _deleteDatabase = (callback, rebuild) => {
     this.deleteFileWithRetry(path.join(this.configDirPath, 'edisonmail.db*'), () => {
       console.log('\nedisonmail.db* deleted\n');
@@ -1125,8 +1107,6 @@ export default class Application extends EventEmitter {
     this.on('application:reset-database', this._resetDatabaseAndRelaunch);
 
     this.on('application:window-relaunch', this._relaunch);
-
-    this.on('application:app-relaunch', this._appRelaunch);
 
     this.on('application:quit', () => {
       app.quit();

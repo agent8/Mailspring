@@ -141,7 +141,6 @@ export default class MailsyncBridge {
     Actions.setObservableRange.listen(this._onSetObservableRange, this);
     Actions.debugFakeNativeMessage.listen(this.fakeEmit, this);
     Actions.forceKillAllClients.listen(this.forceKillClients, this);
-    Actions.forceRelaunchClients.listen(this.forceRelaunchClients, this);
     Actions.forceDatabaseTrigger.listen(this._onIncomingChangeRecord, this);
     Actions.dataShareOptions.listen(this.onDataShareOptionsChange, this);
     Actions.remoteSearch.listen(this._onRemoteSearch, this);
@@ -284,23 +283,6 @@ export default class MailsyncBridge {
     ipcRenderer.send('command', 'application:reset-database', {
       source: `forceKillClients:${source}`,
     });
-  }
-
-  forceRelaunchClients() {
-    if (!AppEnv.isMainWindow()) {
-      return;
-    }
-    this._noRelaunch = true;
-    for (const client of Object.values(this.clients())) {
-      if (client) {
-        if (client._proc && client._proc.pid) {
-          const id = client._proc.pid;
-          AppEnv.logWarning(`\n\n@pid ${id} was forced to die, it shall not re-spawn\n\n`);
-          client.kill();
-        }
-      }
-    }
-    ipcRenderer.send('command', 'application:app-relaunch', {});
   }
 
   forceRelaunchClient(account) {
