@@ -858,6 +858,10 @@ export default class AppEnvConstructor {
     return ipcRenderer.send('call-window-method', 'show');
   }
 
+  restore() {
+    return ipcRenderer.send('call-window-method', 'restore');
+  }
+
   fakeEmit(msg) {
     this.mailsyncBridge.fakeEmit([msg]);
   }
@@ -898,8 +902,11 @@ export default class AppEnvConstructor {
   }
 
   // Extended: Is the current window maximized?
-  isMaximixed() {
+  isMaximized() {
     return this.getCurrentWindow().isMaximized();
+  }
+  isMinimized() {
+    return this.getCurrentWindow().isMinimized();
   }
   unmaximize() {
     return ipcRenderer.send('call-window-method', 'unmaximize');
