@@ -6,6 +6,8 @@ export const OAuthList = [
   'office365-exchange',
   'jira-plugin',
 ];
+export const showCC = 'cc';
+export const showCCAndBCC = 'cc+bcc';
 
 export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');

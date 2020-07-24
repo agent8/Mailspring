@@ -845,7 +845,10 @@ export default class Message extends ModelWithMetadata {
   }
 
   isNewDraft() {
-    return this.msgOrigin === Message.NewDraft;
+    return this.msgOrigin === Message.NewDraft || this.replyType === Message.draftType.new;
+  }
+  isForwardDraft() {
+    return this.msgOrigin === Message.ForwardDraft || this.replyType === Message.draftType.forward;
   }
 
   calendarStatus() {
