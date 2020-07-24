@@ -484,7 +484,7 @@ class DraftFactory {
       participants = message.participantsForReplyAll();
     }
     const accountId = findAccountIdFrom(message, thread);
-    const body = `
+    let body = `
         ${this.getBlankContentWithDefaultFontFamily()}
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
           message.replyAttributionLine()
@@ -495,6 +495,9 @@ class DraftFactory {
           <br/>
         </blockquote>
         `;
+    if (!AppEnv.config.get('core.composing.includeOriginalEmailInReply')) {
+      body = `${this.getBlankContentWithDefaultFontFamily()}`;
+    }
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
       to: participants.to,
