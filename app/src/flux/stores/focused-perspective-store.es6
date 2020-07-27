@@ -219,6 +219,9 @@ class FocusedPerspectiveStore extends MailspringStore {
   }
 
   _setPerspective(perspective, sidebarAccountIds, forceTrigger = false) {
+    if (!(perspective instanceof MailboxPerspective)) {
+      return;
+    }
     // Should back to mail list if click account or inbox while one mail is opened in reading pane off mode
     if (perspective.isEqual(this._currentSidebar) && !this._isInChatView()) {
       const topSheet = WorkspaceStore.topSheet();
