@@ -81,15 +81,10 @@ class SendActionButton extends React.Component {
 
   _onPrimaryClick = ({ disableDraftCheck = false } = {}) => {
     if (this.props.disabled) {
-      if (WorkspaceStore.layoutMode() === 'popout') {
-        console.error('SendActionButton is disabled in popout composer, this is wrong', this.props);
-        AppEnv.reportError(
-          new Error(
-            `SendActionButton::_onPrimaryClick: SendActionButton is disabled in popout composer, this is wrong`,
-            this.props
-          )
-        );
-      }
+      AppEnv.logDebug(
+        `Clicked send, but it is disabled, sending focusHighestLevelDraftWindow, ${this.props.draft.id}, ${this.props.draft.threadId}`
+      );
+      Actions.focusHighestLevelDraftWindow(this.props.draft.id, this.props.draft.threadId);
       return;
     }
 

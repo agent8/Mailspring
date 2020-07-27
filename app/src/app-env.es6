@@ -785,9 +785,9 @@ export default class AppEnvConstructor {
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
   }
-  getOpenWindows() {
+  getOpenWindows(type = 'all') {
     try {
-      return remote.getGlobal('application').windowManager.getOpenWindows();
+      return remote.getGlobal('application').windowManager.getOpenWindows(type);
     } catch (e) {
       this.reportError(e, {});
       return [];
