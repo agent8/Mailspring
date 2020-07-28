@@ -603,7 +603,7 @@ class DatabaseStore extends MailspringStore {
   //
   run(modelQuery, options = { format: true }) {
     return this._query(modelQuery.sql(), [], modelQuery._background).then(result => {
-      if (AppEnv.showQueryResults) {
+      if (AppEnv.showQueryResults || modelQuery.showQueryResults()) {
         try {
           AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
           if (AppEnv.isHinata()) {
@@ -643,7 +643,7 @@ class DatabaseStore extends MailspringStore {
         }
         return new Promise(resolve => {
           Promise.all(promises).then(rets => {
-            if (AppEnv.showQueryResults) {
+            if (AppEnv.showQueryResults || modelQuery.showQueryResults()) {
               try {
                 AppEnv.logDebug(`query-results: ${JSON.stringify(rets)}`);
                 if (AppEnv.isHinata()) {
