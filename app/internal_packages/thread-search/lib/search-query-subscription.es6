@@ -70,6 +70,9 @@ class SearchQuerySubscription extends MutableQuerySubscription {
       parsedQuery,
       searchQuery: this._searchQuery,
     });
+    if (AppEnv.isHinata()) {
+      dbQuery.setShowQueryResults(true);
+    }
     this.replaceQuery(dbQuery);
   }
 
