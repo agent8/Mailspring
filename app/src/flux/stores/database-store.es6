@@ -606,6 +606,11 @@ class DatabaseStore extends MailspringStore {
       if (AppEnv.showQueryResults || modelQuery.showQueryResults()) {
         try {
           AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
+          if (AppEnv.isHinata()) {
+            AppEnv.reportLog(new Error('upload sql results'), {
+              errorData: JSON.stringify(result.slice(5)),
+            });
+          }
         } catch (e) {
           AppEnv.logError(`Show query results failed ${e}`);
         }
@@ -640,7 +645,12 @@ class DatabaseStore extends MailspringStore {
           Promise.all(promises).then(rets => {
             if (AppEnv.showQueryResults || modelQuery.showQueryResults()) {
               try {
-                AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
+                AppEnv.logDebug(`query-results: ${JSON.stringify(rets)}`);
+                if (AppEnv.isHinata()) {
+                  AppEnv.reportLog(new Error('upload sql results'), {
+                    errorData: JSON.stringify(rets.slice(5)),
+                  });
+                }
               } catch (e) {
                 AppEnv.logError(`Show query results failed ${e}`);
               }
