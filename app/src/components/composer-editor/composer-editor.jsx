@@ -137,9 +137,9 @@ export default class ComposerEditor extends React.Component {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       InlineAttachmentChanges.insert(change, file);
-      if (i !== files.length - 1) {
-        change.collapseToEndOfPreviousText();
-      }
+      // if (i !== files.length - 1) {
+      //   change.collapseToEndOfPreviousText();
+      // }
     }
     // DC-734 it seems that if we call onChange immediately, more often than not,
     // it'll effect the next "list" item and make it indent.

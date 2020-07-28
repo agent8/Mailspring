@@ -848,9 +848,11 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.addAttachments, this._onAddAttachments);
     this.listenTo(Actions.selectAttachment, this._onSelectAttachment);
     this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
+    this.listenTo(Actions.removeAttachments, this._onRemoveAttachments);
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.syncAttachmentToMain, this._onAddAttachmentFromNonMainWindow);
       this.listenTo(Actions.removeAttachmentToMain, this._onRemoveAttachmentMainWindow);
+      this.listenTo(Actions.removeAttachmentsToMain, this._onRemoveAttachmentsMainWindow);
     }
     this._attachementCache = Utils.createCircularBuffer(200);
     this._draftAttachmentProgress = new AccountDrafts({
@@ -2031,24 +2033,45 @@ class AttachmentStore extends MailspringStore {
     }
     this.copyAttachmentToDraft(data);
   }
+  _onRemoveAttachments = ({ accountId, messageId, filesToRemove = [] }) => {
+    if (!Array.isArray(filesToRemove) || filesToRemove.length === 0) {
+      return;
+    }
+    const removeIds = filesToRemove.map(f => f.id);
+    this._applySessionChanges(messageId, files => {
+      return files.filter(({ id }) => !removeIds.includes(id));
+    }).then(() => {
+      if (AppEnv.isMainWindow()) {
+        this._onRemoveAttachmentsMainWindow({ accountId, filesToRemove, messageId });
+      } else {
+        Actions.removeAttachmentsToMain({ accountId, filesToRemove, messageId });
+      }
+    });
+  };
 
-  _onRemoveAttachment = async ({ accountId, messageId, fileToRemove }) => {
+  _onRemoveAttachment = ({ accountId, messageId, fileToRemove }) => {
     if (!fileToRemove) {
       return;
     }
     console.log(`file to remove id: ${fileToRemove.id}`);
-    if (AppEnv.isMainWindow()) {
-      this._onRemoveAttachmentMainWindow({ accountId, messageId, fileToRemove });
-      this._applySessionChanges(messageId, files => {
-        return files.filter(({ id }) => id !== fileToRemove.id);
-      });
-    } else {
-      Actions.removeAttachmentToMain({ accountId, messageId, fileToRemove });
-      this._applySessionChanges(messageId, files => {
-        return files.filter(({ id }) => id !== fileToRemove.id);
-      });
-    }
+    this._applySessionChanges(messageId, files => {
+      return files.filter(({ id }) => id !== fileToRemove.id);
+    }).then(() => {
+      if (AppEnv.isMainWindow()) {
+        this._onRemoveAttachmentMainWindow({ accountId, messageId, fileToRemove });
+      } else {
+        Actions.removeAttachmentToMain({ accountId, messageId, fileToRemove });
+      }
+    });
   };
+  _onRemoveAttachmentsMainWindow({ accountId, messageId, filesToRemove }) {
+    if (!Array.isArray(filesToRemove) || filesToRemove.length === 0) {
+      return;
+    }
+    filesToRemove.forEach(fileToRemove => {
+      this._onRemoveAttachmentMainWindow({ accountId, messageId, fileToRemove });
+    });
+  }
   _onRemoveAttachmentMainWindow({ accountId, messageId, fileToRemove }) {
     console.log('removing file in main window', fileToRemove.id);
     this.deleteDraftAttachment({ accountId, messageId, fileId: fileToRemove.id });

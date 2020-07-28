@@ -553,6 +553,7 @@ export default [
       // const firstText = document.getFirstText();
       if (isStartOfDocument(change.value)) {
         if (shouldBeRemoved(change.value)) {
+          change.setBlock(BLOCK_CONFIG.div.type);
           return;
         }
         if (isEmptySelection(change.value)) {

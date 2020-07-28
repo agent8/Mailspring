@@ -154,7 +154,18 @@ export default class ComposerHeader extends React.Component {
   _initialStateForDraft(draft, props) {
     const enabledFields = [Fields.To];
     if (draft.cc.length > 0) enabledFields.push(Fields.Cc);
-    if (draft.cc.length > 0) enabledFields.push(Fields.Bcc);
+    if (draft.bcc.length > 0) enabledFields.push(Fields.Bcc);
+    if (draft.isNewDraft() || draft.isForwardDraft()) {
+      const showCCBCC = AppEnv.config.get('core.composing.showCcAndBcc');
+      if (
+        draft.cc.length === 0 &&
+        (showCCBCC === Constant.showCC || showCCBCC === Constant.showCCAndBCC)
+      ) {
+        enabledFields.push(Fields.Cc);
+      } else if (draft.bcc.length === 0 && showCCBCC === Constant.showCCAndBCC) {
+        enabledFields.push(Fields.Bcc);
+      }
+    }
     enabledFields.push(Fields.From);
     if (this._shouldEnableSubject()) {
       enabledFields.push(Fields.Subject);
