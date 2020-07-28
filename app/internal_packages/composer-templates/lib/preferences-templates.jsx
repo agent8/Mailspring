@@ -16,20 +16,33 @@ const {
   Conversion: { convertFromHTML, convertToHTML },
 } = ComposerSupport;
 
+const TEMPLATEFIELDS = ['CC', 'BCC'];
+
 class TemplateEditor extends React.Component {
   constructor(props) {
     super(props);
 
-    if (this.props.template) {
-      const inHTML = fs.readFileSync(props.template.path).toString();
+    const { path: templatePath, CC, BCC } = props.template || {};
+
+    const state = {
+      CC: CC || '',
+      showCC: !!CC,
+      BCC: BCC || '',
+      showBCC: !!BCC,
+    };
+
+    if (templatePath) {
+      const inHTML = fs.readFileSync(templatePath).toString();
       this.state = {
         editorState: convertFromHTML(inHTML),
         readOnly: false,
+        ...state,
       };
     } else {
       this.state = {
         editorState: convertFromHTML(''),
         readOnly: true,
+        ...state,
       };
     }
   }
@@ -47,6 +60,64 @@ class TemplateEditor extends React.Component {
     }
   };
 
+  _showField = field => {
+    const state = {};
+    state[`show${field}`] = true;
+    this.setState(state);
+  };
+
+  _onChangeField = (field, value) => {
+    const state = {};
+    state[field] = value;
+    this.setState(state, () => {
+      this.props.onEditField(field, value);
+    });
+  };
+
+  _renderTemplateActions = () => {
+    const buttons = [];
+    TEMPLATEFIELDS.forEach(field => {
+      if (!this.state[`show${field}`]) {
+        buttons.push(
+          <div className={'btn'} key={field} title={field} onClick={() => this._showField(field)}>
+            {field}
+          </div>
+        );
+      }
+    });
+    buttons.push(
+      <RetinaImg
+        key={'attachments'}
+        name={'attachments.svg'}
+        style={{ width: 24, height: 24, fontSize: 24 }}
+        isIcon
+        mode={RetinaImg.Mode.ContentIsMask}
+      />
+    );
+    return <div className="template-action-btns">{buttons}</div>;
+  };
+  _renderTemplateFields = () => {
+    const details = [];
+    TEMPLATEFIELDS.forEach(field => {
+      if (this.state[`show${field}`]) {
+        details.push(
+          <label className="template-field" key={field}>
+            <div className="field-label">{field}</div>
+            <input
+              type="text"
+              defaultValue={this.state[field]}
+              onBlur={e => this._onChangeField(field, e.target.value)}
+            />
+          </label>
+        );
+      }
+    });
+    if (!details.length) {
+      return null;
+    }
+    return <div className="template-action-fields">{details}</div>;
+  };
+
   render() {
     const { onEditTitle, template } = this.props;
     const { readOnly, editorState } = this.state;
@@ -62,7 +133,9 @@ class TemplateEditor extends React.Component {
             defaultValue={template ? template.name : ''}
             onBlur={e => onEditTitle(e.target.value)}
           />
+          {this._renderTemplateActions()}
         </div>
+        {this._renderTemplateFields()}
         <div className="section editor" onClick={this._onFocusEditor}>
           <ComposerEditor
             ref={c => (this._composer = c)}
@@ -124,7 +197,13 @@ export default class PreferencesTemplates extends React.Component {
       lastSelIndex = this.state.templates.findIndex(t => t.name === lastSelName);
     }
 
-    const templates = TemplateStore.items();
+    const templates = TemplateStore.items().map(t => {
+      const tConfig = TemplateStore.templateConfig(t.id);
+      return {
+        ...t,
+        ...tConfig,
+      };
+    });
     let selected = templates.find(t => t.name === lastSelName) || templates[lastSelIndex] || null;
     if (!selected && templates.length > 0) {
       selected = templates[0];
@@ -153,6 +232,10 @@ export default class PreferencesTemplates extends React.Component {
 
   _onEditTitle = newName => {
     TemplateActions.renameTemplate(this.state.selected.name, newName);
+  };
+
+  _onChangeField = (field, value) => {
+    TemplateActions.changeTemplateField(this.state.selected.name, field, value);
   };
 
   _onSelect = item => {
@@ -212,6 +295,7 @@ export default class PreferencesTemplates extends React.Component {
             onEditTitle={this._onEditTitle}
             key={selected ? selected.name : 'empty'}
             template={selected}
+            onEditField={this._onChangeField}
           />
         </Flexbox>
       </div>

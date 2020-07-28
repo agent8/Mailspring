@@ -1,11 +1,17 @@
 /* eslint global-require: 0*/
 
-import { DraftStore, Actions, QuotedHTMLTransformer, RegExpUtils } from 'mailspring-exports';
+import {
+  DraftStore,
+  ContactStore,
+  Actions,
+  QuotedHTMLTransformer,
+  RegExpUtils,
+} from 'mailspring-exports';
 import { remote } from 'electron';
 import MailspringStore from 'mailspring-store';
 import path from 'path';
 import fs from 'fs';
-
+import _ from 'underscore';
 import TemplateActions from './template-actions';
 
 // Support accented characters in template names
@@ -21,8 +27,19 @@ class TemplateStore extends MailspringStore {
     this.listenTo(TemplateActions.showTemplates, this._onShowTemplates);
     this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
     this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
+    this.listenTo(TemplateActions.changeTemplateField, this._onChangeTemplateField);
+
     if (AppEnv.isMainWindow()) {
       Actions.resetSettings.listen(this.onAppSettingsReset, this);
+    }
+
+    this.templatesConfig = AppEnv.config.get(`templates`);
+    AppEnv.config.onDidChange(`templates`, () => {
+      this.templatesConfig = AppEnv.config.get(`templates`);
+      this._triggerDebounced();
+    });
+    if (!this.templatesConfig) {
+      this.templatesConfig = {};
     }
 
     this._items = [];
@@ -47,6 +64,8 @@ class TemplateStore extends MailspringStore {
         });
       }
     });
+
+    this._triggerDebounced = _.debounce(() => this.trigger(), 20);
   }
 
   directory() {
@@ -81,6 +100,33 @@ class TemplateStore extends MailspringStore {
     return this._items;
   }
 
+  templateConfig(templateId) {
+    return this.templatesConfig[templateId] || {};
+  }
+
+  _onTemplateConfigChange = () => {
+    AppEnv.config.set(`templates`, this.templatesConfig);
+    this._triggerDebounced();
+  };
+
+  _onDeleteTemplateConfig(templateId) {
+    delete this.templatesConfig[templateId];
+    this._onTemplateConfigChange();
+  }
+
+  _onChangeTemplateConfig(templateId, field, value) {
+    const itemConfig = this.templateConfig(templateId);
+    itemConfig[field] = value;
+    this.templatesConfig[templateId] = itemConfig;
+    this._onTemplateConfigChange();
+  }
+  _onRenameTemplateConfig(oldTId, newTId) {
+    const itemConfig = this.templateConfig(oldTId);
+    delete this.templatesConfig[oldTId];
+    this.templatesConfig[newTId] = itemConfig;
+    this._onTemplateConfigChange();
+  }
+
   _populate() {
     fs.readdir(this._templatesDir, (err, filenames) => {
       if (err) {
@@ -103,7 +149,7 @@ class TemplateStore extends MailspringStore {
           path: path.join(this._templatesDir, filename),
         });
       }
-      this.trigger(this);
+      this._triggerDebounced();
     });
   }
 
@@ -211,7 +257,7 @@ class TemplateStore extends MailspringStore {
       number += 1;
     }
     this.saveTemplate(resolvedName, contents, callback);
-    this.trigger(this);
+    this._triggerDebounced();
   }
 
   saveTemplate(name, contents, callback) {
@@ -247,6 +293,15 @@ class TemplateStore extends MailspringStore {
     fs.unlink(template.path, () => {
       this._populate();
     });
+    this._onDeleteTemplateConfig(template.id);
+  }
+
+  _onChangeTemplateField(name, field, value) {
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    this._onChangeTemplateConfig(template.id, field, value);
   }
 
   _onRenameTemplate(name, newName) {
@@ -254,6 +309,7 @@ class TemplateStore extends MailspringStore {
     if (!template) {
       return;
     }
+    const oldTId = template.id;
 
     if (newName.match(INVALID_TEMPLATE_NAME_REGEX)) {
       this._displayError(
@@ -273,7 +329,8 @@ class TemplateStore extends MailspringStore {
       template.name = newName;
       template.id = newFilename;
       template.path = newPath;
-      this.trigger(this);
+      this._onRenameTemplateConfig(oldTId, template.id);
+      this._triggerDebounced();
     });
   }
 
@@ -315,7 +372,22 @@ class TemplateStore extends MailspringStore {
             insertion = Math.min(insertion, i);
           }
         }
-        session.changes.add({ body: `${templateBody}${current.substr(insertion)}` });
+        const changeObj = { body: `${templateBody}${current.substr(insertion)}` };
+        const { BCC, CC } = this.templateConfig(template.id);
+        if (CC) {
+          const ccContacts = await ContactStore.parseContactsInString(CC);
+          if (ccContacts.length) {
+            changeObj['cc'] = ccContacts;
+          }
+        }
+        if (BCC) {
+          const bccContacts = await ContactStore.parseContactsInString(BCC);
+          if (bccContacts.length) {
+            changeObj['bcc'] = bccContacts;
+          }
+        }
+
+        session.changes.add(changeObj);
       }
     });
   }
