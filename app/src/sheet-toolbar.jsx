@@ -56,7 +56,7 @@ class ToolbarWindowControls extends React.Component {
     this.state = {
       alt: false,
       isFullScreen: AppEnv.isFullScreen(),
-      isMaximized: AppEnv.isMaximixed(),
+      isMaximized: AppEnv.isMaximized(),
     };
   }
 
@@ -85,7 +85,7 @@ class ToolbarWindowControls extends React.Component {
       AppEnv.setFullScreen(!this.state.isFullScreen);
       this.setState({ isFullScreen: !this.state.isFullScreen });
     } else if (!this.state.isFullScreen) {
-      if (AppEnv.isMaximixed()) {
+      if (AppEnv.isMaximized()) {
         AppEnv.unmaximize();
       } else {
         AppEnv.maximize();
@@ -271,7 +271,7 @@ export default class Toolbar extends React.Component {
 
     // Record our overall height for sheets
     this._setSheetOffset(el.clientHeight);
-  }
+  };
 
   _setSheetOffset = _.debounce(posY => remote.getCurrentWindow().setSheetOffset(posY), 100);
 
@@ -298,7 +298,11 @@ export default class Toolbar extends React.Component {
           mode: state.mode,
         });
         // display searchbar in draftlist
-        if (loc.Toolbar.id === 'DraftList:Toolbar' || loc.Toolbar.id === 'Outbox:Toolbar' || loc.Toolbar.id === 'SiftList:Toolbar') {
+        if (
+          loc.Toolbar.id === 'DraftList:Toolbar' ||
+          loc.Toolbar.id === 'Outbox:Toolbar' ||
+          loc.Toolbar.id === 'SiftList:Toolbar'
+        ) {
           const searchBar = ComponentRegistry.findComponentsMatching({
             role: 'Search-Bar',
           });
@@ -377,7 +381,7 @@ export default class Toolbar extends React.Component {
 
     return (
       <div
-        ref={el => this.toolbarEl = el}
+        ref={el => (this.toolbarEl = el)}
         style={style}
         className={`sheet-toolbar-container mode-${this.state.mode}`}
         data-id={this.props.data.id}

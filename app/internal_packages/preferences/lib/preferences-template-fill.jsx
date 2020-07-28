@@ -167,13 +167,20 @@ const preferencesTemplateFill = {
               keyPath: 'core.reading.openReplyInNewWindow',
               keywords: [],
             },
-            // {
-            //   label: 'Use the backspace/delete key to move emails to the trash',
-            //   configSchema: configSchema =>
-            //     configSchema.properties.reading.properties.backspaceDelete,
-            //   keyPath: 'core.reading.backspaceDelete',
-            //   keywords: [],
-            // },
+            {
+              label: 'Include original email when replying to a message',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.includeOriginalEmailInReply,
+              keyPath: 'core.composing.includeOriginalEmailInReply',
+              keywords: [],
+            },
+            {
+              label: 'Show CC, BCC when forwarding or composing new draft',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.showCcAndBcc,
+              keyPath: 'core.composing.showCcAndBcc',
+              keywords: [],
+            },
             {
               label: 'Display conversations in descending chronological order',
               configSchema: configSchema =>

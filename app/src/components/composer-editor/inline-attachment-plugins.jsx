@@ -202,14 +202,16 @@ export const changes = {
         break;
       }
     }
-    return change.insertInline({
-      object: 'inline',
-      isVoid: true,
-      type: IMAGE_TYPE,
-      data: {
-        contentId: file.contentId,
-      },
-    });
+    return change
+      .insertInline({
+        object: 'inline',
+        isVoid: true,
+        type: IMAGE_TYPE,
+        data: {
+          contentId: file.contentId,
+        },
+      })
+      .collapseToStartOfNextText();
   },
 };
 

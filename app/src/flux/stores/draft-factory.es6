@@ -64,19 +64,6 @@ async function prepareBodyForQuoting(body) {
   transformed = await InlineStyleTransformer.run(transformed);
   return transformed;
 }
-const removeAttachmentWithNoContentId = files => {
-  if (!Array.isArray(files)) {
-    return [];
-  }
-  const ret = [];
-  files.forEach(file => {
-    // Because in the end, we use contentId to id which attachment goes where
-    if (file && typeof file.contentId === 'string' && file.contentId.length > 0) {
-      ret.push(file);
-    }
-  });
-  return filterMissingAttachments(ret);
-};
 const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
   if (!Array.isArray(files)) {
     return [];
@@ -90,12 +77,13 @@ const removeAttachmentNotLinkedInBody = (bodyStr, files) => {
       file &&
       typeof file.contentId === 'string' &&
       file.contentId.length > 0 &&
-      bodyStr.includes(file.contentId)
+      bodyStr.includes(file.contentId) &&
+      file.isInline
     ) {
       ret.push(file);
     }
   });
-  return removeAttachmentWithNoContentId(ret);
+  return filterMissingAttachments(ret);
 };
 const filterMissingAttachments = files => {
   AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
@@ -484,7 +472,7 @@ class DraftFactory {
       participants = message.participantsForReplyAll();
     }
     const accountId = findAccountIdFrom(message, thread);
-    const body = `
+    let body = `
         ${this.getBlankContentWithDefaultFontFamily()}
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
           message.replyAttributionLine()
@@ -495,6 +483,9 @@ class DraftFactory {
           <br/>
         </blockquote>
         `;
+    if (!AppEnv.config.get('core.composing.includeOriginalEmailInReply')) {
+      body = `${this.getBlankContentWithDefaultFontFamily()}`;
+    }
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
       to: participants.to,

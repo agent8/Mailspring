@@ -103,7 +103,7 @@ const toDelimiterJSONMappings = val => {
 const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]'];
 export default class Category extends Model {
   get displayName() {
-    return Category.pathToDisplayName(this.name);
+    return Category.pathToDisplayName(this.name, this.delimiter);
   }
   get fullDisplayName() {
     // return utf7.imap.decode(this.name);
@@ -113,19 +113,25 @@ export default class Category extends Model {
     const name = this.fullDisplayName;
     for (const prefix of ignoredPrefixes) {
       if (prefix !== 'INBOX' && !ignoreGmailPrefix) {
-        if (name.startsWith(prefix)) {
-          return name.substr(name.indexOf(prefix) + prefix.length + 1); // + delimiter
+        if (name.startsWith(`${prefix}${this.delimiter}`)) {
+          return name.substr(prefix.length + 1); // + delimiter
+        }
+        if (name === prefix) {
+          return '';
         }
       }
       if (prefix === 'INBOX') {
-        if (name.toLocaleUpperCase().startsWith(prefix)) {
-          return name.substr(name.indexOf(prefix) + prefix.length + 1); // + delimiter;
+        if (name.toLocaleUpperCase().startsWith(`${prefix}${this.delimiter}`)) {
+          return name.substr(prefix.length + 1); // + delimiter;
+        }
+        if (name.toLocaleUpperCase() === prefix) {
+          return '';
         }
       }
     }
     return name;
   }
-  static pathToDisplayName(pathString, ignoreGmailPrefix = false) {
+  static pathToDisplayName(pathString, delimiter = '', ignoreGmailPrefix = false) {
     if (!pathString) {
       return '';
     }
@@ -133,7 +139,7 @@ export default class Category extends Model {
     const decoded = pathString;
 
     for (const prefix of ignoredPrefixes) {
-      if (decoded.startsWith(prefix) && decoded.length > prefix.length + 1) {
+      if (decoded.startsWith(`${prefix}${delimiter}`) && decoded.length > prefix.length + 2) {
         if (prefix !== 'INBOX' && ignoreGmailPrefix) {
           return decoded;
         }
@@ -141,8 +147,8 @@ export default class Category extends Model {
       }
       if (
         prefix === 'INBOX' &&
-        decoded.toLocaleLowerCase().startsWith(prefix.toLocaleLowerCase()) &&
-        decoded.length > prefix.length + 1
+        decoded.toLocaleUpperCase().startsWith(`${prefix}${delimiter}`) &&
+        decoded.length > prefix.length + 2
       ) {
         return decoded.substr(prefix.length + 1); // + delimiter
       }
@@ -290,6 +296,9 @@ export default class Category extends Model {
       //Since this relationship only applies to same account,
       return false;
     }
+    if (this.id === otherCategory.id) {
+      return false;
+    }
     const currentLayers = this.displayName.split(this.delimiter);
     const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
     return otherLayers[0] !== currentLayers[0];
@@ -299,6 +308,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     const currentLayers = this.displayName.split(this.delimiter);
@@ -322,6 +334,9 @@ export default class Category extends Model {
     if (this.accountId !== otherCategory.accountId) {
       return false;
     }
+    if (this.id === otherCategory.id) {
+      return false;
+    }
     const currentLayers = this.displayName.split(this.delimiter);
     const otherLayers = otherCategory.displayName.split(otherCategory.delimiter);
     return (
@@ -334,6 +349,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     const currentLayers = this.displayName.split(this.delimiter);
@@ -366,6 +384,9 @@ export default class Category extends Model {
       return false;
     }
     if (this.accountId !== otherCategory.accountId) {
+      return false;
+    }
+    if (this.id === otherCategory.id) {
       return false;
     }
     return (
