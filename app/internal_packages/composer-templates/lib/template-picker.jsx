@@ -113,6 +113,10 @@ class TemplatePicker extends React.Component {
   };
 
   _onClickButton = () => {
+    if (this.props.session.isPopout()) {
+      Actions.focusHighestLevelDraftWindow(this.props.draft.id, this.props.draft.threadId);
+      return;
+    }
     const buttonRect = ReactDOM.findDOMNode(this).getBoundingClientRect();
     Actions.openPopover(<TemplatePopover messageId={this.props.messageId} />, {
       originRect: buttonRect,
