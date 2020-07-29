@@ -141,7 +141,7 @@ class TemplateEditor extends React.Component {
 
   _renderTemplateFiles() {
     const { template } = this.props;
-    const files = template.files || [];
+    const files = template && template.files ? template.files : [];
     const fileComponents = files.map((file, index) => {
       const fileName = path.basename(file);
       return (
