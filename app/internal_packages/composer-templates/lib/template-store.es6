@@ -45,6 +45,7 @@ class TemplateStore extends MailspringStore {
       TemplateActions.removeAttachmentsFromTemplate,
       this._onRemoveAttachmentsFromTemplate
     );
+    this.listenTo(TemplateActions.selectTemplate, this._onSelectTemplate);
 
     if (AppEnv.isMainWindow()) {
       Actions.resetSettings.listen(this.onAppSettingsReset, this);
@@ -64,6 +65,7 @@ class TemplateStore extends MailspringStore {
     this._welcomeName = 'Welcome to Templates.html';
     this._welcomePath = path.join(__dirname, '..', 'assets', this._welcomeName);
     this._watcher = null;
+    this._selectedTemplateName = '';
 
     // I know this is a bit of pain but don't do anything that
     // could possibly slow down app launch
@@ -119,6 +121,15 @@ class TemplateStore extends MailspringStore {
 
   templateConfig(templateId) {
     return this.templatesConfig[templateId] || {};
+  }
+
+  selectedTemplateName() {
+    return this._selectedTemplateName;
+  }
+
+  _onSelectTemplate(item) {
+    this._selectedTemplateName = item.name;
+    this._triggerDebounced();
   }
 
   _onTemplateConfigChange = () => {
@@ -185,9 +196,7 @@ class TemplateStore extends MailspringStore {
     }
     this.saveNewTemplate(name, contents, template => {
       this._onShowTemplates();
-      if (callback && typeof callback === 'function') {
-        callback(template);
-      }
+      this._onSelectTemplate(template);
     });
   }
 
@@ -377,6 +386,7 @@ class TemplateStore extends MailspringStore {
       template.id = newFilename;
       template.path = newPath;
       this._onRenameTemplateConfig(oldTId, template.id);
+      this._onSelectTemplate(template);
       this._triggerDebounced();
     });
   }
@@ -466,8 +476,7 @@ class TemplateStore extends MailspringStore {
     if (!body) {
       return true;
     }
-
-    const re = /(?:<.+?>)|\s/gim;
+    const re = /(?:<.+?>)|\s|\u200b/gim;
     return body.replace(re, '').length === 0;
   }
 
