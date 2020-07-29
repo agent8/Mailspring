@@ -396,7 +396,10 @@ class TemplateStore extends MailspringStore {
       }
       let proceed = true;
       const pureBody = this._getPureBodyForDraft(session.draft().body);
-      if (!session.draft().pristine && !this._isBodyEmpty(pureBody)) {
+      if (
+        (!session.draft().pristine && !this._isBodyEmpty(pureBody)) ||
+        (draft.files && draft.files.length)
+      ) {
         proceed = await this._displayDialog(
           'Replace draft contents?',
           'It looks like your draft already has some content. Loading this template will ' +
@@ -435,7 +438,9 @@ class TemplateStore extends MailspringStore {
             changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
           }
         }
-
+        // Replace attachments, delete the original attachments
+        changeObj.files = [];
+        session.changes.add(changeObj);
         if (files && files.length) {
           if (files.length > 1) {
             Actions.addAttachments({
@@ -453,8 +458,6 @@ class TemplateStore extends MailspringStore {
             });
           }
         }
-
-        session.changes.add(changeObj);
       }
     });
   }
