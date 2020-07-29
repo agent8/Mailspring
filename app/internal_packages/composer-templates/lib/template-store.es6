@@ -17,6 +17,18 @@ import TemplateActions from './template-actions';
 // Support accented characters in template names
 // https://regex101.com/r/nD3eY8/1
 const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
+function mergeContacts(oldContacts = [], contacts = []) {
+  const result = [...oldContacts];
+  contacts.forEach(contact => {
+    const exist = oldContacts.find(tmp => {
+      return tmp.email === contact.email;
+    });
+    if (!exist) {
+      result.push(contact);
+    }
+  });
+  return result;
+}
 
 class TemplateStore extends MailspringStore {
   constructor() {
@@ -408,17 +420,19 @@ class TemplateStore extends MailspringStore {
           }
         }
         const changeObj = { body: `${templateBody}${current.substr(insertion)}` };
+
         const { BCC, CC, files } = this.templateConfig(template.id);
+        // Add CC, Bcc to the draft, do not delete the original CC, BCC
         if (CC) {
           const ccContacts = await ContactStore.parseContactsInString(CC);
           if (ccContacts.length) {
-            changeObj['cc'] = ccContacts;
+            changeObj['cc'] = mergeContacts(draft.cc, ccContacts);
           }
         }
         if (BCC) {
           const bccContacts = await ContactStore.parseContactsInString(BCC);
           if (bccContacts.length) {
-            changeObj['bcc'] = bccContacts;
+            changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
           }
         }
 
