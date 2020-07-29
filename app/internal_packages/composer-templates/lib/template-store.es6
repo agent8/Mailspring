@@ -1,16 +1,34 @@
 /* eslint global-require: 0*/
 
-import { DraftStore, Actions, QuotedHTMLTransformer, RegExpUtils } from 'mailspring-exports';
+import {
+  DraftStore,
+  ContactStore,
+  Actions,
+  QuotedHTMLTransformer,
+  RegExpUtils,
+} from 'mailspring-exports';
 import { remote } from 'electron';
 import MailspringStore from 'mailspring-store';
 import path from 'path';
 import fs from 'fs';
-
+import _ from 'underscore';
 import TemplateActions from './template-actions';
 
 // Support accented characters in template names
 // https://regex101.com/r/nD3eY8/1
 const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
+function mergeContacts(oldContacts = [], contacts = []) {
+  const result = [...oldContacts];
+  contacts.forEach(contact => {
+    const exist = oldContacts.find(tmp => {
+      return tmp.email === contact.email;
+    });
+    if (!exist) {
+      result.push(contact);
+    }
+  });
+  return result;
+}
 
 class TemplateStore extends MailspringStore {
   constructor() {
@@ -21,8 +39,24 @@ class TemplateStore extends MailspringStore {
     this.listenTo(TemplateActions.showTemplates, this._onShowTemplates);
     this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
     this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
+    this.listenTo(TemplateActions.changeTemplateField, this._onChangeTemplateField);
+    this.listenTo(TemplateActions.addAttachmentsToTemplate, this._onAddAttachmentsToTemplate);
+    this.listenTo(
+      TemplateActions.removeAttachmentsFromTemplate,
+      this._onRemoveAttachmentsFromTemplate
+    );
+
     if (AppEnv.isMainWindow()) {
       Actions.resetSettings.listen(this.onAppSettingsReset, this);
+    }
+
+    this.templatesConfig = AppEnv.config.get(`templates`);
+    AppEnv.config.onDidChange(`templates`, () => {
+      this.templatesConfig = AppEnv.config.get(`templates`);
+      this._triggerDebounced();
+    });
+    if (!this.templatesConfig) {
+      this.templatesConfig = {};
     }
 
     this._items = [];
@@ -47,6 +81,8 @@ class TemplateStore extends MailspringStore {
         });
       }
     });
+
+    this._triggerDebounced = _.debounce(() => this.trigger(), 20);
   }
 
   directory() {
@@ -81,6 +117,33 @@ class TemplateStore extends MailspringStore {
     return this._items;
   }
 
+  templateConfig(templateId) {
+    return this.templatesConfig[templateId] || {};
+  }
+
+  _onTemplateConfigChange = () => {
+    AppEnv.config.set(`templates`, this.templatesConfig);
+    this._triggerDebounced();
+  };
+
+  _onDeleteTemplateConfig(templateId) {
+    delete this.templatesConfig[templateId];
+    this._onTemplateConfigChange();
+  }
+
+  _onChangeTemplateConfig(templateId, field, value) {
+    const itemConfig = this.templateConfig(templateId);
+    itemConfig[field] = value;
+    this.templatesConfig[templateId] = itemConfig;
+    this._onTemplateConfigChange();
+  }
+  _onRenameTemplateConfig(oldTId, newTId) {
+    const itemConfig = this.templateConfig(oldTId);
+    delete this.templatesConfig[oldTId];
+    this.templatesConfig[newTId] = itemConfig;
+    this._onTemplateConfigChange();
+  }
+
   _populate() {
     fs.readdir(this._templatesDir, (err, filenames) => {
       if (err) {
@@ -103,7 +166,7 @@ class TemplateStore extends MailspringStore {
           path: path.join(this._templatesDir, filename),
         });
       }
-      this.trigger(this);
+      this._triggerDebounced();
     });
   }
 
@@ -211,7 +274,7 @@ class TemplateStore extends MailspringStore {
       number += 1;
     }
     this.saveTemplate(resolvedName, contents, callback);
-    this.trigger(this);
+    this._triggerDebounced();
   }
 
   saveTemplate(name, contents, callback) {
@@ -247,6 +310,45 @@ class TemplateStore extends MailspringStore {
     fs.unlink(template.path, () => {
       this._populate();
     });
+    this._onDeleteTemplateConfig(template.id);
+  }
+
+  _onChangeTemplateField(name, field, value) {
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    this._onChangeTemplateConfig(template.id, field, value);
+  }
+
+  _onAddAttachmentsToTemplate(name, paths) {
+    if (!paths || !paths.length) {
+      return;
+    }
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    const itemConfig = this.templateConfig(template.id);
+    const files = itemConfig.files || [];
+    itemConfig.files = [...files, ...paths];
+    this.templatesConfig[template.id] = itemConfig;
+    this._onTemplateConfigChange();
+  }
+
+  _onRemoveAttachmentsFromTemplate(name, indexs) {
+    if (!indexs || !indexs.length) {
+      return;
+    }
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    const itemConfig = this.templateConfig(template.id);
+    const files = itemConfig.files || [];
+    itemConfig.files = files.filter((file, index) => !indexs.includes(index));
+    this.templatesConfig[template.id] = itemConfig;
+    this._onTemplateConfigChange();
   }
 
   _onRenameTemplate(name, newName) {
@@ -254,6 +356,7 @@ class TemplateStore extends MailspringStore {
     if (!template) {
       return;
     }
+    const oldTId = template.id;
 
     if (newName.match(INVALID_TEMPLATE_NAME_REGEX)) {
       this._displayError(
@@ -273,7 +376,8 @@ class TemplateStore extends MailspringStore {
       template.name = newName;
       template.id = newFilename;
       template.path = newPath;
-      this.trigger(this);
+      this._onRenameTemplateConfig(oldTId, template.id);
+      this._triggerDebounced();
     });
   }
 
@@ -292,7 +396,10 @@ class TemplateStore extends MailspringStore {
       }
       let proceed = true;
       const pureBody = this._getPureBodyForDraft(session.draft().body);
-      if (!session.draft().pristine && !this._isBodyEmpty(pureBody)) {
+      if (
+        (!session.draft().pristine && !this._isBodyEmpty(pureBody)) ||
+        (draft.files && draft.files.length)
+      ) {
         proceed = await this._displayDialog(
           'Replace draft contents?',
           'It looks like your draft already has some content. Loading this template will ' +
@@ -315,7 +422,42 @@ class TemplateStore extends MailspringStore {
             insertion = Math.min(insertion, i);
           }
         }
-        session.changes.add({ body: `${templateBody}${current.substr(insertion)}` });
+        const changeObj = { body: `${templateBody}${current.substr(insertion)}` };
+
+        const { BCC, CC, files } = this.templateConfig(template.id);
+        // Add CC, Bcc to the draft, do not delete the original CC, BCC
+        if (CC) {
+          const ccContacts = await ContactStore.parseContactsInString(CC);
+          if (ccContacts.length) {
+            changeObj['cc'] = mergeContacts(draft.cc, ccContacts);
+          }
+        }
+        if (BCC) {
+          const bccContacts = await ContactStore.parseContactsInString(BCC);
+          if (bccContacts.length) {
+            changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
+          }
+        }
+        // Replace attachments, delete the original attachments
+        changeObj.files = [];
+        session.changes.add(changeObj);
+        if (files && files.length) {
+          if (files.length > 1) {
+            Actions.addAttachments({
+              messageId: draft.id,
+              accountId: draft.accountId,
+              filePaths: files,
+              inline: false,
+            });
+          } else {
+            Actions.addAttachment({
+              messageId: draft.id,
+              accountId: draft.accountId,
+              filePath: files[0],
+              inline: false,
+            });
+          }
+        }
       }
     });
   }
