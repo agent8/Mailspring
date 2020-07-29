@@ -28,6 +28,11 @@ class TemplateStore extends MailspringStore {
     this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
     this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
     this.listenTo(TemplateActions.changeTemplateField, this._onChangeTemplateField);
+    this.listenTo(TemplateActions.addAttachmentsToTemplate, this._onAddAttachmentsToTemplate);
+    this.listenTo(
+      TemplateActions.removeAttachmentsFromTemplate,
+      this._onRemoveAttachmentsFromTemplate
+    );
 
     if (AppEnv.isMainWindow()) {
       Actions.resetSettings.listen(this.onAppSettingsReset, this);
@@ -304,6 +309,36 @@ class TemplateStore extends MailspringStore {
     this._onChangeTemplateConfig(template.id, field, value);
   }
 
+  _onAddAttachmentsToTemplate(name, paths) {
+    if (!paths || !paths.length) {
+      return;
+    }
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    const itemConfig = this.templateConfig(template.id);
+    const files = itemConfig.files || [];
+    itemConfig.files = [...files, ...paths];
+    this.templatesConfig[template.id] = itemConfig;
+    this._onTemplateConfigChange();
+  }
+
+  _onRemoveAttachmentsFromTemplate(name, indexs) {
+    if (!indexs || !indexs.length) {
+      return;
+    }
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    const itemConfig = this.templateConfig(template.id);
+    const files = itemConfig.files || [];
+    itemConfig.files = files.filter((file, index) => !indexs.includes(index));
+    this.templatesConfig[template.id] = itemConfig;
+    this._onTemplateConfigChange();
+  }
+
   _onRenameTemplate(name, newName) {
     const template = this._items.find(t => t.name === name);
     if (!template) {
@@ -373,7 +408,7 @@ class TemplateStore extends MailspringStore {
           }
         }
         const changeObj = { body: `${templateBody}${current.substr(insertion)}` };
-        const { BCC, CC } = this.templateConfig(template.id);
+        const { BCC, CC, files } = this.templateConfig(template.id);
         if (CC) {
           const ccContacts = await ContactStore.parseContactsInString(CC);
           if (ccContacts.length) {
@@ -384,6 +419,24 @@ class TemplateStore extends MailspringStore {
           const bccContacts = await ContactStore.parseContactsInString(BCC);
           if (bccContacts.length) {
             changeObj['bcc'] = bccContacts;
+          }
+        }
+
+        if (files && files.length) {
+          if (files.length > 1) {
+            Actions.addAttachments({
+              messageId: draft.id,
+              accountId: draft.accountId,
+              filePaths: files,
+              inline: false,
+            });
+          } else {
+            Actions.addAttachment({
+              messageId: draft.id,
+              accountId: draft.accountId,
+              filePath: files[0],
+              inline: false,
+            });
           }
         }
 

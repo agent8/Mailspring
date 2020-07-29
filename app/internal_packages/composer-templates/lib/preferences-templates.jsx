@@ -5,10 +5,11 @@ import {
   EditableList,
   ComposerEditor,
   ComposerSupport,
+  AttachmentItem,
 } from 'mailspring-component-kit';
-import { React, ReactDOM } from 'mailspring-exports';
-import { shell } from 'electron';
-
+import { React, ReactDOM, Utils } from 'mailspring-exports';
+import { shell, remote } from 'electron';
+import path from 'path';
 import TemplateStore from './template-store';
 import TemplateActions from './template-actions';
 
@@ -17,6 +18,12 @@ const {
 } = ComposerSupport;
 
 const TEMPLATEFIELDS = ['CC', 'BCC'];
+
+function fileIsImage(file) {
+  const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
+  const ext = path.extname(file).toLowerCase();
+  return extensions.includes(ext);
+}
 
 class TemplateEditor extends React.Component {
   constructor(props) {
@@ -74,6 +81,19 @@ class TemplateEditor extends React.Component {
     });
   };
 
+  _onAddAttachment = () => {
+    AppEnv.cachePreferenceFiles(paths => {
+      if (!paths || !paths.length) {
+        return;
+      }
+      TemplateActions.addAttachmentsToTemplate(this.props.template.name, paths);
+    });
+  };
+
+  _onRemoveAttachment = index => {
+    TemplateActions.removeAttachmentsFromTemplate(this.props.template.name, [index]);
+  };
+
   _renderTemplateActions = () => {
     const buttons = [];
     TEMPLATEFIELDS.forEach(field => {
@@ -92,6 +112,7 @@ class TemplateEditor extends React.Component {
         style={{ width: 24, height: 24, fontSize: 24 }}
         isIcon
         mode={RetinaImg.Mode.ContentIsMask}
+        onClick={this._onAddAttachment}
       />
     );
     return <div className="template-action-btns">{buttons}</div>;
@@ -117,6 +138,30 @@ class TemplateEditor extends React.Component {
     }
     return <div className="template-action-fields">{details}</div>;
   };
+
+  _renderTemplateFiles() {
+    const { template } = this.props;
+    const files = template.files || [];
+    const fileComponents = files.map((file, index) => {
+      const fileName = path.basename(file);
+      return (
+        <AttachmentItem
+          key={index}
+          draggable={false}
+          className="template-file"
+          filePath={file}
+          displayName={fileName}
+          isImage={fileIsImage(fileName)}
+          accountId={''}
+          onRemoveAttachment={() => {
+            this._onRemoveAttachment(index);
+          }}
+          onOpenAttachment={() => remote.shell.openItem(file)}
+        />
+      );
+    });
+    return <div className={'attachments'}>{fileComponents}</div>;
+  }
 
   render() {
     const { onEditTitle, template } = this.props;
@@ -156,6 +201,7 @@ class TemplateEditor extends React.Component {
             }}
           />
         </div>
+        {this._renderTemplateFiles()}
         <div className="section note">
           Changes are saved automatically.
           {/* View the{' '}
