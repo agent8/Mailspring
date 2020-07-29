@@ -1208,6 +1208,37 @@ export default class AppEnvConstructor {
     remote.process.exit(status);
   }
 
+  cachePreferenceFiles(callback) {
+    this.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, paths => {
+      if (!paths) {
+        callback([]);
+        return;
+      }
+      let pathsToOpen = paths;
+      if (typeof pathsToOpen === 'string') {
+        pathsToOpen = [pathsToOpen];
+      }
+      const catchFiles = [];
+      const catchFilesDirPath = path.join(this.getConfigDirPath(), 'preference');
+      try {
+        if (!fs.existsSync(catchFilesDirPath)) {
+          fs.mkdirSync(catchFilesDirPath);
+        }
+
+        for (const filepath of pathsToOpen) {
+          const fileName = path.basename(filepath);
+          const catchPath = path.join(catchFilesDirPath, fileName);
+          fs.copyFileSync(filepath, catchPath);
+          catchFiles.push(catchPath);
+        }
+        callback(catchFiles);
+      } catch (err) {
+        callback([]);
+        this.logError(err);
+      }
+    });
+  }
+
   showOpenDialog(options, callback) {
     return remote.dialog
       .showOpenDialog(this.getCurrentWindow(), {
