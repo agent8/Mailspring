@@ -6,6 +6,7 @@ import { ipcRenderer, remote, desktopCapturer } from 'electron';
 import { Emitter } from 'event-kit';
 import { mapSourcePosition } from 'source-map-support';
 import fs from 'fs';
+import os from 'os';
 import stream from 'stream';
 import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
