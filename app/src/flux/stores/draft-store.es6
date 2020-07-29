@@ -1107,7 +1107,7 @@ class DraftStore extends MailspringStore {
         // Actions.queueTask(t);
         // TaskQueue.waitForPerformLocal(t)
         AppEnv.trackingEvent('Message-QuickReply');
-        this._finalizeAndPersistNewMessage(draft)
+        this._finalizeAndPersistNewMessage(draft, { popout: false })
           .then(() => {
             Actions.sendDraft(draft.id, { source: 'SendQuickReply' });
           })
@@ -1322,7 +1322,11 @@ class DraftStore extends MailspringStore {
     return queries;
   }
 
-  _finalizeAndPersistNewMessage(draft, { popout } = {}, { originalMessageId, messageType } = {}) {
+  _finalizeAndPersistNewMessage(
+    draft,
+    { popout = AppEnv.config.get('core.reading.openReplyInNewWindow') } = {},
+    { originalMessageId, messageType } = {}
+  ) {
     // Give extensions an opportunity to perform additional setup to the draft
     ExtensionRegistry.Composer.extensions().forEach(extension => {
       if (!extension.prepareNewDraft) {
@@ -1354,7 +1358,7 @@ class DraftStore extends MailspringStore {
         if (data && data.draftCache) {
           AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
         }
-        if (AppEnv.config.get('core.reading.openReplyInNewWindow') || popout) {
+        if (popout) {
           console.log('\n-------\n draft popout\n');
           this._onPopoutDraft(draft.id);
         }
@@ -1544,7 +1548,7 @@ class DraftStore extends MailspringStore {
   _onHandleMailFiles = async (event, paths) => {
     // returned promise is just used for specs
     const draft = await DraftFactory.createDraft();
-    const { messageId } = await this._finalizeAndPersistNewMessage(draft);
+    const { messageId } = await this._finalizeAndPersistNewMessage(draft, { popout: false });
 
     let remaining = paths.length;
     const callback = () => {
