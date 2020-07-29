@@ -1,6 +1,9 @@
 import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
 import uuid from 'uuid';
+import { ipcRenderer } from 'electron';
+import { WindowTypes } from '../../constant';
+
 const silentTTL = 30 * 60 * 1000;
 class AppMessageStore extends MailspringStore {
   static priority = {
@@ -18,6 +21,7 @@ class AppMessageStore extends MailspringStore {
       medium: [],
       low: [],
     };
+    this._messageWindowPopouts = {};
     this._timeouts = {};
     this._silentCache = {};
     this._mostRecentBlock = null;
@@ -30,7 +34,111 @@ class AppMessageStore extends MailspringStore {
       this.listenTo(Actions.removeAppMessages, this._onPopMessage);
       this.listenTo(Actions.removeAccount, this._onAccountRemoved);
     }
+    if (!AppEnv.isMessageWindow()) {
+      this.listenTo(Actions.requestMessageWindow, this._onRequestMessageWindow);
+      this.listenTo(Actions.messageWindowReply, this._onMessageWindowReply);
+    }
   }
+  _onMessageWindowReply = ({ sourceWindowKey, response, checkboxChecked, requestId } = {}) => {
+    const cb = this._messageWindowPopouts[requestId];
+    delete this._messageWindowPopouts[requestId];
+    if (cb) {
+      cb({ response, checkboxChecked });
+    }
+  };
+
+  _onRequestMessageWindow = (messageData, blockWindowKey = '', cb = () => {}) => {
+    messageData.sourceWindowKey = AppEnv.getCurrentWindowKey();
+    // messageData.targetWindowKey = 'messageWindow';
+    if (blockWindowKey) {
+      messageData.targetWindowKey = blockWindowKey;
+    }
+    messageData.requestId = uuid();
+    messageData.windowType = WindowTypes.MESSAGE_WINDOW;
+    messageData = this._validateMessageWindowRequestData(messageData);
+    this._messageWindowPopouts[messageData.requestId] = cb;
+    console.log('show message window');
+    if (!blockWindowKey) {
+      ipcRenderer.send('reserveWindow-popout', messageData);
+    } else {
+      Actions.showMessageWindow(messageData);
+    }
+  };
+  _validateMessageWindowRequestData = ({
+    title = '',
+    details = '',
+    checkLabel = '',
+    buttons,
+    defaultId,
+    cancelId,
+    targetWindowKey = '',
+    sourceWindowKey = '',
+    requestId = '',
+    ...others
+  } = {}) => {
+    if (!sourceWindowKey) {
+      AppEnv.logError(
+        `Id is not available, we won't be able to return result to correct window, default results will be returned to main`
+      );
+      sourceWindowKey = 'default';
+    }
+    let buttons_state = [];
+    if (!Array.isArray(buttons)) {
+      buttons = ['Ok', 'Cancel'];
+      defaultId = 0;
+      cancelId = 1;
+      AppEnv.logWarning(`MessageWindow: buttons is not array from ${sourceWindowKey}`);
+    }
+    if (
+      typeof defaultId !== 'number' ||
+      !Number.isInteger(defaultId) ||
+      defaultId < 0 ||
+      defaultId >= buttons.length
+    ) {
+      defaultId = 0;
+    }
+    if (
+      typeof cancelId !== 'number' ||
+      !Number.isInteger(cancelId) ||
+      cancelId < 0 ||
+      cancelId >= buttons.length
+    ) {
+      cancelId = 0;
+    }
+    let defaultId_state;
+    let cancelId_state;
+    if (defaultId < buttons.length) {
+      buttons_state.push({ label: buttons[defaultId], order: 0, originalIndex: defaultId });
+      defaultId_state = defaultId;
+    }
+    if (cancelId < buttons.length && cancelId !== defaultId) {
+      buttons_state.push({
+        label: buttons[cancelId],
+        order: buttons_state.length,
+        originalIndex: cancelId,
+      });
+      cancelId_state = cancelId;
+    } else {
+      cancelId_state = defaultId_state;
+    }
+    buttons.forEach((button, index) => {
+      if (button && ![defaultId, cancelId].includes(index)) {
+        buttons_state.push({ label: button, order: buttons_state.length, originalIndex: index });
+      }
+    });
+    return {
+      ...others,
+      title,
+      details,
+      checkLabel,
+      defaultId: defaultId_state,
+      cancelId: cancelId_state,
+      buttons: buttons_state,
+      sourceWindowKey,
+      targetWindowKey,
+      requestId,
+    };
+  };
 
   _onPopMessage = blockOrBlocks => {
     if (!Array.isArray(blockOrBlocks)) {

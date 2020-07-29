@@ -9,7 +9,7 @@ import {
   DatabaseStore,
   Actions,
 } from 'mailspring-exports';
-import { RetinaImg } from 'mailspring-component-kit';
+import { RetinaImg, MessageWindow, FullScreenModal } from 'mailspring-component-kit';
 import Sheet from './sheet';
 import Toolbar from './sheet-toolbar';
 import Flexbox from './components/flexbox';
@@ -23,9 +23,12 @@ export default class SheetContainer extends React.Component {
     super(props);
     this._toolbarComponents = null;
     this.state = this._getStateFromStores();
+    this.state.messageWindowData = {};
+    this.state.showMessageWindow = false;
   }
 
   componentDidMount() {
+    Actions.showMessageWindow.listen(this._onShowMessageWindow);
     ipcRenderer.on('application-activate', this._onAppActive);
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
     if (AppEnv.isMainWindow()) {
@@ -75,6 +78,7 @@ export default class SheetContainer extends React.Component {
     if (this.unsubscribe) {
       this.unsubscribe();
     }
+    Actions.showMessageWindow.unlisten(this._onShowMessageWindow);
   }
 
   _getStateFromStores() {
@@ -153,6 +157,66 @@ export default class SheetContainer extends React.Component {
       </div>
     );
   }
+  _onShowMessageWindow = ({
+    title,
+    details,
+    checkLabel,
+    defaultId,
+    cancelId,
+    buttons,
+    sourceWindowKey,
+    targetWindowKey,
+    requestId,
+  } = {}) => {
+    const currentKey = AppEnv.getCurrentWindowKey();
+    if (targetWindowKey !== currentKey && targetWindowKey !== 'all') {
+      AppEnv.logDebug(
+        `not for current window ${currentKey}, targetWindowKey ${targetWindowKey}, ignoring`
+      );
+      return;
+    }
+    this.setState({
+      messageWindowData: {
+        title,
+        details,
+        checkLabel,
+        defaultId,
+        cancelId,
+        buttons,
+        sourceWindowKey,
+        requestId,
+      },
+      showMessageWindow: true,
+    });
+  };
+  _onMessageWindowCanceled = () => {
+    this.setState({ showMessageWindow: false });
+  };
+  _onMessageWindowClicked = () => {
+    this.setState({ showMessageWindow: false });
+  };
+
+  _renderBlockingMessage = () => {
+    if (!this.state.showMessageWindow) {
+      return null;
+    }
+    console.log('block window');
+    return (
+      <FullScreenModal
+        visible={this.state.showMessageWindow}
+        style={{ height: 'fit-content', width: 420 }}
+        mask={true}
+        closable={false}
+      >
+        <MessageWindow
+          style={{ minHeight: 150, paddingTop: 41 }}
+          {...this.state.messageWindowData}
+          onCanceled={this._onMessageWindowCanceled}
+          onClicked={this._onMessageWindowClicked}
+        />
+      </FullScreenModal>
+    );
+  };
 
   isValidUser = () => {
     // beta invite flow
@@ -225,6 +289,7 @@ export default class SheetContainer extends React.Component {
           name="Center"
           style={{ height: '100%', order: 2, flex: 1, position: 'relative', zIndex: 1 }}
         >
+          {this._renderBlockingMessage()}
           {rootSheet}
           {popSheet}
         </div>

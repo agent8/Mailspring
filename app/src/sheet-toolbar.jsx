@@ -2,17 +2,12 @@
 /* eslint global-require: 0 */
 import React from 'react';
 import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
 import { remote } from 'electron';
-import { Actions, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
-
+import { ComponentRegistry, WorkspaceStore, Actions } from 'mailspring-exports';
 import Flexbox from './components/flexbox';
 import RetinaImg from './components/retina-img';
 import Utils from './flux/models/utils';
 import _ from 'underscore';
-
-let Category = null;
-let FocusedPerspectiveStore = null;
 
 class ToolbarSpacer extends React.Component {
   static displayName = 'ToolbarSpacer';
@@ -93,6 +88,13 @@ class ToolbarWindowControls extends React.Component {
       this.setState({ alt: false });
     }
   };
+  _onClose = () => {
+    if (AppEnv.isMessageWindow()) {
+      Actions.closeMessageWindow();
+    } else {
+      AppEnv.close();
+    }
+  };
 
   render() {
     const enabled =
@@ -107,17 +109,19 @@ class ToolbarWindowControls extends React.Component {
     if (this.state.alt) {
       maxButton = <button tabIndex={-1} className="maximize" onClick={this._onMaximize} />;
     } else if (this.state.isFullScreen) {
-      maxButton = <button tabIndex={-1} className="unmaximize" onClick={this._onMaximize}></button>;
+      maxButton = <button tabIndex={-1} className="unmaximize" onClick={this._onMaximize} />;
     }
     return (
       <div name="ToolbarWindowControls" className={`toolbar-window-controls alt-${this.state.alt}`}>
-        <button tabIndex={-1} className="close" onClick={() => AppEnv.close()} />
-        <button
-          tabIndex={-1}
-          className={`minimize${this.state.isFullScreen ? ' disabled' : ''}`}
-          onClick={() => AppEnv.minimize()}
-        />
-        {maxButton}
+        <button tabIndex={-1} className="close" onClick={this._onClose} />
+        {!AppEnv.isMessageWindow() ? (
+          <button
+            tabIndex={-1}
+            className={`minimize${this.state.isFullScreen ? ' disabled' : ''}`}
+            onClick={() => AppEnv.minimize()}
+          />
+        ) : null}
+        {!AppEnv.isMessageWindow() ? maxButton : null}
       </div>
     );
   }
@@ -133,9 +137,10 @@ class ToolbarMenuControl extends React.Component {
 
   render() {
     const enabled =
-      process.platform === 'win32' ||
-      (process.platform === 'linux' &&
-        AppEnv.config.get('core.workspace.menubarStyle') === 'hamburger');
+      (process.platform === 'win32' ||
+        (process.platform === 'linux' &&
+          AppEnv.config.get('core.workspace.menubarStyle') === 'hamburger')) &&
+      !AppEnv.isMessageWindow();
 
     if (!enabled) {
       return <span />;
@@ -367,6 +372,9 @@ export default class Toolbar extends React.Component {
       zIndex: 1,
       background: 'transparent',
     };
+    if (AppEnv.isMessageWindow()) {
+      delete style.background;
+    }
 
     const toolbars = this.state.columns.map((components, idx) => (
       <div

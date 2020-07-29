@@ -4,11 +4,13 @@ import Utils from './models/utils';
 const Role = {
   MAIN: 'default',
   SECONDARY: 'secondary',
+  MESSAGE: 'message',
 };
 
 const TargetWindows = {
   ALL: 'all',
   MAIN: 'default',
+  MESSAGE: 'messageWindow',
 };
 
 const printToConsole = false;
@@ -33,7 +35,13 @@ class ActionBridge {
     this.ipc = ipc;
     this.ipcLastSendTime = null;
     this.initiatorId = AppEnv.getWindowType();
-    this.role = AppEnv.isMainWindow() ? Role.MAIN : Role.SECONDARY;
+    if (AppEnv.isMainWindow()) {
+      this.role = Role.MAIN;
+    } else if (AppEnv.isMessageWindow()) {
+      this.role = Role.MESSAGE;
+    } else {
+      this.role = Role.SECONDARY;
+    }
 
     AppEnv.onBeforeUnload(this.onBeforeUnload);
 
@@ -51,6 +59,12 @@ class ActionBridge {
       // them to the main window.
       Actions.mainWindowActions.forEach(name => {
         const callback = (...args) => this.onRebroadcast(TargetWindows.MAIN, name, args);
+        return Actions[name].listen(callback, this);
+      });
+    }
+    if (this.role !== Role.MESSAGE) {
+      Actions.messageWindowActions.forEach(name => {
+        const callback = (...args) => this.onRebroadcast(TargetWindows.MESSAGE, name, args);
         return Actions[name].listen(callback, this);
       });
     }

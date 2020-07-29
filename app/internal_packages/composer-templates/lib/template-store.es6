@@ -284,7 +284,7 @@ class TemplateStore extends MailspringStore {
 
   _displayError(message) {
     AppEnv.reportError(new Error('Template Creation Error'), { errorData: message });
-    remote.dialog.showErrorBox('Template Creation Error', message);
+    AppEnv.showErrorDialog({ title: 'Template Creation Error', message });
   }
 
   _displayDialog(title, message, buttons) {

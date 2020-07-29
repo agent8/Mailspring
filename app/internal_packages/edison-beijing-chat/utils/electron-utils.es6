@@ -17,7 +17,7 @@ export const postNotification = (title, body, onActivate = () => {}) => {
 };
 
 export const alert = message => {
-  dialog.showMessageBox({
+  AppEnv.showMessageBox({
     type: 'warning',
     message,
     buttons: ['OK'],
