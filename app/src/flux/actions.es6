@@ -495,6 +495,7 @@ class Actions {
   static requestDraftCacheFromMain = ActionScopeMainWindow;
   static broadcastDraftCache = ActionScopeGlobal;
   static gotoOutbox = ActionScopeWindow;
+  static focusHighestLevelDraftWindow = ActionScopeMainWindow;
 
   /*
   Public: Submits the user's response to an RSVP event.
