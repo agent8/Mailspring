@@ -466,8 +466,7 @@ class TemplateStore extends MailspringStore {
     if (!body) {
       return true;
     }
-
-    const re = /(?:<.+?>)|\s/gim;
+    const re = /(?:<.+?>)|\s|\u200b/gim;
     return body.replace(re, '').length === 0;
   }
 
