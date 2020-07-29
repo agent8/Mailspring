@@ -72,7 +72,7 @@ export default class MessagesTopBar extends Component {
       return;
     }
     if (!conversationName.trim()) {
-      dialog.showMessageBox({
+      AppEnv.showMessageBox({
         type: 'warning',
         message: 'Group name should NOT be empty or blank.',
         buttons: ['OK'],
