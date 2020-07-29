@@ -74,6 +74,7 @@ class TemplatePopover extends React.Component {
     const headerComponents = [
       <InputSearch
         showPreIcon
+        key="InputSearch"
         className="template-picker-input"
         placeholder=""
         onChange={this._onSearchValueChange}
