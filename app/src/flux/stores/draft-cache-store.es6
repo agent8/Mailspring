@@ -15,15 +15,17 @@ class DraftCacheStore extends MailspringStore {
   constructor() {
     super();
     this.cache = {};
-    this.listenTo(Actions.queueTasks, this._taskQueue);
-    this.listenTo(Actions.queueTask, task => this._taskQueue([task]));
-    this.listenTo(Actions.requestDraftCacheFromMain, this._onRequestForDraftCache);
-    this.listenTo(Actions.broadcastDraftCache, this._onBroadcastDraftCacheReceived);
-    this.listenTo(Actions.draftDeliverySucceeded, this._onSendDraftSuccess);
-    this.listenTo(Actions.draftDeliveryFailed, this._onSendDraftFailed);
-    this.listenTo(Actions.cancelOutboxDrafts, this._onRemoveDraft);
-    this.listenTo(Actions.destroyDraft, this._onRemoveDraft);
-    this.listenTo(DatabaseStore, this._onDBDataChange);
+    if (!AppEnv.isMessageWindow()) {
+      this.listenTo(Actions.queueTasks, this._taskQueue);
+      this.listenTo(Actions.queueTask, task => this._taskQueue([task]));
+      this.listenTo(Actions.requestDraftCacheFromMain, this._onRequestForDraftCache);
+      this.listenTo(Actions.broadcastDraftCache, this._onBroadcastDraftCacheReceived);
+      this.listenTo(Actions.draftDeliverySucceeded, this._onSendDraftSuccess);
+      this.listenTo(Actions.draftDeliveryFailed, this._onSendDraftFailed);
+      this.listenTo(Actions.cancelOutboxDrafts, this._onRemoveDraft);
+      this.listenTo(Actions.destroyDraft, this._onRemoveDraft);
+      this.listenTo(DatabaseStore, this._onDBDataChange);
+    }
   }
   _onRemoveDraft = ({ messages = [] } = {}) => {
     if (!Array.isArray(messages)) {
