@@ -628,7 +628,7 @@ export default class ComposerView extends React.Component {
                 style={{ order: -50 }}
                 title="Attach file"
                 onClick={this._onSelectAttachment.bind(this, { type: 'notInline' })}
-                disabled={this.props.session.isPopout() || this._draftNotReady()}
+                disabled={this._draftNotReady()}
               >
                 <RetinaImg
                   name={'attachments.svg'}
@@ -643,7 +643,7 @@ export default class ComposerView extends React.Component {
                 style={{ order: -49 }}
                 title="Insert photo"
                 onClick={this._onSelectAttachment.bind(this, { type: 'image' })}
-                disabled={this.props.session.isPopout() || this._draftNotReady()}
+                disabled={this._draftNotReady()}
               >
                 <RetinaImg
                   name={'inline-image.svg'}
@@ -659,7 +659,7 @@ export default class ComposerView extends React.Component {
                 style={{ order: 40 }}
                 title="Delete draft"
                 onClick={this._onDestroyDraft}
-                disabled={this.props.session.isPopout() || this._draftNotReady()}
+                disabled={this._draftNotReady()}
               >
                 {this.state.isDeleting ? (
                   <LottieImg name={'loading-spinner-blue'} size={{ width: 24, height: 24 }} />
@@ -871,6 +871,10 @@ export default class ComposerView extends React.Component {
   };
 
   _onDestroyDraft = () => {
+    if (this.props.session.isPopout()) {
+      Actions.focusHighestLevelDraftWindow(this.props.draft.id, this.props.draft.threadId);
+      return;
+    }
     if (!this.state.isDeleting && !this._deleteTimer) {
       this._timoutButton();
       this.setState({ isDeleting: true });
@@ -879,6 +883,10 @@ export default class ComposerView extends React.Component {
   };
 
   _onSelectAttachment = ({ type = 'image' }) => {
+    if (this.props.session.isPopout()) {
+      Actions.focusHighestLevelDraftWindow(this.props.draft.id, this.props.draft.threadId);
+      return;
+    }
     if (type === 'image') {
       Actions.selectAttachment({
         messageId: this.props.draft.id,
