@@ -236,13 +236,6 @@ export default class PreferencesTemplates extends React.Component {
   }
 
   _getStateFromStores() {
-    let lastSelName = null;
-    let lastSelIndex = null;
-    if (this.state) {
-      lastSelName = this.state.selected && this.state.selected.name;
-      lastSelIndex = this.state.templates.findIndex(t => t.name === lastSelName);
-    }
-
     const templates = TemplateStore.items().map(t => {
       const tConfig = TemplateStore.templateConfig(t.id);
       return {
@@ -250,11 +243,12 @@ export default class PreferencesTemplates extends React.Component {
         ...tConfig,
       };
     });
-    let selected = templates.find(t => t.name === lastSelName) || templates[lastSelIndex] || null;
-    if (!selected && templates.length > 0) {
+
+    const selectedName = TemplateStore.selectedTemplateName();
+    let selected = templates.find(t => t.name === selectedName);
+    if (!selected) {
       selected = templates[0];
     }
-
     return {
       templates,
       selected,
@@ -262,14 +256,7 @@ export default class PreferencesTemplates extends React.Component {
   }
 
   _onAdd = () => {
-    TemplateActions.createTemplate(
-      { name: 'Untitled', contents: 'Insert content here!' },
-      template => {
-        if (template) {
-          this.setState({ selected: template });
-        }
-      }
-    );
+    TemplateActions.createTemplate({ name: 'Untitled', contents: 'Insert content here!' });
   };
 
   _onDelete = item => {
@@ -285,7 +272,7 @@ export default class PreferencesTemplates extends React.Component {
   };
 
   _onSelect = item => {
-    this.setState({ selected: item });
+    TemplateActions.selectTemplate(item);
   };
 
   render() {

@@ -9,6 +9,7 @@ const TemplateActions = Reflux.createActions([
   'changeTemplateField',
   'addAttachmentsToTemplate',
   'removeAttachmentsFromTemplate',
+  'selectTemplate',
 ]);
 
 for (const key of Object.keys(TemplateActions)) {
