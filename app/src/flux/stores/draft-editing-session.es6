@@ -17,6 +17,7 @@ import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import uuid from 'uuid';
 import _ from 'underscore';
 import RestoreDraftTask from '../tasks/restore-draft-task';
+import { DraftWindowLevel } from '../../constant';
 
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
@@ -260,19 +261,19 @@ export default class DraftEditingSession extends MailspringStore {
     this._isChangingAccount = false;
     this.refOldDraftMessageId = '';
     this.lastSync = Date.now();
-    let currentWindowLevel = 3;
+    let currentWindowLevel = DraftWindowLevel.Composer;
     if (AppEnv.isMainWindow()) {
-      currentWindowLevel = 1;
+      currentWindowLevel = DraftWindowLevel.Main;
     } else if (AppEnv.isThreadWindow()) {
-      currentWindowLevel = 2;
+      currentWindowLevel = DraftWindowLevel.Thread;
     } else if (AppEnv.isComposerWindow()) {
-      currentWindowLevel = 3;
+      currentWindowLevel = DraftWindowLevel.Composer;
     }
     // Because new draft window will first shown as main window type,
     // We need to check windowProps;
     const windowProps = AppEnv.getWindowProps();
     if (windowProps.draftJSON) {
-      currentWindowLevel = 3;
+      currentWindowLevel = DraftWindowLevel.Composer;
     }
 
     this.messageId = messageId;
@@ -305,7 +306,7 @@ export default class DraftEditingSession extends MailspringStore {
       this._isDraftMissingAttachments();
       const thread = FocusedContentStore.focused('thread');
       const inFocusedThread = thread && thread.id === draft.threadId;
-      if (currentWindowLevel === 3) {
+      if (currentWindowLevel === DraftWindowLevel.Composer) {
         // Because new drafts can't be viewed in main window, we don't add it towards open count, if we are in mainWin
         // we want to trigger open count in composer window
         Actions.draftOpenCount({
@@ -314,13 +315,13 @@ export default class DraftEditingSession extends MailspringStore {
           source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
         });
       } else if (draft.replyType !== Message.draftType.new) {
-        if (currentWindowLevel === 2) {
+        if (currentWindowLevel === DraftWindowLevel.Thread) {
           Actions.draftOpenCount({
             messageId: messageId,
             windowLevel: currentWindowLevel,
             source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
           });
-        } else if (currentWindowLevel === 1 && inFocusedThread) {
+        } else if (currentWindowLevel === DraftWindowLevel.Main && inFocusedThread) {
           Actions.draftOpenCount({
             messageId: messageId,
             windowLevel: currentWindowLevel,
@@ -404,13 +405,13 @@ export default class DraftEditingSession extends MailspringStore {
 
   get currentWindowLevel() {
     if (AppEnv.isMainWindow()) {
-      return 1;
+      return DraftWindowLevel.Main;
     } else if (AppEnv.isThreadWindow()) {
-      return 2;
+      return DraftWindowLevel.Thread;
     } else if (AppEnv.isComposerWindow()) {
-      return 3;
+      return DraftWindowLevel.Composer;
     } else {
-      return 3;
+      return DraftWindowLevel.Composer;
     }
   }
 
@@ -1058,7 +1059,7 @@ export default class DraftEditingSession extends MailspringStore {
     AppEnv.logDebug(`draft open count change ${messageId}`);
     if (this._draft && messageId === this._draft.id) {
       AppEnv.logDebug(`draft open count change processing ${messageId} `);
-      let level = 3;
+      let level = DraftWindowLevel.Composer;
       let changedToTrue = false;
       while (level > this.currentWindowLevel) {
         if (data[level]) {

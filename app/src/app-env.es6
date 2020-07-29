@@ -789,9 +789,9 @@ export default class AppEnvConstructor {
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
   }
-  getOpenWindows() {
+  getOpenWindows(type = 'all') {
     try {
-      return remote.getGlobal('application').windowManager.getOpenWindows();
+      return remote.getGlobal('application').windowManager.getOpenWindows(type);
     } catch (e) {
       this.reportError(e, {});
       return [];
@@ -1210,6 +1210,37 @@ export default class AppEnvConstructor {
   exit(status) {
     remote.app.emit('will-exit');
     remote.process.exit(status);
+  }
+
+  cachePreferenceFiles(callback) {
+    this.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, paths => {
+      if (!paths) {
+        callback([]);
+        return;
+      }
+      let pathsToOpen = paths;
+      if (typeof pathsToOpen === 'string') {
+        pathsToOpen = [pathsToOpen];
+      }
+      const catchFiles = [];
+      const catchFilesDirPath = path.join(this.getConfigDirPath(), 'preference');
+      try {
+        if (!fs.existsSync(catchFilesDirPath)) {
+          fs.mkdirSync(catchFilesDirPath);
+        }
+
+        for (const filepath of pathsToOpen) {
+          const fileName = path.basename(filepath);
+          const catchPath = path.join(catchFilesDirPath, fileName);
+          fs.copyFileSync(filepath, catchPath);
+          catchFiles.push(catchPath);
+        }
+        callback(catchFiles);
+      } catch (err) {
+        callback([]);
+        this.logError(err);
+      }
+    });
   }
 
   showOpenDialog(options, callback) {

@@ -25,6 +25,8 @@ import ChangeDraftToFailingTask from '../tasks/change-draft-to-failing-task';
 import ChangeDraftToFailedTask from '../tasks/change-draft-to-failed-task';
 import FocusedContentStore from './focused-content-store';
 import SentProgress from '../models/sent-progress';
+import { DraftWindowLevel } from '../../constant';
+
 let AttachmentStore = null;
 const { DefaultSendActionKey } = SendActionsStore;
 const SendDraftTimeout = 300000;
@@ -81,6 +83,7 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.draftOpenCount, this._onDraftOpenCount);
       this.listenTo(Actions.draftWindowClosing, this._onDraftWindowClosing);
       this.listenTo(TaskQueue, this._restartTimerForOldSendDraftTasks);
+      this.listenTo(Actions.focusHighestLevelDraftWindow, this.focusHighestLevelDraftWindow);
       Actions.queueTasks.listen(this._onTaskQueue, this);
       Actions.queueTask.listen(this._onTaskQueue, this);
       this._startTime = Date.now();
@@ -1103,8 +1106,8 @@ class DraftStore extends MailspringStore {
         // // console.error('send quickly');
         // Actions.queueTask(t);
         // TaskQueue.waitForPerformLocal(t)
-
-        this._finalizeAndPersistNewMessage(draft, { popout: false })
+        AppEnv.trackingEvent('Message-QuickReply');
+        this._finalizeAndPersistNewMessage(draft)
           .then(() => {
             Actions.sendDraft(draft.id, { source: 'SendQuickReply' });
           })
@@ -1319,11 +1322,7 @@ class DraftStore extends MailspringStore {
     return queries;
   }
 
-  _finalizeAndPersistNewMessage(
-    draft,
-    { popout = AppEnv.isDisableThreading() } = {},
-    { originalMessageId, messageType } = {}
-  ) {
+  _finalizeAndPersistNewMessage(draft, { popout } = {}, { originalMessageId, messageType } = {}) {
     // Give extensions an opportunity to perform additional setup to the draft
     ExtensionRegistry.Composer.extensions().forEach(extension => {
       if (!extension.prepareNewDraft) {
@@ -2151,13 +2150,40 @@ class DraftStore extends MailspringStore {
       }, 300);
     }
   };
+  focusHighestLevelDraftWindow = (messageId, threadId) => {
+    const openCount = this._draftsOpenCount[messageId];
+    if (openCount) {
+      let openWindow;
+      if (openCount[DraftWindowLevel.Composer]) {
+        openWindow = AppEnv.getOpenWindows('composer').find(
+          win => win.windowKey === `composer-${messageId}`
+        );
+      } else if (openCount[DraftWindowLevel.Thread]) {
+        openWindow = AppEnv.getOpenWindows('thread-popout').find(
+          win => win.windowKey === `thread-${threadId}`
+        );
+      }
+      if (openWindow && openWindow.browserWindow) {
+        if (openWindow.browserWindow.isMinimized()) {
+          openWindow.browserWindow.restore();
+        }
+        openWindow.browserWindow.focus();
+      }
+    } else {
+      AppEnv.logWarning(
+        `Focus draft window for ${messageId} found no openCount ${JSON.stringify(
+          this._draftsOpenCount
+        )}`
+      );
+    }
+  };
   _getCurrentWindowLevel = () => {
     if (AppEnv.isComposerWindow()) {
-      return 3;
+      return DraftWindowLevel.Composer;
     } else if (AppEnv.isThreadWindow()) {
-      return 2;
+      return DraftWindowLevel.Thread;
     } else {
-      return 1;
+      return DraftWindowLevel.Main;
     }
   };
 }
