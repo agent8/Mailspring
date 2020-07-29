@@ -38,19 +38,20 @@ export class PreferencesKeymapsHearder extends React.Component {
   }
 
   _onDeleteUserKeymap() {
-    const chosen = remote.dialog.showMessageBoxSync(AppEnv.getCurrentWindow(), {
+    AppEnv.showMessageBox({
       type: 'info',
       message: 'Are you sure?',
       detail: 'Delete your custom key bindings and reset to the template defaults?',
       buttons: ['Cancel', 'Reset'],
       defaultId: 1,
       cancelId: 0,
+      blockWindowKey: AppEnv.getCurrentWindowKey(),
+    }).then(({ response }) => {
+      if (response === 1) {
+        const keymapsFile = AppEnv.keymaps.getUserKeymapPath();
+        fs.writeFileSync(keymapsFile, '{}');
+      }
     });
-
-    if (chosen === 1) {
-      const keymapsFile = AppEnv.keymaps.getUserKeymapPath();
-      fs.writeFileSync(keymapsFile, '{}');
-    }
   }
 
   render() {

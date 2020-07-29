@@ -203,7 +203,6 @@ lazyLoad(`InflatesDraftClientId`, 'decorators/inflates-draft-client-id');
 lazyLoad(`ExtensionRegistry`, 'registries/extension-registry');
 lazyLoad(`MessageViewExtension`, 'extensions/message-view-extension');
 lazyLoad(`ComposerExtension`, 'extensions/composer-extension');
-
 // 3rd party libraries
 lazyLoadWithGetter(`Rx`, () => require('rx-lite'));
 lazyLoadWithGetter(`React`, () => require('react'));

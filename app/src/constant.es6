@@ -1,3 +1,17 @@
+export const MessageWindowSize = {
+  width: 450,
+  height: 150,
+};
+export const WindowTypes = {
+  MAIN_WINDOW: 'default',
+  SPEC_WINDOW: 'spec',
+  ONBOARDING_WINDOW: 'onboarding',
+  BUG_REPORT_WINDOW: 'bugreport',
+  MESSAGE_WINDOW: 'messageWindow',
+  DIALOG_WINDOW: 'dialogWindow',
+  COMPOSER_WINDOW: 'composer',
+  THREAD_WINDOW: 'thread-popout',
+};
 export const OAuthList = [
   'gmail',
   'yahoo',

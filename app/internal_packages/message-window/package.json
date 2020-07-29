@@ -1,0 +1,15 @@
+{
+  "name": "messageWindow",
+  "version": "0.1.0",
+  "main": "./lib/main",
+  "description": "Message Window",
+  "syncInit": false,
+  "license": "GPL-3.0",
+  "private": true,
+  "engines": {
+    "mailspring": "*"
+  },
+  "windowTypes": {
+    "messageWindow": true
+  }
+}

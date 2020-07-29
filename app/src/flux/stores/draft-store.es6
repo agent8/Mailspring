@@ -47,21 +47,34 @@ Section: Drafts
 class DraftStore extends MailspringStore {
   constructor() {
     super();
-    this.listenTo(DatabaseStore, this._onDataChanged);
-    this.listenTo(Actions.draftDeliveryFailed, this._onSendDraftFailed);
-    this.listenTo(Actions.draftDeliverySucceeded, this._onSendDraftSuccess);
-    this.listenTo(Actions.sendingDraft, this._onSendingDraft);
-    this.listenTo(Actions.destroyDraftFailed, this._onDestroyDraftFailed);
-    this.listenTo(Actions.destroyDraftSucceeded, this._onDestroyDraftSuccess);
-    this.listenTo(Actions.destroyDraft, this._onDestroyDrafts);
-    this.listenTo(Actions.sendDraft, this._onSendDraftAction);
-    this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChangeAction);
-    this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
-    this.listenTo(Actions.removeAllNoReferenceInLines, this._onRemoveAllNoReferenceInLines);
-    this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
-    this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
-    this.listenTo(Actions.composeReply, this._onReply);
-    this.listenTo(Actions.composeForward, this._onForward);
+    if (!AppEnv.isMessageWindow()) {
+      this.listenTo(DatabaseStore, this._onDataChanged);
+      this.listenTo(Actions.draftDeliveryFailed, this._onSendDraftFailed);
+      this.listenTo(Actions.draftDeliverySucceeded, this._onSendDraftSuccess);
+      this.listenTo(Actions.sendingDraft, this._onSendingDraft);
+      this.listenTo(Actions.destroyDraftFailed, this._onDestroyDraftFailed);
+      this.listenTo(Actions.destroyDraftSucceeded, this._onDestroyDraftSuccess);
+      this.listenTo(Actions.destroyDraft, this._onDestroyDrafts);
+      this.listenTo(Actions.sendDraft, this._onSendDraftAction);
+      this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChangeAction);
+      this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
+      this.listenTo(Actions.removeAllNoReferenceInLines, this._onRemoveAllNoReferenceInLines);
+      this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
+      this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
+      this.listenTo(Actions.composeReply, this._onReply);
+      this.listenTo(Actions.composeForward, this._onForward);
+      ipcRenderer.on('action-send-cancelled', (event, messageId, actionKey) => {
+        AppEnv.debugLog(`Undo Send received ${messageId}`);
+        if (AppEnv.isMainWindow()) {
+          AppEnv.debugLog(
+            `Undo Send received ${messageId} main window sending draftDeliveryCancelled`
+          );
+          Actions.draftDeliveryCancelled({ messageId, actionKey });
+        }
+        this._onSendDraftCancelled({ messageId });
+      });
+      AppEnv.onBeforeUnload(this._onBeforeUnload);
+    }
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.requestSessionForServerDraft, this._onServerDraftSessionRequest);
       this.listenTo(Actions.toMainSendDraft, this._onSendDraft);
@@ -112,23 +125,6 @@ class DraftStore extends MailspringStore {
         Actions.sendDraft(messageId, { actionKey, delay: 0, source: 'Undo timeout' });
       });
     }
-    ipcRenderer.on('action-send-cancelled', (event, messageId, actionKey) => {
-      AppEnv.debugLog(`Undo Send received ${messageId}`);
-      if (AppEnv.isMainWindow()) {
-        AppEnv.debugLog(
-          `Undo Send received ${messageId} main window sending draftDeliveryCancelled`
-        );
-        Actions.draftDeliveryCancelled({ messageId, actionKey });
-      }
-      this._onSendDraftCancelled({ messageId });
-    });
-    // popout closed
-    // ipcRenderer.on('draft-close-window', this._onPopoutClosed);
-    // ipcRenderer.on('draft-got-new-id', this._onDraftGotNewId);
-    // ipcRenderer.on('draft-arp', this._onDraftArp);
-    // ipcRenderer.on('draft-delete', this._onDraftDeleting);
-    AppEnv.onBeforeUnload(this._onBeforeUnload);
-
     this._draftSessions = {};
     this._draftsSending = {};
     this._draftSendingTimeouts = {};
@@ -552,24 +548,24 @@ class DraftStore extends MailspringStore {
     }
     session.validateDraftForChangeAccount().then(ret => {
       const { errors, warnings } = ret;
-      const dialog = remote.dialog;
       if (warnings.length > 0) {
-        dialog
-          .showMessageBox(remote.getCurrentWindow(), {
-            type: 'warning',
-            buttons: ['Yes', 'Cancel'],
-            message: 'Draft not ready, change anyways? This will remove all draft attachments.',
-            detail: `${warnings.join(' and ')}?`,
-          })
-          .then(({ response } = {}) => {
-            if (response === 0) {
-              session.changes.add({ files: [] });
-              session.updateAttachments([]);
-              session.changingAccount();
-              Actions.broadcastChangeAccount(data, AppEnv.getWindowLevel());
-              return true;
-            }
-          });
+        AppEnv.showMessageBox({
+          blockWindowKey: AppEnv.getCurrentWindowKey(),
+          type: 'warning',
+          buttons: ['Yes', 'Cancel'],
+          title: 'Draft not ready',
+          detail: `Draft not ready, change anyways? This will remove all draft attachments.\n${warnings.join(
+            ' and '
+          )}?`,
+        }).then(({ response } = {}) => {
+          if (response === 0) {
+            session.changes.add({ files: [] });
+            session.updateAttachments([]);
+            session.changingAccount();
+            Actions.broadcastChangeAccount(data, AppEnv.getWindowLevel());
+            return true;
+          }
+        });
         return false;
       }
       session.changingAccount();
@@ -948,7 +944,12 @@ class DraftStore extends MailspringStore {
   };
 
   _onBeforeUnload = readyToUnload => {
-    if (AppEnv.isOnboardingWindow() || AppEnv.isEmptyWindow() || AppEnv.isBugReportingWindow()) {
+    if (
+      AppEnv.isOnboardingWindow() ||
+      AppEnv.isEmptyWindow() ||
+      AppEnv.isBugReportingWindow() ||
+      AppEnv.isMessageWindow()
+    ) {
       console.log(`Is not proper window or is empty window ${AppEnv.isEmptyWindow()}`);
       return true;
     }
@@ -1757,7 +1758,6 @@ class DraftStore extends MailspringStore {
     }
   };
   _onDestroyDraftSuccess = ({ messageIds, accountId }) => {
-    AppEnv.logDebug('destroy draft succeeded');
     if (Array.isArray(messageIds)) {
       const triggerMessageIds = [];
       messageIds.forEach(id => {
@@ -1963,14 +1963,14 @@ class DraftStore extends MailspringStore {
       const session = this._draftSessions[messageId];
       if (session) {
         session.validateDraftForSending().then(({ errors, warnings }) => {
-          const dialog = remote.dialog;
           if (errors.length > 0) {
-            dialog.showMessageBox(remote.getCurrentWindow(), {
+            AppEnv.showMessageBox({
+              blockWindowKey: AppEnv.getCurrentWindowKey(),
               type: 'warning',
               buttons: ['Edit Message', 'Cancel'],
               defaultId: 0,
               cancelId: 1,
-              message: 'Cannot Send',
+              title: 'Cannot Send',
               detail: errors[0],
             });
             Actions.draftDeliveryCancelled({ messageId });
@@ -1978,25 +1978,24 @@ class DraftStore extends MailspringStore {
           }
 
           if (warnings.length > 0 && !options.force) {
-            dialog
-              .showMessageBox(remote.getCurrentWindow(), {
-                type: 'warning',
-                buttons: ['Send Anyway', 'Cancel'],
-                defaultId: 0,
-                cancelId: 1,
-                message: 'Are you sure?',
-                detail: `Send ${warnings.join(' and ')}?`,
-              })
-              .then(({ response } = {}) => {
-                if (response === 0) {
-                  options.disableDraftCheck = true;
-                  session.removeMissingAttachments().then(() => {
-                    this._onSendDraftAction(messageId, options);
-                  });
-                } else {
-                  Actions.draftDeliveryCancelled({ messageId });
-                }
-              });
+            AppEnv.showMessageBox({
+              type: 'warning',
+              buttons: ['Send Anyway', 'Cancel'],
+              defaultId: 0,
+              cancelId: 1,
+              title: 'Are you sure?',
+              detail: `Send ${warnings.join(' and ')}?`,
+              blockWindowKey: AppEnv.getCurrentWindowKey(),
+            }).then(({ response } = {}) => {
+              if (response === 0) {
+                options.disableDraftCheck = true;
+                session.removeMissingAttachments().then(() => {
+                  this._onSendDraftAction(messageId, options);
+                });
+              } else {
+                Actions.draftDeliveryCancelled({ messageId });
+              }
+            });
             return false;
           }
           this._reRouteSendDraftAction(messageId, options);

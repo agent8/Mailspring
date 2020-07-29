@@ -842,7 +842,7 @@ class AccountDrafts {
 class AttachmentStore extends MailspringStore {
   constructor() {
     super();
-
+    if (!AppEnv.isMessageWindow()) {
     // viewing messages
     this.listenTo(Actions.fetchFile, this._fetch);
     this.listenTo(Actions.fetchAndOpenFile, this._fetchAndOpen);
@@ -850,8 +850,7 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.fetchAndSaveAllFiles, this._saveAllFilesToUserDir);
     this.listenTo(Actions.abortFetchFile, this._abortFetchFile);
     this.listenTo(Actions.fetchAttachments, this._onFetchAttachments);
-    this.listenTo(Actions.extractTnefFile, this._extractTnefFile);
-
+      this.listenTo(Actions.extractTnefFile, this._extractTnefFile);
     // sending
     this.listenTo(Actions.addAttachment, this._onAddAttachment);
     this.listenTo(Actions.addAttachments, this._onAddAttachments);
@@ -878,12 +877,13 @@ class AttachmentStore extends MailspringStore {
     this._fileSaveSuccess = new Map();
     mkdirp(this._filesDirectory);
 
-    DatabaseStore.listen(change => {
-      if (change.objectClass === AttachmentProgress.name) {
-        this._onPresentChange(change.objects);
-      }
-    });
-    this._triggerDebounced = _.debounce(() => this.trigger(), 20);
+      DatabaseStore.listen(change => {
+        if (change.objectClass === AttachmentProgress.name) {
+          this._onPresentChange(change.objects);
+        }
+      });
+      this._triggerDebounced = _.debounce(() => this.trigger(), 20);
+    }
   }
   _onDraftAttachmentStateChanged = data => {
     console.log(`draft attachment state changed `, data);
@@ -1783,7 +1783,7 @@ class AttachmentStore extends MailspringStore {
     const name = file ? file.displayName() : 'one or more files';
     const errorString = error ? error.toString() : '';
 
-    return remote.dialog.showMessageBox({
+    return AppEnv.showMessageBox({
       type: 'warning',
       message: 'Download Failed',
       detail: `Unable to download ${name}. Check your network connection and try again. ${errorString}`,
@@ -1802,7 +1802,7 @@ class AttachmentStore extends MailspringStore {
     }
 
     if (message) {
-      remote.dialog.showMessageBox({
+      AppEnv.showMessageBox({
         type: 'warning',
         message: 'Download Failed',
         detail: `${message}\n\n${error.message}`,

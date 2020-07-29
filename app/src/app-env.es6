@@ -13,6 +13,8 @@ import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
 import RegExpUtils from './regexp-utils';
+import { WindowTypes } from './constant';
+
 import { WindowLevel } from './constant';
 
 //Hinata gets special treatment for logging and other debugging purposes
@@ -29,6 +31,11 @@ let getDeviceHash = null;
 const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
 const WebServerRoot = 'https://web-marketing.edison.tech/';
 const type = 'mac';
+let actions = null;
+const Actions = () => {
+  actions = actions || require('mailspring-exports').Actions;
+  return actions;
+};
 
 function ensureInteger(f, fallback) {
   let int = f;
@@ -623,17 +630,23 @@ export default class AppEnvConstructor {
   }
 
   isComposerWindow() {
-    return this.getWindowType() === 'composer';
+    return this.getWindowType() === WindowTypes.COMPOSER_WINDOW;
   }
 
   isThreadWindow() {
-    return this.getWindowType() === 'thread-popout';
+    return this.getWindowType() === WindowTypes.THREAD_WINDOW;
   }
   isOnboardingWindow() {
-    return this.getWindowType() === 'onboarding';
+    return this.getWindowType() === WindowTypes.ONBOARDING_WINDOW;
   }
   isBugReportingWindow() {
-    return this.getWindowType() === 'bugreport';
+    return this.getWindowType() === WindowTypes.BUG_REPORT_WINDOW;
+  }
+  isMessageWindow() {
+    return this.getWindowType() === WindowTypes.MESSAGE_WINDOW;
+  }
+  isDialogWindow() {
+    return this.getWindowType() === WindowTypes.DIALOG_WINDOW;
   }
 
   isDisableZoomWindow() {
@@ -767,7 +780,16 @@ export default class AppEnvConstructor {
   }
 
   hide() {
-    return this.getCurrentWindow().hide();
+    if (this.isMainWindow()) {
+      this.getCurrentWindow().hide();
+    } else {
+      ipcRenderer.send(
+        'call-window-manager-method',
+        'hideReserveWindow',
+        this.getCurrentWindowKey(),
+        this.getWindowType()
+      );
+    }
   }
 
   quit() {
@@ -788,6 +810,9 @@ export default class AppEnvConstructor {
   // * `height` The {Number} of pixels.
   setSize(width, height) {
     return this.getCurrentWindow().setSize(ensureInteger(width, 100), ensureInteger(height, 100));
+  }
+  setParentWindow(parent) {
+    this.getCurrentWindow().setParentWindow(parent);
   }
 
   setMinimumWidth(minWidth) {
@@ -825,6 +850,14 @@ export default class AppEnvConstructor {
   // Extended: Get the current window
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
+  }
+  getCurrentWindowKey() {
+    const currentBrowserWindow = this.getCurrentWindow();
+    const current = this.getOpenWindows().find(w => w.browserWindow === currentBrowserWindow);
+    if (current) {
+      return current.windowKey;
+    }
+    return '';
   }
   getOpenWindows(type = 'all') {
     try {
@@ -892,7 +925,20 @@ export default class AppEnvConstructor {
 
   // Extended: Show the current window.
   show() {
-    return ipcRenderer.send('call-window-method', 'show');
+    const win = this.getCurrentWindow();
+    if (win) {
+      if (this.isMainWindow()) {
+        win.show();
+      } else {
+        this.logDebug(`showReserveWindow ${this.getCurrentWindowKey()}, ${this.getWindowType()}`);
+        ipcRenderer.send(
+          'call-window-manager-method',
+          'showReserveWindow',
+          this.getCurrentWindowKey(),
+          this.getWindowType()
+        );
+      }
+    }
   }
 
   restore() {
@@ -910,10 +956,10 @@ export default class AppEnvConstructor {
     return this.getCurrentWindow().isVisible();
   }
 
-  // Extended: Hide the current window.
-  hide() {
-    return ipcRenderer.send('call-window-method', 'hide');
-  }
+  // // Extended: Hide the current window.
+  // hide() {
+  //   return ipcRenderer.send('call-window-method', 'hide');
+  // }
 
   // Extended: Reload the current window.
   reload() {
@@ -1075,7 +1121,7 @@ export default class AppEnvConstructor {
   }
 
   async startWindow() {
-    const { windowType } = this.getLoadSettings();
+    const { windowType, windowKey } = this.getLoadSettings();
 
     this.themes.loadStaticStylesheets();
     this.initializeBasicSheet();
@@ -1090,6 +1136,7 @@ export default class AppEnvConstructor {
             this.menu.update();
 
             ipcRenderer.send('window-command', 'window:loaded');
+            this.logDebug(`This is window ${windowKey}`);
           });
         });
       });
@@ -1167,6 +1214,23 @@ export default class AppEnvConstructor {
   newWindow(options = {}) {
     return ipcRenderer.send('new-window', options);
   }
+  ensureModalMessageWindow = () => {
+    if (this.isMessageWindow()) {
+      this.logDebug(`This is Message window, ignoring`);
+      return;
+    }
+    const options = {};
+    const currentKey = this.getCurrentWindowKey();
+    if (currentKey) {
+      options.windowKey = `messageWindow-${currentKey}`;
+      options.parentWindowKey = currentKey;
+      ipcRenderer.send('ensure-modal-message-window', options);
+    } else {
+      this.logError(
+        new Error(`Unable to create modal message window, cannot get current window key`)
+      );
+    }
+  };
   updateWindowKey({ oldKey, newKey, newOptions = {} } = {}) {
     const opts = { oldKey, newKey, newOptions };
     return ipcRenderer.send('update-window-key', opts);
@@ -1290,8 +1354,12 @@ export default class AppEnvConstructor {
   }
 
   showOpenDialog(options, callback) {
+    let win = null;
+    if (options.modal) {
+      win = this.getCurrentWindow();
+    }
     return remote.dialog
-      .showOpenDialog(this.getCurrentWindow(), {
+      .showOpenDialog(win, {
         ...options,
         securityScopedBookmarks: !!process.mas,
       })
@@ -1307,9 +1375,13 @@ export default class AppEnvConstructor {
       });
   }
 
-  showImageSelectionDialog(cb) {
+  showImageSelectionDialog(cb, modal = false) {
+    let win = null;
+    if (modal) {
+      win = this.getCurrentWindow();
+    }
     return remote.dialog
-      .showOpenDialog(this.getCurrentWindow(), {
+      .showOpenDialog(win, {
         properties: ['openFile', 'multiSelections'],
         filters: [
           {
@@ -1327,9 +1399,13 @@ export default class AppEnvConstructor {
       });
   }
 
-  showBase64ImageTransformDialog(cb, maxSize = 0) {
+  showBase64ImageTransformDialog(cb, maxSize = 0, modal = false) {
+    let win = null;
+    if (modal) {
+      win = this.getCurrentWindow();
+    }
     return remote.dialog
-      .showOpenDialog(this.getCurrentWindow(), {
+      .showOpenDialog(win, {
         properties: ['openFile'],
         filters: [
           {
@@ -1379,7 +1455,7 @@ export default class AppEnvConstructor {
             resolve(path.join(downloadPath, fileNewName));
           } else {
             resolve('');
-            remote.dialog.showErrorBox('File Save Error', errorMsg);
+            this.showErrorDialog({ title: 'File Save Error', message: errorMsg });
           }
           return;
         } catch (e) {
@@ -1397,18 +1473,20 @@ export default class AppEnvConstructor {
         title: options.title || 'Save File',
         securityScopedBookmarks: !!process.mas,
       };
-      remote.dialog
-        .showSaveDialog(this.getCurrentWindow(), optionTmp)
-        .then(({ canceled, filePath, bookmark }) => {
-          if (canceled) {
-            resolve('');
-          } else {
-            if (bookmark) {
-              this.setBookMarkForPath(filePath, bookmark);
-            }
-            resolve(filePath);
+      let win = null;
+      if (options.modal) {
+        win = this.getCurrentWindow();
+      }
+      remote.dialog.showSaveDialog(win, optionTmp).then(({ canceled, filePath, bookmark }) => {
+        if (canceled) {
+          resolve('');
+        } else {
+          if (bookmark) {
+            this.setBookMarkForPath(filePath, bookmark);
           }
-        });
+          resolve(filePath);
+        }
+      });
     });
   }
 
@@ -1427,7 +1505,7 @@ export default class AppEnvConstructor {
             resolve(downloadPath);
           } else {
             resolve('');
-            remote.dialog.showErrorBox('File Save Error', errorMsg);
+            this.showErrorDialog({ title: 'File Save Error', message: errorMsg });
           }
           return;
         } catch (e) {
@@ -1446,9 +1524,12 @@ export default class AppEnvConstructor {
         properties: ['openDirectory', 'createDirectory'],
         securityScopedBookmarks: !!process.mas,
       };
-
+      let win = null;
+      if (options.modal) {
+        win = this.getCurrentWindow();
+      }
       return remote.dialog
-        .showOpenDialog(this.getCurrentWindow(), optionTmp)
+        .showOpenDialog(win, optionTmp)
         .then(({ canceled, filePaths, bookmarks }) => {
           if (canceled) {
             resolve('');
@@ -1504,7 +1585,7 @@ export default class AppEnvConstructor {
     return remote.getGlobal('application').getMainWindow();
   }
 
-  showErrorDialog(messageData, { showInMainWindow, detail } = {}) {
+  showErrorDialog(messageData, { showInMainWindow, detail, blockWindowKey = '' } = {}) {
     let message;
     let title;
     if (_.isString(messageData) || _.isNumber(messageData)) {
@@ -1517,53 +1598,48 @@ export default class AppEnvConstructor {
       throw new Error('Must pass a valid message to show dialog', message);
     }
 
-    let winToShow = null;
     if (showInMainWindow) {
-      winToShow = remote.getGlobal('application').getMainWindow();
+      blockWindowKey = 'default';
     }
 
     if (!detail) {
-      return remote.dialog.showMessageBox(winToShow, {
+      return this.showMessageBox({
         type: 'warning',
         buttons: ['Okay'],
-        message: title,
+        title,
         detail: message,
+        blockWindowKey,
       });
     }
-    return remote.dialog
-      .showMessageBox(winToShow, {
-        type: 'warning',
-        buttons: ['Okay', 'Show Details'],
-        message: title,
-        detail: message,
-      })
-      .then(({ response, ...rest }) => {
-        if (response === 1) {
-          const { Actions } = require('mailspring-exports');
-          const { CodeSnippet } = require('mailspring-component-kit');
-          Actions.openModal({
-            component: CodeSnippet({ intro: message, code: detail, className: 'error-details' }),
-            width: 500,
-            height: 300,
-          });
-        }
-        return Promise.resolve({ response, ...rest });
-      });
+    return this.showMessageBox({
+      blockWindowKey,
+      type: 'warning',
+      buttons: ['Okay', 'Show Details'],
+      title,
+      detail: message,
+    }).then(({ response, ...rest }) => {
+      if (response === 1) {
+        const { Actions } = require('mailspring-exports');
+        const { CodeSnippet } = require('mailspring-component-kit');
+        Actions.openModal({
+          component: CodeSnippet({ intro: message, code: detail, className: 'error-details' }),
+          width: 500,
+          height: 300,
+        });
+      }
+      return Promise.resolve({ response, ...rest });
+    });
   }
 
   showMessageBox({
     title = '',
-    showInMainWindow,
+    blockWindowKey,
     detail = '',
     type = 'question',
     buttons = ['Okay', 'Cancel'],
     defaultId = 0,
     cancelId = 1,
   } = {}) {
-    let winToShow = null;
-    if (showInMainWindow) {
-      winToShow = remote.getGlobal('application').getMainWindow();
-    }
     if (!Array.isArray(buttons)) {
       buttons = ['Okay', 'Cancel'];
     }
@@ -1576,13 +1652,20 @@ export default class AppEnvConstructor {
     if (defaultId < 0 || defaultId > buttons.length - 1) {
       defaultId = 0;
     }
-    return remote.dialog.showMessageBox(winToShow, {
-      type,
-      buttons,
-      message: title,
-      detail,
-      defaultId,
-      cancelId,
+    return new Promise((resolve, reject) => {
+      console.log('request Message window');
+      Actions().requestMessageWindow(
+        {
+          type,
+          buttons,
+          title,
+          details: detail,
+          defaultId,
+          cancelId,
+        },
+        blockWindowKey,
+        resolve
+      );
     });
   }
 
