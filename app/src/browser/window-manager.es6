@@ -1,14 +1,11 @@
-import option from 'eslint-plugin-jsx-a11y/lib/util/implicitRoles/option';
 import _ from 'underscore';
 import { app } from 'electron';
 import WindowLauncher from './window-launcher';
-import { MessageWindowSize } from '../constant';
 
 const MAIN_WINDOW = 'default';
 const SPEC_WINDOW = 'spec';
 const ONBOARDING_WINDOW = 'onboarding';
 const BUG_REPORT_WINDOW = 'bugreport';
-const MESSAGE_WINDOW = 'messageWindow';
 
 export default class WindowManager {
   constructor({
@@ -139,21 +136,6 @@ export default class WindowManager {
 
     return win;
   }
-  newMessageWindow(options = {}) {
-    options.coldStartOnly = true;
-    options.windowType = MESSAGE_WINDOW;
-    if (!options.windowKey) {
-      options.windowKey = MESSAGE_WINDOW;
-    }
-    options.height = MessageWindowSize.height;
-    options.width = MessageWindowSize.width;
-    options.resizable = false;
-    options.hidden = true;
-    const win = this.newWindow(options);
-    if (win && win.browserWindow) {
-      win.browserWindow.hide();
-    }
-  }
 
   _registerWindow = win => {
     if (!win.windowKey) {
@@ -190,13 +172,6 @@ export default class WindowManager {
     }
     return null;
   };
-  ensureMessageWindowExists(windowKey = WindowManager.MESSAGE_WINDOW, extraOpts = {}) {
-    const win = this._windows[windowKey];
-    if (!win) {
-      extraOpts.windowKey = windowKey;
-      this.newMessageWindow(extraOpts);
-    }
-  }
 
   ensureWindow(windowKey, extraOpts) {
     const win = this._windows[windowKey];
@@ -326,17 +301,6 @@ export default class WindowManager {
       width: 685,
       height: 700,
     };
-    coreWinOpts[WindowManager.MESSAGE_WINDOW] = {
-      windowKey: WindowManager.MESSAGE_WINDOW,
-      windowType: WindowManager.MESSAGE_WINDOW,
-      title: 'Message Window',
-      // hidden: true, // Displayed by PageRouter::_initializeWindowSize
-      hidden: true,
-      frame: false, // Always false on Mac, explicitly set for Win & Linux
-      toolbar: false,
-      resizable: false,
-      disableZoom: true,
-    };
 
     // The SPEC_WINDOW gets passed its own bootstrapScript
     coreWinOpts[WindowManager.SPEC_WINDOW] = {
@@ -360,4 +324,3 @@ WindowManager.MAIN_WINDOW = MAIN_WINDOW;
 WindowManager.SPEC_WINDOW = SPEC_WINDOW;
 WindowManager.ONBOARDING_WINDOW = ONBOARDING_WINDOW;
 WindowManager.BUG_REPORT_WINDOW = BUG_REPORT_WINDOW;
-WindowManager.MESSAGE_WINDOW = MESSAGE_WINDOW;

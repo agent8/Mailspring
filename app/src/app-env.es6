@@ -21,11 +21,6 @@ let getDeviceHash = null;
 const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
 const WebServerRoot = 'https://web-marketing.edison.tech/';
 const type = 'mac';
-let actions = null;
-const Actions = () => {
-  actions = actions || require('mailspring-exports').Actions;
-  return actions;
-};
 
 function ensureInteger(f, fallback) {
   let int = f;
@@ -604,9 +599,6 @@ export default class AppEnvConstructor {
   isBugReportingWindow() {
     return this.getWindowType() === 'bugreport';
   }
-  isMessageWindow() {
-    return this.getWindowType() === 'messageWindow';
-  }
 
   isDisableZoomWindow() {
     return this.getLoadSettings().disableZoom;
@@ -757,9 +749,6 @@ export default class AppEnvConstructor {
   setSize(width, height) {
     return this.getCurrentWindow().setSize(ensureInteger(width, 100), ensureInteger(height, 100));
   }
-  setParentWindow(parent) {
-    this.getCurrentWindow().setParentWindow(parent);
-  }
 
   setMinimumWidth(minWidth) {
     const win = this.getCurrentWindow();
@@ -796,14 +785,6 @@ export default class AppEnvConstructor {
   // Extended: Get the current window
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
-  }
-  getCurrentWindowKey() {
-    const currentBrowserWindow = this.getCurrentWindow();
-    const current = this.getOpenWindows().find(w => w.browserWindow === currentBrowserWindow);
-    if (current) {
-      return current.windowKey;
-    }
-    return '';
   }
   getOpenWindows(type = 'all') {
     try {
@@ -1054,7 +1035,7 @@ export default class AppEnvConstructor {
   }
 
   async startWindow() {
-    const { windowType, windowKey } = this.getLoadSettings();
+    const { windowType } = this.getLoadSettings();
 
     this.themes.loadStaticStylesheets();
     this.initializeBasicSheet();
@@ -1069,7 +1050,6 @@ export default class AppEnvConstructor {
             this.menu.update();
 
             ipcRenderer.send('window-command', 'window:loaded');
-            this.logDebug(`This is window ${windowKey}`);
           });
         });
       });
@@ -1147,23 +1127,6 @@ export default class AppEnvConstructor {
   newWindow(options = {}) {
     return ipcRenderer.send('new-window', options);
   }
-  ensureModalMessageWindow = () => {
-    if (this.isMessageWindow()) {
-      this.logDebug(`This is Message window, ignoring`);
-      return;
-    }
-    const options = {};
-    const currentKey = this.getCurrentWindowKey();
-    if (currentKey) {
-      options.windowKey = `messageWindow-${currentKey}`;
-      options.parentWindowKey = currentKey;
-      ipcRenderer.send('ensure-modal-message-window', options);
-    } else {
-      this.logError(
-        new Error(`Unable to create modal message window, cannot get current window key`)
-      );
-    }
-  };
   updateWindowKey({ oldKey, newKey, newOptions = {} } = {}) {
     const opts = { oldKey, newKey, newOptions };
     return ipcRenderer.send('update-window-key', opts);
@@ -1367,7 +1330,7 @@ export default class AppEnvConstructor {
             resolve(path.join(downloadPath, fileNewName));
           } else {
             resolve('');
-            this.showErrorDialog({ title: 'File Save Error', message: errorMsg });
+            remote.dialog.showErrorBox('File Save Error', errorMsg);
           }
           return;
         } catch (e) {
@@ -1415,7 +1378,7 @@ export default class AppEnvConstructor {
             resolve(downloadPath);
           } else {
             resolve('');
-            this.showErrorDialog({ title: 'File Save Error', message: errorMsg });
+            remote.dialog.showErrorBox('File Save Error', errorMsg);
           }
           return;
         } catch (e) {
@@ -1492,7 +1455,7 @@ export default class AppEnvConstructor {
     return remote.getGlobal('application').getMainWindow();
   }
 
-  showErrorDialog(messageData, { showInMainWindow, detail, blockWindowKey = '' } = {}) {
+  showErrorDialog(messageData, { showInMainWindow, detail } = {}) {
     let message;
     let title;
     if (_.isString(messageData) || _.isNumber(messageData)) {
@@ -1505,48 +1468,53 @@ export default class AppEnvConstructor {
       throw new Error('Must pass a valid message to show dialog', message);
     }
 
+    let winToShow = null;
     if (showInMainWindow) {
-      blockWindowKey = 'default';
+      winToShow = remote.getGlobal('application').getMainWindow();
     }
 
     if (!detail) {
-      return this.showMessageBox({
+      return remote.dialog.showMessageBox(winToShow, {
         type: 'warning',
         buttons: ['Okay'],
-        title,
+        message: title,
         detail: message,
-        blockWindowKey,
       });
     }
-    return this.showMessageBox({
-      blockWindowKey,
-      type: 'warning',
-      buttons: ['Okay', 'Show Details'],
-      title,
-      detail: message,
-    }).then(({ response, ...rest }) => {
-      if (response === 1) {
-        const { Actions } = require('mailspring-exports');
-        const { CodeSnippet } = require('mailspring-component-kit');
-        Actions.openModal({
-          component: CodeSnippet({ intro: message, code: detail, className: 'error-details' }),
-          width: 500,
-          height: 300,
-        });
-      }
-      return Promise.resolve({ response, ...rest });
-    });
+    return remote.dialog
+      .showMessageBox(winToShow, {
+        type: 'warning',
+        buttons: ['Okay', 'Show Details'],
+        message: title,
+        detail: message,
+      })
+      .then(({ response, ...rest }) => {
+        if (response === 1) {
+          const { Actions } = require('mailspring-exports');
+          const { CodeSnippet } = require('mailspring-component-kit');
+          Actions.openModal({
+            component: CodeSnippet({ intro: message, code: detail, className: 'error-details' }),
+            width: 500,
+            height: 300,
+          });
+        }
+        return Promise.resolve({ response, ...rest });
+      });
   }
 
   showMessageBox({
     title = '',
-    blockWindowKey,
+    showInMainWindow,
     detail = '',
     type = 'question',
     buttons = ['Okay', 'Cancel'],
     defaultId = 0,
     cancelId = 1,
   } = {}) {
+    let winToShow = null;
+    if (showInMainWindow) {
+      winToShow = remote.getGlobal('application').getMainWindow();
+    }
     if (!Array.isArray(buttons)) {
       buttons = ['Okay', 'Cancel'];
     }
@@ -1559,19 +1527,13 @@ export default class AppEnvConstructor {
     if (defaultId < 0 || defaultId > buttons.length - 1) {
       defaultId = 0;
     }
-    return new Promise((resolve, reject) => {
-      Actions().requestMessageWindow(
-        {
-          type,
-          buttons,
-          title,
-          details: detail,
-          defaultId,
-          cancelId,
-        },
-        blockWindowKey,
-        resolve
-      );
+    return remote.dialog.showMessageBox(winToShow, {
+      type,
+      buttons,
+      message: title,
+      detail,
+      defaultId,
+      cancelId,
     });
   }
 

@@ -27,15 +27,20 @@ export default class MyComposerButton extends React.Component {
     // and add changes to the session which will be appear immediately.
     const newSubject = `${draft.subject} - It Worked!`;
 
-    AppEnv.showMessageBox({
+    const dialog = this._getDialog();
+    dialog.showMessageBox({
       title: 'Here we go...',
       detail: `Adjusting the subject line To "${newSubject}"`,
       buttons: ['OK'],
       type: 'info',
-    }).then(() => {
+    }).then(()=>{
       session.changes.add({ subject: newSubject });
     });
   };
+
+  _getDialog() {
+    return require('electron').remote.dialog;
+  }
 
   render() {
     return (
