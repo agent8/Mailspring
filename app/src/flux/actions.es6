@@ -4,6 +4,7 @@ import { Action } from 'rxjs/internal/scheduler/Action';
 const ActionScopeWindow = 'window';
 const ActionScopeGlobal = 'global';
 const ActionScopeMainWindow = 'main';
+const ActionScopeMessageWindow = 'messageWindow';
 
 /*
 Public: In the Flux {Architecture.md}, almost every user action
@@ -623,6 +624,13 @@ class Actions {
   // Mute
   static changeMuteSucceeded = ActionScopeMainWindow;
 
+  //App Message Popout Window
+  static requestMessageWindow = ActionScopeWindow;
+  static popoutMessageWindow = ActionScopeMessageWindow;
+  static showMessageWindow = ActionScopeGlobal;
+  static closeMessageWindow = ActionScopeGlobal;
+  static messageWindowReply = ActionScopeGlobal;
+
   // App Message actions
   static pushAppMessage = ActionScopeWindow;
   static pushAppMessages = ActionScopeWindow;
@@ -655,11 +663,11 @@ const create = (obj, name, scope) => {
   obj[name].sync = true;
 };
 
-const scopes = {
-  window: [],
-  global: [],
-  main: [],
-};
+const scopes = {};
+scopes[ActionScopeMainWindow] = [];
+scopes[ActionScopeGlobal] = [];
+scopes[ActionScopeWindow] = [];
+scopes[ActionScopeMessageWindow] = [];
 
 for (const name of Object.getOwnPropertyNames(Actions)) {
   if (
@@ -671,7 +679,12 @@ for (const name of Object.getOwnPropertyNames(Actions)) {
   ) {
     continue;
   }
-  if (Actions[name] !== 'window' && Actions[name] !== 'global' && Actions[name] !== 'main') {
+  if (
+    Actions[name] !== ActionScopeWindow &&
+    Actions[name] !== ActionScopeGlobal &&
+    Actions[name] !== ActionScopeMainWindow &&
+    Actions[name] !== ActionScopeMessageWindow
+  ) {
     continue;
   }
   const scope = Actions[name];
@@ -682,5 +695,6 @@ for (const name of Object.getOwnPropertyNames(Actions)) {
 Actions.windowActions = scopes.window;
 Actions.mainWindowActions = scopes.main;
 Actions.globalActions = scopes.global;
+Actions.messageWindowActions = scopes.messageWindow;
 
 export default Actions;
