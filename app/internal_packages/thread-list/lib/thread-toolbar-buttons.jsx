@@ -1193,7 +1193,7 @@ export const DownButton = props => {
     return null;
   }
 
-  const title = 'Next thread';
+  const title = `Next ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
   if (props.isMenuItem) {
     if (getStateFromStores().disabled) {
       return null;
@@ -1235,7 +1235,7 @@ export const UpButton = props => {
   if (WorkspaceStore.layoutMode() !== 'list') {
     return null;
   }
-  const title = 'Previous thread';
+  const title = `Previous ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
   if (props.isMenuItem) {
     if (getStateFromStores().disabled) {
       return null;
