@@ -220,31 +220,30 @@ class PreferencesAccountDetails extends Component {
     if (drafts.length > 0) {
       details = `There are ${drafts.length} draft(s) for this account that are currently open.\n Do you want to proceed with deleting account ${account.emailAddress}?\n Deleting account will also close these drafts.`;
     }
-    AppEnv.showMessageBox({
+    const chosen = remote.dialog.showMessageBoxSync({
       type: 'info',
       message: 'Are you sure?',
       detail: details,
       buttons: ['Delete', 'Cancel'],
       defaultId: 0,
       cancelId: 1,
-    }).then(({ response } = {}) => {
-      if (response !== 0) {
-        return;
-      }
-      const openWindowsCount = AppEnv.getOpenWindowsCountByAccountId(account.id);
-      if (openWindowsCount > 0) {
-        AppEnv.closeWindowsByAccountId(account.id, 'account deleted');
-      }
-      const index = this.props.accounts.indexOf(account);
-      if (account && typeof onRemoveAccount === 'function') {
-        // Move the selection 1 up or down after deleting
-        const newIndex = index === 0 ? index + 1 : index - 1;
-        onRemoveAccount(account);
-        if (this.props.accounts[newIndex] && typeof onSelectAccount === 'function') {
-          onSelectAccount(this.props.accounts[newIndex]);
-        }
-      }
     });
+    if (chosen !== 0) {
+      return;
+    }
+    const openWindowsCount = AppEnv.getOpenWindowsCountByAccountId(account.id);
+    if (openWindowsCount > 0) {
+      AppEnv.closeWindowsByAccountId(account.id, 'account deleted');
+    }
+    const index = this.props.accounts.indexOf(account);
+    if (account && typeof onRemoveAccount === 'function') {
+      // Move the selection 1 up or down after deleting
+      const newIndex = index === 0 ? index + 1 : index - 1;
+      onRemoveAccount(account);
+      if (this.props.accounts[newIndex] && typeof onSelectAccount === 'function') {
+        onSelectAccount(this.props.accounts[newIndex]);
+      }
+    }
   };
 
   // Renderers
