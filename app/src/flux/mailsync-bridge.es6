@@ -2,6 +2,10 @@ import path from 'path';
 import fs from 'fs';
 import { ipcRenderer, remote } from 'electron';
 import _ from 'underscore';
+// import DestroyDraftTask from './tasks/destroy-draft-task';
+// import RestoreDraftTask from './tasks/restore-draft-task';
+// import SyncbackDraftTask from './tasks/syncback-draft-task';
+
 import Task from './tasks/task';
 import SetObservableRange from './models/set-observable-range';
 import TaskQueue from './stores/task-queue';
