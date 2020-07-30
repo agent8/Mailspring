@@ -640,6 +640,8 @@ class Actions {
   static exportUserData = ActionScopeMainWindow;
 
   static remoteSearch = ActionScopeWindow;
+
+  static toggleJiraPlugin = ActionScopeWindow;
 }
 
 // Read the actions we declared on the dummy Actions object above
