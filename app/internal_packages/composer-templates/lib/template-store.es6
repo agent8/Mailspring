@@ -229,6 +229,13 @@ class TemplateStore extends MailspringStore {
 
       if (!draftContents || draftContents.length === 0) {
         this._displayError('To create a template you need to fill the body of the current draft.');
+        return;
+      }
+
+      const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
+      if (inlineAttachment.length) {
+        this._displayError('Sorry，template does not support inline attachments.');
+        return;
       }
 
       const cb = templateSaved => {
