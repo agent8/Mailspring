@@ -165,10 +165,13 @@ export class Notifier {
   _notifyAll() {
     const messageList = this.unnotifiedQueue.map(queue => queue.message);
     const msgsSomeHasNoteSound = this._msgsSomeHasNoteSound(messageList);
+    if (msgsSomeHasNoteSound) {
+      this._playNewMailSound();
+    }
     NativeNotifications.displayNotification({
       title: `${this.unnotifiedQueue.length} Unread Messages`,
       tag: 'unread-update',
-      silent: !msgsSomeHasNoteSound,
+      silent: true,
       onActivate: () => {
         AppEnv.displayWindow();
       },
@@ -198,13 +201,16 @@ export class Notifier {
 
     this.notifiedMessageIds[message.id] = 1;
     const msgsSomeHasNoteSound = this._msgsSomeHasNoteSound([message]);
+    if (msgsSomeHasNoteSound) {
+      this._playNewMailSound();
+    }
     const notification = NativeNotifications.displayNotification({
       title: title,
       subtitle: subtitle,
       body: body,
       canReply: true,
       tag: 'unread-update',
-      silent: !msgsSomeHasNoteSound,
+      silent: true,
       onActivate: ({ response, activationType }) => {
         if (activationType === 'replied' && response && typeof response === 'string') {
           Actions.sendQuickReply({ thread, message }, response);
