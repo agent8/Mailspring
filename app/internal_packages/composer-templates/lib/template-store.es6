@@ -314,7 +314,7 @@ class TemplateStore extends MailspringStore {
 
     let number = 1;
     let resolvedName = name;
-    const sameName = t => t.name === resolvedName;
+    const sameName = t => t.name.toUpperCase() === resolvedName.toUpperCase();
     while (this._items.find(sameName)) {
       resolvedName = `${name} ${number}`;
       number += 1;
@@ -412,6 +412,14 @@ class TemplateStore extends MailspringStore {
     }
     if (newName.length === 0) {
       this._displayError('You must provide a template name.');
+      return;
+    }
+
+    const sameName = this._items.find(t => {
+      return t.name.toUpperCase() === newName.toUpperCase();
+    });
+    if (sameName) {
+      this._displayError(`You already have a template called "${sameName.name}"`);
       return;
     }
 
