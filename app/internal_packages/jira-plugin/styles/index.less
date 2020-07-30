@@ -1,569 +1,570 @@
 @import 'ui-variables';
-@jiraColor : rgb(0, 82, 204);
+@jira_color : rgb(0, 82, 204);
 
 .rc-select-dropdown.jira-dropdown {
-    max-height: 300px;
-    box-shadow: -2px 2.5px 10px rgba(0, 0, 0, 0.35);
-    background: @background-primary;
-    li.rc-select-dropdown-menu-item {
-        height: 46px;
-        line-height: 46px;
-        padding-left: 10px;
-        &>span {
-            display: flex;
-        }
+  max-height: 300px;
+  box-shadow: -2px 2.5px 10px rgba(0, 0, 0, 0.35);
+  background: @background-primary;
+  li.rc-select-dropdown-menu-item {
+    height: 46px;
+    line-height: 46px;
+    padding-left: 10px;
+    & > span {
+      display: flex;
     }
-    li.rc-select-dropdown-menu-item-active {
-        color: @text-color;
-        background-image: none;
+  }
+  li.rc-select-dropdown-menu-item-active {
+    color: @text-color;
+    background-image: none;
+  }
+  .jira-priority {
+    img {
+      width: 16px;
+      margin-right: 4px;
     }
-    .jira-priority {
-        img {
-            width: 16px;
-            margin-right: 4px;
-        }
+  }
+  .jira-user {
+    display: flex;
+    align-items: center;
+    img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 10px;
     }
-    .jira-user {
-        display: flex;
-        align-items: center;
-        img {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-    }
+  }
 }
 
-
 .jira-plugin {
-    border-left: 1px solid @border-color-divider;
-    border-top: 1px solid @border-color-divider;
-    padding: 8px 18px 20px;
-    background: @background-primary;
-    color: @text-color;
-    .jhfGnb,
-    .akEditor {
-        background: @gray-lightest;
-        border-color: @gray-lighter; 
+  border-left: 1px solid @border-color-divider;
+  border-top: 1px solid @border-color-divider;
+  padding: 8px 18px 20px;
+  background: @background-primary;
+  color: @text-color;
+  .jhfGnb,
+  .akEditor {
+    background: @gray-lightest;
+    border-color: @gray-lighter;
+  }
+  .akEditor {
+    .bXRoMz {
+      padding-top: 5px;
     }
-    .akEditor {
-        .bXRoMz {
-            padding-top: 5px;
-        }
-        .heUXKZ {
-            background: @gray-lightest;
-        }
-        .EqFtw .ProseMirror p {
-            margin-top: 0;
-        }
+    .heUXKZ {
+      background: @gray-lightest;
     }
-    .transition-slide-enter {
-        opacity: 0.01;
-        transform: translateY(120px);
-        transition: all 0.35s ease-out;
+    .EqFtw .ProseMirror p {
+      margin-top: 0;
     }
-    .transition-slide-enter.transition-slide-enter-active {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    .transition-slide-leave {
-        opacity: 1;
-        background: @gray;
-        transition: all 0.25s ease-in;
-    }
+  }
+  .transition-slide-enter {
+    opacity: 0.01;
+    transform: translateY(120px);
+    transition: all 0.35s ease-out;
+  }
+  .transition-slide-enter.transition-slide-enter-active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .transition-slide-leave {
+    opacity: 1;
+    background: @gray;
+    transition: all 0.25s ease-in;
+  }
 
-    .transition-slide-leave.transition-slide-leave-active {
-        opacity: 0.01;
+  .transition-slide-leave.transition-slide-leave-active {
+    opacity: 0.01;
+  }
+  .transition-fade-enter {
+    opacity: 0.01;
+    background: @gray;
+    transition: all 0.35s ease-out;
+  }
+  .transition-fade-enter.transition-fade-enter-active {
+    background: none;
+    opacity: 1;
+  }
+  .transition-fade-leave {
+    opacity: 1;
+    background: @gray;
+    transition: all 0.25s ease-in;
+  }
+  .transition-fade-leave.transition-fade-leave-active {
+    opacity: 0.01;
+  }
+  .error {
+    color: @red;
+  }
+  .jira-login {
+    max-width: 300px;
+    margin: 0 auto;
+    height: 100%;
+    overflow-y: auto;
+    .jira-logo {
+      text-align: center;
+      margin: 30px 0 15px;
+      & > div {
+        font-size: 108px;
+        color: @jira_color;
+      }
     }
-    .transition-fade-enter {
-        opacity: 0.01;
-        background: @gray;
-        transition: all 0.35s ease-out;
+    .row {
+      margin-bottom: 16px;
+      text-align: center;
+      .label {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      input {
+        height: 32px;
+        line-height: 32px;
+        padding-left: 6px;
+      }
     }
-    .transition-fade-enter.transition-fade-enter-active {
-        background: none;
-        opacity: 1;
+    .btn-jira-login {
+      width: 200px;
     }
-    .transition-fade-leave {
-        opacity: 1;
-        background: @gray;
-        transition: all 0.25s ease-in;
+  }
+
+  .jira-labels,
+  .jira-fix-versions,
+  .jira-priority,
+  .jira-status,
+  .assign-users {
+    min-width: 200px;
+    .rc-select-selection {
+      &:hover {
+        box-shadow: none;
+      }
+      box-shadow: none;
+      border: none;
     }
-    .transition-fade-leave.transition-fade-leave-active {
-        opacity: 0.01;
+    &.rc-select-focused {
     }
-    .error {
-        color: @red;
-    }
-    .jira-login {
-        max-width: 300px;
-        margin: 0 auto;
+    .rc-select-selection__rendered {
+      font-size: 13px;
+      color: @text-color;
+      .rc-select-search__field {
         height: 100%;
-        overflow-y: auto;
-        .jira-logo {
-            text-align: center;
-            margin: 30px 0 15px;
-            img.content-mask {
-                width: 108px;
-                background: @jiraColor;
-            }
+      }
+      .rc-select-selection-selected-value {
+        span {
+          display: flex;
         }
-        .row {
-            margin-bottom: 16px;
-            text-align: center;
-            .label {
-                font-weight: 600;
-                font-size: 14px;
-            }
-            input {
-                height: 32px;
-                line-height: 32px;
-                padding-left: 6px;
-            }
-        }
-        .btn-jira-login {
-            width: 200px;
-        }
+      }
     }
-
-    .jira-labels,
-    .jira-fix-versions,
-    .jira-priority,
-    .jira-status,
-    .assign-users {
-        min-width: 200px;
-        .rc-select-selection {
-            &:hover {
-                box-shadow: none;
-            }
-            box-shadow: none;
-            border: none;
-        }
-        &.rc-select-focused {
-        }
-        .rc-select-selection__rendered {
-            font-size: 13px;
-            color: @text-color;
-            .rc-select-search__field {
-                height: 100%;
-            }
-            .rc-select-selection-selected-value {
-                span {
-                    display: flex;
-                }
-            }
-        }
-        .rc-select-arrow {
-            visibility: hidden;
-        }
-        &:hover {
-            .rc-select-selection {
-                background: @list-hover-bg;
-            }
-            .rc-select-arrow {
-                visibility: visible;
-            }
-        }
+    .rc-select-arrow {
+      visibility: hidden;
     }
-    .jira-priority {
-        img {
-            width: 16px;
-            margin-right: 4px;
-        }
+    &:hover {
+      .rc-select-selection {
+        background: @list-hover-bg;
+      }
+      .rc-select-arrow {
+        visibility: visible;
+      }
     }
-    .jira-labels,
-    .jira-fix-versions {
-        &.rc-select-focused .rc-select-selection--multiple {
-            .rc-select-selection__rendered {
-                .rc-select-selection__choice {
-                    background: darken(@list-hover-bg, 5%);
-                    .rc-select-selection__choice__content {
-                        margin-left: -7px;
-                        margin-right: 8px;
-                    }
-                    .rc-select-selection__choice__remove {
-                        display: block;
-                    }
-                }
-            }
-        }
-        .rc-select-selection--multiple {
-            margin-top: 1px;
-            .rc-select-selection__rendered {
-                height: unset;
-                min-height: 32px;
-                padding-left: 10px;
-                margin-left: 0;
-                & > ul {
-                    flex-wrap: wrap;
-                }
-                @choiceHeight: 24px;
-                .rc-select-selection__choice {
-                    background: @list-hover-bg;
-                    line-height: @choiceHeight;
-                    height: @choiceHeight;
-                    .rc-select-selection__choice__content {
-                        height: @choiceHeight;
-                        line-height: @choiceHeight;
-                        margin-left: 0;
-                        margin-right: 0;
-                    }
-                    .rc-select-selection__choice__remove {
-                        line-height: @choiceHeight;
-                        display: none;
-                    }
-                }
-            }
-        }
+  }
+  .jira-priority {
+    img {
+      width: 16px;
+      margin-right: 4px;
     }
-    .jira-user {
-        display: flex;
-        align-items: center;
-        white-space: nowrap;
-        img {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+  }
+  .jira-labels,
+  .jira-fix-versions {
+    &.rc-select-focused .rc-select-selection--multiple {
+      .rc-select-selection__rendered {
+        .rc-select-selection__choice {
+          background: darken(@list-hover-bg, 5%);
+          .rc-select-selection__choice__content {
+            margin-left: -7px;
             margin-right: 8px;
+          }
+          .rc-select-selection__choice__remove {
+            display: block;
+          }
         }
+      }
     }
-    .large-loading {
-        margin-top: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .rc-select-selection--multiple {
+      margin-top: 1px;
+      .rc-select-selection__rendered {
+        height: unset;
+        min-height: 32px;
+        padding-left: 10px;
+        margin-left: 0;
+        & > ul {
+          flex-wrap: wrap;
+        }
+        @choiceHeight: 24px;
+        .rc-select-selection__choice {
+          background: @list-hover-bg;
+          line-height: @choiceHeight;
+          height: @choiceHeight;
+          .rc-select-selection__choice__content {
+            height: @choiceHeight;
+            line-height: @choiceHeight;
+            margin-left: 0;
+            margin-right: 0;
+          }
+          .rc-select-selection__choice__remove {
+            line-height: @choiceHeight;
+            display: none;
+          }
+        }
+      }
     }
-    .jira-progress {
-        display: flex;
+  }
+  .jira-user {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    img {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 8px;
     }
-    .jira-detail {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        header {
-            &>div {
-                overflow: hidden;
-                padding: 4px 0;
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-            }
-            &>div>span{
-               float: left; 
-            }
-            .label {
-                width: 74px;
-                line-height: 28px;
-            }
-            .content {
-                line-height: 28px;
-                width: 230px;
-                padding-left: 10px;
-                &.with-progress {
-                    align-items: center;
-                    padding: 0;
-                    display: flex;
-                }
-                &.fix-versions {
-                    width: unset;
-                    min-width: 230px;
-                }
-            }
-        }
-        .label {
-            font-weight: 600;
-        }
-        .wrapper {
-            flex: 1;
-            overflow-y: auto;
-            &::-webkit-scrollbar {
-                width: 4px;
-                height: 1px;
-            }
-            &::-webkit-scrollbar-thumb {
-                background-color: @gray-lighter;
-                visibility: hidden;
-            }
-            &::-webkit-scrollbar-track {
-                background: none;
-                border: none;
-                outline: none;
-            }
-            &:hover {
-                &::-webkit-scrollbar-thumb {
-                    background-color: @gray-lighter;
-                    visibility: visible;
-                }
-            }
-        }
-        .jira-current-user {
-            position: absolute;
-            right: 16px;
-            top: 8px;
-            height: 34px;
-            width: 34px;
-            box-shadow: -1px 1.5px 6px rgba(0, 0, 0, 0.15);
-            border-radius: 50%;
-            overflow: hidden;
-            img {
-                width: 100%;
-                height: 100%;
-                &.content-mask {
-                    background: @jiraColor;
-                }
-            }
-        }
-        .jira-title {
-            line-height: 26px;
-            font-weight: 600;
-            padding-bottom: 6px;
-            a {
-                text-decoration: none;
-                font-size: 16px;
-                color: @text-color;
-                cursor: pointer;
-                &:hover {
-                    color: @jiraColor;
-                    text-decoration: underline;
-                }
-            }
-        }
-        .jira-attachments,
-        .jira-description,
-        .jira-comments {
-            margin-top: 15px;
-            & > div {
-                word-break: break-word;
-                padding: 6px 30px 10px 20px;
-            }
-        }
-        .jira-description {
-            position: relative;
-            &>.editable:hover{
-                background: @gray-lightest;
-            }
-        }
-        .jira-comments {
-            & > div {
-                .row {
-                    word-break: break-word;
-                    margin-bottom: 26px;
-                    .comment-header {
-                        display: flex;
-                        flex-wrap: wrap;
-                        align-items: center;
-                        padding-bottom: 8px;
-                        .datetime {
-                            flex: 1;
-                            text-align: left;
-                            font-size: 12px;
-                            color: rgba(0, 0, 0, 0.65);
-                            white-space: nowrap;
-                            padding-left: 20px;
-                            color: fade(@text-color, 65);
-                        }
-                    }
-                }
-            }
-            .jira-comment-editor-container {
-                position: relative;
-            }
-            .jira-comment-toolbar {
-                .btn {
-                    box-shadow: none;
-                    margin-right: 20px;
-                    opacity: 0.3;
-                    &:hover {
-                        opacity: 0.6;
-                        text-decoration: underline;
-                    }
-                }
-            }
-        }
-        .jira-attachments {
-            .attachments {
-                overflow: hidden;
-                margin-bottom: 30px;
-                & > div {
-                    position: relative;
-                    width: 100px;
-                    height: 100px;
-                    float: left;
-                    margin: 4px 8px 0 0;
-                    overflow: hidden;
-                    cursor: pointer;
-                    &:hover {
-                        &:after {
-                            content: attr(title);
-                            color: @text-color-inverse;
-                            display: block;
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            height: 100%;
-                            width: 100%;
-                            background: fade(@black, 65);
-                        }
-                    }
-                    img {
-                        width: 100%;
-                    }
-                }
-            }
-        }
-    }
-    .jira-submit-comment {
-        position: relative;
-    }
-    .image-wrap {
-        display: inline-block;
-        max-height: 130px;
+  }
+  .large-loading {
+    margin-top: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .jira-progress {
+    display: flex;
+  }
+  .jira-detail {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    header {
+      & > div {
         overflow: hidden;
-    }
-    textarea {
-        margin: 20px 0px 10px 0px;
-        width: 100%;
-        resize: none;
-        border-radius: 6px;
-        border-color: @border-color-primary;
-        height: 50px;
-        transition: height 0.3s;
-        color: @text-color;
-        background: @input-bg;
-        &:focus {
-            height: 150px
-        }
-    }
-    .jira-success {
-        background: @green;
-    }
-    .jira-error {
-        background: @red;
-    }
-    .jira-watcher {
-        display: inline-flex;
-        margin-left: 26px;
-        padding: 0 10px;
+        padding: 4px 0;
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        color: @jiraColor;
-        img.content-mask {
-            width: 22px;
-            background: @jiraColor;
-            margin-right: 4px;
-            margin-top: -2px;
-            &.loading-watcher {
-                background: @gray-lighter;
+      }
+      & > div > span {
+        float: left;
+      }
+      .label {
+        width: 74px;
+        line-height: 28px;
+      }
+      .content {
+        line-height: 28px;
+        width: 230px;
+        padding-left: 10px;
+        &.with-progress {
+          align-items: center;
+          padding: 0;
+          display: flex;
+        }
+        &.fix-versions {
+          width: unset;
+          min-width: 230px;
+        }
+      }
+    }
+    .label {
+      font-weight: 600;
+    }
+    .wrapper {
+      flex: 1;
+      overflow-y: auto;
+      &::-webkit-scrollbar {
+        width: 4px;
+        height: 1px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background-color: @gray-lighter;
+        visibility: hidden;
+      }
+      &::-webkit-scrollbar-track {
+        background: none;
+        border: none;
+        outline: none;
+      }
+      &:hover {
+        &::-webkit-scrollbar-thumb {
+          background-color: @gray-lighter;
+          visibility: visible;
+        }
+      }
+    }
+    .jira-current-user {
+      position: absolute;
+      right: 16px;
+      top: 8px;
+      height: 34px;
+      width: 34px;
+      box-shadow: -1px 1.5px 6px rgba(0, 0, 0, 0.15);
+      border-radius: 50%;
+      overflow: hidden;
+      img {
+        width: 100%;
+        height: 100%;
+        &.content-mask {
+          background: @jira_color;
+        }
+      }
+    }
+    .jira-title {
+      line-height: 26px;
+      font-weight: 600;
+      padding-bottom: 6px;
+      a {
+        text-decoration: none;
+        font-size: 16px;
+        color: @text-color;
+        cursor: pointer;
+        &:hover {
+          color: @jira_color;
+          text-decoration: underline;
+        }
+      }
+    }
+    .jira-attachments,
+    .jira-description,
+    .jira-comments {
+      margin-top: 15px;
+      & > div {
+        word-break: break-word;
+        padding: 6px 30px 10px 20px;
+      }
+    }
+    .jira-description {
+      position: relative;
+      & > .editable:hover {
+        background: @gray-lightest;
+      }
+    }
+    .jira-comments {
+      & > div {
+        .row {
+          word-break: break-word;
+          margin-bottom: 26px;
+          .comment-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding-bottom: 8px;
+            .datetime {
+              flex: 1;
+              text-align: left;
+              font-size: 12px;
+              color: rgba(0, 0, 0, 0.65);
+              white-space: nowrap;
+              padding-left: 20px;
+              color: fade(@text-color, 65);
             }
+          }
+        }
+      }
+      .jira-comment-editor-container {
+        position: relative;
+      }
+      .jira-comment-toolbar {
+        .btn {
+          box-shadow: none;
+          margin-right: 20px;
+          opacity: 0.3;
+          &:hover {
+            opacity: 0.6;
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+    .jira-attachments {
+      .attachments {
+        overflow: hidden;
+        margin-bottom: 30px;
+        & > div {
+          position: relative;
+          width: 100px;
+          height: 100px;
+          float: left;
+          margin: 4px 8px 0 0;
+          overflow: hidden;
+          cursor: pointer;
+          &:hover {
+            &:after {
+              content: attr(title);
+              color: @text-color-inverse;
+              display: block;
+              position: absolute;
+              left: 0;
+              top: 0;
+              height: 100%;
+              width: 100%;
+              background: fade(@black, 65);
+            }
+          }
+          img {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+  .jira-submit-comment {
+    position: relative;
+  }
+  .image-wrap {
+    display: inline-block;
+    max-height: 130px;
+    overflow: hidden;
+  }
+  textarea {
+    margin: 20px 0px 10px 0px;
+    width: 100%;
+    resize: none;
+    border-radius: 6px;
+    border-color: @border-color-primary;
+    height: 50px;
+    transition: height 0.3s;
+    color: @text-color;
+    background: @input-bg;
+    &:focus {
+      height: 150px;
+    }
+  }
+  .jira-success {
+    color: @green;
+  }
+  .jira-error {
+    color: @red;
+  }
+  .jira-watcher {
+    display: inline-flex;
+    margin-left: 26px;
+    padding: 0 10px;
+    align-items: center;
+    color: @jira_color;
+    .edison-icon {
+      width: 22px;
+      position: relative;
+      color: @jira_color;
+      margin-right: 4px;
+      top: 2px;
+      &.loading-watcher {
+        color: @gray-lighter;
+      }
+    }
+    &:hover {
+      background: @list-hover-bg;
+    }
+  }
+  .btn-jira {
+    -webkit-box-align: baseline;
+    align-items: baseline;
+    box-sizing: border-box;
+    font-size: inherit;
+    font-style: normal;
+    font-weight: normal;
+    max-width: 100%;
+    text-align: center;
+    white-space: nowrap;
+    cursor: default;
+    height: 2.28571em;
+    line-height: 2.28571em;
+    vertical-align: middle;
+    width: auto;
+    color: rgb(255, 255, 255) !important;
+    border-width: 0px;
+    text-decoration: none;
+    background: @jira_color;
+    border-radius: 3px;
+    padding: 0px 8px;
+    transition: background 0.1s ease-out 0s,
+      box-shadow 0.15s cubic-bezier(0.47, 0.03, 0.49, 1.38) 0s;
+    outline: none !important;
+  }
+  .jira-watchlist {
+    width: 250px;
+    padding: 10px 0 0;
+    img.content-mask {
+      width: 24px;
+      background: @jira_color;
+    }
+    .row {
+      padding: 4px 12px;
+      height: 36px;
+      &:hover {
+        background: @list-hover-bg;
+      }
+    }
+    .toggle-watch {
+      display: flex;
+      align-items: center;
+      img {
+        margin-right: 4px;
+      }
+      margin-bottom: 4px;
+    }
+    .watch-users {
+      width: 100%;
+      .rc-select-search__field__wrap > input {
+        height: 100%;
+      }
+    }
+    .watcher-list {
+      border-top: 1px solid @border-color-primary;
+      padding-bottom: 4px;
+      .title {
+        color: @gray;
+        text-transform: uppercase;
+        padding: 4px 12px;
+      }
+      .row {
+        display: flex;
+        .jira-user {
+          flex: 1;
+          overflow: hidden;
+          align-items: center;
+        }
+        .remove-icon {
+          width: 20px;
+          cursor: pointer;
+          visibility: hidden;
+          img.content-mask {
+            background: @gray;
+            width: 18px;
+          }
         }
         &:hover {
-            background: @list-hover-bg;
+          .remove-icon {
+            visibility: visible;
+          }
         }
+      }
     }
-    .btn-jira {
-        -webkit-box-align: baseline;
-        align-items: baseline;
-        box-sizing: border-box;
-        font-size: inherit;
-        font-style: normal;
-        font-weight: normal;
-        max-width: 100%;
-        text-align: center;
-        white-space: nowrap;
-        cursor: default;
-        height: 2.28571em;
-        line-height: 2.28571em;
-        vertical-align: middle;
-        width: auto;
-        color: rgb(255, 255, 255) !important;
-        border-width: 0px;
-        text-decoration: none;
-        background: @jiraColor;
-        border-radius: 3px;
-        padding: 0px 8px;
-        transition: background 0.1s ease-out 0s, box-shadow 0.15s cubic-bezier(0.47, 0.03, 0.49, 1.38) 0s;
-        outline: none !important;
+    .add-watcher {
+      color: @blue;
+      border-top: 1px solid @border-color-primary;
+      padding: 4px 0;
     }
-    .jira-watchlist {
-        width: 250px;
-        padding: 10px 0 0;
-        img.content-mask {
-            width: 24px;
-            background: @jiraColor;
-        }
-        .row {
-            padding: 4px 12px;
-            height: 36px;
-            &:hover {
-                background: @list-hover-bg;
-            }
-        }
-        .toggle-watch {
-            display: flex;
-            align-items: center;
-            img {
-                margin-right: 4px;
-            }
-            margin-bottom: 4px;
-        }
-        .watch-users {
-            width: 100%;
-            .rc-select-search__field__wrap > input {
-                height: 100%;
-            }
-        }
-        .watcher-list {
-            border-top: 1px solid @border-color-primary;
-            padding-bottom: 4px;
-            .title {
-                color: @gray;
-                text-transform: uppercase;
-                padding: 4px 12px;
-            }
-            .row {
-                display: flex;
-                .jira-user {
-                    flex: 1;
-                    overflow: hidden;
-                    align-items: center;
-                }
-                .remove-icon {
-                    width: 20px;
-                    cursor: pointer;
-                    visibility: hidden;
-                    img.content-mask {
-                        background: @gray;
-                        width: 18px;
-                    }
-                }
-                &:hover {
-                    .remove-icon {
-                        visibility: visible;
-                    }    
-                }
-            }
-        }
-        .add-watcher {
-            color: @blue;
-            border-top: 1px solid @border-color-primary;
-            padding: 4px 0;
-        }
-    }
-    .loading {
-        position: absolute;
-        height: 100%;
-        width: 100%;
-        left: 0;
-        top: 0;
-        background: fade(@black, 1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+  }
+  .loading {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    background: fade(@black, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .btn-toolbar.message-toolbar-jira.active {
-    img.content-mask {
-        background: @jiraColor;
-    }
+  .edison-icon {
+    color: @jira_color;
+  }
 }
