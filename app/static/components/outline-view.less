@@ -153,28 +153,28 @@
     // The overflow needs to be `hidden` in order for the name to flex
     // fit within the contained space.
     overflow: hidden;
-  &.more-or-less-item{
-    justify-content: flex-start;
+    &.more-or-less-item {
+      justify-content: flex-start;
 
-    &:hover {
+      &:hover {
+        .more-or-less-triangle {
+          &.visible {
+            visibility: visible;
+          }
+        }
+      }
       .more-or-less-triangle {
-        &.visible {
-          visibility: visible;
+        order: 2;
+        margin-left: 4px;
+        .edison-icon-down-arrow {
+          transform: rotate(180deg);
+          color: @gray-light;
+          &.collapsed {
+            transform: rotate(0deg);
+          }
         }
       }
     }
-    .more-or-less-triangle{
-      order: 2;
-      margin-left: 4px;
-      .edison-icon-down-arrow{
-        transform: rotate(180deg);
-        color: @gray-light;
-        &.collapsed {
-          transform: rotate(0deg);
-      }
-      }
-    }
-  }
     img.content-mask {
       background-color: @light-grey;
       vertical-align: text-bottom;
@@ -191,13 +191,7 @@
         border-radius: 50%;
         vertical-align: bottom;
       }
-      &.jira-icon {
-        img {
-          background-color: #0052cc !important;
-          position: relative;
-          top: -1px;
-        }
-      }
+
       &.sift {
         border-radius: 50%;
         height: 18px;
@@ -306,6 +300,13 @@
         font-weight: bold;
         color: @text-color;
         opacity: 0.87;
+      }
+      &.jira-icon {
+        .edison-icon {
+          color: #0052cc;
+          position: relative;
+          top: -1px;
+        }
       }
     }
     &.dropping {
