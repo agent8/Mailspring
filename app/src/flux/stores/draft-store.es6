@@ -1551,7 +1551,7 @@ class DraftStore extends MailspringStore {
   _onHandleMailFiles = async (event, paths) => {
     // returned promise is just used for specs
     const draft = await DraftFactory.createDraft();
-    const { messageId } = await this._finalizeAndPersistNewMessage(draft);
+    const { messageId } = await this._finalizeAndPersistNewMessage(draft, { popout: false });
 
     let remaining = paths.length;
     const callback = () => {
