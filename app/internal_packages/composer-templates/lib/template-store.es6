@@ -3,6 +3,7 @@
 import {
   DraftStore,
   ContactStore,
+  AttachmentStore,
   Actions,
   QuotedHTMLTransformer,
   RegExpUtils,
@@ -226,15 +227,44 @@ class TemplateStore extends MailspringStore {
         return;
       }
 
-      if (draft.files && draft.files.length) {
-        this._displayError('Sorry，template does not support attachments.');
-        return;
-      }
-
       if (!draftContents || draftContents.length === 0) {
         this._displayError('To create a template you need to fill the body of the current draft.');
       }
-      this.saveNewTemplate(draftName, draftContents, this._onShowTemplates);
+
+      const cb = templateSaved => {
+        const filesAddToAttachment = [];
+        if (draft.files && draft.files.length) {
+          draft.files.forEach(f => {
+            const filePath = AttachmentStore.pathForFile(f);
+            const newPath = AppEnv.copyFileToPreferences(filePath);
+            if (newPath) {
+              filesAddToAttachment.push(newPath);
+            }
+          });
+        }
+        if (filesAddToAttachment.length) {
+          this._onAddAttachmentsToTemplate(templateSaved.name, filesAddToAttachment);
+        }
+        if (draft.cc && draft.cc.length) {
+          const ccStr = draft.cc
+            .map(contact => {
+              return contact.email;
+            })
+            .join(',');
+          this._onChangeTemplateField(templateSaved.name, 'CC', ccStr);
+        }
+        if (draft.bcc && draft.bcc.length) {
+          const bccStr = draft.bcc
+            .map(contact => {
+              return contact.email;
+            })
+            .join(',');
+          this._onChangeTemplateField(templateSaved.name, 'BCC', bccStr);
+        }
+        this._onShowTemplates();
+      };
+
+      this.saveNewTemplate(draftName, draftContents, cb);
     });
   }
 
