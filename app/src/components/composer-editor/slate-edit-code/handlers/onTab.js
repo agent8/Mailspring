@@ -1,7 +1,7 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
+Object.defineProperty(exports, '__esModule', {
+  value: true,
 });
 
 require('slate');
@@ -15,21 +15,22 @@ var _changes = require('../changes');
  * Insert a tab after detecting it from code block content.
  */
 function onTab(opts, event, change, editor) {
-    var value = change.value;
+  var value = change.value;
 
-    event.preventDefault();
-    event.stopPropagation();
+  event.preventDefault();
+  event.stopPropagation();
 
-    var isCollapsed = value.isCollapsed;
+  var isCollapsed = value.isCollapsed;
 
-    var indent = (0, _utils.getCurrentIndent)(opts, value);
+  // var indent = (0, _utils.getCurrentIndent)(opts, value);
+  var indent = '    ';
 
-    // Selection is collapsed, we just insert an indent at cursor
-    if (isCollapsed) {
-        return change.insertText(indent).focus();
-    }
+  // Selection is collapsed, we just insert an indent at cursor
+  if (isCollapsed) {
+    return change.insertText(indent).focus();
+  }
 
-    // We indent all selected lines
-    return (0, _changes.indentLines)(opts, change, indent);
+  // We indent all selected lines
+  return (0, _changes.indentLines)(opts, change, indent);
 }
 exports.default = onTab;
