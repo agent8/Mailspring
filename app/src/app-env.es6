@@ -1215,29 +1215,38 @@ export default class AppEnvConstructor {
         callback([]);
         return;
       }
-      let pathsToOpen = paths;
-      if (typeof pathsToOpen === 'string') {
-        pathsToOpen = [pathsToOpen];
+      let pathsToCopy = paths;
+      if (typeof pathsToCopy === 'string') {
+        pathsToCopy = [pathsToCopy];
       }
       const catchFiles = [];
-      const catchFilesDirPath = path.join(this.getConfigDirPath(), 'preference');
-      try {
-        if (!fs.existsSync(catchFilesDirPath)) {
-          fs.mkdirSync(catchFilesDirPath);
+      for (const filepath of pathsToCopy) {
+        const newPath = this.copyFileToPreferences(filepath);
+        if (newPath) {
+          catchFiles.push(newPath);
         }
-
-        for (const filepath of pathsToOpen) {
-          const fileName = path.basename(filepath);
-          const catchPath = path.join(catchFilesDirPath, fileName);
-          fs.copyFileSync(filepath, catchPath);
-          catchFiles.push(catchPath);
-        }
-        callback(catchFiles);
-      } catch (err) {
-        callback([]);
-        this.logError(err);
       }
+      callback(catchFiles);
     });
+  }
+
+  copyFileToPreferences(filepath) {
+    const catchFilesDirPath = path.join(this.getConfigDirPath(), 'preference');
+    try {
+      if (!fs.existsSync(catchFilesDirPath)) {
+        fs.mkdirSync(catchFilesDirPath);
+      }
+      if (!fs.existsSync(filepath)) {
+        return null;
+      }
+      const fileName = path.basename(filepath);
+      const catchPath = path.join(catchFilesDirPath, fileName);
+      fs.copyFileSync(filepath, catchPath);
+      return catchPath;
+    } catch (err) {
+      this.logError(err);
+      return null;
+    }
   }
 
   showOpenDialog(options, callback) {
