@@ -1,7 +1,3 @@
-export const MessageWindowSize = {
-  width: 450,
-  height: 150,
-};
 export const OAuthList = [
   'gmail',
   'yahoo',

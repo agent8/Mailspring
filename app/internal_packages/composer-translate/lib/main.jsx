@@ -54,7 +54,7 @@ class TranslateButton extends React.Component {
   _onError(error) {
     Actions.closePopover();
     const dialog = require('electron').remote.dialog;
-    AppEnv.showErrorDialog({ title: 'Language Conversion Failed', message: error.toString() });
+    dialog.showErrorBox('Language Conversion Failed', error.toString());
   }
 
   _onTranslate = async lang => {

@@ -21,9 +21,7 @@ class MessageStore extends MailspringStore {
   constructor() {
     super();
     this._setStoreDefaults();
-    if (!AppEnv.isMessageWindow()) {
-      this._registerListeners();
-    }
+    this._registerListeners();
   }
 
   findAll() {
@@ -213,6 +211,7 @@ class MessageStore extends MailspringStore {
   }
 
   _registerListeners() {
+    // console.log('register listerners');
     AppEnv.onBeforeUnload(this._onWindowClose);
     if (AppEnv.isMainWindow()) {
       this._currentWindowLevel = 1;
