@@ -226,7 +226,11 @@ export const BLOCK_CONFIG = {
       isActive: value => false,
       onToggle: (value, active, event) => {
         if (!isMoreThanTabs(10, value)) {
-          return Handlers.onTab({ lineType: 'div' }, event, value.change());
+          return Handlers.onTab(
+            { lineType: 'div', getIndent: () => '    ' },
+            event,
+            value.change()
+          );
         } else {
           return value.change();
         }
@@ -242,7 +246,11 @@ export const BLOCK_CONFIG = {
       iconClass: 'dt-icon dt-icon-decrease-indent',
       isActive: value => false,
       onToggle: (value, active, event) => {
-        return Handlers.onShiftTab({ lineType: 'div' }, event, value.change());
+        return Handlers.onShiftTab(
+          { lineType: 'div', getIndent: () => '    ' },
+          event,
+          value.change()
+        );
       },
     },
   },
