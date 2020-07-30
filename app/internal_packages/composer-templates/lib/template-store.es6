@@ -245,6 +245,22 @@ class TemplateStore extends MailspringStore {
         if (filesAddToAttachment.length) {
           this._onAddAttachmentsToTemplate(templateSaved.name, filesAddToAttachment);
         }
+        if (draft.cc && draft.cc.length) {
+          const ccStr = draft.cc
+            .map(contact => {
+              return contact.email;
+            })
+            .join(',');
+          this._onChangeTemplateField(templateSaved.name, 'CC', ccStr);
+        }
+        if (draft.bcc && draft.bcc.length) {
+          const bccStr = draft.bcc
+            .map(contact => {
+              return contact.email;
+            })
+            .join(',');
+          this._onChangeTemplateField(templateSaved.name, 'BCC', bccStr);
+        }
         this._onShowTemplates();
       };
 
