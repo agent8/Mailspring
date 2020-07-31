@@ -41,6 +41,7 @@ class TemplateStore extends MailspringStore {
     this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
     this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
     this.listenTo(TemplateActions.changeTemplateField, this._onChangeTemplateField);
+    this.listenTo(TemplateActions.updateTemplateBody, this._onUpdateTemplateBody);
     this.listenTo(TemplateActions.addAttachmentsToTemplate, this._onAddAttachmentsToTemplate);
     this.listenTo(
       TemplateActions.removeAttachmentsFromTemplate,
@@ -229,6 +230,13 @@ class TemplateStore extends MailspringStore {
 
       if (!draftContents || draftContents.length === 0) {
         this._displayError('To create a template you need to fill the body of the current draft.');
+        return;
+      }
+
+      const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
+      if (inlineAttachment.length) {
+        this._displayError('Sorry，template does not support inline attachments.');
+        return;
       }
 
       const cb = templateSaved => {
@@ -307,7 +315,7 @@ class TemplateStore extends MailspringStore {
 
     let number = 1;
     let resolvedName = name;
-    const sameName = t => t.name === resolvedName;
+    const sameName = t => t.name.toUpperCase() === resolvedName.toUpperCase();
     while (this._items.find(sameName)) {
       resolvedName = `${name} ${number}`;
       number += 1;
@@ -350,6 +358,14 @@ class TemplateStore extends MailspringStore {
       this._populate();
     });
     this._onDeleteTemplateConfig(template.id);
+  }
+
+  _onUpdateTemplateBody(name, body) {
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    fs.writeFileSync(template.path, body);
   }
 
   _onChangeTemplateField(name, field, value) {
@@ -405,6 +421,14 @@ class TemplateStore extends MailspringStore {
     }
     if (newName.length === 0) {
       this._displayError('You must provide a template name.');
+      return;
+    }
+
+    const sameName = this._items.find(t => {
+      return t.name.toUpperCase() === newName.toUpperCase();
+    });
+    if (sameName) {
+      this._displayError(`You already have a template called "${sameName.name}"`);
       return;
     }
 
