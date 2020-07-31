@@ -41,6 +41,7 @@ class TemplateStore extends MailspringStore {
     this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
     this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
     this.listenTo(TemplateActions.changeTemplateField, this._onChangeTemplateField);
+    this.listenTo(TemplateActions.updateTemplateBody, this._onUpdateTemplateBody);
     this.listenTo(TemplateActions.addAttachmentsToTemplate, this._onAddAttachmentsToTemplate);
     this.listenTo(
       TemplateActions.removeAttachmentsFromTemplate,
@@ -357,6 +358,14 @@ class TemplateStore extends MailspringStore {
       this._populate();
     });
     this._onDeleteTemplateConfig(template.id);
+  }
+
+  _onUpdateTemplateBody(name, body) {
+    const template = this._items.find(t => t.name === name);
+    if (!template) {
+      return;
+    }
+    fs.writeFileSync(template.path, body);
   }
 
   _onChangeTemplateField(name, field, value) {
