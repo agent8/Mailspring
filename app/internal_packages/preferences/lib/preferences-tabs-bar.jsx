@@ -125,7 +125,7 @@ class PreferencesTabsBar extends React.Component {
         onResize={this._onColumnResize}
         initialWidth={AppEnv.getColumnWidth(sidebarId) || this.maxWidth}
       >
-        {this.renderTabs()}
+        <div className="preference-tabs-scroll">{this.renderTabs()}</div>
       </ResizableRegion>
     );
   }
