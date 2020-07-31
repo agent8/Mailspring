@@ -76,7 +76,7 @@ export default class ChangeFolderTask extends ChangeMailTask {
       return this.taskDescription;
     }
 
-    const folderText = ` to ${this.folder.displayName}`;
+    const folderText = `to ${this.folder.displayName}`;
     const paramsText = super.description();
     return `Moved ${paramsText} ${folderText}`;
   }
