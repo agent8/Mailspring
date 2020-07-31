@@ -41,7 +41,10 @@ class CategoryStore extends MailspringStore {
     });
     DatabaseStore.findAll(Folder, { state: 0 })
       .order(Folder.attributes.name.ascending())
-      .then(this._onCategoriesChanged);
+      .then(results => {
+        AppEnv.logDebug(`Folders: ${JSON.stringify(results)}`);
+        this._onCategoriesChanged(results);
+      });
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
