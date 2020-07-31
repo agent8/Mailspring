@@ -7,7 +7,7 @@ import {
   ComposerSupport,
   AttachmentItem,
 } from 'mailspring-component-kit';
-import { React, ReactDOM, Utils } from 'mailspring-exports';
+import { React, ReactDOM, Actions } from 'mailspring-exports';
 import { shell, remote } from 'electron';
 import path from 'path';
 import TemplateStore from './template-store';
@@ -277,7 +277,7 @@ export default class PreferencesTemplates extends React.Component {
   };
 
   _onSelect = item => {
-    TemplateActions.selectTemplate(item);
+    Actions.selectTemplate(item);
   };
 
   render() {
