@@ -264,6 +264,9 @@ export default class PreferencesTemplates extends React.Component {
   };
 
   _onEditTitle = newName => {
+    if (this.state.selected.name === newName) {
+      return;
+    }
     TemplateActions.renameTemplate(this.state.selected.name, newName);
   };
 
