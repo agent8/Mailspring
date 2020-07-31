@@ -55,10 +55,12 @@ class TemplateEditor extends React.Component {
   }
 
   _onSave = () => {
-    if (!this.state.readOnly) {
-      const outHTML = convertToHTML(this.state.editorState);
-      fs.writeFileSync(this.props.template.path, outHTML);
+    if (this.state.readOnly) {
+      return;
     }
+    const { template } = this.props;
+    const outHTML = convertToHTML(this.state.editorState);
+    TemplateActions.updateTemplateBody(template.name, outHTML);
   };
 
   _onFocusEditor = e => {
