@@ -468,6 +468,7 @@ export default class DraftEditingSession extends MailspringStore {
       this._draft &&
       !this._draft.savedOnRemote &&
       this._draft.refOldDraftMessageId &&
+      !Message.compareMessageState(this._draft.syncState, Message.messageSyncState.failed) &&
       AppEnv.isMainWindow()
     ) {
       const task = new RestoreDraftTask({
