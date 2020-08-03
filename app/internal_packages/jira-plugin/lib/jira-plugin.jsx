@@ -28,14 +28,16 @@ export default class JiraPlugin extends Component {
   }
   componentDidMount = () => {
     this.disposables = [
-      Actions.toggleJiraPlugin.listen(active => {
-        this.setState(
-          {
-            active,
-          },
-          this._loadJiraDetailComponent
-        );
-      }, this),
+      {
+        dispose: Actions.toggleJiraPlugin.listen(active => {
+          this.setState(
+            {
+              active,
+            },
+            this._loadJiraDetailComponent
+          );
+        }, this),
+      },
       AppEnv.config.onDidChange(CONFIG_KEY, () => {
         const config = AppEnv.config.get(CONFIG_KEY);
         this.setState({
