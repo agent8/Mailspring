@@ -109,6 +109,14 @@ export default class Category extends Model {
     // return utf7.imap.decode(this.name);
     return this.name;
   }
+  startWithPrefix() {
+    for (const prefix of ignoredPrefixes) {
+      if (this.fullDisplayName.toLocaleUpperCase().startsWith(`${prefix}${this.delimiter}`)) {
+        return true;
+      }
+    }
+    return false;
+  }
   pathWithPrefixStripped(ignoreGmailPrefix) {
     const name = this.fullDisplayName;
     for (const prefix of ignoredPrefixes) {
