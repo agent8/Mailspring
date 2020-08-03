@@ -47,7 +47,7 @@ class TemplateStore extends MailspringStore {
       TemplateActions.removeAttachmentsFromTemplate,
       this._onRemoveAttachmentsFromTemplate
     );
-    this.listenTo(TemplateActions.selectTemplate, this._onSelectTemplate);
+    this.listenTo(Actions.selectTemplate, this._onSelectTemplate);
 
     if (AppEnv.isMainWindow()) {
       Actions.resetSettings.listen(this.onAppSettingsReset, this);
@@ -270,6 +270,7 @@ class TemplateStore extends MailspringStore {
           this._onChangeTemplateField(templateSaved.name, 'BCC', bccStr);
         }
         this._onShowTemplates();
+        Actions.selectTemplate(templateSaved);
       };
 
       this.saveNewTemplate(draftName, draftContents, cb);

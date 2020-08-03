@@ -604,6 +604,8 @@ class Actions {
   static selectSignature = ActionScopeWindow;
   static toggleAliasesSignature = ActionScopeWindow;
 
+  static selectTemplate = ActionScopeGlobal;
+
   static expandSyncState = ActionScopeWindow;
 
   static searchQuerySubmitted = ActionScopeWindow;
