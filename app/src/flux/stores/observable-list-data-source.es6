@@ -170,6 +170,7 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
       Actions.setObservableRange(accountId, {
         missingThreadIds: threadIds,
         missingMessageIds: messageIds,
+        windowLevel: AppEnv.getWindowLevel(),
       });
     });
   };
