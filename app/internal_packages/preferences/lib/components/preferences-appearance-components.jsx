@@ -221,7 +221,7 @@ export class AppearanceViewOptions extends React.Component {
         defaultId: 0,
         cancelId: 1,
         message:
-          'All your messages will be re-downloaded. This might take sometime. You can still use Edison Mail while the messages are downloaded. Do you want to proceed?',
+          'All your messages will be re-downloaded. This might take some time. You can still use Edison Mail while the messages are downloaded. Do you want to proceed?',
       })
       .then(({ response }) => {
         if (response === 0) {
