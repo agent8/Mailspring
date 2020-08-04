@@ -25,7 +25,7 @@ import ChangeDraftToFailingTask from '../tasks/change-draft-to-failing-task';
 import ChangeDraftToFailedTask from '../tasks/change-draft-to-failed-task';
 import FocusedContentStore from './focused-content-store';
 import SentProgress from '../models/sent-progress';
-import { DraftWindowLevel } from '../../constant';
+import { WindowLevel } from '../../constant';
 
 let AttachmentStore = null;
 const { DefaultSendActionKey } = SendActionsStore;
@@ -2161,11 +2161,11 @@ class DraftStore extends MailspringStore {
     const openCount = this._draftsOpenCount[messageId];
     if (openCount) {
       let openWindow;
-      if (openCount[DraftWindowLevel.Composer]) {
+      if (openCount[WindowLevel.Composer]) {
         openWindow = AppEnv.getOpenWindows('composer').find(
           win => win.windowKey === `composer-${messageId}`
         );
-      } else if (openCount[DraftWindowLevel.Thread]) {
+      } else if (openCount[WindowLevel.Thread]) {
         openWindow = AppEnv.getOpenWindows('thread-popout').find(
           win => win.windowKey === `thread-${threadId}`
         );
@@ -2186,11 +2186,11 @@ class DraftStore extends MailspringStore {
   };
   _getCurrentWindowLevel = () => {
     if (AppEnv.isComposerWindow()) {
-      return DraftWindowLevel.Composer;
+      return WindowLevel.Composer;
     } else if (AppEnv.isThreadWindow()) {
-      return DraftWindowLevel.Thread;
+      return WindowLevel.Thread;
     } else {
-      return DraftWindowLevel.Main;
+      return WindowLevel.Main;
     }
   };
 }

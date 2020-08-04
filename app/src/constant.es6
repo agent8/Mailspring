@@ -12,7 +12,9 @@ export const showCCAndBCC = 'cc+bcc';
 export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
-export const DraftWindowLevel = {
+export const WindowLevel = {
+  BugReporting: 5,
+  OnBoarding: 4,
   Composer: 3,
   Thread: 2,
   Main: 1,
