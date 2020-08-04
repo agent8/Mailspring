@@ -569,7 +569,8 @@ export async function buildJiraAccountFromAuthResponse(code) {
   }
   AppEnv.config.set('plugin.jira.config', { access_token, refresh_token, resource });
   // wait some time for Event tracking
-  setTimeout(AppEnv.close, 500);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  AppEnv.close();
 }
 
 export async function buildYahooAccountFromAuthResponse(code) {
