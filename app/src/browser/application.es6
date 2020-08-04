@@ -175,7 +175,10 @@ export default class Application extends EventEmitter {
     this.cleaningOldFilesTimer = null;
     this._triggerCleanOldLogs(true);
     try {
-      const mailsync = new MailsyncProcess(options);
+      const mailsync = new MailsyncProcess({
+        ...options,
+        disableThread: this.config.get('core.workspace.threadView') === false,
+      });
       this.nativeVersion = await mailsync.migrate();
     } catch (err) {
       let message = null;

@@ -741,7 +741,10 @@ export async function finalizeAndValidateAccount(account) {
   }
 
   // Test connections to IMAP and SMTP
-  const proc = new MailsyncProcess(AppEnv.getLoadSettings());
+  const proc = new MailsyncProcess({
+    ...AppEnv.getLoadSettings(),
+    disableThread: AppEnv.isDisableThreading(),
+  });
   proc.identity = IdentityStore.identity();
   proc.account = account;
   const { response } = await proc.test();

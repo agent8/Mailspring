@@ -235,6 +235,7 @@ export default class MessageControls extends React.Component {
 
   _items() {
     const { isMuted } = this.state;
+    const isMessageView = AppEnv.isDisableThreading();
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
@@ -310,7 +311,7 @@ export default class MessageControls extends React.Component {
       ret.push(forward);
     }
 
-    if (!this.props.message.draft) {
+    if (!this.props.message.draft && !isMessageView) {
       ret.push(trash);
     }
     if (this.state.showViewOriginalEmail) {
@@ -333,7 +334,9 @@ export default class MessageControls extends React.Component {
         ret.push(moveToFocused);
       }
     }
-    ret.push(printEmail);
+    if (!isMessageView) {
+      ret.push(printEmail);
+    }
 
     return ret;
   }

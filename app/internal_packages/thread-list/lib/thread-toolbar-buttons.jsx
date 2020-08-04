@@ -571,7 +571,7 @@ export function PrintThreadButton(props) {
     Actions.printThread(currentThread, node.outerHTML);
   };
 
-  const title = 'Print Thread';
+  const title = `Print ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
 
   if (props.isMenuItem) {
     return new MenuItem({
@@ -1053,16 +1053,18 @@ export class MoreButton extends React.Component {
     }
     menu.append(
       new MenuItem({
-        label: `Print Thread`,
+        label: `Print ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`,
         click: () => this._onPrintThread(),
       })
     );
-    menu.append(
-      new MenuItem({
-        label: expandTitle,
-        click: () => Actions.toggleAllMessagesExpanded(),
-      })
-    );
+    if (!AppEnv.isDisableThreading()) {
+      menu.append(
+        new MenuItem({
+          label: expandTitle,
+          click: () => Actions.toggleAllMessagesExpanded(),
+        })
+      );
+    }
     menu.popup({});
   };
 
@@ -1191,7 +1193,7 @@ export const DownButton = props => {
     return null;
   }
 
-  const title = 'Next thread';
+  const title = `Next ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
   if (props.isMenuItem) {
     if (getStateFromStores().disabled) {
       return null;
@@ -1233,7 +1235,7 @@ export const UpButton = props => {
   if (WorkspaceStore.layoutMode() !== 'list') {
     return null;
   }
-  const title = 'Previous thread';
+  const title = `Previous ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
   if (props.isMenuItem) {
     if (getStateFromStores().disabled) {
       return null;
@@ -1355,13 +1357,14 @@ class MoreActionsButton extends React.Component {
         }
       }
     });
-    menu.append(
-      new MenuItem({
-        label: expandTitle,
-        click: () => Actions.toggleAllMessagesExpanded(),
-      })
-    );
-
+    if (!AppEnv.isDisableThreading()) {
+      menu.append(
+        new MenuItem({
+          label: expandTitle,
+          click: () => Actions.toggleAllMessagesExpanded(),
+        })
+      );
+    }
     const previousThread = UpButton({ ...this.props, isMenuItem: true });
     const nextThread = DownButton({ ...this.props, isMenuItem: true });
     if (previousThread) {

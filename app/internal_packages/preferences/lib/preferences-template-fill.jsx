@@ -17,6 +17,7 @@ import {
   AppearanceProfileOptions,
   AppearancePanelOptions,
   AppearanceThemeSwitch,
+  AppearanceViewOptions,
 } from './components/preferences-appearance-components';
 import {
   CustomizeQuickActions,
@@ -30,18 +31,6 @@ import {
   PreferencesKeymapsContent,
 } from './components/preferences-keymaps';
 
-const configurationNotSupportedByMAS = [
-  {
-    label: 'Make Edison Mail your default mail client',
-    component: DefaultMailClientItem,
-    keywords: [],
-  },
-  {
-    label: 'Launch on system start',
-    component: LaunchSystemStartItem,
-    keywords: [],
-  },
-];
 const preferencesTemplateFill = {
   tables: [
     {
@@ -53,7 +42,18 @@ const preferencesTemplateFill = {
         {
           groupName: 'EMAIL',
           groupItem: [
-            ...(process.mas ? [] : configurationNotSupportedByMAS),
+            {
+              label: 'Make Edison Mail your default mail client',
+              component: DefaultMailClientItem,
+              keywords: [],
+              hidden: process.mas,
+            },
+            {
+              label: 'Launch on system start',
+              component: LaunchSystemStartItem,
+              keywords: [],
+              hidden: process.mas,
+            },
             {
               label: 'Show icon in menu bar',
               configSchema: configSchema => configSchema.properties.workspace.properties.systemTray,
@@ -166,6 +166,7 @@ const preferencesTemplateFill = {
                 configSchema.properties.reading.properties.openReplyInNewWindow,
               keyPath: 'core.reading.openReplyInNewWindow',
               keywords: [],
+              hidden: AppEnv.isDisableThreading(),
             },
             {
               label: 'Include original email when replying to a message',
@@ -186,6 +187,13 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.reading.properties.descendingOrderMessageList,
               keyPath: 'core.reading.descendingOrderMessageList',
+              keywords: [],
+            },
+            {
+              label: 'Group messages by conversation',
+              configSchema: configSchema => configSchema.properties.workspace.properties.threadView,
+              keyPath: 'core.workspace.threadView',
+              component: AppearanceViewOptions,
               keywords: [],
             },
             {

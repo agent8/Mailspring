@@ -1324,7 +1324,10 @@ class DraftStore extends MailspringStore {
 
   _finalizeAndPersistNewMessage(
     draft,
-    { popout = AppEnv.config.get('core.reading.openReplyInNewWindow') } = {},
+    {
+      popout = AppEnv.config.get('core.reading.openReplyInNewWindow') ||
+        AppEnv.isDisableThreading(),
+    } = {},
     { originalMessageId, messageType } = {}
   ) {
     // Give extensions an opportunity to perform additional setup to the draft
