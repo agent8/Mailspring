@@ -176,6 +176,7 @@ export default class ModelQuery {
     const attrs = Object.values(q._klass.main.attributes);
     q._pseudoPrimaryKey = { main: findPseudoPrimaryKey(attrs) || 'id' };
     q._mustSelectFields = { main: attrs.filter(attr => attr.mergeIntoModel) };
+    q.forceShowDrafts = this.forceShowDrafts;
     return q;
   }
 

@@ -9,7 +9,7 @@ const isMessageView = AppEnv.isDisableThreading();
 // except for the draft folder。
 // The 'query' of constructor for the search is empty and will not be processed
 function handleThreadQuery(query) {
-  if (isMessageView && query) {
+  if (isMessageView && query && !query.forceShowDrafts) {
     const model = query.getModel();
     if (model && model === Thread) {
       const newQuery = query.clone().where(Thread.attributes.draft.equal(false));
