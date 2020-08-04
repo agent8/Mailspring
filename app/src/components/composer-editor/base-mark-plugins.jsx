@@ -10,12 +10,24 @@ import {
 
 import BaseBlockPlugins from './base-block-plugins';
 
-export const DEFAULT_FONT_SIZE = 2;
+export const DEFAULT_FONT_SIZE = '14px';
 export const DEFAULT_FONT_OPTIONS = [
-  { name: 'Small', value: 1 },
-  { name: 'Normal', value: 2 },
-  { name: 'Large', value: 4 },
-  { name: 'Huge', value: 6 },
+  { name: '9', value: '8px' },
+  { name: '10', value: '10px' },
+  { name: '11', value: '14px' },
+  { name: '12', value: '16px' },
+  { name: '13', value: '17px' },
+  { name: '14', value: '19px' },
+  { name: '16', value: '21px' },
+  { name: '18', value: '24px' },
+  { name: '24', value: '32px' },
+  { name: '32', value: '42px' },
+  { name: '48', value: '64px' },
+  { name: '64', value: '85px' },
+  { name: '72', value: '96px' },
+  { name: '96', value: '128px' },
+  { name: '144', value: '192px' },
+  { name: '256', value: '341px' },
 ];
 
 export const DEFAULT_FONT_FACE = AppEnv.config.get('core.fontface');
