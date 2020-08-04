@@ -199,6 +199,9 @@ class DraftFactory {
     if (!merged.threadId) {
       merged.threadId = `T${uniqueId}`;
     }
+    if (AppEnv.isDisableThreading()) {
+      merged.threadId = merged.id;
+    }
     // if (merged.replyToMessageId) {
     //   merged.referenceMessageId = merged.replyToMessageId;
     //   delete merged.replyToMessageId;
@@ -245,6 +248,9 @@ class DraftFactory {
       refOldDraftMessageId: draft.id,
       pastMessageIds,
     });
+    if (AppEnv.isDisableThreading()) {
+      defaults.threadId = defaults.id;
+    }
     const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);
     return message;
@@ -308,6 +314,9 @@ class DraftFactory {
       hasRefOldDraftOnRemote: false,
       refOldDraftMessageId: '',
     });
+    if (AppEnv.isDisableThreading()) {
+      defaults.threadId = defaults.id;
+    }
     const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);
     return message;
@@ -372,6 +381,9 @@ class DraftFactory {
       accountId: account.id,
       needUpload: true,
     });
+    if (AppEnv.isDisableThreading()) {
+      defaults.threadId = defaults.id;
+    }
     await mergeDefaultBccAndCCs(defaults, account);
     const message = new Message(defaults);
     DraftFactory.updateFiles(message, true, true);

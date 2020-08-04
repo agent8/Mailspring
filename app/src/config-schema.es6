@@ -37,7 +37,7 @@ const emailActionValues = [...actionValues, 'spam', 'print'];
 const emailActionLabels = [
   ...actionLabels,
   actionOption('spam', 'Mark as Spam'),
-  actionOption('print', 'Print Thread'),
+  actionOption('print', 'Print Thread/Message'),
 ];
 
 export default {
@@ -160,6 +160,10 @@ export default {
             type: 'number',
             default: 1,
             advanced: true,
+          },
+          threadView: {
+            type: 'boolean',
+            default: true,
           },
         },
       },

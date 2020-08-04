@@ -335,7 +335,8 @@ class MessageStore extends MailspringStore {
 
   _closeWindowIfNoMessage() {
     if (AppEnv.isThreadWindow()) {
-      if (Array.isArray(this._items) && this._items.length === 0 && !this._thread) {
+      const items = this.items();
+      if ((Array.isArray(items) && items.length === 0) || !this._thread) {
         AppEnv.logDebug('Closing window because no message in thread and in ThreadWindow');
         AppEnv.close();
       }
@@ -590,7 +591,6 @@ class MessageStore extends MailspringStore {
     this._setWindowTitle();
 
     this._fetchFromCache({ skipAutoMarkAsRead: false });
-    this._closeWindowIfNoMessage();
     if (AppEnv.isThreadWindow()) {
       DraftCacheStore.getDraftsFromMain();
     }
@@ -1086,6 +1086,12 @@ class MessageStore extends MailspringStore {
 
   _onPopoutThread = thread => {
     this._setPopout(true);
+    const sidebarPerspective = FocusedPerspectiveStore.currentSidebar();
+    const currentPerspective = FocusedPerspectiveStore.current();
+    let currentPerspectiveJson = '';
+    if (!sidebarPerspective.isEqual(currentPerspective)) {
+      currentPerspectiveJson = currentPerspective.toJSON();
+    }
     return AppEnv.newWindow({
       title: thread.subject,
       hidden: false,
@@ -1097,7 +1103,8 @@ class MessageStore extends MailspringStore {
       windowLevel: this._currentWindowLevel,
       windowProps: {
         threadId: thread.id,
-        perspectiveJSON: FocusedPerspectiveStore.current().toJSON(),
+        sidebarPerspectiveJson: sidebarPerspective.toJSON(),
+        currentPerspectiveJson: currentPerspectiveJson,
       },
     });
   };

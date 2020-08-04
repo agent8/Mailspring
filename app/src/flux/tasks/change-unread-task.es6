@@ -18,18 +18,17 @@ export default class ChangeUnreadTask extends ChangeMailTask {
   }
 
   description() {
-    const count = this.threadIds.length;
-    const type = count > 1 ? 'threads' : 'thread';
-
+    const paramsText = super.description();
     if (this.isUndo) {
-      return `Undoing changes to ${count} ${type}`;
+      return `Undoing changes to ${paramsText}`;
     }
 
     const newState = this.unread ? 'unread' : 'read';
-    if (count > 1) {
-      return `Marked ${count} ${type} as ${newState}`;
-    }
-    return `Marked as ${newState}`;
+    return `Marked ${paramsText} as ${newState}`;
+  }
+
+  willBeQueued() {
+    super.willBeQueued('ChangeUnreadTask');
   }
 
   createUndoTask() {
