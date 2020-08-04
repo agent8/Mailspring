@@ -11,6 +11,6 @@
   },
   "windowTypes": {
     "default": true,
-    "thread-popout": false
+    "thread-popout": true
   }
 }
