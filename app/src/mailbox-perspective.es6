@@ -951,6 +951,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       query.where({ state: 0 });
     }
 
+    if (this.categoriesSharedRole() === 'trash') {
+      query.forceShowDrafts = true;
+    }
+
     // if (['spam', 'trash'].includes(this.categoriesSharedRole())) {
     //   query.where(new Matcher.Not([
     //     Thread.attributes.id.like('delete')
