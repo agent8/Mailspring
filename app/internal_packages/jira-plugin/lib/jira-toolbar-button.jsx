@@ -17,15 +17,16 @@ export default class JiraToolbarButton extends Component {
   };
   _isJIRA() {
     const { thread } = this.props;
-    if (thread && thread.participants) {
-      for (const att of thread.participants) {
-        if (att.email && (att.email.split('@')[1] || '').includes('atlassian.net')) {
+    if (thread && thread.__messages) {
+      for (const message of thread.__messages) {
+        const from = message.from && message.from[0];
+        if (from && (from.email.split('@')[1] || '').includes('atlassian.net')) {
           return true;
         }
       }
     }
-    return false;
-    // return this.props.thread.isJIRA;
+    // return false;
+    return this.props.thread.isJIRA;
   }
   render() {
     const accounts = AccountStore.accounts();
