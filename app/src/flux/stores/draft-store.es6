@@ -1101,15 +1101,19 @@ class DraftStore extends MailspringStore {
       .then(draft => {
         draft.body = `${body}\n\n${draft.body}`;
         draft.pristine = false;
-
-        // const t = new SyncbackDraftTask({ draft });
-        // // console.error('send quickly');
-        // Actions.queueTask(t);
-        // TaskQueue.waitForPerformLocal(t)
         AppEnv.trackingEvent('Message-QuickReply');
         this._finalizeAndPersistNewMessage(draft, { popout: false })
           .then(() => {
             Actions.sendDraft(draft.id, { source: 'SendQuickReply' });
+            const unreadTasks = TaskFactory.taskForSettingUnread({
+              messages: [message],
+              unread: false,
+              source: 'Quick Reply',
+              canBeUndone: false,
+            });
+            if (unreadTasks.length > 0) {
+              Actions.queueTasks(unreadTasks);
+            }
           })
           .catch(e => {
             AppEnv.reportError(
