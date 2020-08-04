@@ -224,10 +224,23 @@ function InflatesDraftClientId(ComposedComponent) {
         .then(() => this.refs.composed.focus())
         .catch(() => {});
     }
+    _showDraft = () => {
+      Actions.focusHighestLevelDraftWindow(this.state.draft.id, this.state.draft.threadId);
+    };
 
     render() {
       if (!this.state.draft) {
         return <span />;
+      }
+      if (this.state.session.isPopout()) {
+        return (
+          <div className="draft-in-other-window">
+            Draft is currently being edited in another window.{' '}
+            <button className="show-draft" onClick={this._showDraft}>
+              Show Draft
+            </button>
+          </div>
+        );
       }
       return (
         <ComposedComponent
