@@ -13,7 +13,7 @@ export function currentSignatureId(body) {
 }
 
 export function applySignature(body, signature) {
-  const additionalWhitespace = '<div><br/>';
+  const additionalWhitespace = '<div>';
   const additionalClosingWhitespace = '<br/></div>';
 
   // Remove any existing signature in the body
