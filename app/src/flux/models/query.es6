@@ -80,6 +80,10 @@ export default class ModelQuery {
     this.parseCrossJoinDBs(attrs);
   }
 
+  getModel() {
+    return this._klass.main;
+  }
+
   parseCrossJoinDBs = attrs => {
     for (let attr of attrs) {
       if (isCrossDBAttr(attr)) {

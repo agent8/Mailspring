@@ -1,10 +1,26 @@
 import DatabaseStore from '../stores/database-store';
 import QueryRange from './query-range';
 import MutableQueryResultSet from './mutable-query-result-set';
+import Thread from './thread';
 
+const isMessageView = AppEnv.isDisableThreading();
+
+// In message view, the draft should be hidden in the folder,
+// except for the draft folder。
+// The 'query' of constructor for the search is empty and will not be processed
+function handleThreadQuery(query) {
+  if (isMessageView && query) {
+    const model = query.getModel();
+    if (model && model === Thread) {
+      const newQuery = query.clone().where(Thread.attributes.draft.equal(false));
+      return newQuery;
+    }
+  }
+  return query;
+}
 export default class QuerySubscription {
   constructor(query, options = {}) {
-    this._query = query;
+    this._query = handleThreadQuery(query);
     this._options = options;
 
     this._set = null;

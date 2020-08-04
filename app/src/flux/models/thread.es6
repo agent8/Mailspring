@@ -69,6 +69,12 @@ const threadDiffAttributes = isMessageView
         loadFromColumn: true,
         itemClass: Contact,
       }),
+      draft: Attributes.Boolean({
+        jsModelKey: 'draft',
+        modelKey: 'isDraft',
+        queryable: true,
+        loadFromColumn: true,
+      }),
     }
   : {};
 export default class Thread extends ModelWithMetadata {
