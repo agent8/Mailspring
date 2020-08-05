@@ -4,7 +4,7 @@ const dbs = {};
 const deathDelay = 5000;
 let deathTimer = setTimeout(() => process.exit(0), deathDelay);
 
-const getDatabase = (dbpath) => {
+const getDatabase = dbpath => {
   if (dbs[dbpath]) {
     return dbs[dbpath];
   }
@@ -14,7 +14,7 @@ const getDatabase = (dbpath) => {
   try {
     dbs[dbpath] = new Sqlite3(dbpath, { readonly: true });
   } catch (err) {
-    AppEnv.reportError(err);
+    console.error(err);
     process.exit(1);
   }
   // dbs[dbpath].on('close', (err) => {
@@ -30,22 +30,35 @@ const getDatabase = (dbpath) => {
   // });
 
   return dbs[dbpath];
-}
+};
 
-process.on('message', (m) => {
+process.on('message', m => {
   clearTimeout(deathTimer);
   const { query, values, id, dbpath } = m;
   const start = Date.now();
 
   const db = getDatabase(dbpath);
-  clearTimeout(deathTimer);
-  const fn = query.startsWith('SELECT') ? 'all' : 'run';
-  const stmt = db.prepare(query);
-  const results = stmt[fn](values);
-  process.send({ type: 'results', results, id, agentTime: Date.now() - start });
+  try {
+    clearTimeout(deathTimer);
+    const fn = query.startsWith('SELECT') ? 'all' : 'run';
+    const stmt = db.prepare(query);
+    const results = stmt[fn](values);
+    process.send({ type: 'results', results, id, agentTime: Date.now() - start });
+  } catch (err) {
+    console.error(err);
+  }
 
   clearTimeout(deathTimer);
-  deathTimer = setTimeout(() => process.exit(0), deathDelay);
+  deathTimer = setTimeout(() => {
+    try {
+      if (db) {
+        db.close();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    process.exit(0);
+  }, deathDelay);
 
   // getDatabase(dbpath).then((db) => {
   //   clearTimeout(deathTimer);

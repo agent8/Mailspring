@@ -8,7 +8,7 @@ import Actions from '../actions';
 // it doesn't disappear until you leave the view and come back. This behavior
 // is implemented by keeping track of messages being rea and manually
 // whitelisting them in the query.
-
+const isMessageView = AppEnv.isDisableThreading();
 class RecentlyReadStore extends MailspringStore {
   constructor() {
     super();
@@ -27,18 +27,21 @@ class RecentlyReadStore extends MailspringStore {
 
   tasksQueued(tasks) {
     let changed = false;
-
+    let idKey = 'threadIds';
+    if (isMessageView) {
+      idKey = 'messageIds';
+    }
     tasks
       .filter(task => task instanceof ChangeUnreadTask)
-      .forEach(({ threadIds }) => {
-        this.ids = this.ids.concat(threadIds);
+      .forEach(t => {
+        this.ids = this.ids.concat(t[idKey]);
         changed = true;
       });
 
     tasks
       .filter(task => task instanceof ChangeLabelsTask || task instanceof ChangeFolderTask)
-      .forEach(({ threadIds }) => {
-        this.ids = this.ids.filter(id => !threadIds.includes(id));
+      .forEach(t => {
+        this.ids = this.ids.filter(id => !t[idKey].includes(id));
         changed = true;
       });
 

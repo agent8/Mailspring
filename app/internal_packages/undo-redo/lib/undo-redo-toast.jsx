@@ -31,52 +31,65 @@ class BasicContent extends React.Component {
     super(props);
   }
 
-  render() {
-    const { block, onMouseEnter, onMouseLeave, onClose } = this.props;
-    let description = block.description;
+  _generateDescription() {
+    const { block } = this.props;
     const tasks = block.tasks;
     if (tasks.length >= 2) {
+      const totalMessages = tasks.reduce((sum, task) => sum + (task.messageIds || []).length, 0);
+      const totalThreads = tasks.reduce((sum, task) => sum + (task.threadIds || []).length, 0);
+      let paramText = '';
+      if (AppEnv.isDisableThreading()) {
+        paramText = totalMessages > 1 ? `${totalMessages} messages` : 'message';
+      } else {
+        paramText = totalThreads > 1 ? `${totalThreads} threads` : 'thread';
+      }
+
       if (tasks.every(task => task instanceof ChangeUnreadTask)) {
         // if all ChangeUnreadTask
-        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
         const newState = tasks[0].unread ? 'unread' : 'read';
-        description = `Marked ${total} threads as ${newState}`;
-      } else if (tasks.every(task => task instanceof ChangeStarredTask)) {
+        return `Marked ${paramText} as ${newState}`;
+      }
+      if (tasks.every(task => task instanceof ChangeStarredTask)) {
         // if all ChangeStarredTask
-        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
         const verb = tasks[0].starred ? 'Flagged' : 'Unflagged';
-        description = `${verb} ${total} threads`;
-      } else if (tasks.every(task => task instanceof ChangeFolderTask)) {
+        return `${verb} ${paramText}`;
+      }
+      if (tasks.every(task => task instanceof ChangeFolderTask)) {
         // if all ChangeFolderTask
-        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
-        const folderText = ` to ${tasks[0].folder.displayName}`;
-        description = `Moved ${total} threads${folderText}`;
-      } else if (
+        const folderText = `to ${tasks[0].folder.displayName}`;
+        return `Moved ${paramText} ${folderText}`;
+      }
+      if (
         tasks.every(task => task instanceof ChangeFolderTask || task instanceof ChangeLabelsTask) &&
         tasks.some(task => task instanceof ChangeFolderTask)
       ) {
         // if all ChangeFolderTask or ChangeLabelsTask
-        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
         const firstChangeFolderTask = tasks.find(task => task instanceof ChangeFolderTask);
-        const folderText = ` to ${firstChangeFolderTask.folder.displayName}`;
-        description = `Moved ${total} threads${folderText}`;
-      } else if (tasks.every(task => task instanceof DestroyDraftTask)) {
-        const total = tasks.reduce((sum, task) => sum + task.messageIds.length, 0);
-        description = `Deleting ${total} drafts`;
-      } else if (
+        const folderText = `to ${firstChangeFolderTask.folder.displayName}`;
+        return `Moved ${paramText} ${folderText}`;
+      }
+      if (tasks.every(task => task instanceof DestroyDraftTask)) {
+        const draftText = totalMessages > 1 ? `${totalMessages} drafts` : 'draft';
+        return `Deleting ${draftText}`;
+      }
+      if (
         tasks.every(
           task => task instanceof ExpungeMessagesTask || task instanceof DeleteThreadsTask
         )
       ) {
-        const total = tasks.reduce((sum, task) => sum + task.threadIds.length, 0);
-        description = `Expunging ${total} threads`;
-      }
-    } else {
-      // if TrashFromSenderTask
-      if (tasks[0] instanceof TrashFromSenderTask) {
-        description = `Trash all previous mail from ${tasks[0].email}`;
+        return `Expunging ${paramText}`;
       }
     }
+    // if TrashFromSenderTask
+    if (tasks[0] instanceof TrashFromSenderTask) {
+      return `Trash all previous mail from ${tasks[0].email}`;
+    }
+    return block.description;
+  }
+
+  render() {
+    const { block, onMouseEnter, onMouseLeave, onClose } = this.props;
+    const description = this._generateDescription();
     return (
       <div className="content" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
         <div className="message">{description}</div>
@@ -85,7 +98,7 @@ class BasicContent extends React.Component {
             name="close_1.svg"
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
-            onClick={() => onClose(this.props.block)}
+            onClick={() => onClose(block)}
           />
           <div className="undo-action-text" onClick={() => UndoRedoStore.undo({ block })}>
             Undo

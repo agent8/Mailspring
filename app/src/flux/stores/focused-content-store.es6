@@ -110,7 +110,11 @@ class FocusedContentStore extends MailspringStore {
   };
 
   _onFocus = ({ collection, item, usingClick, reason }) => {
-    console.log('on focus change', item, collection, usingClick, reason);
+    AppEnv.logDebug(
+      `on focus for ${collection} change, reason: ${reason}, item: ${
+        item ? item.id : 'null'
+      }, using click ${usingClick}`
+    );
     if (item && !(item instanceof Model)) {
       throw new Error('focus() requires a Model or null');
     }
@@ -173,8 +177,16 @@ class FocusedContentStore extends MailspringStore {
         }
         for (const obj of change.objects) {
           if (val.id === obj.id) {
-            data[key] = change.type === 'unpersist' ? null : obj;
-            touched.push(key);
+            if (change.type === 'unpesist') {
+              if ((key === 'thread' || key === 'outbox') && AppEnv.isThreadWindow()) {
+                continue;
+              }
+              data[key] = null;
+              touched.push(key);
+            } else {
+              data[key] = obj;
+              touched.push(key);
+            }
           }
         }
       }

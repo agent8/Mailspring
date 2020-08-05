@@ -62,17 +62,12 @@ const isItemSelected = (perspective, children = []) => {
   ) {
     return false;
   }
-  const isCurrent = FocusedPerspectiveStore.current().isEqual(perspective);
-  if (isCurrent) {
+  const currentSidebar = FocusedPerspectiveStore.currentSidebar();
+  if (currentSidebar.isEqual(perspective)) {
     return true;
   }
 
-  const tabSelected = isTabSelected(perspective, FocusedPerspectiveStore.current());
-  if (tabSelected) {
-    return true;
-  }
-
-  const childrenSelected = isChildrenSelected(children, FocusedPerspectiveStore.current());
+  const childrenSelected = isChildrenSelected(children, currentSidebar);
   if (childrenSelected) {
     return true;
   }

@@ -235,7 +235,7 @@ class MessageStore extends MailspringStore {
     this.listenTo(Actions.popoutThread, this._onPopoutThread);
     this.listenTo(Actions.setCurrentWindowTitle, this.setWindowTitle);
     this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
-    this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
+    // this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
     this.listenTo(Actions.pushToFetchAttachmentsQueue, this._onRequestAttachmentQueue);
   }
   _onRequestAttachmentQueue = (
@@ -335,7 +335,8 @@ class MessageStore extends MailspringStore {
 
   _closeWindowIfNoMessage() {
     if (AppEnv.isThreadWindow()) {
-      if (Array.isArray(this._items) && this._items.length === 0 && !this._thread) {
+      const items = this.items();
+      if ((Array.isArray(items) && items.length === 0) || !this._thread) {
         AppEnv.logDebug('Closing window because no message in thread and in ThreadWindow');
         AppEnv.close();
       }
@@ -392,7 +393,6 @@ class MessageStore extends MailspringStore {
 
   _onDataChanged(change) {
     if (!this._thread) return;
-
     if (change.objectClass === Message.name) {
       const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
       if (!inDisplayedThread && change.type === 'persist') return;
@@ -425,7 +425,14 @@ class MessageStore extends MailspringStore {
         this.trigger();
       }
       if (messages.length !== drafts.length) {
-        this._fetchFromCache();
+        const newMessages = messages.some(
+          msg => !msg.draft && !msg.ignoreSift && !this._items.find(m => m.id === msg.id)
+        );
+        if (newMessages) {
+          AppEnv.logDebug(`New message found for ${this.threadId()}`);
+          this._resetAutoMarkAsRead();
+        }
+        this._fetchFromCache({ skipAutoMarkAsRead: true });
       }
       this._closeWindowIfNoMessage();
       return;
@@ -449,7 +456,7 @@ class MessageStore extends MailspringStore {
         }
         query.then(thread => {
           this._updateThread(thread);
-          this._fetchFromCache();
+          this._fetchFromCache({ skipAutoMarkAsRead: true });
         });
       }
       this._closeWindowIfNoMessage();
@@ -583,8 +590,7 @@ class MessageStore extends MailspringStore {
 
     this._setWindowTitle();
 
-    this._fetchFromCache();
-    this._closeWindowIfNoMessage();
+    this._fetchFromCache({ skipAutoMarkAsRead: false });
     if (AppEnv.isThreadWindow()) {
       DraftCacheStore.getDraftsFromMain();
     }
@@ -712,12 +718,12 @@ class MessageStore extends MailspringStore {
     }
     if (dataChange) {
       console.warn(`attachment cache updated`);
-      this._fetchFromCache();
+      this._fetchFromCache({ skipAutoMarkAsRead: true });
       return;
     }
   };
 
-  _fetchFromCache(options) {
+  _fetchFromCache(options = { skipAutoMarkAsRead: true }) {
     if (options == null) options = {};
     if (!this._thread) return;
 
@@ -746,7 +752,9 @@ class MessageStore extends MailspringStore {
       // and once when ready. Many third-party stores will observe
       // MessageStore and they'll be stupid and re-render constantly.
       this._itemsLoading = false;
-      this._markAsRead('fetchFromCache');
+      if (!options.skipAutoMarkAsRead) {
+        this._markAsRead('fetchFromCache');
+      }
       this.trigger(this);
     });
   }
@@ -1078,6 +1086,12 @@ class MessageStore extends MailspringStore {
 
   _onPopoutThread = thread => {
     this._setPopout(true);
+    const sidebarPerspective = FocusedPerspectiveStore.currentSidebar();
+    const currentPerspective = FocusedPerspectiveStore.current();
+    let currentPerspectiveJson = '';
+    if (!sidebarPerspective.isEqual(currentPerspective)) {
+      currentPerspectiveJson = currentPerspective.toJSON();
+    }
     return AppEnv.newWindow({
       title: thread.subject,
       hidden: false,
@@ -1089,20 +1103,21 @@ class MessageStore extends MailspringStore {
       windowLevel: this._currentWindowLevel,
       windowProps: {
         threadId: thread.id,
-        perspectiveJSON: FocusedPerspectiveStore.current().toJSON(),
+        sidebarPerspectiveJson: sidebarPerspective.toJSON(),
+        currentPerspectiveJson: currentPerspectiveJson,
       },
     });
   };
 
-  _onFocusThreadMainWindow(thread) {
-    if (AppEnv.isMainWindow()) {
-      Actions.setFocus({ collection: 'thread', item: thread });
-      this._setPopout(false);
-      return AppEnv.focus();
-    } else {
-      this._onWindowClose();
-    }
-  }
+  // _onFocusThreadMainWindow(thread) {
+  //   if (AppEnv.isMainWindow()) {
+  //     Actions.setFocus({ collection: 'thread', item: thread });
+  //     this._setPopout(false);
+  //     return AppEnv.focus();
+  //   } else {
+  //     this._onWindowClose();
+  //   }
+  // }
 }
 
 const store = new MessageStore();

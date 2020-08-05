@@ -9,7 +9,7 @@ export default class SyncbackMetadataTask extends Task {
     const task = new SyncbackMetadataTask({
       modelId: model.id,
       pluginId: pluginId,
-      modelClassName: model.constructor.name.toLowerCase(),
+      modelClassName: model.constructor.getTableName().toLowerCase(),
       modelMessageId: model.id || null,
       modelThreadId: model.threadId || null,
       accountId: model.accountId,

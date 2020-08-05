@@ -25,6 +25,8 @@ import ChangeDraftToFailingTask from '../tasks/change-draft-to-failing-task';
 import ChangeDraftToFailedTask from '../tasks/change-draft-to-failed-task';
 import FocusedContentStore from './focused-content-store';
 import SentProgress from '../models/sent-progress';
+import { DraftWindowLevel } from '../../constant';
+
 let AttachmentStore = null;
 const { DefaultSendActionKey } = SendActionsStore;
 const SendDraftTimeout = 300000;
@@ -55,6 +57,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.sendDraft, this._onSendDraftAction);
     this.listenTo(Actions.changeDraftAccount, this._onDraftAccountChangeAction);
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
+    this.listenTo(Actions.removeAllNoReferenceInLines, this._onRemoveAllNoReferenceInLines);
     this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
     this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
     this.listenTo(Actions.composeReply, this._onReply);
@@ -80,6 +83,7 @@ class DraftStore extends MailspringStore {
       this.listenTo(Actions.draftOpenCount, this._onDraftOpenCount);
       this.listenTo(Actions.draftWindowClosing, this._onDraftWindowClosing);
       this.listenTo(TaskQueue, this._restartTimerForOldSendDraftTasks);
+      this.listenTo(Actions.focusHighestLevelDraftWindow, this.focusHighestLevelDraftWindow);
       Actions.queueTasks.listen(this._onTaskQueue, this);
       Actions.queueTask.listen(this._onTaskQueue, this);
       this._startTime = Date.now();
@@ -460,14 +464,44 @@ class DraftStore extends MailspringStore {
       }
       const draft = session.draft();
       if (draft && Array.isArray(draft.files)) {
-        const matching = draft.files.some(f => f.contentId === contentId);
-        if (matching) {
-          console.log('match found for draft', draft.id);
-          session.updateAttachments(draft.files.filter(f => f.contentId !== contentId));
-          break;
+        const file = draft.files.find(f => f.contentId === contentId);
+        if (file) {
+          Actions.removeAttachment({
+            accountId: draft.accountId,
+            messageId: draft.id,
+            fileToRemove: file,
+          });
+          return;
         }
       }
     }
+  };
+  _onRemoveAllNoReferenceInLines = messageId => {
+    if (!messageId) {
+      return;
+    }
+    const session = this._draftSessions[messageId];
+    if (session) {
+      const draft = session.draft();
+      if (draft && Array.isArray(draft.files)) {
+        //We are assuming this is called after draft body is updated
+        const filesToRemove = draft.files.filter(
+          f => f.contentId && f.isInline && !draft.body.includes(f.contentId)
+        );
+        Actions.removeAttachments({ accountId: draft.accountId, messageId, filesToRemove });
+        return;
+      }
+      AppEnv.logError(
+        new Error(
+          `Draft ${messageId} session ${
+            draft ? 'draft files is not array' : 'have no draft'
+          } , windowLevel ${this._getCurrentWindowLevel()}`
+        )
+      );
+    }
+    AppEnv.logError(
+      new Error(`Draft ${messageId} have no session, windowLevel ${this._getCurrentWindowLevel()}`)
+    );
   };
 
   _onDraftAccountChangeAction = (data = {}) => {
@@ -1072,8 +1106,8 @@ class DraftStore extends MailspringStore {
         // // console.error('send quickly');
         // Actions.queueTask(t);
         // TaskQueue.waitForPerformLocal(t)
-
-        this._finalizeAndPersistNewMessage(draft)
+        AppEnv.trackingEvent('Message-QuickReply');
+        this._finalizeAndPersistNewMessage(draft, { popout: false })
           .then(() => {
             Actions.sendDraft(draft.id, { source: 'SendQuickReply' });
           })
@@ -1288,7 +1322,14 @@ class DraftStore extends MailspringStore {
     return queries;
   }
 
-  _finalizeAndPersistNewMessage(draft, { popout } = {}, { originalMessageId, messageType } = {}) {
+  _finalizeAndPersistNewMessage(
+    draft,
+    {
+      popout = AppEnv.config.get('core.reading.openReplyInNewWindow') ||
+        AppEnv.isDisableThreading(),
+    } = {},
+    { originalMessageId, messageType } = {}
+  ) {
     // Give extensions an opportunity to perform additional setup to the draft
     ExtensionRegistry.Composer.extensions().forEach(extension => {
       if (!extension.prepareNewDraft) {
@@ -1320,7 +1361,7 @@ class DraftStore extends MailspringStore {
         if (data && data.draftCache) {
           AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
         }
-        if (AppEnv.config.get('core.reading.openReplyInNewWindow') || popout) {
+        if (popout) {
           console.log('\n-------\n draft popout\n');
           this._onPopoutDraft(draft.id);
         }
@@ -1510,7 +1551,7 @@ class DraftStore extends MailspringStore {
   _onHandleMailFiles = async (event, paths) => {
     // returned promise is just used for specs
     const draft = await DraftFactory.createDraft();
-    const { messageId } = await this._finalizeAndPersistNewMessage(draft);
+    const { messageId } = await this._finalizeAndPersistNewMessage(draft, { popout: false });
 
     let remaining = paths.length;
     const callback = () => {
@@ -2116,13 +2157,40 @@ class DraftStore extends MailspringStore {
       }, 300);
     }
   };
+  focusHighestLevelDraftWindow = (messageId, threadId) => {
+    const openCount = this._draftsOpenCount[messageId];
+    if (openCount) {
+      let openWindow;
+      if (openCount[DraftWindowLevel.Composer]) {
+        openWindow = AppEnv.getOpenWindows('composer').find(
+          win => win.windowKey === `composer-${messageId}`
+        );
+      } else if (openCount[DraftWindowLevel.Thread]) {
+        openWindow = AppEnv.getOpenWindows('thread-popout').find(
+          win => win.windowKey === `thread-${threadId}`
+        );
+      }
+      if (openWindow && openWindow.browserWindow) {
+        if (openWindow.browserWindow.isMinimized()) {
+          openWindow.browserWindow.restore();
+        }
+        openWindow.browserWindow.focus();
+      }
+    } else {
+      AppEnv.logWarning(
+        `Focus draft window for ${messageId} found no openCount ${JSON.stringify(
+          this._draftsOpenCount
+        )}`
+      );
+    }
+  };
   _getCurrentWindowLevel = () => {
     if (AppEnv.isComposerWindow()) {
-      return 3;
+      return DraftWindowLevel.Composer;
     } else if (AppEnv.isThreadWindow()) {
-      return 2;
+      return DraftWindowLevel.Thread;
     } else {
-      return 1;
+      return DraftWindowLevel.Main;
     }
   };
 }

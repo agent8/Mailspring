@@ -1,7 +1,7 @@
 {
   "name": "edisonmail",
   "productName": "EdisonMail",
-  "version": "1.0.136",
+  "version": "1.0.143",
   "commitHash": "COMMIT_INSERTED_DURING_PACKAGING",
   "description": "The best email app for people and teams at work",
   "license": "GPL-3.0",
@@ -10,9 +10,9 @@
     "rebuild": "node_modules/.bin/electron-rebuild"
   },
   "dependencies": {
-    "@atlaskit/editor-core": "^123.0.0",
-    "@atlaskit/media-core": "^31.1.0",
-    "@atlaskit/smart-card": "^13.3.0",
+    "@atlaskit/editor-core": "^127.0.0",
+    "@atlaskit/media-core": "^32.0.0",
+    "@atlaskit/smart-card": "^14.1.0",
     "a11y-emoji": "^1.0.1",
     "alt-sasl-digest-md5": "^1.0.0",
     "archiver": "^3.1.1",
@@ -81,7 +81,6 @@
     "moment-timezone": "0.5.4",
     "mousetrap": "^1.5.3",
     "node-emoji": "^1.2.1",
-    "node-gyp": "^6.0.0",
     "node-rsa": "^1.0.1",
     "node-thumbnail": "^0.15.0",
     "optimist": "0.4.0",
@@ -151,7 +150,8 @@
   },
   "optionalDependencies": {},
   "devDependencies": {
-    "electron-rebuild": "^1.10.1"
+    "electron-rebuild": "^1.10.1",
+    "node-gyp": "^6.0.0"
   },
   "resolutions": {
     "**/nan": "2.14.0",

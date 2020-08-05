@@ -28,7 +28,7 @@ export default class SignatureAccountDefaultPicker extends React.Component {
             typeof alias.signatureId === 'function'
               ? alias.signatureId()
               : `local-${alias.accountId}-${alias.email}-${alias.name}`;
-          const isChecked = defaults[signatureId] && defaults[signatureId] === signature.id;
+          const isChecked = defaults[signatureId] ? defaults[signatureId] === signature.id : false;
           return (
             <div key={alias.id}>
               <label>
@@ -39,7 +39,7 @@ export default class SignatureAccountDefaultPicker extends React.Component {
                   }}
                   checked={isChecked}
                 />
-                {`${alias.name} <${alias.email}`}>
+                {`${alias.name} <${alias.email}>`}
               </label>
             </div>
           );

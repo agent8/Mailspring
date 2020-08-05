@@ -192,6 +192,9 @@ class UndoRedoStore extends MailspringStore {
     if (this._maxQueueLength > 0 && this._undo[priority].length >= this._maxQueueLength) {
       block.displayId = this._undo[priority][this._maxQueueLength - 1].displayId;
     }
+    if (isUndoSend(block)) {
+      block.sendStatus = 'sending';
+    }
     this._undo[priority].push(block);
   };
   _pushToUndo = ({ block }) => {
@@ -387,7 +390,10 @@ class UndoRedoStore extends MailspringStore {
   };
 
   isUndoSend(task) {
-    return task instanceof SyncbackMetadataTask && task.value.isUndoSend;
+    return (
+      (task instanceof SyncbackMetadataTask && task.value.isUndoSend) ||
+      task instanceof SendDraftTask
+    );
   }
 
   getUndoSendExpiration(task) {

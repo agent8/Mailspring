@@ -17,6 +17,7 @@ import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import uuid from 'uuid';
 import _ from 'underscore';
 import RestoreDraftTask from '../tasks/restore-draft-task';
+import { DraftWindowLevel } from '../../constant';
 
 const { convertFromHTML, convertToHTML } = Conversion;
 const MetadataChangePrefix = 'metadata.';
@@ -143,48 +144,52 @@ function hotwireDraftBodyState(draft) {
       return _bodyHTMLCache;
     },
     set: function(inHTML) {
-      let nextValue = convertFromHTML(inHTML);
-      if (draft.bodyEditorState) {
-        // DC-1243 When doing full body replace, we first get the first block, and if it's not a div, we upwrap it, insert fragment, and then rewrap it, otherwise the first line will be unwrapped for some unknown reason.
-        const firstBlock = draft.bodyEditorState
-          .change()
-          .value.document.getBlocks()
-          .get(0);
-        const firstParentBlock = draft.bodyEditorState
-          .change()
-          .value.document.getFurthestBlock(firstBlock.key);
-        let blockType = 'div';
-        if (firstParentBlock) {
-          blockType = firstParentBlock.type;
-        } else if (firstBlock) {
-          blockType = firstBlock.type;
-        }
-        let newEditor = draft.bodyEditorState
-          .change()
-          .selectAll()
-          .delete()
-          .selectAll()
-          .collapseToStart();
-        if (blockType !== 'div') {
-          newEditor = newEditor
-            .unwrapBlock(blockType)
+      _bodyHTMLCache = inHTML;
+      try {
+        let nextValue = convertFromHTML(inHTML);
+        if (draft.bodyEditorState) {
+          // DC-1243 When doing full body replace, we first get the first block, and if it's not a div, we upwrap it, insert fragment, and then rewrap it, otherwise the first line will be unwrapped for some unknown reason.
+          const firstBlock = draft.bodyEditorState
+            .change()
+            .value.document.getBlocks()
+            .get(0);
+          const firstParentBlock = draft.bodyEditorState
+            .change()
+            .value.document.getFurthestBlock(firstBlock.key);
+          let blockType = 'div';
+          if (firstParentBlock) {
+            blockType = firstParentBlock.type;
+          } else if (firstBlock) {
+            blockType = firstBlock.type;
+          }
+          let newEditor = draft.bodyEditorState
+            .change()
             .selectAll()
-            .delete();
-        }
-        nextValue = newEditor
-          .insertFragment(nextValue.document)
-          .selectAll()
-          .collapseToStart();
-        if (blockType !== 'div') {
-          nextValue = nextValue
-            .wrapBlock(blockType)
+            .delete()
             .selectAll()
             .collapseToStart();
+          if (blockType !== 'div') {
+            newEditor = newEditor
+              .unwrapBlock(blockType)
+              .selectAll()
+              .delete();
+          }
+          nextValue = newEditor
+            .insertFragment(nextValue.document)
+            .selectAll()
+            .collapseToStart();
+          if (blockType !== 'div') {
+            nextValue = nextValue
+              .wrapBlock(blockType)
+              .selectAll()
+              .collapseToStart();
+          }
+          nextValue = nextValue.value;
         }
-        nextValue = nextValue.value;
+        draft.bodyEditorState = nextValue;
+      } catch (e) {
+        AppEnv.reportError(e, { errorData: { htm: inHTML, id: (draft || {}).id } });
       }
-      draft.bodyEditorState = nextValue;
-      _bodyHTMLCache = inHTML;
     },
   };
 
@@ -256,19 +261,19 @@ export default class DraftEditingSession extends MailspringStore {
     this._isChangingAccount = false;
     this.refOldDraftMessageId = '';
     this.lastSync = Date.now();
-    let currentWindowLevel = 3;
+    let currentWindowLevel = DraftWindowLevel.Composer;
     if (AppEnv.isMainWindow()) {
-      currentWindowLevel = 1;
+      currentWindowLevel = DraftWindowLevel.Main;
     } else if (AppEnv.isThreadWindow()) {
-      currentWindowLevel = 2;
+      currentWindowLevel = DraftWindowLevel.Thread;
     } else if (AppEnv.isComposerWindow()) {
-      currentWindowLevel = 3;
+      currentWindowLevel = DraftWindowLevel.Composer;
     }
     // Because new draft window will first shown as main window type,
     // We need to check windowProps;
     const windowProps = AppEnv.getWindowProps();
     if (windowProps.draftJSON) {
-      currentWindowLevel = 3;
+      currentWindowLevel = DraftWindowLevel.Composer;
     }
 
     this.messageId = messageId;
@@ -301,7 +306,7 @@ export default class DraftEditingSession extends MailspringStore {
       this._isDraftMissingAttachments();
       const thread = FocusedContentStore.focused('thread');
       const inFocusedThread = thread && thread.id === draft.threadId;
-      if (currentWindowLevel === 3) {
+      if (currentWindowLevel === DraftWindowLevel.Composer) {
         // Because new drafts can't be viewed in main window, we don't add it towards open count, if we are in mainWin
         // we want to trigger open count in composer window
         Actions.draftOpenCount({
@@ -310,13 +315,13 @@ export default class DraftEditingSession extends MailspringStore {
           source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
         });
       } else if (draft.replyType !== Message.draftType.new) {
-        if (currentWindowLevel === 2) {
+        if (currentWindowLevel === DraftWindowLevel.Thread) {
           Actions.draftOpenCount({
             messageId: messageId,
             windowLevel: currentWindowLevel,
             source: `draft-editing-session, with draft level: ${currentWindowLevel}`,
           });
-        } else if (currentWindowLevel === 1 && inFocusedThread) {
+        } else if (currentWindowLevel === DraftWindowLevel.Main && inFocusedThread) {
           Actions.draftOpenCount({
             messageId: messageId,
             windowLevel: currentWindowLevel,
@@ -400,13 +405,13 @@ export default class DraftEditingSession extends MailspringStore {
 
   get currentWindowLevel() {
     if (AppEnv.isMainWindow()) {
-      return 1;
+      return DraftWindowLevel.Main;
     } else if (AppEnv.isThreadWindow()) {
-      return 2;
+      return DraftWindowLevel.Thread;
     } else if (AppEnv.isComposerWindow()) {
-      return 3;
+      return DraftWindowLevel.Composer;
     } else {
-      return 3;
+      return DraftWindowLevel.Composer;
     }
   }
 
@@ -463,6 +468,7 @@ export default class DraftEditingSession extends MailspringStore {
       this._draft &&
       !this._draft.savedOnRemote &&
       this._draft.refOldDraftMessageId &&
+      !Message.compareMessageState(this._draft.syncState, Message.messageSyncState.failed) &&
       AppEnv.isMainWindow()
     ) {
       const task = new RestoreDraftTask({
@@ -588,20 +594,20 @@ export default class DraftEditingSession extends MailspringStore {
       warnings.push('without an attachment');
     }
 
-    if (!unnamedRecipientPresent) {
-      // https://www.regexpal.com/?fam=99334
-      // note: requires that the name is capitalized, to avoid catching "Hey guys"
-      const englishSalutationPhrases = /(?:[y|Y]o|[h|H]ey|[h|H]i|[M|m]orning|[A|a]fternoon|[E|e]vening|[D|d]ear){1} ([A-Z][A-Za-zÀ-ÿ. ]+)[!_—,.\n\r< -]/;
-      const match = englishSalutationPhrases.exec(cleaned);
-      if (match) {
-        const salutation = (match[1] || '').toLowerCase();
-        if (!allNames.find(n => n === salutation || (n.length > 1 && salutation.includes(n)))) {
-          warnings.push(
-            `addressed to a name that doesn't appear to be a recipient ("${salutation}")`
-          );
-        }
-      }
-    }
+    // if (!unnamedRecipientPresent) {
+    //   // https://www.regexpal.com/?fam=99334
+    //   // note: requires that the name is capitalized, to avoid catching "Hey guys"
+    //   const englishSalutationPhrases = /(?:[y|Y]o|[h|H]ey|[h|H]i|[M|m]orning|[A|a]fternoon|[E|e]vening|[D|d]ear){1} ([A-Z][A-Za-zÀ-ÿ. ]+)[!_—,.\n\r< -]/;
+    //   const match = englishSalutationPhrases.exec(cleaned);
+    //   if (match) {
+    //     const salutation = (match[1] || '').toLowerCase();
+    //     if (!allNames.find(n => n === salutation || (n.length > 1 && salutation.includes(n)))) {
+    //       warnings.push(
+    //         `addressed to a name that doesn't appear to be a recipient ("${salutation}")`
+    //       );
+    //     }
+    //   }
+    // }
 
     // Check third party warnings added via Composer extensions
     for (const extension of ComposerExtensionRegistry.extensions()) {
@@ -1054,7 +1060,7 @@ export default class DraftEditingSession extends MailspringStore {
     AppEnv.logDebug(`draft open count change ${messageId}`);
     if (this._draft && messageId === this._draft.id) {
       AppEnv.logDebug(`draft open count change processing ${messageId} `);
-      let level = 3;
+      let level = DraftWindowLevel.Composer;
       let changedToTrue = false;
       while (level > this.currentWindowLevel) {
         if (data[level]) {

@@ -615,6 +615,10 @@ export default class AppEnvConstructor {
     return this.getLoadSettings().disableZoom;
   }
 
+  isDisableThreading() {
+    return !this.config.get('core.workspace.threadView');
+  }
+
   getWindowType() {
     return this.getLoadSettings().windowType;
   }
@@ -797,13 +801,19 @@ export default class AppEnvConstructor {
   getCurrentWindow() {
     return this.constructor.getCurrentWindow();
   }
-  getOpenWindows() {
+  getOpenWindows(type = 'all') {
     try {
-      return remote.getGlobal('application').windowManager.getOpenWindows();
+      return remote.getGlobal('application').windowManager.getOpenWindows(type);
     } catch (e) {
       this.reportError(e, {});
       return [];
     }
+  }
+  getOpenWindowsByAccountId(accountId) {
+    if (!accountId) {
+      return [];
+    }
+    return remote.getGlobal('application').windowManager.findWindowsByAccountId(accountId);
   }
   getOpenWindowsCountByAccountId(accountId) {
     if (!accountId) {
@@ -860,6 +870,10 @@ export default class AppEnvConstructor {
     return ipcRenderer.send('call-window-method', 'show');
   }
 
+  restore() {
+    return ipcRenderer.send('call-window-method', 'restore');
+  }
+
   fakeEmit(msg) {
     this.mailsyncBridge.fakeEmit([msg]);
   }
@@ -900,8 +914,11 @@ export default class AppEnvConstructor {
   }
 
   // Extended: Is the current window maximized?
-  isMaximixed() {
+  isMaximized() {
     return this.getCurrentWindow().isMaximized();
+  }
+  isMinimized() {
+    return this.getCurrentWindow().isMinimized();
   }
   unmaximize() {
     return ipcRenderer.send('call-window-method', 'unmaximize');
@@ -1207,13 +1224,59 @@ export default class AppEnvConstructor {
     remote.process.exit(status);
   }
 
+  cachePreferenceFiles(callback) {
+    this.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, paths => {
+      if (!paths) {
+        callback([]);
+        return;
+      }
+      let pathsToCopy = paths;
+      if (typeof pathsToCopy === 'string') {
+        pathsToCopy = [pathsToCopy];
+      }
+      const catchFiles = [];
+      for (const filepath of pathsToCopy) {
+        const newPath = this.copyFileToPreferences(filepath);
+        if (newPath) {
+          catchFiles.push(newPath);
+        }
+      }
+      callback(catchFiles);
+    });
+  }
+
+  copyFileToPreferences(filepath) {
+    const catchFilesDirPath = path.join(this.getConfigDirPath(), 'preference');
+    try {
+      if (!fs.existsSync(catchFilesDirPath)) {
+        fs.mkdirSync(catchFilesDirPath);
+      }
+      if (!fs.existsSync(filepath)) {
+        return null;
+      }
+      const fileName = path.basename(filepath);
+      const catchPath = path.join(catchFilesDirPath, fileName);
+      fs.copyFileSync(filepath, catchPath);
+      return catchPath;
+    } catch (err) {
+      this.logError(err);
+      return null;
+    }
+  }
+
   showOpenDialog(options, callback) {
     return remote.dialog
-      .showOpenDialog(this.getCurrentWindow(), options)
-      .then(({ canceled, filePaths }) => {
+      .showOpenDialog(this.getCurrentWindow(), {
+        ...options,
+        securityScopedBookmarks: !!process.mas,
+      })
+      .then(({ canceled, filePaths, bookmarks }) => {
         if (canceled) {
           callback(null);
         } else {
+          if (filePaths && filePaths[0] && bookmarks && bookmarks[0]) {
+            this.setBookMarkForPath(filePaths[0], bookmarks[0]);
+          }
           callback(filePaths);
         }
       });
@@ -1280,10 +1343,12 @@ export default class AppEnvConstructor {
     return new Promise(resolve => {
       const downloadPath = this.getSaveDirPath();
       if (downloadPath) {
-        // need to make sure this dir exists
+        let stopAccessingSecurityScopedResource = null;
         try {
+          // need to make sure this dir exists
           const { exists, errorMsg } = dirExists(downloadPath);
           if (exists) {
+            stopAccessingSecurityScopedResource = this.startAccessingForFile(downloadPath);
             const fileOldName = path.basename(options.defaultPath || 'untitled');
             const fileNewName = autoGenerateFileName(downloadPath, fileOldName);
             resolve(path.join(downloadPath, fileNewName));
@@ -1294,6 +1359,10 @@ export default class AppEnvConstructor {
           return;
         } catch (e) {
           this.logError(e);
+        } finally {
+          if (stopAccessingSecurityScopedResource) {
+            stopAccessingSecurityScopedResource();
+          }
         }
       }
 
@@ -1301,13 +1370,17 @@ export default class AppEnvConstructor {
         ...options,
         defaultPath: options.defaultPath || this.getDownloadsPath(),
         title: options.title || 'Save File',
+        securityScopedBookmarks: !!process.mas,
       };
       remote.dialog
         .showSaveDialog(this.getCurrentWindow(), optionTmp)
-        .then(({ canceled, filePath }) => {
+        .then(({ canceled, filePath, bookmark }) => {
           if (canceled) {
             resolve('');
           } else {
+            if (bookmark) {
+              this.setBookMarkForPath(filePath, bookmark);
+            }
             resolve(filePath);
           }
         });
@@ -1318,10 +1391,14 @@ export default class AppEnvConstructor {
     return new Promise(resolve => {
       const downloadPath = this.getSaveDirPath();
       if (downloadPath) {
-        // need to make sure this dir exists
+        let stopAccessingSecurityScopedResource = null;
         try {
+          // need to make sure this dir exists
           const { exists, errorMsg } = dirExists(downloadPath);
           if (exists) {
+            stopAccessingSecurityScopedResource = this.startAccessingForFile(downloadPath);
+            // test accessing
+            fs.readdirSync(downloadPath);
             resolve(downloadPath);
           } else {
             resolve('');
@@ -1330,6 +1407,10 @@ export default class AppEnvConstructor {
           return;
         } catch (e) {
           this.logError(e);
+        } finally {
+          if (stopAccessingSecurityScopedResource) {
+            stopAccessingSecurityScopedResource();
+          }
         }
       }
 
@@ -1338,22 +1419,60 @@ export default class AppEnvConstructor {
         defaultPath: options.defaultPath || this.getDownloadsPath(),
         title: options.title || 'Save Into...',
         properties: ['openDirectory', 'createDirectory'],
+        securityScopedBookmarks: !!process.mas,
       };
 
       return remote.dialog
         .showOpenDialog(this.getCurrentWindow(), optionTmp)
-        .then(({ canceled, filePaths }) => {
+        .then(({ canceled, filePaths, bookmarks }) => {
           if (canceled) {
             resolve('');
             return;
           }
           if (filePaths && filePaths.length) {
+            if (bookmarks && bookmarks[0]) {
+              this.setBookMarkForPath(filePaths[0], bookmarks[0]);
+            }
             resolve(filePaths[0]);
-          } else {
-            resolve('');
+            return;
           }
+          resolve('');
         });
     });
+  }
+
+  // Start accessing the file.
+  startAccessingForFile(filepath) {
+    if (!process.mas) {
+      return () => {};
+    }
+    const bookmark = this.getBookMarkForPath(filepath);
+    if (!bookmark) {
+      const home = this.getUserDirPath();
+      const downloadDir = path.join(home, 'Downloads');
+      if (filepath === downloadDir) {
+        return () => {};
+      }
+      return null;
+    }
+    const app = remote.app;
+    const stopAccessingSecurityScopedResource = app.startAccessingSecurityScopedResource(bookmark);
+    if (typeof stopAccessingSecurityScopedResource !== 'function') {
+      return null;
+    }
+    this.logDebug(`startAccessingSecurityScopedResource for:${filepath}`);
+    return stopAccessingSecurityScopedResource;
+  }
+
+  setBookMarkForPath(filepath, bookMark) {
+    const securityScopedResource = remote.getGlobal('application').securityScopedResource;
+    this.logDebug(`setBookMark for:${filepath}`);
+    securityScopedResource.setBookMark(filepath, bookMark);
+  }
+
+  getBookMarkForPath(filepath) {
+    const securityScopedResource = remote.getGlobal('application').securityScopedResource;
+    return securityScopedResource.getBookMark(filepath);
   }
 
   getMainWindow() {
@@ -1521,6 +1640,53 @@ export default class AppEnvConstructor {
       return this.propagationStopped;
     };
   }
+  // nextActionAfterRemoveFromView({
+  //   source = 'unknown',
+  //   affectedItems = [],
+  //   currentFocus,
+  //   topSheet,
+  //   layoutMode,
+  //   popSheet,
+  //   emptyFocusContent,
+  // }) {
+  //   if (!currentFocus || !topSheet || !['list', 'split'].includes(layoutMode)) {
+  //     return;
+  //   }
+  //   const affectedIds = [];
+  //   affectedItems.forEach(item => {
+  //     if (item && item.id) {
+  //       affectedIds.push(item.id);
+  //     }
+  //   });
+  //   const focusEffected = affectedIds.includes(currentFocus.id);
+  //   if (!focusEffected) {
+  //     return;
+  //   }
+  //   const ignoreNextActions =
+  //     (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
+  //   if (ignoreNextActions && topSheet.id === 'Thread') {
+  //     if (typeof popSheet === 'function') {
+  //       this.logDebug(`ignore nextAction on removeFromView popSheet`);
+  //       popSheet({ reason: `${source}:ignoreNextActions` });
+  //     } else {
+  //       this.logDebug(`ignore nextAction on removeFromView popSheet is not a function`);
+  //     }
+  //     return;
+  //   }
+  //   const nextAction = this.config.get('core.reading.actionAfterRemove');
+  //   this.logDebug(`nextAction on removeFromView: ${nextAction}`);
+  //   if (nextAction === 'next' && !ignoreNextActions) {
+  //     this.commands.dispatch('core:show-next');
+  //   } else if (nextAction === 'previous' && !ignoreNextActions) {
+  //     this.commands.dispatch('core:show-previous');
+  //   } else if (nextAction === 'return' && !ignoreNextActions) {
+  //     if (typeof emptyFocusContent === 'function') {
+  //       emptyFocusContent({ reason: `${source}:return` });
+  //     } else {
+  //       this.logDebug(`ignore nextAction on removeFromView emptyFocusContent is not a function`);
+  //     }
+  //   }
+  // }
 
   captureScreen() {
     return new Promise((resolve, reject) => {
@@ -1575,44 +1741,6 @@ export default class AppEnvConstructor {
   grabLogs(fileName = '') {
     return new Promise((resolve, reject) => {
       resolve();
-      // const resourcePath = this.getConfigDirPath();
-      // const logPath = path.dirname(LOG.transports.file.findLogPath());
-      // if (fileName === '') {
-      //   fileName = parseInt(Date.now());
-      // }
-      // const outputPath = path.join(resourcePath, 'upload-log', `logs-${fileName}.zip`);
-      // const output = fs.createWriteStream(outputPath);
-      // const archive = archiver('zip', {
-      //   zlib: { level: 9 }, // Sets the compression level.
-      // });
-      //
-      // output.on('close', function () {
-      //   console.log('\n--->\n' + archive.pointer() + ' total bytes\n');
-      //   console.log('archiver has been finalized and the output file descriptor has closed.');
-      //   resolve(outputPath);
-      // });
-      // output.on('end', function () {
-      //   console.log('\n----->\nData has been drained');
-      //   resolve(outputPath);
-      // });
-      // archive.on('warning', function (err) {
-      //   if (err.code === 'ENOENT') {
-      //     console.log(err);
-      //   } else {
-      //     output.close();
-      //     console.log(err);
-      //     reject(err);
-      //   }
-      // });
-      // archive.on('error', function (err) {
-      //   output.close();
-      //   console.log(err);
-      //   reject(err);
-      // });
-      // archive.pipe(output);
-      // archive.directory(logPath, 'uiLog');
-      // archive.glob(path.join(resourcePath, '*.log'), {}, { prefix: 'nativeLog' });
-      // archive.finalize();
     });
   }
 

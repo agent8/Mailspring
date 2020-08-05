@@ -100,6 +100,23 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
     }
     return super.cleanup();
   }
+  static nextItemFromIndex = (currentIndex, nextResult, nextAction) => {
+    let nextIndex = currentIndex;
+    if (nextAction === 'next') {
+      if (nextIndex >= nextResult.count()) {
+        nextIndex = nextResult.count() - 1;
+      }
+    } else if (nextAction === 'previous') {
+      nextIndex--;
+      if (nextIndex < 0) {
+        nextIndex = 0;
+      }
+    } else if (nextAction === 'return') {
+      nextIndex = -1;
+    }
+    // May return null if no thread is loaded at the next index
+    return nextResult.modelAtOffset(nextIndex);
+  };
 
   setObservableRangeTask = ({ items }) => {
     let accounts = {};
@@ -153,6 +170,7 @@ export default class ObservableListDataSource extends ListTabular.DataSource {
       Actions.setObservableRange(accountId, {
         missingThreadIds: threadIds,
         missingMessageIds: messageIds,
+        windowLevel: AppEnv.getWindowLevel(),
       });
     });
   };

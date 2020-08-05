@@ -14,6 +14,9 @@ function ImageNode(props) {
   }
 
   const { draft } = editor.props.propsForPlugins;
+  if (!draft) {
+    return <span />;
+  }
   const file = draft.files.find(f => contentId === f.contentId);
   if (!file) {
     return <span />;
@@ -202,14 +205,16 @@ export const changes = {
         break;
       }
     }
-    return change.insertInline({
-      object: 'inline',
-      isVoid: true,
-      type: IMAGE_TYPE,
-      data: {
-        contentId: file.contentId,
-      },
-    });
+    return change
+      .insertInline({
+        object: 'inline',
+        isVoid: true,
+        type: IMAGE_TYPE,
+        data: {
+          contentId: file.contentId,
+        },
+      })
+      .collapseToStartOfNextText();
   },
 };
 
