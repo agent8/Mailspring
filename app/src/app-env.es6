@@ -343,6 +343,7 @@ export default class AppEnvConstructor {
       // extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
       extra.pluginIds = JSON.stringify(this._findPluginsFromError(error));
       extra.mas = process.mas ? '1' : '0';
+      extra.messageView = this.isDisableThreading() ? '1' : '0';
       // if (!!extra.errorData) {
       //   extra.errorData = JSON.stringify(extra.errorData);
       // }

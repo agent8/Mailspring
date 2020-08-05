@@ -262,6 +262,7 @@ class DraftFactory {
       if (!account) {
         return null;
       }
+      const messageViewInfo = AppEnv.isDisableThreading() ? '-m' : '-t';
       const body = `<div>
             <div>
             User bug report:</br>
@@ -269,7 +270,7 @@ class DraftFactory {
             -----User bug report end-----</br>
             </div>
             <div>
-            [MacOS] ${AppEnv.getVersion()}${process.mas ? '-mas' : ''}
+            [MacOS] ${AppEnv.getVersion()}${process.mas ? '-mas' : ''}${messageViewInfo}
             </div></br>
             <div>
             SupportId: ${AppEnv.config.get('core.support.id')}
