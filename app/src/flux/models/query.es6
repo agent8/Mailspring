@@ -81,6 +81,10 @@ export default class ModelQuery {
     this.parseCrossJoinDBs(attrs);
   }
 
+  getModel() {
+    return this._klass.main;
+  }
+
   parseCrossJoinDBs = attrs => {
     for (let attr of attrs) {
       if (isCrossDBAttr(attr)) {
@@ -174,6 +178,7 @@ export default class ModelQuery {
     const attrs = Object.values(q._klass.main.attributes);
     q._pseudoPrimaryKey = { main: findPseudoPrimaryKey(attrs) || 'id' };
     q._mustSelectFields = { main: attrs.filter(attr => attr.mergeIntoModel) };
+    q.forceShowDrafts = this.forceShowDrafts;
     return q;
   }
 
@@ -239,7 +244,9 @@ export default class ModelQuery {
         const value = matchers[key];
         const attr = this._klass[dbKey].attributes[key];
         if (!attr) {
-          const msg = `Cannot create where clause \`${key}:${value}\`. ${key} is not an attribute of ${this._klass[dbKey].name}`;
+          const msg = `Cannot create where clause \`${key}:${value}\`. ${key} is not an attribute of ${this._klass[
+            dbKey
+          ].getTableName()}`;
           throw new Error(msg);
         }
         if (isCrossDBAttr(attr)) {
@@ -547,17 +554,19 @@ export default class ModelQuery {
     if (this._count[dbKey]) {
       result = `COUNT(*) as count`;
     } else if (this._returnIds[dbKey]) {
-      result = `\`${this._klass[dbKey].name}\`.\`${this._pseudoPrimaryKey[dbKey].modelKey ||
-        'id'}\``;
+      result = `\`${this._klass[dbKey].getTableName()}\`.\`${this._pseudoPrimaryKey[dbKey]
+        .modelKey || 'id'}\``;
     } else {
       if (dbKey === 'main') {
         result = this._mustSelectFields[dbKey]
           .map(attr => {
-            return `\`${this._klass[dbKey].name}\`.\`${attr.modelKey}\``;
+            return `\`${this._klass[dbKey].getTableName()}\`.\`${attr.modelKey}\``;
           })
           .join(',');
       } else {
-        result = `\`${this._klass[dbKey].name}\`.\`${this._crossDB.connections[dbKey].joinTableKey}\``;
+        result = `\`${this._klass[dbKey].getTableName()}\`.\`${
+          this._crossDB.connections[dbKey].joinTableKey
+        }\``;
       }
       const noDefaultSelect =
         this._mustSelectFields[dbKey] && this._mustSelectFields[dbKey].length === 0;
@@ -567,13 +576,13 @@ export default class ModelQuery {
           continue;
         }
         // get data from inner join table
-        if (attr.modelTable && attr.modelTable !== this._klass[dbKey].name) {
+        if (attr.modelTable && attr.modelTable !== this._klass[dbKey].getTableName()) {
           let tableRef = this._getMuidByJoinTableName(allMatchers, attr.modelTable);
-          result += `, \`${tableRef ? tableRef : this._klass[dbKey].name}\`.\`${
+          result += `, \`${tableRef ? tableRef : this._klass[dbKey].getTableName()}\`.\`${
             attr.tableColumn
           }\` `;
         } else {
-          result += `, \`${this._klass[dbKey].name}\`.\`${attr.tableColumn}\` `;
+          result += `, \`${this._klass[dbKey].getTableName()}\`.\`${attr.tableColumn}\` `;
         }
       }
       if (noDefaultSelect) {
@@ -625,7 +634,9 @@ export default class ModelQuery {
       //     }\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
     }
 
-    return `SELECT ${distinct} ${selectSql} FROM \`${this._klass[dbKey].name}\` ${whereSql} ${order} ${limit}`;
+    return `SELECT ${distinct} ${selectSql} FROM \`${this._klass[
+      dbKey
+    ].getTableName()}\` ${whereSql} ${order} ${limit}`;
   }
 
   // If one of our matchers requires a join, and the attribute configuration lists
@@ -671,7 +682,10 @@ export default class ModelQuery {
     let innerSQL = `SELECT \`pid\` FROM \`${table}\` WHERE ${wheres.join(
       ' AND '
     )} ${order} ${limit}`;
-    innerSQL = innerSQL.replace(new RegExp(`\`${this._klass[dbKey].name}\``, 'g'), `\`${table}\``);
+    innerSQL = innerSQL.replace(
+      new RegExp(`\`${this._klass[dbKey].getTableName()}\``, 'g'),
+      `\`${table}\``
+    );
     innerSQL = innerSQL.replace(
       new RegExp(`\`${returningMatcher.joinTableRef()}\``, 'g'),
       `\`${table}\``
@@ -712,14 +726,18 @@ export default class ModelQuery {
       } else {
         const modelKey = this._crossDB.connections[dbKey].joinModelJsonKey;
         const mainDBIds = this._crossDB.valueCache[modelKey].join(`','`);
-        const linkMainDB = `\`${this._klass[dbKey].name}\`.\`${this._crossDB.connections[dbKey].joinTableKey}\` in ('${mainDBIds}')`;
+        const linkMainDB = `\`${this._klass[dbKey].getTableName()}\`.\`${
+          this._crossDB.connections[dbKey].joinTableKey
+        }\` in ('${mainDBIds}')`;
         // console.log(`where clause for auxDB: ${linkMainDB}`);
         sql += ` WHERE ${linkMainDB} AND ${wheres.join(' AND ')}`;
       }
     } else if (wheres.length === 0 && dbKey !== 'main') {
       const modelKey = this._crossDB.connections[dbKey].joinModelJsonKey;
       const mainDBIds = this._crossDB.valueCache[modelKey].join(`','`);
-      const linkMainDB = `\`${this._klass[dbKey].name}\`.\`${this._crossDB.connections[dbKey].joinTableKey}\` in ('${mainDBIds}')`;
+      const linkMainDB = `\`${this._klass[dbKey].getTableName()}\`.\`${
+        this._crossDB.connections[dbKey].joinTableKey
+      }\` in ('${mainDBIds}')`;
       // console.log(`single where clause for auxDB: ${linkMainDB}`);
       sql += ` WHERE ${linkMainDB} `;
     }

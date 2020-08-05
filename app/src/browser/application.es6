@@ -25,6 +25,7 @@ import ConfigMigrator from './config-migrator';
 import ApplicationMenu from './application-menu';
 import ApplicationTouchBar from './application-touch-bar';
 import AutoUpdateManager from './autoupdate-manager';
+import SecurityScopedResource from './security-scoped-resource';
 import SystemTrayManager from './system-tray-manager';
 import MailspringProtocolHandler from './mailspring-protocol-handler';
 import ConfigPersistenceManager from './config-persistence-manager';
@@ -88,6 +89,8 @@ export default class Application extends EventEmitter {
     if (initializeInBackground === undefined) {
       initializeInBackground = false;
     }
+
+    this.securityScopedResource = new SecurityScopedResource({ configDirPath });
 
     await this.oneTimeMoveToApplications();
     await this.oneTimeAddToDock();
@@ -172,7 +175,10 @@ export default class Application extends EventEmitter {
     this.cleaningOldFilesTimer = null;
     this._triggerCleanOldLogs(true);
     try {
-      const mailsync = new MailsyncProcess(options);
+      const mailsync = new MailsyncProcess({
+        ...options,
+        disableThread: this.config.get('core.workspace.threadView') === false,
+      });
       this.nativeVersion = await mailsync.migrate();
     } catch (err) {
       let message = null;
@@ -1137,6 +1143,10 @@ export default class Application extends EventEmitter {
     this.on('application:new-conversation', () => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('new-conversation');
       }
     });
@@ -1144,6 +1154,10 @@ export default class Application extends EventEmitter {
     this.on('application:select-conversation', jid => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('select-conversation', jid);
       }
     });
@@ -1196,6 +1210,10 @@ export default class Application extends EventEmitter {
     this.on('application:open-preferences', () => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('open-preferences');
       }
     });
@@ -1208,6 +1226,10 @@ export default class Application extends EventEmitter {
       this.openWindowsForTokenState();
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('command', 'navigation:go-to-all-inbox');
       }
     });
@@ -1222,6 +1244,10 @@ export default class Application extends EventEmitter {
       this.openWindowsForTokenState();
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
       if (main) {
+        if (main.isMinimized()) {
+          main.restore();
+        }
+        main.show();
         main.sendMessage('command', 'navigation:go-to-chat');
       }
     });

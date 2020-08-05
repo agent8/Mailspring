@@ -41,7 +41,10 @@ class CategoryStore extends MailspringStore {
     });
     DatabaseStore.findAll(Folder, { state: 0 })
       .order(Folder.attributes.name.ascending())
-      .then(this._onCategoriesChanged);
+      .then(results => {
+        AppEnv.logDebug(`Folders: ${JSON.stringify(results)}`);
+        this._onCategoriesChanged(results);
+      });
     Actions.syncFolders.listen(this._onSyncCategory, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
@@ -316,7 +319,11 @@ class CategoryStore extends MailspringStore {
       this.trigger();
     }
   };
-  _generateParents(category, stopAtAncestor = 0) {
+  _generateParents(
+    category,
+    stopAtAncestor = 0,
+    { checkForDuplicates = false, currentResults = [] } = {}
+  ) {
     if (!category.selectable || !!category.role) {
       return [];
     }
@@ -342,7 +349,14 @@ class CategoryStore extends MailspringStore {
           role: '',
         });
         if (newFolder.pathWithPrefixStripped().length > 0) {
-          ret.unshift(newFolder);
+          if (checkForDuplicates) {
+            const exists = currentResults.find(cat => cat && cat.path === newFolder.path);
+            if (!exists) {
+              ret.unshift(newFolder);
+            }
+          } else {
+            ret.unshift(newFolder);
+          }
         }
         i--;
       }
@@ -368,21 +382,29 @@ class CategoryStore extends MailspringStore {
           if (cat.areStrangers(lastCategory)) {
             ret.unshift(...this._generateParents(lastCategory));
           } else if (cat.isAncestorOf(lastCategory)) {
-            const tmp = this._generateParents(lastCategory, layers.length);
-            // console.warn(cat, 'is ancestor of ', lastCategory, tmp);
-            ret.unshift(...tmp);
-          } else if (cat.areRelatives(lastCategory)) {
-            let k = 0;
-            while (layers[k] === lastLayers[k] && k < layers.length && k < lastLayers.length) {
-              k++;
+            let tmp;
+            if (lastCategory.startWithPrefix()) {
+              tmp = this._generateParents(lastCategory, layers.length + 1);
+            } else {
+              tmp = this._generateParents(lastCategory, layers.length);
             }
-            const tmp = this._generateParents(lastCategory, k);
-            // console.warn(cat, 'are relatives', lastCategory, k, tmp);
+            // console.warn(cat, 'is ancestor of ', lastCategory, tmp);
             ret.unshift(...tmp);
           } else if (cat.areSiblings(lastCategory)) {
             // console.warn(cat, 'are siblings', lastCategory);
           } else if (cat.isParentOf(lastCategory)) {
             // console.warn(cat, 'is parent of', lastCategory);
+          } else if (cat.areRelatives(lastCategory)) {
+            let k = 0;
+            while (layers[k] === lastLayers[k] && k < layers.length && k < lastLayers.length) {
+              k++;
+            }
+            if (lastCategory.startWithPrefix()) {
+              k++;
+            }
+            const tmp = this._generateParents(lastCategory, k);
+            // console.warn(cat, 'are relatives', lastCategory, k, tmp);
+            ret.unshift(...tmp);
           } else {
             // console.error('should not happen', lastCategory, cat);
           }

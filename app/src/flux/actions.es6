@@ -495,6 +495,7 @@ class Actions {
   static requestDraftCacheFromMain = ActionScopeMainWindow;
   static broadcastDraftCache = ActionScopeGlobal;
   static gotoOutbox = ActionScopeWindow;
+  static focusHighestLevelDraftWindow = ActionScopeMainWindow;
 
   /*
   Public: Submits the user's response to an RSVP event.
@@ -518,8 +519,11 @@ class Actions {
   static addAttachments = ActionScopeWindow;
   static selectAttachment = ActionScopeWindow;
   static removeAttachment = ActionScopeWindow;
+  static removeAttachments = ActionScopeWindow;
   static removeAttachmentToMain = ActionScopeMainWindow;
+  static removeAttachmentsToMain = ActionScopeMainWindow;
   static draftInlineAttachmentRemoved = ActionScopeWindow;
+  static removeAllNoReferenceInLines = ActionScopeWindow;
   static broadcastDraftAttachmentState = ActionScopeGlobal;
 
   static syncFolders = ActionScopeMainWindow;
@@ -600,6 +604,8 @@ class Actions {
   static selectSignature = ActionScopeWindow;
   static toggleAliasesSignature = ActionScopeWindow;
 
+  static selectTemplate = ActionScopeGlobal;
+
   static expandSyncState = ActionScopeWindow;
 
   static searchQuerySubmitted = ActionScopeWindow;
@@ -629,6 +635,8 @@ class Actions {
 
   static forceKillAllClients = ActionScopeWindow;
 
+  static forceRelaunchClients = ActionScopeWindow;
+
   static forceDatabaseTrigger = ActionScopeWindow;
 
   static dataShareOptions = ActionScopeMainWindow;
@@ -636,6 +644,8 @@ class Actions {
   static exportUserData = ActionScopeMainWindow;
 
   static remoteSearch = ActionScopeWindow;
+
+  static toggleJiraPlugin = ActionScopeWindow;
 }
 
 // Read the actions we declared on the dummy Actions object above

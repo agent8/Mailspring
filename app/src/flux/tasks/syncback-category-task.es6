@@ -1,6 +1,7 @@
 import utf7 from 'utf7';
 import Task from './task';
 import Attributes from '../attributes';
+import Folder from '../models/folder';
 
 export default class SyncbackCategoryTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
@@ -18,8 +19,16 @@ export default class SyncbackCategoryTask extends Task {
     }),
     created: Attributes.Object({
       modelKey: 'created',
+      itemClass: Folder,
     }),
   });
+  fromJSON(json) {
+    const ret = super.fromJSON(json);
+    if (ret.created) {
+      ret.created = new Folder(ret.created);
+    }
+    return ret;
+  }
 
   static forCreating({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
     return new SyncbackCategoryTask({

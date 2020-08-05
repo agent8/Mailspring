@@ -478,12 +478,13 @@ export default class MailsyncBridge {
 
   _getClientConfiguration(account) {
     const { configDirPath, resourcePath } = AppEnv.getLoadSettings();
+    const disableThread = AppEnv.isDisableThreading();
     const verboseUntil = AppEnv.config.get(VERBOSE_UNTIL_KEY) || 0;
     const verbose = verboseUntil && verboseUntil / 1 > Date.now();
     if (verbose) {
       console.warn(`Verbose mailsync logging is enabled until ${new Date(verboseUntil)}`);
     }
-    return { configDirPath, resourcePath, verbose };
+    return { configDirPath, resourcePath, verbose, disableThread };
   }
 
   startSift(reason = 'Unknown') {
@@ -774,6 +775,18 @@ export default class MailsyncBridge {
         AppEnv.logDebug(`from-native: ${msg}`);
         console.log('---------------------From native END------------------------');
       }
+
+      // Under message view, thread has no native notification,
+      // when receive a message model notification, a corresponding thread notification should be generated
+      if (AppEnv.isDisableThreading() && modelClass === 'Message') {
+        const threadMsgTmp = {
+          modelClass: 'Thread',
+          modelJSONs: modelJSONs.map(json => ({ ...json, __cls: 'Thread' })),
+          type,
+        };
+        this._onIncomingMessages([JSON.stringify(threadMsgTmp)]);
+      }
+
       const promises = [];
       const tmpModels = modelJSONs.map(Utils.convertToModel);
       let passAsIs = false;
@@ -927,7 +940,8 @@ export default class MailsyncBridge {
       const accounts = AppEnv.config.get('accounts');
       if (Array.isArray(accounts)) {
         for (let acc of accounts) {
-          if (acc.id === task.aid || acc.id === task.accountId) {
+          const accountId = acc.id || acc.pid;
+          if (accountId && (accountId === task.aid || accountId === task.accountId)) {
             errorAccount = AppEnv.anonymizeAccount(acc);
             break;
           }
@@ -1028,16 +1042,16 @@ export default class MailsyncBridge {
     );
   };
 
-  _getFocusedThreadId = () => {
+  _getFocusedThreadId = accountId => {
     const currentThread = FocusedContentStore().focused('thread');
-    if (currentThread) {
+    if (currentThread && currentThread.accountId === accountId) {
       return currentThread.id;
     }
     return null;
   };
-  _getOpenThreadWindowIds = () => {
+  _getOpenThreadWindowIds = accountId => {
     const threadIds = [];
-    const openWindows = AppEnv.getOpenWindows();
+    const openWindows = AppEnv.getOpenWindowsByAccountId(accountId);
     if (Array.isArray(openWindows)) {
       openWindows.forEach(win => {
         if (win && win.windowKey && win.windowKey.includes('thread-')) {
@@ -1047,8 +1061,7 @@ export default class MailsyncBridge {
     }
     return threadIds;
   };
-
-  _observableCacheFilter({ accountId = null, missingIds = [], priority = 0 } = {}, dataCache, ttl) {
+  _updateObservableCache({ accountId = null, missingIds = [], priority = 0 } = {}, dataCache, ttl) {
     if (!accountId) {
       return [];
     }
@@ -1281,31 +1294,36 @@ export default class MailsyncBridge {
 
   _onNewWindowOpened = (event, options) => {
     if (options.threadId && options.accountId && this._clients[options.accountId]) {
+      const prevThreadIds = (this._cachedObservableThreadIds[options.accountId] || []).map(
+        cache => cache.id
+      );
       this._onSetObservableRange(options.accountId, {
-        missingThreadIds: [options.threadId],
+        missingThreadIds: [options.threadId, ...prevThreadIds],
         missingMessageIds: [],
       });
     }
   };
   _sentObservableRangeTask = (accountId, missingThreadIds, missingMessageIds) => {
-    const threadIds = this._observableCacheFilter(
+    this._updateObservableCache(
       { accountId, missingIds: missingThreadIds },
       this._cachedObservableThreadIds,
       this._cachedObservableTTL
     );
-    const currentThreadId = this._getFocusedThreadId();
-    if (currentThreadId) {
-      threadIds.push(currentThreadId);
-    }
-    const openThreadWindowIds = this._getOpenThreadWindowIds();
-    if (Array.isArray(openThreadWindowIds)) {
-      threadIds.push(...openThreadWindowIds);
-    }
-    const messageIds = this._observableCacheFilter(
+    this._updateObservableCache(
       { accountId, missingIds: missingMessageIds },
       this._cachedObservableMessageIds,
       this._cachedObservableTTL
     );
+    const threadIds = (this._cachedObservableThreadIds[accountId] || []).map(cache => cache.id);
+    const currentThreadId = this._getFocusedThreadId(accountId);
+    if (currentThreadId) {
+      threadIds.push(currentThreadId);
+    }
+    const openThreadWindowIds = this._getOpenThreadWindowIds(accountId);
+    if (Array.isArray(openThreadWindowIds)) {
+      threadIds.push(...openThreadWindowIds);
+    }
+    const messageIds = (this._cachedObservableMessageIds[accountId] || []).map(cache => cache.id);
     if (threadIds.length === 0 && messageIds.length === 0) {
       return;
     }
@@ -1340,7 +1358,10 @@ export default class MailsyncBridge {
     };
   };
 
-  _onSetObservableRange = (accountId, { missingThreadIds = [], missingMessageIds = [] } = {}) => {
+  _onSetObservableRange = (
+    accountId,
+    { missingThreadIds = [], missingMessageIds = [], windowLevel } = {}
+  ) => {
     if (!this._clients[accountId]) {
       //account doesn't exist, we clear observable cache
       delete this._setObservableRangeTimer[accountId];
@@ -1348,6 +1369,7 @@ export default class MailsyncBridge {
       delete this._cachedObservableMessageIds[accountId];
       return;
     }
+    console.log('windowLevel: ', windowLevel);
     if (this._setObservableRangeTimer[accountId]) {
       if (Date.now() - this._setObservableRangeTimer[accountId].timestamp > 1000) {
         this._sentObservableRangeTask(accountId, missingThreadIds, missingMessageIds);

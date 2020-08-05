@@ -20,14 +20,20 @@ Section: Models
 
 export default class Model {
   static passAsIs = false; // This is to indicate whether we need to re query DB on message from native
-  static pseudoPrimaryJsKey='id';
+  static pseudoPrimaryJsKey = 'id';
+  static getTableName() {
+    if (this.tableName) {
+      return this.tableName;
+    }
+    return this.name;
+  }
   static attributes = {
     id: Attributes.String({
       queryable: true,
       loadFromColumn: true,
       modelKey: 'pid',
       jsModelKey: 'id',
-      isPseudoPrimary: true
+      isPseudoPrimary: true,
     }),
 
     accountId: Attributes.String({
@@ -42,7 +48,7 @@ export default class Model {
       mergeIntoModel: true,
       queryable: true,
       loadFromColumn: true,
-    })
+    }),
   };
 
   static naturalSortOrder = () => null;
@@ -53,10 +59,11 @@ export default class Model {
         this.fromJSON(data);
       } else {
         for (const key of Object.keys(this.constructor.attributes)) {
-          const jsonKey = this.constructor.attributes[key].jsonKey || this.constructor.attributes[key].modelKey;
+          const jsonKey =
+            this.constructor.attributes[key].jsonKey || this.constructor.attributes[key].modelKey;
           if (data[key] !== undefined) {
             this[key] = data[key];
-          } else if (jsonKey && data[jsonKey] !== undefined && data[jsonKey] !== null){
+          } else if (jsonKey && data[jsonKey] !== undefined && data[jsonKey] !== null) {
             this[key] = data[jsonKey];
           }
         }
@@ -82,9 +89,9 @@ export default class Model {
       }
       const attrValue = json[attr.jsonKey || attr.modelKey || key];
       if (attrValue !== undefined) {
-        if(attr.mergeIntoModel){
+        if (attr.mergeIntoModel) {
           Object.assign(this, attr.fromJSON(attrValue));
-        }else{
+        } else {
           this[key] = attr.fromJSON(attrValue);
         }
       }
@@ -101,7 +108,7 @@ export default class Model {
     const json = {};
     for (const key of Object.keys(this.constructor.attributes)) {
       const attr = this.constructor.attributes[key];
-      if(attr.mergeIntoModel){
+      if (attr.mergeIntoModel) {
         continue;
       }
       const attrValue = this[key];
@@ -136,19 +143,25 @@ export default class Model {
     return true;
   }
 
-  mergeFromColumn(val){
-      const allKeys = Object.keys(this.constructor.attributes);
-      const neededKeys = [];
-      allKeys.forEach(key => {
-        if(!this.constructor.attributes[key].loadFromColumn && !this.constructor.attributes[key].mergeIntoModel){
-          neededKeys.push(key);
-        }
-      });
-    neededKeys.forEach(key=>{
-      const jsKey = this.constructor.attributes[key].jsonKey || this.constructor.attributes[key].modelKey || key;
-        if(val && val.hasOwnProperty(jsKey)){
-          this[key] = this.constructor.attributes[key].fromColumn(val[jsKey]);
-        }
-      });
-    }
+  mergeFromColumn(val) {
+    const allKeys = Object.keys(this.constructor.attributes);
+    const neededKeys = [];
+    allKeys.forEach(key => {
+      if (
+        !this.constructor.attributes[key].loadFromColumn &&
+        !this.constructor.attributes[key].mergeIntoModel
+      ) {
+        neededKeys.push(key);
+      }
+    });
+    neededKeys.forEach(key => {
+      const jsKey =
+        this.constructor.attributes[key].jsonKey ||
+        this.constructor.attributes[key].modelKey ||
+        key;
+      if (val && val.hasOwnProperty(jsKey)) {
+        this[key] = this.constructor.attributes[key].fromColumn(val[jsKey]);
+      }
+    });
+  }
 }

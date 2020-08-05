@@ -109,6 +109,14 @@ export default class Category extends Model {
     // return utf7.imap.decode(this.name);
     return this.name;
   }
+  startWithPrefix() {
+    for (const prefix of ignoredPrefixes) {
+      if (this.fullDisplayName.toLocaleUpperCase().startsWith(`${prefix}${this.delimiter}`)) {
+        return true;
+      }
+    }
+    return false;
+  }
   pathWithPrefixStripped(ignoreGmailPrefix) {
     const name = this.fullDisplayName;
     for (const prefix of ignoredPrefixes) {
@@ -117,7 +125,7 @@ export default class Category extends Model {
           return name.substr(prefix.length + 1); // + delimiter
         }
         if (name === prefix) {
-          return name.substr(prefix.length + 1); // + delimiter;
+          return '';
         }
       }
       if (prefix === 'INBOX') {
@@ -125,7 +133,7 @@ export default class Category extends Model {
           return name.substr(prefix.length + 1); // + delimiter;
         }
         if (name.toLocaleUpperCase() === prefix) {
-          return name.substr(prefix.length + 1); // + delimiter;
+          return '';
         }
       }
     }

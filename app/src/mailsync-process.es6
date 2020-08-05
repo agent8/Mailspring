@@ -59,8 +59,13 @@ export const mailSyncModes = {
   SIFT: 'sift',
 };
 
+export const mailSyncView = {
+  THREAD: 'thread',
+  MESSAGE: 'message',
+};
+
 export default class MailsyncProcess extends EventEmitter {
-  constructor({ configDirPath, resourcePath, verbose }) {
+  constructor({ configDirPath, resourcePath, verbose, disableThread }) {
     super();
     this.verbose = verbose;
     this.resourcePath = resourcePath;
@@ -87,6 +92,7 @@ export default class MailsyncProcess extends EventEmitter {
     this.syncInitilMessageSend = false;
     this._sendMessageQueue = [];
     this._mode = '';
+    this.view = disableThread ? mailSyncView.MESSAGE : mailSyncView.THREAD;
     this.dataPrivacyOptions = { isGDPR: false, optOut: false };
     this.supportId = '';
   }
@@ -216,6 +222,12 @@ export default class MailsyncProcess extends EventEmitter {
     } else {
       args.push('--info', mode);
     }
+    // message view
+    if (this.view === mailSyncView.MESSAGE) {
+      args.push('--view', mailSyncView.MESSAGE);
+    } else {
+      args.push('--view', mailSyncView.THREAD);
+    }
     if (typeof this.supportId === 'string' && this.supportId.length > 0) {
       args.push('--supportId', this.supportId);
     }
@@ -260,7 +272,10 @@ export default class MailsyncProcess extends EventEmitter {
         var rs = new Readable();
         rs.push(`${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`);
         rs.push(null);
-        rs.pipe(this._proc.stdin, { end: false });
+        rs.pipe(
+          this._proc.stdin,
+          { end: false }
+        );
         if (this.isInRenderer() && AppEnv.enabledToNativeLog) {
           console.log('--------------------To native---------------');
           this.logDebug(
@@ -283,7 +298,10 @@ export default class MailsyncProcess extends EventEmitter {
         }
         rs.push(siftAccountString);
         rs.push(null);
-        rs.pipe(this._proc.stdin, { end: false });
+        rs.pipe(
+          this._proc.stdin,
+          { end: false }
+        );
         rs.on('end', () => {
           console.log('-----first message send-------');
           this.syncInitilMessageSend = true;

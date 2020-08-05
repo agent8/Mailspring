@@ -21,6 +21,9 @@ class PreferencesContentTemplate extends React.Component {
         {config.groupName ? <h6>{config.groupName.toUpperCase()}</h6> : null}
         {config.groupItem && config.groupItem.length
           ? config.groupItem.map(item => {
+              if (item.hidden) {
+                return null;
+              }
               const configSchema =
                 item.configSchema && typeof item.configSchema === 'function'
                   ? item.configSchema(this.props.configSchema)

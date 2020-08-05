@@ -6,8 +6,8 @@
 .template-picker {
   .header-container {
     width: 210px;
-    .template-picker-input{
-      input{
+    .template-picker-input {
+      input {
         width: 152px;
       }
     }
@@ -82,7 +82,7 @@
     flex-direction: column;
     height: auto;
     width: 282px;
-    padding: 40px 0 0 12px;
+    padding: 40px 0 40px 12px;
 
     .list-item {
       padding: 22px 30px;
@@ -116,6 +116,8 @@
     }
 
     .section.basic-info {
+      display: flex;
+      justify-content: space-between;
       input {
         border: none;
         outline: none;
@@ -126,8 +128,28 @@
         line-height: 64px;
         padding: 0;
         background: none;
+        flex: 1;
         &::placeholder {
           color: @gray-lighter;
+        }
+      }
+      .template-action-btns {
+        padding: 20px 10px;
+        justify-content: flex-end;
+        .btn,
+        .edison-icon {
+          cursor: pointer;
+          color: #797d80;
+          font-size: 12px;
+          line-height: 24px;
+          font-weight: bold;
+          padding: 0 3px;
+          border: none;
+          box-shadow: none;
+          vertical-align: top;
+          &:hover {
+            color: @text-color-link;
+          }
         }
       }
     }
@@ -145,6 +167,26 @@
 
     .section.note {
       color: @gray;
+    }
+    .template-action-fields {
+      .template-field {
+        padding: 5px 0px;
+        display: flex;
+        align-items: center;
+        .field-label {
+          color: #797d80;
+          font-weight: bold;
+          width: 36px;
+          flex: 0 0 auto;
+        }
+        input {
+          border-radius: 0;
+        }
+      }
+    }
+    .attachments {
+      display: flex;
+      flex-wrap: wrap;
     }
   }
 }

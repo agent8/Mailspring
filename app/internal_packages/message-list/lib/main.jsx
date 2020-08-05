@@ -33,17 +33,27 @@ export function activate() {
     });
   } else {
     // This is for the thread-popout window.
-    const { threadId, perspectiveJSON } = AppEnv.getWindowProps();
+    const { threadId, sidebarPerspectiveJson, currentPerspectiveJson } = AppEnv.getWindowProps();
     ComponentRegistry.register(MessageList, { location: WorkspaceStore.Location.Center });
 
     // We need to locate the thread and focus it so that the MessageList displays it
     DatabaseStore.find(Thread, threadId).then(thread =>
-      Actions.setFocus({ collection: 'thread', item: thread })
+      Actions.setFocus({
+        collection: 'thread',
+        item: thread,
+        reason: 'message-list thread window init',
+      })
     );
 
     // Set the focused perspective and hide the proper messages
     // (e.g. we should hide deleted items from the inbox, but not from trash)
-    Actions.focusMailboxPerspective(MailboxPerspective.fromJSON(perspectiveJSON));
+    const sidebarPerspective = MailboxPerspective.fromJSON(sidebarPerspectiveJson);
+    Actions.focusMailboxPerspective(sidebarPerspective);
+    // Focused tab
+    if (currentPerspectiveJson) {
+      const currentPerspective = MailboxPerspective.fromJSON(currentPerspectiveJson);
+      Actions.focusMailboxPerspective(currentPerspective);
+    }
     ComponentRegistry.register(MessageListHiddenMessagesToggle, {
       role: 'MessageListHeaders',
     });

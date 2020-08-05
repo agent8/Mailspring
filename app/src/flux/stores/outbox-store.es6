@@ -237,7 +237,11 @@ class OutboxStore extends MailspringStore {
     const current = FocusedPerspectiveStore.current();
     if (!current.outbox) {
       if (this.selectedDraft()) {
-        Actions.setFocus({ collection: 'outbox', item: null });
+        Actions.setFocus({
+          collection: 'outbox',
+          item: null,
+          reason: 'OutboxStore:perspectiveChange',
+        });
       }
       this._selectedDraft = null;
       // if (typeof this._dataSourceUnlisten === 'function') {
@@ -306,15 +310,25 @@ class OutboxStore extends MailspringStore {
           return next.offsetOfId(model.id) === -1;
         }
       };
+      const focusedIndex = focused ? previous.offsetOfId(focused.id) : -1;
+      const keyboardIndex = keyboard ? previous.offsetOfId(keyboard.id) : -1;
+      const nextItemFromIndex = i => {
+        const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
+        return ObservableListDataSource.nextItemFromIndex(i, next, nextAction);
+      };
 
       if (focused && notInSet(focused)) {
-        Actions.setFocus({ collection: 'outbox', item: null });
+        Actions.setFocus({
+          collection: 'outbox',
+          item: nextItemFromIndex(focusedIndex),
+          reason: 'OutboxStore:onDataChange',
+        });
       }
 
       if (keyboard && notInSet(keyboard)) {
         Actions.setCursorPosition({
           collection: 'outbox',
-          item: null,
+          item: nextItemFromIndex(keyboardIndex),
         });
       }
     }

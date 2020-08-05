@@ -12,7 +12,12 @@ export default class FocusContainer extends React.Component {
 
   getStateFromStores = () => {
     const { collection } = this.props;
-    let onFocusItem = item => Actions.setFocus({ collection: collection, item: item });
+    let onFocusItem = item =>
+      Actions.setFocus({
+        collection: collection,
+        item: item,
+        reason: 'FocusContainer:onFocusItem',
+      });
     let onSetCursorPosition = item => {
       Actions.setCursorPosition({ collection: collection, item: item });
     };

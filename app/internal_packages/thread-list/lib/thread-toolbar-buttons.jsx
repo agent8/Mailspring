@@ -86,36 +86,26 @@ const isSameAccount = items => {
   return true;
 };
 
-const nextActionForRemoveFromView = (source, affectedThreads) => {
-  if (!AppEnv.isMainWindow()) {
-    AppEnv.logDebug('Not main window, no next action for remove from view');
-    return;
-  }
-  const focusedThread = FocusedContentStore.focused('thread');
-  if (focusedThread) {
-    const affectedThreadIds = [];
-    affectedThreads.forEach(t => {
-      if (t && t.id) {
-        affectedThreadIds.push(t.id);
-      }
-    });
-    if (affectedThreadIds.includes(focusedThread.id)) {
-      const topSheet = WorkspaceStore.topSheet();
-      const layoutMode = WorkspaceStore.layoutMode();
-      const ignoreNextActions =
-        topSheet && (topSheet.id === 'Threads' || topSheet.id === 'Sift') && layoutMode === 'list';
-      const nextAction = AppEnv.config.get('core.reading.actionAfterRemove');
-      AppEnv.logDebug(`nextAction on removeFromView: ${nextAction}`);
-      if (nextAction === 'next' && !ignoreNextActions) {
-        AppEnv.commands.dispatch('core:show-next');
-      } else if (nextAction === 'previous' && !ignoreNextActions) {
-        AppEnv.commands.dispatch('core:show-previous');
-      } else {
-        Actions.popSheet({ reason: source });
-      }
-    }
-  }
-};
+// const nextActionForRemoveFromView = (source, affectedThreads) => {
+//   if (!AppEnv.isMainWindow()) {
+//     AppEnv.logDebug('Not main window, no next action for remove from view');
+//     return;
+//   }
+//   const topSheet = WorkspaceStore.topSheet();
+//   const layoutMode = WorkspaceStore.layoutMode();
+//   const onReturn = ({ reason } = {}) => {
+//     Actions.popSheet({ reason });
+//   };
+//   const focusedThread = FocusedContentStore.focused('thread');
+//   // AppEnv.nextActionAfterRemoveFromView({
+//   //   source,
+//   //   currentFocus: focusedThread,
+//   //   affectedItems: affectedThreads,
+//   //   topSheet,
+//   //   layoutMode,
+//   //   emptyFocusContent: onReturn,
+//   // });
+// };
 
 export function ArchiveButton(props) {
   const _onShortCut = event => {
@@ -129,7 +119,7 @@ export function ArchiveButton(props) {
       currentPerspective: FocusedPerspectiveStore.current(),
     });
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('ToolbarButton:ThreadList:archive', archivingThreads);
+    // nextActionForRemoveFromView('ToolbarButton:ThreadList:archive', archivingThreads);
     if (event) {
       event.stopPropagation();
     }
@@ -207,7 +197,7 @@ export function TrashButton(props) {
     });
     const tasks = [...moveTasks, ...expungeTasks];
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('Toolbar Button: Search', threads);
+    // nextActionForRemoveFromView('Toolbar Button: Search', threads);
     if (event) {
       event.stopPropagation();
     }
@@ -242,7 +232,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('ToolbarButton:ThreadList:remove', affectedThreads);
+    // nextActionForRemoveFromView('ToolbarButton:ThreadList:remove', affectedThreads);
     if (event) {
       event.stopPropagation();
     }
@@ -288,7 +278,7 @@ export function TrashButton(props) {
       });
     }
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('ToolbarButton:ThreadList:expunge', threads);
+    // nextActionForRemoveFromView('ToolbarButton:ThreadList:expunge', threads);
     if (event) {
       event.stopPropagation();
     }
@@ -488,7 +478,7 @@ export function MarkAsSpamButton(props) {
       currentPerspective: FocusedPerspectiveStore.current(),
     });
     Actions.queueTasks(tasks);
-    nextActionForRemoveFromView('ToolbarButton:MarkAsSpamButton:Spam', affectedThreads);
+    // nextActionForRemoveFromView('ToolbarButton:MarkAsSpamButton:Spam', affectedThreads);
     if (event) {
       event.stopPropagation();
     }
@@ -581,7 +571,7 @@ export function PrintThreadButton(props) {
     Actions.printThread(currentThread, node.outerHTML);
   };
 
-  const title = 'Print Thread';
+  const title = `Print ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
 
   if (props.isMenuItem) {
     return new MenuItem({
@@ -740,14 +730,26 @@ class HiddenGenericRemoveButton extends React.Component {
     );
     const item = dataSource.get(focusedIdx);
     if (isInSift) {
-      Actions.setFocus({ collection: 'sift', item });
+      Actions.setFocus({
+        collection: 'sift',
+        item,
+        reason: 'ThreadToolbarButton:HiddenButton:onShift:isInShift',
+      });
       Actions.setCursorPosition({ collection: 'sift', item });
       ThreadStore.findBy({ threadId: item.threadId }).then(result => {
-        Actions.setFocus({ collection: 'thread', item: result });
+        Actions.setFocus({
+          collection: 'thread',
+          item: result,
+          reason: 'ThreadToolbarButton:HiddenButton:onShift:db',
+        });
         Actions.setCursorPosition({ collection: 'thread', item: result });
       });
     } else {
-      Actions.setFocus({ collection: 'thread', item });
+      Actions.setFocus({
+        collection: 'thread',
+        item,
+        reason: 'ThreadToolbarButton:HiddenButton:onShift',
+      });
     }
   };
 
@@ -1051,16 +1053,18 @@ export class MoreButton extends React.Component {
     }
     menu.append(
       new MenuItem({
-        label: `Print Thread`,
+        label: `Print ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`,
         click: () => this._onPrintThread(),
       })
     );
-    menu.append(
-      new MenuItem({
-        label: expandTitle,
-        click: () => Actions.toggleAllMessagesExpanded(),
-      })
-    );
+    if (!AppEnv.isDisableThreading()) {
+      menu.append(
+        new MenuItem({
+          label: expandTitle,
+          click: () => Actions.toggleAllMessagesExpanded(),
+        })
+      );
+    }
     menu.popup({});
   };
 
@@ -1189,7 +1193,7 @@ export const DownButton = props => {
     return null;
   }
 
-  const title = 'Next thread';
+  const title = `Next ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
   if (props.isMenuItem) {
     if (getStateFromStores().disabled) {
       return null;
@@ -1231,7 +1235,7 @@ export const UpButton = props => {
   if (WorkspaceStore.layoutMode() !== 'list') {
     return null;
   }
-  const title = 'Previous thread';
+  const title = `Previous ${AppEnv.isDisableThreading() ? 'Message' : 'Thread'}`;
   if (props.isMenuItem) {
     if (getStateFromStores().disabled) {
       return null;
@@ -1353,13 +1357,14 @@ class MoreActionsButton extends React.Component {
         }
       }
     });
-    menu.append(
-      new MenuItem({
-        label: expandTitle,
-        click: () => Actions.toggleAllMessagesExpanded(),
-      })
-    );
-
+    if (!AppEnv.isDisableThreading()) {
+      menu.append(
+        new MenuItem({
+          label: expandTitle,
+          click: () => Actions.toggleAllMessagesExpanded(),
+        })
+      );
+    }
     const previousThread = UpButton({ ...this.props, isMenuItem: true });
     const nextThread = DownButton({ ...this.props, isMenuItem: true });
     if (previousThread) {

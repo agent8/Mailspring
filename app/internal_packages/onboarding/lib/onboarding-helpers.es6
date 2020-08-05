@@ -520,7 +520,7 @@ export async function buildJiraAccountFromAuthResponse(code) {
   const body = [];
   body.push(`code=${encodeURIComponent(code)}`);
   body.push(`client_id=${encodeURIComponent(JIRA_CLIENT_ID)}`);
-  body.push(`redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}`);
+  body.push(`redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}`);
   body.push(`client_secret=${encodeURIComponent(JIRA_CLIENT_SECRET)}`);
   body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
 
@@ -559,11 +559,17 @@ export async function buildJiraAccountFromAuthResponse(code) {
   let resource = {};
   if (resources && resources.length > 0) {
     resource = resources[0];
+    AppEnv.trackingEvent('plugin-jira-onboarding-success', {
+      domain: resource.url,
+      name: resource.name,
+    });
   } else {
     AppEnv.close();
     return;
   }
   AppEnv.config.set('plugin.jira.config', { access_token, refresh_token, resource });
+  // wait some time for Event tracking
+  await new Promise(resolve => setTimeout(resolve, 1000));
   AppEnv.close();
 }
 
@@ -706,7 +712,7 @@ export function buildJiraAuthURL() {
     `https://auth.atlassian.com/authorize?` +
     `audience=api.atlassian.com&client_id=${JIRA_CLIENT_ID}` +
     `&scope=${encodeURIComponent(JIRA_SCOPES.join(' '))}` +
-    `&redirect_uri=${encodeURIComponent(LOCAL_REDIRECT_URI)}` +
+    `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}&response_type=code&prompt=consent`
   );
 }
@@ -735,7 +741,10 @@ export async function finalizeAndValidateAccount(account) {
   }
 
   // Test connections to IMAP and SMTP
-  const proc = new MailsyncProcess(AppEnv.getLoadSettings());
+  const proc = new MailsyncProcess({
+    ...AppEnv.getLoadSettings(),
+    disableThread: AppEnv.isDisableThreading(),
+  });
   proc.identity = IdentityStore.identity();
   proc.account = account;
   const { response } = await proc.test();

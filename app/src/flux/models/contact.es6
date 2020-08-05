@@ -282,6 +282,16 @@ export default class Contact extends Model {
       queryable: true,
       loadFromColumn: true,
     }),
+    sentToFrequency: Attributes.Number({
+      modelKey: 'sentToFrequency',
+      queryable: true,
+      loadFromColumn: true,
+    }),
+    fromFrequency: Attributes.Number({
+      modelKey: 'fromFrequency',
+      queryable: true,
+      loadFromColumn: true,
+    }),
 
     // Contains the raw thirdPartyData (keyed by the vendor name) about
     // this contact.

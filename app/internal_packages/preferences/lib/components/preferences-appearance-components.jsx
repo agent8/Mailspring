@@ -2,9 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
+import { Actions } from 'mailspring-exports';
 import ModeSwitch from './mode-switch';
 import { remote } from 'electron';
+import ConfigSchemaItem from './config-schema-item';
 
+const { dialog } = remote;
 export class AppearanceScaleSlider extends React.Component {
   static displayName = 'AppearanceScaleSlider';
 
@@ -179,6 +182,65 @@ export class AppearanceThemeSwitch extends React.Component {
         config={this.props.config}
         activeValue={this.state.activeTheme}
         onSwitchOption={this.switchTheme}
+      />
+    );
+  }
+}
+
+class ConfigSchemaItemForMessageView extends ConfigSchemaItem {
+  constructor(props) {
+    super(props);
+  }
+
+  _onChangeChecked = event => {
+    this.props.onChange();
+    event.target.blur();
+  };
+}
+
+export class AppearanceViewOptions extends React.Component {
+  static displayName = 'AppearanceThemeSwitch';
+
+  static propTypes = {
+    label: PropTypes.string,
+    keyPath: PropTypes.string,
+    config: PropTypes.object,
+    configSchema: PropTypes.object,
+  };
+
+  constructor(props) {
+    super(props);
+  }
+
+  onChange = () => {
+    const { keyPath } = this.props;
+    dialog
+      .showMessageBox({
+        type: 'info',
+        buttons: ['Okay', 'Cancel'],
+        defaultId: 0,
+        cancelId: 1,
+        message:
+          'All your messages will be re-downloaded. This might take some time. You can still use Edison Mail while the messages are downloaded. Do you want to proceed?',
+      })
+      .then(({ response }) => {
+        if (response === 0) {
+          this.props.config.toggle(keyPath);
+          setImmediate(() => {
+            Actions.forceKillAllClients('onToggleMessageView');
+          });
+        }
+      });
+  };
+
+  render() {
+    return (
+      <ConfigSchemaItemForMessageView
+        configSchema={this.props.configSchema}
+        keyPath={this.props.keyPath}
+        config={this.props.config}
+        label={this.props.label}
+        onChange={this.onChange}
       />
     );
   }

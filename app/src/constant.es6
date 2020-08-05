@@ -6,10 +6,19 @@ export const OAuthList = [
   'office365-exchange',
   'jira-plugin',
 ];
+export const showCC = 'cc';
+export const showCCAndBCC = 'cc+bcc';
 
 export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
+export const DraftWindowLevel = {
+  Composer: 3,
+  Thread: 2,
+  Main: 1,
+};
+
+export const bannedPathNames = ['Trash', 'Spam', 'Inbox', 'All Mail', 'Sent'];
 
 export function macOSVersion() {
   let userAgent;
