@@ -67,6 +67,25 @@ export default class WindowManager {
     return values.sort((a, b) => score(b) - score(a));
   }
 
+  switchWindow = () => {
+    const windows = this.getOpenWindows();
+    if (windows.length <= 1) {
+      return;
+    }
+    let focusedIdx = 0;
+    for (let i = 0; i < windows.length; i++) {
+      if (windows[i].isFocused()) {
+        focusedIdx = i;
+        break;
+      }
+    }
+    let nextIdx = focusedIdx + 1;
+    if (focusedIdx === windows.length - 1) {
+      nextIdx = 0;
+    }
+    this.ensureWindow(windows[nextIdx].windowKey);
+  };
+
   getOpenWindowCount(type = 'all') {
     return this.getOpenWindows(type).length;
   }
