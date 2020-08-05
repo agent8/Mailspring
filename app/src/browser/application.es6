@@ -9,6 +9,7 @@ import {
   systemPreferences,
   Notification,
   screen,
+  globalShortcut,
 } from 'electron';
 
 import fs from 'fs-plus';
@@ -1070,6 +1071,10 @@ export default class Application extends EventEmitter {
   // needs to manually bubble them up to the Application instance via IPC or they won't be
   // handled. This happens in workspace-element.es6
   handleEvents() {
+    if (process.mas) {
+      globalShortcut.register('CommandOrControl+`', this.windowManager.switchWindow);
+    }
+
     this.on('application:run-all-specs', () => {
       const win = this.windowManager.focusedWindow();
       this.runSpecs({
