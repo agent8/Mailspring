@@ -10,7 +10,7 @@ import {
 
 import BaseBlockPlugins from './base-block-plugins';
 
-export const DEFAULT_FONT_SIZE = '14px';
+export const DEFAULT_FONT_SIZE = AppEnv.config.get('core.fontsize');
 export const DEFAULT_FONT_OPTIONS = [
   { name: '9', value: '8px' },
   { name: '10', value: '10px' },
