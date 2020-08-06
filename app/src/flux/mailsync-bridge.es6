@@ -2,10 +2,6 @@ import path from 'path';
 import fs from 'fs';
 import { ipcRenderer, remote } from 'electron';
 import _ from 'underscore';
-// import DestroyDraftTask from './tasks/destroy-draft-task';
-// import RestoreDraftTask from './tasks/restore-draft-task';
-// import SyncbackDraftTask from './tasks/syncback-draft-task';
-
 import Task from './tasks/task';
 import SetObservableRange from './models/set-observable-range';
 import TaskQueue from './stores/task-queue';
@@ -1327,18 +1323,10 @@ export default class MailsyncBridge {
         });
       }
     }
-    let folderIdsChanged = false;
-    if (folderIds.length !== (this._cachedObservableFolderIds[accountId] || []).length) {
-      folderIdsChanged = true;
-    } else {
-      for (let i = 0; i < folderIds.length; i++) {
-        const cachedFolderId = (this._cachedObservableFolderIds[accountId] || [])[i];
-        if (folderIds[i] !== cachedFolderId) {
-          folderIdsChanged = true;
-          break;
-        }
-      }
-    }
+    const folderIdsChanged = !_.isEqual(
+      folderIds,
+      this._cachedObservableFolderIds[accountId] || []
+    );
     if (folderIdsChanged) {
       this._cachedObservableFolderIds[accountId] = folderIds;
     } else if (newThreadIds.length === 0 && newMessageIds.length === 0) {
