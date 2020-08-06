@@ -12,22 +12,22 @@ import BaseBlockPlugins from './base-block-plugins';
 
 export const DEFAULT_FONT_SIZE = AppEnv.config.get('core.fontsize');
 export const DEFAULT_FONT_OPTIONS = [
-  { name: '9', value: '8px' },
-  { name: '10', value: '10px' },
-  { name: '11', value: '14px' },
-  { name: '12', value: '16px' },
-  { name: '13', value: '17px' },
-  { name: '14', value: '19px' },
-  { name: '16', value: '21px' },
-  { name: '18', value: '24px' },
-  { name: '24', value: '32px' },
-  { name: '32', value: '42px' },
-  { name: '48', value: '64px' },
-  { name: '64', value: '85px' },
-  { name: '72', value: '96px' },
-  { name: '96', value: '128px' },
-  { name: '144', value: '192px' },
-  { name: '256', value: '341px' },
+  { name: '9', value: '9pt' },
+  { name: '10', value: '10pt' },
+  { name: '11', value: '11pt' },
+  { name: '12', value: '12pt' },
+  { name: '13', value: '13pt' },
+  { name: '14', value: '14pt' },
+  { name: '16', value: '16pt' },
+  { name: '18', value: '18pt' },
+  { name: '24', value: '24pt' },
+  { name: '32', value: '32pt' },
+  { name: '48', value: '48pt' },
+  { name: '64', value: '64pt' },
+  { name: '72', value: '72pt' },
+  { name: '96', value: '96pt' },
+  { name: '144', value: '144pt' },
+  { name: '256', value: '256pt' },
 ];
 
 export const DEFAULT_FONT_FACE = AppEnv.config.get('core.fontface');
@@ -142,8 +142,8 @@ export const MARK_CONFIG = {
       return typeof v === 'string' ? (
         <font style={{ fontSize: v }}>{children}</font>
       ) : (
-        <font size={v}>{children}</font>
-      );
+          <font size={v}>{children}</font>
+        );
     },
   },
   face: {
