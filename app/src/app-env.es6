@@ -13,6 +13,8 @@ import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
 import RegExpUtils from './regexp-utils';
+import { WindowLevel } from './constant';
+
 const LOG = require('electron-log');
 // const archiver = require('archiver');
 // let getOSInfo = null;
@@ -566,18 +568,18 @@ export default class AppEnvConstructor {
 
   getWindowLevel() {
     if (this.isComposerWindow()) {
-      return 3;
+      return WindowLevel.Composer;
     }
     if (this.isThreadWindow()) {
-      return 2;
+      return WindowLevel.Thread;
     }
     if (this.isOnboardingWindow()) {
-      return 4;
+      return WindowLevel.OnBoarding;
     }
     if (this.isBugReportingWindow()) {
-      return 5;
+      return WindowLevel.BugReporting;
     }
-    return 1;
+    return WindowLevel.Main;
   }
   isMainWindow() {
     return !!this.getLoadSettings().mainWindow;
