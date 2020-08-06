@@ -136,14 +136,14 @@ export const MARK_CONFIG = {
 
       // we don't apply any font size if the font size is the default value,
       // so other clients also show it in their default size of choice.
-      if (v === DEFAULT_FONT_SIZE) {
-        v = undefined;
-      }
+      // if (v === DEFAULT_FONT_SIZE) {
+      //   v = undefined;
+      // }
       return typeof v === 'string' ? (
         <font style={{ fontSize: v }}>{children}</font>
       ) : (
-          <font size={v}>{children}</font>
-        );
+        <font size={v}>{children}</font>
+      );
     },
   },
   face: {
