@@ -6,7 +6,6 @@ import { Emitter, Disposable } from 'event-kit';
 
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
-let blockListForEditor = [];
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
 more specifically block only hotkeys that have no modifier keys (things like
@@ -169,7 +168,7 @@ export default class KeymapManager {
       for (const command of this._commandsCache[keystrokes] || []) {
         if (
           withinSlateEditor &&
-          blockListForEditor.some(blockCommand => blockCommand === command)
+          (!command.startsWith('composer:') && !command.startsWith('contenteditable:'))
         ) {
           continue;
         }
@@ -211,14 +210,6 @@ export default class KeymapManager {
         }
       }
     }
-
-    const blockList = [];
-    for (const command of Object.keys(this._bindingsCache)) {
-      if (!command.startsWith('composer:') && !command.startsWith('contenteditable:')) {
-        blockList.push(command);
-      }
-    }
-    blockListForEditor = blockList;
 
     this._emitter.emit('on-did-reload-keymap');
   }
