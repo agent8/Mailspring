@@ -86,7 +86,17 @@ export default class WindowManager {
     if (focusedIdx === windows.length - 1) {
       nextIdx = 0;
     }
-    this.ensureWindow(windows[nextIdx].windowKey);
+    const win = windows[nextIdx];
+    if (!win) {
+      return;
+    } else if (win.isMinimized()) {
+      win.restore();
+      win.focus();
+    } else if (!win.isVisible()) {
+      win.showWhenLoaded();
+    } else {
+      win.focus();
+    }
   };
 
   getOpenWindowCount(type = 'all') {
