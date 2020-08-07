@@ -55,6 +55,9 @@ export default class WindowManager {
     const values = [];
     Object.keys(this._windows).forEach(key => {
       const win = this._windows[key];
+      if (win.browserWindow.isDestroyed()) {
+        delete this._windows[key];
+      }
       if (win.windowType !== WindowLauncher.EMPTY_WINDOW) {
         if (type === 'all' || win.windowType === type) {
           values.push(win);
