@@ -255,7 +255,7 @@ export default class MessageControls extends React.Component {
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onForward,
     };
     const trash = {
-      name: this.props.message.isInTrash() ? 'Expunge' : 'Trash',
+      name: this.props.message.isInTrash() ? 'Delete Forever' : 'Trash',
       image: 'trash.svg',
       select: this.props.threadPopedOut ? this._onPopoutThread : this._onTrash,
     };
@@ -486,12 +486,24 @@ export default class MessageControls extends React.Component {
         }
       });
     }
-    Actions.queueTasks(tasks);
+    AppEnv.showMessageBox({
+      title: 'Are you sure?',
+      detail: 'Message(s) will be permanently deleted.',
+      buttons: ['Yes', 'No'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then(({ response } = {}) => {
+      if (response !== 0) {
+        AppEnv.logDebug(`Expunging message canceled, user clicked No`);
+        return;
+      }
+      Actions.queueTasks(tasks);
+      if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
+        Actions.popSheet({ reason: 'MessageControls:_onExpunge' });
+      }
+    });
     if (event) {
       event.stopPropagation();
-    }
-    if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
-      Actions.popSheet({ reason: 'MessageControls:_onExpunge' });
     }
     return;
   };
