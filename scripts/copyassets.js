@@ -125,6 +125,30 @@ const file_mappings = [
     './app/static/images/preferences/privacy/send-data.png',
   ],
   [
+    'veyron-design/images/desktop/all-your-devices.png',
+    './app/static/images/preferences/edison-account/all-your-devices.png',
+  ],
+  [
+    'veyron-design/images/desktop/all-your-devices-dark.png',
+    './app/static/images/preferences/edison-account/all-your-devices-dark.png',
+  ],
+  [
+    'veyron-design/images/desktop/enterprise-package.png',
+    './app/static/images/preferences/edison-account/enterprise-package.png',
+  ],
+  [
+    'veyron-design/images/desktop/enterprise-package-dark.png',
+    './app/static/images/preferences/edison-account/enterprise-package-dark.png',
+  ],
+  [
+    'veyron-design/images/desktop/paywall-contacts-nobg.png',
+    './app/static/images/preferences/edison-account/paywall-contacts-nobg.png',
+  ],
+  [
+    'veyron-design/images/desktop/paywall-contacts-nobg-dark.png',
+    './app/static/images/preferences/edison-account/paywall-contacts-nobg-dark.png',
+  ],
+  [
     'veyron-design/images/desktop/focused-inbox.png',
     './app/static/images/notification/focused-inbox.png',
   ],
