@@ -396,9 +396,14 @@ export function BuildColorPicker(config) {
 }
 export function BuildFontSizePicker(config) {
   return class FontPicker extends React.Component {
+    constructor(props) {
+      super(props);
+      config.default = AppEnv.config.get('core.fontsize');
+    }
     _onSetValue = item => {
+      AppEnv.config.set('core.fontsize', item)
       const { onChange, value } = this.props;
-      let markValue = item !== config.default ? item : null;
+      let markValue = item
       if (!(typeof config.options[0].value === 'string')) {
         markValue = markValue / 1;
       }
