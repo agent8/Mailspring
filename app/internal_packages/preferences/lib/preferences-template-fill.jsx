@@ -11,7 +11,7 @@ import {
   PreferencesMutedNotifacations,
   PreferencesAccountNotifacations,
 } from './components/preferences-notifications';
-import { MyAccount, AccountType, Devices } from './components/preferences-my-account';
+import EdisonAccount from './components/preferences-my-account';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
   AppearanceScaleSlider,
@@ -271,36 +271,15 @@ const preferencesTemplateFill = {
       ],
     },
     {
-      tabId: 'MyAccount',
+      tabId: 'My Account',
       displayName: 'My Account',
       order: 2,
       configGroup: [
         {
-          groupName: 'BACK UP & SYNC',
           groupItem: [
             {
               label: 'Back up & Sync',
-              component: MyAccount,
-              keywords: [],
-            },
-          ],
-        },
-        {
-          groupName: 'ACCOUNT TYPE',
-          groupItem: [
-            {
-              label: 'Account Type',
-              component: AccountType,
-              keywords: [],
-            },
-          ],
-        },
-        {
-          groupName: 'DEVICES',
-          groupItem: [
-            {
-              label: 'Devices',
-              component: Devices,
+              component: EdisonAccount,
               keywords: [],
             },
           ],
