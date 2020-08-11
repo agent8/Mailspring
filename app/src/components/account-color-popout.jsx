@@ -6,39 +6,54 @@ import RetinaImg from './retina-img';
 export default class AccountColorPopout extends Component {
   constructor(props) {
     super(props);
-
     this.wrapperRef = React.createRef();
-    this.handleClickOutside = this.handleClickOutside.bind(this);
-  }
-
-  componentDidMount() {
-    document.addEventListener('mousedown', this.handleClickOutside);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('mousedown', this.handleClickOutside);
-  }
-
-  handleClickOutside(event) {
-    if (this.wrapperRef && !this.wrapperRef.current.contains(event.target)) {
-      this.props._hideAccountColorPopout();
+    this.state = {
+      colors: AppEnv.config.get("core.account.colors") || {}
     }
   }
 
+  componentDidMount() {
+    this.disposable = AppEnv.config.onDidChange(
+      'core.account.colors',
+      () => {
+        this.setState({
+          colors: AppEnv.config.get("core.account.colors") || {}
+        })
+      }
+    )
+  }
+
+  componentWillUnmount() {
+    this.disposable.dispose()
+  }
+
+  onCheckColor = bgColor => {
+    const { item } = this.props;
+    const colors = AppEnv.config.get("core.account.colors") || {};
+    colors[item.accountIds[0]] = bgColor
+    AppEnv.config.set('core.account.colors', colors)
+  };
+
   render() {
     const { item } = this.props
+    const { colors } = this.state
     return (
       <div className="popout" ref={this.wrapperRef}>
         Change Account Color
         <div className="color-choice">
           {LabelColorizer.colors.map((color, idx) => {
-            const className = AppEnv.config.get("core.account.colors")[item.accountIds[0]] === idx ? 'checked' : '';
+            let className = '';
+            if (colors[item.accountIds[0]] !== undefined) {
+              className = colors[item.accountIds[0]] === idx ? 'checked' : '';
+            } else {
+              className = idx === 0 ? 'checked' : '';
+            }
             return (
               <div
                 key={color}
                 className={className}
                 style={{ background: color }}
-                onClick={() => this.props.onCheckColor(idx)}
+                onClick={() => this.onCheckColor(idx)}
               >
                 <RetinaImg
                   className="check-img check"
