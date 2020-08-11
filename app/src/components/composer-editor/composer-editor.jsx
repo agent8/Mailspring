@@ -77,6 +77,7 @@ export default class ComposerEditor extends React.Component {
   focus = () => {
     const { onChange, value } = this.props;
     const defaultFont = AppEnv.config.get('core.fontface') || 'sans-serif';
+    const defaultSize = AppEnv.config.get('core.fontsize') || '14px';
     onChange(
       value
         .change()
@@ -86,6 +87,11 @@ export default class ComposerEditor extends React.Component {
           object: 'mark',
           type: 'face',
           data: { value: defaultFont },
+        })
+        .addMark({
+          object: 'mark',
+          type: 'size',
+          data: { value: defaultSize }
         })
         .focus()
     );

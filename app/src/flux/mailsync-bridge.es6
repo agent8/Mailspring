@@ -2,10 +2,6 @@ import path from 'path';
 import fs from 'fs';
 import { ipcRenderer, remote } from 'electron';
 import _ from 'underscore';
-// import DestroyDraftTask from './tasks/destroy-draft-task';
-// import RestoreDraftTask from './tasks/restore-draft-task';
-// import SyncbackDraftTask from './tasks/syncback-draft-task';
-
 import Task from './tasks/task';
 import SetObservableRange from './models/set-observable-range';
 import TaskQueue from './stores/task-queue';
@@ -162,11 +158,10 @@ export default class MailsyncBridge {
     this._setObservableRangeTimer = {};
     this._cachedObservableThreadIds = {};
     this._cachedObservableMessageIds = {};
+    this._cachedObservableFolderIds = {};
     this._folderListCache = {};
     this._folderListTTL = 60000;
     this._cachedObservableTTL = 30000;
-    // Store threads that are opened in seperate window
-    this._additionalObservableThreads = {};
     this._analyzeDBTimer = null;
 
     if (AppEnv.isMainWindow()) {
@@ -560,7 +555,7 @@ export default class MailsyncBridge {
     delete this._setObservableRangeTimer[account.id];
     delete this._cachedObservableThreadIds[account.id];
     delete this._cachedObservableMessageIds[account.id];
-    delete this._additionalObservableThreads[account.id];
+    delete this._cachedObservableFolderIds[account.id];
     delete this._cachedFetchAttachments[account.id];
     delete this._cachedFetchBodies[account.id];
     delete this._folderListCache[account.id];
@@ -1303,30 +1298,17 @@ export default class MailsyncBridge {
       });
     }
   };
-  _sentObservableRangeTask = (accountId, missingThreadIds, missingMessageIds) => {
-    this._updateObservableCache(
-      { accountId, missingIds: missingThreadIds },
+  _sentObservableRangeTask = (accountId, missingThreadIds, missingMessageIds, priority = 0) => {
+    const newThreadIds = this._updateObservableCache(
+      { accountId, missingIds: missingThreadIds, priority },
       this._cachedObservableThreadIds,
       this._cachedObservableTTL
     );
-    this._updateObservableCache(
-      { accountId, missingIds: missingMessageIds },
+    const newMessageIds = this._updateObservableCache(
+      { accountId, missingIds: missingMessageIds, priority },
       this._cachedObservableMessageIds,
       this._cachedObservableTTL
     );
-    const threadIds = (this._cachedObservableThreadIds[accountId] || []).map(cache => cache.id);
-    const currentThreadId = this._getFocusedThreadId(accountId);
-    if (currentThreadId) {
-      threadIds.push(currentThreadId);
-    }
-    const openThreadWindowIds = this._getOpenThreadWindowIds(accountId);
-    if (Array.isArray(openThreadWindowIds)) {
-      threadIds.push(...openThreadWindowIds);
-    }
-    const messageIds = (this._cachedObservableMessageIds[accountId] || []).map(cache => cache.id);
-    if (threadIds.length === 0 && messageIds.length === 0) {
-      return;
-    }
     const folderIds = [];
     FocusedPerspectiveStore =
       FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
@@ -1341,6 +1323,29 @@ export default class MailsyncBridge {
         });
       }
     }
+    const folderIdsChanged = !_.isEqual(
+      folderIds,
+      this._cachedObservableFolderIds[accountId] || []
+    );
+    if (folderIdsChanged) {
+      this._cachedObservableFolderIds[accountId] = folderIds;
+    } else if (newThreadIds.length === 0 && newMessageIds.length === 0) {
+      console.log('no new ids, skipping this round');
+      return;
+    }
+    const threadIds = (this._cachedObservableThreadIds[accountId] || []).map(cache => cache.id);
+    const currentThreadId = this._getFocusedThreadId(accountId);
+    if (currentThreadId) {
+      threadIds.push(currentThreadId);
+    }
+    const openThreadWindowIds = this._getOpenThreadWindowIds(accountId);
+    if (Array.isArray(openThreadWindowIds)) {
+      threadIds.push(...openThreadWindowIds);
+    }
+    const messageIds = (this._cachedObservableMessageIds[accountId] || []).map(cache => cache.id);
+    if (threadIds.length === 0 && messageIds.length === 0) {
+      return;
+    }
     const tmpTask = new SetObservableRange({ accountId, threadIds, messageIds, folderIds });
     this.sendMessageToAccount(accountId, tmpTask.toJSON());
   };
@@ -1348,11 +1353,12 @@ export default class MailsyncBridge {
   _setObservableRangeTaskTimer = (
     accountId = '',
     missingThreadIds = [],
-    missingMessageIds = []
+    missingMessageIds = [],
+    priority = 0
   ) => {
     this._setObservableRangeTimer[accountId] = {
       id: setTimeout(() => {
-        this._sentObservableRangeTask(accountId, missingThreadIds, missingMessageIds);
+        this._sentObservableRangeTask(accountId, missingThreadIds, missingMessageIds, priority);
       }, 1000),
       timestamp: Date.now(),
     };
@@ -1367,18 +1373,28 @@ export default class MailsyncBridge {
       delete this._setObservableRangeTimer[accountId];
       delete this._cachedObservableThreadIds[accountId];
       delete this._cachedObservableMessageIds[accountId];
+      delete this._cachedObservableFolderIds[accountId];
       return;
     }
-    console.log('windowLevel: ', windowLevel);
     if (this._setObservableRangeTimer[accountId]) {
       if (Date.now() - this._setObservableRangeTimer[accountId].timestamp > 1000) {
-        this._sentObservableRangeTask(accountId, missingThreadIds, missingMessageIds);
+        this._sentObservableRangeTask(accountId, missingThreadIds, missingMessageIds, windowLevel);
       } else {
         clearTimeout(this._setObservableRangeTimer[accountId].id);
-        this._setObservableRangeTaskTimer(accountId, missingThreadIds, missingMessageIds);
+        this._setObservableRangeTaskTimer(
+          accountId,
+          missingThreadIds,
+          missingMessageIds,
+          windowLevel
+        );
       }
     } else {
-      this._setObservableRangeTaskTimer(accountId, missingThreadIds, missingMessageIds);
+      this._setObservableRangeTaskTimer(
+        accountId,
+        missingThreadIds,
+        missingMessageIds,
+        windowLevel
+      );
     }
   };
 
