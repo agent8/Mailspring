@@ -155,7 +155,7 @@ class OutlineViewItem extends Component {
       originalText: '',
       showAllChildren: false,
       showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
-      colors: AppEnv.config.get('core.account.colors'),
+      colors: AppEnv.config.get('core.account.colors') || {},
       showPopOut: false
     };
     this._mounted = false;
@@ -457,7 +457,12 @@ class OutlineViewItem extends Component {
       item.children &&
       item.children.length > 0
     ) {
-      const colorId = colors[item.accountIds[0]];
+      let colorId;
+      if (colors[item.accountIds[0]] !== undefined) {
+        colorId = colors[item.accountIds[0]];
+      } else {
+        colorId = 12;
+      }
       const color = LabelColorizer.colors[colorId];
       return <span className="account-color" style={{ color: color }}>|</span>
     }
@@ -468,7 +473,7 @@ class OutlineViewItem extends Component {
 
   onCheckColor = bgColor => {
     const { item } = this.props;
-    const colors = AppEnv.config.get("core.account.colors");
+    const colors = AppEnv.config.get("core.account.colors") || {};
     colors[item.accountIds[0]] = bgColor
     AppEnv.config.set('core.account.colors', colors)
   };
