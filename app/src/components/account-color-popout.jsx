@@ -1,5 +1,6 @@
 
 import React, { Component } from 'react';
+import { AccountStore } from 'mailspring-exports';
 import { LabelColorizer } from 'mailspring-component-kit';
 import RetinaImg from './retina-img';
 
@@ -37,6 +38,7 @@ export default class AccountColorPopout extends Component {
   render() {
     const { item } = this.props
     const { colors } = this.state
+    const accounts = AccountStore.accounts().map(account => account.id);
     return (
       <div className="popout" ref={this.wrapperRef}>
         Change Account Color
@@ -46,7 +48,8 @@ export default class AccountColorPopout extends Component {
             if (colors[item.accountIds[0]] !== undefined) {
               className = colors[item.accountIds[0]] === idx ? 'checked' : '';
             } else {
-              className = idx === 0 ? 'checked' : '';
+              const accountIndex = accounts.findIndex(account => account === item.accountIds[0]);
+              className = accountIndex === idx ? 'checked' : '';
             }
             return (
               <div
