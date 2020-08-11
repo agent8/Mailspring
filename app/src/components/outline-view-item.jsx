@@ -464,7 +464,7 @@ class OutlineViewItem extends Component {
       if (colors[item.accountIds[0]] !== undefined) {
         colorId = colors[item.accountIds[0]];
       } else {
-        colorId = 12;
+        colorId = 0;
       }
       const color = LabelColorizer.colors[colorId];
       return <span className="account-color" style={{ color: color }}>|</span>
@@ -491,7 +491,7 @@ class OutlineViewItem extends Component {
           originRect: event.target.getBoundingClientRect(),
           disablePointer: true,
           direction: 'left',
-          className: 'poppop'
+          className: 'popout-container'
         }
       )
     }
