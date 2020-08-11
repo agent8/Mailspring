@@ -4,9 +4,12 @@ import { LabelColorizer } from 'mailspring-component-kit';
 class ThreadListParticipants extends React.Component {
   constructor(props) {
     super(props);
+    const colors = AppEnv.config.get('core.account.colors') || {}
     this.state = {
       showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
-      color: LabelColorizer.colors[AppEnv.config.get('core.account.colors')[this.props.thread.accountId]]
+      color: colors[this.props.thread.accountId] !== undefined
+        ? LabelColorizer.colors[colors[this.props.thread.accountId]]
+        : LabelColorizer.colors[0]
     }
   }
   static displayName = 'ThreadListParticipants';
@@ -21,15 +24,16 @@ class ThreadListParticipants extends React.Component {
   }
 
   componentDidMount() {
-    AppEnv.config.onDidChange(
+    this.disposables = []
+    this.disposables.push(AppEnv.config.onDidChange(
       'core.appearance.accountcolors',
       () => {
         this.setState({
           showAccountColor: AppEnv.config.get('core.appearance.accountcolors')
         })
       }
-    );
-    AppEnv.config.onDidChange(
+    ))
+    this.disposables.push(AppEnv.config.onDidChange(
       'core.account.colors',
       () => {
         const colorId = AppEnv.config.get("core.account.colors")[this.props.thread.accountId]
@@ -37,7 +41,15 @@ class ThreadListParticipants extends React.Component {
           color: LabelColorizer.colors[colorId]
         })
       }
-    )
+    ))
+  }
+
+  componentWillUnmount() {
+    if (this.disposables) {
+      this.disposables.forEach(disposable => {
+        disposable.dispose();
+      })
+    }
   }
 
   render() {

@@ -456,7 +456,7 @@ class PreferencesAccountDetails extends Component {
 
   onCheckColor = bgColor => {
     const { account } = this.state;
-    const colors = AppEnv.config.get("core.account.colors");
+    const colors = AppEnv.config.get("core.account.colors") || {};
     colors[account.id] = bgColor
     AppEnv.config.set('core.account.colors', colors)
   };
@@ -497,7 +497,13 @@ class PreferencesAccountDetails extends Component {
 
               <div className="color-choice">
                 {LabelColorizer.colors.map((color, idx) => {
-                  const className = AppEnv.config.get("core.account.colors")[account.id] === idx ? 'checked' : '';
+                  const colors = AppEnv.config.get("core.account.colors") || {}
+                  let className = '';
+                  if (colors[account.id] !== undefined) {
+                    className = colors[account.id] === idx ? 'checked' : '';
+                  } else {
+                    className = idx === 0 ? 'checked' : '';
+                  }
                   return (
                     <div
                       key={color}
