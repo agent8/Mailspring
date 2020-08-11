@@ -55,6 +55,9 @@ export default class WindowManager {
     const values = [];
     Object.keys(this._windows).forEach(key => {
       const win = this._windows[key];
+      if (win.browserWindow.isDestroyed()) {
+        delete this._windows[key];
+      }
       if (win.windowType !== WindowLauncher.EMPTY_WINDOW) {
         if (type === 'all' || win.windowType === type) {
           values.push(win);
@@ -83,7 +86,17 @@ export default class WindowManager {
     if (focusedIdx === windows.length - 1) {
       nextIdx = 0;
     }
-    this.ensureWindow(windows[nextIdx].windowKey);
+    const win = windows[nextIdx];
+    if (!win) {
+      return;
+    } else if (win.isMinimized()) {
+      win.restore();
+      win.focus();
+    } else if (!win.isVisible()) {
+      win.showWhenLoaded();
+    } else {
+      win.focus();
+    }
   };
 
   getOpenWindowCount(type = 'all') {

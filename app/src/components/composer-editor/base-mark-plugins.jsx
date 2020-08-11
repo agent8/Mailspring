@@ -10,12 +10,24 @@ import {
 
 import BaseBlockPlugins from './base-block-plugins';
 
-export const DEFAULT_FONT_SIZE = 2;
+export const DEFAULT_FONT_SIZE = AppEnv.config.get('core.fontsize');
 export const DEFAULT_FONT_OPTIONS = [
-  { name: 'Small', value: 1 },
-  { name: 'Normal', value: 2 },
-  { name: 'Large', value: 4 },
-  { name: 'Huge', value: 6 },
+  { name: '9', value: '9px' },
+  { name: '10', value: '10px' },
+  { name: '11', value: '11px' },
+  { name: '12', value: '12px' },
+  { name: '13', value: '13px' },
+  { name: '14', value: '14px' },
+  { name: '16', value: '16px' },
+  { name: '18', value: '18px' },
+  { name: '24', value: '24px' },
+  { name: '32', value: '32px' },
+  { name: '48', value: '48px' },
+  { name: '64', value: '64px' },
+  { name: '72', value: '72px' },
+  { name: '96', value: '96px' },
+  { name: '144', value: '144px' },
+  { name: '256', value: '256px' },
 ];
 
 export const DEFAULT_FONT_FACE = AppEnv.config.get('core.fontface');
@@ -124,14 +136,14 @@ export const MARK_CONFIG = {
 
       // we don't apply any font size if the font size is the default value,
       // so other clients also show it in their default size of choice.
-      if (v === DEFAULT_FONT_SIZE) {
-        v = undefined;
-      }
+      // if (v === DEFAULT_FONT_SIZE) {
+      //   v = undefined;
+      // }
       return typeof v === 'string' ? (
         <font style={{ fontSize: v }}>{children}</font>
       ) : (
-          <font size={v}>{children}</font>
-        );
+        <font size={v}>{children}</font>
+      );
     },
   },
   face: {
@@ -321,22 +333,22 @@ export default [
           default: DEFAULT_FONT_SIZE,
           options: DEFAULT_FONT_OPTIONS,
           convert: provided => {
-            if (typeof provided === 'string') {
-              let size = 2;
-              if (provided.endsWith('px')) {
-                // 16px = 12pt
-                size = PT_TO_SIZE[Math.round((provided.replace('px', '') / 1) * 0.75)];
-              }
-              if (provided.endsWith('em')) {
-                // 1em = 12pt
-                size = PT_TO_SIZE[Math.round(provided.replace('em', '') * 12)];
-              }
-              if (provided.endsWith('pt')) {
-                size = PT_TO_SIZE[Math.round(provided.replace('pt', '') * 1)];
-              }
-              const opt = DEFAULT_FONT_OPTIONS.find(({ value }) => value >= size);
-              return opt ? opt.value : 2;
-            }
+            // if (typeof provided === 'string') {
+            //   let size = 2;
+            //   if (provided.endsWith('px')) {
+            //     // 16px = 12pt
+            //     size = PT_TO_SIZE[Math.round((provided.replace('px', '') / 1) * 0.75)];
+            //   }
+            //   if (provided.endsWith('em')) {
+            //     // 1em = 12pt
+            //     size = PT_TO_SIZE[Math.round(provided.replace('em', '') * 12)];
+            //   }
+            //   if (provided.endsWith('pt')) {
+            //     size = PT_TO_SIZE[Math.round(provided.replace('pt', '') * 1)];
+            //   }
+            //   const opt = DEFAULT_FONT_OPTIONS.find(({ value }) => value >= size);
+            //   return opt ? opt.value : 2;
+            // }
             return provided;
           },
         }),

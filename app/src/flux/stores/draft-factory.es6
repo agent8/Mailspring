@@ -113,13 +113,15 @@ const mergeDefaultBccAndCCs = async (message, account) => {
 };
 
 class DraftFactory {
-  getBlankContentWithDefaultFontFamily() {
-    const defaultFont = AppEnv.config.get('core.fontface') || 'sans-serif';
+  getBlankContentWithDefaultFontValues() {
+    const defaultValues = AppEnv.config.get('core')
+    const defaultSize = defaultValues.fontsize || '14px';
+    const defaultFont = defaultValues.fontface || 'sans-serif';
     return `
-    <font style="font-family:${defaultFont}">
-      ${'\u200b'}
-      <br/>
-    </font>
+      <font style="font-size:${defaultSize};font-family:${defaultFont}">
+        ${'\u200b'}
+        <br/>
+      </font>
     `;
   }
   static updateFiles(message, refMessageIsDraft = false, noCopy = false) {
@@ -177,7 +179,7 @@ class DraftFactory {
     // const uniqueId = `${Math.floor(Date.now() / 1000)}.${Utils.generateTempId()}`;
     const uniqueId = uuid();
     const defaults = {
-      body: `${this.getBlankContentWithDefaultFontFamily()}`,
+      body: `${this.getBlankContentWithDefaultFontValues()}`,
       subject: '',
       version: 0,
       unread: false,
@@ -486,10 +488,10 @@ class DraftFactory {
     }
     const accountId = findAccountIdFrom(message, thread);
     let body = `
-        ${this.getBlankContentWithDefaultFontFamily()}
+        ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
-          message.replyAttributionLine()
-        )}</div>
+      message.replyAttributionLine()
+    )}</div>
         <blockquote class="gmail_quote" data-edison="true"
           style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
           ${prevBody}
@@ -497,7 +499,7 @@ class DraftFactory {
         </blockquote>
         `;
     if (!AppEnv.config.get('core.composing.includeOriginalEmailInReply')) {
-      body = `${this.getBlankContentWithDefaultFontFamily()}`;
+      body = `${this.getBlankContentWithDefaultFontValues()}`;
     }
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
@@ -554,7 +556,7 @@ class DraftFactory {
       msgOrigin: Message.ForwardDraft,
       pastMessageIds: [message.id],
       body: `
-        ${this.getBlankContentWithDefaultFontFamily()}
+        ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote">
           <br>
           ---------- Forwarded message ---------

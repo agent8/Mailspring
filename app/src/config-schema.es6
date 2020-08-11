@@ -242,6 +242,10 @@ export default {
         type: 'string',
         default: 'sans-serif',
       },
+      fontsize: {
+        type: 'string',
+        default: '14px',
+      },
       composing: {
         type: 'object',
         properties: {
