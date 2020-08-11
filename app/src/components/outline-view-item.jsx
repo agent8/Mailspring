@@ -156,7 +156,6 @@ class OutlineViewItem extends Component {
       showAllChildren: false,
       showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
       colors: AppEnv.config.get('core.account.colors') || {},
-      showPopOut: false
     };
     this._mounted = false;
   }
@@ -178,22 +177,23 @@ class OutlineViewItem extends Component {
       targetDiv: ReactDOM.findDOMNode(this.refs[`${this.props.item.id}-span`]),
     });
     this.checkCurrentShowAllChildren(this.props);
-    AppEnv.config.onDidChange(
+    this.disposables = [];
+    this.disposables.push(AppEnv.config.onDidChange(
       'core.appearance.accountcolors',
       () => {
         this.setState({
           showAccountColor: AppEnv.config.get('core.appearance.accountcolors')
         })
       }
-    );
-    AppEnv.config.onDidChange(
+    ));
+    this.disposables.push(AppEnv.config.onDidChange(
       'core.account.colors',
       () => {
         this.setState({
           colors: AppEnv.config.get("core.account.colors")
         })
       }
-    )
+    ));
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -208,6 +208,9 @@ class OutlineViewItem extends Component {
   }
 
   componentWillUnmount() {
+    if (this.disposables) {
+      this.disposables.forEach(disposable => disposable.depose());
+    }
     this._mounted = false;
     clearTimeout(this._expandTimeout);
     if (this._shouldShowContextMenu()) {
@@ -471,14 +474,7 @@ class OutlineViewItem extends Component {
     }
   }
 
-  onCheckColor = bgColor => {
-    const { item } = this.props;
-    const colors = AppEnv.config.get("core.account.colors") || {};
-    colors[item.accountIds[0]] = bgColor
-    AppEnv.config.set('core.account.colors', colors)
-  };
-
-  _onRightClick = () => {
+  _onRightClick = (event) => {
     const { item } = this.props;
     if (
       AppEnv.config.get('core.appearance.accountcolors') &&
@@ -486,12 +482,19 @@ class OutlineViewItem extends Component {
       item.children &&
       item.children.length > 0
     ) {
-      this.setState({ showPopOut: !this.state.showPopOut })
+      Actions.openPopover(
+        <AccountColorPopout
+          onCheckColor={this.onCheckColor}
+          item={item}
+        />,
+        {
+          originRect: event.target.getBoundingClientRect(),
+          disablePointer: true,
+          direction: 'left',
+          className: 'poppop'
+        }
+      )
     }
-  }
-
-  _hideAccountColorPopout = () => {
-    this.setState({ showPopOut: false });
   }
 
   _renderItem(item = this.props.item, state = this.state) {
@@ -521,13 +524,6 @@ class OutlineViewItem extends Component {
           {this._renderItemContent()}
 
         </DropZone>
-        {state.showPopOut ?
-          <AccountColorPopout
-            onCheckColor={this.onCheckColor}
-            item={item}
-            _hideAccountColorPopout={this._hideAccountColorPopout}
-          />
-          : null}
       </div>
 
     );
