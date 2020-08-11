@@ -1,15 +1,17 @@
 import { React, PropTypes, Utils, Message, Contact } from 'mailspring-exports';
+import { AccountStore } from 'mailspring-exports';
 import { LabelColorizer } from 'mailspring-component-kit';
 
 class ThreadListParticipants extends React.Component {
   constructor(props) {
     super(props);
     const colors = AppEnv.config.get('core.account.colors') || {}
+    const accounts = AccountStore.accounts().map(account => account.id);
     this.state = {
       showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
       color: colors[this.props.thread.accountId] !== undefined
         ? LabelColorizer.colors[colors[this.props.thread.accountId]]
-        : LabelColorizer.colors[0]
+        : LabelColorizer.colors[accounts.findIndex(account => account === this.props.thread.accountId)]
     }
   }
   static displayName = 'ThreadListParticipants';

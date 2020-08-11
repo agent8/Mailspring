@@ -454,6 +454,7 @@ class OutlineViewItem extends Component {
 
   _renderAccountColor(item = this.props.item) {
     const { showAccountColor, colors } = this.state
+    const accounts = AccountStore.accounts().map(account => account.id);
     if (
       showAccountColor &&
       item.mode === 'original' &&
@@ -464,7 +465,7 @@ class OutlineViewItem extends Component {
       if (colors[item.accountIds[0]] !== undefined) {
         colorId = colors[item.accountIds[0]];
       } else {
-        colorId = 0;
+        colorId = accounts.findIndex(account => account === item.accountIds[0]);
       }
       const color = LabelColorizer.colors[colorId];
       return <span className="account-color" style={{ color: color }}>|</span>
