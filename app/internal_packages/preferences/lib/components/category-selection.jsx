@@ -1,7 +1,11 @@
 import utf7 from 'utf7';
-import { RetinaImg, BoldedSearchResult } from 'mailspring-component-kit';
-import { React, PropTypes, Actions } from 'mailspring-exports';
-import CategorySelectionPopover from './category-selection-popover';
+import {
+  RetinaImg,
+  DropdownMenu,
+  LabelColorizer,
+  BoldedSearchResult,
+} from 'mailspring-component-kit';
+import { Label, Utils, React, PropTypes } from 'mailspring-exports';
 
 export default class CategorySelection extends React.Component {
   static propTypes = {
@@ -13,36 +17,45 @@ export default class CategorySelection extends React.Component {
 
   constructor(props) {
     super(props);
+    this._categories = [];
+    this.state = {
+      searchValue: '',
+    };
   }
 
-  onSelect = (...args) => {
-    this._closePopover();
-    if (this.props.onSelect) {
-      this.props.onSelect(...args);
+  _itemsForCategories() {
+    if (!this.props.all) {
+      return [];
     }
-  };
-  _closePopover = () => {
-    Actions.closePopover();
-  };
-  _onOpenPopover = event => {
-    if (event && event.target && event.target.getBoundingClientRect) {
-      const originRect = event.target.getBoundingClientRect();
-      Actions.openPopover(
-        <CategorySelectionPopover
-          {...this.props}
-          onClosePopover={this._closePopover}
-          onSelect={this.onSelect}
-        />,
-        {
-          closeOnAppBlur: false,
-          originRect,
-          direction: 'down',
+    return this.props.all
+      .sort((a, b) => {
+        // var pathA = utf7.imap.decode(a.name || a.path).toUpperCase();
+        // var pathB = utf7.imap.decode(b.name || b.path).toUpperCase();
+        var pathA = (a.name || utf7.imap.decode(a.path)).toUpperCase();
+        var pathB = (b.name || utf7.imap.decode(b.path)).toUpperCase();
+        if (pathA < pathB) {
+          return -1;
         }
-      );
-    }
+        if (pathA > pathB) {
+          return 1;
+        }
+        return 0;
+      })
+      .filter(c =>
+        // Utils.wordSearchRegExp(this.state.searchValue).test(utf7.imap.decode(c.name || c.path))
+        Utils.wordSearchRegExp(this.state.searchValue).test(c.name || utf7.imap.decode(c.path))
+      )
+      .map(c => {
+        c.backgroundColor = LabelColorizer.backgroundColorDark(c);
+        return c;
+      });
+  }
+
+  _onSearchValueChange = event => {
+    this.setState({ searchValue: event.target.value });
   };
 
-  _renderItem = (item = { empty: true }, onClick = () => {}) => {
+  _renderItem = (item = { empty: true }) => {
     let icon;
     if (item.empty) {
       icon = <div className="empty-icon" />;
@@ -60,10 +73,10 @@ export default class CategorySelection extends React.Component {
     const displayPath = item.name || utf7.imap.decode(item.path);
 
     return (
-      <div className="category-item" onClick={onClick}>
+      <div className="category-item">
         {icon}
         <div className="category-display-name">
-          <BoldedSearchResult value={displayPath} query={''} />
+          <BoldedSearchResult value={displayPath} query={this.state.searchValue || ''} />
         </div>
       </div>
     );
@@ -80,17 +93,32 @@ export default class CategorySelection extends React.Component {
     if (this.props.disabled) {
       return this.renderDisabled();
     }
+    const placeholder = this.props.accountUsesLabels ? 'Choose folder or label' : 'Choose folder';
+
+    const headerComponents = [
+      <input
+        type="text"
+        tabIndex="-1"
+        key="textfield"
+        className="search"
+        placeholder={placeholder}
+        value={this.state.searchValue}
+        onChange={this._onSearchValueChange}
+      />,
+    ];
+
     return (
-      <div
-        className="category-picker-dropdown default-display btn dropdown-menu"
-        style={{
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        {this._renderItem(this.props.current || { empty: true }, this._onOpenPopover)}
-        <select style={{ border: 'none' }} />
+      <div className="category-picker-dropdown">
+        <DropdownMenu
+          intitialSelectionItem={this.props.current || { empty: true }}
+          headerComponents={headerComponents}
+          footerComponents={[]}
+          items={this._itemsForCategories()}
+          itemKey={item => item.id}
+          itemContent={this._renderItem}
+          defaultSelectedIndex={this.state.searchValue === '' ? -1 : 0}
+          {...this.props}
+        />
       </div>
     );
   }
