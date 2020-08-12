@@ -645,6 +645,8 @@ class Actions {
 
   static remoteSearch = ActionScopeWindow;
 
+  static deletedEdisonAccountOnOtherDevice = ActionScopeMainWindow;
+
   static toggleJiraPlugin = ActionScopeWindow;
 }
 
