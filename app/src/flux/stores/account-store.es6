@@ -27,6 +27,7 @@ import SiftUpdateAccountTask from '../tasks/sift-update-account-task';
 const ipcRenderer = require('electron').ipcRenderer;
 const configAccountsKey = 'accounts';
 const configVersionKey = 'accountsVersion';
+const edisonAccountKey = 'edisonAccount';
 /*
 Public: The AccountStore listens to changes to the available accounts in
 the database and exposes the currently active Account via {::current}
@@ -539,6 +540,27 @@ class AccountStore extends MailspringStore {
   accountIds = () => {
     return this._accounts.map(a => a.id);
   };
+
+  loginSyncAccount = (aid) => {
+    if (!aid) {
+      return
+    }
+    const oldSyncAccountIds = AppEnv.config.get(edisonAccountKey) || []
+    const newSyncAccountIds = new Set([...oldSyncAccountIds,aid])
+    AppEnv.config.set(edisonAccountKey, [...newSyncAccountIds])
+  }
+
+  logoutSyncAccount = (aid) => {
+    const oldSyncAccountIds = AppEnv.config.get(edisonAccountKey) || []
+    const newSyncAccountIds = oldSyncAccountIds.filter(oldId => oldId !==aid)
+    AppEnv.config.set(edisonAccountKey, newSyncAccountIds)
+  }
+  
+  syncAccount = () => {
+    const syncAccountId = (AppEnv.config.get(edisonAccountKey) || [])[0]
+    return this.accountForId(syncAccountId);
+  };
+
   stripAccountData = account => {
     const sensitveData = [
       'emailAddress',
