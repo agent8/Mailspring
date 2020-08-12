@@ -882,9 +882,11 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     this._parseCategories();
   }
   _parseCategories = () => {
-    // Note: We pick the display name and icon assuming that you won't create a
-    // perspective with Inbox and Sent or anything crazy like that... todo?
-    this.name = this._categories[0].displayName;
+    if (AccountStore.isExchangeAccountId(this._categories[0].accountId)) {
+      this.name = this._categories[0].displayName;
+    } else {
+      this.name = this._categories[0].roleDisplayName;
+    }
     if (this._categories[0].role) {
       this.iconName = `${this._categories[0].role}.svg`;
     } else {
@@ -913,7 +915,13 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       return;
     }
     this._categories = categories;
-    this.name = this._categories[0].displayName;
+    if (this._categories[0]) {
+      if (AccountStore.isExchangeAccountId(this._categories[0].accountId)) {
+        this.name = this._categories[0].displayName;
+      } else {
+        this.name = this._categories[0].roleDisplayName;
+      }
+    }
   };
 
   toJSON() {
@@ -925,7 +933,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
+      _.isEqual(
+        this.categories().map(c => c.id),
+        other.categories().map(c => c.id)
+      )
     );
   }
 
@@ -1533,6 +1544,9 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
+    return new UnreadQuerySubscription(
+      this.categories().map(c => c.id),
+      this.isOther
+    );
   }
 }
