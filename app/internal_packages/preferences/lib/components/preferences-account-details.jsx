@@ -2,7 +2,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ipcRenderer, remote } from 'electron';
-import { DraftStore, RegExpUtils, KeyManager, Account, AccountStore, Utils } from 'mailspring-exports';
+import {
+  DraftStore,
+  RegExpUtils,
+  KeyManager,
+  Account,
+  AccountStore,
+  Utils,
+} from 'mailspring-exports';
 import { EditableList, RetinaImg, LabelColorizer } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 
@@ -103,7 +110,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => { }) => {
+  _setState = (updates, callback = () => {}) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -456,9 +463,9 @@ class PreferencesAccountDetails extends Component {
 
   onCheckColor = bgColor => {
     const { account } = this.state;
-    const colors = AppEnv.config.get("core.account.colors") || {};
-    colors[account.id] = bgColor
-    AppEnv.config.set('core.account.colors', colors)
+    const colors = AppEnv.config.get('core.account.colors') || {};
+    colors[account.id] = bgColor;
+    AppEnv.config.set('core.account.colors', colors);
   };
 
   render() {
@@ -491,19 +498,23 @@ class PreferencesAccountDetails extends Component {
               onChange={this._onAccountNameUpdated}
             />
           </div>
-          {AppEnv.config.get("core.appearance.accountcolors") ?
+          {AppEnv.config.get('core.appearance.showAccountColor') ? (
             <div className="item">
-              <div><label style={{ display: "block" }} htmlFor={'Account Color'}>Color</label></div>
+              <div>
+                <label style={{ display: 'block' }} htmlFor={'Account Color'}>
+                  Account Color
+                </label>
+              </div>
 
               <div className="color-choice">
                 {LabelColorizer.colors.map((color, idx) => {
-                  const colors = AppEnv.config.get("core.account.colors") || {}
+                  const colors = AppEnv.config.get('core.account.colors') || {};
                   const accounts = AccountStore.accounts().map(account => account.id);
                   let className = '';
                   if (colors[account.id] !== undefined) {
                     className = colors[account.id] === idx ? 'checked' : '';
                   } else {
-                    const accountIndex = accounts.findIndex(acc => acc === account.id);
+                    const accountIndex = accounts.findIndex(acc => acc === account.id) + 1;
                     className = accountIndex === idx ? 'checked' : '';
                   }
                   return (
@@ -522,10 +533,8 @@ class PreferencesAccountDetails extends Component {
                   );
                 })}
               </div>
-            </div> :
-            null
-          }
-
+            </div>
+          ) : null}
 
           <AutoaddressControl
             autoaddress={account.autoaddress}

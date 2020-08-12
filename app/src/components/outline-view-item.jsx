@@ -11,7 +11,7 @@ import DisclosureTriangle from './disclosure-triangle';
 import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import PropTypes from 'prop-types';
-import AccountColorPopout from './account-color-popout';
+import AccountColorPopout from './account-color-popover';
 import { Divider, DIVIDER_KEY, MORE_TOGGLE } from './outline-view';
 
 /*
@@ -154,7 +154,7 @@ class OutlineViewItem extends Component {
       editing: props.item.editing || false,
       originalText: '',
       showAllChildren: false,
-      showAccountColor: AppEnv.config.get('core.appearance.accountcolors'),
+      showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
       colors: AppEnv.config.get('core.account.colors') || {},
     };
     this._mounted = false;
@@ -178,22 +178,20 @@ class OutlineViewItem extends Component {
     });
     this.checkCurrentShowAllChildren(this.props);
     this.disposables = [];
-    this.disposables.push(AppEnv.config.onDidChange(
-      'core.appearance.accountcolors',
-      () => {
+    this.disposables.push(
+      AppEnv.config.onDidChange('core.appearance.showAccountColor', () => {
         this.setState({
-          showAccountColor: AppEnv.config.get('core.appearance.accountcolors')
-        })
-      }
-    ));
-    this.disposables.push(AppEnv.config.onDidChange(
-      'core.account.colors',
-      () => {
+          showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
+        });
+      })
+    );
+    this.disposables.push(
+      AppEnv.config.onDidChange('core.account.colors', () => {
         this.setState({
-          colors: AppEnv.config.get("core.account.colors")
-        })
-      }
-    ));
+          colors: AppEnv.config.get('core.account.colors'),
+        });
+      })
+    );
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -209,7 +207,7 @@ class OutlineViewItem extends Component {
 
   componentWillUnmount() {
     if (this.disposables) {
-      this.disposables.forEach(disposable => disposable.depose());
+      this.disposables.forEach(disposable => disposable.dispose());
     }
     this._mounted = false;
     clearTimeout(this._expandTimeout);
@@ -452,51 +450,50 @@ class OutlineViewItem extends Component {
     );
   }
 
-  _renderAccountColor(item = this.props.item) {
-    const { showAccountColor, colors } = this.state
+  _renderAccountColor() {
+    const { item } = this.props;
+    const { showAccountColor, colors } = this.state;
     const accounts = AccountStore.accounts().map(account => account.id);
-    if (
-      showAccountColor &&
-      item.mode === 'original' &&
-      item.children &&
-      item.children.length > 0
-    ) {
+    if (showAccountColor && item.id.endsWith('-single')) {
       let colorId;
       if (colors[item.accountIds[0]] !== undefined) {
         colorId = colors[item.accountIds[0]];
       } else {
-        colorId = accounts.findIndex(account => account === item.accountIds[0]);
+        colorId = accounts.findIndex(account => account === item.accountIds[0]) + 1;
       }
       const color = LabelColorizer.colors[colorId];
-      return <span className="account-color" style={{ color: color }}>|</span>
-    }
-    else {
+      return <div className="account-color" style={{ background: color }}></div>;
+    } else {
       return null;
     }
   }
 
-  _onRightClick = (event) => {
+  _onRightClick = event => {
     const { item } = this.props;
-    if (
-      AppEnv.config.get('core.appearance.accountcolors') &&
-      item.mode === 'original' &&
-      item.children &&
-      item.children.length > 0
-    ) {
-      Actions.openPopover(
-        <AccountColorPopout
-          onCheckColor={this.onCheckColor}
-          item={item}
-        />,
-        {
-          originRect: event.target.getBoundingClientRect(),
-          disablePointer: true,
-          direction: 'left',
-          className: 'popout-container'
-        }
-      )
+    if (AppEnv.config.get('core.appearance.showAccountColor') && item.id.endsWith('-single')) {
+      const { remote } = require('electron');
+      const { Menu, MenuItem } = remote;
+      const menu = new Menu();
+      const originRect = event.target.getBoundingClientRect();
+      menu.append(
+        new MenuItem({
+          label: `Change Account Color`,
+          click: () => {
+            Actions.openPopover(
+              <AccountColorPopout onCheckColor={this.onCheckColor} item={item} />,
+              {
+                originRect,
+                disablePointer: true,
+                direction: 'left',
+                className: 'popout-container',
+              }
+            );
+          },
+        })
+      );
+      menu.popup({});
     }
-  }
+  };
 
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
@@ -507,26 +504,21 @@ class OutlineViewItem extends Component {
     });
 
     return (
-      <div>
-        <DropZone
-          id={item.id}
-          className={containerClass}
-          onDrop={this._onDrop}
-          onClick={this._onClick}
-          onDoubleClick={this._onEdit}
-          onContextMenu={this._onRightClick}
-          shouldAcceptDrop={this._shouldAcceptDrop}
-          onDragStateChange={this._onDragStateChange}
-        >
-
-          {this._renderAccountColor()}
-          {this._renderCount()}
-          {this._renderIcon()}
-          {this._renderItemContent()}
-
-        </DropZone>
-      </div>
-
+      <DropZone
+        id={item.id}
+        className={containerClass}
+        onDrop={this._onDrop}
+        onClick={this._onClick}
+        onDoubleClick={this._onEdit}
+        onContextMenu={this._onRightClick}
+        shouldAcceptDrop={this._shouldAcceptDrop}
+        onDragStateChange={this._onDragStateChange}
+      >
+        {this._renderAccountColor()}
+        {this._renderCount()}
+        {this._renderIcon()}
+        {this._renderItemContent()}
+      </DropZone>
     );
   }
 

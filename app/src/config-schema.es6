@@ -60,7 +60,6 @@ export default {
           colors: {
             type: 'object',
             default: {},
-
           },
         },
       },
@@ -613,7 +612,7 @@ export default {
             default: false,
             title: 'Show icons in the left-hand menu.',
           },
-          accountcolors: {
+          showAccountColor: {
             type: 'boolean',
             default: false,
             title: 'Show account colors',

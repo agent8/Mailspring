@@ -150,6 +150,14 @@
     letter-spacing: 0.17px;
     clear: both;
 
+    .account-color {
+      height: 44%;
+      position: absolute;
+      left: 10px;
+      top: 30%;
+      width: 3px;
+    }
+
     // The overflow needs to be `hidden` in order for the name to flex
     // fit within the contained space.
     overflow: hidden;
@@ -358,40 +366,38 @@
     }
   }
 }
-.popout {
-  padding: 8px 8px;
+
+.account-color-popover {
+  width: 360px;
+  padding: 10px 6px;
   text-align: center;
-}
-
-.popout-container {
-  width: 16%;
-}
-
-.color-choice {
-  display: flex;
-  flex-flow: row wrap;
-  margin: 0 0 0 0;
-  & > div {
-    flex: 0 1 20px;
-    height: 20px;
-    width: 20px;
-    margin: 2.5px;
-    border-radius: 50%;
-    text-align: center;
-    img {
-      visibility: hidden;
-      margin-top: 2px;
-    }
-    &.checked {
+  .color-choice {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+    margin: 0;
+    & > div {
+      flex: 0 1 20px;
+      height: 20px;
+      width: 20px;
+      margin: 6px 4px;
+      border-radius: 50%;
+      text-align: center;
       img {
-        visibility: visible;
+        visibility: hidden;
+        margin-top: 2px;
       }
-    }
-    &:nth-child(8n + 1) {
-      margin-left: 0;
-    }
-    &:nth-child(8n + 8) {
-      margin-right: 0;
+      &.checked {
+        img {
+          visibility: visible;
+        }
+      }
+      &:nth-child(12n + 1) {
+        margin-left: 0;
+      }
+      &:nth-child(12n + 12) {
+        margin-right: 0;
+      }
     }
   }
 }
