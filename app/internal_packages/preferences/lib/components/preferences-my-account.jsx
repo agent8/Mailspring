@@ -128,16 +128,20 @@ export default class EdisonAccount extends React.Component {
 
   _onChooseAccount = async newAccount => {
     const { account: oldAccount } = this.state;
-    this.setState({
-      loginLoading: true,
-    });
+    if (this._mounted) {
+      this.setState({
+        loginLoading: true,
+      });
+    }
     if (oldAccount && oldAccount.id) {
       await EdisonAccountRest.logoutDevice(oldAccount.id, this.supportId);
     }
     const registerResult = await EdisonAccountRest.register(newAccount.id);
-    this.setState({
-      loginLoading: false,
-    });
+    if (this._mounted) {
+      this.setState({
+        loginLoading: false,
+      });
+    }
     if (!registerResult.successful) {
       AppEnv.reportError(new Error(`Register edison account fail: ${registerResult.message}`));
     }
@@ -162,13 +166,13 @@ export default class EdisonAccount extends React.Component {
     if (!account || !account.id) {
       return;
     }
-    if (deviceId === this.supportId) {
+    if (deviceId === this.supportId && this._mounted) {
       this.setState({
         logoutLoading: true,
       });
     }
     const logoutResult = await EdisonAccountRest.logoutDevice(account.id, deviceId);
-    if (deviceId === this.supportId) {
+    if (deviceId === this.supportId && this._mounted) {
       this.setState({
         logoutLoading: false,
       });
@@ -225,6 +229,7 @@ export default class EdisonAccount extends React.Component {
 
   renderAccount() {
     const { account, loginLoading, logoutLoading } = this.state;
+    const otherAccounts = AccountStore.accounts().filter(a => !account || account.id !== a.id);
     return (
       <div className="config-group">
         <h6>BACK UP & SYNC</h6>
@@ -248,10 +253,12 @@ export default class EdisonAccount extends React.Component {
               </Flexbox>
             </div>
             <div className="edison-account-button">
-              <div className="btn-primary" onClick={this._chooseAccountPopup}>
-                {this.renderSpinner(loginLoading)}
-                Change Sync Email
-              </div>
+              {otherAccounts.length ? (
+                <div className="btn-primary" onClick={this._chooseAccountPopup}>
+                  {this.renderSpinner(loginLoading)}
+                  Change Sync Email
+                </div>
+              ) : null}
               <div className="btn-danger" onClick={() => this._logout(this.supportId)}>
                 {this.renderSpinner(logoutLoading)}
                 Log Out
