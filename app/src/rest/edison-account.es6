@@ -17,6 +17,12 @@ const aesEncode = data => {
   return encrypted;
 };
 
+const ResCodes = {
+  Deleted: 10002,
+  EmailValid: 10003,
+  AccountValid: 10004,
+};
+
 export default class EdisonAccount {
   constructor(host) {
     this.host = host;
@@ -275,6 +281,9 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
+      if (data.code === ResCodes.Deleted || data.code === ResCodes.AccountValid) {
+        AccountStore.logoutSyncAccount(aid);
+      }
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
