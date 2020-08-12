@@ -149,6 +149,18 @@ const file_mappings = [
     './app/static/images/preferences/edison-account/paywall-contacts-nobg-dark.png',
   ],
   [
+    'veyron-design/icons/ios/device-computer.png',
+    './app/static/images/preferences/edison-account/device-computer.png',
+  ],
+  [
+    'veyron-design/icons/ios/device-phone.png',
+    './app/static/images/preferences/edison-account/device-phone.png',
+  ],
+  [
+    'veyron-design/icons/ios/device-tablet.png',
+    './app/static/images/preferences/edison-account/device-tablet.png',
+  ],
+  [
     'veyron-design/images/desktop/focused-inbox.png',
     './app/static/images/notification/focused-inbox.png',
   ],
