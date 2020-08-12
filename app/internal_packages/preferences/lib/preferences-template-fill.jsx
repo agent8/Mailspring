@@ -342,8 +342,8 @@ const preferencesTemplateFill = {
             {
               label: 'Color Coding for Accounts',
               configSchema: configSchema =>
-                configSchema.properties.appearance.properties.accountcolors,
-              keyPath: 'core.appearance.accountcolors',
+                configSchema.properties.appearance.properties.showAccountColor,
+              keyPath: 'core.appearance.showAccountColor',
               keywords: ['account', 'colors'],
             },
             {
