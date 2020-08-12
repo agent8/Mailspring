@@ -24,8 +24,8 @@ const notifications = [
   DisabledMailRulesNotification,
   UpdateNotification,
   DiskUsageNotification,
-  FocusedInboxNotif,
   EdisonAccountNotif,
+  FocusedInboxNotif,
   ImproveDataNotif,
   WhatsNew,
 ];
