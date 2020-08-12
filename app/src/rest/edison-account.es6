@@ -135,6 +135,7 @@ export default class EdisonAccount {
       emailAccount['type'] = 'exchange';
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
+        host: account.settings.imap_host,
         // To do
         domain: null,
       };
