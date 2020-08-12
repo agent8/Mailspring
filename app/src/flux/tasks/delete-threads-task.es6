@@ -40,7 +40,7 @@ export default class DeleteThreadsTask extends Task {
   }
 
   label() {
-    return `Expunging ${this.threadIds.length > 0 ? 'threads' : 'messages'} from mailbox`;
+    return `Permanently deleted ${this.threadIds.length > 0 ? 'threads' : 'messages'} from mailbox`;
   }
 
   description() {
@@ -56,7 +56,7 @@ export default class DeleteThreadsTask extends Task {
       const count = this.threadIds.length;
       paramesText = count > 1 ? `${count} threads` : 'thread';
     }
-    return `Expunged ${paramesText}`;
+    return `Permanently deleted ${paramesText}`;
   }
   willBeQueued() {
     if (this.threadIds.length > 0 && this.messageIds.length > 0) {
