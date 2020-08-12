@@ -17,7 +17,7 @@ body.platform-win32 {
 .category-picker-dropdown {
   .menu {
     background: @white;
-    width: @popover-width;
+    min-width: @popover-width;
     max-height: 400px;
 
     .header-container {
@@ -53,12 +53,12 @@ body.platform-win32 {
     }
   }
 
-  .item.selected,
-  .item.active {
-    img.content-mask {
-      background-color: @text-color-inverse;
-    }
-  }
+  // .item.selected,
+  // .item.active {
+  //   img.content-mask {
+  //     background-color: @text-color-inverse;
+  //   }
+  // }
 
   img.check-img {
     position: absolute;
@@ -66,7 +66,6 @@ body.platform-win32 {
 
   .category-item {
     line-height: 19px;
-    width: 140px;
     height: 19px;
     padding-left: 26px;
     position: relative;
@@ -90,15 +89,23 @@ body.platform-win32 {
   }
 }
 
+.category-picker-dropdown.folder-mapper {
+  .menu {
+    width: @popover-width;
+  }
+  .category-item {
+    width: 140px;
+  }
+}
+
 .fixed-popover-container .fixed-popover .label-picker-popover,
 .fixed-popover-container .fixed-popover .category-picker-popover {
   padding-top: 4px;
   .menu {
     background: @background-primary;
     min-width: @popover-width;
-    max-width: 400px;
+    max-width: 300px;
     border-radius: 10px;
-    padding-right: 4px;
 
     .scroll-region .scroll-region-content {
       position: relative;
@@ -212,7 +219,6 @@ body.platform-win32 {
   .category-create-new {
     height: 26px;
     line-height: 26px;
-    cursor: default;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
