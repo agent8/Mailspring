@@ -6,6 +6,7 @@ import { getOSInfo } from '../system-utils';
 import KeyManager from '../key-manager';
 
 const { OAuthList } = Constant;
+const supportId = AppEnv.config.get('core.support.id');
 
 const aesEncode = data => {
   const password = 'effa43461f128bee';
@@ -150,6 +151,7 @@ export default class EdisonAccount {
           },
         };
         Actions.updateAccount(aid, newAccount);
+        AccountStore.loginSyncAccount(aid);
       }
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
@@ -176,6 +178,9 @@ export default class EdisonAccount {
         },
       });
       const data = res.data;
+      if (data.code === 0) {
+        AccountStore.logoutSyncAccount(aid);
+      }
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -299,6 +304,9 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
+      if (data.code === 0 && deviceId === supportId) {
+        AccountStore.logoutSyncAccount(aid);
+      }
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -316,7 +324,6 @@ export default class EdisonAccount {
       return new RESTResult(false, 'this account has no token');
     }
     const { hostname, release } = getOSInfo();
-    const supportId = AppEnv.config.get('core.support.id');
     const device = {
       id: supportId,
       name: name || hostname,

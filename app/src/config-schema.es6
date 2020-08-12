@@ -120,6 +120,10 @@ export default {
             type: 'boolean',
             default: false,
           },
+          promptedEdisonAccount: {
+            type: 'boolean',
+            default: false,
+          },
           showImportant: {
             type: 'boolean',
             default: true,
