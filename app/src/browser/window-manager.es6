@@ -53,18 +53,18 @@ export default class WindowManager {
 
   getOpenWindows(type = 'all') {
     const values = [];
-    Object.keys(this._windows).forEach(key => {
+    for (const key of Object.keys(this._windows)) {
       const win = this._windows[key];
       if (win.browserWindow.isDestroyed()) {
         delete this._windows[key];
+        continue;
       }
       if (win.windowType !== WindowLauncher.EMPTY_WINDOW) {
         if (type === 'all' || win.windowType === type) {
           values.push(win);
         }
       }
-    });
-
+    }
     const score = win => (win.loadSettings().mainWindow ? 1000 : win.browserWindow.id);
 
     return values.sort((a, b) => score(b) - score(a));
