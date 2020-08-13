@@ -15,6 +15,12 @@ import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-util
 import RegExpUtils from './regexp-utils';
 import { WindowLevel } from './constant';
 
+//Hinata gets special treatment for logging and other debugging purposes
+const Hinata_Ids = [
+  'f928e3ab2af52a97ab57cdd4248d2c09b5eb7e21ead2f30b77ebb299c63441bd',
+  'b4db0365ca3157ac56c42e810a88d1f941492a9dca8e2f43998d9f3f99073af3',
+];
+
 const LOG = require('electron-log');
 // const archiver = require('archiver');
 // let getOSInfo = null;
@@ -449,6 +455,10 @@ export default class AppEnvConstructor {
           this.config.set('core.support.id', 'Unknown');
         });
     }
+  }
+  isHinata() {
+    const deviceHash = this.config.get('core.support.id');
+    return Hinata_Ids.includes(deviceHash);
   }
 
   _stripSensitiveData(str = '') {
