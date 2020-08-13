@@ -13,6 +13,7 @@ import UpdateNotification from './items/update-notification';
 import DiskUsageNotification from './items/disk-usage-notification';
 import FocusedInboxNotif from './items/focused-inbox-notif';
 import EdisonAccountNotif from './items/edison-account-notif';
+import EdisonAccountDeletedNotif from './items/edison-account-deleted-notif';
 import ImproveDataNotif from './items/improve-data-notif';
 import WhatsNew from './items/whats-new-notif';
 
@@ -28,6 +29,7 @@ const notifications = [
   FocusedInboxNotif,
   ImproveDataNotif,
   WhatsNew,
+  EdisonAccountDeletedNotif,
 ];
 
 export function activate() {

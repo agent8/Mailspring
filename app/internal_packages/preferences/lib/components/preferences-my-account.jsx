@@ -80,8 +80,12 @@ export default class EdisonAccount extends React.Component {
 
   constructor() {
     super();
+    const syncAccount = AccountStore.syncAccount();
     this.state = {
-      account: AccountStore.syncAccount(),
+      account: syncAccount,
+      otherAccounts: AccountStore.accounts().filter(
+        account => !syncAccount || syncAccount.id !== account.id
+      ),
       accountType: 'Free',
       devices: [],
       loginLoading: false,
@@ -95,9 +99,13 @@ export default class EdisonAccount extends React.Component {
     this._mounted = true;
     this.disposable = AppEnv.config.onDidChange(edisonAccountKey, () => {
       if (this._mounted) {
+        const syncAccount = AccountStore.syncAccount();
         this.setState(
           {
-            account: AccountStore.syncAccount(),
+            account: syncAccount,
+            otherAccounts: AccountStore.accounts().filter(
+              account => !syncAccount || syncAccount.id !== account.id
+            ),
           },
           () => {
             this._getDevices();
@@ -147,10 +155,20 @@ export default class EdisonAccount extends React.Component {
     }
   };
 
+  _startBackUpAndSync = e => {
+    const { otherAccounts } = this.state;
+    if (otherAccounts.length === 1) {
+      this._onChooseAccount(otherAccounts[0]);
+    } else {
+      this._chooseAccountPopup(e);
+    }
+  };
+
   _chooseAccountPopup = e => {
-    const otherAccounts = AccountStore.accounts().filter(
-      account => !this.state.account || account.id !== this.state.account.id
-    );
+    const { otherAccounts } = this.state;
+    if (!otherAccounts.length) {
+      return;
+    }
     Actions.openPopover(
       <AccountChoosePopover accounts={otherAccounts} onSelect={this._onChooseAccount} />,
       {
@@ -182,34 +200,6 @@ export default class EdisonAccount extends React.Component {
     }
   };
 
-  _ondelete = () => {
-    AppEnv.showMessageBox({
-      type: 'info',
-      title: 'Are You Sure?',
-      detail: 'This CANNOT be undone. All your account information and data will be deleted.',
-      showInMainWindow: true,
-      buttons: ['Delete', 'Cancel'],
-      defaultId: 1,
-      cancelId: 1,
-    }).then(({ response }) => {
-      if (response !== 0) {
-        return;
-      }
-      this._delete();
-    });
-  };
-
-  _delete = async () => {
-    const { account } = this.state;
-    if (!account || !account.id) {
-      return;
-    }
-    const deleteResult = await EdisonAccountRest.deleteAccount(account.id);
-    if (!deleteResult.successful) {
-      AppEnv.reportError(new Error(`Delete edison account fail: ${deleteResult.message}`));
-    }
-  };
-
   _onClickAccountType(type) {
     this.setState({ accountType: type });
   }
@@ -228,8 +218,8 @@ export default class EdisonAccount extends React.Component {
   }
 
   renderAccount() {
-    const { account, loginLoading, logoutLoading } = this.state;
-    const otherAccounts = AccountStore.accounts().filter(a => !account || account.id !== a.id);
+    const { account, otherAccounts, loginLoading, logoutLoading } = this.state;
+
     return (
       <div className="config-group">
         <h6>BACK UP & SYNC</h6>
@@ -263,14 +253,11 @@ export default class EdisonAccount extends React.Component {
                 {this.renderSpinner(logoutLoading)}
                 Log Out
               </div>
-              <div className="btn-danger" onClick={() => this._ondelete()}>
-                Delete Account
-              </div>
             </div>
           </div>
         ) : (
           <div className="edison-account-button">
-            <div className="btn-primary choose-account" onClick={this._chooseAccountPopup}>
+            <div className="btn-primary choose-account" onClick={this._startBackUpAndSync}>
               {this.renderSpinner(loginLoading)}
               Start Back up & Sync
             </div>
