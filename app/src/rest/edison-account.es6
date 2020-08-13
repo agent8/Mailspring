@@ -28,6 +28,15 @@ export default class EdisonAccount {
     this.host = host;
   }
 
+  _handleResCode(code, account) {
+    if (code === 0) {
+      return;
+    }
+    if (code === ResCodes.Deleted) {
+      Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
+    }
+  }
+
   async checkAccounts(aids = []) {
     const url = `${this.host}/api/charge/account/queryMainAccounts`;
     const accounts = AccountStore.accounts();
@@ -135,6 +144,7 @@ export default class EdisonAccount {
       emailAccount['type'] = 'exchange';
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
+        host: account.settings.imap_host,
         // To do
         domain: null,
       };
@@ -159,6 +169,7 @@ export default class EdisonAccount {
         Actions.updateAccount(aid, newAccount);
         AccountStore.loginSyncAccount(aid);
       }
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -187,6 +198,7 @@ export default class EdisonAccount {
       if (data.code === 0) {
         AccountStore.logoutSyncAccount(aid);
       }
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -214,6 +226,7 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -257,6 +270,7 @@ export default class EdisonAccount {
         };
         Actions.updateAccount(aid, newAccount);
       }
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -281,9 +295,7 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
-      if (data.code === ResCodes.Deleted || data.code === ResCodes.AccountValid) {
-        AccountStore.logoutSyncAccount(aid);
-      }
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -316,6 +328,7 @@ export default class EdisonAccount {
       if (data.code === 0 && deviceId === supportId) {
         AccountStore.logoutSyncAccount(aid);
       }
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -348,6 +361,7 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
