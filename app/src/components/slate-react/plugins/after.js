@@ -463,14 +463,22 @@ function AfterPlugin() {
 
 
     if (_hotkeys2.default.SPLIT_BLOCK(event)) {
-      return value.isInVoid ? change.collapseToStartOfNextText() : change.splitBlock();
+      return value.isInVoid
+        ? change.collapseToStartOfNextText()
+        : change.splitBlock().insertText('\u200b');
     }
 
     if (_hotkeys2.default.DELETE_CHAR_BACKWARD(event)) {
+      if (value.anchorText && value.anchorText.text === '\u200b') {
+        change.deleteCharBackward();
+      }
       return change.deleteCharBackward();
     }
 
     if (_hotkeys2.default.DELETE_CHAR_FORWARD(event)) {
+      if (value.anchorText && value.anchorText.text === '\u200b') {
+        change.deleteCharForward();
+      }
       return change.deleteCharForward();
     }
 
