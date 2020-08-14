@@ -31,6 +31,9 @@ export default class SignaturePhotoPicker extends React.Component {
     AppEnv.showOpenDialog(
       { title: 'Choose an image', buttonLabel: 'Choose', properties: ['openFile'] },
       paths => {
+        if (!this._isMounted) {
+          return;
+        }
         if (paths && paths.length > 0) {
           this._onChooseImageFilePath(paths[0]);
         }

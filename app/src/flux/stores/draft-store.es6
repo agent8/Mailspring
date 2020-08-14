@@ -238,6 +238,9 @@ class DraftStore extends MailspringStore {
     }
     return this._draftSessions[messageId];
   }
+  getSessionByMessageId = messageId => {
+    return this._draftSessions[messageId];
+  };
   _onServerDraftSessionRequest = draft => {
     if (!AppEnv.isMainWindow()) {
       return;

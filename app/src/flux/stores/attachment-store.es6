@@ -1815,10 +1815,19 @@ class AttachmentStore extends MailspringStore {
 
   // Section: Adding Files
 
-  _assertIdPresent(messageId) {
-    if (!messageId) {
-      throw new Error('You need to pass the ID of the message (draft) this Action refers to');
+  _sanityCheck(messageId) {
+    const session = DraftStore.getSessionByMessageId(messageId);
+    if (!session || !session.draft()) {
+      AppEnv.logError(`AttachmentStore: Draft ${messageId} session is not ready`);
+      AppEnv.showMessageBox({
+        title: 'Draft is not ready',
+        detail: 'Cannot attach file(s) to draft',
+        defaultId: 0,
+        buttons: ['Ok'],
+      });
+      return false;
     }
+    return true;
   }
 
   _getFileStats(filepath) {
@@ -1866,20 +1875,6 @@ class AttachmentStore extends MailspringStore {
           }
         });
       });
-    });
-  }
-
-  _copyToInternalPath(originPath, targetPath) {
-    return new Promise((resolve, reject) => {
-      const readStream = fs.createReadStream(originPath);
-      const writeStream = fs.createWriteStream(targetPath);
-
-      readStream.on('error', () => reject(new Error(`Could not read file at path: ${originPath}`)));
-      writeStream.on('error', () =>
-        reject(new Error(`Could not write ${path.basename(targetPath)} to files directory.`))
-      );
-      readStream.on('end', () => resolve());
-      readStream.pipe(writeStream);
     });
   }
 
@@ -1933,8 +1928,6 @@ class AttachmentStore extends MailspringStore {
   // Handlers
 
   _onSelectAttachment = ({ messageId, accountId, onCreated = () => {}, type = '*' }) => {
-    this._assertIdPresent(messageId);
-
     // When the dialog closes, it triggers `Actions.addAttachment`
     const cb = paths => {
       if (paths == null) {
@@ -1977,7 +1970,9 @@ class AttachmentStore extends MailspringStore {
     if (!Array.isArray(filePaths) || filePaths.length === 0) {
       throw new Error('_onAddAttachments must have an array of filePaths');
     }
-    this._assertIdPresent(messageId);
+    if (!this._sanityCheck(messageId)) {
+      return;
+    }
     try {
       const total = filePaths.length;
       // const createdFiles = [];
@@ -2081,8 +2076,9 @@ class AttachmentStore extends MailspringStore {
     inline = undefined,
     onCreated = () => {},
   }) => {
-    this._assertIdPresent(messageId);
-
+    if (!this._sanityCheck(messageId)) {
+      return;
+    }
     try {
       const filename = path.basename(filePath);
       const stats = await this._getFileStats(filePath);
@@ -2120,9 +2116,6 @@ class AttachmentStore extends MailspringStore {
       } else {
         Actions.syncAttachmentToMain(tmpData);
       }
-      // await mkdirpAsync(path.dirname(this.pathForFile(file)));
-      // await this._copyToInternalPath(filePath, this.pathForFile(file));
-
       await this._applySessionChanges(messageId, files => {
         if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
           AppEnv.trackingEvent('largeAttachmentSize');
