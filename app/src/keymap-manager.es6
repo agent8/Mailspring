@@ -6,6 +6,13 @@ import { Emitter, Disposable } from 'event-kit';
 
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
+const enableCommandsInEditor = [
+  'core:select-all',
+  'core:cut',
+  'core:copy',
+  'core:paste',
+  'core:paste-and-match-style',
+];
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
 more specifically block only hotkeys that have no modifier keys (things like
@@ -168,7 +175,8 @@ export default class KeymapManager {
       for (const command of this._commandsCache[keystrokes] || []) {
         if (
           withinSlateEditor &&
-          (!command.startsWith('composer:') && !command.startsWith('contenteditable:'))
+          (!command.startsWith('composer:') && !command.startsWith('contenteditable:')) &&
+          !enableCommandsInEditor.includes(command)
         ) {
           continue;
         }
