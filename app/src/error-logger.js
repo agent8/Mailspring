@@ -29,7 +29,7 @@ var EdisonErrorReporter = require('./error-logger-extensions/edison-error-report
 //
 // The errorLogger will report errors to a log file as well as to 3rd
 // party reporting services if enabled.
-module.exports = ErrorLogger = (function () {
+module.exports = ErrorLogger = (function() {
   function ErrorLogger(args) {
     this.reportError = this.reportError.bind(this);
     this.inSpecMode = args.inSpecMode;
@@ -59,13 +59,13 @@ module.exports = ErrorLogger = (function () {
   /////////////////////////// PUBLIC METHODS //////////////////////////
   /////////////////////////////////////////////////////////////////////
 
-  ErrorLogger.prototype.reportError = function (error, extra = {}) {
+  ErrorLogger.prototype.reportError = function(error, extra = {}) {
     return this._reportLog(error, extra, 'error');
   };
-  ErrorLogger.prototype.reportWarning = function (error, extra = {}) {
+  ErrorLogger.prototype.reportWarning = function(error, extra = {}) {
     return this._reportLog(error, extra, 'warning');
   };
-  ErrorLogger.prototype.reportLog = function (error, extra = {}) {
+  ErrorLogger.prototype.reportLog = function(error, extra = {}) {
     return this._reportLog(error, extra, 'log');
   };
 
@@ -73,11 +73,11 @@ module.exports = ErrorLogger = (function () {
   ////////////////////////// PRIVATE METHODS //////////////////////////
   /////////////////////////////////////////////////////////////////////
 
-  ErrorLogger.prototype._startCrashReporter = function (args) {
+  ErrorLogger.prototype._startCrashReporter = function(args) {
     const crashPath = path.join(this.resourcePath, 'crashReport');
     // const serverURL = `http://tiger:1127/post`;
     const serverURL = `https://cs.edison.tech/api/log2/`;
-    getDeviceHash().then(deviceId=>{
+    getDeviceHash().then(deviceId => {
       crashReporter.start({
         productName: 'EdisonMail',
         companyName: 'Edison Tech',
@@ -88,25 +88,25 @@ module.exports = ErrorLogger = (function () {
         extra: {
           version: appVersion,
           platform: process.platform,
-          deviceId: deviceId
+          deviceId: deviceId,
         },
       });
     });
   };
 
-  ErrorLogger.prototype._extendNativeConsole = function (args) {
+  ErrorLogger.prototype._extendNativeConsole = function(args) {
     console.debug = this._consoleDebug.bind(this);
   };
 
   // globally define Error.toJSON. This allows us to pass errors via IPC
   // and through the Action Bridge. Note:they are not re-inflated into
   // Error objects automatically.
-  ErrorLogger.prototype._extendErrorObject = function (args) {
+  ErrorLogger.prototype._extendErrorObject = function(args) {
     Object.defineProperty(Error.prototype, 'toJSON', {
-      value: function () {
+      value: function() {
         var alt = {};
 
-        Object.getOwnPropertyNames(this).forEach(function (key) {
+        Object.getOwnPropertyNames(this).forEach(function(key) {
           alt[key] = this[key];
         }, this);
 
@@ -116,7 +116,7 @@ module.exports = ErrorLogger = (function () {
     });
   };
 
-  ErrorLogger.prototype._notifyExtensions = function () {
+  ErrorLogger.prototype._notifyExtensions = function() {
     var command, args;
     command = arguments[0];
     args = 2 <= arguments.length ? Array.prototype.slice.call(arguments, 1) : [];
@@ -125,7 +125,7 @@ module.exports = ErrorLogger = (function () {
       extension[command].apply(extension, args);
     }
   };
-  ErrorLogger.prototype._reportLog = function(error, extra = {}, level = 'log'){
+  ErrorLogger.prototype._reportLog = function(error, extra = {}, level = 'log') {
     if (this.inSpecMode) {
       return;
     }
@@ -164,9 +164,9 @@ module.exports = ErrorLogger = (function () {
       ipcRenderer.sendSync(`report-${level}`, { errorJSON: errorJSON, extraJSON: extraJSON });
     } else {
       console.log(`\n----\nerrorLogger: extra ${extra}`);
-      if (level === 'error'){
+      if (level === 'error') {
         this._notifyExtensions(`reportError`, error, extra);
-      } else if (level === 'warning'){
+      } else if (level === 'warning') {
         this._notifyExtensions(`reportWarning`, error, extra);
       } else {
         this._notifyExtensions(`reportLog`, error, extra);
@@ -174,8 +174,6 @@ module.exports = ErrorLogger = (function () {
     }
     if (error.name === 'conflict' && error.status === 409) {
       console.warn(error, extra);
-    } else {
-      // console.error(error, extra);
     }
   };
 
@@ -183,7 +181,7 @@ module.exports = ErrorLogger = (function () {
   // or `false`, don't print in console as the first parameter.
   // This makes it easy for developers to turn on and off
   // "verbose console" mode.
-  ErrorLogger.prototype._consoleDebug = function () {
+  ErrorLogger.prototype._consoleDebug = function() {
     var args = [];
     var showIt = arguments[0];
     for (var ii = 1; ii < arguments.length; ii++) {
