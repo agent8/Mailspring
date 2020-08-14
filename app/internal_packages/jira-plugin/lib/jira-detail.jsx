@@ -112,9 +112,7 @@ export default class JiraDetail extends Component {
     if (!thread) {
       return;
     }
-
     const { link, issueKey } = this._findIssueKey(messages);
-
     if (issueKey) {
       if (issueKey === this.issueKey) {
         return;
@@ -134,7 +132,10 @@ export default class JiraDetail extends Component {
       this.issueKey = issueKey;
       try {
         issue = await this.jira.findIssue(issueKey, `renderedFields`);
-        console.log('*****issue', issue);
+        // if user have already navigated to other issue, don't refresh the page
+        if (issueKey !== this.issueKey) {
+          return;
+        }
         this.safeSetState({
           loading: false,
           issue,

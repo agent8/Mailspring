@@ -64,6 +64,7 @@ export default class ModelQuery {
     this._matchers = { main: [] };
     this._orders = { main: [] };
     this._background = false;
+    this._showQueryResults = false;
     this._backgroundable = true;
     this._distinct = { main: false };
     this._range = { main: QueryRange.infinite() };
@@ -168,6 +169,7 @@ export default class ModelQuery {
     Object.keys(this._range).forEach(key => (q._range[key] = this._range[key].clone()));
     q._background = this._background;
     q._backgroundable = this._backgroundable;
+    q._showQueryResults = this._showQueryResults;
     q._distinct = Object.assign({}, this._distinct);
     q._returnOne = Object.assign({}, this._returnOne);
     q._returnIds = Object.assign({}, this._returnIds);
@@ -191,6 +193,13 @@ export default class ModelQuery {
     }
     this._background = true;
     return this;
+  }
+  setShowQueryResults(val) {
+    this._showQueryResults = val;
+    return this;
+  }
+  showQueryResults() {
+    return this._showQueryResults;
   }
 
   markNotBackgroundable() {

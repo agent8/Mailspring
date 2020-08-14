@@ -7,9 +7,14 @@ import {
   TaskQueue,
   SiftExpungeUserDataTask,
   SiftExportUserDataTask,
+  RESTful,
+  AccountStore,
 } from 'mailspring-exports';
 import rimraf from 'rimraf';
 import ExportDataModal from './export-data-modal';
+
+const { EdisonAccountRest } = RESTful;
+
 export class Privacy extends React.Component {
   static displayName = 'PreferencesPrivacy';
 
@@ -79,10 +84,17 @@ export class Privacy extends React.Component {
     }
   }
 
-  expungeLocalAndReboot() {
+  expungeLocalAndReboot = async () => {
     if (this._mounted) {
       this.setState({ deletingUserData: false });
     }
+
+    // delete edison account
+    const syncAccount = AccountStore.syncAccount();
+    if (syncAccount) {
+      await EdisonAccountRest.deleteAccount(syncAccount.id);
+    }
+
     rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
       if (err) {
         return AppEnv.showErrorDialog(
@@ -95,7 +107,7 @@ export class Privacy extends React.Component {
       }
       app.quit();
     });
-  }
+  };
 
   openDeleteUserDataConfirmationPage = () => {
     this.setState({ deleteUserDataPopupOpen: true });
@@ -165,7 +177,7 @@ export class Privacy extends React.Component {
       });
       Actions.queueTask(task);
       TaskQueue.waitForPerformRemote(task)
-        .then(() => { })
+        .then(() => {})
         .catch(() => {
           AppEnv.showErrorDialog({
             title: 'Export data failed.',

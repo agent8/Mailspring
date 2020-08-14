@@ -120,6 +120,10 @@ export default {
             type: 'boolean',
             default: false,
           },
+          promptedEdisonAccount: {
+            type: 'boolean',
+            default: false,
+          },
           showImportant: {
             type: 'boolean',
             default: true,
@@ -241,6 +245,10 @@ export default {
       fontface: {
         type: 'string',
         default: 'sans-serif',
+      },
+      fontsize: {
+        type: 'string',
+        default: '14px',
       },
       composing: {
         type: 'object',

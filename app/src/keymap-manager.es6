@@ -6,7 +6,7 @@ import { Emitter, Disposable } from 'event-kit';
 
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
-let blockListForEditor = [];
+const enableCommandsInEditor = ['core:undo', 'core:redo', 'core:paste-and-match-style'];
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
 more specifically block only hotkeys that have no modifier keys (things like
@@ -14,18 +14,6 @@ Gmail's "x", while allowing standard hotkeys.)
 */
 mousetrap.prototype.stopCallback = (e, element, combo) => {
   if (suspended) {
-    return true;
-  }
-
-  const withinSlateEditor =
-    e.target.isContentEditable &&
-    (e.target.hasAttribute('data-slate-editor') || e.target.closest('[data-slate-editor]'));
-  // Slate handles undo/redo itself in slate-react's `after` plugin but doesn't stop
-  // propagation. Because of this, we need to make sure we do not fire core:undo or core:redo.
-  // if (withinSlateEditor && /(mod|command|ctrl)\+(z|y)/.test(combo)) {
-  //   return true;
-  // }
-  if (withinSlateEditor && blockListForEditor.some(shortcut => shortcut === combo)) {
     return true;
   }
 
@@ -168,8 +156,24 @@ export default class KeymapManager {
     }
     this._registered[keystrokes] = true;
 
-    mousetrap.bind(keystrokes, () => {
+    mousetrap.bind(keystrokes, e => {
+      const withinSlateEditor =
+        e.target.isContentEditable &&
+        (e.target.hasAttribute('data-slate-editor') || e.target.closest('[data-slate-editor]'));
+      // Slate handles undo/redo itself in slate-react's `after` plugin but doesn't stop
+      // propagation. Because of this, we need to make sure we do not fire core:undo or core:redo.
+      // if (withinSlateEditor && /(mod|command|ctrl)\+(z|y)/.test(combo)) {
+      //   return true;
+      // }
+
       for (const command of this._commandsCache[keystrokes] || []) {
+        if (
+          withinSlateEditor &&
+          (!command.startsWith('composer:') && !command.startsWith('contenteditable:')) &&
+          !enableCommandsInEditor.includes(command)
+        ) {
+          continue;
+        }
         if (command.startsWith('application:')) {
           ipcRenderer.send('command', command);
         } else {
@@ -208,14 +212,6 @@ export default class KeymapManager {
         }
       }
     }
-
-    const blockList = [];
-    for (const command of Object.keys(this._bindingsCache)) {
-      if (!command.startsWith('composer:') && !command.startsWith('contenteditable:')) {
-        blockList.push(...this._bindingsCache[command]);
-      }
-    }
-    blockListForEditor = blockList;
 
     this._emitter.emit('on-did-reload-keymap');
   }

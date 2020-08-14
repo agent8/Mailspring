@@ -9,5 +9,6 @@
   "window:toggle-dev-tools": "meta+alt+=",
   "window:attach-to-xcode": "meta+alt+k",
   "window:open-mailsync-logs": "meta+shift+k",
-  "core:show-runtime-info": "meta+alt+p"
+  "core:show-runtime-info": "meta+alt+p",
+  "application:switch-window": "mod+`"
 }
