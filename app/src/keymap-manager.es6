@@ -6,13 +6,7 @@ import { Emitter, Disposable } from 'event-kit';
 
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
-const enableCommandsInEditor = [
-  'core:select-all',
-  'core:cut',
-  'core:copy',
-  'core:paste',
-  'core:paste-and-match-style',
-];
+const enableCommandsInEditor = ['core:undo', 'core:redo', 'core:paste-and-match-style'];
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
 more specifically block only hotkeys that have no modifier keys (things like
