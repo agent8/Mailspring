@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { RetinaImg, Flexbox, EditableList } from 'mailspring-component-kit';
-import { DraftStore } from 'mailspring-exports';
+import { DraftStore, AccountStore } from 'mailspring-exports';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
 
@@ -81,6 +81,14 @@ class PreferencesAccountList extends Component {
         showDelIcon
         showFooter
         getConfirmMessage={account => {
+          const syncAccount = AccountStore.syncAccount();
+          if (syncAccount && syncAccount.id === account.id) {
+            return {
+              message: 'Warning',
+              detail:
+                'You use this account to sync preferences across all your devices. If you remove it, your saved preferences will be lost, and can not be recovered. Are you sure you want to delete your account?',
+            };
+          }
           const drafts = DraftStore.findDraftsByAccountId(account.id);
           let detail = `Do you want to delete this account ${account.emailAddress}?`;
           if (drafts.length > 0) {
