@@ -970,23 +970,23 @@ export default class MailsyncBridge {
       if (nativeReportTask.level === NativeReportTask.errorLevel.info) {
         console.log(nativeReportTask);
         AppEnv.reportLog(
-          new Error(nativeReportTask.key),
+          nativeReportTask.key,
           { errorData: nativeReportTask },
-          { noAppConfig: true }
+          { noAppConfig: true, noStackTrace: true, expandLog: false }
         );
       } else if (nativeReportTask.level === NativeReportTask.errorLevel.warning) {
         console.warn(nativeReportTask);
         AppEnv.reportWarning(
-          new Error(nativeReportTask.key),
+          nativeReportTask.key,
           { errorData: nativeReportTask },
-          { noAppConfig: true }
+          { noAppConfig: true, noStackTrace: true, expandLog: false }
         );
       } else {
         console.error(nativeReportTask);
         AppEnv.reportError(
-          new Error(nativeReportTask.key),
+          nativeReportTask.key,
           { errorData: nativeReportTask },
-          { noAppConfig: true }
+          { noAppConfig: true, noStackTrace: true, expandLog: false }
         );
       }
     }
