@@ -113,6 +113,7 @@ module.exports = ErrorLogger = (function() {
         return alt;
       },
       configurable: true,
+      writable: true,
     });
   };
 
