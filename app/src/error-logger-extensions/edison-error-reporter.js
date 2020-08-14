@@ -1,12 +1,12 @@
 /* eslint global-require: 0 */
-const { getDeviceHash, getOSInfo } = require('../system-utils');
+const { getDeviceHash } = require('../system-utils');
 const _ = require('underscore');
 const request = require('request');
 const fs = require('fs');
 let processEmitter = null;
-if(process.type === 'renderer'){
+if (process.type === 'renderer') {
   processEmitter = require('electron').ipcRenderer;
-}else{
+} else {
   processEmitter = require('electron').ipcMain;
 }
 module.exports = class EdisonErrorReporter {
@@ -54,39 +54,44 @@ module.exports = class EdisonErrorReporter {
     this._report(err, extra, 'LOG');
   }
   _report(err, extra = {}, type = 'LOG') {
-    if (!extra.osInfo) {
-      if (typeof extra === "string") {
-        console.warn('extra is not an object:' + extra);
-        extra = {
-          errorData: extra
-        }
-      }
-      extra.osInfo = getOSInfo();
-    }
+    // if (!extra.osInfo) {
+    //   if (typeof extra === 'string') {
+    //     console.warn('extra is not an object:' + extra);
+    //     extra = {
+    //       errorData: extra,
+    //     };
+    //   }
+    //   extra.osInfo = getOSInfo();
+    // }
     const now = Date.now();
     if (this.deviceHash === '') {
-      getDeviceHash().then(value => {
-        this.deviceHash = value;
-        return Promise.resolve();
-      }, () => {
-        this.deviceHash = 'Unknown Device Hash';
-      }).then(() => {
-        this._sendErrorToServer({
-          app: 'DESKTOP',
-          platform: process.platform,
-          device_id: this.deviceHash,
-          level: type,
-          time: now,
-          version: this.getVersion(),
-          logID: extra.logID || '',
-          data: {
+      getDeviceHash()
+        .then(
+          value => {
+            this.deviceHash = value;
+            return Promise.resolve();
+          },
+          () => {
+            this.deviceHash = 'Unknown Device Hash';
+          }
+        )
+        .then(() => {
+          this._sendErrorToServer({
+            app: 'DESKTOP',
+            platform: process.platform,
+            device_id: this.deviceHash,
+            level: type,
             time: now,
             version: this.getVersion(),
-            error: err,
-            extra: extra,
-          },
+            logID: extra.logID || '',
+            data: {
+              time: now,
+              version: this.getVersion(),
+              error: err,
+              extra: extra,
+            },
+          });
         });
-      });
     } else {
       this._sendErrorToServer({
         app: 'DESKTOP',
@@ -172,15 +177,14 @@ module.exports = class EdisonErrorReporter {
         options.proxy = process.env.HTTPS_PROXY;
       }
       request.post(options, (err, httpResponse, body) => {
-          if (err) {
-            console.log(`\n---> \nupload failed: ${err}`);
-            this.onSendToServerFailed(err, tmp);
-            return;
-          }
-          console.log(`\n---> \nupload success ${body}`);
-          this.onSendToServerSuccess(tmp);
+        if (err) {
+          console.log(`\n---> \nupload failed: ${err}`);
+          this.onSendToServerFailed(err, tmp);
+          return;
         }
-      );
+        console.log(`\n---> \nupload success ${body}`);
+        this.onSendToServerSuccess(tmp);
+      });
     });
     this.errorStack = [];
   }
@@ -189,5 +193,5 @@ module.exports = class EdisonErrorReporter {
   };
   onSendToServerFailed = (err, payload = {}) => {
     processEmitter.emit('upload-to-report-server', { status: 'failed', error: err, payload });
-  }
+  };
 };
