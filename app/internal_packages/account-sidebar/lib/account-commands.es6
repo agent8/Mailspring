@@ -59,7 +59,7 @@ function menuTemplate(accounts, currentSelectedAccountIds, { clickHandlers } = {
 
 function _focusAccounts(accounts) {
   Actions.focusDefaultMailboxPerspectiveForAccounts(accounts);
-  const mainWin = AppEnv.getMainWin();
+  const mainWin = AppEnv.getMainWindow();
   if (mainWin.isMinimized()) {
     mainWin.restore();
   }
