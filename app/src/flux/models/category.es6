@@ -105,6 +105,15 @@ export default class Category extends Model {
   get displayName() {
     return Category.pathToDisplayName(this.name, this.delimiter);
   }
+  get roleDisplayName() {
+    if (this.role) {
+      const names = this.name.split(this.delimiter);
+      if (names.length > 1) {
+        return names[names.length - 1];
+      }
+    }
+    return this.displayName;
+  }
   get fullDisplayName() {
     // return utf7.imap.decode(this.name);
     return this.name;

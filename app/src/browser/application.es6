@@ -294,58 +294,38 @@ export default class Application extends EventEmitter {
       }
     }
   }
-
-  // clearOldLogs() {
-  //   const logPath = path.join(this.configDirPath, 'ui-log');
-  //   const uploadPath = path.join(this.configDirPath, 'upload-log');
-  //   rimraf(uploadPath, err => {
-  //     if (err) {
-  //       console.log('\n------\npath cannot be removed');
-  //       console.log(err);
-  //     } else {
-  //       console.log('\n------\npath removed');
-  //     }
-  //     fs.mkdir(uploadPath, err => {
-  //       if (err) {
-  //         console.log('\n------\npath cannot be made');
-  //         console.log(err);
-  //       } else {
-  //         console.log('\n------\npath made');
-  //       }
-  //     });
-  //   });
-  //   if (!fs.existsSync(logPath)) {
-  //     fs.mkdirSync(logPath);
-  //   } else {
-  //     console.log('\n-----\nremoving ui logs');
-  //     rimraf(logPath, () => {
-  //       console.log('\n-----\nremoved ui logs');
-  //       fs.mkdir(logPath, err => {
-  //         console.log(`\n-----\nui log path creaded \n${err}`);
-  //       });
-  //     });
-  //   }
-  // }
-  reportError(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
-    if (grabLogs && !this.devMode) {
-      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'error');
+  reportError(
+    error,
+    extra = {},
+    options = { grabLogs: false, noAppConfig: false, expandLog: true, noStackTrace: false }
+  ) {
+    if (options.grabLogs && !this.devMode) {
+      this._grabLogAndReportLog(error, extra, options, 'error');
     } else {
-      this._reportLog(error, extra, { noWindows, noAppConfig }, 'error');
+      this._reportLog(error, extra, options, 'error');
     }
   }
 
-  reportWarning(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
-    if (grabLogs && !this.devMode) {
-      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'warning');
+  reportWarning(
+    error,
+    extra = {},
+    options = { grabLogs: false, noAppConfig: false, expandLog: true, noStackTrace: false }
+  ) {
+    if (options.grabLogs && !this.devMode) {
+      this._grabLogAndReportLog(error, extra, options, 'warning');
     } else {
-      this._reportLog(error, extra, { noWindows, noAppConfig }, 'warning');
+      this._reportLog(error, extra, options, 'warning');
     }
   }
-  reportLog(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
-    if (grabLogs && !this.devMode) {
-      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'log');
+  reportLog(
+    error,
+    extra = {},
+    options = { grabLogs: false, noAppConfig: false, expandLog: true, noStackTrace: false }
+  ) {
+    if (options.grabLogs && !this.devMode) {
+      this._grabLogAndReportLog(error, extra, options, 'log');
     } else {
-      this._reportLog(error, extra, { noWindows, noAppConfig }, 'log');
+      this._reportLog(error, extra, options, 'log');
     }
   }
 
@@ -357,20 +337,25 @@ export default class Application extends EventEmitter {
     }, reCheckUndateInfoTime);
   };
 
-  _grabLogAndReportLog(error, extra, { noWindows, noAppConfig } = {}, type = '') {
+  _grabLogAndReportLog(error, extra, options, type = '') {
     this.grabLogs()
       .then(filename => {
         extra.files = [filename];
-        this._reportLog(error, extra, { noWindows, noAppConfig }, type);
+        this._reportLog(error, extra, options, type);
       })
       .catch(e => {
         extra.grabLogError = e;
-        this._reportLog(error, extra, { noWindows, noAppConfig }, type);
+        this._reportLog(error, extra, options, type);
       });
   }
 
-  _reportLog(error, extra = {}, { noWindows, noAppConfig = false } = {}, type = '') {
-    extra = this._expandReportLog(extra, noAppConfig);
+  _reportLog(
+    error,
+    extra = {},
+    { noAppConfig = false, expandLog = true, noStackTrace = false } = {},
+    type = ''
+  ) {
+    extra = this._expandReportLog(extra, noAppConfig, expandLog);
     if (!extra.noUILog) {
       //We only log application log. Individual window log is written in AppEnv
       if (type.toLocaleLowerCase() === 'error') {
@@ -382,8 +367,11 @@ export default class Application extends EventEmitter {
       }
       // And since data send from renderer is already stripProcessed we don't need to do it again here.
       try {
-        const strippedError = this._stripSensitiveData(error);
-        error = strippedError;
+        if (noStackTrace) {
+          error = undefined;
+        } else {
+          error = this._stripSensitiveData(error);
+        }
         if (!!extra.errorData) {
           extra.errorData = this._stripSensitiveData(extra.errorData);
         }
@@ -404,13 +392,17 @@ export default class Application extends EventEmitter {
       global.errorLogger.reportLog(error, extra);
     }
   }
-  _expandReportLog = (extra = {}, noAppConfig = false) => {
+  _expandReportLog = (extra = {}, noAppConfig = false, expandLog = true) => {
     try {
-      getOSInfo = getOSInfo || require('../system-utils').getOSInfo;
-      extra.osInfo = getOSInfo();
       extra.native = this.nativeVersion;
-      if (!noAppConfig) {
-        extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
+      extra.mas = process.mas ? '1' : '0';
+      if (expandLog) {
+        getOSInfo = getOSInfo || require('../system-utils').getOSInfo;
+        extra.osInfo = getOSInfo();
+        extra.osLocale = app.getLocale();
+        if (!noAppConfig) {
+          extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
+        }
       }
       if (!!extra.errorData && typeof extra.errorData !== 'string') {
         extra.errorData = JSON.stringify(extra.errorData);
@@ -419,6 +411,10 @@ export default class Application extends EventEmitter {
       // can happen when an error is thrown very early
       extra.pluginIds = [];
     }
+    delete extra.noAppConfig;
+    delete extra.noStackTrace;
+    delete extra.expandLog;
+    delete extra.noUILog;
     return extra;
   };
   _stripSensitiveData(str = '') {
@@ -609,6 +605,8 @@ export default class Application extends EventEmitter {
         err = new Error(params.errorMessage);
       } else if (typeof extraParams.message === 'string') {
         err = new Error(extraParams.message);
+      } else if (extraParams.noStackTrace) {
+        err = {};
       } else {
         err = new Error();
       }
@@ -617,16 +615,22 @@ export default class Application extends EventEmitter {
         this.reportError(err, extraParams, {
           grabLogs: extraParams.grabLogs,
           noAppConfig: extraParams.noAppConfig,
+          expandLog: extraParams.expandLog,
+          noStackTrace: extraParams.noStackTrace,
         });
       } else if (level === 'warning') {
         this.reportWarning(err, extraParams, {
           grabLogs: extraParams.grabLogs,
           noAppConfig: extraParams.noAppConfig,
+          expandLog: extraParams.expandLog,
+          noStackTrace: extraParams.noStackTrace,
         });
       } else {
         this.reportLog(err, extraParams, {
           grabLogs: extraParams.grabLogs,
           noAppConfig: extraParams.noAppConfig,
+          expandLog: extraParams.expandLog,
+          noStackTrace: extraParams.noStackTrace,
         });
       }
     } catch (parseError) {
@@ -1074,9 +1078,9 @@ export default class Application extends EventEmitter {
   // needs to manually bubble them up to the Application instance via IPC or they won't be
   // handled. This happens in workspace-element.es6
   handleEvents() {
-    if (process.mas) {
-      globalShortcut.register('CommandOrControl+`', this.windowManager.switchWindow);
-    }
+    this.on('application:switch-window', () => {
+      this.windowManager.switchWindow();
+    });
 
     this.on('application:run-all-specs', () => {
       const win = this.windowManager.focusedWindow();
