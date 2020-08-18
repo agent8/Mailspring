@@ -277,14 +277,26 @@ export function TrashButton(props) {
         }
       });
     }
-    Actions.queueTasks(tasks);
+    AppEnv.showMessageBox({
+      title: 'Are you sure?',
+      detail: 'Message(s) will be permanently deleted.',
+      buttons: ['Yes', 'No'],
+      defaultId: 0,
+      cancelId: 1,
+    }).then(({ response } = {}) => {
+      if (response !== 0) {
+        AppEnv.logDebug(`Expunging message canceled, user clicked No`);
+        return;
+      }
+      Actions.queueTasks(tasks);
+      if (AppEnv.isThreadWindow()) {
+        AppEnv.logDebug(`Closing window because in ThreadWindow`);
+        AppEnv.close();
+      }
+    });
     // nextActionForRemoveFromView('ToolbarButton:ThreadList:expunge', threads);
     if (event) {
       event.stopPropagation();
-    }
-    if (AppEnv.isThreadWindow()) {
-      AppEnv.debugLog(`Closing window because in ThreadWindow`);
-      AppEnv.close();
     }
     return;
   };
@@ -391,7 +403,7 @@ export function TrashButton(props) {
   let title;
   if (canExpunge) {
     actionCallBack = _onShortCutExpunge;
-    title = 'Expunge Thread';
+    title = 'Delete Forever';
   } else if (canMove) {
     actionCallBack = _onShortCutRemove;
     title = 'Move to Trash';
@@ -402,7 +414,7 @@ export function TrashButton(props) {
       allFoldersInTrashOrSpam(props.thread.accountId, props.thread.labelIds)
     ) {
       actionCallBack = _onShortCutExpunge;
-      title = 'Expunge Thread';
+      title = 'Delete Forever';
     }
   }
   if (isInSearch(props) && !props.thread) {
@@ -410,7 +422,7 @@ export function TrashButton(props) {
     if (isMixed(threads)) {
       title = 'Trash';
     } else if (allThreadsInTrashOrSpam(threads)) {
-      title = 'Expunge';
+      title = 'Delete Forever';
     } else {
       title = 'Trash';
     }

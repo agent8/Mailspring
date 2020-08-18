@@ -1178,6 +1178,17 @@ class DraftStore extends MailspringStore {
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ message: m, thread: t }) => {
         if (m && (m.body || ignoreEmptyBody)) {
+          if (m.unread) {
+            const tasks = TaskFactory.taskForSettingUnread({
+              messages: [m],
+              unread: false,
+              source: 'Normal Reply',
+              canBeUndone: true,
+            });
+            if (tasks.length > 0) {
+              Actions.queueTasks(tasks);
+            }
+          }
           return DraftFactory.createOrUpdateDraftForReply({
             message: m,
             thread: t,
@@ -1192,8 +1203,19 @@ class DraftStore extends MailspringStore {
               buttons: ['No', 'Yes'],
             }).then(({ response } = {}) => {
               if (response !== 0) {
+                if (m && m.unread) {
+                  const tasks = TaskFactory.taskForSettingUnread({
+                    messages: [m],
+                    unread: false,
+                    source: 'Normal Reply',
+                    canBeUndone: true,
+                  });
+                  if (tasks.length > 0) {
+                    Actions.queueTasks(tasks);
+                  }
+                }
                 AppEnv.logDebug(
-                  `Message missing body, user accepted forward draft, message ${
+                  `Message missing body, user accepted draft, message ${
                     message ? message.id : messageId
                   }, thread: ${thread ? thread.id : threadId}`
                 );

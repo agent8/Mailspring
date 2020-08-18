@@ -453,7 +453,7 @@ export default class OAuthSignInPage extends React.Component {
     }
     return (
       <div className={`page account-setup oauth ${serviceName}`}>
-        {!process.mas && (
+        {this.needOpenInBrowser(serviceName) && (
           <div title="Open browser" className="oauth-browser-btn" onClick={this.openBrowser}>
             <RetinaImg
               name="popout.svg"
