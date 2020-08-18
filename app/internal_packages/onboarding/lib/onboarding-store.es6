@@ -7,6 +7,7 @@ const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
 const { EdisonAccountRest } = RESTful;
+const ONBOARDING_TRACKING_URL = 'https://cp.edison.tech/api/multiple/desktop/onboarding';
 
 class OnboardingStore extends MailspringStore {
   constructor() {
@@ -167,6 +168,26 @@ class OnboardingStore extends MailspringStore {
     } catch (err) {
       console.log('add tracing failed', err);
     }
+    // add tracking for installed users
+    try {
+      await fetch(ONBOARDING_TRACKING_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: emailAddress,
+          version: AppEnv.getVersion(),
+          mas: process.mas ? 1 : 0,
+          extra: 'desktop',
+          provider,
+        }),
+      });
+    } catch (err) {
+      console.log('onboarding add account tracking failed', err);
+    }
+
     try {
       await AccountStore.addAccount(account);
     } catch (e) {
