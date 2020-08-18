@@ -6,6 +6,34 @@
  */
 const { BrowserWindow, Menu, app } = require('electron');
 const Utils = require('../flux/models/utils');
+import i18n from 'i18next';
+import translationEN from '../translation/translationEN.json';
+import translationDE from '../translation/translationDE.json';
+i18n
+  .init({
+    // we init with resources
+    resources: {
+      en: {
+        translations: translationEN
+      },
+      de: {
+        translations: translationDE
+      }
+    },
+    fallbackLng: "en",
+    debug: true,
+
+    // have a common namespace used around the full app
+    ns: ["translations"],
+    defaultNS: "translations",
+
+    keySeparator: false, // we use content as keys
+
+    interpolation: {
+      escapeValue: false
+    }
+  });
+i18n.changeLanguage("de")
 
 // Used to manage the global application menu.
 //
@@ -37,6 +65,12 @@ module.exports = class ApplicationMenu {
 
   setActiveTemplate(template) {
     if (!Utils.isEqual(template, this.activeTemplate)) {
+      template.forEach(menu => {
+        menu.label = i18n.t(menu.label) || menu.label;
+        menu.submenu.forEach(entry => {
+          entry.label = i18n.t(entry.label) || entry.label;
+        })
+      })
       this.activeTemplate = template;
       this.rebuildMenuWithActiveTemplate();
     }

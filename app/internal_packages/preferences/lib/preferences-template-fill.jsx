@@ -31,8 +31,8 @@ import {
   PreferencesKeymapsContent,
 } from './components/preferences-keymaps';
 import i18n from 'i18next';
-import translationEN from './translationEN.json';
-import translationDE from './translationDE.json';
+import translationEN from '../../../src/translation/translationEN.json';
+import translationDE from '../../../src/translation/translationDE.json';
 i18n
   .init({
     // we init with resources
