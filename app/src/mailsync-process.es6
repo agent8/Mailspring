@@ -63,6 +63,7 @@ export const mailSyncView = {
   THREAD: 'thread',
   MESSAGE: 'message',
 };
+export const maxBufferLength = Math.pow(2, 28) - 1;
 
 export default class MailsyncProcess extends EventEmitter {
   constructor({ configDirPath, resourcePath, verbose, disableThread }) {
@@ -272,10 +273,7 @@ export default class MailsyncProcess extends EventEmitter {
         var rs = new Readable();
         rs.push(`${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`);
         rs.push(null);
-        rs.pipe(
-          this._proc.stdin,
-          { end: false }
-        );
+        rs.pipe(this._proc.stdin, { end: false });
         if (this.isInRenderer() && AppEnv.enabledToNativeLog) {
           console.log('--------------------To native---------------');
           this.logDebug(
@@ -298,10 +296,7 @@ export default class MailsyncProcess extends EventEmitter {
         }
         rs.push(siftAccountString);
         rs.push(null);
-        rs.pipe(
-          this._proc.stdin,
-          { end: false }
-        );
+        rs.pipe(this._proc.stdin, { end: false });
         rs.on('end', () => {
           console.log('-----first message send-------');
           this.syncInitilMessageSend = true;
@@ -449,7 +444,18 @@ export default class MailsyncProcess extends EventEmitter {
     }
     if (this._proc.stderr) {
       this._proc.stderr.on('data', data => {
-        errBuffer += data.toString();
+        if (errBuffer && errBuffer.length < maxBufferLength) {
+          errBuffer += data.toString();
+        } else {
+          try {
+            this.logError(
+              `error buffer exceeded max buffer length, ${maxBufferLength}, printing new error data`
+            );
+            this.logError(data.toString());
+          } catch (e) {
+            this.logError(`Error while printing excess error buffer, ${e}`);
+          }
+        }
       });
     }
     this._proc.on('error', err => {
