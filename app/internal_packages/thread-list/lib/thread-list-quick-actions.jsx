@@ -150,7 +150,7 @@ class ThreadTrashQuickAction extends React.Component {
       return (
         <div
           key="remove"
-          title="Expunge"
+          title="Delete Forever"
           style={{ order: 110 }}
           className="action action-trash"
           onClick={this._onExpunge}
@@ -206,11 +206,19 @@ class ThreadTrashQuickAction extends React.Component {
       source: 'Quick Actions: Thread List: Expunge',
     });
     if (Array.isArray(tasks) && tasks.length > 0) {
-      Actions.queueTasks(tasks);
-      // nextActionForTrashOrArchive({
-      //   source: 'Quick Actions: Thread List: Expunge',
-      //   affectedItems: [this.props.thread],
-      // });
+      AppEnv.showMessageBox({
+        title: 'Are you sure?',
+        detail: 'Message(s) will be permanently deleted.',
+        buttons: ['Yes', 'No'],
+        defaultId: 0,
+        cancelId: 1,
+      }).then(({ response } = {}) => {
+        if (response !== 0) {
+          AppEnv.logDebug(`Expunging message canceled, user clicked No`);
+          return;
+        }
+        Actions.queueTasks(tasks);
+      });
     }
     // Don't trigger the thread row click
     event.stopPropagation();

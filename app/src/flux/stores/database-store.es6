@@ -608,7 +608,6 @@ class DatabaseStore extends MailspringStore {
           AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
           if (AppEnv.isHinata()) {
             AppEnv.reportLog(new Error('upload sql results'), {
-              sql:modelQuery.sql(),
               errorData: JSON.stringify(result.slice(5)),
             });
           }

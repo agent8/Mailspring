@@ -83,7 +83,7 @@ export default class CategorySelection extends React.Component {
   };
   renderDisabled() {
     return (
-      <div className="category-picker-dropdown readonly">
+      <div className="category-picker-dropdown folder-mapper readonly">
         {this._renderItem(this.props.current)}
       </div>
     );
@@ -108,7 +108,7 @@ export default class CategorySelection extends React.Component {
     ];
 
     return (
-      <div className="category-picker-dropdown">
+      <div className="category-picker-dropdown folder-mapper">
         <DropdownMenu
           intitialSelectionItem={this.props.current || { empty: true }}
           headerComponents={headerComponents}
