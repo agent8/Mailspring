@@ -13,7 +13,7 @@ module.exports = class MailspringWindow extends EventEmitter {
   constructor(settings = {}) {
     super();
 
-    let frame, height, pathToOpen, resizable, title, width, autoHideMenuBar;
+    let frame, height, pathToOpen, resizable, title, width, autoHideMenuBar, titleBarStyle;
     this.browserWindow = null;
     this.loaded = null;
     this.isSpec = null;
@@ -38,6 +38,7 @@ module.exports = class MailspringWindow extends EventEmitter {
       exitWhenDone: this.exitWhenDone,
       configDirPath: this.configDirPath,
       autoHideMenuBar,
+      titleBarStyle,
     } = settings);
     if (!this.accountId) {
       this.accountId = 'all';
@@ -56,6 +57,7 @@ module.exports = class MailspringWindow extends EventEmitter {
       show: false,
       title: title || 'EdisonMail',
       frame,
+      titleBarStyle,
       width,
       height,
       resizable,
