@@ -6,6 +6,7 @@ import { getOSInfo } from '../system-utils';
 import KeyManager from '../key-manager';
 
 const { OAuthList } = Constant;
+const supportId = AppEnv.config.get('core.support.id');
 
 const aesEncode = data => {
   const password = 'effa43461f128bee';
@@ -16,9 +17,24 @@ const aesEncode = data => {
   return encrypted;
 };
 
+const ResCodes = {
+  Deleted: 10002,
+  EmailValid: 10003,
+  AccountValid: 10004,
+};
+
 export default class EdisonAccount {
   constructor(host) {
     this.host = host;
+  }
+
+  _handleResCode(code, account) {
+    if (code === 0) {
+      return;
+    }
+    if (code === ResCodes.Deleted) {
+      Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
+    }
   }
 
   async checkAccounts(aids = []) {
@@ -41,8 +57,9 @@ export default class EdisonAccount {
     try {
       const { data } = await axios.post(url, postParams);
       const checkedAccountIds = [];
-      checkAccount.forEach(a => {
-        if (data.data && data.data.includes(`${a.emailAddress}:${a.settings.imap_host}`)) {
+      postParams.forEach(p => {
+        const accountKey = `${p.username || p.emailAddress}:${p.host}`;
+        if (data.data && data.data.includes(accountKey)) {
           checkedAccountIds.push(a.id);
         }
       });
@@ -67,10 +84,8 @@ export default class EdisonAccount {
     }
     try {
       const { data } = await axios.post(url, [postData]);
-      const isChecked =
-        data.data && data.data.includes(`${account.emailAddress}:${account.settings.imap_host}`)
-          ? true
-          : false;
+      const accountKey = `${postData.username || postData.emailAddress}:${postData.host}`;
+      const isChecked = data.data && data.data.includes(accountKey) ? true : false;
       return new RESTResult(data.code === 0, data.message, isChecked);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -129,6 +144,7 @@ export default class EdisonAccount {
       emailAccount['type'] = 'exchange';
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
+        host: account.settings.imap_host,
         // To do
         domain: null,
       };
@@ -151,7 +167,9 @@ export default class EdisonAccount {
           },
         };
         Actions.updateAccount(aid, newAccount);
+        AccountStore.loginSyncAccount(aid);
       }
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -177,6 +195,10 @@ export default class EdisonAccount {
         },
       });
       const data = res.data;
+      if (data.code === 0) {
+        AccountStore.logoutSyncAccount(aid);
+      }
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -204,6 +226,142 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
+      this._handleResCode(data.code, account);
+      return new RESTResult(data.code === 0, data.message);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async loginWithPassword(aid, password) {
+    const url = `${this.host}/api/charge/account/login`;
+    const account = AccountStore.accountForId(aid);
+    if (!account) {
+      return new RESTResult(false, 'accountId is unexpected');
+    }
+    if (!password) {
+      return new RESTResult(false, 'password is unexpected');
+    }
+    const { hostname, release } = getOSInfo();
+    const supportId = AppEnv.config.get('core.support.id');
+    const device = {
+      id: supportId,
+      name: hostname,
+      platform: process.platform === 'darwin' ? 'mac' : process.platform,
+      model: release,
+      screenType: 'computer',
+      pushToken: 'string',
+    };
+    const postData = {
+      emailAddress: account.emailAddress,
+      password: password,
+      device,
+    };
+    try {
+      const { data } = await axios.post(url, postData);
+      if (data.code === 0 && data.data) {
+        const newAccount = {
+          ...account,
+          settings: {
+            ...account.settings,
+            edisonId: data.data.edisonId,
+            edison_token: data.data.token,
+          },
+        };
+        Actions.updateAccount(aid, newAccount);
+      }
+      this._handleResCode(data.code, account);
+      return new RESTResult(data.code === 0, data.message);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async devicesList(aid) {
+    const url = `${this.host}/api/charge/account/devices`;
+    const account = AccountStore.accountForId(aid);
+    if (!account) {
+      return new RESTResult(false, 'accountId is unexpected');
+    }
+    const token = account.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'this account has no token');
+    }
+
+    try {
+      const { data } = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      this._handleResCode(data.code, account);
+      return new RESTResult(data.code === 0, data.message, data.data);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async logoutDevice(aid, deviceId) {
+    const url = `${this.host}/api/charge/account/device/logout`;
+    const account = AccountStore.accountForId(aid);
+    if (!account) {
+      return new RESTResult(false, 'accountId is unexpected');
+    }
+    const token = account.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'this account has no token');
+    }
+    if (!deviceId) {
+      return new RESTResult(false, 'deviceId is unexpected');
+    }
+    const postData = {
+      deviceId: deviceId,
+    };
+    try {
+      const { data } = await axios.post(url, postData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (data.code === 0 && deviceId === supportId) {
+        AccountStore.logoutSyncAccount(aid);
+      }
+      this._handleResCode(data.code, account);
+      return new RESTResult(data.code === 0, data.message);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async UpdateDevice(aid, name) {
+    const url = `${this.host}/api/charge/account/device/update`;
+    const account = AccountStore.accountForId(aid);
+    if (!account) {
+      return new RESTResult(false, 'accountId is unexpected');
+    }
+    const token = account.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'this account has no token');
+    }
+    const { hostname, release } = getOSInfo();
+    const device = {
+      id: supportId,
+      name: name || hostname,
+      platform: process.platform === 'darwin' ? 'mac' : process.platform,
+      model: release,
+      screenType: 'computer',
+      pushToken: 'string',
+    };
+    try {
+      const { data } = await axios.post(url, device, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       return new RESTResult(false, error.message);
