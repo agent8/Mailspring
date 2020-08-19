@@ -6,18 +6,20 @@ import fs from 'fs';
 import { getDeviceHash, syncGetDeviceHash } from '../system-utils';
 import axios from 'axios';
 import moment from 'moment';
-import { ServerInfoPriorityEnum } from '../constant';
+import { ServerInfoPriorityEnum, AutoUpdateManagerState } from '../constant';
 
 let autoUpdater = null;
 
-const IdleState = 'idle';
-const CheckingState = 'checking';
-const DownloadingState = 'downloading';
-const UpdateAvailableState = 'update-available';
-const NoUpdateAvailableState = 'no-update-available';
-const UnsupportedState = 'unsupported';
-const ErrorState = 'error';
+const IdleState = AutoUpdateManagerState.IdleState;
+const CheckingState = AutoUpdateManagerState.CheckingState;
+const AvailableForDownload = AutoUpdateManagerState.AvailableForDownload;
+const DownloadingState = AutoUpdateManagerState.DownloadingState;
+const UpdateAvailableState = AutoUpdateManagerState.UpdateAvailableState;
+const NoUpdateAvailableState = AutoUpdateManagerState.NoUpdateAvailableState;
+const UnsupportedState = AutoUpdateManagerState.UnsupportedState;
+const ErrorState = AutoUpdateManagerState.ErrorState;
 const preferredChannel = 'stable';
+const REMINDER_LATER_KEY = 'reminder_later_date';
 
 export default class AutoUpdateManager extends EventEmitter {
   constructor(version, config, specMode, devMode, host) {
@@ -32,6 +34,8 @@ export default class AutoUpdateManager extends EventEmitter {
     this.preferredChannel = preferredChannel;
     this.supportId = syncGetDeviceHash();
     this._hasForceUpdateMessageDialog = false;
+    this.showOnNotAvailableOrError = false;
+    this.errorMessage = '';
 
     this.updateFeedURL().then(() => {
       setTimeout(() => this.setupAutoUpdater(), 0);
@@ -155,6 +159,7 @@ export default class AutoUpdateManager extends EventEmitter {
       return;
     }
     this.state = state;
+    console.log(`state-changed ${state}`);
     this.emit('state-changed', this.state);
   }
 
@@ -166,60 +171,41 @@ export default class AutoUpdateManager extends EventEmitter {
     return {
       releaseVersion: this.releaseVersion,
       releaseNotes: this.releaseNotes,
+      currentVersion: this.version,
     };
   }
 
   check = async ({ hidePopups, manuallyCheck = false } = {}) => {
-    const REMINDER_LATER_KEY = 'reminder_later_date';
+    if (this.devMode) {
+      return;
+    }
+    if (this.state === IdleState) {
+      this.setState(CheckingState);
+    }
     const res = await axios.get(await this.getFeedUrl());
-    const today = moment().format('YYYYMMDD');
     if (res && res.data && res.data.pckVersion) {
-      if (this.devMode || this.getState() === DownloadingState) {
+      if (this.getState() === DownloadingState) {
         return;
       }
-      let choice = 0;
+      if (!hidePopups) {
+        this.showOnNotAvailableOrError = true;
+      }
       if (manuallyCheck) {
-        choice = dialog.showMessageBoxSync({
-          type: 'info',
-          buttons: ['Update', 'Remind Me Later'],
-          defaultId: 0,
-          cancelId: 1,
-          icon: this.iconURL(),
-          message: `Update available.`,
-          title: 'Update Available',
-          detail: `New EdisonMail available. Version (${res.data.pckVersion}).`,
-        });
-        // Remind Me Later
-        if (choice === 1) {
-          this.config.set(REMINDER_LATER_KEY, today);
-        }
-        // Update
-        else {
-          await this.updateFeedURL();
-          if (!hidePopups) {
-            autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
-            autoUpdater.once('error', this.onUpdateError);
-          }
-          autoUpdater.checkForUpdates();
-        }
+        this.onUpdateAvailableForDownload(res.data.pckVersion);
       } else {
-        // Update
-        await this.updateFeedURL();
-        if (!hidePopups) {
-          autoUpdater.once('update-not-available', this.onUpdateNotAvailable);
-          autoUpdater.once('error', this.onUpdateError);
-        }
-        autoUpdater.checkForUpdates();
+        await this.downloadUpdate();
       }
     } else if (!res.data) {
       if (manuallyCheck) {
-        this.onUpdateNotAvailable();
+        this.setState(NoUpdateAvailableState);
       }
     }
   };
-
   checkForce = async () => {
     try {
+      if (this.devMode) {
+        return;
+      }
       const { data } = await axios.get(await this.getVersionInfoUrl());
       if (data && data.data && data.data.info) {
         const { priority, message, title, detail, url } = JSON.parse(data.data.info);
@@ -266,6 +252,22 @@ export default class AutoUpdateManager extends EventEmitter {
   install() {
     autoUpdater.quitAndInstall();
   }
+  async downloadUpdate() {
+    await this.updateFeedURL();
+    autoUpdater.checkForUpdates();
+    if (this.state === IdleState) {
+      this.setState(CheckingState);
+    }
+  }
+
+  ignoreUpdate() {
+    const today = moment().format('YYYYMMDD');
+    this.config.set(REMINDER_LATER_KEY, today);
+    this.showOnNotAvailableOrError = false;
+    if (this.state !== DownloadingState) {
+      this.setState(IdleState);
+    }
+  }
 
   iconURL() {
     const url = path.join(process.resourcesPath, 'app', 'edisonmail.png');
@@ -274,28 +276,8 @@ export default class AutoUpdateManager extends EventEmitter {
     }
     return url;
   }
-
-  onUpdateNotAvailable = () => {
-    autoUpdater.removeListener('error', this.onUpdateError);
-    dialog.showMessageBox({
-      type: 'info',
-      buttons: ['OK'],
-      icon: this.iconURL(),
-      message: 'No update available.',
-      title: 'No Update Available',
-      detail: `You're running the latest version of EdisonMail (${this.version}).`,
-    });
-  };
-
-  onUpdateError = (event, message) => {
-    autoUpdater.removeListener('update-not-available', this.onUpdateNotAvailable);
-    dialog.showMessageBox({
-      type: 'warning',
-      buttons: ['OK'],
-      icon: this.iconURL(),
-      message: 'There was an error checking for updates.',
-      title: 'Update Error',
-      detail: message,
-    });
+  onUpdateAvailableForDownload = version => {
+    this.releaseVersion = version;
+    this.setState(AvailableForDownload);
   };
 }
