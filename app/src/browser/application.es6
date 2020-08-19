@@ -1265,7 +1265,14 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:check-for-update', () => {
+      console.log('checking for update');
       this.autoUpdateManager.check({ manuallyCheck: true });
+    });
+    this.on('application:ignore-update', () => {
+      this.autoUpdateManager.ignoreUpdate();
+    });
+    this.on('application:start-download-update', () => {
+      this.autoUpdateManager.downloadUpdate();
     });
 
     this.on('application:install-update', () => {
