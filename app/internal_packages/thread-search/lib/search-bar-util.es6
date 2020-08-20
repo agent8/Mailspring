@@ -37,7 +37,8 @@ export const getThreadSuggestions = async (term, accountIds) => {
     dbQuery = dbQuery.where({ accountId: accountIds[0] });
   }
 
-  return dbQuery.background().then(results => results);
+  // return dbQuery.background().then(results => results);
+  return dbQuery.then(results => results);
 };
 
 export const getContactSuggestions = async (term, accountIds) => {
