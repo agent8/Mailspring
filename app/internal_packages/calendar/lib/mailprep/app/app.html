@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <!-- Compiled and minified CSS -->
+
+    <link rel="stylesheet" href="./components/view.css" />
+    <link rel="stylesheet" href="./bootstrap.css" />
+    <link rel="stylesheet" href="../node_modules/react-rrule-generator/build/styles.css" />
+    <link rel="stylesheet" href="materialize.css" />
+
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>Edison Mailspring Calendar</title>
+    <script>
+      (function() {
+        if (!process.env.HOT) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = './dist/style.css';
+          // HACK: Writing the script path should be done with webpack
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+      })();
+    </script>
+
+    <!-- <script src="https://secure.aadcdn.microsoftonline-p.com/lib/<version>/js/msal.js"></script>
+    <script src="https://secure.aadcdn.microsoftonline-p.com/lib/<version>/js/msal.min.js"></script> -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCSlcIifI5yDulPluuQjuhML3V0AO2TqfA&libraries=places"></script>
+    <script async defer src="https://apis.google.com/js/api.js?onload=onLoadCallback">
+      function onLoadCallback () {
+        // NEED TO FIND A PLACE FOR THIS GUY.
+        window.gapi.load('client:auth2', {
+          callback: () => {
+            console.log("init gapi");
+            window.gapi.client.init({
+              'apiKey': 'AIzaSyCTYXWtoRKnXeZkPCcZwYOXm0Qz3Lz9F9g',
+              'clientId': '65724758895-gc7lubjkjsqqddfhlb7jcme80i3mjqn0.apps.googleusercontent.com',
+              'scope': `https://www.googleapis.com/auth/calendar.events`,
+              'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+            });}})};
+        // Wow look at how ugly this is man :\
+    </script>
+    <!--<script>
+      // window.onLoadCallback = function(){
+      function onLoadCallback (){
+        // NEED TO FIND A PLACE FOR THIS GUY.
+        window.gapi.load('client:auth2', {
+          callback: () => {
+            console.log("init gapi");
+            window.gapi.client.init({
+              'apiKey': 'AIzaSyCTYXWtoRKnXeZkPCcZwYOXm0Qz3Lz9F9g',
+              'clientId': '65724758895-gc7lubjkjsqqddfhlb7jcme80i3mjqn0.apps.googleusercontent.com',
+              'scope': `https://www.googleapis.com/auth/calendar.events`,
+              'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+            });}});
+        // Wow look at how ugly this is man :\
+      }
+    </script> -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      {
+        const scripts = [];
+
+        // Dynamically insert the DLL script in development env in the
+        // renderer process
+        if (process.env.NODE_ENV === 'development') {
+          scripts.push('../dll/renderer.dev.dll.js');
+        }
+
+        // Dynamically insert the bundled app script in the renderer process
+        const port = process.env.PORT || 1212;
+        scripts.push(
+          process.env.HOT
+            ? 'http://localhost:' + port + '/dist/renderer.dev.js'
+            : './dist/renderer.prod.js'
+        );
+
+        document.write(
+          scripts.map((script) => `<script defer src="${script}"><\/script>`).join('')
+        );
+      }
+    </script>
+  </body>
+</html>
