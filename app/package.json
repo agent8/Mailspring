@@ -13,6 +13,7 @@
     "@atlaskit/editor-core": "^127.0.0",
     "@atlaskit/media-core": "^32.0.0",
     "@atlaskit/smart-card": "^14.1.0",
+    "@ruoxijiang/node-tnef": "^0.1.2",
     "a11y-emoji": "^1.0.1",
     "alt-sasl-digest-md5": "^1.0.0",
     "archiver": "^3.1.1",
