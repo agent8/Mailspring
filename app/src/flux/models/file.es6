@@ -2,7 +2,7 @@
 import path from 'path';
 import Model from './model';
 import Attributes from '../attributes';
-let RegExpUtils = null;
+import { MS_TNEF_TYPES } from '../../constant';
 
 /**
 Public: File model represents an email attachment.
@@ -70,6 +70,11 @@ export default class File extends Model {
     filePath: Attributes.String({
       modelKey: 'filePath',
       queryable: false,
+    }),
+    state: Attributes.Number({
+      modelKey: 'state',
+      queryable: true,
+      loadFromColumn: true,
     }),
   });
   static fromPartialData(data) {
@@ -161,5 +166,8 @@ export default class File extends Model {
     const decimalPoints = idx >= 2 ? 1 : 0;
     const rounded = parseFloat(result.toFixed(decimalPoints));
     return `${rounded} ${units[idx]}`;
+  }
+  isTNEFType() {
+    return MS_TNEF_TYPES.includes((this.contentType || '').toLocaleLowerCase());
   }
 }
