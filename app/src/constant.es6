@@ -8,7 +8,7 @@ export const OAuthList = [
 ];
 export const showCC = 'cc';
 export const showCCAndBCC = 'cc+bcc';
-
+export const MS_TNEF_TYPES = ['application/ms-tnef', 'application/vnd.ms-tnef'];
 export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
@@ -63,6 +63,11 @@ export const AttachmentDownloadState = {
   fail: -1,
   downloading: 0,
   done: 1,
+};
+export const FileState = {
+  Normal: 0,
+  Removed: 1,
+  IgnoreMissing: 2,
 };
 export const AttachmentFileSizeIgnoreThreshold = 4; //4 Bytes;
 
