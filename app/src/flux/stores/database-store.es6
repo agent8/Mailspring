@@ -19,7 +19,7 @@ const DEBUG_QUERY_PLANS = AppEnv.inDevMode();
 
 const BASE_RETRY_LOCK_DELAY = 50;
 const MAX_RETRY_LOCK_DELAY = 500;
-const SLOW_QUERY_THRESH_HOLD = 500;
+const SLOW_QUERY_THRESH_HOLD = 1000;
 export const AuxDBs = {
   MessageBody: 'embody.db',
 };
