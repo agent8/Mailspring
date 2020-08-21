@@ -1,5 +1,5 @@
-import { React, PropTypes, Actions, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
-import Calendar from './mailprep/app/index';
+import { React } from 'mailspring-exports';
+const { RetinaImg } = require('mailspring-component-kit');
 export default class CalendarButton extends React.Component {
   static displayName = 'CalendarButton';
 
@@ -10,20 +10,21 @@ export default class CalendarButton extends React.Component {
   }
 
   _onClick = () => {
-    AppEnv.getCurrentWindow().setMinimumSize(480, 250);
-    WorkspaceStore.defineSheet(
-      'Calendar',
-      {},
-      {
-        split: ['Calendar'],
-        list: ['Calendar'],
-      }
-    );
-    ComponentRegistry.register(Calendar, {
-      location: WorkspaceStore.Location.Calendar,
+    AppEnv.newWindow({
+      title: '',
+      hidden: true,
+      // additionalChannelParam: 'thread',
+      windowKey: `calendar-plugin`,
+      windowType: 'calendar-plugin',
+      // threadId: 'calendar',
+      // accountId: thread.accountId,
+      windowLevel: 1,
+      // windowProps: {
+      //   threadId: thread.id,
+      //   sidebarPerspectiveJson: sidebarPerspective.toJSON(),
+      //   currentPerspectiveJson: currentPerspectiveJson,
+      // },
     });
-
-    Actions.pushSheet(WorkspaceStore.Sheet.Calendar);
   };
 
   _getDialog() {

@@ -7,11 +7,12 @@
     "url": ""
   },
   "engines": {
-    "mailspring": ">=1.0.31"
+    "mailspring": "*"
   },
   "windowTypes": {
     "default": true,
-    "composer": true
+    "thread-popout": true,
+    "calendar-plugin": true
   },
   "description": "Enter a description of your package!",
   "license": "MIT"

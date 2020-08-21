@@ -19,7 +19,7 @@ const SidebarActions = require('./sidebar-actions');
 
 const idForCategories = categories => _.pluck(categories, 'id').join('-');
 
-const countForItem = function(perspective) {
+const countForItem = function (perspective) {
   const unreadCountEnabled = AppEnv.config.get('core.workspace.showUnreadForAllCategories');
   if (perspective.isInbox() || perspective.isDrafts() || unreadCountEnabled) {
     return perspective.unreadCount();
@@ -74,7 +74,7 @@ const isItemSelected = (perspective, children = []) => {
   return false;
 };
 
-const isItemCollapsed = function(id) {
+const isItemCollapsed = function (id) {
   if (AppEnv.savedState.sidebarKeysCollapsed[id] !== undefined) {
     return AppEnv.savedState.sidebarKeysCollapsed[id];
   } else {
@@ -82,7 +82,7 @@ const isItemCollapsed = function(id) {
   }
 };
 
-const toggleItemCollapsed = function(item) {
+const toggleItemCollapsed = function (item) {
   if (!(item.children.length > 0)) {
     return;
   }
@@ -92,7 +92,7 @@ const toggleItemCollapsed = function(item) {
   SidebarActions.setKeyCollapsed(item.id, !isItemCollapsed(item.id));
 };
 
-const onDeleteItem = function(item) {
+const onDeleteItem = function (item) {
   if (item.deleted === true) {
     return;
   }
@@ -134,7 +134,7 @@ const onDeleteItem = function(item) {
     });
 };
 
-const onEditItem = function(item, newEnteredValue, originalText) {
+const onEditItem = function (item, newEnteredValue, originalText) {
   let newDisplayName;
   if (!newEnteredValue) {
     return;
@@ -635,6 +635,12 @@ class SidebarItem {
       const categories = parentPerspective ? parentPerspective.perspective.categories() : [];
       if (categories.length === 1) {
         SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0]);
+      } else {
+        AppEnv.logDebug(
+          `paths is not 1, children not seeked, ${accountId}, ${parentPerspective &&
+          parentPerspective.perspective &&
+          JSON.stringify(parentPerspective.perspective.toJSON())}`
+        );
       }
     }
     return parentPerspective;

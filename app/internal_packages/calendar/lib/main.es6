@@ -1,36 +1,22 @@
 import { ComponentRegistry, WorkspaceStore, Actions } from 'mailspring-exports';
-import React from 'react';
 import CalendarButton from './calendar-button';
 import Calendar from './mailprep/app/index';
-
-
-
 
 // Activate is called when the package is loaded. If your package previously
 // saved state using `serialize` it is provided.
 //
-
-class CalendarWithWindowProps extends React.Component {
-  static displayName = 'CalendarWithWindowProps';
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return
-  }
-}
-
 export function activate() {
 
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(CalendarButton, {
       location: WorkspaceStore.Location.RootSidebar,
     });
-
   } else {
-    console.log("HALO")
-
+    AppEnv.displayWindow();
+    AppEnv.getCurrentWindow().setSize(1024, 728);
+    ComponentRegistry.register(Calendar, {
+      location: WorkspaceStore.Location.Center,
+    });
   }
 }
 

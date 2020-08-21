@@ -69,6 +69,7 @@ const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 const customStyles = {
   overlay: {
+    zIndex: '10',
     background: 'none'
   },
   content: {

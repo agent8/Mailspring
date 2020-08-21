@@ -54,7 +54,7 @@ class WorkspaceStore extends MailspringStore {
       });
     } else {
       webFrame.setZoomFactor(1);
-      AppEnv.config.observe('core.workspace.interfaceZoom', () => {});
+      AppEnv.config.observe('core.workspace.interfaceZoom', () => { });
     }
   }
 
