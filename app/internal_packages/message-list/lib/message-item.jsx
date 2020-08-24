@@ -125,9 +125,9 @@ export default class MessageItem extends React.Component {
     this._onToggleCollapsed();
   };
 
-  _onDownloadAll = () => {
+  _onDownloadAll = files => {
     Actions.fetchAndSaveAllFiles({
-      files: this.props.message.files,
+      files: files,
       accountId: this.state.accountId,
     });
   };
@@ -245,7 +245,7 @@ export default class MessageItem extends React.Component {
     }
   }
 
-  _renderDownloadAllButton() {
+  _renderDownloadAllButton(attachments) {
     return (
       <div className="download-all">
         <div className="attachment-number">
@@ -255,7 +255,7 @@ export default class MessageItem extends React.Component {
             style={{ width: 18, height: 18, fontSize: 18 }}
             mode={RetinaImg.Mode.ContentIsMask}
           />
-          <span>{this.props.message.files.length} attachments</span>
+          <span>{attachments.length} attachments</span>
         </div>
         <div className="separator">-</div>
         {this._isAllAttachmentsDownloading() ? (
@@ -269,7 +269,10 @@ export default class MessageItem extends React.Component {
             />
           </div>
         ) : (
-          <div className="download-all-action" onClick={this._onDownloadAll}>
+          <div
+            className="download-all-action"
+            onClick={this._onDownloadAll.bind(this, attachments)}
+          >
             <RetinaImg
               name="download.svg"
               isIcon
@@ -315,7 +318,7 @@ export default class MessageItem extends React.Component {
             />
           </div>
         )}
-        {attachedFiles.length > 1 ? this._renderDownloadAllButton() : null}
+        {attachedFiles.length > 1 ? this._renderDownloadAllButton(attachedFiles) : null}
       </div>
     );
   }
