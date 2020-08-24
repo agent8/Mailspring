@@ -1,5 +1,6 @@
 import React from 'react';
 import moment from 'moment';
+import Modal from 'react-modal';
 
 import {
   ConflictResolutionMode,
@@ -43,7 +44,7 @@ import {
   asyncUpdateRecurrExchangeSeries,
   asyncDeleteExchangeEvent
 } from '../../utils/client/exchange';
-// import './index.css';
+
 import { dropDownTime, OUTLOOK, EXCHANGE, GOOGLE, CALDAV } from '../../utils/constants';
 
 // import '../../bootstrap.css';
@@ -62,6 +63,17 @@ const END_INDEX_OF_MINUTE = 16;
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    width: '32%',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)'
+  }
+};
 
 export default class EditEvent extends React.Component {
   constructor(props) {
@@ -117,7 +129,10 @@ export default class EditEvent extends React.Component {
       recurrByMonthDay: '',
       recurrByWeekDay: '',
       recurrByWeekNo: '',
-      activeTab: 'Details'
+      activeTab: 'Details',
+
+      // Update form
+      isShowUpdateForm: false,
     };
   }
 
@@ -217,6 +232,15 @@ export default class EditEvent extends React.Component {
       modifiedThenDeleted: false
     };
   };
+
+  handleEditEvent = () => {
+    const { state } = this;
+    if (state.isRecurring) {
+      this.setState({ isShowUpdateForm: true })
+    } else {
+      this.editEvent();
+    }
+  }
 
   editEvent = () => {
     const { props, state } = this;
@@ -697,6 +721,26 @@ export default class EditEvent extends React.Component {
     }));
   };
 
+  renderPopup = (state) => {
+    return (<Modal isOpen={state.isShowUpdateForm} style={customStyles} onRequestClose={() => this.setState({ isShowUpdateForm: false })}>
+      <p>This is a recurring event</p>
+      <button type="button" onClick={() => this.setState({ isShowUpdateForm: false })}>
+        Cancel
+      </button>
+      {state.isMaster
+        ? <button type="button" onClick={this.editAllRecurrenceEvent}>
+          Update All
+          </button>
+        : <button type="button" onClick={this.editFutureRecurrenceEvent}>
+          Update All Future Events
+          </button>
+      }
+      <button type="button" onClick={this.editEvent}>
+        Update Only This Event
+      </button>
+    </Modal>);
+  }
+
   renderAddDetails = () => {
     const { props, state } = this;
 
@@ -880,57 +924,13 @@ export default class EditEvent extends React.Component {
 
   render() {
     const { props, state } = this;
-    // const rrulegenerator = [];
-    // if (state.showRruleGenerator) {
-    //   rrulegenerator.push(
-    //     <RRuleGenerator
-    //       open={false}
-    //       key="rrulegenerator"
-    //       onChange={this.handleRruleChange}
-    //       name="rrule"
-    //       value={state.updatedRrule}
-    //       config={{
-    //         hideStart: true,
-    //         end: ['On date', 'After']
-    //       }}
-    //     />
-    //   );
-    // }
-
-    const endMenu = [];
-    if (state.isRecurring && !state.updatedIsRecurring) {
-      endMenu.push(
-        <BigButton variant="big-blue" onClick={this.editAllRecurrenceEvent}>
-          Update all events
-        </BigButton>
-      );
-    } else {
-      endMenu.push(
-        <BigButton variant="big-blue" onClick={this.editEvent}>
-          Save
-        </BigButton>
-      );
-      if (state.isRecurring) {
-        if (state.isMaster) {
-          endMenu.push(
-            <BigButton variant="big-blue" onClick={this.editAllRecurrenceEvent}>
-              Update All
-            </BigButton>
-          );
-        } else {
-          endMenu.push(
-            <BigButton variant="big-blue" onClick={this.editFutureRecurrenceEvent}>
-              Update Future
-            </BigButton>
-          );
-        }
-      }
-    }
 
     if (state.start.dateTime !== undefined && state.start.dateTime !== undefined) {
       return (
         <div className="calendar">
+          {this.renderPopup(state)}
           <div className="add-form-main-panel-container">
+
             <div className="add-form-main-panel">
               {/* Add form header */}
               <div className="add-form-header">
@@ -947,7 +947,9 @@ export default class EditEvent extends React.Component {
                   <BigButton variant="big-white" onClick={this.backToCalendar}>
                     Cancel
                   </BigButton>
-                  {endMenu}
+                  <BigButton variant="big-blue" onClick={this.handleEditEvent}>
+                    Save
+                  </BigButton>
                 </div>
               </div>
               {/* Details / Find a Time tab toggle */}
