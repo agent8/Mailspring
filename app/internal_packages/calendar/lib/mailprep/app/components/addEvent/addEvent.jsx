@@ -5,6 +5,7 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import moment from 'moment';
 import ICAL from 'ical.js';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import Modal from 'react-modal';
 
 import RRuleGenerator from '../react-rrule-generator/src/lib';
 import BigButton from '../library/BigButton';
@@ -17,9 +18,9 @@ import RoundCheckbox from '../library/RoundCheckbox';
 import Tabs from '../library/Tabs/Tabs';
 import Tab from '../library/Tabs/Tab';
 
-// import '../view.css';
-// import './addEvent.css';
-// import '../react-rrule-generator/build/styles.css';
+import '../view.css';
+import './addEvent.css';
+import '../react-rrule-generator/build/styles.css';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -31,6 +32,17 @@ const END_INDEX_OF_MINUTE = 16;
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    width: '32%',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)'
+  }
+};
 
 export default class AddEvent extends Component {
   constructor(props) {
@@ -55,7 +67,9 @@ export default class AddEvent extends Component {
       activeTab: 'Details',
       guest: '',
       attendees: [],
-      location: ''
+      location: '',
+      // Popup forms
+      isShowConfirmForm: false,
     };
   }
 
@@ -287,9 +301,34 @@ export default class AddEvent extends Component {
     });
   };
 
-  handleSubmit = async (e) => {
+  handleSubmitClick = (event) => {
+    event.preventDefault();
+    const { props, state } = this;
+    // Display confirmation to send modal if there are guests
+    if (state.attendees.length !== 0) {
+      this.setState({
+        isShowConfirmForm: true
+      })
+    } else {
+      this.handleSubmit();
+    }
+  }
+
+  renderPopup = (state) => {
+    return (<Modal isOpen={state.isShowConfirmForm} style={customStyles} onRequestClose={() => this.setState({ isShowConfirmForm: false })}>
+      <p>You are about to send an invitation for "{state.title}"</p>
+      <p>Do you want to send "{state.title}" now or continue editing the event?</p>
+      <button type="button" onClick={() => this.setState({ isShowConfirmForm: false })}>
+        Edit
+      </button>
+      <button type="button" onClick={this.handleSubmit}>
+        Send
+      </button>
+    </Modal>);
+  }
+
+  handleSubmit = async () => {
     // need to write validation method
-    e.preventDefault();
     const { props, state } = this;
 
     // Force user to select a calendar to add to
@@ -298,6 +337,8 @@ export default class AddEvent extends Component {
       const { providerType } = JSON.parse(state.selectedProvider);
       const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+      // add owner as organizer
+      const attendee = state.attendees !== [] ? [...state.attendees, JSON.parse(state.selectedProvider).email] : []
       props.postEventBegin(
         {
           summary: state.title === '' ? 'Untitled Event' : state.title,
@@ -315,7 +356,12 @@ export default class AddEvent extends Component {
           rrule: state.rrule.slice(6),
           allDay: state.allDay,
           location: state.location,
-          attendee: state.attendees,
+          attendee: Object.assign({}, attendee.map(att => {
+            return {
+              email: att,
+              partstat: att === JSON.parse(state.selectedProvider).email ? 'APPROVED' : 'NEEDS-ACTION'
+            }
+          })),
           organizer: JSON.parse(state.selectedProvider).email,
           calendarId: state.selectedCalendar.calendarUrl
         },
@@ -571,6 +617,7 @@ export default class AddEvent extends Component {
 
     return (
       <div className="calendar">
+        {this.renderPopup(state)}
         <div className="add-form-main-panel-container">
           <div className="add-form-main-panel">
             {/* Add form header */}
@@ -588,7 +635,7 @@ export default class AddEvent extends Component {
                 <BigButton variant="big-white" onClick={this.backToCalendar}>
                   Cancel
                 </BigButton>
-                <BigButton variant="big-blue" onClick={this.handleSubmit}>
+                <BigButton variant="big-blue" onClick={this.handleSubmitClick}>
                   Save
                 </BigButton>
               </div>

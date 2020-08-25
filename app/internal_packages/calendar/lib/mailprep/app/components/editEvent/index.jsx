@@ -44,7 +44,7 @@ import {
   asyncUpdateRecurrExchangeSeries,
   asyncDeleteExchangeEvent
 } from '../../utils/client/exchange';
-
+import './index.css';
 import { dropDownTime, OUTLOOK, EXCHANGE, GOOGLE, CALDAV } from '../../utils/constants';
 
 // import '../../bootstrap.css';
@@ -194,8 +194,8 @@ export default class EditEvent extends React.Component {
 
   guestOnKeyDown = (event) => {
     if (event.keyCode == 13 && event.target.value !== '') {
-      const attendees = this.state.attendees;
-      attendees.push(event.target.value)
+      let attendees = this.state.attendees;
+      attendees[Object.keys(attendees).length] = { email: event.target.value, partstat: 'NEEDS-ACTION' }
       this.setState({
         guest: '',
         attendees
@@ -550,7 +550,7 @@ export default class EditEvent extends React.Component {
       end: dbEventJSON.end,
       location: dbEventJSON.location,
       organizer: dbEventJSON.organizer,
-      attendees: dbEventJSON.attendee === '' ? [] : dbEventJSON.attendee.split(','),
+      attendees: dbEventJSON.attendee === '' ? {} : JSON.parse(dbEventJSON.attendee),
       hangoutLink: dbEventJSON.hangoutLink,
       providerType: dbEventJSON.providerType,
       owner: dbEventJSON.owner,
@@ -812,20 +812,20 @@ export default class EditEvent extends React.Component {
           onKeyDown={this.guestOnKeyDown}
           onChange={this.handleChange}
         />
-        {state.attendees.map((attendee, index) => {
+        {Object.keys(state.attendees).map(key => {
           return (
             <RoundCheckbox
-              id={`${index}-guest-checkmark`}
+              id={`${key}-guest-checkmark`}
               checked={true}
               onChange={() => {
                 const attendees = state.attendees;
-                attendees.splice(index, 1);
+                delete attendees[key]
                 this.setState({
                   attendees
                 });
               }
               }
-              label={attendee}
+              label={state.attendees[key]['email']}
             />);
         })}
       </div>

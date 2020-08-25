@@ -54,8 +54,8 @@ import {
 } from '../utils/client/exchange';
 import { asyncGetAllExchangeEvents } from '../utils/client/exchangebasics';
 import { getdb } from '../sequelizeDB/index';
-// import './view.css';
-// import './calendar-list.css'
+import './view.css';
+import './calendar-list.css'
 
 
 const dav = require('dav');
@@ -69,7 +69,6 @@ const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 const customStyles = {
   overlay: {
-    zIndex: '10',
     background: 'none'
   },
   content: {
@@ -441,7 +440,13 @@ export default class View extends React.Component {
     return false;
   }
 
-  generateBarColor = (color, isAllDay) => {
+  generateBarColor = (calColor, isAllDay, attendees, organizer, owner) => {
+    let color = calColor;
+    if (attendees && owner !== organizer) {
+      // if owner and organizer is different, it is an invited event
+      const ownerIndex = Object.keys(attendees).filter(key => attendees[key]['email'] === owner)
+      color = attendees[ownerIndex]['partstat'] === 'NEEDS-ACTION' ? 'invite' : calColor;
+    }
     if (isAllDay) {
       return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue'
     } else {
@@ -468,7 +473,16 @@ export default class View extends React.Component {
         onNavigate={date => this.setState({ dateSelected: date })}
         popup
         resizable
-        eventPropGetter={event => ({ className: this.generateBarColor(event.colorId, event.isAllDay) })}
+        eventPropGetter={event => ({
+          className:
+            this.generateBarColor(
+              event.colorId,
+              event.isAllDay,
+              event.attendee,
+              event.organizer,
+              event.owner
+            )
+        })}
         // eventPropGetter={this.eventStyleGetter}
         components={{
           dateCellWrapper: dateClassStyleWrapper
@@ -501,11 +515,14 @@ export default class View extends React.Component {
       <p className="modal-date-text">
         {state.currentEventStartDateTime} - {state.currentEventEndDateTime}
       </p>
-      {state.currentEvent.attendee ?
+      {state.currentEvent.attendee && Object.keys(state.currentEvent.attendee).length > 1 ?
         <div>
           <p>Guests</p>
-          {state.currentEvent.attendee.split(',').map(attendee =>
-            <p>{attendee}</p>
+          {Object.keys(state.currentEvent.attendee).map((key, index) =>
+            state.currentEvent.owner === state.currentEvent.organizer
+              && state.currentEvent.attendee[key]['email'] === state.currentEvent.owner
+              ? null
+              : <p>{state.currentEvent.attendee[key]['email']}</p>
           )}
         </div> : null}
 

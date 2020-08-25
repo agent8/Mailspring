@@ -324,7 +324,7 @@ const createEventDb = (data, auth) => {
     colorId: data.colorId,
     location: data.location,
     organizer: data.organizer,
-    attendee: data.attendee.toString()
+    attendee: JSON.stringify(data.attendee)
   };
 
   if (data.isRecurring) {

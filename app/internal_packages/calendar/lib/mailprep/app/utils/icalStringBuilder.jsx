@@ -303,9 +303,21 @@ export const buildICALStringUpdateSingleEvent = (
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
   vevent.updatePropertyWithValue('location', updatedEvent.location);
-  vevent.updatePropertyWithValue('organizer', updatedEvent.organizer);
-  updatedEvent.attendee.forEach(attendee => {
-    vevent.addPropertyWithValue('attendee', `mailto:${attendee}`)
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', updatedEvent.organizer);
+  organizerProperty.setParameter('email', updatedEvent.organizer)
+
+  Object.keys(updatedEvent.attendee).forEach(key => {
+    const attendee = updatedEvent.attendee[key]
+    const email = attendee['email']
+    const partstat = attendee['partstat']
+
+    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${email}`)
+    attendeeProperty.setParameter('email', email)
+    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
+    attendeeProperty.setParameter('partstat', partstat)
+    if (email === updatedEvent.organizer) {
+      attendeeProperty.setParameter('role', 'CHAIR')
+    }
   })
 
   // Add the new master, and the timezone after that.
@@ -388,9 +400,21 @@ export const buildICALStringUpdateAllRecurEvent = (
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
   vevent.updatePropertyWithValue('location', updatedObject.location);
-  vevent.updatePropertyWithValue('organizer', updatedObject.organizer);
-  updatedObject.attendee.forEach(attendee => {
-    vevent.addPropertyWithValue('attendee', `mailto:${attendee}`)
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', updatedObject.organizer);
+  organizerProperty.setParameter('email', updatedObject.organizer)
+
+  Object.keys(updatedObject.attendee).forEach(key => {
+    const attendee = updatedObject.attendee[key]
+    const email = attendee['email']
+    const partstat = attendee['partstat']
+
+    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${email}`)
+    attendeeProperty.setParameter('email', email)
+    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
+    attendeeProperty.setParameter('partstat', partstat)
+    if (email === updatedObject.organizer) {
+      attendeeProperty.setParameter('role', 'CHAIR')
+    }
   })
 
   // Remove the recurring maaster, add the new master, and the timezone after that.
@@ -507,9 +531,18 @@ export const buildICALStringUpdateFutureRecurMasterEvent = (
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
   vevent.updatePropertyWithValue('location', recurringMaster.getFirstPropertyValue('location'))
-  vevent.updatePropertyWithValue('organizer', recurringMaster.getFirstPropertyValue('organizer'))
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', recurringMaster.getFirstPropertyValue('organizer'))
+  organizerProperty.setParameter('email', recurringMaster.getFirstPropertyValue('organizer'))
+
   recurringMaster.getAllProperties('attendee').forEach(attendee => {
-    vevent.addPropertyWithValue('attendee', attendee.jCal[3]);
+    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${attendee.getParameter('email')}`);
+
+    attendeeProperty.setParameter('email', attendee.getParameter('email'))
+    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
+    attendeeProperty.setParameter('partstat', 'NEEDS-ACTION')
+    if (attendee.getParameter('email') === eventObject.organizer) {
+      attendeeProperty.setParameter('role', 'CHAIR')
+    }
   });
   // #endregion
 
@@ -649,9 +682,21 @@ export const buildICALStringUpdateFutureRecurCreateEvent = (
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
   vevent.updatePropertyWithValue('location', updatedObject.location)
-  vevent.updatePropertyWithValue('organizer', updatedObject.organizer);
-  updatedObject.attendee.forEach(attendee => {
-    vevent.addPropertyWithValue('attendee', `mailto:${attendee}`)
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', updatedObject.organizer);
+  organizerProperty.setParameter('email', updatedObject.organizer)
+
+  Object.keys(updatedObject.attendee).forEach(key => {
+    const attendee = updatedObject.attendee[key]
+    const email = attendee['email']
+    const partstat = attendee['partstat']
+
+    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${email}`)
+    attendeeProperty.setParameter('email', email)
+    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
+    attendeeProperty.setParameter('partstat', partstat)
+    if (email === updatedObject.organizer) {
+      attendeeProperty.setParameter('role', 'CHAIR')
+    }
   })
 
   // Based off the ExDates, set the new event accordingly.
@@ -737,10 +782,22 @@ export const buildICALStringCreateRecurEvent = (eventObject, rpObject) => {
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
   vevent.updatePropertyWithValue('location', eventObject.location)
-  vevent.updatePropertyWithValue('organizer', `mailto:${eventObject.organizer}`)
-  eventObject.attendee.forEach(attendee => {
-    vevent.addPropertyWithValue('attendee', `mailto:${attendee}`)
-  });
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', `mailto:${eventObject.organizer}`)
+  organizerProperty.setParameter('email', eventObject.organizer)
+
+  Object.keys(eventObject.attendee).forEach(key => {
+    const attendee = eventObject.attendee[key]
+    const email = attendee['email']
+    const partstat = attendee['partstat']
+
+    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${email}`)
+    attendeeProperty.setParameter('email', email)
+    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
+    attendeeProperty.setParameter('partstat', partstat)
+    if (email === eventObject.organizer) {
+      attendeeProperty.setParameter('role', 'CHAIR')
+    }
+  })
 
   const rrule = new ICAL.Recur(rpObject);
   vevent.updatePropertyWithValue('rrule', rrule);
@@ -805,10 +862,23 @@ export const buildICALStringCreateEvent = (eventObject) => {
   vevent.updatePropertyWithValue('status', 'CONFIRMED');
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
-  vevent.updatePropertyWithValue('organizer', `mailto:${eventObject.organizer}`)
-  eventObject.attendee.forEach(attendee => {
-    vevent.addPropertyWithValue('attendee', `mailto:${attendee}`)
-  });
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', `mailto:${eventObject.organizer}`)
+  organizerProperty.setParameter('email', eventObject.organizer)
+
+  Object.keys(eventObject.attendee).forEach(key => {
+    const attendee = eventObject.attendee[key]
+    const email = attendee['email']
+    const partstat = attendee['partstat']
+
+    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${email}`)
+    attendeeProperty.setParameter('email', email)
+    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
+    attendeeProperty.setParameter('partstat', partstat)
+    if (email === eventObject.organizer) {
+      attendeeProperty.setParameter('role', 'CHAIR')
+    }
+  })
+
   vevent.updatePropertyWithValue('location', eventObject.location)
   vcalendar.addSubcomponent(vevent);
   return vcalendar.toString();

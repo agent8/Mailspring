@@ -76,7 +76,7 @@ export const retrieveEventsEpic = (action$) =>
             recurrence: singleEvent.recurrence,
             iCalUID: singleEvent.iCalUID,
             iCALString: singleEvent.iCALString,
-            attendees: singleEvent.attendees,
+            attendee: singleEvent.attendee,
             originalId: singleEvent.originalId,
             owner: singleEvent.owner,
             hide: singleEvent.hide,
@@ -539,7 +539,7 @@ const editSingleEvent = async (payload) => {
     // end: payload.end,
     allDay: payload.allDay,
     location: payload.location,
-    attendee: payload.attendee.toString()
+    attendee: JSON.stringify(payload.attendee)
   });
 
   // #endregion
@@ -656,7 +656,7 @@ const editAllReccurenceEvent = async (payload) => {
     allDay: payload.allDay,
     location: payload.location,
     organizer: payload.organizer,
-    attendee: payload.attendees
+    attendee: JSON.stringify(payload.attendee)
   });
 
   const user = await dbUserActions.findAccount(payload.providerType, payload.owner);
@@ -803,7 +803,7 @@ const editFutureReccurenceEvent = async (payload) => {
     allDay: payload.allDay,
     location: payload.location,
     organizer: payload.organizer,
-    attendee: payload.attendees
+    attendee: JSON.stringify(payload.attendee)
   });
   // #endregion
 

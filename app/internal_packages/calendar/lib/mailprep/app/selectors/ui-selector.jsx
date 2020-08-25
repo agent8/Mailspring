@@ -27,7 +27,9 @@ const getFilteredEvents = createSelector([getEvents], (normalizedData) => {
         calendarId: eachEvent.calendarId,
         iCalString: eachEvent.iCALString,
         isAllDay: eachEvent.isAllDay,
-        attendee: eachEvent.attendee,
+        attendee: eachEvent.attendee ? JSON.parse(eachEvent.attendee) : undefined,
+        organizer: eachEvent.organizer,
+        owner: eachEvent.owner,
         isMaster: eachEvent.isMaster
       })
     });

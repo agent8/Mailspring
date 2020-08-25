@@ -425,9 +425,12 @@ export const parseEvent = (component, isRecurring, etag, url, calendarId, cdIsMa
     attendee:
       masterEvent.getFirstPropertyValue('attendee') == null
         ? ''
-        : (masterEvent.getAllProperties('attendee').map(attendee => {
-          return attendee.jCal[3].split(':')[1];
-        })).toString(),
+        : JSON.stringify(Object.assign({}, masterEvent.getAllProperties('attendee').map(attendee => {
+          return {
+            email: attendee.getParameter('email'),
+            partstat: attendee.getParameter('partstat')
+          }
+        }))),
     originalStartTime: {
       dateTime: moment(dtstart).unix(),
       timezone: tz

@@ -5,7 +5,7 @@ import { postEventBegin } from '../actions/events';
 // import AddEvent from '../components/addForm';
 // Please rename the newAddEvent to addForm and delete the existing addForm.
 // Developement of new addForm UI was done in new file for easy comparison with previous iteration/rollbacks if necessary
-import AddEvent from '../components/addEvent/addEvent';
+import AddEvent from '../components/addEvent/newAddEvent';
 import getFilteredEvents from '../selectors/ui-selector';
 
 const styles = (theme) => ({
