@@ -133,7 +133,7 @@ export function BuildToggleButton({
         <button
           className={`${className} ${active ? 'active' : ''} ${
             hideWhenCrowded ? 'hide-when-crowded' : ''
-            }`}
+          }`}
           onMouseDown={onMouseDown}
         >
           <RetinaImg
@@ -149,7 +149,7 @@ export function BuildToggleButton({
       <button
         className={`${className} ${active ? 'active' : ''} ${
           hideWhenCrowded ? 'hide-when-crowded' : ''
-          }`}
+        }`}
         onMouseDown={onMouseDown}
       >
         <i title={type} className={iconClass} />
@@ -291,10 +291,10 @@ export function BuildMarkButtonWithValuePicker(
               <i className={config.iconClassOn} />
             </button>
           ) : (
-              <button onMouseDown={this.onPrompt}>
-                <i className={config.iconClassOff} />
-              </button>
-            )}
+            <button onMouseDown={this.onPrompt}>
+              <i className={config.iconClassOff} />
+            </button>
+          )}
           {/*{expanded && (*/}
           {/*  <div className="dropdown">*/}
           {/*    <input*/}
@@ -398,12 +398,12 @@ export function BuildFontSizePicker(config) {
   return class FontPicker extends React.Component {
     constructor(props) {
       super(props);
-      config.default = AppEnv.config.get('core.fontsize');
+      config.default = (props.defaultValues || {}).fontSize || AppEnv.config.get('core.fontsize');
     }
     _onSetValue = item => {
-      AppEnv.config.set('core.fontsize', item)
+      AppEnv.config.set('core.fontsize', item);
       const { onChange, value } = this.props;
-      let markValue = item
+      let markValue = item;
       if (!(typeof config.options[0].value === 'string')) {
         markValue = markValue / 1;
       }
@@ -417,7 +417,10 @@ export function BuildFontSizePicker(config) {
       );
     }
     onClick = e => {
-      const value = getActiveValueForMark(this.props.value, config.type) || config.default;
+      const value =
+        getActiveValueForMark(this.props.value, config.type) ||
+        (this.props.draftDefaultValues && this.props.draftDefaultValues.fontSize) ||
+        config.default;
       Actions.openPopover(
         <FontSizePopover
           options={config.options}
@@ -431,6 +434,15 @@ export function BuildFontSizePicker(config) {
         }
       );
     };
+    // _setFontSizeIfMissing() {
+    //   const value = getActiveValueForMark(this.props.value, config.type);
+    //   if (!value && this.props.value && this.props.onChange) {
+    //     console.log('setting font size to user default');
+    //     this.props.onChange(
+    //       applyValueForMark(this.props.value, config.type, AppEnv.config.get('core.fontsize'))
+    //     );
+    //   }
+    // }
 
     render() {
       return (
@@ -452,7 +464,7 @@ export function BuildFontPicker(config) {
   return class FontPicker extends React.Component {
     constructor(props) {
       super(props);
-      config.default = AppEnv.config.get('core.fontface')
+      config.default = (props.defaultValues || {}).fontFace || AppEnv.config.get('core.fontface');
     }
     _onSetValue = e => {
       AppEnv.config.set('core.fontface', e.target.value);
@@ -474,7 +486,7 @@ export function BuildFontPicker(config) {
 
     render() {
       const value = getActiveValueForMark(this.props.value, config.type) || config.default;
-      const displayed = config.convert(value);
+      const displayed = config.convert(value, config.default);
 
       return (
         <button

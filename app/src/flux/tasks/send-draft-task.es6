@@ -93,6 +93,18 @@ export default class SendDraftTask extends Task {
   label() {
     return this.silent ? null : 'Sending message';
   }
+  toJSON() {
+    const ret = super.toJSON();
+    try {
+      const defaultValues = JSON.parse(ret.draft.defaultValues || '{}');
+      const defaultSize = defaultValues.fontSize || '14px';
+      const defaultFont = defaultValues.fontFace || 'sans-serif';
+      ret.draft.body = `<font style="font-size:${defaultSize};font-family:${defaultFont}">
+        ${ret.draft.body}
+      </font>`;
+    } catch (e) {}
+    return ret;
+  }
 
   willBeQueued() {
     if (!this.draft.from[0]) {
