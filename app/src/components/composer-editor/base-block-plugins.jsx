@@ -1,7 +1,7 @@
 import React from 'react';
 import SoftBreak from 'slate-soft-break';
 import EditList from 'slate-edit-list';
-import AutoReplace from 'slate-auto-replace';
+// import AutoReplace from 'slate-auto-replace';
 import { BuildToggleButton } from './toolbar-component-factories';
 
 const Handlers = require('./slate-edit-code/handlers');
@@ -632,12 +632,12 @@ export default [
   //   },
   // }),
   // "1. " start new lists
-  AutoReplace({
-    onlyIn: [BLOCK_CONFIG.div.type, BLOCK_CONFIG.div.type],
-    trigger: ' ',
-    before: /^([1]{1}[.]{1})$/,
-    transform: (transform, e, matches) => {
-      EditListPlugin.changes.wrapInList(transform, BLOCK_CONFIG.ol_list.type);
-    },
-  }),
+  // AutoReplace({
+  //   onlyIn: [BLOCK_CONFIG.div.type, BLOCK_CONFIG.div.type],
+  //   trigger: ' ',
+  //   before: /^([1]{1}[.]{1})$/,
+  //   transform: (transform, e, matches) => {
+  //     EditListPlugin.changes.wrapInList(transform, BLOCK_CONFIG.ol_list.type);
+  //   },
+  // }),
 ];

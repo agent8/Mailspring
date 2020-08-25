@@ -91,7 +91,7 @@ export default class ComposerEditor extends React.Component {
         .addMark({
           object: 'mark',
           type: 'size',
-          data: { value: defaultSize }
+          data: { value: defaultSize },
         })
         .focus()
     );
@@ -287,7 +287,10 @@ export default class ComposerEditor extends React.Component {
   // Event Handlers
   render() {
     const { className, onBlur, onDrop, value, propsForPlugins } = this.props;
-
+    const draftDefaultValues =
+      this.props.propsForPlugins && this.props.propsForPlugins.draft
+        ? this.props.propsForPlugins.draft.defaultValues
+        : {};
     return (
       <KeyCommandsRegion
         className={`RichEditor-root ${className || ''}`}
@@ -299,6 +302,7 @@ export default class ComposerEditor extends React.Component {
           plugins={this.plugins}
           readOnly={this.props.readOnly}
           isCrowded={this.state.isCrowded}
+          draftDefaultValues={draftDefaultValues}
         />
         <div
           className="RichEditor-content"

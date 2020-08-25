@@ -111,15 +111,19 @@ const mergeDefaultBccAndCCs = async (message, account) => {
     mergeContacts('bcc', autoContacts);
   }
 };
-
+const getDraftDefaultValues = () => {
+  const defaultValues = {};
+  defaultValues.fontSize = AppEnv.config.get('core.fontsize') || '14px';
+  defaultValues.fontFace = AppEnv.config.get('core.fontface') || 'sans-serif';
+  return defaultValues;
+};
 class DraftFactory {
   getBlankContentWithDefaultFontValues() {
-    const defaultValues = AppEnv.config.get('core')
-    const defaultSize = defaultValues.fontsize || '14px';
-    const defaultFont = defaultValues.fontface || 'sans-serif';
+    const defaultValues = getDraftDefaultValues();
+    const defaultSize = defaultValues.fontsize;
+    const defaultFont = defaultValues.fontFace;
     return `
       <font style="font-size:${defaultSize};font-family:${defaultFont}">
-        ${'\u200b'}
         <br/>
       </font>
     `;
@@ -195,6 +199,7 @@ class DraftFactory {
       hasNewID: false,
       accountId: account.id,
       pastMessageIds: [],
+      defaultValues: getDraftDefaultValues(),
     };
 
     const merged = Object.assign(defaults, fields);
@@ -490,8 +495,8 @@ class DraftFactory {
     let body = `
         ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
-      message.replyAttributionLine()
-    )}</div>
+          message.replyAttributionLine()
+        )}</div>
         <blockquote class="gmail_quote" data-edison="true"
           style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
           ${prevBody}

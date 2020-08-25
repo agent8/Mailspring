@@ -28,6 +28,30 @@ const mapping = {
       return file;
     });
   },
+  defaultValuesFromJSON: jsonString => {
+    let ret;
+    if (typeof jsonString !== 'string') {
+      return jsonString;
+    }
+    try {
+      ret = JSON.parse(jsonString);
+    } catch (e) {
+      ret = {};
+    }
+    return ret;
+  },
+  defaultValuesToJSON: data => {
+    let ret;
+    if (typeof data === 'string') {
+      return data;
+    }
+    try {
+      ret = JSON.stringify(data);
+    } catch (e) {
+      ret = '{}';
+    }
+    return ret;
+  },
 };
 
 const isMessageView = AppEnv.isDisableThreading();
@@ -49,6 +73,7 @@ export default class Message extends ModelWithMetadata {
     'calCurStat',
     'calTarStat',
     'lastUpdateTimestamp',
+    'defaultValues',
   ];
   static NewDraft = 1;
   static EditExistingDraft = 2;
@@ -175,8 +200,14 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'hasNewID',
       queryable: false,
     }),
+    defaultValues: Attributes.Object({
+      modelKey: 'defaultValues',
+      queryable: false,
+      fromJSONMapping: mapping.defaultValuesFromJSON,
+      toJSONMapping: mapping.defaultValuesToJSON,
+    }),
     noSave: Attributes.Boolean({
-      noSave: 'noSave',
+      modelKey: 'noSave',
       queryable: false,
     }),
     waitingForBody: Attributes.Boolean({
