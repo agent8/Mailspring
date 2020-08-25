@@ -400,6 +400,7 @@ export default class Application extends EventEmitter {
         getOSInfo = getOSInfo || require('../system-utils').getOSInfo;
         extra.osInfo = getOSInfo();
         extra.osLocale = app.getLocale();
+        extra.appMetrics = JSON.stringify(app.getAppMetrics());
         if (!noAppConfig) {
           extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
         }
@@ -647,6 +648,8 @@ export default class Application extends EventEmitter {
     );
     LOG.transports.console.level = false;
     LOG.transports.file.maxSize = 20485760;
+    //Call once so the cpu infos will not be 0 when we actually needed it.
+    app.getAppMetrics();
     if (this.config) {
       this.config.set('core.support.native', this.nativeVersion);
     }
