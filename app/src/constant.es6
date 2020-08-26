@@ -64,6 +64,26 @@ export const AttachmentDownloadState = {
 };
 export const AttachmentFileSizeIgnoreThreshold = 4; //4 Bytes;
 
+export const EdisonPlatformType = {
+  IOS: 'ios',
+  ANDROID: 'android',
+  MAC: 'mac',
+  COMMON: 'common',
+};
+
+export const EdisonPreferencesType = {
+  LIST: 'list',
+  STRING: 'string',
+};
+
+export const UpdateSettingCode = {
+  Conflict: 10008,
+  Success: 0,
+};
+
+export const UpdateToServerSimpleSettingTypes = ['number', 'string', 'integer', 'boolean'];
+export const UpdateToServerComplexSettingTypes = ['object', 'array'];
+
 export const InboxCategoryStates = {
   MsgNone: -1, //message not in INBOX
   MsgOther: 0,
