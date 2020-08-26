@@ -65,11 +65,11 @@ mailspring-workspace {
     min-width: 220px;
   }
 }
-.layout-mode-split {
-  .toolbar-ThreadList .thread-search-bar {
-    display: none;
-  }
-}
+// .layout-mode-split {
+//   .toolbar-ThreadList .thread-search-bar {
+//     display: none;
+//   }
+// }
 .layout-mode-list {
   .toolbar-ThreadList {
     .title-search-bar {
@@ -360,13 +360,13 @@ body.is-blurred {
     }
   }
 
-  .mode-split .toolbar-ThreadList .item-container {
-    display: block !important;
-    .thread-search-bar {
-      width: 200%;
-      max-width: 700px;
-    }
-  }
+  // .mode-split .toolbar-ThreadList .item-container {
+  //   display: block !important;
+  //   .thread-search-bar {
+  //     width: 200%;
+  //     max-width: 700px;
+  //   }
+  // }
 
   .item-container > * {
     -webkit-app-region: no-drag;
@@ -743,7 +743,7 @@ body.platform-win32 {
 .column-ThreadList,
 .column-MessageList {
   margin-top: @search-bar-height;
-  padding-bottom: @search-bar-height;
+  padding-bottom: 40px;
   -webkit-app-region: no-drag;
   border-top: 1px solid @border-color-primary;
   div {
@@ -763,8 +763,8 @@ body.platform-win32 {
 .column-OutboxMessage,
 .column-MessageList {
   margin-top: 0;
-  top: 68px;
-  height: calc(~'100% - 40px') !important;
+  top: -1px;
+  // height: calc(~'100% - 40px') !important;
   & > div.empty {
     height: 100%;
     background: url(../static/images/empty-state/EmptyMail.png) no-repeat center center;

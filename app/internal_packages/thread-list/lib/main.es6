@@ -1,5 +1,5 @@
 import { React, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
-import { CombineListAndDetail } from 'mailspring-component-kit';
+import { ListDetailContainer } from 'mailspring-component-kit';
 
 import ThreadList from './thread-list';
 import ThreadListToolbar from './thread-list-toolbar';
@@ -7,6 +7,7 @@ import ThreadListEmptyFolderBar from './thread-list-empty-folder-bar';
 import MessageListToolbar from './message-list-toolbar';
 import SelectedItemsStack from './selected-items-stack';
 import HiddenThreadListToolbar from './hidden-thread-list-toolbar';
+import MessageList from '../../message-list/lib/message-list';
 
 import {
   ThreadListToolbarButtons,
@@ -19,12 +20,7 @@ import {
 class NewThreadList extends React.Component {
   static displayName = 'ThreadList';
   render() {
-    return (
-      <CombineListAndDetail
-        listComponent={ThreadList}
-        matching={{ location: WorkspaceStore.Location.MessageList }}
-      />
-    );
+    return <ListDetailContainer listComponent={ThreadList} detailComponent={MessageList} />;
   }
 }
 
