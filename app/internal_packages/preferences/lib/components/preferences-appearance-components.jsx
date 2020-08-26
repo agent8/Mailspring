@@ -85,7 +85,10 @@ export function AppearanceProfileOptions(props) {
 }
 
 export function AppearancePanelOptions(props) {
-  const activeValue = props.config.get('core.workspace.mode');
+  let activeValue = props.config.get('core.workspace.mode');
+  if (activeValue === 'split') {
+    activeValue = props.config.get('core.workspace.mode-split') || 'split-h';
+  }
   const modeSwitchList = [
     {
       value: 'list',
@@ -93,7 +96,12 @@ export function AppearancePanelOptions(props) {
       imgsrc: `appearance-mode-${'list'}.png`,
     },
     {
-      value: 'split',
+      value: 'split-h',
+      label: 'Two Panels',
+      imgsrc: `appearance-mode-${'split'}.png`,
+    },
+    {
+      value: 'split-v',
       label: 'Two Panels',
       imgsrc: `appearance-mode-${'split'}.png`,
     },
@@ -105,6 +113,10 @@ export function AppearancePanelOptions(props) {
       activeValue={activeValue}
       imgActive
       onSwitchOption={value => {
+        if (value.startsWith('split')) {
+          props.config.set('core.workspace.mode-split', value);
+          value = 'split';
+        }
         AppEnv.commands.dispatch(`navigation:select-${value}-mode`);
       }}
     />

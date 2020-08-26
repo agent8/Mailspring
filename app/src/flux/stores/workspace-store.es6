@@ -89,7 +89,7 @@ class WorkspaceStore extends MailspringStore {
           split: [
             'RootSidebar',
             'ThreadList',
-            'MessageList',
+            // 'MessageList',
             // 'QuickSidebar',
             // 'MessageListSidebar'
           ],
