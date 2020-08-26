@@ -216,7 +216,10 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'needUpload',
       queryable: false,
     }),
-
+    subjectChanged: Attributes.Boolean({
+      modelKey: 'subjectChanged',
+      queryable: false,
+    }),
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
