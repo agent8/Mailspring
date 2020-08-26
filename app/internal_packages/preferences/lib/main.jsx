@@ -28,6 +28,9 @@ export function activate() {
   ComponentRegistry.register(PreferencesRoot, {
     location: WorkspaceStore.Location.Preferences,
   });
+
+  // sync preferences from server
+  AppEnv.config.syncAllPreferencesFromServer();
 }
 
 export function deactivate() {}
