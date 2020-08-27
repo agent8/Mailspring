@@ -6,7 +6,7 @@
  */
 const { BrowserWindow, Menu, app } = require('electron');
 const Utils = require('../flux/models/utils');
-import i18n from '../translation/index.es6';
+import i18n from '../translation';
 
 // Used to manage the global application menu.
 //
