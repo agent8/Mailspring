@@ -86,6 +86,7 @@ class MessageList extends React.Component {
   static containerStyles = {
     minWidth: 400,
     maxWidth: 999999,
+    minHeight: 250,
   };
 
   static default = {
