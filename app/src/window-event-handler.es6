@@ -357,7 +357,7 @@ export default class WindowEventHandler {
     );
     menu.append(
       new MenuItem({
-        label: 'Paste with Style',
+        label: 'Paste without Style',
         click: () => {
           onRestoreSelection();
           AppEnv.commands.dispatch('core:paste-and-match-style');

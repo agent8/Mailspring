@@ -11,6 +11,7 @@ import {
   PreferencesMutedNotifacations,
   PreferencesAccountNotifacations,
 } from './components/preferences-notifications';
+import EdisonAccount from './components/preferences-my-account';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
   AppearanceScaleSlider,
@@ -298,10 +299,26 @@ const preferencesTemplateFill = {
         },
       ],
     },
+    // {
+    //   tabId: 'My Account',
+    //   displayName: 'My Account',
+    //   order: 2,
+    //   configGroup: [
+    //     {
+    //       groupItem: [
+    //         {
+    //           label: 'Back up & Sync',
+    //           component: EdisonAccount,
+    //           keywords: [],
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // },
     {
       tabId: 'Notifications',
       displayName: 'Notifications',
-      order: 2,
+      order: 3,
       configGroup: [
         {
           groupName: 'EMAIL NOTIFICATIONS',
@@ -339,7 +356,7 @@ const preferencesTemplateFill = {
     {
       tabId: 'Accounts',
       displayName: 'Accounts',
-      order: 3,
+      order: 4,
       configGroup: [
         {
           groupItem: [
@@ -356,7 +373,7 @@ const preferencesTemplateFill = {
       tabId: 'Appearance',
       displayName: 'Appearance',
       className: 'container-appearance',
-      order: 4,
+      order: 5,
       configGroup: [
         {
           groupName: 'GENERAL',
@@ -439,7 +456,7 @@ const preferencesTemplateFill = {
       tabId: 'Customize Actions',
       displayName: 'Customize Actions',
       className: 'container-customize-actions',
-      order: 5,
+      order: 6,
       configGroup: [
         {
           groupName: 'Quick Actions',
@@ -480,7 +497,7 @@ const preferencesTemplateFill = {
       tabId: 'Shortcuts',
       displayName: 'Shortcuts',
       className: 'container-keymaps',
-      order: 6,
+      order: 7,
       configGroup: [
         {
           groupName: 'SHORTCUTS',
