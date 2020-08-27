@@ -42,35 +42,41 @@ class ListDetailContainer extends React.Component {
       return <List />;
     }
 
-    let handle;
-    let sizeKey;
-    let className;
+    let handle = ResizableRegion.Handle.Left;
+    let sizeKey = this.widthKey;
+    let listClassName = 'right-divider';
+    let forceWidthMode = false;
     const Detail = this.props.detailComponent;
-    const styles = { height: '100%', display: 'flex' };
-    const otherProps = { className: 'column-MessageList' };
+    let listStyles = { minWidth: 200 };
+    const containersStyles = {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+    };
+    const otherProps = {
+      className: 'column-MessageList',
+      initialWidth: this.state.width,
+      minWidth: (Detail.containerStyles && Detail.containerStyles.minWidth) || 150,
+    };
     const splitMode = AppEnv.config.get('core.workspace.mode-split');
+    // when reading pane on bottom
     if (splitMode === 'split-v') {
-      styles.flexDirection = 'column';
+      containersStyles.flexDirection = 'column';
       handle = ResizableRegion.Handle.Top;
       sizeKey = this.heightKey;
+      listClassName = 'bottom-divider';
+      forceWidthMode = true;
       otherProps.initialHeight = this.state.height;
-      className = 'bottom-divider';
-    } else {
-      styles.flexDirection = 'row';
-      handle = ResizableRegion.Handle.Left;
-      sizeKey = this.widthKey;
-      otherProps.initialWidth = this.state.width;
-      className = 'right-divider';
+      otherProps.minHeight = (Detail.containerStyles && Detail.containerStyles.minHeight) || 200;
+      listStyles = { minHeight: 150 };
     }
-
     return (
-      <div style={styles}>
-        <div style={{ flex: 1 }} className={className}>
-          <List />
+      <div style={containersStyles}>
+        <div style={{ flex: 1, ...listStyles }} className={listClassName}>
+          <List forceWidthMode={forceWidthMode} />
         </div>
         <ResizableRegion
           style={{ overflow: 'hidden' }}
-          minHeight={200}
           handle={handle}
           onResize={w => this._onColumnResize(sizeKey, w)}
           {...otherProps}
