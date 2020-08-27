@@ -54,9 +54,6 @@ import {
 } from '../utils/client/exchange';
 import { asyncGetAllExchangeEvents } from '../utils/client/exchangebasics';
 import { getdb } from '../sequelizeDB/index';
-import './view.css';
-import './calendar-list.css'
-
 
 const dav = require('dav');
 const uuidv1 = require('uuid/v1');

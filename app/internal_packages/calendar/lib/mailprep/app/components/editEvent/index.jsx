@@ -44,7 +44,6 @@ import {
   asyncUpdateRecurrExchangeSeries,
   asyncDeleteExchangeEvent
 } from '../../utils/client/exchange';
-import './index.css';
 import { dropDownTime, OUTLOOK, EXCHANGE, GOOGLE, CALDAV } from '../../utils/constants';
 
 // import '../../bootstrap.css';

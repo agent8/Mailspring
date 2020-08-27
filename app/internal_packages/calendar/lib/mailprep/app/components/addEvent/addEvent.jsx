@@ -18,10 +18,6 @@ import RoundCheckbox from '../library/RoundCheckbox';
 import Tabs from '../library/Tabs/Tabs';
 import Tab from '../library/Tabs/Tab';
 
-import '../view.css';
-import './addEvent.css';
-import '../react-rrule-generator/build/styles.css';
-
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
 const END_INDEX_OF_HOUR = 13;
