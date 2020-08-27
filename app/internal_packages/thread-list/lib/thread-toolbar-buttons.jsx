@@ -873,6 +873,7 @@ export class ThreadListMoreButton extends React.Component {
     const selectionCount = this.props.items ? this.props.items.length : 0;
     const menu = new Menu();
     const accounts = AccountStore.accountsForItems(this.props.items);
+    const current = FocusedPerspectiveStore.current();
     if (selectionCount > 0) {
       if (isSameAccount(this.props.items)) {
         menu.append(
@@ -884,6 +885,49 @@ export class ThreadListMoreButton extends React.Component {
           })
         );
       }
+      if (current.isFocusedOtherPerspective && !current.isOther) {
+        menu.append(
+          new MenuItem({
+            label: 'Move to Other',
+            click: event => {
+              const { selection, items } = this.props;
+              const threads = threadSelectionScope(this.props, selection);
+              const tasks = TaskFactory.tasksForMoveToOther(
+                Array.isArray(threads) ? threads : items
+              );
+              Actions.queueTasks(tasks);
+              if (event && typeof event.stopPropagation === 'function') {
+                event.stopPropagation();
+              }
+              if (selection) {
+                selection.clear();
+              }
+            },
+          })
+        );
+      }
+      if (current.isFocusedOtherPerspective && current.isOther) {
+        menu.append(
+          new MenuItem({
+            label: 'Move to Focused',
+            click: event => {
+              const { selection, items } = this.props;
+              const threads = threadSelectionScope(this.props, selection);
+              const tasks = TaskFactory.tasksForMoveToFocused(
+                Array.isArray(threads) ? threads : items
+              );
+              Actions.queueTasks(tasks);
+              if (event && typeof event.stopPropagation === 'function') {
+                event.stopPropagation();
+              }
+              if (selection) {
+                selection.clear();
+              }
+            },
+          })
+        );
+      }
+
       if (accounts.length === 1 && accounts[0].usesLabels()) {
         menu.append(
           new MenuItem({
