@@ -203,10 +203,8 @@ export default class MessageControls extends React.Component {
   };
 
   _onMoveToFocused = event => {
-    const { accountId, id, threadId } = this.props.message;
-    Actions.queueTask(
-      new MakePrimaryTask({ accountId: accountId, messageIds: [id], effectedThreadIds: [threadId] })
-    );
+    const { accountId, id } = this.props.message;
+    Actions.queueTask(new MakePrimaryTask({ accountId: accountId, messageIds: [id] }));
     if (event) {
       event.stopPropagation();
     }
@@ -219,10 +217,8 @@ export default class MessageControls extends React.Component {
   };
 
   _onMoveToOther = event => {
-    const { accountId, id, threadId } = this.props.message;
-    Actions.queueTask(
-      new MakeOtherTask({ accountId: accountId, messageIds: [id], effectedThreadIds: [threadId] })
-    );
+    const { accountId, id } = this.props.message;
+    Actions.queueTask(new MakeOtherTask({ accountId: accountId, messageIds: [id] }));
     if (event) {
       event.stopPropagation();
     }
