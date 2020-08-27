@@ -50,6 +50,8 @@
     "graceful-fs": "^4.1.11",
     "group-by-time": "^1.0.0",
     "hostmeta": "^2.0.0",
+    "i18next": "^19.7.0",
+    "i18next-electron-language-detector": "^0.0.10",
     "iana-hashes": "^1.0.2",
     "ical.js": "^1.3.0",
     "immutable": "^3.8.2",

@@ -31,35 +31,7 @@ import {
   PreferencesKeymapsHearder,
   PreferencesKeymapsContent,
 } from './components/preferences-keymaps';
-import i18n from 'i18next';
-import translationEN from '../../../src/translation/translationEN.json';
-import translationDE from '../../../src/translation/translationDE.json';
-i18n
-  .init({
-    // we init with resources
-    resources: {
-      en: {
-        translations: translationEN
-      },
-      de: {
-        translations: translationDE
-      }
-    },
-    fallbackLng: "en",
-    debug: true,
-
-    // have a common namespace used around the full app
-    ns: ["translations"],
-    defaultNS: "translations",
-
-    keySeparator: false, // we use content as keys
-
-    interpolation: {
-      escapeValue: false
-    }
-  });
-// change language
-// i18n.changeLanguage('de');
+import i18n from '../../../src/translation';
 
 const preferencesTemplateFill = {
   tables: [

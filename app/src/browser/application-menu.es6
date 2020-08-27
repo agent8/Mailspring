@@ -6,34 +6,7 @@
  */
 const { BrowserWindow, Menu, app } = require('electron');
 const Utils = require('../flux/models/utils');
-import i18n from 'i18next';
-import translationEN from '../translation/translationEN.json';
-import translationDE from '../translation/translationDE.json';
-i18n
-  .init({
-    // we init with resources
-    resources: {
-      en: {
-        translations: translationEN
-      },
-      de: {
-        translations: translationDE
-      }
-    },
-    fallbackLng: "en",
-    debug: true,
-
-    // have a common namespace used around the full app
-    ns: ["translations"],
-    defaultNS: "translations",
-
-    keySeparator: false, // we use content as keys
-
-    interpolation: {
-      escapeValue: false
-    }
-  });
-i18n.changeLanguage("de")
+import i18n from '../translation/index.es6';
 
 // Used to manage the global application menu.
 //
