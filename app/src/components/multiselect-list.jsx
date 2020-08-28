@@ -348,7 +348,11 @@ class MultiselectList extends React.Component {
   }
 
   itemIdAtPoint(x, y) {
-    const item = document.elementFromPoint(x, y).closest('[data-item-id]');
+    const targetItem = document.elementFromPoint(x, y);
+    if (!targetItem) {
+      return null;
+    }
+    const item = targetItem.closest('[data-item-id]');
     if (!item) {
       return null;
     }
