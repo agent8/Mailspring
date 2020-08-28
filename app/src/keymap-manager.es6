@@ -29,7 +29,7 @@ mousetrap.prototype.stopCallback = (e, element, combo) => {
     element.isContentEditable;
   if (withinTextInput) {
     const isPlainKey = !/(mod|command|ctrl)/.test(combo);
-    const isReservedTextEditingShortcut = /(mod|command|ctrl)\+(a|x|c|v)/.test(combo);
+    const isReservedTextEditingShortcut = /(mod|command|ctrl)\+(a|x|c|v|z)/.test(combo);
     return isPlainKey || isReservedTextEditingShortcut;
   }
   return false;
@@ -169,7 +169,8 @@ export default class KeymapManager {
       for (const command of this._commandsCache[keystrokes] || []) {
         if (
           withinSlateEditor &&
-          (!command.startsWith('composer:') && !command.startsWith('contenteditable:')) &&
+          !command.startsWith('composer:') &&
+          !command.startsWith('contenteditable:') &&
           !enableCommandsInEditor.includes(command)
         ) {
           continue;
