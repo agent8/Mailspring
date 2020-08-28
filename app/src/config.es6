@@ -584,6 +584,7 @@ class Config {
 
   _bulkSet(setList) {
     const filterSetList = [];
+    const changeTimeList = [];
     const options = {};
     let ipcNotif = false;
     setList.forEach(item => {
@@ -596,12 +597,21 @@ class Config {
           value = this.makeValueConformToSchema(item.key, value);
         } catch (e) {
           this._logError(`Failed to set keyPath: ${keyPath} = ${value}`, e);
-          return false;
+          return;
         }
+      }
+      const itemLastChangeTimeInLocal = this.getConfigUpdateTime(item.key);
+      if (itemLastChangeTimeInLocal && itemLastChangeTimeInLocal > item.tsClientUpdate) {
+        this._syncSettingToServer(item.key, this.get(item.key));
+        return;
       }
       filterSetList.push({
         keyPath: item.key,
         value,
+      });
+      changeTimeList.push({
+        keyPath: item.key,
+        time: item.tsClientUpdate,
       });
       const configSchema = this.getSchema(item.key);
       if (configSchema && configSchema.notifyNative) {
@@ -618,7 +628,12 @@ class Config {
       ipcRenderer.send('client-config', options);
     }
 
-    app.configPersistenceManager.bulkSetRawValue(filterSetList, webContentsId);
+    if (filterSetList.length) {
+      app.configPersistenceManager.bulkSetRawValue(filterSetList, webContentsId);
+    }
+    if (changeTimeList.length) {
+      app.configPersistenceManager.bulkSetChangeTimeValue(changeTimeList);
+    }
 
     this.load();
   }
@@ -695,10 +710,6 @@ class Config {
     app.configPersistenceManager.setChangeTimeValue(keyPath, changeTime);
   }
 
-  _bulkSetConfigUpdateTime(setList) {
-    app.configPersistenceManager.bulkSetChangeTimeValue(setList);
-  }
-
   syncAllPreferencesFromServer = async () => {
     const { PreferencesRest } = require('./rest');
     const setting = await PreferencesRest.getAllPreferences();
@@ -737,12 +748,14 @@ class Config {
     }
   };
 
+  clearSyncPreferencesVersion = () => {
+    this.set('commonSettingsVersion', 0);
+    this.set('macSettingsVersion', 0);
+  };
+
   _syncPreferencesFromServer = async configList => {
     const fomartData = await this._handlePreferencesFromServer(configList);
     this._bulkSet(fomartData);
-    this._bulkSetConfigUpdateTime(
-      fomartData.map(item => ({ keyPath: item.key, time: item.tsClientUpdate }))
-    );
   };
 
   _handlePreferencesFromServer = async configList => {
@@ -865,11 +878,21 @@ class Config {
     return transformList;
   }
 
+  _syncSettingToServer = (keyPath, value) => {
+    const configSchema = this.getSchema(keyPath);
+    if (UpdateToServerSimpleSettingTypes.includes(configSchema.type)) {
+      this._syncSimpleSettingToServer(keyPath, value);
+    } else if (UpdateToServerComplexSettingTypes.includes(configSchema.type)) {
+      const oldValue = this.getRawValue(keyPath);
+      const newValue = value;
+      this._syncComplexSettingToServer(keyPath, oldValue, newValue);
+    }
+  };
+
   _syncSimpleSettingToServer = async (keyPath, value) => {
     if (process.type !== 'renderer') {
       return;
     }
-    this.setConfigUpdateTime(keyPath, new Date().getTime());
     const { PreferencesRest } = require('./rest');
     const result = await PreferencesRest.updateStringPreferences(keyPath, value);
     if (result.successful) {
@@ -1174,19 +1197,11 @@ class Config {
   setRawValue(keyPath, value) {
     const configSchema = this.getSchema(keyPath);
     const syncAccountIds = this.get('edisonAccount') || [];
-    if (
-      process.type === 'renderer' &&
-      syncAccountIds.length &&
-      configSchema &&
-      configSchema.syncToServer
-    ) {
-      // should sync the change to server
-      if (UpdateToServerSimpleSettingTypes.includes(configSchema.type)) {
-        this._syncSimpleSettingToServer(keyPath, value);
-      } else if (UpdateToServerComplexSettingTypes.includes(configSchema.type)) {
-        const oldValue = this.getRawValue(keyPath);
-        const newValue = value;
-        this._syncComplexSettingToServer(keyPath, oldValue, newValue);
+    if (process.type === 'renderer' && configSchema && configSchema.syncToServer) {
+      this.setConfigUpdateTime(keyPath, new Date().getTime());
+      if (syncAccountIds.length) {
+        // should sync the change to server
+        this._syncSettingToServer(keyPath, value);
       }
     }
     app.configPersistenceManager.setRawValue(keyPath, value, webContentsId);

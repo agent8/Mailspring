@@ -573,6 +573,7 @@ class AccountStore extends MailspringStore {
     const oldSyncAccountIds = AppEnv.config.get(edisonAccountKey) || [];
     const newSyncAccountIds = oldSyncAccountIds.filter(oldId => oldId !== aid);
     AppEnv.config.set(edisonAccountKey, newSyncAccountIds);
+    AppEnv.config.clearSyncPreferencesVersion();
   };
 
   syncAccount = () => {
