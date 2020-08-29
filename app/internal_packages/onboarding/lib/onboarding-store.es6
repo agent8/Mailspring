@@ -7,6 +7,7 @@ const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
 const { EdisonAccountRest } = RESTful;
+// const ONBOARDING_TRACKING_URL = 'https://cp.stag.easilydo.cc/api/multiple/desktop/onboarding';
 const ONBOARDING_TRACKING_URL = 'https://cp.edison.tech/api/multiple/desktop/onboarding';
 
 class OnboardingStore extends MailspringStore {
@@ -175,6 +176,7 @@ class OnboardingStore extends MailspringStore {
         mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: 'Bearer ba68b70f0ea8596eadbaea4f116356c2',
         },
         body: JSON.stringify({
           email: emailAddress,
