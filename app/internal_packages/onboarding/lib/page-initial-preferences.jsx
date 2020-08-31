@@ -107,7 +107,7 @@ class InitialPreferencesOptions extends React.Component {
             <br />
             mailbox lists.
           </p> */}
-          <Flexbox direction="row" style={{ alignItems: 'center', width: 578 }}>
+          <Flexbox direction="row" style={{ alignItems: 'center', width: 640 }}>
             {['list', 'split', 'split-v'].map(mode => (
               <AppearanceModeOption
                 mode={mode}
