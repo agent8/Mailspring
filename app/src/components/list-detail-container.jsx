@@ -54,7 +54,7 @@ class ListDetailContainer extends React.Component {
       flexDirection: 'row',
     };
     const otherProps = {
-      className: 'column-MessageList',
+      className: this.props.isOutbox ? 'column-OutboxMessage' : 'column-MessageList',
       initialWidth: this.state.width,
       minWidth: (Detail.containerStyles && Detail.containerStyles.minWidth) || 150,
     };

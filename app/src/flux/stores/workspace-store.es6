@@ -111,7 +111,11 @@ class WorkspaceStore extends MailspringStore {
         'Outbox',
         { root: true },
         {
-          split: ['RootSidebar', 'Outbox', 'OutboxMessage'],
+          split: [
+            'RootSidebar',
+            'Outbox',
+            // 'OutboxMessage'
+          ],
         }
       );
       this.defineSheet(
@@ -121,7 +125,7 @@ class WorkspaceStore extends MailspringStore {
           split: [
             'RootSidebar',
             'SiftList',
-            'MessageList',
+            // 'MessageList',
             // 'QuickSidebar',
             // 'MessageListSidebar'
           ],
