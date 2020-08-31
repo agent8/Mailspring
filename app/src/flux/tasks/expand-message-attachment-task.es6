@@ -17,7 +17,7 @@ export default class ExpandMessageAttachmentTask extends Task {
       modelKey: 'canBeUndone',
     }),
   });
-  constructor(data) {
+  constructor(data = {}) {
     super(data);
     this.messageId = this.messageId || data.messageId || '';
     this.files = this.files || data.files || [];
