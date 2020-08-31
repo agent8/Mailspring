@@ -74,8 +74,11 @@ class SiftList extends React.Component {
     const current = this.state.style;
     const layoutMode = WorkspaceStore.layoutMode();
     // const desired = ReactDOM.findDOMNode(this).offsetWidth < 540 ? 'narrow' : 'wide';
-    const desired =
+    let desired =
       ReactDOM.findDOMNode(this).offsetWidth < 3900 && layoutMode === 'split' ? 'narrow' : 'wide';
+    if (this.props.forceWidthMode) {
+      desired = 'wide';
+    }
     if (current !== desired) {
       this.setState({ style: desired });
     }
