@@ -598,6 +598,7 @@ export default {
             type: 'boolean',
             default: false,
             title: 'Send mail sound',
+            syncToServer: true,
             syncToServerCommonKey: 'play_sound_after_email_sent',
           },
           defaultReplyType: {
