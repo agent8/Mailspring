@@ -4,6 +4,7 @@ import { Mark } from 'slate';
 import { CompactPicker } from 'react-color';
 import { RetinaImg } from 'mailspring-component-kit';
 import { Actions } from 'mailspring-exports';
+import FontFacePopover from './font-face-popover';
 import FontSizePopover from './font-size-popover';
 import ButtonValuePickerPopover from './button-value-picker-popover';
 
@@ -434,22 +435,13 @@ export function BuildFontSizePicker(config) {
         }
       );
     };
-    // _setFontSizeIfMissing() {
-    //   const value = getActiveValueForMark(this.props.value, config.type);
-    //   if (!value && this.props.value && this.props.onChange) {
-    //     console.log('setting font size to user default');
-    //     this.props.onChange(
-    //       applyValueForMark(this.props.value, config.type, AppEnv.config.get('core.fontsize'))
-    //     );
-    //   }
-    // }
 
     render() {
       return (
         <button
           style={{ padding: '6px, 0px', width: 40 }}
           className={`${this.props.className || ''} pull-right with-popup`}
-          onClick={this.onClick}
+          onMouseEnter={this.onClick}
           ref={el => (this.fontSizeBtn = el)}
         >
           <i className={config.iconClass} />
@@ -466,10 +458,10 @@ export function BuildFontPicker(config) {
       super(props);
       config.default = (props.defaultValues || {}).fontFace || AppEnv.config.get('core.fontface');
     }
-    _onSetValue = e => {
-      AppEnv.config.set('core.fontface', e.target.value);
+    _onSetValue = data => {
+      AppEnv.config.set('core.fontface', data);
       const { onChange, value } = this.props;
-      let markValue = e.target.value !== config.default ? e.target.value : null;
+      let markValue = data !== config.default ? data : null;
       if (!(typeof config.options[0].value === 'string')) {
         markValue = markValue / 1;
       }
@@ -483,29 +475,35 @@ export function BuildFontPicker(config) {
         getActiveValueForMark(this.props.value, config.type)
       );
     }
+    onClick = e => {
+      const value = getActiveValueForMark(this.props.value, config.type) || config.default;
+      Actions.openPopover(
+        <FontFacePopover
+          options={config.options}
+          selectedValue={value}
+          onSelect={this._onSetValue}
+        />,
+        {
+          originRect: this.fontFaceBtn.getBoundingClientRect(),
+          direction: 'down',
+          closeOnAppBlur: false,
+        }
+      );
+    };
 
     render() {
       const value = getActiveValueForMark(this.props.value, config.type) || config.default;
       const displayed = config.convert(value, config.default);
-
       return (
         <button
           style={{ padding: 0, paddingRight: 6 }}
-          className={`${this.props.className} with-select`}
+          className={`${this.props.className} with-select font-face`}
+          ref={el => (this.fontFaceBtn = el)}
+          onMouseEnter={this.onClick}
         >
-          <i className={config.iconClass} />
-          <select
-            onFocus={this._onFocus}
-            value={displayed}
-            onChange={this._onSetValue}
-            tabIndex={-1}
-          >
-            {config.options.map(({ name, value }) => (
-              <option key={value} value={value}>
-                {name}
-              </option>
-            ))}
-          </select>
+          <div className="display-name" style={{ fontFamily: value }}>
+            {displayed}
+          </div>
           <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
         </button>
       );
