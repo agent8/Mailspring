@@ -883,9 +883,7 @@ class Config {
     if (UpdateToServerSimpleSettingTypes.includes(configSchema.type)) {
       this._syncSimpleSettingToServer(keyPath, value);
     } else if (UpdateToServerComplexSettingTypes.includes(configSchema.type)) {
-      const oldValue = this.getRawValue(keyPath);
-      const newValue = value;
-      this._syncComplexSettingToServer(keyPath, oldValue, newValue);
+      this._syncComplexSettingToServer(keyPath, value);
     }
   };
 
@@ -917,18 +915,27 @@ class Config {
     }
   };
 
-  _syncComplexSettingToServer = async (keyPath, oldValue, newValue) => {
+  _syncComplexSettingToServer = async (keyPath, value) => {
     if (process.type !== 'renderer') {
       return;
     }
     const { PreferencesRest } = require('./rest');
-    const { transformLocalToServer } = this.getSchema(keyPath);
+    const { transformLocalToServer, syncToServerCommonKey } = this.getSchema(keyPath);
     if (transformLocalToServer && typeof transformLocalToServer === 'function') {
-      const value = transformLocalToServer(oldValue, newValue);
-      if (!value.update.length && !value.remove.length) {
+      const transformValue = transformLocalToServer(value);
+      const platform = syncToServerCommonKey ? EdisonPlatformType.COMMON : EdisonPlatformType.MAC;
+      const configKeyInServer = syncToServerCommonKey
+        ? syncToServerCommonKey
+        : keyPath.replace(/\./g, '_');
+      const oldValue = await this._getLongListPreferencesValue({
+        key: configKeyInServer,
+        platform: platform,
+      });
+      if (!oldValue) {
         return;
       }
-      const result = await PreferencesRest.updateListPreferences(keyPath, value);
+      const diffData = generateDiffData(oldValue, transformValue);
+      const result = await PreferencesRest.updateListPreferences(keyPath, diffData);
       if (result.successful) {
         const { data } = result;
         const resultList = [...data.removeResults, ...data.updateResults];
@@ -1452,5 +1459,33 @@ var withoutEmptyObjects = function(object) {
   }
   return resultObject;
 };
+
+function generateDiffData(oldList, newList) {
+  const newIds = [];
+  const removes = [];
+  const updates = [];
+  newList.forEach(n => {
+    newIds.push(n.subId);
+    const old = oldList.find(oldItem => n.subId === oldItem.subId);
+    if (old && old.value === n.value) {
+      return;
+    }
+    updates.push({
+      subId: n.subId,
+      value: n.value,
+      tsClientUpdate: new Date().getTime(),
+    });
+  });
+  oldList.forEach(o => {
+    if (!newIds.includes(o.subId)) {
+      removes.push({
+        subId: o.subId,
+        value: o.value,
+        tsClientUpdate: new Date().getTime(),
+      });
+    }
+  });
+  return { update: updates, remove: removes };
+}
 
 module.exports = Config;

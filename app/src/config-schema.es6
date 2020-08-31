@@ -724,32 +724,14 @@ export default {
           }));
           return valueTransform;
         },
-        transformLocalToServer: function(oldList, newList) {
-          const newEmailAdress = [];
-          const removes = [];
-          const updates = [];
-          newList.forEach(c => {
-            newEmailAdress.push(c.emailAdress);
-            const oldC = oldList.find(oldItem => c.emailAdress === oldItem.emailAdress);
-            if (oldA && oldC.value === c.value) {
-              return;
-            }
-            updates.push({
+        transformLocalToServer: function(contacts) {
+          return contacts.map(c => {
+            return {
               subId: c.emailAdress,
               value: c.value,
               tsClientUpdate: new Date().getTime(),
-            });
+            };
           });
-          oldList.forEach(c => {
-            if (!newEmailAdress.includes(c.emailAdress)) {
-              removes.push({
-                subId: c.emailAdress,
-                value: c.value,
-                tsClientUpdate: new Date().getTime(),
-              });
-            }
-          });
-          return { update: updates, remove: removes };
         },
       },
     },
@@ -773,43 +755,21 @@ export default {
     transformServerToLocal: function(serverPreferenceList = []) {
       return serverPreferenceList.map(subConf => JSON.parse(subConf.value));
     },
-    transformLocalToServer: function(oldAccounts, newAccounts) {
-      const newAccountIds = [];
-      const removeAccounts = [];
-      const updateAccounts = [];
-      function copyAndFilterSetting(account = {}) {
-        const copy = {
-          ...account,
-        };
-        delete copy.settings;
-        return copy;
-      }
-      newAccounts.forEach(a => {
-        newAccountIds.push(a.pid);
-        const oldA = oldAccounts.find(oldAccountItem => a.pid === oldAccountItem.pid);
-        const formatAStr = JSON.stringify(copyAndFilterSetting(a));
-        const formatOldAStr = JSON.stringify(copyAndFilterSetting(oldA));
-        const isEqual = formatAStr === formatOldAStr;
-        if (oldA && isEqual) {
-          return;
+    transformLocalToServer: function(accounts) {
+      return accounts.map(a => {
+        function copyAndFilterSetting(account = {}) {
+          const copy = {
+            ...account,
+          };
+          delete copy.settings;
+          return copy;
         }
-        updateAccounts.push({
+        return {
           subId: a.pid,
-          value: formatAStr,
+          value: JSON.stringify(copyAndFilterSetting(a)),
           tsClientUpdate: new Date().getTime(),
-        });
+        };
       });
-      oldAccounts.forEach(a => {
-        if (!newAccountIds.includes(a.pid)) {
-          const formatAStr = JSON.stringify(copyAndFilterSetting(a));
-          removeAccounts.push({
-            subId: a.pid,
-            value: formatAStr,
-            tsClientUpdate: new Date().getTime(),
-          });
-        }
-      });
-      return { update: updateAccounts, remove: removeAccounts };
     },
     mergeValue: function(oldList, newList) {
       return oldList.map(account => {
