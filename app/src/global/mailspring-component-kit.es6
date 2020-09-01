@@ -139,3 +139,5 @@ lazyLoad('ListensToFluxStore', 'decorators/listens-to-flux-store');
 lazyLoad('ListensToMovementKeys', 'decorators/listens-to-movement-keys');
 lazyLoad('HasTutorialTip', 'decorators/has-tutorial-tip');
 lazyLoad('CreateButtonGroup', 'decorators/create-button-group');
+
+lazyLoad('ListDetailContainer', 'list-detail-container');

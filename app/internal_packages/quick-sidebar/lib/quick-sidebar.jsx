@@ -1,8 +1,6 @@
 import { React, WorkspaceStore } from 'mailspring-exports';
-import ThreadSearchBar from '../../thread-search/lib/thread-search-bar';
 
 import { InjectedComponent } from 'mailspring-component-kit';
-
 
 export default class QuickSidebar extends React.Component {
   static displayName = 'QuickSidebar';
@@ -13,9 +11,7 @@ export default class QuickSidebar extends React.Component {
   render() {
     return (
       <div className="sidebar-quick">
-        <InjectedComponent
-          matching={{ location: WorkspaceStore.Sheet.Thread.QuickToolbar.Top }}
-        />
+        <InjectedComponent matching={{ location: WorkspaceStore.Sheet.Thread.QuickToolbar.Top }} />
       </div>
     );
   }

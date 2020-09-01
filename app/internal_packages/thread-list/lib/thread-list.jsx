@@ -22,7 +22,7 @@ const {
   AccountStore,
   CategoryStore,
   WorkspaceStore,
-  TaskFactory
+  TaskFactory,
 } = require('mailspring-exports');
 const ToolbarCategoryPicker = require('../../category-picker/lib/toolbar-category-picker');
 
@@ -150,7 +150,7 @@ class ThreadList extends React.Component {
             onDoubleClick={thread => Actions.popoutThread(thread)}
             onDragStart={this._onDragStart}
             onDragEnd={this._onDragEnd}
-          // onScroll={this._onScroll}
+            // onScroll={this._onScroll}
           />
         </FocusContainer>
       </FluxContainer>
@@ -180,11 +180,10 @@ class ThreadList extends React.Component {
       swipeRightActions.push({ action });
     }
     const swipeOptions = {
-      'swipeLeft': swipeLeftActions,
-      'swipeRight': swipeRightActions
-    }
-    if (!swipeOptions[swipeKey] ||
-      !swipeOptions[swipeKey].length) {
+      swipeLeft: swipeLeftActions,
+      swipeRight: swipeRightActions,
+    };
+    if (!swipeOptions[swipeKey] || !swipeOptions[swipeKey].length) {
       return;
     }
     const actions = [];
@@ -224,10 +223,12 @@ class ThreadList extends React.Component {
           });
           break;
         case 'read':
-          tasks.push(TaskFactory.taskForInvertingUnread({
-            threads,
-            source: 'Swipe',
-          }));
+          tasks.push(
+            TaskFactory.taskForInvertingUnread({
+              threads,
+              source: 'Swipe',
+            })
+          );
           break;
         case 'folder':
           AppEnv.commands.dispatch('core:change-folders', container);
@@ -281,7 +282,7 @@ class ThreadList extends React.Component {
     return `swipe-${name}`;
   };
 
-  _threadPropsProvider = (item) => {
+  _threadPropsProvider = item => {
     let classes = classnames({
       unread: item.unread,
     });
@@ -299,17 +300,21 @@ class ThreadList extends React.Component {
 
     props.onSwipeRightClass = (step = 0) => this._onSwipeClass(step, item, 'swipeRight');
 
-    props.onSwipeRight = (callback, step = 0, container) => this._onSwipe(callback, step, item, 'swipeRight', container);
+    props.onSwipeRight = (callback, step = 0, container) =>
+      this._onSwipe(callback, step, item, 'swipeRight', container);
 
     props.onSwipeLeftClass = (step = 0) => this._onSwipeClass(step, item, 'swipeLeft');
 
-    props.onSwipeLeft = (callback, step = 0, container) => this._onSwipe(callback, step, item, 'swipeLeft', container);
+    props.onSwipeLeft = (callback, step = 0, container) =>
+      this._onSwipe(callback, step, item, 'swipeLeft', container);
 
-    props.move_folder_el = <ToolbarCategoryPicker
-      position="threadList"
-      items={[item]}
-      currentPerspective={FocusedPerspectiveStore.current()}
-    />
+    props.move_folder_el = (
+      <ToolbarCategoryPicker
+        position="threadList"
+        items={[item]}
+        currentPerspective={FocusedPerspectiveStore.current()}
+      />
+    );
     // const disabledPackages = AppEnv.config.get('core.disabledPackages') || [];
     // if (disabledPackages.includes('thread-snooze')) {
     //   return props;
@@ -336,7 +341,7 @@ class ThreadList extends React.Component {
     // }
 
     return props;
-  }
+  };
 
   _targetItemsForMouseEvent(event) {
     const itemThreadId = this.refs.list.itemIdAtPoint(event.clientX, event.clientY);
@@ -415,14 +420,17 @@ class ThreadList extends React.Component {
     event.dataTransfer.setData(`nylas-accounts=${data.accountIds.join(',')}`, '1');
   };
 
-  _onDragEnd = event => { };
+  _onDragEnd = event => {};
 
   _onResize = event => {
     const current = this.state.style;
     const layoutMode = WorkspaceStore.layoutMode();
     // const desired = ReactDOM.findDOMNode(this).offsetWidth < 540 ? 'narrow' : 'wide';
-    const desired =
+    let desired =
       ReactDOM.findDOMNode(this).offsetWidth < 3900 && layoutMode === 'split' ? 'narrow' : 'wide';
+    if (this.props.forceWidthMode) {
+      desired = 'wide';
+    }
     if (current !== desired) {
       this.setState({ style: desired });
     }
