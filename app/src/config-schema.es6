@@ -102,7 +102,7 @@ export default {
           mode: {
             type: 'string',
             default: 'list',
-            enum: ['split', 'list'],
+            enum: ['split', 'list', 'split-v'],
           },
           systemTray: {
             type: 'boolean',

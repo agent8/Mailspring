@@ -89,13 +89,18 @@ export function AppearancePanelOptions(props) {
   const modeSwitchList = [
     {
       value: 'list',
-      label: 'Single Panel',
+      label: 'Full Screen',
       imgsrc: `appearance-mode-${'list'}.png`,
     },
     {
       value: 'split',
-      label: 'Two Panels',
+      label: 'Reading Pane Right',
       imgsrc: `appearance-mode-${'split'}.png`,
+    },
+    {
+      value: 'split-v',
+      label: 'Reading Pane Bottom',
+      imgsrc: `appearance-mode-${'split-v'}.png`,
     },
   ];
   return (

@@ -65,9 +65,15 @@ mailspring-workspace {
     min-width: 220px;
   }
 }
+// .layout-mode-split {
+//   .toolbar-ThreadList .thread-search-bar {
+//     display: none;
+//   }
+// }
 .layout-mode-split {
-  .toolbar-ThreadList .thread-search-bar {
-    display: none;
+  .column-OutboxMessage,
+  .column-MessageList {
+    padding-top: 0;
   }
 }
 .layout-mode-list {
@@ -283,7 +289,7 @@ body.is-blurred {
   .toolbar-OutboxMessage,
   .toolbar-MessageList {
     height: @search-bar-height;
-    // border-bottom: 1px solid @border-color-primary;
+    border-bottom: 1px solid @border-color-primary;
   }
   .toolbar-MessageList {
     &.has-shadow {
@@ -360,13 +366,13 @@ body.is-blurred {
     }
   }
 
-  .mode-split .toolbar-ThreadList .item-container {
-    display: block !important;
-    .thread-search-bar {
-      width: 200%;
-      max-width: 700px;
-    }
-  }
+  // .mode-split .toolbar-ThreadList .item-container {
+  //   display: block !important;
+  //   .thread-search-bar {
+  //     width: 200%;
+  //     max-width: 700px;
+  //   }
+  // }
 
   .item-container > * {
     -webkit-app-region: no-drag;
@@ -742,10 +748,8 @@ body.platform-win32 {
 .column-OutboxMessage,
 .column-ThreadList,
 .column-MessageList {
-  margin-top: @search-bar-height;
-  padding-bottom: @search-bar-height;
+  padding-top: @search-bar-height;
   -webkit-app-region: no-drag;
-  border-top: 1px solid @border-color-primary;
   div {
     // This is for DC-182 reduce height because of thread-list-empty-bar
     div:nth-child(2).key-commands-region.thread-list,
@@ -762,9 +766,8 @@ body.platform-win32 {
 }
 .column-OutboxMessage,
 .column-MessageList {
-  margin-top: 0;
-  top: 68px;
-  height: calc(~'100% - 40px') !important;
+  // margin-top: 0;
+  // height: calc(~'100% - 40px') !important;
   & > div.empty {
     height: 100%;
     background: url(../static/images/empty-state/EmptyMail.png) no-repeat center center;
@@ -780,6 +783,10 @@ body.platform-win32 {
     height: 100%;
     align-items: center;
     justify-content: center;
+  }
+  & > .key-commands-region {
+    overflow: hidden;
+    padding-bottom: 40px;
   }
 }
 
