@@ -65,10 +65,12 @@ class SignatureStore extends MailspringStore {
 
       AppEnv.config.onDidChange(`signatures`, () => {
         this.signatures = AppEnv.config.get(`signatures`);
+        AppEnv.config.syncSignatureToServer();
         this.trigger();
       });
       AppEnv.config.onDidChange(`defaultSignatures`, () => {
         this.defaultSignatures = AppEnv.config.get(`defaultSignatures`);
+        AppEnv.config.syncSignatureToServer();
         this.trigger();
       });
     }
@@ -95,6 +97,7 @@ class SignatureStore extends MailspringStore {
       return;
     }
     this.defaultSignatures[accountSigId] = sigId;
+    AppEnv.config.syncSignatureToServer();
     this.trigger();
     this._saveDefaultSignatures();
   }
@@ -143,6 +146,7 @@ class SignatureStore extends MailspringStore {
 
   _onSelectSignature = id => {
     this.selectedSignatureId = id;
+    AppEnv.config.syncSignatureToServer();
     this.trigger();
   };
 
@@ -156,6 +160,7 @@ class SignatureStore extends MailspringStore {
     delete this.signatures[signatureToDelete.id];
     this._onRemoveSignatureBody(signatureToDelete.id);
     this._autoselectSignatureId();
+    AppEnv.config.syncSignatureToServer();
     this.trigger();
     this._saveSignatures();
   };
@@ -173,6 +178,7 @@ class SignatureStore extends MailspringStore {
   _onUpsertSignature = (signature, id) => {
     this.signatures[id] = { id: signature.id, title: signature.title };
     this._onUpsertSignatureBody(signature.id, signature.body);
+    AppEnv.config.syncSignatureToServer();
     this.trigger();
     this._saveSignatures();
   };
@@ -199,6 +205,7 @@ class SignatureStore extends MailspringStore {
       this.defaultSignatures[signatureId] = this.selectedSignatureId;
     }
 
+    AppEnv.config.syncSignatureToServer();
     this.trigger();
     this._saveDefaultSignatures();
   };

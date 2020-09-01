@@ -7,6 +7,7 @@ import {
   Actions,
   QuotedHTMLTransformer,
   RegExpUtils,
+  Constant,
 } from 'mailspring-exports';
 import { remote } from 'electron';
 import MailspringStore from 'mailspring-store';
@@ -15,9 +16,9 @@ import fs from 'fs';
 import _ from 'underscore';
 import TemplateActions from './template-actions';
 
+const { INVALID_TEMPLATE_NAME_REGEX } = Constant;
 // Support accented characters in template names
 // https://regex101.com/r/nD3eY8/1
-const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
 function mergeContacts(oldContacts = [], contacts = []) {
   const result = [...oldContacts];
   contacts.forEach(contact => {
@@ -86,7 +87,10 @@ class TemplateStore extends MailspringStore {
       }
     });
 
-    this._triggerDebounced = _.debounce(() => this.trigger(), 20);
+    this._triggerDebounced = _.debounce(() => {
+      this.trigger();
+      AppEnv.config.syncTemplateToServer();
+    }, 20);
   }
 
   directory() {

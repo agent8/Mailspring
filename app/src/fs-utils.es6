@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Utils from './flux/models/utils';
-
+import { zip } from 'compressing';
 export function dirExists(dirPath) {
   if (fs.existsSync(dirPath)) {
     const stat = fs.lstatSync(dirPath);
@@ -455,4 +455,37 @@ export function styleHtml(html_source, indent_size, indent_character, max_char) 
     multi_parser.last_text = multi_parser.token_text;
   }
   return multi_parser.output.join('');
+}
+
+export async function compressDir(dirPath) {
+  return new Promise((resolve, reject) => {
+    const destDirName = path.dirname(dirPath);
+    const fileName = path.join(destDirName, `${path.basename(dirPath)}.zip`);
+    zip
+      .compressDir(dirPath, fileName)
+      .then(() => {
+        resolve(fileName);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
+}
+
+export async function unCompressDir(filePath) {
+  return new Promise((resolve, reject) => {
+    const destDirName = path.dirname(filePath);
+    const dirName = path.join(destDirName, path.basename(filePath, '.zip'));
+    zip
+      .uncompress(filePath, destDirName)
+      .then(() => {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+        resolve(dirName);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
 }
