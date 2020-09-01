@@ -232,7 +232,7 @@ export default class ComposerHeader extends React.Component {
   };
 
   _onSubjectChange = event => {
-    this.props.session.changes.add({ subject: event.target.value });
+    this.props.session.changes.add({ subject: event.target.value, subjectChanged: true });
   };
 
   _draftNotReady = () => {
