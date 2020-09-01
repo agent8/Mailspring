@@ -1152,6 +1152,7 @@ class Config {
       }
       const defaultSignaturesConf = this.get('defaultSignatures');
       const signatureList = [];
+      const usedSigList = [];
       const accounts = this.get('accounts');
       Object.keys(defaultSignaturesConf).forEach(k => {
         if (defaultSignaturesConf[k]) {
@@ -1164,9 +1165,28 @@ class Config {
               value: oldMapNew.get(defaultSignaturesConf[k]),
               subId: `${host}:${emailAddress}${alias ? ':' + alias : ''}`,
             });
+            usedSigList.push(oldMapNew.get(defaultSignaturesConf[k]));
           }
         }
       });
+      let nameIndex = 1;
+      for (const [key, value] of oldMapNew) {
+        if (!usedSigList.includes(value)) {
+          signatureList.push({
+            value: value,
+            subId: `without-selecting-${nameIndex}`,
+            tsClientUpdate: new Date().getTime(),
+          });
+          nameIndex++;
+        }
+      }
+      const { PreferencesRest } = require('./rest');
+      const oldValue = await PreferencesRest.getListTypePreference('signaturesInOtherClient');
+      if (oldValue.successful) {
+        const oldList = oldValue.data.list || [];
+        const diffData = generateDiffData(oldList, signatureList);
+        await PreferencesRest.updateListPreferences('signaturesInOtherClient', diffData);
+      }
     } catch (err) {
       this._logError('Sync signature to server fail', err);
     }
