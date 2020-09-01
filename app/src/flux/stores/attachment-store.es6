@@ -5,9 +5,11 @@ import { remote } from 'electron';
 import mkdirp from 'mkdirp';
 import MailspringStore from 'mailspring-store';
 import { Constant } from 'mailspring-exports';
+import ExpandMessageAttachmentTask from '../tasks/expand-message-attachment-task';
 import DraftStore from './draft-store';
 import Actions from '../actions';
 import File from '../models/file';
+import Message from '../models/message';
 import Utils from '../models/utils';
 import mime from 'mime-types';
 import DatabaseStore from './database-store';
@@ -15,6 +17,12 @@ import AttachmentProgress from '../models/attachment-progress';
 import { autoGenerateFileName } from '../../fs-utils';
 import uuid from 'uuid';
 import _ from 'underscore';
+import tnef from '@ruoxijiang/node-tnef';
+let taskQueue = null;
+const TaskQueue = () => {
+  taskQueue = taskQueue || require('./task-queue').default;
+  return taskQueue;
+};
 
 const { AttachmentDownloadState } = Constant;
 Promise.promisifyAll(fs);
@@ -842,6 +850,7 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.fetchAndSaveAllFiles, this._saveAllFilesToUserDir);
     this.listenTo(Actions.abortFetchFile, this._abortFetchFile);
     this.listenTo(Actions.fetchAttachments, this._onFetchAttachments);
+    this.listenTo(Actions.extractTnefFile, this._extractTnefFile);
 
     // sending
     this.listenTo(Actions.addAttachment, this._onAddAttachment);
@@ -864,6 +873,7 @@ class AttachmentStore extends MailspringStore {
     this._filesDirectory = path.join(AppEnv.getConfigDirPath(), 'files');
     this._saveFileQueue = [];
     this._saveAllFilesQueue = [];
+    this._extractingTnefFile = {};
     this._fileProcess = new Map();
     this._fileSaveSuccess = new Map();
     mkdirp(this._filesDirectory);
@@ -879,22 +889,6 @@ class AttachmentStore extends MailspringStore {
     console.log(`draft attachment state changed `, data);
     Actions.broadcastDraftAttachmentState(data);
   };
-  // isDraftAttachmentBusy(draft){
-  //   const accountId = draft.accountId;
-  //   const messageId = draft.id;
-  //   const headerMessageId = draft.headerMessageId;
-  //   if(!accountId || !messageId || !headerMessageId){
-  //     AppEnv.reportError(new Error(`Draft data is incorrect,`), {errorData: draft}, {grabLogs: true});
-  //     return false;
-  //   }
-  //   const item = this.findDraft({accountId, messageId, headerMessageId});
-  //   if(!item){
-  //     AppEnv.logWarning(`draft cache ${accountId} ${messageId}, ${headerMessageId} not found, assuming attachments ready`);
-  //     return true;
-  //   }
-  //   Actions.broadcastDraftAttachmentState({accountId, messageId, headerMessageId, busy: item.isBusy()});
-  //   return item.isBusy();
-  // }
   copyAttachmentsToDraft({ draft, fileData = [], cb }) {
     if (!draft) {
       AppEnv.logError(new Error(`Draft is null, add to attachment ignored`));
@@ -1091,7 +1085,9 @@ class AttachmentStore extends MailspringStore {
   };
 
   findAll() {
-    return DatabaseStore.findAll(File);
+    return DatabaseStore.findAll(File, [
+      File.attributes.state.in([Constant.FileState.Normal, Constant.FileState.IgnoreMissing]),
+    ]);
   }
   findAllByFileIds(fileIds) {
     return this.findAll().where([File.attributes.id.in(fileIds)]);
@@ -1105,30 +1101,6 @@ class AttachmentStore extends MailspringStore {
     this._addToMissingDataAttachmentIds(fileId);
     return null;
   }
-  // setAttachmentData(attachmentData) {
-  //   if (attachmentData.mimeType) {
-  //     return this.addAttachmentPartialData(attachmentData);
-  //   } else if (attachmentData.missingData) {
-  //     const cachedAttachment = this._attachementCache.get(attachmentData.id);
-  //     if (cachedAttachment) {
-  //       return;
-  //     }
-  //   }
-  //   this._attachementCache.set(attachmentData.id, attachmentData);
-  // }
-  // addAttachmentPartialData(partialFileData) {
-  //   let fileData = this._attachementCache.get(partialFileData.id);
-  //   if (!fileData) {
-  //     console.log(`file id not in cache ${partialFileData.id}`);
-  //     fileData = File.fromPartialData(partialFileData);
-  //     this._attachementCache.set(fileData.id, fileData);
-  //   }
-  //   if (fileData.missingData) {
-  //     console.log(`file missing data, queue db ${fileData.id}`);
-  //     this._addToMissingDataAttachmentIds(fileData.id);
-  //   }
-  //   return fileData;
-  // }
 
   // Returns a path on disk for saving the file. Note that we must account
   // for files that don't have a name and avoid returning <downloads/dir/"">
@@ -1146,6 +1118,13 @@ class AttachmentStore extends MailspringStore {
       id,
       file.safeDisplayName()
     );
+  }
+  pathForFileFolder(file) {
+    if (!file) {
+      return null;
+    }
+    const id = file.id.toLowerCase();
+    return path.join(this._filesDirectory, id.substr(0, 2), id.substr(2, 2), id);
   }
 
   fileIdForPath(filePath) {
@@ -1249,6 +1228,136 @@ class AttachmentStore extends MailspringStore {
     }
 
     return filePath;
+  }
+  _extractTnefFile(file, message) {
+    if (!(file instanceof File)) {
+      AppEnv.logError('AttachmentStore:extractTnefFile file must be instance of File');
+      return;
+    }
+    if (!(message instanceof Message)) {
+      AppEnv.logError('AttachmentStore:extractTnefFile message must be instance of Message');
+      return;
+    }
+    if (file.state === Constant.FileState.Removed) {
+      AppEnv.logError(`File is already marked as removed, will not extract`);
+      return;
+    }
+    if (!file.isTNEFType()) {
+      AppEnv.logWarning(`File ${file.id} is not tnef file, ignoring`);
+      return;
+    }
+    if (this._extractingTnefFile[file.id]) {
+      AppEnv.logWarning(`File ${file.id} is currently being extracted, ignoring`);
+      return;
+    }
+    this._extractingTnefFile[file.id] = true;
+    return new Promise((resolve, reject) => {
+      fs.access(this.pathForFile(file), err => {
+        if (err) {
+          AppEnv.logError(`File ${file.id} access failed ${err}`);
+          delete this._extractingTnefFile[file.id];
+          reject(err);
+          return;
+        }
+        const tmpPath = path.join(this.pathForFileFolder(file), 'tmp');
+        fs.mkdir(tmpPath, err => {
+          if (err) {
+            if (err.code !== 'EEXIST') {
+              AppEnv.logError(`Creating path ${tmpPath} for ${file.id} failed ${err}`);
+              delete this._extractingTnefFile[file.id];
+              reject(err);
+              return;
+            }
+          }
+          tnef
+            .extractFiles(this.pathForFile(file), tmpPath)
+            .then(filesInfo => {
+              const total = filesInfo.length;
+              const newFiles = [];
+              let processed = 0;
+              const onAllProcessed = () => {
+                const task = new ExpandMessageAttachmentTask({
+                  originalAttachmentId: file.id,
+                  accountId: message.accountId,
+                  files: newFiles,
+                  messageId: message.id,
+                });
+                if (task) {
+                  TaskQueue()
+                    .waitForPerformLocal(task, { sendTask: true, timeout: 500 })
+                    .then(() => {
+                      delete this._extractingTnefFile[file.id];
+                      resolve(newFiles);
+                    })
+                    .catch(err => {
+                      delete this._extractingTnefFile[file.id];
+                      reject();
+                    });
+                } else {
+                  delete this._extractingTnefFile[file.id];
+                  reject();
+                }
+              };
+              filesInfo.forEach(fileInfo => {
+                const newFile = new File({
+                  id: uuid(),
+                  messageId: message.id,
+                  filename: fileInfo.name,
+                  contentType: fileInfo.contentType,
+                  contentId: fileInfo.contentId,
+                  isInline: !!fileInfo.contentId,
+                  size: fileInfo.sizeInBytes,
+                  state: Constant.FileState.IgnoreMissing,
+                });
+                const newFolderDest = this.pathForFileFolder(newFile);
+                fs.mkdir(newFolderDest, { recursive: true }, err => {
+                  if (err) {
+                    AppEnv.logError(
+                      `Creating new path ${newFolderDest} for ${file.id} failed ${err}`
+                    );
+                    delete this._extractingTnefFile[file.id];
+                    reject(err);
+                    return;
+                  }
+                  if (fileInfo && (fileInfo.path || fileInfo.name)) {
+                    const copyPath = path.join(tmpPath, fileInfo.path || fileInfo.name);
+                    const destPath = this.pathForFile(newFile);
+                    fs.copyFile(copyPath, destPath, err => {
+                      if (err) {
+                        AppEnv.logError(
+                          `AttachmentStore:extractTnefFiles: error while copying extracted file ${fileInfo.name} from ${copyPath} to ${destPath}, ${err}`
+                        );
+                      } else {
+                        newFiles.push(newFile);
+                      }
+                      fs.unlink(path.join(tmpPath, fileInfo.path || fileInfo.name), err => {
+                        if (err) {
+                          AppEnv.logDebug(
+                            `AttachmentStore:extractTnefFiles: error while removing extracted copy ${err}`
+                          );
+                        }
+                      });
+                      processed++;
+                      if (processed === total) {
+                        onAllProcessed();
+                      }
+                    });
+                  } else {
+                    processed++;
+                    if (processed === total) {
+                      onAllProcessed();
+                    }
+                  }
+                });
+              });
+            })
+            .catch(error => {
+              delete this._extractingTnefFile[file.id];
+              reject(error);
+            });
+        });
+      });
+    });
   }
 
   async _generatePreview(file) {

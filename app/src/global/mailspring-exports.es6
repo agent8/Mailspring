@@ -147,6 +147,7 @@ lazyLoadAndRegisterTask('SiftChangeSharingOptTask', 'sift-change-sharing-opt-tas
 lazyLoadAndRegisterTask('IMAPSearchTask', 'imap-search-task');
 lazyLoadAndRegisterTask('NativeReportTask', 'native-report-task');
 lazyLoadAndRegisterTask('AppendToSentTask', 'append-to-sent-task');
+lazyLoadAndRegisterTask('ExpandMessageAttachmentTask', 'expand-message-attachment-task');
 // Stores
 // These need to be required immediately since some Stores are
 // listen-only and not explicitly required from anywhere. Stores
