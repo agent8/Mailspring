@@ -283,14 +283,6 @@
       padding: 0;
       display: flex;
       align-items: center;
-      &.font-face{
-        max-width: max-content;
-        justify-content: center;
-        .display-name{
-          padding-right: 4px;
-          align-content: center;
-        }
-      }
       select {
         cursor: pointer;
         border: none;
@@ -1150,7 +1142,7 @@ body.platform-win32 {
     line-height: 24px;
   }
 }
-.font-face-popover,
+
 .font-size-popover {
   width: 80px;
   height: 370px;
@@ -1196,17 +1188,6 @@ body.platform-win32 {
     }
     &:hover {
       background-color: @dropdown-default-hover-bg-color;
-    }
-  }
-}
-div.font-face-popover{
-  width: 140px;
-  height: 240px;
-  padding-right: 4px;
-  .option{
-    padding-right: unset;
-    &.selected {
-      font-size: 14px;
     }
   }
 }

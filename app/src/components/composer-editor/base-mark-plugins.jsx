@@ -319,15 +319,7 @@ export default [
                 (option.value || '').toLocaleLowerCase() === (provided || '').toLocaleLowerCase()
               );
             });
-            let defaultName = DEFAULT_FONT_FACE_OPTIONS.find(option => {
-              return (
-                (option.value || '').toLocaleLowerCase() === (defaultFont || '').toLocaleLowerCase()
-              );
-            });
-            if (!defaultName) {
-              defaultName = DEFAULT_FONT_FACE_OPTIONS[0];
-            }
-            return opt ? opt.name : defaultName.name;
+            return opt ? opt.value : defaultFont;
           },
         }),
         Divider,
