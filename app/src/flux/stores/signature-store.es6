@@ -146,7 +146,6 @@ class SignatureStore extends MailspringStore {
 
   _onSelectSignature = id => {
     this.selectedSignatureId = id;
-    AppEnv.config.syncSignatureToServer();
     this.trigger();
   };
 
