@@ -12,12 +12,17 @@ _ = Object.assign(_, require('./config-utils'));
 const { remote } = require('electron');
 const { Emitter } = require('event-kit');
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
+const { downloadFile, uploadFile } = require('./s3-utils');
+const { unCompressDir, compressDir } = require('./fs-utils');
 const {
   UpdateSettingCode,
   UpdateToServerSimpleSettingTypes,
   UpdateToServerComplexSettingTypes,
   EdisonPlatformType,
   EdisonPreferencesType,
+  INVALID_TEMPLATE_NAME_REGEX,
 } = require('./constant');
 
 if (process.type === 'renderer') {
@@ -737,12 +742,12 @@ class Config {
     });
     try {
       await this._syncPreferencesFromServer(configList);
-      if (commonConfigVersion) {
-        AppEnv.config.set('commonSettingsVersion', commonConfigVersion);
-      }
-      if (macConfigVersion) {
-        AppEnv.config.set('macSettingsVersion', macConfigVersion);
-      }
+      // if (commonConfigVersion) {
+      //   AppEnv.config.set('commonSettingsVersion', commonConfigVersion);
+      // }
+      // if (macConfigVersion) {
+      //   AppEnv.config.set('macSettingsVersion', macConfigVersion);
+      // }
     } catch (err) {
       this._logError('Sync setting from server fail', err);
     }
@@ -755,7 +760,34 @@ class Config {
 
   _syncPreferencesFromServer = async configList => {
     const fomartData = await this._handlePreferencesFromServer(configList);
-    this._bulkSet(fomartData);
+
+    let signatureConfig = null;
+    let templateConfig = null;
+    let signatureIsCommon = false;
+
+    const otherConfigData = fomartData.filter(c => {
+      if (c.key === 'signaturesInOtherClient') {
+        signatureConfig = c;
+        return false;
+      }
+      if (c.key === 'signaturesCommon') {
+        signatureIsCommon = c.value === 'true';
+        return false;
+      }
+      if (c.key === 'templatesInOtherClient') {
+        templateConfig = c;
+        return false;
+      }
+      return true;
+    });
+
+    this._bulkSet(otherConfigData);
+    if (signatureConfig) {
+      this._handleSignaturesFromServer(signatureConfig, signatureIsCommon);
+    }
+    if (templateConfig) {
+      this._handleTemplatesFromServer(templateConfig);
+    }
   };
 
   _handlePreferencesFromServer = async configList => {
@@ -959,6 +991,188 @@ class Config {
       }
     }
   };
+
+  _handleSignaturesFromServer = async (signatureConfig, signatureIsCommon) => {
+    const { tsClientUpdate, value } = signatureConfig;
+    try {
+      const defaultSignaturesConf = {};
+      let nameIndex = 1;
+      const newSignatureList = [];
+      for (const sig of value) {
+        const key = sig.value;
+        const downloadPath = path.join(AppEnv.getConfigDirPath(), 'tmp', `${key}.zip`);
+        const zipPath = await downloadFile(key, downloadPath);
+        const dirName = await unCompressDir(zipPath);
+        const jsonPath = path.join(dirName, `${key}.json`);
+        const json = require(jsonPath);
+        const { attachments, html, id, name } = json;
+        let signatureName = name;
+        if (!name) {
+          signatureName = `Untitled${nameIndex}`;
+          nameIndex++;
+        }
+        const defaultAccount = sig.subId;
+        const accounts = this.get('accounts');
+        if (defaultAccount !== 'common') {
+          const emailAddress = defaultAccount.split(':')[1];
+          const alias = defaultAccount.split(':')[2] || '';
+          const acc = accounts.find(a => a.emailAddress === emailAddress);
+          if (acc) {
+            const localName = `local-${acc.pid}-${acc.emailAddress}-${alias}`;
+            defaultSignaturesConf[localName] = id;
+          }
+        } else if (defaultAccount === 'common' && !signatureIsCommon) {
+          accounts.forEach(a => {
+            const localName = `local-${a.pid}-${a.emailAddress}-`;
+            defaultSignaturesConf[localName] = id;
+          });
+        }
+        let signatureAttachments = [];
+        if (attachments && attachments.length) {
+          signatureAttachments = attachments.map(file => {
+            const filePath = path.join(dirName, file.attId);
+            const preferencesPath = path.join(AppEnv.getConfigDirPath(), 'preference');
+            const destPath = path.join(preferencesPath, file.attId);
+            if (!fs.existsSync(preferencesPath)) {
+              fs.mkdirSync(preferencesPath);
+            }
+            fs.copyFileSync(filePath, destPath);
+            return destPath;
+          });
+        }
+        newSignatureList.push({
+          id: id,
+          title: signatureName,
+          html,
+          attachments: signatureAttachments,
+        });
+      }
+      // clear old template
+      const signaturesDir = path.join(AppEnv.getConfigDirPath(), 'signatures');
+      const oldSignatures = fs.readdirSync(signaturesDir);
+      oldSignatures.forEach(s => {
+        fs.unlinkSync(path.join(signaturesDir, s));
+      });
+      const signaturesConf = {};
+      newSignatureList.forEach(t => {
+        fs.writeFileSync(path.join(signaturesDir, `${t.id}.html`), t.html);
+        signaturesConf[t.id] = {
+          id: t.id,
+          title: t.title,
+        };
+      });
+
+      this.set('signatures', signaturesConf);
+      this.set('defaultSignatures', defaultSignaturesConf);
+      this.setConfigUpdateTime('signaturesInOtherClient', tsClientUpdate);
+    } catch (err) {
+      this._logError('Sync signature from server fail', err);
+    }
+  };
+
+  _handleTemplatesFromServer = async templateConfig => {
+    const { tsClientUpdate, value = [] } = templateConfig;
+    try {
+      const newTemplateList = [];
+      for (const template of value) {
+        const key = template.subId;
+        const downloadPath = path.join(AppEnv.getConfigDirPath(), 'tmp', `${key}.zip`);
+        const zipPath = await downloadFile(key, downloadPath);
+        const dirName = await unCompressDir(zipPath);
+        const jsonPath = path.join(dirName, `${key}.json`);
+        const json = require(jsonPath);
+        const { attachments, html, name } = json;
+        const templateName = name.replace(INVALID_TEMPLATE_NAME_REGEX, '') || 'Untitled';
+        let templateAttachments = [];
+        if (attachments && attachments.length) {
+          templateAttachments = attachments.map(file => {
+            const filePath = path.join(dirName, file.attId);
+            const preferencesPath = path.join(AppEnv.getConfigDirPath(), 'preference');
+            const destPath = path.join(preferencesPath, file.attId);
+            if (!fs.existsSync(preferencesPath)) {
+              fs.mkdirSync(preferencesPath);
+            }
+            fs.copyFileSync(filePath, destPath);
+            return destPath;
+          });
+        }
+        newTemplateList.push({
+          name: templateName,
+          html,
+          attachments: templateAttachments,
+        });
+      }
+      // clear old template
+      const templatesDir = path.join(AppEnv.getConfigDirPath(), 'templates');
+      const oldTemplates = fs.readdirSync(templatesDir);
+      oldTemplates.forEach(t => {
+        fs.unlinkSync(path.join(templatesDir, t));
+      });
+      const templatesConfig = {};
+      newTemplateList.forEach(t => {
+        fs.writeFileSync(path.join(templatesDir, `${t.name}.html`), t.html);
+        if (t.attachments && t.attachments.length) {
+          templatesConfig[`${t.name}.html`] = {
+            files: t.attachments,
+          };
+        }
+      });
+      this.set('templates', templatesConfig);
+      this.setConfigUpdateTime('templatesInOtherClient', tsClientUpdate);
+    } catch (err) {
+      this._logError('Sync template from server fail', err);
+    }
+  };
+
+  syncSignatureToServer = async () => {
+    const uuid = require('uuid');
+    const signaturesConf = this.get('signatures');
+    const tmpDir = path.join(AppEnv.getConfigDirPath(), 'tmp');
+    const signaturesDir = path.join(AppEnv.getConfigDirPath(), 'signatures');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir);
+      }
+      const oldMapNew = new Map();
+      for (const k in signaturesConf) {
+        const key = uuid().toLowerCase();
+        const pakgDir = path.join(tmpDir, key);
+        fs.mkdirSync(pakgDir);
+        const html = fs.readFileSync(path.join(signaturesDir, `${k}.html`), 'utf8');
+        const json = {
+          attachments: [],
+          lastUpdated: new Date().getTime(),
+          id: key,
+          html: html,
+        };
+        fs.writeFileSync(path.join(tmpDir, key, `${key}.json`), JSON.stringify(json), 'utf8');
+        const zipPath = await compressDir(pakgDir);
+        await uploadFile(key, zipPath);
+        oldMapNew.set(k, key);
+      }
+      const defaultSignaturesConf = this.get('defaultSignatures');
+      const signatureList = [];
+      const accounts = this.get('accounts');
+      Object.keys(defaultSignaturesConf).forEach(k => {
+        if (defaultSignaturesConf[k]) {
+          const emailAddress = k.split('-')[2];
+          const alias = k.split('-')[3] || '';
+          const account = accounts.find(a => a.emailAddress === emailAddress);
+          if (account) {
+            const host = account.settings.imap_host;
+            signatureList.push({
+              value: oldMapNew.get(defaultSignaturesConf[k]),
+              subId: `${host}:${emailAddress}${alias ? ':' + alias : ''}`,
+            });
+          }
+        }
+      });
+    } catch (err) {
+      this._logError('Sync signature to server fail', err);
+    }
+  };
+
+  syncTemplateToServer = async () => {};
 
   // Extended: Suppress calls to handler functions registered with {::onDidChange}
   // and {::observe} for the duration of `callback`. After `callback` executes,

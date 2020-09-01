@@ -165,3 +165,12 @@ export const inboxNotOtherCategories = (opts = { toString: false, radix: 10 }) =
   });
   return ret;
 };
+
+export const AwsBucketStag = 'edison-media-stag';
+export const AwsBucketProd = 'edison-media';
+export const AwsRegionType = 'us-east-2';
+export const AwsEndpointUrl = 'https://s3.us-east-2.amazonaws.com';
+export const AWSAccessKey = 'AKIAJPPBMFBNHSNZ5ELA';
+export const AWSSecretKey = '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';
+
+export const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;

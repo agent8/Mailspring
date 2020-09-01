@@ -786,4 +786,25 @@ export default {
       });
     },
   },
+  signaturesInOtherClient: {
+    type: 'array',
+    default: [],
+    // sync by separate func
+    syncToServer: false,
+    syncToServerCommonKey: 'signature',
+  },
+  signaturesCommon: {
+    type: 'boolean',
+    default: false,
+    // sync by separate func
+    syncToServer: false,
+    syncToServerCommonKey: 'signature_common',
+  },
+  templatesInOtherClient: {
+    type: 'array',
+    default: [],
+    // sync by separate func
+    syncToServer: false,
+    syncToServerCommonKey: 'template',
+  },
 };
