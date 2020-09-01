@@ -152,6 +152,10 @@ class OnboardingStore extends MailspringStore {
 
   _onFinishAndAddAccount = async account => {
     // const isFirstAccount = AccountStore.accounts().length === 0;
+    const { settings } = account;
+    if (settings && ['onmail', 'onmail-eng'].includes(settings.provider_key)) {
+      account.provider = 'onmail';
+    }
     const { provider, emailAddress } = account;
     const domain = emailAddress ? emailAddress.split('@')[1] : '';
     // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
