@@ -313,17 +313,21 @@ export default [
           type: 'face',
           default: DEFAULT_FONT_FACE,
           options: DEFAULT_FONT_FACE_OPTIONS,
-          convert: provided => {
-            let opt = null;
-            let score = 10000;
-            for (const aopt of DEFAULT_FONT_FACE_OPTIONS) {
-              const i = provided.toLowerCase().indexOf(aopt.value);
-              if (i >= 0 && i < score) {
-                score = i;
-                opt = aopt;
-              }
+          convert: (provided, defaultFont) => {
+            let opt = DEFAULT_FONT_FACE_OPTIONS.find(option => {
+              return (
+                (option.value || '').toLocaleLowerCase() === (provided || '').toLocaleLowerCase()
+              );
+            });
+            let defaultName = DEFAULT_FONT_FACE_OPTIONS.find(option => {
+              return (
+                (option.value || '').toLocaleLowerCase() === (defaultFont || '').toLocaleLowerCase()
+              );
+            });
+            if (!defaultName) {
+              defaultName = DEFAULT_FONT_FACE_OPTIONS[0];
             }
-            return opt ? opt.value : 'sans-serif';
+            return opt ? opt.name : defaultName.name;
           },
         }),
         Divider,

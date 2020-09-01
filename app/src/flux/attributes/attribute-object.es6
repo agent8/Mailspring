@@ -12,10 +12,16 @@ export default class AttributeObject extends Attribute {
   }
 
   toJSON(val) {
+    if (this.toJSONMapping) {
+      return this.toJSONMapping(val);
+    }
     return val && val.toJSON ? val.toJSON() : val;
   }
 
   fromJSON(val) {
+    if (this.fromJSONMapping) {
+      return this.fromJSONMapping(val);
+    }
     const Klass = this.itemClass;
     if (!val || (Klass && val instanceof Klass)) {
       return val;
