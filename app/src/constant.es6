@@ -19,6 +19,16 @@ export const WindowLevel = {
   Thread: 2,
   Main: 1,
 };
+export const AutoUpdateManagerState = {
+  IdleState: 'idle',
+  CheckingState: 'checking',
+  DownloadingState: 'downloading',
+  AvailableForDownload: 'available-for-download',
+  UpdateAvailableState: 'update-available',
+  NoUpdateAvailableState: 'no-update-available',
+  UnsupportedState: 'unsupported',
+  ErrorState: 'error',
+};
 
 export const bannedPathNames = ['Trash', 'Spam', 'Inbox', 'All Mail', 'Sent'];
 
