@@ -3,8 +3,11 @@ import UndoRedoToast from './undo-redo-toast';
 
 export function activate() {
   if (AppEnv.isMainWindow()) {
+    // ComponentRegistry.register(UndoRedoToast, {
+    //   location: WorkspaceStore.Sheet.Global.Footer,
+    // });
     ComponentRegistry.register(UndoRedoToast, {
-      location: WorkspaceStore.Sheet.Global.Footer,
+      role: 'RootSidebar:Notifications',
     });
   }
 }
