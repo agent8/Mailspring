@@ -105,6 +105,7 @@ export function AppearancePanelOptions(props) {
   ];
   return (
     <ModeSwitch
+      className="reading-pane-switch"
       modeSwitch={modeSwitchList}
       config={props.config}
       activeValue={activeValue}
