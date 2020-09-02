@@ -148,6 +148,20 @@ class DraftStore extends MailspringStore {
       deleted: false,
     }).where([Message.attributes.syncState.in([Message.messageSyncState.failed])]);
   }
+  findAll() {
+    return DatabaseStore.findAll(Message, {
+      draft: true,
+      hasCalendar: false,
+      deleted: false,
+      inAllMail: true,
+    });
+  }
+  findAllInDescendingOrder() {
+    return this.findAll().order(Message.attributes.date.descending());
+  }
+  findAllWithBodyInDescendingOrder() {
+    return this.findAllInDescendingOrder().linkDB(Message.attributes.body);
+  }
 
   findByMessageId({ messageId = '' } = {}) {
     return DatabaseStore.findBy(Message, {
@@ -155,17 +169,7 @@ class DraftStore extends MailspringStore {
       draft: true,
       hasCalendar: false,
       deleted: false,
-    }).where([
-      Message.attributes.syncState.in([
-        Message.messageSyncState.normal,
-        Message.messageSyncState.saving,
-        Message.messageSyncState.sending,
-        Message.messageSyncState.updatingNoUID,
-        Message.messageSyncState.updatingHasUID,
-        Message.messageSyncState.failing,
-        Message.messageSyncState.failed,
-      ]),
-    ]);
+    });
   }
 
   findFailedByMessageIdWithBody({ messageId = '' } = {}) {
@@ -174,14 +178,6 @@ class DraftStore extends MailspringStore {
 
   findByMessageIdWithBody({ messageId = '' } = {}) {
     return this.findByMessageId({ messageId }).linkDB(Message.attributes.body);
-  }
-
-  findAllWithBodyInDescendingOrder() {
-    return MessageStore.findAllWithBodyInDescendingOrder().where({
-      draft: true,
-      hasCalendar: false,
-      inAllMail: true,
-    });
   }
 
   findDraftsByAccountId = accountId => {
