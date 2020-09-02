@@ -204,7 +204,7 @@ export default class SheetContainer extends React.Component {
     const validClass = this.isValidUser() ? '' : 'not-valid';
 
     return [
-      <div className="dragable-bar" onDoubleClick={this.toggleMaximize}></div>,
+      <div className="draggable-bar" onDoubleClick={this.toggleMaximize}></div>,
       <Flexbox
         direction="column"
         className={`layout-mode-${this.state.mode} ${validClass}`}
