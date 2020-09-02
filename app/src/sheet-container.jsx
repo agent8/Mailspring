@@ -135,7 +135,6 @@ export default class SheetContainer extends React.Component {
           top: 0,
         }}
         className="sheet-toolbar"
-        onDoubleClick={this.toggleMaximize}
       >
         <Toolbar
           data={rootSheet}
@@ -204,7 +203,8 @@ export default class SheetContainer extends React.Component {
 
     const validClass = this.isValidUser() ? '' : 'not-valid';
 
-    return (
+    return [
+      <div className="dragable-bar" onDoubleClick={this.toggleMaximize}></div>,
       <Flexbox
         direction="column"
         className={`layout-mode-${this.state.mode} ${validClass}`}
@@ -257,7 +257,7 @@ export default class SheetContainer extends React.Component {
             </button>
           </div>
         )}
-      </Flexbox>
-    );
+      </Flexbox>,
+    ];
   }
 }
