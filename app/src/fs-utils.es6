@@ -15,6 +15,34 @@ export function dirExists(dirPath) {
   }
 }
 
+export function deleteFolder(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    return;
+  }
+  const files = fs.readdirSync(dirPath);
+  files.forEach(f => {
+    const filePath = path.join(dirPath, f);
+    if (fs.lstatSync(filePath).isDirectory()) {
+      deleteFolder(filePath);
+    } else {
+      fs.unlinkSync(filePath);
+    }
+  });
+  fs.rmdirSync(dirPath);
+}
+
+export function deleteFileOrFolder(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+  const stat = fs.lstatSync(filePath);
+  if (stat.isDirectory()) {
+    deleteFolder(filePath);
+  } else {
+    fs.unlinkSync(filePath);
+  }
+}
+
 export function atomicWriteFileSync(filepath, content) {
   const randomId = Utils.generateTempId();
   const backupPath = `${filepath}.${randomId}.bak`;
@@ -479,9 +507,6 @@ export async function unCompressDir(filePath) {
     zip
       .uncompress(filePath, destDirName)
       .then(() => {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
         resolve(dirName);
       })
       .catch(e => {

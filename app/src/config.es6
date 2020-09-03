@@ -12,17 +12,12 @@ _ = Object.assign(_, require('./config-utils'));
 const { remote } = require('electron');
 const { Emitter } = require('event-kit');
 const crypto = require('crypto');
-const path = require('path');
-const fs = require('fs');
-const { downloadFile, uploadFile } = require('./s3-utils');
-const { unCompressDir, compressDir } = require('./fs-utils');
 const {
   UpdateSettingCode,
   UpdateToServerSimpleSettingTypes,
   UpdateToServerComplexSettingTypes,
   EdisonPlatformType,
   EdisonPreferencesType,
-  INVALID_TEMPLATE_NAME_REGEX,
 } = require('./constant');
 
 if (process.type === 'renderer') {
@@ -587,61 +582,76 @@ class Config {
     return true;
   }
 
-  _bulkSet(setList) {
-    const filterSetList = [];
+  _bulkSet = async setList => {
+    const commonSetList = [];
     const changeTimeList = [];
     const options = {};
     let ipcNotif = false;
-    setList.forEach(item => {
-      //   this.set(configItem.key, configItem.value, true);
-      let value = item.value;
-      if (value === undefined) {
-        value = _.valueForKeyPath(this.defaultSettings, item.key);
-      } else {
-        try {
-          value = this.makeValueConformToSchema(item.key, value);
-        } catch (e) {
-          this._logError(`Failed to set keyPath: ${keyPath} = ${value}`, e);
-          return;
-        }
-      }
+    for (const item of setList) {
       const itemLastChangeTimeInLocal = this.getConfigUpdateTime(item.key);
       if (itemLastChangeTimeInLocal && itemLastChangeTimeInLocal > item.tsClientUpdate) {
-        this._syncSettingToServer(item.key, this.get(item.key));
+        // if local change is later then server,
+        // should sync local change to server.
+        // However, in order to avoid an endless loop,
+        // sync it to the server the next time it changes.
+        // So we just need to make sure that the local is new
         return;
       }
-      filterSetList.push({
-        keyPath: item.key,
-        value,
-      });
-      changeTimeList.push({
-        keyPath: item.key,
-        time: item.tsClientUpdate,
-      });
-      const configSchema = this.getSchema(item.key);
-      if (configSchema && configSchema.notifyNative) {
+
+      let value = item.value;
+      const { type, notifyNative, mergeServerToLocal } = this.getSchema(item.key);
+      // special config should use special func
+      if (UpdateToServerSimpleSettingTypes.includes(type)) {
+        if (mergeServerToLocal && typeof mergeServerToLocal === 'function') {
+          value = await mergeServerToLocal(item.value);
+        } else {
+          value = null;
+        }
+      } else if (UpdateToServerComplexSettingTypes.includes(type)) {
+        if (value === undefined) {
+          value = _.valueForKeyPath(this.defaultSettings, item.key);
+        } else {
+          try {
+            value = this.makeValueConformToSchema(item.key, value);
+          } catch (e) {
+            value = null;
+          }
+        }
+      }
+      if (value) {
+        commonSetList.push({
+          keyPath: item.key,
+          value,
+        });
+        changeTimeList.push({
+          keyPath: item.key,
+          time: item.tsClientUpdate,
+        });
+      }
+
+      if (notifyNative) {
         // should notify native this config is changed
         if (!ipcNotif) {
           ipcNotif = true;
         }
         options[item.key.replace(/\./g, '_')] = value;
       }
-    });
+    }
+
+    if (commonSetList.length) {
+      app.configPersistenceManager.bulkSetRawValue(commonSetList, webContentsId);
+    }
+    if (changeTimeList.length) {
+      app.configPersistenceManager.bulkSetChangeTimeValue(changeTimeList);
+    }
 
     if (ipcNotif) {
       const { ipcRenderer } = require('electron');
       ipcRenderer.send('client-config', options);
     }
 
-    if (filterSetList.length) {
-      app.configPersistenceManager.bulkSetRawValue(filterSetList, webContentsId);
-    }
-    if (changeTimeList.length) {
-      app.configPersistenceManager.bulkSetChangeTimeValue(changeTimeList);
-    }
-
     this.load();
-  }
+  };
 
   // Essential: Restore the setting at `keyPath` to its default value.
   //
@@ -742,12 +752,12 @@ class Config {
     });
     try {
       await this._syncPreferencesFromServer(configList);
-      // if (commonConfigVersion) {
-      //   AppEnv.config.set('commonSettingsVersion', commonConfigVersion);
-      // }
-      // if (macConfigVersion) {
-      //   AppEnv.config.set('macSettingsVersion', macConfigVersion);
-      // }
+      if (commonConfigVersion) {
+        AppEnv.config.set('commonSettingsVersion', commonConfigVersion);
+      }
+      if (macConfigVersion) {
+        AppEnv.config.set('macSettingsVersion', macConfigVersion);
+      }
     } catch (err) {
       this._logError('Sync setting from server fail', err);
     }
@@ -760,34 +770,7 @@ class Config {
 
   _syncPreferencesFromServer = async configList => {
     const fomartData = await this._handlePreferencesFromServer(configList);
-
-    let signatureConfig = null;
-    let templateConfig = null;
-    let signatureIsCommon = false;
-
-    const otherConfigData = fomartData.filter(c => {
-      if (c.key === 'signaturesInOtherClient') {
-        signatureConfig = c;
-        return false;
-      }
-      if (c.key === 'signaturesCommon') {
-        signatureIsCommon = c.value === 'true';
-        return false;
-      }
-      if (c.key === 'templatesInOtherClient') {
-        templateConfig = c;
-        return false;
-      }
-      return true;
-    });
-
-    this._bulkSet(otherConfigData);
-    if (signatureConfig) {
-      this._handleSignaturesFromServer(signatureConfig, signatureIsCommon);
-    }
-    if (templateConfig) {
-      this._handleTemplatesFromServer(templateConfig);
-    }
+    await this._bulkSet(fomartData);
   };
 
   _handlePreferencesFromServer = async configList => {
@@ -819,8 +802,7 @@ class Config {
         });
       }
     }
-    const transformData = this._transformServerPreferencesToLocal(changeList);
-    return transformData;
+    return changeList;
   };
 
   _getLongStrPreferencesValue = async conf => {
@@ -886,37 +868,22 @@ class Config {
     }
   };
 
-  _transformServerPreferencesToLocal(preferencesList) {
-    const transformList = preferencesList.map(data => {
-      if (data.type === EdisonPreferencesType.STRING) {
-        return data;
-      }
-      if (data.type === EdisonPreferencesType.LIST) {
-        let value = data.value;
-        const { transformServerToLocal, mergeValue } = this.getSchema(data.key);
-        if (transformServerToLocal && typeof transformServerToLocal === 'function') {
-          value = transformServerToLocal(data.value);
+  _syncSettingToServer = async (keyPath, value) => {
+    const syncAccountIds = this.get('edisonAccount') || [];
+    if (syncAccountIds.length) {
+      // should sync the change to server
+      const configSchema = this.getSchema(keyPath);
+      try {
+        if (UpdateToServerSimpleSettingTypes.includes(configSchema.type)) {
+          await this._syncSimpleSettingToServer(keyPath, value);
+        } else if (UpdateToServerComplexSettingTypes.includes(configSchema.type)) {
+          await this._syncComplexSettingToServer(keyPath, value);
         }
-        if (mergeValue && typeof mergeValue === 'function') {
-          value = mergeValue(this.get(data.key), value);
-        }
-        return {
-          ...data,
-          value,
-        };
+      } catch (error) {
+        this._logError('Sync setting to server fail', error);
       }
-      return data;
-    });
-    return transformList;
-  }
-
-  _syncSettingToServer = (keyPath, value) => {
-    const configSchema = this.getSchema(keyPath);
-    if (UpdateToServerSimpleSettingTypes.includes(configSchema.type)) {
-      this._syncSimpleSettingToServer(keyPath, value);
-    } else if (UpdateToServerComplexSettingTypes.includes(configSchema.type)) {
-      this._syncComplexSettingToServer(keyPath, value);
     }
+    this.setConfigUpdateTime(keyPath, new Date().getTime());
   };
 
   _syncSimpleSettingToServer = async (keyPath, value) => {
@@ -952,9 +919,14 @@ class Config {
       return;
     }
     const { PreferencesRest } = require('./rest');
-    const { transformLocalToServer, syncToServerCommonKey } = this.getSchema(keyPath);
-    if (transformLocalToServer && typeof transformLocalToServer === 'function') {
-      const transformValue = transformLocalToServer(value);
+    const { mergeLocalToServer, generateDiffData, syncToServerCommonKey } = this.getSchema(keyPath);
+    if (
+      mergeLocalToServer &&
+      typeof mergeLocalToServer === 'function' &&
+      generateDiffData &&
+      typeof generateDiffData === 'function'
+    ) {
+      const transformValue = await mergeLocalToServer(value);
       const platform = syncToServerCommonKey ? EdisonPlatformType.COMMON : EdisonPlatformType.MAC;
       const configKeyInServer = syncToServerCommonKey
         ? syncToServerCommonKey
@@ -991,208 +963,6 @@ class Config {
       }
     }
   };
-
-  _handleSignaturesFromServer = async (signatureConfig, signatureIsCommon) => {
-    const { tsClientUpdate, value } = signatureConfig;
-    try {
-      const defaultSignaturesConf = {};
-      let nameIndex = 1;
-      const newSignatureList = [];
-      for (const sig of value) {
-        const key = sig.value;
-        const downloadPath = path.join(AppEnv.getConfigDirPath(), 'tmp', `${key}.zip`);
-        const zipPath = await downloadFile(key, downloadPath);
-        const dirName = await unCompressDir(zipPath);
-        const jsonPath = path.join(dirName, `${key}.json`);
-        const json = require(jsonPath);
-        const { attachments, html, id, name } = json;
-        let signatureName = name;
-        if (!name) {
-          signatureName = `Untitled${nameIndex}`;
-          nameIndex++;
-        }
-        const defaultAccount = sig.subId;
-        const accounts = this.get('accounts');
-        if (defaultAccount !== 'common') {
-          const emailAddress = defaultAccount.split(':')[1];
-          const alias = defaultAccount.split(':')[2] || '';
-          const acc = accounts.find(a => a.emailAddress === emailAddress);
-          if (acc) {
-            const localName = `local-${acc.pid}-${acc.emailAddress}-${alias}`;
-            defaultSignaturesConf[localName] = id;
-          }
-        } else if (defaultAccount === 'common' && !signatureIsCommon) {
-          accounts.forEach(a => {
-            const localName = `local-${a.pid}-${a.emailAddress}-`;
-            defaultSignaturesConf[localName] = id;
-          });
-        }
-        let signatureAttachments = [];
-        if (attachments && attachments.length) {
-          signatureAttachments = attachments.map(file => {
-            const filePath = path.join(dirName, file.attId);
-            const preferencesPath = path.join(AppEnv.getConfigDirPath(), 'preference');
-            const destPath = path.join(preferencesPath, file.attId);
-            if (!fs.existsSync(preferencesPath)) {
-              fs.mkdirSync(preferencesPath);
-            }
-            fs.copyFileSync(filePath, destPath);
-            return destPath;
-          });
-        }
-        newSignatureList.push({
-          id: id,
-          title: signatureName,
-          html,
-          attachments: signatureAttachments,
-        });
-      }
-      // clear old template
-      const signaturesDir = path.join(AppEnv.getConfigDirPath(), 'signatures');
-      const oldSignatures = fs.readdirSync(signaturesDir);
-      oldSignatures.forEach(s => {
-        fs.unlinkSync(path.join(signaturesDir, s));
-      });
-      const signaturesConf = {};
-      newSignatureList.forEach(t => {
-        fs.writeFileSync(path.join(signaturesDir, `${t.id}.html`), t.html);
-        signaturesConf[t.id] = {
-          id: t.id,
-          title: t.title,
-        };
-      });
-
-      this.set('signatures', signaturesConf);
-      this.set('defaultSignatures', defaultSignaturesConf);
-      this.setConfigUpdateTime('signaturesInOtherClient', tsClientUpdate);
-    } catch (err) {
-      this._logError('Sync signature from server fail', err);
-    }
-  };
-
-  _handleTemplatesFromServer = async templateConfig => {
-    const { tsClientUpdate, value = [] } = templateConfig;
-    try {
-      const newTemplateList = [];
-      for (const template of value) {
-        const key = template.subId;
-        const downloadPath = path.join(AppEnv.getConfigDirPath(), 'tmp', `${key}.zip`);
-        const zipPath = await downloadFile(key, downloadPath);
-        const dirName = await unCompressDir(zipPath);
-        const jsonPath = path.join(dirName, `${key}.json`);
-        const json = require(jsonPath);
-        const { attachments, html, name } = json;
-        const templateName = name.replace(INVALID_TEMPLATE_NAME_REGEX, '') || 'Untitled';
-        let templateAttachments = [];
-        if (attachments && attachments.length) {
-          templateAttachments = attachments.map(file => {
-            const filePath = path.join(dirName, file.attId);
-            const preferencesPath = path.join(AppEnv.getConfigDirPath(), 'preference');
-            const destPath = path.join(preferencesPath, file.attId);
-            if (!fs.existsSync(preferencesPath)) {
-              fs.mkdirSync(preferencesPath);
-            }
-            fs.copyFileSync(filePath, destPath);
-            return destPath;
-          });
-        }
-        newTemplateList.push({
-          name: templateName,
-          html,
-          attachments: templateAttachments,
-        });
-      }
-      // clear old template
-      const templatesDir = path.join(AppEnv.getConfigDirPath(), 'templates');
-      const oldTemplates = fs.readdirSync(templatesDir);
-      oldTemplates.forEach(t => {
-        fs.unlinkSync(path.join(templatesDir, t));
-      });
-      const templatesConfig = {};
-      newTemplateList.forEach(t => {
-        fs.writeFileSync(path.join(templatesDir, `${t.name}.html`), t.html);
-        if (t.attachments && t.attachments.length) {
-          templatesConfig[`${t.name}.html`] = {
-            files: t.attachments,
-          };
-        }
-      });
-      this.set('templates', templatesConfig);
-      this.setConfigUpdateTime('templatesInOtherClient', tsClientUpdate);
-    } catch (err) {
-      this._logError('Sync template from server fail', err);
-    }
-  };
-
-  syncSignatureToServer = async () => {
-    const uuid = require('uuid');
-    const signaturesConf = this.get('signatures');
-    const tmpDir = path.join(AppEnv.getConfigDirPath(), 'tmp');
-    const signaturesDir = path.join(AppEnv.getConfigDirPath(), 'signatures');
-    try {
-      if (!fs.existsSync(tmpDir)) {
-        fs.mkdirSync(tmpDir);
-      }
-      const oldMapNew = new Map();
-      for (const k in signaturesConf) {
-        const key = uuid().toLowerCase();
-        const pakgDir = path.join(tmpDir, key);
-        fs.mkdirSync(pakgDir);
-        const html = fs.readFileSync(path.join(signaturesDir, `${k}.html`), 'utf8');
-        const json = {
-          attachments: [],
-          lastUpdated: new Date().getTime(),
-          id: key,
-          html: html,
-        };
-        fs.writeFileSync(path.join(tmpDir, key, `${key}.json`), JSON.stringify(json), 'utf8');
-        const zipPath = await compressDir(pakgDir);
-        await uploadFile(key, zipPath);
-        oldMapNew.set(k, key);
-      }
-      const defaultSignaturesConf = this.get('defaultSignatures');
-      const signatureList = [];
-      const usedSigList = [];
-      const accounts = this.get('accounts');
-      Object.keys(defaultSignaturesConf).forEach(k => {
-        if (defaultSignaturesConf[k]) {
-          const emailAddress = k.split('-')[2];
-          const alias = k.split('-')[3] || '';
-          const account = accounts.find(a => a.emailAddress === emailAddress);
-          if (account) {
-            const host = account.settings.imap_host;
-            signatureList.push({
-              value: oldMapNew.get(defaultSignaturesConf[k]),
-              subId: `${host}:${emailAddress}${alias ? ':' + alias : ''}`,
-            });
-            usedSigList.push(oldMapNew.get(defaultSignaturesConf[k]));
-          }
-        }
-      });
-      let nameIndex = 1;
-      for (const [key, value] of oldMapNew) {
-        if (!usedSigList.includes(value)) {
-          signatureList.push({
-            value: value,
-            subId: `without-selecting-${nameIndex}`,
-            tsClientUpdate: new Date().getTime(),
-          });
-          nameIndex++;
-        }
-      }
-      const { PreferencesRest } = require('./rest');
-      const oldValue = await PreferencesRest.getListTypePreference('signaturesInOtherClient');
-      if (oldValue.successful) {
-        const oldList = oldValue.data.list || [];
-        const diffData = generateDiffData(oldList, signatureList);
-        await PreferencesRest.updateListPreferences('signaturesInOtherClient', diffData);
-      }
-    } catch (err) {
-      this._logError('Sync signature to server fail', err);
-    }
-  };
-
-  syncTemplateToServer = async () => {};
 
   // Extended: Suppress calls to handler functions registered with {::onDidChange}
   // and {::observe} for the duration of `callback`. After `callback` executes,
@@ -1436,16 +1206,11 @@ class Config {
   }
 
   setRawValue(keyPath, value) {
-    const configSchema = this.getSchema(keyPath);
-    const syncAccountIds = this.get('edisonAccount') || [];
-    if (process.type === 'renderer' && configSchema && configSchema.syncToServer) {
-      this.setConfigUpdateTime(keyPath, new Date().getTime());
-      if (syncAccountIds.length) {
-        // should sync the change to server
-        this._syncSettingToServer(keyPath, value);
-      }
-    }
     app.configPersistenceManager.setRawValue(keyPath, value, webContentsId);
+    const configSchema = this.getSchema(keyPath);
+    if (process.type === 'renderer' && configSchema && configSchema.syncToServer) {
+      this._syncSettingToServer(keyPath, value);
+    }
     if (configSchema && configSchema.notifyNative) {
       // should notify native this config is changed
       const { ipcRenderer } = require('electron');
@@ -1693,33 +1458,5 @@ var withoutEmptyObjects = function(object) {
   }
   return resultObject;
 };
-
-function generateDiffData(oldList, newList) {
-  const newIds = [];
-  const removes = [];
-  const updates = [];
-  newList.forEach(n => {
-    newIds.push(n.subId);
-    const old = oldList.find(oldItem => n.subId === oldItem.subId);
-    if (old && old.value === n.value) {
-      return;
-    }
-    updates.push({
-      subId: n.subId,
-      value: n.value,
-      tsClientUpdate: new Date().getTime(),
-    });
-  });
-  oldList.forEach(o => {
-    if (!newIds.includes(o.subId)) {
-      removes.push({
-        subId: o.subId,
-        value: o.value,
-        tsClientUpdate: new Date().getTime(),
-      });
-    }
-  });
-  return { update: updates, remove: removes };
-}
 
 module.exports = Config;

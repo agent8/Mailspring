@@ -89,7 +89,6 @@ class TemplateStore extends MailspringStore {
 
     this._triggerDebounced = _.debounce(() => {
       this.trigger();
-      AppEnv.config.syncTemplateToServer();
     }, 20);
   }
 

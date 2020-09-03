@@ -1,6 +1,15 @@
 import { RetinaImg } from 'mailspring-component-kit';
 import React from 'react';
 import moment from 'moment';
+import {
+  mergeLocalSignaturesToServer,
+  mergeServerSignaturesToLocal,
+  mergelocalTemplatesToServer,
+  mergeServerTemplatesToLocal,
+  mergeLocalAccountsToServer,
+  mergeServerAccountsToLocal,
+  diffListData,
+} from './sync-preferences';
 
 moment.locale(navigator.language);
 // get the default date format like 'MM/DD/YYYY'、'DD/MM/YYYY'
@@ -715,25 +724,8 @@ export default {
         default: [],
         title: '',
         syncToServerCommonKey: 'suggestcontact',
-        transformServerToLocal: function(serverPreferenceList) {
-          if (!serverPreferenceList || !serverPreferenceList.length) {
-            return [];
-          }
-          const valueTransform = serverPreferenceList.map(val => ({
-            emailAdress: val.subId,
-            value: Number(val.value),
-          }));
-          return valueTransform;
-        },
-        transformLocalToServer: function(contacts) {
-          return contacts.map(c => {
-            return {
-              subId: c.emailAdress,
-              value: c.value,
-              tsClientUpdate: new Date().getTime(),
-            };
-          });
-        },
+        mergeServerToLocal: null,
+        mergeLocalToServer: null,
       },
     },
   },
@@ -753,58 +745,30 @@ export default {
     type: 'array',
     default: [],
     syncToServer: true,
-    transformServerToLocal: function(serverPreferenceList = []) {
-      return serverPreferenceList.map(subConf => JSON.parse(subConf.value));
-    },
-    transformLocalToServer: function(accounts) {
-      return accounts.map(a => {
-        function copyAndFilterSetting(account = {}) {
-          const copy = {
-            ...account,
-          };
-          delete copy.settings;
-          return copy;
-        }
-        return {
-          subId: a.pid,
-          value: JSON.stringify(copyAndFilterSetting(a)),
-          tsClientUpdate: new Date().getTime(),
-        };
-      });
-    },
-    mergeValue: function(oldList, newList) {
-      return oldList.map(account => {
-        const aInNewList = newList.find(a => a.pid === account.pid);
-        if (aInNewList) {
-          return {
-            ...aInNewList,
-            settings: account.settings,
-          };
-        } else {
-          return account;
-        }
-      });
-    },
+    mergeServerToLocal: mergeServerAccountsToLocal,
+    mergeLocalToServer: mergeLocalAccountsToServer,
+    generateDiffData: diffListData,
   },
-  signaturesInOtherClient: {
+  signatures: {
     type: 'array',
     default: [],
-    // sync by separate func
-    syncToServer: false,
+    syncToServer: true,
     syncToServerCommonKey: 'signature',
+    mergeLocalToServer: mergeLocalSignaturesToServer,
+    mergeServerToLocal: mergeServerSignaturesToLocal,
+  },
+  templates: {
+    type: 'array',
+    default: [],
+    syncToServer: true,
+    syncToServerCommonKey: 'template',
+    mergeLocalToServer: mergelocalTemplatesToServer,
+    mergeServerToLocal: mergeServerTemplatesToLocal,
   },
   signaturesCommon: {
     type: 'boolean',
     default: false,
-    // sync by separate func
     syncToServer: false,
     syncToServerCommonKey: 'signature_common',
-  },
-  templatesInOtherClient: {
-    type: 'array',
-    default: [],
-    // sync by separate func
-    syncToServer: false,
-    syncToServerCommonKey: 'template',
   },
 };
