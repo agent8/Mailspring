@@ -44,10 +44,6 @@ export const downloadFile = (key, downloadFilePath) => {
         reject(err);
       } else {
         const fileBuffer = data.Body;
-        const dirName = path.dirname(downloadFilePath);
-        if (!fs.existsSync(dirName)) {
-          fs.mkdirSync(dirName);
-        }
         fs.writeFileSync(downloadFilePath, fileBuffer);
         resolve(downloadFilePath);
       }

@@ -41,7 +41,17 @@ export default class Preferences {
       );
       return new RESTResult(data.code === 0, data.message, configList);
     } catch (error) {
-      return new RESTResult(false, error.message);
+      const state = error.response.status;
+      switch (state) {
+        case 304:
+          // no change in server with this version
+          return new RESTResult(false, 'setting is nochange');
+        case 404:
+          // the setting in server is empty
+          return new RESTResult(true, 'setting is empty', []);
+        default:
+          return new RESTResult(false, error.message);
+      }
     }
   }
 
@@ -78,7 +88,20 @@ export default class Preferences {
       });
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
-      return new RESTResult(false, error.message);
+      const state = error.response.status;
+      switch (state) {
+        case 304:
+          // no change in server with this version
+          return new RESTResult(false, 'setting is nochange');
+        case 404:
+          // the setting in server is empty
+          return new RESTResult(true, 'setting is empty', {
+            ...postData,
+            list: [],
+          });
+        default:
+          return new RESTResult(false, error.message);
+      }
     }
   }
 
