@@ -329,36 +329,6 @@ class DraftFactory {
     DraftFactory.updateFiles(message, true, true);
     return message;
   }
-  // async createOutboxDraftForEdit(draft){
-  //   const uniqueId = uuid();
-  //   const account = AccountStore.accountForId(draft.accountId);
-  //   if (!account) {
-  //     throw new Error(
-  //       'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.',
-  //     );
-  //   }
-  //   const defaults = Object.assign({}, draft, {
-  //     body: draft.body,
-  //     version: 0,
-  //     unread: false,
-  //     starred: false,
-  //     headerMessageId: `${uniqueId}@edison.tech`,
-  //     id: uniqueId,
-  //     date: new Date(),
-  //     pristine: false,
-  //     hasNewID: false,
-  //     accountId: account.id
-  //   });
-  //   await mergeDefaultBccAndCCs(defaults, account);
-  //   // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
-  //   // if (account.autoaddress.type === 'cc') {
-  //   //   defaults.cc = (defaults.cc || []).concat(autoContacts);
-  //   // }
-  //   // if (account.autoaddress.type === 'bcc') {
-  //   //   defaults.bcc = (defaults.bcc || []).concat(autoContacts);
-  //   // }
-  //   return new Message(defaults);
-  // }
 
   async copyDraftToAccount(draft, from) {
     const uniqueId = uuid();
