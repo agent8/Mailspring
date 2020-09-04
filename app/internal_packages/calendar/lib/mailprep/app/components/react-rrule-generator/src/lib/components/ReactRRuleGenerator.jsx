@@ -43,19 +43,42 @@ class ReactRRuleGenerator extends PureComponent {
     }
   }
 
-  handleChange = ({ target }) => {
+  handleChange = (event) => {
     // TODO: Change start date accordingly
-    if (target.name === 'repeat.frequency' && target.value === 'Never') {
+    if (event.target.name === 'repeat.frequency' && event.target.value === 'Never') {
       this.setState({
         isRepeating: false
       })
       const newData = cloneDeep(this.state.data);
-      set(newData, target.name, target.value);
+      set(newData, event.target.name, event.target.value);
       const rrule = computeRRuleToString(newData);
       this.props.onChange('');
     } else {
       const newData = cloneDeep(this.state.data);
-      set(newData, target.name, target.value);
+      set(newData, event.target.name, event.target.value);
+      const rrule = computeRRuleToString(newData);
+      this.setState({
+        data: newData,
+        isRepeating: true
+      });
+      this.props.onChange(rrule);
+    }
+
+  };
+
+  handleChangeSelect = name => (target) => {
+    // TODO: Change start date accordingly
+    if (name === 'repeat.frequency' && target.value === 'Never') {
+      this.setState({
+        isRepeating: false
+      })
+      const newData = cloneDeep(this.state.data);
+      set(newData, name, target.value);
+      const rrule = computeRRuleToString(newData);
+      this.props.onChange('');
+    } else {
+      const newData = cloneDeep(this.state.data);
+      set(newData, name, target.value);
       const rrule = computeRRuleToString(newData);
       this.setState({
         data: newData,
@@ -97,7 +120,7 @@ class ReactRRuleGenerator extends PureComponent {
             <Repeat
               id={`${id}-repeat`}
               repeat={repeat}
-              handleChange={this.handleChange}
+              handleChange={this.handleChangeSelect}
               translations={this.props.translations}
               isRepeating={this.state.isRepeating}
             />

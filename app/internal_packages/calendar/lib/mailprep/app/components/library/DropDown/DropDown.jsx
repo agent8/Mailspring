@@ -25,7 +25,6 @@ export default class DropDown extends React.Component {
           name={props.name}
           value={props.value}
           onChange={props.onChange}
-          defaultValue=""
         >
           {placeholder}
           {props.children}

@@ -121,17 +121,18 @@ export const buildICALStringDeleteRecurEvent = (
 };
 
 export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, updatedObject) => {
-  // console.log(recurrencePattern);
-  // console.log(eventObject);
-  // console.log(updatedObject);
   // debugger;
   // Build the Dav Calendar Object from the iCalString.
   const calendarData = ICAL.parse(eventObject.iCALString);
   const vcalendar = new ICAL.Component(calendarData);
 
   // Remove Timezone data as there might be duplicates.
-  const timezoneMetadata = vcalendar.getFirstSubcomponent('vtimezone');
-  const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
+  // const timezoneMetadata = vcalendar.getFirstSubcomponent('vtimezone');
+  // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
+  const tzid = eventObject.dataValues.start.timezone;
+  const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
+  const jcalTimezoneData = ICAL.parse(icalTimezoneData);
+  const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
   vcalendar.removeSubcomponent('vtimezone');
 
   // Create new event structure, and parse it into a component.
@@ -142,25 +143,15 @@ export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, 
   // debugger;
 
   // Updating Single Recurring event, so update the recurrence-id based off the start time.
-  const datetime = moment.tz(updatedObject.start.dateTime * 1000, tzid);
-  const datetimeStart = ICAL.Time.fromJSDate(new Date(datetime.toDate()), false);
-  const datetimeEnd = moment.tz(updatedObject.end.dateTime * 1000, tzid);
-  const endDateTime = ICAL.Time.fromJSDate(new Date(datetimeEnd.toDate()), false);
-  const duration = endDateTime.subtractDate(datetimeStart);
-  const startDateTime = new ICAL.Time().fromData(
-    {
-      year: datetime.year(),
-      month: datetime.month() + 1,
-      day: datetime.date(),
-      hour: datetime.hour(),
-      minute: datetime.minute(),
-      second: datetime.second()
-    },
-    new ICAL.Timezone({ tzid })
-  );
+  const startDateTime = ICAL.Time.fromJSDate(new Date(updatedObject.start.toDate()), false);
+  const endDateTime = ICAL.Time.fromJSDate(new Date(updatedObject.end.toDate()), false);
+  const duration = endDateTime.subtractDate(startDateTime);
 
   if (updatedObject.allDay) {
     startDateTime.isDate = true;
+  }
+  else {
+    startDateTime.isDate = false;
   }
 
   vevent.updatePropertyWithValue('recurrence-id', startDateTime);
@@ -190,9 +181,6 @@ export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, 
   // Update the rule based off the recurrence pattern.
   const rrule = new ICAL.Recur(buildRruleObject(recurrencePattern));
   recurrencePattern.iCALString = rrule.toString();
-  vevent.updatePropertyWithValue('rrule', rrule);
-  // console.log(rrule);
-  // debugger;
 
   // The other fields.
   vevent.updatePropertyWithValue('status', 'CONFIRMED');
@@ -530,16 +518,16 @@ export const buildICALStringUpdateFutureRecurMasterEvent = (
   vevent.updatePropertyWithValue('status', 'CONFIRMED');
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
-  vevent.updatePropertyWithValue('location', recurringMaster.getFirstPropertyValue('location'))
-  const organizerProperty = vevent.updatePropertyWithValue('organizer', recurringMaster.getFirstPropertyValue('organizer'))
-  organizerProperty.setParameter('email', recurringMaster.getFirstPropertyValue('organizer'))
+  vevent.updatePropertyWithValue('location', recurringMaster.getFirstPropertyValue('location'));
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', eventObject.organizer);
+  organizerProperty.setParameter('email', eventObject.organizer);
 
   recurringMaster.getAllProperties('attendee').forEach(attendee => {
     const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${attendee.getParameter('email')}`);
 
     attendeeProperty.setParameter('email', attendee.getParameter('email'))
     attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
-    attendeeProperty.setParameter('partstat', 'NEEDS-ACTION')
+    attendeeProperty.setParameter('partstat', attendee.getParameter('partstat'))
     if (attendee.getParameter('email') === eventObject.organizer) {
       attendeeProperty.setParameter('role', 'CHAIR')
     }
@@ -670,6 +658,7 @@ export const buildICALStringUpdateFutureRecurCreateEvent = (
   // Currently, only updating the title. (TO-DO)
   // Update all the events based of the new event property.
   vevent.updatePropertyWithValue('summary', updatedObject.title);
+  const organizerProperty = vevent.updatePropertyWithValue('organizer', `mailto:${updatedObject.organizer}`);
   vevent.updatePropertyWithValue('description', updatedObject.description);
 
   // Update the rule based off the recurrence pattern.
@@ -682,8 +671,6 @@ export const buildICALStringUpdateFutureRecurCreateEvent = (
   vevent.updatePropertyWithValue('transp', 'OPAQUE');
   vevent.updatePropertyWithValue('class', 'PUBLIC');
   vevent.updatePropertyWithValue('location', updatedObject.location)
-  const organizerProperty = vevent.updatePropertyWithValue('organizer', updatedObject.organizer);
-  organizerProperty.setParameter('email', updatedObject.organizer)
 
   Object.keys(updatedObject.attendee).forEach(key => {
     const attendee = updatedObject.attendee[key]
@@ -907,10 +894,8 @@ export const editICALStringRecurringToSingle = (updatedData, masterEventData) =>
   const vevent = new ICAL.Component(jcalData);
 
   // Start/End time of reduced event is the same as master event (ie collapsing all events back to master).
-  const datetimeStart = moment.tz(masterEventData.start.dateTime * 1000, tzid);
-  const startDateTime = ICAL.Time.fromJSDate(new Date(datetimeStart.toDate()), false);
-  const datetimeEnd = moment.tz(masterEventData.end.dateTime * 1000, tzid);
-  const endDateTime = ICAL.Time.fromJSDate(new Date(datetimeEnd.toDate()), false);
+  const startDateTime = ICAL.Time.fromJSDate(new Date(updatedData.start.toDate()), false);
+  const endDateTime = ICAL.Time.fromJSDate(new Date(updatedData.end.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
   if (updatedData.allDay) {

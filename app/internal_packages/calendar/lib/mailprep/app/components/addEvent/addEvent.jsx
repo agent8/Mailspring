@@ -6,6 +6,7 @@ import moment from 'moment';
 import ICAL from 'ical.js';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
 import Modal from 'react-modal';
+import Select from 'react-select'
 
 import RRuleGenerator from '../react-rrule-generator/src/lib';
 import BigButton from '../library/BigButton';
@@ -39,6 +40,32 @@ const customStyles = {
     transform: 'translate(-50%, -50%)'
   }
 };
+const selectCustomStyles = {
+  control: (provided) => ({
+    ...provided,
+    backgroundColor: '#fff',
+    border: '2px solid darkgrey',
+    borderRadius: '15px',
+    padding: '10px 15px',
+    width: '100%',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: '#f9fafa'
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    padding: '1px 12px',
+    fontSize: '14px',
+    color: 'grey',
+    fontWeight: 'bold',
+    ...(state.isSelected && { color: 'white' }),
+  }),
+  groupHeading: (provided) => ({
+    ...provided,
+    color: 'black'
+  })
+}
 
 export default class AddEvent extends Component {
   constructor(props) {
@@ -255,8 +282,8 @@ export default class AddEvent extends Component {
     const { props } = this;
     const { state } = this;
 
-    const startDateParsed = moment(props.match.params.start);
-    const endDateParsed = moment(props.match.params.end);
+    const startDateParsed = moment(props.match.params.start).startOf('day');
+    const endDateParsed = moment(props.match.params.end)
     // if currently is not all day means its going to switch to all day so format has to
     // in date format and vice versa.
     const startDateParsedInUTC = this.processStringForUTC(
@@ -279,20 +306,20 @@ export default class AddEvent extends Component {
     props.history.push('/');
   };
 
-  handleCalendarSelect = (event) => {
-    event.persist();
+  handleCalendarSelect = name => (target) => {
     this.setState((state, props) => {
 
       const selectedProvider = props.calendarsList.filter((account) =>
-        account.calendars.filter((cal) => cal.uuid === event.target.value)
+        account.calendars.filter((cal) => cal.uuid === target.value)
       );
       const selectedCalendar = selectedProvider[0].calendars.find(
-        (cal) => cal.uuid === event.target.value
+        (cal) => cal.uuid === target.value
       );
       return {
-        [event.target.name]: selectedCalendar,
+        [name]: selectedCalendar,
         selectedCalendarName: selectedCalendar.displayName,
-        selectedProvider: selectedProvider[0] ? selectedProvider[0].provider : ''
+        selectedProvider: selectedProvider[0] ? selectedProvider[0].provider : '',
+        colorId: selectedCalendar.color
       };
     });
   };
@@ -351,6 +378,7 @@ export default class AddEvent extends Component {
           isRecurring: state.isRepeating,
           rrule: state.rrule.slice(6),
           allDay: state.allDay,
+          colorId: state.colorId,
           location: state.location,
           attendee: Object.assign({}, attendee.map(att => {
             return {
@@ -470,12 +498,21 @@ export default class AddEvent extends Component {
   renderAddDetails = () => {
     const { props, state } = this;
 
+    const selectOptions = [];
+    props.calendarsList.forEach(account => {
+      const options = [];
+      account.calendars.forEach(calendar => {
+        options.push({ value: calendar.uuid, label: calendar.displayName })
+      })
+      selectOptions.push({ label: account.email, options: options })
+    });
+
     return (<div className="add-form-details">
       <div className="add-form-start-time add-form-grid-item">
         {/* Start Time and Date */}
         <Input
           label="Starts"
-          type="datetime-local"
+          type={state.allDay ? 'date' : "datetime-local"}
           value={state.startParsed}
           name="startParsed"
           onChange={this.handleChange}
@@ -485,23 +522,14 @@ export default class AddEvent extends Component {
         {/* End Time and Date */}
         <Input
           label="Ends"
-          type="datetime-local"
+          type={state.allDay ? 'date' : "datetime-local"}
           value={state.endParsed}
           name="endParsed"
           onChange={this.handleChange}
         />
       </div>
       <div className="add-form-repeat add-form-grid-item">
-        {/* <div className="repeating-checkbox-container">
-        <RoundCheckbox
-          id="repeat-checkmark"
-          checked={state.isRepeating}
-          onChange={this.toggleRecurr}
-          label="Repeating"
-        />
-      </div> */}
         <RRuleGenerator
-          // onChange={(rrule) => console.log(`RRule changed, now it's ${rrule}`)}
           key="rrulegenerator"
           onChange={this.handleRruleChange}
           name="rrule"
@@ -524,11 +552,6 @@ export default class AddEvent extends Component {
           />
         </div>
       </div>
-      {/* <div className="add-form-recurrence-generator add-form-grid-item">
-      <div className="app" data-tid="container">
-        {repeatingUI}
-      </div>
-    </div> */}
       <div className="add-form-guests add-form-grid-item">
         <Input
           label="Guests"
@@ -567,29 +590,37 @@ export default class AddEvent extends Component {
       </div>
       <div className="add-form-calendar add-form-grid-item ">
         {/* Select Calendar */}
-        <DropDown
-          value={state.selectedCalendar.uuid}
-          type="select"
-          onChange={this.handleCalendarSelect}
+
+        <Select
+          options={selectOptions}
           name="selectedCalendar"
+          styles={selectCustomStyles}
+          onChange={this.handleCalendarSelect("selectedCalendar")}
           placeholder="Select calendar"
-          hiddenPlaceholder
-        >
-          {props.calendarsList.map((account) => (
-            <DropDownGroup
-              key={account.uuid}
-              label={`${account.email} (${
-                account.caldavType ? account.caldavType : account.type
-                })`}
-            >
-              {account.calendars.map((calendar) => (
-                <DropDownItem key={calendar.ctag} value={calendar.uuid}>
-                  {calendar.displayName}
-                </DropDownItem>
-              ))}
-            </DropDownGroup>
-          ))}
-        </DropDown>
+          isSearchable={false} />
+        {/* <DropDown
+        value={state.selectedCalendar.uuid}
+        type="select"
+        onChange={this.handleCalendarSelect}
+        name="selectedCalendar"
+        placeholder="Select calendar"
+        hiddenPlaceholder
+      >
+        {props.calendarsList.map((account) => (
+          <DropDownGroup
+            key={account.uuid}
+            label={`${account.email} (${
+              account.caldavType ? account.caldavType : account.type
+            })`}
+          >
+            {account.calendars.map((calendar) => (
+              <DropDownItem key={calendar.ctag} value={calendar.uuid}>
+                {calendar.displayName}
+              </DropDownItem>
+            ))}
+          </DropDownGroup>
+        ))}
+      </DropDown> */}
       </div>
       <div className="add-form-description add-form-grid-item">
         {/* Text Area */}

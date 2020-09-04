@@ -535,8 +535,8 @@ const editSingleEvent = async (payload) => {
   await dbEventActions.updateEventById(payload.id, {
     summary: payload.title,
     description: payload.description,
-    // start: payload.start,
-    // end: payload.end,
+    start: { dateTime: payload.start.unix(), timezone: payload.start.tz() },
+    end: { dateTime: payload.end.unix(), timezone: payload.end.tz() },
     allDay: payload.allDay,
     location: payload.location,
     attendee: JSON.stringify(payload.attendee)

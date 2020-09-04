@@ -338,7 +338,7 @@ button.rbc-input::-moz-focus-inner {
   box-shadow: none;
   margin: 0;
   padding: 0 5px;
-  background-color: #3174ad;
+  background-color: #fff;
   color: black;
   cursor: pointer;
   width: 100%;
@@ -834,33 +834,81 @@ button.rbc-input::-moz-focus-inner {
   pointer-events: none;
 }
 
-.event-bar--red { background-image: linear-gradient(90deg, rgba(253,172,81,1) 2%, #e4edfb 2%); }
-.event-bar--grey { background-image: linear-gradient(90deg, #c2c2c2 2%, #e4edfb 2%); }
-.event-bar--green { background-image: linear-gradient(90deg, #4ad494 2%, #e4edfb 2%); }
-.event-bar--orange { background-image: linear-gradient(90deg, #fd7642 2%, #e4edfb 2%); }
-.event-bar--blue { background-image: linear-gradient(90deg, #4c88e4 2%, #e4edfb 2%); }
-.event-bar--pink { background-image: linear-gradient(90deg, #f492b2 2%, #e4edfb 2%); }
-.event-bar--beidge { background-image: linear-gradient(90deg, #ebdbde 2%, #e4edfb 2%); }
-.event-bar--cyan { background-image: linear-gradient(90deg, #34a2b9 2%, #e4edfb 2%); }
-.event-bar--darkgreen { background-image: linear-gradient(90deg, #23a667 2%, #e4edfb 2%); }
-.event-bar--brown { background-image: linear-gradient(90deg, #cba6ac 2%, #e4edfb 2%); }
-.event-bar--purple { background-image: linear-gradient(90deg, #b99cfc 2%, #e4edfb 2%); }
-.event-bar--darkred { background-image: linear-gradient(90deg, #f84e39 2%, #e4edfb 2%); }
-.event-bar--invite { background-image: linear-gradient(90deg, #e8ebed 2%, #f9fafa 2%); }
+.event-bar--red { background-image: 
+  linear-gradient(
+    90deg,
+    rgba(253,172,81,1) 3%,
+    rgba(253,172,81,0.3) 3%
+  ); 
+}
+.event-bar--grey { background-image:
+  linear-gradient(
+    90deg,
+    rgba(194, 194, 194, 1) 3%,
+    rgba(194, 194, 194, 0.3) 3%
+  );
+}
+.event-bar--green { background-image:
+  linear-gradient(
+    90deg,
+    rgba(74, 212, 148, 1) 3%,
+    rgba(74, 212, 148, 0.3) 3%
+  );
+}
+.event-bar--orange { background-image:
+  linear-gradient(
+    90deg,
+  rgba(253, 118, 66, 1) 3%,
+  rgba(253, 118, 66, 0.3) 3%
+  );
+}
+.event-bar--blue { background-image:
+  linear-gradient(
+    90deg,
+    rgba(76, 136, 228, 1) 3%,
+    rgba(76, 136, 228, 0.3) 3%
+  );
+}
+.event-bar--pink { background-image:
+  linear-gradient(
+    90deg,
+    rgba(244, 146, 178, 1) 3%,
+    rgba(244, 146, 178, 0.3) 3%
+  );
+}
+.event-bar--beidge { background-image:
+  linear-gradient(
+    90deg,
+    rgba(235, 219, 222, 1) 3%,
+    rgba(235, 219, 222, 0.3) 3%
+  );
+}
+.event-bar--cyan { background-image:
+  linear-gradient(90deg, rgba(52, 162, 185, 1) 3%, rgba(52, 162, 185, 0.3) 3%); }
+.event-bar--darkgreen { background-image:
+  linear-gradient(90deg, rgba(35, 166, 103, 1) 3%, rgba(35, 166, 103, 0.3)3%); }
+.event-bar--brown { background-image:
+  linear-gradient(90deg, rgba(203, 166, 172, 1) 3%, rgba(203, 166, 172, 0.3) 3%); }
+.event-bar--purple { background-image:
+  linear-gradient(90deg, rgba(185, 156, 252, 1) 3%, rgba(185, 156, 252, 0.3)3%); }
+.event-bar--darkred { background-image:
+  linear-gradient(90deg, rgba(248, 78, 57, 1)3%, rgba(248, 78, 57, 0.3) 3%); }
+.event-bar--invite { background-image:
+  linear-gradient(90deg, rgba(232, 235, 237, 1) 3%, rgba(232, 235, 237, 0.3)3%); }
 /* ALL DAY BARS */
-.event-bar-allday--red { background-color: #e4edfb; }
-.event-bar-allday--grey { background-color: #e4edfb; }
-.event-bar-allday--green {background-color: #e4edfb; }
-.event-bar-allday--orange { background-color: #e4edfb; }
-.event-bar-allday--blue { background-color: #e4edfb; }
-.event-bar-allday--pink { background-color: #e4edfb; }
-.event-bar-allday--beidge { background-color: #e4edfb; }
-.event-bar-allday--cyan { background-color: #e4edfb; }
-.event-bar-allday--darkgreen { background-color: #e4edfb; }
-.event-bar-allday--brown { background-color: #e4edfb; }
-.event-bar-allday--purple { background-color: #e4edfb; }
-.event-bar-allday--darkred { background-color: #e4edfb; }
-.event-bar-allday--invite { background-color: #f9fafa; }
+.event-bar-allday--red { background-color: rgba(253,172,81,0.3) }
+.event-bar-allday--grey { background-color: rgba(194, 194, 194, 0.3) }
+.event-bar-allday--green {background-color: rgba(74, 212, 148, 0.3) }
+.event-bar-allday--orange { background-color: rgba(253, 118, 66, 0.3) }
+.event-bar-allday--blue { background-color: rgba(76, 136, 228, 0.3) }
+.event-bar-allday--pink { background-color: rgba(244, 146, 178, 0.3) }
+.event-bar-allday--beidge { background-color: rgba(235, 219, 222, 0.3) }
+.event-bar-allday--cyan { background-color: rgba(52, 162, 185, 0.3) }
+.event-bar-allday--darkgreen { background-color: rgba(35, 166, 103, 0.3) }
+.event-bar-allday--brown { background-color: rgba(203, 166, 172, 0.3) }
+.event-bar-allday--purple { background-color: rgba(185, 156, 252, 0.3) }
+.event-bar-allday--darkred { background-color: rgba(248, 78, 57, 0.3) }
+.event-bar-allday--invite { background-color: rgba(232, 235, 237, 0.3) }
 
 
 /* REACT CALENDAR */

@@ -6,6 +6,22 @@ import RepeatWeekly from './Weekly/index';
 import RepeatDaily from './Daily/index';
 import RepeatHourly from './Hourly/index';
 import translateLabel from '../../utils/translateLabel';
+import Select from 'react-select'
+
+const customStyles = {
+  control: (provided) => ({
+    ...provided,
+    backgroundColor: '#fff',
+    border: '2px solid darkgrey',
+    borderRadius: '15px',
+    padding: '10px 15px',
+    width: '100%',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: '#f9fafa'
+  })
+}
 
 const Repeat = ({
   id,
@@ -24,33 +40,27 @@ const Repeat = ({
 }) => {
   const isOptionAvailable = option => !options.frequency || options.frequency.indexOf(option) !== -1;
   const isOptionSelected = option => frequency === option;
+
+  const selectOptions = [
+    { value: 'Never', label: 'Never' },
+    { value: 'Yearly', label: translateLabel(translations, 'repeat.yearly.label') },
+    { value: 'Monthly', label: translateLabel(translations, 'repeat.monthly.label') },
+    { value: 'Weekly', label: translateLabel(translations, 'repeat.weekly.label') },
+    { value: 'Daily', label: translateLabel(translations, 'repeat.daily.label') }
+  ]
   return (
     <div className="px-3">
       <div className="form-group row">
-        {/* <div className="col-sm-2 text-sm-right">
-          <label
-            htmlFor={`${id}-frequency`}
-            className="col-form-label"
-          >
-            <strong>
-              {translateLabel(translations, 'repeat.label')}
-            </strong>
-          </label>
-        </div> */}
         <div className="col-sm-6">
-          <select
-            name="repeat.frequency"
+          <Select
+            name={"repeat.frequency"}
+            options={selectOptions}
+            styles={customStyles}
             id={`${id}-frequency`}
-            className="rrule-dropdown"
-            value={frequency}
-            onChange={handleChange}
-          >
-            {isOptionAvailable('Never') && <option value="Never">Repeat: Never</option>}
-            {isOptionAvailable('Yearly') && <option value="Yearly">{translateLabel(translations, 'repeat.yearly.label')}</option>}
-            {isOptionAvailable('Monthly') && <option value="Monthly">{translateLabel(translations, 'repeat.monthly.label')}</option>}
-            {isOptionAvailable('Weekly') && <option value="Weekly">{translateLabel(translations, 'repeat.weekly.label')}</option>}
-            {isOptionAvailable('Daily') && <option value="Daily">{translateLabel(translations, 'repeat.daily.label')}</option>}
-          </select>
+            onChange={handleChange("repeat.frequency")}
+            placeholder="Repeat: Never"
+            isSearchable={false}
+          />
         </div>
       </div>
       {

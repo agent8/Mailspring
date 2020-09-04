@@ -235,7 +235,7 @@ export const parseCalendarData = (calendarData, etag, url, calendarId, color) =>
       // modified events from recurrence series
       for (let i = 0; i < modifiedEvents.length; i += 1) {
         results.push({
-          eventData: parseModifiedEvent(comp, etag, url, modifiedEvents[i], calendarId)
+          eventData: parseModifiedEvent(comp, etag, url, modifiedEvents[i], calendarId, color)
         });
       }
     }
@@ -254,7 +254,7 @@ export const parseCalendarData = (calendarData, etag, url, calendarId, color) =>
   return results;
 };
 
-export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId) => {
+export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId, color) => {
   const dtstart =
     modifiedEvent.getFirstPropertyValue('dtstart') == null
       ? ''
@@ -262,7 +262,7 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId) =
 
   let tz = modifiedEvent.getFirstPropertyValue('tzid');
   if (tz === null) {
-    tz = 'UTC';
+    tz = moment.tz.guess();
   }
   let dtstartMoment = moment.tz(dtstart.toUnixTime() * 1000, tz);
   dtstartMoment = dtstartMoment.tz('GMT').tz(tz, true);
@@ -275,7 +275,7 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId) =
       dtendMoment = dtendMoment.tz('GMT').tz(tz, true);
     }
   } else if (modifiedEvent.hasProperty('duration')) {
-    if (modifiedEvent.getFirstPropertyValue('duration').toSeconds() > 0) {
+    if (modifiedEvent.getFirstPropertyValue('duration').toSeconds() >= 0) {
       dtend = modifiedEvent.getFirstPropertyValue('dtstart').clone();
       dtend.addDuration(modifiedEvent.getFirstPropertyValue('duration'));
       dtendMoment = moment.tz(dtend.toUnixTime() * 1000, tz);
@@ -299,11 +299,11 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId) =
     id: uuidv4(),
     start: {
       dateTime: dtstartMoment.unix(),
-      timezone: 'America/Los_Angeles'
+      timezone: tz
     },
     end: {
       dateTime: dtendMoment.unix(),
-      timezone: 'America/Los_Angeles'
+      timezone: tz
     },
     originalId: modifiedEvent.getFirstPropertyValue('uid'),
     iCalUID: modifiedEvent.getFirstPropertyValue('uid'),
@@ -333,6 +333,7 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId) =
     etag,
     caldavUrl: url,
     calendarId,
+    colorId: color,
     iCALString: comp.toString()
   };
 };

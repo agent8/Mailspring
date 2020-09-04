@@ -28,6 +28,7 @@ import Input from '../library/Input';
 import RoundCheckbox from '../library/RoundCheckbox';
 import Tabs from '../library/Tabs/Tabs';
 import DropDown from '../library/DropDown/DropDown';
+import DropDownItem from '../library/DropDown/DropDownItem';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import ICAL from 'ical.js';
@@ -86,9 +87,12 @@ export default class EditEvent extends React.Component {
       end: {},
       colorId: '',
       visibility: '',
+      // Guest related
       guest: '',
       organizer: '',
       attendees: [],
+      partstat: '',
+
       allDay: false,
       conference: '',
       hangoutLink: '',
@@ -160,24 +164,24 @@ export default class EditEvent extends React.Component {
   };
 
   // dateTime saved as SECONDS since start of unix time, not miliseconds
-  handleStartChange = (start) => {
-    const { props, state } = this;
-    const newStart = {
-      dateTime: start.unix(),
-      timezone: state.updatedStartDateTime.timezone
-    };
-    this.setState({ updatedStartDateTime: newStart });
-  };
+  // handleStartChange = (start) => {
+  //   const { props, state } = this;
+  //   const newStart = {
+  //     dateTime: start.unix(),
+  //     timezone: state.updatedStartDateTime.timezone
+  //   };
+  //   this.setState({ updatedStartDateTime: newStart });
+  // };
 
-  // dateTime saved as SECONDS since start of unix time, not miliseconds
-  handleEndChange = (end) => {
-    const { props, state } = this;
-    const newEnd = {
-      dateTime: end.unix(),
-      timezone: state.updatedStartDateTime.timezone
-    };
-    this.setState({ updatedEndDateTime: newEnd });
-  };
+  // // dateTime saved as SECONDS since start of unix time, not miliseconds
+  // handleEndChange = (end) => {
+  //   const { props, state } = this;
+  //   const newEnd = {
+  //     dateTime: end.unix(),
+  //     timezone: state.updatedStartDateTime.timezone
+  //   };
+  //   this.setState({ updatedEndDateTime: newEnd });
+  // };
 
   handleChange = (event) => {
     if (event.target !== undefined) {
@@ -212,7 +216,27 @@ export default class EditEvent extends React.Component {
   };
 
   handleCheckboxChange = (event) => {
-    this.setState({ allDay: event.target.checked });
+    const { props } = this;
+    const { state } = this;
+
+    const startDateParsed = moment(state.start.dateTime * 1000).startOf('day');
+    const endDateParsed = moment(state.end.dateTime * 1000)
+    // if currently is not all day means its going to switch to all day so format has to
+    // in date format and vice versa.
+    const startDateParsedInUTC = this.processStringForUTC(
+      state.allDay
+        ? startDateParsed.format('YYYY-MM-DDThh:mm a')
+        : startDateParsed.format('YYYY-MM-DD')
+    );
+    const endDateParsedInUTC = this.processStringForUTC(
+      state.allDay ? endDateParsed.format('YYYY-MM-DDThh:mm a') : endDateParsed.format('YYYY-MM-DD')
+    );
+
+    this.setState({
+      allDay: event.target.checked,
+      updatedStartDateTime: startDateParsedInUTC,
+      updatedEndDateTime: endDateParsedInUTC
+    });
   };
 
   createDbRecurrenceObj = () => {
@@ -234,7 +258,14 @@ export default class EditEvent extends React.Component {
 
   handleEditEvent = () => {
     const { state } = this;
-    if (state.isRecurring) {
+    const attendees = state.attendees;
+    Object.keys(attendees).map(key => {
+      if (attendees[key].email === state.owner) {
+        attendees[key].partstat = state.partstat !== '' ? state.partstat : 'NEEDS-ACTION';
+        this.setState({ attendees });
+      }
+    })
+    if (state.initialRrule !== state.updatedRrule || state.isRecurring) {
       this.setState({ isShowUpdateForm: true })
     } else {
       this.editEvent();
@@ -526,11 +557,31 @@ export default class EditEvent extends React.Component {
     // debugger;
 
     const startDateParsedInUTC = this.processStringForUTC(
-      moment(dbEventJSON.start.dateTime * 1000).format('YYYY-MM-DDThh:mm')
+      dbEventJSON.allDay
+        ? moment(dbEventJSON.start.dateTime * 1000).format('YYYY-MM-DD')
+        : moment(dbEventJSON.start.dateTime * 1000).format('YYYY-MM-DDThh:mm')
+
     )
     const endDateParsedInUTC = this.processStringForUTC(
-      moment(dbEventJSON.end.dateTime * 1000).format('YYYY-MM-DDThh:mm')
+      dbEventJSON.allDay
+        ? moment(dbEventJSON.end.dateTime * 1000).format('YYYY-MM-DD')
+        : moment(dbEventJSON.end.dateTime * 1000).format('YYYY-MM-DDThh:mm')
     )
+
+    // right now caldav server retrieved events do not have guests by default
+    let attendees = {}
+    let partstat = ''
+    if (dbEventJSON.attendee !== '') {
+      attendees = JSON.parse(dbEventJSON.attendee);
+      const ownerIndex =
+        Object.keys(attendees)
+          .filter(key => attendees[key].email === dbEventJSON.owner)
+      partstat = attendees[ownerIndex]
+        && attendees[ownerIndex].partstat !== 'NEEDS-ACTION'
+        ? attendees[ownerIndex].partstat
+        : '';
+    }
+
 
     this.setState({
       updatedStartDateTime: startDateParsedInUTC,
@@ -549,7 +600,8 @@ export default class EditEvent extends React.Component {
       end: dbEventJSON.end,
       location: dbEventJSON.location,
       organizer: dbEventJSON.organizer,
-      attendees: dbEventJSON.attendee === '' ? {} : JSON.parse(dbEventJSON.attendee),
+      attendees: attendees,
+      partstat: partstat,
       hangoutLink: dbEventJSON.hangoutLink,
       providerType: dbEventJSON.providerType,
       owner: dbEventJSON.owner,
@@ -566,66 +618,14 @@ export default class EditEvent extends React.Component {
     });
   };
 
-  handleFirstRecurrOptions = (event) => {
-    const { state } = this;
-    // Remember to moment.unix because dateTime is stored in seconds instead of miliseconds
-    const text = recurrenceOptions.parseString(
-      Math.ceil(moment.unix(state.start.dateTime).date() / 7)
-    );
-    const secondRecurrOptions = recurrenceOptions.secondRecurrOptions(state.start, text);
-
-    const newVal = state.selectedSecondRecurrOption[event.index];
-    const newArr = state.selectedSecondRecurrOption;
-    newArr[event.index] = newVal;
-
-    this.setState({
-      firstSelectedOption: event.index,
-      secondRecurrOptions: secondRecurrOptions[event.value],
-      selectedSecondRecurrOption: newArr
-    });
-  };
-
-  handleSecondRecurrOptions = (event) => {
-    const { state } = this;
-
-    const newVal = state.selectedSecondRecurrOption[state.firstSelectedOption];
-    const newArr = state.selectedSecondRecurrOption;
-    newArr[state.firstSelectedOption] = event.index;
-    // console.log(newVal, newArr, state);
-
-    this.setState({
-      selectedSecondRecurrOption: newArr
-    });
-  };
-
-  handleThirdRecurrOptions = (event) => {
-    this.setState({
-      thirdRecurrOptions: event.value
-    });
-  };
-
-  handleWeekChangeRecurr = (event) => {
-    const { state } = this;
-
-    // 1 coz, day week, month, year, week = index 1.
-    const newVal = state.selectedSecondRecurrOption[1];
-
-    const intParsed = parseInt(event.target.name, 10);
-    // console.log(state, newVal, intParsed, newVal[intParsed]);
-    // This alternates it between 1/0.
-    newVal[intParsed] = newVal[intParsed] === 1 ? 0 : 1;
-    const newArr = state.selectedSecondRecurrOption;
-    newArr[1] = newVal;
-    // console.log(state, newVal, newArr, event.target.name);
-
-    this.setState({
-      selectedSecondRecurrOption: newArr
-    });
-  };
+  handlePartstatChange = (event) => {
+    this.setState({ partstat: event.target.value })
+  }
 
   handleRruleChange = (selectedRrule) => {
     this.setState((state, props) => ({
-      updatedRrule: selectedRrule.slice(6)
+      updatedRrule: selectedRrule.slice(6),
+      updatedIsRecurring: selectedRrule.slice(6) === "" ? false : true,
     }));
 
     // CHANGING OF DATE DYNAMICALLY
@@ -650,11 +650,11 @@ export default class EditEvent extends React.Component {
       SA: 6
     };
     // Change Date based on Weekly/Monthly/Yearly
-    let newStartDateParsed = moment(state.updatedStartDateTime.dateTime * 1000);
-    let newEndDateParsed = moment(state.updatedEndDateTime.dateTime * 1000);
+    let newStartDateParsed = moment(state.updatedStartDateTime);
+    let newEndDateParsed = moment(state.updatedEndDateTime);
     if (rruleObj['rrule:freq'] === 'WEEKLY' && rruleObj.BYDAY !== undefined) {
       let nextDayDiff;
-      const currentDay = moment(state.updatedStartDateTime.dateTime * 1000).day();
+      const currentDay = moment(state.updatedStartDateTime).day();
 
       // If only one day is selected, it will be a string. Else it will be an array
       if (Array.isArray(rruleObj.BYDAY)) {
@@ -665,11 +665,8 @@ export default class EditEvent extends React.Component {
       }
 
       // Calculate and set the new date
-      newStartDateParsed = moment(state.updatedStartDateTime.dateTime * 1000).add(
-        nextDayDiff,
-        'days'
-      );
-      newEndDateParsed = moment(state.updatedEndDateTime.dateTime * 1000).add(nextDayDiff, 'days');
+      newStartDateParsed = moment(state.updatedStartDateTime).add(nextDayDiff, 'days');
+      newEndDateParsed = moment(state.updatedEndDateTime).add(nextDayDiff, 'days');
     } else if (rruleObj['rrule:freq'] === 'MONTHLY') {
       if (rruleObj.BYDAY !== undefined) {
         newStartDateParsed = moment(newStartDateParsed)
@@ -707,37 +704,53 @@ export default class EditEvent extends React.Component {
     this.setState({
       start: { dateTime: newStartDateParsed.unix(), timezone: 'Asia/Singapore' },
       end: { dateTime: newEndDateParsed.unix(), timezone: 'Asia/Singapore' },
-      updatedStartDateTime: { dateTime: newStartDateParsed.unix(), timezone: 'Asia/Singapore' },
-      updatedEndDateTime: { dateTime: newEndDateParsed.unix(), timezone: 'Asia/Singapore' }
+      updatedStartDateTime: this.processStringForUTC(newStartDateParsed.format('YYYY-MM-DDThh:mm')),
+      updatedEndDateTime: this.processStringForUTC(newEndDateParsed.format('YYYY-MM-DDThh:mm'))
     });
   };
 
-  toggleRruleGenerator = (event) => {
-    event.persist();
-    this.setState((state, props) => ({
-      showRruleGenerator: event.target.checked,
-      updatedIsRecurring: event.target.checked
-    }));
-  };
+  // toggleRruleGenerator = (event) => {
+  //   event.persist();
+  //   this.setState((state, props) => ({
+  //     showRruleGenerator: event.target.checked,
+  //     updatedIsRecurring: event.target.checked
+  //   }));
+  // };
 
   renderPopup = (state) => {
-    return (<Modal isOpen={state.isShowUpdateForm} style={customStyles} onRequestClose={() => this.setState({ isShowUpdateForm: false })}>
-      <p>This is a recurring event</p>
-      <button type="button" onClick={() => this.setState({ isShowUpdateForm: false })}>
-        Cancel
-      </button>
-      {state.isMaster
-        ? <button type="button" onClick={this.editAllRecurrenceEvent}>
-          Update All
-          </button>
-        : <button type="button" onClick={this.editFutureRecurrenceEvent}>
-          Update All Future Events
-          </button>
-      }
-      <button type="button" onClick={this.editEvent}>
-        Update Only This Event
-      </button>
-    </Modal>);
+    if (state.initialRrule !== state.updatedRrule) {
+      return (
+        <Modal isOpen={state.isShowUpdateForm} style={customStyles} onRequestClose={() => this.setState({ isShowUpdateForm: false })}>
+          <p>Are you sure you want to change a repeating rule for this event?</p>
+          <p>Do you want to change all occurrences?</p>
+          <button type="button" onClick={() => this.setState({ isShowUpdateForm: false })}>
+            Cancel
+        </button>
+          <button type="button" onClick={this.editAllRecurrenceEvent}>
+            Update All
+        </button>
+        </Modal>);
+    }
+
+    return (
+      <Modal isOpen={state.isShowUpdateForm} style={customStyles} onRequestClose={() => this.setState({ isShowUpdateForm: false })}>
+        <p>This is a recurring event</p>
+        <button type="button" onClick={() => this.setState({ isShowUpdateForm: false })}>
+          Cancel
+        </button>
+        {state.isMaster
+          ? <button type="button" onClick={this.editAllRecurrenceEvent}>
+            Update All
+            </button>
+          : <button type="button" onClick={this.editFutureRecurrenceEvent}>
+            Update All Future Events
+            </button>
+        }
+        <button type="button" onClick={this.editEvent}>
+          Update Only This Event
+        </button>
+      </Modal>
+    );
   }
 
   renderAddDetails = () => {
@@ -750,13 +763,12 @@ export default class EditEvent extends React.Component {
       );
     }
 
-
     return (<div className="add-form-details">
       <div className="add-form-start-time add-form-grid-item">
         {/* Start Time and Date */}
         <Input
           label="Starts"
-          type="datetime-local"
+          type={state.allDay ? 'date' : "datetime-local"}
           value={state.updatedStartDateTime}
           name="updatedStartDateTime"
           onChange={this.handleChange}
@@ -766,7 +778,7 @@ export default class EditEvent extends React.Component {
         {/* End Time and Date */}
         <Input
           label="Ends"
-          type="datetime-local"
+          type={state.allDay ? 'date' : "datetime-local"}
           value={state.updatedEndDateTime}
           name="updatedEndDateTime"
           onChange={this.handleChange}
@@ -802,30 +814,53 @@ export default class EditEvent extends React.Component {
         </div>
       </div>
       <div className="add-form-guests add-form-grid-item">
-        <Input
-          label="Guests"
-          value={state.guest}
-          type="text"
-          placeholder="Invite guests"
-          name="guest"
-          onKeyDown={this.guestOnKeyDown}
-          onChange={this.handleChange}
-        />
+        {/* if it is a event with guests */}
+        {Object.keys(state.attendees).length > 1
+          ? <DropDown
+            value={state.partstat}
+            type="select"
+            onChange={this.handlePartstatChange}
+            name="partstat"
+            placeholder="Going?"
+            hiddenPlaceholder
+          >
+            <DropDownItem value={'ACCEPTED'}>Yes</DropDownItem>
+            <DropDownItem value={'DECLINED'}>No</DropDownItem>
+            <DropDownItem value={'TENTATIVE'}>Maybe</DropDownItem>
+          </DropDown>
+          : null
+        }
+        {/* Only allow edit if owner is the organizer */}
+        {state.organizer === '' || state.organizer === state.owner
+          ? <Input
+            label="Guests"
+            value={state.guest}
+            type="text"
+            placeholder="Invite guests"
+            name="guest"
+            onKeyDown={this.guestOnKeyDown}
+            onChange={this.handleChange}
+          />
+          : <p><b>Guests</b></p>}
+
         {Object.keys(state.attendees).map(key => {
-          return (
-            <RoundCheckbox
+          return state.owner !== state.organizer
+            ? <RoundCheckbox
               id={`${key}-guest-checkmark`}
               checked={true}
               onChange={() => {
-                const attendees = state.attendees;
-                delete attendees[key]
-                this.setState({
-                  attendees
-                });
+                if (state.organizer === '' || state.organizer === state.owner) {
+                  const attendees = state.attendees;
+                  delete attendees[key]
+                  this.setState({
+                    attendees
+                  });
+                }
               }
               }
               label={state.attendees[key]['email']}
-            />);
+            />
+            : null
         })}
       </div>
       <div className="add-form-location add-form-grid-item">
@@ -903,9 +938,10 @@ export default class EditEvent extends React.Component {
 
   renderCalendar = (props) => {
     const visibleEvents = props.visibleEvents;
-
     return (
       <DragAndDropCalendar
+        // have to use .props here somehow, should not have to use it.
+        defaultDate={new Date(this.state.updatedStartDateTime).props}
         localizer={localizer}
         events={visibleEvents}
         defaultView={'day'}

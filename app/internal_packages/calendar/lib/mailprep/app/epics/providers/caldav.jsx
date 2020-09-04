@@ -296,6 +296,7 @@ const createCalDavEvent = async (payload) => {
 
   // console.log(calendar);
   // debugger;
+
   const addResult = await dav.createCalendarObject(calendar, addCalendarObject);
 
   if (debug) {
@@ -526,7 +527,6 @@ const editCalDavAllRecurrenceEvents = async (payload) => {
     // entire series.
     // Updating is done by pushing the entire iCal string to the server
     let iCalString = '';
-
     // recur -> single
     if (!payload.updatedIsRecurring) {
       // delete recurrencePattern
