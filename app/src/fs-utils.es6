@@ -74,6 +74,25 @@ export function autoGenerateFileName(dirPath, fileName) {
   return `${basename}(${nextNum})${extname}`;
 }
 
+export function autoGenerateNameByNameList(nameList, name) {
+  if (!nameList || nameList.indexOf(name) < 0) {
+    return name;
+  }
+  const reg = new RegExp(`^[0-9]+$`);
+  const fileNums = [];
+  nameList.forEach(nameItem => {
+    const num = nameItem.replace(name, '');
+    if (reg.test(num)) {
+      if (Number(num) && Number(num) > 0) {
+        fileNums.push(Number(num));
+      }
+    }
+  });
+
+  const nextNum = findMinNotInArr(fileNums);
+  return `${name}${nextNum}`;
+}
+
 // this func is for to find the min positive integer that not in the array
 function findMinNotInArr(arr) {
   const arrFilter = arr.filter(num => num > 0 && parseInt(num) === num);

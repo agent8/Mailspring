@@ -243,7 +243,7 @@ export default class Preferences {
       return new RESTResult(false, 'sync account has no token');
     }
     if (!update.length && !remove.length) {
-      return new RESTResult(false, 'there is no need to update');
+      return new RESTResult(true, 'there is no need to update');
     }
     const configSchema = AppEnv.config.getSchema(configKey);
     const platform = configSchema.syncToServerCommonKey
