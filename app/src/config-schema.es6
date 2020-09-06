@@ -8,7 +8,6 @@ import {
   mergeServerTemplatesToLocal,
   mergeLocalAccountsToServer,
   mergeServerAccountsToLocal,
-  diffListData,
 } from './sync-preferences';
 
 moment.locale(navigator.language);
@@ -747,7 +746,6 @@ export default {
     syncToServer: true,
     mergeServerToLocal: mergeServerAccountsToLocal,
     mergeLocalToServer: mergeLocalAccountsToServer,
-    generateDiffData: diffListData,
   },
   signatures: {
     type: 'array',

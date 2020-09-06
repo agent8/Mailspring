@@ -919,14 +919,8 @@ class Config {
       return;
     }
     const { PreferencesRest } = require('./rest');
-    const { mergeLocalToServer, generateDiffData, syncToServerCommonKey } = this.getSchema(keyPath);
-    if (
-      mergeLocalToServer &&
-      typeof mergeLocalToServer === 'function' &&
-      generateDiffData &&
-      typeof generateDiffData === 'function'
-    ) {
-      const transformValue = await mergeLocalToServer(value);
+    const { mergeLocalToServer, syncToServerCommonKey } = this.getSchema(keyPath);
+    if (mergeLocalToServer && typeof mergeLocalToServer === 'function') {
       const platform = syncToServerCommonKey ? EdisonPlatformType.COMMON : EdisonPlatformType.MAC;
       const configKeyInServer = syncToServerCommonKey
         ? syncToServerCommonKey
@@ -938,8 +932,8 @@ class Config {
       if (!oldValue) {
         return;
       }
-      const diffData = generateDiffData(oldValue, transformValue);
-      const result = await PreferencesRest.updateListPreferences(keyPath, diffData);
+      const { update = [], remove = [] } = (await mergeLocalToServer(oldValue, value)) || {};
+      const result = await PreferencesRest.updateListPreferences(keyPath, { update, remove });
       if (result.successful) {
         const { data } = result;
         const resultList = [...data.removeResults, ...data.updateResults];

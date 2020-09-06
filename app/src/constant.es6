@@ -174,3 +174,9 @@ export const AWSAccessKey = 'AKIAJPPBMFBNHSNZ5ELA';
 export const AWSSecretKey = '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';
 
 export const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
+
+export const PreferencesSubListStateEnum = {
+  deleted: -1,
+  updated: 1,
+  synchronized: 0,
+};

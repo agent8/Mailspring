@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { downloadFile, uploadFile } = require('./s3-utils');
 const { dirExists, deleteFileOrFolder, unCompressDir, compressDir } = require('./fs-utils');
-const { INVALID_TEMPLATE_NAME_REGEX } = require('./constant');
+const { PreferencesSubListStateEnum } = require('./constant');
 
 async function downloadAndUnCompress(key) {
   const dirName = path.join(AppEnv.getConfigDirPath(), 'tmp');
@@ -38,7 +38,7 @@ async function cleanUpFiles(key) {
   deleteFileOrFolder(zipDirPath);
 }
 
-export function generateDiffData(oldList, newList) {
+function diffListData(oldList, newList) {
   const newIds = [];
   const removes = [];
   const updates = [];
@@ -66,35 +66,7 @@ export function generateDiffData(oldList, newList) {
   return { update: updates, remove: removes };
 }
 
-export function diffListData(oldList, newList) {
-  const newIds = [];
-  const removes = [];
-  const updates = [];
-  newList.forEach(n => {
-    newIds.push(n.subId);
-    const old = oldList.find(oldItem => n.subId === oldItem.subId);
-    if (old && old.value === n.value) {
-      return;
-    }
-    updates.push({
-      subId: n.subId,
-      value: n.value,
-      tsClientUpdate: new Date().getTime(),
-    });
-  });
-  oldList.forEach(o => {
-    if (!newIds.includes(o.subId)) {
-      removes.push({
-        subId: o.subId,
-        value: o.value,
-        tsClientUpdate: new Date().getTime(),
-      });
-    }
-  });
-  return { update: updates, remove: removes };
-}
-
-export const mergeLocalSignaturesToServer = async () => {};
+export const mergeLocalSignaturesToServer = async (oldValueInServer, value) => {};
 
 export const mergeServerSignaturesToLocal = async () => {};
 
@@ -102,8 +74,8 @@ export const mergelocalTemplatesToServer = async () => {};
 
 export const mergeServerTemplatesToLocal = async () => {};
 
-export const mergeLocalAccountsToServer = async accounts => {
-  return accounts.map(a => {
+export const mergeLocalAccountsToServer = async (oldValueInServer, value) => {
+  const newAccounts = value.map(a => {
     function copyAndFilterSetting(account = {}) {
       const copy = {
         ...account,
@@ -117,6 +89,7 @@ export const mergeLocalAccountsToServer = async accounts => {
       tsClientUpdate: new Date().getTime(),
     };
   });
+  return diffListData(oldValueInServer, newAccounts);
 };
 
 export const mergeServerAccountsToLocal = async accountListInServer => {

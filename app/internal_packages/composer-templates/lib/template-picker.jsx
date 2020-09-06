@@ -15,13 +15,13 @@ class TemplatePopover extends React.Component {
     super();
     this.state = {
       searchValue: '',
-      templates: TemplateStore.items(),
+      templates: TemplateStore.getTemplates(),
     };
   }
 
   componentDidMount() {
     this.unsubscribe = TemplateStore.listen(() => {
-      this.setState({ templates: TemplateStore.items() });
+      this.setState({ templates: TemplateStore.getTemplates() });
     });
   }
 
@@ -39,7 +39,7 @@ class TemplatePopover extends React.Component {
     }
 
     return templates.filter(t => {
-      return t.name.toLowerCase().indexOf(searchValue.toLowerCase()) >= 0;
+      return t.title.toLowerCase().indexOf(searchValue.toLowerCase()) >= 0;
     });
   }
 
@@ -48,7 +48,7 @@ class TemplatePopover extends React.Component {
   };
 
   _onChooseTemplate = template => {
-    TemplateActions.insertTemplateId({
+    TemplateActions.insertTemplateToMessage({
       templateId: template.id,
       messageId: this.props.messageId,
     });
@@ -60,7 +60,7 @@ class TemplatePopover extends React.Component {
   };
 
   _onNewTemplate = () => {
-    TemplateActions.createTemplate({ messageId: this.props.messageId });
+    TemplateActions.createTemplateByMessage({ messageId: this.props.messageId });
   };
 
   _onClickButton = () => {
@@ -98,7 +98,7 @@ class TemplatePopover extends React.Component {
         footerComponents={footerComponents}
         items={filteredTemplates}
         itemKey={item => item.id}
-        itemContent={item => item.name}
+        itemContent={item => item.title}
         onSelect={this._onChooseTemplate}
       />
     );
