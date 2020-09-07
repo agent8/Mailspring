@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 
 const { EdisonAccountRest } = RESTful;
 const edisonAccountKey = 'edisonAccount';
+const PromptedEdisonAccountKey = 'core.workspace.promptedEdisonAccount';
 const computerPlatforms = ['mac'];
 const modeSwitchList = [
   {
@@ -156,6 +157,9 @@ export default class EdisonAccount extends React.Component {
   };
 
   _startBackUpAndSync = e => {
+    if (!AppEnv.config.get(PromptedEdisonAccountKey)) {
+      AppEnv.config.set(PromptedEdisonAccountKey, true);
+    }
     const { otherAccounts } = this.state;
     if (otherAccounts.length === 1) {
       this._onChooseAccount(otherAccounts[0]);
@@ -165,6 +169,9 @@ export default class EdisonAccount extends React.Component {
   };
 
   _chooseAccountPopup = e => {
+    if (!AppEnv.config.get(PromptedEdisonAccountKey)) {
+      AppEnv.config.set(PromptedEdisonAccountKey, true);
+    }
     const { otherAccounts } = this.state;
     if (!otherAccounts.length) {
       return;
@@ -180,6 +187,9 @@ export default class EdisonAccount extends React.Component {
   };
 
   _logout = async deviceId => {
+    if (!AppEnv.config.get(PromptedEdisonAccountKey)) {
+      AppEnv.config.set(PromptedEdisonAccountKey, true);
+    }
     const { account } = this.state;
     if (!account || !account.id) {
       return;

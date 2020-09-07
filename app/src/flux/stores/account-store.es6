@@ -532,6 +532,10 @@ class AccountStore extends MailspringStore {
 
     this._save('add account');
     ipcRenderer.send('after-add-account', account);
+    // refresh the sub accounts for new sync account
+    // Sub account list only increases but not decreases,
+    // So we only should refresh after add account
+    EdisonAccountRest.subAccounts();
   };
 
   _cachedGetter(key, fn) {
@@ -556,6 +560,10 @@ class AccountStore extends MailspringStore {
     const newSyncAccountIds = [...new Set([...oldSyncAccountIds, aid])];
     const nowAccountIds = this.accountIds();
     AppEnv.config.set(edisonAccountKey, newSyncAccountIds.filter(id => nowAccountIds.includes(id)));
+    // sync preferences from server
+    AppEnv.config.syncAllPreferencesFromServer();
+    // refresh the sub accounts for new sync account
+    EdisonAccountRest.subAccounts();
   };
 
   logoutSyncAccount = aid => {
@@ -565,6 +573,7 @@ class AccountStore extends MailspringStore {
     const oldSyncAccountIds = AppEnv.config.get(edisonAccountKey) || [];
     const newSyncAccountIds = oldSyncAccountIds.filter(oldId => oldId !== aid);
     AppEnv.config.set(edisonAccountKey, newSyncAccountIds);
+    AppEnv.config.clearSyncPreferencesVersion();
   };
 
   syncAccount = () => {
