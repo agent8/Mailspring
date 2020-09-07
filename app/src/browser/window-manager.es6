@@ -53,19 +53,51 @@ export default class WindowManager {
 
   getOpenWindows(type = 'all') {
     const values = [];
-    Object.keys(this._windows).forEach(key => {
+    for (const key of Object.keys(this._windows)) {
       const win = this._windows[key];
+      if (win.browserWindow.isDestroyed()) {
+        delete this._windows[key];
+        continue;
+      }
       if (win.windowType !== WindowLauncher.EMPTY_WINDOW) {
         if (type === 'all' || win.windowType === type) {
           values.push(win);
         }
       }
-    });
-
+    }
     const score = win => (win.loadSettings().mainWindow ? 1000 : win.browserWindow.id);
 
     return values.sort((a, b) => score(b) - score(a));
   }
+
+  switchWindow = () => {
+    const windows = this.getOpenWindows();
+    if (windows.length <= 1) {
+      return;
+    }
+    let focusedIdx = 0;
+    for (let i = 0; i < windows.length; i++) {
+      if (windows[i].isFocused()) {
+        focusedIdx = i;
+        break;
+      }
+    }
+    let nextIdx = focusedIdx + 1;
+    if (focusedIdx === windows.length - 1) {
+      nextIdx = 0;
+    }
+    const win = windows[nextIdx];
+    if (!win) {
+      return;
+    } else if (win.isMinimized()) {
+      win.restore();
+      win.focus();
+    } else if (!win.isVisible()) {
+      win.showWhenLoaded();
+    } else {
+      win.focus();
+    }
+  };
 
   getOpenWindowCount(type = 'all') {
     return this.getOpenWindows(type).length;
@@ -273,6 +305,8 @@ export default class WindowManager {
       width: 900, // Gets changed based on previous settings
       height: 670, // Gets changed based on previous settings
       initializeInBackground: this.initializeInBackground,
+      frame: true,
+      titleBarStyle: 'hidden',
     };
 
     coreWinOpts[WindowManager.ONBOARDING_WINDOW] = {
@@ -287,6 +321,7 @@ export default class WindowManager {
       width: 685,
       height: 700,
       disableZoom: true,
+      titleBarStyle: 'default',
     };
     coreWinOpts[WindowManager.BUG_REPORT_WINDOW] = {
       windowKey: WindowManager.BUG_REPORT_WINDOW,

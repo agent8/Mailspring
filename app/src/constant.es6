@@ -8,14 +8,26 @@ export const OAuthList = [
 ];
 export const showCC = 'cc';
 export const showCCAndBCC = 'cc+bcc';
-
+export const MS_TNEF_TYPES = ['application/ms-tnef', 'application/vnd.ms-tnef'];
 export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
-export const DraftWindowLevel = {
+export const WindowLevel = {
+  BugReporting: 5,
+  OnBoarding: 4,
   Composer: 3,
   Thread: 2,
   Main: 1,
+};
+export const AutoUpdateManagerState = {
+  IdleState: 'idle',
+  CheckingState: 'checking',
+  DownloadingState: 'downloading',
+  AvailableForDownload: 'available-for-download',
+  UpdateAvailableState: 'update-available',
+  NoUpdateAvailableState: 'no-update-available',
+  UnsupportedState: 'unsupported',
+  ErrorState: 'error',
 };
 
 export const bannedPathNames = ['Trash', 'Spam', 'Inbox', 'All Mail', 'Sent'];
@@ -61,6 +73,11 @@ export const AttachmentDownloadState = {
   fail: -1,
   downloading: 0,
   done: 1,
+};
+export const FileState = {
+  Normal: 0,
+  Removed: 1,
+  IgnoreMissing: 2,
 };
 export const AttachmentFileSizeIgnoreThreshold = 4; //4 Bytes;
 

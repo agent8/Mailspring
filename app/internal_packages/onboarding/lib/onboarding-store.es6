@@ -7,6 +7,8 @@ const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
 const { EdisonAccountRest } = RESTful;
+// const ONBOARDING_TRACKING_URL = 'https://cp.stag.easilydo.cc/api/multiple/desktop/onboarding';
+const ONBOARDING_TRACKING_URL = 'https://cp.edison.tech/api/multiple/desktop/onboarding';
 
 class OnboardingStore extends MailspringStore {
   constructor() {
@@ -150,6 +152,13 @@ class OnboardingStore extends MailspringStore {
 
   _onFinishAndAddAccount = async account => {
     // const isFirstAccount = AccountStore.accounts().length === 0;
+    const { settings } = account;
+    if (settings && ['onmail-eng'].includes(settings.provider_key)) {
+      account.provider = 'onmail-eng';
+    }
+    if (settings && ['onmail'].includes(settings.provider_key)) {
+      account.provider = 'onmail';
+    }
     const { provider, emailAddress } = account;
     const domain = emailAddress ? emailAddress.split('@')[1] : '';
     // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
@@ -167,6 +176,27 @@ class OnboardingStore extends MailspringStore {
     } catch (err) {
       console.log('add tracing failed', err);
     }
+    // add tracking for installed users
+    try {
+      await fetch(ONBOARDING_TRACKING_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ba68b70f0ea8596eadbaea4f116356c2',
+        },
+        body: JSON.stringify({
+          email: emailAddress,
+          version: AppEnv.getVersion(),
+          mas: process.mas ? 1 : 0,
+          extra: 'desktop',
+          provider,
+        }),
+      });
+    } catch (err) {
+      console.log('onboarding add account tracking failed', err);
+    }
+
     try {
       await AccountStore.addAccount(account);
     } catch (e) {

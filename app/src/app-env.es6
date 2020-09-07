@@ -13,6 +13,14 @@ import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
 import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
 import RegExpUtils from './regexp-utils';
+import { WindowLevel } from './constant';
+
+//Hinata gets special treatment for logging and other debugging purposes
+const Hinata_Ids = [
+  'f928e3ab2af52a97ab57cdd4248d2c09b5eb7e21ead2f30b77ebb299c63441bd',
+  'b4db0365ca3157ac56c42e810a88d1f941492a9dca8e2f43998d9f3f99073af3',
+];
+
 const LOG = require('electron-log');
 // const archiver = require('archiver');
 // let getOSInfo = null;
@@ -323,22 +331,9 @@ export default class AppEnvConstructor {
   };
   _expandReportLog(error, extra = {}) {
     try {
-      // getOSInfo = getOSInfo || require('./system-utils').getOSInfo;
-      // if (typeof extra === 'string') {
-      //   console.warn('extra is not an object:' + extra);
-      //   extra = {
-      //     errorData: extra,
-      //   };
-      // }
-      // extra.osInfo = getOSInfo();
-      // extra.native = this.config.get('core.support.native');
       extra.chatEnabled = this.config.get('core.workspace.enableChat');
-      // extra.appConfig = JSON.stringify(this.config.cloneForErrorLog());
+      extra.messageView = this.isDisableThreading() ? '1' : '0';
       extra.pluginIds = JSON.stringify(this._findPluginsFromError(error));
-      extra.mas = process.mas ? '1' : '0';
-      // if (!!extra.errorData) {
-      //   extra.errorData = JSON.stringify(extra.errorData);
-      // }
     } catch (err) {
       // can happen when an error is thrown very early
       extra.pluginIds = [];
@@ -346,32 +341,59 @@ export default class AppEnvConstructor {
     return extra;
   }
 
-  reportError(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
+  reportError(
+    error,
+    extra = {},
+    { noWindows, grabLogs = false, noAppConfig = false, noStackTrace, expandLog = true } = {}
+  ) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'error');
+      this._grabLogAndReportLog(
+        error,
+        extra,
+        { noWindows, noAppConfig, noStackTrace, expandLog },
+        'error'
+      );
     } else {
-      this._reportLog(error, extra, { noWindows, noAppConfig }, 'error');
+      this._reportLog(error, extra, { noWindows, noAppConfig, noStackTrace, expandLog }, 'error');
     }
   }
 
-  reportWarning(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
+  reportWarning(
+    error,
+    extra = {},
+    { noWindows, grabLogs = false, noAppConfig = false, noStackTrace, expandLog = true } = {}
+  ) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'warning');
+      this._grabLogAndReportLog(
+        error,
+        extra,
+        { noWindows, noAppConfig, noStackTrace, expandLog },
+        'warning'
+      );
     } else {
-      this._reportLog(error, extra, { noWindows, noAppConfig }, 'warning');
+      this._reportLog(error, extra, { noWindows, noAppConfig, noStackTrace, expandLog }, 'warning');
     }
   }
-  reportLog(error, extra = {}, { noWindows, grabLogs = false, noAppConfig = false } = {}) {
+  reportLog(
+    error,
+    extra = {},
+    { noWindows, grabLogs = false, noAppConfig = false, noStackTrace, expandLog = true } = {}
+  ) {
     if (grabLogs) {
-      this._grabLogAndReportLog(error, extra, { noWindows, noAppConfig }, 'log');
+      this._grabLogAndReportLog(
+        error,
+        extra,
+        { noWindows, noAppConfig, noStackTrace, expandLog },
+        'log'
+      );
     } else {
-      this._reportLog(error, extra, { noWindows, noAppConfig }, 'log');
+      this._reportLog(error, extra, { noWindows, noAppConfig, noStackTrace, expandLog }, 'log');
     }
   }
 
-  _grabLogAndReportLog(error, extra, { noWindows, noAppConfig } = {}, type = '') {
+  _grabLogAndReportLog(error, extra, options, type = '') {
     extra.grabLogs = true;
-    this._reportLog(error, extra, { noWindows, noAppConfig }, type);
+    this._reportLog(error, extra, options, type);
     // this.grabLogs()
     //   .then(filename => {
     //     extra.files = [filename];
@@ -383,9 +405,18 @@ export default class AppEnvConstructor {
     //   });
   }
 
-  _reportLog(error, extra = {}, { noWindows, noAppConfig } = {}, type = '') {
-    extra = this._expandReportLog(error, extra);
+  _reportLog(
+    error,
+    extra = {},
+    { noWindows, noAppConfig, noStackTrace, expandLog = true } = {},
+    type = ''
+  ) {
+    if (expandLog) {
+      extra = this._expandReportLog(error, extra);
+    }
     extra.noAppConfig = noAppConfig;
+    extra.noStackTrace = noStackTrace;
+    extra.expandLog = expandLog;
     if (error instanceof APIError) {
       // API Errors are logged by our backend and happen all the time (offline, etc.)
       // Don't clutter the front-end metrics with these.
@@ -410,8 +441,9 @@ export default class AppEnvConstructor {
       this.logDebug(error);
     }
     try {
-      const strippedError = this._stripSensitiveData(error);
-      error = strippedError;
+      if (!noStackTrace) {
+        error = this._stripSensitiveData(error);
+      }
       if (!!extra.errorData) {
         if (typeof extra.errorData === 'string') {
           extra.errorData = this._stripSensitiveData(extra.errorData);
@@ -446,6 +478,10 @@ export default class AppEnvConstructor {
           this.config.set('core.support.id', 'Unknown');
         });
     }
+  }
+  isHinata() {
+    const deviceHash = this.config.get('core.support.id');
+    return Hinata_Ids.includes(deviceHash);
   }
 
   _stripSensitiveData(str = '') {
@@ -565,18 +601,18 @@ export default class AppEnvConstructor {
 
   getWindowLevel() {
     if (this.isComposerWindow()) {
-      return 3;
+      return WindowLevel.Composer;
     }
     if (this.isThreadWindow()) {
-      return 2;
+      return WindowLevel.Thread;
     }
     if (this.isOnboardingWindow()) {
-      return 4;
+      return WindowLevel.OnBoarding;
     }
     if (this.isBugReportingWindow()) {
-      return 5;
+      return WindowLevel.BugReporting;
     }
-    return 1;
+    return WindowLevel.Main;
   }
   isMainWindow() {
     return !!this.getLoadSettings().mainWindow;

@@ -195,7 +195,7 @@ const preferencesTemplateFill = {
               configSchema: configSchema => configSchema.properties.workspace.properties.threadView,
               keyPath: 'core.workspace.threadView',
               component: AppearanceViewOptions,
-              keywords: [],
+              keywords: ['disable threading'],
             },
             {
               label: 'Check messages for spelling',

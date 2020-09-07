@@ -26,12 +26,11 @@ class AccountSidebar extends React.Component {
     this._mounted = false;
   }
 
-  componentDidMount() {
+  componentDidMount = () => {
     ipcRenderer.on('after-add-account', this._afterAddAccount);
     this._mounted = true;
     const pos = window.sessionStorage.getItem('sidebar_scroll_position');
-    console.warn(`setting scroll ${pos}`);
-    if (pos) {
+    if (pos && this._accountSideBarWrapEl) {
       //DC-1130 Because chat account filler will interference with account-sidebar height, causing it to re-scroll, we wait until next frame to set scroll position.
       window.requestAnimationFrame(() => {
         this._accountSideBarWrapEl.scrollTop = pos;
@@ -40,7 +39,7 @@ class AccountSidebar extends React.Component {
     this.unsubscribers = [];
     this.unsubscribers.push(SidebarStore.listen(this._onStoreChange));
     this.unsubscribers.push(AccountStore.listen(this._onStoreChange));
-  }
+  };
 
   shouldComponentUpdate(nextProps, nextState) {
     return !Utils.isEqualReact(nextProps, this.props) || !Utils.isEqualReact(nextState, this.state);

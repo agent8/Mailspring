@@ -12,6 +12,8 @@ import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
 import CategoryStore from '../stores/category-store';
 import Category from './category';
+import { FileState } from '../../constant';
+
 let AttachmentStore = null;
 
 const mapping = {
@@ -19,14 +21,42 @@ const mapping = {
     if (!Array.isArray(json)) {
       return [];
     }
-    return json.map(attachment => {
+    const ret = [];
+    json.forEach(attachment => {
       const file = new File();
       file.fromJSON(attachment);
       if (!file.id && (attachment.pid || attachment.id)) {
         file.id = attachment.pid || attachment.id;
       }
-      return file;
+      if (file.state !== FileState.Removed) {
+        ret.push(file);
+      }
     });
+    return ret;
+  },
+  defaultValuesFromJSON: jsonString => {
+    let ret;
+    if (typeof jsonString !== 'string') {
+      return jsonString;
+    }
+    try {
+      ret = JSON.parse(jsonString);
+    } catch (e) {
+      ret = {};
+    }
+    return ret;
+  },
+  defaultValuesToJSON: data => {
+    let ret;
+    if (typeof data === 'string') {
+      return data;
+    }
+    try {
+      ret = JSON.stringify(data);
+    } catch (e) {
+      ret = '{}';
+    }
+    return ret;
   },
 };
 
@@ -49,6 +79,7 @@ export default class Message extends ModelWithMetadata {
     'calCurStat',
     'calTarStat',
     'lastUpdateTimestamp',
+    'defaultValues',
   ];
   static NewDraft = 1;
   static EditExistingDraft = 2;
@@ -175,8 +206,14 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'hasNewID',
       queryable: false,
     }),
+    defaultValues: Attributes.Object({
+      modelKey: 'defaultValues',
+      queryable: false,
+      fromJSONMapping: mapping.defaultValuesFromJSON,
+      toJSONMapping: mapping.defaultValuesToJSON,
+    }),
     noSave: Attributes.Boolean({
-      noSave: 'noSave',
+      modelKey: 'noSave',
       queryable: false,
     }),
     waitingForBody: Attributes.Boolean({
@@ -216,7 +253,10 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'needUpload',
       queryable: false,
     }),
-
+    subjectChanged: Attributes.Boolean({
+      modelKey: 'subjectChanged',
+      queryable: false,
+    }),
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
@@ -545,37 +585,6 @@ export default class Message extends ModelWithMetadata {
     }
     return false;
   }
-  // get files() {
-  //   AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
-  //   if (!Array.isArray(this.attachmentIds)) {
-  //     console.error(`attachmentIds is not array`, this.attachmentIds);
-  //     return [];
-  //   }
-  //   const rets = [];
-  //   this.attachmentIds.forEach(partialAttachmentData => {
-  //     if (!(partialAttachmentData instanceof File)) {
-  //       partialAttachmentData = File.fromPartialData(partialAttachmentData)
-  //     }
-  //     const fileData = AttachmentStore.addAttachmentPartialData(partialAttachmentData);
-  //     if (fileData) {
-  //       rets.push(fileData);
-  //     }
-  //   });
-  //   return rets;
-  // }
-  // set files(attachments) {
-  //   this.attachmentIds = attachments.map(attachment => {
-  //     if (!(attachment instanceof File)) {
-  //       attachment = File.fromPartialData(attachment)
-  //     }
-  //     if (!attachment.missingData) {
-  //       AttachmentStore.setAttachmentData(attachment);
-  //     } else {
-  //       attachment = AttachmentStore.addAttachmentPartialData(attachment);
-  //     }
-  //     return attachment;
-  //   });
-  // }
 
   // Public: Returns an {Array} of {File} IDs
   fileIds() {
@@ -626,6 +635,13 @@ export default class Message extends ModelWithMetadata {
       }
       let processed = 0;
       (this.files || []).forEach(f => {
+        if (f.state === FileState.IgnoreMissing) {
+          processed += 2;
+          if (processed === total) {
+            resolve(ret);
+            return;
+          }
+        }
         const path = AttachmentStore.pathForFile(f);
         fs.access(path, fs.constants.R_OK, err => {
           if (err) {

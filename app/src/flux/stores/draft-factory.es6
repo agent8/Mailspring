@@ -111,15 +111,21 @@ const mergeDefaultBccAndCCs = async (message, account) => {
     mergeContacts('bcc', autoContacts);
   }
 };
-
+const getDraftDefaultValues = () => {
+  const defaultValues = {};
+  defaultValues.fontSize = AppEnv.config.get('core.fontsize') || '14px';
+  defaultValues.fontFace = AppEnv.config.get('core.fontface') || 'sans-serif';
+  return defaultValues;
+};
 class DraftFactory {
-  getBlankContentWithDefaultFontFamily() {
-    const defaultFont = AppEnv.config.get('core.fontface') || 'sans-serif';
+  getBlankContentWithDefaultFontValues() {
+    const defaultValues = getDraftDefaultValues();
+    const defaultSize = defaultValues.fontsize;
+    const defaultFont = defaultValues.fontFace;
     return `
-    <font style="font-family:${defaultFont}">
-      ${'\u200b'}
-      <br/>
-    </font>
+      <font style="font-size:${defaultSize};font-family:${defaultFont}">
+        <br/>
+      </font>
     `;
   }
   static updateFiles(message, refMessageIsDraft = false, noCopy = false) {
@@ -177,7 +183,7 @@ class DraftFactory {
     // const uniqueId = `${Math.floor(Date.now() / 1000)}.${Utils.generateTempId()}`;
     const uniqueId = uuid();
     const defaults = {
-      body: `${this.getBlankContentWithDefaultFontFamily()}`,
+      body: `${this.getBlankContentWithDefaultFontValues()}`,
       subject: '',
       version: 0,
       unread: false,
@@ -193,6 +199,7 @@ class DraftFactory {
       hasNewID: false,
       accountId: account.id,
       pastMessageIds: [],
+      defaultValues: getDraftDefaultValues(),
     };
 
     const merged = Object.assign(defaults, fields);
@@ -262,6 +269,7 @@ class DraftFactory {
       if (!account) {
         return null;
       }
+      const messageViewInfo = AppEnv.isDisableThreading() ? '-m' : '-t';
       const body = `<div>
             <div>
             User bug report:</br>
@@ -269,7 +277,7 @@ class DraftFactory {
             -----User bug report end-----</br>
             </div>
             <div>
-            [MacOS] ${AppEnv.getVersion()}${process.mas ? '-mas' : ''}
+            [MacOS] ${AppEnv.getVersion()}${process.mas ? '-mas' : ''}${messageViewInfo}
             </div></br>
             <div>
             SupportId: ${AppEnv.config.get('core.support.id')}
@@ -485,7 +493,7 @@ class DraftFactory {
     }
     const accountId = findAccountIdFrom(message, thread);
     let body = `
-        ${this.getBlankContentWithDefaultFontFamily()}
+        ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
           message.replyAttributionLine()
         )}</div>
@@ -496,7 +504,7 @@ class DraftFactory {
         </blockquote>
         `;
     if (!AppEnv.config.get('core.composing.includeOriginalEmailInReply')) {
-      body = `${this.getBlankContentWithDefaultFontFamily()}`;
+      body = `${this.getBlankContentWithDefaultFontValues()}`;
     }
     return this.createDraft({
       subject: Utils.subjectWithPrefix(message.subject, 'Re:'),
@@ -553,7 +561,7 @@ class DraftFactory {
       msgOrigin: Message.ForwardDraft,
       pastMessageIds: [message.id],
       body: `
-        ${this.getBlankContentWithDefaultFontFamily()}
+        ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote">
           <br>
           ---------- Forwarded message ---------

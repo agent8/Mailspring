@@ -98,7 +98,7 @@
       min-height: 40px;
       align-items: center;
       display: flex;
-      -webkit-app-region: no-drag;
+      // -webkit-app-region: no-drag;
       transition: top 0.2s ease-in-out;
       white-space: nowrap;
       padding: 11px 15px;
@@ -168,7 +168,7 @@
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
-        -webkit-app-region: drag;
+        // -webkit-app-region: drag;
       }
 
       .selection-label {
@@ -310,10 +310,16 @@
 }
 
 .mode-split {
-  .list-container {
-    .scroll-region {
-      border-right: 1px solid @border-color-primary;
-    }
+  // .list-container {
+  //   .scroll-region {
+  //     border-right: 1px solid @border-color-primary;
+  //   }
+  // }
+  .right-divider {
+    border-right: 1px solid @border-color-primary;
+  }
+  .bottom-divider {
+    border-bottom: 1px solid @border-color-primary;
   }
 }
 

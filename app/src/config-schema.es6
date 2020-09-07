@@ -112,7 +112,7 @@ export default {
             type: 'string',
             default: 'list',
             syncToServer: true,
-            enum: ['split', 'list'],
+            enum: ['split', 'list', 'split-v'],
           },
           systemTray: {
             type: 'boolean',
@@ -278,6 +278,10 @@ export default {
       fontface: {
         type: 'string',
         default: 'sans-serif',
+      },
+      fontsize: {
+        type: 'string',
+        default: '14px',
       },
       composing: {
         type: 'object',
