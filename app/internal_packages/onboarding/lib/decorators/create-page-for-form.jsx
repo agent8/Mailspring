@@ -256,6 +256,38 @@ const CreatePageForForm = FormComponent => {
           });
         return;
       }
+      // warn users about authenticating a Office365 account via IMAP
+      // and allow them to go back
+      if (
+        !didWarnAboutGmailIMAP &&
+        account.provider === 'imap' &&
+        account.settings.imap_host &&
+        account.settings.imap_host.includes('outlook.office365.com')
+      ) {
+        didWarnAboutGmailIMAP = true;
+        remote.dialog
+          .showMessageBox(null, {
+            type: 'warning',
+            buttons: ['Office365 OAuth', 'Continue', 'Go back'],
+            defaultId: 0,
+            cancelId: 2,
+            message: 'Are you sure?',
+            detail:
+              `This looks like an Office365 account! While it's possible to setup an App ` +
+              `Password and connect to Office365 via IMAP, EdisonMail also supports "Office365 OAuth".`,
+          })
+          .then(({ response }) => {
+            if (response === 2) {
+              OnboardingActions.moveToPage('account-choose');
+              return;
+            } else if (response === 0) {
+              OnboardingActions.chooseAccountProvider('office365-exchange');
+            } else {
+              proceedWithAccount();
+            }
+          });
+        return;
+      }
       proceedWithAccount();
     };
 
