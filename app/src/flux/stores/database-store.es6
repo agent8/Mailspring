@@ -19,7 +19,7 @@ const DEBUG_QUERY_PLANS = AppEnv.inDevMode();
 
 const BASE_RETRY_LOCK_DELAY = 50;
 const MAX_RETRY_LOCK_DELAY = 500;
-const SLOW_QUERY_THRESH_HOLD = 500;
+const SLOW_QUERY_THRESH_HOLD = 1500;
 export const AuxDBs = {
   MessageBody: 'embody.db',
 };
@@ -603,9 +603,14 @@ class DatabaseStore extends MailspringStore {
   //
   run(modelQuery, options = { format: true }) {
     return this._query(modelQuery.sql(), [], modelQuery._background).then(result => {
-      if (AppEnv.showQueryResults) {
+      if (AppEnv.showQueryResults || modelQuery.showQueryResults()) {
         try {
           AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
+          if (AppEnv.isHinata()) {
+            AppEnv.reportLog(new Error('upload sql results'), {
+              errorData: JSON.stringify(result.slice(5)),
+            });
+          }
         } catch (e) {
           AppEnv.logError(`Show query results failed ${e}`);
         }
@@ -638,9 +643,14 @@ class DatabaseStore extends MailspringStore {
         }
         return new Promise(resolve => {
           Promise.all(promises).then(rets => {
-            if (AppEnv.showQueryResults) {
+            if (AppEnv.showQueryResults || modelQuery.showQueryResults()) {
               try {
-                AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
+                AppEnv.logDebug(`query-results: ${JSON.stringify(rets)}`);
+                if (AppEnv.isHinata()) {
+                  AppEnv.reportLog(new Error('upload sql results'), {
+                    errorData: JSON.stringify(rets.slice(5)),
+                  });
+                }
               } catch (e) {
                 AppEnv.logError(`Show query results failed ${e}`);
               }

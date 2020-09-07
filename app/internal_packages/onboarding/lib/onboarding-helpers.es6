@@ -9,7 +9,7 @@ import dns from 'dns';
 import path from 'path';
 import util from 'util';
 import fs from 'fs';
-const regexpForDomain = test => new RegExp(`(^${test}$)|(\\.${test}$)`);
+const regexpForDomain = test => new RegExp(`(^${test}$)`);
 const writeFile = util.promisify(fs.writeFile);
 
 const queryStringify = (data, encoded = false) => {

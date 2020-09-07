@@ -38,11 +38,11 @@ export default class ExpungeMessagesTask extends Task {
       return this.taskDescription;
     }
     if (this.messageIds.length > 1) {
-      return `Expunged ${this.messageIds.length} messages`;
+      return `Permanently deleted ${this.messageIds.length} messages`;
     }
     if (this.messageIds.length === 1) {
-      return `Expunged message`;
+      return `Permanently deleted message`;
     }
-    return `Expunged`;
+    return `Permanently deleted`;
   }
 }

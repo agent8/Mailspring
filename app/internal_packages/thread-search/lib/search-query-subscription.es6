@@ -61,7 +61,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
       dbQuery = dbQuery.search(this._searchQuery);
     }
     dbQuery = dbQuery
-      .background()
+      // .background()
       .where({ state: 0 })
       .order(Thread.attributes.lastMessageTimestamp.descending())
       .limit(1000);
@@ -70,6 +70,9 @@ class SearchQuerySubscription extends MutableQuerySubscription {
       parsedQuery,
       searchQuery: this._searchQuery,
     });
+    if (AppEnv.isHinata()) {
+      dbQuery.setShowQueryResults(true);
+    }
     this.replaceQuery(dbQuery);
   }
 

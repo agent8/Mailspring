@@ -151,7 +151,7 @@ export default class ThreadListContextMenu {
     if (!canMoveToTrash) {
       if (perspective.canExpungeThreads(this.threads)) {
         return {
-          label: 'Expunge',
+          label: 'Delete Forever',
           click: () => {
             const tasks = TaskFactory.tasksForExpungingThreadsOrMessages({
               source: 'Context Menu: Thread List, Expunge',
@@ -171,7 +171,19 @@ export default class ThreadListContextMenu {
                 }
               });
             }
-            Actions.queueTasks(tasks);
+            AppEnv.showMessageBox({
+              title: 'Are you sure?',
+              detail: 'Message(s) will be permanently deleted.',
+              buttons: ['Yes', 'No'],
+              defaultId: 0,
+              cancelId: 1,
+            }).then(({ response } = {}) => {
+              if (response !== 0) {
+                AppEnv.logDebug(`Expunging message canceled, user clicked No`);
+                return;
+              }
+              Actions.queueTasks(tasks);
+            });
           },
         };
       }

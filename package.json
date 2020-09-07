@@ -85,7 +85,7 @@
     "build-docs": "grunt docs --gruntfile=app/build/Gruntfile.js --base=./ && mkdir -p app/dist-docs && cp README.md ./app/build/docs_src/README.md && gitbook --gitbook=latest build . ./app/dist-docs --log=debug --debug && rm ./app/build/docs_src/README.md && rm -rf ./app/build/docs_src/classes",
     "ci-setup-mac-keychain": "grunt setup-mac-keychain --gruntfile=app/build/Gruntfile.js --base=./",
     "sign-mac-mas": "sh scripts/sign_for_mac_app_store.sh",
-    "build-mac-mas": "npm run rebuild && SIGN_BUILD=true npm run build-mas",
+    "build-mac-mas": "npm run rebuild && SIGN_BUILD=true npm run build-mas && npm run sign-mac-mas",
     "build-mas": "grunt build-client --is-mas=true --gruntfile=app/build/Gruntfile.js --base=./",
     "icon-font": "gulp -f scripts/generate-icon-font.js Iconfont"
   },

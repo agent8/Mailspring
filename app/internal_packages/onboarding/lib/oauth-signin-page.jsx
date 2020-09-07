@@ -9,7 +9,7 @@ import url from 'url';
 import FormErrorMessage from './form-error-message';
 import { LOCAL_SERVER_PORT } from './onboarding-helpers';
 const INVITE_COUNT_KEY = 'invite.count';
-const OPEN_BROWSER_PROVIDERS = ['google', 'outlook', 'yahoo', 'office365'];
+const OPEN_BROWSER_PROVIDERS = ['google', 'outlook', 'yahoo', 'office365', 'jira'];
 
 export default class OAuthSignInPage extends React.Component {
   static displayName = 'OAuthSignInPage';
@@ -453,7 +453,7 @@ export default class OAuthSignInPage extends React.Component {
     }
     return (
       <div className={`page account-setup oauth ${serviceName}`}>
-        {!process.mas && (
+        {this.needOpenInBrowser(serviceName) && (
           <div title="Open browser" className="oauth-browser-btn" onClick={this.openBrowser}>
             <RetinaImg
               name="popout.svg"

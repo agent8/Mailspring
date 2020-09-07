@@ -26,6 +26,15 @@ mailspring-workspace {
   // Important: This attribute is used in the theme-manager-specs to check that
   // themes load and override each other correctly. Do not remove!
   background-color: @background-primary;
+  & .draggable-bar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 14px;
+    -webkit-app-region: drag;
+    z-index: 99;
+  }
 }
 
 // the name for bg img must is in @{class}-passive、@{class}-hover、@{class}-active
@@ -49,10 +58,10 @@ mailspring-workspace {
 }
 
 .layout-mode-popout {
-  -webkit-app-region: no-drag;
+  // -webkit-app-region: no-drag;
 }
 .layout-mode-list {
-  -webkit-app-region: drag;
+  // -webkit-app-region: drag;
   .selection-bar div.multiselect-toolbar-root {
     border-right: none;
     &.no-threads {
@@ -65,9 +74,15 @@ mailspring-workspace {
     min-width: 220px;
   }
 }
+// .layout-mode-split {
+//   .toolbar-ThreadList .thread-search-bar {
+//     display: none;
+//   }
+// }
 .layout-mode-split {
-  .toolbar-ThreadList .thread-search-bar {
-    display: none;
+  .column-OutboxMessage,
+  .column-MessageList {
+    padding-top: 0;
   }
 }
 .layout-mode-list {
@@ -196,7 +211,7 @@ img.icon-small {
   .loopBtn(1);
 
   button {
-    -webkit-app-region: no-drag;
+    // -webkit-app-region: no-drag;
     display: inline-block;
     padding: 0;
     width: 12px;
@@ -264,7 +279,7 @@ body.is-blurred {
 
 .sheet-toolbar {
   position: relative;
-  -webkit-app-region: drag;
+  // -webkit-app-region: drag;
   width: 100%;
   height: 14px;
 
@@ -283,7 +298,7 @@ body.is-blurred {
   .toolbar-OutboxMessage,
   .toolbar-MessageList {
     height: @search-bar-height;
-    // border-bottom: 1px solid @border-color-primary;
+    border-bottom: 1px solid @border-color-primary;
   }
   .toolbar-MessageList {
     &.has-shadow {
@@ -360,19 +375,19 @@ body.is-blurred {
     }
   }
 
-  .mode-split .toolbar-ThreadList .item-container {
-    display: block !important;
-    .thread-search-bar {
-      width: 200%;
-      max-width: 700px;
-    }
-  }
+  // .mode-split .toolbar-ThreadList .item-container {
+  //   display: block !important;
+  //   .thread-search-bar {
+  //     width: 200%;
+  //     max-width: 700px;
+  //   }
+  // }
 
   .item-container > * {
-    -webkit-app-region: no-drag;
+    // -webkit-app-region: no-drag;
   }
   .item-spacer {
-    -webkit-app-region: drag;
+    // -webkit-app-region: drag;
   }
 
   .item-compose {
@@ -386,7 +401,7 @@ body.is-blurred {
       text-align: center;
       left: 50%;
       transform: translateX(-50%);
-      -webkit-app-region: drag;
+      // -webkit-app-region: drag;
       line-height: 36px;
       &:hover {
         cursor: default;
@@ -724,7 +739,7 @@ body.platform-win32 {
 }
 .column-RootSidebar {
   // border-right: 1px solid @border-color-primary;
-  -webkit-app-region: no-drag;
+  // -webkit-app-region: no-drag;
   flex-shrink: 0;
   box-shadow: 0 1px 20px 0 rgba(0, 0, 0, 0.1);
   z-index: 2;
@@ -742,10 +757,8 @@ body.platform-win32 {
 .column-OutboxMessage,
 .column-ThreadList,
 .column-MessageList {
-  margin-top: @search-bar-height;
-  padding-bottom: @search-bar-height;
-  -webkit-app-region: no-drag;
-  border-top: 1px solid @border-color-primary;
+  padding-top: @search-bar-height;
+  // -webkit-app-region: no-drag;
   div {
     // This is for DC-182 reduce height because of thread-list-empty-bar
     div:nth-child(2).key-commands-region.thread-list,
@@ -762,9 +775,8 @@ body.platform-win32 {
 }
 .column-OutboxMessage,
 .column-MessageList {
-  margin-top: 0;
-  top: 68px;
-  height: calc(~'100% - 40px') !important;
+  // margin-top: 0;
+  // height: calc(~'100% - 40px') !important;
   & > div.empty {
     height: 100%;
     background: url(../static/images/empty-state/EmptyMail.png) no-repeat center center;
@@ -781,12 +793,16 @@ body.platform-win32 {
     align-items: center;
     justify-content: center;
   }
+  & > .key-commands-region {
+    overflow: hidden;
+    padding-bottom: 40px;
+  }
 }
 
 .column-DraftList {
   margin-top: @search-bar-height;
   padding-bottom: @search-bar-height;
-  -webkit-app-region: no-drag;
+  // -webkit-app-region: no-drag;
   border-top: 1px solid @border-color-primary;
 }
 .mode-list .column-SiftList,

@@ -531,6 +531,7 @@ class Actions {
   static syncSiftFolder = ActionScopeMainWindow;
   static fetchBodies = ActionScopeMainWindow;
   static fetchAttachments = ActionScopeMainWindow;
+  static extractTnefFile = ActionScopeWindow;
   static pushToFetchAttachmentsQueue = ActionScopeWindow;
   static fetchAndOpenFile = ActionScopeWindow;
   static fetchAndSaveFile = ActionScopeWindow;

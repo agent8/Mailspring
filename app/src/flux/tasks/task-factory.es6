@@ -12,6 +12,8 @@ import ExpungeMessagesTask from './expunge-messages-task';
 import DestroyDraftTask from './destroy-draft-task';
 import CancelOutboxDraftTask from './cancel-outbox-draft-task';
 import SyncbackCategoryTask from './syncback-category-task';
+import MakePrimaryTask from './make-primary-task';
+import MakeOtherTask from './make-other-task';
 import { bannedPathNames } from '../../constant';
 
 const TaskFactory = {
@@ -232,18 +234,29 @@ const TaskFactory = {
     return new ChangeUnreadTask({ threads, unread, source, canBeUndone });
   },
 
-  taskForSettingUnread({ threads, unread, source, canBeUndone }) {
-    const threadsByFolder = this._splitByAccount(threads);
+  taskForSettingUnread({ threads, messages, unread, source, canBeUndone }) {
     const tasks = [];
-    for (const accId in threadsByFolder) {
+    const threadsByAccount = this._splitByAccount(threads);
+    const messagesByAccount = this._splitByAccount(messages);
+    const accountIds = Object.keys(threadsByAccount);
+    Object.keys(messagesByAccount).forEach(accountId => {
+      if (!accountIds.includes(accountId)) {
+        accountIds.push(accountId);
+      }
+    });
+    accountIds.forEach(accId => {
+      const threads = threadsByAccount[accId] || [];
+      const messages = messagesByAccount[accId] || [];
       const t = new ChangeUnreadTask({
-        threads: threadsByFolder[accId],
+        threads,
+        messages,
         unread,
         source,
         canBeUndone,
       });
       tasks.push(t);
-    }
+    });
+
     return tasks;
   },
 
@@ -457,6 +470,32 @@ const TaskFactory = {
     }
     return new UndoTask({ referenceTaskId: task.id, accountId: task.accountId });
   },
+
+  tasksForMoveToOther(threads) {
+    const tasks = [];
+    const threadsByAccount = this._splitByAccount(threads);
+    const accountIds = Object.keys(threadsByAccount);
+    accountIds.forEach(accId => {
+      const threadIds = (threadsByAccount[accId] || []).map(t => t.id);
+      const t = new MakeOtherTask({ accountId: accId, threadIds: threadIds });
+      tasks.push(t);
+    });
+
+    return tasks;
+  },
+  tasksForMoveToFocused(threads) {
+    const tasks = [];
+    const threadsByAccount = this._splitByAccount(threads);
+    const accountIds = Object.keys(threadsByAccount);
+    accountIds.forEach(accId => {
+      const threadIds = (threadsByAccount[accId] || []).map(t => t.id);
+      const t = new MakePrimaryTask({ accountId: accId, threadIds: threadIds });
+      tasks.push(t);
+    });
+
+    return tasks;
+  },
+
   findPreviousFolder(currentPerspective, accountId) {
     if (currentPerspective) {
       let previousFolder = currentPerspective.categories().find(cat => cat.accountId === accountId);
@@ -479,13 +518,15 @@ const TaskFactory = {
     return null;
   },
 
-  _splitByAccount(threads) {
-    const accountIds = _.uniq(threads.map(({ accountId }) => accountId));
+  _splitByAccount(items) {
     const result = {};
-    for (const accId of accountIds) {
-      const threadsByAccount = threads.filter(item => item.accountId === accId);
-      // const arr = this._splitByFolder(threadsByAccount);
-      result[accId] = threadsByAccount;
+    if (Array.isArray(items) && items.length > 0) {
+      const accountIds = _.uniq(items.map(({ accountId }) => accountId));
+      for (const accId of accountIds) {
+        const itemsByAccount = items.filter(item => item.accountId === accId);
+        // const arr = this._splitByFolder(threadsByAccount);
+        result[accId] = itemsByAccount;
+      }
     }
     return result;
   },

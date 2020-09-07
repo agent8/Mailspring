@@ -23,8 +23,9 @@ class AppearanceModeOption extends React.Component {
     }
 
     const label = {
-      list: 'One Panel',
-      split: 'Two Panels',
+      list: 'Full Screen',
+      split: 'Reading Pane Right',
+      'split-v': 'Reading Pane Bottom',
     }[this.props.mode];
 
     return (
@@ -106,13 +107,18 @@ class InitialPreferencesOptions extends React.Component {
             <br />
             mailbox lists.
           </p> */}
-          <Flexbox direction="row" style={{ alignItems: 'center', width: 578 }}>
-            {['list', 'split'].map(mode => (
+          <Flexbox direction="row" style={{ alignItems: 'center', width: 640 }}>
+            {['list', 'split', 'split-v'].map(mode => (
               <AppearanceModeOption
                 mode={mode}
                 key={mode}
                 active={this.props.config.get('core.workspace.mode') === mode}
-                onClick={() => this.props.config.set('core.workspace.mode', mode)}
+                onClick={() => {
+                  this.props.config.set('core.workspace.mode', mode);
+                  if (mode.startsWith('split')) {
+                    AppEnv.config.set('core.workspace.mode-split', mode);
+                  }
+                }}
               />
             ))}
           </Flexbox>

@@ -175,8 +175,6 @@ module.exports = ErrorLogger = (function() {
     }
     if (error.name === 'conflict' && error.status === 409) {
       console.warn(error, extra);
-    } else {
-      // console.error(error, extra);
     }
   };
 
