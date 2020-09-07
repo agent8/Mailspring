@@ -551,7 +551,7 @@ class Config {
   // Returns a {Boolean}
   // * `true` if the value was set.
   // * `false` if the value was not able to be coerced to the type specified in the setting's schema.
-  set(keyPath, value) {
+  set(keyPath, value, silent) {
     if (value === undefined) {
       value = _.valueForKeyPath(this.defaultSettings, keyPath);
     } else {
@@ -570,7 +570,7 @@ class Config {
       value = JSON.parse(JSON.stringify(value));
     }
 
-    this.setRawValue(keyPath, value);
+    this.setRawValue(keyPath, value, silent);
     if (
       process.type === 'renderer' &&
       AppEnv &&
@@ -601,13 +601,13 @@ class Config {
       let value = item.value;
       const { type, notifyNative, mergeServerToLocal } = this.getSchema(item.key);
       // special config should use special func
-      if (UpdateToServerSimpleSettingTypes.includes(type)) {
+      if (UpdateToServerComplexSettingTypes.includes(type)) {
         if (mergeServerToLocal && typeof mergeServerToLocal === 'function') {
           value = await mergeServerToLocal(item.value);
         } else {
           value = null;
         }
-      } else if (UpdateToServerComplexSettingTypes.includes(type)) {
+      } else if (UpdateToServerSimpleSettingTypes.includes(type)) {
         if (value === undefined) {
           value = _.valueForKeyPath(this.defaultSettings, item.key);
         } else {
@@ -932,11 +932,13 @@ class Config {
       if (!oldValue) {
         return;
       }
-      const { update = [], remove = [] } = (await mergeLocalToServer(oldValue, value)) || {};
+      const { update = [], remove = [], callback = () => {} } =
+        (await mergeLocalToServer(oldValue, value)) || {};
       const result = await PreferencesRest.updateListPreferences(keyPath, { update, remove });
       if (result.successful) {
         const { data } = result;
-        const resultList = [...data.removeResults, ...data.updateResults];
+        const { removeResults = [], updateResults = [] } = data;
+        const resultList = [...removeResults, ...updateResults];
         if (resultList.some(subResult => subResult.code === UpdateSettingCode.Conflict)) {
           const version = this.getConfigUpdateTime(keyPath);
           const createConfigList = [
@@ -950,7 +952,9 @@ class Config {
           ];
           this._syncPreferencesFromServer(createConfigList);
         } else {
-          // success, pass
+          if (callback && typeof callback === 'function') {
+            callback();
+          }
         }
       } else {
         this._logError('Sync setting to server fail', new Error(result.message));
@@ -1199,10 +1203,10 @@ class Config {
     }
   }
 
-  setRawValue(keyPath, value) {
+  setRawValue(keyPath, value, silent = false) {
     app.configPersistenceManager.setRawValue(keyPath, value, webContentsId);
     const configSchema = this.getSchema(keyPath);
-    if (process.type === 'renderer' && configSchema && configSchema.syncToServer) {
+    if (process.type === 'renderer' && !silent && configSchema && configSchema.syncToServer) {
       this._syncSettingToServer(keyPath, value);
     }
     if (configSchema && configSchema.notifyNative) {

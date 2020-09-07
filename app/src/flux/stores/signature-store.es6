@@ -9,7 +9,7 @@ import { autoGenerateNameByNameList } from '../../fs-utils';
 const { PreferencesSubListStateEnum } = Constant;
 
 const sigDefaultTemplate = {
-  id: 'initial',
+  id: uuid().toLowerCase(),
   title: 'Untitled',
   tsClientUpdate: 0,
   state: PreferencesSubListStateEnum.synchronized,
@@ -38,14 +38,12 @@ class SignatureStore extends MailspringStore {
 
     fs.exists(this._signaturesDir, exists => {
       if (!exists) {
-        fs.mkdir(this._signaturesDir, () => {
-          fs.writeFile(
-            path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),
-            sigDefaultTemplate.body,
-            () => {}
-          );
-        });
+        fs.mkdirSync(this._signaturesDir);
       }
+      fs.writeFileSync(
+        path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),
+        sigDefaultTemplate.body
+      );
     });
 
     this.listenTo(Actions.addSignature, this._onAddSignature);
@@ -64,6 +62,8 @@ class SignatureStore extends MailspringStore {
     });
     AppEnv.config.onDidChange(`defaultSignatures`, () => {
       this.defaultSignatures = AppEnv.config.get(`defaultSignatures`);
+      // Trigger signature update and synchronization
+      AppEnv.config.set(`signatures`, this.signatures);
       this.trigger();
     });
   }

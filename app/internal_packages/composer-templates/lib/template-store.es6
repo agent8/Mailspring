@@ -35,7 +35,7 @@ function mergeContacts(oldContacts = [], contacts = []) {
   return result;
 }
 const WelcomeTemplate = {
-  id: 'Welcome to Templates',
+  id: uuid().toLowerCase(),
   title: 'Welcome to Templates',
   tsClientUpdate: 0,
   state: PreferencesSubListStateEnum.synchronized,
@@ -63,16 +63,14 @@ class TemplateStore extends MailspringStore {
     this._autoselectTemplateId();
 
     fs.exists(this._templatesDir, exists => {
+      const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
       if (!exists) {
-        const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
-        fs.mkdir(this._templatesDir, () => {
-          fs.writeFile(
-            path.join(this._templatesDir, `${WelcomeTemplateBody.id}.html`),
-            WelcomeTemplateBody,
-            () => {}
-          );
-        });
+        fs.mkdirSync(this._templatesDir);
       }
+      fs.writeFileSync(
+        path.join(this._templatesDir, `${WelcomeTemplate.id}.html`),
+        WelcomeTemplateBody
+      );
     });
 
     this.listenTo(TemplateActions.addTemplate, this._onAddTemplate);

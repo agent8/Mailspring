@@ -54,16 +54,17 @@ export const downloadFile = (key, downloadFilePath) => {
 export const uploadFile = (key, uploadFilePath) => {
   return new Promise((resolve, reject) => {
     const readS = fs.createReadStream(uploadFilePath);
-    var uploadParams = { Bucket: BUCKET, Key: key, Body: readS };
-    const request = s3.upload(uploadParams);
-    request.on('error', err => {
-      readS.destroy();
+    readS.on('error', function(err) {
       reject(err);
     });
-    request.on('success', () => {
-      console.log('finished Upload: ', key, downloadFilePath);
-      resolve();
+    var uploadParams = { Bucket: BUCKET, Key: key, Body: readS };
+    s3.putObject(uploadParams, (err, data) => {
+      if (err) {
+        reject(err);
+      } else if (data) {
+        console.error('finished Upload: ', key, uploadFilePath);
+        resolve();
+      }
     });
-    request.send();
   });
 };
