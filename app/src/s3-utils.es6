@@ -62,7 +62,7 @@ export const uploadFile = (key, uploadFilePath) => {
       if (err) {
         reject(err);
       } else if (data) {
-        console.error('finished Upload: ', key, uploadFilePath);
+        console.log('finished Upload: ', key, uploadFilePath);
         resolve();
       }
     });

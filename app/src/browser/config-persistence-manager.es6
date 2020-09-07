@@ -39,7 +39,7 @@ export default class ConfigPersistenceManager {
     if (signatures && !Array.isArray(signatures)) {
       const newSignature = Object.keys(signatures).map(signatureFileName => {
         const newId = uuid().toLowerCase();
-        const oldValue = templates[signatureFileName];
+        const oldValue = signatures[signatureFileName];
         const sigDir = path.join(this.configDirPath, 'signatures');
         renameFileList.push([
           path.join(sigDir, `${signatureFileName}.html`),
@@ -83,7 +83,9 @@ export default class ConfigPersistenceManager {
     }
     if (renameFileList.length) {
       renameFileList.forEach(item => {
-        fs.renameSync(item[0], item[1]);
+        if (fs.existsSync(item[0])) {
+          fs.renameSync(item[0], item[1]);
+        }
       });
     }
     return json;
@@ -162,7 +164,7 @@ export default class ConfigPersistenceManager {
         throw new Error('config json appears empty');
       }
 
-      this.settings = _dataStructureUpgrade(configJson['*']);
+      this.settings = this._dataStructureUpgrade(configJson['*']);
 
       progress = this.configChangeTimeFilePath;
 
