@@ -726,6 +726,10 @@ class Config {
   }
 
   syncAllPreferencesFromServer = async () => {
+    const syncAccountIds = this.get('edisonAccount') || [];
+    if (!syncAccountIds.length) {
+      return;
+    }
     const { PreferencesRest } = require('./rest');
     const setting = await PreferencesRest.getAllPreferences();
     if (!setting.successful) {
