@@ -218,7 +218,7 @@ export default class PreferencesSignatures extends React.Component {
       }
       (account.getAllAliasContacts() || []).forEach(alias => {
         signatureId =
-          typeof account.signatureId === 'function'
+          typeof alias.signatureId === 'function'
             ? alias.signatureId()
             : `local-${alias.accountId}-${alias.email}-${alias.name}`;
         if (this.state.defaults[signatureId] === sig.id) {
