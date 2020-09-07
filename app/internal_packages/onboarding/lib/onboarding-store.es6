@@ -222,16 +222,14 @@ class OnboardingStore extends MailspringStore {
       //   this._onMoveToPage('sorry');
       //   return;
       // }
-
-      // register the first account to edison account
-      // const oldAccountsNum = AccountStore.accountIds().length;
-      // if (oldAccountsNum === 1) {
-      //   const syncAccount = AccountStore.syncAccount();
-      //   if (!syncAccount) {
-      //     // the first account auto to register edison account
-      //     EdisonAccountRest.register(account.id);
-      //   }
-      // }
+      const oldAccountsNum = AccountStore.accountIds().length;
+      if (oldAccountsNum === 1) {
+        const syncAccount = AccountStore.syncAccount();
+        if (!syncAccount) {
+          // the first account auto to register edison account
+          EdisonAccountRest.register(account.id);
+        }
+      }
       this._onMoveToPage('account-add-another');
     } else {
       // let them see the "success" screen for a moment

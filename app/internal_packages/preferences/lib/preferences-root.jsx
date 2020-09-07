@@ -63,6 +63,7 @@ class PreferencesRoot extends React.Component {
     this._regionId = Utils.generateTempId();
     ReactDOM.findDOMNode(this).focus();
     this._focusContent();
+    AppEnv.config.syncAllPreferencesFromServer();
   }
 
   componentDidUpdate(oldProps) {

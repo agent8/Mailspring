@@ -1,6 +1,14 @@
 import { RetinaImg } from 'mailspring-component-kit';
 import React from 'react';
 import moment from 'moment';
+import {
+  mergeLocalSignaturesToServer,
+  mergeServerSignaturesToLocal,
+  mergelocalTemplatesToServer,
+  mergeServerTemplatesToLocal,
+  mergeLocalAccountsToServer,
+  mergeServerAccountsToLocal,
+} from './sync-preferences';
 
 moment.locale(navigator.language);
 // get the default date format like 'MM/DD/YYYY'、'DD/MM/YYYY'
@@ -70,6 +78,7 @@ export default {
           fetchEmailRange: {
             type: 'integer',
             default: 365,
+            syncToServer: true,
             enum: [7, 30, 90, 365, -1],
             enumLabels: [
               'Within 7 Days',
@@ -102,11 +111,13 @@ export default {
           mode: {
             type: 'string',
             default: 'list',
+            syncToServer: true,
             enum: ['split', 'list', 'split-v'],
           },
           systemTray: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Show icon in menu bar',
             platforms: ['darwin', 'linux'],
           },
@@ -114,6 +125,8 @@ export default {
             type: 'boolean',
             default: true,
             notifyNative: true,
+            syncToServer: true,
+            syncToServerCommonKey: 'focused_inbox_enabled',
             title: 'Enable Focused Inbox (only show important senders in your inbox)',
           },
           promptedFocusedInbox: {
@@ -127,16 +140,19 @@ export default {
           showImportant: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Show important markers (Gmail only)',
           },
           showLabels: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Show labels (Gmail only)',
           },
           showUnreadForAllCategories: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Show unread count for all folders',
           },
           enableChat: {
@@ -151,23 +167,27 @@ export default {
           },
           use24HourClock: {
             type: 'boolean',
+            syncToServer: true,
             default: false,
             title: 'Use 24-hour clock',
           },
           sendUsageData: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Send usage data to help improve the performance of the app',
           },
           interfaceZoom: {
             title: 'Override standard interface scaling',
             type: 'number',
             default: 1,
+            syncToServer: true,
             advanced: true,
           },
           threadView: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
           },
         },
       },
@@ -185,6 +205,12 @@ export default {
           type: 'string',
         },
       },
+      themeMode: {
+        type: 'string',
+        default: 'ui-light',
+        syncToServer: true,
+        enum: ['ui-dark', 'ui-light', 'auto'],
+      },
       keymapTemplate: {
         type: 'string',
         default: 'Gmail',
@@ -195,6 +221,7 @@ export default {
           openFolderAfterDownload: {
             type: 'boolean',
             default: false,
+            syncToServer: true,
             title: 'Open containing folder after downloading attachments',
           },
           displayFilePreview: {
@@ -204,6 +231,7 @@ export default {
           },
           downloadFolder: {
             default: 'Downloads',
+            syncToServer: true,
             type: 'component',
           },
         },
@@ -214,6 +242,7 @@ export default {
           markAsReadDelay: {
             type: 'integer',
             default: 0,
+            syncToServer: true,
             enum: [0, 500, 2000, -1],
             enumLabels: ['Instantly', 'After ½ Second', 'After 2 Seconds', 'Manually'],
             title: 'When reading messages, mark as read after',
@@ -221,11 +250,13 @@ export default {
           autoloadImages: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Automatically load images in open emails',
           },
           actionAfterRemove: {
             type: 'string',
             default: 'next',
+            syncToServer: true,
             enum: ['next', 'previous', 'return'],
             enumLabels: ['Open next', 'Open previous', 'Return to email list'],
             title: 'When mail is Archived or Deleted',
@@ -233,11 +264,13 @@ export default {
           descendingOrderMessageList: {
             type: 'boolean',
             default: false,
+            syncToServer: true,
             title: 'Display conversations in descending chronological order',
           },
           openReplyInNewWindow: {
             type: 'boolean',
             default: false,
+            syncToServer: true,
             title: 'Open reply in new window',
           },
         },
@@ -256,6 +289,7 @@ export default {
           showCcAndBcc: {
             type: 'string',
             default: 'cc',
+            syncToServer: true,
             enum: ['none', 'cc', 'cc+bcc'],
             enumLabels: ['None', 'CC', 'CC and BCC'],
             title: 'Show CC, BCC when forwarding or composing new draft',
@@ -263,16 +297,19 @@ export default {
           includeOriginalEmailInReply: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Include original email when replying to a message',
           },
           spellcheck: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Check messages for spelling',
           },
           spellcheckDefaultLanguage: {
             type: 'string',
             default: '',
+            syncToServer: true,
             enum: [
               '',
               'bg',
@@ -401,6 +438,7 @@ export default {
           enabled: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Show quick actions when hovering over emails in your list',
           },
           image: {
@@ -410,6 +448,7 @@ export default {
           quickAction1: {
             type: 'string',
             default: 'archive',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Action 1',
@@ -417,6 +456,7 @@ export default {
           quickAction2: {
             type: 'string',
             default: 'flag',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Action 2',
@@ -424,6 +464,7 @@ export default {
           quickAction3: {
             type: 'string',
             default: 'trash',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Action 3',
@@ -431,6 +472,7 @@ export default {
           quickAction4: {
             type: 'string',
             default: 'read',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Action 4',
@@ -443,6 +485,7 @@ export default {
           enabled: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Enable swipe actions',
           },
           image: {
@@ -452,6 +495,7 @@ export default {
           leftShortAction: {
             type: 'string',
             default: 'archive',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Left short swipe',
@@ -459,6 +503,7 @@ export default {
           leftLongAction: {
             type: 'string',
             default: 'flag',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Left long swipe',
@@ -466,6 +511,7 @@ export default {
           rightShortAction: {
             type: 'string',
             default: 'read',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Right Short swipe',
@@ -473,6 +519,7 @@ export default {
           rightLongAction: {
             type: 'string',
             default: 'trash',
+            syncToServer: true,
             enum: actionValues,
             enumLabels: actionLabels,
             title: 'Right Long swipe',
@@ -489,6 +536,7 @@ export default {
           mailAction1: {
             type: 'string',
             default: 'archive',
+            syncToServer: true,
             enum: emailActionValues,
             enumLabels: emailActionLabels,
             title: 'Action 1',
@@ -496,6 +544,7 @@ export default {
           mailAction2: {
             type: 'string',
             default: 'trash',
+            syncToServer: true,
             enum: emailActionValues,
             enumLabels: emailActionLabels,
             title: 'Action 2',
@@ -503,6 +552,7 @@ export default {
           mailAction3: {
             type: 'string',
             default: 'flag',
+            syncToServer: true,
             enum: emailActionValues,
             enumLabels: emailActionLabels,
             title: 'Action 3',
@@ -510,6 +560,7 @@ export default {
           mailAction4: {
             type: 'string',
             default: 'read',
+            syncToServer: true,
             enum: emailActionValues,
             enumLabels: emailActionLabels,
             title: 'Action 4',
@@ -517,6 +568,7 @@ export default {
           mailAction5: {
             type: 'string',
             default: 'folder',
+            syncToServer: true,
             enum: emailActionValues,
             enumLabels: emailActionLabels,
             title: 'Action 5',
@@ -529,6 +581,7 @@ export default {
           delayInMs: {
             type: 'number',
             default: 5000,
+            syncToServer: true,
             enum: [5000, 15000, 30000, 60000, 0],
             enumLabels: ['5 seconds', '15 seconds', '30 seconds', '60 seconds', 'Disable'],
             title: 'Undo time window',
@@ -536,6 +589,7 @@ export default {
           undoQueueOnlyShowOne: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Only show one Undo',
           },
         },
@@ -556,13 +610,23 @@ export default {
             type: 'boolean',
             default: false,
             title: 'Send mail sound',
+            syncToServer: true,
+            syncToServerCommonKey: 'play_sound_after_email_sent',
           },
           defaultReplyType: {
             type: 'string',
             default: 'reply-all',
+            syncToServer: true,
             enum: ['reply', 'reply-all'],
             enumLabels: ['Reply', 'Reply All'],
             title: 'Default reply behavior',
+          },
+          defaultAccountIdForSend: {
+            type: 'string',
+            default: 'selected-mailbox',
+            syncToServer: true,
+            enum: [],
+            enumLabels: [],
           },
         },
       },
@@ -582,6 +646,7 @@ export default {
           sounds: {
             type: 'boolean',
             default: false,
+            syncToServer: true,
             title: 'New mail sound',
           },
           // unsnoozeToTop: {
@@ -592,6 +657,7 @@ export default {
           countBadge: {
             type: 'string',
             default: 'unread',
+            syncToServer: true,
             enum: ['hide', 'unread', 'total'],
             enumLabels: ['Hide Badge', 'Show Unread Count', 'Show Total Count'],
             title: 'Dock badge count',
@@ -605,11 +671,13 @@ export default {
           sidebaricons: {
             type: 'boolean',
             default: false,
+            syncToServer: true,
             title: 'Show icons in the left-hand menu.',
           },
           previewLines: {
             type: 'number',
             default: '2',
+            syncToServer: true,
             enum: [0, 1, 2, 3, 4],
             enumLabels: ['None', '1 line', '2 lines', '3 lines', '4 lines'],
             title: 'Preview lines (two panel view only)',
@@ -617,11 +685,13 @@ export default {
           profile: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Show profile pictures',
           },
           adaptiveEmailColor: {
             type: 'boolean',
             default: true,
+            syncToServer: true,
             title: 'Enable Adaptive Coloring for emails.',
             note:
               'Email content automatically adapts to the background color of the theme to preserve screen brightness. This can alter the original background and text color of emails in dark mode vs light mode. Turn this off to always view the original email when the app is in dark mode.',
@@ -629,6 +699,7 @@ export default {
           dateFormat: {
             type: 'string',
             default: defaultDateFormatOption,
+            syncToServer: true,
             enum: dateFormatOption,
             enumLabels: dateFormatOption,
             title: 'Date format',
@@ -644,16 +715,62 @@ export default {
               optOut: {
                 type: 'boolean',
                 default: false,
+                syncToServer: true,
                 title: 'Opt Out of data share',
               },
             },
           },
         },
       },
+      suggestContact: {
+        type: 'array',
+        default: [],
+        title: '',
+        syncToServerCommonKey: 'suggestcontact',
+        mergeServerToLocal: null,
+        mergeLocalToServer: null,
+      },
     },
   },
   chatPanelHeight: {
     type: 'number',
     default: 300,
+  },
+  commonSettingsVersion: {
+    type: 'number',
+    default: 0,
+  },
+  macSettingsVersion: {
+    type: 'number',
+    default: 0,
+  },
+  accounts: {
+    type: 'array',
+    default: [],
+    syncToServer: true,
+    mergeServerToLocal: mergeServerAccountsToLocal,
+    mergeLocalToServer: mergeLocalAccountsToServer,
+  },
+  signatures: {
+    type: 'array',
+    default: [],
+    syncToServer: true,
+    syncToServerCommonKey: 'signature',
+    mergeLocalToServer: mergeLocalSignaturesToServer,
+    mergeServerToLocal: mergeServerSignaturesToLocal,
+  },
+  templates: {
+    type: 'array',
+    default: [],
+    syncToServer: true,
+    syncToServerCommonKey: 'template',
+    mergeLocalToServer: mergelocalTemplatesToServer,
+    mergeServerToLocal: mergeServerTemplatesToLocal,
+  },
+  signaturesCommon: {
+    type: 'boolean',
+    default: false,
+    syncToServer: false,
+    syncToServerCommonKey: 'signature_common',
   },
 };

@@ -367,4 +367,45 @@ export default class EdisonAccount {
       return new RESTResult(false, error.message);
     }
   }
+
+  async subAccounts() {
+    const url = `${this.host}/api/charge/user/subAccounts`;
+    const syncAccount = AccountStore.syncAccount();
+    if (!syncAccount) {
+      return new RESTResult(false, 'sync account is unexpected');
+    }
+
+    const token = syncAccount.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'sync account has no token');
+    }
+
+    const accounts = AccountStore.accounts();
+    const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
+    const postData = subAccounts.map(a => {
+      const postData = {
+        host: a.settings.imap_host,
+      };
+      if (a.emailAddress) {
+        postData['emailAddress'] = a.emailAddress;
+      }
+      if (a.name) {
+        postData['username'] = a.name;
+      }
+      return postData;
+    });
+
+    try {
+      const { data } = await axios.post(url, postData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      this._handleResCode(data.code, account);
+      return new RESTResult(data.code === 0, data.message);
+    } catch (error) {
+      return new RESTResult(false, error.message);
+    }
+  }
 }
