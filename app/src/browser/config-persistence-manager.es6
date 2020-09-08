@@ -1,7 +1,6 @@
 import path from 'path';
 import fs from 'fs-plus';
 import { BrowserWindow, dialog, app } from 'electron';
-import uuid from 'uuid';
 import { atomicWriteFileSync } from '../fs-utils';
 import Utils from '../flux/models/utils';
 
@@ -26,81 +25,6 @@ export default class ConfigPersistenceManager {
 
     this.initializeConfigDirectory();
     this.load();
-  }
-
-  _dataStructureUpgrade(json) {
-    if (!json) {
-      return {};
-    }
-    const { templates, signatures, defaultSignatures } = json;
-    const renameFileList = [];
-    if (signatures && !Array.isArray(signatures)) {
-      const newDefaultSignatures = { ...(defaultSignatures || {}) };
-      const newSignature = Object.keys(signatures).map(signatureFileName => {
-        const newId = uuid().toLowerCase();
-        const oldValue = signatures[signatureFileName];
-        const sigDir = path.join(this.configDirPath, 'signatures');
-        renameFileList.push([
-          path.join(sigDir, `${signatureFileName}.html`),
-          path.join(sigDir, `${newId}.html`),
-        ]);
-        const DefaultSignatureAccount = Object.keys(defaultSignatures).find(
-          key => defaultSignatures[key] === signatureFileName
-        );
-        if (DefaultSignatureAccount) {
-          newDefaultSignatures[DefaultSignatureAccount] = newId;
-        }
-        return {
-          id: newId,
-          state: 0,
-          title: oldValue.title,
-          tsClientUpdate: 0,
-          attachments: [],
-        };
-      });
-      json['signatures'] = newSignature;
-      json['defaultSignatures'] = newDefaultSignatures;
-    }
-    if (!templates || !Array.isArray(templates)) {
-      const tempDir = path.join(this.configDirPath, 'templates');
-      let templateList = [];
-      if (fs.existsSync(tempDir)) {
-        templateList = fs
-          .readdirSync(tempDir)
-          .filter(fileName => path.extname(fileName) === '.html');
-      }
-      const newTemplates = templateList.map(templateFileName => {
-        const newId = uuid().toLowerCase();
-        const fileName = path.basename(templateFileName, '.html');
-        const oldValue = templates ? templates[templateFileName] || {} : {};
-        const attachments = (oldValue.files || []).map(filePath => ({
-          inline: false,
-          path: filePath,
-        }));
-        renameFileList.push([
-          path.join(tempDir, templateFileName),
-          path.join(tempDir, `${newId}.html`),
-        ]);
-        return {
-          id: newId,
-          state: 0,
-          title: fileName,
-          CC: oldValue.CC || '',
-          BCC: oldValue.BCC || '',
-          tsClientUpdate: 0,
-          attachments: attachments,
-        };
-      });
-      json['templates'] = newTemplates;
-    }
-    if (renameFileList.length) {
-      renameFileList.forEach(item => {
-        if (fs.existsSync(item[0])) {
-          fs.renameSync(item[0], item[1]);
-        }
-      });
-    }
-    return json;
   }
 
   initializeConfigDirectory() {
@@ -176,7 +100,7 @@ export default class ConfigPersistenceManager {
         throw new Error('config json appears empty');
       }
 
-      this.settings = this._dataStructureUpgrade(configJson['*']);
+      this.settings = configJson['*'];
 
       progress = this.configChangeTimeFilePath;
 
