@@ -9,6 +9,15 @@ export default class Preferences {
     this.host = host;
   }
 
+  _handleReqError(error, aid) {
+    const stateCode = error && error.response && error.response.status;
+    if (stateCode && stateCode === 401) {
+      // Token missed or expired or invalid
+      const { EdisonAccountRest } = require('./index');
+      EdisonAccountRest.register(aid);
+    }
+  }
+
   async getAllPreferences() {
     const url = `${this.host}/api/charge/user/preference/list`;
     const syncAccount = AccountStore.syncAccount();
@@ -41,6 +50,7 @@ export default class Preferences {
       );
       return new RESTResult(data.code === 0, data.message, configList);
     } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       const state = error.response.status;
       switch (state) {
         case 304:
@@ -88,6 +98,7 @@ export default class Preferences {
       });
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       const state = error.response.status;
       switch (state) {
         case 304:
@@ -136,9 +147,9 @@ export default class Preferences {
           'Content-Type': 'application/json',
         },
       });
-
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
@@ -178,9 +189,9 @@ export default class Preferences {
           'Content-Type': 'application/json',
         },
       });
-
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
@@ -227,6 +238,7 @@ export default class Preferences {
       const resultData = data.data ? data.data[0] : {};
       return new RESTResult(data.code === 0, data.message, resultData);
     } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
@@ -270,6 +282,7 @@ export default class Preferences {
       });
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
@@ -317,6 +330,7 @@ export default class Preferences {
       });
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
