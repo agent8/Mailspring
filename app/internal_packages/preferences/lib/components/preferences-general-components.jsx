@@ -212,6 +212,13 @@ export class DownloadSelection extends React.Component {
       ],
       fixedOptions: ['Downloads', 'Ask me every time'],
     };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   _onChangeValue = ([value]) => {
@@ -234,6 +241,9 @@ export class DownloadSelection extends React.Component {
         }
       }
       AppEnv.showOpenDialog(openDirOption, newPaths => {
+        if (!this._mounted) {
+          return;
+        }
         if (newPaths && newPaths.length > 0) {
           this.props.config.set(this.props.keyPath, newPaths[0]);
         }

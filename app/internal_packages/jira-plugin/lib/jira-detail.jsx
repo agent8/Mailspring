@@ -265,7 +265,7 @@ export default class JiraDetail extends Component {
     currentWin.previewFile(path);
   };
   _showDialog(message, type = 'info') {
-    remote.dialog.showMessageBox({
+    AppEnv.showMessageBox({
       type,
       buttons: ['OK'],
       message,

@@ -41,6 +41,12 @@ class TemplateEditor extends React.Component {
       readOnly: !props.template,
     };
   }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
+  }
 
   _onSave = () => {
     if (this.state.readOnly) {
@@ -74,7 +80,7 @@ class TemplateEditor extends React.Component {
 
   _onAddAttachment = () => {
     AppEnv.cachePreferenceFiles(paths => {
-      if (!paths || !paths.length) {
+      if (!paths || !paths.length || !this._mounted) {
         return;
       }
       const addAttachments = paths.map(p => {

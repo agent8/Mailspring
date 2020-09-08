@@ -825,6 +825,12 @@ export default class Application extends EventEmitter {
         title: 'Welcome to EdisonMail',
       });
     }
+    this.ensureReserveWindowAvailability();
+  }
+  ensureReserveWindowAvailability() {
+    if (this.windowManager) {
+      this.windowManager.ensureMessageWindowExists();
+    }
   }
 
   ensureMainWindowVisible() {
@@ -1575,49 +1581,6 @@ export default class Application extends EventEmitter {
         }
       }
     });
-    // ipcMain.on('draft-arp', (event, options) => {
-    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-    //   if (mainWindow && mainWindow.browserWindow.webContents) {
-    //     mainWindow.browserWindow.webContents.send('draft-arp', options);
-    //   }
-    //   if (options.threadId) {
-    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-    //     if (threadWindow && threadWindow.browserWindow.webContents) {
-    //       threadWindow.browserWindow.webContents.send('draft-arp', options);
-    //     }
-    //   }
-    //   if (options.headerMessageId) {
-    //     const composerWindow = this.windowManager.get(`composer-${options.headerMessageId}`);
-    //     if (composerWindow && composerWindow.browserWindow.webContents) {
-    //       composerWindow.browserWindow.webContents.send('draft-arp', options);
-    //     }
-    //   }
-    // });
-
-    // ipcMain.on('draft-arp-reply', (event, options) => {
-    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-    //   if (mainWindow && mainWindow.browserWindow.webContents) {
-    //     mainWindow.browserWindow.webContents.send('draft-arp-reply', options);
-    //   }
-    //   if (options.threadId) {
-    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-    //     if (threadWindow && threadWindow.browserWindow.webContents) {
-    //       threadWindow.browserWindow.webContents.send('draft-arp-reply', options);
-    //     }
-    //   }
-    // });
-    // ipcMain.on('draft-delete', (event, options) => {
-    //   const mainWindow = this.windowManager.get(WindowManager.MAIN_WINDOW);
-    //   if (mainWindow && mainWindow.browserWindow.webContents) {
-    //     mainWindow.browserWindow.webContents.send('draft-delete', options);
-    //   }
-    //   if (options.threadId) {
-    //     const threadWindow = this.windowManager.get(`thread-${options.threadId}`);
-    //     if (threadWindow && threadWindow.browserWindow.webContents) {
-    //       threadWindow.browserWindow.webContents.send('draft-delete', options);
-    //     }
-    //   }
-    // });
     ipcMain.on('update-window-key', (event, options) => {
       const win = options.oldKey ? this.windowManager.get(options.oldKey) : null;
       if (win) {
@@ -1628,6 +1591,35 @@ export default class Application extends EventEmitter {
         if (newOptions && newOptions.accountId) {
           win.updateAccountId(newOptions.accountId);
         }
+      }
+    });
+    ipcMain.on('reserveWindow-popout', (event, options) => {
+      const win = this.windowManager.getAvailableReserveWindow(options.windowType);
+
+      if (!win || !win.browserWindow.webContents) {
+        this.logDebug(`on rebroadcast to reserveWindow, no window found`);
+        return;
+      }
+      if (BrowserWindow.fromWebContents(event.sender) === win) {
+        this.logDebug(`on rebroadcast to reserveWindow, from same window, ignoring`);
+        return;
+      }
+      this.logDebug(`on rebroadcast to reserveWindow, ${win.windowKey}`);
+      win.browserWindow.webContents.send('reserveWindow-popout', options);
+    });
+
+    ipcMain.on('ensure-modal-message-window', (event, options) => {
+      const win = options.windowKey ? this.windowManager.get(options.windowKey) : null;
+      let parent = options.parentWindowKey ? this.windowManager.get(options.parentWindowKey) : null;
+      let parentWindow = parent ? parent.browserWindow : null;
+      if (!win && parentWindow) {
+        this.windowManager.newMessageWindow({
+          modal: true,
+          parentWindow,
+          windowKey: options.windowKey,
+        });
+      } else {
+        this.logWarning(`windowKey: ${options.windowKey}, parentKey ${options.parentWindowKey}`);
       }
     });
 
@@ -1770,6 +1762,13 @@ export default class Application extends EventEmitter {
       }
       win[method](...args);
     });
+    ipcMain.on('call-window-manager-method', (event, method, ...args) => {
+      const winManager = this.windowManager;
+      if (!winManager[method]) {
+        console.error(`Method ${method} does not exist on BrowserWindow!`);
+      }
+      winManager[method](...args);
+    });
 
     ipcMain.on('call-devtools-webcontents-method', (event, method, ...args) => {
       // If devtools aren't open the `webContents::devToolsWebContents` will be null
@@ -1804,6 +1803,21 @@ export default class Application extends EventEmitter {
         return;
       }
       mainWindow.browserWindow.webContents.send('action-bridge-message', ...args);
+    });
+    ipcMain.on('action-bridge-rebroadcast-to-messageWindow', (event, ...args) => {
+      const messageWindows = this.windowManager.getOpenWindows(WindowManager.MESSAGE_WINDOW);
+      messageWindows.forEach(messageWindow => {
+        if (!messageWindow || !messageWindow.browserWindow.webContents) {
+          this.logDebug(`on rebroadcast to messageWindow, no window found`);
+          return;
+        }
+        if (BrowserWindow.fromWebContents(event.sender) === messageWindow) {
+          this.logDebug(`on rebroadcast to messageWindow, from same window, ignoring`);
+          return;
+        }
+        this.logDebug(`on rebroadcast to messageWindow, ${messageWindow.windowKey}`);
+        messageWindow.browserWindow.webContents.send('action-bridge-message', ...args);
+      });
     });
 
     ipcMain.on('write-text-to-selection-clipboard', (event, selectedText) => {

@@ -1,11 +1,14 @@
 import _ from 'underscore';
 import { app } from 'electron';
 import WindowLauncher from './window-launcher';
+import { MessageWindowSize, WindowTypes } from '../constant';
 
-const MAIN_WINDOW = 'default';
-const SPEC_WINDOW = 'spec';
-const ONBOARDING_WINDOW = 'onboarding';
-const BUG_REPORT_WINDOW = 'bugreport';
+const MAIN_WINDOW = WindowTypes.MAIN_WINDOW;
+const SPEC_WINDOW = WindowTypes.SPEC_WINDOW;
+const ONBOARDING_WINDOW = WindowTypes.ONBOARDING_WINDOW;
+const BUG_REPORT_WINDOW = WindowTypes.BUG_REPORT_WINDOW;
+const MESSAGE_WINDOW = WindowTypes.MESSAGE_WINDOW;
+const DIALOG_WINDOW = WindowTypes.DIALOG_WINDOW;
 
 export default class WindowManager {
   constructor({
@@ -19,6 +22,8 @@ export default class WindowManager {
   }) {
     this.initializeInBackground = initializeInBackground;
     this._windows = {};
+    this._reserveWindowTracking = {};
+    this._freeReservedWindowsTimer = null;
 
     const onCreatedHotWindow = win => {
       this._registerWindow(win);
@@ -34,6 +39,34 @@ export default class WindowManager {
       onCreatedHotWindow,
     });
   }
+  _freeReservedWindows = () => {
+    const types = Object.keys(this._reserveWindowTracking);
+    types.forEach(type => {
+      console.log(`extra free reserve window found, ${type}`);
+      const keys = Object.keys(this._reserveWindowTracking[type]);
+      let count = 0;
+      keys.forEach(key => {
+        console.log(
+          `extra free reserve window found, ${type}:${key},count ${count}, ${this._reserveWindowTracking[type][key]} `
+        );
+        if (this._reserveWindowTracking[type][key]) {
+          count = count + 1;
+        }
+        if (count > 2) {
+          console.log(`extra free reserve window found, ${type}:${key}, destroying`);
+          this.destroyWindow(key);
+          delete this._reserveWindowTracking[type][key];
+        }
+      });
+    });
+    console.log(`Cleaning up reserve window complete`);
+    this._freeReservedWindowsTimer = null;
+  };
+  _initiateFreeReservedWindows = () => {
+    if (!this._freeReservedWindowsTimer) {
+      this._freeReservedWindowsTimer = setTimeout(this._freeReservedWindows, 3000);
+    }
+  };
 
   get(windowKey) {
     return this._windows[windowKey];
@@ -168,6 +201,81 @@ export default class WindowManager {
 
     return win;
   }
+  newMessageWindow(options = {}) {
+    options.windowType = MESSAGE_WINDOW;
+    options.windowKey = MESSAGE_WINDOW;
+    options.height = MessageWindowSize.height;
+    options.width = MessageWindowSize.width;
+    this.newHiddenReserveWindow(options);
+  }
+  newDialogWindow(options = {}) {
+    options.windowType = DIALOG_WINDOW;
+    options.windowKey = DIALOG_WINDOW;
+    options.height = MessageWindowSize.height;
+    options.width = MessageWindowSize.width;
+    this.newHiddenReserveWindow(options);
+  }
+
+  newHiddenReserveWindow(options = {}) {
+    options.coldStartOnly = true;
+    const numOfWindows = this.getOpenWindowCount(options.windowType);
+    options.windowKey = `${options.windowKey}-${numOfWindows}`;
+    options.resizable = false;
+    options.hidden = true;
+    const win = this.newWindow(options);
+    if (win && win.browserWindow) {
+      win.browserWindow.hide();
+    }
+    if (!this._reserveWindowTracking[options.windowType]) {
+      this._reserveWindowTracking[options.windowType] = {};
+    }
+    this._reserveWindowTracking[options.windowType][options.windowKey] = true;
+  }
+  getAvailableReserveWindow(type) {
+    if (!this._reserveWindowTracking[type]) {
+      return null;
+    }
+    const keys = Object.keys(this._reserveWindowTracking[type]);
+    for (let i = 0; i < keys.length; i++) {
+      if (keys[i] && this._reserveWindowTracking[type][keys[i]]) {
+        const win = this.get(keys[i]);
+        if (!win) {
+          delete this._reserveWindowTracking[type][keys[i]];
+        } else {
+          return win;
+        }
+      }
+    }
+    return null;
+  }
+  showReserveWindow(windowKey, windowType) {
+    console.log(`windowKey ${windowKey}, ${windowType}`);
+    const win = this.get(windowKey);
+    if (win && win.browserWindow) {
+      win.browserWindow.show();
+      this._reserveWindowTracking[windowType][windowKey] = false;
+      setTimeout(() => {
+        if (win && win.browserWindow) {
+          win.browserWindow.setOpacity(1);
+        }
+        if (windowType === MESSAGE_WINDOW) {
+          this.ensureMessageWindowExists();
+        } else if (windowType === DIALOG_WINDOW) {
+          this.ensureDialogWindowExists();
+        }
+      }, 200);
+    }
+  }
+  hideReserveWindow(key, type) {
+    const win = this.get(key);
+    if (win && win.browserWindow) {
+      console.log(`hide ${key}, ${type}`);
+      win.browserWindow.hide();
+      win.browserWindow.setOpacity(0);
+      this._reserveWindowTracking[type][key] = true;
+      this._initiateFreeReservedWindows();
+    }
+  }
 
   _registerWindow = win => {
     if (!win.windowKey) {
@@ -186,6 +294,9 @@ export default class WindowManager {
   _didCreateNewWindow = win => {
     win.browserWindow.on('closed', () => {
       delete this._windows[win.windowKey];
+      if (this._reserveWindowTracking[win.windowType]) {
+        delete this._reserveWindowTracking[win.windowType][win.windowKey];
+      }
       this.quitWinLinuxIfNoWindows();
     });
 
@@ -204,6 +315,27 @@ export default class WindowManager {
     }
     return null;
   };
+  ensureMessageWindowExists() {
+    this.ensureReserveWindowAvailable(MESSAGE_WINDOW, {
+      windowKey: MESSAGE_WINDOW,
+      height: MessageWindowSize.height,
+      width: MessageWindowSize.width,
+    });
+  }
+  ensureDialogWindowExists() {
+    this.ensureReserveWindowAvailable(DIALOG_WINDOW, {
+      windowKey: DIALOG_WINDOW,
+      height: MessageWindowSize.height,
+      width: MessageWindowSize.width,
+    });
+  }
+  ensureReserveWindowAvailable(windowType, extraOpts = {}) {
+    const win = this.getAvailableReserveWindow(windowType);
+    if (!win) {
+      extraOpts.windowType = windowType;
+      this.newHiddenReserveWindow(extraOpts);
+    }
+  }
 
   ensureWindow(windowKey, extraOpts) {
     const win = this._windows[windowKey];
@@ -249,6 +381,13 @@ export default class WindowManager {
       win.browserWindow.webContents.send(msg, ...args);
     }
   }
+  destroyWindow(windowKey) {
+    const win = this.get(windowKey);
+    if (win && win.browserWindow) {
+      win.browserWindow.destroy();
+    }
+    delete this._windows[windowKey];
+  }
 
   destroyAllWindows() {
     this.windowLauncher.cleanupBeforeAppQuit();
@@ -256,6 +395,7 @@ export default class WindowManager {
       this._windows[windowKey].browserWindow.destroy();
     }
     this._windows = {};
+    this._reserveWindowTracking = {};
   }
 
   cleanupBeforeAppQuit() {
@@ -336,6 +476,17 @@ export default class WindowManager {
       width: 685,
       height: 700,
     };
+    coreWinOpts[WindowManager.MESSAGE_WINDOW] = {
+      windowKey: WindowManager.MESSAGE_WINDOW,
+      windowType: WindowManager.MESSAGE_WINDOW,
+      title: 'Message Window',
+      // hidden: true, // Displayed by PageRouter::_initializeWindowSize
+      hidden: true,
+      frame: false, // Always false on Mac, explicitly set for Win & Linux
+      toolbar: false,
+      resizable: false,
+      disableZoom: true,
+    };
 
     // The SPEC_WINDOW gets passed its own bootstrapScript
     coreWinOpts[WindowManager.SPEC_WINDOW] = {
@@ -359,3 +510,5 @@ WindowManager.MAIN_WINDOW = MAIN_WINDOW;
 WindowManager.SPEC_WINDOW = SPEC_WINDOW;
 WindowManager.ONBOARDING_WINDOW = ONBOARDING_WINDOW;
 WindowManager.BUG_REPORT_WINDOW = BUG_REPORT_WINDOW;
+WindowManager.MESSAGE_WINDOW = MESSAGE_WINDOW;
+WindowManager.DIALOG_WINDOW = DIALOG_WINDOW;
