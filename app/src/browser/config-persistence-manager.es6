@@ -63,9 +63,12 @@ export default class ConfigPersistenceManager {
     }
     if (!templates || !Array.isArray(templates)) {
       const tempDir = path.join(this.configDirPath, 'templates');
-      const templateList = fs
-        .readdirSync(tempDir)
-        .filter(fileName => path.extname(fileName) === '.html');
+      let templateList = [];
+      if (fs.existsSync(tempDir)) {
+        templateList = fs
+          .readdirSync(tempDir)
+          .filter(fileName => path.extname(fileName) === '.html');
+      }
       const newTemplates = templateList.map(templateFileName => {
         const newId = uuid().toLowerCase();
         const fileName = path.basename(templateFileName, '.html');
