@@ -30,13 +30,12 @@ export default class ConfigPersistenceManager {
 
   _dataStructureUpgrade(json) {
     if (!json) {
+      return {};
     }
-    const { templates, signatures } = json;
-    if (!templates && !signatures) {
-      return json;
-    }
+    const { templates, signatures, defaultSignatures } = json;
     const renameFileList = [];
     if (signatures && !Array.isArray(signatures)) {
+      const newDefaultSignatures = { ...(defaultSignatures || {}) };
       const newSignature = Object.keys(signatures).map(signatureFileName => {
         const newId = uuid().toLowerCase();
         const oldValue = signatures[signatureFileName];
@@ -45,6 +44,12 @@ export default class ConfigPersistenceManager {
           path.join(sigDir, `${signatureFileName}.html`),
           path.join(sigDir, `${newId}.html`),
         ]);
+        const DefaultSignatureAccount = Object.keys(defaultSignatures).find(
+          key => defaultSignatures[key] === signatureFileName
+        );
+        if (DefaultSignatureAccount) {
+          newDefaultSignatures[DefaultSignatureAccount] = newId;
+        }
         return {
           id: newId,
           state: 0,
@@ -54,17 +59,21 @@ export default class ConfigPersistenceManager {
         };
       });
       json['signatures'] = newSignature;
+      json['defaultSignatures'] = newDefaultSignatures;
     }
-    if (templates && !Array.isArray(templates)) {
-      const newTemplates = Object.keys(templates).map(templateFileName => {
+    if (!templates || !Array.isArray(templates)) {
+      const tempDir = path.join(this.configDirPath, 'templates');
+      const templateList = fs
+        .readdirSync(tempDir)
+        .filter(fileName => path.extname(fileName) === '.html');
+      const newTemplates = templateList.map(templateFileName => {
         const newId = uuid().toLowerCase();
         const fileName = path.basename(templateFileName, '.html');
-        const oldValue = templates[templateFileName];
+        const oldValue = templates ? templates[templateFileName] || {} : {};
         const attachments = (oldValue.files || []).map(filePath => ({
           inline: false,
           path: filePath,
         }));
-        const tempDir = path.join(this.configDirPath, 'templates');
         renameFileList.push([
           path.join(tempDir, templateFileName),
           path.join(tempDir, `${newId}.html`),
