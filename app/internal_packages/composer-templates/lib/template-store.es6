@@ -35,7 +35,7 @@ function mergeContacts(oldContacts = [], contacts = []) {
   return result;
 }
 const WelcomeTemplate = {
-  id: uuid().toLowerCase(),
+  id: '4ad7f986-de23-44a6-b579-3e2f9703b943',
   title: 'Welcome to Templates',
   tsClientUpdate: 0,
   state: PreferencesSubListStateEnum.synchronized,
@@ -55,23 +55,21 @@ class TemplateStore extends MailspringStore {
     this.templatesBody = new Map();
     this._selectedTemplateId = '';
 
+    if (!fs.existsSync(this._templatesDir)) {
+      fs.mkdirSync(this._templatesDir);
+    }
+
     if (!this.templates || !this.templates.length) {
       const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
       this.templates = [{ ...WelcomeTemplate }];
       this.templatesBody.set(WelcomeTemplate.id, WelcomeTemplateBody);
-    }
-    this._autoselectTemplateId();
-
-    fs.exists(this._templatesDir, exists => {
-      const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
-      if (!exists) {
-        fs.mkdirSync(this._templatesDir);
-      }
       fs.writeFileSync(
         path.join(this._templatesDir, `${WelcomeTemplate.id}.html`),
         WelcomeTemplateBody
       );
-    });
+    }
+
+    this._autoselectTemplateId();
 
     this.listenTo(TemplateActions.addTemplate, this._onAddTemplate);
     this.listenTo(TemplateActions.updateTemplate, this._onUpdateTemplate);
