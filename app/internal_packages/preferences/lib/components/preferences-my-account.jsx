@@ -207,6 +207,8 @@ export default class EdisonAccount extends React.Component {
     }
     if (!logoutResult.successful) {
       AppEnv.reportError(new Error(`Logout edison account fail: ${logoutResult.message}`));
+    } else {
+      this._getDevices();
     }
   };
 
