@@ -34,6 +34,8 @@ import moveToApplications from './move-to-applications';
 import MailsyncProcess from '../mailsync-process';
 import EventTriggers from './event-triggers';
 import { createHash } from 'crypto';
+import { dataUpgrade } from './data-upgrade';
+
 const LOG = require('electron-log');
 const archiver = require('archiver');
 let getOSInfo = null;
@@ -77,6 +79,8 @@ export default class Application extends EventEmitter {
       resourcePath,
       safeMode,
     });
+
+    await dataUpgrade(configDirPath);
 
     const Config = require('../config');
     const config = new Config();
