@@ -1,6 +1,7 @@
 import React from 'react';
 import { RetinaImg } from 'mailspring-component-kit';
 import { BLOCK_CONFIG } from './base-block-plugins';
+import { Constant } from 'mailspring-exports';
 
 const SIGNATURE_TYPE = 'signature';
 
@@ -9,7 +10,17 @@ function SignatureNode(props) {
   const id = node.data.get ? node.data.get('id') : node.data.id;
 
   if (targetIsHTML) {
-    return <edo-signature id={id}>{BLOCK_CONFIG.div.render(props)}</edo-signature>;
+    return (
+      <edo-signature
+        id={id}
+        style={{
+          fontSize: Constant.Composer.defaultFontSize,
+          fontFamily: Constant.Composer.defaultFontFamily,
+        }}
+      >
+        {BLOCK_CONFIG.div.render(props)}
+      </edo-signature>
+    );
   }
   return (
     <div {...attributes} className={`editable-box ${isSelected && 'custom-block-selected'}`}>
@@ -29,7 +40,15 @@ function SignatureNode(props) {
           mode={RetinaImg.Mode.ContentPreserve}
         />
       </a>
-      <edo-signature id={id}>{BLOCK_CONFIG.div.render(props)}</edo-signature>
+      <edo-signature
+        id={id}
+        style={{
+          fontSize: Constant.Composer.defaultFontSize,
+          fontFamily: Constant.Composer.defaultFontFamily,
+        }}
+      >
+        {BLOCK_CONFIG.div.render(props)}
+      </edo-signature>
     </div>
   );
 }

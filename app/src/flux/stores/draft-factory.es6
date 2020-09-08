@@ -113,14 +113,14 @@ const mergeDefaultBccAndCCs = async (message, account) => {
 };
 const getDraftDefaultValues = () => {
   const defaultValues = {};
-  defaultValues.fontSize = AppEnv.config.get('core.fontsize') || '14px';
-  defaultValues.fontFace = AppEnv.config.get('core.fontface') || 'sans-serif';
+  defaultValues.fontSize = AppEnv.config.get('core.fontsize');
+  defaultValues.fontFace = AppEnv.config.get('core.fontface');
   return defaultValues;
 };
 class DraftFactory {
   getBlankContentWithDefaultFontValues() {
     const defaultValues = getDraftDefaultValues();
-    const defaultSize = defaultValues.fontsize;
+    const defaultSize = defaultValues.fontSize;
     const defaultFont = defaultValues.fontFace;
     return `
       <font style="font-size:${defaultSize};font-family:${defaultFont}">
