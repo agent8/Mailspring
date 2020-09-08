@@ -1,5 +1,5 @@
 import { RegExpUtils } from 'mailspring-exports';
-import { SignatureStore } from 'mailspring-exports';
+import { SignatureStore, Constant } from 'mailspring-exports';
 
 export function currentSignatureId(body) {
   let replyEnd = body.search(RegExpUtils.nativeQuoteStartRegex());
@@ -43,9 +43,11 @@ export function applySignature(body, signature) {
     const contentAfter = newBody.slice(insertionPoint);
     return `${contentBefore}${additionalWhitespace}<edo-signature id="${
       signature.id
+    }"><font style="font-size: ${Constant.Composer.defaultFontSize}, font-family: ${
+      Constant.Composer.defaultFontFamily
     }">${SignatureStore.getBodyById(
       signature.id
-    )}</edo-signature>${additionalClosingWhitespace}${contentAfter}`;
+    )}</font></edo-signature>${additionalClosingWhitespace}${contentAfter}`;
   } else {
     return newBody;
   }
