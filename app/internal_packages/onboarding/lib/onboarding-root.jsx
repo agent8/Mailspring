@@ -65,6 +65,9 @@ export default class OnboardingRoot extends React.Component {
     this.unsubscribe = OnboardingStore.listen(this._onStateChanged, this);
     // AppEnv.center();
     AppEnv.displayWindow();
+    const win = AppEnv.getCurrentWindow();
+    win.setMaximizable(false);
+    win.setMinimizable(false);
   }
 
   componentWillUnmount() {
