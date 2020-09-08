@@ -261,7 +261,7 @@ export default class EdisonAccount extends React.Component {
               ) : null}
               <div className="btn-danger" onClick={() => this._logout(this.supportId)}>
                 {this.renderSpinner(logoutLoading)}
-                Log Out
+                Stop Back up & Sync
               </div>
             </div>
           </div>
