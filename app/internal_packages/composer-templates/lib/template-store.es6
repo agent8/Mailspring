@@ -61,7 +61,7 @@ class TemplateStore extends MailspringStore {
 
     if (!this.templates || !this.templates.length) {
       const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
-      this.templates = [{ ...WelcomeTemplate }];
+      AppEnv.config.set(`templates`, [{ ...WelcomeTemplate }]);
       this.templatesBody.set(WelcomeTemplate.id, WelcomeTemplateBody);
       fs.writeFileSync(
         path.join(this._templatesDir, `${WelcomeTemplate.id}.html`),
