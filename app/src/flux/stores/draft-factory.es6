@@ -125,6 +125,7 @@ class DraftFactory {
     return `
       <font style="font-size:${defaultSize};font-family:${defaultFont}">
         <br/>
+        <br/>
       </font>
     `;
   }
@@ -533,7 +534,6 @@ class DraftFactory {
       body: `
         ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote">
-          <br>
           ---------- Forwarded message ---------
           <br><br>
           ${fields.join('<br>')}
