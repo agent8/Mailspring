@@ -40,6 +40,7 @@ class FormField extends React.Component {
           disabled={props.submitting}
           spellCheck="false"
           value={val || ''}
+          placeholder={props.placeholder || ''}
           onKeyPress={props.onFieldKeyPress}
           onChange={props.onFieldChange}
           onBlur={props.onFieldChange}
