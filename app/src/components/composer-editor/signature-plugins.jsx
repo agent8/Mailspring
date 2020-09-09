@@ -11,14 +11,16 @@ function SignatureNode(props) {
 
   if (targetIsHTML) {
     return (
-      <edo-signature
-        id={id}
-        style={{
-          fontSize: Constant.Composer.defaultFontSize,
-          fontFamily: Constant.Composer.defaultFontFamily,
-        }}
-      >
-        {BLOCK_CONFIG.div.render(props)}
+      <edo-signature id={id}>
+        <font
+          style={{
+            fontSize: Constant.Composer.defaultFontSize,
+            fontFamily: Constant.Composer.defaultFontFamily,
+          }}
+        >
+          {BLOCK_CONFIG.div.render(props)}
+        </font>
+        <br />
       </edo-signature>
     );
   }
@@ -40,14 +42,15 @@ function SignatureNode(props) {
           mode={RetinaImg.Mode.ContentPreserve}
         />
       </a>
-      <edo-signature
-        id={id}
-        style={{
-          fontSize: Constant.Composer.defaultFontSize,
-          fontFamily: Constant.Composer.defaultFontFamily,
-        }}
-      >
-        {BLOCK_CONFIG.div.render(props)}
+      <edo-signature id={id}>
+        <font
+          style={{
+            fontSize: Constant.Composer.defaultFontSize,
+            fontFamily: Constant.Composer.defaultFontFamily,
+          }}
+        >
+          {BLOCK_CONFIG.div.render(props)}
+        </font>
       </edo-signature>
     </div>
   );
