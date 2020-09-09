@@ -329,6 +329,7 @@ export default class EdisonAccount {
     const postData = {
       deviceId: deviceId,
     };
+    let message;
     try {
       const { data } = await axios.post(url, postData, {
         headers: {
@@ -336,15 +337,16 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
-      if (data.code === 0 && deviceId === supportId) {
-        AccountStore.logoutSyncAccount(aid);
-      }
       this._handleResCode(data.code, account);
-      return new RESTResult(data.code === 0, data.message);
+      message = data.message;
     } catch (error) {
       this._handleReqError(error, aid);
-      return new RESTResult(false, error.message);
+      message = error.message;
     }
+    if (deviceId === supportId) {
+      AccountStore.logoutSyncAccount(aid);
+    }
+    return new RESTResult(true, message);
   }
 
   async UpdateDevice(aid, name) {
