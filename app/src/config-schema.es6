@@ -755,7 +755,6 @@ export default {
     type: 'array',
     default: [],
     syncToServer: true,
-    syncToServerCommonKey: 'signature',
     mergeLocalToServer: mergeLocalSignaturesToServer,
     mergeServerToLocal: mergeServerSignaturesToLocal,
   },
@@ -766,11 +765,5 @@ export default {
     syncToServerCommonKey: 'template',
     mergeLocalToServer: mergelocalTemplatesToServer,
     mergeServerToLocal: mergeServerTemplatesToLocal,
-  },
-  signaturesCommon: {
-    type: 'boolean',
-    default: false,
-    syncToServer: false,
-    syncToServerCommonKey: 'signature_common',
   },
 };
