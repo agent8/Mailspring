@@ -618,7 +618,7 @@ class Config {
           }
         }
       }
-      if (value) {
+      if (value !== undefined && value !== null) {
         commonSetList.push({
           keyPath: item.key,
           value,
@@ -689,7 +689,7 @@ class Config {
         return syncToServerCommonKey;
       }
     }
-    this._logError('This server setting key can not be recognized', new Error(key));
+    console.log(`This server setting key can not be recognized: ${key}`);
     return '';
   }
 
@@ -797,7 +797,7 @@ class Config {
       } else {
         value = conf.value;
       }
-      if (value) {
+      if (value !== null) {
         changeList.push({
           key: configKey,
           type: conf.type,
