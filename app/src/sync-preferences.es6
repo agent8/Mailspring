@@ -46,34 +46,6 @@ async function cleanUpFiles(key) {
   deleteFileOrFolder(zipDirPath);
 }
 
-function diffListData(oldList, newList) {
-  const newIds = [];
-  const removes = [];
-  const updates = [];
-  newList.forEach(n => {
-    newIds.push(n.subId);
-    const old = oldList.find(oldItem => n.subId === oldItem.subId);
-    if (old && old.value === n.value) {
-      return;
-    }
-    updates.push({
-      subId: n.subId,
-      value: n.value,
-      tsClientUpdate: new Date().getTime(),
-    });
-  });
-  oldList.forEach(o => {
-    if (!newIds.includes(o.subId)) {
-      removes.push({
-        subId: o.subId,
-        value: o.value,
-        tsClientUpdate: new Date().getTime(),
-      });
-    }
-  });
-  return { update: updates, remove: removes };
-}
-
 async function mkdirAndWriteJson(signatureOrTemplate, type) {
   const key = signatureOrTemplate.id;
 
@@ -126,6 +98,9 @@ async function getTheDifferenceForSigOrTemp(list, type) {
   if (!Object.keys(ConfigType).includes(type)) {
     return {};
   }
+  if (!Array.isArray(list)) {
+    return {};
+  }
   const updates = [];
   const removes = [];
   for (const signatureOrTemplate of list) {
@@ -175,6 +150,9 @@ async function getTheDifferenceForSigOrTemp(list, type) {
 }
 
 async function generateNewListForSigOrTemp(list, type) {
+  if (!Array.isArray(list)) {
+    return null;
+  }
   const newSignatureOrTemplateList = [];
   for (const signatureOrTemplate of list) {
     const key = signatureOrTemplate.subId;
@@ -238,7 +216,7 @@ async function generateNewListForSigOrTemp(list, type) {
   return newList;
 }
 
-export const mergeLocalSignaturesToServer = async (oldValueInServer, value) => {
+export const mergeLocalSignaturesToServer = async value => {
   const data = await getTheDifferenceForSigOrTemp(value, 'signature');
   return data;
 };
@@ -248,7 +226,7 @@ export const mergeServerSignaturesToLocal = async value => {
   return newList;
 };
 
-export const mergelocalTemplatesToServer = async (oldValueInServer, value) => {
+export const mergeLocalTemplatesToServer = async value => {
   const data = await getTheDifferenceForSigOrTemp(value, 'template');
   return data;
 };
@@ -258,7 +236,7 @@ export const mergeServerTemplatesToLocal = async value => {
   return newList;
 };
 
-export const mergeLocalAccountsToServer = async (oldValueInServer, value) => {
+export const mergeLocalAccountsToServer = async value => {
   const newAccounts = value.map(a => {
     function copyAndFilterSetting(account = {}) {
       const copy = {
@@ -273,7 +251,8 @@ export const mergeLocalAccountsToServer = async (oldValueInServer, value) => {
       tsClientUpdate: new Date().getTime(),
     };
   });
-  return diffListData(oldValueInServer, newAccounts);
+  const cb = () => {};
+  return { update: newAccounts, remove: [], callback: cb };
 };
 
 export const mergeServerAccountsToLocal = async accountListInServer => {

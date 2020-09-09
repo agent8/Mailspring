@@ -55,7 +55,7 @@ export default class Preferences {
       switch (state) {
         case 304:
           // no change in server with this version
-          return new RESTResult(false, 'setting is nochange');
+          return new RESTResult(true, 'setting is nochange');
         case 404:
           // the setting in server is empty
           return new RESTResult(true, 'setting is empty', []);
@@ -103,7 +103,7 @@ export default class Preferences {
       switch (state) {
         case 304:
           // no change in server with this version
-          return new RESTResult(false, 'setting is nochange');
+          return new RESTResult(true, 'setting is nochange');
         case 404:
           // the setting in server is empty
           return new RESTResult(true, 'setting is empty', {
