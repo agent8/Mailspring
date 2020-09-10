@@ -4,7 +4,7 @@ import moment from 'moment';
 import {
   mergeLocalSignaturesToServer,
   mergeServerSignaturesToLocal,
-  mergelocalTemplatesToServer,
+  mergeLocalTemplatesToServer,
   mergeServerTemplatesToLocal,
   mergeLocalAccountsToServer,
   mergeServerAccountsToLocal,
@@ -755,7 +755,6 @@ export default {
     type: 'array',
     default: [],
     syncToServer: true,
-    syncToServerCommonKey: 'signature',
     mergeLocalToServer: mergeLocalSignaturesToServer,
     mergeServerToLocal: mergeServerSignaturesToLocal,
   },
@@ -764,13 +763,7 @@ export default {
     default: [],
     syncToServer: true,
     syncToServerCommonKey: 'template',
-    mergeLocalToServer: mergelocalTemplatesToServer,
+    mergeLocalToServer: mergeLocalTemplatesToServer,
     mergeServerToLocal: mergeServerTemplatesToLocal,
-  },
-  signaturesCommon: {
-    type: 'boolean',
-    default: false,
-    syncToServer: false,
-    syncToServerCommonKey: 'signature_common',
   },
 };
