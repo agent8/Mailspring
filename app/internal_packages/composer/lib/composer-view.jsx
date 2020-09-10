@@ -277,11 +277,14 @@ export default class ComposerView extends React.Component {
 
   _onEditorBodyContextMenu = event => {
     if (this._els[Fields.Body] && this.state.editorSelection) {
-      this._els[Fields.Body].openContextMenu({
-        word: this.state.editorSelectedText,
-        sel: this.state.editorSelection,
-        hasSelectedText: !this.state.editorSelection.isCollapsed,
-      });
+      this._els[Fields.Body].openContextMenu(
+        {
+          word: this.state.editorSelectedText,
+          sel: this.state.editorSelection,
+          hasSelectedText: !this.state.editorSelection.isCollapsed,
+        },
+        event
+      );
     }
     event.preventDefault();
   };

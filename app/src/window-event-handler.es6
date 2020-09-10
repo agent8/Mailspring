@@ -4,6 +4,7 @@ import url from 'url';
 
 let ComponentRegistry = null;
 let Spellchecker = null;
+let Actions = null;
 
 const isTextInput = node => {
   if (!node) {
@@ -318,55 +319,57 @@ export default class WindowEventHandler {
     }
     const word = event.target.value.substr(wordStart, wordEnd - wordStart);
 
-    this.openSpellingMenuFor(word, hasSelectedText, {
-      onCorrect: correction => {
-        const insertionPoint = wordStart + correction.length;
-        event.target.value = event.target.value.replace(word, correction);
-        event.target.setSelectionRange(insertionPoint, insertionPoint);
+    this.openSpellingMenuFor(
+      word,
+      hasSelectedText,
+      {
+        onCorrect: correction => {
+          const insertionPoint = wordStart + correction.length;
+          event.target.value = event.target.value.replace(word, correction);
+          event.target.setSelectionRange(insertionPoint, insertionPoint);
+        },
       },
-    });
+      event
+    );
   }
 
-  openSpellingMenuFor(word, hasSelectedText, { onCorrect, onRestoreSelection = () => {} }) {
-    const { Menu, MenuItem } = remote;
-    const menu = new Menu();
+  openSpellingMenuFor(
+    word,
+    hasSelectedText,
+    { onCorrect, onRestoreSelection = () => {} },
+    mouseEvent
+  ) {
+    Actions = Actions || require('./flux/actions').default;
+    const menu = [];
 
     Spellchecker = Spellchecker || require('./spellchecker').default;
     Spellchecker.appendSpellingItemsToMenu({ menu, word, onCorrect });
 
-    menu.append(
-      new MenuItem({
-        label: 'Cut',
-        enabled: hasSelectedText,
-        click: () => AppEnv.commands.dispatch('core:cut', { text: word }),
-      })
-    );
-    menu.append(
-      new MenuItem({
-        label: 'Copy',
-        enabled: hasSelectedText,
-        click: () => AppEnv.commands.dispatch('core:copy', { text: word }),
-      })
-    );
-    menu.append(
-      new MenuItem({
-        label: 'Paste',
-        click: () => {
-          onRestoreSelection();
-          AppEnv.commands.dispatch('core:paste');
-        },
-      })
-    );
-    menu.append(
-      new MenuItem({
-        label: 'Paste without Style',
-        click: () => {
-          onRestoreSelection();
-          AppEnv.commands.dispatch('core:paste-and-match-style');
-        },
-      })
-    );
-    menu.popup({});
+    menu.push({
+      label: 'Cut',
+      disabled: !hasSelectedText,
+      click: () => AppEnv.commands.dispatch('core:cut', { text: word }),
+    });
+    menu.push({
+      label: 'Copy',
+      disabled: !hasSelectedText,
+      click: () => AppEnv.commands.dispatch('core:copy', { text: word }),
+    });
+    menu.push({
+      label: 'Paste',
+      click: () => {
+        onRestoreSelection();
+        AppEnv.commands.dispatch('core:paste');
+      },
+    });
+    menu.push({
+      label: 'Paste without Style',
+      click: () => {
+        onRestoreSelection();
+        AppEnv.commands.dispatch('core:paste-and-match-style');
+      },
+    });
+    Actions.openContextMenu({ menuItems: menu, mouseEvent });
   }
 
   showDevModeMessages() {
