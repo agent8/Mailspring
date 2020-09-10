@@ -763,6 +763,7 @@ class Config {
     });
     try {
       await this._syncPreferencesFromServer(configList);
+      await this._singleSyncSignatureOfMobile();
       if (commonConfigVersion) {
         this.set('commonSettingsVersion', commonConfigVersion);
       }
@@ -880,6 +881,32 @@ class Config {
     } else {
       this._logError('Sync setting from server fail', new Error(result.message));
       return null;
+    }
+  };
+
+  _singleSyncSignatureOfMobile = async () => {
+    // sync sig from ios and mac, but only sync sig to mac
+    const sigKeyInCommonServer = 'signature';
+    const sigConfigKey = 'signatures';
+    const { PreferencesRest } = require('./rest');
+    const commonSigListResult = await PreferencesRest.getFullListTypePreferenceByServerKey({
+      serverKey: sigKeyInCommonServer,
+      platform: EdisonPlatformType.COMMON,
+    });
+    if (!commonSigListResult.successful) {
+      throw new Error(commonSigListResult.message);
+    }
+    if (commonSigListResult.data && commonSigListResult.data.length) {
+      const commonSigList = commonSigListResult.data.map(sig => ({
+        subId: sig.value,
+        tsClientUpdate: sig.tsClientUpdate,
+        platform: EdisonPlatformType.COMMON,
+      }));
+      const { mergeServerToLocal } = this.getSchema(sigConfigKey);
+      if (mergeServerToLocal && typeof mergeServerToLocal === 'function') {
+        const value = await mergeServerToLocal(commonSigList);
+        this.set(sigConfigKey, value, true);
+      }
     }
   };
 
