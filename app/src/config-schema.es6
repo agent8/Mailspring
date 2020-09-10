@@ -8,6 +8,8 @@ import {
   mergeServerTemplatesToLocal,
   mergeLocalAccountsToServer,
   mergeServerAccountsToLocal,
+  mergeLocalDefaultSignaturesToServer,
+  mergeServerDefaultSignaturesToLocal,
 } from './sync-preferences';
 
 moment.locale(navigator.language);
@@ -765,5 +767,12 @@ export default {
     syncToServerCommonKey: 'template',
     mergeLocalToServer: mergeLocalTemplatesToServer,
     mergeServerToLocal: mergeServerTemplatesToLocal,
+  },
+  defaultSignatures: {
+    type: 'object',
+    properties: {},
+    syncToServer: true,
+    mergeLocalToServer: mergeLocalDefaultSignaturesToServer,
+    mergeServerToLocal: mergeServerDefaultSignaturesToLocal,
   },
 };
