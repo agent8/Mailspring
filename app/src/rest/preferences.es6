@@ -196,6 +196,65 @@ export default class Preferences {
     }
   }
 
+  async getFullListTypePreferenceByServerKey({ serverKey, platform }) {
+    const url = `${this.host}/api/charge/user/subPreference/list`;
+    const syncAccount = AccountStore.syncAccount();
+    if (!syncAccount) {
+      return new RESTResult(false, 'sync account is unexpected');
+    }
+
+    const token = syncAccount.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'sync account has no token');
+    }
+    const postData = {
+      platform: platform,
+      key: serverKey,
+      version: 0,
+    };
+    try {
+      const { data } = await axios.post(url, postData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!data || data.code !== 0 || !data.data || !data.data.list) {
+        return new RESTResult(false, 'data in server is empty');
+      }
+
+      const value = [];
+      const subDataList = data.data.list;
+      for (const subData of subDataList) {
+        if (!subData.longFlag) {
+          value.push(subData);
+        } else {
+          const subDataInServer = await PreferencesRest.getListTypeSubPreference(
+            configKey,
+            subData.subId
+          );
+          if (subDataInServer.successful) {
+            value.push({ ...subData, value: subDataInServer.data.value });
+          } else {
+            return new RESTResult(false, subDataInServer.message);
+          }
+        }
+      }
+      return new RESTResult(true, 'success', value);
+    } catch (error) {
+      this._handleReqError(error, syncAccount.id);
+      const state = error.response.status;
+      switch (state) {
+        case 404:
+          // the setting in server is empty
+          return new RESTResult(true, 'setting is empty', []);
+        default:
+          return new RESTResult(false, error.message);
+      }
+    }
+  }
+
   async updateStringPreferences(configKey, value) {
     const url = `${this.host}/api/charge/user/preference/update`;
     const syncAccount = AccountStore.syncAccount();

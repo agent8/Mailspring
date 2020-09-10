@@ -6,7 +6,7 @@ const uuid = require('uuid');
 
 const { downloadFile, uploadFile } = require('./s3-utils');
 const { dirExists, deleteFileOrFolder, unCompressDir, compressDir } = require('./fs-utils');
-const { PreferencesSubListStateEnum } = require('./constant');
+const { PreferencesSubListStateEnum, EdisonPlatformType } = require('./constant');
 const ConfigType = {
   template: { dirName: 'templates', configKey: 'templates' },
   signature: { dirName: 'signatures', configKey: 'signatures' },
@@ -162,7 +162,9 @@ async function generateNewListForSigOrTemp(list, type) {
       const jsonStr = fs.readFileSync(jsonPath);
       const json = JSON.parse(jsonStr);
       const { attachments, html, name, CC, BCC } = json;
-      const signatureOrTemplateName = name || 'Untitled';
+      const backupName =
+        signatureOrTemplate.platform === EdisonPlatformType.COMMON ? 'From Mobile' : 'Untitled';
+      const signatureOrTemplateName = name || backupName;
       let attachmentList = [];
       if (attachments && attachments.length) {
         attachmentList = attachments.map(file => {
