@@ -340,7 +340,9 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       message = data.message;
     } catch (error) {
-      this._handleReqError(error, aid);
+      if (deviceId !== supportId) {
+        this._handleReqError(error, aid);
+      }
       message = error.message;
     }
     if (deviceId === supportId) {
