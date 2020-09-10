@@ -292,6 +292,9 @@ class Menu extends React.Component {
       if (React.isValidElement(content) && content.type === MenuItem) {
         return content;
       }
+      if (item.type === 'divider') {
+        return <div key={i} className="menu-divider" />;
+      }
 
       const onMouseDown = event => {
         event.preventDefault();
@@ -361,7 +364,7 @@ class Menu extends React.Component {
 
       const itemContext = this.props.itemContent(item, this.props.itemContext).props || {};
 
-      if (itemContext.divider) {
+      if (itemContext.divider || item.type === 'divider') {
         if (delta > 0) {
           index += 1;
         } else if (delta < 0) {

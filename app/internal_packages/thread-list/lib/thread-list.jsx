@@ -380,7 +380,7 @@ class ThreadList extends React.Component {
       event.preventDefault();
       return;
     }
-    new ThreadListContextMenu(data).displayMenu();
+    new ThreadListContextMenu(data).displayMenu(event);
   };
 
   _onMouseMove = event => {

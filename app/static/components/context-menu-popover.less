@@ -1,0 +1,44 @@
+@import 'ui-variables';
+nylas-popover-container {
+  .fixed-popover-container {
+    .fixed-context-menu-popover-container {
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: 0.5px solid fade(@black, 10%);
+      box-shadow: 0 5px 10px 0 fade(@black, 15%);
+
+      .context-menu-popover-container {
+        width: max-content;
+        padding: 8px 0 8px 0;
+
+        .context-menu-popover {
+          .header-container {
+            display: none;
+          }
+
+          .content-container {
+            height: max-content;
+            width: 180px;
+            overflow-y: scroll;
+            margin-top: unset;
+
+            .item {
+              padding: 0 33px 0 17px;
+              line-height: 30px;
+              height: 30px;
+              width: 100%;
+              min-width: 180px;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              font-size: 14px;
+            }
+
+            &::-webkit-scrollbar {
+              width: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+}

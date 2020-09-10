@@ -585,6 +585,7 @@ class Actions {
   static startReprocessingMailRules = ActionScopeWindow;
   static stopReprocessingMailRules = ActionScopeWindow;
 
+  static openContextMenu = ActionScopeWindow;
   static openPopover = ActionScopeWindow;
   static closePopover = ActionScopeWindow;
 

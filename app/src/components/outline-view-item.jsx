@@ -332,42 +332,31 @@ class OutlineViewItem extends Component {
     event.stopPropagation();
     const item = this.props.item;
     const contextMenuLabel = item.contextMenuLabel || item.name;
-    const { remote } = require('electron');
-    const { Menu, MenuItem } = remote;
-    const menu = new Menu();
-    let shouldPopup = false;
+    const menu = [];
+
     if (this.props.item.onEdited) {
-      shouldPopup = true;
-      menu.append(
-        new MenuItem({
-          label: `Rename ${contextMenuLabel}`,
-          click: this._onEdit,
-        })
-      );
+      menu.push({
+        label: `Rename ${contextMenuLabel}`,
+        click: this._onEdit,
+      });
     }
 
     if (this.props.item.onDelete) {
-      shouldPopup = true;
-      menu.append(
-        new MenuItem({
-          label: `Delete ${contextMenuLabel}`,
-          click: this._onDelete,
-        })
-      );
+      menu.push({
+        label: `Delete ${contextMenuLabel}`,
+        click: this._onDelete,
+      });
     }
     if (this.props.item.onAllRead) {
-      shouldPopup = true;
-      menu.append(
-        new MenuItem({
+      menu.push({
           label: 'Mark All as Read',
           click: this._onAllRead,
-        })
-      );
+        });
     }
-    if (shouldPopup) {
-      menu.popup({});
+    if(menu.length > 0) {
+      Actions.openContextMenu({ menuItems: menu, mouseEvent: event });
     }
-  };
+    };
 
   _formatNumber(num) {
     if (num > 99) {
