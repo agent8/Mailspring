@@ -588,16 +588,6 @@ class Config {
     const options = {};
     let ipcNotif = false;
     for (const item of setList) {
-      const itemLastChangeTimeInLocal = this.getConfigUpdateTime(item.key);
-      if (itemLastChangeTimeInLocal && itemLastChangeTimeInLocal > item.tsClientUpdate) {
-        // if local change is later then server,
-        // should sync local change to server.
-        // However, in order to avoid an endless loop,
-        // sync it to the server the next time it changes.
-        // So we just need to make sure that the local is new
-        return;
-      }
-
       let value = item.value;
       const { type, notifyNative, mergeServerToLocal } = this.getSchema(item.key);
       // special config should use special func
@@ -608,6 +598,15 @@ class Config {
           value = null;
         }
       } else if (UpdateToServerSimpleSettingTypes.includes(type)) {
+        const itemLastChangeTimeInLocal = this.getConfigUpdateTime(item.key);
+        if (itemLastChangeTimeInLocal && itemLastChangeTimeInLocal > item.tsClientUpdate) {
+          // if local change is later then server,
+          // should sync local change to server.
+          // However, in order to avoid an endless loop,
+          // sync it to the server the next time it changes.
+          // So we just need to make sure that the local is new
+          continue;
+        }
         if (value === undefined) {
           value = _.valueForKeyPath(this.defaultSettings, item.key);
         } else {
@@ -618,7 +617,7 @@ class Config {
           }
         }
       }
-      if (value) {
+      if (value !== undefined && value !== null) {
         commonSetList.push({
           keyPath: item.key,
           value,
@@ -681,35 +680,43 @@ class Config {
     return schema;
   }
 
-  _getConfigKeyByServerKey(key) {
-    const syncToServerCommonKey = this.serverKeyMap.get(key);
+  _getConfigKeyByServerKey(platform, key) {
+    const keyMap = this.serverKeyMap.get(platform);
+    if (!keyMap) {
+      return '';
+    }
+    const syncToServerCommonKey = keyMap.get(key);
     if (syncToServerCommonKey) {
       const theSchema = this.getSchema(syncToServerCommonKey);
       if (theSchema) {
         return syncToServerCommonKey;
       }
     }
-    this._logError('This server setting key can not be recognized', new Error(key));
+    console.log(`This server setting key can not be recognized: ${key}`);
     return '';
   }
 
   _updateServerKeyMap() {
-    const serverKeyMap = new Map();
+    const serverCommonKeyMap = new Map();
+    const serverMacKeyMap = new Map();
     function traversingObj(obj, parentKey) {
       Object.keys(obj).forEach(key => {
         const nowObj = obj[key] || {};
         const nowKey = `${parentKey ? parentKey + '.' : ''}${key}`;
         if (nowObj.syncToServerCommonKey) {
-          serverKeyMap.set(nowObj.syncToServerCommonKey, nowKey);
-        } else {
-          serverKeyMap.set(nowKey.toLowerCase().replace(/\./g, '_'), nowKey);
+          serverCommonKeyMap.set(nowObj.syncToServerCommonKey, nowKey);
         }
+        serverMacKeyMap.set(nowKey.toLowerCase().replace(/\./g, '_'), nowKey);
         if (nowObj.type === 'object') {
           traversingObj(nowObj.properties, nowKey);
         }
       });
     }
+
     traversingObj(this.schema.properties);
+    const serverKeyMap = new Map();
+    serverKeyMap.set(EdisonPlatformType.COMMON, serverCommonKeyMap);
+    serverKeyMap.set(EdisonPlatformType.MAC, serverMacKeyMap);
     this.serverKeyMap = serverKeyMap;
   }
 
@@ -756,11 +763,12 @@ class Config {
     });
     try {
       await this._syncPreferencesFromServer(configList);
+      await this._singleSyncSignatureOfMobile();
       if (commonConfigVersion) {
-        AppEnv.config.set('commonSettingsVersion', commonConfigVersion);
+        this.set('commonSettingsVersion', commonConfigVersion);
       }
       if (macConfigVersion) {
-        AppEnv.config.set('macSettingsVersion', macConfigVersion);
+        this.set('macSettingsVersion', macConfigVersion);
       }
     } catch (err) {
       this._logError('Sync setting from server fail', err);
@@ -783,7 +791,7 @@ class Config {
     }
     const changeList = [];
     for (const conf of configList) {
-      const configKey = this._getConfigKeyByServerKey(conf.key);
+      const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
       if (!configKey) {
         continue;
       }
@@ -797,7 +805,7 @@ class Config {
       } else {
         value = conf.value;
       }
-      if (value) {
+      if (value !== null) {
         changeList.push({
           key: configKey,
           type: conf.type,
@@ -811,7 +819,7 @@ class Config {
 
   _getLongStrPreferencesValue = async conf => {
     const { PreferencesRest } = require('./rest');
-    const configKey = this._getConfigKeyByServerKey(conf.key);
+    const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
     if (!configKey) {
       return;
     }
@@ -834,22 +842,25 @@ class Config {
 
   _getLongListPreferencesValue = async conf => {
     const { PreferencesRest } = require('./rest');
-    const configKey = this._getConfigKeyByServerKey(conf.key);
+    const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
     if (!configKey) {
-      return;
+      return null;
     }
     const result = await PreferencesRest.getListTypePreference(configKey);
     if (result.successful) {
       const { data } = result;
-      if (conf.platform !== data.platform) {
+      if (!data || !data.list) {
+        // no change in server with this version
+        return null;
+      } else if (conf.platform !== data.platform) {
         this._logError(
           'Sync setting syncToServerCommonKey key has error',
           new Error(`the setting platform in server is ${conf.platform}`)
         );
-        return;
+        return null;
       } else {
         const value = [];
-        const subDataList = data.list || [];
+        const subDataList = data.list;
         for (const subData of subDataList) {
           if (!subData.longFlag) {
             value.push(subData);
@@ -869,6 +880,33 @@ class Config {
       }
     } else {
       this._logError('Sync setting from server fail', new Error(result.message));
+      return null;
+    }
+  };
+
+  _singleSyncSignatureOfMobile = async () => {
+    // sync sig from ios and mac, but only sync sig to mac
+    const sigKeyInCommonServer = 'signature';
+    const sigConfigKey = 'signatures';
+    const { PreferencesRest } = require('./rest');
+    const commonSigListResult = await PreferencesRest.getFullListTypePreferenceByServerKey({
+      serverKey: sigKeyInCommonServer,
+      platform: EdisonPlatformType.COMMON,
+    });
+    if (!commonSigListResult.successful) {
+      throw new Error(commonSigListResult.message);
+    }
+    if (commonSigListResult.data && commonSigListResult.data.length) {
+      const commonSigList = commonSigListResult.data.map(sig => ({
+        subId: sig.value,
+        tsClientUpdate: sig.tsClientUpdate,
+        platform: EdisonPlatformType.COMMON,
+      }));
+      const { mergeServerToLocal } = this.getSchema(sigConfigKey);
+      if (mergeServerToLocal && typeof mergeServerToLocal === 'function') {
+        const value = await mergeServerToLocal(commonSigList);
+        this.set(sigConfigKey, value, true);
+      }
     }
   };
 
@@ -923,21 +961,10 @@ class Config {
       return;
     }
     const { PreferencesRest } = require('./rest');
-    const { mergeLocalToServer, syncToServerCommonKey } = this.getSchema(keyPath);
+    const { mergeLocalToServer } = this.getSchema(keyPath);
     if (mergeLocalToServer && typeof mergeLocalToServer === 'function') {
-      const platform = syncToServerCommonKey ? EdisonPlatformType.COMMON : EdisonPlatformType.MAC;
-      const configKeyInServer = syncToServerCommonKey
-        ? syncToServerCommonKey
-        : keyPath.replace(/\./g, '_');
-      const oldValue = await this._getLongListPreferencesValue({
-        key: configKeyInServer,
-        platform: platform,
-      });
-      if (!oldValue) {
-        return;
-      }
       const { update = [], remove = [], callback = () => {} } =
-        (await mergeLocalToServer(oldValue, value)) || {};
+        (await mergeLocalToServer(value)) || {};
       const result = await PreferencesRest.updateListPreferences(keyPath, { update, remove });
       if (result.successful) {
         const { data } = result;
