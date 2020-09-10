@@ -360,10 +360,11 @@ const CreatePageForForm = FormComponent => {
 
     render() {
       const { account, errorMessage, errorFieldNames, errorLog, submitting } = this.state;
-      const providerConfig = AccountProviders.find(({ provider }) => provider === account.provider);
+      const accProvider = account.provider === 'onmail' ? 'imap' : account.provider;
+      const providerConfig = AccountProviders.find(({ provider }) => provider === accProvider);
 
       if (!providerConfig) {
-        throw new Error(`Cannot find account provider ${account.provider}`);
+        throw new Error(`Cannot find account provider ${accProvider}`);
       }
 
       const hideTitle = errorMessage && errorMessage.length > 120;
