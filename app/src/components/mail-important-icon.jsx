@@ -34,7 +34,7 @@ class MailImportantIcon extends React.Component {
       for (let accountId of perspective.accountIds) {
         const account = AccountStore.accountForId(accountId);
         const accountImportant = CategoryStore.getCategoryByRole(account, 'important');
-        if (accountImportant) {
+        if (accountImportant && !account.isOnmail()) {
           visible = true;
         }
         if (accountId === props.thread.accountId) {
@@ -46,7 +46,8 @@ class MailImportantIcon extends React.Component {
       }
     } else {
       category = CategoryStore.getCategoryByRole(props.thread.accountId, 'important');
-      visible = category != null;
+      const account = AccountStore.accountForId(props.thread.accountId);
+      visible = category != null && account && !account.isOnmail();
     }
 
     const isImportant = category && _.findWhere(props.thread.labels, { id: category.id }) != null;
