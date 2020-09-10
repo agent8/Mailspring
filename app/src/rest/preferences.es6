@@ -2,7 +2,7 @@ import axios from 'axios';
 import RESTResult from './result-data-format';
 import { AccountStore, Constant } from 'mailspring-exports';
 
-const { EdisonPlatformType } = Constant;
+const { EdisonPlatformType, generateServerConfigKey } = Constant;
 
 export default class Preferences {
   constructor(host) {
@@ -82,7 +82,7 @@ export default class Preferences {
       : EdisonPlatformType.MAC;
     const configKeyInServer = configSchema.syncToServerCommonKey
       ? configSchema.syncToServerCommonKey
-      : configKey.toLowerCase().replace(/\./g, '_');
+      : generateServerConfigKey(configKey);
     const version = AppEnv.config.getConfigUpdateTime(configKey);
     const postData = {
       platform: platform,
@@ -133,7 +133,7 @@ export default class Preferences {
       : EdisonPlatformType.MAC;
     const configKeyInServer = configSchema.syncToServerCommonKey
       ? configSchema.syncToServerCommonKey
-      : configKey.toLowerCase().replace(/\./g, '_');
+      : generateServerConfigKey(configKey);
 
     const postData = {
       platform: platform,
@@ -174,7 +174,7 @@ export default class Preferences {
       : EdisonPlatformType.MAC;
     const configKeyInServer = configSchema.syncToServerCommonKey
       ? configSchema.syncToServerCommonKey
-      : configKey.toLowerCase().replace(/\./g, '_');
+      : generateServerConfigKey(configKey);
 
     const postData = {
       platform: platform,
@@ -272,7 +272,7 @@ export default class Preferences {
       : EdisonPlatformType.MAC;
     const configKeyInServer = configSchema.syncToServerCommonKey
       ? configSchema.syncToServerCommonKey
-      : configKey.toLowerCase().replace(/\./g, '_');
+      : generateServerConfigKey(configKey);
     const tsClientCurrent = new Date().getTime();
     const tsClientUpdate = AppEnv.config.getConfigUpdateTime(configKey);
     const postData = {
@@ -322,7 +322,7 @@ export default class Preferences {
       : EdisonPlatformType.MAC;
     const configKeyInServer = configSchema.syncToServerCommonKey
       ? configSchema.syncToServerCommonKey
-      : configKey.toLowerCase().replace(/\./g, '_');
+      : generateServerConfigKey(configKey);
     const tsClientCurrent = new Date().getTime();
     const postData = {
       platform: platform,
@@ -365,7 +365,7 @@ export default class Preferences {
         : EdisonPlatformType.MAC;
       const configKeyInServer = configSchema.syncToServerCommonKey
         ? configSchema.syncToServerCommonKey
-        : configKey.toLowerCase().replace(/\./g, '_');
+        : generateServerConfigKey(configKey);
       const tsClientUpdate = AppEnv.config.getConfigUpdateTime(configKey);
       return {
         platform: platform,

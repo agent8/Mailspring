@@ -88,6 +88,10 @@ export const EdisonPlatformType = {
   COMMON: 'common',
 };
 
+export function generateServerConfigKey(configKey) {
+  return configKey.toLowerCase().replace(/\./g, '_');
+}
+
 export const EdisonPreferencesType = {
   LIST: 'list',
   STRING: 'string',
