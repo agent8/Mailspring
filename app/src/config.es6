@@ -680,8 +680,12 @@ class Config {
     return schema;
   }
 
-  _getConfigKeyByServerKey(key) {
-    const syncToServerCommonKey = this.serverKeyMap.get(key);
+  _getConfigKeyByServerKey(platform, key) {
+    const keyMap = this.serverKeyMap.get(platform);
+    if (!keyMap) {
+      return '';
+    }
+    const syncToServerCommonKey = keyMap.get(key);
     if (syncToServerCommonKey) {
       const theSchema = this.getSchema(syncToServerCommonKey);
       if (theSchema) {
@@ -693,22 +697,26 @@ class Config {
   }
 
   _updateServerKeyMap() {
-    const serverKeyMap = new Map();
+    const serverCommonKeyMap = new Map();
+    const serverMacKeyMap = new Map();
     function traversingObj(obj, parentKey) {
       Object.keys(obj).forEach(key => {
         const nowObj = obj[key] || {};
         const nowKey = `${parentKey ? parentKey + '.' : ''}${key}`;
         if (nowObj.syncToServerCommonKey) {
-          serverKeyMap.set(nowObj.syncToServerCommonKey, nowKey);
-        } else {
-          serverKeyMap.set(nowKey.toLowerCase().replace(/\./g, '_'), nowKey);
+          serverCommonKeyMap.set(nowObj.syncToServerCommonKey, nowKey);
         }
+        serverMacKeyMap.set(nowKey.toLowerCase().replace(/\./g, '_'), nowKey);
         if (nowObj.type === 'object') {
           traversingObj(nowObj.properties, nowKey);
         }
       });
     }
+
     traversingObj(this.schema.properties);
+    const serverKeyMap = new Map();
+    serverKeyMap.set(EdisonPlatformType.COMMON, serverCommonKeyMap);
+    serverKeyMap.set(EdisonPlatformType.MAC, serverMacKeyMap);
     this.serverKeyMap = serverKeyMap;
   }
 
@@ -782,7 +790,7 @@ class Config {
     }
     const changeList = [];
     for (const conf of configList) {
-      const configKey = this._getConfigKeyByServerKey(conf.key);
+      const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
       if (!configKey) {
         continue;
       }
@@ -810,7 +818,7 @@ class Config {
 
   _getLongStrPreferencesValue = async conf => {
     const { PreferencesRest } = require('./rest');
-    const configKey = this._getConfigKeyByServerKey(conf.key);
+    const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
     if (!configKey) {
       return;
     }
@@ -833,7 +841,7 @@ class Config {
 
   _getLongListPreferencesValue = async conf => {
     const { PreferencesRest } = require('./rest');
-    const configKey = this._getConfigKeyByServerKey(conf.key);
+    const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
     if (!configKey) {
       return null;
     }
