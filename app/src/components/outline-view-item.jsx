@@ -323,28 +323,22 @@ class OutlineViewItem extends Component {
     event.stopPropagation();
     const item = this.props.item;
     const contextMenuLabel = item.contextMenuLabel || item.name;
-    const { remote } = require('electron');
-    const { Menu, MenuItem } = remote;
-    const menu = new Menu();
+    const menu = [];
 
     if (this.props.item.onEdited) {
-      menu.append(
-        new MenuItem({
-          label: `Rename ${contextMenuLabel}`,
-          click: this._onEdit,
-        })
-      );
+      menu.push({
+        label: `Rename ${contextMenuLabel}`,
+        click: this._onEdit,
+      });
     }
 
     if (this.props.item.onDelete) {
-      menu.append(
-        new MenuItem({
-          label: `Delete ${contextMenuLabel}`,
-          click: this._onDelete,
-        })
-      );
+      menu.push({
+        label: `Delete ${contextMenuLabel}`,
+        click: this._onDelete,
+      });
     }
-    menu.popup({});
+    Actions.openContextMenu({ menuItems: menu, mouseEvent: event });
   };
 
   _formatNumber(num) {

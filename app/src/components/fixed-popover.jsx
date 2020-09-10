@@ -12,6 +12,7 @@ const Directions = {
   Down: 'down',
   Left: 'left',
   Right: 'right',
+  RightBottom: 'rightBottom',
 };
 
 const InverseDirections = {
@@ -19,6 +20,7 @@ const InverseDirections = {
   [Directions.Down]: Directions.Up,
   [Directions.Left]: Directions.Right,
   [Directions.Right]: Directions.Left,
+  [Directions.RightBottom]: Directions.Up,
 };
 
 const OFFSET_PADDING = 11.5;
@@ -34,6 +36,8 @@ class FixedPopover extends Component {
   static Directions = Directions;
 
   static propTypes = {
+    className: PropTypes.string,
+    popoverClassName: PropTypes.string,
     children: PropTypes.element,
     direction: PropTypes.string,
     fallbackDirection: PropTypes.string,
@@ -228,7 +232,7 @@ class FixedPopover extends Component {
   };
 
   computePopoverStyles = ({ originRect, direction, offset, isFixedToWindow, position = {} }) => {
-    const { Up, Down, Left, Right } = Directions;
+    const { Up, Down, Left, Right, RightBottom } = Directions;
     let containerStyle = {};
     let popoverStyle = {};
     let pointerStyle = {};
@@ -316,6 +320,24 @@ class FixedPopover extends Component {
           top: originRect.height || 0, // Don't divide by 2 because of zoom
         };
         break;
+      case RightBottom:
+        containerStyle = {
+          // Place container on the top right corner of the rect
+          top: originRect.top || 0,
+          left: (originRect.left || 0) + (originRect.width || 0),
+          height: originRect.height || 0,
+        };
+        popoverStyle = {
+          // Center and adjust 10px for the pointer
+          transform: `translate(0, ${offset.y || 0}px) translate(10px, 0px)`,
+          top: (originRect.height || 0) / 2,
+        };
+        pointerStyle = {
+          // Center, already positioned at the right of container (adjust for rotation)
+          transform: 'translate(-12px, 0%) rotate(45deg)',
+          top: originRect.height || 0, // Don't divide by 2 because of zoom
+        };
+        break;
       default:
         break;
     }
@@ -356,7 +378,11 @@ class FixedPopover extends Component {
           onBlur={this.onBlur}
           tabIndex={-1}
         >
-          <div ref="popover" className={`fixed-popover`} style={popoverStyle}>
+          <div
+            ref="popover"
+            className={`fixed-popover ${this.props.popoverClassName}`}
+            style={popoverStyle}
+          >
             {children}
           </div>
           {!disablePointer && <div className={`fixed-popover-pointer`} style={pointerStyle} />}
@@ -369,7 +395,4 @@ class FixedPopover extends Component {
   }
 }
 
-export default compose(
-  FixedPopover,
-  AutoFocuses
-);
+export default compose(FixedPopover, AutoFocuses);
