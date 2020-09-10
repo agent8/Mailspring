@@ -203,6 +203,9 @@ export default class Account extends ModelWithMetadata {
   isExchange() {
     return (this.provider || '').includes('exchange');
   }
+  isOnmail() {
+    return (this.provider || '').includes('onmail');
+  }
   isMyEmail(emailAddress) {
     return this.getAllEmails().includes(emailAddress);
   }
