@@ -1,5 +1,5 @@
 /* eslint global-require: 0 */
-import { shell, ipcRenderer, remote } from 'electron';
+import { shell, ipcRenderer, remote, clipboard } from 'electron';
 import url from 'url';
 
 let ComponentRegistry = null;
@@ -134,8 +134,10 @@ export default class WindowEventHandler {
     };
 
     AppEnv.commands.add(document.body, {
-      'core:copy': () => (isSelectionPresent() ? webContents.copy() : null),
-      'core:cut': () => (isSelectionPresent() ? webContents.cut() : null),
+      'core:copy': (event, { text = '' } = {}) =>
+        isSelectionPresent() ? webContents.copy() : clipboard.writeText(text),
+      'core:cut': (event, { text = '' } = {}) =>
+        isSelectionPresent() ? webContents.cut() : clipboard.writeText(text),
       'core:paste': () => webContents.paste(),
       'core:paste-and-match-style': () => webContents.pasteAndMatchStyle(),
       'core:undo': e => (isTextInput(e.target) ? webContents.undo() : getUndoStore().undoLastOne()),
@@ -336,14 +338,14 @@ export default class WindowEventHandler {
       new MenuItem({
         label: 'Cut',
         enabled: hasSelectedText,
-        click: () => AppEnv.commands.dispatch('core:cut'),
+        click: () => AppEnv.commands.dispatch('core:cut', { text: word }),
       })
     );
     menu.append(
       new MenuItem({
         label: 'Copy',
         enabled: hasSelectedText,
-        click: () => AppEnv.commands.dispatch('core:copy'),
+        click: () => AppEnv.commands.dispatch('core:copy', { text: word }),
       })
     );
     menu.append(
