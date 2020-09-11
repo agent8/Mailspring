@@ -133,7 +133,11 @@ const CreatePageForForm = FormComponent => {
           this.setState({ submitting: true });
         }
         if (account.provider === 'exchange') {
-          if (!account.emailAddress) {
+          if (
+            !account.emailAddress ||
+            (account.settings['ews_email'] &&
+              account.emailAddress !== account.settings['ews_email'])
+          ) {
             account.emailAddress = account.settings['ews_email'];
           }
           if (!account.settings['ews_username']) {
