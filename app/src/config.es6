@@ -18,6 +18,7 @@ const {
   UpdateToServerComplexSettingTypes,
   EdisonPlatformType,
   EdisonPreferencesType,
+  generateServerConfigKey,
 } = require('./constant');
 
 if (process.type === 'renderer') {
@@ -706,7 +707,7 @@ class Config {
         if (nowObj.syncToServerCommonKey) {
           serverCommonKeyMap.set(nowObj.syncToServerCommonKey, nowKey);
         }
-        serverMacKeyMap.set(nowKey.toLowerCase().replace(/\./g, '_'), nowKey);
+        serverMacKeyMap.set(generateServerConfigKey(nowKey), nowKey);
         if (nowObj.type === 'object') {
           traversingObj(nowObj.properties, nowKey);
         }
