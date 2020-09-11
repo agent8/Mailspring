@@ -576,7 +576,7 @@ class AccountStore extends MailspringStore {
   };
 
   syncAccount = () => {
-    const syncAccountId = AppEnv.config.get(edisonAccountKey) ;
+    const syncAccountId = AppEnv.config.get(edisonAccountKey);
     return this.accountForId(syncAccountId);
   };
 

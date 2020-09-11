@@ -13,8 +13,14 @@ export default class Preferences {
     const stateCode = error && error.response && error.response.status;
     if (stateCode && stateCode === 401) {
       // Token missed or expired or invalid
-      const { EdisonAccountRest } = require('./index');
-      EdisonAccountRest.register(aid);
+      setTimeout(() => {
+        // wait for config change finish
+        const { EdisonAccountRest } = require('./index');
+        const syncAccount = AccountStore.syncAccount();
+        if (syncAccount && syncAccount.id) {
+          EdisonAccountRest.register(aid);
+        }
+      }, 3000);
     }
   }
 

@@ -738,14 +738,20 @@ class Config {
     if (!syncAccountId) {
       return;
     }
+    if (this._onSyncPreferences) {
+      return;
+    }
+    this._onSyncPreferences = true;
     const { PreferencesRest } = require('./rest');
     const setting = await PreferencesRest.getAllPreferences();
     if (!setting.successful) {
+      this._onSyncPreferences = false;
       this._logError('Sync all setting from server fail', new Error(setting.message));
       return;
     }
     const { data } = setting;
     if (!Array.isArray(data) || !data.length) {
+      this._onSyncPreferences = false;
       return;
     }
     const configList = [];
@@ -774,6 +780,7 @@ class Config {
     } catch (err) {
       this._logError('Sync setting from server fail', err);
     }
+    this._onSyncPreferences = false;
   };
 
   clearSyncPreferencesVersion = () => {
