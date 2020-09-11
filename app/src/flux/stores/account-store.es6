@@ -308,6 +308,7 @@ class AccountStore extends MailspringStore {
           : `local-${updated.id}-${updated.emailAddress}-${updated.name}`;
       const sig = SignatureStore.signatureForDefaultSignatureId(oldAccountSigId);
       if (sig) {
+        SignatureStore.removeDefaultSignature(oldAccountSigId)
         SignatureStore.setDefaultSignature(newAccountSigId, sig.id);
       }
     }

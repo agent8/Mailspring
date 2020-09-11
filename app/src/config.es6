@@ -357,8 +357,8 @@ class Config {
       // If new Config() has already been called, unmount it's listener when
       // we attach ourselves. This is only done during specs, Config is a singleton.
       ipcRenderer.removeAllListeners('on-config-reloaded');
-      ipcRenderer.on('on-config-reloaded', (event, settings) => {
-        this.updateSettings(settings);
+      ipcRenderer.on('on-config-reloaded', () => {
+        this.load();
       });
     }
   }
@@ -1119,6 +1119,7 @@ class Config {
     let oldValue = this.get(keyPath);
     return this.emitter.on('did-change', () => {
       const newValue = this.get(keyPath);
+
       if (!_.isEqual(oldValue, newValue)) {
         const event = { oldValue, newValue };
         oldValue = newValue;

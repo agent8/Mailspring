@@ -292,7 +292,7 @@ export default class ConfigPersistenceManager {
 
     BrowserWindow.getAllWindows().forEach(win => {
       if (win.webContents && win.webContents.id !== sourceWebcontentsId) {
-        win.webContents.send('on-config-reloaded', this.settings);
+        win.webContents.send('on-config-reloaded');
       }
     });
   };
