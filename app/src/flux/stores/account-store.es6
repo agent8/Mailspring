@@ -559,7 +559,10 @@ class AccountStore extends MailspringStore {
     const oldSyncAccountIds = AppEnv.config.get(edisonAccountKey) || [];
     const newSyncAccountIds = [...new Set([...oldSyncAccountIds, aid])];
     const nowAccountIds = this.accountIds();
-    AppEnv.config.set(edisonAccountKey, newSyncAccountIds.filter(id => nowAccountIds.includes(id)));
+    AppEnv.config.set(
+      edisonAccountKey,
+      newSyncAccountIds.filter(id => nowAccountIds.includes(id))
+    );
     // sync preferences from server
     AppEnv.config.syncAllPreferencesFromServer();
     // refresh the sub accounts for new sync account
@@ -596,7 +599,7 @@ class AccountStore extends MailspringStore {
       'smtp_password',
     ];
     const ret = {};
-    const hash = str => {
+    const hash = (str = '') => {
       return crypto
         .createHash('sha256')
         .update(str)

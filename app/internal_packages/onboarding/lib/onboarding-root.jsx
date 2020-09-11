@@ -10,6 +10,7 @@ import AccountChoosePage from './page-account-choose';
 import AccountSettingsPage from './page-account-settings';
 import AccountSettingsPageGmail from './page-account-settings-gmail';
 import AccountSettingsPageIMAP from './page-account-settings-imap';
+import AccountExchangeSettingsForm from './page-account-settings-exchange';
 import AccountSettingsPageOffice365 from './page-account-settings-office365';
 import AccountSettingsPageOutlook from './page-account-settings-outlook';
 import AccountSettingsPageYahoo from './page-account-settings-yahoo';
@@ -40,6 +41,7 @@ const PageComponents = {
   'account-settings-hotmail': AccountSettingsPageOutlook,
   'account-settings-yahoo': AccountSettingsPageYahoo,
   'account-settings-imap': AccountSettingsPageIMAP,
+  'account-settings-exchange': AccountExchangeSettingsForm,
   'account-settings-jira-plugin': AccountSettingsPageJira,
   'account-onboarding-success': AccountOnboardingSuccess,
   'account-add-another': AddAnotherAccountPage,

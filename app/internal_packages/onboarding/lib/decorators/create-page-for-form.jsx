@@ -132,6 +132,18 @@ const CreatePageForForm = FormComponent => {
         if (this._mounted) {
           this.setState({ submitting: true });
         }
+        if (account.provider === 'exchange') {
+          if (
+            !account.emailAddress ||
+            (account.settings['ews_email'] &&
+              account.emailAddress !== account.settings['ews_email'])
+          ) {
+            account.emailAddress = account.settings['ews_email'];
+          }
+          if (!account.settings['ews_username']) {
+            account.settings['ews_username'] = account.settings['ews_email'];
+          }
+        }
         finalizeAndValidateAccount(account)
           .then(validated => {
             OnboardingActions.moveToPage('account-onboarding-success');
@@ -148,60 +160,79 @@ const CreatePageForForm = FormComponent => {
               return;
             }
             const errorFieldNames = [];
-            if (err.message.includes('Authentication Error')) {
-              if (/smtp/i.test(err.message)) {
-                errorFieldNames.push('settings.smtp_username');
-                errorFieldNames.push('settings.smtp_password');
+            if (account.provider === 'exchange') {
+              if (isBasicForm) {
+                if (err.statusCode === 'ErrorNoValidServerFound') {
+                  OnboardingActions.moveToPage('account-settings-exchange');
+                  return;
+                } else if (err.statusCode === 'ErrorAuthentication') {
+                  errorFieldNames.push('emailAddress');
+                  errorFieldNames.push('settings.imap_password');
+                }
               } else {
-                errorFieldNames.push('settings.imap_username');
-                errorFieldNames.push('settings.imap_password');
+                if (err.statusCode === 'ErrorNoValidServerFound') {
+                  errorFieldNames.push('settings.ews_host');
+                } else if (err.statusCode === 'ErrorAuthentication') {
+                  errorFieldNames.push('settings.ews_username');
+                  errorFieldNames.push('settings.ews_password');
+                }
               }
-            } else if (/certificate/i.test(err.message)) {
-              errorFieldNames.push('settings.imap_allow_insecure_ssl');
-              errorFieldNames.push('settings.smtp_allow_insecure_ssl');
-              remote.dialog
-                .showMessageBox(remote.getCurrentWindow(), {
-                  type: 'warning',
-                  buttons: ['Go Back', 'Continue'],
-                  defaultId: 1,
-                  cancelId: 0,
-                  message: 'Certificate Error',
-                  detail: `The TLS certificate for this server seems to be incorrect. Do you want to continue?`,
-                })
-                .then(({ response }) => {
-                  if (response === 1 && this.state.account && this.state.account.settings) {
-                    account.settings.imap_allow_insecure_ssl = true;
-                    account.settings.smtp_allow_insecure_ssl = true;
-                    if (this._mounted) {
-                      this.setState({ account, submitting: true }, () => {
-                        this.onConnect(this.state.account);
+            } else {
+              if (err.message.includes('Authentication Error')) {
+                if (/smtp/i.test(err.message)) {
+                  errorFieldNames.push('settings.smtp_username');
+                  errorFieldNames.push('settings.smtp_password');
+                } else {
+                  errorFieldNames.push('settings.imap_username');
+                  errorFieldNames.push('settings.imap_password');
+                }
+              } else if (/certificate/i.test(err.message)) {
+                errorFieldNames.push('settings.imap_allow_insecure_ssl');
+                errorFieldNames.push('settings.smtp_allow_insecure_ssl');
+                remote.dialog
+                  .showMessageBox(remote.getCurrentWindow(), {
+                    type: 'warning',
+                    buttons: ['Go Back', 'Continue'],
+                    defaultId: 1,
+                    cancelId: 0,
+                    message: 'Certificate Error',
+                    detail: `The TLS certificate for this server seems to be incorrect. Do you want to continue?`,
+                  })
+                  .then(({ response }) => {
+                    if (response === 1 && this.state.account && this.state.account.settings) {
+                      account.settings.imap_allow_insecure_ssl = true;
+                      account.settings.smtp_allow_insecure_ssl = true;
+                      if (this._mounted) {
+                        this.setState({ account, submitting: true }, () => {
+                          this.onConnect(this.state.account);
+                        });
+                      }
+                    } else {
+                      account.settings.imap_allow_insecure_ssl = false;
+                      account.settings.smtp_allow_insecure_ssl = false;
+                      const errorAccount = Object.assign({}, account);
+                      delete errorAccount.name;
+                      delete errorAccount.emailAddress;
+                      delete errorAccount.label;
+                      delete errorAccount.autoaddress;
+                      delete errorAccount.aliases;
+                      AppEnv.reportError(err, {
+                        account: AccountStore.stripAccountData(errorAccount),
                       });
+                      if (this._mounted) {
+                        this.setState({
+                          errorMessage: err.message,
+                          errorStatusCode: err.statusCode,
+                          errorLog: err.rawLog,
+                          errorFieldNames,
+                          account,
+                          submitting: false,
+                        });
+                      }
                     }
-                  } else {
-                    account.settings.imap_allow_insecure_ssl = false;
-                    account.settings.smtp_allow_insecure_ssl = false;
-                    const errorAccount = Object.assign({}, account);
-                    delete errorAccount.name;
-                    delete errorAccount.emailAddress;
-                    delete errorAccount.label;
-                    delete errorAccount.autoaddress;
-                    delete errorAccount.aliases;
-                    AppEnv.reportError(err, {
-                      account: AccountStore.stripAccountData(errorAccount),
-                    });
-                    if (this._mounted) {
-                      this.setState({
-                        errorMessage: err.message,
-                        errorStatusCode: err.statusCode,
-                        errorLog: err.rawLog,
-                        errorFieldNames,
-                        account,
-                        submitting: false,
-                      });
-                    }
-                  }
-                });
-              return;
+                  });
+                return;
+              }
             }
             const errorAccount = Object.assign({}, account);
             delete errorAccount.name;
