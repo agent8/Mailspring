@@ -734,8 +734,8 @@ class Config {
   }
 
   syncAllPreferencesFromServer = async () => {
-    const syncAccountIds = this.get('edisonAccount') || [];
-    if (!syncAccountIds.length) {
+    const syncAccountId = this.get('edisonAccountId');
+    if (!syncAccountId) {
       return;
     }
     const { PreferencesRest } = require('./rest');
@@ -912,8 +912,8 @@ class Config {
   };
 
   _syncSettingToServer = async (keyPath, value) => {
-    const syncAccountIds = this.get('edisonAccount') || [];
-    if (syncAccountIds.length) {
+    const syncAccountId = this.get('edisonAccountId');
+    if (syncAccountId) {
       // should sync the change to server
       const configSchema = this.getSchema(keyPath);
       try {

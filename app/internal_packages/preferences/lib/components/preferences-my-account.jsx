@@ -4,7 +4,7 @@ import { RetinaImg, Flexbox, LottieImg } from 'mailspring-component-kit';
 import PropTypes from 'prop-types';
 
 const { EdisonAccountRest } = RESTful;
-const edisonAccountKey = 'edisonAccount';
+const edisonAccountKey = 'edisonAccountId';
 const PromptedEdisonAccountKey = 'core.workspace.promptedEdisonAccount';
 const computerPlatforms = ['mac'];
 const modeSwitchList = [

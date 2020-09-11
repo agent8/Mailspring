@@ -28,7 +28,7 @@ const { EdisonAccountRest } = RESTful;
 const ipcRenderer = require('electron').ipcRenderer;
 const configAccountsKey = 'accounts';
 const configVersionKey = 'accountsVersion';
-const edisonAccountKey = 'edisonAccount';
+const edisonAccountKey = 'edisonAccountId';
 /*
 Public: The AccountStore listens to changes to the available accounts in
 the database and exposes the currently active Account via {::current}
@@ -458,8 +458,8 @@ class AccountStore extends MailspringStore {
     }
 
     // logout edison account
-    const syncAccountIds = AppEnv.config.get(edisonAccountKey) || [];
-    if (syncAccountIds.includes(id)) {
+    const syncAccountId = AppEnv.config.get(edisonAccountKey);
+    if (syncAccountId === id) {
       await EdisonAccountRest.logoutDevice(id, AppEnv.config.get('core.support.id'));
     }
 
@@ -557,10 +557,10 @@ class AccountStore extends MailspringStore {
     if (!aid) {
       return;
     }
-    const oldSyncAccountIds = AppEnv.config.get(edisonAccountKey) || [];
-    const newSyncAccountIds = [...new Set([...oldSyncAccountIds, aid])];
-    const nowAccountIds = this.accountIds();
-    AppEnv.config.set(edisonAccountKey, newSyncAccountIds.filter(id => nowAccountIds.includes(id)));
+    AppEnv.config.set(
+      edisonAccountKey,
+      aid
+    );
     // sync preferences from server
     AppEnv.config.syncAllPreferencesFromServer();
     // refresh the sub accounts for new sync account
@@ -571,16 +571,13 @@ class AccountStore extends MailspringStore {
     if (!aid) {
       return;
     }
-    const oldSyncAccountIds = AppEnv.config.get(edisonAccountKey) || [];
-    const newSyncAccountIds = oldSyncAccountIds.filter(oldId => oldId !== aid);
-    AppEnv.config.set(edisonAccountKey, newSyncAccountIds);
+    AppEnv.config.set(edisonAccountKey, '');
     AppEnv.config.clearSyncPreferencesVersion();
   };
 
   syncAccount = () => {
-    const syncAccountIds = AppEnv.config.get(edisonAccountKey) || [];
-    const theId = syncAccountIds.filter(id => this.accountIds().includes(id))[0];
-    return this.accountForId(theId);
+    const syncAccountId = AppEnv.config.get(edisonAccountKey) ;
+    return this.accountForId(syncAccountId);
   };
 
   stripAccountData = account => {
