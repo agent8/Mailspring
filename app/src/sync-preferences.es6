@@ -11,6 +11,7 @@ const ConfigType = {
   template: { dirName: 'templates', configKey: 'templates' },
   signature: { dirName: 'signatures', configKey: 'signatures' },
 };
+const defaultSignaturesKey = 'defaultSignatures';
 
 async function downloadAndUnCompress(key) {
   const dirName = path.join(AppEnv.getConfigDirPath(), 'tmp');
@@ -271,4 +272,30 @@ export const mergeServerAccountsToLocal = async accountListInServer => {
       return account;
     }
   });
+};
+
+export const mergeLocalDefaultSignaturesToServer = async value => {
+  const update = [
+    {
+      subId: defaultSignaturesKey.toLowerCase(),
+      value: JSON.stringify(value),
+      tsClientUpdate: new Date().getTime(),
+    },
+  ];
+
+  return { update: update, remove: [] };
+};
+
+export const mergeServerDefaultSignaturesToLocal = async defaultSigInServer => {
+  const configInServer = defaultSigInServer.find(
+    item => item.subId === defaultSignaturesKey.toLowerCase()
+  );
+  if (configInServer && configInServer.value) {
+    try {
+      const newConfig = JSON.parse(configInServer.value);
+      return newConfig;
+    } catch (err) {}
+  }
+  const configInLocal = AppEnv.config.get(defaultSignaturesKey);
+  return configInLocal;
 };
