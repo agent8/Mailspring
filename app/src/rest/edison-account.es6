@@ -41,7 +41,10 @@ export default class EdisonAccount {
     const stateCode = error && error.response && error.response.status;
     if (stateCode && stateCode === 401) {
       // Token missed or expired or invalid
-      this.register(aid);
+      const syncAccount = AccountStore.syncAccount();
+      if (syncAccount && syncAccount.id) {
+        this.register(syncAccount.id);
+      }
     }
   }
 
