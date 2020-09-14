@@ -93,15 +93,15 @@ class AccountExchangeSettingsForm extends React.Component {
       <div className="twocol advance-settings">
         <div className="col">
           <div className="col-heading">
-            <span>SERVER INFO</span>
-          </div>
-          {this.renderServerInfo()}
-        </div>
-        <div className="col">
-          <div className="col-heading">
             <span>USER INFO</span>
           </div>
           {this.renderUserInfo()}
+        </div>
+        <div className="col">
+          <div className="col-heading">
+            <span>SERVER INFO</span>
+          </div>
+          {this.renderServerInfo()}
         </div>
       </div>
     );
