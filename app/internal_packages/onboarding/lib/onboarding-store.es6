@@ -54,6 +54,8 @@ class OnboardingStore extends MailspringStore {
         this._pageStack = ['account-choose', `account-settings-${this._account.provider}`];
       } else if (this._account.provider === 'imap') {
         this._pageStack = ['account-choose', 'account-settings', 'account-settings-imap'];
+      } else if (this._account.provider === 'exchange') {
+        this._pageStack = ['account-choose', 'account-settings', 'account-settings-exchange'];
       } else {
         this._pageStack = ['account-choose', 'account-settings'];
       }

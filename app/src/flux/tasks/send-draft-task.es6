@@ -7,6 +7,7 @@ import Message from '../models/message';
 import SoundRegistry from '../../registries/sound-registry';
 import { Composer as ComposerExtensionRegistry } from '../../registries/extension-registry';
 import { LocalizedErrorStrings } from '../../mailsync-process';
+import { Composer } from '../../constant';
 
 export const SendTaskDisplayErrors = {
   ErrorSendMessage: 'ErrorSendMessage',
@@ -97,8 +98,8 @@ export default class SendDraftTask extends Task {
     const ret = super.toJSON();
     try {
       const defaultValues = JSON.parse(ret.draft.defaultValues || '{}');
-      const defaultSize = defaultValues.fontSize || '14px';
-      const defaultFont = defaultValues.fontFace || 'sans-serif';
+      const defaultSize = defaultValues.fontSize || Composer.defaultFontSize;
+      const defaultFont = defaultValues.fontFace || Composer.defaultFontFamily;
       ret.draft.body = `<font style="font-size:${defaultSize};font-family:${defaultFont}">
         ${ret.draft.body}
       </font>`;

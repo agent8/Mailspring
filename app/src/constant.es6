@@ -19,6 +19,10 @@ export const WindowLevel = {
   Thread: 2,
   Main: 1,
 };
+export const Composer = {
+  defaultFontSize: '14px',
+  defaultFontFamily: 'sans-serif',
+};
 export const AutoUpdateManagerState = {
   IdleState: 'idle',
   CheckingState: 'checking',
