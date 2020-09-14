@@ -29,6 +29,9 @@ class SignatureStore extends MailspringStore {
     this.signaturesBody = new Map();
     this.defaultSignatures = AppEnv.config.get(`defaultSignatures`) || {};
     this.selectedSignatureId = '';
+    this._triggerDebounced = _.debounce(() => {
+      this.trigger();
+    }, 20);
 
     if (!fs.existsSync(this._signaturesDir)) {
       fs.mkdirSync(this._signaturesDir);
@@ -57,13 +60,11 @@ class SignatureStore extends MailspringStore {
         // compose should update the body when signature change
         this.signaturesBody = new Map();
       }
-      this.trigger();
+      this._triggerDebounced();
     });
     AppEnv.config.onDidChange(`defaultSignatures`, () => {
       this.defaultSignatures = AppEnv.config.get(`defaultSignatures`);
-      // Trigger signature update and synchronization
-      AppEnv.config.set(`signatures`, this.signatures);
-      this.trigger();
+      this._triggerDebounced();
     });
   }
 
@@ -95,8 +96,16 @@ class SignatureStore extends MailspringStore {
       return;
     }
     this.defaultSignatures[accountSigId] = sigId;
-    this.trigger();
+    this._triggerDebounced();
     this._saveDefaultSignatures();
+  }
+
+  removeDefaultSignature(accountSigId) {
+    if (this.defaultSignatures[accountSigId]) {
+      delete this.defaultSignatures[accountSigId];
+      this._triggerDebounced();
+      this._saveDefaultSignatures();
+    }
   }
 
   getBodyById(id) {
@@ -141,7 +150,7 @@ class SignatureStore extends MailspringStore {
 
   _onSelectSignature = id => {
     this.selectedSignatureId = id;
-    this.trigger();
+    this._triggerDebounced();
   };
 
   _autoselectSignatureId() {
@@ -168,7 +177,7 @@ class SignatureStore extends MailspringStore {
     this._onUpsertSignatureBody(newSigId, sigDefaultTemplate.body);
     // auto select
     this.selectedSignatureId = newSigId;
-    this.trigger();
+    this._triggerDebounced();
     this._saveSignatures();
   };
 
@@ -186,7 +195,7 @@ class SignatureStore extends MailspringStore {
       return sig;
     });
     this._onUpsertSignatureBody(signature.id, signature.body);
-    this.trigger();
+    this._triggerDebounced();
     this._saveSignatures();
   };
 
@@ -202,7 +211,7 @@ class SignatureStore extends MailspringStore {
     });
     this._onRemoveSignatureBody(signatureToDelete.id);
     this._autoselectSignatureId();
-    this.trigger();
+    this._triggerDebounced();
     this._saveSignatures();
   };
 
@@ -237,7 +246,7 @@ class SignatureStore extends MailspringStore {
       this.defaultSignatures[signatureId] = this.selectedSignatureId;
     }
 
-    this.trigger();
+    this._triggerDebounced();
     this._saveDefaultSignatures();
   };
 }
