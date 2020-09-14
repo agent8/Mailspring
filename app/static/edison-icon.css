@@ -1,6 +1,6 @@
 @font-face {
-	font-family: "EdisonIcons-1600048618507";
-  src: url('./fonts/EdisonIcons-1600048618507.woff') format('woff');
+	font-family: "EdisonIcons";
+  src: url('./fonts/EdisonIcons.woff?1600086523497') format('woff');
 }
 
 .edison-icon {
@@ -12,7 +12,7 @@
 
 
 .edison-icon:before {
-	font-family: "EdisonIcons-1600048618507";
+	font-family: "EdisonIcons";
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	font-style: normal;
