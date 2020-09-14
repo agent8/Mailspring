@@ -25,6 +25,7 @@ function InflatesDraftClientId(ComposedComponent) {
       this.state = {
         session: null,
         draft: null,
+        missingAttachments: false,
       };
       if (AppEnv.isMainWindow()) {
         this._windowLevel = 1;
@@ -92,48 +93,13 @@ function InflatesDraftClientId(ComposedComponent) {
         `Session for server draft ${draft.id}, savedOnRemote ${draft.savedOnRemote}, stack: ${trace}`
       );
       if (draft.savedOnRemote) {
-        DraftStore.sessionForServerDraft(draft);
-        //   .then(session => {
-        //   const shouldSetState = () => {
-        //     if (!session) {
-        //       AppEnv.reportError(new Error('session not available'));
-        //       return false;
-        //     }
-        //     const newDraft = session.draft();
-        //     let sameDraftWithNewID = false; // account for when draft gets new id because of being from remote
-        //     if (newDraft && newDraft.refOldDraftMessageId) {
-        //       sameDraftWithNewID = newDraft.refOldDraftMessageId === this.props.messageId;
-        //     }
-        //     return (
-        //       this._mounted &&
-        //       (newDraft.refOldDraftMessageId === this.props.messageId || sameDraftWithNewID)
-        //     );
-        //   };
-        //   if (!shouldSetState()) {
-        //     return;
-        //   }
-        //   // this._sessionUnlisten = session.listen(() => {
-        //   //   // console.log('inflates, data change');
-        //   //   if (!shouldSetState()) {
-        //   //     console.log('-------------------inflate-draft-cilent-id--------------- ');
-        //   //     console.log('did not update state');
-        //   //     console.log('------------------------------------- ');
-        //   //     return;
-        //   //   }
-        //   //   if (this._mounted) {
-        //   //     console.error(`updated inflate draft ${draft.id}`);
-        //   //     this.setState({ draft: session.draft() });
-        //   //   }
-        //   // });
-        //   if (this._mounted) {
-        //     console.error(`updated inflate draft outside session ${draft.id}`);
-        //     this.setState({
-        //       session: session,
-        //       draft: session.draft(),
-        //     });
-        //     this.props.onDraftReady();
-        //   }
-        // });
+        draft.missingAttachments().then(ret => {
+          if (ret && ret.totalMissing().length > 0) {
+            this.setState({ missingAttachments: true });
+            return;
+          }
+          DraftStore.sessionForServerDraft(draft);
+        });
       }
     }
 
@@ -227,15 +193,46 @@ function InflatesDraftClientId(ComposedComponent) {
     _showDraft = () => {
       Actions.focusHighestLevelDraftWindow(this.state.draft.id, this.state.draft.threadId);
     };
+    _removeAttachments = () => {
+      AppEnv.showMessageBox({
+        title: 'Attachments still downloading',
+        detail:
+          "Attachments still downloading, opening draft now will cause draft to loose it's attachments",
+        buttons: ['Cancel', 'Open'],
+        cancelId: 0,
+        defaultId: 0,
+      }).then(({ response } = {}) => {
+        if (response === 1) {
+          AppEnv.logDebug(
+            `InflateDraftClient: User opened draft ${this.props.draft.id} while attachments are missing`
+          );
+          this.props.draft.removeMissingAttachments().then(() => {
+            this.setState({ missingAttachments: false }, () => {
+              DraftStore.sessionForServerDraft(this.props.draft);
+            });
+          });
+        }
+      });
+    };
 
     render() {
+      if (this.state.missingAttachments) {
+        return (
+          <div className="draft-not-show">
+            Draft is currently downloading attachments.
+            <button className="show-draft" onClick={this._removeAttachments}>
+              Show Draft
+            </button>
+          </div>
+        );
+      }
       if (!this.state.draft) {
         return <span />;
       }
       if (this.state.session.isPopout()) {
         return (
-          <div className="draft-in-other-window">
-            Draft is currently being edited in another window.{' '}
+          <div className="draft-not-show">
+            Draft is currently being edited in another window.
             <button className="show-draft" onClick={this._showDraft}>
               Show Draft
             </button>

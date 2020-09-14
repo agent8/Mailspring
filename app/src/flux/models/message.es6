@@ -14,7 +14,11 @@ import CategoryStore from '../stores/category-store';
 import Category from './category';
 import { FileState } from '../../constant';
 
-let AttachmentStore = null;
+let attachmentStore = null;
+const AttachmentStore = () => {
+  attachmentStore = attachmentStore || require('../stores/attachment-store').default;
+  return attachmentStore;
+};
 
 const mapping = {
   attachmentIdsFromJSON: json => {
@@ -607,7 +611,6 @@ export default class Message extends ModelWithMetadata {
   }
 
   missingAttachments() {
-    AttachmentStore = AttachmentStore || require('../stores/attachment-store').default;
     return new Promise(resolve => {
       const totalMissing = () => {
         return [
@@ -642,7 +645,7 @@ export default class Message extends ModelWithMetadata {
             return;
           }
         }
-        const path = AttachmentStore.pathForFile(f);
+        const path = AttachmentStore().pathForFile(f);
         fs.access(path, fs.constants.R_OK, err => {
           if (err) {
             processed++;
@@ -681,6 +684,33 @@ export default class Message extends ModelWithMetadata {
       });
     });
   }
+  removeMissingAttachments = () => {
+    if (Array.isArray(this.files) && this.files.length > 0) {
+      return new Promise(resolve => {
+        let processed = 0;
+        const total = this.files.length;
+        const ret = [];
+        const removed = [];
+        this.files.forEach(f => {
+          const path = AttachmentStore().pathForFile(f);
+          fs.access(path, fs.constants.R_OK, err => {
+            processed++;
+            if (!err) {
+              ret.push(f);
+            } else {
+              removed.push(f);
+            }
+            if (processed === total) {
+              this.files = ret;
+              resolve(removed);
+            }
+          });
+        });
+      });
+    } else {
+      return Promise.resolve([]);
+    }
+  };
 
   //Public: returns the first email that belongs to the account that received the email,
   // otherwise returns the account's default email.
