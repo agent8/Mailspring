@@ -129,17 +129,19 @@ export default class AutoUpdateManager extends EventEmitter {
       return;
     }
 
-    //check immediately at startup
-    setTimeout(() => this.check({ hidePopups: true }), 20 * 1000);
+    if (!process.mas) {
+      //check immediately at startup
+      setTimeout(() => this.check({ hidePopups: true }), 20 * 1000);
 
-    //check every 60 minutes
-    setInterval(() => {
-      if ([UpdateAvailableState, UnsupportedState].includes(this.state)) {
-        console.log('Skipping update check... update ready to install, or updater unavailable.');
-        return;
-      }
-      this.check({ hidePopups: true });
-    }, 1000 * 60 * 60);
+      //check every 60 minutes
+      setInterval(() => {
+        if ([UpdateAvailableState, UnsupportedState].includes(this.state)) {
+          console.log('Skipping update check... update ready to install, or updater unavailable.');
+          return;
+        }
+        this.check({ hidePopups: true });
+      }, 1000 * 60 * 60);
+    }
     console.log(`\n------->\nupdater set feedURL ${this.feedURL}`);
   }
 
