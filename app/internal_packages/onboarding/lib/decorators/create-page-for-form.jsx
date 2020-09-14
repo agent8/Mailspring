@@ -93,6 +93,7 @@ const CreatePageForForm = FormComponent => {
       const { errorFieldNames, errorMessage, populated } = FormComponent.validateAccount(next);
       if (this._mounted) {
         this.setState({
+          errorLog: '',
           account: next,
           errorFieldNames,
           errorMessage,

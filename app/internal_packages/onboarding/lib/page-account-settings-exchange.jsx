@@ -35,8 +35,9 @@ class AccountExchangeSettingsForm extends React.Component {
       errorFieldNames.push('ews_password');
       errorMessage = 'Please provide a password';
       populated = false;
-    } else if (!account.settings['ews_username']) {
+    } else if (!account.settings['ews_username'] && !account.settings['ews_email']) {
       errorFieldNames.push('ews_username');
+      errorFieldNames.push('ews_email');
       errorMessage = 'Please provide username or email';
       populated = false;
     }

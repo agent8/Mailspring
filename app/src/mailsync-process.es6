@@ -36,7 +36,7 @@ export const LocalizedErrorStrings = {
     'A Gmail application-specific password is required.',
   ErrorOutlookLoginViaWebBrowser: 'The Outlook server said you must sign in via a web browser.',
   ErrorNeedsConnectToWebmail: 'The server said you must sign in via your webmail.',
-  ErrorNoValidServerFound: 'No valid server found.',
+  ErrorNoValidServerFound: 'Server not found.',
   ErrorAuthenticationRequired: 'Authentication required.',
 
   // sending related
