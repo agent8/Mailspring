@@ -521,6 +521,7 @@ export default class MessageItem extends React.Component {
             {this._renderBlockNote()}
             {this._renderHeader()}
             <MessageItemBody
+              pending={this.props.pending}
               message={this.props.message}
               messageIndex={this.props.messageIndex}
               downloads={this.state.downloads}
