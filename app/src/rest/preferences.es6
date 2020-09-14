@@ -236,10 +236,7 @@ export default class Preferences {
         if (!subData.longFlag) {
           value.push(subData);
         } else {
-          const subDataInServer = await PreferencesRest.getListTypeSubPreference(
-            configKey,
-            subData.subId
-          );
+          const subDataInServer = await this.getListTypeSubPreference(configKey, subData.subId);
           if (subDataInServer.successful) {
             value.push({ ...subData, value: subDataInServer.data.value });
           } else {
