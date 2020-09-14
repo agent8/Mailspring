@@ -365,7 +365,11 @@ export async function buildOffice365AccountFromAuthResponse(code) {
 
   // check if there is an old Office365 account
   const oldOffice365Acc = AccountStore.accountForEmail({ email: emailAddress });
-  if (oldOffice365Acc && oldOffice365Acc.settings.provider_key === 'office365') {
+  if (
+    oldOffice365Acc &&
+    (oldOffice365Acc.settings.provider_key === 'office365' ||
+      oldOffice365Acc.provider === 'exchange')
+  ) {
     OnboardingActions.moveToPage('account-choose');
     AppEnv.showErrorDialog({
       title: 'Unable to Add Account',
