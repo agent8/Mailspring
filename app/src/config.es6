@@ -357,8 +357,8 @@ class Config {
       // If new Config() has already been called, unmount it's listener when
       // we attach ourselves. This is only done during specs, Config is a singleton.
       ipcRenderer.removeAllListeners('on-config-reloaded');
-      ipcRenderer.on('on-config-reloaded', (event, settings) => {
-        this.updateSettings(settings);
+      ipcRenderer.on('on-config-reloaded', () => {
+        this.load();
       });
     }
   }
@@ -734,18 +734,25 @@ class Config {
   }
 
   syncAllPreferencesFromServer = async () => {
-    const syncAccountIds = this.get('edisonAccount') || [];
-    if (!syncAccountIds.length) {
+    return;
+    const syncAccountId = this.get('edisonAccountId');
+    if (!syncAccountId) {
       return;
     }
+    if (this._onSyncPreferences) {
+      return;
+    }
+    this._onSyncPreferences = true;
     const { PreferencesRest } = require('./rest');
     const setting = await PreferencesRest.getAllPreferences();
     if (!setting.successful) {
+      this._onSyncPreferences = false;
       this._logError('Sync all setting from server fail', new Error(setting.message));
       return;
     }
     const { data } = setting;
     if (!Array.isArray(data) || !data.length) {
+      this._onSyncPreferences = false;
       return;
     }
     const configList = [];
@@ -774,6 +781,7 @@ class Config {
     } catch (err) {
       this._logError('Sync setting from server fail', err);
     }
+    this._onSyncPreferences = false;
   };
 
   clearSyncPreferencesVersion = () => {
@@ -912,8 +920,9 @@ class Config {
   };
 
   _syncSettingToServer = async (keyPath, value) => {
-    const syncAccountIds = this.get('edisonAccount') || [];
-    if (syncAccountIds.length) {
+    return;
+    const syncAccountId = this.get('edisonAccountId');
+    if (syncAccountId) {
       // should sync the change to server
       const configSchema = this.getSchema(keyPath);
       try {
@@ -1119,6 +1128,7 @@ class Config {
     let oldValue = this.get(keyPath);
     return this.emitter.on('did-change', () => {
       const newValue = this.get(keyPath);
+
       if (!_.isEqual(oldValue, newValue)) {
         const event = { oldValue, newValue };
         oldValue = newValue;

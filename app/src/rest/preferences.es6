@@ -13,8 +13,14 @@ export default class Preferences {
     const stateCode = error && error.response && error.response.status;
     if (stateCode && stateCode === 401) {
       // Token missed or expired or invalid
-      const { EdisonAccountRest } = require('./index');
-      EdisonAccountRest.register(aid);
+      setTimeout(() => {
+        // wait for config change finish
+        const { EdisonAccountRest } = require('./index');
+        const syncAccount = AccountStore.syncAccount();
+        if (syncAccount && syncAccount.id) {
+          EdisonAccountRest.register(aid);
+        }
+      }, 3000);
     }
   }
 
@@ -230,10 +236,7 @@ export default class Preferences {
         if (!subData.longFlag) {
           value.push(subData);
         } else {
-          const subDataInServer = await PreferencesRest.getListTypeSubPreference(
-            configKey,
-            subData.subId
-          );
+          const subDataInServer = await this.getListTypeSubPreference(configKey, subData.subId);
           if (subDataInServer.successful) {
             value.push({ ...subData, value: subDataInServer.data.value });
           } else {
