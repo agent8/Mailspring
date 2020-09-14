@@ -27,6 +27,7 @@ class KeyManager {
       delete keys[`${account.emailAddress}-imap`];
       delete keys[`${account.emailAddress}-smtp`];
       delete keys[`${account.emailAddress}-refresh-token`];
+      delete keys[`${account.emailAddress}-ews_password`];
       await this._writeKeyHash(keys);
     } catch (err) {
       this._reportFatalError(err, { account });
@@ -39,6 +40,7 @@ class KeyManager {
       keys[`${account.emailAddress}-imap`] = account.settings.imap_password;
       keys[`${account.emailAddress}-smtp`] = account.settings.smtp_password;
       keys[`${account.emailAddress}-refresh-token`] = account.settings.refresh_token;
+      keys[`${account.emailAddress}-ews_password`] = account.settings.ews_password;
       await this._writeKeyHash(keys);
     } catch (err) {
       this._reportFatalError(err, { account });
@@ -47,6 +49,7 @@ class KeyManager {
     delete next.settings.imap_password;
     delete next.settings.smtp_password;
     delete next.settings.refresh_token;
+    delete next.settings.ews_password;
     return next;
   }
 
@@ -56,6 +59,7 @@ class KeyManager {
     next.settings.imap_password = keys[`${account.emailAddress}-imap`];
     next.settings.smtp_password = keys[`${account.emailAddress}-smtp`];
     next.settings.refresh_token = keys[`${account.emailAddress}-refresh-token`];
+    next.settings.ews_password = keys[`${account.emailAddress}-ews_password`];
     return next;
   }
 

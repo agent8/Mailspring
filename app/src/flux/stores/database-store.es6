@@ -608,7 +608,7 @@ class DatabaseStore extends MailspringStore {
           AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
           if (AppEnv.isHinata()) {
             AppEnv.reportLog(new Error('upload sql results'), {
-              errorData: JSON.stringify(result.slice(5)),
+              errorData: JSON.stringify(result.slice(0, 5)),
             });
           }
         } catch (e) {
@@ -648,7 +648,7 @@ class DatabaseStore extends MailspringStore {
                 AppEnv.logDebug(`query-results: ${JSON.stringify(rets)}`);
                 if (AppEnv.isHinata()) {
                   AppEnv.reportLog(new Error('upload sql results'), {
-                    errorData: JSON.stringify(rets.slice(5)),
+                    errorData: JSON.stringify(rets.slice(0, 5)),
                   });
                 }
               } catch (e) {
