@@ -10,8 +10,8 @@ class ListDetailContainer extends React.Component {
   static containerStyles = {};
   constructor(props) {
     super(props);
-    this.widthKey = `${this.displayName}_width`;
-    this.heightKey = `${this.displayName}_height`;
+    this.widthKey = `${ListDetailContainer.displayName}_width`;
+    this.heightKey = `${ListDetailContainer.displayName}_height`;
     this.state = {
       width: AppEnv.getColumnWidth(this.widthKey),
       height: AppEnv.getColumnWidth(this.heightKey),
@@ -42,47 +42,58 @@ class ListDetailContainer extends React.Component {
       return <List />;
     }
 
-    let handle = ResizableRegion.Handle.Left;
+    let handle = ResizableRegion.Handle.Right;
     let sizeKey = this.widthKey;
     let listClassName = 'right-divider';
     let forceWidthMode = false;
     const Detail = this.props.detailComponent;
-    let listStyles = { minWidth: 200 };
+    const listStyles = {};
+    const listOtherProps = {};
     const containersStyles = {
       height: '100%',
       display: 'flex',
       flexDirection: 'row',
     };
-    const otherProps = {
-      className: this.props.isOutbox ? 'column-OutboxMessage' : 'column-MessageList',
-      initialWidth: this.state.width,
-      minWidth: (Detail.containerStyles && Detail.containerStyles.minWidth) || 150,
-    };
+    const detailStyles = {};
     const splitMode = AppEnv.config.get('core.workspace.mode-split');
     // when reading pane on bottom
     if (splitMode === 'split-v') {
       containersStyles.flexDirection = 'column';
-      handle = ResizableRegion.Handle.Top;
+      handle = ResizableRegion.Handle.Bottom;
       sizeKey = this.heightKey;
       listClassName = 'bottom-divider';
       forceWidthMode = true;
-      otherProps.initialHeight = this.state.height;
-      otherProps.minHeight = (Detail.containerStyles && Detail.containerStyles.minHeight) || 200;
-      listStyles = { minHeight: 150 };
+      detailStyles.minHeight = (Detail.containerStyles && Detail.containerStyles.minHeight) || 200;
+      listStyles.minHeight = (List.containerStyles && List.containerStyles.minHeight) || 150;
+      if (this.state.height) {
+        listOtherProps.initialHeight = this.state.height;
+      }
+    } else {
+      detailStyles.minWidth = (Detail.containerStyles && Detail.containerStyles.minWidth) || 150;
+      listStyles.minWidth = (List.containerStyles && List.containerStyles.minWidth) || 200;
+      if (this.state.width) {
+        listOtherProps.initialWidth = this.state.width;
+      }
     }
     return (
       <div style={containersStyles}>
-        <div style={{ flex: 1, ...listStyles }} className={listClassName}>
-          <List forceWidthMode={forceWidthMode} />
-        </div>
         <ResizableRegion
-          style={{ overflow: 'hidden' }}
+          style={{ overflow: 'hidden', ...listStyles }}
           handle={handle}
+          className={listClassName}
           onResize={w => this._onColumnResize(sizeKey, w)}
-          {...otherProps}
+          {...listOtherProps}
+        >
+          <div style={{ height: '100%' }}>
+            <List forceWidthMode={forceWidthMode} />
+          </div>
+        </ResizableRegion>
+        <div
+          style={{ flex: 2, ...detailStyles }}
+          className={this.props.isOutbox ? 'column-OutboxMessage' : 'column-MessageList'}
         >
           <Detail />
-        </ResizableRegion>
+        </div>
       </div>
     );
   }

@@ -315,7 +315,7 @@ export default class WindowManager {
       title: 'Account Setup',
       // hidden: true, // Displayed by PageRouter::_initializeWindowSize
       hidden: false,
-      frame: false, // Always false on Mac, explicitly set for Win & Linux
+      frame: true, // Always false on Mac, explicitly set for Win & Linux
       toolbar: false,
       resizable: false,
       width: 685,

@@ -594,7 +594,7 @@ class AccountStore extends MailspringStore {
       'smtp_password',
     ];
     const ret = {};
-    const hash = str => {
+    const hash = (str = '') => {
       return crypto
         .createHash('sha256')
         .update(str)
