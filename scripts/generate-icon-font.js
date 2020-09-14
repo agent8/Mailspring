@@ -3,7 +3,7 @@ var iconfont = require('gulp-iconfont');
 var iconfontCss = require('gulp-iconfont-css');
 var path = require('path');
 var absPath = path.resolve('../');
-var fontName = 'EdisonIcons';
+var fontName = `EdisonIcons-${new Date().getTime()}`;
 var dealPath = path.join(absPath, './app/static/icons/');
 
 gulp.task('Iconfont', function() {
@@ -22,6 +22,7 @@ gulp.task('Iconfont', function() {
       iconfont({
         fontName: fontName,
         normalize: true,
+        formats: ['woff'],
         centerHorizontally: true,
       })
     )
