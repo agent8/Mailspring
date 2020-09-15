@@ -94,11 +94,23 @@ class StartSyncModal extends React.Component {
     this.state = {
       step: StartSyncStep.start,
       mainAccountIds: [],
+      accounts: AccountStore.accounts(),
     };
   }
 
+  getNoMainAccounts = () => {
+    const { mainAccountIds, accounts } = this.state;
+    return accounts.filter(a => {
+      const emailHost = `${a.emailAddress}:${a.settings.imap_host}`;
+      if (mainAccountIds.includes(emailHost)) {
+        return false;
+      }
+      return true;
+    });
+  };
+
   _verifyAllAccounts = async () => {
-    const accounts = AccountStore.accounts();
+    const { accounts } = this.state;
     const accountIds = accounts.map(a => a.id);
     const result = await EdisonAccountRest.checkAccounts(accountIds);
     // error
@@ -141,14 +153,22 @@ class StartSyncModal extends React.Component {
   };
 
   onChooseOtherAccount = () => {
-    this.setState({
-      step: StartSyncStep.addAccount,
-    });
+    const noMainAccounts = this.getNoMainAccounts() || [];
+    if (noMainAccounts.length !== 1) {
+      this.setState({
+        step: StartSyncStep.addAccount,
+      });
+      return;
+    }
+    // only have one account is not the main account
+    const chooseAccount = noMainAccounts[0];
+    this.props.onSelectAccount(chooseAccount);
+    this.props.onClose();
   };
 
   onChooseAccount = emailHost => {
     const { onSelectAccount, onClose } = this.props;
-    const accounts = AccountStore.accounts();
+    const { accounts } = this.state;
     const chooseAccount = accounts.find(
       a => emailHost === `${a.emailAddress}:${a.settings.imap_host}`
     );
@@ -205,6 +225,7 @@ class StartSyncModal extends React.Component {
 
   _renderChooseAccount() {
     const { mainAccountIds } = this.state;
+    const noMainAccounts = this.getNoMainAccounts() || [];
     return (
       <div>
         <RetinaImg
@@ -237,24 +258,26 @@ class StartSyncModal extends React.Component {
               </li>
             );
           })}
-          <li onClick={this.onChooseOtherAccount}>
-            <Flexbox direction="row" style={{ alignItems: 'middle' }}>
-              <RetinaImg
-                name={`add.svg`}
-                style={{ width: 40, height: 40, fontSize: 40, color: '#1293fd' }}
-                isIcon
-                mode={RetinaImg.Mode.ContentIsMask}
-              />
-              <div className="account-email">Other Account</div>
-            </Flexbox>
-          </li>
+          {noMainAccounts.length ? (
+            <li onClick={this.onChooseOtherAccount}>
+              <Flexbox direction="row" style={{ alignItems: 'middle' }}>
+                <RetinaImg
+                  name={`add.svg`}
+                  style={{ width: 40, height: 40, fontSize: 40, color: '#1293fd' }}
+                  isIcon
+                  mode={RetinaImg.Mode.ContentIsMask}
+                />
+                <div className="account-email">Other Account</div>
+              </Flexbox>
+            </li>
+          ) : null}
         </ul>
       </div>
     );
   }
 
   _renderAddAccount() {
-    const accounts = AccountStore.accounts();
+    const noMainAccounts = this.getNoMainAccounts() || [];
 
     return (
       <div>
@@ -266,7 +289,7 @@ class StartSyncModal extends React.Component {
         <h2>Back up Preferences & Sync Across All Your Devices</h2>
         <p>Select the email you would like to use to sync your accounts, and settings:</p>
         <ul>
-          {accounts.map(a => {
+          {noMainAccounts.map(a => {
             return (
               <li
                 key={a.id}
