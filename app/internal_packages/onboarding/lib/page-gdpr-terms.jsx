@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
-import { Utils } from 'mailspring-exports';
+import { Utils, AccountStore, RESTful } from 'mailspring-exports';
 import OnboardingActions from './onboarding-actions';
+const { EdisonAccountRest } = RESTful;
 
 class GdprTerms extends Component {
   // eslint-disable-line
@@ -95,6 +96,15 @@ class GdprTerms extends Component {
     }
     AppEnv.trackingEvent('Onboarding-TermsAgreed');
     AppEnv.config.set('agree', true);
+    // The first time install the app, automatically register Edison account
+    const syncAccount = AccountStore.syncAccount();
+    if (!syncAccount) {
+      // the first account auto to register edison account
+      const regAccount = AccountStore.accounts()[0];
+      if (regAccount) {
+        EdisonAccountRest.register(regAccount.id);
+      }
+    }
     OnboardingActions.moveToPage('initial-preferences');
   };
 

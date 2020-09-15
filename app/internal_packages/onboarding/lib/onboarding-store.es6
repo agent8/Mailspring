@@ -1,4 +1,4 @@
-import { AccountStore, Account, IdentityStore, Constant, RESTful } from 'mailspring-exports';
+import { AccountStore, Account, IdentityStore, Constant } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
@@ -6,7 +6,6 @@ import OnboardingActions from './onboarding-actions';
 const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
-const { EdisonAccountRest } = RESTful;
 // const ONBOARDING_TRACKING_URL = 'https://cp.stag.easilydo.cc/api/multiple/desktop/onboarding';
 const ONBOARDING_TRACKING_URL = 'https://cp.edison.tech/api/multiple/desktop/onboarding';
 
