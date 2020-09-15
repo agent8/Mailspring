@@ -1620,22 +1620,15 @@ class DraftStore extends MailspringStore {
     // returned promise is just used for specs
     const draft = await DraftFactory.createDraft();
     const { messageId } = await this._finalizeAndPersistNewMessage(draft, { popout: false });
-
-    let remaining = paths.length;
     const callback = () => {
-      remaining -= 1;
-      if (remaining === 0) {
-        this._onPopoutDraft(messageId);
-      }
+      this._onPopoutDraft(messageId);
     };
-
-    paths.forEach(path => {
-      Actions.addAttachment({
-        filePath: path,
-        accountId: draft.accountId,
-        messageId,
-        onCreated: callback,
-      });
+    Actions.addAttachments({
+      filePaths: paths,
+      accountId: draft.accountId,
+      messageId,
+      inline: false,
+      onCreated: callback,
     });
   };
 
