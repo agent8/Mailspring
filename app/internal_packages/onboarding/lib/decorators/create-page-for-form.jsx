@@ -93,6 +93,7 @@ const CreatePageForForm = FormComponent => {
       const { errorFieldNames, errorMessage, populated } = FormComponent.validateAccount(next);
       if (this._mounted) {
         this.setState({
+          errorLog: '',
           account: next,
           errorFieldNames,
           errorMessage,
@@ -129,9 +130,6 @@ const CreatePageForForm = FormComponent => {
     onConnect = updatedAccount => {
       const account = updatedAccount || this.state.account;
       const proceedWithAccount = () => {
-        if (this._mounted) {
-          this.setState({ submitting: true });
-        }
         if (account.provider === 'exchange') {
           if (
             !account.emailAddress ||
@@ -143,6 +141,18 @@ const CreatePageForForm = FormComponent => {
           if (!account.settings['ews_username']) {
             account.settings['ews_username'] = account.settings['ews_email'];
           }
+        }
+        const office365Account = AccountStore.accountForEmail({ email: account.emailAddress });
+        if (office365Account && office365Account.provider !== 'exchange') {
+          OnboardingActions.moveToPage('account-choose');
+          AppEnv.showErrorDialog({
+            title: 'Unable to Add Account',
+            message: `Please remove your ${account.emailAddress} account first, and try again.`,
+          });
+          return;
+        }
+        if (this._mounted) {
+          this.setState({ submitting: true });
         }
         finalizeAndValidateAccount(account)
           .then(validated => {
