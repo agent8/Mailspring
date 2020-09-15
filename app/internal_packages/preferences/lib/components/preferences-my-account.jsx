@@ -98,26 +98,39 @@ class StartSyncModal extends React.Component {
   }
 
   _verifyAllAccounts = async () => {
-    const accountIds = AccountStore.accountIds();
+    const accounts = AccountStore.accounts();
+    const accountIds = accounts.map(a => a.id);
     const result = await EdisonAccountRest.checkAccounts(accountIds);
-    if (result.successful) {
-      const mainAccountIds = result.data;
-      if (mainAccountIds.length) {
-        this.setState({
-          mainAccountIds,
-          step: StartSyncStep.chooseAccounts,
-        });
-      } else {
-        this.setState({
-          step: StartSyncStep.addAccount,
-        });
-      }
-    } else {
+    // error
+    if (!result.successful) {
       this.setState({
         step: StartSyncStep.fail,
         message: result.message,
       });
+      return;
     }
+    const mainAccountIds = result.data;
+    // No main account
+    if (!mainAccountIds.length) {
+      this.setState({
+        step: StartSyncStep.addAccount,
+      });
+      return;
+    }
+    // The only account is the main account
+    if (accounts.length === 1) {
+      const chooseAccount = accounts[0];
+      const theAccountEmailHost = `${chooseAccount.emailAddress}:${chooseAccount.settings.imap_host}`;
+      if (mainAccountIds.includes(theAccountEmailHost)) {
+        this.props.onSelectAccount(chooseAccount);
+        this.props.onClose();
+        return;
+      }
+    }
+    this.setState({
+      mainAccountIds,
+      step: StartSyncStep.chooseAccounts,
+    });
   };
 
   onStartSync = () => {
