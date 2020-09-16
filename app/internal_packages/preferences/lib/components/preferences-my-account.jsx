@@ -95,6 +95,7 @@ class StartSyncModal extends React.Component {
       step: StartSyncStep.start,
       mainAccountIds: [],
       accounts: AccountStore.accounts(),
+      collapsibleBoxClose: false,
     };
   }
 
@@ -126,6 +127,7 @@ class StartSyncModal extends React.Component {
     if (!mainAccountIds.length) {
       this.setState({
         step: StartSyncStep.addAccount,
+        collapsibleBoxClose: false,
       });
       return;
     }
@@ -142,7 +144,17 @@ class StartSyncModal extends React.Component {
     this.setState({
       mainAccountIds,
       step: StartSyncStep.chooseAccounts,
+      collapsibleBoxClose: false,
     });
+  };
+
+  onBoxScroll = e => {
+    if (e.target) {
+      const scrollTop = e.target.scrollTop;
+      if (scrollTop > 30) {
+        this.setState({ collapsibleBoxClose: true });
+      }
+    }
   };
 
   onStartSync = () => {
@@ -157,6 +169,7 @@ class StartSyncModal extends React.Component {
     if (noMainAccounts.length !== 1) {
       this.setState({
         step: StartSyncStep.addAccount,
+        collapsibleBoxClose: false,
       });
       return;
     }
@@ -224,15 +237,18 @@ class StartSyncModal extends React.Component {
   }
 
   _renderChooseAccount() {
-    const { mainAccountIds } = this.state;
+    const { mainAccountIds, collapsibleBoxClose } = this.state;
     const noMainAccounts = this.getNoMainAccounts() || [];
     return (
-      <div>
-        <RetinaImg
-          name={`welcome-back.png`}
-          mode={RetinaImg.Mode.ContentPreserve}
-          style={{ width: 280, height: 210 }}
-        />
+      <div onScroll={this.onBoxScroll}>
+        <div className={`collapsible-box${collapsibleBoxClose ? ' close' : ''}`}>
+          <RetinaImg
+            name={`welcome-back.png`}
+            mode={RetinaImg.Mode.ContentPreserve}
+            style={{ width: 280, height: 210 }}
+          />
+        </div>
+
         <h2>Welcome Back!</h2>
         <p>Select the account you use to sync and back up your settings in Edison Mail:</p>
         <ul>
@@ -277,15 +293,17 @@ class StartSyncModal extends React.Component {
   }
 
   _renderAddAccount() {
+    const { collapsibleBoxClose } = this.state;
     const noMainAccounts = this.getNoMainAccounts() || [];
-
     return (
-      <div>
-        <RetinaImg
-          name={`all-your-devices.png`}
-          mode={RetinaImg.Mode.ContentPreserve}
-          style={{ width: 280, height: 210 }}
-        />
+      <div onScroll={this.onBoxScroll}>
+        <div className={`collapsible-box${collapsibleBoxClose ? ' close' : ''}`}>
+          <RetinaImg
+            name={`all-your-devices.png`}
+            mode={RetinaImg.Mode.ContentPreserve}
+            style={{ width: 280, height: 210 }}
+          />
+        </div>
         <h2>Back up Preferences & Sync Across All Your Devices</h2>
         <p>Select the email you would like to use to sync your accounts, and settings:</p>
         <ul>
