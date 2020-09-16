@@ -52,6 +52,18 @@ class TemplateEditor extends React.Component {
     TemplateActions.updateTemplate(template);
   };
 
+  _onAddInlineImage = ({ path, inline }) => {
+    const newAttachments = [...this.state.attachments, { inline: inline, path: path }];
+    this.setState(
+      {
+        attachments: newAttachments,
+      },
+      () => {
+        this.props.onEditField('attachments', newAttachments);
+      }
+    );
+  };
+
   _onFocusEditor = e => {
     if (e.target === ReactDOM.findDOMNode(this._composer)) {
       this._composer.focusEndAbsolute();
@@ -156,25 +168,27 @@ class TemplateEditor extends React.Component {
 
   _renderTemplateFiles() {
     const { attachments = [] } = this.state;
-    const fileComponents = attachments.map((file, index) => {
-      const filePath = file.path;
-      const fileName = path.basename(filePath);
-      return (
-        <AttachmentItem
-          key={index}
-          draggable={false}
-          className="template-file"
-          filePath={filePath}
-          displayName={fileName}
-          isImage={fileIsImage(fileName)}
-          accountId={''}
-          onRemoveAttachment={() => {
-            this._onRemoveAttachment(index);
-          }}
-          onOpenAttachment={() => remote.shell.openItem(filePath)}
-        />
-      );
-    });
+    const fileComponents = attachments
+      .filter(atta => !atta.inline)
+      .map((file, index) => {
+        const filePath = file.path;
+        const fileName = path.basename(filePath);
+        return (
+          <AttachmentItem
+            key={index}
+            draggable={false}
+            className="template-file"
+            filePath={filePath}
+            displayName={fileName}
+            isImage={fileIsImage(fileName)}
+            accountId={''}
+            onRemoveAttachment={() => {
+              this._onRemoveAttachment(index);
+            }}
+            onOpenAttachment={() => remote.shell.openItem(filePath)}
+          />
+        );
+      });
     return <div className={'attachments'}>{fileComponents}</div>;
   }
 
@@ -214,6 +228,7 @@ class TemplateEditor extends React.Component {
             onFileReceived={() => {
               // This method ensures that HTML can be pasted.
             }}
+            onAddAttachments={this._onAddInlineImage}
           />
         </div>
         {this._renderTemplateFiles()}
