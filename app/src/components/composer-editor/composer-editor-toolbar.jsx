@@ -106,6 +106,7 @@ export default class ComposerEditorToolbar extends React.Component {
       readOnly,
       isCrowded = false,
       draftDefaultValues = {},
+      onAddAttachments = () => {},
     } = this.props;
     let sectionItems = [];
 
@@ -134,6 +135,7 @@ export default class ComposerEditorToolbar extends React.Component {
             disabled={readOnly}
             isCrowded={isCrowded}
             draftDefaultValues={draftDefaultValues}
+            onAddAttachments={onAddAttachments}
           />
         ))
       );

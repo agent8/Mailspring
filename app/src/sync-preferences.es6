@@ -13,6 +13,11 @@ const ConfigType = {
 };
 const defaultSignaturesKey = 'defaultSignatures';
 
+function replaceStr(oldStr, searchStr, replaceStr) {
+  const oldStrSplit = oldStr.split(searchStr);
+  return oldStrSplit.join(replaceStr);
+}
+
 async function downloadAndUnCompress(key) {
   const dirName = path.join(AppEnv.getConfigDirPath(), 'tmp');
   if (!fs.existsSync(dirName)) {
@@ -62,13 +67,14 @@ async function mkdirAndWriteJson(signatureOrTemplate, type) {
   const bodyDirName = ConfigType[type].dirName;
   const bodyDirPath = path.join(AppEnv.getConfigDirPath(), bodyDirName);
   const filePath = path.join(bodyDirPath, `${key}.html`);
-  const body = fs.readFileSync(filePath).toString();
+  let body = fs.readFileSync(filePath).toString();
 
   const attachments = (signatureOrTemplate.attachments || []).map(file => {
     const name = path.basename(file.path);
     const extName = path.extname(name);
     const fileAttId = `${uuid()}${extName}`;
     fs.copyFileSync(file.path, path.join(dirName, fileAttId));
+    body = replaceStr(body, file.path, `file://${fileAttId}`);
     return {
       attId: fileAttId,
       inline: file.inline,
@@ -166,17 +172,21 @@ async function generateNewListForSigOrTemp(list, type) {
       const backupName =
         signatureOrTemplate.platform === EdisonPlatformType.COMMON ? 'From Mobile' : 'Untitled';
       const signatureOrTemplateName = name || backupName;
+      let body = html;
       let attachmentList = [];
       if (attachments && attachments.length) {
         attachmentList = attachments.map(file => {
           const filePath = path.join(dirName, file.attId);
-          const preferencesPath = path.join(AppEnv.getConfigDirPath(), 'preference');
-          const destPath = path.join(preferencesPath, file.name);
-          if (!fs.existsSync(preferencesPath)) {
-            fs.mkdirSync(preferencesPath);
-          }
-          fs.copyFileSync(filePath, destPath);
-          return { inline: file.inline, path: destPath };
+          const filename = file.name;
+          const preferenceDir = path.join(AppEnv.getConfigDirPath(), 'preference');
+          const newFileDirName = path.join(preferenceDir, uuid());
+          const newFilePath = path.join(newFileDirName, filename);
+          fs.mkdirSync(newFileDirName, {
+            recursive: true,
+          });
+          fs.copyFileSync(filePath, newFilePath);
+          body = replaceStr(body, `file://${file.attId}`, newFilePath);
+          return { inline: file.inline, path: newFilePath };
         });
       }
       const newItem = {
@@ -185,7 +195,7 @@ async function generateNewListForSigOrTemp(list, type) {
         tsClientUpdate: signatureOrTemplate.tsClientUpdate,
         state: PreferencesSubListStateEnum.synchronized,
         attachments: attachmentList,
-        body: html,
+        body,
       };
       if (type === 'template') {
         newItem['CC'] = CC || '';
