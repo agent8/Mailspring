@@ -262,4 +262,13 @@
       }
     }
   }
+  .collapsible-box {
+    width: 280px;
+    height: 210px;
+    overflow: hidden;
+    transition: height 0.3s cubic-bezier(0, 0.71, 0.36, 0.4);
+    &.close {
+      height: 0px;
+    }
+  }
 }
