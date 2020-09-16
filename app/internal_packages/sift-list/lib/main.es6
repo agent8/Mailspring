@@ -1,7 +1,16 @@
-import { WorkspaceStore, ComponentRegistry, Actions } from 'mailspring-exports';
+import { React, WorkspaceStore, ComponentRegistry, Actions } from 'mailspring-exports';
+import { ListDetailContainer } from 'mailspring-component-kit';
 import SiftList from './sift-list';
 import SiftListToolbar from './sift-list-toolbar';
 import { SiftButton } from './sift-list-toolbar-buttons';
+import MessageList from '../../message-list/lib/message-list';
+
+class NewSiftList extends React.Component {
+  static displayName = 'SiftList';
+  render() {
+    return <ListDetailContainer listComponent={SiftList} detailComponent={MessageList} />;
+  }
+}
 
 export function activate() {
   if (
@@ -11,7 +20,7 @@ export function activate() {
     Actions.selectRootSheet(WorkspaceStore.Sheet.Sift);
   }
 
-  ComponentRegistry.register(SiftList, { location: WorkspaceStore.Location.SiftList });
+  ComponentRegistry.register(NewSiftList, { location: WorkspaceStore.Location.SiftList });
   ComponentRegistry.register(SiftListToolbar, {
     location: WorkspaceStore.Location.SiftList.Toolbar,
     role: 'SiftListToolbar',
@@ -20,7 +29,7 @@ export function activate() {
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(SiftList);
+  ComponentRegistry.unregister(NewSiftList);
   ComponentRegistry.unregister(SiftListToolbar);
   ComponentRegistry.unregister(SiftButton);
 }

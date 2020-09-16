@@ -8,7 +8,7 @@ export const OAuthList = [
 ];
 export const showCC = 'cc';
 export const showCCAndBCC = 'cc+bcc';
-
+export const MS_TNEF_TYPES = ['application/ms-tnef', 'application/vnd.ms-tnef'];
 export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
@@ -18,6 +18,20 @@ export const WindowLevel = {
   Composer: 3,
   Thread: 2,
   Main: 1,
+};
+export const Composer = {
+  defaultFontSize: '14px',
+  defaultFontFamily: 'sans-serif',
+};
+export const AutoUpdateManagerState = {
+  IdleState: 'idle',
+  CheckingState: 'checking',
+  DownloadingState: 'downloading',
+  AvailableForDownload: 'available-for-download',
+  UpdateAvailableState: 'update-available',
+  NoUpdateAvailableState: 'no-update-available',
+  UnsupportedState: 'unsupported',
+  ErrorState: 'error',
 };
 
 export const bannedPathNames = ['Trash', 'Spam', 'Inbox', 'All Mail', 'Sent'];
@@ -64,7 +78,36 @@ export const AttachmentDownloadState = {
   downloading: 0,
   done: 1,
 };
+export const FileState = {
+  Normal: 0,
+  Removed: 1,
+  IgnoreMissing: 2,
+};
 export const AttachmentFileSizeIgnoreThreshold = 4; //4 Bytes;
+
+export const EdisonPlatformType = {
+  IOS: 'ios',
+  ANDROID: 'android',
+  MAC: 'mac',
+  COMMON: 'common',
+};
+
+export function generateServerConfigKey(configKey) {
+  return configKey.toLowerCase().replace(/\./g, '_');
+}
+
+export const EdisonPreferencesType = {
+  LIST: 'list',
+  STRING: 'string',
+};
+
+export const UpdateSettingCode = {
+  Conflict: 10008,
+  Success: 0,
+};
+
+export const UpdateToServerSimpleSettingTypes = ['number', 'string', 'integer', 'boolean'];
+export const UpdateToServerComplexSettingTypes = ['object', 'array'];
 
 export const InboxCategoryStates = {
   MsgNone: -1, //message not in INBOX
@@ -146,4 +189,19 @@ export const inboxNotOtherCategories = (opts = { toString: false, radix: 10 }) =
     }
   });
   return ret;
+};
+
+export const AwsBucketStag = 'edison-media-stag';
+export const AwsBucketProd = 'edison-media';
+export const AwsRegionType = 'us-east-2';
+export const AwsEndpointUrl = 'https://s3.us-east-2.amazonaws.com';
+export const AWSAccessKey = 'AKIAJPPBMFBNHSNZ5ELA';
+export const AWSSecretKey = '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';
+
+export const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
+
+export const PreferencesSubListStateEnum = {
+  deleted: -1,
+  updated: 1,
+  synchronized: 0,
 };

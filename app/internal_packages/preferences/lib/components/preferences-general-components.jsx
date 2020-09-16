@@ -284,17 +284,6 @@ export class LocalData extends React.Component {
     super();
     this.state = {};
     this.resetStarted = false;
-    this.unsubscribe = null;
-  }
-  componentDidMount() {
-    if (AppEnv.isMainWindow()) {
-      this.unsubscribe = Actions.resetSettingsCb.listen(this._onResetAccountsCb, this);
-    }
-  }
-  componentWillUnmount() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-    }
   }
 
   _onReboot = () => {
@@ -310,7 +299,7 @@ export class LocalData extends React.Component {
   };
 
   _onResetAccountsCb = () => {
-    AppEnv.logDebug(`running reset accounts settings cb`);
+    AppEnv.logDebug(`running reset accounts settings`);
     rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
       if (err) {
         return AppEnv.showErrorDialog(
@@ -326,7 +315,7 @@ export class LocalData extends React.Component {
       return;
     }
     this.resetStarted = true;
-    Actions.resetSettings();
+    this._onResetAccountsCb();
   };
 
   render() {

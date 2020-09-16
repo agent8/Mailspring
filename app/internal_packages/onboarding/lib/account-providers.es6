@@ -123,14 +123,14 @@ const AccountProviders = [
   //   headerIcon: 'setup-icon-provider-yandex.png',
   //   color: '#fff',
   // },
-  // {
-  //   provider: 'exchange',
-  //   displayName: 'Exchange',
-  //   displayNameShort: 'Exchange',
-  //   icon: 'account-logo-exchange.png',
-  //   headerIcon: 'setup-icon-provider-exchange.png',
-  //   color: '#0078d7',
-  // },
+  {
+    provider: 'exchange',
+    displayName: 'Exchange',
+    displayNameShort: 'Exchange',
+    icon: 'account-logo-exchange.png',
+    headerIcon: 'setup-icon-provider-exchange.png',
+    color: '#0078d7',
+  },
   {
     provider: 'imap',
     displayName: 'Other',

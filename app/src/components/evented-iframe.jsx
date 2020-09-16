@@ -434,7 +434,7 @@ class EventedIFrame extends React.Component {
           },
         })
       );
-      if (process.platform === 'darwin') {
+      if (process.platform === 'darwin' && selection && !selection.isCollapsed) {
         menu.append(
           new MenuItem({
             label: `Look Up '${textPreview}'`,

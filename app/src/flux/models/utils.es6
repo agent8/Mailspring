@@ -244,7 +244,8 @@ module.exports = Utils = {
     return files.find(
       f =>
         (!f.contentId || (f.contentId && !Utils.shouldDisplayAsImage(f))) &&
-        !CALENDAR_TYPES.includes(f.contentType)
+        !CALENDAR_TYPES.includes(f.contentType) &&
+        !f.isTNEFType()
     );
   },
   findKeywordIndex(str = '', searchValue = '') {

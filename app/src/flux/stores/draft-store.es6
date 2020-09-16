@@ -262,6 +262,45 @@ class DraftStore extends MailspringStore {
     }
     return null;
   };
+  checkDraftForMissingAttachments(draft, ignoreMissingAttachment) {
+    return new Promise((resolve, reject) => {
+      if (draft && 'function' === typeof draft.missingAttachments) {
+        draft.missingAttachments().then(ret => {
+          if (ret && ret.totalMissing().length > 0) {
+            if (!ignoreMissingAttachment) {
+              AppEnv.showMessageBox({
+                title: 'Attachments still downloading',
+                detail:
+                  "Attachments still downloading, opening draft now will cause draft to loose it's attachments",
+                buttons: ['Cancel', 'Open'],
+                cancelId: 0,
+                defaultId: 0,
+              }).then(({ response } = {}) => {
+                if (response === 1) {
+                  AppEnv.logDebug(
+                    `DraftStore: User opened draft ${draft.id} while attachments are missing`
+                  );
+                  draft.removeMissingAttachments().then(() => {
+                    resolve(draft);
+                  });
+                } else {
+                  reject(draft);
+                }
+              });
+            } else {
+              draft.removeMissingAttachments().then(() => {
+                resolve(draft);
+              });
+            }
+          } else {
+            resolve(draft);
+          }
+        });
+      } else {
+        reject(draft);
+      }
+    });
+  }
 
   async sessionForServerDraft(draft) {
     if (this.isDraftWaitingSaveOnRemote(draft.id)) {
@@ -1092,6 +1131,15 @@ class DraftStore extends MailspringStore {
     }
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ message: m, thread: t }) => {
+        const unreadTasks = TaskFactory.taskForSettingUnread({
+          threads: t ? [t] : [],
+          unread: false,
+          source: 'Quick Reply',
+          canBeUndone: false,
+        });
+        if (unreadTasks.length > 0) {
+          Actions.queueTasks(unreadTasks);
+        }
         return DraftFactory.createDraftForReply({ message: m, thread: t, type: 'reply' });
       })
       .then(draft => {
@@ -1101,15 +1149,6 @@ class DraftStore extends MailspringStore {
         this._finalizeAndPersistNewMessage(draft, { popout: false })
           .then(() => {
             Actions.sendDraft(draft.id, { source: 'SendQuickReply' });
-            const unreadTasks = TaskFactory.taskForSettingUnread({
-              messages: [message],
-              unread: false,
-              source: 'Quick Reply',
-              canBeUndone: false,
-            });
-            if (unreadTasks.length > 0) {
-              Actions.queueTasks(unreadTasks);
-            }
           })
           .catch(e => {
             AppEnv.reportError(
@@ -1176,7 +1215,7 @@ class DraftStore extends MailspringStore {
         if (m && (m.body || ignoreEmptyBody)) {
           if (m.unread) {
             const tasks = TaskFactory.taskForSettingUnread({
-              messages: [m],
+              threads: t ? [t] : [],
               unread: false,
               source: 'Normal Reply',
               canBeUndone: true,
@@ -1201,7 +1240,7 @@ class DraftStore extends MailspringStore {
               if (response !== 0) {
                 if (m && m.unread) {
                   const tasks = TaskFactory.taskForSettingUnread({
-                    messages: [m],
+                    threads: t ? [t] : [],
                     unread: false,
                     source: 'Normal Reply',
                     canBeUndone: true,
@@ -1493,39 +1532,46 @@ class DraftStore extends MailspringStore {
       return;
     }
     if (draft.savedOnRemote) {
-      this._doneWithSession(session, 'savedOnRemote');
-      this.sessionForServerDraft(draft).then(newSession => {
-        if (!newSession) {
-          AppEnv.logError(
-            `We should get session, ${draft.id}, windowLevel ${this._getCurrentWindowLevel()}`
-          );
-          return;
+      this.checkDraftForMissingAttachments(draft, options.ignoreMissingAttachments).then(
+        cleanDraft => {
+          this._doneWithSession(session, 'savedOnRemote');
+          this.sessionForServerDraft(cleanDraft).then(newSession => {
+            if (!newSession) {
+              AppEnv.logError(
+                `We should get session, ${
+                  cleanDraft.id
+                }, windowLevel ${this._getCurrentWindowLevel()}`
+              );
+              return;
+            }
+            const newDraft = newSession.draft();
+            newSession.setPopout(true);
+            const draftJSON = newSession.draft().toJSON();
+            AppEnv.newWindow({
+              hidden: true, // We manually show in ComposerWithWindowProps::onDraftReady
+              messageId: newDraft.id,
+              windowType: 'composer',
+              windowKey: `composer-${newDraft.id}`,
+              windowProps: Object.assign(options, {
+                messageId: newDraft.id,
+                draftJSON,
+              }),
+              title: ' ',
+              threadId: newSession.draft().threadId,
+              accountId: newDraft.accountId,
+            });
+            AttachmentStore = AttachmentStore || require('./attachment-store').default;
+            AttachmentStore.removeDraftAttachmentCache({
+              accountId: cleanDraft.accountId,
+              id: cleanDraft.id,
+              reason: 'sessionForServerDraft',
+            });
+          });
+        },
+        rejectDraft => {
+          AppEnv.logDebug(`DraftStore: user igonerd draft ${rejectDraft.id}`);
         }
-        const newDraft = newSession.draft();
-        newSession.setPopout(true);
-        // console.warn('need upload');
-        // newSession.needUpload = true;
-        const draftJSON = newSession.draft().toJSON();
-        AppEnv.newWindow({
-          hidden: true, // We manually show in ComposerWithWindowProps::onDraftReady
-          messageId: newDraft.id,
-          windowType: 'composer',
-          windowKey: `composer-${newDraft.id}`,
-          windowProps: Object.assign(options, {
-            messageId: newDraft.id,
-            draftJSON,
-          }),
-          title: ' ',
-          threadId: newSession.draft().threadId,
-          accountId: newDraft.accountId,
-        });
-        AttachmentStore = AttachmentStore || require('./attachment-store').default;
-        AttachmentStore.removeDraftAttachmentCache({
-          accountId: draft.accountId,
-          id: draft.id,
-          reason: 'sessionForServerDraft',
-        });
-      });
+      );
     } else {
       const messageId = session.draft().id;
       if (this._draftsDeleting[messageId] || this.isSendingDraft(messageId)) {
@@ -1574,22 +1620,15 @@ class DraftStore extends MailspringStore {
     // returned promise is just used for specs
     const draft = await DraftFactory.createDraft();
     const { messageId } = await this._finalizeAndPersistNewMessage(draft, { popout: false });
-
-    let remaining = paths.length;
     const callback = () => {
-      remaining -= 1;
-      if (remaining === 0) {
-        this._onPopoutDraft(messageId);
-      }
+      this._onPopoutDraft(messageId);
     };
-
-    paths.forEach(path => {
-      Actions.addAttachment({
-        filePath: path,
-        accountId: draft.accountId,
-        messageId,
-        onCreated: callback,
-      });
+    Actions.addAttachments({
+      filePaths: paths,
+      accountId: draft.accountId,
+      messageId,
+      inline: false,
+      onCreated: callback,
     });
   };
 

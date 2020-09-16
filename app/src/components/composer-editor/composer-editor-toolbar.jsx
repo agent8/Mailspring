@@ -3,6 +3,7 @@ import React from 'react';
 export default class ComposerEditorToolbar extends React.Component {
   static defaultProps = {
     readOnly: false,
+    draftDefaultValues: {},
   };
   constructor(props) {
     super(props);
@@ -98,7 +99,14 @@ export default class ComposerEditorToolbar extends React.Component {
   };
 
   render() {
-    const { value, onChange, plugins, readOnly, isCrowded = false } = this.props;
+    const {
+      value,
+      onChange,
+      plugins,
+      readOnly,
+      isCrowded = false,
+      draftDefaultValues = {},
+    } = this.props;
     let sectionItems = [];
 
     if (!this.state.visible) {
@@ -125,6 +133,7 @@ export default class ComposerEditorToolbar extends React.Component {
             className={toolbarSectionClass}
             disabled={readOnly}
             isCrowded={isCrowded}
+            draftDefaultValues={draftDefaultValues}
           />
         ))
       );
@@ -138,9 +147,7 @@ export default class ComposerEditorToolbar extends React.Component {
     return (
       <div ref={el => (this._el = el)} className="RichEditor-toolbar">
         <div ref={el => (this._floatingEl = el)} className="floating-container">
-          <div className={'inner ' + (isCrowded ? 'active-crowded-state' : '')}>
-            {sectionItems}
-          </div>
+          <div className={'inner ' + (isCrowded ? 'active-crowded-state' : '')}>{sectionItems}</div>
         </div>
       </div>
     );

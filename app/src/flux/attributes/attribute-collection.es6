@@ -56,7 +56,7 @@ export default class AttributeCollection extends Attribute {
   }
 
   toJSON(vals) {
-    if(typeof this.toJSONMapping === 'function'){
+    if (typeof this.toJSONMapping === 'function') {
       return this.toJSONMapping(vals);
     }
     if (!vals) {
@@ -69,15 +69,15 @@ export default class AttributeCollection extends Attribute {
 
     return vals.map(val => {
       if (this.itemClass && !(val instanceof this.itemClass)) {
-        // if(this.itemClass !== 'Label'){
-          console.warn( new Error(
-            `AttributeCollection::toJSON: Value \`${val}\` in ${this.modelKey} is not an ${
-              this.itemClass.name
-            }`
-          ));
+        if (this.itemClass.name !== 'Label') {
+          console.warn(
+            new Error(
+              `AttributeCollection::toJSON: Value \`${val}\` in ${this.modelKey} is not an ${this.itemClass.name}`
+            )
+          );
           const Klass = this.itemClass;
           val = new Klass(val);
-        // }
+        }
       }
       return val.toJSON !== undefined ? val.toJSON() : val;
     });
@@ -85,13 +85,13 @@ export default class AttributeCollection extends Attribute {
 
   fromJSON(json) {
     if (typeof json === 'string') {
-      if(json.length === 0){
+      if (json.length === 0) {
         json = [];
-      }else{
+      } else {
         json = JSON.parse(json);
       }
     }
-    if(typeof  this.fromJSONMapping === 'function'){
+    if (typeof this.fromJSONMapping === 'function') {
       return this.fromJSONMapping(json);
     }
     const Klass = this.itemClass;
@@ -123,7 +123,7 @@ export default class AttributeCollection extends Attribute {
     this._assertPresentAndQueryable('contains', vals);
     return new Matcher(this, 'containsAny', vals);
   }
-  containsAnyAtColumn(column, vals){
+  containsAnyAtColumn(column, vals) {
     this._assertPresentAndQueryable('contains', vals);
     if (column === 'category') {
       return new Matcher(this, 'containsAnyAtCategory', vals);
