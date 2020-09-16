@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import { PropTypes } from 'mailspring-exports';
 import RetinaImg from './retina-img';
 
+let hasMask = false;
 export default class FullScreenModal extends React.Component {
   static propTypes = {
     className: PropTypes.string,
@@ -24,6 +25,10 @@ export default class FullScreenModal extends React.Component {
       if (insertNodeFromProps instanceof HTMLElement) {
         this.insertNode = insertNodeFromProps;
       }
+    }
+    this.showMask = props.mask && !hasMask;
+    if (this.showMask) {
+      hasMask = true;
     }
   }
 
@@ -73,9 +78,10 @@ export default class FullScreenModal extends React.Component {
   }
 
   retContent() {
-    const { className, children, mask, closable, style } = this.props;
+    const { className, children, closable, style } = this.props;
+
     return (
-      <div className={mask ? 'component_modal_wrap' : ''} onClick={this._onClickWrap}>
+      <div className={this.showMask ? 'component_modal_wrap' : ''} onClick={this._onClickWrap}>
         <div
           className={`modal_content${className ? ' ' + className : ''}`}
           onClick={e => {
@@ -104,6 +110,9 @@ export default class FullScreenModal extends React.Component {
       if (this.popupNode) {
         this.insertNode.removeChild(this.popupNode);
         this.popupNode = null;
+        if (this.showMask) {
+          hasMask = false;
+        }
       }
     } else {
       ReactDOM.unstable_renderSubtreeIntoContainer(this, this.retContent(), this.retContainer());
