@@ -18,8 +18,10 @@ export default class ConfigPersistenceManager {
     this.userWantsToPreserveErrors = false;
     this.saveRetries = 0;
     this.configFilePath = path.join(this.configDirPath, 'config.json');
+    this.configChangeTimeFilePath = path.join(this.configDirPath, 'config-change-time.json');
     this.mailsyncConfigFilePath = path.join(this.configDirPath, 'mailsync.json');
     this.settings = {};
+    this.configChangeTime = {};
 
     this.initializeConfigDirectory();
     this.load();
@@ -45,6 +47,9 @@ export default class ConfigPersistenceManager {
     if (!fs.existsSync(this.configFilePath)) {
       this.writeTemplateConfigFile();
     }
+    if (!fs.existsSync(this.configChangeTimeFilePath)) {
+      this.writeTemplateConfigChangeTimeFile();
+    }
   }
 
   writeTemplateConfigFile() {
@@ -53,14 +58,18 @@ export default class ConfigPersistenceManager {
     fs.writeFileSync(this.configFilePath, templateConfig);
   }
 
-  _showLoadErrorDialog(error) {
-    const message = `Failed to load "${path.basename(this.configFilePath)}"`;
+  writeTemplateConfigChangeTimeFile() {
+    fs.writeFileSync(this.configChangeTimeFilePath, '{"*": {}}');
+  }
+
+  _showLoadErrorDialog(filePath, error) {
+    const message = `Failed to load "${path.basename(filePath)}"`;
     let detail = error.message;
 
     if (error instanceof SyntaxError) {
-      detail += `\n\nThe file ${this.configFilePath} has incorrect JSON formatting or is empty. Fix the formatting to resolve this error, or reset your settings to continue using N1.`;
+      detail += `\n\nThe file ${filePath} has incorrect JSON formatting or is empty. Fix the formatting to resolve this error, or reset your settings to continue using N1.`;
     } else {
-      detail += `\n\nWe were unable to read the file ${this.configFilePath}. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`;
+      detail += `\n\nWe were unable to read the file ${filePath}. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`;
     }
 
     const clickedIndex = dialog.showMessageBoxSync({
@@ -84,18 +93,33 @@ export default class ConfigPersistenceManager {
 
   load() {
     this.userWantsToPreserveErrors = false;
-
+    let progress = this.configFilePath;
     try {
-      const json = JSON.parse(fs.readFileSync(this.configFilePath));
-      if (!json || !json['*']) {
+      const configJson = JSON.parse(fs.readFileSync(this.configFilePath));
+      if (!configJson || !configJson['*']) {
         throw new Error('config json appears empty');
       }
-      this.settings = json['*'];
+
+      this.settings = configJson['*'];
+
+      progress = this.configChangeTimeFilePath;
+
+      const configChangeJson = JSON.parse(fs.readFileSync(this.configChangeTimeFilePath));
+      if (!configChangeJson || !configChangeJson['*']) {
+        throw new Error('config change time json appears empty');
+      }
+      this.configChangeTime = configChangeJson['*'];
+
+      progress = '';
+
       this.emitChangeEvent();
     } catch (error) {
-      error.message = `Failed to load config.json: ${error.message}`;
+      if (!progress) {
+        return;
+      }
+      error.message = `Failed to load ${path.basename(progress)}: ${error.message}`;
 
-      const action = this._showLoadErrorDialog(error);
+      const action = this._showLoadErrorDialog(progress, error);
       if (action === 'quit') {
         this.userWantsToPreserveErrors = true;
         app.quit();
@@ -114,16 +138,20 @@ export default class ConfigPersistenceManager {
       if (fs.existsSync(this.configFilePath)) {
         fs.unlinkSync(this.configFilePath);
       }
+      if (fs.existsSync(this.configChangeTimeFilePath)) {
+        fs.unlinkSync(this.configChangeTimeFilePath);
+      }
       this.writeTemplateConfigFile();
+      this.writeTemplateConfigChangeTimeFile();
       this.load();
     }
   }
 
-  _showSaveErrorDialog() {
+  _showSaveErrorDialog(filePath) {
     const clickedIndex = dialog.showMessageBoxSync({
       type: 'error',
-      message: `Failed to save "${path.basename(this.configFilePath)}"`,
-      detail: `\n\nWe were unable to save the file ${this.configFilePath}. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`,
+      message: `Failed to save "${path.basename(filePath)}"`,
+      detail: `\n\nWe were unable to save the file ${filePath}. Make sure you have permissions to access this file, and check that the file is not open or being edited and try again.`,
       buttons: ['Okay', 'Try again'],
     });
     return ['ignore', 'retry'][clickedIndex];
@@ -134,6 +162,7 @@ export default class ConfigPersistenceManager {
       return;
     }
     const allSettings = { '*': this.settings };
+    const allConfigChanges = { '*': this.configChangeTime };
     let mailsyncSettings = {};
     if (this.settings) {
       if (this.settings.core && this.settings.core.mailsync) {
@@ -156,16 +185,26 @@ export default class ConfigPersistenceManager {
     });
     const mailsyncSettingsJSON = JSON.stringify(mailsyncSettings, null, 2);
     const allSettingsJSON = JSON.stringify(allSettings, null, 2);
+    const allConfigChangesJSON = JSON.stringify(allConfigChanges, null, 2);
     this.lastSaveTimestamp = Date.now();
+
+    let progress = this.configFilePath;
 
     try {
       atomicWriteFileSync(this.configFilePath, allSettingsJSON);
+      progress = this.configChangeTimeFilePath;
+      atomicWriteFileSync(this.configChangeTimeFilePath, allConfigChangesJSON);
+      progress = this.mailsyncConfigFilePath;
       atomicWriteFileSync(this.mailsyncConfigFilePath, mailsyncSettingsJSON);
+      progress = '';
       this.saveRetries = 0;
     } catch (error) {
+      if (!progress) {
+        return;
+      }
       if (this.saveRetries >= RETRY_SAVES) {
-        error.message = `Failed to save config.json: ${error.message}`;
-        const action = this._showSaveErrorDialog();
+        error.message = `Failed to save ${path.basename(progress)}: ${error.message}`;
+        const action = this._showSaveErrorDialog(progress);
         this.saveRetries = 0;
 
         if (action === 'retry') {
@@ -201,8 +240,50 @@ export default class ConfigPersistenceManager {
     this.save();
   };
 
+  bulkSetRawValue = (setList, sourceWebcontentsId) => {
+    setList.forEach(({ keyPath, value }) => {
+      if (!keyPath) {
+        throw new Error('keyPath must not be false-y!');
+      }
+      _.setValueForKeyPath(this.settings, keyPath, value);
+    });
+    this.emitChangeEvent({ sourceWebcontentsId });
+    this.save();
+  };
+
   setShouldSyncToNativeConfigs = shouldSyncToNativeConfigs => {
     this.shouldSyncToNativeConfigs = shouldSyncToNativeConfigs;
+    this.save();
+  };
+
+  getChangeTimeValue = keyPath => {
+    const value = _.valueForKeyPath(this.configChangeTime, keyPath);
+    return value;
+  };
+
+  setChangeTimeValue = (keyPath, changeTime) => {
+    if (!keyPath) {
+      throw new Error('keyPath must not be false-y!');
+    }
+    const oldValue = _.valueForKeyPath(this.configChangeTime, keyPath);
+    if (typeof changeTime !== 'number' || changeTime === oldValue) {
+      return;
+    }
+    _.setValueForKeyPath(this.configChangeTime, keyPath, changeTime);
+    this.save();
+  };
+
+  bulkSetChangeTimeValue = setList => {
+    setList.forEach(({ keyPath, time }) => {
+      if (!keyPath) {
+        throw new Error('keyPath must not be false-y!');
+      }
+      const oldValue = _.valueForKeyPath(this.configChangeTime, keyPath);
+      if (typeof time !== 'number' || time === oldValue) {
+        return;
+      }
+      _.setValueForKeyPath(this.configChangeTime, keyPath, time);
+    });
     this.save();
   };
 
@@ -211,7 +292,7 @@ export default class ConfigPersistenceManager {
 
     BrowserWindow.getAllWindows().forEach(win => {
       if (win.webContents && win.webContents.id !== sourceWebcontentsId) {
-        win.webContents.send('on-config-reloaded', this.settings);
+        win.webContents.send('on-config-reloaded');
       }
     });
   };

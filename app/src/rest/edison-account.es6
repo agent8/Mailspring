@@ -37,6 +37,17 @@ export default class EdisonAccount {
     }
   }
 
+  _handleReqError(error, aid) {
+    const stateCode = error && error.response && error.response.status;
+    if (stateCode && stateCode === 401) {
+      // Token missed or expired or invalid
+      const syncAccount = AccountStore.syncAccount();
+      if (syncAccount && syncAccount.id) {
+        this.register(syncAccount.id);
+      }
+    }
+  }
+
   async checkAccounts(aids = []) {
     const url = `${this.host}/api/charge/account/queryMainAccounts`;
     const accounts = AccountStore.accounts();
@@ -201,6 +212,7 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, aid);
       return new RESTResult(false, error.message);
     }
   }
@@ -229,6 +241,7 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
+      this._handleReqError(error, aid);
       return new RESTResult(false, error.message);
     }
   }
@@ -298,6 +311,7 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, aid);
       return new RESTResult(false, error.message);
     }
   }
@@ -318,6 +332,7 @@ export default class EdisonAccount {
     const postData = {
       deviceId: deviceId,
     };
+    let message;
     try {
       const { data } = await axios.post(url, postData, {
         headers: {
@@ -325,14 +340,18 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
-      if (data.code === 0 && deviceId === supportId) {
-        AccountStore.logoutSyncAccount(aid);
-      }
       this._handleResCode(data.code, account);
-      return new RESTResult(data.code === 0, data.message);
+      message = data.message;
     } catch (error) {
-      return new RESTResult(false, error.message);
+      if (deviceId !== supportId) {
+        this._handleReqError(error, aid);
+      }
+      message = error.message;
     }
+    if (deviceId === supportId) {
+      AccountStore.logoutSyncAccount(aid);
+    }
+    return new RESTResult(true, message);
   }
 
   async UpdateDevice(aid, name) {
@@ -364,6 +383,49 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
+      this._handleReqError(error, aid);
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async subAccounts() {
+    const url = `${this.host}/api/charge/user/subAccounts`;
+    const syncAccount = AccountStore.syncAccount();
+    if (!syncAccount) {
+      return new RESTResult(false, 'sync account is unexpected');
+    }
+
+    const token = syncAccount.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'sync account has no token');
+    }
+
+    const accounts = AccountStore.accounts();
+    const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
+    const postData = subAccounts.map(a => {
+      const postData = {
+        host: a.settings.imap_host,
+      };
+      if (a.emailAddress) {
+        postData['emailAddress'] = a.emailAddress;
+      }
+      if (a.name) {
+        postData['username'] = a.name;
+      }
+      return postData;
+    });
+
+    try {
+      const { data } = await axios.post(url, postData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      this._handleResCode(data.code, account);
+      return new RESTResult(data.code === 0, data.message);
+    } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }

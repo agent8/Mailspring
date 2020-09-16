@@ -4,7 +4,8 @@ import { RetinaImg, Flexbox, LottieImg } from 'mailspring-component-kit';
 import PropTypes from 'prop-types';
 
 const { EdisonAccountRest } = RESTful;
-const edisonAccountKey = 'edisonAccount';
+const edisonAccountKey = 'edisonAccountId';
+const PromptedEdisonAccountKey = 'core.workspace.promptedEdisonAccount';
 const computerPlatforms = ['mac'];
 const modeSwitchList = [
   {
@@ -156,6 +157,9 @@ export default class EdisonAccount extends React.Component {
   };
 
   _startBackUpAndSync = e => {
+    if (!AppEnv.config.get(PromptedEdisonAccountKey)) {
+      AppEnv.config.set(PromptedEdisonAccountKey, true);
+    }
     const { otherAccounts } = this.state;
     if (otherAccounts.length === 1) {
       this._onChooseAccount(otherAccounts[0]);
@@ -165,6 +169,9 @@ export default class EdisonAccount extends React.Component {
   };
 
   _chooseAccountPopup = e => {
+    if (!AppEnv.config.get(PromptedEdisonAccountKey)) {
+      AppEnv.config.set(PromptedEdisonAccountKey, true);
+    }
     const { otherAccounts } = this.state;
     if (!otherAccounts.length) {
       return;
@@ -180,6 +187,9 @@ export default class EdisonAccount extends React.Component {
   };
 
   _logout = async deviceId => {
+    if (!AppEnv.config.get(PromptedEdisonAccountKey)) {
+      AppEnv.config.set(PromptedEdisonAccountKey, true);
+    }
     const { account } = this.state;
     if (!account || !account.id) {
       return;
@@ -197,6 +207,8 @@ export default class EdisonAccount extends React.Component {
     }
     if (!logoutResult.successful) {
       AppEnv.reportError(new Error(`Logout edison account fail: ${logoutResult.message}`));
+    } else {
+      this._getDevices();
     }
   };
 
@@ -251,7 +263,7 @@ export default class EdisonAccount extends React.Component {
               ) : null}
               <div className="btn-danger" onClick={() => this._logout(this.supportId)}>
                 {this.renderSpinner(logoutLoading)}
-                Log Out
+                Stop Back up & Sync
               </div>
             </div>
           </div>

@@ -7,6 +7,8 @@ import {
   Actions,
   QuotedHTMLTransformer,
   RegExpUtils,
+  Constant,
+  FsUtils,
 } from 'mailspring-exports';
 import { remote } from 'electron';
 import MailspringStore from 'mailspring-store';
@@ -14,10 +16,12 @@ import path from 'path';
 import fs from 'fs';
 import _ from 'underscore';
 import TemplateActions from './template-actions';
+import uuid from 'uuid';
 
+const { autoGenerateNameByNameList } = FsUtils;
+const { PreferencesSubListStateEnum } = Constant;
 // Support accented characters in template names
 // https://regex101.com/r/nD3eY8/1
-const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
 function mergeContacts(oldContacts = [], contacts = []) {
   const result = [...oldContacts];
   contacts.forEach(contact => {
@@ -30,425 +34,216 @@ function mergeContacts(oldContacts = [], contacts = []) {
   });
   return result;
 }
+const WelcomeTemplate = {
+  id: '4ad7f986-de23-44a6-b579-3e2f9703b943',
+  title: 'Welcome to Templates',
+  tsClientUpdate: 0,
+  state: PreferencesSubListStateEnum.synchronized,
+  attachments: [],
+};
+
+const DefaultTemplate = { title: 'Untitled', body: 'Insert content here!' };
 
 class TemplateStore extends MailspringStore {
   constructor() {
     super();
 
-    this.listenTo(TemplateActions.insertTemplateId, this._onInsertTemplateId);
-    this.listenTo(TemplateActions.createTemplate, this._onCreateTemplate);
-    this.listenTo(TemplateActions.showTemplates, this._onShowTemplates);
-    this.listenTo(TemplateActions.deleteTemplate, this._onDeleteTemplate);
-    this.listenTo(TemplateActions.renameTemplate, this._onRenameTemplate);
-    this.listenTo(TemplateActions.changeTemplateField, this._onChangeTemplateField);
-    this.listenTo(TemplateActions.updateTemplateBody, this._onUpdateTemplateBody);
-    this.listenTo(TemplateActions.addAttachmentsToTemplate, this._onAddAttachmentsToTemplate);
-    this.listenTo(
-      TemplateActions.removeAttachmentsFromTemplate,
-      this._onRemoveAttachmentsFromTemplate
-    );
-    this.listenTo(Actions.selectTemplate, this._onSelectTemplate);
-
-    if (AppEnv.isMainWindow()) {
-      Actions.resetSettings.listen(this.onAppSettingsReset, this);
-    }
-
-    this.templatesConfig = AppEnv.config.get(`templates`);
-    AppEnv.config.onDidChange(`templates`, () => {
-      this.templatesConfig = AppEnv.config.get(`templates`);
-      this._triggerDebounced();
-    });
-    if (!this.templatesConfig) {
-      this.templatesConfig = {};
-    }
-
-    this._items = [];
     this._templatesDir = path.join(AppEnv.getConfigDirPath(), 'templates');
     this._welcomeName = 'Welcome to Templates.html';
     this._welcomePath = path.join(__dirname, '..', 'assets', this._welcomeName);
-    this._watcher = null;
-    this._selectedTemplateName = '';
+    this.templates = AppEnv.config.get(`templates`);
+    this.templatesBody = new Map();
+    this._selectedTemplateId = '';
 
-    // I know this is a bit of pain but don't do anything that
-    // could possibly slow down app launch
-    fs.exists(this._templatesDir, exists => {
-      if (exists) {
-        this._populate();
-        this.watch();
-      } else {
-        fs.mkdir(this._templatesDir, () => {
-          fs.readFile(this._welcomePath, (err, welcome) => {
-            fs.writeFile(path.join(this._templatesDir, this._welcomeName), welcome, () => {
-              this.watch();
-            });
-          });
-        });
+    if (!fs.existsSync(this._templatesDir)) {
+      fs.mkdirSync(this._templatesDir);
+    }
+
+    if (!this.templates || !this.templates.length) {
+      const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
+      AppEnv.config.set(`templates`, [{ ...WelcomeTemplate }]);
+      this.templatesBody.set(WelcomeTemplate.id, WelcomeTemplateBody);
+      fs.writeFileSync(
+        path.join(this._templatesDir, `${WelcomeTemplate.id}.html`),
+        WelcomeTemplateBody
+      );
+    }
+
+    this._autoselectTemplateId();
+
+    this.listenTo(TemplateActions.addTemplate, this._onAddTemplate);
+    this.listenTo(TemplateActions.updateTemplate, this._onUpdateTemplate);
+    this.listenTo(TemplateActions.removeTemplate, this._onRemoveTemplate);
+    this.listenTo(Actions.selectTemplate, this._onSelectTemplate);
+    this.listenTo(TemplateActions.showTemplates, this._onShowTemplates);
+
+    this.listenTo(TemplateActions.insertTemplateToMessage, this._onInsertTemplateToMessage);
+    this.listenTo(TemplateActions.createTemplateByMessage, this._onCreateTemplateByMessage);
+
+    AppEnv.config.onDidChange(`templates`, () => {
+      this.templates = AppEnv.config.get(`templates`);
+      if (!AppEnv.isMainWindow()) {
+        // compose should update the body when templates change
+        this.templatesBody = new Map();
       }
+      this._triggerDebounced();
     });
 
-    this._triggerDebounced = _.debounce(() => this.trigger(), 20);
+    this._triggerDebounced = _.debounce(() => {
+      this.trigger();
+    }, 20);
   }
 
   directory() {
     return this._templatesDir;
   }
 
-  watch() {
-    if (!this._watcher) {
-      AppEnv.logDebug('watching templates');
-      try {
-        this._watcher = fs.watch(this._templatesDir, () => this._populate());
-      } catch (err) {
-        // usually an ENOSPC error
-        console.warn(err);
-      }
+  getTemplates() {
+    return this.templates.filter(t => t.state !== PreferencesSubListStateEnum.deleted);
+  }
+
+  _getTemplateById(id) {
+    return this.templates.find(t => t.id === id && t.state !== PreferencesSubListStateEnum.deleted);
+  }
+
+  selectedTemplate() {
+    return this._getTemplateById(this._selectedTemplateId);
+  }
+
+  getBodyById(id) {
+    if (!id) {
+      return '';
     }
-  }
-  onAppSettingsReset = () => {
-    this.unwatch();
-    Actions.resetSettingsCb();
-  };
-
-  unwatch = () => {
-    if (this._watcher) {
-      AppEnv.logDebug('unwatching templates');
-      this._watcher.close();
+    const theTem = this._getTemplateById(id);
+    if (!theTem) {
+      return '';
     }
-    this._watcher = null;
-  };
+    const bodyInTmp = this.templatesBody.get(id);
+    if (bodyInTmp) {
+      return bodyInTmp;
+    }
 
-  items() {
-    return this._items;
+    const bodyFilePath = path.join(this._templatesDir, `${id}.html`);
+    // Backward compatibility
+    let bodyInFile = theTem.body ? theTem.body : DefaultTemplate.body;
+    if (fs.existsSync(bodyFilePath)) {
+      bodyInFile = fs.readFileSync(bodyFilePath).toString();
+    } else {
+      fs.writeFileSync(bodyFilePath, bodyInFile);
+    }
+
+    // add to cache
+    this.templatesBody.set(id, bodyInFile);
+    return bodyInFile;
   }
 
-  templateConfig(templateId) {
-    return this.templatesConfig[templateId] || {};
+  _saveTemplates() {
+    _.debounce(AppEnv.config.set(`templates`, this.templates), 500);
   }
 
-  selectedTemplateName() {
-    return this._selectedTemplateName;
-  }
-
-  _onSelectTemplate(item) {
-    this._selectedTemplateName = item.name;
+  _onSelectTemplate = id => {
+    this._selectedTemplateId = id;
     this._triggerDebounced();
-  }
-
-  _onTemplateConfigChange = () => {
-    AppEnv.config.set(`templates`, this.templatesConfig);
-    this._triggerDebounced();
   };
 
-  _onDeleteTemplateConfig(templateId) {
-    delete this.templatesConfig[templateId];
-    this._onTemplateConfigChange();
-  }
-
-  _onChangeTemplateConfig(templateId, field, value) {
-    const itemConfig = this.templateConfig(templateId);
-    itemConfig[field] = value;
-    this.templatesConfig[templateId] = itemConfig;
-    this._onTemplateConfigChange();
-  }
-  _onRenameTemplateConfig(oldTId, newTId) {
-    const itemConfig = this.templateConfig(oldTId);
-    delete this.templatesConfig[oldTId];
-    this.templatesConfig[newTId] = itemConfig;
-    this._onTemplateConfigChange();
-  }
-
-  _populate() {
-    fs.readdir(this._templatesDir, (err, filenames) => {
-      if (err) {
-        AppEnv.showErrorDialog({
-          title: 'Cannot scan templates directory',
-          message: `EdisonMail was unable to read the contents of your templates directory (${this._templatesDir}). You may want to delete this folder or ensure filesystem permissions are set correctly.`,
-        });
-        return;
+  _autoselectTemplateId() {
+    const temIds = [];
+    this.templates.forEach(t => {
+      if (t.state !== PreferencesSubListStateEnum.deleted) {
+        temIds.push(t.id);
       }
-      this._items = [];
-      for (let i = 0, filename; i < filenames.length; i++) {
-        filename = filenames[i];
-        if (filename[0] === '.') {
-          continue;
-        }
-        const displayname = path.basename(filename, path.extname(filename));
-        this._items.push({
-          id: filename,
-          name: displayname,
-          path: path.join(this._templatesDir, filename),
-        });
-      }
-      this._triggerDebounced();
     });
+    this._selectedTemplateId = temIds.length ? temIds[0] : null;
   }
 
-  _onCreateTemplate({ messageId, name, contents } = {}, callback) {
-    if (messageId) {
-      this._onCreateTemplateFromDraft(messageId);
+  _onAddTemplate = () => {
+    const newTemplateId = uuid().toLowerCase();
+    const oldTempTitles = this.getTemplates().map(t => t.title);
+    const newTempTitle = autoGenerateNameByNameList(oldTempTitles, DefaultTemplate.title);
+    this.templates.push({
+      id: newTemplateId,
+      state: PreferencesSubListStateEnum.updated,
+      title: newTempTitle,
+      tsClientUpdate: new Date().getTime(),
+      attachments: [],
+    });
+    this._onUpsertTemplateBody(newTemplateId, DefaultTemplate.body);
+    // auto select
+    this._selectedTemplateId = newTemplateId;
+    this._triggerDebounced();
+    this._saveTemplates();
+  };
+
+  _onUpdateTemplate = template => {
+    this.templates = this.templates.map(t => {
+      if (t.id === template.id) {
+        return {
+          id: t.id,
+          state: PreferencesSubListStateEnum.updated,
+          title: template.title,
+          CC: template.CC,
+          BCC: template.BCC,
+          tsClientUpdate: new Date().getTime(),
+          attachments: template.attachments || [],
+        };
+      }
+      return t;
+    });
+    this._onUpsertTemplateBody(template.id, template.body);
+    this._triggerDebounced();
+    this._saveTemplates();
+  };
+
+  _onRemoveTemplate = templateToDelete => {
+    this.templates = this.templates.map(t => {
+      if (t.id === templateToDelete.id) {
+        return {
+          ...t,
+          state: PreferencesSubListStateEnum.deleted,
+        };
+      }
+      return t;
+    });
+    this._onRemoveTemplateBody(templateToDelete.id);
+    this._autoselectTemplateId();
+    this._triggerDebounced();
+    this._saveTemplates();
+  };
+
+  _onRemoveTemplateBody = id => {
+    const bodyFilePath = path.join(this._templatesDir, `${id}.html`);
+    if (fs.existsSync(bodyFilePath)) {
+      fs.unlinkSync(bodyFilePath);
+    }
+    // updata cache
+    this.templatesBody.delete(id);
+  };
+
+  _onUpsertTemplateBody = (id, body) => {
+    const oldBody = this.templatesBody.get(id);
+    if (typeof body === 'undefined' || body === oldBody) {
       return;
     }
-    if (!name || name.length === 0) {
-      this._displayError('You must provide a name for your template.');
-      return;
-    }
-    if (!contents || contents.length === 0) {
-      this._displayError('You must provide contents for your template.');
-      return;
-    }
-    this.saveNewTemplate(name, contents, template => {
-      this._onShowTemplates();
-      this._onSelectTemplate(template);
-    });
-  }
-
-  _onCreateTemplateFromDraft(messageId) {
-    DraftStore.sessionForClientId(messageId).then(session => {
-      if (!session) {
-        this._displayError(`Draft Session for ${messageId} not available`);
-        return;
-      }
-      const draft = session.draft();
-      if (!draft) {
-        this._displayError(`Draft for ${messageId} not available`);
-        return;
-      }
-      const draftName = draft.subject.replace(INVALID_TEMPLATE_NAME_REGEX, '');
-
-      let draftContents = QuotedHTMLTransformer.removeQuotedHTML(draft.body);
-      const sigIndex = draftContents.search(RegExpUtils.mailspringSignatureRegex());
-      draftContents = sigIndex > -1 ? draftContents.substr(0, sigIndex) : draftContents;
-
-      if (!draftName || draftName.length === 0) {
-        if (draft.subject && draft.subject.length > 0) {
-          this._displayError('Template name is not valid.');
-        } else {
-          this._displayError('Give your draft a subject to name your template.');
-        }
-        return;
-      }
-
-      if (!draftContents || draftContents.length === 0) {
-        this._displayError('To create a template you need to fill the body of the current draft.');
-        return;
-      }
-
-      const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
-      if (inlineAttachment.length) {
-        this._displayError('Sorry，template does not support inline attachments.');
-        return;
-      }
-
-      const cb = templateSaved => {
-        const filesAddToAttachment = [];
-        if (draft.files && draft.files.length) {
-          draft.files.forEach(f => {
-            const filePath = AttachmentStore.pathForFile(f);
-            const newPath = AppEnv.copyFileToPreferences(filePath);
-            if (newPath) {
-              filesAddToAttachment.push(newPath);
-            }
-          });
-        }
-        if (filesAddToAttachment.length) {
-          this._onAddAttachmentsToTemplate(templateSaved.name, filesAddToAttachment);
-        }
-        if (draft.cc && draft.cc.length) {
-          const ccStr = draft.cc
-            .map(contact => {
-              return contact.email;
-            })
-            .join(',');
-          this._onChangeTemplateField(templateSaved.name, 'CC', ccStr);
-        }
-        if (draft.bcc && draft.bcc.length) {
-          const bccStr = draft.bcc
-            .map(contact => {
-              return contact.email;
-            })
-            .join(',');
-          this._onChangeTemplateField(templateSaved.name, 'BCC', bccStr);
-        }
-        this._onShowTemplates();
-        Actions.selectTemplate(templateSaved);
-      };
-
-      this.saveNewTemplate(draftName, draftContents, cb);
-    });
-  }
+    const bodyFilePath = path.join(this._templatesDir, `${id}.html`);
+    fs.writeFileSync(bodyFilePath, body);
+    // updata cache
+    this.templatesBody.set(id, body);
+  };
 
   _onShowTemplates() {
     Actions.switchPreferencesTab('Templates');
     Actions.openPreferences();
   }
 
-  _displayError(message) {
-    AppEnv.reportError(new Error('Template Creation Error'), { errorData: message });
-    remote.dialog.showErrorBox('Template Creation Error', message);
-  }
-
-  _displayDialog(title, message, buttons) {
-    return remote.dialog
-      .showMessageBox({
-        title: title,
-        message: title,
-        detail: message,
-        buttons: buttons,
-        type: 'info',
-      })
-      .then(({ response }) => {
-        return Promise.resolve(response === 0);
-      });
-  }
-
-  saveNewTemplate(name, contents, callback) {
-    if (!name || name.length === 0) {
-      this._displayError('You must provide a template name.');
-      return;
-    }
-
-    if (name.match(INVALID_TEMPLATE_NAME_REGEX)) {
-      this._displayError(
-        'Invalid template name! Names can only contain letters, numbers, spaces, dashes, and underscores.'
-      );
-      return;
-    }
-
-    let number = 1;
-    let resolvedName = name;
-    const sameName = t => t.name.toUpperCase() === resolvedName.toUpperCase();
-    while (this._items.find(sameName)) {
-      resolvedName = `${name} ${number}`;
-      number += 1;
-    }
-    this.saveTemplate(resolvedName, contents, callback);
-    this._triggerDebounced();
-  }
-
-  saveTemplate(name, contents, callback) {
-    const filename = `${name}.html`;
-    const templatePath = path.join(this._templatesDir, filename);
-    let template = this._items.find(t => t.name === name);
-
-    this.unwatch();
-    fs.writeFile(templatePath, contents, err => {
-      this.watch();
-      if (err) {
-        this._displayError(err);
-      }
-      if (!template) {
-        template = {
-          id: filename,
-          name: name,
-          path: templatePath,
-        };
-        this._items.unshift(template);
-      }
-      if (callback) {
-        callback(template);
-      }
-    });
-  }
-
-  async _onDeleteTemplate(name) {
-    const template = this._items.find(t => t.name === name);
+  _onInsertTemplateToMessage = ({ templateId, messageId }) => {
+    const template = this._getTemplateById(templateId);
     if (!template) {
       return;
     }
-    fs.unlink(template.path, () => {
-      this._populate();
-    });
-    this._onDeleteTemplateConfig(template.id);
-  }
-
-  _onUpdateTemplateBody(name, body) {
-    const template = this._items.find(t => t.name === name);
-    if (!template) {
+    const templateBody = this.getBodyById(templateId);
+    if (!templateBody) {
       return;
     }
-    fs.writeFileSync(template.path, body);
-  }
-
-  _onChangeTemplateField(name, field, value) {
-    const template = this._items.find(t => t.name === name);
-    if (!template) {
-      return;
-    }
-    this._onChangeTemplateConfig(template.id, field, value);
-  }
-
-  _onAddAttachmentsToTemplate(name, paths) {
-    if (!paths || !paths.length) {
-      return;
-    }
-    const template = this._items.find(t => t.name === name);
-    if (!template) {
-      return;
-    }
-    const itemConfig = this.templateConfig(template.id);
-    const files = itemConfig.files || [];
-    itemConfig.files = [...files, ...paths];
-    this.templatesConfig[template.id] = itemConfig;
-    this._onTemplateConfigChange();
-  }
-
-  _onRemoveAttachmentsFromTemplate(name, indexs) {
-    if (!indexs || !indexs.length) {
-      return;
-    }
-    const template = this._items.find(t => t.name === name);
-    if (!template) {
-      return;
-    }
-    const itemConfig = this.templateConfig(template.id);
-    const files = itemConfig.files || [];
-    itemConfig.files = files.filter((file, index) => !indexs.includes(index));
-    this.templatesConfig[template.id] = itemConfig;
-    this._onTemplateConfigChange();
-  }
-
-  _onRenameTemplate(name, newName) {
-    const template = this._items.find(t => t.name === name);
-    if (!template) {
-      return;
-    }
-    const oldTId = template.id;
-
-    if (newName.match(INVALID_TEMPLATE_NAME_REGEX)) {
-      this._displayError(
-        'Invalid template name! Names can only contain letters, numbers, spaces, dashes, and underscores.'
-      );
-      return;
-    }
-    if (newName.length === 0) {
-      this._displayError('You must provide a template name.');
-      return;
-    }
-
-    const sameName = this._items.find(t => {
-      return t.name.toUpperCase() === newName.toUpperCase();
-    });
-    if (sameName) {
-      this._displayError(`You already have a template called "${sameName.name}"`);
-      return;
-    }
-
-    const newFilename = `${newName}.html`;
-    const oldPath = path.join(this._templatesDir, `${name}.html`);
-    const newPath = path.join(this._templatesDir, newFilename);
-    fs.rename(oldPath, newPath, () => {
-      template.name = newName;
-      template.id = newFilename;
-      template.path = newPath;
-      this._onRenameTemplateConfig(oldTId, template.id);
-      this._onSelectTemplate(template);
-      this._triggerDebounced();
-    });
-  }
-
-  _onInsertTemplateId({ templateId, messageId } = {}) {
-    const template = this._items.find(t => t.id === templateId);
-    const templateBody = fs.readFileSync(template.path).toString();
     DraftStore.sessionForClientId(messageId).then(async session => {
       if (!session) {
         this._displayError(`Draft Session for ${messageId} not available`);
@@ -487,9 +282,11 @@ class TemplateStore extends MailspringStore {
             insertion = Math.min(insertion, i);
           }
         }
-        const changeObj = { body: `${templateBody}${current.substr(insertion)}` };
+        const changeObj = {
+          body: `${templateBody}${current.substr(insertion)}`,
+        };
 
-        const { BCC, CC, files } = this.templateConfig(template.id);
+        const { BCC, CC, attachments } = template;
         // Add CC, Bcc to the draft, do not delete the original CC, BCC
         if (CC) {
           const ccContacts = await ContactStore.parseContactsInString(CC);
@@ -506,6 +303,7 @@ class TemplateStore extends MailspringStore {
         // Replace attachments, delete the original attachments
         changeObj.files = [];
         session.changes.add(changeObj);
+        const files = attachments.map(atta => atta.path);
         if (files && files.length) {
           if (files.length > 1) {
             Actions.addAttachments({
@@ -525,14 +323,114 @@ class TemplateStore extends MailspringStore {
         }
       }
     });
+  };
+
+  _onCreateTemplateByMessage = ({ messageId }) => {
+    DraftStore.sessionForClientId(messageId).then(session => {
+      if (!session) {
+        this._displayError(`Draft Session for ${messageId} not available`);
+        return;
+      }
+      const draft = session.draft();
+      if (!draft) {
+        this._displayError(`Draft for ${messageId} not available`);
+        return;
+      }
+      const draftName = draft.subject;
+
+      let draftContents = QuotedHTMLTransformer.removeQuotedHTML(draft.body);
+      const sigIndex = draftContents.search(RegExpUtils.mailspringSignatureRegex());
+      draftContents = sigIndex > -1 ? draftContents.substr(0, sigIndex) : draftContents;
+
+      if (!draftName || draftName.length === 0) {
+        this._displayError('Give your draft a subject to name your template.');
+        return;
+      }
+
+      if (!draftContents || draftContents.length === 0) {
+        this._displayError('To create a template you need to fill the body of the current draft.');
+        return;
+      }
+
+      const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
+      if (inlineAttachment.length) {
+        this._displayError('Sorry，template does not support inline attachments.');
+        return;
+      }
+
+      const newTemplateId = uuid().toLowerCase();
+      const oldTempTitles = this.getTemplates().map(t => t.title);
+      const newTempTitle = autoGenerateNameByNameList(oldTempTitles, draftName);
+      const newTemplate = {
+        id: newTemplateId,
+        state: PreferencesSubListStateEnum.updated,
+        title: newTempTitle,
+        tsClientUpdate: new Date().getTime(),
+        attachments: [],
+      };
+      if (draft.files && draft.files.length) {
+        const filesAddToAttachment = [];
+        draft.files.forEach(f => {
+          const filePath = AttachmentStore.pathForFile(f);
+          const newPath = AppEnv.copyFileToPreferences(filePath);
+          if (newPath) {
+            filesAddToAttachment.push({
+              inline: false,
+              path: newPath,
+            });
+          }
+        });
+        if (filesAddToAttachment.length) {
+          newTemplate['attachments'] = filesAddToAttachment;
+        }
+      }
+
+      if (draft.cc && draft.cc.length) {
+        const ccStr = draft.cc
+          .map(contact => {
+            return contact.email;
+          })
+          .join(',');
+        newTemplate['CC'] = ccStr;
+      }
+      if (draft.bcc && draft.bcc.length) {
+        const bccStr = draft.bcc
+          .map(contact => {
+            return contact.email;
+          })
+          .join(',');
+        newTemplate['BCC'] = bccStr;
+      }
+
+      this.templates.push(newTemplate);
+      this._onUpsertTemplateBody(newTemplateId, draftContents);
+      // auto select
+      this._selectedTemplateId = newTemplateId;
+      this._triggerDebounced();
+      this._saveTemplates();
+      this._onShowTemplates();
+    });
+  };
+
+  _displayDialog(title, message, buttons) {
+    return remote.dialog
+      .showMessageBox({
+        title: title,
+        message: title,
+        detail: message,
+        buttons: buttons,
+        type: 'info',
+      })
+      .then(({ response }) => {
+        return Promise.resolve(response === 0);
+      });
   }
 
-  _isBodyEmpty(body) {
-    if (!body) {
-      return true;
-    }
-    const re = /(?:<.+?>)|\s|\u200b/gim;
-    return body.replace(re, '').length === 0;
+  _displayError(message) {
+    AppEnv.reportError(new Error('Template Creation Error'), {
+      errorData: message,
+    });
+    remote.dialog.showErrorBox('Template Creation Error', message);
   }
 
   _getPureBodyForDraft(body) {
@@ -567,6 +465,14 @@ class TemplateStore extends MailspringStore {
     const str = tmpNode.innerHTML;
 
     return str || '';
+  }
+
+  _isBodyEmpty(body) {
+    if (!body) {
+      return true;
+    }
+    const re = /(?:<.+?>)|\s|\u200b/gim;
+    return body.replace(re, '').length === 0;
   }
 }
 

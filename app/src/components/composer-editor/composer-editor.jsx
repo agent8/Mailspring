@@ -76,8 +76,8 @@ export default class ComposerEditor extends React.Component {
 
   focus = () => {
     const { onChange, value } = this.props;
-    const defaultFont = AppEnv.config.get('core.fontface') || 'sans-serif';
-    const defaultSize = AppEnv.config.get('core.fontsize') || '14px';
+    const defaultFont = AppEnv.config.get('core.fontface');
+    const defaultSize = AppEnv.config.get('core.fontsize');
     onChange(
       value
         .change()
@@ -91,7 +91,7 @@ export default class ComposerEditor extends React.Component {
         .addMark({
           object: 'mark',
           type: 'size',
-          data: { value: defaultSize }
+          data: { value: defaultSize },
         })
         .focus()
     );
@@ -287,7 +287,12 @@ export default class ComposerEditor extends React.Component {
   // Event Handlers
   render() {
     const { className, onBlur, onDrop, value, propsForPlugins } = this.props;
-
+    const draftDefaultValues =
+      this.props.propsForPlugins && this.props.propsForPlugins.draft
+        ? this.props.propsForPlugins.draft.defaultValues
+        : {};
+    const defaultFontFace = (draftDefaultValues || {}).fontFace || 'sans-serif';
+    const defaultFontSize = (draftDefaultValues || {}).fontSize || '14px';
     return (
       <KeyCommandsRegion
         className={`RichEditor-root ${className || ''}`}
@@ -299,6 +304,7 @@ export default class ComposerEditor extends React.Component {
           plugins={this.plugins}
           readOnly={this.props.readOnly}
           isCrowded={this.state.isCrowded}
+          draftDefaultValues={draftDefaultValues}
         />
         <div
           className="RichEditor-content"
@@ -311,6 +317,7 @@ export default class ComposerEditor extends React.Component {
               <p.topLevelComponent key={idx} value={value} onChange={this.onChange} />
             ))}
           <Editor
+            style={{ fontFace: defaultFontFace, fontSize: defaultFontSize }}
             value={value}
             onChange={this.onChange}
             onBlur={onBlur}

@@ -933,10 +933,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(
-        this.categories().map(c => c.id),
-        other.categories().map(c => c.id)
-      )
+      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
     );
   }
 
@@ -1376,8 +1373,9 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
 class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
   constructor(categories) {
     super(categories);
-    const isAllInbox = categories && categories.length > 1;
-    this.name = `${isAllInbox ? 'All ' : ''}Focused`;
+    // const isAllInbox = categories && categories.length > 1;
+    // this.name = `${isAllInbox ? 'All ' : ''}Focused`;
+    this.name = `Focused`;
     this.isTab = true;
     this.isFocusedOtherPerspective = true;
   }
@@ -1438,8 +1436,9 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
 class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
   constructor(categories) {
     super(categories);
-    const isAllInbox = categories && categories.length > 1;
-    this.name = `${isAllInbox ? 'All ' : ''}Other`;
+    // const isAllInbox = categories && categories.length > 1;
+    // this.name = `${isAllInbox ? 'All ' : ''}Other`;
+    this.name = `Other`;
     this.isTab = true;
     this.isOther = true;
     this.isFocusedOtherPerspective = true;
@@ -1544,9 +1543,6 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(
-      this.categories().map(c => c.id),
-      this.isOther
-    );
+    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
   }
 }

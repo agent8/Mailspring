@@ -172,6 +172,7 @@ export default class MessageItemBody extends React.Component {
           showQuotedText={showQuotedText}
           content={this._mergeBodyWithFiles(processedBody)}
           message={message}
+          pending={this.props.pending}
           messageIndex={this.props.messageIndex}
           viewOriginalEmail={this.props.viewOriginalEmail}
           setTrackers={this.props.setTrackers}

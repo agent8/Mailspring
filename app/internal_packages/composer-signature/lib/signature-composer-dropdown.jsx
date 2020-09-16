@@ -104,7 +104,7 @@ export default class SignatureComposerDropdown extends React.Component {
       <Menu
         headerComponents={this._staticHeaderItems}
         footerComponents={this._staticFooterItems}
-        items={Object.values(this.state.signatures)}
+        items={this.state.signatures}
         itemKey={sig => sig.id}
         itemChecked={sig => currentSignatureId(this.props.draft.body) === sig.id}
         itemContent={sig => <span className={`signature-title-${sig.title}`}>{sig.title}</span>}

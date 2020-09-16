@@ -123,7 +123,23 @@ class DraftList extends React.Component {
             source: 'Click',
           });
         }
-        Actions.composePopoutDraft(draft.id);
+        if (inLines.length > 0 || normal.length > 0) {
+          AppEnv.showMessageBox({
+            title: 'Attachments still downloading',
+            detail:
+              "Attachments still downloading, opening draft now will cause draft to loose it's attachments",
+            buttons: ['Cancel', 'Open'],
+            cancelId: 0,
+            defaultId: 0,
+          }).then(({ response } = {}) => {
+            if (response === 1) {
+              Actions.composePopoutDraft(draft.id, { ignoreMissingAttachments: true });
+              AppEnv.logDebug(`User opened draft ${draft.id} while attachments are missing`);
+            }
+          });
+        } else {
+          Actions.composePopoutDraft(draft.id);
+        }
       });
     } else {
       Actions.fetchBodies({ messages: [draft], source: 'draft' });

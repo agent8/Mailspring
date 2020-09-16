@@ -34,6 +34,8 @@ import moveToApplications from './move-to-applications';
 import MailsyncProcess from '../mailsync-process';
 import EventTriggers from './event-triggers';
 import { createHash } from 'crypto';
+import { dataUpgrade } from './data-upgrade';
+
 const LOG = require('electron-log');
 const archiver = require('archiver');
 let getOSInfo = null;
@@ -62,8 +64,11 @@ export default class Application extends EventEmitter {
     this.specMode = specMode;
     this.safeMode = safeMode;
     this.nativeVersion = '';
-    // this.edisonServerHost = 'https://cp.stag.easilydo.cc';
-    this.edisonServerHost = 'https://cp.edison.tech';
+    const stagHost = 'https://cp.stag.easilydo.cc';
+    const prodHost = 'https://cp.edison.tech';
+    this.isStag = true;
+    this.edisonServerHost = this.isStag ? stagHost : prodHost;
+    // this.edisonServerHost = ;
     this.startOfDay = getStartOfDay();
     this.refreshStartOfDay = _.throttle(this._refreshStartOfDay, 1000);
     this._triggerRefreshStartOfDayTimer = null;
@@ -74,6 +79,8 @@ export default class Application extends EventEmitter {
       resourcePath,
       safeMode,
     });
+
+    await dataUpgrade(configDirPath);
 
     const Config = require('../config');
     const config = new Config();
@@ -1265,7 +1272,14 @@ export default class Application extends EventEmitter {
     });
 
     this.on('application:check-for-update', () => {
+      console.log('checking for update');
       this.autoUpdateManager.check({ manuallyCheck: true });
+    });
+    this.on('application:ignore-update', () => {
+      this.autoUpdateManager.ignoreUpdate();
+    });
+    this.on('application:start-download-update', () => {
+      this.autoUpdateManager.downloadUpdate();
     });
 
     this.on('application:install-update', () => {

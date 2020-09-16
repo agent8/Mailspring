@@ -3,7 +3,7 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-import { FocusedContentStore } from 'mailspring-exports';
+import { FocusedContentStore, MenuHelpers } from 'mailspring-exports';
 const _ = require('underscore');
 const Actions = require('../actions').default;
 const MailspringStore = require('mailspring-store').default;
@@ -89,7 +89,7 @@ class WorkspaceStore extends MailspringStore {
           split: [
             'RootSidebar',
             'ThreadList',
-            'MessageList',
+            // 'MessageList',
             // 'QuickSidebar',
             // 'MessageListSidebar'
           ],
@@ -111,7 +111,11 @@ class WorkspaceStore extends MailspringStore {
         'Outbox',
         { root: true },
         {
-          split: ['RootSidebar', 'Outbox', 'OutboxMessage'],
+          split: [
+            'RootSidebar',
+            'Outbox',
+            // 'OutboxMessage'
+          ],
         }
       );
       this.defineSheet(
@@ -121,7 +125,7 @@ class WorkspaceStore extends MailspringStore {
           split: [
             'RootSidebar',
             'SiftList',
-            'MessageList',
+            // 'MessageList',
             // 'QuickSidebar',
             // 'MessageListSidebar'
           ],
@@ -227,6 +231,9 @@ class WorkspaceStore extends MailspringStore {
     const focused = FocusedContentStore.focused('thread') || null;
     this._preferredLayoutMode = mode;
     AppEnv.config.set('core.workspace.mode', this._preferredLayoutMode);
+    if (mode.startsWith('split')) {
+      AppEnv.config.set('core.workspace.mode-split', mode);
+    }
     this._rebuildShortcuts();
     this.popToRootSheet({ reason: 'WorkspaceStore:onSelectLayoutMode' });
     if (focused) {
@@ -251,12 +258,54 @@ class WorkspaceStore extends MailspringStore {
           'core:pop-sheet': () =>
             this.popSheet({ reason: 'workspace-store:rebuildShortcuts:core:pop-sheet' }),
         },
-        this._preferredLayoutMode === 'list'
-          ? { 'navigation:select-split-mode': () => this._onSelectLayoutMode('split') }
-          : { 'navigation:select-list-mode': () => this._onSelectLayoutMode('list') }
+        { 'navigation:select-list-mode': () => this._onSelectLayoutMode('list') },
+        { 'navigation:select-split-mode': () => this._onSelectLayoutMode('split') },
+        { 'navigation:select-split-v-mode': () => this._onSelectLayoutMode('split-v') }
       )
     );
+    this.registerMenuItems();
   }
+
+  registerMenuItems = () => {
+    const windowMenu = AppEnv.menu.template.find(
+      ({ label }) => MenuHelpers.normalizeLabel(label) === 'View'
+    );
+    if (!windowMenu) {
+      return;
+    }
+    const submenu = windowMenu.submenu;
+    const template = [
+      {
+        label: 'Full Screen',
+        command: `navigation:select-list-mode`,
+        type: 'checkbox',
+        checked: this._preferredLayoutMode === 'list',
+      },
+      {
+        label: 'Reading Pane on Right',
+        command: `navigation:select-split-mode`,
+        type: 'checkbox',
+        checked: this._preferredLayoutMode === 'split',
+      },
+      {
+        label: 'Reading Pane on Bottom',
+        command: `navigation:select-split-v-mode`,
+        type: 'checkbox',
+        checked: this._preferredLayoutMode === 'split-v',
+      },
+      {
+        type: 'separator',
+      },
+    ];
+
+    const idx = submenu.findIndex(({ type }) => type === 'separator');
+    if (!(idx > 0)) {
+      return;
+    }
+
+    windowMenu.submenu = [...template, ...submenu.slice(idx)];
+    AppEnv.menu.update();
+  };
 
   /*
   Accessing Data
@@ -266,10 +315,11 @@ class WorkspaceStore extends MailspringStore {
   //
   layoutMode() {
     const root = this.rootSheet();
+    let layoutMode = this._preferredLayoutMode === 'split-v' ? 'split' : this._preferredLayoutMode;
     if (!root) {
       return 'list';
-    } else if (root.supportedModes.includes(this._preferredLayoutMode)) {
-      return this._preferredLayoutMode;
+    } else if (root.supportedModes.includes(layoutMode)) {
+      return layoutMode;
     } else {
       return root.supportedModes[0];
     }

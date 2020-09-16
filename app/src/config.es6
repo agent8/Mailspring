@@ -12,6 +12,15 @@ _ = Object.assign(_, require('./config-utils'));
 const { remote } = require('electron');
 const { Emitter } = require('event-kit');
 const crypto = require('crypto');
+const {
+  UpdateSettingCode,
+  UpdateToServerSimpleSettingTypes,
+  UpdateToServerComplexSettingTypes,
+  EdisonPlatformType,
+  EdisonPreferencesType,
+  generateServerConfigKey,
+} = require('./constant');
+
 if (process.type === 'renderer') {
   app = remote.getGlobal('application');
   webContentsId = remote.getCurrentWebContents().id;
@@ -341,14 +350,15 @@ class Config {
     this.settings = {};
     this.defaultSettings = {};
     this.transactDepth = 0;
+    this.serverKeyMap = new Map();
 
     if (process.type === 'renderer') {
       const { ipcRenderer } = require('electron');
       // If new Config() has already been called, unmount it's listener when
       // we attach ourselves. This is only done during specs, Config is a singleton.
       ipcRenderer.removeAllListeners('on-config-reloaded');
-      ipcRenderer.on('on-config-reloaded', (event, settings) => {
-        this.updateSettings(settings);
+      ipcRenderer.on('on-config-reloaded', () => {
+        this.load();
       });
     }
   }
@@ -542,7 +552,7 @@ class Config {
   // Returns a {Boolean}
   // * `true` if the value was set.
   // * `false` if the value was not able to be coerced to the type specified in the setting's schema.
-  set(keyPath, value) {
+  set(keyPath, value, silent) {
     if (value === undefined) {
       value = _.valueForKeyPath(this.defaultSettings, keyPath);
     } else {
@@ -561,7 +571,7 @@ class Config {
       value = JSON.parse(JSON.stringify(value));
     }
 
-    this.setRawValue(keyPath, value);
+    this.setRawValue(keyPath, value, silent);
     if (
       process.type === 'renderer' &&
       AppEnv &&
@@ -572,6 +582,76 @@ class Config {
     }
     return true;
   }
+
+  _bulkSet = async setList => {
+    const commonSetList = [];
+    const changeTimeList = [];
+    const options = {};
+    let ipcNotif = false;
+    for (const item of setList) {
+      let value = item.value;
+      const { type, notifyNative, mergeServerToLocal } = this.getSchema(item.key);
+      // special config should use special func
+      if (UpdateToServerComplexSettingTypes.includes(type)) {
+        if (mergeServerToLocal && typeof mergeServerToLocal === 'function') {
+          value = await mergeServerToLocal(item.value);
+        } else {
+          value = null;
+        }
+      } else if (UpdateToServerSimpleSettingTypes.includes(type)) {
+        const itemLastChangeTimeInLocal = this.getConfigUpdateTime(item.key);
+        if (itemLastChangeTimeInLocal && itemLastChangeTimeInLocal > item.tsClientUpdate) {
+          // if local change is later then server,
+          // should sync local change to server.
+          // However, in order to avoid an endless loop,
+          // sync it to the server the next time it changes.
+          // So we just need to make sure that the local is new
+          continue;
+        }
+        if (value === undefined) {
+          value = _.valueForKeyPath(this.defaultSettings, item.key);
+        } else {
+          try {
+            value = this.makeValueConformToSchema(item.key, value);
+          } catch (e) {
+            value = null;
+          }
+        }
+      }
+      if (value !== undefined && value !== null) {
+        commonSetList.push({
+          keyPath: item.key,
+          value,
+        });
+        changeTimeList.push({
+          keyPath: item.key,
+          time: item.tsClientUpdate,
+        });
+      }
+
+      if (notifyNative) {
+        // should notify native this config is changed
+        if (!ipcNotif) {
+          ipcNotif = true;
+        }
+        options[item.key.replace(/\./g, '_')] = value;
+      }
+    }
+
+    if (commonSetList.length) {
+      app.configPersistenceManager.bulkSetRawValue(commonSetList, webContentsId);
+    }
+    if (changeTimeList.length) {
+      app.configPersistenceManager.bulkSetChangeTimeValue(changeTimeList);
+    }
+
+    if (ipcNotif) {
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.send('client-config', options);
+    }
+
+    this.load();
+  };
 
   // Essential: Restore the setting at `keyPath` to its default value.
   //
@@ -600,6 +680,328 @@ class Config {
     }
     return schema;
   }
+
+  _getConfigKeyByServerKey(platform, key) {
+    const keyMap = this.serverKeyMap.get(platform);
+    if (!keyMap) {
+      return '';
+    }
+    const syncToServerCommonKey = keyMap.get(key);
+    if (syncToServerCommonKey) {
+      const theSchema = this.getSchema(syncToServerCommonKey);
+      if (theSchema) {
+        return syncToServerCommonKey;
+      }
+    }
+    console.log(`This server setting key can not be recognized: ${key}`);
+    return '';
+  }
+
+  _updateServerKeyMap() {
+    const serverCommonKeyMap = new Map();
+    const serverMacKeyMap = new Map();
+    function traversingObj(obj, parentKey) {
+      Object.keys(obj).forEach(key => {
+        const nowObj = obj[key] || {};
+        const nowKey = `${parentKey ? parentKey + '.' : ''}${key}`;
+        if (nowObj.syncToServerCommonKey) {
+          serverCommonKeyMap.set(nowObj.syncToServerCommonKey, nowKey);
+        }
+        serverMacKeyMap.set(generateServerConfigKey(nowKey), nowKey);
+        if (nowObj.type === 'object') {
+          traversingObj(nowObj.properties, nowKey);
+        }
+      });
+    }
+
+    traversingObj(this.schema.properties);
+    const serverKeyMap = new Map();
+    serverKeyMap.set(EdisonPlatformType.COMMON, serverCommonKeyMap);
+    serverKeyMap.set(EdisonPlatformType.MAC, serverMacKeyMap);
+    this.serverKeyMap = serverKeyMap;
+  }
+
+  getConfigUpdateTime(keyPath) {
+    const value = app.configPersistenceManager.getChangeTimeValue(keyPath);
+    if (typeof value !== 'number') {
+      return 0;
+    }
+    return value;
+  }
+
+  setConfigUpdateTime(keyPath, changeTime) {
+    app.configPersistenceManager.setChangeTimeValue(keyPath, changeTime);
+  }
+
+  syncAllPreferencesFromServer = async () => {
+    return;
+    const syncAccountId = this.get('edisonAccountId');
+    if (!syncAccountId) {
+      return;
+    }
+    if (this._onSyncPreferences) {
+      return;
+    }
+    this._onSyncPreferences = true;
+    const { PreferencesRest } = require('./rest');
+    const setting = await PreferencesRest.getAllPreferences();
+    if (!setting.successful) {
+      this._onSyncPreferences = false;
+      this._logError('Sync all setting from server fail', new Error(setting.message));
+      return;
+    }
+    const { data } = setting;
+    if (!Array.isArray(data) || !data.length) {
+      this._onSyncPreferences = false;
+      return;
+    }
+    const configList = [];
+    let commonConfigVersion = 0;
+    let macConfigVersion = 0;
+    data.forEach(platformSetting => {
+      if (platformSetting.changed && platformSetting.list && platformSetting.list.length) {
+        configList.push(...platformSetting.list);
+        if (platformSetting.platform === EdisonPlatformType.MAC) {
+          macConfigVersion = platformSetting.version;
+        }
+        if (platformSetting.platform === EdisonPlatformType.COMMON) {
+          commonConfigVersion = platformSetting.version;
+        }
+      }
+    });
+    try {
+      await this._syncPreferencesFromServer(configList);
+      await this._singleSyncSignatureOfMobile();
+      if (commonConfigVersion) {
+        this.set('commonSettingsVersion', commonConfigVersion);
+      }
+      if (macConfigVersion) {
+        this.set('macSettingsVersion', macConfigVersion);
+      }
+    } catch (err) {
+      this._logError('Sync setting from server fail', err);
+    }
+    this._onSyncPreferences = false;
+  };
+
+  clearSyncPreferencesVersion = () => {
+    this.set('commonSettingsVersion', 0);
+    this.set('macSettingsVersion', 0);
+  };
+
+  _syncPreferencesFromServer = async configList => {
+    const fomartData = await this._handlePreferencesFromServer(configList);
+    await this._bulkSet(fomartData);
+  };
+
+  _handlePreferencesFromServer = async configList => {
+    if (process.type !== 'renderer') {
+      return;
+    }
+    const changeList = [];
+    for (const conf of configList) {
+      const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
+      if (!configKey) {
+        continue;
+      }
+      let value = null;
+      if (conf.longFlag) {
+        if (conf.type === EdisonPreferencesType.STRING) {
+          value = await this._getLongStrPreferencesValue(conf);
+        } else if (conf.type === EdisonPreferencesType.LIST) {
+          value = await this._getLongListPreferencesValue(conf);
+        }
+      } else {
+        value = conf.value;
+      }
+      if (value !== null) {
+        changeList.push({
+          key: configKey,
+          type: conf.type,
+          value,
+          tsClientUpdate: conf.tsClientUpdate,
+        });
+      }
+    }
+    return changeList;
+  };
+
+  _getLongStrPreferencesValue = async conf => {
+    const { PreferencesRest } = require('./rest');
+    const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
+    if (!configKey) {
+      return;
+    }
+    const result = await PreferencesRest.getStringTypePreference(configKey);
+    if (result.successful) {
+      const { data } = result;
+      if (conf.platform !== data.platform) {
+        this._logError(
+          'Sync setting syncToServerCommonKey key has error',
+          new Error(`the setting platform in server is ${conf.platform}`)
+        );
+        return;
+      } else {
+        return data.value;
+      }
+    } else {
+      this._logError('Sync setting from server fail', new Error(result.message));
+    }
+  };
+
+  _getLongListPreferencesValue = async conf => {
+    const { PreferencesRest } = require('./rest');
+    const configKey = this._getConfigKeyByServerKey(conf.platform, conf.key);
+    if (!configKey) {
+      return null;
+    }
+    const result = await PreferencesRest.getListTypePreference(configKey);
+    if (result.successful) {
+      const { data } = result;
+      if (!data || !data.list) {
+        // no change in server with this version
+        return null;
+      } else if (conf.platform !== data.platform) {
+        this._logError(
+          'Sync setting syncToServerCommonKey key has error',
+          new Error(`the setting platform in server is ${conf.platform}`)
+        );
+        return null;
+      } else {
+        const value = [];
+        const subDataList = data.list;
+        for (const subData of subDataList) {
+          if (!subData.longFlag) {
+            value.push(subData);
+          } else {
+            const subDataInServer = await PreferencesRest.getListTypeSubPreference(
+              configKey,
+              subData.subId
+            );
+            if (subDataInServer.successful) {
+              value.push({ ...subData, value: subDataInServer.data.value });
+            } else {
+              this._logError('Sync setting from server fail', new Error(subDataInServer.message));
+            }
+          }
+        }
+        return value;
+      }
+    } else {
+      this._logError('Sync setting from server fail', new Error(result.message));
+      return null;
+    }
+  };
+
+  _singleSyncSignatureOfMobile = async () => {
+    // sync sig from ios and mac, but only sync sig to mac
+    const sigKeyInCommonServer = 'signature';
+    const sigConfigKey = 'signatures';
+    const { PreferencesRest } = require('./rest');
+    const commonSigListResult = await PreferencesRest.getFullListTypePreferenceByServerKey({
+      serverKey: sigKeyInCommonServer,
+      platform: EdisonPlatformType.COMMON,
+    });
+    if (!commonSigListResult.successful) {
+      throw new Error(commonSigListResult.message);
+    }
+    if (commonSigListResult.data && commonSigListResult.data.length) {
+      const commonSigList = commonSigListResult.data.map(sig => ({
+        subId: sig.value,
+        tsClientUpdate: sig.tsClientUpdate,
+        platform: EdisonPlatformType.COMMON,
+      }));
+      const { mergeServerToLocal } = this.getSchema(sigConfigKey);
+      if (mergeServerToLocal && typeof mergeServerToLocal === 'function') {
+        const value = await mergeServerToLocal(commonSigList);
+        this.set(sigConfigKey, value, true);
+      }
+    }
+  };
+
+  _syncSettingToServer = async (keyPath, value) => {
+    return;
+    const syncAccountId = this.get('edisonAccountId');
+    if (syncAccountId) {
+      // should sync the change to server
+      const configSchema = this.getSchema(keyPath);
+      try {
+        if (UpdateToServerSimpleSettingTypes.includes(configSchema.type)) {
+          await this._syncSimpleSettingToServer(keyPath, value);
+        } else if (UpdateToServerComplexSettingTypes.includes(configSchema.type)) {
+          await this._syncComplexSettingToServer(keyPath, value);
+        }
+      } catch (error) {
+        this._logError('Sync setting to server fail', error);
+      }
+    }
+    this.setConfigUpdateTime(keyPath, new Date().getTime());
+  };
+
+  _syncSimpleSettingToServer = async (keyPath, value) => {
+    if (process.type !== 'renderer') {
+      return;
+    }
+    const { PreferencesRest } = require('./rest');
+    const result = await PreferencesRest.updateStringPreferences(keyPath, value);
+    if (result.successful) {
+      const { data } = result;
+      if (data.code === UpdateSettingCode.Success) {
+        // success, pass
+      } else if (data.code === UpdateSettingCode.Conflict) {
+        const version = this.getConfigUpdateTime(keyPath);
+        const createConfigList = [
+          {
+            key: data.key,
+            platform: data.platform,
+            longFlag: true,
+            type: EdisonPreferencesType.STRING,
+            tsClientUpdate: version,
+          },
+        ];
+        this._syncPreferencesFromServer(createConfigList);
+      }
+    } else {
+      this._logError('Sync setting to server fail', new Error(result.message));
+    }
+  };
+
+  _syncComplexSettingToServer = async (keyPath, value) => {
+    if (process.type !== 'renderer') {
+      return;
+    }
+    const { PreferencesRest } = require('./rest');
+    const { mergeLocalToServer } = this.getSchema(keyPath);
+    if (mergeLocalToServer && typeof mergeLocalToServer === 'function') {
+      const { update = [], remove = [], callback = () => {} } =
+        (await mergeLocalToServer(value)) || {};
+      const result = await PreferencesRest.updateListPreferences(keyPath, { update, remove });
+      if (result.successful) {
+        const { data } = result;
+        const { removeResults = [], updateResults = [] } = data;
+        const resultList = [...removeResults, ...updateResults];
+        if (resultList.some(subResult => subResult.code === UpdateSettingCode.Conflict)) {
+          const version = this.getConfigUpdateTime(keyPath);
+          const createConfigList = [
+            {
+              key: data.key,
+              platform: data.platform,
+              longFlag: true,
+              type: EdisonPreferencesType.LIST,
+              tsClientUpdate: version,
+            },
+          ];
+          this._syncPreferencesFromServer(createConfigList);
+        } else {
+          if (callback && typeof callback === 'function') {
+            callback();
+          }
+        }
+      } else {
+        this._logError('Sync setting to server fail', new Error(result.message));
+      }
+    }
+  };
 
   // Extended: Suppress calls to handler functions registered with {::onDidChange}
   // and {::observe} for the duration of `callback`. After `callback` executes,
@@ -691,6 +1093,7 @@ class Config {
     Object.assign(rootSchema, schema);
     this.setDefaults(keyPath, this.extractDefaultsFromSchema(schema));
     this.resetSettingsForSchemaChange();
+    this._updateServerKeyMap();
   }
 
   /*
@@ -725,6 +1128,7 @@ class Config {
     let oldValue = this.get(keyPath);
     return this.emitter.on('did-change', () => {
       const newValue = this.get(keyPath);
+
       if (!_.isEqual(oldValue, newValue)) {
         const event = { oldValue, newValue };
         oldValue = newValue;
@@ -841,9 +1245,12 @@ class Config {
     }
   }
 
-  setRawValue(keyPath, value) {
+  setRawValue(keyPath, value, silent = false) {
     app.configPersistenceManager.setRawValue(keyPath, value, webContentsId);
     const configSchema = this.getSchema(keyPath);
+    if (process.type === 'renderer' && !silent && configSchema && configSchema.syncToServer) {
+      this._syncSettingToServer(keyPath, value);
+    }
     if (configSchema && configSchema.notifyNative) {
       // should notify native this config is changed
       const { ipcRenderer } = require('electron');

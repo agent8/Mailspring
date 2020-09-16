@@ -36,7 +36,7 @@ export const LocalizedErrorStrings = {
     'A Gmail application-specific password is required.',
   ErrorOutlookLoginViaWebBrowser: 'The Outlook server said you must sign in via a web browser.',
   ErrorNeedsConnectToWebmail: 'The server said you must sign in via your webmail.',
-  ErrorNoValidServerFound: 'No valid server found.',
+  ErrorNoValidServerFound: 'Server not found.',
   ErrorAuthenticationRequired: 'Authentication required.',
 
   // sending related
@@ -63,7 +63,7 @@ export const mailSyncView = {
   THREAD: 'thread',
   MESSAGE: 'message',
 };
-export const maxBufferLength = 10000;
+export const maxBufferLength = 5000;
 
 export default class MailsyncProcess extends EventEmitter {
   constructor({ configDirPath, resourcePath, verbose, disableThread }) {
@@ -444,14 +444,19 @@ export default class MailsyncProcess extends EventEmitter {
     }
     if (this._proc.stderr) {
       this._proc.stderr.on('data', data => {
+        if (!errBuffer) {
+          errBuffer = data.toString();
+        }
         if (errBuffer && errBuffer.length < maxBufferLength) {
           errBuffer += data.toString();
         } else {
+          errBuffer = data.toString();
           try {
-            this.logError(
-              `error buffer exceeded max buffer length, ${maxBufferLength}, printing new error data`
+            this.reportError(
+              new Error('error Buffer exceeded'),
+              { errorData: { newData: data.toString() } },
+              { noAppConfig: true }
             );
-            this.logError(data.toString());
           } catch (e) {
             this.logError(`Error while printing excess error buffer, ${e}`);
           }

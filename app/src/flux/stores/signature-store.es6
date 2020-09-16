@@ -1,77 +1,71 @@
-import { Actions, AccountStore } from 'mailspring-exports';
+import { Actions, Constant } from 'mailspring-exports';
 import MailspringStore from 'mailspring-store';
 import _ from 'underscore';
 import path from 'path';
 import fs from 'fs';
+import uuid from 'uuid';
+import { autoGenerateNameByNameList } from '../../fs-utils';
+
+const { PreferencesSubListStateEnum } = Constant;
 
 const sigDefaultTemplate = {
-  id: 'initial',
-  title: 'Default',
+  id: '4ad7f986-de23-44a6-b579-3e2f9703b943',
+  title: 'Untitled',
+  tsClientUpdate: 0,
+  state: PreferencesSubListStateEnum.synchronized,
+  attachments: [],
   body: `<div>Sent from <a href="https://www.edison.tech/">EdisonMail</a>, the best free email app for work</div>`,
 };
 
 class SignatureStore extends MailspringStore {
   constructor() {
     super();
-    this.activate(); // for specs
+    this.activate();
   }
 
   activate() {
+    this._signaturesDir = path.join(AppEnv.getConfigDirPath(), 'signatures');
     this.signatures = AppEnv.config.get(`signatures`);
     this.signaturesBody = new Map();
     this.defaultSignatures = AppEnv.config.get(`defaultSignatures`) || {};
+    this.selectedSignatureId = '';
+    this._triggerDebounced = _.debounce(() => {
+      this.trigger();
+    }, 20);
 
-    // If the user has no signatures (after a clean install or upgrade from 1.0.9),
-    // create a default one for them and apply it to all their accounts.
-    if (!this.signatures) {
-      this.signatures = {
-        initial: { id: sigDefaultTemplate.id, title: sigDefaultTemplate.title },
-      };
-      AccountStore.accounts().forEach(a => {
-        if (this.defaultSignatures[a.emailAddress] !== 'initial') {
-          this.defaultSignatures[a.emailAddress] = null;
-        }
-        (a.aliases || []).forEach(aliase => {
-          if (this.defaultSignatures[aliase] !== 'initial') {
-            this.defaultSignatures[aliase] = null;
-          }
-        });
-      });
+    if (!fs.existsSync(this._signaturesDir)) {
+      fs.mkdirSync(this._signaturesDir);
+    }
+
+    if (!this.signatures || !this.signatures.length) {
+      AppEnv.config.set(`signatures`, [{ ...sigDefaultTemplate }]);
+      this.signaturesBody.set(sigDefaultTemplate.id, sigDefaultTemplate.body);
+      fs.writeFileSync(
+        path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),
+        sigDefaultTemplate.body
+      );
     }
 
     this._autoselectSignatureId();
 
-    this._signaturesDir = path.join(AppEnv.getConfigDirPath(), 'signatures');
+    this.listenTo(Actions.addSignature, this._onAddSignature);
+    this.listenTo(Actions.updateSignature, this._onUpdateSignature);
+    this.listenTo(Actions.removeSignature, this._onRemoveSignature);
+    this.listenTo(Actions.selectSignature, this._onSelectSignature);
+    this.listenTo(Actions.toggleAliasesSignature, this._onToggleAliasesSignature);
 
-    fs.exists(this._signaturesDir, exists => {
-      if (!exists) {
-        fs.mkdir(this._signaturesDir, () => {
-          fs.writeFile(
-            path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),
-            sigDefaultTemplate.body,
-            () => {}
-          );
-        });
+    AppEnv.config.onDidChange(`signatures`, () => {
+      this.signatures = AppEnv.config.get(`signatures`);
+      if (!AppEnv.isMainWindow()) {
+        // compose should update the body when signature change
+        this.signaturesBody = new Map();
       }
+      this._triggerDebounced();
     });
-
-    if (!this.unsubscribers) {
-      this.unsubscribers = [
-        Actions.removeSignature.listen(this._onRemoveSignature),
-        Actions.upsertSignature.listen(this._onUpsertSignature),
-        Actions.selectSignature.listen(this._onSelectSignature),
-        Actions.toggleAliasesSignature.listen(this._onToggleAliasesSignature),
-      ];
-
-      AppEnv.config.onDidChange(`signatures`, () => {
-        this.signatures = AppEnv.config.get(`signatures`);
-        this.trigger();
-      });
-      AppEnv.config.onDidChange(`defaultSignatures`, () => {
-        this.defaultSignatures = AppEnv.config.get(`defaultSignatures`);
-        this.trigger();
-      });
-    }
+    AppEnv.config.onDidChange(`defaultSignatures`, () => {
+      this.defaultSignatures = AppEnv.config.get(`defaultSignatures`);
+      this._triggerDebounced();
+    });
   }
 
   deactivate() {
@@ -79,11 +73,17 @@ class SignatureStore extends MailspringStore {
   }
 
   getSignatures() {
-    return this.signatures;
+    return this.signatures.filter(sig => sig.state !== PreferencesSubListStateEnum.deleted);
+  }
+
+  _getSignatureById(id) {
+    return this.signatures.find(
+      sig => sig.id === id && sig.state !== PreferencesSubListStateEnum.deleted
+    );
   }
 
   selectedSignature() {
-    return this.signatures[this.selectedSignatureId];
+    return this._getSignatureById(this.selectedSignatureId);
   }
 
   getDefaults() {
@@ -91,20 +91,29 @@ class SignatureStore extends MailspringStore {
   }
 
   setDefaultSignature(accountSigId, sigId) {
-    if (this.signatures[sigId] === undefined) {
+    const theSig = this._getSignatureById(sigId);
+    if (!theSig) {
       return;
     }
     this.defaultSignatures[accountSigId] = sigId;
-    this.trigger();
+    this._triggerDebounced();
     this._saveDefaultSignatures();
   }
 
-  getDefaultTemplate() {
-    return sigDefaultTemplate;
+  removeDefaultSignature(accountSigId) {
+    if (this.defaultSignatures[accountSigId]) {
+      delete this.defaultSignatures[accountSigId];
+      this._triggerDebounced();
+      this._saveDefaultSignatures();
+    }
   }
 
   getBodyById(id) {
     if (!id) {
+      return '';
+    }
+    const theSig = this._getSignatureById(id);
+    if (!theSig) {
       return '';
     }
     const bodyInTmp = this.signaturesBody.get(id);
@@ -114,10 +123,7 @@ class SignatureStore extends MailspringStore {
 
     const bodyFilePath = path.join(this._signaturesDir, `${id}.html`);
     // Backward compatibility
-    let bodyInFile =
-      this.signatures[id] && this.signatures[id].body
-        ? this.signatures[id].body
-        : sigDefaultTemplate.body;
+    let bodyInFile = theSig.body ? theSig.body : sigDefaultTemplate.body;
     if (fs.existsSync(bodyFilePath)) {
       bodyInFile = fs.readFileSync(bodyFilePath).toString();
     } else {
@@ -130,7 +136,8 @@ class SignatureStore extends MailspringStore {
   }
 
   signatureForDefaultSignatureId = emailOrAliase => {
-    return this.signatures[this.defaultSignatures[emailOrAliase]];
+    const sigId = this.defaultSignatures[emailOrAliase];
+    return this._getSignatureById(sigId);
   };
 
   _saveSignatures() {
@@ -143,20 +150,68 @@ class SignatureStore extends MailspringStore {
 
   _onSelectSignature = id => {
     this.selectedSignatureId = id;
-    this.trigger();
+    this._triggerDebounced();
   };
 
   _autoselectSignatureId() {
-    const sigIds = Object.keys(this.signatures);
+    const sigIds = [];
+    this.signatures.forEach(sig => {
+      if (sig.state !== PreferencesSubListStateEnum.deleted) {
+        sigIds.push(sig.id);
+      }
+    });
     this.selectedSignatureId = sigIds.length ? sigIds[0] : null;
   }
 
+  _onAddSignature = () => {
+    const newSigId = uuid().toLowerCase();
+    const oldSigTitles = this.getSignatures().map(s => s.title);
+    const newSigTitle = autoGenerateNameByNameList(oldSigTitles, sigDefaultTemplate.title);
+    this.signatures.push({
+      id: newSigId,
+      state: PreferencesSubListStateEnum.updated,
+      title: newSigTitle,
+      tsClientUpdate: new Date().getTime(),
+      attachments: [],
+    });
+    this._onUpsertSignatureBody(newSigId, sigDefaultTemplate.body);
+    // auto select
+    this.selectedSignatureId = newSigId;
+    this._triggerDebounced();
+    this._saveSignatures();
+  };
+
+  _onUpdateSignature = signature => {
+    this.signatures = this.signatures.map(sig => {
+      if (sig.id === signature.id) {
+        return {
+          id: sig.id,
+          state: PreferencesSubListStateEnum.updated,
+          title: signature.title,
+          tsClientUpdate: new Date().getTime(),
+          attachments: signature.attachments || [],
+        };
+      }
+      return sig;
+    });
+    this._onUpsertSignatureBody(signature.id, signature.body);
+    this._triggerDebounced();
+    this._saveSignatures();
+  };
+
   _onRemoveSignature = signatureToDelete => {
-    this.signatures = Object.assign({}, this.signatures);
-    delete this.signatures[signatureToDelete.id];
+    this.signatures = this.signatures.map(sig => {
+      if (sig.id === signatureToDelete.id) {
+        return {
+          ...sig,
+          state: PreferencesSubListStateEnum.deleted,
+        };
+      }
+      return sig;
+    });
     this._onRemoveSignatureBody(signatureToDelete.id);
     this._autoselectSignatureId();
-    this.trigger();
+    this._triggerDebounced();
     this._saveSignatures();
   };
 
@@ -165,16 +220,8 @@ class SignatureStore extends MailspringStore {
     if (fs.existsSync(bodyFilePath)) {
       fs.unlinkSync(bodyFilePath);
     }
-
     // updata cache
     this.signaturesBody.delete(id);
-  };
-
-  _onUpsertSignature = (signature, id) => {
-    this.signatures[id] = { id: signature.id, title: signature.title };
-    this._onUpsertSignatureBody(signature.id, signature.body);
-    this.trigger();
-    this._saveSignatures();
   };
 
   _onUpsertSignatureBody = (id, body) => {
@@ -199,7 +246,7 @@ class SignatureStore extends MailspringStore {
       this.defaultSignatures[signatureId] = this.selectedSignatureId;
     }
 
-    this.trigger();
+    this._triggerDebounced();
     this._saveDefaultSignatures();
   };
 }

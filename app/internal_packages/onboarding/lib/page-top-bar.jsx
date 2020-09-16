@@ -56,7 +56,7 @@ const PageTopBar = props => {
         WebkitAppRegion: 'drag',
       }}
     >
-      {closeButton}
+      {/* {closeButton} */}
       {backButton}
     </div>
   );
