@@ -1131,6 +1131,15 @@ class DraftStore extends MailspringStore {
     }
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ message: m, thread: t }) => {
+        const unreadTasks = TaskFactory.taskForSettingUnread({
+          threads: t ? [t] : [],
+          unread: false,
+          source: 'Quick Reply',
+          canBeUndone: false,
+        });
+        if (unreadTasks.length > 0) {
+          Actions.queueTasks(unreadTasks);
+        }
         return DraftFactory.createDraftForReply({ message: m, thread: t, type: 'reply' });
       })
       .then(draft => {
@@ -1140,15 +1149,6 @@ class DraftStore extends MailspringStore {
         this._finalizeAndPersistNewMessage(draft, { popout: false })
           .then(() => {
             Actions.sendDraft(draft.id, { source: 'SendQuickReply' });
-            const unreadTasks = TaskFactory.taskForSettingUnread({
-              messages: [message],
-              unread: false,
-              source: 'Quick Reply',
-              canBeUndone: false,
-            });
-            if (unreadTasks.length > 0) {
-              Actions.queueTasks(unreadTasks);
-            }
           })
           .catch(e => {
             AppEnv.reportError(
@@ -1215,7 +1215,7 @@ class DraftStore extends MailspringStore {
         if (m && (m.body || ignoreEmptyBody)) {
           if (m.unread) {
             const tasks = TaskFactory.taskForSettingUnread({
-              messages: [m],
+              threads: t ? [t] : [],
               unread: false,
               source: 'Normal Reply',
               canBeUndone: true,
@@ -1240,7 +1240,7 @@ class DraftStore extends MailspringStore {
               if (response !== 0) {
                 if (m && m.unread) {
                   const tasks = TaskFactory.taskForSettingUnread({
-                    messages: [m],
+                    threads: t ? [t] : [],
                     unread: false,
                     source: 'Normal Reply',
                     canBeUndone: true,
