@@ -348,7 +348,19 @@ export const BLOCK_CONFIG = {
   list_item: {
     type: 'list_item',
     tagNames: ['li'],
-    render: props => <li {...props.attributes}>{props.children}</li>,
+    render: props => {
+      const style = {};
+      if (props.node && props.node.data && props.node.data.size > 0) {
+        style.fontSize = props.node.data.get('fontSize');
+        style.font = props.node.data.get('face');
+        style.color = props.node.data.get('color');
+      }
+      return (
+        <li {...props.attributes} style={style}>
+          {props.children}
+        </li>
+      );
+    },
   },
   heading_one: {
     type: 'heading_one',
@@ -408,7 +420,23 @@ const rules = [
       // return block
       if (config) {
         const className = el.getAttribute('class');
-        const data = className ? { className } : undefined;
+        let data = className ? { className } : undefined;
+        if (config.type === BLOCK_CONFIG.list_item.type) {
+          if (el.style) {
+            if (!data) {
+              data = {};
+            }
+            if (el.style.font) {
+              data.font = el.style.font;
+            }
+            if (el.style.color) {
+              data.color = el.style.color;
+            }
+            if (el.style.fontSize) {
+              data.fontSize = el.style.fontSize;
+            }
+          }
+        }
         return {
           object: 'block',
           type: config.type,

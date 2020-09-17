@@ -6,6 +6,7 @@ import { RetinaImg } from 'mailspring-component-kit';
 import { Actions } from 'mailspring-exports';
 import FontSizePopover from './font-size-popover';
 import ButtonValuePickerPopover from './button-value-picker-popover';
+import { BLOCK_CONFIG } from './base-block-plugins';
 
 // Helper Functions
 
@@ -101,6 +102,56 @@ export function applyValueForMark(value, type, markValue) {
         value: markValue,
       },
     });
+  }
+  if (!change.value.selection.isCollapsed) {
+    let startBlock, endBlock, includeStart, includeEnd;
+    const startOffset = change.value.selection.startOffset;
+    const endOffset = change.value.selection.endOffset;
+    if (!change.value.selection.isBackward) {
+      startBlock = change.value.anchorBlock;
+      endBlock = change.value.focusBlock;
+      includeEnd = true;
+      includeStart = startOffset === 1;
+    } else {
+      endBlock = change.value.anchorBlock;
+      startBlock = change.value.focusBlock;
+      includeStart = true;
+      includeEnd = endOffset >= (endBlock.text || '').length;
+    }
+    if (startBlock && endBlock) {
+      const startParentBlock = change.value.document.getParent(startBlock.key);
+      const endParentBlock = change.value.document.getParent(endBlock.key);
+      if (
+        startParentBlock &&
+        endParentBlock &&
+        (startParentBlock.type === BLOCK_CONFIG.list_item.type ||
+          endParentBlock.type === BLOCK_CONFIG.list_item.type)
+      ) {
+        let item;
+        if (includeStart) {
+          item = startParentBlock;
+        } else {
+          item = change.value.document.getNextSibling(startParentBlock.key);
+        }
+        while (item) {
+          const newBlock = {};
+          if (type === 'size') {
+            newBlock.fontSize = markValue;
+          } else if (type === 'face') {
+            newBlock.font = markValue;
+          } else if (type === 'color') {
+            newBlock.color = markValue;
+          }
+          change.setNodeByKey(item.key, { data: newBlock });
+          item = change.value.document.getNextSibling(item.key);
+          if (item && item.key === endParentBlock.key) {
+            if (!includeEnd) {
+              item = null;
+            }
+          }
+        }
+      }
+    }
   }
 
   return change;
