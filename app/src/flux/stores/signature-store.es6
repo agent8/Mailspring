@@ -38,7 +38,8 @@ class SignatureStore extends MailspringStore {
     }
 
     if (!this.signatures || !this.signatures.length) {
-      AppEnv.config.set(`signatures`, [{ ...sigDefaultTemplate }]);
+      this.signatures = [{ ...sigDefaultTemplate }];
+      AppEnv.config.set(`signatures`, this.signatures);
       this.signaturesBody.set(sigDefaultTemplate.id, sigDefaultTemplate.body);
       fs.writeFileSync(
         path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),

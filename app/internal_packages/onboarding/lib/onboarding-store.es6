@@ -1,4 +1,4 @@
-import { AccountStore, Account, IdentityStore, Constant, RESTful } from 'mailspring-exports';
+import { AccountStore, Account, IdentityStore, Constant } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
@@ -6,7 +6,6 @@ import OnboardingActions from './onboarding-actions';
 const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
-const { EdisonAccountRest } = RESTful;
 // const ONBOARDING_TRACKING_URL = 'https://cp.stag.easilydo.cc/api/multiple/desktop/onboarding';
 const ONBOARDING_TRACKING_URL = 'https://cp.edison.tech/api/multiple/desktop/onboarding';
 
@@ -223,14 +222,6 @@ class OnboardingStore extends MailspringStore {
       //   AppEnv.config.set('invite.email', account.emailAddress);
       //   this._onMoveToPage('sorry');
       //   return;
-      // }
-      // const oldAccountsNum = AccountStore.accountIds().length;
-      // if (oldAccountsNum === 1) {
-      //   const syncAccount = AccountStore.syncAccount();
-      //   if (!syncAccount) {
-      //     // the first account auto to register edison account
-      //     EdisonAccountRest.register(account.id);
-      //   }
       // }
       this._onMoveToPage('account-add-another');
     } else {
