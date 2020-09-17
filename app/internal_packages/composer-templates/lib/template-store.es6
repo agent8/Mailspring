@@ -307,7 +307,7 @@ class TemplateStore extends MailspringStore {
         const files = [];
         attachments.forEach(atta => {
           if (!atta.inline) {
-            files.add(atta.path);
+            files.push(atta.path);
           }
         });
         if (files && files.length) {
