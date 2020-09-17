@@ -61,7 +61,8 @@ class TemplateStore extends MailspringStore {
 
     if (!this.templates || !this.templates.length) {
       const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
-      AppEnv.config.set(`templates`, [{ ...WelcomeTemplate }]);
+      this.templates = [{ ...WelcomeTemplate }];
+      AppEnv.config.set(`templates`, this.templates);
       this.templatesBody.set(WelcomeTemplate.id, WelcomeTemplateBody);
       fs.writeFileSync(
         path.join(this._templatesDir, `${WelcomeTemplate.id}.html`),
@@ -303,7 +304,12 @@ class TemplateStore extends MailspringStore {
         // Replace attachments, delete the original attachments
         changeObj.files = [];
         session.changes.add(changeObj);
-        const files = attachments.map(atta => atta.path);
+        const files = [];
+        attachments.forEach(atta => {
+          if (!atta.inline) {
+            files.add(atta.path);
+          }
+        });
         if (files && files.length) {
           if (files.length > 1) {
             Actions.addAttachments({

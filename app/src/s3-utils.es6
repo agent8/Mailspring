@@ -32,39 +32,29 @@ AWS.config.update(s3options);
 // Create S3 service object
 const s3 = new AWS.S3();
 
-export const downloadFile = (key, downloadFilePath) => {
-  return new Promise((resolve, reject) => {
-    var params = {
-      Bucket: BUCKET,
-      Key: key,
-    };
-
-    s3.getObject(params, (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        const fileBuffer = data.Body;
-        fs.writeFileSync(downloadFilePath, fileBuffer);
-        resolve(downloadFilePath);
-      }
-    });
-  });
+export const downloadFile = async (key, downloadFilePath) => {
+  const params = {
+    Bucket: BUCKET,
+    Key: key,
+  };
+  try {
+    const data = await s3.getObject(params).promise();
+    fs.writeFileSync(downloadFilePath, data.Body);
+    return downloadFilePath;
+  } catch (err) {
+    throw new Error(`Could not download file from S3: ${err.message}`);
+  }
 };
 
-export const uploadFile = (key, uploadFilePath) => {
-  return new Promise((resolve, reject) => {
-    const readS = fs.createReadStream(uploadFilePath);
-    readS.on('error', function(err) {
-      reject(err);
-    });
-    var uploadParams = { Bucket: BUCKET, Key: key, Body: readS };
-    s3.putObject(uploadParams, (err, data) => {
-      if (err) {
-        reject(err);
-      } else if (data) {
-        console.log('finished Upload: ', key, uploadFilePath);
-        resolve();
-      }
-    });
+export const uploadFile = async (key, uploadFilePath) => {
+  const readS = fs.createReadStream(uploadFilePath);
+  readS.on('error', function(err) {
+    throw new Error(`Could not upload file to S3: ${err.message}`);
   });
+  const uploadParams = { Bucket: BUCKET, Key: key, Body: readS };
+  try {
+    await s3.putObject(uploadParams).promise();
+  } catch (err) {
+    throw new Error(`Could not upload file to S3: ${err.message}`);
+  }
 };

@@ -43,6 +43,18 @@ class SignatureEditor extends React.Component {
     Actions.updateSignature(sig);
   };
 
+  _onAddInlineImage = ({ path, inline }) => {
+    const newAttachments = [...this.state.attachments, { inline: inline, path: path }];
+    this.setState(
+      {
+        attachments: newAttachments,
+      },
+      () => {
+        this.props.onEditField('attachments', newAttachments);
+      }
+    );
+  };
+
   _onFocusEditor = e => {
     if (e.target === ReactDOM.findDOMNode(this._composer)) {
       this._composer.focusEndAbsolute();
@@ -127,6 +139,7 @@ class SignatureEditor extends React.Component {
               onFileReceived={() => {
                 // This method ensures that HTML can be pasted.
               }}
+              onAddAttachments={this._onAddInlineImage}
             />
           </div>
         )}

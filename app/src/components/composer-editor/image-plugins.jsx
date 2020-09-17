@@ -63,19 +63,23 @@ function renderNode(props) {
   }
 }
 
-const ToolbarAttachmentButton = ({ value, onChange }) => {
-  const cb = base64Str => {
-    if (!base64Str) {
+const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
+  const cb = filePath => {
+    if (!filePath) {
       return;
     }
-
     const inline = Inline.create({
       isVoid: true,
       type: IMAGE_TYPE,
       data: {
         draggerDisable: true,
-        src: base64Str,
+        src: filePath,
       },
+    });
+
+    onAddAttachments({
+      path: filePath,
+      inline: true,
     });
 
     setTimeout(() => {
@@ -92,9 +96,9 @@ const ToolbarAttachmentButton = ({ value, onChange }) => {
   return (
     <button
       onClick={() => {
-        AppEnv.showBase64ImageTransformDialog(cb, maxImgSize);
+        AppEnv.addInlineImageDialog(cb, maxImgSize);
       }}
-      className={'hide show-in-signature'}
+      className={'hide show-in-preferences'}
     >
       <RetinaImg
         name={'inline-image.svg'}
