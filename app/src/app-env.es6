@@ -14,7 +14,7 @@ import { createHash } from 'crypto';
 import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
 import RegExpUtils from './regexp-utils';
 import { WindowLevel } from './constant';
-
+import uuid from 'uuid';
 //Hinata gets special treatment for logging and other debugging purposes
 const Hinata_Ids = [
   'f928e3ab2af52a97ab57cdd4248d2c09b5eb7e21ead2f30b77ebb299c63441bd',
@@ -1271,18 +1271,19 @@ export default class AppEnvConstructor {
   }
 
   copyFileToPreferences(filepath) {
-    const catchFilesDirPath = path.join(this.getConfigDirPath(), 'preference');
+    const filename = path.basename(filepath);
+    const preferenceDir = path.join(this.getConfigDirPath(), 'preference');
+    const newFileDirName = path.join(preferenceDir, uuid());
+    const newFilePath = path.join(newFileDirName, filename);
     try {
-      if (!fs.existsSync(catchFilesDirPath)) {
-        fs.mkdirSync(catchFilesDirPath);
-      }
       if (!fs.existsSync(filepath)) {
         return null;
       }
-      const fileName = path.basename(filepath);
-      const catchPath = path.join(catchFilesDirPath, fileName);
-      fs.copyFileSync(filepath, catchPath);
-      return catchPath;
+      fs.mkdirSync(newFileDirName, {
+        recursive: true,
+      });
+      fs.copyFileSync(filepath, newFilePath);
+      return newFilePath;
     } catch (err) {
       this.logError(err);
       return null;
@@ -1327,7 +1328,7 @@ export default class AppEnvConstructor {
       });
   }
 
-  showBase64ImageTransformDialog(cb, maxSize = 0) {
+  addInlineImageDialog(cb, maxSize = 0) {
     return remote.dialog
       .showOpenDialog(this.getCurrentWindow(), {
         properties: ['openFile'],
@@ -1355,8 +1356,14 @@ export default class AppEnvConstructor {
                 `${filename} cannot be attached because it is larger than ${maxSize / 1000}k.`
               );
             }
-            const base64Str = transfornImgToBase64(filePath);
-            cb(base64Str);
+            const preferenceDir = path.join(this.getConfigDirPath(), 'preference');
+            const newFileDirName = path.join(preferenceDir, uuid());
+            const newFilePath = path.join(newFileDirName, filename);
+            fs.mkdirSync(newFileDirName, {
+              recursive: true,
+            });
+            fs.copyFileSync(filePath, newFilePath);
+            cb(newFilePath);
           } catch (err) {
             this.showErrorDialog(err.message);
           }

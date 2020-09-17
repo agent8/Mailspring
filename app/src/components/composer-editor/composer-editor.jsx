@@ -286,7 +286,7 @@ export default class ComposerEditor extends React.Component {
 
   // Event Handlers
   render() {
-    const { className, onBlur, onDrop, value, propsForPlugins } = this.props;
+    const { className, onBlur, onDrop, value, propsForPlugins, onAddAttachments } = this.props;
     const draftDefaultValues =
       this.props.propsForPlugins && this.props.propsForPlugins.draft
         ? this.props.propsForPlugins.draft.defaultValues
@@ -305,6 +305,7 @@ export default class ComposerEditor extends React.Component {
           readOnly={this.props.readOnly}
           isCrowded={this.state.isCrowded}
           draftDefaultValues={draftDefaultValues}
+          onAddAttachments={onAddAttachments}
         />
         <div
           className="RichEditor-content"

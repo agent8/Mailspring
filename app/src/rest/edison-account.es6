@@ -67,13 +67,11 @@ export default class EdisonAccount {
     });
     try {
       const { data } = await axios.post(url, postParams);
-      const checkedAccountIds = [];
-      postParams.forEach(p => {
-        const accountKey = `${p.username || p.emailAddress}:${p.host}`;
-        if (data.data && data.data.includes(accountKey)) {
-          checkedAccountIds.push(a.id);
-        }
-      });
+      let checkedAccountIds = [];
+      if (data.data && data.data.length) {
+        checkedAccountIds = data.data;
+      }
+
       return new RESTResult(data.code === 0, data.message, checkedAccountIds);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -95,8 +93,7 @@ export default class EdisonAccount {
     }
     try {
       const { data } = await axios.post(url, [postData]);
-      const accountKey = `${postData.username || postData.emailAddress}:${postData.host}`;
-      const isChecked = data.data && data.data.includes(accountKey) ? true : false;
+      const isChecked = data.data && data.data.length ? true : false;
       return new RESTResult(data.code === 0, data.message, isChecked);
     } catch (error) {
       return new RESTResult(false, error.message);

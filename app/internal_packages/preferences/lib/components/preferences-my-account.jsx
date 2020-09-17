@@ -1,6 +1,8 @@
 import React from 'react';
+import { ipcRenderer } from 'electron';
 import { AccountStore, RESTful, Actions } from 'mailspring-exports';
-import { RetinaImg, Flexbox, LottieImg } from 'mailspring-component-kit';
+import { FullScreenModal, RetinaImg, Flexbox, LottieImg } from 'mailspring-component-kit';
+
 import PropTypes from 'prop-types';
 
 const { EdisonAccountRest } = RESTful;
@@ -31,6 +33,13 @@ const modeSwitchList = [
     price: '$19.99/mo',
   },
 ];
+const StartSyncStep = {
+  fail: -1,
+  start: 1,
+  verifying: 2,
+  chooseAccounts: 3,
+  addAccount: 4,
+};
 
 class AccountChoosePopover extends React.Component {
   static propTypes = {
@@ -74,6 +83,276 @@ class AccountChoosePopover extends React.Component {
   }
 }
 
+class StartSyncModal extends React.Component {
+  static propTypes = {
+    onClose: PropTypes.func.isRequired,
+    onSelectAccount: PropTypes.func.isRequired,
+  };
+
+  constructor() {
+    super();
+    this.state = {
+      step: StartSyncStep.start,
+      mainAccountIds: [],
+      accounts: AccountStore.accounts(),
+      collapsibleBoxClose: false,
+    };
+  }
+
+  getNoMainAccounts = () => {
+    const { mainAccountIds, accounts } = this.state;
+    return accounts.filter(a => {
+      const emailHost = `${a.emailAddress}:${a.settings.imap_host}`;
+      if (mainAccountIds.includes(emailHost)) {
+        return false;
+      }
+      return true;
+    });
+  };
+
+  _verifyAllAccounts = async () => {
+    const { accounts } = this.state;
+    const accountIds = accounts.map(a => a.id);
+    const result = await EdisonAccountRest.checkAccounts(accountIds);
+    // error
+    if (!result.successful) {
+      this.setState({
+        step: StartSyncStep.fail,
+        message: result.message,
+      });
+      return;
+    }
+    const mainAccountIds = result.data;
+    // No main account
+    if (!mainAccountIds.length) {
+      this.setState({
+        step: StartSyncStep.addAccount,
+        collapsibleBoxClose: false,
+      });
+      return;
+    }
+    // The only account is the main account
+    if (accounts.length === 1) {
+      const chooseAccount = accounts[0];
+      const theAccountEmailHost = `${chooseAccount.emailAddress}:${chooseAccount.settings.imap_host}`;
+      if (mainAccountIds.includes(theAccountEmailHost)) {
+        this.props.onSelectAccount(chooseAccount);
+        this.props.onClose();
+        return;
+      }
+    }
+    this.setState({
+      mainAccountIds,
+      step: StartSyncStep.chooseAccounts,
+      collapsibleBoxClose: false,
+    });
+  };
+
+  onBoxScroll = e => {
+    if (e.target) {
+      const scrollTop = e.target.scrollTop;
+      if (scrollTop > 30) {
+        this.setState({ collapsibleBoxClose: true });
+      }
+    }
+  };
+
+  onStartSync = () => {
+    this.setState({
+      step: StartSyncStep.verifying,
+    });
+    this._verifyAllAccounts();
+  };
+
+  onChooseOtherAccount = () => {
+    const noMainAccounts = this.getNoMainAccounts() || [];
+    if (noMainAccounts.length !== 1) {
+      this.setState({
+        step: StartSyncStep.addAccount,
+        collapsibleBoxClose: false,
+      });
+      return;
+    }
+    // only have one account is not the main account
+    const chooseAccount = noMainAccounts[0];
+    this.props.onSelectAccount(chooseAccount);
+    this.props.onClose();
+  };
+
+  onChooseAccount = emailHost => {
+    const { onSelectAccount, onClose } = this.props;
+    const { accounts } = this.state;
+    const chooseAccount = accounts.find(
+      a => emailHost === `${a.emailAddress}:${a.settings.imap_host}`
+    );
+    if (chooseAccount) {
+      onSelectAccount(chooseAccount);
+    } else {
+      ipcRenderer.send('command', 'application:add-account');
+    }
+    onClose();
+  };
+
+  _renderInbox() {
+    return (
+      <div>
+        <RetinaImg
+          name={`all-your-devices.png`}
+          mode={RetinaImg.Mode.ContentPreserve}
+          style={{ width: 280, height: 210 }}
+        />
+        <h2>Back up Preferences & Sync Across All Your Devices</h2>
+        <p>
+          Don’t lose your settings to an app update. Back up and sync your preferences across
+          devices?
+        </p>
+        <div className="btn-list">
+          <div className="btn modal-btn-disable" onClick={this.props.onClose}>
+            No Thanks
+          </div>
+          <div className="btn modal-btn-enable" onClick={this.onStartSync}>
+            Back up & Sync
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  _renderVerifying() {
+    return (
+      <div>
+        <RetinaImg
+          name={`verifying-account.png`}
+          mode={RetinaImg.Mode.ContentPreserve}
+          style={{ width: 280, height: 210 }}
+        />
+        <h2>Verifying…</h2>
+        <p>
+          Verifying your accounts
+          <br /> This should only take a few seconds.
+        </p>
+        <LottieImg name="loading-spinner-blue" size={{ width: 32, height: 32 }} />
+      </div>
+    );
+  }
+
+  _renderChooseAccount() {
+    const { mainAccountIds, collapsibleBoxClose } = this.state;
+    const noMainAccounts = this.getNoMainAccounts() || [];
+    return (
+      <div onScroll={this.onBoxScroll}>
+        <div className={`collapsible-box${collapsibleBoxClose ? ' close' : ''}`}>
+          <RetinaImg
+            name={`welcome-back.png`}
+            mode={RetinaImg.Mode.ContentPreserve}
+            style={{ width: 280, height: 210 }}
+          />
+        </div>
+
+        <h2>Welcome Back!</h2>
+        <p>Select the account you use to sync and back up your settings in Edison Mail:</p>
+        <ul>
+          {mainAccountIds.map(a => {
+            const emailAddress = a.split(':')[0];
+            return (
+              <li
+                key={a}
+                onClick={() => {
+                  this.onChooseAccount(a);
+                }}
+              >
+                <Flexbox direction="row" style={{ alignItems: 'middle' }}>
+                  <RetinaImg
+                    name={`account-logo-other.png`}
+                    fallback="account-logo-other.png"
+                    mode={RetinaImg.Mode.ContentPreserve}
+                  />
+                  <div className="account-email" title={emailAddress}>
+                    {emailAddress}
+                  </div>
+                </Flexbox>
+              </li>
+            );
+          })}
+          {noMainAccounts.length ? (
+            <li onClick={this.onChooseOtherAccount}>
+              <Flexbox direction="row" style={{ alignItems: 'middle' }}>
+                <RetinaImg
+                  name={`add.svg`}
+                  style={{ width: 40, height: 40, fontSize: 40, color: '#1293fd' }}
+                  isIcon
+                  mode={RetinaImg.Mode.ContentIsMask}
+                />
+                <div className="account-email">Other Account</div>
+              </Flexbox>
+            </li>
+          ) : null}
+        </ul>
+      </div>
+    );
+  }
+
+  _renderAddAccount() {
+    const { collapsibleBoxClose } = this.state;
+    const noMainAccounts = this.getNoMainAccounts() || [];
+    return (
+      <div onScroll={this.onBoxScroll}>
+        <div className={`collapsible-box${collapsibleBoxClose ? ' close' : ''}`}>
+          <RetinaImg
+            name={`all-your-devices.png`}
+            mode={RetinaImg.Mode.ContentPreserve}
+            style={{ width: 280, height: 210 }}
+          />
+        </div>
+        <h2>Back up Preferences & Sync Across All Your Devices</h2>
+        <p>Select the email you would like to use to sync your accounts, and settings:</p>
+        <ul>
+          {noMainAccounts.map(a => {
+            return (
+              <li
+                key={a.id}
+                onClick={() => {
+                  const emailHost = `${a.emailAddress}:${a.settings.imap_host}`;
+                  this.onChooseAccount(emailHost);
+                }}
+              >
+                <Flexbox direction="row" style={{ alignItems: 'middle' }}>
+                  <RetinaImg
+                    url={a.picture}
+                    name={`account-logo-${a.provider}.png`}
+                    fallback="account-logo-other.png"
+                    mode={RetinaImg.Mode.ContentPreserve}
+                  />
+                  <div className="account-email" title={a.emailAddress}>
+                    {a.emailAddress}
+                  </div>
+                </Flexbox>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
+
+  _renderError() {
+    return <div>has some error</div>;
+  }
+
+  render() {
+    const { step } = this.state;
+    return (
+      <div className="edison-account-modal">
+        {step === StartSyncStep.start ? this._renderInbox() : null}
+        {step === StartSyncStep.verifying ? this._renderVerifying() : null}
+        {step === StartSyncStep.chooseAccounts ? this._renderChooseAccount() : null}
+        {step === StartSyncStep.addAccount ? this._renderAddAccount() : null}
+        {step === StartSyncStep.fail ? this._renderError() : null}
+      </div>
+    );
+  }
+}
+
 export default class EdisonAccount extends React.Component {
   static propTypes = {
     config: PropTypes.object.isRequired,
@@ -91,6 +370,7 @@ export default class EdisonAccount extends React.Component {
       devices: [],
       loginLoading: false,
       logoutLoading: false,
+      startSyncVisible: false,
     };
     this.supportId = AppEnv.config.get('core.support.id');
     this._getDevices();
@@ -160,12 +440,15 @@ export default class EdisonAccount extends React.Component {
     if (!AppEnv.config.get(PromptedEdisonAccountKey)) {
       AppEnv.config.set(PromptedEdisonAccountKey, true);
     }
-    const { otherAccounts } = this.state;
-    if (otherAccounts.length === 1) {
-      this._onChooseAccount(otherAccounts[0]);
-    } else {
-      this._chooseAccountPopup(e);
-    }
+    this.setState({
+      startSyncVisible: true,
+    });
+  };
+
+  _onCloseStartSyncModal = e => {
+    this.setState({
+      startSyncVisible: false,
+    });
   };
 
   _chooseAccountPopup = e => {
@@ -275,6 +558,18 @@ export default class EdisonAccount extends React.Component {
             </div>
           </div>
         )}
+        <FullScreenModal
+          visible={this.state.startSyncVisible}
+          style={{ height: '500px', width: '600px' }}
+          onCancel={this._onCloseStartSyncModal}
+          mask
+          closable
+        >
+          <StartSyncModal
+            onClose={this._onCloseStartSyncModal}
+            onSelectAccount={this._onChooseAccount}
+          />
+        </FullScreenModal>
       </div>
     );
   }
