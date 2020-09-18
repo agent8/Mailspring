@@ -63,6 +63,21 @@ function renderNode(props) {
   }
 }
 
+export const changes = {
+  insert: (change, filePath) => {
+    return change
+      .insertInline({
+        isVoid: true,
+        type: IMAGE_TYPE,
+        data: {
+          draggerDisable: true,
+          src: filePath,
+        },
+      })
+      .collapseToStartOfNextText();
+  },
+};
+
 const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
   const cb = filePath => {
     if (!filePath) {
