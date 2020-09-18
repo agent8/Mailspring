@@ -1,4 +1,3 @@
-import fs from 'fs';
 import {
   RetinaImg,
   Flexbox,
@@ -7,7 +6,7 @@ import {
   ComposerSupport,
   AttachmentItem,
 } from 'mailspring-component-kit';
-import { React, ReactDOM, Actions } from 'mailspring-exports';
+import { React, ReactDOM, Actions, Utils } from 'mailspring-exports';
 import { shell, remote } from 'electron';
 import path from 'path';
 import TemplateStore from './template-store';
@@ -68,6 +67,17 @@ class TemplateEditor extends React.Component {
         this.props.onEditField('attachments', newAttachments);
       }
     );
+  };
+
+  _onFileReceived = filePath => {
+    if (!Utils.fileIsImage(filePath)) {
+      return;
+    }
+    const newFilePath = AppEnv.copyFileToPreferences(filePath);
+    if (this._composer) {
+      this._composer.insertInlineResizableImage(newFilePath);
+      this._onAddInlineImage({ path: newFilePath, inline: true });
+    }
   };
 
   _onFocusEditor = e => {
@@ -231,9 +241,7 @@ class TemplateEditor extends React.Component {
               }
             }}
             onBlur={this._onSave}
-            onFileReceived={() => {
-              // This method ensures that HTML can be pasted.
-            }}
+            onFileReceived={this._onFileReceived}
             onAddAttachments={this._onAddInlineImage}
           />
         </div>
