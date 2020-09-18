@@ -208,6 +208,12 @@ export default class EmailFrame extends React.Component {
     this._onMustRecalculateFrameHeight();
   };
 
+  _openLink = (e, node) => {
+    if (node.href) {
+      AppEnv.trackingEvent('Open-Link');
+    }
+  };
+
   _onLoad = () => {
     if (!this._mounted) {
       return;
@@ -225,6 +231,14 @@ export default class EmailFrame extends React.Component {
     if (inlineImgs && inlineImgs.length > 0) {
       for (let i = 0; i < inlineImgs.length; i++) {
         inlineImgs[i].ondblclick = this._openInlineImage;
+      }
+    }
+
+    // add traciking for clicking link
+    const links = doc.querySelectorAll('a');
+    if (links && links.length > 0) {
+      for (let link of links) {
+        link.onclick = e => this._openLink(e, link);
       }
     }
 
