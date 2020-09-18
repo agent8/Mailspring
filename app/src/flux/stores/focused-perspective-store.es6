@@ -198,6 +198,10 @@ class FocusedPerspectiveStore extends MailspringStore {
   };
 
   _onEnsureCategoryIsFocused = (categoryName, accountIds = [], forceTrigger = false) => {
+    // if current is All Inboxes, don't navigate to the specific inbox
+    if (this.current().accountIds.length > 1) {
+      accountIds = this.sidebarAccountIds();
+    }
     const ids = accountIds instanceof Array ? accountIds : [accountIds];
     const categories = ids.map(id => CategoryStore.getCategoryByRole(id, categoryName));
     const perspective = MailboxPerspective.forCategories(categories);
