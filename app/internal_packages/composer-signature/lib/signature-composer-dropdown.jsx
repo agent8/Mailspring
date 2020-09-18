@@ -79,13 +79,11 @@ export default class SignatureComposerDropdown extends React.Component {
   }
 
   _onChangeSignature = sig => {
-    let body;
     if (sig) {
-      body = applySignature(this.props.draft.body, sig);
+      applySignature({ signature: sig, messageId: this.props.draft.id });
     } else {
-      body = applySignature(this.props.draft.body, null);
+      applySignature({ signature: null, messageId: this.props.draft.id });
     }
-    this.props.session.changes.add({ body });
   };
 
   _onClickNoSignature = () => {
