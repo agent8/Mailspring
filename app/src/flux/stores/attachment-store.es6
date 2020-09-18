@@ -2136,6 +2136,34 @@ class AttachmentStore extends MailspringStore {
       AppEnv.showErrorDialog(err.message);
     }
   };
+
+  addSigOrTempAttachments = async (attachments, messageId, accountId) => {
+    const fileMap = new Map();
+    const addPromise = (path, inline) => {
+      return new Promise((resolve, reject) => {
+        const onCreated = file => {
+          resolve(file);
+        };
+        try {
+          this._onAddAttachment({
+            messageId: messageId,
+            accountId: accountId,
+            filePath: path,
+            inline: inline,
+            onCreated,
+          });
+        } catch (err) {
+          reject(err);
+        }
+      });
+    };
+    for (const atta of attachments) {
+      const file = await addPromise(atta.path, atta.inline);
+      fileMap.set(atta.path, file);
+    }
+    return fileMap;
+  };
+
   _onAddAttachmentFromNonMainWindow(data) {
     if (!AppEnv.isMainWindow()) {
       return;

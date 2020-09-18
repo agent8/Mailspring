@@ -255,79 +255,39 @@ class TemplateStore extends MailspringStore {
         this._displayError(`Draft for ${messageId} not available`);
         return;
       }
-      let proceed = true;
-      const pureBody = this._getPureBodyForDraft(session.draft().body);
-      if (
-        (!session.draft().pristine && !this._isBodyEmpty(pureBody)) ||
-        (draft.files && draft.files.length)
-      ) {
-        proceed = await this._displayDialog(
-          'Replace draft contents?',
-          'It looks like your draft already has some content. Loading this template will ' +
-            'overwrite all draft contents.',
-          ['Replace contents', 'Cancel']
-        );
-      }
 
-      if (proceed) {
-        const current = session.draft().body;
-        let insertion = current.length;
-        for (const s of [
-          '<edo-signature',
-          '<div class="gmail_quote_attribution"',
-          '<blockquote class="gmail_quote"',
-          '<div class="gmail_quote"',
-        ]) {
-          const i = current.indexOf(s);
-          if (i !== -1) {
-            insertion = Math.min(insertion, i);
-          }
-        }
-        const changeObj = {
-          body: `${templateBody}${current.substr(insertion)}`,
-        };
-
-        const { BCC, CC, attachments } = template;
-        // Add CC, Bcc to the draft, do not delete the original CC, BCC
-        if (CC) {
-          const ccContacts = await ContactStore.parseContactsInString(CC);
-          if (ccContacts.length) {
-            changeObj['cc'] = mergeContacts(draft.cc, ccContacts);
-          }
-        }
-        if (BCC) {
-          const bccContacts = await ContactStore.parseContactsInString(BCC);
-          if (bccContacts.length) {
-            changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
-          }
-        }
-        // Replace attachments, delete the original attachments
-        changeObj.files = [];
-        session.changes.add(changeObj);
-        const files = [];
-        attachments.forEach(atta => {
-          if (!atta.inline) {
-            files.push(atta.path);
-          }
-        });
-        if (files && files.length) {
-          if (files.length > 1) {
-            Actions.addAttachments({
-              messageId: draft.id,
-              accountId: draft.accountId,
-              filePaths: files,
-              inline: false,
-            });
-          } else {
-            Actions.addAttachment({
-              messageId: draft.id,
-              accountId: draft.accountId,
-              filePath: files[0],
-              inline: false,
-            });
-          }
+      const { BCC, CC, attachments } = template;
+      const changeObj = {};
+      // Add CC, Bcc to the draft, do not delete the original CC, BCC
+      if (CC) {
+        const ccContacts = await ContactStore.parseContactsInString(CC);
+        if (ccContacts.length) {
+          changeObj['cc'] = mergeContacts(draft.cc, ccContacts);
         }
       }
+      if (BCC) {
+        const bccContacts = await ContactStore.parseContactsInString(BCC);
+        if (bccContacts.length) {
+          changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
+        }
+      }
+      const fileMap = await AttachmentStore.addSigOrTempAttachments(
+        attachments,
+        draft.id,
+        draft.accountId
+      );
+      function replaceStr(oldStr, searchStr, replaceStr) {
+        const oldStrSplit = oldStr.split(searchStr);
+        return oldStrSplit.join(replaceStr);
+      }
+      let newBody = templateBody;
+      fileMap.forEach((file, key) => {
+        if (file.isInline) {
+          newBody = replaceStr(newBody, `src="${key}"`, `src="cid:${file.contentId}"`);
+        }
+      });
+      changeObj['body'] = newBody;
+      session.changes.add(changeObj);
     });
   };
 
