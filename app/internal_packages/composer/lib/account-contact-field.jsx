@@ -47,15 +47,13 @@ export default class AccountContactField extends React.Component {
   };
 
   _changeSignature = account => {
-    const { draft, session } = this.props;
+    const { draft } = this.props;
     let sig = SignatureStore.signatureForDefaultSignatureId(account.signatureId());
-    let body;
     if (sig) {
-      body = applySignature(draft.body, sig);
+      applySignature({ signature: sig, messageId: draft.id });
     } else {
-      body = applySignature(draft.body, null);
+      applySignature({ signature: null, messageId: draft.id });
     }
-    session.changes.add({ body });
   };
 
   _renderDefalutAccount() {
