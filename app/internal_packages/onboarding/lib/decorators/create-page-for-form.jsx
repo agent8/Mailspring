@@ -143,7 +143,7 @@ const CreatePageForForm = FormComponent => {
           }
         }
         const office365Account = AccountStore.accountForEmail({ email: account.emailAddress });
-        if (office365Account && office365Account.provider !== 'exchange') {
+        if (office365Account && office365Account.provider !== account.provider) {
           OnboardingActions.moveToPage('account-choose');
           AppEnv.showErrorDialog({
             title: 'Unable to Add Account',
