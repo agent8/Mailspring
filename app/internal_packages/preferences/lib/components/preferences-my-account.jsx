@@ -102,7 +102,9 @@ class StartSyncModal extends React.Component {
   getNoMainAccounts = () => {
     const { mainAccountIds, accounts } = this.state;
     return accounts.filter(a => {
-      const emailHost = `${a.emailAddress}:${a.settings.imap_host}`;
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
+      const emailHost = `${a.emailAddress}:${host}`;
       if (mainAccountIds.includes(emailHost)) {
         return false;
       }
@@ -134,7 +136,9 @@ class StartSyncModal extends React.Component {
     // The only account is the main account
     if (accounts.length === 1) {
       const chooseAccount = accounts[0];
-      const theAccountEmailHost = `${chooseAccount.emailAddress}:${chooseAccount.settings.imap_host}`;
+      const isExchange = AccountStore.isExchangeAccount(chooseAccount);
+      const host = isExchange ? chooseAccount.settings.ews_host : chooseAccount.settings.imap_host;
+      const theAccountEmailHost = `${chooseAccount.emailAddress}:${host}`;
       if (mainAccountIds.includes(theAccountEmailHost)) {
         this.props.onSelectAccount(chooseAccount);
         this.props.onClose();
@@ -182,9 +186,11 @@ class StartSyncModal extends React.Component {
   onChooseAccount = emailHost => {
     const { onSelectAccount, onClose } = this.props;
     const { accounts } = this.state;
-    const chooseAccount = accounts.find(
-      a => emailHost === `${a.emailAddress}:${a.settings.imap_host}`
-    );
+    const chooseAccount = accounts.find(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
+      return emailHost === `${a.emailAddress}:${host}`;
+    });
     if (chooseAccount) {
       onSelectAccount(chooseAccount);
     } else {
@@ -312,7 +318,9 @@ class StartSyncModal extends React.Component {
               <li
                 key={a.id}
                 onClick={() => {
-                  const emailHost = `${a.emailAddress}:${a.settings.imap_host}`;
+                  const isExchange = AccountStore.isExchangeAccount(a);
+                  const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
+                  const emailHost = `${a.emailAddress}:${host}`;
                   this.onChooseAccount(emailHost);
                 }}
               >

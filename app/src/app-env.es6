@@ -1356,13 +1356,7 @@ export default class AppEnvConstructor {
                 `${filename} cannot be attached because it is larger than ${maxSize / 1000}k.`
               );
             }
-            const preferenceDir = path.join(this.getConfigDirPath(), 'preference');
-            const newFileDirName = path.join(preferenceDir, uuid());
-            const newFilePath = path.join(newFileDirName, filename);
-            fs.mkdirSync(newFileDirName, {
-              recursive: true,
-            });
-            fs.copyFileSync(filePath, newFilePath);
+            const newFilePath = this.copyFileToPreferences(filePath);
             cb(newFilePath);
           } catch (err) {
             this.showErrorDialog(err.message);

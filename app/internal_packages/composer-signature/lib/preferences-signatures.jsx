@@ -1,4 +1,4 @@
-import { React, ReactDOM, AccountStore, SignatureStore, Actions } from 'mailspring-exports';
+import { React, ReactDOM, AccountStore, SignatureStore, Actions, Utils } from 'mailspring-exports';
 import {
   RetinaImg,
   Flexbox,
@@ -59,6 +59,17 @@ class SignatureEditor extends React.Component {
         this.props.onEditField('attachments', newAttachments);
       }
     );
+  };
+
+  _onFileReceived = filePath => {
+    if (!Utils.fileIsImage(filePath)) {
+      return;
+    }
+    const newFilePath = AppEnv.copyFileToPreferences(filePath);
+    if (this._composer) {
+      this._composer.insertInlineResizableImage(newFilePath);
+      this._onAddInlineImage({ path: newFilePath, inline: true });
+    }
   };
 
   _onFocusEditor = e => {
@@ -142,9 +153,7 @@ class SignatureEditor extends React.Component {
                 }
               }}
               onBlur={this._onBlurEditor}
-              onFileReceived={() => {
-                // This method ensures that HTML can be pasted.
-              }}
+              onFileReceived={this._onFileReceived}
               onAddAttachments={this._onAddInlineImage}
             />
           </div>

@@ -56,9 +56,11 @@ export default class EdisonAccount {
       return new RESTResult(false, 'accountIds is unexpected');
     }
     const postParams = checkAccount.map(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
         emailAddress: a.emailAddress,
-        host: a.settings.imap_host,
+        host: host,
       };
       if (a.name) {
         postData['username'] = a.name;
@@ -84,9 +86,11 @@ export default class EdisonAccount {
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
     }
+    const isExchange = AccountStore.isExchangeAccount(account);
+    const host = isExchange ? account.settings.ews_host : account.settings.imap_host;
     const postData = {
       emailAddress: account.emailAddress,
-      host: account.settings.imap_host,
+      host: host,
     };
     if (account.name) {
       postData['username'] = account.name;
@@ -148,11 +152,11 @@ export default class EdisonAccount {
         ssl: account.settings.smtp_security && account.settings.smtp_security !== 'none',
       };
     }
-    if (account.provider.endsWith('-exchange')) {
+    if (AccountStore.isExchangeAccount(account)) {
       emailAccount['type'] = 'exchange';
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
-        host: account.settings.imap_host,
+        host: account.settings.ews_host,
         // To do
         domain: null,
       };
@@ -400,8 +404,10 @@ export default class EdisonAccount {
     const accounts = AccountStore.accounts();
     const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
     const postData = subAccounts.map(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
-        host: a.settings.imap_host,
+        host: host,
       };
       if (a.emailAddress) {
         postData['emailAddress'] = a.emailAddress;
