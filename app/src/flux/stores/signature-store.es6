@@ -136,6 +136,12 @@ class SignatureStore extends MailspringStore {
     return bodyInFile;
   }
 
+  getPureBodyById(id) {
+    const fullBody = this.getBodyById(id);
+    // delete resizable="true", the resize image can use only in signature and template
+    return fullBody.replace(/resizable="true"/g, '');
+  }
+
   signatureForDefaultSignatureId = emailOrAliase => {
     const sigId = this.defaultSignatures[emailOrAliase];
     return this._getSignatureById(sigId);
