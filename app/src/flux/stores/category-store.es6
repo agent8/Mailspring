@@ -144,7 +144,9 @@ class CategoryStore extends MailspringStore {
     if (!account) {
       return null;
     }
-    return this.getCategoryByRole(account.id, 'archive') || account.provider === 'gmail';
+    return (
+      this.getCategoryByRole(account.id, 'archive') || this.getCategoryByRole(account.id, 'all')
+    );
   }
 
   // Public: Returns Label object for "All mail"
