@@ -62,7 +62,7 @@ export function applySignature({ signature, messageId }) {
     // add new signature
     if (signature) {
       const { attachments, id } = signature;
-      const sigBody = SignatureStore.getBodyById(id);
+      const sigBody = SignatureStore.getPureBodyById(id);
       const fileMap = await AttachmentStore.addSigOrTempAttachments(
         attachments,
         draft.id,

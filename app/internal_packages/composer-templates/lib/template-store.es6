@@ -138,6 +138,12 @@ class TemplateStore extends MailspringStore {
     return bodyInFile;
   }
 
+  getPureBodyById(id) {
+    const fullBody = this.getBodyById(id);
+    // delete resizable="true", the resize image can use only in signature and template
+    return fullBody.replace(/resizable="true"/g, '');
+  }
+
   _saveTemplates() {
     _.debounce(AppEnv.config.set(`templates`, this.templates), 500);
   }
@@ -241,7 +247,7 @@ class TemplateStore extends MailspringStore {
     if (!template) {
       return;
     }
-    const templateBody = this.getBodyById(templateId);
+    const templateBody = this.getPureBodyById(templateId);
     if (!templateBody) {
       return;
     }
