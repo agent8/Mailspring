@@ -138,6 +138,12 @@ class TemplateStore extends MailspringStore {
     return bodyInFile;
   }
 
+  getPureBodyById(id) {
+    const fullBody = this.getBodyById(id);
+    // delete resizable="true", the resize image can use only in signature and template
+    return fullBody.replace(/resizable="true"/g, '');
+  }
+
   _saveTemplates() {
     _.debounce(AppEnv.config.set(`templates`, this.templates), 500);
   }
@@ -241,7 +247,7 @@ class TemplateStore extends MailspringStore {
     if (!template) {
       return;
     }
-    const templateBody = this.getBodyById(templateId);
+    const templateBody = this.getPureBodyById(templateId);
     if (!templateBody) {
       return;
     }
@@ -256,8 +262,40 @@ class TemplateStore extends MailspringStore {
         return;
       }
 
+      let proceed = true;
+      const pureBody = this._getPureBodyForDraft(session.draft().body);
+      if (
+        (!session.draft().pristine && !this._isBodyEmpty(pureBody)) ||
+        (draft.files && draft.files.length)
+      ) {
+        proceed = await this._displayDialog(
+          'Replace draft contents?',
+          'It looks like your draft already has some content. Loading this template will ' +
+            'overwrite all draft contents.',
+          ['Replace contents', 'Cancel']
+        );
+      }
+      if (!proceed) {
+        return;
+      }
+
+      const current = session.draft().body;
+      let insertion = current.length;
+      for (const s of [
+        '<edo-signature',
+        '<div class="gmail_quote_attribution"',
+        '<blockquote class="gmail_quote"',
+        '<div class="gmail_quote"',
+      ]) {
+        const i = current.indexOf(s);
+        if (i !== -1) {
+          insertion = Math.min(insertion, i);
+        }
+      }
+
+      let newBody = `${templateBody}${current.substr(insertion)}`;
+      const changeObj = { files: [] };
       const { BCC, CC, attachments } = template;
-      const changeObj = {};
       // Add CC, Bcc to the draft, do not delete the original CC, BCC
       if (CC) {
         const ccContacts = await ContactStore.parseContactsInString(CC);
@@ -271,6 +309,7 @@ class TemplateStore extends MailspringStore {
           changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
         }
       }
+      session.changes.add(changeObj);
       const fileMap = await AttachmentStore.addSigOrTempAttachments(
         attachments,
         draft.id,
@@ -280,14 +319,12 @@ class TemplateStore extends MailspringStore {
         const oldStrSplit = oldStr.split(searchStr);
         return oldStrSplit.join(replaceStr);
       }
-      let newBody = templateBody;
       fileMap.forEach((file, key) => {
         if (file.isInline) {
           newBody = replaceStr(newBody, `src="${key}"`, `src="cid:${file.contentId}"`);
         }
       });
-      changeObj['body'] = newBody;
-      session.changes.add(changeObj);
+      session.changes.add({ body: newBody });
     });
   };
 
