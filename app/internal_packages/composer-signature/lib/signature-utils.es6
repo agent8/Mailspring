@@ -48,7 +48,7 @@ export function applySignature({ signature, messageId }) {
     // // // remove old signature attachment
     const removeFiles = draft.files.filter(f => {
       if (!f.isInline) {
-        return falses;
+        return false;
       }
       const fileInBody = newBody.indexOf(`src="cid:${f.contentId}"`) >= 0;
       return !fileInBody;
@@ -90,7 +90,6 @@ export function applySignature({ signature, messageId }) {
       const contentAfter = newBody.slice(insertionPoint);
       newBody = `${contentBefore}${additionalWhitespace}<edo-signature id="${id}"><font style="font-size: ${Constant.Composer.defaultFontSize}, font-family: ${Constant.Composer.defaultFontFamily}">${newSigBody}</font></edo-signature>${additionalClosingWhitespace}${contentAfter}`;
     }
-
     session.changes.add({ body: newBody });
   });
 }
