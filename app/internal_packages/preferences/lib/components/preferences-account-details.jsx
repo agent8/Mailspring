@@ -110,7 +110,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => {}) => {
+  _setState = (updates, callback = () => { }) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -464,7 +464,7 @@ class PreferencesAccountDetails extends Component {
   onCheckColor = bgColor => {
     const { account } = this.state;
     const colors = AppEnv.config.get('core.account.colors') || {};
-    colors[account.id] = bgColor;
+    colors[account.emailAddress] = bgColor;
     AppEnv.config.set('core.account.colors', colors);
   };
 
@@ -509,10 +509,10 @@ class PreferencesAccountDetails extends Component {
               <div className="color-choice">
                 {LabelColorizer.colors.map((color, idx) => {
                   const colors = AppEnv.config.get('core.account.colors') || {};
-                  const accounts = AccountStore.accounts().map(account => account.id);
+                  const accounts = AccountStore.accounts().map(account => account.emailAddress);
                   let className = '';
-                  if (colors[account.id] !== undefined) {
-                    className = colors[account.id] === idx ? 'checked' : '';
+                  if (colors[account.emailAddress] !== undefined) {
+                    className = colors[account.emailAddress] === idx ? 'checked' : '';
                   } else {
                     const accountIndex = accounts.findIndex(acc => acc === account.id) + 1;
                     className = accountIndex === idx ? 'checked' : '';

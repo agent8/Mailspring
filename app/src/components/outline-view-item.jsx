@@ -454,10 +454,12 @@ class OutlineViewItem extends Component {
     const { item } = this.props;
     const { showAccountColor, colors } = this.state;
     const accounts = AccountStore.accounts().map(account => account.id);
+
     if (showAccountColor && item.id.endsWith('-single')) {
+      const emailAdress = AccountStore.accounts().find(account => account.id === item.accountIds[0]).emailAddress
       let colorId;
-      if (colors[item.accountIds[0]] !== undefined) {
-        colorId = colors[item.accountIds[0]];
+      if (colors[emailAdress] !== undefined) {
+        colorId = colors[emailAdress];
       } else {
         colorId = accounts.findIndex(account => account === item.accountIds[0]) + 1;
       }

@@ -8,11 +8,12 @@ class ThreadListParticipants extends React.Component {
     const colors = AppEnv.config.get('core.account.colors') || {};
     const accounts = AccountStore.accounts().map(account => account.id);
     const accountId = this.props.thread.accountId;
+    const emailAddress = AccountStore.accounts().find(account => account.id === accountId).emailAddress
     this.state = {
       showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
       color:
-        colors[accountId] !== undefined
-          ? LabelColorizer.colors[colors[accountId]]
+        colors[emailAddress] !== undefined
+          ? LabelColorizer.colors[colors[emailAddress]]
           : LabelColorizer.colors[accounts.findIndex(account => account === accountId) + 1],
     };
   }
@@ -38,7 +39,9 @@ class ThreadListParticipants extends React.Component {
     );
     this.disposables.push(
       AppEnv.config.onDidChange('core.account.colors', () => {
-        const colorId = AppEnv.config.get('core.account.colors')[this.props.thread.accountId];
+        const accountId = this.props.thread.accountId;
+        const emailAddress = AccountStore.accounts().find(account => account.id === accountId).emailAddress
+        const colorId = AppEnv.config.get('core.account.colors')[emailAddress];
         this.setState({
           color: LabelColorizer.colors[colorId],
         });
@@ -81,8 +84,8 @@ class ThreadListParticipants extends React.Component {
     const messages =
       this.props.thread.__messages != null
         ? this.props.thread.__messages.filter(message => {
-            return !message.deleted;
-          })
+          return !message.deleted;
+        })
         : [];
     if (messages.length > 1) {
       return <div className="messages-count">({messages.length})</div>;
@@ -106,7 +109,7 @@ class ThreadListParticipants extends React.Component {
     let accumulated = null;
     let accumulatedUnread = false;
 
-    const flush = function() {
+    const flush = function () {
       if (accumulated) {
         spans.push(
           <span key={spans.length} className={`unread-${accumulatedUnread}`}>
@@ -118,7 +121,7 @@ class ThreadListParticipants extends React.Component {
       accumulatedUnread = false;
     };
 
-    const accumulate = function(text, unread) {
+    const accumulate = function (text, unread) {
       if (accumulated && unread && accumulatedUnread !== unread) {
         flush();
       }
@@ -290,7 +293,7 @@ class ThreadListParticipants extends React.Component {
     if (
       list.length === 0 &&
       (this.props.thread.participants != null ? this.props.thread.participants.length : undefined) >
-        0
+      0
     ) {
       list.push({ contact: this.props.thread.participants[0], unread: false });
     }
