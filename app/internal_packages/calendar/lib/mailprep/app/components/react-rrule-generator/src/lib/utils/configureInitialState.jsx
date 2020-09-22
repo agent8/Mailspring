@@ -24,6 +24,9 @@ const configureState = (config = {}, calendarComponent, id) => {
     },
     repeat: {
       frequency: 'Never',
+      daily: {
+        interval: 1
+      },
       yearly: {
         mode: configureYearly(),
         on: {
@@ -67,9 +70,6 @@ const configureState = (config = {}, calendarComponent, id) => {
         options: {
           weekStartsOnSunday: config.weekStartsOnSunday,
         },
-      },
-      daily: {
-        interval: 1,
       },
       never: {},
       options: {

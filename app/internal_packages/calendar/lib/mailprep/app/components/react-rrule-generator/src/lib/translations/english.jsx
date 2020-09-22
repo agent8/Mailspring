@@ -50,25 +50,25 @@ export default {
   repeat: {
     label: 'Repeat',
     yearly: {
-      label: 'Yearly',
+      label: 'Every Year',
       on: 'on',
       on_the: 'on the',
       of: 'of',
     },
     monthly: {
-      label: 'Monthly',
+      label: 'Every Month',
       every: 'every',
       months: 'month(s)',
       on_day: 'on day',
       on_the: 'on the',
     },
     weekly: {
-      label: 'Weekly',
+      label: 'Every Week',
       every: 'every',
       weeks: 'week(s)',
     },
     daily: {
-      label: 'Daily',
+      label: 'Every Day',
       every: 'every',
       days: 'day(s)',
     },

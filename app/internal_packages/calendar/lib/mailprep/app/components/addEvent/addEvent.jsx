@@ -18,6 +18,8 @@ import DropDownItem from '../library/DropDown/DropDownItem';
 import RoundCheckbox from '../library/RoundCheckbox';
 import Tabs from '../library/Tabs/Tabs';
 import Tab from '../library/Tabs/Tab';
+import DatePicker from 'react-datepicker';
+
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -513,19 +515,20 @@ export default class AddEvent extends Component {
         <Input
           label="Starts"
           type={state.allDay ? 'date' : "datetime-local"}
-          value={state.startParsed}
+          value={new Date(state.startParsed)}
           name="startParsed"
-          onChange={this.handleChange}
+          onChange={date => this.setState({ startParsed: date })}
         />
+
       </div>
       <div className="add-form-end-time add-form-grid-item">
         {/* End Time and Date */}
         <Input
           label="Ends"
           type={state.allDay ? 'date' : "datetime-local"}
-          value={state.endParsed}
+          value={new Date(state.endParsed)}
           name="endParsed"
-          onChange={this.handleChange}
+          onChange={date => this.setState({ endParsed: date })}
         />
       </div>
       <div className="add-form-repeat add-form-grid-item">

@@ -35,14 +35,14 @@ const Repeat = ({
     options,
   },
   handleChange,
+  handleChangeSelect,
   translations,
   isRepeating
 }) => {
   const isOptionAvailable = option => !options.frequency || options.frequency.indexOf(option) !== -1;
   const isOptionSelected = option => frequency === option;
-
   const selectOptions = [
-    { value: 'Never', label: 'Never' },
+    { value: 'Never', label: 'Repeat: Never' },
     { value: 'Yearly', label: translateLabel(translations, 'repeat.yearly.label') },
     { value: 'Monthly', label: translateLabel(translations, 'repeat.monthly.label') },
     { value: 'Weekly', label: translateLabel(translations, 'repeat.weekly.label') },
@@ -57,7 +57,8 @@ const Repeat = ({
             options={selectOptions}
             styles={customStyles}
             id={`${id}-frequency`}
-            onChange={handleChange("repeat.frequency")}
+            value={selectOptions.find(option => option.value === frequency)}
+            onChange={handleChangeSelect("repeat.frequency")}
             placeholder="Repeat: Never"
             isSearchable={false}
           />

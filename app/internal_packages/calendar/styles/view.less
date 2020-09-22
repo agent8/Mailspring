@@ -8,6 +8,9 @@
 .modal-container .modal-backdrop {
   position: absolute;
 } */
+*:focus {
+  outline: none;
+}
 
 .modal-btn-grp {
   position: absolute;
@@ -175,7 +178,6 @@ button.rbc-input::-moz-focus-inner {
   -ms-user-select: none;
   user-select: none;
   -webkit-user-select: none;
-  z-index: 4f;
 }
 .rbc-header-day {
   font-size: 12px;
@@ -348,9 +350,6 @@ button.rbc-input::-moz-focus-inner {
   cursor: inherit;
   pointer-events: none;
 }
-.rbc-event.rbc-selected {
-  background-color: #265985;
-}
 .rbc-event-label {
   font-size: 80%;
 }
@@ -380,6 +379,7 @@ button.rbc-input::-moz-focus-inner {
   -webkit-flex-direction: row;
   -ms-flex-direction: row;
   flex-direction: row;
+  padding-bottom: 5px;
 }
 .rbc-row-segment {
   padding: 0 1px 1px 1px;

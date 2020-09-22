@@ -34,7 +34,7 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import ICAL from 'ical.js';
 import Location from './location';
 import Attendees from './attendees';
-import Date from './date';
+// import Date from './date';
 import Time from './time';
 import Conference from './conference';
 import Checkbox from './checkbox';
@@ -45,6 +45,7 @@ import {
   asyncUpdateRecurrExchangeSeries,
   asyncDeleteExchangeEvent
 } from '../../utils/client/exchange';
+// import './index.css';
 import { dropDownTime, OUTLOOK, EXCHANGE, GOOGLE, CALDAV } from '../../utils/constants';
 
 // import '../../bootstrap.css';
@@ -63,15 +64,31 @@ const END_INDEX_OF_MINUTE = 16;
 
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
+const selectStyles = {
+  control: (provided) => ({
+    ...provided,
+    backgroundColor: '#fff',
+    border: '2px solid darkgrey',
+    borderRadius: '15px',
+    padding: '10px 15px',
+    width: '100%',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: '#f9fafa'
+  })
+}
 const customStyles = {
   content: {
     top: '50%',
     left: '50%',
     right: 'auto',
     bottom: 'auto',
-    width: '32%',
+    width: '40%',
     marginRight: '-50%',
-    transform: 'translate(-50%, -50%)'
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: '#f9fafa',
+    boxShadow: '0px 0px 10px -5px',
   }
 };
 
@@ -107,8 +124,8 @@ export default class EditEvent extends React.Component {
 
       updatedIsRecurring: false,
       updatedRrule: '',
-      updatedStartDateTime: '',
-      updatedEndDateTime: '',
+      updatedStartDateTime: new Date(),
+      updatedEndDateTime: new Date(),
       updateAttendees: [],
       updatedLocation: '',
       updatedConference: '',
@@ -135,7 +152,7 @@ export default class EditEvent extends React.Component {
       activeTab: 'Details',
 
       // Update form
-      isShowUpdateForm: false,
+      isShowUpdateForm: false
     };
   }
 
@@ -198,13 +215,16 @@ export default class EditEvent extends React.Component {
   guestOnKeyDown = (event) => {
     if (event.keyCode == 13 && event.target.value !== '') {
       let attendees = this.state.attendees;
-      attendees[Object.keys(attendees).length] = { email: event.target.value, partstat: 'NEEDS-ACTION' }
+      attendees[Object.keys(attendees).length] = {
+        email: event.target.value,
+        partstat: 'NEEDS-ACTION'
+      };
       this.setState({
         guest: '',
         attendees
       });
     }
-  }
+  };
 
   handleInputChange = (event) => {
     const { target } = event;
@@ -220,7 +240,7 @@ export default class EditEvent extends React.Component {
     const { state } = this;
 
     const startDateParsed = moment(state.start.dateTime * 1000).startOf('day');
-    const endDateParsed = moment(state.end.dateTime * 1000)
+    const endDateParsed = moment(state.end.dateTime * 1000);
     // if currently is not all day means its going to switch to all day so format has to
     // in date format and vice versa.
     const startDateParsedInUTC = this.processStringForUTC(
@@ -259,18 +279,18 @@ export default class EditEvent extends React.Component {
   handleEditEvent = () => {
     const { state } = this;
     const attendees = state.attendees;
-    Object.keys(attendees).map(key => {
+    Object.keys(attendees).map((key) => {
       if (attendees[key].email === state.owner) {
         attendees[key].partstat = state.partstat !== '' ? state.partstat : 'NEEDS-ACTION';
         this.setState({ attendees });
       }
-    })
-    if (state.initialRrule !== state.updatedRrule || state.isRecurring) {
-      this.setState({ isShowUpdateForm: true })
+    });
+    if (state.initialRrule && (state.initialRrule !== state.updatedRrule || state.isRecurring)) {
+      this.setState({ isShowUpdateForm: true });
     } else {
       this.editEvent();
     }
-  }
+  };
 
   editEvent = () => {
     const { props, state } = this;
@@ -318,6 +338,7 @@ export default class EditEvent extends React.Component {
       // Updating fields
       title: state.title,
       description: state.description,
+      colorId: state.colorId,
       location: state.location,
       organizer: state.organizer,
       attendee: state.attendees,
@@ -560,28 +581,26 @@ export default class EditEvent extends React.Component {
       dbEventJSON.allDay
         ? moment(dbEventJSON.start.dateTime * 1000).format('YYYY-MM-DD')
         : moment(dbEventJSON.start.dateTime * 1000).format('YYYY-MM-DDThh:mm')
-
-    )
+    );
     const endDateParsedInUTC = this.processStringForUTC(
       dbEventJSON.allDay
         ? moment(dbEventJSON.end.dateTime * 1000).format('YYYY-MM-DD')
         : moment(dbEventJSON.end.dateTime * 1000).format('YYYY-MM-DDThh:mm')
-    )
+    );
 
     // right now caldav server retrieved events do not have guests by default
-    let attendees = {}
-    let partstat = ''
+    let attendees = {};
+    let partstat = '';
     if (dbEventJSON.attendee !== '') {
       attendees = JSON.parse(dbEventJSON.attendee);
-      const ownerIndex =
-        Object.keys(attendees)
-          .filter(key => attendees[key].email === dbEventJSON.owner)
-      partstat = attendees[ownerIndex]
-        && attendees[ownerIndex].partstat !== 'NEEDS-ACTION'
-        ? attendees[ownerIndex].partstat
-        : '';
+      const ownerIndex = Object.keys(attendees).filter(
+        (key) => attendees[key].email === dbEventJSON.owner
+      );
+      partstat =
+        attendees[ownerIndex] && attendees[ownerIndex].partstat !== 'NEEDS-ACTION'
+          ? attendees[ownerIndex].partstat
+          : '';
     }
-
 
     this.setState({
       updatedStartDateTime: startDateParsedInUTC,
@@ -596,6 +615,7 @@ export default class EditEvent extends React.Component {
       id: dbEventJSON.id,
       title: dbEventJSON.summary,
       description: dbEventJSON.description,
+      colorId: dbEventJSON.colorId,
       start: dbEventJSON.start,
       end: dbEventJSON.end,
       location: dbEventJSON.location,
@@ -619,13 +639,14 @@ export default class EditEvent extends React.Component {
   };
 
   handlePartstatChange = (event) => {
-    this.setState({ partstat: event.target.value })
-  }
+    console.log(event.value)
+    this.setState({ partstat: event.value });
+  };
 
   handleRruleChange = (selectedRrule) => {
     this.setState((state, props) => ({
       updatedRrule: selectedRrule.slice(6),
-      updatedIsRecurring: selectedRrule.slice(6) === "" ? false : true,
+      updatedIsRecurring: selectedRrule.slice(6) === '' ? false : true
     }));
 
     // CHANGING OF DATE DYNAMICALLY
@@ -720,184 +741,204 @@ export default class EditEvent extends React.Component {
   renderPopup = (state) => {
     if (state.initialRrule !== state.updatedRrule) {
       return (
-        <Modal isOpen={state.isShowUpdateForm} style={customStyles} onRequestClose={() => this.setState({ isShowUpdateForm: false })}>
+        <Modal
+          isOpen={state.isShowUpdateForm}
+          style={customStyles}
+          onRequestClose={() => this.setState({ isShowUpdateForm: false })}
+        >
           <p>Are you sure you want to change a repeating rule for this event?</p>
           <p>Do you want to change all occurrences?</p>
-          <button type="button" onClick={() => this.setState({ isShowUpdateForm: false })}>
-            Cancel
-        </button>
-          <button type="button" onClick={this.editAllRecurrenceEvent}>
-            Update All
-        </button>
-        </Modal>);
+          <div className="modal-button-group">
+            <BigButton variant="small-white" onClick={() => this.setState({ isShowUpdateForm: false })}>
+              Cancel
+            </BigButton>
+            <BigButton variant="small-blue" onClick={this.editAllRecurrenceEvent}>
+              Update All
+            </BigButton>
+          </div>
+
+        </Modal>
+      );
     }
 
     return (
-      <Modal isOpen={state.isShowUpdateForm} style={customStyles} onRequestClose={() => this.setState({ isShowUpdateForm: false })}>
+      <Modal
+        isOpen={state.isShowUpdateForm}
+        style={customStyles}
+        onRequestClose={() => this.setState({ isShowUpdateForm: false })}
+      >
         <p>This is a recurring event</p>
-        <button type="button" onClick={() => this.setState({ isShowUpdateForm: false })}>
-          Cancel
-        </button>
-        {state.isMaster
-          ? <button type="button" onClick={this.editAllRecurrenceEvent}>
-            Update All
-            </button>
-          : <button type="button" onClick={this.editFutureRecurrenceEvent}>
-            Update All Future Events
-            </button>
-        }
-        <button type="button" onClick={this.editEvent}>
-          Update Only This Event
-        </button>
+        <div className="modal-button-group">
+          <BigButton variant="small-white" onClick={() => this.setState({ isShowUpdateForm: false })}>
+            Cancel
+          </BigButton>
+          {state.isMaster ? (
+            <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
+              Update All
+            </BigButton>
+          ) : (
+              <BigButton variant="small-white" type="button" onClick={this.editFutureRecurrenceEvent}>
+                Update All Future Events
+              </BigButton>
+            )}
+          <BigButton variant="small-blue" onClick={this.editEvent}>
+            Update Only This Event
+          </BigButton>
+        </div>
+
       </Modal>
     );
-  }
+  };
 
   renderAddDetails = () => {
     const { props, state } = this;
 
     const repeatingUI = [];
     if (state.showRruleGenerator) {
-      repeatingUI.push(
-
-      );
+      repeatingUI.push();
     }
-
-    return (<div className="add-form-details">
-      <div className="add-form-start-time add-form-grid-item">
-        {/* Start Time and Date */}
-        <Input
-          label="Starts"
-          type={state.allDay ? 'date' : "datetime-local"}
-          value={state.updatedStartDateTime}
-          name="updatedStartDateTime"
-          onChange={this.handleChange}
-        />
-      </div>
-      <div className="add-form-end-time add-form-grid-item">
-        {/* End Time and Date */}
-        <Input
-          label="Ends"
-          type={state.allDay ? 'date' : "datetime-local"}
-          value={state.updatedEndDateTime}
-          name="updatedEndDateTime"
-          onChange={this.handleChange}
-        />
-      </div>
-      <div className="add-form-repeat add-form-grid-item">
-        <RRuleGenerator
-          // onChange={(rrule) => console.log(`RRule changed, now it's ${rrule}`)}
-          key="rrulegenerator"
-          onChange={this.handleRruleChange}
-          name="rrule"
-          value={state.updatedRrule}
-          config={{
-            hideStart: true,
-            repeat: ["Never", "Yearly", "Monthly", "Weekly", "Daily"],
-            end: ['On date', 'After']
-          }}
-        />
-      </div>
-      <div className="add-form-all-day add-form-grid-item">
-        <div className="all-day-checkbox-container">
-          <RoundCheckbox
-            id="allday-checkmark"
-            checked={state.allDay}
-            onChange={this.handleCheckboxChange}
-            label="All day"
+    const options = [
+      { value: 'ACCEPTED', label: 'Yes' },
+      { value: 'DECLINED', label: 'No' },
+      { value: 'TENTATIVE', label: 'Maybe' }
+    ]
+    return (
+      <div className="add-form-details">
+        <div className="add-form-start-time add-form-grid-item">
+          {/* Start Time and Date */}
+          <Input
+            label="Starts"
+            type={state.allDay ? 'date' : 'datetime-local'}
+            value={new Date(state.updatedStartDateTime)}
+            name="updatedStartDateTime"
+            onChange={(date) => this.setState({ updatedStartDateTime: date })}
           />
         </div>
-      </div>
-      <div className="add-form-recurrence-generator add-form-grid-item">
-        <div className="app" data-tid="container">
-          {repeatingUI}
+        <div className="add-form-end-time add-form-grid-item">
+          {/* End Time and Date */}
+          <Input
+            label="Ends"
+            type={state.allDay ? 'date' : 'datetime-local'}
+            value={new Date(state.updatedEndDateTime)}
+            name="updatedEndDateTime"
+            onChange={(date) => this.setState({ updatedEndDateTime: date })}
+          />
         </div>
-      </div>
-      <div className="add-form-guests add-form-grid-item">
-        {/* if it is a event with guests */}
-        {Object.keys(state.attendees).length > 1
-          ? <DropDown
-            value={state.partstat}
-            type="select"
-            onChange={this.handlePartstatChange}
-            name="partstat"
-            placeholder="Going?"
-            hiddenPlaceholder
-          >
-            <DropDownItem value={'ACCEPTED'}>Yes</DropDownItem>
-            <DropDownItem value={'DECLINED'}>No</DropDownItem>
-            <DropDownItem value={'TENTATIVE'}>Maybe</DropDownItem>
-          </DropDown>
-          : null
-        }
-        {/* Only allow edit if owner is the organizer */}
-        {state.organizer === '' || state.organizer === state.owner
-          ? <Input
-            label="Guests"
-            value={state.guest}
+        <div className="add-form-repeat add-form-grid-item">
+          <RRuleGenerator
+            // onChange={(rrule) => console.log(`RRule changed, now it's ${rrule}`)}
+            key="rrulegenerator"
+            onChange={this.handleRruleChange}
+            name="rrule"
+            value={state.updatedRrule}
+            config={{
+              hideStart: true,
+              repeat: ['Never', 'Yearly', 'Monthly', 'Weekly', 'Daily'],
+              end: ['On date', 'After']
+            }}
+          />
+        </div>
+        <div className="add-form-all-day add-form-grid-item">
+          <div className="all-day-checkbox-container">
+            <RoundCheckbox
+              id="allday-checkmark"
+              checked={state.allDay}
+              onChange={this.handleCheckboxChange}
+              label="All day"
+            />
+          </div>
+        </div>
+        <div className="add-form-recurrence-generator add-form-grid-item">
+          <div className="app" data-tid="container">
+            {repeatingUI}
+          </div>
+        </div>
+        <div className="add-form-guests add-form-grid-item">
+          {/* if it is a event with guests */}
+          {Object.keys(state.attendees).length > 1 ? (
+            <Select
+              name="partstat"
+              options={options}
+              styles={selectStyles}
+              value={options.find(option => option.value === state.partstat)}
+              onChange={this.handlePartstatChange}
+              placeholder="Going?"
+              hiddenPlaceholder
+            />
+          ) : null}
+          {/* Only allow edit if owner is the organizer */}
+          {state.organizer === '' || state.organizer === state.owner ? (
+            <Input
+              label="Guests"
+              value={state.guest}
+              type="text"
+              placeholder="Invite guests"
+              name="guest"
+              onKeyDown={this.guestOnKeyDown}
+              onChange={this.handleChange}
+            />
+          ) : (
+              <p>
+                <b>Guests</b>
+              </p>
+            )}
+
+          {Object.keys(state.attendees).map((key, index) => {
+            return state.owner !== state.organizer ? (
+              <RoundCheckbox
+                key={index}
+                id={`${key}-guest-checkmark`}
+                checked={true}
+                onChange={() => {
+                  if (state.organizer === '' || state.organizer === state.owner) {
+                    const attendees = state.attendees;
+                    delete attendees[key];
+                    this.setState({
+                      attendees
+                    });
+                  }
+                }}
+                label={state.attendees[key]['email']}
+              />
+            ) : null;
+          })}
+        </div>
+        <div className="add-form-location add-form-grid-item">
+          <Input
             type="text"
-            placeholder="Invite guests"
-            name="guest"
-            onKeyDown={this.guestOnKeyDown}
+            value={state.location}
+            placeholder="Add location"
+            name="location"
             onChange={this.handleChange}
           />
-          : <p><b>Guests</b></p>}
-
-        {Object.keys(state.attendees).map(key => {
-          return state.owner !== state.organizer
-            ? <RoundCheckbox
-              id={`${key}-guest-checkmark`}
-              checked={true}
-              onChange={() => {
-                if (state.organizer === '' || state.organizer === state.owner) {
-                  const attendees = state.attendees;
-                  delete attendees[key]
-                  this.setState({
-                    attendees
-                  });
-                }
-              }
-              }
-              label={state.attendees[key]['email']}
-            />
-            : null
-        })}
+        </div>
+        <div className="add-form-description add-form-grid-item">
+          {/* Text Area */}
+          <Input
+            type="textarea"
+            placeholder="Add description"
+            value={state.description}
+            name="desc"
+            onChange={this.handleChange}
+          />
+        </div>
       </div>
-      <div className="add-form-location add-form-grid-item">
-        <Input
-          type="text"
-          value={state.location}
-          placeholder="Add location"
-          name="location"
-          onChange={this.handleChange}
-        />
-      </div>
-      <div className="add-form-description add-form-grid-item">
-        {/* Text Area */}
-        <Input
-          type="textarea"
-          placeholder="Add description"
-          value={state.description}
-          name="desc"
-          onChange={this.handleChange}
-        />
-      </div>
-    </div>);
-  }
+    );
+  };
 
   renderTab = (activeTab) => {
     switch (activeTab) {
-      case "Details":
+      case 'Details':
         return this.renderAddDetails();
         break;
-      case "Find a Time":
+      case 'Find a Time':
         return this.renderFindATime();
         break;
       default:
-        return (<h1>Error</h1>)
+        return <h1>Error</h1>;
         break;
     }
-  }
+  };
 
   CustomToolbar = (toolbar) => {
     const goToBack = () => {
@@ -913,7 +954,9 @@ export default class EditEvent extends React.Component {
     const label = () => {
       const date = moment(toolbar.date);
       return (
-        <span className={'sidebar-label'}>{date.format('MMM')} {date.format('DD')}, {date.format('YYYY')}</span>
+        <span className={'sidebar-label'}>
+          {date.format('MMM')} {date.format('DD')}, {date.format('YYYY')}
+        </span>
       );
     };
 
@@ -921,20 +964,24 @@ export default class EditEvent extends React.Component {
       <div className={'rbc-toolbar'}>
         {label()}
         <div className={'rbc-navigate'}>
-          <button className={'rbc-navigate-btn'} onClick={goToBack}>&#8249;</button>
-          <button className={'rbc-navigate-btn'} onClick={goToNext}>&#8250;</button>
+          <button className={'rbc-navigate-btn'} onClick={goToBack}>
+            &#8249;
+          </button>
+          <button className={'rbc-navigate-btn'} onClick={goToNext}>
+            &#8250;
+          </button>
         </div>
-      </div >
+      </div>
     );
   };
 
   generateBarColor = (color, isAllDay) => {
     if (isAllDay) {
-      return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue'
+      return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue';
     } else {
-      return color ? `event-bar--${color}` : 'event-bar--blue'
+      return color ? `event-bar--${color}` : 'event-bar--blue';
     }
-  }
+  };
 
   renderCalendar = (props) => {
     const visibleEvents = props.visibleEvents;
@@ -949,7 +996,9 @@ export default class EditEvent extends React.Component {
           day: true
         }}
         popup
-        eventPropGetter={event => ({ className: this.generateBarColor(event.colorId, event.isAllDay) })}
+        eventPropGetter={(event) => ({
+          className: this.generateBarColor(event.colorId, event.isAllDay)
+        })}
         components={{
           toolbar: this.CustomToolbar
         }}
@@ -965,7 +1014,6 @@ export default class EditEvent extends React.Component {
         <div className="calendar">
           {this.renderPopup(state)}
           <div className="add-form-main-panel-container">
-
             <div className="add-form-main-panel">
               {/* Add form header */}
               <div className="add-form-header">
@@ -991,17 +1039,14 @@ export default class EditEvent extends React.Component {
               <Tabs
                 handleChangeTab={this.handleChangeTab}
                 activeTab={state.activeTab}
-                tabList={["Details", "Find a Time"]}
+                tabList={['Details', 'Find a Time']}
               />
               {this.renderTab(state.activeTab)}
-
 
               <div className="add-form-find-a-time" />
             </div>
           </div>
-          <div className="sidebar">
-            {this.renderCalendar(props)}
-          </div>
+          <div className="sidebar">{this.renderCalendar(props)}</div>
         </div>
       );
     }

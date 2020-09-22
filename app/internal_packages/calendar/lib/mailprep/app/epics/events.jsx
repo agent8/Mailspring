@@ -689,7 +689,10 @@ export const pendingActionsEpics = (action$) => {
 };
 
 const reflect = (p) =>
-  p.then((v) => ({ v, status: 'fulfilled' }), (e) => ({ e, status: 'rejected' }));
+  p.then(
+    (v) => ({ v, status: 'fulfilled' }),
+    (e) => ({ e, status: 'rejected' })
+  );
 
 /*
 You were dealing with creating an offline recurrence event pending action

@@ -7,6 +7,7 @@ import Modal from 'react-modal';
 import RRule from 'rrule';
 import ICAL from 'ical.js';
 import fileSystem from 'fs';
+import BigButton from './library/BigButton';
 
 import {
   ExchangeService,
@@ -55,6 +56,7 @@ import {
 import { asyncGetAllExchangeEvents } from '../utils/client/exchangebasics';
 import { getdb } from '../sequelizeDB/index';
 
+
 const dav = require('dav');
 const uuidv1 = require('uuid/v1');
 
@@ -75,7 +77,26 @@ const customStyles = {
     bottom: 'auto',
     width: '32%',
     marginRight: '-50%',
-    transform: 'translate(-50%, -50%)'
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: '#f9fafa',
+    boxShadow: '0px 0px 10px -5px',
+  }
+};
+
+const deleteModalStyles = {
+  overlay: {
+    background: 'none'
+  },
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    width: '40%',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: '#f9fafa',
+    boxShadow: '0px 0px 10px -5px',
   }
 };
 
@@ -334,7 +355,8 @@ export default class View extends React.Component {
 
   closeModal = () => {
     this.setState({
-      isShowEvent: false
+      isShowEvent: false,
+      isShowDeleteForm: false
     });
   };
 
@@ -439,7 +461,7 @@ export default class View extends React.Component {
 
   generateBarColor = (calColor, isAllDay, attendees, organizer, owner) => {
     let color = calColor;
-    if (attendees && owner !== organizer) {
+    if (attendees && attendees[0] && owner !== organizer) {
       // if owner and organizer is different, it is an invited event
       const ownerIndex = Object.keys(attendees).filter(key => attendees[key]['email'] === owner)
       color = attendees[ownerIndex]['partstat'] === 'NEEDS-ACTION' ? 'invite' : calColor;
@@ -514,16 +536,17 @@ export default class View extends React.Component {
       </p>
       {state.currentEvent.attendee && Object.keys(state.currentEvent.attendee).length > 1 ?
         <div>
-          <p>Guests</p>
+          <p>{Object.keys(state.currentEvent.attendee).length} Guests</p>
           {Object.keys(state.currentEvent.attendee).map((key, index) =>
             state.currentEvent.owner === state.currentEvent.organizer
               && state.currentEvent.attendee[key]['email'] === state.currentEvent.owner
               ? null
-              : <p>{state.currentEvent.attendee[key]['email']}</p>
+              : <p key={index}>{state.currentEvent.attendee[key]['email']}</p>
           )}
         </div> : null}
 
-      <button type="button" onClick={() => this.setState({ isShowIcal: true })}>
+      {/* FOR DEBUGGING WITH ICALSTRING */}
+      {/* <button type="button" onClick={() => this.setState({ isShowIcal: true })}>
         Show iCal String
       </button>
       <Modal isOpen={state.isShowIcal} onRequestClose={() => this.setState({ isShowIcal: false })}>
@@ -533,23 +556,26 @@ export default class View extends React.Component {
         <button type="button" onClick={() => this.setState({ isShowIcal: false })}>
           Done
         </button>
-      </Modal>
-      <Modal isOpen={state.isShowDeleteForm} style={customStyles} onRequestClose={() => this.setState({ isShowDeleteForm: false })}>
+      </Modal> */}
+      <Modal isOpen={state.isShowDeleteForm} style={deleteModalStyles} onRequestClose={() => this.setState({ isShowDeleteForm: false })}>
         <p>This is a recurring event</p>
-        <button type="button" onClick={() => this.setState({ isShowDeleteForm: false })}>
-          Cancel
-        </button>
-        {state.currentEvent.isMaster
-          ? <button type="button" onClick={this.deleteAllRecurrenceEvent}>
-            Delete All
-            </button>
-          : <button type="button" onClick={this.deleteFutureRecurrenceEvent}>
-            Delete All Future Events
-            </button>
-        }
-        <button type="button" onClick={this.deleteEvent}>
-          Delete Only This Event
-        </button>
+        <div className="modal-button-group">
+          <BigButton variant="small-white" onClick={() => this.setState({ isShowDeleteForm: false })}>
+            Cancel
+          </BigButton>
+          {state.currentEvent.isMaster
+            ? <BigButton variant="small-white" onClick={this.deleteAllRecurrenceEvent}>
+              Delete All
+              </BigButton>
+            : <BigButton variant="small-white" onClick={this.deleteFutureRecurrenceEvent}>
+              Delete All Future Events
+              </BigButton>
+          }
+          <BigButton variant="small-blue" onClick={this.deleteEvent}>
+            Delete Only This Event
+          </BigButton>
+        </div>
+
 
       </Modal>
     </Modal>

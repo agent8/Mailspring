@@ -10,7 +10,7 @@ import computeRRuleFromString from '../utils/computeRRule/fromString/computeRRul
 import configureInitialState from '../utils/configureInitialState';
 import translateLabel from '../utils/translateLabel';
 import translations from '../translations';
-// import '../styles/index.css';
+import '../styles/index.css';
 
 class ReactRRuleGenerator extends PureComponent {
   // compute default view based on user's config
@@ -120,7 +120,8 @@ class ReactRRuleGenerator extends PureComponent {
             <Repeat
               id={`${id}-repeat`}
               repeat={repeat}
-              handleChange={this.handleChangeSelect}
+              handleChangeSelect={this.handleChangeSelect}
+              handleChange={this.handleChange}
               translations={this.props.translations}
               isRepeating={this.state.isRepeating}
             />
