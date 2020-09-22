@@ -1403,6 +1403,12 @@ class DraftStore extends MailspringStore {
       extension.prepareNewDraft({ draft });
     });
 
+    // open the draft window first, if [openReplyInNewWindow] is ON
+    if (popout) {
+      console.log('\n-------\n draft popout\n');
+      this._onPopoutDraft(draft.id);
+    }
+
     const task = new SyncbackDraftTask({ draft });
     const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
     if (needUpload) {
@@ -1422,10 +1428,6 @@ class DraftStore extends MailspringStore {
       .then(data => {
         if (data && data.draftCache) {
           AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
-        }
-        if (popout) {
-          console.log('\n-------\n draft popout\n');
-          this._onPopoutDraft(draft.id);
         }
         if (originalMessageId) {
           Actions.draftReplyForwardCreated({ messageId: originalMessageId, type: messageType });
