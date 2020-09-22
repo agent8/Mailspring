@@ -1391,6 +1391,10 @@ class DraftStore extends MailspringStore {
     } = {},
     { originalMessageId, messageType } = {}
   ) {
+    // Optimistically create a draft session and hand it the draft so that it
+    // doesn't need to do a query for it a second from now when the composer wants it.
+    const session = this._createSession(draft.id, draft);
+
     // Give extensions an opportunity to perform additional setup to the draft
     ExtensionRegistry.Composer.extensions().forEach(extension => {
       if (!extension.prepareNewDraft) {
@@ -1399,9 +1403,12 @@ class DraftStore extends MailspringStore {
       extension.prepareNewDraft({ draft });
     });
 
-    // Optimistically create a draft session and hand it the draft so that it
-    // doesn't need to do a query for it a second from now when the composer wants it.
-    const session = this._createSession(draft.id, draft);
+    // open the draft window first, if [openReplyInNewWindow] is ON
+    if (popout) {
+      console.log('\n-------\n draft popout\n');
+      this._onPopoutDraft(draft.id);
+    }
+
     const task = new SyncbackDraftTask({ draft });
     const needUpload = this.clearSaveOnRemoteTaskTimer(draft.id);
     if (needUpload) {
@@ -1421,10 +1428,6 @@ class DraftStore extends MailspringStore {
       .then(data => {
         if (data && data.draftCache) {
           AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
-        }
-        if (popout) {
-          console.log('\n-------\n draft popout\n');
-          this._onPopoutDraft(draft.id);
         }
         if (originalMessageId) {
           Actions.draftReplyForwardCreated({ messageId: originalMessageId, type: messageType });
