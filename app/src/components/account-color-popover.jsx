@@ -27,7 +27,8 @@ export default class AccountColorPopover extends Component {
   onCheckColor = bgColor => {
     const { item } = this.props;
     const colors = AppEnv.config.get('core.account.colors') || {};
-    colors[item.accountIds[0]] = bgColor;
+    const emailAddress = AccountStore.accounts().find(account => account.id === item.accountIds[0]).emailAddress;
+    colors[emailAddress] = bgColor;
     AppEnv.config.set('core.account.colors', colors);
     Actions.closePopover();
   };
@@ -42,7 +43,8 @@ export default class AccountColorPopover extends Component {
           {LabelColorizer.colors.map((color, idx) => {
             let className = '';
             if (colors[item.accountIds[0]] !== undefined) {
-              className = colors[item.accountIds[0]] === idx ? 'checked' : '';
+              const emailAddress = AccountStore.accounts().find(account => account.id === item.accountIds[0]).emailAddress;
+              className = colors[emailAddress] === idx ? 'checked' : '';
             } else {
               const accountIndex =
                 accounts.findIndex(account => account === item.accountIds[0]) + 1;
