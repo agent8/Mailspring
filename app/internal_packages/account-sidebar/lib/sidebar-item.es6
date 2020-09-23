@@ -534,7 +534,7 @@ class SidebarItem {
   }
 
   static forAllInbox(accountIds, opts = {}) {
-    const perspective = MailboxPerspective.forInbox(accountIds);
+    const perspective = MailboxPerspective.forAllInbox(accountIds);
     opts.categoryIds = this.getCategoryIds(accountIds, 'inbox');
     opts.mode = RetinaImg.Mode.ContentPreserve;
     const id = 'AllInbox';
