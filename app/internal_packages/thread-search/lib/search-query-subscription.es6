@@ -61,7 +61,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
       dbQuery = dbQuery.search(this._searchQuery);
     }
     dbQuery = dbQuery
-      // .background()
+      .background()
       .where({ state: 0 })
       .order(Thread.attributes.lastMessageTimestamp.descending())
       .limit(1000);
