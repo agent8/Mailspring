@@ -416,7 +416,7 @@ class DatabaseStore extends MailspringStore {
       this._agentOpenQueries = {};
       this._agent = childProcess.fork(
         path.join(path.dirname(__filename), 'database-agent.js'),
-        [],
+        [AppEnv.getConfigDirPath()],
         {
           silent: true,
         }
@@ -437,8 +437,24 @@ class DatabaseStore extends MailspringStore {
         });
         console.error(data.toString(), _queryForLog);
       });
-      this._agent.on('close', code => {
+      this._agent.on('disconnect', () => {
+        AppEnv.logError(`database background agent disconnected`);
+        debug(`Query Agent: disconnected`);
+        if (this._agent) {
+          this._agent.kill('SIGTERM');
+        }
+        this._agent = null;
+        clearOpenQueries();
+      });
+      this._agent.on('exit', code => {
+        AppEnv.logDebug(`database background agent exited with code ${code}`);
         debug(`Query Agent: exited with code ${code}`);
+        this._agent = null;
+        clearOpenQueries();
+      });
+      this._agent.on('close', code => {
+        AppEnv.logDebug(`database background agent closed with code ${code}`);
+        debug(`Query Agent: closed with code ${code}`);
         this._agent = null;
         clearOpenQueries();
       });
@@ -451,7 +467,7 @@ class DatabaseStore extends MailspringStore {
         clearOpenQueries();
       });
       this._agent.on('message', ({ type, id, results, agentTime }) => {
-        if (type === 'results') {
+        if (type === 'results' && this._agentOpenQueries[id]) {
           this._agentOpenQueries[id]({ results, backgroundTime: agentTime });
           delete this._agentOpenQueries[id];
         }
