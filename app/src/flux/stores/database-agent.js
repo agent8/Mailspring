@@ -95,7 +95,7 @@ process.on('exit', () => {
 });
 process.on('message', m => {
   clearTimeout(deathTimer);
-  const { query, values, id, dbpath } = m;
+  const { query, values, id, dbpath, queryType } = m;
   logDebug(`processing query for ${dbpath}, ${id}`);
   const start = Date.now();
 
@@ -105,7 +105,13 @@ process.on('message', m => {
     const fn = query.startsWith('SELECT') ? 'all' : 'run';
     const stmt = db.prepare(query);
     const results = stmt[fn](values);
-    process.send({ type: 'results', results, id, agentTime: Date.now() - start });
+    process.send({
+      type: 'results',
+      results,
+      id,
+      agentTime: Date.now() - start,
+      queryType: queryType,
+    });
     logDebug(`returning results for ${dbpath}, ${id}`);
   } catch (err) {
     logError(`returning results for ${dbpath}, ${id} failed`);
