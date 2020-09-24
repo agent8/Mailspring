@@ -1,3 +1,7 @@
+export const QUERY_TYPE = {
+  SEARCH_PERSPECTIVE: 'SEARCH_PERSPECTIVE',
+  SEARCH_SUBJECT: 'SEARCH_SUBJECT',
+};
 export const OAuthList = [
   'gmail',
   'yahoo',

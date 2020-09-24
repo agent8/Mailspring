@@ -142,11 +142,11 @@ class SearchStore extends MailspringStore {
       }
     }
     this.trigger();
-  }, 500);
+  }, 700);
 
   _throttleOnQuerySubmitted = _.debounce((query, forceQuery) => {
     this._onQuerySubmitted(query, forceQuery);
-  }, 500);
+  }, 700);
 
   _onQuerySubmitted = (query, forceQuery) => {
     if (query !== this._searchQuery || forceQuery) {
