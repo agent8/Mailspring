@@ -266,7 +266,7 @@ class DatabaseStore extends MailspringStore {
   //
   // If a query is made before the database has been opened, the query will be
   // held in a queue and run / resolved when the database is ready.
-  _query(query, values = [], background = false, dbKey = 'main') {
+  _query(query, values = [], background = false, dbKey = 'main', queryType) {
     return new Promise(async (resolve, reject) => {
       if (!this._open) {
         console.log(`db conections not ready ${dbKey}`);
@@ -303,21 +303,23 @@ class DatabaseStore extends MailspringStore {
         }
         resolve(results);
       } else {
-        this._executeInBackground(query, values, dbKey).then(({ results, backgroundTime }) => {
-          const msec = Date.now() - start;
-          if (debugVerbose.enabled) {
-            const q = `🔶 (${msec}ms) Background: ${query}`;
-            debugVerbose(trimTo(q));
-          }
+        this._executeInBackground(query, values, dbKey, queryType).then(
+          ({ results, backgroundTime }) => {
+            const msec = Date.now() - start;
+            if (debugVerbose.enabled) {
+              const q = `🔶 (${msec}ms) Background: ${query}`;
+              debugVerbose(trimTo(q));
+            }
 
-          if (msec > SLOW_QUERY_THRESH_HOLD) {
-            const msgPrefix = `DatabaseStore._executeInBackground took more than ${SLOW_QUERY_THRESH_HOLD}ms - `;
-            this._prettyConsoleLog(
-              `${msgPrefix}${msec}msec (${backgroundTime}msec in background): ${query}`
-            );
+            if (msec > SLOW_QUERY_THRESH_HOLD) {
+              const msgPrefix = `DatabaseStore._executeInBackground took more than ${SLOW_QUERY_THRESH_HOLD}ms - `;
+              this._prettyConsoleLog(
+                `${msgPrefix}${msec}msec (${backgroundTime}msec in background): ${query}`
+              );
+            }
+            resolve(results);
           }
-          resolve(results);
-        });
+        );
       }
     });
   }
@@ -405,15 +407,25 @@ class DatabaseStore extends MailspringStore {
     return results;
   }
 
-  _executeInBackground(query, values, dbKey = 'main') {
+  _executeInBackground(query, values, dbKey = 'main', queryType = null) {
     let _queryForLog = query;
     if (AppEnv.enabledBackgroundQueryLog) {
       console.log(`-------------------background query for ${dbKey}----------------`);
       AppEnv.logDebug(`background query - ${query}`);
       console.log(`--------------------background query for ${dbKey} end---------------`);
     }
+    const sendToAgent = data => {
+      if (!this._agent) {
+        AppEnv.logError(`Agent not available for background db query, ${data.id} not send`);
+        return;
+      }
+      AppEnv.logDebug(`Sending query for ${data.id} to agent`);
+      this._agent.send(data);
+    };
     if (!this._agent) {
+      AppEnv.logDebug(`DBStore:Agent not available, starting agent`);
       this._agentOpenQueries = {};
+      this._agentQueues = {};
       this._agent = childProcess.fork(
         path.join(path.dirname(__filename), 'database-agent.js'),
         [AppEnv.getConfigDirPath()],
@@ -428,6 +440,7 @@ class DatabaseStore extends MailspringStore {
           }
         }
         this._agentOpenQueries = {};
+        this._agentQueues = {};
       };
       this._agent.stdout.on('data', data => console.log(data.toString()));
       this._agent.stderr.on('data', data => {
@@ -466,26 +479,74 @@ class DatabaseStore extends MailspringStore {
         this._agent = null;
         clearOpenQueries();
       });
-      this._agent.on('message', ({ type, id, results, agentTime }) => {
-        if (type === 'results' && this._agentOpenQueries[id]) {
-          this._agentOpenQueries[id]({ results, backgroundTime: agentTime });
+      this._agent.on('message', ({ type, id, results, agentTime, queryType }) => {
+        const result = { results, backgroundTime: agentTime };
+        if (!queryType && type === 'results' && this._agentOpenQueries[id]) {
+          this._agentOpenQueries[id](result);
           delete this._agentOpenQueries[id];
+        } else if (type === 'results' && queryType && this._agentQueues[queryType]) {
+          const item =
+            this._agentQueues[queryType].length > 0 ? this._agentQueues[queryType][0] : null;
+          const newItem =
+            this._agentQueues[queryType].length > 1 ? this._agentQueues[queryType][1] : null;
+          if (item && item.id === id && item.resolve) {
+            AppEnv.logDebug(
+              `DBStore:Background results for ${id} of type ${queryType} match, resolving`
+            );
+            item.resolve(result);
+          } else {
+            AppEnv.logError(
+              `DBStore:Background results for ${id} of type ${queryType} not resolve`
+            );
+          }
+          if (newItem && newItem.data) {
+            AppEnv.logDebug(
+              `DBStore:old item ${id} new item in queue, ${newItem.data.id} query type ${queryType}, sending`
+            );
+            sendToAgent(newItem.data);
+          }
+          if (newItem) {
+            this._agentQueues[queryType] = [newItem];
+          } else {
+            this._agentQueues[queryType] = [];
+          }
         }
       });
     }
     return new Promise(resolve => {
       const id = Utils.generateTempId();
-      this._agentOpenQueries[id] = resolve;
+      let ignore = false;
+      let data;
       if (dbKey === 'main') {
-        this._agent.send({ query, values, id, dbpath: this._databasePath });
+        data = { query, values, id, dbpath: this._databasePath, queryType: queryType };
       } else {
-        this._agent.send({
+        data = {
           query,
           values,
           id,
+          queryType: queryType,
           dbpath: auxiliaryDBPath(AppEnv.getConfigDirPath(), AuxDBs[dbKey]),
-        });
+        };
       }
+      if (!queryType) {
+        this._agentOpenQueries[id] = resolve;
+      } else {
+        if (!this._agentQueues[queryType]) {
+          this._agentQueues[queryType] = [];
+        }
+        if (this._agentQueues[queryType].length > 0) {
+          ignore = true;
+          this._agentQueues[queryType] = [this._agentQueues[queryType][0], { id, resolve, data }];
+        } else {
+          this._agentQueues[queryType] = [{ id, resolve, data }];
+        }
+      }
+      if (!ignore) {
+        AppEnv.logDebug(`DBStore:No pending request for ${id} of type ${queryType}, sending`);
+        sendToAgent(data);
+        return;
+      }
+      AppEnv.logDebug(`DBStore:Request pending,  request for ${id} of type ${queryType} not send`);
     });
   }
 
@@ -618,7 +679,13 @@ class DatabaseStore extends MailspringStore {
   //   - resolves with the result of the database query.
   //
   run(modelQuery, options = { format: true }) {
-    return this._query(modelQuery.sql(), [], modelQuery._background).then(result => {
+    return this._query(
+      modelQuery.sql(),
+      [],
+      modelQuery._background,
+      'main',
+      modelQuery.queryType()
+    ).then(result => {
       if (AppEnv.showQueryResults || modelQuery.showQueryResults()) {
         try {
           AppEnv.logDebug(`query-results: ${JSON.stringify(result)}`);
@@ -650,7 +717,8 @@ class DatabaseStore extends MailspringStore {
                 modelQuery.sql(auxDBKey),
                 [],
                 modelQuery._background,
-                crossDBs[auxDBKey].db
+                crossDBs[auxDBKey].db,
+                modelQuery.queryType()
               )
             );
           } else {

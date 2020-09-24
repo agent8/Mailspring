@@ -4,6 +4,7 @@ import {
   SearchQueryParser,
   Thread,
   ContactStore,
+  Constant,
 } from 'mailspring-exports';
 import _ from 'underscore';
 
@@ -37,7 +38,7 @@ export const getThreadSuggestions = async (term, accountIds) => {
     dbQuery = dbQuery.where({ accountId: accountIds[0] });
   }
 
-  return dbQuery.background();
+  return dbQuery.background().setQueryType(Constant.QUERY_TYPE.SEARCH_SUBJECT);
   // return dbQuery.then(results => results);
 };
 
