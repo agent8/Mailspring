@@ -56,7 +56,7 @@ class MatchQueryExpressionVisitor extends SearchQueryExpressionVisitor {
 
   visitSubject(node) {
     const text = this.visitAndGetResult(node.text);
-    this._result = `(subject : "${text}"*)`;
+    this._result = `(subject : "${text}")`;
   }
 
   visitGeneric(node) {
