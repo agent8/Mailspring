@@ -155,7 +155,11 @@ module.exports = class EdisonErrorReporter {
       }
       if (data && data.error) {
         try {
-          ret.error = JSON.stringify(data.error);
+          if (typeof data.error === 'string') {
+            ret.error = data.error;
+          } else {
+            ret.error = JSON.stringify(data.error);
+          }
         } catch (e) {
           console.log(e);
         }
@@ -182,7 +186,7 @@ module.exports = class EdisonErrorReporter {
           this.onSendToServerFailed(err, tmp);
           return;
         }
-        console.log(`\n---> \nupload success ${body}`);
+        console.log(`\n---> \nupload success ${body}, ${stack.logID}`);
         this.onSendToServerSuccess(tmp);
       });
     });

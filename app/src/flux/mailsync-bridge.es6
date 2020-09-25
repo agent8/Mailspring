@@ -968,21 +968,18 @@ export default class MailsyncBridge {
   _uploadNativeReport = nativeReportTask => {
     if (nativeReportTask instanceof NativeReportTask) {
       if (nativeReportTask.level === NativeReportTask.errorLevel.info) {
-        console.log(nativeReportTask);
         AppEnv.reportLog(
           nativeReportTask.key,
           { errorData: nativeReportTask },
           { noAppConfig: true, noStackTrace: true, expandLog: false }
         );
       } else if (nativeReportTask.level === NativeReportTask.errorLevel.warning) {
-        console.warn(nativeReportTask);
         AppEnv.reportWarning(
           nativeReportTask.key,
           { errorData: nativeReportTask },
           { noAppConfig: true, noStackTrace: true, expandLog: false }
         );
       } else {
-        console.error(nativeReportTask);
         AppEnv.reportError(
           nativeReportTask.key,
           { errorData: nativeReportTask },
