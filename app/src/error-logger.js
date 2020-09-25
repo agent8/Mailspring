@@ -133,6 +133,9 @@ module.exports = ErrorLogger = (function() {
     if (!error) {
       error = { stack: '' };
     }
+    if (typeof error === 'string') {
+      error = { stack: '', message: error };
+    }
     if (process.type === 'renderer') {
       var errorJSON = '{}';
       try {
@@ -164,7 +167,7 @@ module.exports = ErrorLogger = (function() {
       console.log(`\n---\nerrorLogger: extraJSON ${extraJSON}`);
       ipcRenderer.sendSync(`report-${level}`, { errorJSON: errorJSON, extraJSON: extraJSON });
     } else {
-      console.log(`\n----\nerrorLogger: extra ${extra}`);
+      // console.log(`\n----\nerrorLogger: extra ${extra}`);
       if (level === 'error') {
         this._notifyExtensions(`reportError`, error, extra);
       } else if (level === 'warning') {

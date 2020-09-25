@@ -422,7 +422,6 @@ export default class Application extends EventEmitter {
     delete extra.noAppConfig;
     delete extra.noStackTrace;
     delete extra.expandLog;
-    delete extra.noUILog;
     return extra;
   };
   _stripSensitiveData(str = '') {
