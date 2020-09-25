@@ -430,6 +430,11 @@ export default class MessageItem extends React.Component {
     );
   }
 
+  _toggleHeaderDetail = e => {
+    e.stopPropagation();
+    this.setState({ detailedHeaders: !this.state.detailedHeaders });
+  };
+
   _renderHeaderDetailToggle() {
     if (this.props.pending) {
       return null;
@@ -438,11 +443,8 @@ export default class MessageItem extends React.Component {
       return (
         <div
           className="header-toggle-control"
-          style={{ top: 18, left: -14, transform: 'rotate(180deg)' }}
-          onClick={e => {
-            this.setState({ detailedHeaders: false });
-            e.stopPropagation();
-          }}
+          style={{ display: 'inline-block', alignContent: 'center', transform: 'rotate(180deg)' }}
+          onClick={this._toggleHeaderDetail}
         >
           <RetinaImg
             name={'down-arrow.svg'}
@@ -458,10 +460,7 @@ export default class MessageItem extends React.Component {
       <div
         className="header-toggle-control inactive"
         style={{ top: 18 }}
-        onClick={e => {
-          this.setState({ detailedHeaders: true });
-          e.stopPropagation();
-        }}
+        onClick={this._toggleHeaderDetail}
       >
         <RetinaImg
           name={'down-arrow.svg'}
