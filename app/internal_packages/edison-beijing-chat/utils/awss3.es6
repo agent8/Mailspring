@@ -8,9 +8,9 @@ import uuid from 'uuid';
 // Set the region
 
 let s3options = {
-  region: 'us-east-2',
-  accessKeyId: 'AKIAJPPBMFBNHSNZ5ELA',
-  secretAccessKey: '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',
+  region: process.env.S3_REGION || 'ENV_S3_REGION',
+  accessKeyId: process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID',
+  secretAccessKey: process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY',
   Endpoint: 'http://s3.us-east-2.amazonaws.com',
 };
 
@@ -107,7 +107,7 @@ export const uploadFile = (oid, aes, file, callback, progressCallback) => {
   const data = readS.pipe(cipherStream);
   var uploadParams = { Bucket: getMyBucket(), Key: myKey, Body: data };
   const request = s3.upload(uploadParams);
-  request.on('httpUploadProgress', function (progress) {
+  request.on('httpUploadProgress', function(progress) {
     if (progressCallback) {
       progressCallback(progress);
     }

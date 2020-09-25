@@ -197,10 +197,10 @@ export const inboxNotOtherCategories = (opts = { toString: false, radix: 10 }) =
 
 export const AwsBucketStag = 'edison-media-stag';
 export const AwsBucketProd = 'edison-media';
-export const AwsRegionType = 'us-east-2';
+export const AwsRegionType = process.env.S3_REGION || 'ENV_S3_REGION';
 export const AwsEndpointUrl = 'https://s3.us-east-2.amazonaws.com';
-export const AWSAccessKey = 'AKIAJPPBMFBNHSNZ5ELA';
-export const AWSSecretKey = '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';
+export const AWSAccessKey = process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID';
+export const AWSSecretKey = process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY';
 
 export const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
 
