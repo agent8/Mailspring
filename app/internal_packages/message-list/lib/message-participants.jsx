@@ -82,7 +82,7 @@ export default class MessageParticipants extends React.Component {
     menu.append(
       new MenuItem({
         label: 'Copy Address',
-        click: () => clipboard.writeText(contact.email)
+        click: () => clipboard.writeText(contact.email),
       })
     );
     menu.append(
@@ -138,7 +138,7 @@ export default class MessageParticipants extends React.Component {
     });
   }
 
-  _renderExpandedField(name, field, { includeLabel = true } = {}) {
+  _renderExpandedField(name, field, { includeLabel = true, includeChildren = false } = {}) {
     return (
       <div className="participant-type" key={`participant-type-${name}`}>
         {includeLabel ? (
@@ -146,7 +146,10 @@ export default class MessageParticipants extends React.Component {
             {name === 'detail-from' ? 'from' : name}:
           </div>
         ) : null}
-        <div className={`participant-name ${name}-contact`}>{this._renderFullContacts(field)}</div>
+        <div className={`participant-name ${name}-contact`}>
+          {this._renderFullContacts(field)}
+          {includeChildren ? this.props.children : null}
+        </div>
       </div>
     );
   }
@@ -169,7 +172,9 @@ export default class MessageParticipants extends React.Component {
     }
 
     if (detailFrom && detailFrom.length > 0) {
-      expanded.push(this._renderExpandedField('detail-from', detailFrom));
+      expanded.push(
+        this._renderExpandedField('detail-from', detailFrom, { includeChildren: true })
+      );
     }
 
     if (from.length > 0) {
