@@ -6,6 +6,7 @@ import { RetinaImg } from 'mailspring-component-kit';
 import { Actions } from 'mailspring-exports';
 import FontSizePopover from './font-size-popover';
 import ButtonValuePickerPopover from './button-value-picker-popover';
+import { BLOCK_CONFIG } from './base-block-plugins';
 
 // Helper Functions
 
@@ -101,6 +102,59 @@ export function applyValueForMark(value, type, markValue) {
         value: markValue,
       },
     });
+  }
+  if (!change.value.selection.isCollapsed) {
+    let startBlock, endBlock, includeStart, includeEnd;
+    const startOffset = change.value.selection.startOffset;
+    includeEnd = true;
+    includeStart = startOffset === 1;
+    if (!change.value.selection.isBackward) {
+      startBlock = change.value.anchorBlock;
+      endBlock = change.value.focusBlock;
+    } else {
+      endBlock = change.value.anchorBlock;
+      startBlock = change.value.focusBlock;
+    }
+    if (startBlock && endBlock) {
+      const startParentBlock = change.value.document.getParent(startBlock.key);
+      const endParentBlock = change.value.document.getParent(endBlock.key);
+      const blocks = change.value.blocks;
+      if (blocks && blocks.size > 0) {
+        for (let i = 0; i < blocks.size; i++) {
+          const block = blocks.get(i);
+          if (block) {
+            const ancestors = change.value.document.getAncestors(block.key);
+            if (ancestors && ancestors.size > 0) {
+              for (let k = ancestors.size - 1; k >= 0; k--) {
+                const item = ancestors.get(k);
+                if (item && item.type === BLOCK_CONFIG.list_item.type) {
+                  if (item.key === startParentBlock.key && !includeStart) {
+                    break;
+                  } else if (item.key === endParentBlock.key && !includeEnd) {
+                    break;
+                  }
+                  const newBlock = item.data
+                    ? {
+                        fontSize: item.data.get('fontSize'),
+                        fontFamily: item.data.get('fontFamily'),
+                        color: item.data.get('color)'),
+                      }
+                    : {};
+                  if (type === 'size') {
+                    newBlock.fontSize = markValue;
+                  } else if (type === 'face') {
+                    newBlock.fontFamily = markValue;
+                  } else if (type === 'color') {
+                    newBlock.color = markValue;
+                  }
+                  change.setNodeByKey(item.key, { data: newBlock });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   return change;
