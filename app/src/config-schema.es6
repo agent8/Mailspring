@@ -176,7 +176,6 @@ export default {
           sendUsageData: {
             type: 'boolean',
             default: true,
-            syncToServer: true,
             title: 'Send usage data to help improve the performance of the app',
           },
           interfaceZoom: {
@@ -717,7 +716,6 @@ export default {
               optOut: {
                 type: 'boolean',
                 default: false,
-                syncToServer: true,
                 title: 'Opt Out of data share',
               },
             },
