@@ -96,11 +96,11 @@ export class Privacy extends React.Component {
     }
 
     rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
-      if (err) {
-        return AppEnv.showErrorDialog(
-          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
-        );
-      }
+      // if (err) {
+      //   return AppEnv.showErrorDialog(
+      //     `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
+      //   );
+      // }
       const app = require('electron').remote.app;
       if (!process.mas) {
         app.relaunch();

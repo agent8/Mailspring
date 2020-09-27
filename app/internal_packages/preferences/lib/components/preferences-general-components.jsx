@@ -301,11 +301,11 @@ export class LocalData extends React.Component {
   _onResetAccountsCb = () => {
     AppEnv.logDebug(`running reset accounts settings`);
     rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
-      if (err) {
-        return AppEnv.showErrorDialog(
-          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
-        );
-      }
+      // if (err) {
+      //   return AppEnv.showErrorDialog(
+      //     `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
+      //   );
+      // }
       this._onReboot();
     });
   };
