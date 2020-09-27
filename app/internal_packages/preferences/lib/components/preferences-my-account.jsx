@@ -586,12 +586,26 @@ export default class EdisonAccount extends React.Component {
             </div>
             <div className="edison-account-button">
               {otherAccounts.length ? (
-                <div className="btn-primary" onClick={this._chooseAccountPopup}>
+                <div
+                  className="btn-primary"
+                  onClick={e => {
+                    if (!loginLoading) {
+                      this._chooseAccountPopup(e);
+                    }
+                  }}
+                >
                   {this.renderSpinner(loginLoading)}
                   Change Sync Email
                 </div>
               ) : null}
-              <div className="btn-danger" onClick={() => this._logout(this.supportId)}>
+              <div
+                className="btn-danger"
+                onClick={() => {
+                  if (!logoutLoading) {
+                    this._logout(this.supportId);
+                  }
+                }}
+              >
                 {this.renderSpinner(logoutLoading)}
                 Stop Back up & Sync
               </div>
@@ -602,7 +616,14 @@ export default class EdisonAccount extends React.Component {
           </div>
         ) : (
           <div className="edison-account-button">
-            <div className="btn-primary choose-account" onClick={this._startBackUpAndSync}>
+            <div
+              className="btn-primary choose-account"
+              onClick={e => {
+                if (!loginLoading) {
+                  this._startBackUpAndSync(e);
+                }
+              }}
+            >
               {this.renderSpinner(loginLoading)}
               Start Back up & Sync
             </div>
