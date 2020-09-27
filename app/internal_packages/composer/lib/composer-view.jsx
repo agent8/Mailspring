@@ -1,14 +1,4 @@
-import { remote } from 'electron';
-import {
-  React,
-  ReactDOM,
-  PropTypes,
-  Utils,
-  Actions,
-  DraftStore,
-  AttachmentStore,
-  MessageStore,
-} from 'mailspring-exports';
+import { React, ReactDOM, PropTypes, Utils, Actions, AttachmentStore } from 'mailspring-exports';
 import {
   DropZone,
   RetinaImg,
@@ -32,9 +22,9 @@ const {
   hasNonTrailingBlockquote,
   hideQuotedTextByDefault,
   removeQuotedText,
+  BLOCK_CONFIG,
 } = ComposerSupport.BaseBlockPlugins;
 const buttonTimer = 700;
-const newDraftTimeDiff = 3000;
 // The ComposerView is a unique React component because it (currently) is a
 // singleton. Normally, the React way to do things would be to re-render the
 // Composer with new props.
@@ -457,6 +447,13 @@ export default class ComposerView extends React.Component {
         );
       });
       this.props.session.changes.add({ bodyEditorState: change.value }, { skipSaving });
+    }
+    const focusBlock = change.value.focusBlock;
+    if (focusBlock && focusBlock.type === BLOCK_CONFIG.div.type) {
+      if (focusBlock.data && focusBlock.data.get('className') === 'gmail_quote_attribution') {
+        AppEnv.logDebug(`Draft ${(this.props.draft || {}).id} in quote, showing quote`);
+        this.setState({ quotedTextHidden: false });
+      }
     }
   };
 
