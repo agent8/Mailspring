@@ -2053,6 +2053,24 @@ export default class AppEnvConstructor {
   getLocale(env = process.env) {
     return env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE || env.LC_CTYPE;
   }
+
+  expungeLocalAndReboot() {
+    const rimraf = require('rimraf');
+    this.logDebug(`running reset accounts settings cb`);
+    rimraf(this.getConfigDirPath(), { disableGlob: true }, err => {
+      // dont show error, because files maybe has been deleted
+      // if (err) {
+      //   return AppEnv.showErrorDialog(
+      //     `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
+      //   );
+      // }
+      const app = remote.app;
+      if (!process.mas) {
+        app.relaunch();
+      }
+      app.quit();
+    });
+  }
   // openExternal() {
   //   const { spawn, exec } = require('child_process');
   //   exec(
