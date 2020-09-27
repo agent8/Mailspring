@@ -156,6 +156,7 @@ export default class EdisonAccount {
       emailAccount['type'] = 'exchange';
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
+        username: account.settings.ews_username,
         host: account.settings.ews_host,
         // To do
         domain: null,
