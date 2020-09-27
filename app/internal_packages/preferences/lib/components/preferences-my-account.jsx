@@ -503,6 +503,36 @@ export default class EdisonAccount extends React.Component {
     }
   };
 
+  _ondelete = () => {
+    AppEnv.showMessageBox({
+      type: 'info',
+      title: 'Are You Sure?',
+      detail: 'This CANNOT be undone. All your account information and data will be deleted.',
+      showInMainWindow: true,
+      buttons: ['Delete', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+    }).then(({ response }) => {
+      if (response !== 0) {
+        return;
+      }
+      this._delete();
+    });
+  };
+
+  _delete = async () => {
+    const { account } = this.state;
+    if (!account || !account.id) {
+      return;
+    }
+    const deleteResult = await EdisonAccountRest.deleteAccount(account.id);
+    if (!deleteResult.successful) {
+      AppEnv.reportError(new Error(`Delete edison account fail: ${deleteResult.message}`));
+    } else {
+      AppEnv.expungeLocalAndReboot();
+    }
+  };
+
   _onClickAccountType(type) {
     this.setState({ accountType: type });
   }
@@ -555,6 +585,9 @@ export default class EdisonAccount extends React.Component {
               <div className="btn-danger" onClick={() => this._logout(this.supportId)}>
                 {this.renderSpinner(logoutLoading)}
                 Stop Back up & Sync
+              </div>
+              <div className="btn-danger" onClick={() => this._ondelete()}>
+                Delete Account
               </div>
             </div>
           </div>
