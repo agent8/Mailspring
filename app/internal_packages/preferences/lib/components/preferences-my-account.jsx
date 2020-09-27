@@ -94,23 +94,11 @@ class StartSyncModal extends React.Component {
     this.state = {
       step: StartSyncStep.start,
       mainAccountIds: [],
+      hasAddedNoMainAccounts: [],
       accounts: AccountStore.accounts(),
       collapsibleBoxClose: false,
     };
   }
-
-  getNoMainAccounts = () => {
-    const { mainAccountIds, accounts } = this.state;
-    return accounts.filter(a => {
-      const isExchange = AccountStore.isExchangeAccount(a);
-      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
-      const emailHost = `${a.emailAddress}:${host}`;
-      if (mainAccountIds.includes(emailHost)) {
-        return false;
-      }
-      return true;
-    });
-  };
 
   _verifyAllAccounts = async () => {
     const { accounts } = this.state;
@@ -125,31 +113,54 @@ class StartSyncModal extends React.Component {
       return;
     }
     const mainAccountIds = result.data;
-    // No main account
-    if (!mainAccountIds.length) {
-      this.setState({
-        step: StartSyncStep.addAccount,
-        collapsibleBoxClose: false,
-      });
-      return;
-    }
-    // The only account is the main account
-    if (accounts.length === 1) {
-      const chooseAccount = accounts[0];
-      const isExchange = AccountStore.isExchangeAccount(chooseAccount);
-      const host = isExchange ? chooseAccount.settings.ews_host : chooseAccount.settings.imap_host;
-      const theAccountEmailHost = `${chooseAccount.emailAddress}:${host}`;
+    const hasAddedMainAccounts = [];
+    const hasAddedMainAccountIds = [];
+    const hasAddedNoMainAccounts = [];
+    AccountStore.accounts().forEach(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
+      const theAccountEmailHost = `${a.emailAddress}:${host}`;
       if (mainAccountIds.includes(theAccountEmailHost)) {
+        hasAddedMainAccounts.push(a);
+        hasAddedMainAccountIds.push(theAccountEmailHost);
+      } else {
+        hasAddedNoMainAccounts.push(a);
+      }
+    });
+    const noAddedMainAccountIds = mainAccountIds.filter(id => !hasAddedMainAccountIds.includes(id));
+    if (hasAddedMainAccounts.length) {
+      if (hasAddedMainAccounts.length === 1) {
+        const chooseAccount = hasAddedMainAccounts[0];
         this.props.onSelectAccount(chooseAccount);
         this.props.onClose();
         return;
       }
+      this.setState({
+        mainAccountIds: hasAddedMainAccountIds,
+        hasAddedNoMainAccounts,
+        step: StartSyncStep.chooseAccounts,
+        collapsibleBoxClose: false,
+      });
+    } else if (noAddedMainAccountIds.length) {
+      this.setState({
+        mainAccountIds: noAddedMainAccountIds,
+        hasAddedNoMainAccounts,
+        step: StartSyncStep.chooseAccounts,
+        collapsibleBoxClose: false,
+      });
+    } else {
+      if (hasAddedNoMainAccounts.length === 1) {
+        const chooseAccount = hasAddedNoMainAccounts[0];
+        this.props.onSelectAccount(chooseAccount);
+        this.props.onClose();
+        return;
+      }
+      this.setState({
+        hasAddedNoMainAccounts,
+        step: StartSyncStep.addAccount,
+        collapsibleBoxClose: false,
+      });
     }
-    this.setState({
-      mainAccountIds,
-      step: StartSyncStep.chooseAccounts,
-      collapsibleBoxClose: false,
-    });
   };
 
   onBoxScroll = e => {
@@ -169,8 +180,8 @@ class StartSyncModal extends React.Component {
   };
 
   onChooseOtherAccount = () => {
-    const noMainAccounts = this.getNoMainAccounts() || [];
-    if (noMainAccounts.length !== 1) {
+    const { hasAddedNoMainAccounts } = this.state;
+    if (hasAddedNoMainAccounts.length !== 1) {
       this.setState({
         step: StartSyncStep.addAccount,
         collapsibleBoxClose: false,
@@ -178,7 +189,7 @@ class StartSyncModal extends React.Component {
       return;
     }
     // only have one account is not the main account
-    const chooseAccount = noMainAccounts[0];
+    const chooseAccount = hasAddedNoMainAccounts[0];
     this.props.onSelectAccount(chooseAccount);
     this.props.onClose();
   };
@@ -243,8 +254,7 @@ class StartSyncModal extends React.Component {
   }
 
   _renderChooseAccount() {
-    const { mainAccountIds, collapsibleBoxClose } = this.state;
-    const noMainAccounts = this.getNoMainAccounts() || [];
+    const { mainAccountIds, hasAddedNoMainAccounts, collapsibleBoxClose } = this.state;
     return (
       <div onScroll={this.onBoxScroll}>
         <div className={`collapsible-box${collapsibleBoxClose ? ' close' : ''}`}>
@@ -280,7 +290,7 @@ class StartSyncModal extends React.Component {
               </li>
             );
           })}
-          {noMainAccounts.length ? (
+          {hasAddedNoMainAccounts.length ? (
             <li onClick={this.onChooseOtherAccount}>
               <Flexbox direction="row" style={{ alignItems: 'middle' }}>
                 <RetinaImg
@@ -299,8 +309,7 @@ class StartSyncModal extends React.Component {
   }
 
   _renderAddAccount() {
-    const { collapsibleBoxClose } = this.state;
-    const noMainAccounts = this.getNoMainAccounts() || [];
+    const { collapsibleBoxClose, hasAddedNoMainAccounts } = this.state;
     return (
       <div onScroll={this.onBoxScroll}>
         <div className={`collapsible-box${collapsibleBoxClose ? ' close' : ''}`}>
@@ -313,7 +322,7 @@ class StartSyncModal extends React.Component {
         <h2>Back up Preferences & Sync Across All Your Devices</h2>
         <p>Select the email you would like to use to sync your accounts, and settings:</p>
         <ul>
-          {noMainAccounts.map(a => {
+          {hasAddedNoMainAccounts.map(a => {
             return (
               <li
                 key={a.id}
