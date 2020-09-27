@@ -232,7 +232,6 @@ export default {
           },
           downloadFolder: {
             default: 'Downloads',
-            syncToServer: true,
             type: 'component',
           },
         },
