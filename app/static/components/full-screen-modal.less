@@ -11,6 +11,10 @@
     height: 100%;
     width: 100%;
     background: fade(@text-color, 70%);
+
+    .modal_content .modal-close {
+      color: @background-primary;
+    }
   }
   .modal_content {
     position: absolute;
@@ -29,7 +33,7 @@
       position: absolute;
       top: -36px;
       right: -36px;
-      color: @background-primary;
+      color: @gray-light;
       background: transparent;
       cursor: pointer;
     }

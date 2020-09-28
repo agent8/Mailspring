@@ -144,7 +144,6 @@ class CategoryStore extends MailspringStore {
     if (!account) {
       return null;
     }
-
     return (
       this.getCategoryByRole(account.id, 'archive') || this.getCategoryByRole(account.id, 'all')
     );

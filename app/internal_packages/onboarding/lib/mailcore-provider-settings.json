@@ -793,27 +793,6 @@
             ]
         }
     },
-    "edisonmail": {
-        "domain-match": [
-            "onmail\\.com"
-        ],
-        "servers": {
-            "imap": [
-                {
-                    "hostname": "imap.onmail.com",
-                    "port": 993,
-                    "ssl": true
-                }
-            ],
-            "smtp": [
-                {
-                    "hostname": "smtp.onmail.com",
-                    "port": 465,
-                    "ssl": true
-                }
-            ]
-        }
-    },
     "email-ssl.com.br": {
         "domain-match": [
             "email-ssl\\.com\\.br"
@@ -2285,7 +2264,7 @@
             ]
         }
     },
-    "office365-exchange": {
+    "office365": {
         "auto-copy-to-sent": true,
         "domain-match": [
             "(.+\\.)?office365\\.com",
@@ -2377,6 +2356,54 @@
             "smtp": [
                 {
                     "hostname": "smtp.online.no",
+                    "port": 465,
+                    "ssl": true
+                }
+            ]
+        }
+    },
+    "onmail": {
+        "domain-match": [
+            "onmail\\.com"
+        ],
+        "mx-match": [
+            "mx\\.onmail\\.com"
+        ],
+        "servers": {
+            "imap": [
+                {
+                    "hostname": "imap.onmail.com",
+                    "port": 993,
+                    "ssl": true
+                }
+            ],
+            "smtp": [
+                {
+                    "hostname": "smtp.onmail.com",
+                    "port": 465,
+                    "ssl": true
+                }
+            ]
+        }
+    },
+    "onmail-eng": {
+        "domain-match": [
+            "engineering\\.onmail\\.com"
+        ],
+        "mx-match": [
+            "mx\\.engineering\\.onmail\\.com"
+        ],
+        "servers": {
+            "imap": [
+                {
+                    "hostname": "imap.engineering.onmail.com",
+                    "port": 993,
+                    "ssl": true
+                }
+            ],
+            "smtp": [
+                {
+                    "hostname": "smtp.engineering.onmail.com",
                     "port": 465,
                     "ssl": true
                 }

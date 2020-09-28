@@ -1,7 +1,6 @@
 import { React } from 'mailspring-exports';
 import { FullScreenModal, RetinaImg } from 'mailspring-component-kit';
 import { Actions } from 'mailspring-exports';
-import rimraf from 'rimraf';
 
 export default class EdisonAccountDeletedNotif extends React.Component {
   static displayName = 'EdisonAccountDeletedNotif';
@@ -27,20 +26,7 @@ export default class EdisonAccountDeletedNotif extends React.Component {
   }
 
   _onClickButton = () => {
-    this.setState({ show: false, email: '' });
-    AppEnv.logDebug(`running reset accounts settings cb`);
-    rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
-      if (err) {
-        return AppEnv.showErrorDialog(
-          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
-        );
-      }
-      const app = require('electron').remote.app;
-      if (!process.mas) {
-        app.relaunch();
-      }
-      app.quit();
-    });
+    AppEnv.expungeLocalAndReboot();
   };
 
   render() {

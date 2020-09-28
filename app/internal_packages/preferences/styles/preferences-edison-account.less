@@ -122,6 +122,9 @@
             font-size: 14px;
             letter-spacing: -0.31px;
             margin-right: 30px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
           .remove-btn {
             height: 20px;
@@ -167,6 +170,109 @@
     }
     &:hover {
       background-color: @active;
+    }
+  }
+}
+.edison-account-modal {
+  height: 100%;
+  width: 100%;
+  padding: 45px 100px;
+  text-align: center;
+  font-family: 'SF UI Text';
+  & > div {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    & * {
+      flex: 0 0 auto;
+    }
+    &::-webkit-scrollbar {
+      display: none; /* Chrome Safari */
+    }
+  }
+  h2 {
+    margin: 10px 0;
+    color: @text-color;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 29px;
+  }
+  p {
+    width: 420px;
+    color: @text-color-very-subtle;
+    font-size: 15px;
+    line-height: 20px;
+    margin-bottom: 20px;
+  }
+  .btn-list {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+
+    .btn {
+      margin: 0 10px;
+      box-sizing: border-box;
+      height: 36px;
+      background-color: #fff;
+      opacity: 0.98;
+      border-radius: 20px;
+      border: 1px solid @blue;
+      line-height: 34px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      padding: 0 24px;
+
+      &.modal-btn-disable {
+        color: @blue;
+      }
+
+      &.modal-btn-enable {
+        color: @text-color-inverse;
+        background: @blue;
+      }
+    }
+  }
+  ul {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    li {
+      padding: 5px 7.5px;
+      cursor: pointer;
+      img {
+        height: 40px;
+        width: 40px;
+        border-radius: 20px;
+      }
+      .account-email {
+        padding: 0 15px;
+        font-family: 'SF UI Display';
+        font-size: 13px;
+        letter-spacing: 0.18px;
+        line-height: 40px;
+        color: @text-color;
+      }
+      &:hover {
+        background-color: @active;
+      }
+    }
+  }
+  .collapsible-box {
+    width: 280px;
+    height: 210px;
+    overflow: hidden;
+    transition: height 0.3s cubic-bezier(0, 0.71, 0.36, 0.4);
+    &.close {
+      height: 0px;
     }
   }
 }

@@ -534,7 +534,7 @@ class SidebarItem {
   }
 
   static forAllInbox(accountIds, opts = {}) {
-    const perspective = MailboxPerspective.forInbox(accountIds);
+    const perspective = MailboxPerspective.forAllInbox(accountIds);
     opts.categoryIds = this.getCategoryIds(accountIds, 'inbox');
     opts.mode = RetinaImg.Mode.ContentPreserve;
     const id = 'AllInbox';
@@ -635,12 +635,6 @@ class SidebarItem {
       const categories = parentPerspective ? parentPerspective.perspective.categories() : [];
       if (categories.length === 1) {
         SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0]);
-      } else {
-        AppEnv.logDebug(
-          `paths is not 1, children not seeked, ${accountId}, ${parentPerspective &&
-            parentPerspective.perspective &&
-            JSON.stringify(parentPerspective.perspective.toJSON())}`
-        );
       }
     }
     return parentPerspective;

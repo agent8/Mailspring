@@ -93,6 +93,7 @@ const CreatePageForForm = FormComponent => {
       const { errorFieldNames, errorMessage, populated } = FormComponent.validateAccount(next);
       if (this._mounted) {
         this.setState({
+          errorLog: '',
           account: next,
           errorFieldNames,
           errorMessage,
@@ -129,6 +130,27 @@ const CreatePageForForm = FormComponent => {
     onConnect = updatedAccount => {
       const account = updatedAccount || this.state.account;
       const proceedWithAccount = () => {
+        if (account.provider === 'exchange') {
+          if (
+            !account.emailAddress ||
+            (account.settings['ews_email'] &&
+              account.emailAddress !== account.settings['ews_email'])
+          ) {
+            account.emailAddress = account.settings['ews_email'];
+          }
+          if (!account.settings['ews_username']) {
+            account.settings['ews_username'] = account.settings['ews_email'];
+          }
+        }
+        const office365Account = AccountStore.accountForEmail({ email: account.emailAddress });
+        if (office365Account && office365Account.provider !== account.provider) {
+          OnboardingActions.moveToPage('account-choose');
+          AppEnv.showErrorDialog({
+            title: 'Unable to Add Account',
+            message: `Please remove your ${account.emailAddress} account first, and try again.`,
+          });
+          return;
+        }
         if (this._mounted) {
           this.setState({ submitting: true });
         }
@@ -148,60 +170,79 @@ const CreatePageForForm = FormComponent => {
               return;
             }
             const errorFieldNames = [];
-            if (err.message.includes('Authentication Error')) {
-              if (/smtp/i.test(err.message)) {
-                errorFieldNames.push('settings.smtp_username');
-                errorFieldNames.push('settings.smtp_password');
+            if (account.provider === 'exchange') {
+              if (isBasicForm) {
+                if (err.statusCode === 'ErrorNoValidServerFound') {
+                  OnboardingActions.moveToPage('account-settings-exchange');
+                  return;
+                } else if (err.statusCode === 'ErrorAuthentication') {
+                  errorFieldNames.push('emailAddress');
+                  errorFieldNames.push('settings.imap_password');
+                }
               } else {
-                errorFieldNames.push('settings.imap_username');
-                errorFieldNames.push('settings.imap_password');
+                if (err.statusCode === 'ErrorNoValidServerFound') {
+                  errorFieldNames.push('settings.ews_host');
+                } else if (err.statusCode === 'ErrorAuthentication') {
+                  errorFieldNames.push('settings.ews_username');
+                  errorFieldNames.push('settings.ews_password');
+                }
               }
-            } else if (/certificate/i.test(err.message)) {
-              errorFieldNames.push('settings.imap_allow_insecure_ssl');
-              errorFieldNames.push('settings.smtp_allow_insecure_ssl');
-              remote.dialog
-                .showMessageBox(remote.getCurrentWindow(), {
-                  type: 'warning',
-                  buttons: ['Go Back', 'Continue'],
-                  defaultId: 1,
-                  cancelId: 0,
-                  message: 'Certificate Error',
-                  detail: `The TLS certificate for this server seems to be incorrect. Do you want to continue?`,
-                })
-                .then(({ response }) => {
-                  if (response === 1 && this.state.account && this.state.account.settings) {
-                    account.settings.imap_allow_insecure_ssl = true;
-                    account.settings.smtp_allow_insecure_ssl = true;
-                    if (this._mounted) {
-                      this.setState({ account, submitting: true }, () => {
-                        this.onConnect(this.state.account);
+            } else {
+              if (err.message.includes('Authentication Error')) {
+                if (/smtp/i.test(err.message)) {
+                  errorFieldNames.push('settings.smtp_username');
+                  errorFieldNames.push('settings.smtp_password');
+                } else {
+                  errorFieldNames.push('settings.imap_username');
+                  errorFieldNames.push('settings.imap_password');
+                }
+              } else if (/certificate/i.test(err.message)) {
+                errorFieldNames.push('settings.imap_allow_insecure_ssl');
+                errorFieldNames.push('settings.smtp_allow_insecure_ssl');
+                remote.dialog
+                  .showMessageBox(remote.getCurrentWindow(), {
+                    type: 'warning',
+                    buttons: ['Go Back', 'Continue'],
+                    defaultId: 1,
+                    cancelId: 0,
+                    message: 'Certificate Error',
+                    detail: `The TLS certificate for this server seems to be incorrect. Do you want to continue?`,
+                  })
+                  .then(({ response }) => {
+                    if (response === 1 && this.state.account && this.state.account.settings) {
+                      account.settings.imap_allow_insecure_ssl = true;
+                      account.settings.smtp_allow_insecure_ssl = true;
+                      if (this._mounted) {
+                        this.setState({ account, submitting: true }, () => {
+                          this.onConnect(this.state.account);
+                        });
+                      }
+                    } else {
+                      account.settings.imap_allow_insecure_ssl = false;
+                      account.settings.smtp_allow_insecure_ssl = false;
+                      const errorAccount = Object.assign({}, account);
+                      delete errorAccount.name;
+                      delete errorAccount.emailAddress;
+                      delete errorAccount.label;
+                      delete errorAccount.autoaddress;
+                      delete errorAccount.aliases;
+                      AppEnv.reportError(err, {
+                        account: AccountStore.stripAccountData(errorAccount),
                       });
+                      if (this._mounted) {
+                        this.setState({
+                          errorMessage: err.message,
+                          errorStatusCode: err.statusCode,
+                          errorLog: err.rawLog,
+                          errorFieldNames,
+                          account,
+                          submitting: false,
+                        });
+                      }
                     }
-                  } else {
-                    account.settings.imap_allow_insecure_ssl = false;
-                    account.settings.smtp_allow_insecure_ssl = false;
-                    const errorAccount = Object.assign({}, account);
-                    delete errorAccount.name;
-                    delete errorAccount.emailAddress;
-                    delete errorAccount.label;
-                    delete errorAccount.autoaddress;
-                    delete errorAccount.aliases;
-                    AppEnv.reportError(err, {
-                      account: AccountStore.stripAccountData(errorAccount),
-                    });
-                    if (this._mounted) {
-                      this.setState({
-                        errorMessage: err.message,
-                        errorStatusCode: err.statusCode,
-                        errorLog: err.rawLog,
-                        errorFieldNames,
-                        account,
-                        submitting: false,
-                      });
-                    }
-                  }
-                });
-              return;
+                  });
+                return;
+              }
             }
             const errorAccount = Object.assign({}, account);
             delete errorAccount.name;
@@ -250,6 +291,38 @@ const CreatePageForForm = FormComponent => {
               return;
             } else if (response === 0) {
               OnboardingActions.chooseAccountProvider('gmail');
+            } else {
+              proceedWithAccount();
+            }
+          });
+        return;
+      }
+      // warn users about authenticating a Office365 account via IMAP
+      // and allow them to go back
+      if (
+        !didWarnAboutGmailIMAP &&
+        account.provider === 'imap' &&
+        account.settings.imap_host &&
+        account.settings.imap_host.includes('outlook.office365.com')
+      ) {
+        didWarnAboutGmailIMAP = true;
+        remote.dialog
+          .showMessageBox(null, {
+            type: 'warning',
+            buttons: ['Office365 OAuth', 'Continue', 'Go back'],
+            defaultId: 0,
+            cancelId: 2,
+            message: 'Are you sure?',
+            detail:
+              `This looks like an Office365 account! While it's possible to setup an App ` +
+              `Password and connect to Office365 via IMAP, EdisonMail also supports "Office365 OAuth".`,
+          })
+          .then(({ response }) => {
+            if (response === 2) {
+              OnboardingActions.moveToPage('account-choose');
+              return;
+            } else if (response === 0) {
+              OnboardingActions.chooseAccountProvider('office365-exchange');
             } else {
               proceedWithAccount();
             }
@@ -328,10 +401,11 @@ const CreatePageForForm = FormComponent => {
 
     render() {
       const { account, errorMessage, errorFieldNames, errorLog, submitting } = this.state;
-      const providerConfig = AccountProviders.find(({ provider }) => provider === account.provider);
+      const accProvider = account.provider === 'onmail' ? 'imap' : account.provider;
+      const providerConfig = AccountProviders.find(({ provider }) => provider === accProvider);
 
       if (!providerConfig) {
-        throw new Error(`Cannot find account provider ${account.provider}`);
+        throw new Error(`Cannot find account provider ${accProvider}`);
       }
 
       const hideTitle = errorMessage && errorMessage.length > 120;

@@ -111,15 +111,20 @@ const mergeDefaultBccAndCCs = async (message, account) => {
     mergeContacts('bcc', autoContacts);
   }
 };
-
+const getDraftDefaultValues = () => {
+  const defaultValues = {};
+  defaultValues.fontSize = AppEnv.config.get('core.fontsize');
+  defaultValues.fontFace = AppEnv.config.get('core.fontface');
+  return defaultValues;
+};
 class DraftFactory {
   getBlankContentWithDefaultFontValues() {
-    const defaultValues = AppEnv.config.get('core')
-    const defaultSize = defaultValues.fontsize || '14px';
-    const defaultFont = defaultValues.fontface || 'sans-serif';
+    const defaultValues = getDraftDefaultValues();
+    const defaultSize = defaultValues.fontSize;
+    const defaultFont = defaultValues.fontFace;
     return `
       <font style="font-size:${defaultSize};font-family:${defaultFont}">
-        ${'\u200b'}
+        <br/>
         <br/>
       </font>
     `;
@@ -195,6 +200,7 @@ class DraftFactory {
       hasNewID: false,
       accountId: account.id,
       pastMessageIds: [],
+      defaultValues: getDraftDefaultValues(),
     };
 
     const merged = Object.assign(defaults, fields);
@@ -324,36 +330,6 @@ class DraftFactory {
     DraftFactory.updateFiles(message, true, true);
     return message;
   }
-  // async createOutboxDraftForEdit(draft){
-  //   const uniqueId = uuid();
-  //   const account = AccountStore.accountForId(draft.accountId);
-  //   if (!account) {
-  //     throw new Error(
-  //       'DraftEditingSession::createOutboxDraftForEdit - you can only send drafts from a configured account.',
-  //     );
-  //   }
-  //   const defaults = Object.assign({}, draft, {
-  //     body: draft.body,
-  //     version: 0,
-  //     unread: false,
-  //     starred: false,
-  //     headerMessageId: `${uniqueId}@edison.tech`,
-  //     id: uniqueId,
-  //     date: new Date(),
-  //     pristine: false,
-  //     hasNewID: false,
-  //     accountId: account.id
-  //   });
-  //   await mergeDefaultBccAndCCs(defaults, account);
-  //   // const autoContacts = await ContactStore.parseContactsInString(account.autoaddress.value);
-  //   // if (account.autoaddress.type === 'cc') {
-  //   //   defaults.cc = (defaults.cc || []).concat(autoContacts);
-  //   // }
-  //   // if (account.autoaddress.type === 'bcc') {
-  //   //   defaults.bcc = (defaults.bcc || []).concat(autoContacts);
-  //   // }
-  //   return new Message(defaults);
-  // }
 
   async copyDraftToAccount(draft, from) {
     const uniqueId = uuid();
@@ -490,8 +466,8 @@ class DraftFactory {
     let body = `
         ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote_attribution">${DOMUtils.escapeHTMLCharacters(
-      message.replyAttributionLine()
-    )}</div>
+          message.replyAttributionLine()
+        )}</div>
         <blockquote class="gmail_quote" data-edison="true"
           style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
           ${prevBody}
@@ -558,7 +534,6 @@ class DraftFactory {
       body: `
         ${this.getBlankContentWithDefaultFontValues()}
         <div class="gmail_quote">
-          <br>
           ---------- Forwarded message ---------
           <br><br>
           ${fields.join('<br>')}

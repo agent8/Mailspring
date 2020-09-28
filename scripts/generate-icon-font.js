@@ -3,9 +3,9 @@ var iconfont = require('gulp-iconfont');
 var iconfontCss = require('gulp-iconfont-css');
 var path = require('path');
 var absPath = path.resolve('../');
-var fontName = 'EdisonIcons';
+var fontName = `EdisonIcons`;
 var dealPath = path.join(absPath, './app/static/icons/');
-
+var cacheBusterQueryString = new Date().getTime();
 gulp.task('Iconfont', function() {
   return gulp
     .src([path.join(dealPath, '*.svg')])
@@ -16,12 +16,14 @@ gulp.task('Iconfont', function() {
         cssClass: 'edison-icon',
         targetPath: '../edison-icon.css',
         fontPath: './fonts/',
+        cacheBuster: cacheBusterQueryString,
       })
     )
     .pipe(
       iconfont({
         fontName: fontName,
         normalize: true,
+        formats: ['woff'],
         centerHorizontally: true,
       })
     )

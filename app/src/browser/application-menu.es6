@@ -6,6 +6,7 @@
  */
 const { BrowserWindow, Menu, app } = require('electron');
 const Utils = require('../flux/models/utils');
+import { AutoUpdateManagerState } from '../constant';
 
 // Used to manage the global application menu.
 //
@@ -169,8 +170,7 @@ module.exports = class ApplicationMenu {
       let title = settings.title || 'Window';
       if (settings.windowType === 'composer') {
         title = 'Composer';
-      }
-      else if (title.length > MAX_LENGTH) {
+      } else if (title.length > MAX_LENGTH) {
         title = title.substr(0, MAX_LENGTH) + '...';
       }
       return {
@@ -180,7 +180,7 @@ module.exports = class ApplicationMenu {
           w.show();
           w.focus();
         },
-      }
+      };
     });
     return windowMenu.submenu.splice(idx, 0, { type: 'separator' }, ...windowsItems);
   }
@@ -190,6 +190,9 @@ module.exports = class ApplicationMenu {
     const checkForUpdateItem = this.flattenMenuItems(this.menu).find(
       ({ label }) => label === 'Check for Update'
     );
+    const checkingForUpdateItem = this.flattenMenuItems(this.menu).find(
+      ({ label }) => label === 'Checking for Update'
+    );
     const downloadingUpdateItem = this.flattenMenuItems(this.menu).find(
       ({ label }) => label === 'Downloading Update'
     );
@@ -197,25 +200,33 @@ module.exports = class ApplicationMenu {
       ({ label }) => label === 'Restart and Install Update'
     );
 
-    if (checkForUpdateItem == null || downloadingUpdateItem == null || installUpdateItem == null) {
+    if (
+      checkForUpdateItem == null ||
+      downloadingUpdateItem == null ||
+      installUpdateItem == null ||
+      checkingForUpdateItem == null
+    ) {
       return;
     }
 
+    checkingForUpdateItem.visible = false;
     checkForUpdateItem.visible = false;
     downloadingUpdateItem.visible = false;
     installUpdateItem.visible = false;
 
     switch (state) {
-      case 'idle':
-      case 'error':
-      case 'no-update-available':
-        checkForUpdateItem.visible = process.mas ? false : true;
+      case AutoUpdateManagerState.IdleState:
+      case AutoUpdateManagerState.ErrorState:
+      case AutoUpdateManagerState.NoUpdateAvailableState:
+        checkForUpdateItem.visible = !process.mas;
         break;
-      case 'checking':
-      case 'downloading':
+      case AutoUpdateManagerState.CheckingState:
+        checkingForUpdateItem.visible = true;
+        break;
+      case AutoUpdateManagerState.DownloadingState:
         downloadingUpdateItem.visible = true;
         break;
-      case 'update-available':
+      case AutoUpdateManagerState.UpdateAvailableState:
         installUpdateItem.visible = true;
         break;
       default:
@@ -223,12 +234,8 @@ module.exports = class ApplicationMenu {
   }
 
   updateFullscreenMenuItem(fullscreen) {
-    const enterItem = this.flattenMenuItems(this.menu).find(
-      ({ key }) => key === 'enterFullScreen'
-    );
-    const exitItem = this.flattenMenuItems(this.menu).find(
-      ({ key }) => key === 'exitFullScreen'
-    );
+    const enterItem = this.flattenMenuItems(this.menu).find(({ key }) => key === 'enterFullScreen');
+    const exitItem = this.flattenMenuItems(this.menu).find(({ key }) => key === 'exitFullScreen');
     if (!enterItem || !exitItem) {
       return;
     }

@@ -13,7 +13,7 @@ export default class SignatureAccountDefaultPicker extends React.Component {
   };
 
   render() {
-    const { accounts, defaults, signature } = this.props;
+    const { accounts, defaults, signature = {} } = this.props;
     const aliases = [];
     accounts.forEach(account => {
       aliases.push(...account.getAllIsMeContacts());

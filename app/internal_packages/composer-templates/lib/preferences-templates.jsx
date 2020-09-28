@@ -1,4 +1,3 @@
-import fs from 'fs';
 import {
   RetinaImg,
   Flexbox,
@@ -7,7 +6,7 @@ import {
   ComposerSupport,
   AttachmentItem,
 } from 'mailspring-component-kit';
-import { React, ReactDOM, Actions } from 'mailspring-exports';
+import { React, ReactDOM, Actions, Utils } from 'mailspring-exports';
 import { shell, remote } from 'electron';
 import path from 'path';
 import TemplateStore from './template-store';
@@ -28,39 +27,57 @@ function fileIsImage(file) {
 class TemplateEditor extends React.Component {
   constructor(props) {
     super(props);
-
-    const { path: templatePath, CC, BCC } = props.template || {};
-
-    const state = {
+    const { id, CC, BCC, attachments } = props.template || {};
+    const body = TemplateStore.getBodyById(id);
+    this.state = {
+      body,
+      editorState: convertFromHTML(body),
       CC: CC || '',
       showCC: !!CC,
       BCC: BCC || '',
       showBCC: !!BCC,
+      attachments: attachments || [],
+      readOnly: !props.template,
     };
-
-    if (templatePath) {
-      const inHTML = fs.readFileSync(templatePath).toString();
-      this.state = {
-        editorState: convertFromHTML(inHTML),
-        readOnly: false,
-        ...state,
-      };
-    } else {
-      this.state = {
-        editorState: convertFromHTML(''),
-        readOnly: true,
-        ...state,
-      };
-    }
   }
 
   _onSave = () => {
     if (this.state.readOnly) {
       return;
     }
-    const { template } = this.props;
     const outHTML = convertToHTML(this.state.editorState);
-    TemplateActions.updateTemplateBody(template.name, outHTML);
+    const template = Object.assign({}, this.props.template);
+    template.body = outHTML;
+    // if delete the inline, should filter it
+    const filterAttachment = this.state.attachments.filter(
+      a => !a.inline || outHTML.indexOf(`src="${a.path}"`) >= 0
+    );
+    template.attachments = filterAttachment;
+    this.setState({ attachments: filterAttachment });
+    TemplateActions.updateTemplate(template);
+  };
+
+  _onAddInlineImage = ({ path, inline }) => {
+    const newAttachments = [...this.state.attachments, { inline: inline, path: path }];
+    this.setState(
+      {
+        attachments: newAttachments,
+      },
+      () => {
+        this.props.onEditField('attachments', newAttachments);
+      }
+    );
+  };
+
+  _onFileReceived = filePath => {
+    if (!Utils.fileIsImage(filePath)) {
+      return;
+    }
+    const newFilePath = AppEnv.copyFileToPreferences(filePath);
+    if (this._composer) {
+      this._composer.insertInlineResizableImage(newFilePath);
+      this._onAddInlineImage({ path: newFilePath, inline: true });
+    }
   };
 
   _onFocusEditor = e => {
@@ -88,12 +105,36 @@ class TemplateEditor extends React.Component {
       if (!paths || !paths.length) {
         return;
       }
-      TemplateActions.addAttachmentsToTemplate(this.props.template.name, paths);
+      const addAttachments = paths.map(p => {
+        return {
+          inline: false,
+          path: p,
+        };
+      });
+      const newAttachments = [...this.state.attachments, ...addAttachments];
+      this.setState(
+        {
+          attachments: newAttachments,
+        },
+        () => {
+          this.props.onEditField('attachments', newAttachments);
+        }
+      );
     });
   };
 
   _onRemoveAttachment = index => {
-    TemplateActions.removeAttachmentsFromTemplate(this.props.template.name, [index]);
+    const newAttachments = this.state.attachments.filter((attach, idx) => {
+      return idx !== index;
+    });
+    this.setState(
+      {
+        attachments: newAttachments,
+      },
+      () => {
+        this.props.onEditField('attachments', newAttachments);
+      }
+    );
   };
 
   _renderTemplateActions = () => {
@@ -142,31 +183,33 @@ class TemplateEditor extends React.Component {
   };
 
   _renderTemplateFiles() {
-    const { template } = this.props;
-    const files = template && template.files ? template.files : [];
-    const fileComponents = files.map((file, index) => {
-      const fileName = path.basename(file);
-      return (
-        <AttachmentItem
-          key={index}
-          draggable={false}
-          className="template-file"
-          filePath={file}
-          displayName={fileName}
-          isImage={fileIsImage(fileName)}
-          accountId={''}
-          onRemoveAttachment={() => {
-            this._onRemoveAttachment(index);
-          }}
-          onOpenAttachment={() => remote.shell.openItem(file)}
-        />
-      );
-    });
+    const { attachments = [] } = this.state;
+    const fileComponents = attachments
+      .filter(atta => !atta.inline)
+      .map((file, index) => {
+        const filePath = file.path;
+        const fileName = path.basename(filePath);
+        return (
+          <AttachmentItem
+            key={index}
+            draggable={false}
+            className="template-file"
+            filePath={filePath}
+            displayName={fileName}
+            isImage={fileIsImage(fileName)}
+            accountId={''}
+            onRemoveAttachment={() => {
+              this._onRemoveAttachment(index);
+            }}
+            onOpenAttachment={() => remote.shell.openItem(filePath)}
+          />
+        );
+      });
     return <div className={'attachments'}>{fileComponents}</div>;
   }
 
   render() {
-    const { onEditTitle, template } = this.props;
+    const { onEditTitle, template = {} } = this.props;
     const { readOnly, editorState } = this.state;
 
     return (
@@ -177,7 +220,7 @@ class TemplateEditor extends React.Component {
             id="title"
             placeholder="Name"
             style={{ maxWidth: 400 }}
-            defaultValue={template ? template.name : ''}
+            defaultValue={template ? template.title : ''}
             onBlur={e => onEditTitle(e.target.value)}
           />
           {this._renderTemplateActions()}
@@ -198,9 +241,8 @@ class TemplateEditor extends React.Component {
               }
             }}
             onBlur={this._onSave}
-            onFileReceived={() => {
-              // This method ensures that HTML can be pasted.
-            }}
+            onFileReceived={this._onFileReceived}
+            onAddAttachments={this._onAddInlineImage}
           />
         </div>
         {this._renderTemplateFiles()}
@@ -226,61 +268,54 @@ export default class PreferencesTemplates extends React.Component {
   }
 
   componentDidMount() {
-    this.unsubscribers = [
-      TemplateStore.listen(() => {
-        this.setState(this._getStateFromStores());
-      }),
-    ];
+    this.unsubscribers = [TemplateStore.listen(this._onChange)];
   }
 
   componentWillUnmount() {
     this.unsubscribers.forEach(unsubscribe => unsubscribe());
   }
 
-  _getStateFromStores() {
-    const templates = TemplateStore.items().map(t => {
-      const tConfig = TemplateStore.templateConfig(t.id);
-      return {
-        ...t,
-        ...tConfig,
-      };
-    });
+  _onChange = () => {
+    this.setState(this._getStateFromStores());
+  };
 
-    const selectedName = TemplateStore.selectedTemplateName();
-    let selected = templates.find(t => t.name === selectedName);
-    if (!selected) {
-      selected = templates[0];
-    }
+  _getStateFromStores() {
     return {
-      templates,
-      selected,
+      templates: TemplateStore.getTemplates(),
+      selected: TemplateStore.selectedTemplate(),
     };
   }
 
   _onAdd = () => {
-    TemplateActions.createTemplate({ name: 'Untitled', contents: 'Insert content here!' });
+    TemplateActions.addTemplate();
   };
 
   _onDelete = item => {
-    TemplateActions.deleteTemplate(item.name);
+    TemplateActions.removeTemplate(item);
   };
 
-  _onEditTitle = newName => {
-    if (this.state.selected.name === newName) {
+  _onEditTitle = newTitle => {
+    if (!newTitle) {
       return;
     }
-    TemplateActions.renameTemplate(this.state.selected.name, newName);
+    this._onChangeField('title', newTitle);
   };
 
   _onChangeField = (field, value) => {
-    TemplateActions.changeTemplateField(this.state.selected.name, field, value);
+    const templateChangeFields = [...TEMPLATEFIELDS, 'title', 'attachments'];
+    if (!templateChangeFields.includes(field)) {
+      return;
+    }
+    const template = Object.assign({}, this.state.selected);
+    template[field] = value;
+    TemplateActions.updateTemplate(template);
   };
 
   _onSelect = item => {
-    Actions.selectTemplate(item);
+    Actions.selectTemplate(item.id);
   };
 
-  render() {
+  _renderTemplates() {
     const { selected } = this.state;
     const footer = (
       <div className="btn-primary buttons-add" onClick={this._onAdd}>
@@ -294,7 +329,7 @@ export default class PreferencesTemplates extends React.Component {
       </div>
     );
     return (
-      <div className="preferences-templates-container">
+      <div>
         <div className="config-group">
           <h6>TEMPLATES</h6>
           <Flexbox>
@@ -320,7 +355,7 @@ export default class PreferencesTemplates extends React.Component {
             })}
             className="template-list"
             items={this.state.templates}
-            itemContent={template => <div className="title">{template.name}</div>}
+            itemContent={template => <div className="title">{template.title}</div>}
             onCreateItem={this._onAdd}
             onDeleteItem={this._onDelete}
             onItemEdited={this._onEditTitle}
@@ -331,12 +366,16 @@ export default class PreferencesTemplates extends React.Component {
 
           <TemplateEditor
             onEditTitle={this._onEditTitle}
-            key={selected ? selected.name : 'empty'}
+            key={selected ? selected.id : 'empty'}
             template={selected}
             onEditField={this._onChangeField}
           />
         </Flexbox>
       </div>
     );
+  }
+
+  render() {
+    return <div className="preferences-templates-container">{this._renderTemplates()}</div>;
   }
 }

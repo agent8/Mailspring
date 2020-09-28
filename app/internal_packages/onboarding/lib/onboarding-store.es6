@@ -1,4 +1,4 @@
-import { AccountStore, Account, IdentityStore, Constant, RESTful } from 'mailspring-exports';
+import { AccountStore, Account, IdentityStore, Constant } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
@@ -6,7 +6,7 @@ import OnboardingActions from './onboarding-actions';
 const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
-const { EdisonAccountRest } = RESTful;
+// const ONBOARDING_TRACKING_URL = 'https://cp.stag.easilydo.cc/api/multiple/desktop/onboarding';
 const ONBOARDING_TRACKING_URL = 'https://cp.edison.tech/api/multiple/desktop/onboarding';
 
 class OnboardingStore extends MailspringStore {
@@ -53,6 +53,8 @@ class OnboardingStore extends MailspringStore {
         this._pageStack = ['account-choose', `account-settings-${this._account.provider}`];
       } else if (this._account.provider === 'imap') {
         this._pageStack = ['account-choose', 'account-settings', 'account-settings-imap'];
+      } else if (this._account.provider === 'exchange') {
+        this._pageStack = ['account-choose', 'account-settings', 'account-settings-exchange'];
       } else {
         this._pageStack = ['account-choose', 'account-settings'];
       }
@@ -151,6 +153,13 @@ class OnboardingStore extends MailspringStore {
 
   _onFinishAndAddAccount = async account => {
     // const isFirstAccount = AccountStore.accounts().length === 0;
+    const { settings } = account;
+    if (settings && ['onmail-eng'].includes(settings.provider_key)) {
+      account.provider = 'onmail-eng';
+    }
+    if (settings && ['onmail'].includes(settings.provider_key)) {
+      account.provider = 'onmail';
+    }
     const { provider, emailAddress } = account;
     const domain = emailAddress ? emailAddress.split('@')[1] : '';
     // if (AppEnv.config.get(INVITE_COUNT_KEY) === undefined) {
@@ -175,6 +184,7 @@ class OnboardingStore extends MailspringStore {
         mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: 'Bearer ba68b70f0ea8596eadbaea4f116356c2',
         },
         body: JSON.stringify({
           email: emailAddress,
@@ -212,16 +222,6 @@ class OnboardingStore extends MailspringStore {
       //   AppEnv.config.set('invite.email', account.emailAddress);
       //   this._onMoveToPage('sorry');
       //   return;
-      // }
-
-      // register the first account to edison account
-      // const oldAccountsNum = AccountStore.accountIds().length;
-      // if (oldAccountsNum === 1) {
-      //   const syncAccount = AccountStore.syncAccount();
-      //   if (!syncAccount) {
-      //     // the first account auto to register edison account
-      //     EdisonAccountRest.register(account.id);
-      //   }
       // }
       this._onMoveToPage('account-add-another');
     } else {

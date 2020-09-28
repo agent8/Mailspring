@@ -66,10 +66,10 @@ class AccountBasicSettingsForm extends React.Component {
       errorFieldNames.push('password');
       errorMessage = 'Please provide a password for your account.';
     }
-    if (account.provider === 'exchange' && !account.settings.exchangeServer) {
-      errorFieldNames.push('exchangeServer');
-      errorMessage = 'Please provide your exchange server.';
-    }
+    // if (account.provider === 'exchange' && !account.settings.exchangeServer) {
+    //   errorFieldNames.push('exchangeServer');
+    //   errorMessage = 'Please provide your exchange server.';
+    // }
 
     return { errorMessage, errorFieldNames, populated: true };
   };
@@ -130,9 +130,9 @@ class AccountBasicSettingsForm extends React.Component {
           type="password"
           {...this.props}
         />
-        {provider === 'exchange' ? (
+        {/* {provider === 'exchange' ? (
           <FormField field="settings.exchangeServer" title="Exchange Server" {...this.props} />
-        ) : null}
+        ) : null} */}
       </form>
     );
   }
