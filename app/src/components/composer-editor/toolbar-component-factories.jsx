@@ -6,6 +6,7 @@ import { RetinaImg } from 'mailspring-component-kit';
 import { Actions } from 'mailspring-exports';
 import FontSizePopover from './font-size-popover';
 import ButtonValuePickerPopover from './button-value-picker-popover';
+import { BLOCK_CONFIG } from './base-block-plugins';
 
 // Helper Functions
 
@@ -102,6 +103,59 @@ export function applyValueForMark(value, type, markValue) {
       },
     });
   }
+  if (!change.value.selection.isCollapsed) {
+    let startBlock, endBlock, includeStart, includeEnd;
+    const startOffset = change.value.selection.startOffset;
+    includeEnd = true;
+    includeStart = startOffset === 1;
+    if (!change.value.selection.isBackward) {
+      startBlock = change.value.anchorBlock;
+      endBlock = change.value.focusBlock;
+    } else {
+      endBlock = change.value.anchorBlock;
+      startBlock = change.value.focusBlock;
+    }
+    if (startBlock && endBlock) {
+      const startParentBlock = change.value.document.getParent(startBlock.key);
+      const endParentBlock = change.value.document.getParent(endBlock.key);
+      const blocks = change.value.blocks;
+      if (blocks && blocks.size > 0) {
+        for (let i = 0; i < blocks.size; i++) {
+          const block = blocks.get(i);
+          if (block) {
+            const ancestors = change.value.document.getAncestors(block.key);
+            if (ancestors && ancestors.size > 0) {
+              for (let k = ancestors.size - 1; k >= 0; k--) {
+                const item = ancestors.get(k);
+                if (item && item.type === BLOCK_CONFIG.list_item.type) {
+                  if (item.key === startParentBlock.key && !includeStart) {
+                    break;
+                  } else if (item.key === endParentBlock.key && !includeEnd) {
+                    break;
+                  }
+                  const newBlock = item.data
+                    ? {
+                        fontSize: item.data.get('fontSize'),
+                        fontFamily: item.data.get('fontFamily'),
+                        color: item.data.get('color)'),
+                      }
+                    : {};
+                  if (type === 'size') {
+                    newBlock.fontSize = markValue;
+                  } else if (type === 'face') {
+                    newBlock.fontFamily = markValue;
+                  } else if (type === 'color') {
+                    newBlock.color = markValue;
+                  }
+                  change.setNodeByKey(item.key, { data: newBlock });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   return change;
 }
@@ -133,7 +187,7 @@ export function BuildToggleButton({
         <button
           className={`${className} ${active ? 'active' : ''} ${
             hideWhenCrowded ? 'hide-when-crowded' : ''
-            }`}
+          }`}
           onMouseDown={onMouseDown}
         >
           <RetinaImg
@@ -149,7 +203,7 @@ export function BuildToggleButton({
       <button
         className={`${className} ${active ? 'active' : ''} ${
           hideWhenCrowded ? 'hide-when-crowded' : ''
-          }`}
+        }`}
         onMouseDown={onMouseDown}
       >
         <i title={type} className={iconClass} />
@@ -291,10 +345,10 @@ export function BuildMarkButtonWithValuePicker(
               <i className={config.iconClassOn} />
             </button>
           ) : (
-              <button onMouseDown={this.onPrompt}>
-                <i className={config.iconClassOff} />
-              </button>
-            )}
+            <button onMouseDown={this.onPrompt}>
+              <i className={config.iconClassOff} />
+            </button>
+          )}
           {/*{expanded && (*/}
           {/*  <div className="dropdown">*/}
           {/*    <input*/}
@@ -398,12 +452,12 @@ export function BuildFontSizePicker(config) {
   return class FontPicker extends React.Component {
     constructor(props) {
       super(props);
-      config.default = AppEnv.config.get('core.fontsize');
+      config.default = (props.defaultValues || {}).fontSize || AppEnv.config.get('core.fontsize');
     }
     _onSetValue = item => {
-      AppEnv.config.set('core.fontsize', item)
+      AppEnv.config.set('core.fontsize', item);
       const { onChange, value } = this.props;
-      let markValue = item
+      let markValue = item;
       if (!(typeof config.options[0].value === 'string')) {
         markValue = markValue / 1;
       }
@@ -417,7 +471,10 @@ export function BuildFontSizePicker(config) {
       );
     }
     onClick = e => {
-      const value = getActiveValueForMark(this.props.value, config.type) || config.default;
+      const value =
+        getActiveValueForMark(this.props.value, config.type) ||
+        (this.props.draftDefaultValues && this.props.draftDefaultValues.fontSize) ||
+        config.default;
       Actions.openPopover(
         <FontSizePopover
           options={config.options}
@@ -431,6 +488,15 @@ export function BuildFontSizePicker(config) {
         }
       );
     };
+    // _setFontSizeIfMissing() {
+    //   const value = getActiveValueForMark(this.props.value, config.type);
+    //   if (!value && this.props.value && this.props.onChange) {
+    //     console.log('setting font size to user default');
+    //     this.props.onChange(
+    //       applyValueForMark(this.props.value, config.type, AppEnv.config.get('core.fontsize'))
+    //     );
+    //   }
+    // }
 
     render() {
       return (
@@ -452,7 +518,7 @@ export function BuildFontPicker(config) {
   return class FontPicker extends React.Component {
     constructor(props) {
       super(props);
-      config.default = AppEnv.config.get('core.fontface')
+      config.default = (props.defaultValues || {}).fontFace || AppEnv.config.get('core.fontface');
     }
     _onSetValue = e => {
       AppEnv.config.set('core.fontface', e.target.value);
@@ -474,7 +540,7 @@ export function BuildFontPicker(config) {
 
     render() {
       const value = getActiveValueForMark(this.props.value, config.type) || config.default;
-      const displayed = config.convert(value);
+      const displayed = config.convert(value, config.default);
 
       return (
         <button

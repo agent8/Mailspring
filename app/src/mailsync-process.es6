@@ -36,7 +36,7 @@ export const LocalizedErrorStrings = {
     'A Gmail application-specific password is required.',
   ErrorOutlookLoginViaWebBrowser: 'The Outlook server said you must sign in via a web browser.',
   ErrorNeedsConnectToWebmail: 'The server said you must sign in via your webmail.',
-  ErrorNoValidServerFound: 'No valid server found.',
+  ErrorNoValidServerFound: 'Server not found.',
   ErrorAuthenticationRequired: 'Authentication required.',
 
   // sending related
@@ -63,6 +63,7 @@ export const mailSyncView = {
   THREAD: 'thread',
   MESSAGE: 'message',
 };
+export const maxBufferLength = 5000;
 
 export default class MailsyncProcess extends EventEmitter {
   constructor({ configDirPath, resourcePath, verbose, disableThread }) {
@@ -272,10 +273,7 @@ export default class MailsyncProcess extends EventEmitter {
         var rs = new Readable();
         rs.push(`${JSON.stringify(this.account)}\n${JSON.stringify(this.identity)}\n`);
         rs.push(null);
-        rs.pipe(
-          this._proc.stdin,
-          { end: false }
-        );
+        rs.pipe(this._proc.stdin, { end: false });
         if (this.isInRenderer() && AppEnv.enabledToNativeLog) {
           console.log('--------------------To native---------------');
           this.logDebug(
@@ -298,10 +296,7 @@ export default class MailsyncProcess extends EventEmitter {
         }
         rs.push(siftAccountString);
         rs.push(null);
-        rs.pipe(
-          this._proc.stdin,
-          { end: false }
-        );
+        rs.pipe(this._proc.stdin, { end: false });
         rs.on('end', () => {
           console.log('-----first message send-------');
           this.syncInitilMessageSend = true;
@@ -449,7 +444,23 @@ export default class MailsyncProcess extends EventEmitter {
     }
     if (this._proc.stderr) {
       this._proc.stderr.on('data', data => {
-        errBuffer += data.toString();
+        if (!errBuffer) {
+          errBuffer = data.toString();
+        }
+        if (errBuffer && errBuffer.length < maxBufferLength) {
+          errBuffer += data.toString();
+        } else {
+          errBuffer = data.toString();
+          try {
+            this.reportError(
+              new Error('error Buffer exceeded'),
+              { errorData: { newData: data.toString() } },
+              { noAppConfig: true }
+            );
+          } catch (e) {
+            this.logError(`Error while printing excess error buffer, ${e}`);
+          }
+        }
       });
     }
     this._proc.on('error', err => {

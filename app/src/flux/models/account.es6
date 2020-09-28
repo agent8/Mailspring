@@ -203,6 +203,9 @@ export default class Account extends ModelWithMetadata {
   isExchange() {
     return (this.provider || '').includes('exchange');
   }
+  isOnmail() {
+    return (this.provider || '').includes('onmail');
+  }
   isMyEmail(emailAddress) {
     return this.getAllEmails().includes(emailAddress);
   }
@@ -238,7 +241,7 @@ export default class Account extends ModelWithMetadata {
 
   canArchiveThreads() {
     CategoryStore = CategoryStore || require('../stores/category-store').default;
-    return CategoryStore.getArchiveCategory(this);
+    return CategoryStore.getArchiveCategory(this) || (this.provider || '') === 'gmail';
   }
 
   canTrashThreads() {

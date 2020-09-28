@@ -1,6 +1,7 @@
 import _ from 'underscore';
 import { React, ReactDOM } from 'mailspring-exports';
 import { InjectedComponentSet } from 'mailspring-component-kit';
+import Flexbox from '../../../src/components/flexbox';
 
 const ROLE = 'RootSidebar:Notifications';
 
@@ -44,9 +45,9 @@ export default class NotifWrapper extends React.Component {
         className="notifications"
         style={{
           position: 'absolute',
-          bottom: 37
+          bottom: 25,
+          height: 'fit-content',
         }}
-        height=""
         matching={{ role: ROLE }}
         direction="column"
         containersRequired={false}

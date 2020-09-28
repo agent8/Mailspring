@@ -473,6 +473,7 @@ class PreferencesAccountDetails extends Component {
     const aliasPlaceholder = this._makeAlias(
       `Your Alias <alias@${account.emailAddress.split('@')[1]}>`
     );
+    const isExchange = AccountStore.isExchangeAccount(account);
 
     return (
       <div className="account-details">
@@ -535,6 +536,18 @@ class PreferencesAccountDetails extends Component {
               </div>
             </div>
           ) : null}
+          {isExchange ? null : (
+            <div className="item">
+              <label htmlFor={'Sender Name'}>Sender Name</label>
+              <input
+                type="text"
+                value={account.name}
+                onBlur={this._saveChanges}
+                placeholder="e.g. John Smith"
+                onChange={this._onAccountNameUpdated}
+              />
+            </div>
+          )}
 
           <AutoaddressControl
             autoaddress={account.autoaddress}

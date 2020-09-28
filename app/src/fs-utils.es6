@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Utils from './flux/models/utils';
-
+import { zip } from 'compressing';
 export function dirExists(dirPath) {
   if (fs.existsSync(dirPath)) {
     const stat = fs.lstatSync(dirPath);
@@ -12,6 +12,34 @@ export function dirExists(dirPath) {
     }
   } else {
     return { exists: false, errorMsg: `directory: ${dirPath} doesn't exist` };
+  }
+}
+
+export function deleteFolder(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    return;
+  }
+  const files = fs.readdirSync(dirPath);
+  files.forEach(f => {
+    const filePath = path.join(dirPath, f);
+    if (fs.lstatSync(filePath).isDirectory()) {
+      deleteFolder(filePath);
+    } else {
+      fs.unlinkSync(filePath);
+    }
+  });
+  fs.rmdirSync(dirPath);
+}
+
+export function deleteFileOrFolder(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+  const stat = fs.lstatSync(filePath);
+  if (stat.isDirectory()) {
+    deleteFolder(filePath);
+  } else {
+    fs.unlinkSync(filePath);
   }
 }
 
@@ -44,6 +72,25 @@ export function autoGenerateFileName(dirPath, fileName) {
   });
   const nextNum = findMinNotInArr(fileNums);
   return `${basename}(${nextNum})${extname}`;
+}
+
+export function autoGenerateNameByNameList(nameList, name) {
+  if (!nameList || nameList.indexOf(name) < 0) {
+    return name;
+  }
+  const reg = new RegExp(`^[0-9]+$`);
+  const fileNums = [];
+  nameList.forEach(nameItem => {
+    const num = nameItem.replace(name, '');
+    if (reg.test(num)) {
+      if (Number(num) && Number(num) > 0) {
+        fileNums.push(Number(num));
+      }
+    }
+  });
+
+  const nextNum = findMinNotInArr(fileNums);
+  return `${name}${nextNum}`;
 }
 
 // this func is for to find the min positive integer that not in the array
@@ -455,4 +502,34 @@ export function styleHtml(html_source, indent_size, indent_character, max_char) 
     multi_parser.last_text = multi_parser.token_text;
   }
   return multi_parser.output.join('');
+}
+
+export async function compressDir(dirPath) {
+  return new Promise((resolve, reject) => {
+    const destDirName = path.dirname(dirPath);
+    const fileName = path.join(destDirName, `${path.basename(dirPath)}.zip`);
+    zip
+      .compressDir(dirPath, fileName)
+      .then(() => {
+        resolve(fileName);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
+}
+
+export async function unCompressDir(filePath) {
+  return new Promise((resolve, reject) => {
+    const destDirName = path.dirname(filePath);
+    const dirName = path.join(destDirName, path.basename(filePath, '.zip'));
+    zip
+      .uncompress(filePath, destDirName)
+      .then(() => {
+        resolve(dirName);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
 }

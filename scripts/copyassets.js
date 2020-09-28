@@ -31,19 +31,19 @@ const file_mappings = [
   ],
   [
     'veyron-design/images/desktop/preference-data-false.png',
-    './app/internal_packages/onboarding/preference-data-false.png',
+    './app/static/images/onboarding/preference-data-false.png',
   ],
   [
     'veyron-design/images/desktop/preference-data-false-dark.png',
-    './app/internal_packages/onboarding/preference-data-false-dark.png',
+    './app/static/images/onboarding/preference-data-false-dark.png',
   ],
   [
     'veyron-design/images/desktop/preference-data-true.png',
-    './app/internal_packages/onboarding/preference-data-true.png',
+    './app/static/images/onboarding/preference-data-true.png',
   ],
   [
     'veyron-design/images/desktop/preference-data-true-dark.png',
-    './app/internal_packages/onboarding/preference-data-true-dark.png',
+    './app/static/images/onboarding/preference-data-true-dark.png',
   ],
   // preferences
   [
@@ -77,6 +77,14 @@ const file_mappings = [
   [
     'veyron-design/images/desktop/twocolumn-grey.png',
     './app/static/images/preferences/appearance/appearance-mode-split.png',
+  ],
+  [
+    'veyron-design/images/desktop/twocolumnhorizontal-blue.png',
+    './app/static/images/preferences/appearance/appearance-mode-split-v-active.png',
+  ],
+  [
+    'veyron-design/images/desktop/twocolumnhorizontal-grey.png',
+    './app/static/images/preferences/appearance/appearance-mode-split-v.png',
   ],
   ['veyron-design/images/desktop/profile-hide*.png', './app/static/images/preferences/appearance/'],
   ['veyron-design/images/desktop/profile-show*.png', './app/static/images/preferences/appearance/'],
@@ -161,6 +169,22 @@ const file_mappings = [
     './app/static/images/preferences/edison-account/device-tablet.png',
   ],
   [
+    'veyron-design/images/ios/verifying-account.png',
+    './app/static/images/preferences/edison-account/verifying-account.png',
+  ],
+  [
+    'veyron-design/images/ios/verifying-account-dark.png',
+    './app/static/images/preferences/edison-account/verifying-account-dark.png',
+  ],
+  [
+    'veyron-design/images/ios/welcome-back.png',
+    './app/static/images/preferences/edison-account/welcome-back.png',
+  ],
+  [
+    'veyron-design/images/ios/welcome-back-dark.png',
+    './app/static/images/preferences/edison-account/welcome-back-dark.png',
+  ],
+  [
     'veyron-design/images/desktop/focused-inbox.png',
     './app/static/images/notification/focused-inbox.png',
   ],
@@ -176,7 +200,7 @@ const file_mappings = [
 
 let errorCommands = [];
 function copyIt(from, to) {
-  const command = `cp ../${from} ${to}`;
+  const command = `cp ../../${from} ${to}`;
   try {
     const result = child_process.execSync(command);
   } catch (e) {

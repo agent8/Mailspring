@@ -1,4 +1,5 @@
-import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { React, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { ListDetailContainer } from 'mailspring-component-kit';
 
 import ThreadList from './thread-list';
 import ThreadListToolbar from './thread-list-toolbar';
@@ -6,6 +7,7 @@ import ThreadListEmptyFolderBar from './thread-list-empty-folder-bar';
 import MessageListToolbar from './message-list-toolbar';
 import SelectedItemsStack from './selected-items-stack';
 import HiddenThreadListToolbar from './hidden-thread-list-toolbar';
+import MessageList from '../../message-list/lib/message-list';
 
 import {
   ThreadListToolbarButtons,
@@ -15,6 +17,13 @@ import {
   HiddenThreadListToolbarButtons,
 } from './thread-toolbar-buttons';
 
+class NewThreadList extends React.Component {
+  static displayName = 'ThreadList';
+  render() {
+    return <ListDetailContainer listComponent={ThreadList} detailComponent={MessageList} />;
+  }
+}
+
 export function activate() {
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(ThreadListEmptyFolderBar, {
@@ -22,7 +31,7 @@ export function activate() {
       role: 'ThreadListEmptyFolderBar',
     });
 
-    ComponentRegistry.register(ThreadList, {
+    ComponentRegistry.register(NewThreadList, {
       location: WorkspaceStore.Location.ThreadList,
     });
 
@@ -66,7 +75,7 @@ export function activate() {
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(ThreadList);
+  ComponentRegistry.unregister(ThrNewThreadListeadList);
   ComponentRegistry.unregister(SelectedItemsStack);
   ComponentRegistry.unregister(ThreadListToolbar);
   ComponentRegistry.unregister(HiddenThreadListToolbar);

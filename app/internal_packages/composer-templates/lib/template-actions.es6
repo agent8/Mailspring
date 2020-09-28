@@ -1,15 +1,12 @@
 import Reflux from 'reflux';
 
 const TemplateActions = Reflux.createActions([
-  'insertTemplateId',
-  'createTemplate',
+  'addTemplate',
+  'updateTemplate',
+  'removeTemplate',
   'showTemplates',
-  'deleteTemplate',
-  'renameTemplate',
-  'changeTemplateField',
-  'updateTemplateBody',
-  'addAttachmentsToTemplate',
-  'removeAttachmentsFromTemplate',
+  'insertTemplateToMessage',
+  'createTemplateByMessage',
 ]);
 
 for (const key of Object.keys(TemplateActions)) {

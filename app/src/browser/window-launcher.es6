@@ -28,7 +28,7 @@ export default class WindowLauncher {
     config,
   }) {
     this.defaultWindowOpts = {
-      frame: process.platform !== 'darwin',
+      frame: true,
       toolbar: process.platform !== 'linux',
       hidden: false,
       devMode,
@@ -39,6 +39,7 @@ export default class WindowLauncher {
       resourcePath,
       configDirPath,
       width: 880,
+      titleBarStyle: 'hidden',
     };
     this.config = config;
     this.onCreatedHotWindow = onCreatedHotWindow;

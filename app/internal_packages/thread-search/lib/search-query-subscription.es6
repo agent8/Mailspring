@@ -9,6 +9,7 @@ import {
   MutableQuerySubscription,
   IMAPSearchQueryBackend,
   IMAPSearchTask,
+  Constant,
 } from 'mailspring-exports';
 
 const utf7 = require('utf7').imap;
@@ -62,9 +63,10 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     }
     dbQuery = dbQuery
       .background()
+      .setQueryType(Constant.QUERY_TYPE.SEARCH_PERSPECTIVE)
       .where({ state: 0 })
       .order(Thread.attributes.lastMessageTimestamp.descending())
-      .limit(1000);
+      .limit(500);
     this._performRemoteSearch({
       accountIds: this._accountIds,
       parsedQuery,

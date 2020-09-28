@@ -1,6 +1,7 @@
 import Attributes from '../attributes';
 import Task from './task';
 
+const isMessageView = AppEnv.isDisableThreading();
 export default class MakeOtherTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
     aid: Attributes.String({
@@ -12,16 +13,17 @@ export default class MakeOtherTask extends Task {
     messageIds: Attributes.Collection({
       modelKey: 'messageIds',
     }),
-    effectedThreadIds: Attributes.Collection({
-      modelKey: 'effectedThreadIds',
-    }),
   });
-  constructor({ accountId, threadIds, messageIds, effectedThreadIds, ...rest } = {}) {
+  constructor({ accountId, threadIds, messageIds, ...rest } = {}) {
     super(rest);
     this.aid = accountId;
     this.threadIds = threadIds || [];
     this.messageIds = messageIds || [];
-    this.effectedThreadIds = effectedThreadIds || [];
+    if (isMessageView) {
+      const messageIdSet = new Set([...this.threadIds, ...this.messageIds]);
+      this.threadIds = [];
+      this.messageIds = [...messageIdSet];
+    }
   }
 
   get accountId() {

@@ -29,6 +29,7 @@ export default class EmailFrame extends React.Component {
     setTrackers: PropTypes.func,
     viewOriginalEmail: PropTypes.bool,
     downloads: PropTypes.object,
+    pending: PropTypes.bool,
   };
 
   background = {
@@ -133,6 +134,22 @@ export default class EmailFrame extends React.Component {
       doc.write(`<style>${styles}</style>`);
     }
     doc.write(`<style> body {display: block!important; visibility: visible!important;} </style>`);
+    let defaultStyles = '';
+    if (this.props.pending && this.props.message.draft) {
+      try {
+        let defaultValues;
+        if ('string' === typeof this.props.message.defaultValues) {
+          defaultValues = JSON.parse(this.props.message.defaultValues);
+        } else {
+          defaultValues = this.props.message.defaultValues || {};
+        }
+        const defaultSize = defaultValues.fontSize || Constant.Composer.defaultFontSize;
+        const defaultFont = defaultValues.fontFace || Constant.Composer.defaultFontFamily;
+        defaultStyles = `font-size:${defaultSize};font-face:${defaultFont};`;
+      } catch (e) {
+        console.error(e, this.props.message.defaultValues);
+      }
+    }
     // if (isPlainBody) {
     //   doc.write(`
     //   <style>
@@ -145,7 +162,7 @@ export default class EmailFrame extends React.Component {
     doc.write(
       `<div id='inbox-html-wrapper' class="${process.platform} ${
         this.props.viewOriginalEmail ? 'original' : ''
-      }">${this._emailContent(isPlainBody)}</div>`
+      }" style="${defaultStyles}">${this._emailContent(isPlainBody)}</div>`
     );
     doc.close();
 
@@ -191,6 +208,12 @@ export default class EmailFrame extends React.Component {
     this._onMustRecalculateFrameHeight();
   };
 
+  _openLink = (e, node) => {
+    if (node.href) {
+      AppEnv.trackingEvent('Open-Link');
+    }
+  };
+
   _onLoad = () => {
     if (!this._mounted) {
       return;
@@ -208,6 +231,14 @@ export default class EmailFrame extends React.Component {
     if (inlineImgs && inlineImgs.length > 0) {
       for (let i = 0; i < inlineImgs.length; i++) {
         inlineImgs[i].ondblclick = this._openInlineImage;
+      }
+    }
+
+    // add traciking for clicking link
+    const links = doc.querySelectorAll('a');
+    if (links && links.length > 0) {
+      for (let link of links) {
+        link.onclick = e => this._openLink(e, link);
       }
     }
 

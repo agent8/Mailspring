@@ -1,7 +1,7 @@
 import React from 'react';
 import SoftBreak from 'slate-soft-break';
 import EditList from 'slate-edit-list';
-import AutoReplace from 'slate-auto-replace';
+// import AutoReplace from 'slate-auto-replace';
 import { BuildToggleButton } from './toolbar-component-factories';
 
 const Handlers = require('./slate-edit-code/handlers');
@@ -348,7 +348,19 @@ export const BLOCK_CONFIG = {
   list_item: {
     type: 'list_item',
     tagNames: ['li'],
-    render: props => <li {...props.attributes}>{props.children}</li>,
+    render: props => {
+      const style = {};
+      if (props.node && props.node.data && props.node.data.size > 0) {
+        style.fontSize = props.node.data.get('fontSize');
+        style.fontFamily = props.node.data.get('fontFamily');
+        style.color = props.node.data.get('color');
+      }
+      return (
+        <li {...props.attributes} style={style}>
+          {props.children}
+        </li>
+      );
+    },
   },
   heading_one: {
     type: 'heading_one',
@@ -408,7 +420,23 @@ const rules = [
       // return block
       if (config) {
         const className = el.getAttribute('class');
-        const data = className ? { className } : undefined;
+        let data = className ? { className } : undefined;
+        if (config.type === BLOCK_CONFIG.list_item.type) {
+          if (el.style) {
+            if (!data) {
+              data = {};
+            }
+            if (el.style.font) {
+              data.fontFamil = el.style.fontFamily;
+            }
+            if (el.style.color) {
+              data.color = el.style.color;
+            }
+            if (el.style.fontSize) {
+              data.fontSize = el.style.fontSize;
+            }
+          }
+        }
         return {
           object: 'block',
           type: config.type,
@@ -632,12 +660,12 @@ export default [
   //   },
   // }),
   // "1. " start new lists
-  AutoReplace({
-    onlyIn: [BLOCK_CONFIG.div.type, BLOCK_CONFIG.div.type],
-    trigger: ' ',
-    before: /^([1]{1}[.]{1})$/,
-    transform: (transform, e, matches) => {
-      EditListPlugin.changes.wrapInList(transform, BLOCK_CONFIG.ol_list.type);
-    },
-  }),
+  // AutoReplace({
+  //   onlyIn: [BLOCK_CONFIG.div.type, BLOCK_CONFIG.div.type],
+  //   trigger: ' ',
+  //   before: /^([1]{1}[.]{1})$/,
+  //   transform: (transform, e, matches) => {
+  //     EditListPlugin.changes.wrapInList(transform, BLOCK_CONFIG.ol_list.type);
+  //   },
+  // }),
 ];

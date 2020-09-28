@@ -29,6 +29,7 @@ export default class SheetContainer extends React.Component {
     ipcRenderer.on('application-activate', this._onAppActive);
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
     if (AppEnv.isMainWindow()) {
+      AppEnv.trackingEvent('App-Open');
       this._checkDBVersion();
     }
   }
@@ -135,7 +136,6 @@ export default class SheetContainer extends React.Component {
           top: 0,
         }}
         className="sheet-toolbar"
-        onDoubleClick={this.toggleMaximize}
       >
         <Toolbar
           data={rootSheet}
@@ -204,8 +204,10 @@ export default class SheetContainer extends React.Component {
 
     const validClass = this.isValidUser() ? '' : 'not-valid';
 
-    return (
+    return [
+      <div key="draggable-bar" className="draggable-bar" onDoubleClick={this.toggleMaximize}></div>,
       <Flexbox
+        key="container"
         direction="column"
         className={`layout-mode-${this.state.mode} ${validClass}`}
         style={{ overflow: 'hidden' }}
@@ -257,7 +259,7 @@ export default class SheetContainer extends React.Component {
             </button>
           </div>
         )}
-      </Flexbox>
-    );
+      </Flexbox>,
+    ];
   }
 }

@@ -14,6 +14,13 @@
     rxjs "^5.0.0-beta.12"
     xmlhttprequest "^1.8.0"
 
+"@atlaskit/activity-provider@^2.0.0":
+  version "2.1.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/activity-provider/download/@atlaskit/activity-provider-2.1.0.tgz#146eaa34adbb88e0f69b4cad33c4ffa90ef4b2eb"
+  integrity sha1-FG6qNK27iOD2m0ytM8T/qQ70sus=
+  dependencies:
+    "@atlaskit/util-service-support" "^6.0.0"
+
 "@atlaskit/activity@^1.0.1":
   version "1.0.3"
   resolved "https://registry.npmjs.org/@atlaskit/activity/-/activity-1.0.3.tgz#cdb564dd7ee59c85a684d5acf0ab221fa7eebbab"
@@ -22,331 +29,252 @@
     "@atlaskit/util-service-support" "2.0.4"
     tslib "^1.7.1"
 
-"@atlaskit/adf-schema@^9.0.1", "@atlaskit/adf-schema@^9.0.2":
-  version "9.0.2"
-  resolved "https://registry.npm.taobao.org/@atlaskit/adf-schema/download/@atlaskit/adf-schema-9.0.2.tgz#dd40a7ba5ff2a0ab489498145e80d412bc882303"
-  integrity sha1-3UCnul/yoKtIlJgUXoDUEryIIwM=
+"@atlaskit/adf-schema@^12.1.0", "@atlaskit/adf-schema@^12.2.0":
+  version "12.2.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/adf-schema/download/@atlaskit/adf-schema-12.2.1.tgz#2477b6bf5ba8edec59c8b5423d417015d08ba07f"
+  integrity sha1-JHe2v1uo7exZyLVCPUFwFdCLoH8=
   dependencies:
     "@types/linkify-it" "^2.0.4"
     "@types/prosemirror-model" "^1.7.2"
     "@types/prosemirror-state" "^1.2.0"
-    "@types/prosemirror-view" "^1.9.0"
     css-color-names "0.0.4"
     linkify-it "^2.0.3"
+    memoize-one "^5.1.0"
     prosemirror-model "^1.7.0"
-    prosemirror-view "^1.9.12"
+    prosemirror-tables "^0.10.0"
+    prosemirror-transform "^1.2.5"
     tslib "^1.9.3"
 
-"@atlaskit/adf-utils@^9.2.0":
-  version "9.2.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/adf-utils/download/@atlaskit/adf-utils-9.2.0.tgz#4b05d63ff54159962978e02686fef4ffed4d4ac7"
-  integrity sha1-SwXWP/VBWZYpeOAmhv70/+1NSsc=
+"@atlaskit/adf-utils@^10.1.0", "@atlaskit/adf-utils@^10.2.0":
+  version "10.2.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/adf-utils/download/@atlaskit/adf-utils-10.2.2.tgz#9ef665dddf771194c2a614227b597709c9cefbb9"
+  integrity sha1-nvZl3d93EZTCphQie1l3CcnO+7k=
   dependencies:
-    "@atlaskit/adf-schema" "^9.0.1"
+    "@atlaskit/adf-schema" "^12.2.0"
+    tslib "^2.0.0"
+
+"@atlaskit/analytics-gas-types@^5.0.0":
+  version "5.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/analytics-gas-types/download/@atlaskit/analytics-gas-types-5.0.1.tgz#7ad2db5b12c36f0d414d964361d6cb2d3ec55620"
+  integrity sha1-etLbWxLDbw1BTZZDYdbLLT7FViA=
+  dependencies:
+    "@atlaskit/analytics-next" "^7.0.0"
+    tslib "^2.0.0"
+
+"@atlaskit/analytics-listeners@^7.0.0":
+  version "7.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/analytics-listeners/download/@atlaskit/analytics-listeners-7.0.3.tgz#5f13a881fd8cf205a4953b3b6070af8d15598852"
+  integrity sha1-XxOogf2M8gWklTs7YHCvjRVZiFI=
+  dependencies:
+    "@atlaskit/analytics-gas-types" "^5.0.0"
+    "@atlaskit/analytics-namespaced-context" "^5.1.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    lodash "^4.17.15"
+    tslib "^2.0.0"
+
+"@atlaskit/analytics-namespaced-context@^5.0.0", "@atlaskit/analytics-namespaced-context@^5.1.0":
+  version "5.1.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/analytics-namespaced-context/download/@atlaskit/analytics-namespaced-context-5.1.0.tgz#19c0399bb2df4df597cbb10bba57f16b9e35e582"
+  integrity sha1-GcA5m7LfTfWXy7ELulfxa5415YI=
+  dependencies:
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/media-common" "^2.1.0"
     tslib "^1.9.3"
 
-"@atlaskit/analytics-gas-types@^4.0.13":
-  version "4.0.13"
-  resolved "https://registry.npmjs.org/@atlaskit/analytics-gas-types/-/analytics-gas-types-4.0.13.tgz#0d8a12a8ede8a9253e7b20d38aaaf36fe3a60ab0"
-  integrity sha512-oD7wCFhALUWuyBrMIWQHK92BANgZgV29FZrLrhurN/6fs890SPmE7P3fMobkJU8qdF6wRfaFVerxK70kZ2LUEQ==
+"@atlaskit/analytics-next-stable-react-context@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/analytics-next-stable-react-context/download/@atlaskit/analytics-next-stable-react-context-1.0.1.tgz#93c4c7a1a35f4ab606d727af443f49f0842fd96f"
+  integrity sha1-k8THoaNfSrYG1yevRD9J8IQv2W8=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/analytics-listeners@^6.3.0":
-  version "6.3.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/analytics-listeners/download/@atlaskit/analytics-listeners-6.3.0.tgz#9d3230372d43ea67f7b36f5406bf532ca891c8d3"
-  integrity sha1-nTIwNy1D6mf3s29UBr9TLKiRyNM=
+"@atlaskit/analytics-next@^7.0.0":
+  version "7.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/analytics-next/download/@atlaskit/analytics-next-7.0.3.tgz#077592c99690b23f78f98870821964cd2c59609f"
+  integrity sha1-B3WSyZaQsj94+YhwghlkzSxZYJ8=
   dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-namespaced-context" "^4.2.0"
-    "@atlaskit/analytics-next" "^6.3.6"
-    lodash.last "^3.0.0"
-    lodash.merge "^4.6.2"
-    tslib "^1.9.3"
-
-"@atlaskit/analytics-namespaced-context@^4.2.0":
-  version "4.2.0"
-  resolved "https://registry.npmjs.org/@atlaskit/analytics-namespaced-context/-/analytics-namespaced-context-4.2.0.tgz#52da0c87cb205666c7ae2accd75d0b5980968eae"
-  integrity sha512-otwXLyZzXGiJOP/BuAV4sxZCKUyEJiR2xM2k7KwJ/2BpobsWOyrTTYKc/eZb5myQemNA39pd9KiwRIYzQDnxYA==
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.6"
-    tslib "^1.9.3"
-
-"@atlaskit/analytics-next@^6.3.5", "@atlaskit/analytics-next@^6.3.6":
-  version "6.3.6"
-  resolved "https://registry.npmjs.org/@atlaskit/analytics-next/-/analytics-next-6.3.6.tgz#447ddbd1eb80f7228871570d39aad0b0d91636c9"
-  integrity sha512-LeByMgFN19rU8Awl+OG+9iERwxv2bg/nPLYV6anvPkL4H9IGgDu9+hLgJZ2muCQXN5AfamNMcxtU4LPGcDKRdQ==
-  dependencies:
+    "@atlaskit/analytics-next-stable-react-context" "1.0.1"
     prop-types "^15.5.10"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
     use-memo-one "^1.1.1"
 
-"@atlaskit/avatar-group@^5.1.1":
-  version "5.1.1"
-  resolved "https://registry.npmjs.org/@atlaskit/avatar-group/-/avatar-group-5.1.1.tgz#7ac06134e396c6b3840e57500e57784ded297dca"
-  integrity sha512-DqVP/1reT/Jr5bGJIQYnp99XMqOhyRYMiL0O6MFfVWW1raUn572oqRWQo1LEzj6Blm+3p3XPzzf/dthXQCLnwQ==
+"@atlaskit/avatar-group@^8.0.0":
+  version "8.0.6"
+  resolved "https://registry.npm.taobao.org/@atlaskit/avatar-group/download/@atlaskit/avatar-group-8.0.6.tgz#e5b17576e974e393aa70b011a74c4d5888bdd25a"
+  integrity sha1-5bF1dul045OqcLARp0xNWIi90lo=
   dependencies:
-    "@atlaskit/avatar" "^17.1.9"
-    "@atlaskit/dropdown-menu" "^9.0.2"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
+    "@atlaskit/avatar" "^20.0.0"
+    "@atlaskit/menu" "^0.6.0"
+    "@atlaskit/popup" "^1.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
+    "@emotion/core" "^10.0.9"
+    tslib "^2.0.0"
 
-"@atlaskit/avatar-group@^5.1.2":
-  version "5.1.2"
-  resolved "https://registry.npm.taobao.org/@atlaskit/avatar-group/download/@atlaskit/avatar-group-5.1.2.tgz#2c34533dda57dcefd3cf05b8f1dc4ff40e0d0d63"
-  integrity sha1-LDRTPdpX3O/TzwW48dxP9A4NDWM=
+"@atlaskit/avatar@^20.0.0":
+  version "20.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/avatar/download/@atlaskit/avatar-20.0.3.tgz#7f7bb473a76995f13bd8ec3c4ae077310bff0ea3"
+  integrity sha1-f3u0c6dplfE72Ow8SuB3MQv/DqM=
   dependencies:
-    "@atlaskit/avatar" "^17.1.10"
-    "@atlaskit/dropdown-menu" "^9.0.3"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
+    "@emotion/core" "^10.0.9"
+    tslib "^2.0.0"
 
-"@atlaskit/avatar@^17.1.10":
-  version "17.1.10"
-  resolved "https://registry.npm.taobao.org/@atlaskit/avatar/download/@atlaskit/avatar-17.1.10.tgz#1eb1e2cf02f7500a40c1e16446d3e5be24a839a1"
-  integrity sha1-HrHizwL3UApAweFkRtPlviSoOaE=
+"@atlaskit/blanket@^11.0.0":
+  version "11.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/blanket/download/@atlaskit/blanket-11.0.1.tgz#46324542036beed5d6b3a800ea5146c00809ea90"
+  integrity sha1-RjJFQgNr7tXWs6gA6lFGwAgJ6pA=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/theme" "^9.5.1"
-    "@atlaskit/tooltip" "^15.2.6"
-    tslib "^1.9.3"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    tslib "^2.0.0"
 
-"@atlaskit/avatar@^17.1.9":
-  version "17.1.9"
-  resolved "https://registry.npmjs.org/@atlaskit/avatar/-/avatar-17.1.9.tgz#cf452ce32040977a355246b2eb39f58572feac03"
-  integrity sha512-DZM9OVNn1XHPqx+1JaOr99dBPPMkXwlB1eyC6NkJnFuW3jdN7JoqWu9xT/eiyjcm9GV1hGUUmQ15nGfy7uhkSQ==
+"@atlaskit/button@^14.0.0":
+  version "14.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/button/download/@atlaskit/button-14.0.2.tgz#421c926d0bec6f0ea23655e8ce86a350b28fc6d7"
+  integrity sha1-QhySbQvsbw6iNlXozoajULKPxtc=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/theme" "^9.5.1"
-    "@atlaskit/tooltip" "^15.2.5"
-    tslib "^1.9.3"
-
-"@atlaskit/badge@^13.1.7":
-  version "13.1.7"
-  resolved "https://registry.npmjs.org/@atlaskit/badge/-/badge-13.1.7.tgz#857f27b798f4e99122602c6036a17240357c57ae"
-  integrity sha512-7XXrQ9SlPLMgGRW4xfxYNVQFgQAh+ttdOtKw+l2lNKyrf9RGoJYp/Bi2f4RAaRAC0HAP0vZ2/Y4D3/A389Ixew==
-  dependencies:
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
-
-"@atlaskit/badge@^13.1.8":
-  version "13.1.8"
-  resolved "https://registry.npm.taobao.org/@atlaskit/badge/download/@atlaskit/badge-13.1.8.tgz#03fffa403985c7c592c2e638d72abc4cb48d2b61"
-  integrity sha1-A//6QDmFx8WSwuY41yq8TLSNK2E=
-  dependencies:
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
-
-"@atlaskit/blanket@^10.0.17":
-  version "10.0.17"
-  resolved "https://registry.npmjs.org/@atlaskit/blanket/-/blanket-10.0.17.tgz#86cb68496b91ffa493e4dbb1f9c591986f52dcb0"
-  integrity sha512-bwpt15VxUnrCjb6ytFXENSw88RnPvdeOgbMhdp0qmQCCAhjXzo2YqIr5/PGRrPnZB/rK9s7Ce+RzN1pSlMqaFg==
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
-
-"@atlaskit/blanket@^10.0.18":
-  version "10.0.18"
-  resolved "https://registry.npm.taobao.org/@atlaskit/blanket/download/@atlaskit/blanket-10.0.18.tgz#e7a008c8a5cc93a564083aab8cce3b4c2cec85e5"
-  integrity sha1-56AIyKXMk6VkCDqrjM47TCzsheU=
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
-
-"@atlaskit/button@^13.3.10", "@atlaskit/button@^13.3.9":
-  version "13.3.10"
-  resolved "https://registry.npmjs.org/@atlaskit/button/-/button-13.3.10.tgz#7a23ca56522fc9eead50de675c46899c9836a3c8"
-  integrity sha512-8RjJlGvOyMYzTgkDv7FUxV89Xb5vOfibw5dQV85tVsC4pZB/qZnrPrWvsic2BDNQZF4htKTNA8TxDD9abm5cGw==
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
     memoize-one "^5.1.0"
     tslib "^1.9.3"
 
-"@atlaskit/button@^13.3.11":
-  version "13.3.11"
-  resolved "https://registry.npm.taobao.org/@atlaskit/button/download/@atlaskit/button-13.3.11.tgz#a90faee9bc546721925038da688883cf6191e044"
-  integrity sha1-qQ+u6bxUZyGSUDjaaIiDz2GR4EQ=
+"@atlaskit/calendar@^10.0.0":
+  version "10.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/calendar/download/@atlaskit/calendar-10.0.1.tgz#06802ee12be5dfdf6f028d07a628a55114464861"
+  integrity sha1-BoAu4Svl399vAo0HpiilURRGSGE=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.3"
-    "@emotion/core" "^10.0.9"
-    memoize-one "^5.1.0"
-    tslib "^1.9.3"
-
-"@atlaskit/calendar@^9.2.7":
-  version "9.2.7"
-  resolved "https://registry.npm.taobao.org/@atlaskit/calendar/download/@atlaskit/calendar-9.2.7.tgz#ff43f78e01a080b51cabf915db084feef81792ed"
-  integrity sha1-/0P3jgGggLUcq/kV2whP7vgXku0=
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/locale" "^1.0.5"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/locale" "^2.1.0"
+    "@atlaskit/theme" "^10.0.0"
     calendar-base "^0.3.0"
-    lodash.pick "^4.4.0"
+    lodash "^4.17.15"
     react-uid "^2.2.0"
     tslib "^1.9.3"
 
-"@atlaskit/checkbox@^10.1.11":
-  version "10.1.11"
-  resolved "https://registry.npm.taobao.org/@atlaskit/checkbox/download/@atlaskit/checkbox-10.1.11.tgz#3adbbad9479092f136ee5564c2154d7008891d4c"
-  integrity sha1-Otu62UeQkvE27lVkwhVNcAiJHUw=
+"@atlaskit/checkbox@^11.0.0":
+  version "11.0.4"
+  resolved "https://registry.npm.taobao.org/@atlaskit/checkbox/download/@atlaskit/checkbox-11.0.4.tgz#5d6c141f46bcec04b1392ea7b0ab3ce2fcafc1ed"
+  integrity sha1-XWwUH0a87ASxOS6nsKs84vyvwe0=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
-    emotion-theming "^10.0.7"
-    lodash.merge "^4.6.2"
+    lodash "^4.17.15"
     memoize-one "^5.1.0"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/chunkinator@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/@atlaskit/chunkinator/-/chunkinator-1.1.0.tgz#56f63b535e47d775aaf20db7bc1ec475940427ce"
-  integrity sha512-Pc9yavK6OgGpuQ/RPRzpXGIumpd2sBqEajUOWBqzphC6jsMSK7DXen/a5tSiEB3HccwGDLqEoIqvOJBTccAqzg==
+"@atlaskit/chunkinator@^2.0.0":
+  version "2.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/chunkinator/download/@atlaskit/chunkinator-2.0.2.tgz#99b7aa4e43ecf262d04299e45420ab834e62ce3b"
+  integrity sha1-mbeqTkPs8mLQQpnkVCCrg05izjs=
   dependencies:
     rxjs-async-map "^0.1.2"
     tslib "^1.9.3"
 
-"@atlaskit/code@^11.1.5":
-  version "11.1.5"
-  resolved "https://registry.npm.taobao.org/@atlaskit/code/download/@atlaskit/code-11.1.5.tgz#f37b8c3dea73a58dd925f646148769fbf59c61f2"
-  integrity sha1-83uMPepzpY3ZJfZGFIdp+/WcYfI=
+"@atlaskit/code@^12.0.0":
+  version "12.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/code/download/@atlaskit/code-12.0.3.tgz#eca2b1ad06cfc74dc0cbaf8953a7df1f72f0d428"
+  integrity sha1-7KKxrQbPx03Ay6+JU6ffH3Lw1Cg=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/theme" "^10.0.0"
     memoize-one "^5.1.0"
     react-syntax-highlighter "^10.0.1"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/date@^0.7.10":
-  version "0.7.10"
-  resolved "https://registry.npmjs.org/@atlaskit/date/-/date-0.7.10.tgz#c54a252b137cc051651acc2a32cad59f77cfaf14"
-  integrity sha512-bgRUi4PQcPnXrAry9hAwwS3NTDxkqRPhVlxlvnUxz8iYiiPsXa8x0AlyeHhCGXO7fBV7MkNNwE8+rP3ix1Ev3A==
+"@atlaskit/date@^0.8.0":
+  version "0.8.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/date/download/@atlaskit/date-0.8.0.tgz#1aad4e2b0df4607138a3b410322bd30c2319123c"
+  integrity sha1-Gq1OKw30YHE4o7QQMivTDCMZEjw=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/theme" "^10.0.0"
     date-fns "^1.30.1"
     styled-components "^3.2.6"
 
-"@atlaskit/datetime-picker@^9.4.0":
-  version "9.4.1"
-  resolved "https://registry.npm.taobao.org/@atlaskit/datetime-picker/download/@atlaskit/datetime-picker-9.4.1.tgz#1b2648c6139cb2087add94c2979365e7326fb532"
-  integrity sha1-GyZIxhOcsgh63ZTCl5Nl5zJvtTI=
+"@atlaskit/datetime-picker@^10.0.0":
+  version "10.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/datetime-picker/download/@atlaskit/datetime-picker-10.0.3.tgz#85fca77b4c377ff67a1022e82f353dcd71cada23"
+  integrity sha1-hfyne0w3f/Z6ECLoLzU9zXHK2iM=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/calendar" "^9.2.7"
-    "@atlaskit/field-base" "^14.0.2"
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/locale" "^1.0.6"
-    "@atlaskit/popper" "^3.1.12"
-    "@atlaskit/select" "^11.0.10"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/calendar" "^10.0.0"
+    "@atlaskit/field-base" "^15.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/locale" "^2.1.0"
+    "@atlaskit/popper" "^5.0.0"
+    "@atlaskit/select" "^13.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
     "@emotion/styled" "^10.0.7"
     date-fns "^1.30.1"
-    lodash.pick "^4.4.0"
+    lodash "^4.17.15"
     react-scrolllock "^5.0.1"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/dropdown-menu@^9.0.2":
-  version "9.0.2"
-  resolved "https://registry.npmjs.org/@atlaskit/dropdown-menu/-/dropdown-menu-9.0.2.tgz#d9c9b017a677aef78d7d76e501b3662fbe144eb7"
-  integrity sha512-uC6GqMofwn5MsjfYLdG44w/+EGKYzLGX1Sywt7uJsY6fLp0WUBJjEQFz5/Rmqi0ok7kAyG9vwk0TkzmLTsWCaw==
+"@atlaskit/dropdown-menu@^10.0.0":
+  version "10.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/dropdown-menu/download/@atlaskit/dropdown-menu-10.0.2.tgz#d40b03fdfc173481e0cd4ccd9e6a5ab9b580a4d4"
+  integrity sha1-1AsD/fwXNIHgzUzNnmpaubWApNQ=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/button" "^13.3.9"
-    "@atlaskit/droplist" "^10.0.3"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/droplist" "^11.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/item" "^12.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@babel/runtime" "^7.0.0"
     array-find "^1.0.0"
     prop-types "^15.5.10"
     react-uid "^2.2.0"
     tslib "^1.9.3"
 
-"@atlaskit/dropdown-menu@^9.0.3":
-  version "9.0.3"
-  resolved "https://registry.npm.taobao.org/@atlaskit/dropdown-menu/download/@atlaskit/dropdown-menu-9.0.3.tgz#02eba1445058967caa9d460e57302e5f32ea0e09"
-  integrity sha1-AuuhRFBYlnyqnUYOVzAuXzLqDgk=
+"@atlaskit/droplist@^11.0.0":
+  version "11.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/droplist/download/@atlaskit/droplist-11.0.2.tgz#78eec49e54420512aec3820b324700cb91c344be"
+  integrity sha1-eO7EnlRCBRKuw4ILMkcAy5HDRL4=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/droplist" "^10.0.4"
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/theme" "^9.5.1"
-    "@babel/runtime" "^7.0.0"
-    array-find "^1.0.0"
-    prop-types "^15.5.10"
-    react-uid "^2.2.0"
-    tslib "^1.9.3"
-
-"@atlaskit/droplist@^10.0.3":
-  version "10.0.3"
-  resolved "https://registry.npmjs.org/@atlaskit/droplist/-/droplist-10.0.3.tgz#957696686a554ecd1b7aab584645335e45735f42"
-  integrity sha512-qoE7yCLZ+JEEWePlg8z0F/0vkPhWgv8AA3W0/TmydeMtcfKvyZDeM1ujISJDWjT9Luwv3kNbjvjPRcPufFVaqA==
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/layer" "^8.0.1"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.1"
-    "@atlaskit/tooltip" "^15.2.5"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/item" "^12.0.0"
+    "@atlaskit/layer" "^9.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
     "@babel/runtime" "^7.0.0"
     prop-types "^15.5.10"
 
-"@atlaskit/droplist@^10.0.4":
-  version "10.0.4"
-  resolved "https://registry.npm.taobao.org/@atlaskit/droplist/download/@atlaskit/droplist-10.0.4.tgz#5980c454c5ff13ffe642bee4b3f45c66b5d81d9c"
-  integrity sha1-WYDEVMX/E//mQr7ks/RcZrXYHZw=
+"@atlaskit/editor-common@^48.0.0":
+  version "48.0.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/editor-common/download/@atlaskit/editor-common-48.0.0.tgz#f05f726534beb8c0e1a2143071c5799e82871f00"
+  integrity sha1-8F9yZTS+uMDhohQwccV5noKHHwA=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/layer" "^8.0.1"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.1"
-    "@atlaskit/tooltip" "^15.2.6"
-    "@babel/runtime" "^7.0.0"
-    prop-types "^15.5.10"
-
-"@atlaskit/editor-common@^45.2.0":
-  version "45.2.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/editor-common/download/@atlaskit/editor-common-45.2.0.tgz#781f11b67b82d531c2e0584f474e826b090e23ca"
-  integrity sha1-eB8RtnuC1THC4FhPR06CawkOI8o=
-  dependencies:
-    "@atlaskit/adf-schema" "^9.0.2"
-    "@atlaskit/adf-utils" "^9.2.0"
-    "@atlaskit/analytics-namespaced-context" "^4.2.0"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/emoji" "^62.8.0"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/media-card" "^67.2.2"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/media-picker" "^54.1.2"
-    "@atlaskit/mention" "^18.18.0"
-    "@atlaskit/profilecard" "^12.4.0"
-    "@atlaskit/task-decision" "^16.0.12"
-    "@atlaskit/theme" "^9.5.3"
-    "@atlaskit/width-detector" "^2.1.0"
+    "@atlaskit/adf-schema" "^12.1.0"
+    "@atlaskit/adf-utils" "^10.1.0"
+    "@atlaskit/analytics-namespaced-context" "^5.0.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/emoji" "^63.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/media-card" "^69.1.0"
+    "@atlaskit/media-client" "^8.0.0"
+    "@atlaskit/media-picker" "^55.0.0"
+    "@atlaskit/mention" "^19.0.0"
+    "@atlaskit/profilecard" "^13.0.0"
+    "@atlaskit/task-decision" "^17.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/width-detector" "^3.0.0"
     "@types/prosemirror-model" "^1.7.2"
     "@types/prosemirror-state" "^1.2.0"
     "@types/prosemirror-transform" "^1.1.0"
     "@types/prosemirror-view" "^1.9.0"
     classnames "^2.2.5"
-    css-color-names "0.0.4"
     date-fns "^1.30.1"
     prosemirror-model "^1.7.0"
     prosemirror-state "^1.2.2"
@@ -355,53 +283,89 @@
     raf-schd "^2.1.0"
     react-loadable "^5.1.0"
 
-"@atlaskit/editor-core@^123.0.0":
-  version "123.0.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/editor-core/download/@atlaskit/editor-core-123.0.0.tgz#f12d2f41fd1d03afe0f0048fb93030fff111178a"
-  integrity sha1-8S0vQf0dA6/g8ASPuTAw//ERF4o=
+"@atlaskit/editor-common@^49.0.0":
+  version "49.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/editor-common/download/@atlaskit/editor-common-49.0.1.tgz#e7cbb31a9e00a8c461feb096d93d0994ab879cba"
+  integrity sha1-58uzGp4AqMRh/rCW2T0JlKuHnLo=
+  dependencies:
+    "@atlaskit/adf-schema" "^12.2.0"
+    "@atlaskit/adf-utils" "^10.2.0"
+    "@atlaskit/analytics-namespaced-context" "^5.1.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/emoji" "^63.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/media-card" "^69.2.0"
+    "@atlaskit/media-client" "^9.0.0"
+    "@atlaskit/media-picker" "^55.0.0"
+    "@atlaskit/mention" "^19.0.0"
+    "@atlaskit/profilecard" "^13.0.0"
+    "@atlaskit/task-decision" "^17.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/width-detector" "^3.0.0"
+    "@types/prosemirror-model" "^1.7.2"
+    "@types/prosemirror-state" "^1.2.0"
+    "@types/prosemirror-transform" "^1.1.0"
+    "@types/prosemirror-view" "^1.9.0"
+    classnames "^2.2.5"
+    date-fns "^1.30.1"
+    prosemirror-model "^1.7.0"
+    prosemirror-state "^1.2.2"
+    prosemirror-transform "^1.2.5"
+    prosemirror-view "^1.9.12"
+    raf-schd "^2.1.0"
+    react-loadable "^5.1.0"
+
+"@atlaskit/editor-core@^127.0.0":
+  version "127.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/editor-core/download/@atlaskit/editor-core-127.0.3.tgz#2f63da342feeb4dfe9e1f13ffcbeef5a5fb38d6b"
+  integrity sha1-L2PaNC/utN/p4fE//L7vWl+zjWs=
   dependencies:
     "@atlaskit/activity" "^1.0.1"
-    "@atlaskit/adf-schema" "^9.0.2"
-    "@atlaskit/adf-utils" "^9.2.0"
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-listeners" "^6.3.0"
-    "@atlaskit/analytics-namespaced-context" "^4.2.0"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/avatar" "^17.1.10"
-    "@atlaskit/avatar-group" "^5.1.2"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/calendar" "^9.2.7"
-    "@atlaskit/checkbox" "^10.1.11"
-    "@atlaskit/code" "^11.1.5"
-    "@atlaskit/date" "^0.7.10"
-    "@atlaskit/datetime-picker" "^9.4.0"
-    "@atlaskit/droplist" "^10.0.4"
-    "@atlaskit/editor-common" "^45.2.0"
-    "@atlaskit/editor-json-transformer" "^7.0.12"
-    "@atlaskit/editor-markdown-transformer" "^3.1.23"
-    "@atlaskit/emoji" "^62.8.0"
-    "@atlaskit/form" "^7.2.1"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/locale" "^1.0.6"
-    "@atlaskit/logo" "^12.3.4"
-    "@atlaskit/media-card" "^67.2.2"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/media-editor" "^37.0.9"
-    "@atlaskit/media-filmstrip" "^38.0.1"
-    "@atlaskit/media-picker" "^54.1.2"
-    "@atlaskit/mention" "^18.18.0"
-    "@atlaskit/modal-dialog" "^10.5.7"
-    "@atlaskit/radio" "^3.2.1"
-    "@atlaskit/select" "^11.0.10"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/status" "^0.9.23"
-    "@atlaskit/task-decision" "^16.0.12"
-    "@atlaskit/textfield" "^3.1.10"
-    "@atlaskit/theme" "^9.5.3"
-    "@atlaskit/tooltip" "^15.2.6"
-    "@atlaskit/util-service-support" "^5.0.1"
-    "@atlaskit/width-detector" "^2.1.0"
+    "@atlaskit/activity-provider" "^2.0.0"
+    "@atlaskit/adf-schema" "^12.1.0"
+    "@atlaskit/adf-utils" "^10.1.0"
+    "@atlaskit/analytics-gas-types" "^5.0.0"
+    "@atlaskit/analytics-listeners" "^7.0.0"
+    "@atlaskit/analytics-namespaced-context" "^5.0.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/avatar" "^20.0.0"
+    "@atlaskit/avatar-group" "^8.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/calendar" "^10.0.0"
+    "@atlaskit/checkbox" "^11.0.0"
+    "@atlaskit/code" "^12.0.0"
+    "@atlaskit/date" "^0.8.0"
+    "@atlaskit/datetime-picker" "^10.0.0"
+    "@atlaskit/droplist" "^11.0.0"
+    "@atlaskit/editor-common" "^48.0.0"
+    "@atlaskit/editor-json-transformer" "^8.1.0"
+    "@atlaskit/editor-markdown-transformer" "^4.0.0"
+    "@atlaskit/emoji" "^63.0.0"
+    "@atlaskit/empty-state" "^7.1.0"
+    "@atlaskit/form" "^8.1.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/inline-dialog" "^13.0.0"
+    "@atlaskit/item" "^12.0.0"
+    "@atlaskit/locale" "^2.0.0"
+    "@atlaskit/logo" "^13.0.0"
+    "@atlaskit/media-card" "^69.1.0"
+    "@atlaskit/media-client" "^8.0.0"
+    "@atlaskit/media-editor" "^38.0.0"
+    "@atlaskit/media-filmstrip" "^39.0.0"
+    "@atlaskit/media-picker" "^55.0.0"
+    "@atlaskit/mention" "^19.0.0"
+    "@atlaskit/modal-dialog" "^11.0.0"
+    "@atlaskit/radio" "^4.0.0"
+    "@atlaskit/select" "^12.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/status" "^0.10.0"
+    "@atlaskit/task-decision" "^17.0.0"
+    "@atlaskit/textfield" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
+    "@atlaskit/util-service-support" "^6.0.0"
+    "@atlaskit/width-detector" "^3.0.0"
+    "@testing-library/react" "^8.0.1"
     "@types/prettier" "^1.18.3"
     "@types/prosemirror-collab" "^1.0.2"
     "@types/prosemirror-commands" "^1.0.1"
@@ -413,7 +377,7 @@
     "@types/prosemirror-state" "^1.2.0"
     "@types/prosemirror-transform" "^1.1.0"
     "@types/prosemirror-view" "^1.9.0"
-    "@types/puppeteer" "^1.12.1"
+    "@types/puppeteer" "^3.0.1"
     "@types/react-loadable" "^5.4.1"
     chromatism "^2.6.0"
     classnames "^2.2.5"
@@ -421,6 +385,7 @@
     eventemitter2 "^4.1.0"
     fuse.js "^3.4.6"
     linkify-it "^2.0.3"
+    lodash.memoize "^4.1.2"
     markdown-it "^10.0.0"
     memoize-one "^5.1.0"
     prop-types "^15.5.10"
@@ -429,56 +394,56 @@
     prosemirror-history "^1.0.2"
     prosemirror-inputrules "^1.0.4"
     prosemirror-keymap "^1.0.1"
-    prosemirror-markdown "^1.4.2"
     prosemirror-model "^1.7.0"
     prosemirror-schema-list "^1.0.0"
     prosemirror-state "^1.2.2"
-    prosemirror-tables "0.9.5"
+    prosemirror-tables "^0.10.0"
     prosemirror-transform "^1.2.5"
     prosemirror-utils "^0.9.6"
     prosemirror-view "^1.9.12"
     raf-schd "^2.1.0"
     re-resizable "^6.0.0"
     react-loadable "^5.1.0"
+    react-transition-group "^4.4.1"
     tslib "^1.9.3"
     uuid "^3.1.0"
     w3c-keyname "^2.1.0"
 
-"@atlaskit/editor-json-transformer@^7.0.12":
-  version "7.0.12"
-  resolved "https://registry.npm.taobao.org/@atlaskit/editor-json-transformer/download/@atlaskit/editor-json-transformer-7.0.12.tgz#fce6a72ec39b4d6971976ec6572fc63364f64466"
-  integrity sha1-/OanLsObTWlxl27GVy/GM2T2RGY=
+"@atlaskit/editor-json-transformer@^8.1.0":
+  version "8.2.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/editor-json-transformer/download/@atlaskit/editor-json-transformer-8.2.1.tgz#a574912d4206736dd0a38b116dfb973e34bac4e4"
+  integrity sha1-pXSRLUIGc23Qo4sRbfuXPjS6xOQ=
   dependencies:
-    "@atlaskit/adf-schema" "^9.0.2"
-    lodash.isequal "^4.5.0"
+    "@atlaskit/adf-schema" "^12.2.0"
+    lodash "^4.17.15"
     prosemirror-model "^1.7.0"
 
-"@atlaskit/editor-markdown-transformer@^3.1.23":
-  version "3.1.23"
-  resolved "https://registry.npm.taobao.org/@atlaskit/editor-markdown-transformer/download/@atlaskit/editor-markdown-transformer-3.1.23.tgz#2df53d5477b6253aeda6d2dab9cb8b29eb4a0e51"
-  integrity sha1-LfU9VHe2JTrtptLaucuLKetKDlE=
+"@atlaskit/editor-markdown-transformer@^4.0.0":
+  version "4.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/editor-markdown-transformer/download/@atlaskit/editor-markdown-transformer-4.0.2.tgz#829e056e7c6187d039128ca61c96fb0e5c38a7a0"
+  integrity sha1-gp4Fbnxhh9A5EoymHJb7Dlw4p6A=
   dependencies:
-    "@atlaskit/adf-schema" "^9.0.2"
-    "@atlaskit/editor-common" "^45.2.0"
+    "@atlaskit/adf-schema" "^12.2.0"
+    "@atlaskit/editor-common" "^49.0.0"
     markdown-it "^10.0.0"
     markdown-it-table "^2.0.4"
     prosemirror-markdown "^1.4.2"
     prosemirror-model "^1.7.0"
 
-"@atlaskit/emoji@^62.8.0":
-  version "62.8.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/emoji/download/@atlaskit/emoji-62.8.0.tgz#2f0c21bcbb3ce04efe691507a353f14d20cad190"
-  integrity sha1-LwwhvLs84E7+aRUHo1PxTSDK0ZA=
+"@atlaskit/emoji@^63.0.0":
+  version "63.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/emoji/download/@atlaskit/emoji-63.0.3.tgz#2e1b0882023c87cf0880098071c344c2516385a9"
+  integrity sha1-LhsIggI8h88IgAmAccNEwlFjhak=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/button" "^13.3.10"
-    "@atlaskit/field-base" "^14.0.1"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/spinner" "^12.1.4"
-    "@atlaskit/theme" "^9.5.3"
-    "@atlaskit/tooltip" "^15.2.3"
-    "@atlaskit/util-service-support" "^5.0.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/field-base" "^15.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/media-client" "^9.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
+    "@atlaskit/util-service-support" "^6.0.0"
     "@babel/runtime" "^7.0.0"
     classnames "^2.2.5"
     js-search "^1.3.7"
@@ -487,558 +452,523 @@
     react-virtualized "^9.8.0"
     tslib "^1.9.3"
     typestyle "^1.4.4"
-    url "^0.11.0"
     uuid "^3.1.0"
 
-"@atlaskit/field-base@^14.0.1", "@atlaskit/field-base@^14.0.2":
-  version "14.0.2"
-  resolved "https://registry.npmjs.org/@atlaskit/field-base/-/field-base-14.0.2.tgz#c68617408399657d61c4447883478dfc3677db08"
-  integrity sha512-+1tfUCTIGpYA8f6Y+JXJ3/kaoMr06MS6f0Cof/GcgLcjtIpWqVJ1XJZCIgsI2nb5lXeRiIUybF7aWeBGaAbRBA==
+"@atlaskit/empty-state@^7.1.0":
+  version "7.1.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/empty-state/download/@atlaskit/empty-state-7.1.1.tgz#f34d4fb22e0b6dd16b4778cb0da1eda8bf15610a"
+  integrity sha1-801Psi4LbdFrR3jLDaHtqL8VYQo=
   dependencies:
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/inline-dialog" "^12.1.11"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    tslib "^2.0.0"
+
+"@atlaskit/field-base@^15.0.0":
+  version "15.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/field-base/download/@atlaskit/field-base-15.0.2.tgz#a7f89c8b7804a4f8bc66ef0381591442b7913c56"
+  integrity sha1-p/ici3gEpPi8Zu8DgVkUQreRPFY=
+  dependencies:
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/inline-dialog" "^13.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@babel/runtime" "^7.0.0"
 
-"@atlaskit/field-range@^8.0.2":
-  version "8.0.2"
-  resolved "https://registry.npmjs.org/@atlaskit/field-range/-/field-range-8.0.2.tgz#f35a2549e2347b0dd038b7f52a280766b28a7a2f"
-  integrity sha512-9Vh3W/45rPGXmi5ASslzEpj3mTClHcMzwzYBzzajENUK/Ddm6XMrNJYBK492eHyFPVP8uLMq/xT4BncwbaD9fw==
+"@atlaskit/field-range@^9.0.0":
+  version "9.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/field-range/download/@atlaskit/field-range-9.0.2.tgz#d97ccde27d66d56d41f5816c4eb7d1a7318d67c7"
+  integrity sha1-2XzN4n1m1W1B9YFsTrfRpzGNZ8c=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/theme" "^10.0.0"
     "@babel/runtime" "^7.0.0"
 
-"@atlaskit/flag@^12.4.0":
-  version "12.4.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/flag/download/@atlaskit/flag-12.4.0.tgz#f3bba44fdea579ad88b1bc27a590a360fcd9d6df"
-  integrity sha1-87ukT96lea2IsbwnpZCjYPzZ1t8=
+"@atlaskit/flag@^14.0.0":
+  version "14.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/flag/download/@atlaskit/flag-14.0.3.tgz#d16ec316802258218177da326d9f92eb6da6dd73"
+  integrity sha1-0W7DFoAiWCGBd9oybZ+S622m3XM=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/portal" "^3.1.8"
-    "@atlaskit/theme" "^9.5.1"
-    react-transition-group "^2.2.1"
-    tslib "^1.9.3"
-    uuid "^3.1.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/motion" "^0.4.0"
+    "@atlaskit/portal" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@emotion/core" "^10.0.9"
+    tslib "^2.0.0"
 
-"@atlaskit/form@^7.2.1":
-  version "7.2.1"
-  resolved "https://registry.npm.taobao.org/@atlaskit/form/download/@atlaskit/form-7.2.1.tgz#e1c453e4a13210abc7a345ea91ae4dc752859cbb"
-  integrity sha1-4cRT5KEyEKvHo0Xqka5Nx1KFnLs=
+"@atlaskit/form@^8.1.0":
+  version "8.1.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/form/download/@atlaskit/form-8.1.2.tgz#813bd68d436e24c484db4fd619530a8697f6fe9a"
+  integrity sha1-gTvWjUNuJMSE20/WGVMKhpf2/po=
   dependencies:
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/theme" "^10.0.0"
     final-form "^4.14.1"
     final-form-focus "^1.1.0"
-    memoize-one "^5.1.0"
+    lodash "^4.17.15"
     react-uid "^2.2.0"
     tiny-invariant "^0.0.3"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/icon-file-type@^5.0.4":
-  version "5.0.4"
-  resolved "https://registry.npm.taobao.org/@atlaskit/icon-file-type/download/@atlaskit/icon-file-type-5.0.4.tgz#3539d6bbce5e750912eba6503150acc2343d23ca"
-  integrity sha1-NTnWu85edQkS66ZQMVCswjQ9I8o=
+"@atlaskit/icon-file-type@^6.0.0":
+  version "6.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/icon-file-type/download/@atlaskit/icon-file-type-6.0.2.tgz#8cdd7d23e04cc335d944fd5df3a330faa227758e"
+  integrity sha1-jN19I+BMwzXZRP1d86Mw+qIndY4=
   dependencies:
-    "@atlaskit/theme" "^9.5.3"
-    tslib "^1.9.3"
+    "@atlaskit/theme" "^10.0.0"
+    tslib "^2.0.0"
 
-"@atlaskit/icon-object@^5.0.3":
-  version "5.0.3"
-  resolved "https://registry.npm.taobao.org/@atlaskit/icon-object/download/@atlaskit/icon-object-5.0.3.tgz#5c177f82c7a6a5d38038d01d442ee81374ab15d6"
-  integrity sha1-XBd/gsempdOAONAdRC7oE3SrFdY=
+"@atlaskit/icon-object@^6.0.0":
+  version "6.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/icon-object/download/@atlaskit/icon-object-6.0.2.tgz#6d0032b9256320c527b53433114e99bf82e52c17"
+  integrity sha1-bQAyuSVjIMUntTQzEU6Zv4LlLBc=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
+    "@atlaskit/theme" "^10.0.0"
+    tslib "^2.0.0"
 
-"@atlaskit/icon@^20.0.1", "@atlaskit/icon@^20.1.0":
-  version "20.1.0"
-  resolved "https://registry.npmjs.org/@atlaskit/icon/-/icon-20.1.0.tgz#d89652672d298dd16276da237fcaf134e213f859"
-  integrity sha512-kIVSyrAo/0dZaU2BenQ7TACtafRQ7cjvQlUPD9xxuJBQuL8rx7NCB0NnK8JYfVGOxpujJ6SaeBGB1osMovukTw==
+"@atlaskit/icon@^21.0.0":
+  version "21.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/icon/download/@atlaskit/icon-21.0.3.tgz#97c7d0635849683698a3a3d333ae01623cf9d0e1"
+  integrity sha1-l8fQY1hJaDaYo6PTM64BYjz50OE=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
+    "@atlaskit/theme" "^10.0.0"
+    tslib "^2.0.0"
     uuid "^3.1.0"
 
-"@atlaskit/icon@^20.1.1", "@atlaskit/icon@^20.1.2":
-  version "20.1.2"
-  resolved "https://registry.npm.taobao.org/@atlaskit/icon/download/@atlaskit/icon-20.1.2.tgz#1054196d5442cb818faefe17a47c3e528bc15ae7"
-  integrity sha1-EFQZbVRCy4GPrv4XpHw+UovBWuc=
+"@atlaskit/inline-dialog@^13.0.0":
+  version "13.0.5"
+  resolved "https://registry.npm.taobao.org/@atlaskit/inline-dialog/download/@atlaskit/inline-dialog-13.0.5.tgz#a082d5a4f1352b4b687d5ab404dfc5f530e50db2"
+  integrity sha1-oILVpPE1K0tofVq0BN/F9TDlDbI=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
-    tslib "^1.9.3"
-    uuid "^3.1.0"
-
-"@atlaskit/inline-dialog@^12.1.11":
-  version "12.1.11"
-  resolved "https://registry.npmjs.org/@atlaskit/inline-dialog/-/inline-dialog-12.1.11.tgz#a14040b598148c3c4ed6503c9f28902e4c0ef713"
-  integrity sha512-O7kZb+so6X01RNPqgbiunRvJ5WH/UHGa5wStNY+tp1g/gpDMVJtDhcpZR8dcqFmG60KaL8w60sR7TqRzwCD03w==
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/popper" "^3.1.11"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/popper" "^5.0.0"
+    "@atlaskit/theme" "^10.0.0"
     react-node-resolver "^1.0.1"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/item@^11.0.2":
-  version "11.0.2"
-  resolved "https://registry.npmjs.org/@atlaskit/item/-/item-11.0.2.tgz#6f870fd8e45cb8670efb3e9aeb62cf7d8dd12d62"
-  integrity sha512-kiUss92IPx+7KThpcCtNrNAZakWZzVKI2Js8FbtMby5thqDSXARR79eGZYhc3ANybX+xkXoW2A3O24MuRUkl6w==
+"@atlaskit/item@^12.0.0":
+  version "12.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/item/download/@atlaskit/item-12.0.2.tgz#ce1e5b9cff8a9e91f48c87e0ca1e2ca142740712"
+  integrity sha1-zh5bnP+KnpH0jIfgyh4soUJ0BxI=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/theme" "^10.0.0"
     "@babel/runtime" "^7.0.0"
     prop-types "^15.5.10"
     react-addons-text-content "^0.0.4"
     uuid "^3.1.0"
 
-"@atlaskit/layer@^8.0.1":
-  version "8.0.2"
-  resolved "https://registry.npmjs.org/@atlaskit/layer/-/layer-8.0.2.tgz#9ae9694646f0f44e739354c8818bb4fa3bef6583"
-  integrity sha512-zj4tuNmrC/Xl0+FmLoZZGHUIi0oWotPgZIG9N9ldjy1BvExD7IyXD6T+bR9zCx2CymCUO6+ASNteFNiY8PvatQ==
+"@atlaskit/layer@^9.0.0":
+  version "9.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/layer/download/@atlaskit/layer-9.0.2.tgz#760926cd2a1687ec215c60428e3cd44831725386"
+  integrity sha1-dgkmzSoWh+whXGBCjjzUSDFyU4Y=
   dependencies:
     "@babel/runtime" "^7.0.0"
     popper.js "^1.14.1"
     raf-schd "^2.1.0"
     react-scrolllock "^5.0.1"
 
-"@atlaskit/locale@^1.0.5", "@atlaskit/locale@^1.0.6":
-  version "1.0.6"
-  resolved "https://registry.npmjs.org/@atlaskit/locale/-/locale-1.0.6.tgz#7440278e10c489b4c27745e5d445e947aa661069"
-  integrity sha512-3B7rIxADfKJNAjLh/scPss6QJDpslT5kU52dPQ0waFXXRKU6RRIPVvz3/ID3bPbCMNJQY/KJetZkKC7ZKXbhqg==
+"@atlaskit/locale@^2.0.0", "@atlaskit/locale@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/locale/download/@atlaskit/locale-2.1.0.tgz#dc18c3aaa5f81e220e22d183595c769c2f7c72c0"
+  integrity sha1-3BjDqqX4HiIOItGDWVx2nC98csA=
   dependencies:
-    "@atlaskit/select" "^11.0.7"
+    "@atlaskit/select" "^13.0.0"
     tslib "^1.9.3"
 
-"@atlaskit/logo@^12.3.4":
-  version "12.3.4"
-  resolved "https://registry.npm.taobao.org/@atlaskit/logo/download/@atlaskit/logo-12.3.4.tgz#174cf1e5fdb39f2f586f9bc7ff9e3523c1cc229d"
-  integrity sha1-F0zx5f2zny9Yb5vH/541I8HMIp0=
+"@atlaskit/logo@^13.0.0":
+  version "13.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/logo/download/@atlaskit/logo-13.0.2.tgz#8dfec2806def9441f7adc5a2f04d76b9f30491fa"
+  integrity sha1-jf7CgG3vlEH3rcWi8E12ufMEkfo=
   dependencies:
     react-uid "^2.2.0"
     tslib "^1.9.3"
 
-"@atlaskit/lozenge@^9.1.4", "@atlaskit/lozenge@^9.1.6":
-  version "9.1.6"
-  resolved "https://registry.npmjs.org/@atlaskit/lozenge/-/lozenge-9.1.6.tgz#a7e37c954553a2d08cae10cde7d085b2e55b1847"
-  integrity sha512-31uDSreGGzCeC5fu+RDXqF0M3UrlF1GVKYJFhxdT+NHiRmuYBMjduY5jrF6J2tHfsNnoLqllmxjUVZrlrLc1aQ==
+"@atlaskit/lozenge@^10.0.0":
+  version "10.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/lozenge/download/@atlaskit/lozenge-10.0.2.tgz#f35a7eae5e479b8542905a3e6d234eefa7e8047e"
+  integrity sha1-81p+rl5Hm4VCkFo+bSNO76foBH4=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
     tslib "^1.9.3"
 
-"@atlaskit/lozenge@^9.1.7":
-  version "9.1.7"
-  resolved "https://registry.npm.taobao.org/@atlaskit/lozenge/download/@atlaskit/lozenge-9.1.7.tgz#2123278b52162c775c46c37fdeb427ed51e2e833"
-  integrity sha1-ISMni1IWLHdcRsN/3rQn7VHi6DM=
+"@atlaskit/media-card@^69.1.0", "@atlaskit/media-card@^69.2.0":
+  version "69.2.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-card/download/@atlaskit/media-card-69.2.0.tgz#a0d75e6644e91b6b0ca27269f4c724419e16487c"
+  integrity sha1-oNdeZkTpG2sMonJp9MckQZ4WSHw=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
-    "@emotion/core" "^10.0.9"
-    tslib "^1.9.3"
-
-"@atlaskit/media-card@^67.1.1", "@atlaskit/media-card@^67.2.0":
-  version "67.2.0"
-  resolved "https://registry.npmjs.org/@atlaskit/media-card/-/media-card-67.2.0.tgz#98e3b7daf0918f4e1d09a318b4a13a00f5669f6c"
-  integrity sha512-h/CyEOOM8ZF3AMwtWzINFSAd9c14EOj9+ryTPzNjoplcRKo8q8XZvpWs48I0Av2g1e2JhUcIdGA7a8LSI+TtXQ==
-  dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-namespaced-context" "^4.2.0"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/dropdown-menu" "^9.0.2"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/media-ui" "^12.1.0"
-    "@atlaskit/media-viewer" "^44.4.0"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/analytics-gas-types" "^5.0.0"
+    "@atlaskit/analytics-namespaced-context" "^5.1.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/dropdown-menu" "^10.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/media-client" "^9.0.0"
+    "@atlaskit/media-common" "^2.1.0"
+    "@atlaskit/media-ui" "^13.1.0"
+    "@atlaskit/media-viewer" "^45.1.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
     "@babel/runtime" "^7.0.0"
     classnames "^2.2.5"
+    date-fns "^1.30.1"
+    eventemitter2 "^4.1.0"
+    lru-fast "^0.2.2"
     react-lazily-render "^1.2.0"
     tslib "^1.9.3"
     uuid "^3.1.0"
     video-snapshot "^1.0.3"
 
-"@atlaskit/media-card@^67.2.2":
-  version "67.2.2"
-  resolved "https://registry.npm.taobao.org/@atlaskit/media-card/download/@atlaskit/media-card-67.2.2.tgz#a4918dd3243a349be10dc552074c21808d55b27e"
-  integrity sha1-pJGN0yQ6NJvhDcVSB0whgI1Vsn4=
+"@atlaskit/media-client@^8.0.0":
+  version "8.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-client/download/@atlaskit/media-client-8.0.1.tgz#dfb9a9dfe61075f4bce8e41a1e0fe83baffe2f7a"
+  integrity sha1-37mp3+YQdfS86OQaHg/oO6/+L3o=
   dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-namespaced-context" "^4.2.0"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/dropdown-menu" "^9.0.3"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/media-ui" "^12.2.1"
-    "@atlaskit/media-viewer" "^44.4.0"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.3"
-    "@babel/runtime" "^7.0.0"
-    classnames "^2.2.5"
-    react-lazily-render "^1.2.0"
-    tslib "^1.9.3"
-    uuid "^3.1.0"
-    video-snapshot "^1.0.3"
-
-"@atlaskit/media-client@^6.0.0", "@atlaskit/media-client@^6.1.0":
-  version "6.1.0"
-  resolved "https://registry.npmjs.org/@atlaskit/media-client/-/media-client-6.1.0.tgz#ebfd4b713920927cbda9059b9eddb4ed8a9a876a"
-  integrity sha512-kpYuzrh1LmtTmE4nqMxPrgShfMwnTh3LdCI7Yr7jAO1CuuTyYqOW9PCeT4jT3qAuw6X/WnFw0RsBbcvxZWgKXg==
-  dependencies:
-    "@atlaskit/chunkinator" "^1.1.0"
-    "@atlaskit/media-common" "^1.0.1"
+    "@atlaskit/chunkinator" "^2.0.0"
+    "@atlaskit/media-common" "^2.0.0"
     dataloader "^1.4.0"
     deep-equal "^1.0.1"
     eventemitter2 "^4.1.0"
     lru-fast "^0.2.2"
-    query-string "^4.3.2"
+    query-string "^5.1.0"
     rusha "^0.8.13"
     url-search-params "^0.10.0"
     uuid "^3.1.0"
     uuid-validate "^0.0.3"
 
-"@atlaskit/media-common@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/@atlaskit/media-common/-/media-common-1.0.1.tgz#3b365a6298bcd44bf96e14ea7cdf856b53c8adc0"
-  integrity sha512-97SeBMEswlfKHN0xwCFVhFvcQy5eyTOXKG69pEroUGny58J9U37hAROA5YyXyp+wx19kYw04Nl/+cPpwZssYGw==
+"@atlaskit/media-client@^9.0.0":
+  version "9.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-client/download/@atlaskit/media-client-9.0.1.tgz#131b23638657441b3b87a907380d5e2397240fc6"
+  integrity sha1-ExsjY4ZXRBs7h6kHOA1eI5ckD8Y=
+  dependencies:
+    "@atlaskit/chunkinator" "^2.0.0"
+    "@atlaskit/media-common" "^2.1.0"
+    dataloader "^1.4.0"
+    deep-equal "^1.0.1"
+    eventemitter2 "^4.1.0"
+    lru-fast "^0.2.2"
+    query-string "^5.1.0"
+    rusha "^0.8.13"
+    url-search-params "^0.10.0"
+    uuid "^3.1.0"
+    uuid-validate "^0.0.3"
+
+"@atlaskit/media-common@^2.0.0", "@atlaskit/media-common@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-common/download/@atlaskit/media-common-2.1.0.tgz#0da82dee0cb4c82d4ff53bf323c361b7a96376d0"
+  integrity sha1-Dagt7gy0yC1P9TvzI8Nht6ljdtA=
   dependencies:
     "@babel/runtime" "^7.0.0"
     tslib "^1.9.3"
 
-"@atlaskit/media-core@^31.1.0":
-  version "31.1.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/media-core/download/@atlaskit/media-core-31.1.0.tgz#b705f20fd00e86a308c56d370eecdeba8eec0abc"
-  integrity sha1-twXyD9AOhqMIxW03Duzeuo7sCrw=
+"@atlaskit/media-core@^32.0.0":
+  version "32.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-core/download/@atlaskit/media-core-32.0.2.tgz#954e790342bbee9e00034395d40e7ffe58f24499"
+  integrity sha1-lU55A0K77p4AA0OV1A5//ljyRJk=
   dependencies:
     eventemitter2 "^4.1.0"
     lru-fast "^0.2.2"
     tslib "^1.9.3"
-    uuid "^3.1.0"
 
-"@atlaskit/media-editor@^37.0.9":
-  version "37.0.9"
-  resolved "https://registry.npmjs.org/@atlaskit/media-editor/-/media-editor-37.0.9.tgz#ab1efd417329408ad8760e9aa73628cdb60e1103"
-  integrity sha512-5Aqa29BOEuZySCXmfm9GPAhuPp8KpAM6t29m+GQ57qKi1N9IbkgumS4VQngvm6ZQSmOvMp2anM0Dw6dzCIuZkA==
+"@atlaskit/media-editor@^38.0.0":
+  version "38.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-editor/download/@atlaskit/media-editor-38.0.2.tgz#6ddcb078d94137d263202358bfe742de4d92f6c9"
+  integrity sha1-bdyweNlBN9JjICNYv+dC3k2S9sk=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/button" "^13.3.9"
-    "@atlaskit/field-range" "^8.0.2"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/inline-dialog" "^12.1.11"
-    "@atlaskit/media-card" "^67.1.1"
-    "@atlaskit/media-client" "^6.0.0"
-    "@atlaskit/media-ui" "^12.0.1"
-    "@atlaskit/modal-dialog" "^10.5.5"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.1"
-    "@atlaskit/tooltip" "^15.2.5"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/field-range" "^9.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/inline-dialog" "^13.0.0"
+    "@atlaskit/media-card" "^69.2.0"
+    "@atlaskit/media-client" "^9.0.0"
+    "@atlaskit/media-ui" "^13.1.0"
+    "@atlaskit/modal-dialog" "^11.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
     "@types/uuid" "^3.4.4"
     perf-marks "^1.5.0"
     tslib "^1.9.3"
     uuid "^3.1.0"
 
-"@atlaskit/media-filmstrip@^38.0.1":
-  version "38.0.1"
-  resolved "https://registry.npm.taobao.org/@atlaskit/media-filmstrip/download/@atlaskit/media-filmstrip-38.0.1.tgz#2af6d1a0ebadf7c500f11b09ea5ff431cb86242e"
-  integrity sha1-KvbRoOut98UA8RsJ6l/0McuGJC4=
+"@atlaskit/media-filmstrip@^39.0.0":
+  version "39.1.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-filmstrip/download/@atlaskit/media-filmstrip-39.1.2.tgz#669da457c27140f9e67a1d9350d6df72a87ce637"
+  integrity sha1-Zp2kV8JxQPnmeh2TUNbfcqh85jc=
   dependencies:
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/media-card" "^67.2.0"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/media-card" "^69.2.0"
+    "@atlaskit/media-client" "^9.0.0"
+    "@atlaskit/media-common" "^2.1.0"
+    "@atlaskit/theme" "^10.0.0"
     debounce "^1.0.0"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/media-picker@^54.1.2":
-  version "54.1.2"
-  resolved "https://registry.npm.taobao.org/@atlaskit/media-picker/download/@atlaskit/media-picker-54.1.2.tgz#f06b03ced0926092c24d6d42f4b01bb4ed6cc2ab"
-  integrity sha1-8GsDztCSYJLCTW1C9LAbtO1swqs=
+"@atlaskit/media-picker@^55.0.0":
+  version "55.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-picker/download/@atlaskit/media-picker-55.0.3.tgz#e25785c8a1fe63456df7382ac09588fefdbd1514"
+  integrity sha1-4leFyKH+Y0Vt9zgqwJWI/v29FRQ=
   dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/dropdown-menu" "^9.0.3"
-    "@atlaskit/flag" "^12.4.0"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/media-card" "^67.2.2"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/media-editor" "^37.0.9"
-    "@atlaskit/media-ui" "^12.2.1"
-    "@atlaskit/modal-dialog" "^10.5.7"
-    "@atlaskit/outbound-auth-flow-client" "^2.0.8"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/textfield" "^3.1.10"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/analytics-gas-types" "^5.0.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/dropdown-menu" "^10.0.0"
+    "@atlaskit/flag" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/media-card" "^69.2.0"
+    "@atlaskit/media-client" "^9.0.0"
+    "@atlaskit/media-editor" "^38.0.0"
+    "@atlaskit/media-ui" "^13.1.0"
+    "@atlaskit/modal-dialog" "^11.0.0"
+    "@atlaskit/outbound-auth-flow-client" "^3.1.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/textfield" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
     bricks.js "^1.8.0"
     dateformat "^1.0.12"
     eventemitter2 "^4.1.0"
     exenv "^1.2.2"
     filesize "^3.2.1"
-    json-ld-types "^2.1.0"
+    json-ld-types "^2.1.7"
     jwt-decode "^2.2.0"
-    lodash.debounce "^4.0.8"
+    lodash "^4.17.15"
     perf-marks "^1.5.0"
     postis "^2.2.0"
-    react-redux "^5.0.0"
+    react-redux "^5.1.2"
     redux "^3.7.2"
     redux-devtools-extension "^2.13.2"
-    rusha "^0.8.13"
-    svg-inline-react "^3.0.0"
     url "^0.11.0"
     uuid "^3.1.0"
     video-snapshot "^1.0.3"
 
-"@atlaskit/media-ui@^12.0.1", "@atlaskit/media-ui@^12.1.0":
-  version "12.1.1"
-  resolved "https://registry.npmjs.org/@atlaskit/media-ui/-/media-ui-12.1.1.tgz#054291b6f6367d7c943ad30a705a01d9273073fe"
-  integrity sha512-dErM/JjLmzuGuRdVpVrFqCqiaZFK0JfnQIf+mls2McYaRkYVL4bhdvHAS7c8/k1bwN5Qo8edsvP3awoI7d/FSA==
+"@atlaskit/media-ui@^13.1.0":
+  version "13.1.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-ui/download/@atlaskit/media-ui-13.1.0.tgz#b096dccb250d250ddd78ba9b266543ce7b1eb103"
+  integrity sha1-sJbcyyUNJQ3deLqbJmVDznsesQM=
   dependencies:
-    "@atlaskit/avatar" "^17.1.9"
-    "@atlaskit/avatar-group" "^5.1.1"
-    "@atlaskit/badge" "^13.1.7"
-    "@atlaskit/button" "^13.3.10"
-    "@atlaskit/dropdown-menu" "^9.0.2"
-    "@atlaskit/droplist" "^10.0.3"
-    "@atlaskit/field-base" "^14.0.2"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/lozenge" "^9.1.6"
-    "@atlaskit/media-common" "^1.0.1"
-    "@atlaskit/modal-dialog" "^10.5.6"
-    "@atlaskit/page" "^11.0.12"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/textfield" "^3.1.9"
-    "@atlaskit/theme" "^9.5.3"
-    "@atlaskit/tooltip" "^15.2.5"
-    "@atlaskit/width-detector" "^2.1.0"
+    "@atlaskit/avatar" "^20.0.0"
+    "@atlaskit/avatar-group" "^8.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/droplist" "^11.0.0"
+    "@atlaskit/field-base" "^15.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/icon-file-type" "^6.0.0"
+    "@atlaskit/item" "^12.0.0"
+    "@atlaskit/lozenge" "^10.0.0"
+    "@atlaskit/media-common" "^2.1.0"
+    "@atlaskit/modal-dialog" "^11.0.0"
+    "@atlaskit/page" "^12.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/textfield" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
+    "@atlaskit/width-detector" "^3.0.0"
     "@babel/runtime" "^7.0.0"
     "@emotion/core" "^10.0.9"
     blueimp-load-image "2.19.0"
     bytes "^2.4.0"
     exenv "^1.2.2"
     facepaint "^1.2.1"
-    lodash.debounce "^4.0.8"
+    lodash "^4.17.15"
     png-chunks-extract "^1.0.0"
     react-render-image "^1.1.3"
-    react-transition-group "^2.2.1"
     react-video-renderer "^2.4.3"
     tslib "^1.9.3"
 
-"@atlaskit/media-ui@^12.2.1":
-  version "12.2.1"
-  resolved "https://registry.npm.taobao.org/@atlaskit/media-ui/download/@atlaskit/media-ui-12.2.1.tgz#10146e6863e3d2ca391f7668f9a792e40d34ed1c"
-  integrity sha1-EBRuaGPj0so5H3Zo+aeS5A007Rw=
+"@atlaskit/media-viewer@^45.1.0":
+  version "45.1.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/media-viewer/download/@atlaskit/media-viewer-45.1.1.tgz#c439c27f4d3e0f37fac066b26bddafccc9187671"
+  integrity sha1-xDnCf00+Dzf6wGaya92vzMkYdnE=
   dependencies:
-    "@atlaskit/avatar" "^17.1.10"
-    "@atlaskit/avatar-group" "^5.1.2"
-    "@atlaskit/badge" "^13.1.8"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/dropdown-menu" "^9.0.3"
-    "@atlaskit/droplist" "^10.0.4"
-    "@atlaskit/field-base" "^14.0.2"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/item" "^11.0.2"
-    "@atlaskit/lozenge" "^9.1.7"
-    "@atlaskit/media-common" "^1.0.1"
-    "@atlaskit/modal-dialog" "^10.5.7"
-    "@atlaskit/page" "^11.0.13"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/textfield" "^3.1.10"
-    "@atlaskit/theme" "^9.5.3"
-    "@atlaskit/tooltip" "^15.2.6"
-    "@atlaskit/width-detector" "^2.1.0"
-    "@babel/runtime" "^7.0.0"
-    "@emotion/core" "^10.0.9"
-    blueimp-load-image "2.19.0"
-    bytes "^2.4.0"
-    exenv "^1.2.2"
-    facepaint "^1.2.1"
-    lodash.debounce "^4.0.8"
-    png-chunks-extract "^1.0.0"
-    react-render-image "^1.1.3"
-    react-transition-group "^2.2.1"
-    react-video-renderer "^2.4.3"
-    tslib "^1.9.3"
-
-"@atlaskit/media-viewer@^44.4.0":
-  version "44.4.0"
-  resolved "https://registry.npmjs.org/@atlaskit/media-viewer/-/media-viewer-44.4.0.tgz#c13fd6af763dc5a18ded0b61decd6c3bb1685bee"
-  integrity sha512-JkfJ31KOGmYrgFrz+jNk0XW5fzt1RNN5vNi+UVJKNqfnGcQfQRshzv5f8aV6PNHTQC38Q5GZ+mjKv5oysltIBA==
-  dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/button" "^13.3.10"
-    "@atlaskit/field-range" "^8.0.2"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/media-client" "^6.1.0"
-    "@atlaskit/media-ui" "^12.1.0"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/analytics-gas-types" "^5.0.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/icon-file-type" "^6.0.0"
+    "@atlaskit/media-client" "^9.0.0"
+    "@atlaskit/media-common" "^2.1.0"
+    "@atlaskit/media-ui" "^13.1.0"
+    "@atlaskit/navigation-next" "^9.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
     deep-equal "^1.0.1"
     exenv "^1.2.2"
+    mime "^2.4.6"
     pdfjs-dist "2.0.943"
     perf-marks "^1.5.0"
     tslib "^1.9.3"
+    unzipit "^1.3.0"
 
-"@atlaskit/mention@^18.18.0":
-  version "18.18.0"
-  resolved "https://registry.npmjs.org/@atlaskit/mention/-/mention-18.18.0.tgz#62a03c438ed9f90db52b110b33678795b40605f8"
-  integrity sha512-8O2SbtJ7ouBjICJIqXjOvQ2UdRAHK30NcPgJqY6YQXEQz3HxC/dfNf3vVx8tU/llU0QPLDfG7TTpaVZ9sGMQGQ==
+"@atlaskit/mention@^19.0.0":
+  version "19.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/mention/download/@atlaskit/mention-19.0.2.tgz#2cde45951dbc49e2b8e2979238c1db1ee1fa7247"
+  integrity sha1-LN5FlR28SeK44peSOMHbHuH6ckc=
   dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/avatar" "^17.1.9"
-    "@atlaskit/button" "^13.3.9"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/lozenge" "^9.1.6"
-    "@atlaskit/theme" "^9.5.1"
-    "@atlaskit/tooltip" "^15.2.5"
-    "@atlaskit/util-service-support" "^5.0.1"
+    "@atlaskit/analytics-gas-types" "^5.0.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/avatar" "^20.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/lozenge" "^10.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
+    "@atlaskit/util-service-support" "^6.0.0"
     "@babel/runtime" "^7.0.0"
     tslib "^1.9.3"
     uuid "^3.1.0"
 
-"@atlaskit/modal-dialog@^10.5.5", "@atlaskit/modal-dialog@^10.5.6":
-  version "10.5.6"
-  resolved "https://registry.npmjs.org/@atlaskit/modal-dialog/-/modal-dialog-10.5.6.tgz#5508efc249730ea96cb404f5110564fc8016646a"
-  integrity sha512-qYJ6UNUf+DKC6MJ/dA6Mq7CZrzpmk2B1JoAMMZlCM36HTOxaKDkm1MWs23vAoCX2Zl3/7+zjIST5ya88n1yKxw==
+"@atlaskit/menu@^0.6.0":
+  version "0.6.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/menu/download/@atlaskit/menu-0.6.1.tgz#544a8e659c76b66e4c1a488e06dc038199963d7a"
+  integrity sha1-VEqOZZx2tm5MGkiOBtwDgZmWPXo=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/blanket" "^10.0.17"
-    "@atlaskit/button" "^13.3.10"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/portal" "^3.1.7"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/theme" "^10.0.0"
+    "@emotion/core" "^10.0.9"
+    tslib "^2.0.0"
+
+"@atlaskit/modal-dialog@^11.0.0":
+  version "11.1.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/modal-dialog/download/@atlaskit/modal-dialog-11.1.3.tgz?cache=0&sync_timestamp=1597658964100&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40atlaskit%2Fmodal-dialog%2Fdownload%2F%40atlaskit%2Fmodal-dialog-11.1.3.tgz#8c9ce81d61f4328c12825c3e60d5ce9ca1636de5"
+  integrity sha1-jJzoHWH0MowSglw+YNXOnKFjbeU=
+  dependencies:
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/blanket" "^11.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/portal" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
     "@emotion/styled" "^10.0.7"
     exenv "^1.2.2"
     raf-schd "^2.1.0"
     react-focus-lock "^1.19.1"
     react-scrolllock "^5.0.1"
-    react-transition-group "^2.2.1"
+    react-transition-group "^4.4.1"
+    react-uid "^2.2.0"
     tiny-invariant "^0.0.3"
     tslib "^1.9.3"
 
-"@atlaskit/modal-dialog@^10.5.7":
-  version "10.5.8"
-  resolved "https://registry.npm.taobao.org/@atlaskit/modal-dialog/download/@atlaskit/modal-dialog-10.5.8.tgz#2513daa4e9150f0ed2e56ecb770dd82329b93efe"
-  integrity sha1-JRPapOkVDw7S5W7Ldw3YIym5Pv4=
+"@atlaskit/motion@^0.4.0":
+  version "0.4.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/motion/download/@atlaskit/motion-0.4.2.tgz#91b61feda8f03a21ed92c5218381410ce3ce8e4f"
+  integrity sha1-kbYf7ajwOiHtksUhg4FBDOPOjk8=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/blanket" "^10.0.18"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/portal" "^3.1.7"
-    "@atlaskit/theme" "^9.5.3"
     "@emotion/core" "^10.0.9"
-    "@emotion/styled" "^10.0.7"
-    exenv "^1.2.2"
+    tslib "^2.0.0"
+
+"@atlaskit/navigation-next@^9.0.0":
+  version "9.0.5"
+  resolved "https://registry.npm.taobao.org/@atlaskit/navigation-next/download/@atlaskit/navigation-next-9.0.5.tgz#bc23121aa043a0da5e5ddfe606f74a96e965b7f7"
+  integrity sha1-vCMSGqBDoNpeXd/mBvdKlullt/c=
+  dependencies:
+    "@atlaskit/analytics-namespaced-context" "^5.1.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/avatar" "^20.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/select" "^13.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/tooltip" "^16.0.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/core" "^10.0.9"
+    chromatism "^2.6.0"
+    deep-object-diff "^1.1.0"
+    emotion-theming "^10.0.7"
     raf-schd "^2.1.0"
-    react-focus-lock "^1.19.1"
-    react-scrolllock "^5.0.1"
-    react-transition-group "^2.2.1"
-    tiny-invariant "^0.0.3"
-    tslib "^1.9.3"
+    react-beautiful-dnd "^12.1.1"
+    react-fast-compare "^2.0.1"
+    react-loadable "^5.1.0"
+    react-node-resolver "^1.0.1"
+    react-transition-group "^4.4.1"
+    shallow-equal "^1.0.0"
+    unstated "^1.2.0"
 
-"@atlaskit/outbound-auth-flow-client@^2.0.8", "@atlaskit/outbound-auth-flow-client@^2.0.9":
-  version "2.0.9"
-  resolved "https://registry.npmjs.org/@atlaskit/outbound-auth-flow-client/-/outbound-auth-flow-client-2.0.9.tgz#826a9fe3ebee8044ca3e13b4fb5148c9d5b6cdea"
-  integrity sha512-msoiI8qnS9Lu7/8wO7frtWiga5kV5K7DMmRTYf4wqr0a5PANqNvUGdNMOK6T5UKWF8X8OWDBHJrnsfRc/XzyPg==
-
-"@atlaskit/page@^11.0.12":
-  version "11.0.12"
-  resolved "https://registry.npmjs.org/@atlaskit/page/-/page-11.0.12.tgz#4b8490b3f9b93008d9aa9dd5c900716c17097577"
-  integrity sha512-t/pu7+V4zgnYBouqona+iMhNP2U8bf3uiVitJB/eHxb2L+xqk9NzTrP+b9zh2GZbCqHAtRFCgztmjeI4kmYvfw==
+"@atlaskit/outbound-auth-flow-client@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/outbound-auth-flow-client/download/@atlaskit/outbound-auth-flow-client-3.1.0.tgz#b0f2fa9e24d98ff663ec68e8e2113151122e077a"
+  integrity sha1-sPL6niTZj/Zj7Gjo4hExURIuB3o=
   dependencies:
     tslib "^1.9.3"
 
-"@atlaskit/page@^11.0.13":
-  version "11.0.13"
-  resolved "https://registry.npm.taobao.org/@atlaskit/page/download/@atlaskit/page-11.0.13.tgz#e4b4bcdbfeecb7ddd09ff4f5a565de00d2184567"
-  integrity sha1-5LS82/7st93Qn/T1pWXeANIYRWc=
+"@atlaskit/page@^12.0.0":
+  version "12.0.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/page/download/@atlaskit/page-12.0.0.tgz#50c3c9239133ce0f1a5dbd6e5b63fc5d8ef4135c"
+  integrity sha1-UMPJI5Ezzg8aXb1uW2P8XY70E1w=
   dependencies:
     tslib "^1.9.3"
 
-"@atlaskit/popper@^3.1.11":
-  version "3.1.11"
-  resolved "https://registry.npmjs.org/@atlaskit/popper/-/popper-3.1.11.tgz#e6dabbf6440ffaf0d8a42d9ddc7dd3bd16e88ab8"
-  integrity sha512-c6Kms/6I5bS4FWbvkarLE6jooNwfSpom0DyaDGqG8rLuFZld1YOVVDXwlLHCLq4oY0nhPi7Jl2aGz0VpGuJpLA==
+"@atlaskit/popper@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/popper/download/@atlaskit/popper-5.0.0.tgz#ef84dbd39ff6089b309dc85581b452c585a034d1"
+  integrity sha1-74Tb05/2CJswnchVgbRSxYWgNNE=
   dependencies:
-    memoize-one "^5.1.0"
-    react-popper "1.3.6"
+    "@popperjs/core" "^2.4.2"
+    react-popper "^2.2.3"
     tslib "^1.9.3"
 
-"@atlaskit/popper@^3.1.12":
-  version "3.1.12"
-  resolved "https://registry.npm.taobao.org/@atlaskit/popper/download/@atlaskit/popper-3.1.12.tgz#9c8722d7787c847229c9cbd8232ba646eefa8353"
-  integrity sha1-nIci13h8hHIpycvYIyumRu76g1M=
+"@atlaskit/popup@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/popup/download/@atlaskit/popup-1.0.0.tgz#dcb6abab38a92966f14fa7703a9e7d55bd5a749b"
+  integrity sha1-3LarqzipKWbxT6dwOp59Vb1adJs=
   dependencies:
-    memoize-one "^5.1.0"
-    react-popper "1.3.6"
+    "@atlaskit/popper" "^5.0.0"
+    "@atlaskit/portal" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/core" "^10.0.9"
+    focus-trap "^2.4.5"
     tslib "^1.9.3"
 
-"@atlaskit/portal@^3.1.6", "@atlaskit/portal@^3.1.7":
-  version "3.1.7"
-  resolved "https://registry.npmjs.org/@atlaskit/portal/-/portal-3.1.7.tgz#b1d55731410ce12f22e9808d9b6c74e7a5e764c6"
-  integrity sha512-uC4aPS46sdObsAyLCA/JIkHUtkLVHV4x8YfVfkjPI7CGwmpYNcgivUU4SmRYdvl6nF5VP703b/v52G3mD5tYzw==
+"@atlaskit/portal@^4.0.0":
+  version "4.0.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/portal/download/@atlaskit/portal-4.0.1.tgz#2eb6607b7e89606b44160e0736c7043163a7949c"
+  integrity sha1-LrZge36JYGtEFg4HNscEMWOnlJw=
   dependencies:
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/theme" "^10.0.0"
     exenv "^1.2.2"
     tiny-invariant "^0.0.3"
     tslib "^1.9.3"
 
-"@atlaskit/portal@^3.1.8":
-  version "3.1.8"
-  resolved "https://registry.npm.taobao.org/@atlaskit/portal/download/@atlaskit/portal-3.1.8.tgz#dc8763746df8777f30b3cbfa1a58f34578826e6c"
-  integrity sha1-3IdjdG34d38ws8v6GljzRXiCbmw=
+"@atlaskit/profilecard@^13.0.0":
+  version "13.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/profilecard/download/@atlaskit/profilecard-13.0.3.tgz#19e64d6f8050f936ef55bdf17252965be8145ab1"
+  integrity sha1-GeZNb4BQ+TbvVb3xclKWW+gUWrE=
   dependencies:
-    "@atlaskit/theme" "^9.5.3"
-    exenv "^1.2.2"
-    tiny-invariant "^0.0.3"
-    tslib "^1.9.3"
-
-"@atlaskit/profilecard@^12.4.0":
-  version "12.4.0"
-  resolved "https://registry.npmjs.org/@atlaskit/profilecard/-/profilecard-12.4.0.tgz#25b205862bd1b7d3a2c5cafa4224c32af0535f6a"
-  integrity sha512-gO3WnKOOxBPrXkc0pIsASm6pvgtbvyx/1/jPpb7bsZRmW5WCZ3N+fjxfdTHa+/5hF3ZRb9uon+LKiSd4dhCn2g==
-  dependencies:
-    "@atlaskit/avatar" "^17.1.9"
-    "@atlaskit/button" "^13.3.9"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/layer" "^8.0.1"
-    "@atlaskit/lozenge" "^9.1.6"
-    "@atlaskit/popper" "^3.1.11"
-    "@atlaskit/portal" "^3.1.6"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.1"
-    "@atlaskit/util-shared-styles" "^2.10.3"
+    "@atlaskit/avatar" "^20.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/lozenge" "^10.0.0"
+    "@atlaskit/popper" "^5.0.0"
+    "@atlaskit/portal" "^4.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@babel/runtime" "^7.0.0"
     date-fns "^1.30.1"
     es6-promise "^4.0.5"
     lru-fast "^0.2.2"
-    prop-types "^15.5.10"
     react-node-resolver "^1.0.1"
 
-"@atlaskit/radio@^3.2.1":
-  version "3.2.1"
-  resolved "https://registry.npm.taobao.org/@atlaskit/radio/download/@atlaskit/radio-3.2.1.tgz#0d5baf897e0e6ef5f21205a87717d1eb4125507c"
-  integrity sha1-DVuviX4ObvXyEgWodxfR60ElUHw=
+"@atlaskit/radio@^4.0.0":
+  version "4.0.4"
+  resolved "https://registry.npm.taobao.org/@atlaskit/radio/download/@atlaskit/radio-4.0.4.tgz#3c49a7869a27c8eee71c2c68e89bc939ff4d259c"
+  integrity sha1-PEmnhponyO7nHCxo6JvJOf9NJZw=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/theme" "^10.0.0"
     tslib "^1.9.3"
 
-"@atlaskit/select@^11.0.10":
-  version "11.0.10"
-  resolved "https://registry.npm.taobao.org/@atlaskit/select/download/@atlaskit/select-11.0.10.tgz#1a8f59dbf9844528868fb48d6216fe7b9e09b579"
-  integrity sha1-Go9Z2/mERSiGj7SNYhb+e54JtXk=
+"@atlaskit/select@^12.0.0":
+  version "12.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/select/download/@atlaskit/select-12.0.2.tgz#51dcefdc49d535e70edc0aa5c08e19b469bd195f"
+  integrity sha1-Udzv3EnVNecO3AqlwI4ZtGm9GV8=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/icon" "^20.1.1"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
     "@types/react-select" "^3.0.8"
     focus-trap "^2.4.5"
@@ -1050,144 +980,115 @@
     shallow-equal "^1.0.0"
     tslib "^1.9.3"
 
-"@atlaskit/select@^11.0.7":
-  version "11.0.9"
-  resolved "https://registry.npmjs.org/@atlaskit/select/-/select-11.0.9.tgz#9c512c2a74c97bf03a23d217d5df47e2a7f6a1f5"
-  integrity sha512-wSeVDdueOkgLYSG5CKtjTZ+6Z/9KAcXPb/VdM2HnWN8eHuZ04jUEacsKKX3z1oS63bUuPwlJdvAJhtB1GYJiww==
+"@atlaskit/select@^13.0.0":
+  version "13.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/select/download/@atlaskit/select-13.0.2.tgz#c21aff1be2313778e172d3ce1d606064326880ad"
+  integrity sha1-whr/G+IxN3jhctPOHWBgZDJogK0=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/icon" "^20.1.0"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/spinner" "^15.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
+    "@popperjs/core" "^2.4.2"
     "@types/react-select" "^3.0.8"
     focus-trap "^2.4.5"
     memoize-one "^5.1.0"
     react-fast-compare "^2.0.1"
     react-node-resolver "^1.0.1"
-    react-popper "1.3.6"
+    react-popper "^2.2.3"
     react-select "^3.0.4"
     shallow-equal "^1.0.0"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/smart-card@^13.3.0":
-  version "13.3.0"
-  resolved "https://registry.npm.taobao.org/@atlaskit/smart-card/download/@atlaskit/smart-card-13.3.0.tgz#9f6048875baa34181fc627a5884d62a1e20f9cc4"
-  integrity sha1-n2BIh1uqNBgfxieliE1ioeIPnMQ=
+"@atlaskit/smart-card@^14.1.0":
+  version "14.2.1"
+  resolved "https://registry.npm.taobao.org/@atlaskit/smart-card/download/@atlaskit/smart-card-14.2.1.tgz#1118180f6cf320950b6481d016faa8910d25f069"
+  integrity sha1-ERgYD2zzIJULZIHQFvqokQ0l8Gk=
   dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/icon-file-type" "^5.0.4"
-    "@atlaskit/icon-object" "^5.0.3"
-    "@atlaskit/logo" "^12.3.4"
-    "@atlaskit/media-ui" "^12.2.1"
-    "@atlaskit/outbound-auth-flow-client" "^2.0.9"
-    "@atlaskit/theme" "^9.5.3"
+    "@atlaskit/analytics-gas-types" "^5.0.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/button" "^14.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/icon-file-type" "^6.0.0"
+    "@atlaskit/icon-object" "^6.0.0"
+    "@atlaskit/logo" "^13.0.0"
+    "@atlaskit/media-ui" "^13.1.0"
+    "@atlaskit/outbound-auth-flow-client" "^3.1.0"
+    "@atlaskit/theme" "^10.0.0"
     dataloader "^1.4.0"
-    json-ld-types "^2.1.0"
-    lodash.clonedeep "^4.5.0"
+    json-ld-types "^2.1.7"
     react-lazily-render "^1.2.0"
     react-loadable "^5.1.0"
     redux "^3.7.2"
+    uuid "^3.1.0"
 
-"@atlaskit/spinner@^12.1.4", "@atlaskit/spinner@^12.1.6":
-  version "12.1.6"
-  resolved "https://registry.npmjs.org/@atlaskit/spinner/-/spinner-12.1.6.tgz#bf8cfef92ebbdb87c492d087032e4096c4840078"
-  integrity sha512-pqwgpc8Gx0GMlWNqHmeRvJo1K0J7kiL59lEdtfv4drjWd2ny/wuW12AzdSrEs1gcGPjrdcwGx01bB7MCsEtRYA==
+"@atlaskit/spinner@^15.0.0":
+  version "15.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/spinner/download/@atlaskit/spinner-15.0.2.tgz#96c1f203ab16b281f8f2e53cee82eba66db17cd9"
+  integrity sha1-lsHyA6sWsoH48uU87oLrpm2xfNk=
   dependencies:
-    "@atlaskit/theme" "^9.5.1"
-    react-transition-group "^2.2.1"
-    tslib "^1.9.3"
+    "@atlaskit/theme" "^10.0.0"
+    "@emotion/core" "^10.0.9"
+    tslib "^2.0.0"
 
-"@atlaskit/status@^0.9.23":
-  version "0.9.23"
-  resolved "https://registry.npm.taobao.org/@atlaskit/status/download/@atlaskit/status-0.9.23.tgz#4a49d26a5e165cf7c276133bcc9615ce97f9cc9c"
-  integrity sha1-SknSal4WXPfCdhM7zJYVzpf5zJw=
+"@atlaskit/status@^0.10.0":
+  version "0.10.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/status/download/@atlaskit/status-0.10.2.tgz#757ce17c4d0d10ba08c4a1ca9bfa2a6bd4d4b56c"
+  integrity sha1-dXzhfE0NELoIxKHKm/oqa9TUtWw=
   dependencies:
-    "@atlaskit/analytics-gas-types" "^4.0.13"
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/icon" "^20.0.1"
-    "@atlaskit/lozenge" "^9.1.4"
-    "@atlaskit/textfield" "^3.1.6"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/lozenge" "^10.0.0"
+    "@atlaskit/textfield" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
     styled-components "^3.2.6"
 
-"@atlaskit/task-decision@^16.0.12":
-  version "16.0.12"
-  resolved "https://registry.npm.taobao.org/@atlaskit/task-decision/download/@atlaskit/task-decision-16.0.12.tgz#88663e3f0f15365197dc677cab71f91e477c1134"
-  integrity sha1-iGY+Pw8VNlGX3Gd8q3H5Hkd8ETQ=
+"@atlaskit/task-decision@^17.0.0":
+  version "17.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/task-decision/download/@atlaskit/task-decision-17.0.3.tgz#5702799ca8f8870940aefe2f379424b9a599a09f"
+  integrity sha1-VwJ5nKj4hwlArv4vN5QkuaWZoJ8=
   dependencies:
-    "@atlaskit/analytics-namespaced-context" "^4.2.0"
-    "@atlaskit/analytics-next" "^6.3.6"
-    "@atlaskit/avatar-group" "^5.1.2"
-    "@atlaskit/button" "^13.3.11"
-    "@atlaskit/icon" "^20.1.2"
-    "@atlaskit/spinner" "^12.1.6"
-    "@atlaskit/theme" "^9.5.3"
-    "@atlaskit/util-service-support" "^5.0.1"
+    "@atlaskit/analytics-namespaced-context" "^5.1.0"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/icon" "^21.0.0"
+    "@atlaskit/theme" "^10.0.0"
+    "@atlaskit/util-service-support" "^6.0.0"
     date-fns "^1.30.1"
-    lodash.debounce "^4.0.8"
-    react-loadable "^5.1.0"
     tslib "^1.9.3"
     uuid "^3.1.0"
 
-"@atlaskit/textfield@^3.1.10":
-  version "3.1.10"
-  resolved "https://registry.npm.taobao.org/@atlaskit/textfield/download/@atlaskit/textfield-3.1.10.tgz#f4b63a8e34a1f822cc5b97b89f6ba946cb27cfc1"
-  integrity sha1-9LY6jjSh+CLMW5e4n2upRssnz8E=
+"@atlaskit/textfield@^4.0.0":
+  version "4.0.4"
+  resolved "https://registry.npm.taobao.org/@atlaskit/textfield/download/@atlaskit/textfield-4.0.4.tgz#b4ea88a53aa3c2c0a84049e04574812829e28510"
+  integrity sha1-tOqIpTqjwsCoQEngRXSBKCnihRA=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/theme" "^10.0.0"
     "@emotion/core" "^10.0.9"
-    tslib "^1.9.3"
+    tslib "^2.0.0"
 
-"@atlaskit/textfield@^3.1.6", "@atlaskit/textfield@^3.1.9":
-  version "3.1.9"
-  resolved "https://registry.npmjs.org/@atlaskit/textfield/-/textfield-3.1.9.tgz#3db4a66c1294fb92a3084dffc124f9cdc81ec645"
-  integrity sha512-/BngbkkmlcnJiaG28ugZL8UZ616fYFzBfwstY+WLQL8MKEg0KFGaMcrY123PLKinG3RBb85BKWVu5XPkIRMccQ==
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/theme" "^9.5.1"
-    "@emotion/core" "^10.0.9"
-    tslib "^1.9.3"
-
-"@atlaskit/theme@^9.5.1", "@atlaskit/theme@^9.5.3":
-  version "9.5.3"
-  resolved "https://registry.npmjs.org/@atlaskit/theme/-/theme-9.5.3.tgz#7239b024093959dcc8e0e18283d91b08f1338d7e"
-  integrity sha512-GA8zpyDZHO81vPcSJbObQuRt3ajQxOHY+Qz6Zi1yIepr4Y6xz/fXIiFzamP/VJB/TvHQEhyNE0yeQIYVHGuhyg==
+"@atlaskit/theme@^10.0.0":
+  version "10.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/theme/download/@atlaskit/theme-10.0.3.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40atlaskit%2Ftheme%2Fdownload%2F%40atlaskit%2Ftheme-10.0.3.tgz#9c1f1726e8605d1f77dca87782a8a769dfe5e122"
+  integrity sha1-nB8XJuhgXR933Kh3gqinad/l4SI=
   dependencies:
     exenv "^1.2.2"
     prop-types "^15.5.10"
     tslib "^1.9.3"
 
-"@atlaskit/tooltip@^15.2.3", "@atlaskit/tooltip@^15.2.5":
-  version "15.2.5"
-  resolved "https://registry.npmjs.org/@atlaskit/tooltip/-/tooltip-15.2.5.tgz#a0bdc2e00f28cba11253c6f69df870d927dacd2e"
-  integrity sha512-qtLDqcZ58QxXkbVY9IdsiJBOdJbI3roqeehnLF7IHQ7JZkH8UcqHns+7IriKlFzN/54PKsa25o6QaWB2yKBvpQ==
+"@atlaskit/tooltip@^16.0.0":
+  version "16.0.3"
+  resolved "https://registry.npm.taobao.org/@atlaskit/tooltip/download/@atlaskit/tooltip-16.0.3.tgz#0bee8ea3e3cd6e1ddc5db729b8434e6d7d77fba2"
+  integrity sha1-C+6Oo+PNbh3cXbcpuENObX13+6I=
   dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/popper" "^3.1.11"
-    "@atlaskit/portal" "^3.1.6"
-    "@atlaskit/theme" "^9.5.1"
+    "@atlaskit/analytics-next" "^7.0.0"
+    "@atlaskit/popper" "^5.0.0"
+    "@atlaskit/portal" "^4.0.0"
+    "@atlaskit/theme" "^10.0.0"
     flushable "^1.0.0"
     react-node-resolver "^1.0.1"
-    react-transition-group "^2.2.1"
-    tslib "^1.9.3"
-
-"@atlaskit/tooltip@^15.2.6":
-  version "15.2.6"
-  resolved "https://registry.npm.taobao.org/@atlaskit/tooltip/download/@atlaskit/tooltip-15.2.6.tgz#e5bdd0b75b355b628da08449ec23f8af4307e4e1"
-  integrity sha1-5b3Qt1s1W2KNoIRJ7CP4r0MH5OE=
-  dependencies:
-    "@atlaskit/analytics-next" "^6.3.5"
-    "@atlaskit/popper" "^3.1.12"
-    "@atlaskit/portal" "^3.1.6"
-    "@atlaskit/theme" "^9.5.1"
-    flushable "^1.0.0"
-    react-node-resolver "^1.0.1"
-    react-transition-group "^2.2.1"
+    react-transition-group "^4.4.1"
     tslib "^1.9.3"
 
 "@atlaskit/util-service-support@2.0.4":
@@ -1199,26 +1100,19 @@
     url "^0.11.0"
     url-search-params "^0.10.0"
 
-"@atlaskit/util-service-support@^5.0.1":
-  version "5.0.1"
-  resolved "https://registry.npmjs.org/@atlaskit/util-service-support/-/util-service-support-5.0.1.tgz#8eed60130490a0841d3dc8f23095dd20313ecdd4"
-  integrity sha512-IzHMT4SCnQexNcgCtfUTsEYia3wLGQLz+FmuBccooHtv+hHJLpXQTpjocnmul+q4rluafh9ghOcjpX+cYx/SJQ==
+"@atlaskit/util-service-support@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.npm.taobao.org/@atlaskit/util-service-support/download/@atlaskit/util-service-support-6.0.0.tgz#1fc896e4c723b9eb745065775ec5e395c4ba3f95"
+  integrity sha1-H8iW5Mcjuet0UGV3XsXjlcS6P5U=
   dependencies:
     tslib "^1.9.3"
     url "^0.11.0"
     url-search-params "^0.10.0"
 
-"@atlaskit/util-shared-styles@^2.10.3":
-  version "2.10.8"
-  resolved "https://registry.npmjs.org/@atlaskit/util-shared-styles/-/util-shared-styles-2.10.8.tgz#07fb6903cb749575c36a1d7e25f4638bbcf866f7"
-  integrity sha1-B/tpA8t0lXXDah1+JfRji7z4Zvc=
-  dependencies:
-    babel-runtime "^6.11.6"
-
-"@atlaskit/width-detector@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.npmjs.org/@atlaskit/width-detector/-/width-detector-2.1.0.tgz#40f988daca57d15108d7c47bfd697895cf0d29c9"
-  integrity sha512-PfTxw6iBIwGQgK7yisO1HC2Shn1zOaNWQu5pjOUNiXh19Eciu3z0Gw8B6JaqguTD35WZwTGKsCtjgV5Kwsdn2g==
+"@atlaskit/width-detector@^3.0.0":
+  version "3.0.2"
+  resolved "https://registry.npm.taobao.org/@atlaskit/width-detector/download/@atlaskit/width-detector-3.0.2.tgz#17fdcd8bf618987d710e2776b072027daeafeb46"
+  integrity sha1-F/3Ni/YYmH1xDid2sHICfa6v60Y=
   dependencies:
     raf-schd "^2.1.0"
     tslib "^1.9.3"
@@ -1255,6 +1149,14 @@
   version "7.9.2"
   resolved "https://registry.npmjs.org/@babel/runtime-corejs2/-/runtime-corejs2-7.9.2.tgz#f11d074ff99b9b4319b5ecf0501f12202bf2bf4d"
   integrity sha512-ayjSOxuK2GaSDJFCtLgHnYjuMyIpViNujWrZo8GUpN60/n7juzJKK5yOo6RFVb0zdU9ACJFK+MsZrUnj3OmXMw==
+  dependencies:
+    core-js "^2.6.5"
+    regenerator-runtime "^0.13.4"
+
+"@babel/runtime-corejs2@^7.6.3":
+  version "7.11.2"
+  resolved "https://registry.npm.taobao.org/@babel/runtime-corejs2/download/@babel/runtime-corejs2-7.11.2.tgz?cache=0&sync_timestamp=1596637734824&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40babel%2Fruntime-corejs2%2Fdownload%2F%40babel%2Fruntime-corejs2-7.11.2.tgz#700a03945ebad0d31ba6690fc8a6bcc9040faa47"
+  integrity sha1-cAoDlF660NMbpmkPyKa8yQQPqkc=
   dependencies:
     core-js "^2.6.5"
     regenerator-runtime "^0.13.4"
@@ -1389,15 +1291,73 @@
   resolved "https://registry.npmjs.org/@icons/material/-/material-0.2.4.tgz#e90c9f71768b3736e76d7dd6783fc6c2afa88bc8"
   integrity sha512-QPcGmICAPbGLGb6F/yNf/KzKqvFx8z5qx3D1yFqVAjoFmXK35EgyW+cJ57Te3CNsmzblwtzakLGFqHPqrfb4Tw==
 
+"@jest/types@^24.9.0":
+  version "24.9.0"
+  resolved "https://registry.npm.taobao.org/@jest/types/download/@jest/types-24.9.0.tgz?cache=0&sync_timestamp=1597057385275&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40jest%2Ftypes%2Fdownload%2F%40jest%2Ftypes-24.9.0.tgz#63cb26cb7500d069e5a389441a7c6ab5e909fc59"
+  integrity sha1-Y8smy3UA0Gnlo4lEGnxqtekJ/Fk=
+  dependencies:
+    "@types/istanbul-lib-coverage" "^2.0.0"
+    "@types/istanbul-reports" "^1.1.1"
+    "@types/yargs" "^13.0.0"
+
+"@popperjs/core@^2.4.2":
+  version "2.4.4"
+  resolved "https://registry.npm.taobao.org/@popperjs/core/download/@popperjs/core-2.4.4.tgz#11d5db19bd178936ec89cd84519c4de439574398"
+  integrity sha1-EdXbGb0XiTbsic2EUZxN5DlXQ5g=
+
+"@sheerun/mutationobserver-shim@^0.3.2":
+  version "0.3.3"
+  resolved "https://registry.npm.taobao.org/@sheerun/mutationobserver-shim/download/@sheerun/mutationobserver-shim-0.3.3.tgz#5405ee8e444ed212db44e79351f0c70a582aae25"
+  integrity sha1-VAXujkRO0hLbROeTUfDHClgqriU=
+
 "@sindresorhus/is@^0.7.0":
   version "0.7.0"
   resolved "https://registry.npmjs.org/@sindresorhus/is/-/is-0.7.0.tgz#9a06f4f137ee84d7df0460c1fdb1135ffa6c50fd"
   integrity sha512-ONhaKPIufzzrlNbqtWFFd+jlnemX6lJAgq9ZeiZtS7I1PIf/la7CW4m83rTXRnVnsMbW2k56pGYu7AUFJD9Pow==
 
+"@testing-library/dom@^5.6.1":
+  version "5.6.1"
+  resolved "https://registry.npm.taobao.org/@testing-library/dom/download/@testing-library/dom-5.6.1.tgz#705a1cb4a039b877c1e69e916824038e837ab637"
+  integrity sha1-cFoctKA5uHfB5p6RaCQDjoN6tjc=
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+    "@sheerun/mutationobserver-shim" "^0.3.2"
+    aria-query "3.0.0"
+    pretty-format "^24.8.0"
+    wait-for-expect "^1.2.0"
+
+"@testing-library/react@^8.0.1":
+  version "8.0.9"
+  resolved "https://registry.npm.taobao.org/@testing-library/react/download/@testing-library/react-8.0.9.tgz#1ecd96bc3471b06dd2f9763b6e53a7ace28a54a2"
+  integrity sha1-Hs2WvDRxsG3S+XY7blOnrOKKVKI=
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+    "@testing-library/dom" "^5.6.1"
+
 "@types/anymatch@*":
   version "1.3.1"
   resolved "https://registry.npmjs.org/@types/anymatch/-/anymatch-1.3.1.tgz#336badc1beecb9dacc38bea2cf32adf627a8421a"
   integrity sha512-/+CRPXpBDpo2RK9C68N3b2cOvO0Cf5B9aPijHsoDQTHivnGSObdOF2BRQOYjojWTDy6nQvMjmqRXIxH55VjxxA==
+
+"@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0":
+  version "2.0.3"
+  resolved "https://registry.npm.taobao.org/@types/istanbul-lib-coverage/download/@types/istanbul-lib-coverage-2.0.3.tgz#4ba8ddb720221f432e443bd5f9117fd22cfd4762"
+  integrity sha1-S6jdtyAiH0MuRDvV+RF/0iz9R2I=
+
+"@types/istanbul-lib-report@*":
+  version "3.0.0"
+  resolved "https://registry.npm.taobao.org/@types/istanbul-lib-report/download/@types/istanbul-lib-report-3.0.0.tgz#c14c24f18ea8190c118ee7562b7ff99a36552686"
+  integrity sha1-wUwk8Y6oGQwRjudWK3/5mjZVJoY=
+  dependencies:
+    "@types/istanbul-lib-coverage" "*"
+
+"@types/istanbul-reports@^1.1.1":
+  version "1.1.2"
+  resolved "https://registry.npm.taobao.org/@types/istanbul-reports/download/@types/istanbul-reports-1.1.2.tgz#e875cc689e47bce549ec81f3df5e6f6f11cfaeb2"
+  integrity sha1-6HXMaJ5HvOVJ7IHz315vbxHPrrI=
+  dependencies:
+    "@types/istanbul-lib-coverage" "*"
+    "@types/istanbul-lib-report" "*"
 
 "@types/linkify-it@^2.0.4":
   version "2.1.0"
@@ -1512,10 +1472,10 @@
     "@types/prosemirror-state" "*"
     "@types/prosemirror-transform" "*"
 
-"@types/puppeteer@^1.12.1":
-  version "1.20.4"
-  resolved "https://registry.npmjs.org/@types/puppeteer/-/puppeteer-1.20.4.tgz#30cb0a4ee5394c420119cbdf9f079d6595a07f67"
-  integrity sha512-T/kFgyLnYWk0H94hxI0HbOLnqHvzBRpfS0F0oo9ESGI24oiC2fEjDcMbBjuK3wH7VLsaIsp740vVXVzR1dsMNg==
+"@types/puppeteer@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.npm.taobao.org/@types/puppeteer/download/@types/puppeteer-3.0.1.tgz#053ec20facc162b25a64785affccaa3e5817c607"
+  integrity sha1-BT7CD6zBYrJaZHha/8yqPlgXxgc=
   dependencies:
     "@types/node" "*"
 
@@ -1601,6 +1561,18 @@
     "@types/webpack-sources" "*"
     source-map "^0.6.0"
 
+"@types/yargs-parser@*":
+  version "15.0.0"
+  resolved "https://registry.npm.taobao.org/@types/yargs-parser/download/@types/yargs-parser-15.0.0.tgz?cache=0&sync_timestamp=1596840530983&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fyargs-parser%2Fdownload%2F%40types%2Fyargs-parser-15.0.0.tgz#cb3f9f741869e20cce330ffbeb9271590483882d"
+  integrity sha1-yz+fdBhp4gzOMw/765JxWQSDiC0=
+
+"@types/yargs@^13.0.0":
+  version "13.0.10"
+  resolved "https://registry.npm.taobao.org/@types/yargs/download/@types/yargs-13.0.10.tgz?cache=0&sync_timestamp=1596840529553&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fyargs%2Fdownload%2F%40types%2Fyargs-13.0.10.tgz#e77bf3fc73c781d48c2eb541f87c453e321e5f4b"
+  integrity sha1-53vz/HPHgdSMLrVB+HxFPjIeX0s=
+  dependencies:
+    "@types/yargs-parser" "*"
+
 a11y-emoji@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/a11y-emoji/-/a11y-emoji-1.0.1.tgz#92c2ce4f6ac1865ae9139bee7773e00e9c06c0a8"
@@ -1650,6 +1622,11 @@ abstract-leveldown@~6.2.1, abstract-leveldown@~6.2.3:
     level-concat-iterator "~2.0.0"
     level-supports "~1.0.0"
     xtend "~4.0.0"
+
+ace-builds@^1.4.6:
+  version "1.4.12"
+  resolved "https://registry.npm.taobao.org/ace-builds/download/ace-builds-1.4.12.tgz#888efa386e36f4345f40b5233fcc4fe4c588fae7"
+  integrity sha1-iI76OG429DRfQLUjP8xP5MWI+uc=
 
 add-dom-event-listener@^1.1.0:
   version "1.1.0"
@@ -1737,10 +1714,10 @@ ansi-regex@^3.0.0:
   resolved "https://registry.npmjs.org/ansi-regex/-/ansi-regex-3.0.0.tgz#ed0317c322064f79466c02966bddb605ab37d998"
   integrity sha1-7QMXwyIGT3lGbAKWa922Bas32Zg=
 
-ansi-regex@^4.1.0:
+ansi-regex@^4.0.0, ansi-regex@^4.1.0:
   version "4.1.0"
-  resolved "https://registry.npmjs.org/ansi-regex/-/ansi-regex-4.1.0.tgz#8b9f8f08cf1acb843756a839ca8c7e3168c51997"
-  integrity sha512-1apePfXM1UOSqw0o9IiFAovVz9M5S1Dg+4TrDwfMewQ6p/rmMueb7tWZjQ1rx4Loy1ArBggoqGpfqqdI4rondg==
+  resolved "https://registry.npm.taobao.org/ansi-regex/download/ansi-regex-4.1.0.tgz#8b9f8f08cf1acb843756a839ca8c7e3168c51997"
+  integrity sha1-i5+PCM8ay4Q3Vqg5yox+MWjFGZc=
 
 ansi-styles@^2.2.1:
   version "2.2.1"
@@ -1820,6 +1797,14 @@ argsarray@0.0.1, argsarray@^0.0.1:
   resolved "https://registry.npmjs.org/argsarray/-/argsarray-0.0.1.tgz#6e7207b4ecdb39b0af88303fa5ae22bda8df61cb"
   integrity sha1-bnIHtOzbObCviDA/pa4ivajfYcs=
 
+aria-query@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npm.taobao.org/aria-query/download/aria-query-3.0.0.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Faria-query%2Fdownload%2Faria-query-3.0.0.tgz#65b3fcc1ca1155a8c9ae64d6eee297f15d5133cc"
+  integrity sha1-ZbP8wcoRVajJrmTW7uKX8V1RM8w=
+  dependencies:
+    ast-types-flow "0.0.7"
+    commander "^2.11.0"
+
 array-find-index@^1.0.1:
   version "1.0.2"
   resolved "https://registry.npmjs.org/array-find-index/-/array-find-index-1.0.2.tgz#df010aa1287e164bbda6f9723b0a96a1ec4187a1"
@@ -1859,6 +1844,11 @@ assert-plus@^0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/assert-plus/-/assert-plus-0.2.0.tgz#d74e1b87e7affc0db8aadb7021f3fe48101ab234"
   integrity sha1-104bh+ev/A24qttwIfP+SBAasjQ=
+
+ast-types-flow@0.0.7:
+  version "0.0.7"
+  resolved "https://registry.npm.taobao.org/ast-types-flow/download/ast-types-flow-0.0.7.tgz#f70b735c6bca1a5c9c22d982c3e39e7feba3bdad"
+  integrity sha1-9wtzXGvKGlycItmCw+Oef+ujva0=
 
 async@2.3.0:
   version "2.3.0"
@@ -2378,7 +2368,7 @@ babel-register@^6.26.0:
     mkdirp "^0.5.1"
     source-map-support "^0.4.15"
 
-babel-runtime@6.x, babel-runtime@^6.11.6, babel-runtime@^6.22.0, babel-runtime@^6.23.0, babel-runtime@^6.26.0:
+babel-runtime@6.x, babel-runtime@^6.22.0, babel-runtime@^6.23.0, babel-runtime@^6.26.0:
   version "6.26.0"
   resolved "https://registry.npmjs.org/babel-runtime/-/babel-runtime-6.26.0.tgz#965c7058668e82b55d7bfe04ff2337bc8b5647fe"
   integrity sha1-llxwWGaOgrVde/4E/yM3vItWR/4=
@@ -2999,10 +2989,10 @@ commander@2.9.0:
   dependencies:
     graceful-readlink ">= 1.0.0"
 
-commander@^2.19.0:
+commander@^2.11.0, commander@^2.19.0:
   version "2.20.3"
-  resolved "https://registry.npmjs.org/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
-  integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
+  resolved "https://registry.npm.taobao.org/commander/download/commander-2.20.3.tgz?cache=0&sync_timestamp=1598576136669&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fcommander%2Fdownload%2Fcommander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
+  integrity sha1-/UhehMA+tIgcIHIrpIA16FMa6zM=
 
 commander@~2.8.1:
   version "2.8.1"
@@ -3032,6 +3022,21 @@ compress-commons@^2.1.1:
     crc32-stream "^3.0.1"
     normalize-path "^3.0.0"
     readable-stream "^2.3.6"
+
+compressing@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.npm.taobao.org/compressing/download/compressing-1.5.1.tgz#d031a3311b8c2ed6561a8431671d5a844540482d"
+  integrity sha1-0DGjMRuMLtZWGoQxZx1ahEVASC0=
+  dependencies:
+    flushwritable "^1.0.0"
+    get-ready "^1.0.0"
+    iconv-lite "^0.5.0"
+    mkdirp "^0.5.1"
+    pump "^3.0.0"
+    streamifier "^0.1.1"
+    tar-stream "^1.5.2"
+    yauzl "^2.7.0"
+    yazl "^2.4.2"
 
 computed-style@~0.1.3:
   version "0.1.4"
@@ -3151,6 +3156,11 @@ create-hmac@^1.1.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
+create-react-context@^0.1.5:
+  version "0.1.6"
+  resolved "https://registry.npm.taobao.org/create-react-context/download/create-react-context-0.1.6.tgz#0f425931d907741127acc6e31acb4f9015dd9fdc"
+  integrity sha1-D0JZMdkHdBEnrMbjGstPkBXdn9w=
+
 create-react-context@^0.3.0:
   version "0.3.0"
   resolved "https://registry.npmjs.org/create-react-context/-/create-react-context-0.3.0.tgz#546dede9dc422def0d3fc2fe03afe0bc0f4f7d8c"
@@ -3197,6 +3207,13 @@ css-animation@^1.3.2:
   dependencies:
     babel-runtime "6.x"
     component-classes "^1.2.5"
+
+css-box-model@^1.2.0:
+  version "1.2.1"
+  resolved "https://registry.npm.taobao.org/css-box-model/download/css-box-model-1.2.1.tgz#59951d3b81fd6b2074a62d49444415b0d2b4d7c1"
+  integrity sha1-WZUdO4H9ayB0pi1JREQVsNK018E=
+  dependencies:
+    tiny-invariant "^1.0.6"
 
 css-color-keywords@^1.0.0:
   version "1.0.0"
@@ -3460,6 +3477,11 @@ deep-extend@^0.6.0:
   resolved "https://registry.npmjs.org/deep-extend/-/deep-extend-0.6.0.tgz#c4fa7c95404a17a9c3e8ca7e1537312b736330ac"
   integrity sha512-LOHxIOaPYdHlJRtCQfDIVZtfw/ufM8+rVj649RIHzcm/vGwQRXFt6OPqIFWsm2XEMrNIEtWR64sY1LEKD2vAOA==
 
+deep-object-diff@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.npm.taobao.org/deep-object-diff/download/deep-object-diff-1.1.0.tgz#d6fabf476c2ed1751fc94d5ca693d2ed8c18bc5a"
+  integrity sha1-1vq/R2wu0XUfyU1cppPS7YwYvFo=
+
 defaults@^1.0.3:
   version "1.0.3"
   resolved "https://registry.npmjs.org/defaults/-/defaults-1.0.3.tgz#c656051e9817d9ff08ed881477f3fe4019f3ef7d"
@@ -3521,6 +3543,11 @@ detect-newline@^2.1.0:
   version "2.1.0"
   resolved "https://registry.npmjs.org/detect-newline/-/detect-newline-2.1.0.tgz#f41f1c10be4b00e87b5f13da680759f2c5bfd3e2"
   integrity sha1-9B8cEL5LAOh7XxPaaAdZ8sW/0+I=
+
+diff-match-patch@^1.0.4:
+  version "1.0.5"
+  resolved "https://registry.npm.taobao.org/diff-match-patch/download/diff-match-patch-1.0.5.tgz#abb584d5f10cd1196dfc55aa03701592ae3f7b37"
+  integrity sha1-q7WE1fEM0Rlt/FWqA3AVkq4/ezc=
 
 direction@^0.1.5:
   version "0.1.5"
@@ -4356,6 +4383,11 @@ flushable@^1.0.0:
   resolved "https://registry.npmjs.org/flushable/-/flushable-1.0.0.tgz#2fc16837ec85f8d7ec1bd777087b8448e1ca8216"
   integrity sha512-WQr7DsBZfdmXwqWk7yyk9H2R60iHiUpLMvkov6KivafC9d1SzDTjSBsKMa8skT4laaSxus+F4v7WLO6J0zxPkw==
 
+flushwritable@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npm.taobao.org/flushwritable/download/flushwritable-1.0.0.tgz#3e328d8fde412ad47e738e3be750b4d290043498"
+  integrity sha1-PjKNj95BKtR+c44751C00pAENJg=
+
 focus-lock@^0.6.3:
   version "0.6.7"
   resolved "https://registry.npmjs.org/focus-lock/-/focus-lock-0.6.7.tgz#65e298f2ba2a3372ab57a4e4c4bdc19e1e32a4e5"
@@ -4531,6 +4563,11 @@ get-proxy@^2.0.0:
   integrity sha512-zmZIaQTWnNQb4R4fJUEp/FC51eZsc6EkErspy3xtIYStaq8EB/hDIWipxsal+E8rz0qD7f2sL/NA9Xee4RInJw==
   dependencies:
     npm-conf "^1.1.0"
+
+get-ready@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npm.taobao.org/get-ready/download/get-ready-1.0.0.tgz#f91817f1e9adecfea13a562adfc8de883ab34782"
+  integrity sha1-+RgX8emt7P6hOlYq38jeiDqzR4I=
 
 get-stdin@^4.0.1:
   version "4.0.1"
@@ -4950,6 +4987,13 @@ iconv-lite@^0.4.4, iconv-lite@~0.4.13:
   version "0.4.24"
   resolved "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.4.24.tgz#2022b4b25fbddc21d2f524974a474aafe733908b"
   integrity sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==
+  dependencies:
+    safer-buffer ">= 2.1.2 < 3"
+
+iconv-lite@^0.5.0:
+  version "0.5.2"
+  resolved "https://registry.npm.taobao.org/iconv-lite/download/iconv-lite-0.5.2.tgz?cache=0&sync_timestamp=1594184325364&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ficonv-lite%2Fdownload%2Ficonv-lite-0.5.2.tgz#af6d628dccfb463b7364d97f715e4b74b8c8c2b8"
+  integrity sha1-r21ijcz7RjtzZNl/cV5LdLjIwrg=
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
@@ -5521,10 +5565,10 @@ json-buffer@3.0.0:
   resolved "https://registry.npmjs.org/json-buffer/-/json-buffer-3.0.0.tgz#5b1f397afc75d677bde8bcfc0e47e1f9a3d9a898"
   integrity sha1-Wx85evx11ne96Lz8Dkfh+aPZqJg=
 
-json-ld-types@^2.1.0:
-  version "2.1.4"
-  resolved "https://registry.npm.taobao.org/json-ld-types/download/json-ld-types-2.1.4.tgz#94c63766c97edf7bea02d63f57097fb60e3fbdfc"
-  integrity sha1-lMY3Zsl+33vqAtY/Vwl/tg4/vfw=
+json-ld-types@^2.1.7:
+  version "2.1.10"
+  resolved "https://registry.npm.taobao.org/json-ld-types/download/json-ld-types-2.1.10.tgz#d1453c63d3bce2d9e318ecd9ab2ccc03f8521967"
+  integrity sha1-0UU8Y9O84tnjGOzZqyzMA/hSGWc=
   dependencies:
     schema-dts "^0.5.1"
 
@@ -6151,11 +6195,6 @@ lodash.createcallback@~2.4.1:
     lodash.keys "~2.4.1"
     lodash.property "~2.4.1"
 
-lodash.debounce@^4.0.8:
-  version "4.0.8"
-  resolved "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
-  integrity sha1-gteb/zCmfEAF/9XiUVMArZyk168=
-
 lodash.defaults@^4.2.0:
   version "4.2.0"
   resolved "https://registry.npmjs.org/lodash.defaults/-/lodash.defaults-4.2.0.tgz#d09178716ffea4dde9e5fb7b37f6f0802274580c"
@@ -6303,15 +6342,10 @@ lodash.keys@~2.4.1:
     lodash._shimkeys "~2.4.1"
     lodash.isobject "~2.4.1"
 
-lodash.last@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.npmjs.org/lodash.last/-/lodash.last-3.0.0.tgz#242f663112dd4c6e63728c60a3c909d1bdadbd4c"
-  integrity sha1-JC9mMRLdTG5jcoxgo8kJ0b2tvUw=
-
-lodash.merge@^4.6.2:
-  version "4.6.2"
-  resolved "https://registry.npmjs.org/lodash.merge/-/lodash.merge-4.6.2.tgz#558aa53b43b661e1925a0afdfa36a9a1085fe57a"
-  integrity sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==
+lodash.memoize@^4.1.2:
+  version "4.1.2"
+  resolved "https://registry.npm.taobao.org/lodash.memoize/download/lodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
+  integrity sha1-vMbEmkKihA7Zl/Mj6tpezRguC/4=
 
 lodash.mergewith@^4.6.2:
   version "4.6.2"
@@ -6329,11 +6363,6 @@ lodash.pairs@^3.0.0:
   integrity sha1-u+CNV4bu6qCaFckevw3LfSvjJqk=
   dependencies:
     lodash.keys "^3.0.0"
-
-lodash.pick@^4.4.0:
-  version "4.4.0"
-  resolved "https://registry.npmjs.org/lodash.pick/-/lodash.pick-4.4.0.tgz#52f05610fff9ded422611441ed1fc123a03001b3"
-  integrity sha1-UvBWEP/53tQiYRRB7R/BI6AwAbM=
 
 lodash.property@~2.4.1:
   version "2.4.1"
@@ -6563,7 +6592,7 @@ mem@^4.0.0:
     mimic-fn "^2.0.0"
     p-is-promise "^2.0.0"
 
-memoize-one@^5.0.0, memoize-one@^5.1.0:
+memoize-one@^5.0.0, memoize-one@^5.1.0, memoize-one@^5.1.1:
   version "5.1.1"
   resolved "https://registry.npmjs.org/memoize-one/-/memoize-one-5.1.1.tgz#047b6e3199b508eaec03504de71229b8eb1d75c0"
   integrity sha512-HKeeBpWvqiVJD57ZUAsJNm71eHTykffzcLZVYWiVfQeI1rJtuEaS7hQiEpWfVVk18donPwJEcFKIkCmPJNOhHA==
@@ -6613,6 +6642,11 @@ mime@^1.2.11, mime@^1.3.4:
   version "1.6.0"
   resolved "https://registry.npmjs.org/mime/-/mime-1.6.0.tgz#32cd9e5c64553bd58d19a568af452acff04981b1"
   integrity sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==
+
+mime@^2.4.6:
+  version "2.4.6"
+  resolved "https://registry.npm.taobao.org/mime/download/mime-2.4.6.tgz?cache=0&sync_timestamp=1590596728112&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fmime%2Fdownload%2Fmime-2.4.6.tgz#e5b407c90db442f2beb5b162373d07b69affa4d1"
+  integrity sha1-5bQHyQ20QvK+tbFiNz0Htpr/pNE=
 
 mime@~1.2.11:
   version "1.2.11"
@@ -7705,6 +7739,16 @@ prepend-http@^2.0.0:
   resolved "https://registry.npmjs.org/prepend-http/-/prepend-http-2.0.0.tgz#e92434bfa5ea8c19f41cdfd401d741a3c819d897"
   integrity sha1-6SQ0v6XqjBn0HN/UAddBo8gZ2Jc=
 
+pretty-format@^24.8.0:
+  version "24.9.0"
+  resolved "https://registry.npm.taobao.org/pretty-format/download/pretty-format-24.9.0.tgz?cache=0&sync_timestamp=1598096606104&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fpretty-format%2Fdownload%2Fpretty-format-24.9.0.tgz#12fac31b37019a4eea3c11aa9a959eb7628aa7c9"
+  integrity sha1-EvrDGzcBmk7qPBGqmpWet2KKp8k=
+  dependencies:
+    "@jest/types" "^24.9.0"
+    ansi-regex "^4.0.0"
+    ansi-styles "^3.2.0"
+    react-is "^16.8.4"
+
 prismjs@^1.8.4:
   version "1.20.0"
   resolved "https://registry.npmjs.org/prismjs/-/prismjs-1.20.0.tgz#9b685fc480a3514ee7198eac6a3bf5024319ff03"
@@ -7854,10 +7898,10 @@ prosemirror-state@^1.0.0, prosemirror-state@^1.2.2:
     prosemirror-model "^1.0.0"
     prosemirror-transform "^1.0.0"
 
-prosemirror-tables@0.9.5:
-  version "0.9.5"
-  resolved "https://registry.npmjs.org/prosemirror-tables/-/prosemirror-tables-0.9.5.tgz#94d9881a46051e6fff3c51edffafa346da084def"
-  integrity sha512-RlAF/D7OvnDCOL8B6Qt6KuBkb0w3SedTdrou7wH7Nn2ml7+M5xUalW/h1f7dMD3wjsU47/Cn8zTbEkCDIpIggw==
+prosemirror-tables@^0.10.0:
+  version "0.10.1"
+  resolved "https://registry.npm.taobao.org/prosemirror-tables/download/prosemirror-tables-0.10.1.tgz#1cc717fc62942d09a46a613ead687bd2770e064e"
+  integrity sha1-HMcX/GKULQmkamE+rWh70ncOBk4=
   dependencies:
     prosemirror-keymap "^1.0.0"
     prosemirror-model "^1.0.0"
@@ -7970,18 +8014,10 @@ qs@~6.5.2:
   resolved "https://registry.npmjs.org/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
   integrity sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
 
-query-string@^4.3.2:
-  version "4.3.4"
-  resolved "https://registry.npmjs.org/query-string/-/query-string-4.3.4.tgz#bbb693b9ca915c232515b228b1a02b609043dbeb"
-  integrity sha1-u7aTucqRXCMlFbIosaArYJBD2+s=
-  dependencies:
-    object-assign "^4.1.0"
-    strict-uri-encode "^1.0.0"
-
-query-string@^5.0.1:
+query-string@^5.0.1, query-string@^5.1.0:
   version "5.1.1"
-  resolved "https://registry.npmjs.org/query-string/-/query-string-5.1.1.tgz#a78c012b71c17e05f2e3fa2319dd330682efb3cb"
-  integrity sha512-gjWOsm2SoGlgLEdAGt7a6slVOk9mGiXmPFMqrEhLQ68rhQuBnpfs3+EmlvqKyxnCo9/PPlF+9MtY02S1aFg+Jw==
+  resolved "https://registry.npm.taobao.org/query-string/download/query-string-5.1.1.tgz?cache=0&sync_timestamp=1591853346096&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fquery-string%2Fdownload%2Fquery-string-5.1.1.tgz#a78c012b71c17e05f2e3fa2319dd330682efb3cb"
+  integrity sha1-p4wBK3HBfgXy4/ojGd0zBoLvs8s=
   dependencies:
     decode-uri-component "^0.2.0"
     object-assign "^4.1.0"
@@ -7996,6 +8032,11 @@ raf-schd@^2.1.0:
   version "2.1.2"
   resolved "https://registry.npmjs.org/raf-schd/-/raf-schd-2.1.2.tgz#ec622b5167f2912089f054dc03ebd5bcf33c8f62"
   integrity sha512-Orl0IEvMtUCgPddgSxtxreK77UiQz4nPYJy9RggVzu4mKsZkQWiAaG1y9HlYWdvm9xtN348xRaT37qkvL/+A+g==
+
+raf-schd@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.npm.taobao.org/raf-schd/download/raf-schd-4.0.2.tgz#bd44c708188f2e84c810bf55fcea9231bcaed8a0"
+  integrity sha1-vUTHCBiPLoTIEL9V/OqSMbyu2KA=
 
 raf@^3.4.0:
   version "3.4.1"
@@ -8160,6 +8201,17 @@ re-resizable@^6.0.0:
   dependencies:
     fast-memoize "^2.5.1"
 
+react-ace@^9.0.0:
+  version "9.1.3"
+  resolved "https://registry.npm.taobao.org/react-ace/download/react-ace-9.1.3.tgz#848dc3741d5460f3ac73468b6c39879aab9238bc"
+  integrity sha1-hI3DdB1UYPOsc0aLbDmHmquSOLw=
+  dependencies:
+    ace-builds "^1.4.6"
+    diff-match-patch "^1.0.4"
+    lodash.get "^4.4.2"
+    lodash.isequal "^4.5.0"
+    prop-types "^15.7.2"
+
 react-addons-text-content@^0.0.4:
   version "0.0.4"
   resolved "https://registry.npmjs.org/react-addons-text-content/-/react-addons-text-content-0.0.4.tgz#d2e259fdc951d1d8906c08902002108dce8792e5"
@@ -8173,6 +8225,19 @@ react-autosize-textarea@^4.0.0:
     autosize "^4.0.0"
     line-height "^0.3.1"
     prop-types "^15.5.6"
+
+react-beautiful-dnd@^12.1.1:
+  version "12.2.0"
+  resolved "https://registry.npm.taobao.org/react-beautiful-dnd/download/react-beautiful-dnd-12.2.0.tgz#e5f6222f9e7934c6ed4ee09024547f9e353ae423"
+  integrity sha1-5fYiL555NMbtTuCQJFR/njU65CM=
+  dependencies:
+    "@babel/runtime-corejs2" "^7.6.3"
+    css-box-model "^1.2.0"
+    memoize-one "^5.1.1"
+    raf-schd "^4.0.2"
+    react-redux "^7.1.1"
+    redux "^4.0.4"
+    use-memo-one "^1.1.1"
 
 react-bootstrap@^0.32.4:
   version "0.32.4"
@@ -8226,6 +8291,11 @@ react-fast-compare@^2.0.1:
   resolved "https://registry.npmjs.org/react-fast-compare/-/react-fast-compare-2.0.4.tgz#e84b4d455b0fec113e0402c329352715196f81f9"
   integrity sha512-suNP+J1VU1MWFKcyt7RtjiSWUjvidmQSlqu+eHslq+342xCbGTYmC0mEhPCOHxlW0CywylOC1u2DFAT+bv4dBw==
 
+react-fast-compare@^3.0.1:
+  version "3.2.0"
+  resolved "https://registry.npm.taobao.org/react-fast-compare/download/react-fast-compare-3.2.0.tgz#641a9da81b6a6320f270e89724fb45a0b39e43bb"
+  integrity sha1-ZBqdqBtqYyDycOiXJPtFoLOeQ7s=
+
 react-focus-lock@^1.19.1:
   version "1.19.1"
   resolved "https://registry.npmjs.org/react-focus-lock/-/react-focus-lock-1.19.1.tgz#2f3429793edaefe2d077121f973ce5a3c7a0651a"
@@ -8261,7 +8331,7 @@ react-intl@2.9.0:
     intl-relativeformat "^2.1.0"
     invariant "^2.1.1"
 
-react-is@^16.12.0, react-is@^16.3.1, react-is@^16.3.2, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.1, react-is@^16.8.6, react-is@^16.9.0:
+react-is@^16.12.0, react-is@^16.3.1, react-is@^16.3.2, react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.1, react-is@^16.8.4, react-is@^16.8.6, react-is@^16.9.0:
   version "16.13.1"
   resolved "https://registry.npmjs.org/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
@@ -8314,6 +8384,14 @@ react-popper@1.3.6:
     typed-styles "^0.0.7"
     warning "^4.0.2"
 
+react-popper@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.npm.taobao.org/react-popper/download/react-popper-2.2.3.tgz#33d425fa6975d4bd54d9acd64897a89d904b9d97"
+  integrity sha1-M9Ql+ml11L1U2azWSJeonZBLnZc=
+  dependencies:
+    react-fast-compare "^3.0.1"
+    warning "^4.0.2"
+
 react-portal@^3.1.0:
   version "3.2.0"
   resolved "https://registry.npmjs.org/react-portal/-/react-portal-3.2.0.tgz#4224e19b2b05d5cbe730a7ba0e34ec7585de0043"
@@ -8328,10 +8406,10 @@ react-prop-types@^0.4.0:
   dependencies:
     warning "^3.0.0"
 
-react-redux@^5.0.0, react-redux@^5.1.1:
+react-redux@^5.1.1, react-redux@^5.1.2:
   version "5.1.2"
-  resolved "https://registry.npmjs.org/react-redux/-/react-redux-5.1.2.tgz#b19cf9e21d694422727bf798e934a916c4080f57"
-  integrity sha512-Ns1G0XXc8hDyH/OcBHOxNgQx9ayH3SPxBnFCOidGKSle8pKihysQw2rG/PmciUQRoclhVBO8HMhiRmGXnDja9Q==
+  resolved "https://registry.npm.taobao.org/react-redux/download/react-redux-5.1.2.tgz#b19cf9e21d694422727bf798e934a916c4080f57"
+  integrity sha1-sZz54h1pRCJye/eY6TSpFsQID1c=
   dependencies:
     "@babel/runtime" "^7.1.2"
     hoist-non-react-statics "^3.3.0"
@@ -8340,6 +8418,17 @@ react-redux@^5.0.0, react-redux@^5.1.1:
     prop-types "^15.6.1"
     react-is "^16.6.0"
     react-lifecycles-compat "^3.0.0"
+
+react-redux@^7.1.1:
+  version "7.2.1"
+  resolved "https://registry.npm.taobao.org/react-redux/download/react-redux-7.2.1.tgz#8dedf784901014db2feca1ab633864dee68ad985"
+  integrity sha1-je33hJAQFNsv7KGrYzhk3uaK2YU=
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+    hoist-non-react-statics "^3.3.0"
+    loose-envify "^1.4.0"
+    prop-types "^15.7.2"
+    react-is "^16.9.0"
 
 react-render-image@^1.1.3:
   version "1.1.3"
@@ -8408,7 +8497,7 @@ react-transition-group@^1.2.1:
     prop-types "^15.5.6"
     warning "^3.0.0"
 
-react-transition-group@^2.0.0, react-transition-group@^2.2.0, react-transition-group@^2.2.1:
+react-transition-group@^2.0.0, react-transition-group@^2.2.0:
   version "2.9.0"
   resolved "https://registry.npmjs.org/react-transition-group/-/react-transition-group-2.9.0.tgz#df9cdb025796211151a436c69a8f3b97b5b07c8d"
   integrity sha512-+HzNTCHpeQyl4MJ/bdE0u6XRMe9+XG/+aL4mCxVN4DnPBQ0/5bfHWPDuOZUzYdMj94daZaZdCCc1Dzt9R/xSSg==
@@ -8422,6 +8511,16 @@ react-transition-group@^4.3.0:
   version "4.3.0"
   resolved "https://registry.npmjs.org/react-transition-group/-/react-transition-group-4.3.0.tgz#fea832e386cf8796c58b61874a3319704f5ce683"
   integrity sha512-1qRV1ZuVSdxPlPf4O8t7inxUGpdyO5zG9IoNfJxSO0ImU2A1YWkEQvFPuIPZmMLkg5hYs7vv5mMOyfgSkvAwvw==
+  dependencies:
+    "@babel/runtime" "^7.5.5"
+    dom-helpers "^5.0.1"
+    loose-envify "^1.4.0"
+    prop-types "^15.6.2"
+
+react-transition-group@^4.4.1:
+  version "4.4.1"
+  resolved "https://registry.npm.taobao.org/react-transition-group/download/react-transition-group-4.4.1.tgz#63868f9325a38ea5ee9535d828327f85773345c9"
+  integrity sha1-Y4aPkyWjjqXulTXYKDJ/hXczRck=
   dependencies:
     "@babel/runtime" "^7.5.5"
     dom-helpers "^5.0.1"
@@ -8575,10 +8674,10 @@ redux@^3.7.2:
     loose-envify "^1.1.0"
     symbol-observable "^1.0.3"
 
-redux@^4.0.1:
+redux@^4.0.1, redux@^4.0.4:
   version "4.0.5"
-  resolved "https://registry.npmjs.org/redux/-/redux-4.0.5.tgz#4db5de5816e17891de8a80c424232d06f051d93f"
-  integrity sha512-VSz1uMAH24DM6MF72vcojpYPtrTUu3ByVWfPL1nPfVRb5mZVTve5GnNCUV53QM/BZ66xfWrm0CTWoM+Xlz8V1w==
+  resolved "https://registry.npm.taobao.org/redux/download/redux-4.0.5.tgz#4db5de5816e17891de8a80c424232d06f051d93f"
+  integrity sha1-TbXeWBbheJHeioDEJCMtBvBR2T8=
   dependencies:
     loose-envify "^1.4.0"
     symbol-observable "^1.2.0"
@@ -9468,6 +9567,11 @@ stream-to@~0.2.0:
   resolved "https://registry.npmjs.org/stream-to/-/stream-to-0.2.2.tgz#84306098d85fdb990b9fa300b1b3ccf55e8ef01d"
   integrity sha1-hDBgmNhf25kLn6MAsbPM9V6O8B0=
 
+streamifier@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.npm.taobao.org/streamifier/download/streamifier-0.1.1.tgz#97e98d8fa4d105d62a2691d1dc07e820db8dfc4f"
+  integrity sha1-l+mNj6TRBdYqJpHR3AfoINuN/E8=
+
 streamsink@~1.2.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/streamsink/-/streamsink-1.2.0.tgz#efafee9f1e22d3591ed7de3dcaa95c3f5e79f73c"
@@ -9677,13 +9781,6 @@ svg-attributes@^1.0.0:
   resolved "https://registry.npmjs.org/svg-attributes/-/svg-attributes-1.0.0.tgz#b5c5968f36247b7dbe3853207f2a9c68ad806bfc"
   integrity sha1-tcWWjzYke32+OFMgfyqcaK2Aa/w=
 
-svg-inline-react@^3.0.0:
-  version "3.2.0"
-  resolved "https://registry.npmjs.org/svg-inline-react/-/svg-inline-react-3.2.0.tgz#e5b35a59a000070334ab8c95e62a9f9e8114cc46"
-  integrity sha512-LofK2PJpIsvvi9lJdFe1RW3mhHPg4LvO/3Z1wEdz4Ksr/REPc+IW67i3Y3orGDk+qIa3LrTb0Rt6do8ClKriAw==
-  dependencies:
-    prop-types "^15.5.0"
-
 symbol-observable@1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/symbol-observable/-/symbol-observable-1.0.1.tgz#8340fc4702c3122df5d22288f88283f513d3fdd4"
@@ -9815,6 +9912,11 @@ tiny-invariant@^0.0.3:
   resolved "https://registry.npmjs.org/tiny-invariant/-/tiny-invariant-0.0.3.tgz#4c7283c950e290889e9e94f64d3586ec9156cf44"
   integrity sha512-SA2YwvDrCITM9fTvHTHRpq9W6L2fBsClbqm3maT5PZux4Z73SPPDYwJMtnoWh6WMgmCkJij/LaOlWiqJqFMK8g==
 
+tiny-invariant@^1.0.6:
+  version "1.1.0"
+  resolved "https://registry.npm.taobao.org/tiny-invariant/download/tiny-invariant-1.1.0.tgz#634c5f8efdc27714b7f386c35e6760991d230875"
+  integrity sha1-Y0xfjv3CdxS384bDXmdgmR0jCHU=
+
 tiny-queue@^0.2.1:
   version "0.2.1"
   resolved "https://registry.npmjs.org/tiny-queue/-/tiny-queue-0.2.1.tgz#25a67f2c6e253b2ca941977b5ef7442ef97a6046"
@@ -9886,6 +9988,11 @@ tslib@^1.10.0, tslib@^1.2.0, tslib@^1.7.1, tslib@^1.9.0, tslib@^1.9.3:
   version "1.11.1"
   resolved "https://registry.npmjs.org/tslib/-/tslib-1.11.1.tgz#eb15d128827fbee2841549e171f45ed338ac7e35"
   integrity sha512-aZW88SY8kQbU7gpV19lN24LtXh/yD4ZZg6qieAJDDg+YBsJcSmLGK9QpnUjAKVG/xefmvJGd1WUmfpT/g6AJGA==
+
+tslib@^2.0.0:
+  version "2.0.1"
+  resolved "https://registry.npm.taobao.org/tslib/download/tslib-2.0.1.tgz?cache=0&sync_timestamp=1596751904317&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Ftslib%2Fdownload%2Ftslib-2.0.1.tgz#410eb0d113e5b6356490eec749603725b021b43e"
+  integrity sha1-QQ6w0RPltjVkkO7HSWA3JbAhtD4=
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
@@ -10008,10 +10115,24 @@ universalify@^0.1.0:
   resolved "https://registry.npmjs.org/universalify/-/universalify-0.1.2.tgz#b646f69be3942dabcecc9d6639c80dc105efaa66"
   integrity sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==
 
+unstated@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.npm.taobao.org/unstated/download/unstated-1.2.0.tgz#5c57cc077473d2cce411ec0930da285cef3df306"
+  integrity sha1-XFfMB3Rz0szkEewJMNooXO898wY=
+  dependencies:
+    create-react-context "^0.1.5"
+
 unzip-response@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/unzip-response/-/unzip-response-2.0.1.tgz#d2f0f737d16b0615e72a6935ed04214572d56f97"
   integrity sha1-0vD3N9FrBhXnKmk17QQhRXLVb5c=
+
+unzipit@^1.3.0:
+  version "1.3.1"
+  resolved "https://registry.npm.taobao.org/unzipit/download/unzipit-1.3.1.tgz#9863c025f2232cc0c181529a74cb04cffde9e2fa"
+  integrity sha1-mGPAJfIjLMDBgVKadMsEz/3p4vo=
+  dependencies:
+    uzip-module "^1.0.2"
 
 uri-js@^4.2.2:
   version "4.2.2"
@@ -10114,6 +10235,11 @@ uuid@^3.0.0, uuid@^3.1.0, uuid@^3.3.2, uuid@^3.3.3:
   resolved "https://registry.npmjs.org/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
 
+uzip-module@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.npm.taobao.org/uzip-module/download/uzip-module-1.0.2.tgz#eba08001334f6ca0a83a94baf2d4dd368ba8b344"
+  integrity sha1-66CAATNPbKCoOpS68tTdNouos0Q=
+
 validate-npm-package-license@^3.0.1:
   version "3.0.4"
   resolved "https://registry.npmjs.org/validate-npm-package-license/-/validate-npm-package-license-3.0.4.tgz#fc91f6b9c7ba15c857f4cb2c5defeec39d4f410a"
@@ -10155,6 +10281,11 @@ w3c-keyname@^2.1.0, w3c-keyname@^2.2.0:
   version "2.2.4"
   resolved "https://registry.npmjs.org/w3c-keyname/-/w3c-keyname-2.2.4.tgz#4ade6916f6290224cdbd1db8ac49eab03d0eef6b"
   integrity sha512-tOhfEwEzFLJzf6d1ZPkYfGj+FWhIpBux9ppoP3rlclw3Z0BZv3N7b7030Z1kYth+6rDuAsXUFr+d0VE6Ed1ikw==
+
+wait-for-expect@^1.2.0:
+  version "1.3.0"
+  resolved "https://registry.npm.taobao.org/wait-for-expect/download/wait-for-expect-1.3.0.tgz#65241ce355425f907f5d127bdb5e72c412ff830c"
+  integrity sha1-ZSQc41VCX5B/XRJ7215yxBL/gww=
 
 walkdir@0.0.11:
   version "0.0.11"
@@ -10460,13 +10591,20 @@ yargs@~3.10.0:
     decamelize "^1.0.0"
     window-size "0.1.0"
 
-yauzl@^2.4.2:
+yauzl@^2.4.2, yauzl@^2.7.0:
   version "2.10.0"
-  resolved "https://registry.npmjs.org/yauzl/-/yauzl-2.10.0.tgz#c7eb17c93e112cb1086fa6d8e51fb0667b79a5f9"
+  resolved "https://registry.npm.taobao.org/yauzl/download/yauzl-2.10.0.tgz#c7eb17c93e112cb1086fa6d8e51fb0667b79a5f9"
   integrity sha1-x+sXyT4RLLEIb6bY5R+wZnt5pfk=
   dependencies:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
+
+yazl@^2.4.2:
+  version "2.5.1"
+  resolved "https://registry.npm.taobao.org/yazl/download/yazl-2.5.1.tgz#a3d65d3dd659a5b0937850e8609f22fffa2b5c35"
+  integrity sha1-o9ZdPdZZpbCTeFDoYJ8i//orXDU=
+  dependencies:
+    buffer-crc32 "~0.2.3"
 
 zip-stream@^2.1.2:
   version "2.1.3"

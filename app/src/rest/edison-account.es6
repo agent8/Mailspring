@@ -37,6 +37,17 @@ export default class EdisonAccount {
     }
   }
 
+  _handleReqError(error, aid) {
+    const stateCode = error && error.response && error.response.status;
+    if (stateCode && stateCode === 401) {
+      // Token missed or expired or invalid
+      const syncAccount = AccountStore.syncAccount();
+      if (syncAccount && syncAccount.id) {
+        this.register(syncAccount.id);
+      }
+    }
+  }
+
   async checkAccounts(aids = []) {
     const url = `${this.host}/api/charge/account/queryMainAccounts`;
     const accounts = AccountStore.accounts();
@@ -45,9 +56,11 @@ export default class EdisonAccount {
       return new RESTResult(false, 'accountIds is unexpected');
     }
     const postParams = checkAccount.map(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
         emailAddress: a.emailAddress,
-        host: a.settings.imap_host,
+        host: host,
       };
       if (a.name) {
         postData['username'] = a.name;
@@ -56,13 +69,11 @@ export default class EdisonAccount {
     });
     try {
       const { data } = await axios.post(url, postParams);
-      const checkedAccountIds = [];
-      postParams.forEach(p => {
-        const accountKey = `${p.username || p.emailAddress}:${p.host}`;
-        if (data.data && data.data.includes(accountKey)) {
-          checkedAccountIds.push(a.id);
-        }
-      });
+      let checkedAccountIds = [];
+      if (data.data && data.data.length) {
+        checkedAccountIds = data.data;
+      }
+
       return new RESTResult(data.code === 0, data.message, checkedAccountIds);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -75,17 +86,18 @@ export default class EdisonAccount {
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
     }
+    const isExchange = AccountStore.isExchangeAccount(account);
+    const host = isExchange ? account.settings.ews_host : account.settings.imap_host;
     const postData = {
       emailAddress: account.emailAddress,
-      host: account.settings.imap_host,
+      host: host,
     };
     if (account.name) {
       postData['username'] = account.name;
     }
     try {
       const { data } = await axios.post(url, [postData]);
-      const accountKey = `${postData.username || postData.emailAddress}:${postData.host}`;
-      const isChecked = data.data && data.data.includes(accountKey) ? true : false;
+      const isChecked = data.data && data.data.length ? true : false;
       return new RESTResult(data.code === 0, data.message, isChecked);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -140,11 +152,12 @@ export default class EdisonAccount {
         ssl: account.settings.smtp_security && account.settings.smtp_security !== 'none',
       };
     }
-    if (account.provider.endsWith('-exchange')) {
+    if (AccountStore.isExchangeAccount(account)) {
       emailAccount['type'] = 'exchange';
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
-        host: account.settings.imap_host,
+        username: account.settings.ews_username,
+        host: account.settings.ews_host,
         // To do
         domain: null,
       };
@@ -201,6 +214,7 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, aid);
       return new RESTResult(false, error.message);
     }
   }
@@ -229,6 +243,7 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
+      this._handleReqError(error, aid);
       return new RESTResult(false, error.message);
     }
   }
@@ -298,6 +313,7 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
+      this._handleReqError(error, aid);
       return new RESTResult(false, error.message);
     }
   }
@@ -318,6 +334,7 @@ export default class EdisonAccount {
     const postData = {
       deviceId: deviceId,
     };
+    let message;
     try {
       const { data } = await axios.post(url, postData, {
         headers: {
@@ -325,14 +342,18 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
-      if (data.code === 0 && deviceId === supportId) {
-        AccountStore.logoutSyncAccount(aid);
-      }
       this._handleResCode(data.code, account);
-      return new RESTResult(data.code === 0, data.message);
+      message = data.message;
     } catch (error) {
-      return new RESTResult(false, error.message);
+      if (deviceId !== supportId) {
+        this._handleReqError(error, aid);
+      }
+      message = error.message;
     }
+    if (deviceId === supportId) {
+      AccountStore.logoutSyncAccount(aid);
+    }
+    return new RESTResult(true, message);
   }
 
   async UpdateDevice(aid, name) {
@@ -364,6 +385,51 @@ export default class EdisonAccount {
       this._handleResCode(data.code, account);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
+      this._handleReqError(error, aid);
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async subAccounts() {
+    const url = `${this.host}/api/charge/user/subAccounts`;
+    const syncAccount = AccountStore.syncAccount();
+    if (!syncAccount) {
+      return new RESTResult(false, 'sync account is unexpected');
+    }
+
+    const token = syncAccount.settings.edison_token;
+    if (!token) {
+      return new RESTResult(false, 'sync account has no token');
+    }
+
+    const accounts = AccountStore.accounts();
+    const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
+    const postData = subAccounts.map(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
+      const postData = {
+        host: host,
+      };
+      if (a.emailAddress) {
+        postData['emailAddress'] = a.emailAddress;
+      }
+      if (a.name) {
+        postData['username'] = a.name;
+      }
+      return postData;
+    });
+
+    try {
+      const { data } = await axios.post(url, postData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      this._handleResCode(data.code, account);
+      return new RESTResult(data.code === 0, data.message);
+    } catch (error) {
+      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }

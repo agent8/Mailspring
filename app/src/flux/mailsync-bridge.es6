@@ -968,21 +968,18 @@ export default class MailsyncBridge {
   _uploadNativeReport = nativeReportTask => {
     if (nativeReportTask instanceof NativeReportTask) {
       if (nativeReportTask.level === NativeReportTask.errorLevel.info) {
-        console.log(nativeReportTask);
         AppEnv.reportLog(
           nativeReportTask.key,
           { errorData: nativeReportTask },
           { noAppConfig: true, noStackTrace: true, expandLog: false }
         );
       } else if (nativeReportTask.level === NativeReportTask.errorLevel.warning) {
-        console.warn(nativeReportTask);
         AppEnv.reportWarning(
           nativeReportTask.key,
           { errorData: nativeReportTask },
           { noAppConfig: true, noStackTrace: true, expandLog: false }
         );
       } else {
-        console.error(nativeReportTask);
         AppEnv.reportError(
           nativeReportTask.key,
           { errorData: nativeReportTask },
@@ -1065,21 +1062,23 @@ export default class MailsyncBridge {
     if (!dataCache[accountId]) {
       dataCache[accountId] = [];
     }
+    const missingIdsMap = {};
+    missingIds.forEach(id => {
+      missingIdsMap[id] = true;
+    });
+    const uniqMissingIds = Object.keys(missingIdsMap);
     if (dataCache[accountId].length === 0) {
-      for (const id of missingIds) {
+      for (const id of uniqMissingIds) {
         dataCache[accountId].push({ id: id, lastSend: now, priority });
       }
       return missingIds;
     } else {
-      const missingIdsMap = missingIds.map(id => {
-        return { id: id, isNew: true };
-      });
       const missing = [];
       const newCache = [];
       for (let cache of dataCache[accountId]) {
         let cacheUpdated = false;
-        for (let i = 0; i < missingIdsMap.length; i++) {
-          if (missingIdsMap[i].id === cache.id) {
+        for (const id of uniqMissingIds) {
+          if (id === cache.id) {
             if (now - cache.lastSend > ttl || cache.lastSend < clientStartTime) {
               cache.lastSend = now;
               cache.priority = priority;
@@ -1091,7 +1090,7 @@ export default class MailsyncBridge {
             }
             newCache.push(cache);
             cacheUpdated = true;
-            missingIdsMap[i].isNew = false;
+            delete missingIdsMap[cache.id];
             break;
           }
         }
@@ -1099,11 +1098,9 @@ export default class MailsyncBridge {
           newCache.push(cache);
         }
       }
-      for (const idMap of missingIdsMap) {
-        if (idMap.isNew) {
-          newCache.push({ id: idMap.id, lastSend: now, priority });
-          missing.push(idMap.id);
-        }
+      for (const id of Object.keys(missingIdsMap)) {
+        newCache.push({ id, lastSend: now, priority });
+        missing.push(id);
       }
       dataCache[accountId] = newCache;
       return missing;

@@ -125,9 +125,9 @@ export default class MessageItem extends React.Component {
     this._onToggleCollapsed();
   };
 
-  _onDownloadAll = () => {
+  _onDownloadAll = files => {
     Actions.fetchAndSaveAllFiles({
-      files: this.props.message.files,
+      files: files,
       accountId: this.state.accountId,
     });
   };
@@ -204,32 +204,6 @@ export default class MessageItem extends React.Component {
       return;
     }
     MessageStore.markAsRead('Message-Item:OnMouseEnter');
-    // if (this.markAsReadTimer) {
-    //   return;
-    // }
-    // const messageId = this.props.message.id;
-    // const threadId = this.props.message.threadId;
-    // const markAsReadDelay = AppEnv.config.get('core.reading.markAsReadDelay');
-    // this.markAsReadTimer = setTimeout(() => {
-    //   this.markAsReadTimer = null;
-    //   if (!this.props.message || !this.mounted || this.props.pending) {
-    //     return;
-    //   }
-    //   if (threadId !== this.props.message.threadId || messageId !== this.props.message.id) {
-    //     return;
-    //   }
-    //   if (!this.props.message.unread) {
-    //     return;
-    //   }
-    //   Actions.queueTask(
-    //     TaskFactory.taskForInvertingUnread({
-    //       threads: [this.props.thread],
-    //       source: 'Thread Selected',
-    //       canBeUndone: false,
-    //       unread: false,
-    //     })
-    //   );
-    // }, markAsReadDelay);
   };
 
   _setTrackers = trackers => {
@@ -245,7 +219,7 @@ export default class MessageItem extends React.Component {
     }
   }
 
-  _renderDownloadAllButton() {
+  _renderDownloadAllButton(attachments) {
     return (
       <div className="download-all">
         <div className="attachment-number">
@@ -255,7 +229,7 @@ export default class MessageItem extends React.Component {
             style={{ width: 18, height: 18, fontSize: 18 }}
             mode={RetinaImg.Mode.ContentIsMask}
           />
-          <span>{this.props.message.files.length} attachments</span>
+          <span>{attachments.length} attachments</span>
         </div>
         <div className="separator">-</div>
         {this._isAllAttachmentsDownloading() ? (
@@ -269,7 +243,10 @@ export default class MessageItem extends React.Component {
             />
           </div>
         ) : (
-          <div className="download-all-action" onClick={this._onDownloadAll}>
+          <div
+            className="download-all-action"
+            onClick={this._onDownloadAll.bind(this, attachments)}
+          >
             <RetinaImg
               name="download.svg"
               isIcon
@@ -291,10 +268,14 @@ export default class MessageItem extends React.Component {
     }
     const { filePreviewPaths, downloads } = this.state;
     const attachedFiles = files.filter(f => {
+      if (f.isTNEFType && f.isTNEFType()) {
+        Actions.extractTnefFile(f, this.props.message);
+      }
       return (
-        !f.contentId ||
-        !(body || '').includes(`cid:${f.contentId}`) ||
-        (f.contentId && !Utils.shouldDisplayAsImage(f))
+        !f.isTNEFType() &&
+        (!f.contentId ||
+          !(body || '').includes(`cid:${f.contentId}`) ||
+          (f.contentId && !Utils.shouldDisplayAsImage(f)))
       );
     });
 
@@ -315,7 +296,7 @@ export default class MessageItem extends React.Component {
             />
           </div>
         )}
-        {attachedFiles.length > 1 ? this._renderDownloadAllButton() : null}
+        {attachedFiles.length > 1 ? this._renderDownloadAllButton(attachedFiles) : null}
       </div>
     );
   }
@@ -449,6 +430,11 @@ export default class MessageItem extends React.Component {
     );
   }
 
+  _toggleHeaderDetail = e => {
+    e.stopPropagation();
+    this.setState({ detailedHeaders: !this.state.detailedHeaders });
+  };
+
   _renderHeaderDetailToggle() {
     if (this.props.pending) {
       return null;
@@ -457,11 +443,8 @@ export default class MessageItem extends React.Component {
       return (
         <div
           className="header-toggle-control"
-          style={{ top: 18, left: -14, transform: 'rotate(180deg)' }}
-          onClick={e => {
-            this.setState({ detailedHeaders: false });
-            e.stopPropagation();
-          }}
+          style={{ display: 'inline-block', alignContent: 'center', transform: 'rotate(180deg)' }}
+          onClick={this._toggleHeaderDetail}
         >
           <RetinaImg
             name={'down-arrow.svg'}
@@ -477,10 +460,7 @@ export default class MessageItem extends React.Component {
       <div
         className="header-toggle-control inactive"
         style={{ top: 18 }}
-        onClick={e => {
-          this.setState({ detailedHeaders: true });
-          e.stopPropagation();
-        }}
+        onClick={this._toggleHeaderDetail}
       >
         <RetinaImg
           name={'down-arrow.svg'}
@@ -540,6 +520,7 @@ export default class MessageItem extends React.Component {
             {this._renderBlockNote()}
             {this._renderHeader()}
             <MessageItemBody
+              pending={this.props.pending}
               message={this.props.message}
               messageIndex={this.props.messageIndex}
               downloads={this.state.downloads}

@@ -305,6 +305,8 @@ export default class WindowManager {
       width: 900, // Gets changed based on previous settings
       height: 670, // Gets changed based on previous settings
       initializeInBackground: this.initializeInBackground,
+      frame: true,
+      titleBarStyle: 'hidden',
     };
 
     coreWinOpts[WindowManager.ONBOARDING_WINDOW] = {
@@ -313,12 +315,13 @@ export default class WindowManager {
       title: 'Account Setup',
       // hidden: true, // Displayed by PageRouter::_initializeWindowSize
       hidden: false,
-      frame: false, // Always false on Mac, explicitly set for Win & Linux
+      frame: true, // Always false on Mac, explicitly set for Win & Linux
       toolbar: false,
       resizable: false,
       width: 685,
       height: 700,
       disableZoom: true,
+      titleBarStyle: 'default',
     };
     coreWinOpts[WindowManager.BUG_REPORT_WINDOW] = {
       windowKey: WindowManager.BUG_REPORT_WINDOW,

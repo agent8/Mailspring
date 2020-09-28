@@ -52,6 +52,7 @@ const GDPR_COUNTRIES = [
   'CH',
   // "CN", "US",
 ];
+const ImageExtensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
 const BLANK_ZWNJ = '\u200c'; // &zwnj;
 const aggregation = (baseClass, ...mixins) => {
   class base extends baseClass {
@@ -244,7 +245,8 @@ module.exports = Utils = {
     return files.find(
       f =>
         (!f.contentId || (f.contentId && !Utils.shouldDisplayAsImage(f))) &&
-        !CALENDAR_TYPES.includes(f.contentType)
+        !CALENDAR_TYPES.includes(f.contentType) &&
+        !f.isTNEFType()
     );
   },
   findKeywordIndex(str = '', searchValue = '') {
@@ -449,9 +451,13 @@ module.exports = Utils = {
       'IMAGE/JPEG',
       'IMAGE/HEIC',
     ];
-    const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
 
-    return (contentTypes.includes(contentType) || extensions.includes(ext)) && size > 256;
+    return (contentTypes.includes(contentType) || ImageExtensions.includes(ext)) && size > 256;
+  },
+
+  fileIsImage(filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    return ImageExtensions.includes(ext);
   },
 
   // Escapes potentially dangerous html characters

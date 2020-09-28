@@ -16,13 +16,15 @@ const {
 class SignatureEditor extends React.Component {
   constructor(props) {
     super(props);
-    const signatureId = this.props.signature ? this.props.signature.id : '';
-    const body = SignatureStore.getBodyById(signatureId);
+    const { id, attachments } = props.signature || {};
+    const body = SignatureStore.getBodyById(id);
     this.state = {
       body,
       editorState: convertFromHTML(body),
+      attachments: attachments || [],
       editCode: false,
       CodeEditor: () => {},
+      readOnly: !props.signature,
     };
   }
 
@@ -32,16 +34,42 @@ class SignatureEditor extends React.Component {
     this.setState({ CodeEditor });
   }
 
-  _onBaseFieldChange = event => {
-    const { id, value } = event.target;
-    const sig = this.props.signature;
-    Actions.upsertSignature(Object.assign({}, sig, { [id]: value }), sig.id);
-  };
-
   _onSave = () => {
+    if (this.state.readOnly) {
+      return;
+    }
     const sig = Object.assign({}, this.props.signature);
     sig.body = this.state.body;
-    Actions.upsertSignature(sig, sig.id);
+    // if delete the inline, should filter it
+    const filterAttachment = this.state.attachments.filter(
+      a => !a.inline || this.state.body.indexOf(`src="${a.path}"`) >= 0
+    );
+    sig.attachments = filterAttachment;
+    this.setState({ attachments: filterAttachment });
+    Actions.updateSignature(sig);
+  };
+
+  _onAddInlineImage = ({ path, inline }) => {
+    const newAttachments = [...this.state.attachments, { inline: inline, path: path }];
+    this.setState(
+      {
+        attachments: newAttachments,
+      },
+      () => {
+        this.props.onEditField('attachments', newAttachments);
+      }
+    );
+  };
+
+  _onFileReceived = filePath => {
+    if (!Utils.fileIsImage(filePath)) {
+      return;
+    }
+    const newFilePath = AppEnv.copyFileToPreferences(filePath);
+    if (this._composer) {
+      this._composer.insertInlineResizableImage(newFilePath);
+      this._onAddInlineImage({ path: newFilePath, inline: true });
+    }
   };
 
   _onFocusEditor = e => {
@@ -86,18 +114,11 @@ class SignatureEditor extends React.Component {
   };
 
   render() {
-    const { accounts, defaults } = this.props;
-    const { editorState, body, editCode, CodeEditor } = this.state;
-
-    let signature = this.props.signature;
-    let empty = false;
-    if (!signature) {
-      signature = {};
-      empty = true;
-    }
+    const { accounts, defaults, onEditTitle, signature = {} } = this.props;
+    const { editorState, body, editCode, CodeEditor, readOnly } = this.state;
 
     return (
-      <div className={`signature-wrap ${empty && 'empty'}`}>
+      <div className={`signature-wrap ${readOnly && 'empty'}`}>
         <div className="section basic-info">
           <input
             className={signature.title && signature.title !== 'Untitled' ? 'black' : null}
@@ -105,8 +126,8 @@ class SignatureEditor extends React.Component {
             type="text"
             id="title"
             placeholder="Name"
-            value={signature.title || ''}
-            onChange={this._onBaseFieldChange}
+            defaultValue={signature ? signature.title : ''}
+            onBlur={e => onEditTitle(e.target.value)}
           />
         </div>
 
@@ -132,9 +153,8 @@ class SignatureEditor extends React.Component {
                 }
               }}
               onBlur={this._onBlurEditor}
-              onFileReceived={() => {
-                // This method ensures that HTML can be pasted.
-              }}
+              onFileReceived={this._onFileReceived}
+              onAddAttachments={this._onAddInlineImage}
             />
           </div>
         )}
@@ -185,18 +205,7 @@ export default class PreferencesSignatures extends React.Component {
   }
 
   _onAddSignature = () => {
-    const id = Utils.generateTempId();
-    const defaultTemplate = SignatureStore.getDefaultTemplate();
-
-    Actions.upsertSignature(
-      {
-        id,
-        title: 'Untitled',
-        body: defaultTemplate.body,
-      },
-      id
-    );
-    Actions.selectSignature(id);
+    Actions.addSignature();
   };
 
   _onDeleteSignature = signature => {
@@ -204,15 +213,27 @@ export default class PreferencesSignatures extends React.Component {
   };
 
   _onEditSignatureTitle = nextTitle => {
-    const { title, ...rest } = this.state.selectedSignature;
-    Actions.upsertSignature({ title: nextTitle, ...rest }, rest.id);
+    if (!nextTitle) {
+      return;
+    }
+    this._onChangeField('title', nextTitle);
+  };
+
+  _onChangeField = (field, value) => {
+    const SignatureChangeFields = ['title', 'attachments'];
+    if (!SignatureChangeFields.includes(field)) {
+      return;
+    }
+    const sig = Object.assign({}, this.state.selectedSignature);
+    sig[field] = value;
+    Actions.updateSignature(sig);
   };
 
   _onSelectSignature = sig => {
     Actions.selectSignature(sig.id);
   };
 
-  _renderSig = sig => {
+  _renderSigItem = sig => {
     let checkedAccountLength = 0;
     let checkedAliasLength = 0;
     this.state.accounts.forEach(account => {
@@ -225,7 +246,7 @@ export default class PreferencesSignatures extends React.Component {
       }
       (account.getAllAliasContacts() || []).forEach(alias => {
         signatureId =
-          typeof account.signatureId === 'function'
+          typeof alias.signatureId === 'function'
             ? alias.signatureId()
             : `local-${alias.accountId}-${alias.email}-${alias.name}`;
         if (this.state.defaults[signatureId] === sig.id) {
@@ -262,7 +283,7 @@ export default class PreferencesSignatures extends React.Component {
   };
 
   _renderSignatures() {
-    const sigArr = Object.values(this.state.signatures);
+    const { signatures } = this.state;
     const footer = (
       <div className="btn-primary buttons-add" onClick={this._onAddSignature}>
         <RetinaImg
@@ -287,9 +308,9 @@ export default class PreferencesSignatures extends React.Component {
         <Flexbox>
           <EditableList
             className="signature-list"
-            items={sigArr}
+            items={signatures}
             showFooter
-            itemContent={this._renderSig}
+            itemContent={this._renderSigItem}
             onCreateItem={this._onAddSignature}
             onDeleteItem={this._onDeleteSignature}
             onItemEdited={this._onEditSignatureTitle}
@@ -303,6 +324,8 @@ export default class PreferencesSignatures extends React.Component {
             defaults={this.state.defaults}
             key={this.state.selectedSignature ? this.state.selectedSignature.id : 'empty'}
             accounts={this.state.accounts}
+            onEditTitle={this._onEditSignatureTitle}
+            onEditField={this._onChangeField}
           />
         </Flexbox>
       </div>
