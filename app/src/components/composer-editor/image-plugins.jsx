@@ -138,11 +138,13 @@ const rules = [
           draggerDisable: true,
         };
         const style = el.style;
-        if (style.height) {
-          data.height = style.height;
+        const height = style.height || el.getAttribute('height');
+        if (height) {
+          data.height = height;
         }
-        if (style.width) {
-          data.width = style.width;
+        const width = style.width || el.getAttribute('width');
+        if (width) {
+          data.width = width;
         }
 
         return {
