@@ -88,11 +88,11 @@ export default class OAuthSignInPage extends React.Component {
     this._startTimer = setTimeout(() => {
       if (!this._mounted) return;
       // shell.openExternal(this.props.providerAuthPageUrl);
-      if (this.needOpenInBrowser(serviceName)) {
-        this.openBrowser();
-      } else {
-        this._openInWebView(this.props.providerAuthPageUrl);
-      }
+      // if (this.needOpenInBrowser(serviceName)) {
+      //   this.openBrowser();
+      // } else {
+      this._openInWebView(this.props.providerAuthPageUrl);
+      // }
     }, 600);
     this._warnTimer = setTimeout(() => {
       if (!this._mounted) return;
@@ -248,11 +248,13 @@ export default class OAuthSignInPage extends React.Component {
   }
 
   _onConsoleMessage = e => {
-    // console.log('*****webview: ' + e.message);
+    console.log('*****webview: ', e.message);
     if (e.message === 'move-to-account-choose') {
       OnboardingActions.moveToPage('account-choose');
     } else if (e.message === 'oauth page go to blur') {
       this.refs.webview.blur();
+    } else if (e.message.includes('icloud')) {
+      alert('****password:' + e.message.split(':')[1]);
     }
   };
   _pasteIntoWebview = () => {
@@ -332,7 +334,7 @@ export default class OAuthSignInPage extends React.Component {
     for (const event of Object.keys(listeners)) {
       webview.addEventListener(event, listeners[event]);
     }
-
+    webview.setAttribute('preload', '../internal_packages/onboarding/lib/oauth-inject-iclound.js');
     // if (this.state.isYahoo) {
     //   webview.setAttribute('preload', '../internal_packages/onboarding/lib/oauth-inject-yahoo.js');
     //   webview.getWebContents().executeJavaScript(`
@@ -356,6 +358,7 @@ export default class OAuthSignInPage extends React.Component {
   };
 
   _loaded = () => {
+    const webview = this.refs.webview;
     if (this.refs.webview.src.indexOf('signin/rejected') !== -1) {
       AppEnv.reportError(
         new Error(`Oauth error: signin/rejected, url is:` + this.refs.webview.src)
@@ -418,39 +421,39 @@ export default class OAuthSignInPage extends React.Component {
     const serviceName = this.props.serviceName.toLowerCase();
     let wbView;
     let loadingImg;
-    if (this.needOpenInBrowser(serviceName)) {
-      wbView = (
-        <div className="jira-oauth-title">
-          <h2>Sign in with your browser.</h2>
-          {serviceName === 'office365' && (
-            <a
-              className="sign-with-imap"
-              onClick={() => OnboardingActions.chooseAccountProvider('office365')}
-            >
-              Trouble using your browser to sign in? Try signing in here instead.
-            </a>
-          )}
-        </div>
-      );
-    } else {
-      wbView = (
-        <webview
-          useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
-          key={this.randomNum}
-          ref="webview"
-          src={this.state.url}
-          partition={`in-memory-only${this.randomNum}`}
-          style={isYahoo ? yahooOptions : defaultOptions}
-        />
-      );
-      loadingImg = (
-        <LottieImg
-          name="loading-spinner-blue"
-          size={{ width: 65, height: 65 }}
-          style={{ margin: '200px auto 0' }}
-        />
-      );
-    }
+    // if (this.needOpenInBrowser(serviceName)) {
+    //   wbView = (
+    //     <div className="jira-oauth-title">
+    //       <h2>Sign in with your browser.</h2>
+    //       {serviceName === 'office365' && (
+    //         <a
+    //           className="sign-with-imap"
+    //           onClick={() => OnboardingActions.chooseAccountProvider('office365')}
+    //         >
+    //           Trouble using your browser to sign in? Try signing in here instead.
+    //         </a>
+    //       )}
+    //     </div>
+    //   );
+    // } else {
+    wbView = (
+      <webview
+        useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+        key={this.randomNum}
+        ref="webview"
+        src={'https://appleid.apple.com/#!&page=signin'}
+        partition={`in-memory-only${this.randomNum}`}
+        style={isYahoo ? yahooOptions : defaultOptions}
+      />
+    );
+    loadingImg = (
+      <LottieImg
+        name="loading-spinner-blue"
+        size={{ width: 65, height: 65 }}
+        style={{ margin: '200px auto 0' }}
+      />
+    );
+    // }
     return (
       <div className={`page account-setup oauth ${serviceName}`}>
         {this.needOpenInBrowser(serviceName) && (
