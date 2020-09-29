@@ -153,6 +153,13 @@ export const MARK_CONFIG = {
       <font style={{ fontFamily: mark.data.value || mark.data.get('value') }}>{children}</font>
     ),
   },
+  weight: {
+    type: 'weight',
+    tagNames: [],
+    render: ({ children, mark }) => (
+      <font style={{ fontWeight: mark.data.value || mark.data.get('value') }}>{children}</font>
+    ),
+  },
   clearFormatting: {
     type: 'clear formatting',
     tagNames: [],
@@ -198,6 +205,13 @@ const rules = [
           type: config.type,
           nodes: next(el.childNodes),
         };
+      }
+      if (el.style && el.style.fontWeight) {
+        marks.push({
+          object: 'mark',
+          type: 'weight',
+          data: { value: el.style.fontWeight },
+        });
       }
       if (el.style && isMeaningfulColor(el.style.color)) {
         marks.push({
