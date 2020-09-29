@@ -1,5 +1,5 @@
 import ThreadCategory from '../../../src/flux/models/thread-category';
-
+import SidebarStore from './sidebar-store';
 const _ = require('underscore');
 const _str = require('underscore.string');
 const { OutlineViewItem, RetinaImg } = require('mailspring-component-kit');
@@ -100,6 +100,14 @@ const onChangeAllToRead = function(item) {
     Actions.queueTasks(tasks);
   }
 };
+const toggleItemHide = item => {
+  if (item.perspective.isHidden()) {
+    item.perspective.show();
+  } else {
+    item.perspective.hide();
+  }
+};
+
 const onDeleteItem = function(item) {
   if (item.deleted === true) {
     return;
@@ -218,6 +226,10 @@ class SidebarItem {
         name: perspective.name,
         path: perspective.getPath(),
         displayName: perspective.displayName,
+        displayOrder: perspective.displayOrder,
+        setDisplayOrder: perspective.setDisplayOrder,
+        toggleHide: toggleItemHide,
+        isHidden: perspective.isHidden(),
         threadTitleName: perspective.threadTitleName,
         contextMenuLabel: perspective.displayName,
         count: countForItem(perspective),
@@ -240,10 +252,11 @@ class SidebarItem {
         onAllRead: perspective.canChangeAllToRead() ? onChangeAllToRead : undefined,
 
         onDrop(item, event) {
-          const jsonString = event.dataTransfer.getData('nylas-threads-data');
+          const threadsString = event.dataTransfer.getData('edison-threads-data');
+          const categoryString = event.dataTransfer.getData('edison-category-data');
           let jsonData = null;
           try {
-            jsonData = JSON.parse(jsonString);
+            jsonData = JSON.parse(threadsString);
           } catch (err) {
             AppEnv.reportError(new Error(`JSON parse error: ${err}`));
           }
@@ -256,8 +269,14 @@ class SidebarItem {
         shouldAcceptDrop(item, event) {
           const target = item.perspective;
           const current = FocusedPerspectiveStore.current();
-          if (!event.dataTransfer.types.includes('nylas-threads-data')) {
+          if (
+            !event.dataTransfer.types.includes('edison-threads-data') &&
+            !event.dataTransfer.types.includes('edison-category-data')
+          ) {
             return false;
+          }
+          if (event.dataTransfer.types.includes('edison-category-data')) {
+            return true;
           }
           if (target && target.isEqual(current)) {
             return false;

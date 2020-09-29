@@ -4,6 +4,7 @@ import DatabaseStore from './database-store';
 import AccountStore from './account-store';
 import Account from '../models/account';
 import Category from '../models/category';
+import CategoryMetaData from '../models/category-metadata';
 import Actions from '../actions';
 import FolderState from '../models/folder-state';
 import Folder from '../models/folder';
@@ -46,6 +47,8 @@ class CategoryStore extends MailspringStore {
         this._onCategoriesChanged(results);
       });
     Actions.syncFolders.listen(this._onSyncCategory, this);
+    Actions.cancelCategoryMeteDataChange.listen(this.cancelCategoryMetaDataChange, this);
+    Actions.saveCategoryMetaDataChange.listen(this.saveCategoryMetaDataChange, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
   // decodePath(pathString) {
@@ -277,6 +280,55 @@ class CategoryStore extends MailspringStore {
       }
     }
     return this._categorySyncState[categoryId].syncing;
+  };
+  isCategoryHiddenInFolderTree = ({ accountId, categoryId } = {}) => {
+    return CategoryMetaData.isHidden({ accountId, id: categoryId });
+  };
+  hideCategoryById = ({ accountId, categoryId, save = true } = {}) => {
+    let category;
+    if (accountId && categoryId) {
+      this.hideCategoryInFolderTree({ accountId, id: categoryId }, save);
+    } else if (categoryId) {
+      category = this.byFolderId(categoryId);
+      if (category) {
+        this.hideCategoryInFolderTree({ accountId: category.accountId, id: categoryId }, save);
+      }
+    }
+  };
+  hideCategoryInFolderTree = ({ accountId, id } = {}, save = true) => {
+    if (accountId && id) {
+      if (!CategoryMetaData.isHidden({ accountId, id })) {
+        CategoryMetaData.hide({ accountId, id, save });
+        this.trigger();
+      }
+    }
+  };
+  showCategoryById = ({ accountId, categoryId, save = true } = {}) => {
+    let category;
+    if (accountId && categoryId) {
+      this.showCategoryInFolderTree({ accountId, id: categoryId }, save);
+    } else if (categoryId) {
+      category = this.byFolderId(categoryId);
+      if (category) {
+        this.showCategoryInFolderTree({ accountId: category.accountId, id: categoryId }, save);
+      }
+    }
+  };
+  showCategoryInFolderTree = ({ accountId, id } = {}, save = true) => {
+    if (accountId && id) {
+      if (CategoryMetaData.isHidden({ accountId, id })) {
+        CategoryMetaData.show({ accountId, id, save });
+        this.trigger();
+      }
+    }
+  };
+  saveCategoryMetaDataChange = () => {
+    CategoryMetaData.saveToStorage();
+    this.trigger();
+  };
+  cancelCategoryMetaDataChange = () => {
+    CategoryMetaData.restore();
+    this.trigger();
   };
   _onFolderStateChange = ({ objectClass, objects, processAccountId }) => {
     if (objectClass === Folder.name) {

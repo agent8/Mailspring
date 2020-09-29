@@ -1,7 +1,7 @@
 /* eslint global-require:0 */
 
 import _ from 'underscore';
-import { Utils, AccountStore, Actions } from 'mailspring-exports';
+import { Utils, AccountStore, Actions, CanvasUtils } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
 import DisclosureTriangle from './disclosure-triangle';
@@ -143,6 +143,7 @@ class OutlineViewItem extends Component {
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
     }).isRequired,
+    isEditingMenu: PropTypes.bool,
   };
 
   static CounterStyles = CounterStyles;
@@ -155,6 +156,7 @@ class OutlineViewItem extends Component {
       editing: props.item.editing || false,
       originalText: '',
       showAllChildren: false,
+      isCategoryDropping: false,
     };
     this._selfRef = null;
     this._setSelfRef = el => (this._selfRef = el);
@@ -225,9 +227,16 @@ class OutlineViewItem extends Component {
 
   // Handlers
 
-  _onDragStateChange = ({ isDropping }) => {
+  _onDragStateChange = ({ isDropping, dataItems }) => {
     this.setState({ isDropping });
-
+    if (dataItems) {
+      for (let i = 0; i < dataItems.length; i++) {
+        if (dataItems[i] && dataItems[i].type === 'edison-category-data') {
+          this.setState({ isCategoryDropping: isDropping });
+          return;
+        }
+      }
+    }
     const { item } = this.props;
     if (isDropping === true && item.children.length > 0 && item.collapsed) {
       this._expandTimeout = setTimeout(this._onCollapseToggled, 650);
@@ -238,6 +247,7 @@ class OutlineViewItem extends Component {
   };
 
   _onDrop = event => {
+    this.setState({ isDropping: false, isCategoryDropping: false });
     this._runCallback('onDrop', event);
   };
 
@@ -268,6 +278,9 @@ class OutlineViewItem extends Component {
 
   _onClick = event => {
     event.preventDefault();
+    if (this.props.isEditingMenu) {
+      return;
+    }
     this._runCallback('onSelect');
     if (this.props.item.selected) {
       if (
@@ -293,6 +306,9 @@ class OutlineViewItem extends Component {
     if (this.props.item.onEdited) {
       this.setState({ editing: true, originalText: this.props.item.name });
     }
+  };
+  _onEditMenu = () => {
+    Actions.setEditingMenu(true);
   };
 
   _onInputFocus = event => {
@@ -332,7 +348,7 @@ class OutlineViewItem extends Component {
     event.stopPropagation();
     const item = this.props.item;
     const contextMenuLabel = item.contextMenuLabel || item.name;
-    const menu = [];
+    const menu = [{ label: 'Edit Menu', click: this._onEditMenu }];
 
     if (this.props.item.onEdited) {
       menu.push({
@@ -349,25 +365,52 @@ class OutlineViewItem extends Component {
     }
     if (this.props.item.onAllRead) {
       menu.push({
-          label: 'Mark All as Read',
-          click: this._onAllRead,
-        });
+        label: 'Mark All as Read',
+        click: this._onAllRead,
+      });
     }
-    if(menu.length > 0) {
+    if (menu.length > 0) {
       Actions.openContextMenu({ menuItems: menu, mouseEvent: event });
     }
-    };
+  };
+
+  _onDragStart = event => {
+    if (!this.props.item) {
+      event.preventDefault();
+      return;
+    }
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.setData('edison-category-data', JSON.stringify(this.props.item));
+  };
+  _onDragEnter = event => {
+    if (event.dataTransfer.types.includes('edison-category-data')) {
+      const categoryData = event.dataTransfer.getData('edison-category-data');
+      try {
+        const dragItem = JSON.parse(categoryData);
+        this.setState({ isCategoryDropping: true, droppingItem: dragItem });
+      } catch (e) {
+        console.warn(e);
+        console.warn(categoryData);
+      }
+    }
+  };
+  _onDragLeave = event => {
+    this.setState({ isCategoryDropping: false, droppingItem: null });
+  };
 
   _formatNumber(num) {
     if (num > 99) {
       return <span className="count over-99">99</span>;
     }
     return <span className="count">{num}</span>;
-    // return num && num.toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1,');
   }
 
   // Renderers
   _renderCount = (item = this.props.item) => {
+    if (this.props.isEditingMenu) {
+      return null;
+    }
     if (!item.count || item.iconName === 'sent.svg') {
       return <span />;
     }
@@ -380,6 +423,9 @@ class OutlineViewItem extends Component {
   };
 
   _renderIcon(item = this.props.item) {
+    if (this.props.isEditingMenu) {
+      return null;
+    }
     const styles = { width: 18, height: 18, fontSize: 18 };
     let color;
     if (item.iconColor) {
@@ -438,12 +484,38 @@ class OutlineViewItem extends Component {
       </div>
     );
   }
+  _toggleItemHide = () => {
+    if (this.props.item) {
+      this.props.item.toggleHide(this.props.item);
+    }
+  };
+  _renderCheckmark(item) {
+    if (!item) {
+      item = this.props.item;
+    }
+    if (!this.props.isEditingMenu) {
+      return null;
+    }
+    const className = `checkmark ${!item.isHidden ? 'checked' : ''}`;
+    return (
+      <div className={className} onClick={this._toggleItemHide}>
+        <div className="inner" />
+      </div>
+    );
+  }
+  _renderDrag() {
+    if (!this.props.isEditingMenu) {
+      return null;
+    }
+    return <div>D</div>;
+  }
 
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
       item: true,
       selected: item.selected,
       editing: state.editing,
+      inEditMode: this.props.isEditingMenu,
       [item.className]: item.className,
     });
 
@@ -451,7 +523,9 @@ class OutlineViewItem extends Component {
       <DropZone
         id={item.id}
         className={containerClass}
+        draggable={true}
         onDrop={this._onDrop}
+        onDragStart={this._onDragStart}
         onClick={this._onClick}
         onDoubleClick={this._onEdit}
         shouldAcceptDrop={this._shouldAcceptDrop}
@@ -473,11 +547,15 @@ class OutlineViewItem extends Component {
       return (
         <section className="item-children" key={`${item.id}-children`}>
           {item.children.map((child, idx) => {
-            if (this.state.showAllChildren || !child.hideWhenCrowded) {
+            if (
+              (this.state.showAllChildren || !child.hideWhenCrowded) &&
+              (this.props.isEditingMenu || !child.isHidden)
+            ) {
               return (
                 <OutlineViewItem
                   key={notFolderIds.includes(child.id) ? idx : child.id}
                   provider={acc.provider}
+                  isEditingMenu={this.props.isEditingMenu}
                   index={idx}
                   item={child}
                   onToggleShowAllFolder={this._onToggleShowAllFolder}
@@ -491,10 +569,17 @@ class OutlineViewItem extends Component {
     }
     return <span />;
   }
+  _renderDropOverCategory = () => {
+    if (!this.state.isCategoryDropping) {
+      return null;
+    }
+    return (
+      <div className="item-container item-dropping-mirage" key={`dropping-${this.props.item.id}`} />
+    );
+  };
 
   render() {
     const item = this.props.item;
-
     if (item.id && item.id === DIVIDER_KEY) {
       return <Divider key={this.props.index || 100} />;
     }
@@ -527,13 +612,17 @@ class OutlineViewItem extends Component {
     }
     return (
       <div className={item.className ? item.className : null} ref={this._setSelfRef}>
+        {this._renderDropOverCategory()}
         <span className={containerClasses}>
+          {this._renderCheckmark()}
           {this._renderItem()}
           <DisclosureTriangle
             collapsed={item.collapsed}
-            visible={item.children && item.children.length > 0}
+            visible={this.props.isEditingMenu && item.children && item.children.length > 0}
+            visibleOnHover={item.children && item.children.length > 0}
             onCollapseToggled={this._onCollapseToggled}
           />
+          {this._renderDrag()}
         </span>
         {this._renderChildren()}
       </div>

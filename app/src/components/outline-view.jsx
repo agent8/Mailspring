@@ -1,6 +1,5 @@
 import { Utils } from 'mailspring-exports';
 import React, { Component } from 'react';
-import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import OutlineViewItem from './outline-view-item';
 import PropTypes from 'prop-types';
@@ -139,32 +138,30 @@ class OutlineView extends Component {
     );
   }
 
-  _renderHeading(allowCreate, collapsed, collapsible) {
-    const collapseLabel = collapsed ? 'Show' : 'Hide';
-    return (
-      <DropZone
-        className="heading"
-        onDrop={() => true}
-        onDragStateChange={this._onDragStateChange}
-        shouldAcceptDrop={() => true}
-      >
-        <span className="text" title={this.props.title}>
-          {this.props.title}
-        </span>
-        {allowCreate ? this._renderCreateButton() : null}
-        {collapsible ? (
-          <span className="collapse-button" onClick={this._onCollapseToggled}>
-            {collapseLabel}
-          </span>
-        ) : null}
-      </DropZone>
-    );
-  }
-
   _renderItems() {
-    return this.props.items.map((item, idx) =>
-      item.name ? <OutlineViewItem key={item.id} item={item} index={idx} /> : <Divider key={idx} />
-    );
+    const ret = [];
+    this.props.items.forEach((item, idx) => {
+      if (!this.props.isEditingMenu && item.isHidden) {
+        return;
+      }
+      if (item.name) {
+        ret.push(
+          <OutlineViewItem
+            key={item.id}
+            item={item}
+            index={idx}
+            isEditingMenu={this.props.isEditingMenu}
+          />
+        );
+      } else {
+        if (ret.length > 0) {
+          if (ret[ret.length - 1] && isNaN(ret[ret.length - 1].key)) {
+            ret.push(<Divider key={idx} />);
+          }
+        }
+      }
+    });
+    return ret;
   }
 
   _renderOutline(allowCreate, collapsed) {
@@ -189,7 +186,6 @@ class OutlineView extends Component {
 
     return (
       <section className={`nylas-outline-view ${avatarClass}`}>
-        {/* {this._renderHeading(allowCreate, collapsed, collapsible)} */}
         {this._renderOutline(allowCreate, collapsed)}
       </section>
     );

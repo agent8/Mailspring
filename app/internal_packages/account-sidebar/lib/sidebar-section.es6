@@ -6,15 +6,7 @@
  */
 import Sift from '../../../src/flux/models/sift';
 const _ = require('underscore');
-const {
-  Actions,
-  SyncbackCategoryTask,
-  CategoryStore,
-  Label,
-  ExtensionRegistry,
-  RegExpUtils,
-  OutboxStore,
-} = require('mailspring-exports');
+const { CategoryStore, ExtensionRegistry, OutboxStore } = require('mailspring-exports');
 
 const SidebarItem = require('./sidebar-item');
 const SidebarActions = require('./sidebar-actions');
@@ -133,7 +125,10 @@ export default class SidebarSection {
     if (accounts.length === 1) {
       outbox = SidebarItem.forOutbox([accounts[0].id], outboxOpts);
     } else {
-      outbox = SidebarItem.forOutbox(accounts.map(act => act.id), outboxOpts);
+      outbox = SidebarItem.forOutbox(
+        accounts.map(act => act.id),
+        outboxOpts
+      );
     }
     if (!accounts || accounts.length === 0) {
       return this.empty('All Accounts');
@@ -271,101 +266,23 @@ export default class SidebarSection {
           items.push(moreOrLess);
         }
         items.push(item);
-        // if (items.length > 4 && item.selected) {
-        //   items[3].collapsed = false;
-        // }
       }
     }
     if (isShowAll && items.length > 3) {
       items.push(moreOrLess);
     }
-    return items;
+    return items.sort((a, b) => {
+      if (DIVIDER_OBJECT.id.includes(a.id) || DIVIDER_OBJECT.id.includes(b.id)) {
+        return 0;
+      } else if (MORE_TOGGLE.id.includes(a.id)) {
+        return 1;
+      } else if (MORE_TOGGLE.id.includes(b.id)) {
+        return -1;
+      } else {
+        return a.displayOrder - b.displayOrder;
+      }
+    });
   }
-
-  // static forUserCategories(account, { title, collapsible } = {}) {
-  //   let onCollapseToggled;
-  //   if (!account) {
-  //     return;
-  //   }
-  //   // Compute hierarchy for user categories using known "path" separators
-  //   // NOTE: This code uses the fact that userCategoryItems is a sorted set, eg:
-  //   //
-  //   // Inbox
-  //   // Inbox.FolderA
-  //   // Inbox.FolderA.FolderB
-  //   // Inbox.FolderB
-  //   //
-  //   const items = [];
-  //   const seenItems = {};
-  //   for (let category of CategoryStore.userCategories(account)) {
-  //     // https://regex101.com/r/jK8cC2/1
-  //     var item, parentKey;
-  //     const re = RegExpUtils.subcategorySplitRegex();
-  //     const itemKey = category.displayName.replace(re, '/');
-  //
-  //     let parent = null;
-  //     const parentComponents = itemKey.split('/');
-  //     for (let i = parentComponents.length; i >= 1; i--) {
-  //       parentKey = parentComponents.slice(0, i).join('/');
-  //       parent = seenItems[parentKey];
-  //       if (parent) {
-  //         break;
-  //       }
-  //     }
-  //
-  //     if (parent) {
-  //       const itemDisplayName = category.displayName.substr(parentKey.length + 1);
-  //       item = SidebarItem.forCategories([category], { name: itemDisplayName }, false);
-  //       if (item) {
-  //         parent.children.push(item);
-  //       }
-  //     } else {
-  //       item = SidebarItem.forCategories([category], {}, false);
-  //       if (item) {
-  //         items.push(item);
-  //       }
-  //     }
-  //     seenItems[itemKey] = item;
-  //   }
-  //
-  //   const inbox = CategoryStore.getInboxCategory(account);
-  //   let iconName = null;
-  //
-  //   if (inbox && inbox.constructor === Label) {
-  //     if (title == null) {
-  //       title = 'Labels';
-  //     }
-  //     iconName = 'tag.png';
-  //   } else {
-  //     if (title == null) {
-  //       title = 'Folders';
-  //     }
-  //     iconName = 'folder.png';
-  //   }
-  //   const collapsed = isSectionCollapsed(title);
-  //   if (collapsible) {
-  //     onCollapseToggled = toggleSectionCollapsed;
-  //   }
-  //
-  //   return {
-  //     title,
-  //     iconName,
-  //     items,
-  //     collapsed,
-  //     onCollapseToggled,
-  //     onItemCreated(displayName) {
-  //       if (!displayName) {
-  //         return;
-  //       }
-  //       Actions.queueTask(
-  //         SyncbackCategoryTask.forCreating({
-  //           name: displayName,
-  //           accountId: account.id,
-  //         })
-  //       );
-  //     },
-  //   };
-  // }
 
   static forSiftCategories(accountsOrIds, items) {
     if (!Array.isArray(accountsOrIds) || !Array.isArray(items)) {

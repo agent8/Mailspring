@@ -1,6 +1,52 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 
+.account-sidebar-controls {
+  position: unset;
+  padding-top: 20px;
+  display: flex;
+  padding-left: 8px;
+  padding-right: 20px;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 100%;
+  height: 63px;
+  max-height: 63px;
+  align-items: center;
+
+  .btn {
+    font-weight: 700;
+    text-align: center;
+    font-size: 14px;
+    letter-spacing: 0.17px;
+    line-height: 20px;
+    width: 68px;
+    height: 20px;
+    max-width: 68px;
+    opacity: 0.98;
+    border-radius: 20px;
+  }
+
+  .modal-btn-disable {
+    border: none;
+    color: @accent-primary;
+    box-shadow: unset;
+  }
+
+  .modal-btn-enable {
+    background-color: @accent-primary;
+    color: @white;
+  }
+}
+.account-sidebar-mask{
+  background-color: rgba(255,255,255,0.87);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  right: 0;
+  z-index: 100;
+}
 .account-sidebar {
   // flex: 1;
   height: 100%;
