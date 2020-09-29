@@ -33,11 +33,15 @@ export default class CalendarButton extends React.Component {
 
   render() {
     return (
-      <div className="my-package">
-        <button className="btn btn-toolbar" onClick={() => this._onClick()} ref="button">
-          Calendar
-        </button>
+      <div className="button-group" style={{ order: -1 }}>
+        <div
+          className={`btn-toolbar message-toolbar-jira`}
+          onClick={() => this._onClick()}
+        >
+          calendar
+        </div>
       </div>
+
     );
   }
 }

@@ -9,7 +9,7 @@ export function activate() {
 
   if (AppEnv.isMainWindow()) {
     ComponentRegistry.register(CalendarButton, {
-      location: WorkspaceStore.Location.RootSidebar,
+      role: 'MailActionsToolbarButton',
     });
   } else {
     AppEnv.displayWindow();
