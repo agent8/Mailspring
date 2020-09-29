@@ -416,7 +416,7 @@ class ThreadList extends React.Component {
 
     const canvas = CanvasUtils.canvasWithThreadDragImage(data.threadIds.length);
     event.dataTransfer.setDragImage(canvas, 10, 10);
-    event.dataTransfer.setData('nylas-threads-data', JSON.stringify(data));
+    event.dataTransfer.setData('edison-threads-data', JSON.stringify(data));
     event.dataTransfer.setData(`nylas-accounts=${data.accountIds.join(',')}`, '1');
   };
 

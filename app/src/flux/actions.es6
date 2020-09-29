@@ -512,6 +512,9 @@ class Actions {
   // Account Sidebar
   static setCollapsedSidebarItem = ActionScopeWindow;
   static setMoreOrLessCollapsed = ActionScopeWindow;
+  static setEditingMenu = ActionScopeWindow;
+  static cancelCategoryMeteDataChange = ActionScopeWindow;
+  static saveCategoryMetaDataChange = ActionScopeWindow;
 
   // File Actions
   // Some file actions only need to be processed in their current window

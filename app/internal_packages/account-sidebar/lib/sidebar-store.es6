@@ -29,6 +29,7 @@ class SidebarStore extends MailspringStore {
     this._sections = {};
     this._sections[Sections.Standard] = {};
     this._sections[Sections.User] = [];
+    this._editingMenu = false;
     this._itemShowAllChildern = {};
     this._keyboardFocusKey = null;
     this._registerCommands();
@@ -147,8 +148,14 @@ class SidebarStore extends MailspringStore {
       }
     }
   };
+  _toggleItemHide = item => {
+    if (item) {
+      item.toggleHide(item);
+    }
+  };
 
   _registerListeners() {
+    this.listenTo(Actions.setEditingMenu, this._onSetEditingMenu);
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
     this.listenTo(Actions.setMoreOrLessCollapsed, this.setItemShowAllChildren);
     this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
@@ -164,6 +171,14 @@ class SidebarStore extends MailspringStore {
       this._updateSections
     );
   }
+
+  _onSetEditingMenu = val => {
+    this._editingMenu = val;
+    this.trigger();
+  };
+  isEditingMenu = () => {
+    return this._editingMenu;
+  };
 
   _onSetCollapsedByKey = (itemKey, collapsed) => {
     const currentValue = AppEnv.savedState.sidebarKeysCollapsed[itemKey];

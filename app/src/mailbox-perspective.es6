@@ -334,6 +334,15 @@ export default class MailboxPerspective {
     }
     this._displayName = null;
   }
+  get displayOrder() {
+    return 0;
+  }
+  setDisplayOrder() {}
+  isHidden() {
+    return false;
+  }
+  hide() {}
+  show() {}
 
   get providers() {
     if (this.accountIds.length > 0) {
@@ -669,6 +678,32 @@ class DraftsMailboxPerspective extends MailboxPerspective {
     if (Array.isArray(accountIds) && accountIds.length > 1) {
       this.displayName = 'All Drafts';
     }
+
+    if (this._categories.length === 1 && this._categories[0]) {
+      this._categoryMetaDataAccountId = this._categories[0].accountId;
+    } else {
+      this._categoryMetaDataAccountId = 'all';
+    }
+  }
+  isHidden() {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+    });
+  }
+  hide() {
+    return CategoryStore.hideCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+      save: false,
+    });
+  }
+  show() {
+    return CategoryStore.showCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+      save: false,
+    });
   }
 
   categories() {
@@ -725,6 +760,27 @@ class SiftMailboxPerspective extends MailboxPerspective {
     }
     this.iconStyles = { borderRadius: '50%' };
     this._categories = [];
+  }
+
+  isHidden() {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: 'sift',
+      categoryId: this.siftCategory,
+    });
+  }
+  hide() {
+    return CategoryStore.hideCategoryById({
+      accountId: 'sift',
+      categoryId: this.siftCategory,
+      save: false,
+    });
+  }
+  show() {
+    return CategoryStore.showCategoryById({
+      accountId: 'sift',
+      categoryId: this.siftCategory,
+      save: false,
+    });
   }
 
   threads() {
@@ -784,6 +840,33 @@ class StarredMailboxPerspective extends MailboxPerspective {
     this.starred = true;
     this.name = 'Flagged';
     this.iconName = 'flag.svg';
+
+    if (Array.isArray(accountIds) && accountIds.length === 1 && accountIds[0]) {
+      this._categoryMetaDataAccountId = accountIds[0];
+    } else {
+      this._categoryMetaDataAccountId = 'all';
+    }
+  }
+
+  isHidden() {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+    });
+  }
+  hide() {
+    return CategoryStore.hideCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+      save: false,
+    });
+  }
+  show() {
+    return CategoryStore.showCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+      save: false,
+    });
   }
 
   gmailThreads() {
@@ -920,6 +1003,50 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       throw new Error('CategoryMailboxPerspective: You must provide at least one category.');
     }
     this._parseCategories();
+    if (this._categories.length === 1 && this._categories[0]) {
+      this._categoryMetaDataAccountId = this._categories[0].accountId;
+    } else {
+      this._categoryMetaDataAccountId = 'all';
+    }
+  }
+  isHidden = () => {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+    });
+  };
+  hide = () => {
+    return CategoryStore.hideCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+      save: false,
+    });
+  };
+  show = () => {
+    return CategoryStore.showCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this.displayName || this.name,
+      save: false,
+    });
+  };
+  setDisplayOrder = val => {
+    if (this._categories.length === 1 && this._categories[0]) {
+      if (this.isInbox() || this.isArchive() || this.isSent() || this.isSpam() || this.isTrash()) {
+        return;
+      }
+      const cat = this._categories[0];
+      cat.setDisplayOrder(val, false);
+    }
+  };
+  get displayOrder() {
+    if (this._categories.length === 1 && this._categories[0]) {
+      if (this.isInbox() || this.isArchive() || this.isSent() || this.isSpam() || this.isTrash()) {
+        return 0;
+      }
+      const cat = this._categories[0];
+      return cat.getDisplayOrder();
+    }
+    return 0;
   }
   _parseCategories = () => {
     if (AccountStore.isExchangeAccountId(this._categories[0].accountId)) {
@@ -1254,6 +1381,13 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
     this._categories = categories;
     this.isToday = true;
   }
+  get displayOrder() {
+    return 0;
+  }
+  setDisplayOrder(val) {
+    return;
+  }
+
   categories() {
     return this._categories;
   }
@@ -1323,7 +1457,6 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
     return;
   }
 }
-
 class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
   constructor(data) {
     super(data);
@@ -1366,6 +1499,8 @@ class AllMailMailboxPerspective extends CategoryMailboxPerspective {
 class JiraMailboxPerspective extends CategoryMailboxPerspective {
   constructor(_categories) {
     super(_categories);
+    this._categoryMetaDataAccountId = 'all';
+    this.displayName = 'Jira';
   }
   unreadCount() {
     let sum = 0;
@@ -1466,6 +1601,10 @@ class InboxMailboxFocusedPerspective extends CategoryMailboxPerspective {
     this.isFocusedOtherPerspective = true;
   }
 
+  get displayOrder() {
+    return 0;
+  }
+
   isTabOfPerspective(other) {
     const tab = other.tab || [];
     return tab.some(per => {
@@ -1528,6 +1667,10 @@ class InboxMailboxOtherPerspective extends CategoryMailboxPerspective {
     this.isTab = true;
     this.isOther = true;
     this.isFocusedOtherPerspective = true;
+  }
+
+  get displayOrder() {
+    return 0;
   }
 
   isTabOfPerspective(other) {

@@ -7,7 +7,11 @@ import {
   inboxNotOtherCategories,
   inboxOtherCategories,
 } from '../../constant';
-
+let categoryMetadata = null;
+const CategoryMetadata = () => {
+  categoryMetadata = categoryMetadata || require('./category-metadata').default;
+  return categoryMetadata;
+};
 // We look for a few standard categories and display them in the Mailboxes
 // portion of the left sidebar. Note that these may not all be present on
 // a particular account.
@@ -102,6 +106,21 @@ const toDelimiterJSONMappings = val => {
 };
 const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]'];
 export default class Category extends Model {
+  isState(targetState) {
+    try {
+      const current = parseInt(this.state);
+      const target = parseInt(targetState);
+      return current === target;
+    } catch (e) {
+      AppEnv.reportError(new Error('currentState or targetState cannot be converted to int'), {
+        errorData: {
+          current: this.state,
+          target: targetState,
+        },
+      });
+      return false;
+    }
+  }
   get displayName() {
     return Category.pathToDisplayName(this.name, this.delimiter);
   }
@@ -218,6 +237,11 @@ export default class Category extends Model {
       queryable: true,
       loadFromColumn: true,
     }),
+    displayOrder: Attributes.Number({
+      modelKey: 'displayOrder',
+      queryable: false,
+      loadFromColumn: false,
+    }),
     type: Attributes.Number({
       modelKey: 'type',
       queryable: true,
@@ -303,7 +327,27 @@ export default class Category extends Model {
   }
 
   isDeleted() {
-    return this.state === 1;
+    return this.state === Category.DELETED;
+  }
+  isHidden = () => {
+    return CategoryMetadata().isHidden({ accountId: this.accountId, id: this.id });
+  };
+  hide(save = true) {
+    CategoryMetadata().hide({ accountId: this.accountId, id: this.id });
+  }
+  show(save = true) {
+    CategoryMetadata().show({ accountId: this.accountId, id: this.id });
+  }
+  getDisplayOrder() {
+    return CategoryMetadata().getDisplayOrder({ accountId: this.accountId, id: this.id });
+  }
+  setDisplayOrder(val, save = true) {
+    CategoryMetadata().setDisplayOrder({
+      accountId: this.accountId,
+      id: this.id,
+      displayOrder: val,
+      save,
+    });
   }
   areStrangers(otherCategory) {
     if (!(otherCategory instanceof Category)) {
