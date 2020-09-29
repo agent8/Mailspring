@@ -51,6 +51,11 @@ const getStartOfDay = () => {
 };
 const logFileRetainThreshHoldInMs = 30 * 24 * 60 * 60 * 1000;
 const logFileUploadThreshHoldInMs = 48 * 60 * 60 * 1000;
+const isStag = version => {
+  const verNumList = version.split('.');
+  const lastVersionNum = Number(verNumList[verNumList.length - 1]);
+  return !lastVersionNum || lastVersionNum % 2 === 1;
+};
 export default class Application extends EventEmitter {
   async start(options) {
     const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
@@ -66,7 +71,7 @@ export default class Application extends EventEmitter {
     this.nativeVersion = '';
     const stagHost = 'https://cp.stag.easilydo.cc';
     const prodHost = 'https://cp.edison.tech';
-    this.isStag = true;
+    this.isStag = isStag(this.version);
     this.edisonServerHost = this.isStag ? stagHost : prodHost;
     // this.edisonServerHost = ;
     this.startOfDay = getStartOfDay();
