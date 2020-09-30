@@ -1,3 +1,7 @@
+/*
+ * 传递函数给whenReady()
+ * 当文档解析完毕且为操作准备就绪时，函数作为document的方法调用
+ */
 var whenReady = (function() {
   //这个函数返回whenReady()函数
   var funcs = []; //当获得事件时，要运行的函数
@@ -95,8 +99,3 @@ function autoProcess() {
     }, 100);
   }
 }
-
-/*
- * 传递函数给whenReady()
- * 当文档解析完毕且为操作准备就绪时，函数作为document的方法调用
- */
