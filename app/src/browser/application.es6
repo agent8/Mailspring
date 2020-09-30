@@ -1216,6 +1216,16 @@ export default class Application extends EventEmitter {
       }
     });
 
+    this.on('application:icloud-app-token', () => {
+      const bugReportWindow = this.windowManager.get(WindowManager.ICLOUD_APP_TOKEN_WINDOW);
+      if (bugReportWindow) {
+        bugReportWindow.show();
+        bugReportWindow.focus();
+      } else {
+        this.windowManager.ensureWindow(WindowManager.ICLOUD_APP_TOKEN_WINDOW, { title: 'iCloud' });
+      }
+    });
+
     this.on('application:view-privacy', () => {
       const helpUrl = 'http://www.edison.tech/privacy.html';
       require('electron').shell.openExternal(helpUrl);

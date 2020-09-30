@@ -1,0 +1,15 @@
+{
+  "name": "icloudAppToken",
+  "version": "0.1.0",
+  "main": "./lib/main",
+  "description": "Get iCloud App password",
+  "syncInit": true,
+  "license": "GPL-3.0",
+  "private": true,
+  "engines": {
+    "mailspring": "*"
+  },
+  "windowTypes": {
+    "icloudAppToken": true
+  }
+}

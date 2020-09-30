@@ -6,6 +6,7 @@ const MAIN_WINDOW = 'default';
 const SPEC_WINDOW = 'spec';
 const ONBOARDING_WINDOW = 'onboarding';
 const BUG_REPORT_WINDOW = 'bugreport';
+const ICLOUD_APP_TOKEN_WINDOW = 'icloudAppToken';
 
 export default class WindowManager {
   constructor({
@@ -336,6 +337,16 @@ export default class WindowManager {
       width: 685,
       height: 700,
     };
+    coreWinOpts[WindowManager.ICLOUD_APP_TOKEN_WINDOW] = {
+      windowKey: WindowManager.ICLOUD_APP_TOKEN_WINDOW,
+      windowType: WindowManager.ICLOUD_APP_TOKEN_WINDOW,
+      title: 'iCloud',
+      toolbar: true,
+      width: 1000, // Gets changed based on previous settings
+      height: 750, // Gets changed based on previous settings
+      frame: true,
+      titleBarStyle: 'hidden',
+    };
 
     // The SPEC_WINDOW gets passed its own bootstrapScript
     coreWinOpts[WindowManager.SPEC_WINDOW] = {
@@ -359,3 +370,4 @@ WindowManager.MAIN_WINDOW = MAIN_WINDOW;
 WindowManager.SPEC_WINDOW = SPEC_WINDOW;
 WindowManager.ONBOARDING_WINDOW = ONBOARDING_WINDOW;
 WindowManager.BUG_REPORT_WINDOW = BUG_REPORT_WINDOW;
+WindowManager.ICLOUD_APP_TOKEN_WINDOW = ICLOUD_APP_TOKEN_WINDOW;

@@ -1,4 +1,4 @@
-import { Account, React, PropTypes, RegExpUtils } from 'mailspring-exports';
+import { Account, React, PropTypes, RegExpUtils, Actions } from 'mailspring-exports';
 
 import OnboardingActions from './onboarding-actions';
 import CreatePageForForm from './decorators/create-page-for-form';
@@ -8,6 +8,7 @@ import {
 } from './onboarding-helpers';
 import FormField from './form-field';
 import AccountProviders from './account-providers';
+import { ipcRenderer } from 'electron';
 
 class AccountBasicSettingsForm extends React.Component {
   static displayName = 'AccountBasicSettingsForm';
@@ -74,7 +75,33 @@ class AccountBasicSettingsForm extends React.Component {
     return { errorMessage, errorFieldNames, populated: true };
   };
 
-  async submit() {
+  componentDidMount() {
+    this._storeUnlisten = [];
+    const { provider } = this.props.account;
+    if (provider === 'icloud') {
+      this._storeUnlisten.push(
+        Actions.transfterICloudToken.listen(token => {
+          this.props.onFieldChange({
+            target: {
+              id: 'settings.imap_password',
+              value: token,
+            },
+          });
+          setTimeout(this.submit, 100);
+        }, this)
+      );
+    }
+  }
+
+  componentWillUnmount() {
+    if (this._storeUnlisten) {
+      for (let un of this._storeUnlisten) {
+        un();
+      }
+    }
+  }
+
+  submit = async () => {
     // create a new account with expanded settings and just the three fields
     const {
       name,
@@ -117,6 +144,10 @@ class AccountBasicSettingsForm extends React.Component {
       // we need the user to provide IMAP/SMTP credentials manually
       // OnboardingActions.moveToPage('account-settings-imap');
     }
+  };
+
+  _openICloudAppTokenWindow() {
+    ipcRenderer.send('command', 'application:icloud-app-token');
   }
 
   render() {
@@ -126,13 +157,18 @@ class AccountBasicSettingsForm extends React.Component {
         <FormField field="emailAddress" title="Email" {...this.props} />
         <FormField
           field="settings.imap_password"
-          title="Password"
+          title={provider === 'icloud' ? 'App-Specific Password' : 'Password'}
           type="password"
           {...this.props}
         />
         {/* {provider === 'exchange' ? (
           <FormField field="settings.exchangeServer" title="Exchange Server" {...this.props} />
         ) : null} */}
+        {provider === 'icloud' ? (
+          <div className="icloud-generate-token" onClick={this._openICloudAppTokenWindow}>
+            Generate an app-specific password
+          </div>
+        ) : null}
       </form>
     );
   }

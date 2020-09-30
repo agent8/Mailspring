@@ -647,6 +647,8 @@ class Actions {
   static deletedEdisonAccountOnOtherDevice = ActionScopeMainWindow;
 
   static toggleJiraPlugin = ActionScopeWindow;
+
+  static transfterICloudToken = ActionScopeGlobal;
 }
 
 // Read the actions we declared on the dummy Actions object above

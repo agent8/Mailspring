@@ -34,7 +34,7 @@ const AccountProviders = [
         passwords, this includes our Email app.
         <br />
         <br />
-        <a href="https://support.apple.com/en-us/HT204397">
+        <a href="https://support.apple.com/en-us/HT204397" style={{ cursor: 'pointer' }}>
           <strong>iCloud App-Specific Passwords Help</strong>
         </a>
       </span>
