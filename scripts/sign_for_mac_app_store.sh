@@ -36,6 +36,6 @@ productbuild --component "$APP_PATH" /Applications --sign "$INSTALLER_KEY" "$RES
 
 echo "****SIGN Done!****"
 echo "****Validate Start****"
-# xcrun altool --validate-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p ghak-zlrl-lmbu-feef
+# xcrun altool --validate-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p kwtk-wowe-puxy-hnub
 echo "****Validate Done****"
-#xcrun altool --upload-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p ghak-zlrl-lmbu-feef
+# xcrun altool --upload-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p kwtk-wowe-puxy-hnub
