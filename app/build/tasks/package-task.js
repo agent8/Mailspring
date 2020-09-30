@@ -109,7 +109,7 @@ module.exports = grunt => {
   grunt.config.merge({
     packager: {
       appVersion: packageJSON.version,
-      buildVersion: packageJSON.version,
+      buildVersion: packageJSON.buildVersion,
       platform: isMas ? 'mas' : platform,
       dir: grunt.config('appDir'),
       appCategoryType: 'public.app-category.business',
