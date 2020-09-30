@@ -79,7 +79,7 @@ function autoProcess() {
   }
   $('.btn-app-password').trigger('click');
   setTimeout(() => {
-    $('.generic-input-field').attr('value', 'good-for-you');
+    $('.generic-input-field').attr('value', 'EdisonMail');
     $('.generic-input-field').trigger('change');
     $('.button-primary').trigger('click');
     intervalCheckPassword();

@@ -88,6 +88,7 @@ class AccountBasicSettingsForm extends React.Component {
             },
           });
           setTimeout(this.submit, 100);
+          AppEnv.trackingEvent('iCloud-Generate-App-Password-Success');
         }, this)
       );
     }
@@ -148,6 +149,7 @@ class AccountBasicSettingsForm extends React.Component {
 
   _openICloudAppTokenWindow() {
     ipcRenderer.send('command', 'application:icloud-app-token');
+    AppEnv.trackingEvent('iCloud-Generate-App-Password');
   }
 
   render() {
