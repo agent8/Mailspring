@@ -72,7 +72,7 @@ export default class ICloudAppTokenRoot extends React.PureComponent {
         useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
         ref="webview"
         src={'https://appleid.apple.com/#!&page=signin'}
-        partition={`in-memory-only`}
+        partition={`in-memory-only-${Date.now()}`}
         style={defaultOptions}
       />
     );

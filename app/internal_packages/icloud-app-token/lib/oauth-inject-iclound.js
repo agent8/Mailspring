@@ -93,8 +93,8 @@ function autoProcess() {
         clearInterval(timer);
         // send the message to the receiver
         console.log('icloud:' + el.val());
-        maskDiv.text('');
+        // maskDiv.text('');
       }
-    }, 100);
+    }, 200);
   }
 }
