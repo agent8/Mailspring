@@ -6,18 +6,27 @@ import Calendar from './mailprep/app/index';
 // saved state using `serialize` it is provided.
 //
 export function activate() {
-
-  if (AppEnv.isMainWindow()) {
-    ComponentRegistry.register(CalendarButton, {
-      role: 'MailActionsToolbarButton',
-    });
-  } else {
-    AppEnv.displayWindow();
-    AppEnv.getCurrentWindow().setSize(1024, 728);
-    ComponentRegistry.register(Calendar, {
-      location: WorkspaceStore.Location.Center,
-    });
+  if (!WorkspaceStore.Location.Calendar) {
+    WorkspaceStore.defineSheet('Calendar', { root: true }, { list: ['RootSidebar', 'Calendar'] });
   }
+  if (
+    AppEnv.savedState.perspective &&
+    AppEnv.savedState.perspective.type === 'CalendarMailboxPerspective'
+  ) {
+    Actions.selectRootSheet(WorkspaceStore.Sheet.Calendar);
+  }
+  ComponentRegistry.register(Calendar, { location: WorkspaceStore.Location.Calendar });
+  // if (AppEnv.isMainWindow()) {
+  //   ComponentRegistry.register(CalendarButton, {
+  //     role: 'MailActionsToolbarButton',
+  //   });
+  // } else {
+  //   AppEnv.displayWindow();
+  //   AppEnv.getCurrentWindow().setSize(1024, 728);
+  //   ComponentRegistry.register(Calendar, {
+  //     location: WorkspaceStore.Location.Center,
+  //   });
+  // }
 }
 
 // Serialize is called when your package is about to be unmounted.
@@ -32,6 +41,6 @@ export function serialize() { }
 // subscribing to events, release them here.
 //
 export function deactivate() {
-  ComponentRegistry.unregister(CalendarButton);
+  // ComponentRegistry.unregister(CalendarButton);
   ComponentRegistry.unregister(Calendar);
 }

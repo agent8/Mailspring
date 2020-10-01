@@ -219,6 +219,10 @@ export default class SidebarSection {
     if (folderItem) {
       items.push(folderItem);
     }
+    folderItem = SidebarItem.forCalendar(accountIds, { displayName: 'Calendar' });
+    if (folderItem) {
+      items.push(folderItem);
+    }
 
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)

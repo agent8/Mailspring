@@ -159,6 +159,10 @@ export default class MailboxPerspective {
     return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
   }
 
+  static forCalendar(categories) {
+    return categories.length > 0 ? new CalendarMailboxPerspective(categories) : this.forNothing();
+  }
+
   static forInboxFocused(categories) {
     return categories.length > 0
       ? new InboxMailboxFocusedPerspective(categories)
@@ -1230,8 +1234,8 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
       const lastMessageTimestampAttr = isMessageView
         ? Thread.attributes.lastMessageTimestamp.greaterThan(startOfDay / 1000)
         : JoinTable.useAttribute(Thread.attributes.lastMessageTimestamp, 'DateTime').greaterThan(
-            startOfDay / 1000
-          );
+          startOfDay / 1000
+        );
       const conditions = [
         Thread.attributes.categories.containsAny(categoryIds),
         lastMessageTimestampAttr,
@@ -1243,8 +1247,8 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
         const inboxCategoryAttr = isMessageView
           ? Thread.attributes.inboxCategory.in(notOtherCategories)
           : JoinTable.useAttribute(Thread.attributes.inboxCategory, 'Number').in(
-              notOtherCategories
-            );
+            notOtherCategories
+          );
         conditions.push(inboxCategoryAttr);
       }
       query = query.where([new Matcher.JoinAnd(conditions)]);
@@ -1346,6 +1350,58 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
     }
 
     return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class CalendarMailboxPerspective extends MailboxPerspective {
+  constructor(accountIds) {
+    super(accountIds);
+    this.name = 'Calendar';
+    this.iconName = 'drafts.svg';
+    this._categories = [];
+    for (const id of accountIds) {
+      const cat = CategoryStore.getCategoryByRole(id, 'calendar');
+      if (cat) {
+        this._categories.push(cat);
+      }
+    }
+    if (Array.isArray(accountIds) && accountIds.length > 1) {
+      this.displayName = 'Calendar';
+    }
+
+  }
+
+  categories() {
+    return this._categories;
+  }
+
+  threads() {
+    return null;
+  }
+
+  // unreadCount() {
+  //   let sum = 0;
+  //   if (Array.isArray(this.categoryIds)) {
+  //     for (const catId of this.categoryIds) {
+  //       sum += ThreadCountsStore.totalCountForCategoryId(catId);
+  //     }
+  //   }
+  //   return sum;
+  // }
+
+  // canReceiveThreadsFromAccountIds() {
+  //   return false;
+  // }
+
+  // tasksForRemovingItems(messages, source) {
+  //   return TaskFactory.tasksForMovingToTrash({ messages, source });
+  // }
+
+  sheet() {
+    if (!WorkspaceStore || !WorkspaceStore.Sheet) {
+      WorkspaceStore = require('./flux/stores/workspace-store');
+    }
+    return WorkspaceStore.Sheet && WorkspaceStore.Sheet.Calendar;
   }
 }
 

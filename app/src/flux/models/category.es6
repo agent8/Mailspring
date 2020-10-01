@@ -58,6 +58,7 @@ const StandardRoleMap = ToObject([
   'spam',
   'archive',
   'trash',
+  'calendar',
 ]);
 
 const LockedRoleMap = ToObject(['sent', 'drafts']);
@@ -339,9 +340,9 @@ export default class Category extends Model {
       otherLayers.length - 1 === currentLayers.length &&
       otherCategory.displayName.startsWith(this.displayName) &&
       this.displayName.length ===
-        otherCategory.displayName.length -
-          otherLayers[otherLayers.length - 1].length -
-          otherCategory.delimiter.length
+      otherCategory.displayName.length -
+      otherLayers[otherLayers.length - 1].length -
+      otherCategory.delimiter.length
     );
   }
   isAncestorOf(otherCategory) {

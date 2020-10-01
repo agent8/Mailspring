@@ -58,7 +58,7 @@ const isItemSelected = (perspective, children = []) => {
   const sheet = WorkspaceStore.topSheet();
   if (
     sheet &&
-    !['Threads', 'Thread', 'Drafts', 'Outbox', 'Preference', 'Sift'].includes(sheet.id)
+    !['Threads', 'Thread', 'Drafts', 'Outbox', 'Preference', 'Sift', 'Calendar'].includes(sheet.id)
   ) {
     return false;
   }
@@ -486,6 +486,42 @@ class SidebarItem {
     if (opts.key) {
       id += `-${opts.key}`;
     }
+    return this.forPerspective(id, perspective, opts);
+  }
+
+  static forCalendar(accountIds, opts = {}) {
+
+    // let categories = accountIds.map(accId => {
+    //   return CategoryStore.getCategoryByRole(accId, 'inbox');
+    // });
+    // categories = _.compact(categories);
+    // const perspective = MailboxPerspective.forCalendar(categories)
+    // let id = 'Calendar'
+    // opts.iconName = 'jira.svg';
+    // opts.className = 'jira-icon';
+    // opts.name = 'Calendar'
+    // opts._categoriesSharedRole = 'calendar'
+    // console.log("BEAR")
+    // console.log(perspective)
+    // console.log(categories)
+    // return this.forPerspective(id, perspective, opts)
+
+    opts.iconName = 'drafts.svg';
+
+    const perspective = MailboxPerspective.forCalendar(accountIds);
+
+    opts.categoryIds = this.getCategoryIds(accountIds, 'calendar');
+
+    // if (!Array.isArray(opts.categoryIds) || opts.categoryIds.length === 0) {
+    //   return null;
+    // }
+    let id = `Calendar`;
+    // if (opts.key) {
+    //   id += `${opts.key}`;
+    // } else {
+    //   id += `${accountIds.join('-')}`;
+    // }
+
     return this.forPerspective(id, perspective, opts);
   }
 
