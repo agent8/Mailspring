@@ -1,5 +1,6 @@
 import React from 'react';
 // import './Input.css';
+import DatePicker from 'react-datepicker';
 
 export default class Input extends React.Component {
   render() {
@@ -38,10 +39,27 @@ export default class Input extends React.Component {
         </div>
       );
     }
+    if (props.type === 'text') {
+      return (
+        <div className="input-component">
+          {label}
+          <input
+            type={props.type}
+            className={className}
+            required={props.type === 'datetime-local'}
+            value={props.value}
+            name={props.name}
+            placeholder={props.placeholder}
+            onKeyDown={props.name === 'guest' ? props.onKeyDown : null}
+            onChange={props.onChange}
+          />
+        </div>
+      )
+    }
     return (
       <div className="input-component">
         {label}
-        <input
+        {/* <input
           type={props.type}
           className={className}
           required={props.type === 'datetime-local'}
@@ -50,6 +68,14 @@ export default class Input extends React.Component {
           placeholder={props.placeholder}
           onKeyDown={props.name === 'guest' ? props.onKeyDown : null}
           onChange={props.onChange}
+        /> */}
+        <DatePicker
+          formatWeekDay={nameOfDay => nameOfDay.substr(0, 1)}
+          className={className}
+          selected={props.value}
+          onChange={props.onChange}
+          showTimeInput
+          dateFormat={`MMM dd, yyyy ${props.type === 'datetime-local' ? 'h:mm aa' : ''}`}
         />
       </div>
     );

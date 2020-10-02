@@ -44,6 +44,7 @@ import AccountBlock from '../sequelizeDB/schemas/accounts';
 import EventBlock from '../sequelizeDB/schemas/events';
 import RpBlock from '../sequelizeDB/schemas/recurrencePatterns';
 import { getAllAccounts } from '../sequelizeDB/operations/accounts';
+import * as dbEventActions from '../sequelizeDB/operations/events';
 import * as dbRpOperations from '../sequelizeDB/operations/recurrencepatterns';
 import {
   asyncCreateExchangeEvent,
@@ -116,6 +117,7 @@ export default class View extends React.Component {
       currentEvent: [{}],
       isShowEvent: false,
       isShowDeleteForm: false,
+      isShowLoginForm: false,
       currentEventStartDateTime: '',
       currentEventEndDateTime: '',
       email: '',
@@ -304,8 +306,11 @@ export default class View extends React.Component {
   // #endregion
 
   // #region On Event Clicks
-  handleEventClick = (event) => {
-    console.log(event);
+  handleEventClick = async (event) => {
+    const eventPresent = await dbEventActions.getOneEventById(event.id)
+    if (eventPresent === null) {
+      return;
+    }
     this.setState({
       isShowEvent: true,
       currentEvent: event,
@@ -323,7 +328,9 @@ export default class View extends React.Component {
     // console.log(this.state)
     // debugger;
     e.preventDefault();
-    const { email, pwd, accountType } = this.state;
+    const { email, pwd } = this.state;
+    // Temp set to icloud for now
+    const accountType = 'ICLOUD'
 
     if (accountType === 'EWS') {
       this.authorizeExchangeCodeRequest({
@@ -333,6 +340,7 @@ export default class View extends React.Component {
     } else {
       this.authorizeCaldavCodeRequest(email, pwd, accountType);
     }
+    this.setState({ isShowLoginForm: false })
   };
   // #endregion
 
@@ -616,8 +624,9 @@ export default class View extends React.Component {
     }
 
     return (
-      <div>
-        <a
+      <Modal isOpen={state.isShowLoginForm} style={deleteModalStyles} onRequestClose={() => this.setState({ isShowLoginForm: false })}>
+        <div>
+          {/* <a
           role="button"
           tabIndex="0"
           className="waves-effect waves-light btn"
@@ -648,23 +657,23 @@ export default class View extends React.Component {
           onClick={() => props.endPendingActions()}
         >
           <i className="material-icons left">close</i>End Pending Actions
-        </a>{' '}
-        <form onSubmit={this.handleSubmit}>
-          <input
-            type="text"
-            name="email"
-            value={state.email}
-            onChange={this.handleChange}
-            placeholder="Email"
-          />
-          <input
-            type="text"
-            name="pwd"
-            value={state.pwd}
-            onChange={this.handleChange}
-            placeholder="Password"
-          />
-          <label>
+        </a>{' '} */}
+          <form onSubmit={this.handleSubmit}>
+            <input
+              type="text"
+              name="email"
+              value={state.email}
+              onChange={this.handleChange}
+              placeholder="Email"
+            />
+            <input
+              type="text"
+              name="pwd"
+              value={state.pwd}
+              onChange={this.handleChange}
+              placeholder="Password"
+            />
+            {/* <label>
             <input
               type="radio"
               name="accountType"
@@ -685,12 +694,12 @@ export default class View extends React.Component {
           <label>
             <input type="radio" name="accountType" value="EWS" onChange={this.handleChange} />
             EWS
-          </label>
+          </label> */}
 
-          <input type="submit" value="Submit" />
-        </form>
-        {/* this is for out of sync tokens. */}
-        {providers}
+            <input type="submit" value="Submit" />
+          </form>
+          {/* this is for out of sync tokens. */}
+          {/* {providers}
         <a
           role="button"
           tabIndex="0"
@@ -754,8 +763,10 @@ export default class View extends React.Component {
           onClick={() => props.clearAllEvents()}
         >
           <i className="material-icons left">close</i>Clear all Events
-        </a>
-      </div>
+        </a> */}
+        </div>
+      </Modal>
+
     );
   };
 
@@ -765,7 +776,7 @@ export default class View extends React.Component {
     if (props.isAuth !== undefined) {
       return (
         <div className={'calendar'}>
-          {/* {this.renderSignupLinks(props, state)} */}
+          {this.renderSignupLinks(props, state)}
           {this.renderEventPopup(state)}
           {this.renderCalendar(props)}
           <div className={'side-calendar'}>
@@ -781,6 +792,7 @@ export default class View extends React.Component {
               tileContent={({ date, view }) => this.renderDayContent(date, view)}
             />
             <FilterCalendar />
+            <BigButton variant="small-blue" onClick={() => this.setState({ isShowLoginForm: true })}>Login</BigButton>
           </div>
         </div>
       );

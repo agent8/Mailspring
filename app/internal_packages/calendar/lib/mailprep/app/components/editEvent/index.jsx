@@ -926,6 +926,30 @@ export default class EditEvent extends React.Component {
     );
   };
 
+  renderFindATime = () => {
+    const { props } = this;
+    const visibleEvents = props.visibleEvents;
+
+    return (
+      <DragAndDropCalendar
+        localizer={localizer}
+        events={visibleEvents}
+        defaultView={'week'}
+        views={{
+          week: true
+        }}
+        popup
+        eventPropGetter={event => ({ className: this.generateBarColor(event.colorId, event.isAllDay) })}
+      />
+    );
+  }
+
+  handleChangeTab = (event, tabLabel) => {
+    this.setState({
+      activeTab: tabLabel
+    });
+  }
+
   renderTab = (activeTab) => {
     switch (activeTab) {
       case 'Details':
