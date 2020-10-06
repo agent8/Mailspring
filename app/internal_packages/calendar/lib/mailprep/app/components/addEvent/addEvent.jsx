@@ -5,7 +5,8 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import moment from 'moment';
 import ICAL from 'ical.js';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
-import Modal from 'react-modal';
+// import Modal from 'react-modal';
+import { Modal } from 'mailspring-component-kit'
 import Select from 'react-select'
 
 import RRuleGenerator from '../react-rrule-generator/src/lib';
@@ -340,16 +341,17 @@ export default class AddEvent extends Component {
   }
 
   renderPopup = (state) => {
-    return (<Modal isOpen={state.isShowConfirmForm} style={customStyles} onRequestClose={() => this.setState({ isShowConfirmForm: false })}>
-      <p>You are about to send an invitation for "{state.title}"</p>
-      <p>Do you want to send "{state.title}" now or continue editing the event?</p>
-      <button type="button" onClick={() => this.setState({ isShowConfirmForm: false })}>
-        Edit
+    return state.isShowConfirmForm ?
+      (<Modal isOpen={state.isShowConfirmForm} style={customStyles} onRequestClose={() => this.setState({ isShowConfirmForm: false })}>
+        <p>You are about to send an invitation for "{state.title}"</p>
+        <p>Do you want to send "{state.title}" now or continue editing the event?</p>
+        <button type="button" onClick={() => this.setState({ isShowConfirmForm: false })}>
+          Edit
       </button>
-      <button type="button" onClick={this.handleSubmit}>
-        Send
+        <button type="button" onClick={this.handleSubmit}>
+          Send
       </button>
-    </Modal>);
+      </Modal>) : null;
   }
 
   handleSubmit = async () => {

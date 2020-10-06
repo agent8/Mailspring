@@ -3,7 +3,8 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { Calendar as MiniCalendar } from 'react-calendar';
 import moment from 'moment';
-import Modal from 'react-modal';
+// import Modal from 'react-modal';
+import { Modal } from 'mailspring-component-kit'
 import RRule from 'rrule';
 import ICAL from 'ical.js';
 import fileSystem from 'fs';
@@ -81,6 +82,15 @@ const customStyles = {
     transform: 'translate(-50%, -50%)',
     backgroundColor: '#f9fafa',
     boxShadow: '0px 0px 10px -5px',
+    // height: '32%',
+    // maxHeight: '95%',
+    // width: '32%',
+    // maxWidth: '95%',
+    // overflow: 'auto',
+    // position: 'absolute',
+    // backgroundColor: 'red',
+    // boxShadow: '0 10px 20px rgba(0,0,0,0.19), inset 0 0 1px rgba(0,0,0,0.5)',
+    // borderRadius: '5px',
   }
 };
 
@@ -133,9 +143,10 @@ export default class View extends React.Component {
     // dav.debug.enabled = true;
   }
 
-  componentWillMount() {
-    Modal.setAppElement('body');
-  }
+  // This was for react-modal
+  // componentWillMount() {
+  //   Modal.setAppElement('mailspring-workspace');
+  // }
 
   async componentDidMount() {
     const { props } = this;
@@ -518,76 +529,83 @@ export default class View extends React.Component {
     );
   };
 
-  renderEventPopup = (state) => (
-    <Modal
-      isOpen={state.isShowEvent}
-      onAfterOpen={this.afterOpenModal}
-      onRequestClose={this.closeModal}
-      style={customStyles}
-      contentLabel="Event Modal"
-    >
-      <div className="modal-btn-grp">
-        <button className="modal-btn" type="button" onClick={this.handleDeleteEvent}>
-          &#128465;
-        </button>
-        <button className="modal-btn" type="button" onClick={this.editEvent}>
-          &#9998;
-        </button>
-        <button className="modal-btn" type="button" onClick={this.closeModal}>
-          &#120;
-        </button>
-      </div>
-
-      <h4 ref={(subtitle) => (this.subtitle = subtitle)}>{state.currentEvent.title}</h4>
-      <p className="modal-date-text">
-        {state.currentEventStartDateTime} - {state.currentEventEndDateTime}
-      </p>
-      {state.currentEvent.attendee && Object.keys(state.currentEvent.attendee).length > 1 ?
+  renderEventPopup = (state) => {
+    return state.isShowEvent ? (
+      <Modal
+        className={`modal-container animate`}
+        contentLabel="Event Modal"
+        height={300}
+        width={400}
+      >
         <div>
-          <p>{Object.keys(state.currentEvent.attendee).length} Guests</p>
-          {Object.keys(state.currentEvent.attendee).map((key, index) =>
-            state.currentEvent.owner === state.currentEvent.organizer
-              && state.currentEvent.attendee[key]['email'] === state.currentEvent.owner
-              ? null
-              : <p key={index}>{state.currentEvent.attendee[key]['email']}</p>
-          )}
-        </div> : null}
+          <div className="modal-btn-grp">
+            <button className="modal-btn" type="button" onClick={this.handleDeleteEvent}>
+              &#128465;
+          </button>
+            <button className="modal-btn" type="button" onClick={this.editEvent}>
+              &#9998;
+          </button>
+            <button className="modal-btn" type="button" onClick={this.closeModal}>
+              &#120;
+          </button>
+          </div>
 
-      {/* FOR DEBUGGING WITH ICALSTRING */}
-      {/* <button type="button" onClick={() => this.setState({ isShowIcal: true })}>
-        Show iCal String
-      </button>
-      <Modal isOpen={state.isShowIcal} onRequestClose={() => this.setState({ isShowIcal: false })}>
-        <h3>{state.currentEvent.title}</h3>
-        <br />
-        <pre>{`${state.currentEvent.iCalString}`}</pre>
-        <button type="button" onClick={() => this.setState({ isShowIcal: false })}>
-          Done
-        </button>
-      </Modal> */}
-      <Modal isOpen={state.isShowDeleteForm} style={deleteModalStyles} onRequestClose={() => this.setState({ isShowDeleteForm: false })}>
-        <p>This is a recurring event</p>
-        <div className="modal-button-group">
-          <BigButton variant="small-white" onClick={() => this.setState({ isShowDeleteForm: false })}>
-            Cancel
-          </BigButton>
-          {state.currentEvent.isMaster
-            ? <BigButton variant="small-white" onClick={this.deleteAllRecurrenceEvent}>
-              Delete All
-              </BigButton>
-            : <BigButton variant="small-white" onClick={this.deleteFutureRecurrenceEvent}>
-              Delete All Future Events
-              </BigButton>
+          <h4 ref={(subtitle) => (this.subtitle = subtitle)}>{state.currentEvent.title}</h4>
+          <p className="modal-date-text">
+            {state.currentEventStartDateTime} - {state.currentEventEndDateTime}
+          </p>
+          {state.currentEvent.attendee && Object.keys(state.currentEvent.attendee).length > 1 ?
+            <div>
+              <p>{Object.keys(state.currentEvent.attendee).length} Guests</p>
+              {Object.keys(state.currentEvent.attendee).map((key, index) =>
+                state.currentEvent.owner === state.currentEvent.organizer
+                  && state.currentEvent.attendee[key]['email'] === state.currentEvent.owner
+                  ? null
+                  : <p key={index}>{state.currentEvent.attendee[key]['email']}</p>
+              )}
+            </div> : null}
+          {state.isShowDeleteForm ?
+            <Modal style={deleteModalStyles}>
+              <p>This is a recurring event</p>
+              <div className="modal-button-group">
+                <BigButton variant="small-white" onClick={() => this.setState({ isShowDeleteForm: false })}>
+                  Cancel
+                </BigButton>
+                {state.currentEvent.isMaster
+                  ? <BigButton variant="small-white" onClick={this.deleteAllRecurrenceEvent}>
+                    Delete All
+                    </BigButton>
+                  : <BigButton variant="small-white" onClick={this.deleteFutureRecurrenceEvent}>
+                    Delete All Future Events
+                    </BigButton>
+                }
+                <BigButton variant="small-blue" onClick={this.deleteEvent}>
+                  Delete Only This Event
+                </BigButton>
+              </div>
+            </Modal>
+            : null
           }
-          <BigButton variant="small-blue" onClick={this.deleteEvent}>
-            Delete Only This Event
-          </BigButton>
         </div>
 
-
       </Modal>
-    </Modal>
-  );
+    ) : null
+  };
+
+  //         {/* FOR DEBUGGING WITH ICALSTRING */ }
+  // {/* <button type="button" onClick={() => this.setState({ isShowIcal: true })}>
+  //         Show iCal String
+  //       </button>
+  //       <Modal isOpen={state.isShowIcal} onRequestClose={() => this.setState({ isShowIcal: false })}>
+  //         <h3>{state.currentEvent.title}</h3>
+  //         <br />
+  //         <pre>{`${state.currentEvent.iCalString}`}</pre>
+  //         <button type="button" onClick={() => this.setState({ isShowIcal: false })}>
+  //           Done
+  //         </button>
+  //       </Modal> */}
+
+
 
   renderSignupLinks = (props, state) => {
     const providers = [];
@@ -623,10 +641,11 @@ export default class View extends React.Component {
       );
     }
 
-    return (
-      <Modal isOpen={state.isShowLoginForm} style={deleteModalStyles} onRequestClose={() => this.setState({ isShowLoginForm: false })}>
-        <div>
-          {/* <a
+    return state.isShowLoginForm ?
+      (
+        <Modal isOpen={state.isShowLoginForm} style={deleteModalStyles} onRequestClose={() => this.setState({ isShowLoginForm: false })}>
+          <div>
+            {/* <a
           role="button"
           tabIndex="0"
           className="waves-effect waves-light btn"
@@ -658,22 +677,22 @@ export default class View extends React.Component {
         >
           <i className="material-icons left">close</i>End Pending Actions
         </a>{' '} */}
-          <form onSubmit={this.handleSubmit}>
-            <input
-              type="text"
-              name="email"
-              value={state.email}
-              onChange={this.handleChange}
-              placeholder="Email"
-            />
-            <input
-              type="text"
-              name="pwd"
-              value={state.pwd}
-              onChange={this.handleChange}
-              placeholder="Password"
-            />
-            {/* <label>
+            <form onSubmit={this.handleSubmit}>
+              <input
+                type="text"
+                name="email"
+                value={state.email}
+                onChange={this.handleChange}
+                placeholder="Email"
+              />
+              <input
+                type="text"
+                name="pwd"
+                value={state.pwd}
+                onChange={this.handleChange}
+                placeholder="Password"
+              />
+              {/* <label>
             <input
               type="radio"
               name="accountType"
@@ -696,10 +715,10 @@ export default class View extends React.Component {
             EWS
           </label> */}
 
-            <input type="submit" value="Submit" />
-          </form>
-          {/* this is for out of sync tokens. */}
-          {/* {providers}
+              <input type="submit" value="Submit" />
+            </form>
+            {/* this is for out of sync tokens. */}
+            {/* {providers}
         <a
           role="button"
           tabIndex="0"
@@ -764,10 +783,10 @@ export default class View extends React.Component {
         >
           <i className="material-icons left">close</i>Clear all Events
         </a> */}
-        </div>
-      </Modal>
+          </div>
+        </Modal>
 
-    );
+      ) : null;
   };
 
   render() {
@@ -776,6 +795,14 @@ export default class View extends React.Component {
     if (props.isAuth !== undefined) {
       return (
         <div className={'calendar'}>
+          {/* <ModalTest
+          height={200}
+          width={200}
+        >
+          <div>
+            <h1>HEY</h1>
+          </div>
+        </ModalTest> */}
           {this.renderSignupLinks(props, state)}
           {this.renderEventPopup(state)}
           {this.renderCalendar(props)}

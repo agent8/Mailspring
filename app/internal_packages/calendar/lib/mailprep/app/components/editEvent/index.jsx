@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment';
-import Modal from 'react-modal';
+// import Modal from 'react-modal';
+import { Modal } from 'mailspring-component-kit'
 
 import {
   ConflictResolutionMode,
@@ -740,54 +741,56 @@ export default class EditEvent extends React.Component {
 
   renderPopup = (state) => {
     if (state.initialRrule !== state.updatedRrule) {
-      return (
+      return state.isShowUpdateForm ?
+        (
+          <Modal
+            isOpen={state.isShowUpdateForm}
+            style={customStyles}
+            onRequestClose={() => this.setState({ isShowUpdateForm: false })}
+          >
+            <p>Are you sure you want to change a repeating rule for this event?</p>
+            <p>Do you want to change all occurrences?</p>
+            <div className="modal-button-group">
+              <BigButton variant="small-white" onClick={() => this.setState({ isShowUpdateForm: false })}>
+                Cancel
+            </BigButton>
+              <BigButton variant="small-blue" onClick={this.editAllRecurrenceEvent}>
+                Update All
+            </BigButton>
+            </div>
+
+          </Modal>
+        ) : null;
+    }
+
+    return state.isShowUpdateForm ?
+      (
         <Modal
           isOpen={state.isShowUpdateForm}
           style={customStyles}
           onRequestClose={() => this.setState({ isShowUpdateForm: false })}
         >
-          <p>Are you sure you want to change a repeating rule for this event?</p>
-          <p>Do you want to change all occurrences?</p>
+          <p>This is a recurring event</p>
           <div className="modal-button-group">
             <BigButton variant="small-white" onClick={() => this.setState({ isShowUpdateForm: false })}>
               Cancel
-            </BigButton>
-            <BigButton variant="small-blue" onClick={this.editAllRecurrenceEvent}>
-              Update All
-            </BigButton>
+          </BigButton>
+            {state.isMaster ? (
+              <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
+                Update All
+              </BigButton>
+            ) : (
+                <BigButton variant="small-white" type="button" onClick={this.editFutureRecurrenceEvent}>
+                  Update All Future Events
+                </BigButton>
+              )}
+            <BigButton variant="small-blue" onClick={this.editEvent}>
+              Update Only This Event
+          </BigButton>
           </div>
 
         </Modal>
-      );
-    }
-
-    return (
-      <Modal
-        isOpen={state.isShowUpdateForm}
-        style={customStyles}
-        onRequestClose={() => this.setState({ isShowUpdateForm: false })}
-      >
-        <p>This is a recurring event</p>
-        <div className="modal-button-group">
-          <BigButton variant="small-white" onClick={() => this.setState({ isShowUpdateForm: false })}>
-            Cancel
-          </BigButton>
-          {state.isMaster ? (
-            <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
-              Update All
-            </BigButton>
-          ) : (
-              <BigButton variant="small-white" type="button" onClick={this.editFutureRecurrenceEvent}>
-                Update All Future Events
-              </BigButton>
-            )}
-          <BigButton variant="small-blue" onClick={this.editEvent}>
-            Update Only This Event
-          </BigButton>
-        </div>
-
-      </Modal>
-    );
+      ) : null;
   };
 
   renderAddDetails = () => {
