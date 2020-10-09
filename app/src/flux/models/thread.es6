@@ -322,6 +322,9 @@ export default class Thread extends ModelWithMetadata {
     if (!this.id) {
       this.id = json.id || json.pid;
     }
+    if (json.remoteSearch) {
+      this.remoteSearch = json.remoteSearch;
+    }
     return this;
   }
 

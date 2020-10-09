@@ -38,6 +38,10 @@ export const getThreadSuggestions = async (term, accountIds) => {
     dbQuery = dbQuery.where({ accountId: accountIds[0] });
   }
 
+  if (AppEnv.config.get('core.workspace.disableSubjectSuggestions')) {
+    return Promise.resolve([]);
+  }
+
   return dbQuery.background().setQueryType(Constant.QUERY_TYPE.SEARCH_SUBJECT);
   // return dbQuery.then(results => results);
 };

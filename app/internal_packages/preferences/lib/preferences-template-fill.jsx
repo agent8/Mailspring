@@ -249,6 +249,18 @@ const preferencesTemplateFill = {
           ],
         },
         {
+          groupName: 'SEARCH',
+          groupItem: [
+            {
+              label: 'Disable subject suggestions',
+              configSchema: configSchema =>
+                configSchema.properties.workspace.properties.disableSubjectSuggestions,
+              keyPath: 'core.workspace.disableSubjectSuggestions',
+              keywords: ['suggestions'],
+            },
+          ],
+        },
+        {
           groupName: 'Local Data',
           groupItem: [
             {

@@ -123,6 +123,12 @@ export default {
             title: 'Show icon in menu bar',
             platforms: ['darwin', 'linux'],
           },
+          disableSubjectSuggestions: {
+            type: 'boolean',
+            default: true,
+            syncToServer: false,
+            title: 'Disable subject suggestions',
+          },
           enableFocusedInbox: {
             type: 'boolean',
             default: true,

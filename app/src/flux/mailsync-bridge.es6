@@ -834,6 +834,16 @@ export default class MailsyncBridge {
           FocusedPerspectiveStore =
             FocusedPerspectiveStore || require('./stores/focused-perspective-store').default;
           const perspective = FocusedPerspectiveStore.current();
+
+          // don't refresh list when it's in rearch mode and the incomming message's remoteSearch is not 'done'
+          if (perspective && perspective.isSearchMailbox) {
+            if (tmpModels[0].remoteSearch === 'done') {
+              AppEnv.logDebug(`execute refresh list in search mode`);
+            } else {
+              continue;
+            }
+          }
+
           if (perspective) {
             const categoryIds = Array.isArray(perspective.categories())
               ? perspective.categories().map(cat => cat.id)
