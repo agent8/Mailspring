@@ -188,7 +188,12 @@ function parseHtml(html) {
       cssValueIsZero(p.style.margin);
 
     // if the <p> is followed by a non-empty node and, insert a <br>
-    if (!prHasExplicitZeroMargin && p.nextSibling && p.nextSibling.nodeName !== 'P' && !nodeIsEmpty(p.nextSibling)) {
+    if (
+      !prHasExplicitZeroMargin &&
+      p.nextSibling &&
+      p.nextSibling.nodeName !== 'P' &&
+      !nodeIsEmpty(p.nextSibling)
+    ) {
       const br = document.createElement('BR');
       p.parentNode.insertBefore(br, p.nextSibling);
     }
@@ -241,7 +246,7 @@ HtmlSerializer.deserializeMark = function(mark) {
   }, []);
 };
 
-export function convertFromHTML(html) {
+export function convertFromHTML(html, defaultFontValues = {}) {
   const json = HtmlSerializer.deserialize(html, { toJSON: true });
 
   /* Slate's default sanitization just obliterates block nodes that contain both
@@ -374,7 +379,21 @@ export function convertFromHTML(html) {
   };
 
   optimizeTextNodesForNormalization(json.document);
-
+  const { fontSize, fontFace } = defaultFontValues || {};
+  if (fontFace === undefined && fontSize === undefined) {
+    return;
+  }
+  const injectDefaultFontValues = node => {
+    const nodes = node.nodes;
+    if (nodes.length > 0) {
+      if (nodes[0].object === 'block' && nodes[0].type === BLOCK_CONFIG.div.type) {
+        nodes[0].data = nodes[0].data || {};
+        nodes[0].data.fontFamily = nodes[0].data.fontFamily || fontFace;
+        nodes[0].data.fontSize = nodes[0].data.fontSize || fontSize;
+      }
+    }
+  };
+  injectDefaultFontValues(json.document);
   return Value.fromJSON(json);
 }
 

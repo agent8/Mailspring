@@ -203,7 +203,32 @@ export const BLOCK_CONFIG = {
       }
 
       if (targetIsHTML && nodeIsEmpty(node)) {
+        if (!node.data) {
+          return <br {...attributes} />;
+        }
+        const fontSize = node.data.get('fontSize');
+        const fontFamily = node.data.get('fontFamily');
+        if (fontSize || fontFamily) {
+          return (
+            <font style={{ fontFamily, fontSize }}>
+              <br {...attributes} />
+            </font>
+          );
+        }
         return <br {...attributes} />;
+      }
+      const fontSize = node.data.get('fontSize');
+      const fontFamily = node.data.get('fontFamily');
+      if (fontSize || fontFamily) {
+        return (
+          <div
+            {...attributes}
+            {...explicitHTMLAttributes}
+            className={node.data.className || node.data.get('className')}
+          >
+            <font style={{ fontFamily, fontSize }}>{children}</font>
+          </div>
+        );
       }
       return (
         <div
