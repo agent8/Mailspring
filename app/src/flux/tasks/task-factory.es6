@@ -15,6 +15,7 @@ import SyncbackCategoryTask from './syncback-category-task';
 import MakePrimaryTask from './make-primary-task';
 import MakeOtherTask from './make-other-task';
 import { bannedPathNames } from '../../constant';
+import ChangeAllUnreadTask from './change-all-unread-task';
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -258,6 +259,17 @@ const TaskFactory = {
     });
 
     return tasks;
+  },
+  taskForChangingAllToRead({ category, source }) {
+    if (category && category.id) {
+      return new ChangeAllUnreadTask({
+        accountId: category.accountId,
+        folderId: category.id,
+        unread: false,
+        source,
+      });
+    }
+    return null;
   },
 
   taskForInvertingStarred({ threads, source }) {
