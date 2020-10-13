@@ -116,6 +116,7 @@ class EventedIFrame extends React.Component {
   };
 
   _unsubscribeFromIFrameEvents() {
+    document.removeEventListener('keydown', this._zoomContent);
     const node = ReactDOM.findDOMNode(this);
     const doc = node && node.contentDocument;
     if (!doc) {
@@ -123,7 +124,6 @@ class EventedIFrame extends React.Component {
     }
     doc.removeEventListener('click', this._onIFrameClick);
     doc.removeEventListener('keydown', this._onIFrameKeyEvent);
-    doc.removeEventListener('keydown', this._zoomContent);
     doc.removeEventListener('keypress', this._onIFrameKeyEvent);
     doc.removeEventListener('keyup', this._onIFrameKeyEvent);
     doc.removeEventListener('mousedown', this._onIFrameMouseEvent);
@@ -138,12 +138,12 @@ class EventedIFrame extends React.Component {
   }
 
   _subscribeToIFrameEvents() {
+    document.addEventListener('keydown', this._zoomContent);
     const node = ReactDOM.findDOMNode(this);
     const doc = node.contentDocument;
     _.defer(() => {
       doc.addEventListener('click', this._onIFrameClick);
       doc.addEventListener('keydown', this._onIFrameKeyEvent);
-      doc.addEventListener('keydown', this._zoomContent);
       doc.addEventListener('keypress', this._onIFrameKeyEvent);
       doc.addEventListener('keyup', this._onIFrameKeyEvent);
       doc.addEventListener('mousedown', this._onIFrameMouseEvent);
