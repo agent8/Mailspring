@@ -58,13 +58,22 @@ const isStag = version => {
 };
 export default class Application extends EventEmitter {
   async start(options) {
-    const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
+    const {
+      resourcePath,
+      configDirPath,
+      version,
+      buildVersion,
+      devMode,
+      specMode,
+      safeMode,
+    } = options;
     //BrowserWindow.addDevToolsExtension('~/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/3.4.2_0');
     // BrowserWindow.addDevToolsExtension('/Users/gtkrab/edisonSoftware/react_extension');
     //Normalize to make sure drive letter case is consistent on Windows
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
     this.version = version;
+    this.buildVersion = buildVersion;
     this.devMode = devMode;
     this.specMode = specMode;
     this.safeMode = safeMode;

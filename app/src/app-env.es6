@@ -672,6 +672,12 @@ export default class AppEnvConstructor {
       : (this.appVersion = this.getLoadSettings().appVersion);
   }
 
+  getBuildVersion() {
+    return this.buildVersion != null
+      ? this.buildVersion
+      : (this.buildVersion = this.getLoadSettings().buildVersion);
+  }
+
   // Public: Determine whether the current version is an official release.
   isReleasedVersion() {
     // Check if the release contains a 7-character SHA prefix
