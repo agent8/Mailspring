@@ -230,9 +230,20 @@ class Matcher {
       .replace(/\(/g, '/(')
       .replace(/\)/g, '/)');
   }
+  _likeSQLSplit(term) {
+    let searchSubjectTerm = term.replace(/\ +/g, '%');
+    if (searchSubjectTerm.lastIndexOf('%') === searchSubjectTerm.length - 1) {
+      searchSubjectTerm = searchSubjectTerm.slice(-1);
+    }
+    if (searchSubjectTerm.indexOf('%') === 0) {
+      searchSubjectTerm = searchSubjectTerm.slice(1);
+    }
+    return searchSubjectTerm;
+  }
 
   whereSQL(klass) {
-    const val = this.comparator === 'like' ? `%${this._safeSQL(this.val)}%` : this.val;
+    const val =
+      this.comparator === 'like' ? `%${this._likeSQLSplit(this._safeSQL(this.val))}%` : this.val;
     let escaped = null;
     if (typeof val === 'string') {
       if (this.comparator === 'like') {
