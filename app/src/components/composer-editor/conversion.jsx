@@ -379,11 +379,11 @@ export function convertFromHTML(html, defaultFontValues = {}) {
   };
 
   optimizeTextNodesForNormalization(json.document);
-  const { fontSize, fontFace } = defaultFontValues || {};
-  if (fontFace === undefined && fontSize === undefined) {
-    return;
-  }
   const injectDefaultFontValues = node => {
+    const { fontSize, fontFace } = defaultFontValues || {};
+    if (fontFace === undefined && fontSize === undefined) {
+      return;
+    }
     const nodes = node.nodes;
     if (nodes.length > 0) {
       if (nodes[0].object === 'block' && nodes[0].type === BLOCK_CONFIG.div.type) {
