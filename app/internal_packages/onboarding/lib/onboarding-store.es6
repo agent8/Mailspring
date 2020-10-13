@@ -1,8 +1,9 @@
-import { AccountStore, Account, IdentityStore, Constant } from 'mailspring-exports';
+import { AccountStore, Account, IdentityStore, Constant, RESTful } from 'mailspring-exports';
 import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
 
+const { EdisonAccountRest } = RESTful;
 const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
@@ -20,7 +21,12 @@ class OnboardingStore extends MailspringStore {
     this.listenTo(OnboardingActions.finishAndAddAccount, this._onFinishAndAddAccount);
     this.listenTo(OnboardingActions.identityJSONReceived, this._onIdentityJSONReceived);
 
-    const { existingAccountJSON, addingAccount } = AppEnv.getWindowProps();
+    const { existingAccountJSON, edisonAccount, addingAccount } = AppEnv.getWindowProps();
+
+    // add account from edison account
+    if (edisonAccount) {
+      this.addEdisonAccount = edisonAccount;
+    }
 
     const hasAccounts = AccountStore.accounts().length > 0;
     // we don't have edison account for now.
@@ -208,6 +214,15 @@ class OnboardingStore extends MailspringStore {
           'Sorry, something went wrong when this account was added to EdisonMail. ' +
           `If you do not see the account, try linking it again. ${e.toString()}`,
       });
+    }
+
+    if (this.addEdisonAccount) {
+      const isExchange = (account.provider || '').includes('exchange');
+      const host = isExchange ? account.settings.ews_host : account.settings.imap_host;
+      const theAccountEmailHost = `${account.emailAddress}:${host}`;
+      if (this.addEdisonAccount === theAccountEmailHost) {
+        await EdisonAccountRest.register(account.id);
+      }
     }
 
     AppEnv.displayWindow();
