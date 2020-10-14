@@ -216,14 +216,14 @@ class OnboardingStore extends MailspringStore {
       });
     }
 
-    if (this.addEdisonAccount) {
-      const isExchange = (account.provider || '').includes('exchange');
-      const host = isExchange ? account.settings.ews_host : account.settings.imap_host;
-      const theAccountEmailHost = `${account.emailAddress}:${host}`;
-      if (this.addEdisonAccount === theAccountEmailHost) {
-        await EdisonAccountRest.register(account.id);
-      }
-    }
+    // if (this.addEdisonAccount) {
+    //   const isExchange = (account.provider || '').includes('exchange');
+    //   const host = isExchange ? account.settings.ews_host : account.settings.imap_host;
+    //   const theAccountEmailHost = `${account.emailAddress}:${host}`;
+    //   if (this.addEdisonAccount === theAccountEmailHost) {
+    //     await EdisonAccountRest.register(account.id);
+    //   }
+    // }
 
     AppEnv.displayWindow();
 
