@@ -140,6 +140,7 @@ export default class MailsyncBridge {
     Actions.forceDatabaseTrigger.listen(this._onIncomingChangeRecord, this);
     Actions.dataShareOptions.listen(this.onDataShareOptionsChange, this);
     Actions.remoteSearch.listen(this._onRemoteSearch, this);
+    Actions.startDBVacuum.listen(this._onVacuum, this);
     Actions.fetchNativeRuntimeInfo.listen(this._onFetchNativeRuntimeInfo, this);
     ipcRenderer.on('mailsync-config', this._onMailsyncConfigUpdate);
     ipcRenderer.on('client-config', this._onClientConfigUpdate);
@@ -261,7 +262,21 @@ export default class MailsyncBridge {
     }
   }
 
-  forceKillClients(source = '') {
+  _onVacuum() {
+    AppEnv.logDebug('killing clients for vacuum');
+    this.forceKillClients('Vacuum', false);
+    this.killSift('Vacuum');
+    DatabaseStore.vaccum().then(() => {
+      AppEnv.logDebug('Vacuuming finished, starting clients');
+      this._noRelaunch = false;
+      this.ensureClients('Vacuum Finished');
+      this.startSift('Vacuum Finished');
+      Actions.endDBVacuum();
+      AppEnv.logDebug('Notifying UI Vacuum finished');
+    });
+  }
+
+  forceKillClients(source = '', resetDB = true) {
     if (!AppEnv.isMainWindow()) {
       return;
     }
@@ -275,9 +290,12 @@ export default class MailsyncBridge {
         }
       }
     }
-    ipcRenderer.send('command', 'application:reset-database', {
-      source: `forceKillClients:${source}`,
-    });
+    this._clients = {};
+    if (resetDB) {
+      ipcRenderer.send('command', 'application:reset-database', {
+        source: `forceKillClients:${source}`,
+      });
+    }
   }
 
   forceRelaunchClient(account) {
@@ -809,7 +827,6 @@ export default class MailsyncBridge {
         continue;
       }
       let threadIndex = -1;
-      let threadCategories = [];
       if (tmpModels.length < 1) {
         return;
       }

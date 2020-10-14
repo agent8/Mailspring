@@ -289,6 +289,9 @@ export class LocalData extends React.Component {
   _onResetEmailCache = () => {
     Actions.forceKillAllClients('onResetEmailCache');
   };
+  _onVacuumDB = () => {
+    Actions.askVacuum();
+  };
 
   _onResetAccountsAndSettings = () => {
     if (this.resetStarted) {
@@ -306,6 +309,9 @@ export class LocalData extends React.Component {
         </div>
         <div className="btn-primary buttons-reset-data" onClick={this._onResetAccountsAndSettings}>
           Reset Accounts and Settings
+        </div>
+        <div className="btn-primary buttons-reset-data" onClick={this._onVacuumDB}>
+          Optimize Database
         </div>
       </div>
     );

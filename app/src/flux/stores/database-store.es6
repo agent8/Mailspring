@@ -1,15 +1,17 @@
 /* eslint global-require: 0 */
 import path from 'path';
+import fs from 'fs';
 import createDebug from 'debug';
 import childProcess from 'child_process';
 import LRU from 'lru-cache';
 import Sqlite3 from 'better-sqlite3';
 import { remote } from 'electron';
 import { ExponentialBackoffScheduler } from '../../backoff-schedulers';
-
+import Actions from '../actions';
 import MailspringStore from '../../global/mailspring-store';
 import Utils from '../models/utils';
 import Query from '../models/query';
+import AppMessage from '../models/app-message';
 import DatabaseChangeRecord from './database-change-record';
 
 const debug = createDebug('app:RxDB');
@@ -20,6 +22,32 @@ const DEBUG_QUERY_PLANS = AppEnv.inDevMode();
 const BASE_RETRY_LOCK_DELAY = 50;
 const MAX_RETRY_LOCK_DELAY = 500;
 const SLOW_QUERY_THRESH_HOLD = 1500;
+const SLOW_QUERY_PROMPT_THRESH_HOLD = 3000;
+const SLOW_QUERY_PROMPT_MAX_INTERVAL = 2000;
+const NUM_SLOW_QUERY_THRESH_HOLD = 10;
+const promptSlowQuery = slowQueryCache => {
+  const now = Date.now();
+  if (slowQueryCache.length > 0) {
+    if (now - slowQueryCache[slowQueryCache.length - 1] > SLOW_QUERY_PROMPT_MAX_INTERVAL) {
+      slowQueryCache.length = 0;
+      return;
+    }
+    if (slowQueryCache.length + 1 > NUM_SLOW_QUERY_THRESH_HOLD) {
+      const message = new AppMessage({
+        allowClose: true,
+        level: 0,
+        id: 'database-slow-query',
+        accountIds: [],
+        description: 'Edison Mail need to do some housekeeping in order to improve performance.',
+        actions: [{ text: 'Proceed', onClick: () => Actions.askVacuum() }],
+      });
+      Actions.pushAppMessage(message);
+      slowQueryCache.length = 0;
+      return;
+    }
+  }
+  slowQueryCache.push(now);
+};
 export const AuxDBs = {
   MessageBody: 'embody.db',
 };
@@ -49,10 +77,10 @@ function handleUnrecoverableDatabaseError(
   });
 }
 
-async function openDatabase(dbPath, retryCnt = 0) {
+async function openDatabase(dbPath, retryCnt = 0, options = { readonly: true }) {
   try {
     const database = await new Promise((resolve, reject) => {
-      const db = new Sqlite3(dbPath, { readonly: true });
+      const db = new Sqlite3(dbPath, options);
       // db.on('close', reject);
       // db.on('open', () => {
       // https://www.sqlite.org/wal.html
@@ -189,6 +217,7 @@ class DatabaseStore extends MailspringStore {
     this._open = false;
     this._waiting = [];
     this._preparedStatementCache = LRU({ max: 500 });
+    this._slowQueryCache = [];
 
     this.setupEmitter();
     this._emitter.setMaxListeners(100);
@@ -211,6 +240,21 @@ class DatabaseStore extends MailspringStore {
     }
     this._waiting = [];
     this._emitter.emit('ready');
+  }
+  close(source = '') {
+    AppEnv.logDebug(`Closing db connections because ${source}`);
+    Object.values(this._db).forEach(db => {
+      try {
+        db.close();
+      } catch (err) {
+        AppEnv.logError(`Closing db connections because ${source} failed: ${err}`);
+      }
+    });
+    this._open = false;
+    this._waiting = [];
+    this._preparedStatementCache.reset();
+    this._slowQueryCache = [];
+    AppEnv.logDebug(`Connections closed`);
   }
 
   _prettyConsoleLog(qa) {
@@ -300,6 +344,9 @@ class DatabaseStore extends MailspringStore {
           this._prettyConsoleLog(
             `DatabaseStore._executeLocally took more than ${SLOW_QUERY_THRESH_HOLD}ms - ${msec}msec: ${query}`
           );
+          if (msec > SLOW_QUERY_PROMPT_THRESH_HOLD) {
+            promptSlowQuery(this._slowQueryCache);
+          }
         }
         resolve(results);
       } else {
@@ -316,6 +363,9 @@ class DatabaseStore extends MailspringStore {
               this._prettyConsoleLog(
                 `${msgPrefix}${msec}msec (${backgroundTime}msec in background): ${query}`
               );
+              if (backgroundTime > SLOW_QUERY_PROMPT_THRESH_HOLD) {
+                promptSlowQuery(this._slowQueryCache);
+              }
             }
             resolve(results);
           }
@@ -554,6 +604,58 @@ class DatabaseStore extends MailspringStore {
 
   // ActiveRecord-style Querying
 
+  vaccum() {
+    const configPath = AppEnv.getConfigDirPath();
+    const dbKeys = [];
+    const executeVacuumQuery = dbKey => {
+      const dbPath = path.join(configPath, dbKey);
+      AppEnv.logDebug(`Vacuuming ${dbKey} db`);
+      return new Promise(resolve => {
+        try {
+          const db = new Sqlite3(dbPath);
+          db.exec('VACUUM');
+          db.close();
+        } catch (err) {
+          AppEnv.logError(`Opening db ${dbKey} for vacuum failed ${err}`);
+        }
+        resolve();
+      });
+    };
+    return new Promise((resolve, reject) => {
+      this.close('Vacuum DB');
+      AppEnv.logDebug(`Finding all db files`);
+      fs.readdir(configPath, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
+        if (err) {
+          AppEnv.logError(`Reading config path for Vacuum failed, ${err}`);
+          reject(err);
+          return;
+        }
+        files.forEach(dirent => {
+          if (dirent.isFile()) {
+            if (dirent.name.match(/\S+\.db$/g)) {
+              dbKeys.push(dirent.name);
+            }
+          }
+        });
+        const total = dbKeys.length;
+        let finished = 0;
+        dbKeys.forEach(key => {
+          executeVacuumQuery(key).then(() => {
+            finished++;
+            if (finished === total) {
+              AppEnv.logDebug(`Vacuuming dbs finished, restarting UI db connections`);
+              this.open().then(() => {
+                AppEnv.logDebug(`DBs connections restarted, notifying UI`);
+                setTimeout(() => {
+                  resolve();
+                }, 2000);
+              });
+            }
+          });
+        });
+      });
+    });
+  }
   // Public: Creates a new Model Query for retrieving a single model specified by
   // the class and id.
   //
