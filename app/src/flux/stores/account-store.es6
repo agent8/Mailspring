@@ -68,6 +68,10 @@ class AccountStore extends MailspringStore {
           );
           await MessageStore.saveMessagesAndRefresh([]);
         }
+        // refresh the sub accounts for new sync account
+        // Sub account list only increases but not decreases,
+        // So we only should refresh after add account
+        EdisonAccountRest.subAccounts();
       });
     }
 
@@ -533,10 +537,6 @@ class AccountStore extends MailspringStore {
 
     this._save('add account');
     ipcRenderer.send('after-add-account', account);
-    // refresh the sub accounts for new sync account
-    // Sub account list only increases but not decreases,
-    // So we only should refresh after add account
-    EdisonAccountRest.subAccounts();
   };
 
   _cachedGetter(key, fn) {
