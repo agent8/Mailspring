@@ -1183,6 +1183,12 @@ class AllInboxPerspective extends CategoryMailboxPerspective {
     super(data);
     this.name = 'All Inboxes';
     this.isAllInbox = true;
+    if (AppEnv.config.get(EnableFocusedInboxKey)) {
+      this.tab = [
+        new InboxMailboxFocusedPerspective(this._categories),
+        new InboxMailboxOtherPerspective(this._categories),
+      ];
+    }
   }
   isEqual(other) {
     return super.isEqual(other) && other.isAllInbox;
