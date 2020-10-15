@@ -1,4 +1,4 @@
-const digit0123 = '\\s*=\\s*[\'"]?(?:(?:0*(?:1|2|3)\\D)|0+\\D)';
+const digit0123 = '\\s*[=:]\\s*[\'"]?(?:(?:0*(?:1|2|3)\\D)|0+\\D)';
 const invisibleReStr = '(?:display\\s*:[\'"]?\\s*none)|(?:visibility\\s*:[\'"]?\\s*hidden)';
 const smallOrInvisible = `(?:(?:width${digit0123})|(?:height${digit0123})|${invisibleReStr})`;
 
