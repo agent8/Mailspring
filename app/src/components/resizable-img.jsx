@@ -90,6 +90,10 @@ export default class ResizableImg extends Component {
     const disableOrientationTmp =
       disableOrientation || (lockAspectRatio ? ['n', 's', 'w', 'e'] : []);
 
+    const styles = { height: imgHeight, width: imgWidth };
+    if (this.props.style && this.props.style.verticalAlign) {
+      styles.verticalAlign = this.props.style.verticalAlign;
+    }
     return (
       <ResizableBox
         onResize={value => {
@@ -126,7 +130,7 @@ export default class ResizableImg extends Component {
         showMask={showMask}
         style={{ height: boxHeight, width: boxWidth }}
       >
-        <img alt="" src={this.props.src} style={{ height: imgHeight, width: imgWidth }} />
+        <img alt="" src={this.props.src} style={styles} />
       </ResizableBox>
     );
   }
