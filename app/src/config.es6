@@ -734,6 +734,7 @@ class Config {
   }
 
   syncAllPreferencesFromServer = async () => {
+    return;
     const syncAccountId = this.get('edisonAccountId');
     if (!syncAccountId) {
       return;
@@ -919,6 +920,7 @@ class Config {
   };
 
   _syncSettingToServer = async (keyPath, value) => {
+    return;
     const syncAccountId = this.get('edisonAccountId');
     if (syncAccountId) {
       // should sync the change to server
