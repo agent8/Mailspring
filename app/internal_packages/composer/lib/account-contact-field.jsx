@@ -35,7 +35,7 @@ export default class AccountContactField extends React.Component {
       bcc: bcc,
     });
     // session.ensureCorrectAccount();
-    this._changeSignature(contact);
+    await this._changeSignature(contact);
     const changeDraftData = {
       originalMessageId: draft.id,
       newParticipants: { from, cc, bcc },
@@ -46,16 +46,14 @@ export default class AccountContactField extends React.Component {
     }
   };
 
-  _changeSignature = account => {
-    const { draft, session } = this.props;
+  _changeSignature = async account => {
+    const { draft } = this.props;
     let sig = SignatureStore.signatureForDefaultSignatureId(account.signatureId());
-    let body;
     if (sig) {
-      body = applySignature(draft.body, sig);
+      await applySignature({ signature: sig, messageId: draft.id });
     } else {
-      body = applySignature(draft.body, null);
+      await applySignature({ signature: null, messageId: draft.id });
     }
-    session.changes.add({ body });
   };
 
   _renderDefalutAccount() {

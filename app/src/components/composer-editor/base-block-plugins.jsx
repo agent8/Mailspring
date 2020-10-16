@@ -203,7 +203,32 @@ export const BLOCK_CONFIG = {
       }
 
       if (targetIsHTML && nodeIsEmpty(node)) {
+        if (!node.data) {
+          return <br {...attributes} />;
+        }
+        const fontSize = node.data.get('fontSize');
+        const fontFamily = node.data.get('fontFamily');
+        if (fontSize || fontFamily) {
+          return (
+            <font style={{ fontFamily, fontSize }}>
+              <br {...attributes} />
+            </font>
+          );
+        }
         return <br {...attributes} />;
+      }
+      const fontSize = node.data.get('fontSize');
+      const fontFamily = node.data.get('fontFamily');
+      if (fontSize || fontFamily) {
+        return (
+          <div
+            {...attributes}
+            {...explicitHTMLAttributes}
+            className={node.data.className || node.data.get('className')}
+          >
+            <font style={{ fontFamily, fontSize }}>{children}</font>
+          </div>
+        );
       }
       return (
         <div
@@ -348,7 +373,19 @@ export const BLOCK_CONFIG = {
   list_item: {
     type: 'list_item',
     tagNames: ['li'],
-    render: props => <li {...props.attributes}>{props.children}</li>,
+    render: props => {
+      const style = {};
+      if (props.node && props.node.data && props.node.data.size > 0) {
+        style.fontSize = props.node.data.get('fontSize');
+        style.fontFamily = props.node.data.get('fontFamily');
+        style.color = props.node.data.get('color');
+      }
+      return (
+        <li {...props.attributes} style={style}>
+          {props.children}
+        </li>
+      );
+    },
   },
   heading_one: {
     type: 'heading_one',
@@ -408,7 +445,23 @@ const rules = [
       // return block
       if (config) {
         const className = el.getAttribute('class');
-        const data = className ? { className } : undefined;
+        let data = className ? { className } : undefined;
+        if (config.type === BLOCK_CONFIG.list_item.type) {
+          if (el.style) {
+            if (!data) {
+              data = {};
+            }
+            if (el.style.font) {
+              data.fontFamil = el.style.fontFamily;
+            }
+            if (el.style.color) {
+              data.color = el.style.color;
+            }
+            if (el.style.fontSize) {
+              data.fontSize = el.style.fontSize;
+            }
+          }
+        }
         return {
           object: 'block',
           type: config.type,

@@ -3,7 +3,7 @@ import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
 const IMAGE_TYPE = 'inline_resizable_image';
-const maxImgSize = 50 * 1000;
+const maxImgSize = 200 * 1000;
 
 function ImageNode(props) {
   const { attributes, node, targetIsHTML, editor } = props;
@@ -11,6 +11,7 @@ function ImageNode(props) {
   const src = data.get ? data.get('src') : data.src;
   const height = data.get ? data.get('height') : data.height;
   const width = data.get ? data.get('width') : data.width;
+  const verticalAlign = data.get ? data.get('verticalAlign') : data.verticalAlign;
   const style = {};
   if (height) {
     style.height = height;
@@ -19,6 +20,9 @@ function ImageNode(props) {
     style.width = width;
   }
 
+  if (verticalAlign) {
+    style.verticalAlign = verticalAlign;
+  }
   if (targetIsHTML) {
     return <img alt="" src={src} style={style} resizable={'true'} />;
   }
@@ -63,19 +67,38 @@ function renderNode(props) {
   }
 }
 
-const ToolbarAttachmentButton = ({ value, onChange }) => {
-  const cb = base64Str => {
-    if (!base64Str) {
+export const changes = {
+  insert: (change, filePath) => {
+    return change
+      .insertInline({
+        isVoid: true,
+        type: IMAGE_TYPE,
+        data: {
+          draggerDisable: true,
+          src: filePath,
+        },
+      })
+      .collapseToStartOfNextText();
+  },
+};
+
+const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
+  const cb = filePath => {
+    if (!filePath) {
       return;
     }
-
     const inline = Inline.create({
       isVoid: true,
       type: IMAGE_TYPE,
       data: {
         draggerDisable: true,
-        src: base64Str,
+        src: filePath,
       },
+    });
+
+    onAddAttachments({
+      path: filePath,
+      inline: true,
     });
 
     setTimeout(() => {
@@ -92,9 +115,9 @@ const ToolbarAttachmentButton = ({ value, onChange }) => {
   return (
     <button
       onClick={() => {
-        AppEnv.showBase64ImageTransformDialog(cb, maxImgSize);
+        AppEnv.addInlineImageDialog(cb, maxImgSize);
       }}
-      className={'hide show-in-signature'}
+      className={'hide show-in-preferences'}
     >
       <RetinaImg
         name={'inline-image.svg'}
@@ -126,6 +149,10 @@ const rules = [
         const width = style.width || el.getAttribute('width');
         if (width) {
           data.width = width;
+        }
+        const verticalAlign = style.verticalAlign || el.getAttribute('verticalAlign');
+        if (verticalAlign) {
+          data.verticalAlign = verticalAlign;
         }
 
         return {

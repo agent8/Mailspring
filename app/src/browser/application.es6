@@ -58,13 +58,22 @@ const isStag = version => {
 };
 export default class Application extends EventEmitter {
   async start(options) {
-    const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
+    const {
+      resourcePath,
+      configDirPath,
+      version,
+      buildVersion,
+      devMode,
+      specMode,
+      safeMode,
+    } = options;
     //BrowserWindow.addDevToolsExtension('~/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/3.4.2_0');
     // BrowserWindow.addDevToolsExtension('/Users/gtkrab/edisonSoftware/react_extension');
     //Normalize to make sure drive letter case is consistent on Windows
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
     this.version = version;
+    this.buildVersion = buildVersion;
     this.devMode = devMode;
     this.specMode = specMode;
     this.safeMode = safeMode;
@@ -1143,14 +1152,14 @@ export default class Application extends EventEmitter {
       win.browserWindow.inspectElement(x, y);
     });
 
-    this.on('application:add-account', ({ existingAccountJSON } = {}) => {
+    this.on('application:add-account', ({ existingAccountJSON, edisonAccount } = {}) => {
       const onboarding = this.windowManager.get(WindowManager.ONBOARDING_WINDOW);
       if (onboarding) {
         onboarding.show();
         onboarding.focus();
       } else {
         this.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, {
-          windowProps: { addingAccount: true, existingAccountJSON },
+          windowProps: { addingAccount: true, existingAccountJSON, edisonAccount },
           title: '',
         });
       }

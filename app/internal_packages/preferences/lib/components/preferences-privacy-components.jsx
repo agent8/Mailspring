@@ -89,24 +89,12 @@ export class Privacy extends React.Component {
       this.setState({ deletingUserData: false });
     }
 
-    // delete edison account
-    const syncAccount = AccountStore.syncAccount();
-    if (syncAccount) {
-      await EdisonAccountRest.deleteAccount(syncAccount.id);
-    }
-
-    rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
-      if (err) {
-        return AppEnv.showErrorDialog(
-          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
-        );
-      }
-      const app = require('electron').remote.app;
-      if (!process.mas) {
-        app.relaunch();
-      }
-      app.quit();
-    });
+    // // delete edison account
+    // const syncAccount = AccountStore.syncAccount();
+    // if (syncAccount) {
+    //   await EdisonAccountRest.deleteAccount(syncAccount.id);
+    // }
+    AppEnv.expungeLocalAndReboot();
   };
 
   openDeleteUserDataConfirmationPage = () => {

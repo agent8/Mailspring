@@ -44,6 +44,11 @@ class EventedIFrame extends React.Component {
     onResize: PropTypes.func,
   };
 
+  constructor(props) {
+    super(props);
+    this.zoomLevel = 1;
+  }
+
   render() {
     const otherProps = Utils.fastOmit(this.props, Object.keys(this.constructor.propTypes));
     return <iframe title="iframe" seamless="seamless" {...otherProps} />;
@@ -111,6 +116,7 @@ class EventedIFrame extends React.Component {
   };
 
   _unsubscribeFromIFrameEvents() {
+    document.removeEventListener('keydown', this._zoomContent);
     const node = ReactDOM.findDOMNode(this);
     const doc = node && node.contentDocument;
     if (!doc) {
@@ -132,6 +138,7 @@ class EventedIFrame extends React.Component {
   }
 
   _subscribeToIFrameEvents() {
+    document.addEventListener('keydown', this._zoomContent);
     const node = ReactDOM.findDOMNode(this);
     const doc = node.contentDocument;
     _.defer(() => {
@@ -152,6 +159,43 @@ class EventedIFrame extends React.Component {
       }
     });
   }
+
+  _zoomContent = event => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) {
+      return;
+    }
+    const node = ReactDOM.findDOMNode(this);
+    const doc = node.contentDocument;
+    if (!doc) {
+      return;
+    }
+    if (!(event.metaKey || event.ctrlKey) || event.altKey) {
+      return;
+    }
+    const preZoomLevel = this.zoomLevel;
+    // '+', '=': zoom out
+    if (event.keyCode === 187) {
+      this.zoomLevel = (this.zoomLevel * 10 + 1) / 10;
+      if (this.zoomLevel >= 2) {
+        this.zoomLevel = 2;
+      }
+    }
+    // '-', '_': zoom in
+    if (event.keyCode === 189) {
+      this.zoomLevel = (this.zoomLevel * 10 - 1) / 10;
+      if (this.zoomLevel <= 0.5) {
+        this.zoomLevel = 0.5;
+      }
+    }
+    // 0: set zoom to 1
+    if (event.keyCode === 48) {
+      this.zoomLevel = 1;
+    }
+    if (preZoomLevel !== this.zoomLevel) {
+      doc.body.style.zoom = this.zoomLevel;
+      this._onIFrameResize();
+    }
+  };
 
   _getContainingTarget(event, options) {
     let { target } = event;

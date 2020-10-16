@@ -3,10 +3,10 @@ import { ipcRenderer } from 'electron';
 import MailspringStore from 'mailspring-store';
 import OnboardingActions from './onboarding-actions';
 
+const { EdisonAccountRest } = RESTful;
 const { OAuthList } = Constant;
 const NEED_INVITE_COUNT = 3;
 const INVITE_COUNT_KEY = 'invite.count';
-const { EdisonAccountRest } = RESTful;
 // const ONBOARDING_TRACKING_URL = 'https://cp.stag.easilydo.cc/api/multiple/desktop/onboarding';
 const ONBOARDING_TRACKING_URL = 'https://cp.edison.tech/api/multiple/desktop/onboarding';
 
@@ -21,7 +21,12 @@ class OnboardingStore extends MailspringStore {
     this.listenTo(OnboardingActions.finishAndAddAccount, this._onFinishAndAddAccount);
     this.listenTo(OnboardingActions.identityJSONReceived, this._onIdentityJSONReceived);
 
-    const { existingAccountJSON, addingAccount } = AppEnv.getWindowProps();
+    const { existingAccountJSON, edisonAccount, addingAccount } = AppEnv.getWindowProps();
+
+    // add account from edison account
+    if (edisonAccount) {
+      this.addEdisonAccount = edisonAccount;
+    }
 
     const hasAccounts = AccountStore.accounts().length > 0;
     // we don't have edison account for now.
@@ -211,6 +216,15 @@ class OnboardingStore extends MailspringStore {
       });
     }
 
+    // if (this.addEdisonAccount) {
+    //   const isExchange = (account.provider || '').includes('exchange');
+    //   const host = isExchange ? account.settings.ews_host : account.settings.imap_host;
+    //   const theAccountEmailHost = `${account.emailAddress}:${host}`;
+    //   if (this.addEdisonAccount === theAccountEmailHost) {
+    //     await EdisonAccountRest.register(account.id);
+    //   }
+    // }
+
     AppEnv.displayWindow();
 
     const { addingAccount } = AppEnv.getWindowProps();
@@ -223,14 +237,6 @@ class OnboardingStore extends MailspringStore {
       //   AppEnv.config.set('invite.email', account.emailAddress);
       //   this._onMoveToPage('sorry');
       //   return;
-      // }
-      // const oldAccountsNum = AccountStore.accountIds().length;
-      // if (oldAccountsNum === 1) {
-      //   const syncAccount = AccountStore.syncAccount();
-      //   if (!syncAccount) {
-      //     // the first account auto to register edison account
-      //     EdisonAccountRest.register(account.id);
-      //   }
       // }
       this._onMoveToPage('account-add-another');
     } else {

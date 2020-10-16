@@ -1,4 +1,4 @@
-import { React, ReactDOM, AccountStore, SignatureStore, Actions } from 'mailspring-exports';
+import { React, ReactDOM, AccountStore, SignatureStore, Actions, Utils } from 'mailspring-exports';
 import {
   RetinaImg,
   Flexbox,
@@ -40,7 +40,36 @@ class SignatureEditor extends React.Component {
     }
     const sig = Object.assign({}, this.props.signature);
     sig.body = this.state.body;
+    // if delete the inline, should filter it
+    const filterAttachment = this.state.attachments.filter(
+      a => !a.inline || this.state.body.indexOf(`src="${a.path}"`) >= 0
+    );
+    sig.attachments = filterAttachment;
+    this.setState({ attachments: filterAttachment });
     Actions.updateSignature(sig);
+  };
+
+  _onAddInlineImage = ({ path, inline }) => {
+    const newAttachments = [...this.state.attachments, { inline: inline, path: path }];
+    this.setState(
+      {
+        attachments: newAttachments,
+      },
+      () => {
+        this.props.onEditField('attachments', newAttachments);
+      }
+    );
+  };
+
+  _onFileReceived = filePath => {
+    if (!Utils.fileIsImage(filePath)) {
+      return;
+    }
+    const newFilePath = AppEnv.copyFileToPreferences(filePath);
+    if (this._composer) {
+      this._composer.insertInlineResizableImage(newFilePath);
+      this._onAddInlineImage({ path: newFilePath, inline: true });
+    }
   };
 
   _onFocusEditor = e => {
@@ -124,9 +153,8 @@ class SignatureEditor extends React.Component {
                 }
               }}
               onBlur={this._onBlurEditor}
-              onFileReceived={() => {
-                // This method ensures that HTML can be pasted.
-              }}
+              onFileReceived={this._onFileReceived}
+              onAddAttachments={this._onAddInlineImage}
             />
           </div>
         )}

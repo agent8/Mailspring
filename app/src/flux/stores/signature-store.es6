@@ -38,7 +38,8 @@ class SignatureStore extends MailspringStore {
     }
 
     if (!this.signatures || !this.signatures.length) {
-      AppEnv.config.set(`signatures`, [{ ...sigDefaultTemplate }]);
+      this.signatures = [{ ...sigDefaultTemplate }];
+      AppEnv.config.set(`signatures`, this.signatures);
       this.signaturesBody.set(sigDefaultTemplate.id, sigDefaultTemplate.body);
       fs.writeFileSync(
         path.join(this._signaturesDir, `${sigDefaultTemplate.id}.html`),
@@ -133,6 +134,12 @@ class SignatureStore extends MailspringStore {
     // add to cache
     this.signaturesBody.set(id, bodyInFile);
     return bodyInFile;
+  }
+
+  getPureBodyById(id) {
+    const fullBody = this.getBodyById(id);
+    // delete resizable="true", the resize image can use only in signature and template
+    return fullBody.replace(/resizable="true"/g, '');
   }
 
   signatureForDefaultSignatureId = emailOrAliase => {

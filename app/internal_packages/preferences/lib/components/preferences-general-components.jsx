@@ -286,28 +286,8 @@ export class LocalData extends React.Component {
     this.resetStarted = false;
   }
 
-  _onReboot = () => {
-    const app = require('electron').remote.app;
-    if (!process.mas) {
-      app.relaunch();
-    }
-    app.quit();
-  };
-
   _onResetEmailCache = () => {
     Actions.forceKillAllClients('onResetEmailCache');
-  };
-
-  _onResetAccountsCb = () => {
-    AppEnv.logDebug(`running reset accounts settings`);
-    rimraf(AppEnv.getConfigDirPath(), { disableGlob: true }, err => {
-      if (err) {
-        return AppEnv.showErrorDialog(
-          `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
-        );
-      }
-      this._onReboot();
-    });
   };
 
   _onResetAccountsAndSettings = () => {
@@ -315,7 +295,7 @@ export class LocalData extends React.Component {
       return;
     }
     this.resetStarted = true;
-    this._onResetAccountsCb();
+    AppEnv.expungeLocalAndReboot();
   };
 
   render() {

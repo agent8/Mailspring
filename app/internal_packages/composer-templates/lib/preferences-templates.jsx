@@ -1,4 +1,3 @@
-import fs from 'fs';
 import {
   RetinaImg,
   Flexbox,
@@ -7,7 +6,7 @@ import {
   ComposerSupport,
   AttachmentItem,
 } from 'mailspring-component-kit';
-import { React, ReactDOM, Actions } from 'mailspring-exports';
+import { React, ReactDOM, Actions, Utils } from 'mailspring-exports';
 import { shell, remote } from 'electron';
 import path from 'path';
 import TemplateStore from './template-store';
@@ -49,7 +48,36 @@ class TemplateEditor extends React.Component {
     const outHTML = convertToHTML(this.state.editorState);
     const template = Object.assign({}, this.props.template);
     template.body = outHTML;
+    // if delete the inline, should filter it
+    const filterAttachment = this.state.attachments.filter(
+      a => !a.inline || outHTML.indexOf(`src="${a.path}"`) >= 0
+    );
+    template.attachments = filterAttachment;
+    this.setState({ attachments: filterAttachment });
     TemplateActions.updateTemplate(template);
+  };
+
+  _onAddInlineImage = ({ path, inline }) => {
+    const newAttachments = [...this.state.attachments, { inline: inline, path: path }];
+    this.setState(
+      {
+        attachments: newAttachments,
+      },
+      () => {
+        this.props.onEditField('attachments', newAttachments);
+      }
+    );
+  };
+
+  _onFileReceived = filePath => {
+    if (!Utils.fileIsImage(filePath)) {
+      return;
+    }
+    const newFilePath = AppEnv.copyFileToPreferences(filePath);
+    if (this._composer) {
+      this._composer.insertInlineResizableImage(newFilePath);
+      this._onAddInlineImage({ path: newFilePath, inline: true });
+    }
   };
 
   _onFocusEditor = e => {
@@ -156,25 +184,27 @@ class TemplateEditor extends React.Component {
 
   _renderTemplateFiles() {
     const { attachments = [] } = this.state;
-    const fileComponents = attachments.map((file, index) => {
-      const filePath = file.path;
-      const fileName = path.basename(filePath);
-      return (
-        <AttachmentItem
-          key={index}
-          draggable={false}
-          className="template-file"
-          filePath={filePath}
-          displayName={fileName}
-          isImage={fileIsImage(fileName)}
-          accountId={''}
-          onRemoveAttachment={() => {
-            this._onRemoveAttachment(index);
-          }}
-          onOpenAttachment={() => remote.shell.openItem(filePath)}
-        />
-      );
-    });
+    const fileComponents = attachments
+      .filter(atta => !atta.inline)
+      .map((file, index) => {
+        const filePath = file.path;
+        const fileName = path.basename(filePath);
+        return (
+          <AttachmentItem
+            key={index}
+            draggable={false}
+            className="template-file"
+            filePath={filePath}
+            displayName={fileName}
+            isImage={fileIsImage(fileName)}
+            accountId={''}
+            onRemoveAttachment={() => {
+              this._onRemoveAttachment(index);
+            }}
+            onOpenAttachment={() => remote.shell.openItem(filePath)}
+          />
+        );
+      });
     return <div className={'attachments'}>{fileComponents}</div>;
   }
 
@@ -211,9 +241,8 @@ class TemplateEditor extends React.Component {
               }
             }}
             onBlur={this._onSave}
-            onFileReceived={() => {
-              // This method ensures that HTML can be pasted.
-            }}
+            onFileReceived={this._onFileReceived}
+            onAddAttachments={this._onAddInlineImage}
           />
         </div>
         {this._renderTemplateFiles()}

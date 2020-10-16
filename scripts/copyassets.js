@@ -169,6 +169,22 @@ const file_mappings = [
     './app/static/images/preferences/edison-account/device-tablet.png',
   ],
   [
+    'veyron-design/images/ios/verifying-account.png',
+    './app/static/images/preferences/edison-account/verifying-account.png',
+  ],
+  [
+    'veyron-design/images/ios/verifying-account-dark.png',
+    './app/static/images/preferences/edison-account/verifying-account-dark.png',
+  ],
+  [
+    'veyron-design/images/ios/welcome-back.png',
+    './app/static/images/preferences/edison-account/welcome-back.png',
+  ],
+  [
+    'veyron-design/images/ios/welcome-back-dark.png',
+    './app/static/images/preferences/edison-account/welcome-back-dark.png',
+  ],
+  [
     'veyron-design/images/desktop/focused-inbox.png',
     './app/static/images/notification/focused-inbox.png',
   ],
