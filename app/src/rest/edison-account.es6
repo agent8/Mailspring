@@ -8,6 +8,27 @@ import KeyManager from '../key-manager';
 const { OAuthList } = Constant;
 const supportId = AppEnv.config.get('core.support.id');
 
+function getDeviceInfo() {
+  const { hostname, release } = getOSInfo();
+  const appInstallDate = new Date(AppEnv.config.get('identity.createdAt'));
+  const appInstalledAtInMs = appInstallDate.getTime();
+  const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
+  const appVersion = AppEnv.getVersion();
+  const buildVersion = AppEnv.getBuildVersion();
+  return {
+    id: supportId,
+    name: hostname,
+    platform: process.platform === 'darwin' ? 'mac' : process.platform,
+    model: release,
+    screenType: 'computer',
+    pushToken: 'string',
+    timeZoneOffsetInMs: timezoneOffset,
+    appInstalledAtInMs: appInstalledAtInMs,
+    appUpdatedAtInMs: 0,
+    appVersion: `${appVersion}(${buildVersion})`,
+  };
+}
+
 const aesEncode = data => {
   const password = 'effa43461f128bee';
   const algorithm = 'aes-128-ecb';
@@ -56,9 +77,11 @@ export default class EdisonAccount {
       return new RESTResult(false, 'accountIds is unexpected');
     }
     const postParams = checkAccount.map(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
         emailAddress: a.emailAddress,
-        host: a.settings.imap_host,
+        host: host,
       };
       if (a.name) {
         postData['username'] = a.name;
@@ -67,13 +90,11 @@ export default class EdisonAccount {
     });
     try {
       const { data } = await axios.post(url, postParams);
-      const checkedAccountIds = [];
-      postParams.forEach(p => {
-        const accountKey = `${p.username || p.emailAddress}:${p.host}`;
-        if (data.data && data.data.includes(accountKey)) {
-          checkedAccountIds.push(a.id);
-        }
-      });
+      let checkedAccountIds = [];
+      if (data.data && data.data.length) {
+        checkedAccountIds = data.data;
+      }
+
       return new RESTResult(data.code === 0, data.message, checkedAccountIds);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -86,17 +107,18 @@ export default class EdisonAccount {
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
     }
+    const isExchange = AccountStore.isExchangeAccount(account);
+    const host = isExchange ? account.settings.ews_host : account.settings.imap_host;
     const postData = {
       emailAddress: account.emailAddress,
-      host: account.settings.imap_host,
+      host: host,
     };
     if (account.name) {
       postData['username'] = account.name;
     }
     try {
       const { data } = await axios.post(url, [postData]);
-      const accountKey = `${postData.username || postData.emailAddress}:${postData.host}`;
-      const isChecked = data.data && data.data.includes(accountKey) ? true : false;
+      const isChecked = data.data && data.data.length ? true : false;
       return new RESTResult(data.code === 0, data.message, isChecked);
     } catch (error) {
       return new RESTResult(false, error.message);
@@ -109,16 +131,7 @@ export default class EdisonAccount {
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
     }
-    const { hostname, release } = getOSInfo();
-    const supportId = AppEnv.config.get('core.support.id');
-    const device = {
-      id: supportId,
-      name: hostname,
-      platform: process.platform === 'darwin' ? 'mac' : process.platform,
-      model: release,
-      screenType: 'computer',
-      pushToken: 'string',
-    };
+    const device = getDeviceInfo();
     const emailAccount = {
       name: account.name,
       emailAddress: account.emailAddress,
@@ -151,11 +164,12 @@ export default class EdisonAccount {
         ssl: account.settings.smtp_security && account.settings.smtp_security !== 'none',
       };
     }
-    if (account.provider.endsWith('-exchange')) {
+    if (AccountStore.isExchangeAccount(account)) {
       emailAccount['type'] = 'exchange';
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
-        host: account.settings.imap_host,
+        username: account.settings.ews_username,
+        host: account.settings.ews_host,
         // To do
         domain: null,
       };
@@ -255,16 +269,7 @@ export default class EdisonAccount {
     if (!password) {
       return new RESTResult(false, 'password is unexpected');
     }
-    const { hostname, release } = getOSInfo();
-    const supportId = AppEnv.config.get('core.support.id');
-    const device = {
-      id: supportId,
-      name: hostname,
-      platform: process.platform === 'darwin' ? 'mac' : process.platform,
-      model: release,
-      screenType: 'computer',
-      pushToken: 'string',
-    };
+    const device = getDeviceInfo();
     const postData = {
       emailAddress: account.emailAddress,
       password: password,
@@ -364,15 +369,12 @@ export default class EdisonAccount {
     if (!token) {
       return new RESTResult(false, 'this account has no token');
     }
-    const { hostname, release } = getOSInfo();
-    const device = {
-      id: supportId,
-      name: name || hostname,
-      platform: process.platform === 'darwin' ? 'mac' : process.platform,
-      model: release,
-      screenType: 'computer',
-      pushToken: 'string',
-    };
+
+    const device = getDeviceInfo();
+    if (name) {
+      device.name = name;
+    }
+
     try {
       const { data } = await axios.post(url, device, {
         headers: {
@@ -403,8 +405,10 @@ export default class EdisonAccount {
     const accounts = AccountStore.accounts();
     const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
     const postData = subAccounts.map(a => {
+      const isExchange = AccountStore.isExchangeAccount(a);
+      const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
-        host: a.settings.imap_host,
+        host: host,
       };
       if (a.emailAddress) {
         postData['emailAddress'] = a.emailAddress;

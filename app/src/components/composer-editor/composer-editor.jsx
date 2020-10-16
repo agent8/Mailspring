@@ -8,6 +8,7 @@ import ComposerEditorToolbar from './composer-editor-toolbar';
 import { plugins as insidePlugins, convertFromHTML, convertToHTML } from './conversion';
 import { lastUnquotedNode } from './base-block-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
+import { changes as InlineResizableImageChanges } from './image-plugins';
 import { shortCutsUtils } from './system-text-replacements-plugins';
 
 const TOOLBAR_MIN_WIDTH = 628;
@@ -158,6 +159,11 @@ export default class ComposerEditor extends React.Component {
     onChange(InlineAttachmentChanges.insert(value.change(), file));
   };
 
+  insertInlineResizableImage = filePath => {
+    const { onChange, value } = this.props;
+    onChange(InlineResizableImageChanges.insert(value.change(), filePath));
+  };
+
   onFocusIfBlurred = event => {
     if (!this.props.value.selection.isFocused) {
       this.focus();
@@ -286,7 +292,7 @@ export default class ComposerEditor extends React.Component {
 
   // Event Handlers
   render() {
-    const { className, onBlur, onDrop, value, propsForPlugins } = this.props;
+    const { className, onBlur, onDrop, value, propsForPlugins, onAddAttachments } = this.props;
     const draftDefaultValues =
       this.props.propsForPlugins && this.props.propsForPlugins.draft
         ? this.props.propsForPlugins.draft.defaultValues
@@ -305,6 +311,7 @@ export default class ComposerEditor extends React.Component {
           readOnly={this.props.readOnly}
           isCrowded={this.state.isCrowded}
           draftDefaultValues={draftDefaultValues}
+          onAddAttachments={onAddAttachments}
         />
         <div
           className="RichEditor-content"

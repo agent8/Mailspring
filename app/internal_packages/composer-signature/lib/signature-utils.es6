@@ -1,5 +1,11 @@
-import { RegExpUtils } from 'mailspring-exports';
-import { SignatureStore, Constant } from 'mailspring-exports';
+import {
+  RegExpUtils,
+  DraftStore,
+  SignatureStore,
+  AttachmentStore,
+  Actions,
+  Constant,
+} from 'mailspring-exports';
 
 export function currentSignatureId(body) {
   let replyEnd = body.search(RegExpUtils.nativeQuoteStartRegex());
@@ -12,13 +18,35 @@ export function currentSignatureId(body) {
   return signatureMatch && signatureMatch[1];
 }
 
-export function applySignature(body, signature) {
+const getSessionByMessageId = messageId => {
+  return new Promise((resolve, reject) => {
+    DraftStore.sessionForClientId(messageId)
+      .then(session => {
+        resolve(session);
+      })
+      .catch(err => {
+        reject(err);
+      });
+  });
+};
+
+export async function applySignature({ signature, messageId }) {
+  const session = await getSessionByMessageId(messageId);
+  if (!session) {
+    this._displayError(`Draft Session for ${messageId} not available`);
+    return;
+  }
+  const draft = session.draft();
+  if (!draft) {
+    this._displayError(`Draft for ${messageId} not available`);
+    return;
+  }
+  // remove old signature
   const additionalWhitespace = '<div>';
   const additionalClosingWhitespace = '<br/></div>';
-
-  // Remove any existing signature in the body
-  let newBody = body;
-  if (currentSignatureId(body)) {
+  // // // Remove any existing signature in the body
+  let newBody = draft.body;
+  if (currentSignatureId(draft.body)) {
     const bodyTmpList = newBody.split(RegExpUtils.mailspringSignatureRegex());
     // should remove additionalWhitespace and additionalClosingWhitespace
     const additionalWhitespaceReg = new RegExp(`${additionalWhitespace}$`);
@@ -29,26 +57,50 @@ export function applySignature(body, signature) {
     const bodyTmpEnd = (bodyTmpList[2] || '').replace(additionalClosingWhitespaceReg, '');
     newBody = bodyTmpStart + bodyTmpEnd;
   }
+  // // // remove old signature attachment
+  const removeFiles = draft.files.filter(f => {
+    if (!f.isInline) {
+      return false;
+    }
+    const fileInBody = newBody.indexOf(`src="cid:${f.contentId}"`) >= 0;
+    return !fileInBody;
+  });
+  Actions.removeAttachments({
+    accountId: draft.accountId,
+    messageId: draft.id,
+    filesToRemove: removeFiles,
+  });
 
-  // http://www.regexpal.com/?fam=94390
-  // prefer to put the signature one <br> before the beginning of the quote,
-  // if possible.
-  let insertionPoint = newBody.search(RegExpUtils.nativeQuoteStartRegex());
-  if (insertionPoint === -1) {
-    insertionPoint = newBody.length;
-  }
-
+  // add new signature
   if (signature) {
+    const { attachments, id } = signature;
+    const sigBody = SignatureStore.getPureBodyById(id);
+    const fileMap = await AttachmentStore.addSigOrTempAttachments(
+      attachments,
+      draft.id,
+      draft.accountId
+    );
+    function replaceStr(oldStr, searchStr, replaceStr) {
+      const oldStrSplit = oldStr.split(searchStr);
+      return oldStrSplit.join(replaceStr);
+    }
+    let newSigBody = sigBody;
+    fileMap.forEach((file, key) => {
+      if (file.isInline) {
+        newSigBody = replaceStr(newSigBody, `src="${key}"`, `src="cid:${file.contentId}"`);
+      }
+    });
+
+    // http://www.regexpal.com/?fam=94390
+    // prefer to put the signature one <br> before the beginning of the quote,
+    // if possible.
+    let insertionPoint = newBody.search(RegExpUtils.nativeQuoteStartRegex());
+    if (insertionPoint === -1) {
+      insertionPoint = newBody.length;
+    }
     const contentBefore = newBody.slice(0, insertionPoint);
     const contentAfter = newBody.slice(insertionPoint);
-    return `${contentBefore}${additionalWhitespace}<edo-signature id="${
-      signature.id
-    }"><font style="font-size: ${Constant.Composer.defaultFontSize}, font-family: ${
-      Constant.Composer.defaultFontFamily
-    }">${SignatureStore.getBodyById(
-      signature.id
-    )}</font></edo-signature>${additionalClosingWhitespace}${contentAfter}`;
-  } else {
-    return newBody;
+    newBody = `${contentBefore}${additionalWhitespace}<edo-signature id="${id}"><font style="font-size: ${Constant.Composer.defaultFontSize}, font-family: ${Constant.Composer.defaultFontFamily}">${newSigBody}</font></edo-signature>${additionalClosingWhitespace}${contentAfter}`;
   }
+  session.changes.add({ body: newBody });
 }

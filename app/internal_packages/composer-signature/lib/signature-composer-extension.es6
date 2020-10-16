@@ -20,6 +20,6 @@ export default class SignatureComposerExtension extends ComposerExtension {
     if (!signatureObj) {
       return;
     }
-    draft.body = applySignature(draft.body, signatureObj);
+    applySignature({ signature: signatureObj, messageId: draft.id });
   };
 }

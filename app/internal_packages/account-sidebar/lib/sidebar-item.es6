@@ -91,7 +91,15 @@ const toggleItemCollapsed = function(item) {
   }
   SidebarActions.setKeyCollapsed(item.id, !isItemCollapsed(item.id));
 };
-
+const onChangeAllToRead = function(item) {
+  if (!item.perspective.canChangeAllToRead()) {
+    return;
+  }
+  const tasks = item.perspective.tasksForChangeAllToRead();
+  if (tasks.length > 0) {
+    Actions.queueTasks(tasks);
+  }
+};
 const onDeleteItem = function(item) {
   if (item.deleted === true) {
     return;
@@ -229,6 +237,7 @@ class SidebarItem {
         onEdited: opts.editable ? onEditItem : undefined,
         syncFolderList: opts.syncFolderList,
         onCollapseToggled: toggleItemCollapsed,
+        onAllRead: perspective.canChangeAllToRead() ? onChangeAllToRead : undefined,
 
         onDrop(item, event) {
           const jsonString = event.dataTransfer.getData('nylas-threads-data');
@@ -534,7 +543,7 @@ class SidebarItem {
   }
 
   static forAllInbox(accountIds, opts = {}) {
-    const perspective = MailboxPerspective.forInbox(accountIds);
+    const perspective = MailboxPerspective.forAllInbox(accountIds);
     opts.categoryIds = this.getCategoryIds(accountIds, 'inbox');
     opts.mode = RetinaImg.Mode.ContentPreserve;
     const id = 'AllInbox';

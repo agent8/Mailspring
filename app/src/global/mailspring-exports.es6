@@ -111,6 +111,7 @@ lazyLoadAndRegisterTask(`RestoreDraftTask`, 'restore-draft-task');
 lazyLoadAndRegisterTask(`ChangeLabelsTask`, 'change-labels-task');
 lazyLoadAndRegisterTask(`ChangeFolderTask`, 'change-folder-task');
 lazyLoadAndRegisterTask(`ChangeUnreadTask`, 'change-unread-task');
+lazyLoadAndRegisterTask(`ChangeAllUnreadTask`, 'change-all-unread-task');
 lazyLoadAndRegisterTask(`DestroyModelTask`, 'destroy-model-task');
 lazyLoadAndRegisterTask(`SyncbackDraftTask`, 'syncback-draft-task');
 lazyLoadAndRegisterTask(`ChangeStarredTask`, 'change-starred-task');

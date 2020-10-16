@@ -61,7 +61,8 @@ class TemplateStore extends MailspringStore {
 
     if (!this.templates || !this.templates.length) {
       const WelcomeTemplateBody = fs.readFileSync(this._welcomePath).toString();
-      AppEnv.config.set(`templates`, [{ ...WelcomeTemplate }]);
+      this.templates = [{ ...WelcomeTemplate }];
+      AppEnv.config.set(`templates`, this.templates);
       this.templatesBody.set(WelcomeTemplate.id, WelcomeTemplateBody);
       fs.writeFileSync(
         path.join(this._templatesDir, `${WelcomeTemplate.id}.html`),
@@ -135,6 +136,12 @@ class TemplateStore extends MailspringStore {
     // add to cache
     this.templatesBody.set(id, bodyInFile);
     return bodyInFile;
+  }
+
+  getPureBodyById(id) {
+    const fullBody = this.getBodyById(id);
+    // delete resizable="true", the resize image can use only in signature and template
+    return fullBody.replace(/resizable="true"/g, '');
   }
 
   _saveTemplates() {
@@ -240,7 +247,7 @@ class TemplateStore extends MailspringStore {
     if (!template) {
       return;
     }
-    const templateBody = this.getBodyById(templateId);
+    const templateBody = this.getPureBodyById(templateId);
     if (!templateBody) {
       return;
     }
@@ -254,6 +261,7 @@ class TemplateStore extends MailspringStore {
         this._displayError(`Draft for ${messageId} not available`);
         return;
       }
+
       let proceed = true;
       const pureBody = this._getPureBodyForDraft(session.draft().body);
       if (
@@ -267,61 +275,56 @@ class TemplateStore extends MailspringStore {
           ['Replace contents', 'Cancel']
         );
       }
+      if (!proceed) {
+        return;
+      }
 
-      if (proceed) {
-        const current = session.draft().body;
-        let insertion = current.length;
-        for (const s of [
-          '<edo-signature',
-          '<div class="gmail_quote_attribution"',
-          '<blockquote class="gmail_quote"',
-          '<div class="gmail_quote"',
-        ]) {
-          const i = current.indexOf(s);
-          if (i !== -1) {
-            insertion = Math.min(insertion, i);
-          }
-        }
-        const changeObj = {
-          body: `${templateBody}${current.substr(insertion)}`,
-        };
-
-        const { BCC, CC, attachments } = template;
-        // Add CC, Bcc to the draft, do not delete the original CC, BCC
-        if (CC) {
-          const ccContacts = await ContactStore.parseContactsInString(CC);
-          if (ccContacts.length) {
-            changeObj['cc'] = mergeContacts(draft.cc, ccContacts);
-          }
-        }
-        if (BCC) {
-          const bccContacts = await ContactStore.parseContactsInString(BCC);
-          if (bccContacts.length) {
-            changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
-          }
-        }
-        // Replace attachments, delete the original attachments
-        changeObj.files = [];
-        session.changes.add(changeObj);
-        const files = attachments.map(atta => atta.path);
-        if (files && files.length) {
-          if (files.length > 1) {
-            Actions.addAttachments({
-              messageId: draft.id,
-              accountId: draft.accountId,
-              filePaths: files,
-              inline: false,
-            });
-          } else {
-            Actions.addAttachment({
-              messageId: draft.id,
-              accountId: draft.accountId,
-              filePath: files[0],
-              inline: false,
-            });
-          }
+      const current = session.draft().body;
+      let insertion = current.length;
+      for (const s of [
+        '<edo-signature',
+        '<div class="gmail_quote_attribution"',
+        '<blockquote class="gmail_quote"',
+        '<div class="gmail_quote"',
+      ]) {
+        const i = current.indexOf(s);
+        if (i !== -1) {
+          insertion = Math.min(insertion, i);
         }
       }
+
+      let newBody = `${templateBody}${current.substr(insertion)}`;
+      const changeObj = { files: [] };
+      const { BCC, CC, attachments } = template;
+      // Add CC, Bcc to the draft, do not delete the original CC, BCC
+      if (CC) {
+        const ccContacts = await ContactStore.parseContactsInString(CC);
+        if (ccContacts.length) {
+          changeObj['cc'] = mergeContacts(draft.cc, ccContacts);
+        }
+      }
+      if (BCC) {
+        const bccContacts = await ContactStore.parseContactsInString(BCC);
+        if (bccContacts.length) {
+          changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
+        }
+      }
+      session.changes.add(changeObj);
+      const fileMap = await AttachmentStore.addSigOrTempAttachments(
+        attachments,
+        draft.id,
+        draft.accountId
+      );
+      function replaceStr(oldStr, searchStr, replaceStr) {
+        const oldStrSplit = oldStr.split(searchStr);
+        return oldStrSplit.join(replaceStr);
+      }
+      fileMap.forEach((file, key) => {
+        if (file.isInline) {
+          newBody = replaceStr(newBody, `src="${key}"`, `src="cid:${file.contentId}"`);
+        }
+      });
+      session.changes.add({ body: newBody });
     });
   };
 

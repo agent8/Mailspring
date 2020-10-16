@@ -119,6 +119,9 @@ export default class MailboxPerspective {
   static forAllSent(categories) {
     return categories.length > 0 ? new AllSentMailboxPerspective(categories) : this.forNothing();
   }
+  static forAllInboxes(categories) {
+    return categories.length > 1 ? new AllInboxPerspective(categories) : this.forNothing();
+  }
 
   static forCategories(categories) {
     return categories.length > 0 ? new CategoryMailboxPerspective(categories) : this.forNothing();
@@ -228,6 +231,20 @@ export default class MailboxPerspective {
     perspective.categoryIds = MailboxPerspective.getCategoryIds(accountsOrIds, 'sent');
     return perspective;
   }
+  static forAllInbox(accountsOrIds) {
+    const categories = CategoryStore.getCategoriesWithRoles(accountsOrIds, 'inbox');
+    let perspective;
+    if (Array.isArray(categories) && categories.length > 0) {
+      perspective = this.forAllInboxes(categories);
+    } else {
+      perspective = this.forNothing();
+    }
+    perspective.iconName = 'all-mail.svg';
+    perspective.displayName = 'All Inboxes';
+    perspective.iconName = 'account-logo-edison.png';
+    perspective.categoryIds = this.getCategoryIds(accountsOrIds, 'inbox');
+    return perspective;
+  }
 
   static forInbox(accountsOrIds) {
     const perspective = this.forStandardCategories(accountsOrIds, 'inbox');
@@ -241,6 +258,7 @@ export default class MailboxPerspective {
   }
 
   static fromJSON(json) {
+    console.log('json', json);
     try {
       if (json.type === InboxMailboxFocusedPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -288,6 +306,10 @@ export default class MailboxPerspective {
           siftCategory: data.siftCategory,
           accountsOrIds: json.accountIds,
         });
+      }
+      if (json.type === AllInboxPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        return this.forAllInboxes(categories);
       }
       if (json.type === CategoryMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -562,6 +584,12 @@ export default class MailboxPerspective {
 
     return false;
   }
+  canChangeAllToRead() {
+    return false;
+  }
+  tasksForChangeAllToRead() {
+    return [];
+  }
 
   tasksForRemovingItems(threads) {
     if (!(threads instanceof Array)) {
@@ -712,6 +740,10 @@ class SiftMailboxPerspective extends MailboxPerspective {
       .distinct();
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
+  canChangeAllToRead() {
+    return false;
+  }
+
   canArchiveThreads() {
     return false;
   }
@@ -799,6 +831,9 @@ class StarredMailboxPerspective extends MailboxPerspective {
     }
 
     return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+  canChangeAllToRead() {
+    return false;
   }
 
   canReceiveThreadsFromAccountIds(...args) {
@@ -933,7 +968,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
+      _.isEqual(
+        this.categories().map(c => c.id),
+        other.categories().map(c => c.id)
+      )
     );
   }
 
@@ -1006,6 +1044,22 @@ class CategoryMailboxPerspective extends MailboxPerspective {
 
   isArchive() {
     return this._categories.every(cat => cat.isArchive());
+  }
+  canChangeAllToRead() {
+    return this._categories.length === 1 && this.unreadCount() > 0;
+  }
+  tasksForChangeAllToRead(source = 'CategoryMailboxPerspective') {
+    if (!this.canChangeAllToRead()) {
+      return [];
+    }
+    const tasks = [];
+    (this._categories || []).forEach(cat => {
+      const task = TaskFactory.taskForChangingAllToRead({ category: cat, source });
+      if (task) {
+        tasks.push(task);
+      }
+    });
+    return tasks;
   }
 
   canReceiveThreadsFromAccountIds(...args) {
@@ -1124,6 +1178,22 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   }
 }
 
+class AllInboxPerspective extends CategoryMailboxPerspective {
+  constructor(data) {
+    super(data);
+    this.name = 'All Inboxes';
+    this.isAllInbox = true;
+    if (AppEnv.config.get(EnableFocusedInboxKey)) {
+      this.tab = [
+        new InboxMailboxFocusedPerspective(this._categories),
+        new InboxMailboxOtherPerspective(this._categories),
+      ];
+    }
+  }
+  isEqual(other) {
+    return super.isEqual(other) && other.isAllInbox;
+  }
+}
 class NoneSelectablePerspective extends CategoryMailboxPerspective {
   constructor(data) {
     super(data);
@@ -1142,6 +1212,10 @@ class NoneSelectablePerspective extends CategoryMailboxPerspective {
   unreadCount() {
     return 0;
   }
+  canChangeAllToRead() {
+    return false;
+  }
+
   canReceiveThreadsFromAccountIds() {
     return false;
   }
@@ -1229,6 +1303,10 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
     } else {
       return ThreadCountsStore.unreadCountForCategoryId(`${this.accountIds[0]}_Today`);
     }
+  }
+
+  canChangeAllToRead() {
+    return false;
   }
 
   canReceiveThreadsFromAccountIds() {
@@ -1344,6 +1422,10 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
       sum += ThreadCountsStore.unreadCountForCategoryId(categorieId);
     }
     return sum;
+  }
+
+  canChangeAllToRead() {
+    return false;
   }
 
   actionsForReceivingThreads(threads, accountId) {
@@ -1543,6 +1625,9 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
+    return new UnreadQuerySubscription(
+      this.categories().map(c => c.id),
+      this.isOther
+    );
   }
 }

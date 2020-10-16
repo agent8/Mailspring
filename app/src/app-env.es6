@@ -14,7 +14,7 @@ import { createHash } from 'crypto';
 import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
 import RegExpUtils from './regexp-utils';
 import { WindowLevel } from './constant';
-
+import uuid from 'uuid';
 //Hinata gets special treatment for logging and other debugging purposes
 const Hinata_Ids = [
   'f928e3ab2af52a97ab57cdd4248d2c09b5eb7e21ead2f30b77ebb299c63441bd',
@@ -672,6 +672,12 @@ export default class AppEnvConstructor {
       : (this.appVersion = this.getLoadSettings().appVersion);
   }
 
+  getBuildVersion() {
+    return this.buildVersion != null
+      ? this.buildVersion
+      : (this.buildVersion = this.getLoadSettings().buildVersion);
+  }
+
   // Public: Determine whether the current version is an official release.
   isReleasedVersion() {
     // Check if the release contains a 7-character SHA prefix
@@ -1271,18 +1277,19 @@ export default class AppEnvConstructor {
   }
 
   copyFileToPreferences(filepath) {
-    const catchFilesDirPath = path.join(this.getConfigDirPath(), 'preference');
+    const filename = path.basename(filepath);
+    const preferenceDir = path.join(this.getConfigDirPath(), 'preference');
+    const newFileDirName = path.join(preferenceDir, uuid());
+    const newFilePath = path.join(newFileDirName, filename);
     try {
-      if (!fs.existsSync(catchFilesDirPath)) {
-        fs.mkdirSync(catchFilesDirPath);
-      }
       if (!fs.existsSync(filepath)) {
         return null;
       }
-      const fileName = path.basename(filepath);
-      const catchPath = path.join(catchFilesDirPath, fileName);
-      fs.copyFileSync(filepath, catchPath);
-      return catchPath;
+      fs.mkdirSync(newFileDirName, {
+        recursive: true,
+      });
+      fs.copyFileSync(filepath, newFilePath);
+      return newFilePath;
     } catch (err) {
       this.logError(err);
       return null;
@@ -1327,7 +1334,7 @@ export default class AppEnvConstructor {
       });
   }
 
-  showBase64ImageTransformDialog(cb, maxSize = 0) {
+  addInlineImageDialog(cb, maxSize = 0) {
     return remote.dialog
       .showOpenDialog(this.getCurrentWindow(), {
         properties: ['openFile'],
@@ -1355,8 +1362,8 @@ export default class AppEnvConstructor {
                 `${filename} cannot be attached because it is larger than ${maxSize / 1000}k.`
               );
             }
-            const base64Str = transfornImgToBase64(filePath);
-            cb(base64Str);
+            const newFilePath = this.copyFileToPreferences(filePath);
+            cb(newFilePath);
           } catch (err) {
             this.showErrorDialog(err.message);
           }
@@ -2051,6 +2058,24 @@ export default class AppEnvConstructor {
   }
   getLocale(env = process.env) {
     return env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE || env.LC_CTYPE;
+  }
+
+  expungeLocalAndReboot() {
+    const rimraf = require('rimraf');
+    this.logDebug(`running reset accounts settings cb`);
+    rimraf(this.getConfigDirPath(), { disableGlob: true }, err => {
+      // dont show error, because files maybe has been deleted
+      // if (err) {
+      //   return AppEnv.showErrorDialog(
+      //     `Could not reset accounts and settings. Please delete the folder ${AppEnv.getConfigDirPath()} manually.\n\n${err.toString()}`
+      //   );
+      // }
+      const app = remote.app;
+      if (!process.mas) {
+        app.relaunch();
+      }
+      app.quit();
+    });
   }
   // openExternal() {
   //   const { spawn, exec } = require('child_process');
