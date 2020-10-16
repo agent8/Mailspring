@@ -137,6 +137,7 @@ class OutlineViewItem extends Component {
       onSelect: PropTypes.func,
       onDelete: PropTypes.func,
       onEdited: PropTypes.func,
+      onAllRead: PropTypes.func,
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
     }).isRequired,
@@ -166,9 +167,7 @@ class OutlineViewItem extends Component {
 
   componentDidMount() {
     this._mounted = true;
-    if (this._shouldShowContextMenu()) {
-      ReactDOM.findDOMNode(this).addEventListener('contextmenu', this._onShowContextMenu);
-    }
+    ReactDOM.findDOMNode(this).addEventListener('contextmenu', this._onShowContextMenu);
     this.setState({
       targetDiv: ReactDOM.findDOMNode(this.refs[`${this.props.item.id}-span`]),
     });
@@ -189,9 +188,7 @@ class OutlineViewItem extends Component {
   componentWillUnmount() {
     this._mounted = false;
     clearTimeout(this._expandTimeout);
-    if (this._shouldShowContextMenu()) {
-      ReactDOM.findDOMNode(this).removeEventListener('contextmenu', this._onShowContextMenu);
-    }
+    ReactDOM.findDOMNode(this).removeEventListener('contextmenu', this._onShowContextMenu);
   }
 
   // Helpers
@@ -205,7 +202,11 @@ class OutlineViewItem extends Component {
   };
 
   _shouldShowContextMenu = () => {
-    return this.props.item.onDelete != null || this.props.item.onEdited != null;
+    return (
+      this.props.item.onDelete != null ||
+      this.props.item.onEdited != null ||
+      this.props.item.onAllRead != null
+    );
   };
 
   _shouldAcceptDrop = event => {
@@ -275,6 +276,9 @@ class OutlineViewItem extends Component {
   _onDelete = () => {
     this._runCallback('onDelete');
   };
+  _onAllRead = item => {
+    this._runCallback('onAllRead');
+  };
 
   _onEdited = (value, originalText) => {
     this._runCallback('onEdited', value, originalText);
@@ -326,8 +330,9 @@ class OutlineViewItem extends Component {
     const { remote } = require('electron');
     const { Menu, MenuItem } = remote;
     const menu = new Menu();
-
+    let shouldPopup = false;
     if (this.props.item.onEdited) {
+      shouldPopup = true;
       menu.append(
         new MenuItem({
           label: `Rename ${contextMenuLabel}`,
@@ -337,6 +342,7 @@ class OutlineViewItem extends Component {
     }
 
     if (this.props.item.onDelete) {
+      shouldPopup = true;
       menu.append(
         new MenuItem({
           label: `Delete ${contextMenuLabel}`,
@@ -344,7 +350,18 @@ class OutlineViewItem extends Component {
         })
       );
     }
-    menu.popup({});
+    if (this.props.item.onAllRead) {
+      shouldPopup = true;
+      menu.append(
+        new MenuItem({
+          label: 'Mark All as Read',
+          click: this._onAllRead,
+        })
+      );
+    }
+    if (shouldPopup) {
+      menu.popup({});
+    }
   };
 
   _formatNumber(num) {
