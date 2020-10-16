@@ -146,7 +146,7 @@ function hotwireDraftBodyState(draft) {
     set: function(inHTML) {
       _bodyHTMLCache = inHTML;
       try {
-        draft.bodyEditorState = convertFromHTML(inHTML);
+        draft.bodyEditorState = convertFromHTML(inHTML, draft.defaultValues);
       } catch (e) {
         AppEnv.reportError(e, { errorData: { htm: inHTML, id: (draft || {}).id } });
       }

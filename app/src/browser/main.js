@@ -3,10 +3,10 @@
 global.shellStartTime = Date.now();
 const util = require('util');
 const fs = require('fs');
-fs.statSyncNoException = function (...args) {
+fs.statSyncNoException = function(...args) {
   try {
     return fs.statSync.apply(fs, args);
-  } catch (e) { }
+  } catch (e) {}
   return false;
 };
 
@@ -17,6 +17,10 @@ console.inspect = function consoleInspect(val) {
 const app = require('electron').app;
 const path = require('path');
 const mkdirp = require('mkdirp');
+
+// This is for Electron v9
+// Because the default value is true, can't load native module in renderer process
+app.allowRendererProcessReuse = false;
 
 if (typeof process.setFdLimit === 'function') {
   process.setFdLimit(1024);
@@ -67,7 +71,7 @@ const setupErrorLogger = (args = {}) => {
   });
   process.on('uncaughtException', e => {
     console.error(e);
-    errorLogger.reportError(e)
+    errorLogger.reportError(e);
   });
   process.on('unhandledRejection', e => {
     console.error(e);
@@ -133,7 +137,7 @@ const declareOptions = argv => {
 const parseCommandLine = argv => {
   const pkg = require('../../package.json');
   const version = `${pkg.version}`;
-
+  const buildVersion = `${pkg.buildVersion}`;
   const options = declareOptions(argv.slice(1));
   const args = options.argv;
 
@@ -189,6 +193,7 @@ const parseCommandLine = argv => {
 
   return {
     version,
+    buildVersion,
     devMode,
     background,
     logFile,

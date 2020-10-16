@@ -584,6 +584,12 @@ export default class MailboxPerspective {
 
     return false;
   }
+  canChangeAllToRead() {
+    return false;
+  }
+  tasksForChangeAllToRead() {
+    return [];
+  }
 
   tasksForRemovingItems(threads) {
     if (!(threads instanceof Array)) {
@@ -734,6 +740,10 @@ class SiftMailboxPerspective extends MailboxPerspective {
       .distinct();
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
+  canChangeAllToRead() {
+    return false;
+  }
+
   canArchiveThreads() {
     return false;
   }
@@ -821,6 +831,9 @@ class StarredMailboxPerspective extends MailboxPerspective {
     }
 
     return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+  canChangeAllToRead() {
+    return false;
   }
 
   canReceiveThreadsFromAccountIds(...args) {
@@ -1032,6 +1045,22 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isArchive() {
     return this._categories.every(cat => cat.isArchive());
   }
+  canChangeAllToRead() {
+    return this._categories.length === 1 && this.unreadCount() > 0;
+  }
+  tasksForChangeAllToRead(source = 'CategoryMailboxPerspective') {
+    if (!this.canChangeAllToRead()) {
+      return [];
+    }
+    const tasks = [];
+    (this._categories || []).forEach(cat => {
+      const task = TaskFactory.taskForChangingAllToRead({ category: cat, source });
+      if (task) {
+        tasks.push(task);
+      }
+    });
+    return tasks;
+  }
 
   canReceiveThreadsFromAccountIds(...args) {
     return (
@@ -1154,6 +1183,12 @@ class AllInboxPerspective extends CategoryMailboxPerspective {
     super(data);
     this.name = 'All Inboxes';
     this.isAllInbox = true;
+    if (AppEnv.config.get(EnableFocusedInboxKey)) {
+      this.tab = [
+        new InboxMailboxFocusedPerspective(this._categories),
+        new InboxMailboxOtherPerspective(this._categories),
+      ];
+    }
   }
   isEqual(other) {
     return super.isEqual(other) && other.isAllInbox;
@@ -1177,6 +1212,10 @@ class NoneSelectablePerspective extends CategoryMailboxPerspective {
   unreadCount() {
     return 0;
   }
+  canChangeAllToRead() {
+    return false;
+  }
+
   canReceiveThreadsFromAccountIds() {
     return false;
   }
@@ -1264,6 +1303,10 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
     } else {
       return ThreadCountsStore.unreadCountForCategoryId(`${this.accountIds[0]}_Today`);
     }
+  }
+
+  canChangeAllToRead() {
+    return false;
   }
 
   canReceiveThreadsFromAccountIds() {
@@ -1379,6 +1422,10 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
       sum += ThreadCountsStore.unreadCountForCategoryId(categorieId);
     }
     return sum;
+  }
+
+  canChangeAllToRead() {
+    return false;
   }
 
   actionsForReceivingThreads(threads, accountId) {

@@ -205,7 +205,7 @@ class StartSyncModal extends React.Component {
     if (chooseAccount) {
       onSelectAccount(chooseAccount);
     } else {
-      ipcRenderer.send('command', 'application:add-account');
+      ipcRenderer.send('command', 'application:add-account', { edisonAccount: emailHost });
     }
     onClose();
   };
