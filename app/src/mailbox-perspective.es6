@@ -983,19 +983,18 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         categoryIds.push(c.id);
       }
     });
-    const query = DatabaseStore.findAll(Thread)
-      .where([Thread.attributes.categories.containsAny(categoryIds)])
-      .limit(0);
+    const conditions = [Thread.attributes.categories.containsAny(categoryIds)];
+    const query = DatabaseStore.findAll(Thread).limit(0);
 
     if (this.isSent()) {
       query.order(Thread.attributes.lastMessageTimestamp.descending());
     }
 
     if (!['spam', 'trash', 'inbox'].includes(this.categoriesSharedRole())) {
-      query.where({ inAllMail: true, state: 0 });
-    } else {
-      query.where({ state: 0 });
+      conditions.push(Thread.attributes.inAllMail.equal(true));
     }
+    conditions.push(Thread.attributes.state.equal(0));
+    query.where(new Matcher.JoinAnd(conditions));
 
     if (this.categoriesSharedRole() === 'trash') {
       query.forceShowDrafts = true;
