@@ -2,6 +2,7 @@ import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
 import Message from '../models/message';
 import Thread from '../models/thread';
+import Matcher from '../attributes/matcher';
 import Category from '../models/category';
 import DatabaseStore from './database-store';
 import DraftCacheStore from './draft-cache-store';
@@ -451,7 +452,9 @@ class MessageStore extends MailspringStore {
             }
           });
           if (categoryIds.length > 0) {
-            query.where([Thread.attributes.categories.containsAny(categoryIds)]);
+            query.where(
+              new Matcher.JoinAnd([Thread.attributes.categories.containsAny(categoryIds)])
+            );
           }
         }
         query.then(thread => {
