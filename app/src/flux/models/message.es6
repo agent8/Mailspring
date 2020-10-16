@@ -399,6 +399,7 @@ export default class Message extends ModelWithMetadata {
       joinTableName: 'SiftData',
       joinTableColumn: 'category',
       joinOnWhere: { state: 0 },
+      ignoreSubSelect: true,
       itemClass: Sift,
     }),
     deleted: Attributes.Boolean({
