@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import path from 'path';
 import fs from 'fs';
 import { remote } from 'electron';
-import { Flexbox } from 'mailspring-component-kit';
+import { Flexbox, RetinaImg } from 'mailspring-component-kit';
 
 import displayedKeybindings from './keymaps/displayed-keybindings';
 import CommandItem from './keymaps/command-item';
@@ -78,6 +78,18 @@ export class PreferencesKeymapsHearder extends React.Component {
                   );
                 })}
               </select>
+              <RetinaImg
+                name={'arrow-dropdown.svg'}
+                isIcon
+                style={{
+                  width: 24,
+                  height: 24,
+                  fontSize: 20,
+                  lineHeight: '24px',
+                  verticalAlign: 'middle',
+                }}
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
             </div>
           </div>
           <div className="btn-danger shortcuts-reset-btn" onClick={this._onDeleteUserKeymap}>
