@@ -333,7 +333,7 @@ export default class MessageItem extends React.Component {
   _renderEmailAvatar() {
     if (this.props.isOutboxDraft) {
       return (
-        <OutboxSender draft={this.props.message} lottieStyle={{ margin: '-45px auto 0px -5px' }} />
+        <OutboxSender draft={this.props.message} lottieStyle={{ margin: '-57px auto 0px -5px' }} />
       );
     } else {
       return (
