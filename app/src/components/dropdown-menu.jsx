@@ -97,12 +97,7 @@ export default class DropdownMenu extends React.Component {
           }}
         >
           {this.props.itemContent(this.state.currentSelection)}
-          <RetinaImg
-            name="arrow-dropdown.svg"
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-            style={{ width: 20 }}
-          />
+          <select style={{ border: 'none' }}></select>
         </div>
         <div style={dropdownContainerStyles}>{dropdown}</div>
       </div>
