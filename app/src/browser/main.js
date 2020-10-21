@@ -18,10 +18,6 @@ const app = require('electron').app;
 const path = require('path');
 const mkdirp = require('mkdirp');
 
-// This is for Electron v9
-// Because the default value is true, can't load native module in renderer process
-app.allowRendererProcessReuse = false;
-
 if (typeof process.setFdLimit === 'function') {
   process.setFdLimit(1024);
 }
