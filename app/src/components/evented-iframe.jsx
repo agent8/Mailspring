@@ -122,6 +122,7 @@ class EventedIFrame extends React.Component {
     if (!doc) {
       return;
     }
+    doc.removeEventListener('keydown', this._zoomContent);
     doc.removeEventListener('click', this._onIFrameClick);
     doc.removeEventListener('keydown', this._onIFrameKeyEvent);
     doc.removeEventListener('keypress', this._onIFrameKeyEvent);
@@ -142,6 +143,7 @@ class EventedIFrame extends React.Component {
     const node = ReactDOM.findDOMNode(this);
     const doc = node.contentDocument;
     _.defer(() => {
+      doc.addEventListener('keydown', this._zoomContent);
       doc.addEventListener('click', this._onIFrameClick);
       doc.addEventListener('keydown', this._onIFrameKeyEvent);
       doc.addEventListener('keypress', this._onIFrameKeyEvent);

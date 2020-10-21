@@ -14,7 +14,7 @@
 	<true/>
 	<key>com.apple.security.files.downloads.read-write</key>
 	<true/>
-  <key>com.apple.security.files.bookmarks.app-scope</key>
+	<key>com.apple.security.files.bookmarks.app-scope</key>
 	<true/>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
@@ -26,6 +26,12 @@
 	<false/>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.12</string>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
