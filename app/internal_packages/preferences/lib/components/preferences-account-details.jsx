@@ -10,7 +10,7 @@ import {
   Utils,
   AccountStore,
 } from 'mailspring-exports';
-import { EditableList, RetinaImg } from 'mailspring-component-kit';
+import { EditableList } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 
 class AutoaddressControl extends Component {
@@ -21,29 +21,14 @@ class AutoaddressControl extends Component {
       <div>
         <div className="item">
           <label>When composing, automatically</label>
-          <div className="button-dropdown">
-            <select
-              className="auto-cc-bcc"
-              value={autoaddress.type}
-              onChange={e => onChange(Object.assign({}, autoaddress, { type: e.target.value }))}
-              onBlur={onSaveChanges}
-            >
-              <option value="cc">CC</option>
-              <option value="bcc">BCC</option>
-            </select>
-            <RetinaImg
-              name={'arrow-dropdown.svg'}
-              isIcon
-              style={{
-                width: 24,
-                height: 24,
-                fontSize: 20,
-                lineHeight: '24px',
-                verticalAlign: 'middle',
-              }}
-              mode={RetinaImg.Mode.ContentIsMask}
-            />
-          </div>
+          <select
+            value={autoaddress.type}
+            onChange={e => onChange(Object.assign({}, autoaddress, { type: e.target.value }))}
+            onBlur={onSaveChanges}
+          >
+            <option value="cc">CC</option>
+            <option value="bcc">BCC</option>
+          </select>
           &nbsp;&nbsp;:
         </div>
         <div className="item">
@@ -390,31 +375,17 @@ class PreferencesAccountDetails extends Component {
     return (
       <div className="item">
         <label>Sync mail as far back as:</label>
-        <div className="button-dropdown">
-          <select
-            value={mailsyncSettings.fetchEmailRange.toString()}
-            onChange={this._onFetchEmailRangeUpdate}
-            onBlur={this._saveChanges}
-          >
-            <option value="7">Within 7 days</option>
-            <option value="30">Within 30 days</option>
-            <option value="90">Within 3 month</option>
-            <option value="365">Within 1 year</option>
-            <option value="-1">All</option>
-          </select>
-          <RetinaImg
-            name={'arrow-dropdown.svg'}
-            isIcon
-            style={{
-              width: 24,
-              height: 24,
-              fontSize: 20,
-              lineHeight: '24px',
-              verticalAlign: 'middle',
-            }}
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        </div>
+        <select
+          value={mailsyncSettings.fetchEmailRange.toString()}
+          onChange={this._onFetchEmailRangeUpdate}
+          onBlur={this._saveChanges}
+        >
+          <option value="7">Within 7 days</option>
+          <option value="30">Within 30 days</option>
+          <option value="90">Within 3 month</option>
+          <option value="365">Within 1 year</option>
+          <option value="-1">All</option>
+        </select>
       </div>
     );
   }
@@ -434,29 +405,15 @@ class PreferencesAccountDetails extends Component {
     return (
       <div className="item">
         <label>Check for mail every:</label>
-        <div className="button-dropdown">
-          <select
-            value={mailsyncSettings.fetchEmailInterval.toString()}
-            onChange={this._onFetchEmailIntervalUpdate}
-            onBlur={this._saveChanges}
-          >
-            <option value="1">Every minute</option>
-            <option value="3">Every 3 minutes</option>
-            <option value="5">Every 5 minutes</option>
-          </select>
-          <RetinaImg
-            name={'arrow-dropdown.svg'}
-            isIcon
-            style={{
-              width: 24,
-              height: 24,
-              fontSize: 20,
-              lineHeight: '24px',
-              verticalAlign: 'middle',
-            }}
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        </div>
+        <select
+          value={mailsyncSettings.fetchEmailInterval.toString()}
+          onChange={this._onFetchEmailIntervalUpdate}
+          onBlur={this._saveChanges}
+        >
+          <option value="1">Every minute</option>
+          <option value="3">Every 3 minutes</option>
+          <option value="5">Every 5 minutes</option>
+        </select>
       </div>
     );
   }
