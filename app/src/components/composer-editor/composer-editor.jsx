@@ -332,7 +332,7 @@ export default class ComposerEditor extends React.Component {
             onCut={this.onCut}
             onCopy={this.onCopy}
             onPaste={this.onPaste}
-            spellCheck={true}
+            spellCheck={false}
             readOnly={this.props.readOnly}
             plugins={this.plugins}
             propsForPlugins={propsForPlugins}
