@@ -21,12 +21,14 @@ class SearchStore extends MailspringStore {
 
     this._searchQuery = FocusedPerspectiveStore.current().searchQuery || '';
     this._isSearching = false;
+    this._limitSearchDate = true;
 
     this.listenTo(WorkspaceStore, this._onWorkspaceChange);
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
     this.listenTo(Actions.searchQuerySubmitted, this._onQuerySubmitted);
     this.listenTo(Actions.searchQueryChanged, this._onQueryChanged);
     this.listenTo(Actions.searchCompleted, this._onSearchCompleted);
+    // this.listenTo(Actions.expandSearchDate, this._onExpandSearchDate);
   }
 
   query() {
@@ -108,10 +110,18 @@ class SearchStore extends MailspringStore {
     this._searchQuery = FocusedPerspectiveStore.current().searchQuery || '';
     this.trigger();
   };
+  _onExpandSearchDate = () => {
+    if (this._limitSearchDate) {
+      this._limitSearchDate = false;
+      this._processAndSubmitQuery();
+      this._throttleOnQuerySubmitted(this._searchQuery, true);
+    }
+  };
 
   _onQueryChanged = query => {
     if (query !== this._searchQuery) {
       this._searchQuery = query;
+      this._limitSearchDate = true;
       this.trigger();
       this._processAndSubmitQuery();
       this._throttleOnQuerySubmitted(query, true);
@@ -151,6 +161,9 @@ class SearchStore extends MailspringStore {
   _onQuerySubmitted = (query, forceQuery) => {
     if (query !== this._searchQuery || forceQuery) {
       this._searchQuery = query;
+      if (query !== this._searchQuery) {
+        this._limitSearchDate = true;
+      }
       this._preSearchQuery = query;
       this.trigger();
       this._processAndSubmitQuery(forceQuery);

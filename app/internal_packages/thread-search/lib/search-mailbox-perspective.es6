@@ -10,7 +10,7 @@ import {
 import SearchQuerySubscription from './search-query-subscription';
 
 class SearchMailboxPerspective extends MailboxPerspective {
-  constructor(sourcePerspective, searchQuery) {
+  constructor(sourcePerspective, searchQuery, limitSearchDate) {
     super(sourcePerspective.accountIds);
     if (typeof searchQuery !== 'string') {
       throw new Error('SearchMailboxPerspective: Expected a `string` search query');
@@ -43,8 +43,8 @@ class SearchMailboxPerspective extends MailboxPerspective {
     return super.isEqual(other) && other.searchQuery === this.searchQuery;
   }
 
-  threads() {
-    return new SearchQuerySubscription(this.searchQuery, this.accountIds);
+  threads(limitSearchDate = true) {
+    return new SearchQuerySubscription(this.searchQuery, this.accountIds, limitSearchDate);
   }
 
   canReceiveThreadsFromAccountIds() {

@@ -1,10 +1,4 @@
-import {
-  Rx,
-  Actions,
-  WorkspaceStore,
-  FocusedContentStore,
-  FocusedPerspectiveStore,
-} from 'mailspring-exports';
+import { Rx, Actions, FocusedContentStore, FocusedPerspectiveStore } from 'mailspring-exports';
 import { ListTabular } from 'mailspring-component-kit';
 import ThreadListDataSource from './thread-list-data-source';
 import { ipcRenderer } from 'electron';
@@ -13,8 +7,10 @@ import MailspringStore from 'mailspring-store';
 class ThreadListStore extends MailspringStore {
   constructor() {
     super();
+    this._limitSearchDate = true;
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
     ipcRenderer.on('refresh-start-of-day', this._onRefreshStartOfDay);
+    Actions.expandSearchDate.listen(this._onExpandSearchDate);
     this.createListDataSource();
   }
   _onRefreshStartOfDay = () => {
@@ -23,6 +19,33 @@ class ThreadListStore extends MailspringStore {
       AppEnv.logDebug('Force Refresh today thread list in 100ms');
       // Set timeout to give native time to update today count
       setTimeout(this.createListDataSource, 100);
+    }
+  };
+  limitSearchDate = () => {
+    return this._limitSearchDate;
+  };
+  _onExpandSearchDate = () => {
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (currentPerspective && currentPerspective.isSearchMailbox && this._limitSearchDate) {
+      this._limitSearchDate = false;
+      if (typeof this._dataSourceUnlisten === 'function') {
+        this._dataSourceUnlisten();
+      }
+
+      if (this._dataSource) {
+        this._dataSource.cleanup();
+        this._dataSource = null;
+      }
+
+      const threadsSubscription = FocusedPerspectiveStore.current().threads(false);
+      console.warn('subscription changed');
+      if (threadsSubscription) {
+        this._dataSource = new ThreadListDataSource(threadsSubscription);
+        this._dataSourceUnlisten = this._dataSource.listen(this._onDataChanged);
+      } else {
+        this._dataSource = new ListTabular.DataSource.Empty();
+      }
+      this.trigger(this);
     }
   };
 
@@ -63,6 +86,7 @@ class ThreadListStore extends MailspringStore {
   // Inbound Events
 
   _onPerspectiveChanged = () => {
+    this._limitSearchDate = true;
     if (AppEnv.isMainWindow()) {
       this.createListDataSource();
     } else {
@@ -71,6 +95,14 @@ class ThreadListStore extends MailspringStore {
   };
 
   _onDataChanged = ({ previous, next } = {}) => {
+    // If in SearchMailBox, and we returned less than 100 results,
+    // we want to expand our search scope
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (next && currentPerspective && currentPerspective.isSearchMailbox) {
+      if (next.empty() || next._ids.length < 100) {
+        Actions.expandSearchDate();
+      }
+    }
     // This code keeps the focus and keyboard cursor in sync with the thread list.
     // When the thread list changes, it looks to see if the focused thread is gone,
     // or no longer matches the query criteria and advances the focus to the next
