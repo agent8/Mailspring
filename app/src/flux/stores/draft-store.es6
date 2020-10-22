@@ -1383,7 +1383,7 @@ class DraftStore extends MailspringStore {
     return queries;
   }
 
-  _finalizeAndPersistNewMessage(
+  async _finalizeAndPersistNewMessage(
     draft,
     {
       popout = AppEnv.config.get('core.reading.openReplyInNewWindow') ||
@@ -1396,12 +1396,11 @@ class DraftStore extends MailspringStore {
     const session = this._createSession(draft.id, draft);
 
     // Give extensions an opportunity to perform additional setup to the draft
-    ExtensionRegistry.Composer.extensions().forEach(extension => {
-      if (!extension.prepareNewDraft) {
-        return;
+    for (const extension of ExtensionRegistry.Composer.extensions()) {
+      if (extension.prepareNewDraft) {
+        await extension.prepareNewDraft({ draft });
       }
-      extension.prepareNewDraft({ draft });
-    });
+    }
 
     // open the draft window first, if [openReplyInNewWindow] is ON
     if (popout) {
@@ -1424,24 +1423,23 @@ class DraftStore extends MailspringStore {
         }
       }, 300);
     });
-    return Promise.race([taskPromise, draftCachePromise])
-      .then(data => {
-        if (data && data.draftCache) {
-          AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
-        }
-        if (originalMessageId) {
-          Actions.draftReplyForwardCreated({ messageId: originalMessageId, type: messageType });
-        }
-        return { messageId: draft.id, draft };
-      })
-      .catch(t => {
-        AppEnv.reportError(
-          new Error('SyncbackDraft Task not returned, and draft cache have no value'),
-          { errorData: task },
-          { grabLogs: true }
-        );
-        return { messageId: draft.id, draft };
-      });
+    try {
+      const data = await Promise.race([taskPromise, draftCachePromise]);
+      if (data && data.draftCache) {
+        AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
+      }
+      if (originalMessageId) {
+        Actions.draftReplyForwardCreated({ messageId: originalMessageId, type: messageType });
+      }
+      return { messageId: draft.id, draft };
+    } catch (t) {
+      AppEnv.reportError(
+        new Error('SyncbackDraft Task not returned, and draft cache have no value'),
+        { errorData: task },
+        { grabLogs: true }
+      );
+      return { messageId: draft.id, draft };
+    }
   }
 
   _createSession(messageId, draft, options = {}) {
