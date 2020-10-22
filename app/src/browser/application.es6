@@ -9,7 +9,6 @@ import {
   systemPreferences,
   Notification,
   screen,
-  globalShortcut,
 } from 'electron';
 
 import fs from 'fs-plus';
@@ -67,6 +66,7 @@ export default class Application extends EventEmitter {
       specMode,
       safeMode,
     } = options;
+
     //BrowserWindow.addDevToolsExtension('~/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/3.4.2_0');
     // BrowserWindow.addDevToolsExtension('/Users/gtkrab/edisonSoftware/react_extension');
     //Normalize to make sure drive letter case is consistent on Windows
@@ -116,7 +116,6 @@ export default class Application extends EventEmitter {
 
     await this.oneTimeMoveToApplications();
     await this.oneTimeAddToDock();
-    this.autoStartRestore();
 
     this.autoUpdateManager = new AutoUpdateManager(
       version,
@@ -146,6 +145,7 @@ export default class Application extends EventEmitter {
     this.setupCrosssitePolicy();
     this.handleEvents();
     this.handleLaunchOptions(options);
+    this.autoStartRestore();
 
     // add 'EdisonMail://' to LSSetDefaultHandlerForURLScheme
     app.setAsDefaultProtocolClient('edisonmail');
@@ -691,15 +691,15 @@ export default class Application extends EventEmitter {
 
   autoStartRestore() {
     return new Promise(resolve => {
-      if (process.platform === 'darwin') {
-        const openAtLogin = app.getLoginItemSettings().openAtLogin;
+      if (process.platform === 'darwin' && !process.mas) {
+        const { openAtLogin, openAsHidden } = app.getLoginItemSettings() || {};
         if (!openAtLogin) {
           resolve();
           return;
         }
         app.setLoginItemSettings({ openAtLogin: false });
         setTimeout(() => {
-          app.setLoginItemSettings({ openAtLogin });
+          app.setLoginItemSettings({ openAtLogin, openAsHidden });
         }, 2000);
       }
       resolve();
