@@ -39,6 +39,7 @@ isUnread.evaluate(threadB)
 
 Section: Database
 */
+const isMessageView = AppEnv.isDisableThreading();
 class Matcher {
   constructor(attr, comparator, val, muid = null, useJoinTableRef = false) {
     this.attr = attr;
@@ -51,6 +52,13 @@ class Matcher {
       Matcher.muid = (Matcher.muid + 1) % 50;
     }
     this._useJoinTableRef = useJoinTableRef;
+    this._partOfSubSelectJoin = false;
+  }
+  set partOfSubSelectJoin(val) {
+    this._partOfSubSelectJoin = val;
+  }
+  get partOfSubSelectJoin() {
+    return this._partOfSubSelectJoin;
   }
 
   getMuid() {
@@ -186,7 +194,9 @@ class Matcher {
             andSql = ` AND ( ${wheres.join(' AND ')} ) `;
           }
         }
-        return `INNER JOIN \`${joinTable}\` AS \`${joinTableRef}\` ON \`${joinTableRef}\`.\`${
+        return `INNER JOIN ${
+          isMessageView || this.attr.ignoreSubSelect ? `\`${joinTable}\`` : '(SUB_SELECT_SQL) '
+        } AS \`${joinTableRef}\` ON \`${joinTableRef}\`.\`${
           this.attr.joinTableOnField
         }\` = \`${klass.getTableName()}\`.\`${this.attr.joinModelOnField}\`${andSql}`;
       }
@@ -241,7 +251,11 @@ class Matcher {
     return searchSubjectTerm;
   }
 
-  whereSQL(klass) {
+  whereSQL(klass, usingSubSelect = false) {
+    if (usingSubSelect !== this.partOfSubSelectJoin && !isMessageView) {
+      // console.warn(`skipping attr ${this.attr.modelKey}`);
+      return false;
+    }
     const val =
       this.comparator === 'like' ? `%${this._likeSQLSplit(this._safeSQL(this.val))}%` : this.val;
     let escaped = null;
@@ -270,6 +284,10 @@ class Matcher {
       escaped = val;
     }
     let andSql = '';
+    let tableName = klass.getTableName();
+    if (usingSubSelect && !isMessageView) {
+      tableName = this.attr.joinTableName || this.attr.modelTable;
+    }
     if (this.attr.joinOnWhere) {
       const wheres = [];
       let tmpVal = '';
@@ -278,16 +296,22 @@ class Matcher {
         tmpVal = this._escapeValue(this.attr.joinOnWhere[key]);
         tmpKey = key;
         if (typeof tmpVal === 'string' && tmpVal.indexOf('(') === 0) {
-          wheres.push(` \`${this.joinTableRef()}\`.\`${tmpKey}\` IN ${tmpVal} `);
+          wheres.push(
+            ` \`${usingSubSelect ? tableName : this.joinTableRef()}\`.\`${tmpKey}\` IN ${tmpVal} `
+          );
         } else if (tmpVal === null) {
-          wheres.push(` \`${this.joinTableRef()}\`.\`${tmpKey}\` is NULL `);
+          wheres.push(
+            ` \`${usingSubSelect ? tableName : this.joinTableRef()}\`.\`${tmpKey}\` is NULL `
+          );
         } else {
-          wheres.push(` \`${this.joinTableRef()}\`.\`${tmpKey}\` = ${tmpVal} `);
+          wheres.push(
+            ` \`${usingSubSelect ? tableName : this.joinTableRef()}\`.\`${tmpKey}\` = ${tmpVal} `
+          );
         }
       }
       andSql = ` AND ( ${wheres.join(' AND ')} ) `;
     }
-    if (this.attr.isJoinTable) {
+    if (this.attr.isJoinTable && !usingSubSelect) {
       switch (this.comparator) {
         case '=': {
           if (escaped === null) {
@@ -322,32 +346,32 @@ class Matcher {
     switch (this.comparator) {
       case '=': {
         if (escaped === null) {
-          return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` IS NULL`;
+          return `\`${tableName}\`.\`${this.attr.tableColumn}\` IS NULL`;
         }
-        return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` = ${escaped}`;
+        return `\`${tableName}\`.\`${this.attr.tableColumn}\` = ${escaped}`;
       }
       case '!=': {
         if (escaped === null) {
-          return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` IS NOT NULL`;
+          return `\`${tableName}\`.\`${this.attr.tableColumn}\` IS NOT NULL`;
         }
-        return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` != ${escaped}`;
+        return `\`${tableName}\`.\`${this.attr.tableColumn}\` != ${escaped}`;
       }
       case 'startsWith':
         return ' RAISE `TODO`; ';
       case 'contains':
-        return `\`${this.joinTableRef()}\`.\`${this.attr.joinTableColumn}\` = ${escaped}`;
+        return `\`${usingSubSelect ? tableName : this.joinTableRef()}\`.\`${
+          this.attr.joinTableColumn
+        }\` = ${escaped}`;
       case 'containsAny':
-        return `\`${this.joinTableRef()}\`.\`${
+        return `\`${usingSubSelect ? tableName : this.joinTableRef()}\`.\`${
           this.attr.joinTableColumn
         }\` IN ${escaped} ${andSql}`;
       case 'containsAnyAtCategory':
-        return `\`${this.joinTableRef()}\`.\`${
+        return `\`${usingSubSelect ? tableName : this.joinTableRef()}\`.\`${
           this.attr.joinTableColumn
         }\` IN ${escaped} ${andSql}`;
       default:
-        return `\`${klass.getTableName()}\`.\`${this.attr.tableColumn}\` ${
-          this.comparator
-        } ${escaped}`;
+        return `\`${tableName}\`.\`${this.attr.tableColumn}\` ${this.comparator} ${escaped}`;
     }
   }
 }
@@ -383,13 +407,27 @@ class OrCompositeMatcher extends Matcher {
     return joins.length ? joins.join(' ') : false;
   }
 
-  whereSQL(klass) {
-    const wheres = this.children.map(matcher => matcher.whereSQL(klass));
-    return `(${wheres.join(' OR ')})`;
+  whereSQL(klass, usingSubSelect = false) {
+    const wheres = [];
+    this.children.forEach(matcher => {
+      const where = matcher.whereSQL(klass, usingSubSelect);
+      if (where) {
+        wheres.push(where);
+      }
+    });
+    return wheres.length > 0 ? `(${wheres.join(' OR ')})` : '';
   }
 }
 
 class JoinOrCompositeMatcher extends OrCompositeMatcher {
+  constructor(props) {
+    super(props);
+    this._partOfSubSelectjoin = true;
+    this.children.forEach(child => {
+      child.partOfSubSelectJoin = true;
+    });
+  }
+
   joinSQL(klass) {
     const joins = [];
     for (const matcher of this.children) {
@@ -402,13 +440,17 @@ class JoinOrCompositeMatcher extends OrCompositeMatcher {
     return joins.length ? joins.join(' ') : false;
   }
 
-  whereSQL(klass) {
+  whereSQL(klass, usingSubSelect = false) {
     const muid = this.getMuid();
-    const wheres = this.children.map(matcher => {
+    const wheres = [];
+    this.children.forEach(matcher => {
       matcher.setMuid(muid);
-      return matcher.whereSQL(klass);
+      const where = matcher.whereSQL(klass, usingSubSelect);
+      if (where) {
+        wheres.push(where);
+      }
     });
-    return `(${wheres.join(' OR ')})`;
+    return wheres.length > 0 ? `(${wheres.join(' OR ')})` : '';
   }
 }
 
@@ -441,13 +483,27 @@ class AndCompositeMatcher extends Matcher {
     return joins;
   }
 
-  whereSQL(klass) {
-    const wheres = this.children.map(m => m.whereSQL(klass));
-    return `(${wheres.join(' AND ')})`;
+  whereSQL(klass, usingSubSelect = false) {
+    const wheres = [];
+    this.children.forEach(m => {
+      const where = m.whereSQL(klass, usingSubSelect);
+      if (where) {
+        wheres.push(where);
+      }
+    });
+    return wheres.length > 0 ? `(${wheres.join(' AND ')})` : '';
   }
 }
 
 class JoinAndCompositeMatcher extends AndCompositeMatcher {
+  constructor(props) {
+    super(props);
+    this._partOfSubSelectJoin = true;
+    this.children.forEach(child => {
+      child.partOfSubSelectJoin = true;
+    });
+  }
+
   joinSQL(klass) {
     const joins = [];
     for (const matcher of this.children) {
@@ -460,19 +516,31 @@ class JoinAndCompositeMatcher extends AndCompositeMatcher {
     return joins;
   }
 
-  whereSQL(klass) {
+  whereSQL(klass, usingSubSelect = false) {
     const muid = this.getMuid();
-    const wheres = this.children.map(m => {
+    const wheres = [];
+    this.children.forEach(m => {
       m.setMuid(muid);
-      return m.whereSQL(klass);
+      const where = m.whereSQL(klass, usingSubSelect);
+      if (where) {
+        wheres.push(where);
+      }
     });
-    return `(${wheres.join(' AND ')})`;
+    if (wheres.length > 0) {
+      return `(${wheres.join(' AND ')})`;
+    }
+    return '';
   }
 }
 
 class NotCompositeMatcher extends AndCompositeMatcher {
-  whereSQL(klass) {
-    return `NOT (${super.whereSQL(klass)})`;
+  whereSQL(klass, usingSubSelect = false) {
+    const where = super.whereSQL(klass, usingSubSelect);
+    if (where) {
+      return `NOT (${where})`;
+    } else {
+      return '';
+    }
   }
 }
 
