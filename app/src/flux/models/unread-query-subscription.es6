@@ -50,7 +50,7 @@ const buildQuery = (categoryIds, isOther) => {
     const whereOptions = [unreadAttr, Thread.attributes.state.equal(0)];
     const recentlyReadStoreWhereOptions = [
       JoinTable.useAttribute(idKey, 'String').in(RecentlyReadStore.ids),
-      JoinTable.useAttribute('state', 'Number').equal(0),
+      JoinTable.useAttribute(isMessageView ? 'state' : Thread.attributes.state, 'Number').equal(0),
     ];
     if (enableFocusedInboxKey) {
       const inboxCategoryAttr = isMessageView
