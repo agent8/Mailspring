@@ -15,7 +15,6 @@ import { Composer as ComposerExtensionRegistry } from '../../registries/extensio
 import QuotedHTMLTransformer from '../../services/quoted-html-transformer';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import uuid from 'uuid';
-import _ from 'underscore';
 import RestoreDraftTask from '../tasks/restore-draft-task';
 import { WindowLevel } from '../../constant';
 
