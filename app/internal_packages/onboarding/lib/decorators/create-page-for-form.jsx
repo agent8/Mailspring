@@ -79,7 +79,9 @@ const CreatePageForForm = FormComponent => {
         next[parent][key] = val;
         // change emailAddress field
         if (event.target.id === 'settings.imap_username') {
-          // next['emailAddress'] = val;
+          if ((val || '').includes('@')) {
+            next['emailAddress'] = val;
+          }
           next['name'] = val;
         }
       } else {
