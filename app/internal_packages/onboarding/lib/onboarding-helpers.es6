@@ -682,7 +682,8 @@ export function buildOutlookAuthURL() {
     `&scope=${encodeURIComponent(OUTLOOK_SCOPES.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
-    `&response_type=code`
+    `&response_type=code` +
+    `&login_hint=email`
   );
 }
 
