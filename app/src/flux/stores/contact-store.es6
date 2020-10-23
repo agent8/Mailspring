@@ -55,7 +55,7 @@ class ContactStore extends MailspringStore {
       .limit(limit * accountCount)
       .order([
         Contact.attributes.sentToFrequency.descending(),
-        Contact.attributes.fromFrequency.descending(),
+        Contact.attributes.sendToCount.descending(),
       ]);
 
     return query.then(async _results => {
