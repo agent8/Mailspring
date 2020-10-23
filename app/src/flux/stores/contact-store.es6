@@ -80,7 +80,7 @@ class ContactStore extends MailspringStore {
       .limit(limit * accountCount)
       .order([
         Contact.attributes.sentToFrequency.descending(),
-        Contact.attributes.fromFrequency.descending(),
+        Contact.attributes.sendToCount.descending(),
       ])
       .then(async _results => {
         let results = this._distinctByEmail(_results);
