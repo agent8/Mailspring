@@ -1,6 +1,6 @@
 import React from 'react';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
-import { AttachmentStore, Actions } from 'mailspring-exports';
+import { AttachmentStore, Actions, Utils } from 'mailspring-exports';
 import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
 
 const IMAGE_TYPE = 'image';
@@ -8,7 +8,6 @@ const IMAGE_TYPE = 'image';
 function ImageNode(props) {
   const { attributes, node, editor, targetIsHTML, isSelected } = props;
   const contentId = node.data.get ? node.data.get('contentId') : node.data.contentId;
-
   if (targetIsHTML) {
     return <img alt="" src={`cid:${contentId}`} />;
   }
@@ -18,7 +17,14 @@ function ImageNode(props) {
     return <span />;
   }
   const file = draft.files.find(f => contentId === f.contentId);
-  if (!file) {
+  const fileId = file ? file.id : node.data.get ? node.data.get('fileId') : '';
+  const fileName = file ? file.name : node.data.get ? node.data.get('fileName') : '';
+  const filePath = file
+    ? AttachmentStore.pathForFile(file)
+    : node.data.get
+    ? node.data.get('filePath')
+    : '';
+  if (!fileId) {
     return <span />;
   }
 
@@ -27,9 +33,9 @@ function ImageNode(props) {
       {...attributes}
       draggable={false}
       className={`file-upload ${isSelected && 'custom-block-selected'}`}
-      filePath={AttachmentStore.pathForFile(file)}
-      displayName={file.filename}
-      fileId={file.id}
+      filePath={filePath}
+      displayName={fileName}
+      fileId={fileId}
       accountId={draft.accountId}
       onRemoveAttachment={() =>
         editor.change(change => {
@@ -37,7 +43,7 @@ function ImageNode(props) {
             headerMessageId: draft.headerMessageId,
             messageId: draft.id,
             accountId: draft.accountId,
-            fileToRemove: file,
+            fileToRemove: { id: fileId },
           });
           return change.removeNodeByKey(node.key);
         })
@@ -69,6 +75,26 @@ const rules = [
   {
     deserialize(el, next) {
       if (el.tagName.toLowerCase() === 'img' && (el.getAttribute('src') || '').startsWith('cid:')) {
+        const fileId = el.getAttribute('data-edison-file-id');
+        const fileName = el.getAttribute('data-edison-file-name');
+        const filePath = el.getAttribute('data-edison-file-path');
+        if (fileId && fileName) {
+          return {
+            object: 'inline',
+            isVoid: true,
+            nodes: [],
+            type: IMAGE_TYPE,
+            data: {
+              contentId: el
+                .getAttribute('src')
+                .split('cid:')
+                .pop(),
+              fileId,
+              fileName: Utils.base64ToString(fileName),
+              filePath: decodeURIComponent(filePath),
+            },
+          };
+        }
         return {
           object: 'inline',
           isVoid: true,
