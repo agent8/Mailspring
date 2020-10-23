@@ -20,6 +20,6 @@ export default class SignatureComposerExtension extends ComposerExtension {
     if (!signatureObj) {
       return;
     }
-    await applySignature({ signature: signatureObj, messageId: draft.id });
+    await applySignature({ signature: signatureObj, messageId: draft.id, skipSaving: true });
   };
 }
