@@ -20,7 +20,6 @@ function SignatureNode(props) {
         >
           {BLOCK_CONFIG.div.render(props)}
         </font>
-        <br />
       </edo-signature>
     );
   }
