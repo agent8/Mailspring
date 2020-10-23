@@ -185,7 +185,7 @@ function fromBinary(binary) {
   return String.fromCharCode(...new Uint16Array(bytes.buffer));
 }
 module.exports = Utils = {
-  stringToBase64: string => btoa(toBinary(string)),
+  stringToBase64: string => btoa(toBinary(string || '')),
   base64ToString: base64 => fromBinary(atob(base64)),
 
   safeBrowserPath: filePath => {
