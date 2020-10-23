@@ -145,8 +145,8 @@ export default class MessageItemBody extends React.Component {
           )}" class='inline-image' data-edison-file-id='${
             file.id
           }' data-edison-file-content-type='${Utils.stringToBase64(
-            file.contentType
-          )}' data-edison-file-name='${Utils.stringToBase64(file.filename)}' 
+            file.contentType || ''
+          )}' data-edison-file-name='${Utils.stringToBase64(file.filename || '')}' 
           data-edison-file-size='${file.size}'`
         );
       });
