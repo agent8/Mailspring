@@ -1395,6 +1395,11 @@ class DraftStore extends MailspringStore {
     // doesn't need to do a query for it a second from now when the composer wants it.
     const session = this._createSession(draft.id, draft);
 
+    // open the draft window first, if [openReplyInNewWindow] is ON
+    if (popout) {
+      session.setPopout(true);
+    }
+
     // Give extensions an opportunity to perform additional setup to the draft
     for (const extension of ExtensionRegistry.Composer.extensions()) {
       if (extension.prepareNewDraft) {
