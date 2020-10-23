@@ -30,7 +30,7 @@ const getSessionByMessageId = messageId => {
   });
 };
 
-export async function applySignature({ signature, messageId }) {
+export async function applySignature({ signature, messageId, skipSaving }) {
   const session = await getSessionByMessageId(messageId);
   if (!session) {
     this._displayError(`Draft Session for ${messageId} not available`);
@@ -102,5 +102,5 @@ export async function applySignature({ signature, messageId }) {
     const contentAfter = newBody.slice(insertionPoint);
     newBody = `${contentBefore}${additionalWhitespace}<edo-signature id="${id}"><font style="font-size: ${Constant.Composer.defaultFontSize}, font-family: ${Constant.Composer.defaultFontFamily}">${newSigBody}</font></edo-signature>${additionalClosingWhitespace}${contentAfter}`;
   }
-  session.changes.add({ body: newBody });
+  session.changes.add({ body: newBody }, { skipSaving });
 }
