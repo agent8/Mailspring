@@ -100,7 +100,8 @@ class ThreadListStore extends MailspringStore {
     const currentPerspective = FocusedPerspectiveStore.current();
     if (next && currentPerspective && currentPerspective.isSearchMailbox) {
       if (next.empty() || next._ids.length < 100) {
-        Actions.expandSearchDate();
+        //defer until next cycle, give UI time to display no results page if no results are found
+        setTimeout(() => Actions.expandSearchDate());
       }
     }
     // This code keeps the focus and keyboard cursor in sync with the thread list.
