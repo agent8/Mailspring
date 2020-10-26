@@ -525,6 +525,7 @@ class Actions {
   static draftInlineAttachmentRemoved = ActionScopeWindow;
   static removeAllNoReferenceInLines = ActionScopeWindow;
   static broadcastDraftAttachmentState = ActionScopeGlobal;
+  static bulkUpdateDraftFiles = ActionScopeWindow;
 
   static syncFolders = ActionScopeMainWindow;
   static syncFolderList = ActionScopeMainWindow;

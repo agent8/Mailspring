@@ -7,6 +7,10 @@ Public: The value of this attribute is always a Javascript `Date`, or `null`.
 Section: Database
 */
 export default class AttributeDateTime extends Attribute {
+  constructor({ joinTableName, ...others }) {
+    super(others);
+    this.joinTableName = joinTableName;
+  }
   toJSON(val) {
     if (!val) {
       return null;

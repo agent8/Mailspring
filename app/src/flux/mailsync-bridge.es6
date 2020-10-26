@@ -8,6 +8,7 @@ import TaskQueue from './stores/task-queue';
 import IdentityStore from './stores/identity-store';
 import Account from './models/account';
 import Sift from './models/sift';
+import Matcher from './attributes/matcher';
 import AccountStore from './stores/account-store';
 import DatabaseStore from './stores/database-store';
 import OnlineStatusStore from './stores/online-status-store';
@@ -841,9 +842,9 @@ export default class MailsyncBridge {
             if (Array.isArray(categoryIds) && categoryIds.length > 0) {
               // console.log(`adding category constrain, ${categoryIds}`);
               Thread = Thread || require('./models/thread').default;
-              const threadPromise = DatabaseStore.findAll(Thread, where).where([
-                Thread.attributes.categories.containsAny(categoryIds),
-              ]);
+              const threadPromise = DatabaseStore.findAll(Thread, where).where(
+                new Matcher.JoinAnd([Thread.attributes.categories.containsAny(categoryIds)])
+              );
               promises.push(threadPromise);
               threadIndex = promises.length - 1;
             } else {

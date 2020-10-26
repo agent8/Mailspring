@@ -13,7 +13,8 @@ import EmojiPlugins from './emoji-plugins';
 import ImagePlugins from './image-plugins';
 import SignaturePlugins from './signature-plugins';
 import CrowdedButtons from './crowded-buttons';
-import SystemTextReplacementsPlugins from './system-text-replacements-plugins';
+import Utils from '../../flux/models/utils';
+// import SystemTextReplacementsPlugins from './system-text-replacements-plugins';
 
 // Note: order is important here because we deserialize HTML with rules
 // in this order. <code class="var"> before <code>, etc.
@@ -396,6 +397,37 @@ export function convertFromHTML(html, defaultFontValues = {}) {
   injectDefaultFontValues(json.document);
   return Value.fromJSON(json);
 }
+export const convertEdisonImageFilesToInline = htmlString => {
+  const parsed = new DOMParser().parseFromString(htmlString, 'text/html');
+  const pWalker = document.createTreeWalker(parsed.body, NodeFilter.SHOW_ELEMENT, {
+    acceptNode: node => {
+      return node.nodeName === 'IMG' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    },
+  });
+  const newFiles = [];
+  while (pWalker.nextNode()) {
+    const img = pWalker.currentNode;
+    const fileId = img.getAttribute('data-edison-file-id');
+    const contentType = img.getAttribute('data-edison-file-content-type');
+    const fileSize = img.getAttribute('data-edison-file-size');
+    const fileName = img.getAttribute('data-edison-file-name');
+    const originalPath = img.getAttribute('src');
+    if (fileId && contentType && fileName) {
+      const contentId = Utils.generateContentId();
+      newFiles.push({
+        id: fileId,
+        contentType: Utils.base64ToString(contentType),
+        size: fileSize,
+        filename: Utils.base64ToString(fileName),
+        isInline: true,
+        contentId,
+      });
+      img.setAttribute('src', `cid:${contentId}`);
+      img.setAttribute('data-edison-file-path', originalPath);
+    }
+  }
+  return { newFiles, html: parsed.body.innerHTML };
+};
 
 export function convertToHTML(value) {
   return HtmlSerializer.serialize(value);
