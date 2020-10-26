@@ -46,8 +46,9 @@ function noEmbedTagsHandle(src, regEx, reRegEx, trackers) {
     } else {
       const patternAttr = new RegExp(reRegEx, 'g');
       const matcherAttr = patternAttr.test(rematchStr);
+      const isInlineImage = /class='inline-image'/g.test(rematchStr);
 
-      if (matcherAttr) {
+      if (matcherAttr && !isInlineImage) {
         builder += src.substring(currentIndex, start);
         trackers.push(rematchStr);
         currentIndex = end;
@@ -57,7 +58,7 @@ function noEmbedTagsHandle(src, regEx, reRegEx, trackers) {
       }
     }
   }
-  if (currentIndex == 0) {
+  if (currentIndex === 0) {
     return src;
   } else {
     builder += src.substring(currentIndex);
