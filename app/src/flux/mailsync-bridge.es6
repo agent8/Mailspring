@@ -90,7 +90,7 @@ class CrashTracker {
     const key = this._keyFor(fullAccountJSON);
     if (code === null) {
       console.log('mailsync crashed');
-      AppEnv.reportError(new Error(`mailsync crashed for account: ${key}`));
+      AppEnv.reportError(new Error(`mailsync crashed for account: ${key}`), {}, { grabLogs: true });
     } else {
       console.log('mailsync exited');
       AppEnv.reportWarning(
