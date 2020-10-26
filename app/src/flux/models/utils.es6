@@ -184,7 +184,17 @@ function fromBinary(binary) {
   }
   return String.fromCharCode(...new Uint16Array(bytes.buffer));
 }
+function parseBase64Data(base64String = '') {
+  // https://regex101.com/r/7J9c9g/3
+  const base64Regx = new RegExp(/^data\:\S+\/(\S+)\;base64,\s*(\S+)$/);
+  const match = base64Regx.exec(base64String.replace(/(\s|\r|\t|\n)/g, ''));
+  if (match && match.length === 3) {
+    return { extension: match[1], data: match[2] };
+  }
+  return false;
+}
 module.exports = Utils = {
+  parseBase64Data: parseBase64Data,
   stringToBase64: string => btoa(toBinary(string || '')),
   base64ToString: base64 => fromBinary(atob(base64)),
 
