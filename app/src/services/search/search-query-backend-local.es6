@@ -243,6 +243,10 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
   visitDate(node) {
     const comparator = node.direction === 'before' ? '<' : '>';
+    if (isFinite(parseInt(node.text.token.s))) {
+      this._result = `(SELECT \`lastDate\` FROM \`ThreadCategory\` WHERE \`ThreadCategory\`.\`threadId\` = \`${this._className}\`.\`pid\`) ${comparator} ${node.text.token.s}`;
+      return;
+    }
     const date = DateUtils.getChronoPast().parseDate(node.text.token.s);
     if (!date) {
       this._result = '';
