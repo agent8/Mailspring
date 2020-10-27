@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <!--Import Google Icon Font-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <!-- Compiled and minified CSS -->
+
+<head>
+  <meta charset="utf-8" />
+  <!--Import Google Icon Font-->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <!-- Compiled and minified CSS -->
 
 
-    <link rel="stylesheet" href="./components/view.css" />
-    <link rel="stylesheet" href="./components/calendar-list.css" />
-    <link rel="stylesheet" href="./components/react-datepicker.css" />
-    <link rel="stylesheet" href="../node_modules/react-rrule-generator/build/styles.css" />
-    <link rel="stylesheet" href="./components/library/styles.global.css" />
+  <link rel="stylesheet" href="./components/view.css" />
+  <link rel="stylesheet" href="./components/calendar-list.css" />
+  <link rel="stylesheet" href="./components/react-datepicker.css" />
+  <link rel="stylesheet" href="../node_modules/react-rrule-generator/build/styles.css" />
+  <link rel="stylesheet" href="./components/library/styles.global.css" />
 
-    <!--
+  <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
       Only files inside the `public` folder can be referenced from the HTML.
@@ -22,44 +23,60 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>Edison Mailspring Calendar</title>
-    <script>
-      (function() {
-        if (!process.env.HOT) {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = './dist/style.css';
-          // HACK: Writing the script path should be done with webpack
-          document.getElementsByTagName('head')[0].appendChild(link);
-        }
-      })();
-      const { remote } = require('electron')
-      const mainWindow = remote.getCurrentWindow()
+  <title>Edison Mailspring Calendar</title>
+  <script>
+    (function () {
+      if (!process.env.HOT) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = './dist/style.css';
+        // HACK: Writing the script path should be done with webpack
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+    })();
+    const { remote } = require('electron')
+    const mainWindow = remote.getCurrentWindow()
     mainWindow.blur()
     mainWindow.focus()
-    </script>
+  </script>
 
-    <!-- <script src="https://secure.aadcdn.microsoftonline-p.com/lib/<version>/js/msal.js"></script>
+  <!-- <script src="https://secure.aadcdn.microsoftonline-p.com/lib/<version>/js/msal.js"></script>
     <script src="https://secure.aadcdn.microsoftonline-p.com/lib/<version>/js/msal.min.js"></script> -->
+  <script>
+    function init() {
+      // NEED TO FIND A PLACE FOR THIS GUY.
+      gapi.load('auth2', function () {
+        console.log("init gapi");
+        console.log("HEYHEY")
+        // gapi.auth2.init({
+        //   // 'apiKey': 'AIzaSyCTYXWtoRKnXeZkPCcZwYOXm0Qz3Lz9F9g',
+        //   'clientId': '190108842853-2o3l63c3qlgjjg4pp2v9suoacrbfpgva.apps.googleusercontent.com',
+        //   'scope': `https://www.googleapis.com/auth/calendar.events`,
+        //   // 'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+        // });
+        gapi.auth2.init({
+          // apiKey: 'atSqQBGyYhlJAba9NiZe47r6ggg',
+          // cookie_policy: 'http://localhost:8000',
+          client_id: '190108842853-2o3l63c3qlgjjg4pp2v9suoacrbfpgva.apps.googleusercontent.com',
+          // scope: `https://www.googleapis.com/auth/calendar`,
+          // 'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+        }).then((() => {
+          console.log("BOBO")
+          console.log(auth2)
+        }, () => console.log("GAPI ERROR")));
+        console.log("DONE")
+        console.log(gapi.auth2.GoogleAuth())
+      })
+    };
+  </script>
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script async defer src="https://apis.google.com/js/api.js"></script> -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCSlcIifI5yDulPluuQjuhML3V0AO2TqfA&libraries=places"></script>
+    <script src="https://apis.google.com/js/platform.js?onload=init" async defer>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script async defer src="https://apis.google.com/js/api.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCSlcIifI5yDulPluuQjuhML3V0AO2TqfA&libraries=places"></script>
-    <script async defer src="https://apis.google.com/js/api.js?onload=onLoadCallback">
-      function onLoadCallback () {
-        // NEED TO FIND A PLACE FOR THIS GUY.
-        window.gapi.load('client:auth2', {
-          callback: () => {
-            console.log("init gapi");
-            window.gapi.client.init({
-              'apiKey': 'AIzaSyCTYXWtoRKnXeZkPCcZwYOXm0Qz3Lz9F9g',
-              'clientId': '65724758895-gc7lubjkjsqqddfhlb7jcme80i3mjqn0.apps.googleusercontent.com',
-              'scope': `https://www.googleapis.com/auth/calendar.events`,
-              'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-            });}})};
-        // Wow look at how ugly this is man :\
     </script>
-    <!--<script>
+  <!--<script>
       // window.onLoadCallback = function(){
       function onLoadCallback (){
         // NEED TO FIND A PLACE FOR THIS GUY.
@@ -75,33 +92,35 @@
         // Wow look at how ugly this is man :\
       }
     </script> -->
-  </head>
-  <body>
-    <div style="position:absolute; width: 100%; height: 20px;-webkit-user-select: none;-webkit-app-region: drag;"></div>
-    <div id="root">
-    </div>
-    <script>
-      {
-        const scripts = [];
+</head>
 
-        // Dynamically insert the DLL script in development env in the
-        // renderer process
-        if (process.env.NODE_ENV === 'development') {
-          scripts.push('../dll/renderer.dev.dll.js');
-        }
+<body>
+  <div style="position:absolute; width: 100%; height: 20px;-webkit-user-select: none;-webkit-app-region: drag;"></div>
+  <div id="root">
+  </div>
+  <script>
+    {
+      const scripts = [];
 
-        // Dynamically insert the bundled app script in the renderer process
-        const port = process.env.PORT || 1212;
-        scripts.push(
-          process.env.HOT
-            ? 'http://localhost:' + port + '/dist/renderer.dev.js'
-            : './dist/renderer.prod.js'
-        );
-
-        document.write(
-          scripts.map((script) => `<script defer src="${script}"><\/script>`).join('')
-        );
+      // Dynamically insert the DLL script in development env in the
+      // renderer process
+      if (process.env.NODE_ENV === 'development') {
+        scripts.push('../dll/renderer.dev.dll.js');
       }
-    </script>
-  </body>
+
+      // Dynamically insert the bundled app script in the renderer process
+      const port = process.env.PORT || 1212;
+      scripts.push(
+        process.env.HOT
+          ? 'http://localhost:' + port + '/dist/renderer.dev.js'
+          : './dist/renderer.prod.js'
+      );
+
+      document.write(
+        scripts.map((script) => `<script defer src="${script}"><\/script>`).join('')
+      );
+    }
+  </script>
+</body>
+
 </html>

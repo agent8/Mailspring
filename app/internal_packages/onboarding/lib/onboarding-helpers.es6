@@ -31,8 +31,8 @@ const NEW_EDISON_REDIRECT_URI = 'https://mail.edison.tech/oauthsuccess.html';
 
 export const LOCAL_SERVER_PORT = 12141;
 export const LOCAL_REDIRECT_URI = `http://127.0.0.1:${LOCAL_SERVER_PORT}`;
-const GMAIL_CLIENT_ID = '533632962939-g0m1obkdahbh4pva3rohik5skarb2pon.apps.googleusercontent.com';
-const GMAIL_CLIENT_SECRET = 'rOtn7n4eAfzsMqQhAzvOE0Ak';
+const GMAIL_CLIENT_ID = '190108842853-2o3l63c3qlgjjg4pp2v9suoacrbfpgva.apps.googleusercontent.com';
+const GMAIL_CLIENT_SECRET = 'atSqQBGyYhlJAba9NiZe47r6';
 const GMAIL_SCOPES = [
   // Edison
   'https://mail.google.com/',
@@ -41,6 +41,7 @@ const GMAIL_SCOPES = [
   'email',
   'https://www.googleapis.com/auth/gmail.settings.basic',
   'profile',
+  'https://www.googleapis.com/auth/calendar'
 ];
 
 const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
