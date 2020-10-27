@@ -114,7 +114,7 @@ process.on('message', m => {
     });
     logDebug(`returning results for ${dbpath}, ${id}`);
   } catch (err) {
-    logError(`returning results for ${dbpath}, ${id} failed`);
+    logError(`returning results for ${dbpath}, ${id} failed, query: ${query}`);
     logError(err);
   }
 
