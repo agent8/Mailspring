@@ -1,6 +1,6 @@
 const digit0123 = '\\s*[=:]\\s*[\'"]?(?:(?:0*(?:1|2|3)\\D)|0+\\D)';
 const invisibleReStr = '(?:display\\s*:[\'"]?\\s*none)|(?:visibility\\s*:[\'"]?\\s*hidden)';
-const smallOrInvisible = `(?:(?:width${digit0123})|(?:height${digit0123})|${invisibleReStr})`;
+const smallOrInvisible = `(?:(?:[^-](max-)?width${digit0123})|(?:[^-](max-)?height${digit0123})|${invisibleReStr})`;
 
 // Dont support double html tag with content
 // 不支持有内容的双标签
