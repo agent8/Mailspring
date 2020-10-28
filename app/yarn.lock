@@ -2470,7 +2470,11 @@ bignumber.js@^2.1.0:
   resolved "https://registry.npmjs.org/bignumber.js/-/bignumber.js-2.4.0.tgz#838a992da9f9d737e0f4b2db0be62bb09dd0c5e8"
   integrity sha1-g4qZLan51zfg9LLbC+YrsJ3Qxeg=
 
+<<<<<<< HEAD
 bindings@^1.4.0, bindings@^1.5.0:
+=======
+bindings@^1.3.0, bindings@^1.4.0, bindings@^1.5.0:
+>>>>>>> 9776d87ab... change macos-notification-state to electron-notification-state
   version "1.5.0"
   resolved "https://registry.npm.taobao.org/bindings/download/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
   integrity sha1-EDU8npRTNLwFEabZCzj7x8nFBN8=
@@ -3774,6 +3778,15 @@ electron-log@^3.0.6:
   version "3.0.9"
   resolved "https://registry.npmjs.org/electron-log/-/electron-log-3.0.9.tgz#53ff1fcdb2f3e4a73ea7096d2f7204121109ec6f"
   integrity sha512-kfV4riUqW8uooYLAfrlB3EJW66W29ePipJU4/Fm8UxQekVNcR2qHI/0tiJX3oWM79VdAUiiYqL9V49lhnSIO8g==
+
+electron-notification-state@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.npm.taobao.org/electron-notification-state/download/electron-notification-state-1.0.4.tgz#998610eff6f3870c81beec4769a0d9c7ad659aa1"
+  integrity sha1-mYYQ7/bzhwyBvuxHaaDZx61lmqE=
+  dependencies:
+    macos-notification-state "^1.1.0"
+    windows-notification-state "^1.3.0"
+    windows-quiet-hours "^1.2.2"
 
 electron-platform@^1.2.0:
   version "1.2.0"
@@ -6529,13 +6542,12 @@ ltx@^2.2.0:
   dependencies:
     inherits "^2.0.4"
 
-macos-notification-state@^1.3.1:
-  version "1.3.1"
-  resolved "https://registry.npmjs.org/macos-notification-state/-/macos-notification-state-1.3.1.tgz#0be26fe1ef41f6914431ae5b792df40ed25ce20c"
-  integrity sha512-Zd4fezXN4WaXw0fJnO3dr8Eg72AKI4C+g0Jnm5KcX8o7WWvIMV9rzsl8mtuOL8FT+QPYv1xiaLpElqhXubf3Yw==
+macos-notification-state@^1.1.0:
+  version "1.3.3"
+  resolved "https://registry.npm.taobao.org/macos-notification-state/download/macos-notification-state-1.3.3.tgz#7231a9bab377e5d0618b074de074381a0781ed20"
+  integrity sha1-cjGpurN35dBhiwdN4HQ4GgeB7SA=
   dependencies:
     bindings "^1.4.0"
-    nan "^2.13.2"
 
 make-dir@^1.0.0, make-dir@^1.2.0:
   version "1.3.0"
@@ -6845,7 +6857,7 @@ mutationobserver-shim@^0.3.2:
   resolved "https://registry.npmjs.org/mutationobserver-shim/-/mutationobserver-shim-0.3.5.tgz#6f35ce85867b21aa1e58f78892d0ab4eee942c0e"
   integrity sha512-YAMuSp4Oi19SYQF04dGnRajyFp4Wyam+jKKWzm5roPcNh1Rip8dnHPxls5F/xBgY0H2gV+3IzWuIvYQPDAvmBQ==
 
-nan@2.14.0, nan@^2.12.1, nan@^2.13.2, nan@^2.14.0:
+nan@2.14.0, nan@^2.12.1, nan@^2.13.2, nan@^2.14.0, nan@^2.7.0:
   version "2.14.0"
   resolved "https://registry.npmjs.org/nan/-/nan-2.14.0.tgz#7818f722027b2459a86f0295d434d1fc2336c52c"
   integrity sha512-INOFj37C7k3AfaNTtX8RhsTw7qRy7eLET14cROi9+5HAVbbHuIWUHEauBv5qT4Av2tWasiTY1Jw6puUNqRJXQg==
@@ -6918,9 +6930,15 @@ node-addon-api@*:
   integrity sha512-ASCL5U13as7HhOExbT6OlWJJUV/lLzL2voOSP1UVehpRD8FbSrSDjfScK/KwAvVTI5AS6r4VwbOMlIqtvRidnA==
 
 node-addon-api@^3.0.0:
+<<<<<<< HEAD
   version "3.0.0"
   resolved "https://registry.npm.taobao.org/node-addon-api/download/node-addon-api-3.0.0.tgz?cache=0&sync_timestamp=1595260182379&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fnode-addon-api%2Fdownload%2Fnode-addon-api-3.0.0.tgz#812446a1001a54f71663bed188314bba07e09247"
   integrity sha1-gSRGoQAaVPcWY77RiDFLugfgkkc=
+=======
+  version "3.0.2"
+  resolved "https://registry.npm.taobao.org/node-addon-api/download/node-addon-api-3.0.2.tgz?cache=0&sync_timestamp=1600444072897&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fnode-addon-api%2Fdownload%2Fnode-addon-api-3.0.2.tgz#04bc7b83fd845ba785bb6eae25bc857e1ef75681"
+  integrity sha1-BLx7g/2EW6eFu26uJbyFfh73VoE=
+>>>>>>> 9776d87ab... change macos-notification-state to electron-notification-state
 
 node-emoji@^1.2.1:
   version "1.10.0"
@@ -10413,6 +10431,22 @@ window-size@0.1.0:
   version "0.1.0"
   resolved "https://registry.npmjs.org/window-size/-/window-size-0.1.0.tgz#5438cd2ea93b202efa3a19fe8887aee7c94f9c9d"
   integrity sha1-VDjNLqk7IC76Ohn+iIeu58lPnJ0=
+
+windows-notification-state@^1.3.0:
+  version "1.3.4"
+  resolved "https://registry.npm.taobao.org/windows-notification-state/download/windows-notification-state-1.3.4.tgz#f4cdb009d1e92124f1913a93b5c72659f4901542"
+  integrity sha1-9M2wCdHpISTxkTqTtccmWfSQFUI=
+  dependencies:
+    bindings "^1.5.0"
+    nan "^2.14.0"
+
+windows-quiet-hours@^1.2.2:
+  version "1.2.7"
+  resolved "https://registry.npm.taobao.org/windows-quiet-hours/download/windows-quiet-hours-1.2.7.tgz#12dd46f21d296f1518109dcbe1a518ef1f85365e"
+  integrity sha1-Et1G8h0pbxUYEJ3L4aUY7x+FNl4=
+  dependencies:
+    bindings "^1.3.0"
+    nan "^2.7.0"
 
 "windows-shortcuts@github:ruoxijiang/windows-shortcuts#b0a0fc7":
   version "0.1.1"
