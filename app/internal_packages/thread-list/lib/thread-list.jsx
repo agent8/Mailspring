@@ -127,7 +127,10 @@ class ThreadList extends React.Component {
         footer={this._getFooter()}
         stores={[ThreadListStore]}
         getStateFromStores={() => {
-          return { dataSource: ThreadListStore.dataSource() };
+          return {
+            dataSource: ThreadListStore.dataSource(),
+            limitSearchDate: ThreadListStore.limitSearchDate(),
+          };
         }}
       >
         <FocusContainer collection="thread">

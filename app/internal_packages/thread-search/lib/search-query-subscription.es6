@@ -15,10 +15,11 @@ import {
 const utf7 = require('utf7').imap;
 
 class SearchQuerySubscription extends MutableQuerySubscription {
-  constructor(searchQuery, accountIds) {
+  constructor(searchQuery, accountIds, limitSearchDate = true) {
     super(null, { emitResultSet: true });
     this._searchQuery = searchQuery;
     this._accountIds = accountIds;
+    this._limitSearchDate = limitSearchDate;
 
     this._connections = [];
     this._extDisposables = [];
@@ -42,7 +43,16 @@ class SearchQuerySubscription extends MutableQuerySubscription {
     }
     let parsedQuery = null;
     try {
-      parsedQuery = SearchQueryParser.parse(this._searchQuery);
+      let tmpSearchQuery = this._searchQuery;
+      if (
+        this._limitSearchDate &&
+        !tmpSearchQuery.toLocaleUpperCase().includes('BEFORE:') &&
+        !tmpSearchQuery.toLocaleUpperCase().includes('AFTER:') &&
+        !tmpSearchQuery.toLocaleUpperCase().includes('SINCE:')
+      ) {
+        tmpSearchQuery = `( ${tmpSearchQuery} ) AND SINCE: "a month ago"`;
+      }
+      parsedQuery = SearchQueryParser.parse(tmpSearchQuery);
       // const firstInQueryExpression = parsedQuery.getFirstInQueryExpression();
       // if (!firstInQueryExpression) {
       //   const defaultFolder = new Set();

@@ -11,6 +11,7 @@ import MailspringStore from '../../global/mailspring-store';
 import Utils from '../models/utils';
 import Query from '../models/query';
 import DatabaseChangeRecord from './database-change-record';
+import { QUERY_TYPE } from '../../constant';
 
 const debug = createDebug('app:RxDB');
 const debugVerbose = createDebug('app:RxDB:all');
@@ -189,6 +190,9 @@ class DatabaseStore extends MailspringStore {
     this._open = false;
     this._waiting = [];
     this._preparedStatementCache = LRU({ max: 500 });
+    this._agent = {};
+    this._agent[QUERY_TYPE.BACKGROUND] = null;
+    this._agent[QUERY_TYPE.SEARCH_PERSPECTIVE] = null;
 
     this.setupEmitter();
     this._emitter.setMaxListeners(100);
@@ -312,7 +316,7 @@ class DatabaseStore extends MailspringStore {
             }
 
             if (msec > SLOW_QUERY_THRESH_HOLD) {
-              const msgPrefix = `DatabaseStore._executeInBackground took more than ${SLOW_QUERY_THRESH_HOLD}ms - `;
+              const msgPrefix = `DatabaseStore._executeInBackground ${queryType} took more than ${SLOW_QUERY_THRESH_HOLD}ms - `;
               this._prettyConsoleLog(
                 `${msgPrefix}${msec}msec (${backgroundTime}msec in background): ${query}`
               );
@@ -407,28 +411,14 @@ class DatabaseStore extends MailspringStore {
     return results;
   }
 
-  _executeInBackground(query, values, dbKey = 'main', queryType = null) {
-    let _queryForLog = query;
-    if (AppEnv.enabledBackgroundQueryLog) {
-      console.log(`-------------------background query for ${dbKey}----------------`);
-      AppEnv.logDebug(`background query - ${query}`);
-      console.log(`--------------------background query for ${dbKey} end---------------`);
-    }
-    const sendToAgent = data => {
-      if (!this._agent) {
-        AppEnv.logError(`Agent not available for background db query, ${data.id} not send`);
-        return;
-      }
-      AppEnv.logDebug(`Sending query for ${data.id} to agent`);
-      this._agent.send(data);
-    };
-    if (!this._agent) {
+  _registerAndStartAgent = (queryForLog, queryType = QUERY_TYPE.BACKGROUND) => {
+    if (!this._agent[queryType]) {
       AppEnv.logDebug(`DBStore:Agent not available, starting agent`);
       this._agentOpenQueries = {};
       this._agentQueues = {};
-      this._agent = childProcess.fork(
+      this._agent[queryType] = childProcess.fork(
         path.join(path.dirname(__filename), 'database-agent.js'),
-        [AppEnv.getConfigDirPath()],
+        [AppEnv.getConfigDirPath(), queryType],
         {
           silent: true,
         }
@@ -442,44 +432,44 @@ class DatabaseStore extends MailspringStore {
         this._agentOpenQueries = {};
         this._agentQueues = {};
       };
-      this._agent.stdout.on('data', data => console.log(data.toString()));
-      this._agent.stderr.on('data', data => {
+      this._agent[queryType].stdout.on('data', data => console.log(data.toString()));
+      this._agent[queryType].stderr.on('data', data => {
         AppEnv.reportError(new Error(`database-store._executeInBackground error`), {
           errorData: data.toString(),
-          query: _queryForLog,
+          query: queryForLog,
         });
-        console.error(data.toString(), _queryForLog);
+        console.error(data.toString(), queryForLog);
       });
-      this._agent.on('disconnect', () => {
+      this._agent[queryType].on('disconnect', () => {
         AppEnv.logError(`database background agent disconnected`);
         debug(`Query Agent: disconnected`);
-        if (this._agent) {
-          this._agent.kill('SIGTERM');
+        if (this._agent[queryType]) {
+          this._agent[queryType].kill('SIGTERM');
         }
-        this._agent = null;
+        this._agent[queryType] = null;
         clearOpenQueries();
       });
-      this._agent.on('exit', code => {
+      this._agent[queryType].on('exit', code => {
         AppEnv.logDebug(`database background agent exited with code ${code}`);
         debug(`Query Agent: exited with code ${code}`);
-        this._agent = null;
+        this._agent[queryType] = null;
         clearOpenQueries();
       });
-      this._agent.on('close', code => {
+      this._agent[queryType].on('close', code => {
         AppEnv.logDebug(`database background agent closed with code ${code}`);
         debug(`Query Agent: closed with code ${code}`);
-        this._agent = null;
+        this._agent[queryType] = null;
         clearOpenQueries();
       });
-      this._agent.on('error', err => {
+      this._agent[queryType].on('error', err => {
         AppEnv.reportError(
           new Error(`Query Agent: failed to start or receive message: ${err.toString()}`)
         );
-        this._agent.kill('SIGTERM');
-        this._agent = null;
+        this._agent[queryType].kill('SIGTERM');
+        this._agent[queryType] = null;
         clearOpenQueries();
       });
-      this._agent.on('message', ({ type, id, results, agentTime, queryType }) => {
+      this._agent[queryType].on('message', ({ type, id, results, agentTime, queryType }) => {
         const result = { results, backgroundTime: agentTime };
         if (!queryType && type === 'results' && this._agentOpenQueries[id]) {
           this._agentOpenQueries[id](result);
@@ -489,6 +479,12 @@ class DatabaseStore extends MailspringStore {
             this._agentQueues[queryType].length > 0 ? this._agentQueues[queryType][0] : null;
           const newItem =
             this._agentQueues[queryType].length > 1 ? this._agentQueues[queryType][1] : null;
+          if (newItem && newItem.data) {
+            AppEnv.logDebug(
+              `DBStore:old item ${id} new item in queue, ${newItem.data.id} query type ${queryType}, sending`
+            );
+            this._sendToAgent(newItem.data, queryType);
+          }
           if (item && item.id === id && item.resolve) {
             AppEnv.logDebug(
               `DBStore:Background results for ${id} of type ${queryType} match, resolving`
@@ -499,12 +495,6 @@ class DatabaseStore extends MailspringStore {
               `DBStore:Background results for ${id} of type ${queryType} not resolve`
             );
           }
-          if (newItem && newItem.data) {
-            AppEnv.logDebug(
-              `DBStore:old item ${id} new item in queue, ${newItem.data.id} query type ${queryType}, sending`
-            );
-            sendToAgent(newItem.data);
-          }
           if (newItem) {
             this._agentQueues[queryType] = [newItem];
           } else {
@@ -513,6 +503,24 @@ class DatabaseStore extends MailspringStore {
         }
       });
     }
+  };
+  _sendToAgent = (data, queryType = QUERY_TYPE.BACKGROUND) => {
+    if (!this._agent[queryType]) {
+      AppEnv.logError(`Agent not available for background db query, ${data.id} not send`);
+      return;
+    }
+    AppEnv.logDebug(`Sending query for ${data.id} to agent`);
+    this._agent[queryType].send(data);
+  };
+
+  _executeInBackground(query, values, dbKey = 'main', queryType = QUERY_TYPE.BACKGROUND) {
+    if (AppEnv.enabledBackgroundQueryLog) {
+      console.log(`-------------------background query for ${dbKey}----------------`);
+      AppEnv.logDebug(`background query - ${query}`);
+      console.log(`--------------------background query for ${dbKey} end---------------`);
+    }
+    this._registerAndStartAgent(query, queryType);
+
     return new Promise(resolve => {
       const id = Utils.generateTempId();
       let ignore = false;
@@ -543,7 +551,7 @@ class DatabaseStore extends MailspringStore {
       }
       if (!ignore) {
         AppEnv.logDebug(`DBStore:No pending request for ${id} of type ${queryType}, sending`);
-        sendToAgent(data);
+        this._sendToAgent(data, queryType);
         return;
       }
       AppEnv.logDebug(`DBStore:Request pending,  request for ${id} of type ${queryType} not send`);

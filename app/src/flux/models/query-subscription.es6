@@ -2,6 +2,7 @@ import DatabaseStore from '../stores/database-store';
 import QueryRange from './query-range';
 import MutableQueryResultSet from './mutable-query-result-set';
 import Thread from './thread';
+import { QUERY_TYPE } from '../../constant';
 
 const isMessageView = AppEnv.isDisableThreading();
 
@@ -242,11 +243,14 @@ export default class QuerySubscription {
   _getQueryForRange = (range, fetchEntireModels) => {
     let rangeQuery = null;
     if (!range.isInfinite()) {
-      rangeQuery = rangeQuery || this._query.clone();
+      rangeQuery = this._query.clone();
       rangeQuery.offset(range.offset).limit(range.limit);
     }
     if (!fetchEntireModels) {
       rangeQuery = rangeQuery || this._query.clone();
+      if (rangeQuery.queryType() && rangeQuery.isBackground()) {
+        rangeQuery.setQueryType(QUERY_TYPE.BACKGROUND);
+      }
       rangeQuery.idsOnly();
     }
     rangeQuery = rangeQuery || this._query;

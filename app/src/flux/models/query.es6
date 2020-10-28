@@ -196,6 +196,9 @@ export default class ModelQuery {
     this._background = true;
     return this;
   }
+  isBackground() {
+    return this._background;
+  }
   setQueryType(queryType) {
     this._queryType = queryType;
     return this;
