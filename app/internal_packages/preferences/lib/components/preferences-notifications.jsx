@@ -308,7 +308,8 @@ export class PreferencesAccountNotifacations extends React.Component {
         <Flexbox direction="row" style={{ alignItems: 'middle' }}>
           <div style={{ textAlign: 'center' }}>
             <RetinaImg
-              style={{ width: 40, height: 40 }}
+              style={{ width: 40, height: 40, borderRadius: '50%' }}
+              url={account.picture}
               name={`account-logo-${account.provider}.png`}
               fallback="account-logo-other.png"
               mode={RetinaImg.Mode.ContentPreserve}
