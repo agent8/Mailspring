@@ -1,5 +1,5 @@
 import path from 'path';
-var { getDoNotDisturb } = require('electron-notification-state');
+import { getDoNotDisturb } from 'electron-notification-state';
 
 class SoundRegistry {
   constructor() {
