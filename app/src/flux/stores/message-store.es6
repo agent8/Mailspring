@@ -3,6 +3,7 @@ import Actions from '../actions';
 import Message from '../models/message';
 import Thread from '../models/thread';
 import Matcher from '../attributes/matcher';
+import JoinTable from '../models/join-table';
 import Category from '../models/category';
 import DatabaseStore from './database-store';
 import DraftCacheStore from './draft-cache-store';
@@ -15,6 +16,7 @@ import FocusedContentStore from './focused-content-store';
 import * as ExtensionRegistry from '../../registries/extension-registry';
 import { ipcRenderer } from 'electron';
 import fs from 'fs';
+const isMessageView = AppEnv.isDisableThreading();
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
 const AutoDownloadSizeThreshHold = 2 * 1024 * 1024;
@@ -453,7 +455,12 @@ class MessageStore extends MailspringStore {
           });
           if (categoryIds.length > 0) {
             query.where(
-              new Matcher.JoinAnd([Thread.attributes.categories.containsAny(categoryIds)])
+              new Matcher.JoinAnd([
+                Thread.attributes.categories.containsAny(categoryIds),
+                JoinTable.useAttribute(isMessageView ? 'messageId' : 'threadId', 'String').equal(
+                  this._thread.id
+                ),
+              ])
             );
           }
         }
