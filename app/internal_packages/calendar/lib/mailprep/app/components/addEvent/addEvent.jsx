@@ -20,6 +20,7 @@ import RoundCheckbox from '../library/RoundCheckbox';
 import Tabs from '../library/Tabs/Tabs';
 import Tab from '../library/Tabs/Tab';
 import DatePicker from 'react-datepicker';
+import { ConsoleReporter } from 'jasmine';
 
 
 const START_INDEX_OF_UTC_FORMAT = 17;
@@ -311,17 +312,16 @@ export default class AddEvent extends Component {
 
   handleCalendarSelect = name => (target) => {
     this.setState((state, props) => {
-
-      const selectedProvider = props.calendarsList.filter((account) =>
-        account.calendars.filter((cal) => cal.uuid === target.value)
+      const selectedProvider = props.calendarsList.find((account) =>
+        account.calendars.find((cal) => cal.uuid === target.value)
       );
-      const selectedCalendar = selectedProvider[0].calendars.find(
+      const selectedCalendar = selectedProvider.calendars.find(
         (cal) => cal.uuid === target.value
       );
       return {
         [name]: selectedCalendar,
         selectedCalendarName: selectedCalendar.displayName,
-        selectedProvider: selectedProvider[0] ? selectedProvider[0].provider : '',
+        selectedProvider: selectedProvider ? selectedProvider.provider : '',
         colorId: selectedCalendar.color
       };
     });
