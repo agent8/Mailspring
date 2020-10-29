@@ -2,17 +2,17 @@ import MailspringStore from 'mailspring-store';
 import DatabaseStore from './database-store';
 import Thread from '../models/thread';
 
-class ThreadStore extends MailspringStore{
-  constructor(){
+class ThreadStore extends MailspringStore {
+  constructor() {
     super();
   }
   findBy({ threadId }) {
-    return DatabaseStore.findBy(Thread, {id: threadId, state: 0});
+    return DatabaseStore.findBy(Thread, { id: threadId, state: 0 });
   }
-  findAll(){
-    return DatabaseStore.findAll(Thread,{state: 0});
+  findAll() {
+    return DatabaseStore.findAll(Thread, { state: 0 });
   }
-  findAllByThreadIds({threadIds}){
+  findAllByThreadIds({ threadIds }) {
     return this.findAll().where([Thread.attributes.id.in(threadIds)]);
   }
 }
