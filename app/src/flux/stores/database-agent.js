@@ -7,11 +7,11 @@ const dbs = {};
 
 const deathDelay = 50000;
 const args = process.argv.slice(2);
-if (args.length > 0) {
+if (args.length > 1) {
   LOG.transports.file.file = path.join(
     args[0],
     'ui-log',
-    `ui-log-database-agent-${Date.now()}.log`
+    `ui-log-database-agent-${args[1]}-${Date.now()}.log`
   );
   LOG.transports.console.level = false;
   LOG.transports.file.maxSize = 20485760;

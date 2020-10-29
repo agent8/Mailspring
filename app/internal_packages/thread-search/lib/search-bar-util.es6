@@ -30,6 +30,8 @@ export const wrapInQuotes = s => `"${s.replace(/"/g, '')}"`;
 export const getThreadSuggestions = async (term, accountIds) => {
   let dbQuery = DatabaseStore.findAll(Thread)
     .where({ state: 0 })
+    .background()
+    .setQueryType(Constant.QUERY_TYPE.SEARCH_SUBJECT)
     .where([Thread.attributes.subject.like(term)])
     .order(Thread.attributes.lastMessageTimestamp.descending())
     .limit(10);

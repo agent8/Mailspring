@@ -31,6 +31,7 @@ class MultiselectList extends React.Component {
 
   static propTypes = {
     dataSource: PropTypes.object,
+    limitSearchDate: PropTypes.bool,
     className: PropTypes.string.isRequired,
     columns: PropTypes.array.isRequired,
     columnCheckProvider: PropTypes.func,
@@ -180,6 +181,7 @@ class MultiselectList extends React.Component {
             ref="list"
             columns={this.state.computedColumns}
             dataSource={this.props.dataSource}
+            limitSearchDate={this.props.limitSearchDate}
             itemPropsProvider={this.itemPropsProvider}
             onSelect={this._onClickItem}
             onComponentDidUpdate={this.props.onComponentDidUpdate}

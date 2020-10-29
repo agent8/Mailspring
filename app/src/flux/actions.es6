@@ -611,6 +611,7 @@ class Actions {
   static searchQuerySubmitted = ActionScopeWindow;
   static searchQueryChanged = ActionScopeWindow;
   static searchCompleted = ActionScopeWindow;
+  static expandSearchDate = ActionScopeWindow;
 
   static updateChatPanelHeight = ActionScopeMainWindow;
   static expandChatPanelFiller = ActionScopeMainWindow;

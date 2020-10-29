@@ -18,12 +18,7 @@ import ListDataSource from './list-data-source';
 import ListSelection from './list-selection';
 import ListTabularItem from './list-tabular-item';
 import IFrameSearcher from '../searchable-components/iframe-searcher';
-// const {
-//   GenericQueryExpression,
-//   AndQueryExpression,
-//   SubjectQueryExpression,
-//   FromQueryExpression,
-// } = SearchQueryAST;
+
 const ConfigProfileKey = 'core.appearance.profile';
 
 class ListColumn {
@@ -165,7 +160,17 @@ class ListTabular extends Component {
 
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.dataSource !== this.props.dataSource) {
-      this.setupDataSource(nextProps.dataSource);
+      const currentPerspective = FocusedPerspectiveStore.current();
+      if (
+        currentPerspective &&
+        currentPerspective.isSearchMailbox &&
+        !nextProps.limitSearchDate &&
+        this.props.limitSearchDate
+      ) {
+        this.setupDataSource(nextProps.dataSource, true);
+      } else {
+        this.setupDataSource(nextProps.dataSource);
+      }
     }
     if (nextProps.itemHeight !== this.props.itemHeight) {
       this.updateRangeState(nextProps);
@@ -179,7 +184,19 @@ class ListTabular extends Component {
     // If our view has been swapped out for an entirely different one,
     // reset our scroll position to the top.
     if (prevProps.dataSource !== this.props.dataSource) {
-      this._scrollRegion.scrollTop = 0;
+      const currentPerspective = FocusedPerspectiveStore.current();
+      if (
+        !(
+          currentPerspective &&
+          currentPerspective.isSearchMailbox &&
+          prevProps.limitSearchDate &&
+          !this.props.limitSearchDate
+        )
+      ) {
+        this._scrollRegion.scrollTop = 0;
+      } else {
+        console.log('limit search date changed, ignoring retaining scroll');
+      }
     }
 
     if (!this.updateRangeStateFiring) {
@@ -288,14 +305,19 @@ class ListTabular extends Component {
     }
   };
 
-  setupDataSource(dataSource) {
+  setupDataSource(dataSource, retainRange = false) {
     this._unlisten();
     this._unlisten = dataSource.listen(() => {
       if (this.mounted) {
         this._safeSetState(this.buildStateForRange());
       }
     });
-    this._safeSetState(this.buildStateForRange({ start: -1, end: -1, dataSource }));
+    if (retainRange) {
+      console.log('retained range');
+      this._safeSetState(this.buildStateForRange({ dataSource, retainRange }));
+    } else {
+      this._safeSetState(this.buildStateForRange({ start: -1, end: -1, dataSource }));
+    }
   }
 
   getRowsToRender() {
@@ -374,7 +396,15 @@ class ListTabular extends Component {
       start = this.state.renderedRangeStart,
       end = this.state.renderedRangeEnd,
       dataSource = this.props.dataSource,
+      retainRange,
     } = args;
+    if (retainRange) {
+      dataSource.setRetainedRange({
+        start,
+        end,
+      });
+      return;
+    }
 
     const items = {};
     let animatingOut = {};
