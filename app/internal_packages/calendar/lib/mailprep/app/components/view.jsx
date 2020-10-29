@@ -483,7 +483,8 @@ export default class View extends React.Component {
     if (attendees && attendees[0] && owner !== organizer) {
       // if owner and organizer is different, it is an invited event
       const ownerIndex = Object.keys(attendees).filter(key => attendees[key]['email'] === owner)
-      color = attendees[ownerIndex]['partstat'] === 'NEEDS-ACTION' ? 'invite' : calColor;
+      console.log(ownerIndex)
+      color = attendees[ownerIndex] && attendees[ownerIndex]['partstat'] === 'NEEDS-ACTION' ? 'invite' : calColor;
     }
     if (isAllDay) {
       return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue'
