@@ -491,21 +491,6 @@ class SidebarItem {
 
   static forCalendar(accountIds, opts = {}) {
 
-    // let categories = accountIds.map(accId => {
-    //   return CategoryStore.getCategoryByRole(accId, 'inbox');
-    // });
-    // categories = _.compact(categories);
-    // const perspective = MailboxPerspective.forCalendar(categories)
-    // let id = 'Calendar'
-    // opts.iconName = 'jira.svg';
-    // opts.className = 'jira-icon';
-    // opts.name = 'Calendar'
-    // opts._categoriesSharedRole = 'calendar'
-    // console.log("BEAR")
-    // console.log(perspective)
-    // console.log(categories)
-    // return this.forPerspective(id, perspective, opts)
-
     opts.iconName = 'drafts.svg';
 
     const perspective = MailboxPerspective.forCalendar(accountIds);

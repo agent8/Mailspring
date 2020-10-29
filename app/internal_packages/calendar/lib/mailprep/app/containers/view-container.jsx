@@ -84,28 +84,6 @@ const mapStateToProps = (state) => {
   const events = getFilteredEvents(state);
   const visibleEvents = events.filter((event) => filterMap[event.calendarId]);
 
-  console.log("TEST GOOGLE DEMING")
-  const acc = AccountStore.accounts()[0]
-  console.log(acc)
-  const caldavPayload = {
-    server: 'https://www.google.com/calendar/dav',
-    xhr: new dav.transport.OAuth2(
-      new dav.Credentials({
-        username: 'deming@edison.tech',
-        password: 'lucify228',
-        accessToken: acc.settings.access_token,
-        clientId: acc.settings.refresh_client_id,
-        clientSecret: 'rOtn7n4eAfzsMqQhAzvOE0Ak',
-        redirectUrl: 'https://mail.edison.tech/oauthsuccess.html',
-        tokenUrl: 'https://www.googleapis.com/oauth2/v4/token',
-      })
-    ),
-    loadObjects: true
-  };
-  console.log("WHAT")
-  console.log(caldavPayload)
-  dav.createAccount(caldavPayload).then((res) => console.log(res))
-
   return {
     events,
     initialSync: state.events.initialSync,

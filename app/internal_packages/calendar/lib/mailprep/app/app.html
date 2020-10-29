@@ -47,7 +47,6 @@
       // NEED TO FIND A PLACE FOR THIS GUY.
       gapi.load('auth2', function () {
         console.log("init gapi");
-        console.log("HEYHEY")
         // gapi.auth2.init({
         //   // 'apiKey': 'AIzaSyCTYXWtoRKnXeZkPCcZwYOXm0Qz3Lz9F9g',
         //   'clientId': '190108842853-2o3l63c3qlgjjg4pp2v9suoacrbfpgva.apps.googleusercontent.com',
@@ -61,10 +60,8 @@
           // scope: `https://www.googleapis.com/auth/calendar`,
           // 'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
         }).then((() => {
-          console.log("BOBO")
           console.log(auth2)
         }, () => console.log("GAPI ERROR")));
-        console.log("DONE")
         console.log(gapi.auth2.GoogleAuth())
       })
     };
