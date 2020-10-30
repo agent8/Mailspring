@@ -633,6 +633,9 @@ class Actions {
 
   static hideEmptyMessageList = ActionScopeWindow;
 
+  static askVacuum = ActionScopeWindow;
+  static startDBVacuum = ActionScopeWindow;
+  static endDBVacuum = ActionScopeWindow;
   static forceKillAllClients = ActionScopeWindow;
 
   static forceRelaunchClients = ActionScopeWindow;
