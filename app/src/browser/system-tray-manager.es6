@@ -79,8 +79,9 @@ class SystemTrayManager {
     }
     if (this._unreadString !== unreadString) {
       this._unreadString = unreadString;
-      if (this._tray) this._tray.setToolTip(_getTooltip(unreadString));
-      // if (this._tray) this._tray.setTitle(unreadString);
+      const formatedCount = this._formatCount(this._formatCount(unreadString));
+      if (this._tray) this._tray.setToolTip(_getTooltip(formatedCount));
+      if (this._tray) this._tray.setTitle(formatedCount);
     }
   }
 
@@ -233,7 +234,7 @@ class SystemTrayManager {
     if (count !== undefined) {
       if (count > 99) {
         count = '99+';
-      } else if (count == 0) {
+      } else if (count === 0) {
         count = '';
       } else {
         count = count + '';

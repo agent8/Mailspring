@@ -320,6 +320,13 @@ const preferencesTemplateFill = {
               keyPath: 'core.notifications.countBadge',
               keywords: [],
             },
+            {
+              label: 'System tray badge count',
+              configSchema: configSchema =>
+                configSchema.properties.notifications.properties.countSystemTray,
+              keyPath: 'core.notifications.countSystemTray',
+              keywords: [],
+            },
           ],
         },
       ],
