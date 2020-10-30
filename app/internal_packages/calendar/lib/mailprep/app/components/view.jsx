@@ -5,6 +5,7 @@ import { Calendar as MiniCalendar } from 'react-calendar';
 import moment from 'moment';
 // import Modal from 'react-modal';
 import { Modal } from 'mailspring-component-kit'
+import { Actions } from 'mailspring-exports'
 import RRule from 'rrule';
 import ICAL from 'ical.js';
 import fileSystem from 'fs';
@@ -310,20 +311,22 @@ export default class View extends React.Component {
     props.history.push(`/${start}/${end}`);
   };
 
-  editEvent = () => {
-    const { props, state } = this;
-    props.history.push(`/${state.currentEvent.id}`);
+  editEvent = (event) => {
+    const { props } = this;
+    Actions.closePopover();
+    props.history.push(`/${event.id}`);
   };
   // #endregion
 
   // #region On Event Clicks
-  handleEventClick = async (event) => {
+  handleEventClick = async (event, target) => {
     const eventPresent = await dbEventActions.getOneEventById(event.id)
     if (eventPresent === null) {
       return;
     }
+    this.renderEventPopup(event, target)
     this.setState({
-      isShowEvent: true,
+      // isShowEvent: true,
       currentEvent: event,
       currentEventStartDateTime: moment(event.start).format('MMMM D YYYY, h:mm a'),
       currentEventEndDateTime: moment(event.end).format('MMMM D YYYY, h:mm a')
@@ -373,36 +376,56 @@ export default class View extends React.Component {
   });
 
   closeModal = () => {
-    this.setState({
-      isShowEvent: false,
-      isShowDeleteForm: false
-    });
+    Actions.closePopover();
+    Actions.closeModal();
   };
 
-  handleDeleteEvent = () => {
-    const { state } = this;
-    if (state.currentEvent.isRecurring) {
-      this.setState({ isShowDeleteForm: true })
+  handleDeleteEvent = (event) => {
+    if (event.isRecurring) {
+      Actions.openModal({
+        component:
+          <div style={deleteModalStyles}>
+            <p>This is a recurring event</p>
+            <div className="modal-button-group">
+              {event.isMaster
+                ? <BigButton variant="small-white" onClick={() => this.deleteAllRecurrenceEvent(event)}>
+                  Delete All
+                  </BigButton>
+                : <BigButton variant="small-white" onClick={() => this.deleteFutureRecurrenceEvent(event)}>
+                  Delete All Future Events
+                  </BigButton>
+              }
+              <BigButton variant="small-white" onClick={() => this.deleteEvent(event)}>
+                Delete Only This Event
+                </BigButton>
+              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
+                Cancel
+                  </BigButton>
+            </div>
+          </div>,
+        width: 500,
+        height: 125
+      })
     } else {
-      this.deleteEvent();
+      this.deleteEvent(event);
     }
   }
   // #region Delete functionality
-  deleteEvent = () => {
-    const { props, state } = this;
-    props.beginDeleteEvent(state.currentEvent.id);
+  deleteEvent = (event) => {
+    const { props } = this;
+    props.beginDeleteEvent(event.id);
     this.closeModal();
   };
 
-  deleteAllRecurrenceEvent = () => {
-    const { props, state } = this;
-    props.beginDeleteRecurrenceSeries(state.currentEvent.id);
+  deleteAllRecurrenceEvent = (event) => {
+    const { props } = this;
+    props.beginDeleteRecurrenceSeries(event.id);
     this.closeModal();
   };
 
-  deleteFutureRecurrenceEvent = () => {
-    const { props, state } = this;
-    props.beginDeleteFutureRecurrenceSeries(state.currentEvent.id);
+  deleteFutureRecurrenceEvent = (event) => {
+    const { props } = this;
+    props.beginDeleteFutureRecurrenceSeries(event.id);
     this.closeModal();
   };
   // #endregion
@@ -508,7 +531,11 @@ export default class View extends React.Component {
         onEventDrop={this.moveEventList}
         onEventResize={this.resizeEvent}
         onSelectSlot={this.addEvent}
-        onSelectEvent={(event) => this.handleEventClick(event)}
+        onSelectEvent={(event, target) => {
+          target.persist()
+          this.handleEventClick(event, target)
+        }
+        }
         onNavigate={date => this.setState({ dateSelected: date })}
         popup
         resizable
@@ -530,67 +557,46 @@ export default class View extends React.Component {
     );
   };
 
-  renderEventPopup = (state) => {
-    return state.isShowEvent ? (
-      <Modal
-        className={`modal-container animate`}
-        contentLabel="Event Modal"
-        height={300}
-        width={400}
-      >
-        <div>
-          <div className="modal-btn-grp">
-            <button className="modal-btn" type="button" onClick={this.handleDeleteEvent}>
-              &#128465;
+  renderEventPopup = (event, target) => {
+    Actions.openPopover(
+      <div style={{ height: 300, width: 400 }}>
+        <div className="modal-btn-grp">
+          <button className="modal-btn" type="button" onClick={() => this.handleDeleteEvent(event)}>
+            &#128465;
           </button>
-            <button className="modal-btn" type="button" onClick={this.editEvent}>
-              &#9998;
+          <button className="modal-btn" type="button" onClick={() => this.editEvent(event)}>
+            &#9998;
           </button>
-            <button className="modal-btn" type="button" onClick={this.closeModal}>
-              &#120;
+          <button className="modal-btn" type="button" onClick={this.closeModal}>
+            &#120;
           </button>
-          </div>
-
-          <h4 ref={(subtitle) => (this.subtitle = subtitle)}>{state.currentEvent.title}</h4>
-          <p className="modal-date-text">
-            {state.currentEventStartDateTime} - {state.currentEventEndDateTime}
-          </p>
-          {state.currentEvent.attendee && Object.keys(state.currentEvent.attendee).length > 1 ?
-            <div>
-              <p>{Object.keys(state.currentEvent.attendee).length} Guests</p>
-              {Object.keys(state.currentEvent.attendee).map((key, index) =>
-                state.currentEvent.owner === state.currentEvent.organizer
-                  && state.currentEvent.attendee[key]['email'] === state.currentEvent.owner
-                  ? null
-                  : <p key={index}>{state.currentEvent.attendee[key]['email']}</p>
-              )}
-            </div> : null}
-          {state.isShowDeleteForm ?
-            <Modal style={deleteModalStyles}>
-              <p>This is a recurring event</p>
-              <div className="modal-button-group">
-                <BigButton variant="small-white" onClick={() => this.setState({ isShowDeleteForm: false })}>
-                  Cancel
-                </BigButton>
-                {state.currentEvent.isMaster
-                  ? <BigButton variant="small-white" onClick={this.deleteAllRecurrenceEvent}>
-                    Delete All
-                    </BigButton>
-                  : <BigButton variant="small-white" onClick={this.deleteFutureRecurrenceEvent}>
-                    Delete All Future Events
-                    </BigButton>
-                }
-                <BigButton variant="small-blue" onClick={this.deleteEvent}>
-                  Delete Only This Event
-                </BigButton>
-              </div>
-            </Modal>
-            : null
-          }
         </div>
 
-      </Modal>
-    ) : null
+        <div style={{ paddingLeft: 10, paddingRight: 10 }}>
+          <h4 ref={(subtitle) => (this.subtitle = subtitle)}>{event.title}</h4>
+          <p className="modal-date-text">
+            {moment(event.start).format('MMMM D YYYY, h:mm a')} - {moment(event.end).format('MMMM D YYYY, h:mm a')}
+          </p>
+          {event.attendee && Object.keys(event.attendee).length > 1 ?
+            <div>
+              <p>{Object.keys(event.attendee).length} Guests</p>
+              {Object.keys(event.attendee).map((key, index) =>
+                event.owner === event.organizer
+                  && event.attendee[key]['email'] === event.owner
+                  ? null
+                  : <p key={index}>{event.attendee[key]['email']}</p>
+              )}
+            </div> : null}
+        </div>
+      </div>,
+      {
+        // originRect,
+        originRect: { top: target.clientY, left: target.clientX },
+        disablePointer: true,
+        direction: 'right',
+        className: 'popout-container',
+      }
+    );
   };
 
   //         {/* FOR DEBUGGING WITH ICALSTRING */ }
@@ -805,7 +811,6 @@ export default class View extends React.Component {
           </div>
         </ModalTest> */}
           {this.renderSignupLinks(props, state)}
-          {this.renderEventPopup(state)}
           {this.renderCalendar(props)}
           <div className={'side-calendar'}>
             <MiniCalendar
