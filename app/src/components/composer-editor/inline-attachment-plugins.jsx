@@ -273,6 +273,7 @@ export const changes = {
         isVoid: true,
         type: IMAGE_TYPE,
         data: {
+          draggerDisable: true,
           contentId: file.contentId,
         },
       })

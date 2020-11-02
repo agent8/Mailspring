@@ -23,12 +23,12 @@ export default class ResizableBox extends Component {
       disY: 0,
     };
   }
-  _processAspectRatio = ({ width, height } = {}) => {
+  _processAspectRatio = ({ width, height, originalWidth, originalHeight } = {}) => {
     const { lockAspectRatio } = this.props;
     if (!lockAspectRatio) {
       return { width, height };
     }
-    return { height, width: (this.props.width / this.props.height) * height };
+    return { height, width: (originalWidth / originalHeight) * height };
   };
 
   renderHandleBar = Orientation => {
@@ -63,13 +63,27 @@ export default class ResizableBox extends Component {
           }
         });
         if (onResize && typeof onResize === 'function') {
-          onResize(this._processAspectRatio({ width: targetWidth, height: targetHeight }));
+          onResize(
+            this._processAspectRatio({
+              width: targetWidth,
+              height: targetHeight,
+              originalWidth,
+              originalHeight,
+            })
+          );
         }
       };
       document.onmouseup = () => {
         document.onmousemove = null;
         if (onResizeComplete && typeof onResizeComplete === 'function') {
-          onResizeComplete(this._processAspectRatio({ width: targetWidth, height: targetHeight }));
+          onResizeComplete(
+            this._processAspectRatio({
+              width: targetWidth,
+              height: targetHeight,
+              originalWidth,
+              originalHeight,
+            })
+          );
         }
       };
     };
