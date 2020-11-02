@@ -22,7 +22,7 @@ class SearchMailboxPerspective extends MailboxPerspective {
     } else {
       this.sourcePerspective = sourcePerspective;
     }
-    let folderOrLabel = 'All';
+    let folderOrLabel = (this.accountIds || []).length > 1 ? 'All' : '';
 
     const hasFolderOrLabel = searchQuery.match(
       /in:\s*(("(?<folder1>[A-Za-z\s]+)")|(?<folder2>[A-Za-z]+))/
