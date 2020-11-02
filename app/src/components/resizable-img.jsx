@@ -65,25 +65,6 @@ export default class ResizableImg extends Component {
     this._mounted = false;
   }
 
-  _processingValue = value => {
-    const { lockAspectRatio } = this.props;
-    if (!lockAspectRatio) {
-      return value;
-    }
-    if (value.x === 0 || value.y === 0) {
-      return {
-        x: 0,
-        y: 0,
-      };
-    }
-    const { imgHeight, imgWidth } = this.state;
-    const newValue = {
-      x: value.x,
-      y: (imgHeight * value.x) / imgWidth,
-    };
-    return newValue;
-  };
-
   render() {
     const { boxHeight, boxWidth, imgHeight, imgWidth } = this.state;
     const { lockAspectRatio, callback, disableOrientation, showMask } = this.props;
@@ -100,21 +81,19 @@ export default class ResizableImg extends Component {
           if (!this._mounted) {
             return;
           }
-          const valueTemp = this._processingValue(value);
           this.setState({
-            boxHeight: imgHeight + valueTemp.y,
-            boxWidth: imgWidth + valueTemp.x,
+            boxHeight: value.height,
+            boxWidth: value.width,
           });
         }}
-        onComplateResize={value => {
+        onResizeComplete={value => {
           if (!this._mounted) {
             return;
           }
-          const valueTemp = this._processingValue(value);
           this.setState(
             {
-              imgHeight: imgHeight + valueTemp.y,
-              imgWidth: imgWidth + valueTemp.x,
+              imgHeight: value.height,
+              imgWidth: value.width,
             },
             () => {
               if (callback && typeof callback === 'function') {
@@ -126,9 +105,11 @@ export default class ResizableImg extends Component {
             }
           );
         }}
-        disableOrientation={disableOrientationTmp}
+        disabledDragPoints={disableOrientationTmp}
         showMask={showMask}
-        style={{ height: boxHeight, width: boxWidth }}
+        lockAspectRatio={this.props.lockAspectRatio}
+        height={boxHeight}
+        width={boxWidth}
       >
         <img alt="" src={this.props.src} style={styles} />
       </ResizableBox>
