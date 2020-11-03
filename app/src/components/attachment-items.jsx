@@ -598,6 +598,7 @@ export class ImageAttachmentItem extends Component {
     let style = {};
     if (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) {
       style = {
+        display: 'block',
         width: this.state.imgWidth,
         height: this.state.imgHeight,
         maxHeight: this.state.imgHeight,
@@ -650,7 +651,7 @@ export class ImageAttachmentItem extends Component {
       return;
     }
     if (width > 0 && height > 0) {
-      this.setState({ resizeBoxHeight: Math.floor(height), resizeBoxWidth: Math.floor(width) });
+      this.setState({ resizeBoxHeight: height, resizeBoxWidth: width });
     }
   };
   _onResizeComplete = ({ width, height }) => {
