@@ -4,7 +4,6 @@ import {
   Actions,
   EmailAvatar,
   AccountStore,
-  Account,
   RegExpUtils,
 } from 'mailspring-exports';
 import { RetinaImg, EditableList, Flexbox, FullScreenModal } from 'mailspring-component-kit';
@@ -306,9 +305,8 @@ export class PreferencesAccountNotifacations extends React.Component {
     return (
       <div className={classnames({ account: true, 'sync-error': syncError })} key={account.id}>
         <Flexbox direction="row" style={{ alignItems: 'middle' }}>
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center' }} className="account-picture">
             <RetinaImg
-              style={{ width: 40, height: 40, borderRadius: '50%' }}
               url={account.picture}
               name={`account-logo-${account.provider}.png`}
               fallback="account-logo-other.png"
