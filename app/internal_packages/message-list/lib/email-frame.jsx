@@ -234,7 +234,7 @@ export default class EmailFrame extends React.Component {
       }
     }
 
-    // add traciking for clicking link
+    // add tracking for clicking link
     const links = doc.querySelectorAll('a');
     if (links && links.length > 0) {
       for (let link of links) {
@@ -263,7 +263,7 @@ export default class EmailFrame extends React.Component {
         }
         if (fallbackSrc) {
           img.src = fallbackSrc;
-        } else {
+        } else if (!/^file:\/\/.*/.test(img.src)) {
           img.src = '../static/icons/empty.svg';
         }
       }
