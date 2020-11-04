@@ -1,7 +1,7 @@
 import moment from 'moment';
 import { isEmpty, uniqueId } from 'lodash';
 
-import computeRRuleToString from './computeRRule/toString/computeRRule';
+import computeRRuleToString from './computerrule/to-string/computeRRule';
 import { DATE_TIME_FORMAT } from '../constants/index';
 
 const configureState = (config = {}, calendarComponent, id) => {
