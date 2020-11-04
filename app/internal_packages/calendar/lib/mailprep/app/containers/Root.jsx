@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Provider } from 'react-redux';
 import { ConnectedRouter } from 'connected-react-router';
-import Routes from '../routes';
+import Routes from '../Routes';
 
 export default class Root extends Component {
   render() {

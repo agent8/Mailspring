@@ -20,7 +20,6 @@ import RoundCheckbox from '../library/RoundCheckbox';
 import Tabs from '../library/Tabs/Tabs';
 import Tab from '../library/Tabs/Tab';
 import DatePicker from 'react-datepicker';
-import { ConsoleReporter } from 'jasmine';
 
 
 const START_INDEX_OF_UTC_FORMAT = 17;

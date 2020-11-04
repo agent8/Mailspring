@@ -15,11 +15,10 @@ export const getdb = async () => {
     await db.sync();
     return db;
   }
-  // const configDirPath = AppEnv.getConfigDirPath();
-  // const dbPath = path.join(configDirPath, 'calendar-db');
-
-  const configDirPath = './app/internal_packages/calendar/lib/mailprep/app';
+  const configDirPath = AppEnv.getConfigDirPath();
   const dbPath = path.join(configDirPath, 'calendar-db');
+  // const configDirPath = './app/internal_packages/calendar/lib/mailprep/app';
+  // const dbPath = path.join(configDirPath, 'calendar-db');
   if (!fs.existsSync(dbPath)) {
     fs.mkdirSync(dbPath);
   }
