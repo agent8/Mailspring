@@ -14,6 +14,7 @@ export default class ResizableBox extends Component {
     height: PropTypes.number,
     width: PropTypes.number,
     lockAspectRatio: PropTypes.bool,
+    onMaskClicked: PropTypes.func,
   };
 
   constructor(props) {
@@ -22,7 +23,15 @@ export default class ResizableBox extends Component {
       disX: 0,
       disY: 0,
     };
+    this._mounted = false;
   }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+
   _processAspectRatio = ({ width, height, originalWidth, originalHeight } = {}) => {
     const { lockAspectRatio } = this.props;
     if (!lockAspectRatio) {
@@ -34,6 +43,9 @@ export default class ResizableBox extends Component {
   renderHandleBar = Orientation => {
     const { onResize, onResizeComplete } = this.props;
     const _onMouseDown = e => {
+      if (!this._mounted) {
+        return;
+      }
       const disX = e.screenX;
       const disY = e.screenY;
       const originalWidth = this.props.width;
@@ -42,6 +54,10 @@ export default class ResizableBox extends Component {
       let targetHeight = this.props.height;
 
       document.onmousemove = event => {
+        if (!this._mounted) {
+          document.onmousemove = null;
+          return;
+        }
         const moveX = event.screenX - disX;
         const moveY = event.screenY - disY;
         const orientationList = Orientation.split('');
@@ -75,6 +91,10 @@ export default class ResizableBox extends Component {
       };
       document.onmouseup = () => {
         document.onmousemove = null;
+        document.onmouseup = null;
+        if (!this._mounted) {
+          return;
+        }
         if (onResizeComplete && typeof onResizeComplete === 'function') {
           onResizeComplete(
             this._processAspectRatio({
@@ -95,6 +115,15 @@ export default class ResizableBox extends Component {
         onMouseDown={_onMouseDown}
       />
     );
+  };
+  _onMaskClicked = e => {
+    e.stopPropagation();
+    if (!this._mounted) {
+      return;
+    }
+    if (this.props.onMaskClicked) {
+      this.props.onMaskClicked();
+    }
   };
 
   renderHandles = () => {
@@ -122,19 +151,26 @@ export default class ResizableBox extends Component {
       maskStyle.zIndex = 2;
     }
     return (
-      <div className={`resizable-box${showMask ? ` showMask` : ''}`} style={containerStyle}>
-        <div
-          className="resizable-box-mask"
-          style={maskStyle}
-          contentEditable={false}
-          suppressContentEditableWarning
-          onKeyDown={e => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-        >
-          {this.renderHandles()}
-        </div>
+      <div
+        className={`resizable-box${showMask ? ` showMask` : ''}`}
+        style={containerStyle}
+        onClick={() => console.warn('onclick')}
+      >
+        {showMask ? (
+          <div
+            className="resizable-box-mask"
+            style={maskStyle}
+            contentEditable={false}
+            suppressContentEditableWarning
+            onKeyDown={e => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onClick={this._onMaskClicked}
+          >
+            {this.renderHandles()}
+          </div>
+        ) : null}
         {children}
       </div>
     );
