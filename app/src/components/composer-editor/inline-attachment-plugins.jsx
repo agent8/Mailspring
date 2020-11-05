@@ -1,16 +1,29 @@
 import React from 'react';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
-import { AttachmentStore, Actions } from 'mailspring-exports';
+import { AttachmentStore, Actions, Utils } from 'mailspring-exports';
 import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
 
 const IMAGE_TYPE = 'image';
+function formatHeightWidthToNum(val) {
+  if (typeof val === 'number') {
+    return val;
+  } else if (typeof val === 'string') {
+    const valTmp = Number(val.replace('px', ''));
+    return valTmp ? valTmp : 0;
+  }
+  return undefined;
+}
 
 function ImageNode(props) {
   const { attributes, node, editor, targetIsHTML, isSelected } = props;
   const contentId = node.data.get ? node.data.get('contentId') : node.data.contentId;
-
+  const style = {};
+  if (node.data.get) {
+    style.height = node.data.get('height');
+    style.width = node.data.get('width');
+  }
   if (targetIsHTML) {
-    return <img alt="" src={`cid:${contentId}`} />;
+    return <img alt="" src={`cid:${contentId}`} style={style} />;
   }
 
   const { draft } = editor.props.propsForPlugins;
@@ -18,26 +31,46 @@ function ImageNode(props) {
     return <span />;
   }
   const file = draft.files.find(f => contentId === f.contentId);
-  if (!file) {
+  const fileId = file ? file.id : node.data.get ? node.data.get('fileId') : '';
+  const fileName = file ? file.name : node.data.get ? node.data.get('fileName') : '';
+  const filePath = file
+    ? AttachmentStore.pathForFile(file)
+    : node.data.get
+    ? node.data.get('filePath')
+    : '';
+  if (!fileId) {
     return <span />;
   }
+  const nodeDataJSON = node.data.get ? node.data.toJS() : node.data;
 
   return (
     <ImageAttachmentItem
       {...attributes}
+      resizable={true}
       draggable={false}
       className={`file-upload ${isSelected && 'custom-block-selected'}`}
-      filePath={AttachmentStore.pathForFile(file)}
-      displayName={file.filename}
-      fileId={file.id}
+      filePath={filePath}
+      displayName={fileName}
+      fileId={fileId}
       accountId={draft.accountId}
+      imgProps={style}
+      onResizeComplete={({ width, height }) => {
+        editor.change(change => {
+          return change.setNodeByKey(node.key, {
+            data: Object.assign({}, nodeDataJSON, {
+              height: height,
+              width: width,
+            }),
+          });
+        });
+      }}
       onRemoveAttachment={() =>
         editor.change(change => {
           Actions.removeAttachment({
             headerMessageId: draft.headerMessageId,
             messageId: draft.id,
             accountId: draft.accountId,
-            fileToRemove: file,
+            fileToRemove: { id: fileId },
           });
           return change.removeNodeByKey(node.key);
         })
@@ -69,6 +102,32 @@ const rules = [
   {
     deserialize(el, next) {
       if (el.tagName.toLowerCase() === 'img' && (el.getAttribute('src') || '').startsWith('cid:')) {
+        const style = el.style;
+        const height = formatHeightWidthToNum(style.height || el.getAttribute('height'));
+        const width = formatHeightWidthToNum(style.width || el.getAttribute('width'));
+        const fileId = el.getAttribute('data-edison-file-id');
+        const fileName = el.getAttribute('data-edison-file-name');
+        const filePath = el.getAttribute('data-edison-file-path');
+        if (fileId && fileName) {
+          return {
+            object: 'inline',
+            isVoid: true,
+            nodes: [],
+            type: IMAGE_TYPE,
+            data: {
+              contentId: el
+                .getAttribute('src')
+                .split('cid:')
+                .pop(),
+              draggerDisable: true,
+              fileId,
+              fileName: Utils.base64ToString(fileName),
+              filePath: decodeURIComponent(filePath),
+              width,
+              height,
+            },
+          };
+        }
         return {
           object: 'inline',
           isVoid: true,
@@ -79,6 +138,9 @@ const rules = [
               .getAttribute('src')
               .split('cid:')
               .pop(),
+            draggerDisable: true,
+            width,
+            height,
           },
         };
       }
@@ -211,6 +273,7 @@ export const changes = {
         isVoid: true,
         type: IMAGE_TYPE,
         data: {
+          draggerDisable: true,
           contentId: file.contentId,
         },
       })

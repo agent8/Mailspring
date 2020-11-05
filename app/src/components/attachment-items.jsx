@@ -10,6 +10,7 @@ import Flexbox from './flexbox';
 import Spinner from './spinner';
 import { AttachmentStore, MessageStore, Utils, Constant } from 'mailspring-exports';
 import Actions from '../flux/actions';
+import ResizableBox from './resizable-box';
 
 const { AttachmentDownloadState } = Constant;
 
@@ -417,6 +418,7 @@ export class ImageAttachmentItem extends Component {
   static propTypes = {
     imgProps: PropTypes.object,
     onHover: PropTypes.func,
+    onResizeComplete: PropTypes.func,
     ...propTypes,
   };
 
@@ -431,6 +433,10 @@ export class ImageAttachmentItem extends Component {
       percent: 0,
       displaySupportPopup: false,
       notReady: false,
+      imgHeight: 0,
+      imgWidth: 0,
+      resizeBoxHeight: 0,
+      resizeBoxWidth: 0,
     };
     this._mounted = false;
   }
@@ -525,6 +531,33 @@ export class ImageAttachmentItem extends Component {
       this.props.onHover(event.target);
     }
   };
+  _onImageSelect = () => {
+    if (!this._mounted) {
+      return;
+    }
+    if (this.props.resizable && !this.state.showResizeMask) {
+      const state = { showResizeMask: true };
+      if (this._imgRef) {
+        const el = ReactDOM.findDOMNode(this._imgRef);
+        const rect = el.getBoundingClientRect();
+        state.imgHeight = rect.height;
+        state.imgWidth = rect.width;
+        state.resizeBoxHeight = state.imgHeight;
+        state.resizeBoxWidth = state.imgWidth;
+      }
+      this.setState(state);
+    } else if (this.props.resizable && this.state.showResizeMask) {
+      this.setState({ showResizeMask: false });
+    }
+  };
+  _onImageDeselect = () => {
+    if (!this._mounted) {
+      return;
+    }
+    if (this.props.resizable) {
+      this.setState({ showResizeMask: false });
+    }
+  };
 
   renderImage() {
     const { isDownloading, filePath, draggable } = this.props;
@@ -535,6 +568,18 @@ export class ImageAttachmentItem extends Component {
         </div>
       );
     }
+    let height, width;
+    if (
+      (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) ||
+      this.props.imgProps
+    ) {
+      width =
+        this.state.imgWidth ||
+        ((this.props.imgProps || {}).width > 0 ? this.props.imgProps.width : 'auto');
+      height =
+        this.state.imgHeight ||
+        ((this.props.imgProps || {}).height > 0 ? this.props.imgProps.height : 'auto');
+    }
     return (
       <img
         ref={ref => (this._imgRef = ref)}
@@ -544,15 +589,34 @@ export class ImageAttachmentItem extends Component {
         alt={`${this.state.notReady}`}
         onLoad={this._onImgLoaded}
         onError={this._onImageError}
+        onClick={this._onImageSelect}
+        onBlur={this._onImageDeselect}
+        style={{ height, width }}
       />
     );
   }
-
-  render() {
+  _renderInnerContainer() {
     const { className, displayName, disabled, ...extraProps } = this.props;
     const classes = `nylas-attachment-item image-attachment-item ${className || ''}`;
+    let style = {};
+    if (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) {
+      style = {
+        display: 'block',
+        width: this.state.imgWidth,
+        height: this.state.imgHeight,
+        maxHeight: this.state.imgHeight,
+        maxWidth: this.state.imgWidth,
+      };
+    } else if (this.props.resizable) {
+      style = { maxWidth: 'fit-content' };
+    }
     return (
-      <div className={classes} {...pickHTMLProps(extraProps)} onMouseUp={this._onImageHover}>
+      <div
+        className={classes}
+        {...pickHTMLProps(extraProps)}
+        onMouseUp={this._onImageHover}
+        style={style}
+      >
         <div>
           <div
             className="popup"
@@ -586,5 +650,60 @@ export class ImageAttachmentItem extends Component {
         </div>
       </div>
     );
+  }
+  _onResize = ({ width, height }) => {
+    if (!this._mounted) {
+      return;
+    }
+    if (width > 0 && height > 0) {
+      this.setState({ resizeBoxHeight: height, resizeBoxWidth: width });
+    }
+  };
+  _onResizeComplete = ({ width, height }) => {
+    if (!this._mounted) {
+      return;
+    }
+    if (width > 0 && height > 0) {
+      this.setState(
+        {
+          imgHeight: height,
+          imgWidth: width,
+          resizeBoxHeight: height,
+          resizeBoxWidth: width,
+          showResizeMask: false,
+        },
+        () => {
+          if (!this._mounted) {
+            return;
+          }
+          if (typeof this.props.onResizeComplete === 'function') {
+            this.props.onResizeComplete({ width, height });
+          }
+        }
+      );
+    }
+  };
+  _renderResizableContainer() {
+    return (
+      <ResizableBox
+        onResize={this._onResize}
+        onResizeComplete={this._onResizeComplete}
+        onMaskClicked={this._onImageDeselect}
+        disabledDragPoints={['n', 's', 'w', 'e']}
+        lockAspectRatio={true}
+        showMask={this.state.showResizeMask}
+        height={this.state.resizeBoxHeight}
+        width={this.state.resizeBoxWidth}
+      >
+        {this._renderInnerContainer()}
+      </ResizableBox>
+    );
+  }
+  render() {
+    if (this.props.resizable) {
+      return this._renderResizableContainer();
+    } else {
+      return this._renderInnerContainer();
+    }
   }
 }

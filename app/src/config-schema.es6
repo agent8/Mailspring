@@ -663,6 +663,15 @@ export default {
             title: 'Dock badge count',
             notifyNative: true,
           },
+          countSystemTray: {
+            type: 'string',
+            default: 'hide',
+            syncToServer: true,
+            enum: ['hide', 'unread'],
+            enumLabels: ['Hide Badge', 'Show Unread Count'],
+            title: 'System tray badge count',
+            notifyNative: true,
+          },
         },
       },
       appearance: {
