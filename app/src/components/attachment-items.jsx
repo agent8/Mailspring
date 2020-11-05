@@ -540,8 +540,8 @@ export class ImageAttachmentItem extends Component {
       if (this._imgRef) {
         const el = ReactDOM.findDOMNode(this._imgRef);
         const rect = el.getBoundingClientRect();
-        state.imgHeight = Math.floor(rect.height);
-        state.imgWidth = Math.floor(rect.width);
+        state.imgHeight = rect.height;
+        state.imgWidth = rect.width;
         state.resizeBoxHeight = state.imgHeight;
         state.resizeBoxWidth = state.imgWidth;
       }
@@ -573,8 +573,12 @@ export class ImageAttachmentItem extends Component {
       (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) ||
       this.props.imgProps
     ) {
-      width = this.state.imgWidth || this.props.imgProps ? this.props.imgProps.width : undefined;
-      height = this.state.imgHeight || this.props.imgProps ? this.props.imgProps.height : undefined;
+      width =
+        this.state.imgWidth ||
+        ((this.props.imgProps || {}).width > 0 ? this.props.imgProps.width : 'auto');
+      height =
+        this.state.imgHeight ||
+        ((this.props.imgProps || {}).height > 0 ? this.props.imgProps.height : 'auto');
     }
     return (
       <img
@@ -587,8 +591,7 @@ export class ImageAttachmentItem extends Component {
         onError={this._onImageError}
         onClick={this._onImageSelect}
         onBlur={this._onImageDeselect}
-        height={height}
-        width={width}
+        style={{ height, width }}
       />
     );
   }
@@ -598,11 +601,14 @@ export class ImageAttachmentItem extends Component {
     let style = {};
     if (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) {
       style = {
+        display: 'block',
         width: this.state.imgWidth,
         height: this.state.imgHeight,
         maxHeight: this.state.imgHeight,
         maxWidth: this.state.imgWidth,
       };
+    } else if (this.props.resizable) {
+      style = { maxWidth: 'fit-content' };
     }
     return (
       <div
@@ -650,7 +656,7 @@ export class ImageAttachmentItem extends Component {
       return;
     }
     if (width > 0 && height > 0) {
-      this.setState({ resizeBoxHeight: Math.floor(height), resizeBoxWidth: Math.floor(width) });
+      this.setState({ resizeBoxHeight: height, resizeBoxWidth: width });
     }
   };
   _onResizeComplete = ({ width, height }) => {
@@ -682,6 +688,7 @@ export class ImageAttachmentItem extends Component {
       <ResizableBox
         onResize={this._onResize}
         onResizeComplete={this._onResizeComplete}
+        onMaskClicked={this._onImageDeselect}
         disabledDragPoints={['n', 's', 'w', 'e']}
         lockAspectRatio={true}
         showMask={this.state.showResizeMask}
