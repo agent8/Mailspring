@@ -7,11 +7,11 @@ const dbs = {};
 
 const deathDelay = 50000;
 const args = process.argv.slice(2);
-if (args.length > 0) {
+if (args.length > 1) {
   LOG.transports.file.file = path.join(
     args[0],
     'ui-log',
-    `ui-log-database-agent-${Date.now()}.log`
+    `ui-log-database-agent-${args[1]}-${Date.now()}.log`
   );
   LOG.transports.console.level = false;
   LOG.transports.file.maxSize = 20485760;
@@ -54,7 +54,7 @@ let deathTimer = setTimeout(() => {
   logDebug(`existing process after ${deathDelay}`);
   process.exit(0);
 }, deathDelay);
-const getDatabase = dbpath => {
+const getDatabase = (dbpath, readonly = true) => {
   logDebug(`accessing db at ${dbpath}`);
   if (dbs[dbpath]) {
     logDebug(`dbpath ${dbpath} already open`);
@@ -65,7 +65,7 @@ const getDatabase = dbpath => {
 
   try {
     logDebug(`creating dbpath ${dbpath}`);
-    dbs[dbpath] = new Sqlite3(dbpath, { readonly: true });
+    dbs[dbpath] = new Sqlite3(dbpath, { readonly });
   } catch (err) {
     logError(`error opening db ${dbpath}`);
     logError(err);
@@ -96,15 +96,20 @@ process.on('exit', () => {
 process.on('message', m => {
   clearTimeout(deathTimer);
   const { query, values, id, dbpath, queryType } = m;
-  logDebug(`processing query for ${dbpath}, ${id}`);
+  logDebug(`processing query for ${dbpath}, ${id}, ${query}`);
   const start = Date.now();
 
-  const db = getDatabase(dbpath);
+  const db = getDatabase(dbpath, query !== 'Vacuum');
   try {
     clearTimeout(deathTimer);
-    const fn = query.startsWith('SELECT') ? 'all' : 'run';
-    const stmt = db.prepare(query);
-    const results = stmt[fn](values);
+    let results;
+    if (query === 'Vacuum') {
+      results = db.exec(query);
+    } else {
+      const fn = query.startsWith('SELECT') ? 'all' : 'run';
+      const stmt = db.prepare(query);
+      results = stmt[fn](values);
+    }
     process.send({
       type: 'results',
       results,
@@ -114,7 +119,7 @@ process.on('message', m => {
     });
     logDebug(`returning results for ${dbpath}, ${id}`);
   } catch (err) {
-    logError(`returning results for ${dbpath}, ${id} failed`);
+    logError(`returning results for ${dbpath}, ${id} failed, query: ${query}`);
     logError(err);
   }
 

@@ -399,14 +399,28 @@ class EventedIFrame extends React.Component {
     const imageTarget = this._getContainingTarget(event, { with: 'src' });
     if (imageTarget) {
       const src = imageTarget.getAttribute('src');
-      const srcFilename = path.basename(src);
+      let srcFilename = path.basename(src);
       menu.append(
         new MenuItem({
           label: 'Save Image...',
           click() {
-            AppEnv.getFilePathForSaveFile({ defaultPath: srcFilename }).then(function(path) {
+            const base64Data = Utils.parseBase64Data(src);
+            if (base64Data) {
+              srcFilename = `untitled.${base64Data.extension}`;
+            }
+            AppEnv.getFilePathForSaveFile({
+              defaultPath: srcFilename,
+            }).then(function(path) {
               if (!path) {
                 return;
+              }
+              if (base64Data) {
+                return fs.writeFile(path, base64Data.data, { encoding: 'base64' }, err => {
+                  if (err) {
+                    AppEnv.logError(err);
+                  }
+                  shell.showItemInFolder(path);
+                });
               }
               const oReq = new XMLHttpRequest();
               oReq.open('GET', src, true);

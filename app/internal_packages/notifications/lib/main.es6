@@ -16,6 +16,7 @@ import EdisonAccountNotif from './items/edison-account-notif';
 import EdisonAccountDeletedNotif from './items/edison-account-deleted-notif';
 import ImproveDataNotif from './items/improve-data-notif';
 import WhatsNew from './items/whats-new-notif';
+import DatabaseVacuumNotification from './items/database-vacuum-notification';
 
 const notifications = [
   // DefaultClientNotification,
@@ -27,6 +28,7 @@ const notifications = [
   DiskUsageNotification,
   // EdisonAccountNotif,
   FocusedInboxNotif,
+  DatabaseVacuumNotification,
   ImproveDataNotif,
   WhatsNew,
   // EdisonAccountDeletedNotif,

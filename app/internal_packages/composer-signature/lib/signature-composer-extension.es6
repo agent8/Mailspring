@@ -2,7 +2,7 @@ import { ComposerExtension, SignatureStore } from 'mailspring-exports';
 import { applySignature } from './signature-utils';
 
 export default class SignatureComposerExtension extends ComposerExtension {
-  static prepareNewDraft = ({ draft }) => {
+  static prepareNewDraft = async ({ draft }) => {
     // only change signature when creat a new draft
     if (!draft.pristine || draft.hasRefOldDraftOnRemote) {
       return;
@@ -20,6 +20,6 @@ export default class SignatureComposerExtension extends ComposerExtension {
     if (!signatureObj) {
       return;
     }
-    applySignature({ signature: signatureObj, messageId: draft.id });
+    await applySignature({ signature: signatureObj, messageId: draft.id, skipSaving: true });
   };
 }

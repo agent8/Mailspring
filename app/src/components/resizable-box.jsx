@@ -1,16 +1,20 @@
 import React, { Component } from 'react';
 import { PropTypes } from 'mailspring-exports';
 
-const allOrientation = ['n', 's', 'w', 'e', 'ne', 'nw', 'se', 'sw'];
+const allDragPoints = ['n', 's', 'w', 'e', 'ne', 'nw', 'se', 'sw'];
 
 export default class ResizableBox extends Component {
   static propTypes = {
-    disableOrientation: PropTypes.arrayOf(PropTypes.string),
+    disabledDragPoints: PropTypes.arrayOf(PropTypes.string),
     onResize: PropTypes.func,
-    onComplateResize: PropTypes.func,
+    onResizeComplete: PropTypes.func,
     children: PropTypes.node,
     style: PropTypes.object,
     showMask: PropTypes.bool,
+    height: PropTypes.number,
+    width: PropTypes.number,
+    lockAspectRatio: PropTypes.bool,
+    onMaskClicked: PropTypes.func,
   };
 
   constructor(props) {
@@ -19,44 +23,87 @@ export default class ResizableBox extends Component {
       disX: 0,
       disY: 0,
     };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
+  _processAspectRatio = ({ width, height, originalWidth, originalHeight } = {}) => {
+    const { lockAspectRatio } = this.props;
+    if (!lockAspectRatio) {
+      return { width, height };
+    }
+    return { height, width: (originalWidth / originalHeight) * height };
+  };
+
   renderHandleBar = Orientation => {
-    const { onResize, onComplateResize } = this.props;
+    const { onResize, onResizeComplete } = this.props;
     const _onMouseDown = e => {
-      const disX = e.clientX;
-      const disY = e.clientY;
-      const result = { x: 0, y: 0 };
+      if (!this._mounted) {
+        return;
+      }
+      const disX = e.screenX;
+      const disY = e.screenY;
+      const originalWidth = this.props.width;
+      const originalHeight = this.props.height;
+      let targetWidth = this.props.width;
+      let targetHeight = this.props.height;
 
       document.onmousemove = event => {
-        const moveX = event.clientX - disX;
-        const moveY = event.clientY - disY;
+        if (!this._mounted) {
+          document.onmousemove = null;
+          return;
+        }
+        const moveX = event.screenX - disX;
+        const moveY = event.screenY - disY;
         const orientationList = Orientation.split('');
         orientationList.forEach(o => {
           switch (o) {
             case 'n':
-              result.y = -moveY;
+              targetHeight = originalHeight - moveY;
               break;
             case 's':
-              result.y = moveY;
+              targetHeight = originalHeight + moveY;
               break;
             case 'w':
-              result.x = -moveX;
+              targetWidth = originalWidth - moveX;
               break;
             case 'e':
-              result.x = moveX;
+              targetWidth = originalWidth + moveX;
               break;
             default:
           }
         });
         if (onResize && typeof onResize === 'function') {
-          onResize(result);
+          onResize(
+            this._processAspectRatio({
+              width: targetWidth,
+              height: targetHeight,
+              originalWidth,
+              originalHeight,
+            })
+          );
         }
       };
       document.onmouseup = () => {
         document.onmousemove = null;
-        if (onComplateResize && typeof onComplateResize === 'function') {
-          onComplateResize(result);
+        document.onmouseup = null;
+        if (!this._mounted) {
+          return;
+        }
+        if (onResizeComplete && typeof onResizeComplete === 'function') {
+          onResizeComplete(
+            this._processAspectRatio({
+              width: targetWidth,
+              height: targetHeight,
+              originalWidth,
+              originalHeight,
+            })
+          );
         }
       };
     };
@@ -69,12 +116,21 @@ export default class ResizableBox extends Component {
       />
     );
   };
+  _onMaskClicked = e => {
+    e.stopPropagation();
+    if (!this._mounted) {
+      return;
+    }
+    if (this.props.onMaskClicked) {
+      this.props.onMaskClicked();
+    }
+  };
 
   renderHandles = () => {
-    const { disableOrientation = [] } = this.props;
+    const { disabledDragPoints = [] } = this.props;
     const result = [];
-    allOrientation.forEach(item => {
-      if (!disableOrientation.includes(item)) {
+    allDragPoints.forEach(item => {
+      if (!disabledDragPoints.includes(item)) {
         result.push(this.renderHandleBar(item));
       }
     });
@@ -83,19 +139,38 @@ export default class ResizableBox extends Component {
 
   render() {
     const { children, style, showMask } = this.props;
+    const containerStyle = style || {};
+    if (this.props.height > 0) {
+      containerStyle.height = this.props.height;
+    }
+    if (this.props.width > 0) {
+      containerStyle.width = this.props.width;
+    }
+    const maskStyle = {};
+    if (showMask) {
+      maskStyle.zIndex = 2;
+    }
     return (
-      <div className={`resizable-box${showMask ? ` showMask` : ''}`} style={style ? style : {}}>
-        <div
-          className="resizable-box-mask"
-          contentEditable={true}
-          suppressContentEditableWarning
-          onKeyDown={e => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-        >
-          {this.renderHandles()}
-        </div>
+      <div
+        className={`resizable-box${showMask ? ` showMask` : ''}`}
+        style={containerStyle}
+        onClick={() => console.warn('onclick')}
+      >
+        {showMask ? (
+          <div
+            className="resizable-box-mask"
+            style={maskStyle}
+            contentEditable={false}
+            suppressContentEditableWarning
+            onKeyDown={e => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onClick={this._onMaskClicked}
+          >
+            {this.renderHandles()}
+          </div>
+        ) : null}
         {children}
       </div>
     );
