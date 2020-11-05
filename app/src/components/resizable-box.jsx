@@ -148,7 +148,7 @@ export default class ResizableBox extends Component {
     }
     const maskStyle = {};
     if (showMask) {
-      maskStyle.zIndex = 2;
+      maskStyle.zIndex = 1;
     }
     return (
       <div

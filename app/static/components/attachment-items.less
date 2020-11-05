@@ -339,7 +339,7 @@ body.platform-win32 {
 
   .file-action-icon {
     position: absolute;
-    z-index: 2;
+    z-index: 1;
     right: 2px;
     top: -14px;
     width: 26px;
@@ -349,10 +349,12 @@ body.platform-win32 {
       background: none;
     }
   }
-
+  .file-padding:hover{
+   z-index: 0;
+  }
   .file-preview {
     position: relative;
-    z-index: 1;
+    z-index: 0;
     overflow: hidden;
 
     .file-name-container {

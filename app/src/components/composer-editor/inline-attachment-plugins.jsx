@@ -54,6 +54,19 @@ function ImageNode(props) {
       fileId={fileId}
       accountId={draft.accountId}
       imgProps={style}
+      onShowMask={node => {
+        const selection = window.getSelection();
+        if (
+          selection &&
+          node &&
+          selection.type === 'Range' &&
+          selection.anchorNode === selection.focusNode &&
+          selection.anchorOffset === selection.focusOffset
+        ) {
+          AppEnv.logDebug(`extending selection for inline ${file.id}`);
+          selection.extend(node);
+        }
+      }}
       onResizeComplete={({ width, height }) => {
         editor.change(change => {
           return change.setNodeByKey(node.key, {
