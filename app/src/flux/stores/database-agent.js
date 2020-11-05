@@ -124,6 +124,21 @@ process.on('message', m => {
   }
 
   clearTimeout(deathTimer);
+
+  if (query === 'Vacuum') {
+    logDebug(`Because was ${query}, ${id}, killing connection now `);
+    try {
+      if (db) {
+        logDebug(`closing db for ${dbpath}`);
+        db.close();
+      }
+    } catch (err) {
+      logError(err);
+    }
+    logDebug(`existing process immediately`);
+    process.exit(0);
+    return;
+  }
   deathTimer = setTimeout(() => {
     try {
       if (db) {
