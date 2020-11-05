@@ -35,14 +35,6 @@ class QuotedHTMLTransformer {
       }
     }
 
-    // It's possible that the entire body was quoted text anyway and we've
-    // removed everything.
-    if (options.keepIfWholeBodyIsQuote) {
-      if (!doc.body || !doc.children[0] || doc.body.textContent.trim().length === 0) {
-        return this._outputHTMLFor(this._parseHTML(html), { initialHTML: html });
-      }
-    }
-
     if (!doc.body) {
       return this._outputHTMLFor(this._parseHTML(''), { initialHTML: html });
     }
@@ -52,10 +44,16 @@ class QuotedHTMLTransformer {
         el.remove();
       }
     }
+    // It's possible that the entire body was quoted text anyway and we've
+    // removed everything.
+    if (options.keepIfWholeBodyIsQuote) {
+      if (!doc.body || !doc.children[0] || doc.body.textContent.trim().length === 0) {
+        return this._outputHTMLFor(this._parseHTML(html), { initialHTML: html });
+      }
+    }
 
     this._removeImagesStrippedByAnotherClient(doc);
     this._removeUnnecessaryWhitespace(doc);
-
     return this._outputHTMLFor(doc, { initialHTML: html });
   }
 
@@ -267,14 +265,18 @@ class QuotedHTMLTransformer {
       blocks.push(node);
     }
     return blocks;
-  }
+  };
 
   _findBlockquoteQuotes = doc => {
     const nodes = Array.from(doc.querySelectorAll('blockquote'));
     const blocks = [];
     for (const node of nodes) {
       // if it is a indent, skip this block
-      if (node.style.margin === "0px 0px 0px 40px" && node.style.border === "none" && !node.className) {
+      if (
+        node.style.margin === '0px 0px 0px 40px' &&
+        node.style.border === 'none' &&
+        !node.className
+      ) {
         continue;
       }
       // Keep quotes that are followed by non-quote blocks (eg: inline reply text)
@@ -284,7 +286,7 @@ class QuotedHTMLTransformer {
       blocks.push(node);
     }
     return blocks;
-  }
+  };
 
   _findConfidentialityNotice(doc) {
     // Traverse from the body down the tree of "last" nodes looking for a
