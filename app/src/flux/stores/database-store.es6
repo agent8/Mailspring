@@ -42,7 +42,7 @@ const promptSlowQuery = slowQueryCache => {
         description: 'Edison Mail need to do some housekeeping in order to improve performance.',
         actions: [{ text: 'Proceed', onClick: () => Actions.askVacuum() }],
       });
-      Actions.pushAppMessage(message);
+      // Actions.pushAppMessage(message);
       slowQueryCache.length = 0;
       return;
     }
