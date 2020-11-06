@@ -6,11 +6,11 @@ import {
   SendActionsStore,
   DefaultClientHelper,
   SystemStartService,
+  Actions,
 } from 'mailspring-exports';
 import { ListensToFluxStore, Menu, ButtonDropdown } from 'mailspring-component-kit';
 import ConfigSchemaItem from './config-schema-item';
-import rimraf from 'rimraf';
-import { Actions } from 'mailspring-exports';
+import { UpdateMailSyncSettings } from '../preferences-utils';
 import _ from 'underscore';
 import { ipcRenderer } from 'electron';
 
@@ -145,6 +145,57 @@ export class LaunchSystemStartItem extends React.Component {
           onChange={this._toggleLaunchOnStart}
         />
         <label htmlFor="launch-on-start">{this.props.label}</label>
+      </div>
+    );
+  }
+}
+
+export class EnableFocusInboxItem extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      enabled: AppEnv.config.get('core.workspace.enableFocusedInbox'),
+    };
+    this._mounted = false;
+  }
+
+  componentDidMount() {
+    this._mounted = true;
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+
+  _toggleEnableFocusInbox = event => {
+    const accounts = AccountStore.accounts();
+    const newSettings = UpdateMailSyncSettings({
+      value: !this.state.enabled,
+      key: 'core_workspace_enableFocusedInbox',
+      accountIds: accounts.map(account => account.id || account.pid),
+    });
+    if (newSettings) {
+      accounts.forEach(account => {
+        const accountId = account.id || account.pid;
+        const newAccount = Object.assign(account.clone(), { mailsync: newSettings[accountId] });
+        console.log(newAccount);
+        Actions.updateAccount(accountId, newAccount);
+      });
+    }
+    AppEnv.config.set('core.workspace.enableFocusedInbox', !this.state.enabled);
+    this.setState({ enabled: !this.state.enabled });
+  };
+
+  render() {
+    return (
+      <div className="item">
+        <input
+          type="checkbox"
+          id="enabled-focused-inobx"
+          checked={this.state.enabled}
+          onChange={this._toggleEnableFocusInbox}
+        />
+        <label htmlFor="enabled-focused-inobx">{this.props.label}</label>
       </div>
     );
   }
