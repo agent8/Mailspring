@@ -663,12 +663,17 @@ class DatabaseStore extends MailspringStore {
             finished++;
             if (finished === total) {
               AppEnv.logDebug(`Vacuuming dbs finished, restarting UI db connections`);
-              this.open().then(() => {
-                AppEnv.logDebug(`DBs connections restarted, notifying UI`);
-                setTimeout(() => {
+              this.open()
+                .then(() => {
+                  AppEnv.logDebug(`DBs connections restarted, notifying UI`);
+                  setTimeout(() => {
+                    resolve();
+                  }, 2000);
+                })
+                .catch(err => {
+                  AppEnv.logError(err);
                   resolve();
-                }, 2000);
-              });
+                });
             }
           });
         });
