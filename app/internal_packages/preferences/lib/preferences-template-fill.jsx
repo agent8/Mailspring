@@ -302,15 +302,6 @@ const preferencesTemplateFill = {
           ],
         },
         {
-          groupItem: [
-            {
-              label: 'MutedNotifications',
-              component: PreferencesMutedNotifacations,
-              keywords: [],
-            },
-          ],
-        },
-        {
           groupName: 'BADGE COUNT',
           groupItem: [
             {
@@ -325,6 +316,15 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.notifications.properties.countSystemTray,
               keyPath: 'core.notifications.countSystemTray',
+              keywords: [],
+            },
+          ],
+        },
+        {
+          groupItem: [
+            {
+              label: 'MutedNotifications',
+              component: PreferencesMutedNotifacations,
               keywords: [],
             },
           ],
