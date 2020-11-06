@@ -180,7 +180,7 @@ export default class Application extends EventEmitter {
     }
     this.makeLogFolders();
     this.initSupportInfo();
-    this._fixMailsyncTaskDelayInconsistency();
+    this._fixMailsyncInconsistency();
     // subscribe event of dark mode change
     if (process.platform === 'darwin') {
       try {
@@ -866,21 +866,47 @@ export default class Application extends EventEmitter {
       }
     }
   }
-  _fixMailsyncTaskDelayInconsistency = () => {
+  _fixMailsyncInconsistency = () => {
     const taskDelay = this.config.get('core.mailsync.taskDelay');
-    if (taskDelay !== undefined) {
-      const accounts = this.config.get('accounts');
-      if (Array.isArray(accounts)) {
-        let changed = false;
-        accounts.forEach(account => {
+    const enableFocusedInbox = this.config.get('core.workspace.enableFocusedInbox');
+
+    const accounts = this.config.get('accounts');
+    const mailSync = this.config.get('core.mailsync.accounts');
+    if (Array.isArray(accounts)) {
+      let changed = false;
+      let mailsyncChanged = false;
+      accounts.forEach(account => {
+        if (taskDelay !== undefined) {
           if (account && account.mailsync && account.mailsync.taskDelay !== taskDelay) {
             changed = true;
             account.mailsync.taskDelay = taskDelay;
           }
-        });
-        if (changed) {
-          this.config.set('accounts', accounts);
         }
+        if (
+          account &&
+          account.mailsync &&
+          !!account.mailsync.core_workspace_enableFocusedInbox !== !!enableFocusedInbox
+        ) {
+          changed = true;
+          account.mailsync.core_workspace_enableFocusedInbox = !!enableFocusedInbox;
+        }
+        if (
+          mailSync &&
+          mailSync[account.id || account.pid] &&
+          !!mailSync[account.id || account.pid].core_workspace_enableFocusedInbox !==
+            !!enableFocusedInbox
+        ) {
+          mailsyncChanged = true;
+          mailSync[
+            account.id || account.pid
+          ].core_workspace_enableFocusedInbox = !!enableFocusedInbox;
+        }
+      });
+      if (mailsyncChanged) {
+        this.config.set('core.mailsync.accounts', mailSync);
+      }
+      if (changed) {
+        this.config.set('accounts', accounts);
       }
     }
   };
