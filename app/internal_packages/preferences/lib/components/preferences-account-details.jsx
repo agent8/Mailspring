@@ -12,6 +12,7 @@ import {
 } from 'mailspring-exports';
 import { EditableList } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
+import { UpdateMailSyncSettings } from '../preferences-utils';
 
 class AutoaddressControl extends Component {
   render() {
@@ -314,19 +315,13 @@ class PreferencesAccountDetails extends Component {
   }
   _onUpdateMailSyncSettings = ({ value, key }) => {
     try {
-      const defalutMailsyncSettings = this._getDefalutMailsyncSettings();
-      let mailsyncSettings = this.state.account.mailsync;
-      if (defalutMailsyncSettings && !mailsyncSettings) {
-        mailsyncSettings = defalutMailsyncSettings;
-      }
-      delete mailsyncSettings.accounts;
-      const tmp = {};
-      tmp[key] = value;
-      const newSettings = Object.assign({}, mailsyncSettings, tmp);
-      const data = {};
-      data[this.state.account.id || this.state.account.pid] = newSettings;
-      ipcRenderer.send('mailsync-config', data);
-      return newSettings;
+      const accountId = this.state.account.id || this.state.account.pid;
+      const newSettings = UpdateMailSyncSettings({
+        value,
+        key,
+        accountIds: [accountId],
+      });
+      return (newSettings || {})[accountId];
     } catch (e) {
       AppEnv.reportError(e);
     }
