@@ -105,6 +105,8 @@ function AttachmentActionIcon(props) {
   if (actionIconName === removeIcon) {
     fileActionIconStyle.opacity = 1;
     fileActionIconStyle.transform = 'scale(0.7)';
+    fileActionIconStyle.width = 'fit-content';
+    fileActionIconStyle.height = 'fit-content';
   }
 
   return (
@@ -419,6 +421,7 @@ export class ImageAttachmentItem extends Component {
     imgProps: PropTypes.object,
     onHover: PropTypes.func,
     onResizeComplete: PropTypes.func,
+    onShowMask: PropTypes.func,
     ...propTypes,
   };
 
@@ -531,7 +534,7 @@ export class ImageAttachmentItem extends Component {
       this.props.onHover(event.target);
     }
   };
-  _onImageSelect = () => {
+  _onImageSelect = event => {
     if (!this._mounted) {
       return;
     }
@@ -546,6 +549,9 @@ export class ImageAttachmentItem extends Component {
         state.resizeBoxWidth = state.imgWidth;
       }
       this.setState(state);
+      if (this.props.onShowMask) {
+        this.props.onShowMask(event.target);
+      }
     } else if (this.props.resizable && this.state.showResizeMask) {
       this.setState({ showResizeMask: false });
     }
@@ -602,13 +608,17 @@ export class ImageAttachmentItem extends Component {
     if (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) {
       style = {
         display: 'block',
-        width: this.state.imgWidth,
-        height: this.state.imgHeight,
-        maxHeight: this.state.imgHeight,
-        maxWidth: this.state.imgWidth,
+        width: this.state.imgWidth + 2,
+        height: this.state.imgHeight + 2,
+        maxHeight: this.state.imgHeight + 2,
+        maxWidth: this.state.imgWidth + 2,
       };
     } else if (this.props.resizable) {
       style = { maxWidth: 'fit-content' };
+    }
+    const filePreviewStyle = {};
+    if (this.props.resizable && this.state.showResizeMask) {
+      filePreviewStyle.zIndex = 0;
     }
     return (
       <div
@@ -639,7 +649,11 @@ export class ImageAttachmentItem extends Component {
             retinaImgMode={RetinaImg.Mode.ContentPreserve}
             onAbortDownload={null}
           />
-          <div className="file-preview" onDoubleClick={!disabled ? this._onOpenAttachment : null}>
+          <div
+            className="file-preview"
+            style={filePreviewStyle}
+            onDoubleClick={!disabled ? this._onOpenAttachment : null}
+          >
             <div className="file-name-container">
               <div className="file-name" title={displayName}>
                 {displayName}

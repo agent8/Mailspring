@@ -399,7 +399,7 @@ class EventedIFrame extends React.Component {
     const imageTarget = this._getContainingTarget(event, { with: 'src' });
     if (imageTarget) {
       const src = imageTarget.getAttribute('src');
-      let srcFilename = path.basename(src);
+      let srcFilename = decodeURIComponent(path.basename(src));
       menu.append(
         new MenuItem({
           label: 'Save Image...',
