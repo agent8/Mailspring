@@ -18,6 +18,7 @@ export const getdb = async () => {
   const configDirPath = AppEnv.getConfigDirPath();
   const dbPath = path.join(configDirPath, 'calendar-db');
   // const configDirPath = './app/internal_packages/calendar/lib/mailprep/app';
+  // const configDirPath = '../';
   // const dbPath = path.join(configDirPath, 'calendar-db');
   if (!fs.existsSync(dbPath)) {
     fs.mkdirSync(dbPath);
