@@ -858,6 +858,7 @@ class AttachmentStore extends MailspringStore {
     this.listenTo(Actions.selectAttachment, this._onSelectAttachment);
     this.listenTo(Actions.removeAttachment, this._onRemoveAttachment);
     this.listenTo(Actions.removeAttachments, this._onRemoveAttachments);
+    this.listenTo(Actions.bulkUpdateDraftFiles, this.bulkUpdateDraftFiles);
     if (AppEnv.isMainWindow()) {
       this.listenTo(Actions.syncAttachmentToMain, this._onAddAttachmentFromNonMainWindow);
       this.listenTo(Actions.removeAttachmentToMain, this._onRemoveAttachmentMainWindow);
@@ -1967,6 +1968,26 @@ class AttachmentStore extends MailspringStore {
     }
     return AppEnv.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, cb);
   };
+  bulkUpdateDraftFiles = ({ messageId = '', newFiles = [], onCreated = () => {} }) => {
+    const newFilesSize = newFiles.reduce((c, f) => c + f.size, 0);
+    this._applySessionChanges(messageId, files => {
+      if (files.reduce((c, f) => c + f.size, 0) + newFilesSize >= 25 * 1000000) {
+        AppEnv.trackingEvent('largeAttachmentSize');
+        throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
+      }
+      return files.concat(newFiles);
+    })
+      .then(() => {
+        console.log('bulk updated files');
+        onCreated(newFiles);
+      })
+      .catch(e => {
+        AppEnv.showErrorDialog({
+          title: 'Attachments not added',
+          message: e.message,
+        });
+      });
+  };
   _onAddAttachments = async ({
     messageId,
     accountId,
@@ -1983,25 +2004,6 @@ class AttachmentStore extends MailspringStore {
       // const createdFiles = [];
       const newFiles = [];
       let processed = 0;
-      const bulkUpdateDraftFiles = () => {
-        const newFilesSize = newFiles.reduce((c, f) => c + f.size, 0);
-        this._applySessionChanges(messageId, files => {
-          if (files.reduce((c, f) => c + f.size, 0) + newFilesSize >= 25 * 1000000) {
-            AppEnv.trackingEvent('largeAttachmentSize');
-            throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
-          }
-          return files.concat(newFiles);
-        })
-          .then(() => {
-            onCreated(newFiles);
-          })
-          .catch(e => {
-            AppEnv.showErrorDialog({
-              title: 'Attachments not added',
-              message: e.message,
-            });
-          });
-      };
       filePaths.forEach(filePath => {
         const filename = path.basename(filePath);
         this._getFileStats(filePath)
@@ -2039,7 +2041,7 @@ class AttachmentStore extends MailspringStore {
             processed++;
             newFiles.push(file);
             if (processed === total) {
-              bulkUpdateDraftFiles();
+              this.bulkUpdateDraftFiles({ messageId, newFiles, onCreated });
               if (newFiles.length < total) {
                 const num = total - newFiles.length;
                 AppEnv.showErrorDialog({
@@ -2054,7 +2056,7 @@ class AttachmentStore extends MailspringStore {
           .catch(e => {
             processed++;
             if (processed === total) {
-              bulkUpdateDraftFiles();
+              this.bulkUpdateDraftFiles({ messageId, newFiles, onCreated });
               if (newFiles.length < total) {
                 const num = total - newFiles.length;
                 AppEnv.showErrorDialog({

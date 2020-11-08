@@ -525,6 +525,7 @@ class Actions {
   static draftInlineAttachmentRemoved = ActionScopeWindow;
   static removeAllNoReferenceInLines = ActionScopeWindow;
   static broadcastDraftAttachmentState = ActionScopeGlobal;
+  static bulkUpdateDraftFiles = ActionScopeWindow;
 
   static syncFolders = ActionScopeMainWindow;
   static syncFolderList = ActionScopeMainWindow;
@@ -632,6 +633,9 @@ class Actions {
 
   static hideEmptyMessageList = ActionScopeWindow;
 
+  static askVacuum = ActionScopeWindow;
+  static startDBVacuum = ActionScopeWindow;
+  static endDBVacuum = ActionScopeWindow;
   static forceKillAllClients = ActionScopeWindow;
 
   static forceRelaunchClients = ActionScopeWindow;

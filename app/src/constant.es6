@@ -1,6 +1,8 @@
 export const QUERY_TYPE = {
+  BACKGROUND: 'BACKGROUND',
   SEARCH_PERSPECTIVE: 'SEARCH_PERSPECTIVE',
   SEARCH_SUBJECT: 'SEARCH_SUBJECT',
+  VACUUM: 'VACUUM',
 };
 export const OAuthList = [
   'gmail',

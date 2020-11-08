@@ -245,11 +245,17 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
     const comparator = node.direction === 'before' ? '<' : '>';
     const date = DateUtils.getChronoPast().parseDate(node.text.token.s);
     if (!date) {
+      if (isFinite(parseInt(node.text.token.s))) {
+        this._result = `${isMessageView ? ' Message.date ' : ' Thread.lastDate '} ${comparator} ${
+          node.text.token.s
+        }`;
+        return;
+      }
       this._result = '';
       return;
     }
     const ts = Math.floor(date.getTime() / 1000);
-    this._result = `(SELECT \`lastDate\` FROM \`ThreadCategory\` WHERE \`ThreadCategory\`.\`threadId\` = \`${this._className}\`.\`pid\`) ${comparator} ${ts}`;
+    this._result = `${isMessageView ? ' Message.date ' : ' Thread.lastDate '} ${comparator} ${ts}`;
   }
 
   visitMatch(node) {

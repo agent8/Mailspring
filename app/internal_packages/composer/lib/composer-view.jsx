@@ -1,4 +1,12 @@
-import { React, ReactDOM, PropTypes, Utils, Actions, AttachmentStore } from 'mailspring-exports';
+import {
+  React,
+  ReactDOM,
+  PropTypes,
+  Utils,
+  Actions,
+  AttachmentStore,
+  File,
+} from 'mailspring-exports';
 import {
   DropZone,
   RetinaImg,
@@ -473,6 +481,7 @@ export default class ComposerView extends React.Component {
         onBlur={this._onEditorBlur}
         readOnly={this.props.session ? this.props.session.isPopout() : true}
         onChange={this._onEditorChange}
+        onPasteHtmlHasFiles={this._onPasteHtmlHasFiles}
       />
     );
   }
@@ -833,6 +842,20 @@ export default class ComposerView extends React.Component {
       messageId: this.props.draft.id,
       accountId: this.props.draft.accountId,
       onCreated: this._onAttachmentCreated,
+    });
+  };
+  _onPasteHtmlHasFiles = newFiles => {
+    const newAttachments = newFiles.map(f => {
+      return new File(
+        Object.assign({}, f, {
+          messageId: this.props.draft.id,
+          accountId: this.props.draft.accountId,
+        })
+      );
+    });
+    Actions.bulkUpdateDraftFiles({
+      messageId: this.props.draft.id,
+      newFiles: newAttachments,
     });
   };
 
