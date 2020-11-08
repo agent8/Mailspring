@@ -1,5 +1,5 @@
 import path from 'path';
-import { getDoNotDisturb } from 'electron-notification-state';
+import { getDoNotDisturb } from 'macos-notification-state';
 
 class SoundRegistry {
   constructor() {
