@@ -149,6 +149,7 @@ lazyLoadAndRegisterTask('IMAPSearchTask', 'imap-search-task');
 lazyLoadAndRegisterTask('NativeReportTask', 'native-report-task');
 lazyLoadAndRegisterTask('AppendToSentTask', 'append-to-sent-task');
 lazyLoadAndRegisterTask('ExpandMessageAttachmentTask', 'expand-message-attachment-task');
+lazyLoadAndRegisterTask('ContactUpdateTask', 'contact-update-task');
 // Stores
 // These need to be required immediately since some Stores are
 // listen-only and not explicitly required from anywhere. Stores
