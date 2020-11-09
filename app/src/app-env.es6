@@ -612,6 +612,9 @@ export default class AppEnvConstructor {
     if (this.isBugReportingWindow()) {
       return WindowLevel.BugReporting;
     }
+    if (this.isMigrateWindow()) {
+      return WindowLevel.Migrating;
+    }
     return WindowLevel.Main;
   }
   isMainWindow() {
@@ -634,6 +637,9 @@ export default class AppEnvConstructor {
   }
   isBugReportingWindow() {
     return this.getWindowType() === 'bugreport';
+  }
+  isMigrateWindow() {
+    return this.getWindowType() === 'migrating';
   }
 
   isDisableZoomWindow() {
