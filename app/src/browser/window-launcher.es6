@@ -47,7 +47,6 @@ export default class WindowLauncher {
     this.config = config;
     this.onCreatedHotWindow = onCreatedHotWindow;
     if (specMode) return;
-    this.createHotWindow();
   }
 
   newWindow(options) {
