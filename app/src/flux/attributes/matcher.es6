@@ -548,6 +548,7 @@ class StructuredSearchMatcher extends Matcher {
   constructor(searchQuery) {
     super(null, null, null);
     this._searchQuery = searchQuery;
+    this.isSearchQurey = true;
   }
 
   attribute() {
@@ -583,6 +584,7 @@ class SearchMatcher extends Matcher {
       .replace(/['"]$/, '')
       .replace(/'/g, singleQuoteEscapeSequence)
       .replace(/"/g, doubleQuoteEscapeSequence);
+    this.isSearchQurey = true;
   }
 
   attribute() {

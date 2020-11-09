@@ -5,7 +5,7 @@ import Utils from './utils';
 import _ from 'underscore';
 
 const { Matcher, AttributeJoinedData, AttributeCollection } = Attributes;
-
+const isMessageView = AppEnv.isDisableThreading();
 const isCrossDBAttr = attr => {
   return attr && typeof attr.crossDBKey === 'function';
 };
@@ -613,7 +613,8 @@ export default class ModelQuery {
     this.finalize(dbKey);
     const allMatchers = this.matchersFlattened(dbKey);
     const useSubSelect = this._hasSubSelectForJoin(allMatchers);
-    let order = this._count[dbKey] ? '' : this._orderClause(dbKey, useSubSelect);
+    const hasSearchSubSelect = this._hasSearchSubSelect(allMatchers);
+    let order = this._count[dbKey] ? '' : this._orderClause(dbKey, useSubSelect, false);
     let whereSql = this._whereClause(dbKey);
     const selectSql = this._getSelect(allMatchers, dbKey);
 
@@ -641,7 +642,12 @@ export default class ModelQuery {
     //   const subSql = this._subSelectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
     //   return `SELECT ${distinct} ${selectSql} FROM \`${this._klass[dbKey].name}\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
     // }
-    if (useSubSelect) {
+    if (hasSearchSubSelect) {
+      whereSql = whereSql.replace(
+        /SEARCH_MATCH_SQL/g,
+        `${this._orderClause('main', false, true)} ${limit}`
+      );
+    } else if (useSubSelect) {
       const subSelectMatchers = this._subSelectMatchers(allMatchers);
       const subSQL = this._subSelectSQL(subSelectMatchers, order, limit, dbKey);
       whereSql = whereSql.replace('SUB_SELECT_SQL', subSQL);
@@ -664,6 +670,9 @@ export default class ModelQuery {
   //
   _hasSubSelectForJoin(matchers) {
     return !!matchers.find(matcher => matcher.partOfSubSelectJoin) && !AppEnv.isDisableThreading();
+  }
+  _hasSearchSubSelect(matchers) {
+    return !!matchers.find(matcher => matcher.isSearchQurey);
   }
   _subSelectMatchers(matchers = 'main') {
     return matchers.filter(matcher => matcher.partOfSubSelectJoin);
@@ -768,7 +777,7 @@ export default class ModelQuery {
     return sql;
   }
 
-  _orderClause(dbKey = 'main', useSubSelect = false) {
+  _orderClause(dbKey = 'main', useSubSelect = false, useSearchSelect = false) {
     if (this._orders[dbKey].length === 0) {
       return '';
     }
@@ -781,11 +790,19 @@ export default class ModelQuery {
     const getSubSelectTableName = attr => {
       return attr.joinTableName || attr.modelTable;
     };
+    const getSearchTableName = () => {
+      return isMessageView ? 'MessageSearch' : 'ThreadSearch';
+    };
+    let getJoinTable;
+    if (useSubSelect) {
+      getJoinTable = getSubSelectTableName;
+    } else if (useSearchSelect) {
+      getJoinTable = getSearchTableName;
+    } else {
+      getJoinTable = getJoinTableRef;
+    }
     this._orders[dbKey].forEach((sort, index) => {
-      sql += sort.orderBySQL(
-        this._klass[dbKey],
-        useSubSelect ? getSubSelectTableName : getJoinTableRef
-      );
+      sql += sort.orderBySQL(this._klass[dbKey], getJoinTable);
       if (index !== this._orders[dbKey].length - 1 && this._orders[dbKey].length > 1) {
         sql += ' , ';
       }
