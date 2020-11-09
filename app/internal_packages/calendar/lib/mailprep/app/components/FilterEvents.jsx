@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { updateFilter, changeColor } from '../actions/filter';
 import { updateEventColor } from '../actions/db/events'
 import CalendarMenu from './CalendarMenu';
+import { Actions } from 'mailspring-exports'
 
 class FilterEvents extends React.Component {
   constructor(props) {
@@ -58,21 +59,24 @@ class FilterEvents extends React.Component {
     });
   }
 
-  setOpen = (e) => {
+  setOpen = (e, acc, cal, calUrl) => {
     e.preventDefault();
-    const calendarMenuOpenCopy = this.state.calendarMenuOpen;
-    calendarMenuOpenCopy[e.currentTarget.value] = true;
-    this.setState({
-      calendarMenuOpen: calendarMenuOpenCopy
-    });
-  };
-
-  setClose = (calUrl) => {
-    const calendarMenuOpenCopy = this.state.calendarMenuOpen;
-    calendarMenuOpenCopy[calUrl] = false;
-    this.setState({
-      calendarMenuOpen: calendarMenuOpenCopy
-    });
+    e.persist()
+    Actions.openPopover(
+      <CalendarMenu
+        email={acc.email}
+        calUrl={calUrl}
+        color={cal.color}
+        changeColor={this.handleColorChange}
+      />,
+      {
+        // originRect,
+        originRect: { top: e.clientY, left: e.clientX },
+        disablePointer: true,
+        direction: 'left',
+        className: 'popout-container',
+      }
+    );
   };
 
   renderCalendarList = (acc, filterMap) =>
@@ -98,19 +102,14 @@ class FilterEvents extends React.Component {
             </label>
             <div className="dropdown">
               <div>
-                <button value={calUrl} className="three-dot-btn" onClick={this.setOpen}>
+                <button
+                  value={calUrl}
+                  className="three-dot-btn"
+                  onClick={e => this.setOpen(e, acc, cal, calUrl)}
+                >
                   &#10247;
                 </button>
               </div>
-              {this.state.calendarMenuOpen[calUrl]
-                ? <CalendarMenu
-                  email={acc.email}
-                  calUrl={calUrl}
-                  color={cal.color}
-                  changeColor={this.handleColorChange}
-                  setClose={this.setClose} />
-                : null
-              }
             </div>
           </div>
 

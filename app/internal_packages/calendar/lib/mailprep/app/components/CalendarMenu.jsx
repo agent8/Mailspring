@@ -1,5 +1,5 @@
 import React, { Children, Component } from 'react';
-import { connect } from 'react-redux';
+import { Actions } from 'mailspring-exports'
 
 const colorOptions = [
   'red',
@@ -17,39 +17,17 @@ const colorOptions = [
 ];
 
 class CalendarMenu extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.wrapperRef = React.createRef();
-    // this.setWrapperRef = this.setWrapperRef.bind(this);
-    this.handleClickOutside = this.handleClickOutside.bind(this);
-  }
-
-  handleClickOutside(event) {
-    if (this.wrapperRef && !this.wrapperRef.current.contains(event.target)) {
-      this.props.setClose(this.props.calUrl);
-    }
-  }
 
   changeColor = (e) => {
     e.preventDefault();
     this.props.changeColor(e.target.getAttribute('data-color'), this.props.calUrl, this.props.email)
+    Actions.closePopover();
   }
 
-  componentDidMount() {
-    document.addEventListener('click', this.handleClickOutside);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('click', this.handleClickOutside);
-  }
 
   render() {
-    const { calUrl } = this.props;
-    const { state } = this;
-
     return (
-      <div ref={this.wrapperRef} className='dropdown-content'>
+      <div className='dropdown-content'>
         {/* Not planning to release currently may need it in future */}
         {/* <div className='menu-btn'>Rename</div>
         <div className='menu-btn'>Merge</div>
