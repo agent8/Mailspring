@@ -40,7 +40,12 @@ class PreferencesAccountList extends Component {
       label: 'Change profile image',
       click: () => {
         AppEnv.showOpenDialog(
-          { title: 'Choose an image', buttonLabel: 'Choose', properties: ['openFile'] },
+          {
+            title: 'Choose an image',
+            buttonLabel: 'Choose',
+            properties: ['openFile'],
+            filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }],
+          },
           paths => {
             if (paths && paths.length > 0) {
               let fromPath = paths[0];
