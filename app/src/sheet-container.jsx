@@ -29,7 +29,9 @@ export default class SheetContainer extends React.Component {
     ipcRenderer.on('application-activate', this._onAppActive);
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
     if (AppEnv.isMainWindow()) {
-      AppEnv.trackingEvent('App-Open');
+      setTimeout(() => {
+        AppEnv.trackingEvent('App-Open');
+      }, 6000);
       this._checkDBVersion();
     }
   }
