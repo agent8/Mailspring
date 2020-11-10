@@ -384,9 +384,13 @@ export default class View extends React.Component {
     if (event.isRecurring) {
       Actions.openModal({
         component:
-          <div style={deleteModalStyles}>
-            <p>This is a recurring event</p>
+          <div className="delete-modal">
+            <h5>You're deleting an event</h5>
+            <p>Do you want to delete all occurrences of this event, or only the selected occurrence?</p>
             <div className="modal-button-group">
+              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
+                Cancel
+            </BigButton>
               {event.isMaster
                 ? <BigButton variant="small-white" onClick={() => this.deleteAllRecurrenceEvent(event)}>
                   Delete All
@@ -398,13 +402,11 @@ export default class View extends React.Component {
               <BigButton variant="small-white" onClick={() => this.deleteEvent(event)}>
                 Delete Only This Event
                 </BigButton>
-              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
-                Cancel
-                  </BigButton>
+
             </div>
           </div>,
-        width: 500,
-        height: 125
+        width: 510,
+        height: 170
       })
     } else {
       this.deleteEvent(event);
