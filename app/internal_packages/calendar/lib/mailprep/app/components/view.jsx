@@ -384,7 +384,7 @@ export default class View extends React.Component {
     if (event.isRecurring) {
       Actions.openModal({
         component:
-          <div className="delete-modal">
+          <div className="popup-modal">
             <h5>You're deleting an event</h5>
             <p>Do you want to delete all occurrences of this event, or only the selected occurrence?</p>
             <div className="modal-button-group">

@@ -1,8 +1,5 @@
 import React from 'react';
 import moment from 'moment';
-// import Modal from 'react-modal';
-import { Modal } from 'mailspring-component-kit'
-
 import {
   ConflictResolutionMode,
   SendInvitationsOrCancellationsMode,
@@ -33,12 +30,6 @@ import DropDownItem from '../library/DropDown/DropDownItem';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import ICAL from 'ical.js';
-import Location from './location';
-import Attendees from './attendees';
-// import Date from './date';
-import Time from './time';
-import Conference from './conference';
-import Checkbox from './checkbox';
 import RRuleGenerator from '../react-rrule-generator/src/lib';
 import { loadClient, editGoogleEvent } from '../../utils/client/google';
 import {
@@ -46,14 +37,11 @@ import {
   asyncUpdateRecurrExchangeSeries,
   asyncDeleteExchangeEvent
 } from '../../utils/client/exchange';
-// import './index.css';
 import { dropDownTime, OUTLOOK, EXCHANGE, GOOGLE, CALDAV } from '../../utils/constants';
-
-// import '../../bootstrap.css';
 import * as recurrenceOptions from '../../utils/recurrenceOptions';
-
 import * as dbEventActions from '../../sequelizeDB/operations/events';
 import * as dbRpActions from '../../sequelizeDB/operations/recurrencepatterns';
+import { Actions } from 'mailspring-exports'
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -181,26 +169,6 @@ export default class EditEvent extends React.Component {
     return dateInStringInUTC;
   };
 
-  // dateTime saved as SECONDS since start of unix time, not miliseconds
-  // handleStartChange = (start) => {
-  //   const { props, state } = this;
-  //   const newStart = {
-  //     dateTime: start.unix(),
-  //     timezone: state.updatedStartDateTime.timezone
-  //   };
-  //   this.setState({ updatedStartDateTime: newStart });
-  // };
-
-  // // dateTime saved as SECONDS since start of unix time, not miliseconds
-  // handleEndChange = (end) => {
-  //   const { props, state } = this;
-  //   const newEnd = {
-  //     dateTime: end.unix(),
-  //     timezone: state.updatedStartDateTime.timezone
-  //   };
-  //   this.setState({ updatedEndDateTime: newEnd });
-  // };
-
   handleChange = (event) => {
     if (event.target !== undefined) {
       this.setState({
@@ -287,7 +255,8 @@ export default class EditEvent extends React.Component {
       }
     });
     if (state.initialRrule && (state.initialRrule !== state.updatedRrule || state.isRecurring)) {
-      this.setState({ isShowUpdateForm: true });
+      // this.setState({ isShowUpdateForm: true });
+      this.renderPopup();
     } else {
       this.editEvent();
     }
@@ -321,6 +290,7 @@ export default class EditEvent extends React.Component {
       oldRpJson: state.oldRpJson
     };
     // debugger;
+    Actions.closeModal();
     props.beginEditEvent(payload);
     props.history.push('/');
   };
@@ -379,6 +349,7 @@ export default class EditEvent extends React.Component {
       oldRpJson: state.oldRpJson
     };
     // debugger;
+    Actions.closeModal();
     props.beginEditRecurrenceSeries(payload);
     props.history.push('/');
   };
@@ -431,6 +402,7 @@ export default class EditEvent extends React.Component {
       oldRpJson: state.oldRpJson
     };
     // debugger;
+    Actions.closeModal();
     props.beginEditFutureRecurrenceSeries(payload);
     props.history.push('/');
   };
@@ -731,66 +703,50 @@ export default class EditEvent extends React.Component {
     });
   };
 
-  // toggleRruleGenerator = (event) => {
-  //   event.persist();
-  //   this.setState((state, props) => ({
-  //     showRruleGenerator: event.target.checked,
-  //     updatedIsRecurring: event.target.checked
-  //   }));
-  // };
-
-  renderPopup = (state) => {
+  renderPopup = () => {
+    const { state } = this
     if (state.initialRrule !== state.updatedRrule) {
-      return state.isShowUpdateForm ?
-        (
-          <Modal
-            isOpen={state.isShowUpdateForm}
-            style={customStyles}
-            onRequestClose={() => this.setState({ isShowUpdateForm: false })}
-          >
-            <p>Are you sure you want to change a repeating rule for this event?</p>
+      Actions.openModal({
+        component:
+          <div className="popup-modal">
+            <h5>You're changing a repeating event's repeating rule.</h5>
             <p>Do you want to change all occurrences?</p>
             <div className="modal-button-group">
-              <BigButton variant="small-white" onClick={() => this.setState({ isShowUpdateForm: false })}>
+              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
                 Cancel
             </BigButton>
-              <BigButton variant="small-blue" onClick={this.editAllRecurrenceEvent}>
+              <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
                 Update All
             </BigButton>
             </div>
-
-          </Modal>
-        ) : null;
-    }
-
-    return state.isShowUpdateForm ?
-      (
-        <Modal
-          isOpen={state.isShowUpdateForm}
-          style={customStyles}
-          onRequestClose={() => this.setState({ isShowUpdateForm: false })}
-        >
-          <p>This is a recurring event</p>
-          <div className="modal-button-group">
-            <BigButton variant="small-white" onClick={() => this.setState({ isShowUpdateForm: false })}>
-              Cancel
-          </BigButton>
-            {state.isMaster ? (
-              <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
-                Update All
-              </BigButton>
-            ) : (
-                <BigButton variant="small-white" type="button" onClick={this.editFutureRecurrenceEvent}>
-                  Update All Future Events
-                </BigButton>
-              )}
-            <BigButton variant="small-blue" onClick={this.editEvent}>
-              Update Only This Event
-          </BigButton>
           </div>
-
-        </Modal>
-      ) : null;
+      })
+    } else {
+      Actions.openModal({
+        component:
+          <div className="popup-modal">
+            <h5>You're changing a repeating event.</h5>
+            <p>Do you want to change only this occurrence of the event, or all occurrences?</p>
+            <div className="modal-button-group">
+              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
+                Cancel
+              </BigButton>
+              {state.isMaster ? (
+                <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
+                  Update All
+                </BigButton>
+              ) : (
+                  <BigButton variant="small-white" type="button" onClick={this.editFutureRecurrenceEvent}>
+                    Update All Future Events
+                  </BigButton>
+                )}
+              <BigButton variant="small-white" onClick={this.editEvent}>
+                Update Only This Event
+              </BigButton>
+            </div>
+          </div>
+      })
+    }
   };
 
   renderAddDetails = () => {
@@ -1039,7 +995,7 @@ export default class EditEvent extends React.Component {
     if (state.start.dateTime !== undefined && state.start.dateTime !== undefined) {
       return (
         <div className="calendar">
-          {this.renderPopup(state)}
+          {/* {this.renderPopup(state)} */}
           <div className="add-form-main-panel-container">
             <div className="add-form-main-panel">
               {/* Add form header */}
