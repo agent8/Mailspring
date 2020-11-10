@@ -19,6 +19,7 @@ export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
 export const WindowLevel = {
+  Migrating: 6,
   BugReporting: 5,
   OnBoarding: 4,
   Composer: 3,
