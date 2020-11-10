@@ -42,7 +42,7 @@ export default class MigrateWindowRoot extends React.PureComponent {
     return (
       <div className="page-frame migrate-window">
         <div className="migrate-description">
-          We are migrating your local data <br /> Please do not close the app.
+          We are migrating your local data. <br /> Please do not close the app.
         </div>
         <div className="migrate-spinner">
           <LottieImg
