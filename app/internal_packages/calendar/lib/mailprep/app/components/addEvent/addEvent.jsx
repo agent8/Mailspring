@@ -7,6 +7,7 @@ import ICAL from 'ical.js';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
 // import Modal from 'react-modal';
 import { Modal } from 'mailspring-component-kit'
+import { Actions } from 'mailspring-exports'
 import Select from 'react-select'
 
 import RRuleGenerator from '../react-rrule-generator/src/lib';
@@ -331,26 +332,40 @@ export default class AddEvent extends Component {
     const { props, state } = this;
     // Display confirmation to send modal if there are guests
     if (state.attendees.length !== 0) {
-      this.setState({
-        isShowConfirmForm: true
-      })
+      this.renderPopup();
     } else {
       this.handleSubmit();
     }
   }
 
-  renderPopup = (state) => {
-    return state.isShowConfirmForm ?
-      (<Modal isOpen={state.isShowConfirmForm} style={customStyles} onRequestClose={() => this.setState({ isShowConfirmForm: false })}>
-        <p>You are about to send an invitation for "{state.title}"</p>
-        <p>Do you want to send "{state.title}" now or continue editing the event?</p>
-        <button type="button" onClick={() => this.setState({ isShowConfirmForm: false })}>
-          Edit
-      </button>
-        <button type="button" onClick={this.handleSubmit}>
-          Send
-      </button>
-      </Modal>) : null;
+  renderPopup = () => {
+    const { state } = this;
+    Actions.openModal({
+      component:
+        <div className="popup-modal">
+          <h5>You are about to send an invitation for "{state.title}"</h5>
+          <p>Do you want to send "{state.title}" now or continue editing the event?</p>
+          <div className="modal-button-group">
+            <BigButton type="button" variant="small-blue" onClick={() => Actions.closeModal()}>
+              Edit
+            </BigButton>
+            <BigButton type="button" variant="small-white" onClick={this.handleSubmit}>
+              Send
+            </BigButton>
+          </div>
+        </div>
+    })
+    // return state.isShowConfirmForm ?
+    //   (<Modal isOpen={state.isShowConfirmForm} style={customStyles} onRequestClose={() => this.setState({ isShowConfirmForm: false })}>
+    //     <p>You are about to send an invitation for "{state.title}"</p>
+    //     <p>Do you want to send "{state.title}" now or continue editing the event?</p>
+    //     <button type="button" onClick={() => this.setState({ isShowConfirmForm: false })}>
+    //       Edit
+    //   </button>
+    //     <button type="button" onClick={this.handleSubmit}>
+    //       Send
+    //   </button>
+    //   </Modal>) : null;
   }
 
   handleSubmit = async () => {
@@ -396,6 +411,7 @@ export default class AddEvent extends Component {
         providerType,
         state.selectedCalendar
       );
+      Actions.closeModal();
       props.history.push('/');
     } else {
       console.log('No provider selected! Disabled adding of events!!');
@@ -648,7 +664,6 @@ export default class AddEvent extends Component {
 
     return (
       <div className="calendar">
-        {this.renderPopup(state)}
         <div className="add-form-main-panel-container">
           <div className="add-form-main-panel">
             {/* Add form header */}
