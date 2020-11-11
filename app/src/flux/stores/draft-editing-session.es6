@@ -61,7 +61,10 @@ class DraftChangeSet extends EventEmitter {
 
   add(changes, { skipSaving = false } = {}) {
     if (!skipSaving) {
-      changes.pristine = false;
+      if (!changes.files || changes.files.every(f => !f.isSigOrTempAttachments)) {
+        changes.pristine = false;
+      }
+
       changes.needUpload = true;
       // update the per-attribute flags that track our dirty state
       for (const key of Object.keys(changes)) this._lastModifiedTimes[key] = Date.now();
@@ -788,7 +791,9 @@ export default class DraftEditingSession extends MailspringStore {
     if (this._draft && Array.isArray(files)) {
       this._draft.files = files;
       this.needUpload = true;
-      this._draft.pristine = false;
+      if (files.every(f => !f.isSigOrTempAttachments)) {
+        this._draft.pristine = false;
+      }
       this.needsSyncToMain = true;
       if (!AppEnv.isMainWindow()) {
         this.syncDraftDataToMainNow({ forceCommit: true });
