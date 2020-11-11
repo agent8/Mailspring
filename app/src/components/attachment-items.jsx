@@ -703,7 +703,7 @@ export class ImageAttachmentItem extends Component {
         onResize={this._onResize}
         onResizeComplete={this._onResizeComplete}
         onMaskClicked={this._onImageDeselect}
-        disabledDragPoints={['n', 's', 'w', 'e']}
+        disabledDragPoints={['n', 's', 'w', 'e', 'ne', 'nw', 'sw']}
         lockAspectRatio={true}
         showMask={this.state.showResizeMask}
         height={this.state.resizeBoxHeight}

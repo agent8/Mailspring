@@ -187,6 +187,19 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitAnd(node) {
+    if (!node.noDatesOptimize) {
+      if (node.e1 instanceof DateQueryExpression && node.e2 instanceof MatchQueryExpression) {
+        node.e2.dates = [node.e1];
+      } else if (
+        node.e2 instanceof DateQueryExpression &&
+        node.e1 instanceof MatchQueryExpression
+      ) {
+        node.e1.dates = [node.e2];
+      } else {
+        node.e1.noDatesOptimize = true;
+        node.e2.noDatesOptimize = true;
+      }
+    }
     const lhs = this.visitAndGetResult(node.e1);
     const rhs = this.visitAndGetResult(node.e2);
     this._result = `(${lhs} AND ${rhs})`;
@@ -241,31 +254,49 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
     this._result = `(\`${this._className}\`.\`subject\` like '${text}')`;
   }
 
-  visitDate(node) {
+  visitDate(node, klassName = '') {
+    this._result = StructuredSearchQueryVisitor.dateQuery(node, klassName);
+  }
+  static dateQuery(node, klassName = '') {
     const comparator = node.direction === 'before' ? '<' : '>';
     const date = DateUtils.getChronoPast().parseDate(node.text.token.s);
+    if (!klassName) {
+      klassName = isMessageView ? 'Message' : 'Thread';
+    }
     if (!date) {
       if (isFinite(parseInt(node.text.token.s))) {
-        this._result = `${isMessageView ? ' Message.date ' : ' Thread.lastDate '} ${comparator} ${
-          node.text.token.s
-        }`;
-        return;
+        return `${
+          isMessageView ? ` ${klassName}.date ` : ` ${klassName}.lastDate `
+        } ${comparator} ${node.text.token.s}`;
       }
-      this._result = '';
-      return;
+      return '';
     }
     const ts = Math.floor(date.getTime() / 1000);
-    this._result = `${isMessageView ? ' Message.date ' : ' Thread.lastDate '} ${comparator} ${ts}`;
+    return `${
+      isMessageView ? ` ${klassName}.date ` : ` ${klassName}.lastDate`
+    } ${comparator} ${ts}`;
   }
 
   visitMatch(node) {
     const searchTable = `${this._className}Search`;
+    let dateQuery = '';
+    if (!node.noDatesOptimize && Array.isArray(node.dates) && node.dates.length > 0) {
+      const klassName = isMessageView ? 'MessageSearch' : 'ThreadSearch';
+      dateQuery =
+        ' AND ' +
+        node.dates
+          .map(d => {
+            return StructuredSearchQueryVisitor.dateQuery(d, klassName);
+          })
+          .join(' AND ') +
+        ' SEARCH_MATCH_SQL ';
+    }
 
     // in sqlite3, you use '' to escape a '. Weird right?
     const escaped = node.rawQuery.replace(/'/g, "''");
     this._result = `(\`${this._className}\`.\`pid\` IN (SELECT \`${
       isMessageView ? 'messageId' : 'threadId'
-    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
+    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}' ${dateQuery}))`;
   }
 }
 
