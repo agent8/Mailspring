@@ -42,7 +42,7 @@ const promptSlowQuery = slowQueryCache => {
         description: 'Edison Mail need to do some housekeeping in order to improve performance.',
         actions: [{ text: 'Proceed', onClick: () => Actions.askVacuum() }],
       });
-      Actions.pushAppMessage(message);
+      // Actions.pushAppMessage(message);
       slowQueryCache.length = 0;
       return;
     }
@@ -227,7 +227,7 @@ class DatabaseStore extends MailspringStore {
     this._databasePath = databasePath(AppEnv.getConfigDirPath(), AppEnv.inSpecMode());
     console.log('this._databasePath', this._databasePath);
 
-    if (!AppEnv.inSpecMode()) {
+    if (!AppEnv.inSpecMode() && !AppEnv.isMigrateWindow()) {
       this.open();
     }
   }

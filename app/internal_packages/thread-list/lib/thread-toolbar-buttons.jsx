@@ -1,7 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { RetinaImg, CreateButtonGroup, BindGlobalCommands } from 'mailspring-component-kit';
+import {
+  RetinaImg,
+  CreateButtonGroup,
+  BindGlobalCommands,
+  FullScreenModal,
+} from 'mailspring-component-kit';
 import {
   AccountStore,
   Actions,
@@ -854,6 +859,14 @@ export class ThreadListMoreButton extends React.Component {
     if (current && current.accountIds.length) {
       this._account = AccountStore.accountForId(current.accountIds[0]);
     }
+    this.state = { showMoveToOtherDialog: false };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   UNSAFE_componentWillUpdate() {
@@ -889,20 +902,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Other',
-            click: event => {
-              const { selection, items } = this.props;
-              const threads = threadSelectionScope(this.props, selection);
-              const tasks = TaskFactory.tasksForMoveToOther(
-                Array.isArray(threads) ? threads : items
-              );
-              Actions.queueTasks(tasks);
-              if (event && typeof event.stopPropagation === 'function') {
-                event.stopPropagation();
-              }
-              if (selection) {
-                selection.clear();
-              }
-            },
+            click: this._onToggleMoveOther,
           })
         );
       }
@@ -1033,9 +1033,71 @@ export class ThreadListMoreButton extends React.Component {
     }
     menu.popup({});
   };
+  _onToggleMoveOther = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({ showMoveToOtherDialog: !this.state.showMoveToOtherDialog });
+  };
+  _onMoveToOther = () => {
+    const { selection, items } = this.props;
+    const threads = threadSelectionScope(this.props, selection);
+    const tasks = TaskFactory.tasksForMoveToOther(Array.isArray(threads) ? threads : items);
+    Actions.queueTasks(tasks);
+    if (selection) {
+      selection.clear();
+    }
+  };
+
+  _renderMoveOtherPopup = () => {
+    return (
+      <div className="email-confirm-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onToggleMoveOther}
+        />
+        <h1>{`Move to Other Inbox`}</h1>
+        <p>
+          Always move conversations from these senders to <br /> your Other Inbox
+        </p>
+        <div className="btn-list">
+          <div className="btn cancel" onClick={this._onToggleMoveOther}>
+            Cancel
+          </div>
+          <div className="btn confirm" onClick={this._onMoveToOther}>
+            Move
+          </div>
+        </div>
+      </div>
+    );
+  };
+  _renderMoveToOtherDialog() {
+    if (!this.state.showMoveToOtherDialog) {
+      return null;
+    }
+    return (
+      <FullScreenModal
+        visible={this.state.showMoveToOtherDialog}
+        style={{
+          height: 'auto',
+          width: '400px',
+          top: '165px',
+          right: '255px',
+          left: 'auto',
+          bottom: 'auto',
+        }}
+      >
+        {this._renderMoveOtherPopup()}
+      </FullScreenModal>
+    );
+  }
 
   render() {
-    return (
+    return [
       <button
         id={`moreButton${this.props.position}`}
         ref={el => (this._anchorEl = el)}
@@ -1049,8 +1111,9 @@ export class ThreadListMoreButton extends React.Component {
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
-      </button>
-    );
+      </button>,
+      this._renderMoveToOtherDialog(),
+    ];
   }
 }
 

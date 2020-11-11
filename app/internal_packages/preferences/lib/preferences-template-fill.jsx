@@ -2,6 +2,7 @@ import {
   DefaultMailClientItem,
   LaunchSystemStartItem,
   DefaultAccountSending,
+  EnableFocusInboxItem,
   DownloadSelection,
   LocalData,
   SupportId,
@@ -63,8 +64,7 @@ const preferencesTemplateFill = {
             },
             {
               label: 'Enable Focused Inbox (only show important senders in your inbox)',
-              configSchema: configSchema =>
-                configSchema.properties.workspace.properties.enableFocusedInbox,
+              component: EnableFocusInboxItem,
               keyPath: 'core.workspace.enableFocusedInbox',
               keywords: [],
             },
