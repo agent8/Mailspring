@@ -2081,6 +2081,7 @@ class AttachmentStore extends MailspringStore {
     messageId,
     filePath,
     inline = undefined,
+    isSigOrTempAttachments = false,
     onCreated = () => {},
   }) => {
     this._assertIdPresent(messageId);
@@ -2105,6 +2106,10 @@ class AttachmentStore extends MailspringStore {
         contentId: inline ? Utils.generateContentId() : null,
         isInline: inline,
       });
+      // Is the attachment is in signature or template
+      if (isSigOrTempAttachments) {
+        file.isSigOrTempAttachments = true;
+      }
       if (inline === undefined && Utils.shouldDisplayAsImage(file)) {
         console.log('should be image but not set as inline');
         file.isInline = true;
@@ -2152,6 +2157,7 @@ class AttachmentStore extends MailspringStore {
             accountId: accountId,
             filePath: path,
             inline: inline,
+            isSigOrTempAttachments: true,
             onCreated,
           });
         } catch (err) {
