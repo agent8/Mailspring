@@ -173,6 +173,7 @@ export default class EmailAvatar extends Component {
       backgroundPosition: 'center',
       backgroundSize: 'cover',
       backgroundRepeat: 'no-repeat',
+      backgroundColor: 'white',
     };
     if (this.props.styles) {
       styles = Object.assign(styles, this.props.styles);
