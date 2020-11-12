@@ -211,7 +211,7 @@ export default class Application extends EventEmitter {
       });
       this.nativeVersion = await mailsync.migrate();
       clearTimeout(this._migrateTimer);
-      this._requestMigrateWindowClose();
+      this._closeMigrateWindow();
       this.windowManager.createHotWindow();
       this.handleLaunchOptions(options);
     } catch (err) {
@@ -863,10 +863,10 @@ export default class Application extends EventEmitter {
       });
     }
   }
-  _requestMigrateWindowClose() {
+  _closeMigrateWindow() {
     const migrateWindow = this.windowManager.get(WindowManager.MIGRATE_WINDOW);
-    if (migrateWindow && migrateWindow.browserWindow && migrateWindow.browserWindow.webContents) {
-      migrateWindow.browserWindow.webContents.send('migrate-complete');
+    if (migrateWindow && migrateWindow.browserWindow) {
+      migrateWindow.browserWindow.close();
     }
   }
 
