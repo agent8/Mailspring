@@ -67,7 +67,7 @@
     "jira-client": "^6.14.0",
     "juice": "^1.4",
     "jxt-xmpp-types": "^3.0.0",
-    "keytar": "^4.4.1",
+    "keytar": "^7.0.0",
     "less-cache": "1.1.0",
     "lodash.assign": "^3.0.0",
     "lodash.filter": "^3.1.0",
