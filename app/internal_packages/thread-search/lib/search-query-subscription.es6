@@ -89,7 +89,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
         firstInQueryExpression.text &&
         firstInQueryExpression.text.token &&
         firstInQueryExpression.text.token.s
-          ? utf7.decode(firstInQueryExpression.text.token.s)
+          ? firstInQueryExpression.text.token.s
           : '';
       queryJSON = parsedQuery;
       genericText = IMAPSearchQueryBackend.folderNamesForQuery(parsedQuery);
