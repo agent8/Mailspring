@@ -787,7 +787,7 @@ export default class DraftEditingSession extends MailspringStore {
   get needsSyncToMain() {
     return !AppEnv.isMainWindow() && this._needsSyncWithMain;
   }
-  updateAttachments(files) {
+  updateAttachments(files, { commit = true } = {}) {
     if (this._draft && Array.isArray(files)) {
       this._draft.files = files;
       this.needUpload = true;
@@ -795,9 +795,10 @@ export default class DraftEditingSession extends MailspringStore {
         this._draft.pristine = false;
       }
       this.needsSyncToMain = true;
+      console.log(`commit ${commit}`);
       if (!AppEnv.isMainWindow()) {
-        this.syncDraftDataToMainNow({ forceCommit: true });
-      } else {
+        this.syncDraftDataToMainNow({ forceCommit: commit });
+      } else if (commit) {
         this.changeSetCommit(`attachments change`);
       }
     } else {
