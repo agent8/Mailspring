@@ -1,5 +1,4 @@
 import React from 'react';
-import { ipcRenderer } from 'electron';
 import { LottieImg } from 'mailspring-component-kit';
 export default class MigrateWindowRoot extends React.PureComponent {
   static displayName = 'MigrateWindowRoot';
@@ -20,23 +19,11 @@ export default class MigrateWindowRoot extends React.PureComponent {
   componentDidMount() {
     AppEnv.center();
     AppEnv.displayWindow();
-    ipcRenderer.on('migrate-complete', this._onMigrateComplete);
     this.mounted = true;
   }
   componentWillUnmount() {
     this.mounted = false;
-    ipcRenderer.removeListener('migrate-complete', this._onMigrateComplete);
   }
-
-  _onMigrateComplete = (event, data) => {
-    if (!this.mounted) {
-      return;
-    }
-    this.setState({ migrating: false });
-    this._timer = setTimeout(() => {
-      AppEnv.close();
-    }, 1000);
-  };
 
   render() {
     return (
