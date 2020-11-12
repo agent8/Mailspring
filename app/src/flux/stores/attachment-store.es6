@@ -1922,12 +1922,12 @@ class AttachmentStore extends MailspringStore {
     }
   }
 
-  async _applySessionChanges(messageId, changeFunction) {
+  async _applySessionChanges(messageId, changeFunction, { skipSaving = false } = {}) {
     const session = await DraftStore.sessionForClientId(messageId);
     const files = changeFunction(session.draft().files);
     console.log(`update attachments with applySession changes`, files);
-    session.changes.add({ files });
-    session.updateAttachments(files);
+    session.changes.add({ files }, { skipSaving });
+    session.updateAttachments(files, { commit: !skipSaving });
     // session.changes.commit();
   }
 
@@ -2082,6 +2082,7 @@ class AttachmentStore extends MailspringStore {
     filePath,
     inline = undefined,
     isSigOrTempAttachments = false,
+    skipSaving = false,
     onCreated = () => {},
   }) => {
     this._assertIdPresent(messageId);
@@ -2130,13 +2131,17 @@ class AttachmentStore extends MailspringStore {
       // await mkdirpAsync(path.dirname(this.pathForFile(file)));
       // await this._copyToInternalPath(filePath, this.pathForFile(file));
 
-      await this._applySessionChanges(messageId, files => {
-        if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
-          AppEnv.trackingEvent('largeAttachmentSize');
-          throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
-        }
-        return files.concat([file]);
-      });
+      await this._applySessionChanges(
+        messageId,
+        files => {
+          if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
+            AppEnv.trackingEvent('largeAttachmentSize');
+            throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
+          }
+          return files.concat([file]);
+        },
+        { skipSaving }
+      );
       onCreated(file);
     } catch (err) {
       AppEnv.logError(err);
@@ -2144,7 +2149,7 @@ class AttachmentStore extends MailspringStore {
     }
   };
 
-  addSigOrTempAttachments = async (attachments, messageId, accountId) => {
+  addSigOrTempAttachments = async (attachments, messageId, accountId, skipSaving = false) => {
     const fileMap = new Map();
     const addPromise = (path, inline) => {
       return new Promise((resolve, reject) => {
@@ -2158,6 +2163,7 @@ class AttachmentStore extends MailspringStore {
             filePath: path,
             inline: inline,
             isSigOrTempAttachments: true,
+            skipSaving,
             onCreated,
           });
         } catch (err) {
