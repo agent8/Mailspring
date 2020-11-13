@@ -200,7 +200,7 @@ class KeyManager {
     remote.dialog
       .showMessageBox({
         type: 'error',
-        buttons: ['Visit', 'Quit'],
+        buttons: ['Visit', 'Quit', 'Cancel'],
         defaultId: 0,
         message: `EdisonMail could not store your password securely. ${more} For more information, visit ${link}`,
       })
@@ -209,9 +209,10 @@ class KeyManager {
         // on the passwords being saved never runs (saving identity for example)
         if (response === 0) {
           remote.shell.openExternal(link);
+        } else if (response === 1) {
           remote.app.quit();
         } else {
-          remote.app.quit();
+          return;
         }
       });
     throw err;
