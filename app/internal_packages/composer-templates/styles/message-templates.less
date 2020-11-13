@@ -155,9 +155,25 @@
     }
 
     .RichEditor-root {
-      padding: 10px;
+      padding: 0;
       padding-top: 2px;
       min-height: 248px;
+      .RichEditor-toolbar {
+        margin: 0 10px;
+        .hide-in-composer {
+          display: none;
+        }
+        .show-in-signature {
+          display: block;
+        }
+      }
+      .RichEditor-content {
+        margin: 0;
+        padding: 0;
+        & > div[data-slate-editor] {
+          padding: 12px 20px 20px 20px;
+        }
+      }
     }
 
     .section.editor {
