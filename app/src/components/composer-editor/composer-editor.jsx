@@ -82,8 +82,9 @@ export default class ComposerEditor extends React.Component {
 
   focus = () => {
     const { onChange, value } = this.props;
-    const defaultFont = AppEnv.config.get('core.fontface');
-    const defaultSize = AppEnv.config.get('core.fontsize');
+    const draft = (this.props.propsForPlugins || {}).draft || { defaultValues: {} };
+    const defaultFont = draft.defaultValues.fontFace || AppEnv.config.get('core.fontface');
+    const defaultSize = draft.defaultValues.fontSize || AppEnv.config.get('core.fontsize');
     onChange(
       value
         .change()
