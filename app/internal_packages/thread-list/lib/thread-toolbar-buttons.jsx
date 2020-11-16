@@ -1487,12 +1487,15 @@ class MoreActionsButton extends React.Component {
     moreButtonlist.forEach(button => {
       if (button && typeof button === 'function') {
         const menuItem = button({ ...this.props, isMenuItem: true, anchorEl: this._anchorEl });
-        if (menuItem instanceof Array) {
-          menuItem.forEach(item => {
-            menu.append(item);
-          });
-        } else {
-          menu.append(menuItem);
+        // if the account has no spam folder, the menuItem is false
+        if (menuItem) {
+          if (menuItem instanceof Array) {
+            menuItem.forEach(item => {
+              menu.append(item);
+            });
+          } else {
+            menu.append(menuItem);
+          }
         }
       }
     });
