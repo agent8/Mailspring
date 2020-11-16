@@ -42,6 +42,20 @@ const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.settings.basic',
   'profile',
   'https://www.googleapis.com/auth/calendar'
+
+const GMAIL_CALENDAR_CLIENT_ID =
+  '190108842853-2o3l63c3qlgjjg4pp2v9suoacrbfpgva.apps.googleusercontent.com';
+const GMAIL_CALENDAR_CLIENT_SECRET = 'atSqQBGyYhlJAba9NiZe47r6';
+const GMAIL_CALENDAR_SCOPES = [
+  // Edison
+  'https://mail.google.com/',
+  'email',
+  'https://www.google.com/m8/feeds',
+  'email',
+  'https://www.googleapis.com/auth/gmail.settings.basic',
+  'profile',
+  'https://www.googleapis.com/auth/calendar',
+  'https://www.googleapis.com/auth/calendar.events',
 ];
 
 const JIRA_CLIENT_ID = 'k5w4G817nXJRIEpss2GYizMxpTXbl7tn';
@@ -520,6 +534,66 @@ export async function buildGmailAccountFromAuthResponse(code) {
   return await finalizeAndValidateAccount(account);
 }
 
+export async function buildGmailCalendarAccountFromAuthResponse(code) {
+  /// Exchange code for an access token
+  const body = [];
+  body.push(`code=${encodeURIComponent(code)}`);
+  body.push(`client_id=${encodeURIComponent(GMAIL_CALENDAR_CLIENT_ID)}`);
+  body.push(`client_secret=${encodeURIComponent(GMAIL_CALENDAR_CLIENT_SECRET)}`);
+  body.push(`redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}`);
+  body.push(`grant_type=${encodeURIComponent('authorization_code')}`);
+
+  const resp = await edisonFetch('https://www.googleapis.com/oauth2/v4/token', {
+    method: 'POST',
+    body: body.join('&'),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+    },
+  });
+
+  const json = (await resp.json()) || {};
+  if (!resp.ok) {
+    throw new Error(
+      `Gmail OAuth Code exchange returned ${resp.status} ${resp.statusText}: ${JSON.stringify(
+        json
+      )}`
+    );
+  }
+  const { access_token, refresh_token } = json;
+
+  // get the user's email address
+  const meResp = await edisonFetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${access_token}` },
+  });
+  const me = await meResp.json();
+  if (!meResp.ok) {
+    throw new Error(
+      `Gmail profile request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
+    );
+  }
+  const account = await expandAccountWithCommonSettings(
+    new Account({
+      name: me.name,
+      emailAddress: me.email,
+      provider: 'gmail',
+      settings: {
+        refresh_client_id: GMAIL_CLIENT_ID,
+        refresh_token: refresh_token,
+      },
+    }),
+    'gmail.com'
+  );
+
+  account.id = idForAccount(me.email, account.settings);
+  account.picture = me.picture;
+
+  AppEnv.config.set('plugin.calendar.config', { access_token, refresh_token });
+  // wait some time for Event tracking
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  AppEnv.close();
+}
+
 export async function buildJiraAccountFromAuthResponse(code) {
   /// Exchange code for an access token
   const body = [];
@@ -707,6 +781,20 @@ export function buildGmailAuthURL() {
     `&response_type=code` +
     `&prompt=consent` +
     `&scope=${encodeURIComponent(GMAIL_SCOPES.join(' '))}` +
+    `&access_type=offline` +
+    `&select_account%20consent`
+  );
+}
+
+export function buildGmailCalendarAuthURL() {
+  return (
+    `https://accounts.google.com/o/oauth2/auth` +
+    `?` +
+    `client_id=${GMAIL_CALENDAR_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
+    `&response_type=code` +
+    `&prompt=consent` +
+    `&scope=${encodeURIComponent(GMAIL_CALENDAR_SCOPES.join(' '))}` +
     `&access_type=offline` +
     `&select_account%20consent`
   );

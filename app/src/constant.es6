@@ -9,6 +9,7 @@ export const OAuthList = [
   'hotmail',
   'office365-exchange',
   'jira-plugin',
+  'gmail-calendar',
 ];
 export const showCC = 'cc';
 export const showCCAndBCC = 'cc+bcc';

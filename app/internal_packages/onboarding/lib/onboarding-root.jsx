@@ -9,6 +9,7 @@ import AuthenticatePage from './page-authenticate';
 import AccountChoosePage from './page-account-choose';
 import AccountSettingsPage from './page-account-settings';
 import AccountSettingsPageGmail from './page-account-settings-gmail';
+import AccountSettingsPageGmailCalendar from './page-account-settings-gmail-calendar';
 import AccountSettingsPageIMAP from './page-account-settings-imap';
 import AccountExchangeSettingsForm from './page-account-settings-exchange';
 import AccountSettingsPageOffice365 from './page-account-settings-office365';
@@ -36,6 +37,7 @@ const PageComponents = {
   'account-choose': AccountChoosePage,
   'account-settings': AccountSettingsPage,
   'account-settings-gmail': AccountSettingsPageGmail,
+  'account-settings-gmail-calendar': AccountSettingsPageGmailCalendar,
   'account-settings-office365-exchange': AccountSettingsPageOffice365,
   'account-settings-outlook': AccountSettingsPageOutlook,
   'account-settings-hotmail': AccountSettingsPageOutlook,

@@ -140,6 +140,13 @@ const AccountProviders = [
     color: '#aaa',
     twoStep,
   },
+  {
+    provider: 'gmail-calendar',
+    displayName: 'Gmail(Calendar)',
+    icon: 'account-logo-gmail.png',
+    headerIcon: 'setup-icon-provider-gmail.png',
+    color: '#e99999',
+  },
 ];
 
 export default AccountProviders;
