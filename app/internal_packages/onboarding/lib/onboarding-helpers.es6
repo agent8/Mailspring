@@ -41,7 +41,8 @@ const GMAIL_SCOPES = [
   'email',
   'https://www.googleapis.com/auth/gmail.settings.basic',
   'profile',
-  'https://www.googleapis.com/auth/calendar'
+  'https://www.googleapis.com/auth/calendar',
+];
 
 const GMAIL_CALENDAR_CLIENT_ID =
   '190108842853-2o3l63c3qlgjjg4pp2v9suoacrbfpgva.apps.googleusercontent.com';
