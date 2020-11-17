@@ -1,3 +1,4 @@
+import path from 'path';
 import React from 'react';
 import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
@@ -71,6 +72,8 @@ export const changes = {
 
 const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
   const cb = filePath => {
+    const dirName = path.dirname(filePath);
+    const fileName = encodeURIComponent(path.basename(filePath));
     if (!filePath) {
       return;
     }
@@ -79,7 +82,7 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
       type: IMAGE_TYPE,
       data: {
         draggerDisable: true,
-        src: filePath,
+        src: path.join(dirName, fileName),
       },
     });
 
