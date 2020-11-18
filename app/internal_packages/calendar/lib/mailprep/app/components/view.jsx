@@ -342,9 +342,9 @@ export default class View extends React.Component {
     // console.log(this.state)
     // debugger;
     e.preventDefault();
-    const { email, pwd } = this.state;
+    const { email, pwd, accountType } = this.state;
     // Temp set to icloud for now
-    const accountType = 'ICLOUD'
+    // const accountType = 'ICLOUD'
 
     if (accountType === 'EWS') {
       this.authorizeExchangeCodeRequest({
@@ -700,29 +700,28 @@ export default class View extends React.Component {
                 onChange={this.handleChange}
                 placeholder="Password"
               />
-              {/* <label>
-            <input
-              type="radio"
-              name="accountType"
-              value="ICLOUD"
-              onChange={this.handleChange}
-              defaultChecked
-            />
-            ICLOUD
-          </label>
-          <label>
-            <input type="radio" name="accountType" value="FASTMAIL" onChange={this.handleChange} />
-            FASTMAIL
-          </label>
-          <label>
-            <input type="radio" name="accountType" value="YAHOO" onChange={this.handleChange} />
-            YAHOO
-          </label>
-          <label>
-            <input type="radio" name="accountType" value="EWS" onChange={this.handleChange} />
-            EWS
-          </label> */}
-
+              <label>
+                <input
+                  type="radio"
+                  name="accountType"
+                  value="ICLOUD"
+                  onChange={this.handleChange}
+                  defaultChecked
+                />
+                ICLOUD
+              </label>
+              <label>
+                <input type="radio" name="accountType" value="FASTMAIL" onChange={this.handleChange} />
+                  FASTMAIL
+              </label>
+              <label>
+                <input type="radio" name="accountType" value="YAHOO" onChange={this.handleChange} />
+                  YAHOO
+              </label>
+              <label>
+                <input type="radio" name="accountType" value="EWS" onChange={this.handleChange} />
+                  EWS
+              </label>
               <input type="submit" value="Submit" />
             </form>
             {/* this is for out of sync tokens. */}
