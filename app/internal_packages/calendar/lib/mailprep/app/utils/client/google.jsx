@@ -72,11 +72,12 @@ export const loadNextPage = async (pageToken) =>
     );
   });
 
-export const filterUser = (jsonObj, accessToken, accessTokenExpiry) => ({
-  personId: md5(jsonObj.getId()),
-  originalId: jsonObj.getId(),
-  email: jsonObj.getEmail(),
+export const filterUser = (account, calendars, accessToken, accessTokenExpiry = '') => ({
+  personId: md5(account.pid),
+  originalId: account.pid,
+  email: account.emailAddress,
   providerType: ProviderTypes.GOOGLE,
+  calendars: calendars.length > 0 ? calendars : [],
   accessToken,
   accessTokenExpiry
 });

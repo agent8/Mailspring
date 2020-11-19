@@ -8,20 +8,19 @@ export const insertAccountIntoDatabase = async (account) => {
     where: {
       email: account.email,
       providerType: account.providerType,
-      caldavType: account.caldavType === undefined ? null : account.caldavType
+      caldavType: account.caldavType === undefined ? '' : account.caldavType
     }
   });
   // console.log(clonedAcc);
   // console.log(dbAccount);
   // clone account to new object so as to not delete calendar data in original object reference (needed for future processing)
   const clonedAcc = Object.assign({}, account);
-  if (dbAccount.length === 0 && clonedAcc.calendars) {
+  if (dbAccount.length === 0 && clonedAcc.calendars && clonedAcc.providerType !== 'GOOGLE') {
     clonedAcc.calendars.forEach((cal) => {
       delete cal.account.calendars;
       delete cal.objects;
     });
   }
-
   // console.log(clonedAcc);
   // console.log(account);
   // debugger;

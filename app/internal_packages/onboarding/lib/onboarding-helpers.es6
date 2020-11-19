@@ -589,7 +589,7 @@ export async function buildGmailCalendarAccountFromAuthResponse(code) {
   account.id = idForAccount(me.email, account.settings);
   account.picture = me.picture;
 
-  AppEnv.config.set('plugin.calendar.config', { access_token, refresh_token });
+  AppEnv.config.set('plugin.calendar.config', { access_token, refresh_token, account });
   // wait some time for Event tracking
   await new Promise(resolve => setTimeout(resolve, 1000));
   AppEnv.close();

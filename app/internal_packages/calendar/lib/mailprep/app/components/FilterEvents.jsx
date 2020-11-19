@@ -83,10 +83,10 @@ class FilterEvents extends React.Component {
     acc.calendars.map((cal) => {
       // if first login calUrl = cal.url, if retrieved from db, calUrl = cal,url
       // problem with epics changing payload
-      const calUrl = cal.calendarUrl ? cal.calendarUrl : cal.url;
+      const calUrl = cal.calendarUrl ? cal.calendarUrl : (cal.url ? cal.url : cal.id);
 
       return (
-        <li key={cal.calendarUrl}>
+        <li key={cal.calendarUrl ? cal.calendarUrl : cal.id}>
           <div className="calendar-list-item">
             <label className="checkbox-container" htmlFor={calUrl}>
               <input
@@ -98,7 +98,7 @@ class FilterEvents extends React.Component {
                 checked={filterMap[calUrl]}
               />
               <p className={`checkbox-checkmark color-picker-${cal.color}`}></p>
-              <span>{cal.displayName}</span>
+              <span>{cal.displayName ? cal.displayName : cal.summary}</span>
             </label>
             <div className="dropdown">
               <div>

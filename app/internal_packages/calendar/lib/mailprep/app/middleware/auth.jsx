@@ -19,6 +19,7 @@ import * as DbActionTypes from '../actions/db/events';
 import { filterCaldavUser } from '../utils/client/caldav';
 import { findAccount } from '../sequelizeDB/operations/accounts';
 import serverUrls from '../utils/serverUrls';
+import axios from 'axios';
 
 const dav = require('dav');
 
@@ -39,94 +40,50 @@ export const authBeginMiddleware = (store) => (next) => async (action) => {
   }
 
   if (action.type === AuthActionTypes.BEGIN_GOOGLE_AUTH) {
-    GoogleAuth = window.gapi.auth2.getAuthInstance();
-    // GoogleAuth.signIn();
-    handleAuthClick(GoogleAuth);
-    const googleUser = GoogleAuth.currentUser.get();
-    const authResponse = googleUser.getAuthResponse();
-    const user = filterUser(
-      googleUser.getBasicProfile(),
-      authResponse.access_token,
-      authResponse.expires_at
-    );
+    if (AppEnv.config.get('plugin.calendar.config') !== null) {
+      const {
+        access_token,
+        refresh_token,
+        account
+      } = AppEnv.config.get('plugin.calendar.config');
+      try {
+        const res = await axios.get(
+          'https://www.googleapis.com/calendar/v3/users/me/calendarList?key=AIzaSyAgA9vLu54Xpv6y93yptMDUFzZ8kXyvQnA',
+          {
+            headers: {
+              Authorization: 'Bearer '.concat(access_token),
+              Accept: 'application/json'
+            }
+          }
+        );
+        const calendars = res.data.items
+        const user = filterUser(account, calendars, access_token)
+        next({
+          type: AuthActionTypes.SUCCESS_GOOGLE_AUTH,
+          payload: {
+            user
+          }
+        })
+      } catch (err) {
+        console.log(err)
+      }
 
-    const isAuthorized = googleUser.hasGrantedScopes(GOOGLE_SCOPE);
-    if (isAuthorized) {
-      next({
-        type: AuthActionTypes.SUCCESS_GOOGLE_AUTH,
-        payload: {
-          user
-        }
-      });
-    } else {
-      next({
-        type: AuthActionTypes.FAIL_GOOGLE_AUTH
-      });
     }
-    // #region
-    // window.gapi.load('client:auth2', {
-    //   callback: () => {
-    //     window.gapi.client.init({
-    //       'apiKey': GOOGLE_API_KEY,
-    //       'clientId': GOOGLE_CLIENT_ID,
-    //       'scope': GOOGLE_SCOPE,
-    //       'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-    //     });
-    //   }
-    // }););
 
-    // window.gapi.load('client:auth2', {
-    //   callback: () => {
-    //     window.gapi.client.init({
-    //       'apiKey': GOOGLE_API_KEY,
-    //       'clientId': GOOGLE_CLIENT_ID,
-    //       'scope': GOOGLE_SCOPE,
-    //       'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-    //     }).then(async () => {
-    //       GoogleAuth = window.gapi.auth2.getAuthInstance();
-    //       //GoogleAuth.signIn();
-    //       handleAuthClick(GoogleAuth);
-    //       const googleUser = GoogleAuth.currentUser.get();
-    //       const authResponse = googleUser.getAuthResponse();
-
-    //       const db = await getDb();
-    //       const user = filterUser(googleUser.getBasicProfile(), authResponse.access_token, authResponse.expires_at);
-    //       console.log(user);
-    //       // db.persons.find().exec().then(document => console.log(document));
-    //       db.persons.upsert(user);
-
-    //       const isAuthorized = googleUser.hasGrantedScopes(GOOGLE_SCOPE);
-    //       if(isAuthorized) {
-    //         next({
-    //           type: AuthActionTypes.SUCCESS_GOOGLE_AUTH,
-    //           payload: {
-    //             user
-    //           }
-    //         });
-    //       } else {
-    //         next({
-    //           type: AuthActionTypes.FAIL_GOOGLE_AUTH,
-    //         });
-    //       }
-    //     });
-    //   }
-    // });
-
+    // OLD CODE - TO REMOVE
     // GoogleAuth = window.gapi.auth2.getAuthInstance();
-    // //GoogleAuth.signIn();
+    // // GoogleAuth.signIn();
     // handleAuthClick(GoogleAuth);
     // const googleUser = GoogleAuth.currentUser.get();
     // const authResponse = googleUser.getAuthResponse();
-    // const user = filterUser(googleUser.getBasicProfile(), authResponse.access_token, authResponse.expires_at);
-
-    // // const db = await getDb();
-    // // const user = filterUser(googleUser.getBasicProfile(), authResponse.access_token, authResponse.expires_at);
-    // // console.log(user);
-    // // // db.persons.find().exec().then(document => console.log(document));
-    // // db.persons.upsert(user);
+    // const user = filterUser(
+    //   googleUser.getBasicProfile(),
+    //   authResponse.access_token,
+    //   authResponse.expires_at
+    // );
 
     // const isAuthorized = googleUser.hasGrantedScopes(GOOGLE_SCOPE);
-    // if(isAuthorized) {
+    // if (isAuthorized) {
     //   next({
     //     type: AuthActionTypes.SUCCESS_GOOGLE_AUTH,
     //     payload: {
@@ -135,19 +92,10 @@ export const authBeginMiddleware = (store) => (next) => async (action) => {
     //   });
     // } else {
     //   next({
-    //     type: AuthActionTypes.FAIL_GOOGLE_AUTH,
+    //     type: AuthActionTypes.FAIL_GOOGLE_AUTH
     //   });
     // }
-    // // window.gapi.load('client:auth2', {
-    // //   callback: () => {
-    // //     window.gapi.client.init({
-    // //       'apiKey': GOOGLE_API_KEY,
-    // //       'clientId': GOOGLE_CLIENT_ID,
-    // //       'scope': GOOGLE_SCOPE,
-    // //       'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-    // //     });
-    // //   }
-    // // });
+    // #region
     // #endregion
   } else if (action.type === AuthActionTypes.BEGIN_OUTLOOK_AUTH) {
     const url = buildAuthUrl();
@@ -259,12 +207,12 @@ export const authBeginMiddleware = (store) => (next) => async (action) => {
 };
 
 export const authSuccessMiddleware = (store) => (next) => (action) => {
-  // if(action.type === AuthActionTypes.SUCCESS_GOOGLE_AUTH) {
-  //   next({
-  //     type: DbActionTypes.RETRIEVE_STORED_EVENTS,
-  //     payload: { providerType: Providers.GOOGLE, user: action.payload.user }
-  //   });
-  // }
+  if (action.type === AuthActionTypes.SUCCESS_GOOGLE_AUTH) {
+    next({
+      type: DbActionTypes.RETRIEVE_STORED_EVENTS,
+      payload: { providerType: Providers.GOOGLE, user: action.payload.user }
+    });
+  }
   // if (action.type === AuthActionTypes.FAIL_GOOGLE_AUTH) {
   //   next({
   //     type: AuthActionTypes.RETRY_GOOGLE_AUTH

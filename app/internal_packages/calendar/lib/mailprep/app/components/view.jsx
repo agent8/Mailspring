@@ -711,8 +711,8 @@ export default class View extends React.Component {
                 ICLOUD
               </label>
               <label>
-                <input type="radio" name="accountType" value="FASTMAIL" onChange={this.handleChange} />
-                  FASTMAIL
+                <input type="radio" name="accountType" value="GOOGLE" onChange={this.handleChange} />
+                  GOOGLE
               </label>
               <label>
                 <input type="radio" name="accountType" value="YAHOO" onChange={this.handleChange} />
@@ -826,6 +826,7 @@ export default class View extends React.Component {
             />
             <FilterCalendar />
             <BigButton variant="small-blue" onClick={() => this.setState({ isShowLoginForm: true })}>Login</BigButton>
+            <BigButton variant="small-blue" onClick={() => this.authorizeGoogleCodeRequest()}>Google Auth</BigButton>
           </div>
         </div>
       );
