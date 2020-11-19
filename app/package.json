@@ -1,7 +1,7 @@
 {
   "name": "edisonmail",
   "productName": "EdisonMail",
-  "version": "1.6.5",
+  "version": "1.6.9",
   "buildVersion": "329",
   "commitHash": "COMMIT_INSERTED_DURING_PACKAGING",
   "description": "The best email app for people and teams at work",
