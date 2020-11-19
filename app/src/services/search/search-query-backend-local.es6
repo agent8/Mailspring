@@ -290,13 +290,15 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
           })
           .join(' AND ') +
         ' SEARCH_MATCH_SQL ';
+    } else {
+      dateQuery = ' SEARCH_MATCH_SQL ';
     }
 
     // in sqlite3, you use '' to escape a '. Weird right?
     const escaped = node.rawQuery.replace(/'/g, "''");
     this._result = `(\`${this._className}\`.\`pid\` IN (SELECT \`${
       isMessageView ? 'messageId' : 'threadId'
-    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}' ${dateQuery}))`;
+    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}' ${dateQuery} ))`;
   }
 }
 
