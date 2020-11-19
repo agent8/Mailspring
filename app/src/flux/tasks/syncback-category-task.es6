@@ -69,6 +69,15 @@ export default class SyncbackCategoryTask extends Task {
       accountId: accountId,
     });
   }
+  static editLabel({ newName, currentName, accountId, newColor }) {
+    return new SyncbackCategoryTask({
+      existingPath: utf7.imap.encode(currentName),
+      path: utf7.imap.encode(newName),
+      name: newName,
+      accountId: accountId,
+      bgColor: newColor,
+    });
+  }
 
   label() {
     return this.existingPath

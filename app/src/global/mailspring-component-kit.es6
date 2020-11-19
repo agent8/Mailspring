@@ -133,6 +133,7 @@ lazyLoad('MailLabelSet', 'mail-label-set');
 lazyLoad('MailImportantIcon', 'mail-important-icon');
 
 lazyLoad('ScenarioEditor', 'scenario-editor');
+lazyLoad('LabelPopover', 'label-popover');
 
 // Higher order components
 lazyLoad('ListensToObservable', 'decorators/listens-to-observable');

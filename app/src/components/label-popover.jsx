@@ -1,31 +1,22 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg, LabelColorizer } from 'mailspring-component-kit';
-import {
-  Actions,
-  TaskFactory,
-  ChangeLabelsTask,
-  TaskQueue,
-  FocusedPerspectiveStore,
-} from 'mailspring-exports';
+import { Actions, TaskFactory, TaskQueue } from 'mailspring-exports';
 
-export default class CreateNewFolderPopover extends Component {
+export default class LabelPopover extends Component {
   static propTypes = {
-    threads: PropTypes.array.isRequired,
     account: PropTypes.object.isRequired,
     onCancel: PropTypes.func,
     left: PropTypes.number,
     top: PropTypes.number,
     onActionCallback: PropTypes.func,
-    name: PropTypes.string,
-    buttonTimeout: PropTypes.number,
-    isMoveAction: PropTypes.bool,
-    visible: PropTypes.bool,
+    isNew: PropTypes.bool,
   };
   static defaultProps = {
     left: 490,
     top: 107,
     buttonTimeout: 700, // timeout
+    isNew: false,
   };
 
   constructor(props) {
@@ -114,73 +105,38 @@ export default class CreateNewFolderPopover extends Component {
   };
   _onCreateCategory = () => {
     this.setState({ isBusy: true });
-    const syncbackTask = TaskFactory.tasksForCreatingPath({
-      name: this.state.newName,
-      bgColor: this.state.bgColor,
-      accountId: this.props.account.id,
-    });
+    let task;
+    if (this.props.isNew) {
+      task = TaskFactory.tasksForCreatingPath({
+        name: this.state.newName,
+        bgColor: this.state.bgColor,
+        accountId: this.props.account.id,
+      });
+    } else {
+      task = TaskFactory.tasksForEditingLabel({
+        accountId: this.props.account.id,
+        currentName: this.props.name,
+        newName: this.state.newName,
+        newColor: this.state.bgColor,
+      });
+    }
     this._onResultReturned();
-    if (syncbackTask) {
-      Actions.queueTask(syncbackTask);
-      TaskQueue.waitForPerformRemote(syncbackTask).then(finishedTask => {
+    if (task) {
+      Actions.queueTask(task);
+      TaskQueue.waitForPerformRemote(task).then(finishedTask => {
         if (finishedTask.error) {
           AppEnv.showErrorDialog({
             title: 'Error',
-            message: `Could not create label.${finishedTask.error && finishedTask.error.debuginfo}`,
+            message: `Could not ${
+              this.props.isNew ? 'create' : 'edit'
+            } label.${finishedTask.error && finishedTask.error.debuginfo}`,
           });
           return;
         }
-        if (this.props.isMoveAction) {
-          this._onMoveToCategory(finishedTask.created);
-        } else if (Array.isArray(this.props.threads) && this.props.threads.length > 0) {
-          Actions.queueTask(
-            new ChangeLabelsTask({
-              source: 'Category Picker: New Label',
-              threads: this.props.threads,
-              labelsToRemove: [],
-              labelsToAdd: [finishedTask.created],
-            })
-          );
-        }
-        this._onActionCallback({ addedLabels: [finishedTask.created] });
+        this._onActionCallback({ newLabels: [finishedTask.created] });
       });
       Actions.closePopover();
     }
-  };
-
-  _onMoveToCategory = category => {
-    // This is currently not used, replaced by moveFolder
-    AppEnv.logError(`Should not have been used, use moveFolder flow instead`);
-    const { threads } = this.props;
-    const all = [];
-    threads.forEach(({ labels }) => all.push(...labels));
-    const currentPerspective = FocusedPerspectiveStore.current();
-    if (currentPerspective && Array.isArray(currentPerspective.categories())) {
-      const inSpamOrTrash = currentPerspective.categories().every(cat => {
-        return cat && (cat.role === 'trash' || cat.role === 'spam');
-      });
-      if (inSpamOrTrash) {
-        Actions.queueTasks(
-          TaskFactory.tasksForChangeFolder({
-            source: 'Label Picker: New Label',
-            threads: threads,
-            folder: category,
-            currentPerspective,
-          })
-        );
-      } else {
-        Actions.queueTasks([
-          new ChangeLabelsTask({
-            source: 'Category Picker: Move to Label, deleting previous labels',
-            labelsToRemove: all.filter(label => label.isLabel && label.isLabel()),
-            labelsToAdd: [category],
-            threads: threads,
-          }),
-        ]);
-      }
-    }
-
-    this._onActionCallback({ addedLabels: [category], removedLabels: all });
   };
 
   _onNameChange = e => {
@@ -196,6 +152,7 @@ export default class CreateNewFolderPopover extends Component {
   };
 
   renderButtons() {
+    const text = this.props.isNew ? 'Create Label' : 'Edit Label';
     return (
       <div className="button-row">
         <button className="create-folder-btn-cancel" title="Cancel" onClick={this.onCancel}>
@@ -214,7 +171,7 @@ export default class CreateNewFolderPopover extends Component {
               mode={RetinaImg.Mode.ContentIsMask}
             />
           ) : (
-            <span>Create Label</span>
+            <span>{text}</span>
           )}
         </button>
       </div>
@@ -222,6 +179,7 @@ export default class CreateNewFolderPopover extends Component {
   }
 
   render() {
+    const title = this.props.isNew ? 'New Label' : 'Edit Label';
     return (
       <div
         ref={el => (this.container = el)}
@@ -238,7 +196,7 @@ export default class CreateNewFolderPopover extends Component {
           </span>
         </div>
         <div className="header-text-container">
-          <div className="header-text">New Label</div>
+          <div className="header-text">{title}</div>
           <div className="header-subtext">What do you want to name it?</div>
         </div>
         <input
@@ -249,7 +207,7 @@ export default class CreateNewFolderPopover extends Component {
           onChange={this._onNameChange}
         />
         <div>
-          <div className="header-subtext">Pick a color for your new label:</div>
+          <div className="header-subtext">Pick a color for your label:</div>
           <div className="color-choice">
             {LabelColorizer.colors.map((color, idx) => {
               const className = this.state.bgColor === idx ? 'checked' : '';

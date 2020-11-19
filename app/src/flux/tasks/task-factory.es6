@@ -450,6 +450,40 @@ const TaskFactory = {
     }
     return SyncbackCategoryTask.forRenaming({ path: existingPath, accountId, newName, isExchange });
   },
+  tasksForEditingLabel({ currentName, newName, accountId, newColor } = {}) {
+    if (bannedPathNames.includes(newName)) {
+      AppEnv.logWarning(`TaskFactory:Edit folder ${newName} is in banned`);
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `${newName} is a reserved name`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
+    const existingCategories = CategoryStore.categories(accountId);
+    if (existingCategories.length > 0) {
+      for (let i = 0; i < existingCategories.length; i++) {
+        const displayName = existingCategories[i].fullDisplayName;
+        if (displayName === newName) {
+          AppEnv.logWarning(
+            `TaskFactory:Editing label ${newName} is in conflict with existing label ${displayName}`
+          );
+          AppEnv.showMessageBox({
+            title: 'Cannot rename',
+            detail: `${newName} already exists`,
+            buttons: ['Ok'],
+          });
+          return;
+        }
+      }
+    }
+    return SyncbackCategoryTask.editLabel({
+      currentName,
+      accountId,
+      newName,
+      newColor,
+    });
+  },
   tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
     if (bannedPathNames.includes(name)) {
       AppEnv.logWarning(`TaskFactory:Creating folder ${name} is in banned`);

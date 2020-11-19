@@ -329,8 +329,9 @@ export default class Category extends Model {
   isDeleted() {
     return this.state === Category.DELETED;
   }
+  //Is Hidden from Folder Tree
   isHidden = () => {
-    return CategoryMetadata().isHidden({ accountId: this.accountId, id: this.id });
+    return !!CategoryMetadata().isHidden({ accountId: this.accountId, id: this.id });
   };
   hide(save = true) {
     CategoryMetadata().hide({ accountId: this.accountId, id: this.id });
