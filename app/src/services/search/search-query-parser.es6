@@ -14,8 +14,7 @@ import {
   HasAttachmentQueryExpression,
   SpecialCharacterQueryExpression,
 } from './search-query-ast';
-import { CategoryStore, FocusedPerspectiveStore } from 'mailspring-exports';
-var utf7 = require('utf7').imap;
+import { CategoryStore, FocusedPerspectiveStore, Utils } from 'mailspring-exports';
 
 const nextStringToken = text => {
   if (text[0] !== '"') {
@@ -321,7 +320,7 @@ const findRoleForPath = path => {
       }
     }
   }
-  return utf7.encode(path);
+  return Utils.safeSQL(path);
 };
 
 const parseOrQuery = text => {
