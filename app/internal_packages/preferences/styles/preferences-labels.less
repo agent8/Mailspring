@@ -1,0 +1,183 @@
+@import 'ui-variables';
+
+.preferences-wrap {
+  .container-labels {
+    max-width: 700px;
+    padding-bottom: 33.5px;
+
+    .config-group {
+      border: none;
+      max-width: 682px;
+    }
+
+    .labels-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 28px 0 20.5px 20px;
+
+      .labels-title {
+        height: 11px;
+        width: 96px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 11px;;
+      }
+
+      .labels-description {
+        color: @gray-light;
+        margin-top: 15px;
+        margin-bottom: 20.5px;
+        padding-right: 50px;
+        width: 620px;
+        height: 36px;
+        font-size: 13px;
+        line-height: 18px;
+      }
+
+      .labels-controls {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+
+        .account-selection {
+          width: fit-content;
+          height: 21px;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+
+          .label {
+            height: 16px;
+            width: 55px;
+            font-size: 13px;
+            line-height: 16px;
+          }
+
+          .labels-menu {
+            width: max-content;
+          }
+
+          .dropdown-menu {
+            width: fit-content;
+            height: 21px;
+
+            .edison-icon {
+              visibility: hidden;
+            }
+          }
+        }
+
+        .add-label {
+          box-sizing: border-box;
+          height: 30px;
+          width: 112px;
+          border-radius: 10px;
+          background-color: @white;
+          border: 0.5px solid #E8EBED;
+          box-shadow: 0 0.5px 1px 0 rgba(0, 0, 0, 0.2);
+          margin: 0;
+          display: flex;
+          align-items: center;
+          color: @blue;
+
+          .edison-icon {
+            color: @blue;
+          }
+        }
+      }
+    }
+
+    .labels-table {
+      width: 672px;
+      height: calc(~'100% - 208px');
+      margin-left: 10px;
+      position: absolute;
+      border: 1px solid @black;
+      .close{
+        cursor: pointer;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: @gray-light;
+        margin: 0 15px;
+        display: inline-block;
+        text-align: center;
+      }
+      .label-pill {
+        cursor: pointer;
+        display: inline-flex;
+        height: 20px;
+        width: 68px;
+        border-radius: 10px;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        margin: 10px 0;
+      }
+
+      table {
+        height: 100%;
+        width: 100%;
+      }
+
+      tr {
+        height: 40px;
+        border: none;
+
+        .pill-selected {
+          background-color: @gray-lighter;
+        }
+      }
+
+      tbody {
+        boder: @gray;
+        height: calc(~'100% - 248px');
+
+        tr:hover {
+          background-color: @gray-lighter;
+
+          .pill-selected {
+            background-color: @white;
+          }
+        }
+      }
+
+
+      td {
+        width: 220px;
+        text-align: left;
+        color: @gray;
+        border: none;
+      }
+
+      td:first-of-type {
+        padding-left: 15px;
+      }
+
+      td:last-of-type {
+        width: 230px;
+        text-align: right;
+      }
+
+      thead {
+        th {
+          color: @light-grey;
+          width: 220px;
+          text-align: left;
+          border: none;
+        }
+
+        th:first-of-type {
+          padding-left: 15px;
+        }
+
+        th:last-of-type {
+          text-align: right;
+        }
+      }
+    }
+  }
+}

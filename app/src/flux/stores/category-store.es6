@@ -55,6 +55,9 @@ class CategoryStore extends MailspringStore {
   //   return Category.pathToDisplayName(pathString);
   // }
   byFolderId(categoryId) {
+    if (!categoryId) {
+      return null;
+    }
     const accountIds = Object.keys(this._categoryCache);
     for (let accountId of accountIds) {
       const category = this.byId(accountId, categoryId);

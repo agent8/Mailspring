@@ -503,12 +503,6 @@ class OutlineViewItem extends Component {
       </div>
     );
   }
-  _renderDrag() {
-    if (!this.props.isEditingMenu) {
-      return null;
-    }
-    return <div>D</div>;
-  }
 
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
@@ -523,9 +517,7 @@ class OutlineViewItem extends Component {
       <DropZone
         id={item.id}
         className={containerClass}
-        draggable={true}
         onDrop={this._onDrop}
-        onDragStart={this._onDragStart}
         onClick={this._onClick}
         onDoubleClick={this._onEdit}
         shouldAcceptDrop={this._shouldAcceptDrop}
@@ -569,14 +561,6 @@ class OutlineViewItem extends Component {
     }
     return <span />;
   }
-  _renderDropOverCategory = () => {
-    if (!this.state.isCategoryDropping) {
-      return null;
-    }
-    return (
-      <div className="item-container item-dropping-mirage" key={`dropping-${this.props.item.id}`} />
-    );
-  };
 
   render() {
     const item = this.props.item;
@@ -622,7 +606,6 @@ class OutlineViewItem extends Component {
             visibleOnHover={item.children && item.children.length > 0}
             onCollapseToggled={this._onCollapseToggled}
           />
-          {this._renderDrag()}
         </span>
         {this._renderChildren()}
       </div>
