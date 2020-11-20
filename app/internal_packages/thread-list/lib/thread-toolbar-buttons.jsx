@@ -1479,6 +1479,13 @@ class MoreActionsButton extends React.Component {
     super();
   }
 
+  _canReplyAll = () => {
+    const lastMessage = (this.props.thread.__messages || MessageStore.items() || [])
+      .filter(m => !m.draft)
+      .pop();
+    return lastMessage && lastMessage.canReplyAll();
+  };
+
   _more = () => {
     const expandTitle = MessageStore.hasCollapsedItems() ? 'Expand All' : 'Collapse All';
     const menu = new Menu();
@@ -1499,6 +1506,30 @@ class MoreActionsButton extends React.Component {
         }
       }
     });
+    menu.insert(
+      0,
+      new MenuItem({
+        label: `Forward`,
+        click: () => AppEnv.commands.dispatch('core:forward'),
+      })
+    );
+    if (this._canReplyAll()) {
+      menu.insert(
+        0,
+        new MenuItem({
+          label: `Reply All`,
+          click: () => AppEnv.commands.dispatch('core:reply-all'),
+        })
+      );
+    }
+    menu.insert(
+      0,
+      new MenuItem({
+        label: `Reply`,
+        click: () => AppEnv.commands.dispatch('core:reply'),
+      })
+    );
+
     if (!AppEnv.isDisableThreading()) {
       menu.append(
         new MenuItem({
