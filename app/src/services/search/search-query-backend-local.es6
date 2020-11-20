@@ -9,7 +9,7 @@ import {
   MatchQueryExpression,
   SpecialCharacterQueryExpression,
 } from './search-query-ast';
-import { DateUtils } from 'mailspring-exports';
+import { DateUtils, Utils } from 'mailspring-exports';
 
 const isMessageView = AppEnv.isDisableThreading();
 
@@ -251,7 +251,7 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
   visitSpecialCharacter(node) {
     const text = node.text.token.s;
-    this._result = `(\`${this._className}\`.\`subject\` like '${text.replace(/'/g, "''")}')`;
+    this._result = `(\`${this._className}\`.\`subject\` like '${Utils.safeSQL(text)}' escape '/')`;
   }
 
   visitDate(node, klassName = '') {
