@@ -605,7 +605,9 @@ class SearchMatcher extends Matcher {
 
   whereSQL(klass) {
     const searchTable = `${klass.getTableName()}Search`;
-    return `\`${klass.getTableName()}\`.\`pid\` IN (SELECT \`threadId\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '"${
+    return `\`${klass.getTableName()}\`.\`pid\` IN (SELECT \`${
+      isMessageView ? 'messageId' : 'threadId'
+    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '"${
       this.searchQuery
     }"*' LIMIT 1000)`;
   }

@@ -859,7 +859,7 @@ export class ThreadListMoreButton extends React.Component {
     if (current && current.accountIds.length) {
       this._account = AccountStore.accountForId(current.accountIds[0]);
     }
-    this.state = { showMoveToOtherDialog: false };
+    this.state = { showMoveToOtherDialog: false, showMoveToFocusedDialog: false };
     this._mounted = false;
   }
   componentDidMount() {
@@ -910,20 +910,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Focused',
-            click: event => {
-              const { selection, items } = this.props;
-              const threads = threadSelectionScope(this.props, selection);
-              const tasks = TaskFactory.tasksForMoveToFocused(
-                Array.isArray(threads) ? threads : items
-              );
-              Actions.queueTasks(tasks);
-              if (event && typeof event.stopPropagation === 'function') {
-                event.stopPropagation();
-              }
-              if (selection) {
-                selection.clear();
-              }
-            },
+            click: this._onToggleMoveFocused,
           })
         );
       }
@@ -1037,19 +1024,52 @@ export class ThreadListMoreButton extends React.Component {
     if (!this._mounted) {
       return;
     }
-    this.setState({ showMoveToOtherDialog: !this.state.showMoveToOtherDialog });
+    this.setState({
+      showMoveToOtherDialog: !this.state.showMoveToOtherDialog,
+      showMoveToFocusedDialog: false,
+    });
   };
-  _onMoveToOther = () => {
+  _onToggleMoveFocused = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: false,
+      showMoveToFocusedDialog: !this.state.showMoveToFocusedDialog,
+    });
+  };
+  _onHideMoveOtherFocusedDialog = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: false,
+      showMoveToFocusedDialog: false,
+    });
+  };
+  _onMoveToOtherFocused = () => {
     const { selection, items } = this.props;
     const threads = threadSelectionScope(this.props, selection);
-    const tasks = TaskFactory.tasksForMoveToOther(Array.isArray(threads) ? threads : items);
+    let tasks;
+    if (this.state.showMoveToOtherDialog) {
+      tasks = TaskFactory.tasksForMoveToOther(Array.isArray(threads) ? threads : items);
+    } else if (this.state.showMoveToFocusedDialog) {
+      tasks = TaskFactory.tasksForMoveToFocused(Array.isArray(threads) ? threads : items);
+    }
     Actions.queueTasks(tasks);
     if (selection) {
       selection.clear();
     }
+    this._onHideMoveOtherFocusedDialog();
   };
 
-  _renderMoveOtherPopup = () => {
+  _renderMoveOtherFocusedPopup = () => {
+    let name;
+    if (this.state.showMoveToFocusedDialog) {
+      name = 'Focused';
+    } else if (this.state.showMoveToOtherDialog) {
+      name = 'Other';
+    }
     return (
       <div className="email-confirm-popup">
         <RetinaImg
@@ -1058,30 +1078,30 @@ export class ThreadListMoreButton extends React.Component {
           style={{ width: '20', height: '20' }}
           name="close.svg"
           mode={RetinaImg.Mode.ContentIsMask}
-          onClick={this._onToggleMoveOther}
+          onClick={this._onHideMoveOtherFocusedDialog}
         />
-        <h1>{`Move to Other Inbox`}</h1>
+        <h1>{`Move to ${name} Inbox`}</h1>
         <p>
-          Always move conversations from these senders to <br /> your Other Inbox
+          Always move conversations from these senders to <br /> your {`${name} Inbox`}
         </p>
         <div className="btn-list">
-          <div className="btn cancel" onClick={this._onToggleMoveOther}>
+          <div className="btn cancel" onClick={this._onHideMoveOtherFocusedDialog}>
             Cancel
           </div>
-          <div className="btn confirm" onClick={this._onMoveToOther}>
+          <div className="btn confirm" onClick={this._onMoveToOtherFocused}>
             Move
           </div>
         </div>
       </div>
     );
   };
-  _renderMoveToOtherDialog() {
-    if (!this.state.showMoveToOtherDialog) {
+  _renderMoveToOtherFocusedDialog() {
+    if (!this.state.showMoveToOtherDialog && !this.state.showMoveToFocusedDialog) {
       return null;
     }
     return (
       <FullScreenModal
-        visible={this.state.showMoveToOtherDialog}
+        visible={this.state.showMoveToOtherDialog || this.state.showMoveToFocusedDialog}
         style={{
           height: 'auto',
           width: '400px',
@@ -1091,7 +1111,7 @@ export class ThreadListMoreButton extends React.Component {
           bottom: 'auto',
         }}
       >
-        {this._renderMoveOtherPopup()}
+        {this._renderMoveOtherFocusedPopup()}
       </FullScreenModal>
     );
   }
@@ -1112,7 +1132,7 @@ export class ThreadListMoreButton extends React.Component {
           mode={RetinaImg.Mode.ContentIsMask}
         />
       </button>,
-      this._renderMoveToOtherDialog(),
+      this._renderMoveToOtherFocusedDialog(),
     ];
   }
 }
@@ -1467,12 +1487,15 @@ class MoreActionsButton extends React.Component {
     moreButtonlist.forEach(button => {
       if (button && typeof button === 'function') {
         const menuItem = button({ ...this.props, isMenuItem: true, anchorEl: this._anchorEl });
-        if (menuItem instanceof Array) {
-          menuItem.forEach(item => {
-            menu.append(item);
-          });
-        } else {
-          menu.append(menuItem);
+        // if the account has no spam folder, the menuItem is false
+        if (menuItem) {
+          if (menuItem instanceof Array) {
+            menuItem.forEach(item => {
+              menu.append(item);
+            });
+          } else {
+            menu.append(menuItem);
+          }
         }
       }
     });
