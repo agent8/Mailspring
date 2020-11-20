@@ -21,7 +21,6 @@
     "babel-preset-react": "6.x.x",
     "chalk": "1.x.x",
     "devtron": "^1.4.0",
-    "electron": "6.1.12",
     "electron-installer-dmg": "^3.0.0",
     "electron-packager": "^15.1.0",
     "electron-packager-languages": "^0.4.0",
@@ -93,6 +92,7 @@
   "dependencies": {
     "aws-sdk": "^2.336.0",
     "cheerio": "^1.0.0-rc.3",
+    "electron": "6.1.12",
     "electron-platform": "^1.2.0",
     "fs-xattr": "^0.3.0",
     "mkdirp": "^0.5.1",
