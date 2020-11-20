@@ -13,7 +13,7 @@ export const storeGoogleAuthEpic = (action$) =>
   action$.pipe(
     ofType(AuthActionTypes.SUCCESS_GOOGLE_AUTH),
     mergeMap((action) =>
-      from(storeAccount(action.payload.user)).pipe(
+      from(storeGoogleData(action.payload.user)).pipe(
         // mergeMap((resp) => of(successStoreAuth(), retrieveStoreEvents(action.payload.user))),
         mergeMap((resp) => of(successStoreAuth())),
         catchError((error) => {
@@ -82,6 +82,32 @@ const storeCaldavData = async (payload) => {
     storeCalendar = payload.user.calendars
       .filter((cal) => cal.components.includes('VEVENT'))
       .map((filteredCal) => dbCalendarActions.insertCalendar(payload.user, filteredCal));
+  }
+  return Promise.all([storeUser, ...storeCalendar]);
+};
+
+const storeGoogleData = async (payload) => {
+  console.log(payload);
+  // debugger;
+  // db actions are async. Needed user to be stored successfully in order for calendars to be stored in db due to FK constraints
+  const storeUser = await dbUserActions.insertAccountIntoDatabase(payload);
+  // debugger;
+  let storeCalendar = [];
+  // check to make sure payload.data is defined
+  // console.log(payload)
+  // debugger;
+
+  // autologin have no payload.data, also not required to stored calendars again for autologin as calendars area already stored.
+  if (payload.calendars) {
+    storeCalendar = payload.calendars
+      .map((cal) => {
+        cal.ctag = cal.etag
+        cal.displayName = cal.summary
+        cal.timezone = cal.timeZone
+        cal.account = payload
+        cal.objects = {}
+        dbCalendarActions.insertCalendar(payload, cal)
+      });
   }
   return Promise.all([storeUser, ...storeCalendar]);
 };

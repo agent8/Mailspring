@@ -1,10 +1,11 @@
 import md5 from 'md5';
 import * as ProviderTypes from '../constants';
+import axios from 'axios'
+import moment from 'moment';
 
 export const GOOGLE_CLIENT_ID =
   '65724758895-gc7lubjkjsqqddfhlb7jcme80i3mjqn0.apps.googleusercontent.com';
-export const GOOGLE_API_KEY = 'AIzaSyCTYXWtoRKnXeZkPCcZwYOXm0Qz3Lz9F9g';
-export const GOOGLE_SCOPE = `https://www.googleapis.com/auth/calendar.events`;
+export const GOOGLE_API_KEY = 'AIzaSyAgA9vLu54Xpv6y93yptMDUFzZ8kXyvQnA';
 
 export const loadClient = async () => {
   const result = new Promise((resolve, reject) => {
@@ -72,6 +73,31 @@ export const loadNextPage = async (pageToken) =>
     );
   });
 
+export const getAllCalendars = async (accessToken) => {
+  return await axios.get(
+    `https://www.googleapis.com/calendar/v3/users/me/calendarList?key=${GOOGLE_API_KEY}`,
+    {
+      headers: {
+        Authorization: 'Bearer '.concat(accessToken),
+        Accept: 'application/json'
+      }
+    }
+  );
+}
+
+export const getCalendarEvents = async (calendarId, accessToken) => {
+  calendarId = calendarId.replace('#', '%23')
+  return await axios.get(
+    `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?key=${GOOGLE_API_KEY}`,
+    {
+      headers: {
+        Authorization: 'Bearer '.concat(accessToken),
+        Accept: 'application/json'
+      }
+    }
+  )
+}
+
 export const filterUser = (account, calendars, accessToken, accessTokenExpiry = '') => ({
   personId: md5(account.pid),
   originalId: account.pid,
@@ -81,3 +107,74 @@ export const filterUser = (account, calendars, accessToken, accessTokenExpiry = 
   accessToken,
   accessTokenExpiry
 });
+
+export const asyncGetAllGoogleEvents = async (email, accessToken) => {
+  // 1. get the list of calendars
+  // 2. For each calendar retrieve the events
+  // 3. Parse the events
+
+  let res = await getAllCalendars(accessToken);
+  const calendars = res.data.items;
+
+  try {
+    let finalResult = []
+    for (const calendar of calendars) {
+      let resp = await getCalendarEvents(calendar.id, accessToken);
+      const events = resp.data;
+
+      for (const event of events.items) {
+        if (event.end) {
+          finalResult.push({
+            attendee: event.attendees ? JSON.stringify({
+              ...event.attendees.map(attendee => {
+                let partstat = 'NEEDS-ACTION'
+                if (attendee.responseStatus === 'accepted') partstat = 'APPROVED'
+                if (attendee.responseStatus === 'declined') partstat = 'DECLINED'
+                return {
+                  email: attendee.email,
+                  partstat
+                }
+              })
+            }) : '',
+            calendarId: calendar.id,
+            colorId: 'blue', // TODO the color logic
+            created: moment(event.created).unix(),
+            description: event.description ? event.description : '',
+            end: {
+              dateTime: moment(event.end.dateTime ? event.end.dateTime : event.end.date).unix()
+            },
+            etag: event.etag,
+            iCalUID: event.iCalUID,
+            id: event.id,
+            isAllDay: event.date,
+            // isMaster: true,
+            isRecurring: event.recurringEventId ? true : false,
+            location: event.location,
+            organizer: event.organizer ? event.organizer.email : '',
+            originalId: event.id,
+            originalStartTime: {
+              dateTime: moment(event.start.dateTime ? event.start.dateTime : event.start.date).unix()
+            },
+            owner: event.creator ? event.creator.email : '',
+            providerType: 'GOOGLE',
+            recurringEventId: event.recurringEventId ? event.recurringEventId : '',
+            start: {
+              dateTime: moment(event.start.dateTime ? event.start.dateTime : event.start.date).unix()
+            },
+            summary: event.summary,
+            updated: 0,
+            // CALDAV Fields: Not relevant
+            iCALString: '',
+            caldavType: '',
+            caldavUrl: '',
+          })
+        }
+      }
+    }
+    console.log("BEAR")
+    console.log(finalResult)
+    return finalResult;
+  } catch (e) {
+    throw e
+  }
+}

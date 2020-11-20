@@ -20,6 +20,7 @@ import { filterCaldavUser } from '../utils/client/caldav';
 import { findAccount } from '../sequelizeDB/operations/accounts';
 import serverUrls from '../utils/serverUrls';
 import axios from 'axios';
+import { getAllCalendars } from '../utils/client/google';
 
 const dav = require('dav');
 
@@ -47,15 +48,7 @@ export const authBeginMiddleware = (store) => (next) => async (action) => {
         account
       } = AppEnv.config.get('plugin.calendar.config');
       try {
-        const res = await axios.get(
-          'https://www.googleapis.com/calendar/v3/users/me/calendarList?key=AIzaSyAgA9vLu54Xpv6y93yptMDUFzZ8kXyvQnA',
-          {
-            headers: {
-              Authorization: 'Bearer '.concat(access_token),
-              Accept: 'application/json'
-            }
-          }
-        );
+        const res = await getAllCalendars(access_token);
         const calendars = res.data.items
         const user = filterUser(account, calendars, access_token)
         next({

@@ -82,6 +82,7 @@ import {
 import * as Credentials from '../utils/credentials';
 import ServerUrls from '../utils/serverUrls';
 import { asyncGetAllCalDavEvents } from '../utils/client/caldav';
+import { asyncGetAllGoogleEvents } from '../utils/client/google';
 import * as IcalStringBuilder from '../utils/icalStringBuilder';
 
 import * as dbGeneralActions from '../sequelizeDB/operations/general';
@@ -461,6 +462,97 @@ const syncEvents = async (action) => {
       // Check which provider
       switch (user.providerType) {
         case Providers.GOOGLE:
+          console.log("GOOGLE EVENTS SYNCING")
+          try {
+            // debugger;
+            const events = await asyncGetAllGoogleEvents(
+              user.email,
+              user.accessToken
+            );
+            console.log(user);
+            console.log(events);
+            // debugger;
+            const dbEvents = await dbEventActions.getAllEvents();
+            const updatedEvents = [];
+            const listOfPriomises = [];
+
+            for (const event of events) {
+              const dbObj = dbEvents.filter(
+                (dbEvent) =>
+                  dbEvent.start.dateTime === event.start.dateTime &&
+                  dbEvent.originalId === event.originalId
+              );
+              const filteredEvent = Providers.filterIntoSchema(
+                event,
+                Providers.GOOGLE,
+                user.email,
+                false
+              );
+
+              // debugger;
+
+              if (dbObj.length === 0) {
+                // New object from server, add and move on to next one.
+                updatedEvents.push({ event: filteredEvent, type: 'create' });
+                listOfPriomises.push(dbEventActions.insertEventsIntoDatabase(filteredEvent));
+              } else {
+                // Sync old objects and compare in case.
+                const dbEvent = dbObj[0];
+
+                // Just update, server is always truth, no matter what
+                updatedEvents.push({ event: filteredEvent, type: 'update' });
+                filteredEvent.id = dbEvent.id;
+                listOfPriomises.push(
+                  dbEventActions.updateEventByiCalUIDandStartDateTime(
+                    filteredEvent.iCalUID,
+                    event.start.dateTime,
+                    filteredEvent
+                  )
+                );
+              }
+            }
+
+            // debugger;
+
+            // Check for deleted events, as if it not in the set, it means that it could be deleted.
+            // In database, but not on server, as we are taking server, we just assume delete.
+            for (const dbEvent of dbEvents) {
+              const result = events.find(
+                (event) =>
+                  dbEvent.start.dateTime === event.start.dateTime &&
+                  dbEvent.originalId === event.originalId &&
+                  dbEvent.providerType === event.providerType
+              );
+              // Means we found something, move on to next object or it has not been uploaded to the server yet.
+              if (
+                dbEvent.providerType !== Providers.GOOGLE ||
+                result !== undefined ||
+                dbEvent.createdOffline === true
+              ) {
+                continue;
+              }
+              console.log('Found a event not on server, but is local', dbEvent);
+
+              // Means not found, delete it if it is not a new object.
+              updatedEvents.push({
+                event: Providers.filterEventIntoSchema(dbEvent),
+                type: 'delete'
+              });
+              listOfPriomises.push(
+                dbEventActions.deleteEventByiCalUIDandStartDateTime(
+                  dbEvent.originalId,
+                  dbEvent.start.dateTime
+                )
+              );
+            }
+            await Promise.all(listOfPriomises);
+            console.log("PANDA")
+            console.log(updatedEvents)
+            return updatedEvents;
+          } catch (e) {
+            console.log(e);
+            return [];
+          }
           break;
         case Providers.OUTLOOK:
           break;
