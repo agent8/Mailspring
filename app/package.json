@@ -82,7 +82,7 @@
     "mkdirp": "^0.5.1",
     "moment": "2.24.0",
     "moment-round": "^1.0.1",
-    "moment-timezone": "0.5.4",
+    "moment-timezone": "^0.5.32",
     "mousetrap": "^1.5.3",
     "node-emoji": "^1.2.1",
     "node-rsa": "^1.0.1",
