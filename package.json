@@ -66,6 +66,7 @@
     "underscore": "1.8.x"
   },
   "scripts": {
+    "sonar": "sh scripts/sonar-check.sh",
     "build-native": "sh scripts/build-native.sh",
     "uploaddmg": "node scripts/upload_dmg.js",
     "uploadpkg": "node scripts/upload_pkg.js",
@@ -98,7 +99,8 @@
     "mkdirp": "^0.5.1",
     "node-gyp": "^6.0.0",
     "plist": "^3.0.1",
-    "react-bootstrap": "^0.32.4"
+    "react-bootstrap": "^0.32.4",
+    "sonar-scanner": "^3.1.0"
   },
   "resolutions": {
     "**/nan": "2.14.0",
