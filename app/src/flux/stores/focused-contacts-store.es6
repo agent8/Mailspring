@@ -113,7 +113,7 @@ class FocusedContactsStore extends MailspringStore {
     }
     DatabaseStore.findAll(Thread)
       .where({ state: 0 })
-      .structuredSearch(SearchQueryParser.parse(`from:${email}`))
+      .structuredSearch({ query: SearchQueryParser.parse(`from:${email}`) })
       .limit(100)
       // .background()
       .then((threads = []) => {
