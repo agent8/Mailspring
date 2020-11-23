@@ -62,7 +62,6 @@ const mapStateToProps = (state) => {
     }))
   ];
 
-  // console.log("PANDA");
   // const access_token = AppEnv.config.get('plugin.calendar.config').access_token;
   // const refresh_token = AppEnv.config.get('plugin.calendar.config').refresh_token;
   // METHOD 1: HTTP REQUEST DIRECTLY TO GOOGLE APIS (WORKING)

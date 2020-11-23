@@ -47,49 +47,26 @@ export const authBeginMiddleware = (store) => (next) => async (action) => {
         refresh_token,
         account
       } = AppEnv.config.get('plugin.calendar.config');
-      try {
-        const res = await getAllCalendars(access_token);
-        const calendars = res.data.items
-        const user = filterUser(account, calendars, access_token)
-        next({
-          type: AuthActionTypes.SUCCESS_GOOGLE_AUTH,
-          payload: {
-            user
-          }
+      getAllCalendars(access_token)
+        .then(res => {
+          next({
+            type: AuthActionTypes.SUCCESS_GOOGLE_AUTH,
+            payload: {
+              user: filterUser(
+                account,
+                res.data.items,
+                access_token
+              ),
+              calendars: res.data.items.length > 1 ? res.data.items : [],
+            }
+          })
         })
-      } catch (err) {
-        console.log(err)
-      }
-
+        .catch(err => console.log(err));
+    } else {
+      next({
+        type: AuthActionTypes.RETRY_GOOGLE_AUTH,
+      })
     }
-
-    // OLD CODE - TO REMOVE
-    // GoogleAuth = window.gapi.auth2.getAuthInstance();
-    // // GoogleAuth.signIn();
-    // handleAuthClick(GoogleAuth);
-    // const googleUser = GoogleAuth.currentUser.get();
-    // const authResponse = googleUser.getAuthResponse();
-    // const user = filterUser(
-    //   googleUser.getBasicProfile(),
-    //   authResponse.access_token,
-    //   authResponse.expires_at
-    // );
-
-    // const isAuthorized = googleUser.hasGrantedScopes(GOOGLE_SCOPE);
-    // if (isAuthorized) {
-    //   next({
-    //     type: AuthActionTypes.SUCCESS_GOOGLE_AUTH,
-    //     payload: {
-    //       user
-    //     }
-    //   });
-    // } else {
-    //   next({
-    //     type: AuthActionTypes.FAIL_GOOGLE_AUTH
-    //   });
-    // }
-    // #region
-    // #endregion
   } else if (action.type === AuthActionTypes.BEGIN_OUTLOOK_AUTH) {
     const url = buildAuthUrl();
     console.log(url);
@@ -206,11 +183,11 @@ export const authSuccessMiddleware = (store) => (next) => (action) => {
       payload: { providerType: Providers.GOOGLE, user: action.payload.user }
     });
   }
-  // if (action.type === AuthActionTypes.FAIL_GOOGLE_AUTH) {
-  //   next({
-  //     type: AuthActionTypes.RETRY_GOOGLE_AUTH
-  //   });
-  // }
+  if (action.type === AuthActionTypes.FAIL_GOOGLE_AUTH) {
+    next({
+      type: AuthActionTypes.RETRY_GOOGLE_AUTH
+    });
+  }
 
   // if (action.type === AuthActionTypes.SUCCESS_OUTLOOK_AUTH) {
   //   next({

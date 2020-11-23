@@ -36,9 +36,15 @@ export default function authReducer(state = initialState, action) {
               (e) => e.personId === action.payload.user.personId
             ).length > 0
               ? state.providers[ProviderTypes.GOOGLE].map((e) =>
-                e.personId === action.payload.user.personId ? action.payload.user : e
+                e.personId === action.payload.user.personId
+                  ? { ...action.payload.user, calendars: action.payload.calendars }
+                  : e
               )
-              : state.providers[ProviderTypes.GOOGLE].concat(action.payload.user)
+              : state.providers[ProviderTypes.GOOGLE]
+                .concat({
+                  ...action.payload.user,
+                  calendars: action.payload.calendars
+                })
         },
         expiredProviders: {
           [ProviderTypes.GOOGLE]: state.expiredProviders[ProviderTypes.GOOGLE].filter(

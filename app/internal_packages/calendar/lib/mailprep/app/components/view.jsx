@@ -710,10 +710,10 @@ export default class View extends React.Component {
                 />
                 ICLOUD
               </label>
-              <label>
+              {/* <label>
                 <input type="radio" name="accountType" value="GOOGLE" onChange={this.handleChange} />
                   GOOGLE
-              </label>
+              </label> */}
               <label>
                 <input type="radio" name="accountType" value="YAHOO" onChange={this.handleChange} />
                   YAHOO
@@ -770,14 +770,6 @@ export default class View extends React.Component {
           role="button"
           tabIndex="0"
           className="waves-effect waves-light btn"
-          onClick={() => props.beginGetExchangeEvents(props.providers.EXCHANGE)}
-        >
-          <i className="material-icons left">cloud_download</i>Get Exchange Events
-        </a>
-        <a
-          role="button"
-          tabIndex="0"
-          className="waves-effect waves-light btn"
           onClick={() => props.beginGetCaldavEvents(props.providers.CALDAV)}
         >
           <i className="material-icons left">cloud_download</i>Get Caldav Events
@@ -827,6 +819,7 @@ export default class View extends React.Component {
             <FilterCalendar />
             <BigButton variant="small-blue" onClick={() => this.setState({ isShowLoginForm: true })}>Login</BigButton>
             <BigButton variant="small-blue" onClick={() => this.authorizeGoogleCodeRequest()}>Google Auth</BigButton>
+            <BigButton variant="small-blue" onClick={() => this.authorizeExchangeCodeRequest()}>Exchange</BigButton>
           </div>
         </div>
       );

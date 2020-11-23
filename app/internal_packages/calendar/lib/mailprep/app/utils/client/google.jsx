@@ -73,8 +73,8 @@ export const loadNextPage = async (pageToken) =>
     );
   });
 
-export const getAllCalendars = async (accessToken) => {
-  return await axios.get(
+export const getAllCalendars = (accessToken) => {
+  return axios.get(
     `https://www.googleapis.com/calendar/v3/users/me/calendarList?key=${GOOGLE_API_KEY}`,
     {
       headers: {
@@ -98,15 +98,33 @@ export const getCalendarEvents = async (calendarId, accessToken) => {
   )
 }
 
-export const filterUser = (account, calendars, accessToken, accessTokenExpiry = '') => ({
-  personId: md5(account.pid),
-  originalId: account.pid,
-  email: account.emailAddress,
-  providerType: ProviderTypes.GOOGLE,
-  calendars: calendars.length > 0 ? calendars : [],
-  accessToken,
-  accessTokenExpiry
-});
+export const addGoogleEvent = (calendarId, event) => {
+  return axios.post(
+    `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?key=${GOOGLE_API_KEY}`,
+    {
+      headers: {
+        Authorization: 'Bearer '.concat(accessToken),
+        Accept: 'application/json',
+      },
+      data: {
+        start: {},
+        end: {}
+      }
+    }
+  )
+}
+
+export const filterUser = (account, calendars, accessToken, accessTokenExpiry = '') => {
+  return ({
+    personId: md5(account.pid),
+    originalId: account.pid,
+    email: account.emailAddress,
+    providerType: ProviderTypes.GOOGLE,
+    calendars: calendars.length > 0 ? calendars : [],
+    accessToken,
+    accessTokenExpiry
+  })
+};
 
 export const asyncGetAllGoogleEvents = async (email, accessToken) => {
   // 1. get the list of calendars
@@ -171,8 +189,6 @@ export const asyncGetAllGoogleEvents = async (email, accessToken) => {
         }
       }
     }
-    console.log("BEAR")
-    console.log(finalResult)
     return finalResult;
   } catch (e) {
     throw e

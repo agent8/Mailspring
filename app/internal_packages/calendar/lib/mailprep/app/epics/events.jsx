@@ -546,7 +546,7 @@ const syncEvents = async (action) => {
               );
             }
             await Promise.all(listOfPriomises);
-            console.log("PANDA")
+            console.log("BOBO")
             console.log(updatedEvents)
             return updatedEvents;
           } catch (e) {

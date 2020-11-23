@@ -109,7 +109,7 @@ const storeGoogleData = async (payload) => {
         dbCalendarActions.insertCalendar(payload, cal)
       });
   }
-  return Promise.all([storeUser, ...storeCalendar]);
+  return await Promise.all([storeUser, ...storeCalendar]);
 };
 
 const storeAccount = async (account) => {
