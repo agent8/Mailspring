@@ -97,7 +97,7 @@ export default class EmailAvatar extends Component {
         bccList = [];
       messages.forEach(msg => {
         const account = AccountStore.accountForId(msg.accountId);
-        const filterCurrent = contact => !account.isMyEmail(contact.email);
+        const filterCurrent = contact => account && !account.isMyEmail(contact.email);
         fromList.push(...(msg.from || []).filter(filterCurrent));
         toList.push(...(msg.to || []).filter(filterCurrent));
         ccList.push(...(msg.cc || []).filter(filterCurrent));
