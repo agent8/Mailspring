@@ -8,9 +8,9 @@
       "jsx": true
     }
   },
-  "extends": ["react-app", "prettier", "prettier/react"],
+  "extends": ["eslint:recommended", "plugin:react/recommended", "prettier", "prettier/react"],
   "globals": {
-    "AppEnv": false,
+    "AppEnv": "readonly",
     "$m": false,
     "waitsForPromise": false,
     "advanceClock": false,
@@ -22,7 +22,8 @@
   "env": {
     "browser": true,
     "node": true,
-    "jasmine": true
+    "jasmine": true,
+    "es6": true
   },
   "plugins": ["prettier"],
   "rules": {
@@ -30,6 +31,9 @@
     "prettier/prettier": "error"
   },
   "settings": {
+    "react": {
+      "version": "16.14.0"
+    },
     "import/core-modules": [
       "mailspring-exports",
       "mailspring-component-kit",
