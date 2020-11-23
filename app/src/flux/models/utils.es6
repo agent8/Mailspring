@@ -194,6 +194,19 @@ function parseBase64Data(base64String = '') {
   return false;
 }
 module.exports = Utils = {
+  safeSQL(keyWord) {
+    return keyWord
+      .replace(/\//g, '//')
+      .replace(/\'/g, "''")
+      .replace(/\"/g, '""')
+      .replace(/\[/g, '/[')
+      .replace(/\]/g, '/]')
+      .replace(/\%/g, '/%')
+      .replace(/\&/g, '/&')
+      .replace(/\_/g, '/_')
+      .replace(/\(/g, '/(')
+      .replace(/\)/g, '/)');
+  },
   parseBase64Data: parseBase64Data,
   stringToBase64: string => btoa(toBinary(string || '')),
   base64ToString: base64 => fromBinary(atob(base64)),
