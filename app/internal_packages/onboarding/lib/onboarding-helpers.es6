@@ -557,7 +557,9 @@ export async function buildJiraAccountFromAuthResponse(code) {
   const resources = await resourcesResp.json();
   if (!resourcesResp.ok) {
     throw new Error(
-      `Jira resources request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
+      `Jira resources request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(
+        resources
+      )}`
     );
   }
   let resource = {};
