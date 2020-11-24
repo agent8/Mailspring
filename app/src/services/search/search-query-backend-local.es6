@@ -177,9 +177,10 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
  * uses a MATCH clause.
  */
 class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
-  constructor(className) {
+  constructor(className, accountIds = []) {
     super();
     this._className = className;
+    this._accountIds = accountIds;
   }
 
   visit(root) {
@@ -279,7 +280,7 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
   visitMatch(node) {
     const searchTable = `${this._className}Search`;
-    let dateQuery = '';
+    let dateQuery = ' SEARCH_MATCH_SQL ';
     if (!node.noDatesOptimize && Array.isArray(node.dates) && node.dates.length > 0) {
       const klassName = isMessageView ? 'MessageSearch' : 'ThreadSearch';
       dateQuery =
@@ -290,28 +291,35 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
           })
           .join(' AND ') +
         ' SEARCH_MATCH_SQL ';
-    } else {
-      dateQuery = ' SEARCH_MATCH_SQL ';
+    }
+    let accountQuery = '';
+    if (Array.isArray(this._accountIds) && this._accountIds.length === 1 && this._accountIds[0]) {
+      accountQuery = ` \`${searchTable}\`.\`accountId\` = '${this._accountIds[0]}' AND `;
+    } else if (Array.isArray(this._accountIds) && this._accountIds.length > 1) {
+      accountQuery = ` \`${searchTable}\`.\`accountId\` in ('${this._accountIds.join(
+        "','"
+      )}') AND `;
     }
 
     // in sqlite3, you use '' to escape a '. Weird right?
     const escaped = node.rawQuery.replace(/'/g, "''");
     this._result = `(\`${this._className}\`.\`pid\` IN (SELECT \`${
       isMessageView ? 'messageId' : 'threadId'
-    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}' ${dateQuery} ))`;
+    }\` FROM \`${searchTable}\` WHERE ${accountQuery} \`${searchTable}\` MATCH '${escaped}' ${dateQuery} ))`;
   }
 }
 
 export default class LocalSearchQueryBackend {
-  constructor(modelClassName) {
+  constructor(modelClassName, accountIds = []) {
     this._modelClassName = modelClassName;
+    this._accountIds = accountIds;
   }
 
   compile(ast) {
     const condenser = new MatchCompatibleQueryCondenser();
     const intermediateAST = condenser.visit(ast);
 
-    const codegen = new StructuredSearchQueryVisitor(`${this._modelClassName}`);
+    const codegen = new StructuredSearchQueryVisitor(`${this._modelClassName}`, this._accountIds);
     return codegen.visit(intermediateAST);
   }
 }

@@ -284,9 +284,9 @@ export default class ModelQuery {
     return this;
   }
 
-  structuredSearch(query, dbKey = 'main') {
+  structuredSearch({ query, accountIds = [] } = {}, dbKey = 'main') {
     this._assertNotFinalized(dbKey);
-    this._matchers[dbKey].push(new Matcher.StructuredSearch(query));
+    this._matchers[dbKey].push(new Matcher.StructuredSearch(query, accountIds));
     return this;
   }
 
