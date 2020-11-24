@@ -1,12 +1,13 @@
 #!/bin/bash
 
+APP_VERSION=`cat app/package.json | json version`
 APP_FOLDER="app/dist/Edison Mail-mas-x64"
 # Name of your app.
 APP="Edison Mail"
 # The path of your app to sign.
 APP_PATH="$APP_FOLDER/Edison Mail.app"
 # The path to the location you want to put the signed package.
-RESULT_PATH="$APP_FOLDER/$APP.pkg"
+RESULT_PATH="$APP_FOLDER/$APP-$APP_VERSION.pkg"
 # The name of certificates you requested.
 APP_KEY="3rd Party Mac Developer Application: Edison Software Inc. (8QY2MN5UJ9)"
 INSTALLER_KEY="3rd Party Mac Developer Installer: Edison Software Inc. (8QY2MN5UJ9)"
