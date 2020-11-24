@@ -56,6 +56,7 @@
     "handlebars": "^4.0.10",
     "jasmine": "2.x.x",
     "joanna": "0.0.9",
+    "json": "^10.0.0",
     "load-grunt-parent-tasks": "^0.1.2",
     "meta-marked": "^0.4.2",
     "prettier": "^1.10.0",
