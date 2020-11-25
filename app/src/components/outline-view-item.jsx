@@ -1,7 +1,7 @@
 /* eslint global-require:0 */
 
 import _ from 'underscore';
-import { Utils, AccountStore, Actions, CanvasUtils } from 'mailspring-exports';
+import { Utils, AccountStore, Actions } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
 import DisclosureTriangle from './disclosure-triangle';
@@ -140,6 +140,7 @@ class OutlineViewItem extends Component {
       onDelete: PropTypes.func,
       onEdited: PropTypes.func,
       onAllRead: PropTypes.func,
+      toggleHide: PropTypes.func,
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
     }).isRequired,
@@ -395,7 +396,7 @@ class OutlineViewItem extends Component {
       }
     }
   };
-  _onDragLeave = event => {
+  _onDragLeave = () => {
     this.setState({ isCategoryDropping: false, droppingItem: null });
   };
 
@@ -596,7 +597,6 @@ class OutlineViewItem extends Component {
     }
     return (
       <div className={item.className ? item.className : null} ref={this._setSelfRef}>
-        {this._renderDropOverCategory()}
         <span className={containerClasses}>
           {this._renderCheckmark()}
           {this._renderItem()}
