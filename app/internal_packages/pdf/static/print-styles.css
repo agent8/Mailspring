@@ -97,6 +97,10 @@ pre {
 .message-item-white-wrap {
   box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.28), 0 1px 1.5px rgba(0, 0, 0, 0.08) !important;
 }
+.message-list-toolbar,
+.footer-reply-area-wrap {
+  display: none !important;
+}
 
 @media only print {
   body,
