@@ -93,6 +93,7 @@ import * as dbRpActions from '../sequelizeDB/operations/recurrencepatterns';
 import * as dbPendingActionActions from '../sequelizeDB/operations/pendingactions';
 import { createEwsEventBegin } from '../actions/providers/exchange';
 import { createCaldavEventBegin } from '../actions/providers/caldav';
+import { createGoogleEventBegin } from '../actions/providers/google';
 import { parseRecurrenceEvents, parseRecurrence } from '../utils/parser';
 import { SUCCESS_STORE_AUTH } from '../actions/db/auth';
 
@@ -212,7 +213,7 @@ const createEvent = async (payload) => {
   switch (payload.providerType) {
     case Providers.GOOGLE:
       try {
-        console.log('Google, To-Do create feature');
+        return createGoogleEventBegin(payload);
       } catch (googleError) {
         console.log('Handle Google pending action here', googleError);
       }

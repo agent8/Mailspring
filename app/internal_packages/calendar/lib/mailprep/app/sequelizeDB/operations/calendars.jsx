@@ -7,7 +7,7 @@ export const insertCalendar = async (owner, newCalendar) => {
   // debugger;
   const calendar = await Calendar.findOne({
     where: {
-      calendarUrl: newCalendar.url,
+      calendarUrl: newCalendar.url ? newCalendar.url : newCalendar.calendarUrl,
       ownerId: owner.personId
     }
   });
@@ -20,7 +20,7 @@ export const insertCalendar = async (owner, newCalendar) => {
     }
   } else {
     console.log(`*** Creating calendar in db : ${newCalendar.displayName}`);
-    delete newCalendar.account.calendars;
+    if (newCalendar.account) delete newCalendar.account.calendars;
     delete newCalendar.objects;
     return Calendar.create({
       calendarUrl: newCalendar.url,
@@ -49,13 +49,13 @@ export const retrieveCalendarByOwnerId = (ownerId) =>
     }
   });
 
-export const retrieveCalendarByCalendarUrl = async (calendarUrl) =>
+export const retrieveCalendarByCalendarUrl = async (calendarUrl) => {
   await Calendar.findOne({
     where: {
       calendarUrl
     }
   });
-
+}
 
 // For cascade deletes when account is removed
 // Deletes all calendars under the same account

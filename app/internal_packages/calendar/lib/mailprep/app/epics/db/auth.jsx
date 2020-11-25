@@ -104,7 +104,7 @@ const storeGoogleData = async (payload) => {
         cal.ctag = cal.etag
         cal.displayName = cal.summary
         cal.timezone = cal.timeZone
-        cal.account = payload
+        // cal.account = payload
         cal.objects = {}
         dbCalendarActions.insertCalendar(payload, cal)
       });
