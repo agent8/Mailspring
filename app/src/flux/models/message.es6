@@ -816,6 +816,9 @@ export default class Message extends ModelWithMetadata {
     if (!this.isInInbox()) {
       return false;
     }
+    if (this.fromContact() && this.fromContact().isMe()) {
+      return false;
+    }
     return (
       this.inboxCategory === Category.InboxCategoryState.MsgCandidate ||
       this.inboxCategory === Category.InboxCategoryState.MsgPrimary

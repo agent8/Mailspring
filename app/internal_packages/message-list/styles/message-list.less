@@ -205,6 +205,10 @@ body.platform-win32 {
     margin-bottom: @padding-large-vertical;
   }
 
+  .headers {
+    padding: 0 15px;
+  }
+
   .message-subject-wrap {
     max-width: @message-max-width;
     margin: 15px auto 5px auto;
@@ -212,7 +216,7 @@ body.platform-win32 {
     line-height: 27px;
     display: flex;
     align-items: center;
-    padding: 0 12px 0 14px;
+    padding: 0 27px 0 29px;
     & > div {
       display: flex;
       align-items: center;
@@ -310,9 +314,9 @@ body.platform-win32 {
 
     .scroll-region-content-inner {
       padding-top: 0px;
-      padding-right: 15px;
-      padding-bottom: 6px;
-      padding-left: 15px;
+      // padding-bottom: 16px;
+      // padding-right: 15px;
+      // padding-left: 15px;
     }
   }
 
@@ -321,6 +325,7 @@ body.platform-win32 {
   }
 
   .message-item-wrap {
+    padding: 0 15px;
     transition: height 0.1s, opacity 0.1s;
     position: relative;
     max-width: @message-max-width;
@@ -440,6 +445,7 @@ body.platform-win32 {
   }
 
   .minified-bundle {
+    padding: 0 15px;
     position: relative;
     height: 60px;
     margin: 0 auto;
@@ -476,7 +482,7 @@ body.platform-win32 {
         font-size: 17px;
         text-align: center;
         position: absolute;
-        left: 15px;
+        left: 30px;
         top: 10px;
       }
     }
@@ -756,15 +762,24 @@ body.platform-win32 {
     }
   }
 
+  #reply-area-marker {
+    height: 0;
+    position: static;
+    background: @white;
+    z-index: 99;
+  }
   .footer-reply-area-wrap {
-    padding-left: 15px;
-    padding-top: 20px;
+    padding-bottom: 18px;
+    padding-left: 30px;
     overflow: hidden;
     line-height: 42px;
     max-width: @message-max-width;
-    margin: -3px auto 10px auto;
+    margin-top: -3px;
+    display: flex;
+    flex-wrap: wrap;
 
-    position: relative;
+    position: sticky;
+    bottom: 0;
     z-index: 2;
 
     background: @background-primary;
@@ -778,12 +793,18 @@ body.platform-win32 {
       cursor: default;
     }
 
+    &.has-shadow {
+      transition: box-shadow 0.2s ease-in-out;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+      z-index: 4;
+    }
+
     .btn {
       cursor: pointer;
       display: inline-block;
       position: relative;
       width: 150px;
-      margin: 0 20px 20px 0;
+      margin: 18px 20px 0 0;
       border: 1px solid @border-color-divider;
       box-shadow: none;
       overflow: hidden;

@@ -15,7 +15,7 @@ import {
   SpecialCharacterQueryExpression,
 } from './search-query-ast';
 import { CategoryStore, FocusedPerspectiveStore } from 'mailspring-exports';
-var utf7 = require('utf7').imap;
+import crypto from 'crypto';
 
 const nextStringToken = text => {
   if (text[0] !== '"') {
@@ -316,12 +316,18 @@ const findRoleForPath = path => {
       for (const ct of standardCategories) {
         const names = ct.name.split(ct.delimiter) || [];
         if (names.some(nameItem => nameItem.toUpperCase() === newPath.toUpperCase())) {
-          return ct.role;
+          return crypto
+            .createHash('md5')
+            .update(ct.role)
+            .digest('hex');
         }
       }
     }
   }
-  return utf7.encode(path);
+  return crypto
+    .createHash('md5')
+    .update(path)
+    .digest('hex');
 };
 
 const parseOrQuery = text => {

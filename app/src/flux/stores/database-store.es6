@@ -227,7 +227,7 @@ class DatabaseStore extends MailspringStore {
     this._databasePath = databasePath(AppEnv.getConfigDirPath(), AppEnv.inSpecMode());
     console.log('this._databasePath', this._databasePath);
 
-    if (!AppEnv.inSpecMode()) {
+    if (!AppEnv.inSpecMode() && !AppEnv.isMigrateWindow()) {
       this.open();
     }
   }
