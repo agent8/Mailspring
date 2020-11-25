@@ -156,7 +156,7 @@ const mapStateToProps = (state) => {
       email: account.email,
       type: 'GOOGLE',
       provider: JSON.stringify(account),
-      calendars: account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal))
+      calendars: account.calendars ? account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal)) : []
     })),
     ...state.auth.providers.OUTLOOK.map((account) => ({
       email: account.email,

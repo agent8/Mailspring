@@ -4,8 +4,6 @@ import Calendar from '../schemas/calendars';
 // Insert calendar into database if absent.
 // Update calendar if calendar is present but ctag is different
 export const insertCalendar = async (owner, newCalendar) => {
-  console.log(owner);
-  console.log(newCalendar);
   // debugger;
   const calendar = await Calendar.findOne({
     where: {
