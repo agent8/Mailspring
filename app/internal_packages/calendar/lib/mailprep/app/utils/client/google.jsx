@@ -98,7 +98,7 @@ export const getCalendarEvents = async (calendarId, accessToken) => {
   )
 }
 
-export const addGoogleEvent = (calendarId, event) => {
+export const addGoogleEvent = (calendarId, accessToken, event) => {
   return axios.post(
     `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?key=${GOOGLE_API_KEY}`,
     {
