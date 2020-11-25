@@ -60,10 +60,10 @@ export default class WhatsNew extends React.Component {
     if (sinceInstall < UserUseAppDaysHappyLine * 24 * 60 * 60 * 1000) {
       return;
     }
-    // if the version user has know the update info is less than now
+    // if the user ever reviewed
     // We shouldn show this pop-up
     const userKnowUpdateInfoVersion = AppEnv.config.get(SETTINGS_KEY);
-    if (userKnowUpdateInfoVersion && !this.isLessThenNowVersion(userKnowUpdateInfoVersion)) {
+    if (userKnowUpdateInfoVersion) {
       return;
     }
     const result = await AppUpdateRest.getUpdateInformation();

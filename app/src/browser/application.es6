@@ -144,7 +144,6 @@ export default class Application extends EventEmitter {
     this.setupAutoPlayPolicy();
     this.setupCrosssitePolicy();
     this.handleEvents();
-    this.handleLaunchOptions(options);
     this.autoStartRestore();
 
     // add 'EdisonMail://' to LSSetDefaultHandlerForURLScheme
@@ -196,12 +195,25 @@ export default class Application extends EventEmitter {
     }
     this.cleaningOldFilesTimer = null;
     this._triggerCleanOldLogs(true);
+    await this._startMigrate(options);
+  }
+  async _startMigrate(options) {
+    this._migrateTimer = setTimeout(() => {
+      this._migrateTimer = null;
+      if (!this.nativeVersion) {
+        this._ensureMigrateWindowVisible();
+      }
+    }, 3000);
     try {
       const mailsync = new MailsyncProcess({
         ...options,
         disableThread: this.config.get('core.workspace.threadView') === false,
       });
       this.nativeVersion = await mailsync.migrate();
+      clearTimeout(this._migrateTimer);
+      this._closeMigrateWindow();
+      this.windowManager.createHotWindow();
+      this.handleLaunchOptions(options);
     } catch (err) {
       let message = null;
       let buttons = ['Quit'];
@@ -841,6 +853,20 @@ export default class Application extends EventEmitter {
       this.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, {
         title: 'Welcome to EdisonMail',
       });
+    }
+  }
+  _ensureMigrateWindowVisible() {
+    const migrateWindow = this.windowManager.get(WindowManager.MIGRATE_WINDOW);
+    if (!migrateWindow) {
+      this.windowManager.ensureWindow(WindowManager.MIGRATE_WINDOW, {
+        title: 'Migrating your local data',
+      });
+    }
+  }
+  _closeMigrateWindow() {
+    const migrateWindow = this.windowManager.get(WindowManager.MIGRATE_WINDOW);
+    if (migrateWindow && migrateWindow.browserWindow) {
+      migrateWindow.browserWindow.close();
     }
   }
 

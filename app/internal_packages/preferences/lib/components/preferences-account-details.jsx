@@ -377,7 +377,7 @@ class PreferencesAccountDetails extends Component {
         >
           <option value="7">Within 7 days</option>
           <option value="30">Within 30 days</option>
-          <option value="90">Within 3 month</option>
+          <option value="90">Within 3 months</option>
           <option value="365">Within 1 year</option>
           <option value="-1">All</option>
         </select>

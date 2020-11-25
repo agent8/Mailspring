@@ -545,9 +545,11 @@ class NotCompositeMatcher extends AndCompositeMatcher {
 }
 
 class StructuredSearchMatcher extends Matcher {
-  constructor(searchQuery) {
+  constructor(searchQuery, accountIds = []) {
     super(null, null, null);
     this._searchQuery = searchQuery;
+    this.isSearchQurey = true;
+    this._accountIds = accountIds;
   }
 
   attribute() {
@@ -567,7 +569,9 @@ class StructuredSearchMatcher extends Matcher {
   }
 
   whereSQL(klass) {
-    return new LocalSearchQueryBackend(klass.getTableName()).compile(this._searchQuery);
+    return new LocalSearchQueryBackend(klass.getTableName(), this._accountIds).compile(
+      this._searchQuery
+    );
   }
 }
 
@@ -583,6 +587,7 @@ class SearchMatcher extends Matcher {
       .replace(/['"]$/, '')
       .replace(/'/g, singleQuoteEscapeSequence)
       .replace(/"/g, doubleQuoteEscapeSequence);
+    this.isSearchQurey = true;
   }
 
   attribute() {
