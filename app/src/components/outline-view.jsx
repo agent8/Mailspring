@@ -47,6 +47,7 @@ class OutlineView extends Component {
     title: PropTypes.string,
     iconName: PropTypes.string,
     items: PropTypes.array,
+    isEditingMenu: PropTypes.bool,
     collapsed: PropTypes.bool,
     onItemCreated: PropTypes.func,
     onCollapseToggled: PropTypes.func,
@@ -105,7 +106,6 @@ class OutlineView extends Component {
       this.setState({ showCreateInput: false });
     }
   };
-
   // Renderers
 
   _renderCreateInput(props = this.props) {
@@ -153,10 +153,13 @@ class OutlineView extends Component {
             isEditingMenu={this.props.isEditingMenu}
           />
         );
+      } else if (item.id === ADD_FOLDER_KEY && this.props.isEditingMenu) {
+        ret.push(AddFolder(item.onRequestAddFolder));
+        ret.push(Divider(idx + 1));
       } else {
         if (ret.length > 0) {
           if (ret[ret.length - 1] && isNaN(ret[ret.length - 1].key)) {
-            ret.push(<Divider key={idx} />);
+            ret.push(Divider(idx));
           }
         }
       }
@@ -179,7 +182,6 @@ class OutlineView extends Component {
   }
 
   render() {
-    const collapsible = this.props.onCollapseToggled;
     const collapsed = this.props.collapsed;
     const allowCreate = this.props.onItemCreated != null && !collapsed;
     const avatarClass = AppEnv.config.get('core.appearance.sidebaricons') ? '' : 'name-only';
@@ -193,12 +195,23 @@ class OutlineView extends Component {
 }
 
 export const DIVIDER_KEY = 'divider';
+export const ADD_FOLDER_KEY = 'addFolder';
+export const NEW_FOLDER_KEY = 'newFolder';
 export const MORE_TOGGLE = 'moreToggle';
-export const Divider = () => {
-  return <div className="sidebar-divider" />;
+export const Divider = key => {
+  return <div key={key} className="sidebar-divider" />;
 };
-const More = props => {
-  return <div className="sidebar-more" onClick={props.onClick} />;
+export const AddFolder = onAddFolder => {
+  const onClick = e => {
+    e.stopPropagation();
+    e.preventDefault();
+    onAddFolder();
+  };
+  return (
+    <div key="addFolder" className="item-container item name inEditMode" onClick={onClick}>
+      <span className="sidebar-add-folder">New Folder...</span>
+    </div>
+  );
 };
 
 export default OutlineView;

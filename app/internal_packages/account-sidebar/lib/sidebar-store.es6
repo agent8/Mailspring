@@ -8,10 +8,14 @@ import {
   OutboxStore,
   FocusedPerspectiveStore,
   CategoryStore,
+  TaskQueue,
 } from 'mailspring-exports';
+import React from 'react';
 import SidebarSection, { nonFolderIds } from './sidebar-section';
 import SidebarActions from './sidebar-actions';
 import AccountCommands from './account-commands';
+import NewCategoryAccountSelectPopover from './components/new-category-account-select-popover';
+import TaskFactory from '../../../src/flux/tasks/task-factory';
 
 const Sections = {
   Standard: 'Standard',
@@ -30,6 +34,7 @@ class SidebarStore extends MailspringStore {
     this._sections[Sections.Standard] = {};
     this._sections[Sections.User] = [];
     this._editingMenu = false;
+    this._newFolder = { accountId: null };
     this._itemShowAllChildern = {};
     this._keyboardFocusKey = null;
     this._registerCommands();
@@ -159,6 +164,14 @@ class SidebarStore extends MailspringStore {
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
     this.listenTo(Actions.setMoreOrLessCollapsed, this.setItemShowAllChildren);
     this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
+    this.listenTo(
+      SidebarActions.requestAddFolderAccountSelection,
+      this._onAddFolderAccountSelection
+    );
+    this.listenTo(SidebarActions.addingNewFolderToAccount, this._onAddingNewFolderToAccount);
+    this.listenTo(SidebarActions.updateNewFolderData, this._onUpdateNewFolderData);
+    this.listenTo(SidebarActions.saveNewFolderRequest, this._onSaveNewFolderRequest);
+    this.listenTo(SidebarActions.cancelAddFolderRequest, this._onCancelNewFolderRequest);
     this.listenTo(AccountStore, this._onAccountsChanged);
     this.listenTo(FocusedPerspectiveStore, this._onFocusedPerspectiveChanged);
     this.listenTo(WorkspaceStore, this._updateSections);
@@ -171,10 +184,92 @@ class SidebarStore extends MailspringStore {
       this._updateSections
     );
   }
+  getNewFolder(accountId) {
+    if (this._newFolder.accountId === accountId) {
+      return this._newFolder;
+    }
+    return null;
+  }
+  _onAddFolderAccountSelection = () => {
+    Actions.openPopover(<NewCategoryAccountSelectPopover accounts={AccountStore.accounts()} />, {
+      popoverClassName: 'fixed-popover-add-folder',
+      isFixedToWindow: true,
+      originRect: {
+        top: 0,
+        left: 0,
+      },
+      position: { top: '30%', left: '50%' },
+      disablePointer: true,
+      closeOnAppBlur: true,
+      onClose: () => this._onCancelNewFolderRequest(true),
+    });
+  };
+  _onAddingNewFolderToAccount = ({ accountId, newFolderName, isHiddenInFolderTree }) => {
+    this._onUpdateNewFolderData({ accountId, newFolderName, isHiddenInFolderTree });
+    this._updateSections();
+  };
+  _onUpdateNewFolderData = ({ accountId, newFolderName, isHiddenInFolderTree }) => {
+    if (!accountId) {
+      return;
+    }
+    this._newFolder = { accountId, newFolderName, isHiddenInFolderTree };
+  };
+  _onCancelNewFolderRequest = (autoClose = false) => {
+    if (autoClose && this._newFolder.accountId) {
+      return;
+    }
+    this._newFolder = { accountId: null };
+    Actions.setEditingMenu(false);
+    this._updateSections();
+  };
+  _onSaveNewFolderRequest = () => {
+    if (!this._newFolder.accountId) {
+      return;
+    }
+    const accountId = this._newFolder.accountId;
+    const name = this._newFolder.newFolderName;
+    const isHidden = this._newFolder.isHiddenInFolderTree;
+    const task = TaskFactory.tasksForCreatingPath({
+      name,
+      accountId,
+    });
+    if (task) {
+      TaskQueue.waitForPerformRemote(task).then(finishedTask => {
+        console.warn('Task returned');
+        if (!finishedTask.created) {
+          AppEnv.showErrorDialog({ title: 'Error', message: `Could not create folder.` });
+          return;
+        }
+        const category = finishedTask.created;
+        if (isHidden) {
+          console.warn(`${accountId} ${category.id || category.pid} is Hidden`);
+          CategoryStore.hideCategoryById({
+            accountId,
+            categoryId: category.id || category.pid,
+            save: true,
+          });
+          this._updateSections();
+          console.warn(
+            `${accountId} ${category.id || category.pid} category data saved to storage`
+          );
+        }
+      });
+      Actions.queueTask(task);
+    }
+    this._newFolder = { accountId: null };
+    this._onSetEditingMenu(false);
+  };
 
   _onSetEditingMenu = val => {
-    this._editingMenu = val;
-    this.trigger();
+    if (val !== this._editingMenu) {
+      this._editingMenu = val;
+      if (!val) {
+        this._newFolder = { accountId: null };
+        this._updateSections();
+      } else {
+        this.trigger();
+      }
+    }
   };
   isEditingMenu = () => {
     return this._editingMenu;

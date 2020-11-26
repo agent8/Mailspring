@@ -25,6 +25,12 @@
     margin-bottom: 0;
   }
 
+  .sidebar-add-folder {
+    color: @accent-primary;
+    font-weight: 600;
+    letter-spacing: -0.26px;
+  }
+
   .sidebar-divider {
     height: 1px;
     background-color: @border-color-divider;
@@ -85,6 +91,10 @@
     position: relative;
     cursor: pointer;
     // margin-bottom: 6px;
+    .checkmark.disabled .inner,
+    .checkmark.disabled.checked .inner{
+      background-color: @gray-light;
+    }
     .checkmark {
       cursor: pointer;
 
@@ -120,7 +130,18 @@
 
     &.selected {
       background-color: @source-list-active-bg;
-
+      .new-folder-edit{
+        .item-input{
+          color: @gray-light;
+          background-color: unset;
+          border: none;
+          box-shadow: unset;
+          outline: unset;
+        }
+        .edison-icon-close:before{
+          color: @gray;
+        }
+      }
       .name {
         font-weight: 600;
       }
@@ -407,15 +428,25 @@
 
     &.editing {
       align-items: center;
-
-      .item-input {
+      .edit-folder-container {
         order: 2;
-        font-size: @font-size-small;
-        margin-left: @padding-small-horizontal * 0.3;
-        height: 22px;
-        padding-left: 0;
-        text-indent: @padding-small-horizontal * 0.55;
-        width: 85%;
+        .item-input {
+          color: @gray-light;
+          background-color: unset;
+          border: none;
+          box-shadow: unset;
+          outline: unset;
+          order: 2;
+          //font-size: @font-size-small;
+          //margin-left: @padding-small-horizontal * 0.3;
+          //height: 22px;
+          //padding-left: 0;
+          //text-indent: @padding-small-horizontal * 0.55;
+          //width: 85%;
+        }
+        .edison-icon-close:before{
+          color: @gray;
+        }
       }
     }
 

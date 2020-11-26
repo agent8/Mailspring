@@ -300,7 +300,9 @@ class CategoryStore extends MailspringStore {
   };
   hideCategoryInFolderTree = ({ accountId, id } = {}, save = true) => {
     if (accountId && id) {
+      console.warn(`saving ${accountId} ${id} ${save} `);
       if (!CategoryMetaData.isHidden({ accountId, id })) {
+        console.warn(`saved ${accountId} ${id} ${save} `);
         CategoryMetaData.hide({ accountId, id, save });
         this.trigger();
       }

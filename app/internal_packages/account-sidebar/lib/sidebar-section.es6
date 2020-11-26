@@ -1,32 +1,46 @@
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
 import Sift from '../../../src/flux/models/sift';
 const _ = require('underscore');
 const { CategoryStore, ExtensionRegistry, OutboxStore } = require('mailspring-exports');
-
 const SidebarItem = require('./sidebar-item');
 const SidebarActions = require('./sidebar-actions');
+let sidebarStore = null;
+const SidebarStore = () => {
+  sidebarStore = sidebarStore || require('./sidebar-store');
+  return sidebarStore;
+};
 const DIVIDER_OBJECT = { id: 'divider' };
+const ADD_FOLDER_OBJECT = {
+  id: 'addFolder',
+  onRequestAddFolder: () => SidebarActions.requestAddFolderAccountSelection(),
+};
+const NEW_FOLDER_OBJECT = {
+  id: 'newFolder',
+  isHidden: true,
+  newFolderAccountId: '',
+  onEdited: data => SidebarActions.updateNewFolderData(data),
+  onSave: () => SidebarActions.saveNewFolderRequest(),
+};
 const MORE_TOGGLE = { id: 'moreToggle' };
-export const nonFolderIds = [DIVIDER_OBJECT.id, MORE_TOGGLE.id];
-function isSectionCollapsed(title) {
-  if (AppEnv.savedState.sidebarKeysCollapsed[title] !== undefined) {
-    return AppEnv.savedState.sidebarKeysCollapsed[title];
-  } else {
-    return false;
-  }
-}
+export const nonFolderIds = [
+  DIVIDER_OBJECT.id,
+  MORE_TOGGLE.id,
+  ADD_FOLDER_OBJECT.id,
+  NEW_FOLDER_OBJECT.id,
+];
+// function isSectionCollapsed(title) {
+//   if (AppEnv.savedState.sidebarKeysCollapsed[title] !== undefined) {
+//     return AppEnv.savedState.sidebarKeysCollapsed[title];
+//   } else {
+//     return false;
+//   }
+// }
 
-function toggleSectionCollapsed(section) {
-  if (!section) {
-    return;
-  }
-  SidebarActions.setKeyCollapsed(section.title, !isSectionCollapsed(section.title));
-}
+// function toggleSectionCollapsed(section) {
+//   if (!section) {
+//     return;
+//   }
+//   SidebarActions.setKeyCollapsed(section.title, !isSectionCollapsed(section.title));
+// }
 
 export default class SidebarSection {
   static empty(title) {
@@ -136,25 +150,25 @@ export default class SidebarSection {
     if (CategoryStore.categories().length === 0) {
       return this.empty('All Accounts');
     }
-    // if (accounts.length === 1) {
-    //   const ret = this.standardSectionForAccount(accounts[0]);
-    //   if (outboxCount.total > 0) {
-    //     const inbox = ret.items.shift();
-    //     ret.items.unshift(inbox);
-    //     ret.items.unshift(outbox);
-    //   }
-    //   SidebarSection.forSiftCategories([accounts[0]], ret.items);
-    //   return ret;
-    // } else {
     accounts.forEach(acc => {
-      let item = SidebarItem.forSingleInbox([acc.id], {
+      const accountItems = this.standardSectionForAccount(acc).items;
+      const newFolder = SidebarStore().getNewFolder(acc.id);
+      let forceExpand = undefined;
+      if (newFolder) {
+        forceExpand = true;
+        accountItems.push(Object.assign({}, NEW_FOLDER_OBJECT, { newFolderAccountId: acc.id }));
+      }
+      let item = SidebarItem.forSingleInbox(acc.id, {
         name: acc.label,
         threadTitleName: 'Inbox',
-        children: this.standardSectionForAccount(acc).items,
+        children: accountItems,
+        forceExpand,
       });
       items.push(item);
     });
-    // }
+    if (accounts.length > 1) {
+      items.push(ADD_FOLDER_OBJECT);
+    }
 
     const accountIds = _.pluck(accounts, 'id');
     let folderItem;
@@ -242,7 +256,7 @@ export default class SidebarSection {
     };
   }
 
-  static accountUserCategories(account, { title, collapsible } = {}) {
+  static accountUserCategories(account) {
     const items = [];
     // const isExchange = account && account.provider === 'exchange';
     // let exchangeInboxCategory;
