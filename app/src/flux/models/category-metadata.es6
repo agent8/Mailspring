@@ -46,6 +46,7 @@ class CategoryMetaData {
     }
     this._accounts[accountId][id] = { displayOrder, hidden };
     if (save) {
+      console.warn(`saving data ${accountId} ${id} to storage`);
       this._updateStorage();
     }
   };

@@ -1,5 +1,4 @@
 import ThreadCategory from '../../../src/flux/models/thread-category';
-import SidebarStore from './sidebar-store';
 const _ = require('underscore');
 const _str = require('underscore.string');
 const { OutlineViewItem, RetinaImg } = require('mailspring-component-kit');
@@ -27,7 +26,7 @@ const countForItem = function(perspective) {
   return 0;
 };
 
-const isChildrenSelected = (children = [], currentPerspective) => {
+const isChildrenSelected = (children = []) => {
   if (!children || children.length === 0) {
     return false;
   }
@@ -38,21 +37,21 @@ const isChildrenSelected = (children = [], currentPerspective) => {
   }
   return false;
 };
-
-const isTabSelected = (perspective, currentPerspective) => {
-  if (!perspective) {
-    console.error(new Error('no perspective'));
-  }
-  if (!perspective.tab || perspective.tab.length === 0) {
-    return false;
-  }
-  for (const tab of perspective.tab) {
-    if (tab && tab.isEqual(currentPerspective)) {
-      return true;
-    }
-  }
-  return false;
-};
+//
+// const isTabSelected = (perspective, currentPerspective) => {
+//   if (!perspective) {
+//     console.error(new Error('no perspective'));
+//   }
+//   if (!perspective.tab || perspective.tab.length === 0) {
+//     return false;
+//   }
+//   for (const tab of perspective.tab) {
+//     if (tab && tab.isEqual(currentPerspective)) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
 const isItemSelected = (perspective, children = []) => {
   const sheet = WorkspaceStore.topSheet();
@@ -197,7 +196,6 @@ const onEditItem = function(item, newEnteredValue, originalText) {
     existingPath: category.path,
     newName: newDisplayName,
     accountId: category.accountId,
-    isExchange: AccountStore.isExchangeAccount(account),
   });
   if (task) {
     Actions.queueTask(task);
@@ -213,8 +211,7 @@ class SidebarItem {
     if (opts) {
       perspective = Object.assign(perspective, opts);
     }
-
-    const collapsed = isItemCollapsed(id);
+    const collapsed = opts.forceExpand !== undefined ? !opts.forceExpand : isItemCollapsed(id);
 
     return Object.assign(
       {
@@ -250,10 +247,11 @@ class SidebarItem {
         syncFolderList: opts.syncFolderList,
         onCollapseToggled: toggleItemCollapsed,
         onAllRead: perspective.canChangeAllToRead() ? onChangeAllToRead : undefined,
+        onAddNewFolder: opts.onAddNewFolder ? opts.onAddNewFolder : undefined,
 
         onDrop(item, event) {
           const threadsString = event.dataTransfer.getData('edison-threads-data');
-          const categoryString = event.dataTransfer.getData('edison-category-data');
+          // const categoryString = event.dataTransfer.getData('edison-category-data');
           let jsonData = null;
           try {
             jsonData = JSON.parse(threadsString);
@@ -519,12 +517,15 @@ class SidebarItem {
 
   static forSingleInbox(accountId, opts = {}) {
     opts.iconName = 'inbox.svg';
-    const perspective = MailboxPerspective.forInbox(accountId);
-    opts.categoryIds = this.getCategoryIds(accountId, 'inbox');
+    const perspective = MailboxPerspective.forInbox([accountId]);
+    opts.categoryIds = this.getCategoryIds([accountId], 'inbox');
     const id = `${accountId}-single`;
     if (Array.isArray(perspective.accountIds) && perspective.accountIds.length === 0) {
       opts.accountIds = [accountId];
     }
+    opts.onAddNewFolder = () => {
+      SidebarActions.addingNewFolderToAccount({ accountId });
+    };
     const account = AccountStore.accountForId(accountId);
     if (account) {
       opts.url = account.picture;

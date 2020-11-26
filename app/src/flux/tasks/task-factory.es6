@@ -17,6 +17,11 @@ import MakeOtherTask from './make-other-task';
 import { bannedPathNames } from '../../constant';
 import ChangeAllUnreadTask from './change-all-unread-task';
 import ContactUpdateTask from './contact-update-task';
+let accountStore = null;
+const AccountStore = () => {
+  accountStore = accountStore || require('../stores/account-store').default;
+  return accountStore;
+};
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -421,7 +426,7 @@ const TaskFactory = {
     ];
   },
 
-  tasksForRenamingPath({ existingPath, newName, accountId, isExchange = false } = {}) {
+  tasksForRenamingPath({ existingPath, newName, accountId } = {}) {
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -448,6 +453,7 @@ const TaskFactory = {
         }
       }
     }
+    const isExchange = AccountStore().isExchangeAccountId(accountId);
     return SyncbackCategoryTask.forRenaming({ path: existingPath, accountId, newName, isExchange });
   },
   tasksForEditingLabel({ currentName, newName, accountId, newColor } = {}) {
@@ -484,7 +490,7 @@ const TaskFactory = {
       newColor,
     });
   },
-  tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
+  tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '' }) {
     if (bannedPathNames.includes(name)) {
       AppEnv.logWarning(`TaskFactory:Creating folder ${name} is in banned`);
       AppEnv.showMessageBox({
@@ -513,6 +519,7 @@ const TaskFactory = {
         }
       }
     }
+    const isExchange = AccountStore().isExchangeAccountId(accountId);
     return SyncbackCategoryTask.forCreating({
       name,
       accountId,

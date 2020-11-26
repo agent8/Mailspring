@@ -333,11 +333,11 @@ export default class Category extends Model {
   isHidden = () => {
     return !!CategoryMetadata().isHidden({ accountId: this.accountId, id: this.id });
   };
-  hide(save = true) {
-    CategoryMetadata().hide({ accountId: this.accountId, id: this.id });
+  hide(save = false) {
+    CategoryMetadata().hide({ accountId: this.accountId, id: this.id, save });
   }
-  show(save = true) {
-    CategoryMetadata().show({ accountId: this.accountId, id: this.id });
+  show(save = false) {
+    CategoryMetadata().show({ accountId: this.accountId, id: this.id, save });
   }
   getDisplayOrder() {
     return CategoryMetadata().getDisplayOrder({ accountId: this.accountId, id: this.id });

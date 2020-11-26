@@ -1,6 +1,107 @@
 @import 'ui-variables';
 @import 'ui-mixins';
 
+.fixed-popover-container .fixed-popover.fixed-popover-add-folder {
+  overflow: visible;
+
+  .create-folder-container {
+    height: 237px;
+    width: 400px;
+    .header-text{
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.01px;
+      line-height: 24px;
+    }
+    .header-subtext{
+      margin-top: 10px;
+      color: @gray-light;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.18px;
+      line-height: 16px;
+    }
+    .button-row{
+      width: 340px;
+      .create-folder-btn-cancel,
+      .create-folder-btn-create{
+        height: 35px;
+      }
+    }
+    .sidebar-add-folder-account-selector-container {
+      height: 92px;
+      width: 350px;
+      margin: 22px 0 30px -5px;
+      overflow: visible;
+
+      .sidebar-add-folder-account-selector {
+        box-sizing: border-box;
+        height: 40px;
+        width: 350px;
+        border-radius: 10px;
+        border: 1px solid @off-white;
+        padding: 0 8px 0 15px;
+
+        .only-item {
+          width: 100%;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          position: relative;
+          top: 10px;
+          padding: unset;
+
+          .primary-item .content-mask {
+            position: relative;
+            top: 6px;
+          }
+
+          .primary-item:hover:after {
+            display: none;
+          }
+        }
+
+        .secondary-items {
+          width: 100%;
+
+          .menu .content-container .item {
+            font-size: 14px;
+            height: 28.5px;
+            background-color: transparent;
+            padding: 5.5px 8px 6px 15px;
+
+            &:hover {
+              background-color: @active;
+            }
+          }
+
+          .menu .content-container {
+            padding-top: 11.5px;
+            height: max-content;
+          }
+        }
+
+        .item {
+          padding: unset;
+          width: 100%;
+          color: @black;
+          font-size: 14px;
+          letter-spacing: -0.28px;
+          line-height: 17px;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+        }
+
+        select {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
 .account-sidebar-controls {
   position: unset;
   padding-top: 20px;
@@ -39,14 +140,16 @@
     color: @white;
   }
 }
-.account-sidebar-mask{
-  background-color: rgba(255,255,255,0.87);
+
+.account-sidebar-mask {
+  background-color: rgba(255, 255, 255, 0.87);
   position: absolute;
   width: 100%;
   height: 100%;
   right: 0;
   z-index: 100;
 }
+
 .account-sidebar {
   // flex: 1;
   height: 100%;
@@ -73,6 +176,7 @@
   top: 7px;
   right: 17px;
   z-index: 3;
+
   img {
     transform: rotateX(180deg);
   }

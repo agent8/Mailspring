@@ -198,7 +198,7 @@ export default class MailboxPerspective {
   static getCategoryIds = (accountsOrIds, categoryName) => {
     const categoryIds = [];
     for (let accountId of accountsOrIds) {
-      let tmp = CategoryStore.getCategoryByRole(accountsOrIds, categoryName);
+      let tmp = CategoryStore.getCategoryByRole(accountId, categoryName);
       if (tmp) {
         categoryIds.push(tmp.id);
       }
@@ -612,6 +612,7 @@ class SingleAccountMailboxPerspective extends MailboxPerspective {
   constructor(accountId) {
     super([accountId]);
     this.iconName = 'inbox.png';
+    this._categoryMetadDataId = 'singleAccount';
   }
 }
 
@@ -1005,27 +1006,32 @@ class CategoryMailboxPerspective extends MailboxPerspective {
     this._parseCategories();
     if (this._categories.length === 1 && this._categories[0]) {
       this._categoryMetaDataAccountId = this._categories[0].accountId;
+      this._categoryMetadDataId = this._categories[0].id;
     } else {
       this._categoryMetaDataAccountId = 'all';
+      this._categoryMetadDataId = this._categories
+        .filter(cat => !!cat)
+        .map(cat => cat.id)
+        .join('-');
     }
   }
   isHidden = () => {
     return CategoryStore.isCategoryHiddenInFolderTree({
       accountId: this._categoryMetaDataAccountId,
-      categoryId: this.displayName || this.name,
+      categoryId: this._categoryMetadDataId,
     });
   };
   hide = () => {
     return CategoryStore.hideCategoryById({
       accountId: this._categoryMetaDataAccountId,
-      categoryId: this.displayName || this.name,
+      categoryId: this._categoryMetadDataId,
       save: false,
     });
   };
   show = () => {
     return CategoryStore.showCategoryById({
       accountId: this._categoryMetaDataAccountId,
-      categoryId: this.displayName || this.name,
+      categoryId: this._categoryMetadDataId,
       save: false,
     });
   };
@@ -1380,6 +1386,9 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
     this.iconName = 'today.svg';
     this._categories = categories;
     this.isToday = true;
+    if (this._categories.length === 1) {
+      this._categoryMetadDataId = 'today';
+    }
   }
   get displayOrder() {
     return 0;
@@ -1546,6 +1555,9 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
         new UnreadMailboxFocusedPerspective(this._categories),
         new UnreadMailboxOtherPerspective(this._categories),
       ];
+    }
+    if (Array.isArray(this._categories) && this._categories.length === 1) {
+      this._categoryMetadDataId = 'unread';
     }
   }
 

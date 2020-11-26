@@ -8,14 +8,14 @@ import DisclosureTriangle from './disclosure-triangle';
 import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import PropTypes from 'prop-types';
-import { Divider, DIVIDER_KEY, MORE_TOGGLE } from './outline-view';
-
+import { Divider, DIVIDER_KEY, MORE_TOGGLE, ADD_FOLDER_KEY, NEW_FOLDER_KEY } from './outline-view';
+import OutlineViewEditFolderItem from './outline-view-edit-folder-item';
 /*
  * Enum for counter styles
  * @readonly
  * @enum {string}
  */
-const notFolderIds = [DIVIDER_KEY, MORE_TOGGLE];
+const notFolderIds = [DIVIDER_KEY, MORE_TOGGLE, ADD_FOLDER_KEY, NEW_FOLDER_KEY];
 const CounterStyles = {
   Default: 'def',
   Alt: 'alt',
@@ -120,7 +120,9 @@ class OutlineViewItem extends Component {
     index: PropTypes.number,
     provider: PropTypes.string,
     item: PropTypes.shape({
+      component: PropTypes.element,
       className: PropTypes.string,
+      newFolderAccountId: PropTypes.string,
       id: PropTypes.string.isRequired,
       children: PropTypes.array,
       contextMenuLabel: PropTypes.string,
@@ -140,6 +142,7 @@ class OutlineViewItem extends Component {
       onDelete: PropTypes.func,
       onEdited: PropTypes.func,
       onAllRead: PropTypes.func,
+      onAddNewFolder: PropTypes.func,
       toggleHide: PropTypes.func,
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
@@ -158,6 +161,10 @@ class OutlineViewItem extends Component {
       originalText: '',
       showAllChildren: false,
       isCategoryDropping: false,
+      editingFolderName: '',
+      newFolderName: '',
+      newFolderHidden: false,
+      newFolderDisableHidden: true,
     };
     this._selfRef = null;
     this._setSelfRef = el => (this._selfRef = el);
@@ -222,7 +229,7 @@ class OutlineViewItem extends Component {
   };
 
   _clearEditingState = event => {
-    this.setState({ editing: false, originalText: '' });
+    this.setState({ editing: false, originalText: '', editingFolderName: '' });
     this._runCallback('onInputCleared', event);
   };
 
@@ -279,7 +286,7 @@ class OutlineViewItem extends Component {
 
   _onClick = event => {
     event.preventDefault();
-    if (this.props.isEditingMenu) {
+    if (this.props.isEditingMenu || this.state.editing) {
       return;
     }
     this._runCallback('onSelect');
@@ -302,22 +309,30 @@ class OutlineViewItem extends Component {
   _onEdited = (value, originalText) => {
     this._runCallback('onEdited', value, originalText);
   };
+  _onAddNewFolder = () => {
+    Actions.setEditingMenu(true);
+    this._runCallback('onAddNewFolder');
+  };
 
   _onEdit = () => {
     if (this.props.item.onEdited) {
-      this.setState({ editing: true, originalText: this.props.item.name });
+      this.setState({
+        editing: true,
+        originalText: this.props.item.name,
+        editingFolderName: this.props.item.name,
+      });
     }
   };
   _onEditMenu = () => {
     Actions.setEditingMenu(true);
   };
 
-  _onInputFocus = event => {
+  _onEditFolderInputFocus = event => {
     const input = event.target;
     input.selectionStart = input.selectionEnd = input.value.length;
   };
 
-  _onInputBlur = event => {
+  _onEditFolderInputBlur = event => {
     if (this.state.originalText.length > 0 && event.target.value !== this.state.originalText) {
       const value = event.target.value;
       AppEnv.showMessageBox({
@@ -335,7 +350,7 @@ class OutlineViewItem extends Component {
     this._clearEditingState(event);
   };
 
-  _onInputKeyDown = event => {
+  _onEditFolderInputKeyDown = event => {
     if (event.key === 'Escape') {
       this._clearEditingState(event);
     }
@@ -344,19 +359,32 @@ class OutlineViewItem extends Component {
       this._clearEditingState(event);
     }
   };
+  _onEditingFolderValueChange = folderName => {
+    this.setState({ editingFolderName: folderName });
+  };
 
   _onShowContextMenu = event => {
     event.stopPropagation();
+    if (this.state.editing || this.props.isEditingMenu) {
+      return;
+    }
     const item = this.props.item;
     const contextMenuLabel = item.contextMenuLabel || item.name;
-    const menu = [{ label: 'Edit Menu', click: this._onEditMenu }];
+    const menu = [];
 
+    if (this.props.item.onAddNewFolder) {
+      menu.push({
+        label: `New Folder...`,
+        click: this._onAddNewFolder,
+      });
+    }
     if (this.props.item.onEdited) {
       menu.push({
         label: `Rename ${contextMenuLabel}`,
         click: this._onEdit,
       });
     }
+    menu.push({ label: 'Edit Menu', click: this._onEditMenu });
 
     if (this.props.item.onDelete) {
       menu.push({
@@ -398,6 +426,33 @@ class OutlineViewItem extends Component {
   };
   _onDragLeave = () => {
     this.setState({ isCategoryDropping: false, droppingItem: null });
+  };
+  _updateNewFolderData = (accountId, onEdited) => {
+    if (onEdited) {
+      onEdited({
+        accountId,
+        newFolderName: this.state.newFolderName,
+        isHiddenInFolderTree: this.state.newFolderIsHidden,
+      });
+    }
+  };
+  _onNewFolderNameChange = (accountId, onEdited, folderName) => {
+    this.setState(
+      { newFolderName: folderName, newFolderDisableHidden: folderName.length === 0 },
+      this._updateNewFolderData.bind(this, accountId, onEdited)
+    );
+  };
+  _onNewFolderKeyDown = ({ onSave }, event) => {
+    if (event.key === 'Escape') {
+      this.setState({ newFolderName: '', newFolderIsHidden: false, newFolderDisableHidden: true });
+      return;
+    }
+    if (['Enter', 'Return'].includes(event.key)) {
+      if (onSave) {
+        onSave();
+      }
+      this.setState({ newFolderName: '', newFolderIsHidden: false, newFolderDisableHidden: true });
+    }
   };
 
   _formatNumber(num) {
@@ -458,6 +513,49 @@ class OutlineViewItem extends Component {
       </div>
     );
   }
+  _toggleNewFolderItemHide = ({ accountId, onEdited }) => {
+    if (this.state.newFolderDisableHidden) {
+      return;
+    }
+    this.setState(
+      { newFolderIsHidden: !this.state.newFolderIsHidden },
+      this._updateNewFolderData.bind(this, accountId, onEdited)
+    );
+  };
+  _onCancelNewFolder = () => {
+    Actions.setEditingMenu(false);
+  };
+  _renderNewFolderCheckmark({ accountId, onEdited }) {
+    const className = `checkmark ${!this.state.newFolderIsHidden ? 'checked' : ''} ${
+      this.state.newFolderDisableHidden ? ' disabled ' : ''
+    }`;
+    return (
+      <div
+        className={className}
+        onClick={this._toggleNewFolderItemHide.bind(this, { accountId, onEdited })}
+      >
+        <div className="inner" />
+      </div>
+    );
+  }
+  _renderNewFolderInput({ accountId, onEdited, onSave }) {
+    return (
+      <div>
+        <span className="item-container selected">
+          {this._renderNewFolderCheckmark({ accountId, onEdited })}
+          <OutlineViewEditFolderItem
+            containerClassName="item inEditMode selected new-folder-edit"
+            inputClassName="item-input"
+            placeholder="Untitled Folder"
+            folderName={this.state.newFolderName}
+            onCloseClicked={this._onCancelNewFolder}
+            onChange={this._onNewFolderNameChange.bind(this, accountId, onEdited)}
+            onKeyDown={this._onNewFolderKeyDown.bind(this, { accountId, onEdited, onSave })}
+          />
+        </span>
+      </div>
+    );
+  }
 
   _renderItemContent(item = this.props.item, state = this.state) {
     if (this.props.provider === 'aol' && item.name === 'Bulk Mail') {
@@ -466,16 +564,16 @@ class OutlineViewItem extends Component {
     if (state.editing) {
       const placeholder = item.inputPlaceholder || '';
       return (
-        <input
-          autoFocus
-          type="text"
-          tabIndex="1"
-          className="item-input"
+        <OutlineViewEditFolderItem
+          containerClassName="edit-folder-container"
+          inputClassName="item-input"
           placeholder={placeholder}
-          defaultValue={item.name}
-          onBlur={this._onInputBlur}
-          onFocus={this._onInputFocus}
-          onKeyDown={this._onInputKeyDown}
+          renderCloseIcon={false}
+          folderName={this.state.editingFolderName}
+          onBlur={this._onEditFolderInputBlur}
+          onFocus={this._onEditFolderInputFocus}
+          onKeyDown={this._onEditFolderInputKeyDown}
+          onChange={this._onEditingFolderValueChange}
         />
       );
     }
@@ -540,6 +638,13 @@ class OutlineViewItem extends Component {
       return (
         <section className="item-children" key={`${item.id}-children`}>
           {item.children.map((child, idx) => {
+            if (this.props.isEditingMenu && child.id === NEW_FOLDER_KEY) {
+              return this._renderNewFolderInput({
+                accountId: child.newFolderAccountId,
+                onEdited: child.onEdited,
+                onSave: child.onSave,
+              });
+            }
             if (
               (this.state.showAllChildren || !child.hideWhenCrowded) &&
               (this.props.isEditingMenu || !child.isHidden)
@@ -566,7 +671,7 @@ class OutlineViewItem extends Component {
   render() {
     const item = this.props.item;
     if (item.id && item.id === DIVIDER_KEY) {
-      return <Divider key={this.props.index || 100} />;
+      return Divider(this.props.index || 100);
     }
 
     const containerClasses = classnames({
@@ -574,6 +679,9 @@ class OutlineViewItem extends Component {
       selected: item.selected,
       dropping: this.state.isDropping,
     });
+    if (item.component) {
+      return <item.component />;
+    }
 
     if (item.id && item.id === MORE_TOGGLE) {
       const text = this.props.item.collapsed ? 'less' : 'more';
@@ -603,7 +711,7 @@ class OutlineViewItem extends Component {
           <DisclosureTriangle
             collapsed={item.collapsed}
             visible={this.props.isEditingMenu && item.children && item.children.length > 0}
-            visibleOnHover={item.children && item.children.length > 0}
+            visibleOnHover={!this.state.editing && item.children && item.children.length > 0}
             onCollapseToggled={this._onCollapseToggled}
           />
         </span>
