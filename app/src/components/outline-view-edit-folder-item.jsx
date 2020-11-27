@@ -67,7 +67,7 @@ export default class OutlineViewEditFolderItem extends PureComponent {
         <RetinaImg
           name="close.svg"
           isIcon={true}
-          style={{ width: 12, height: 12, fontSize: 12 }}
+          style={{ width: 12, height: 12, fontSize: 12, marginRight: -10 }}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       </div>

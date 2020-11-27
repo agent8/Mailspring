@@ -9,16 +9,17 @@ const SidebarStore = () => {
   return sidebarStore;
 };
 const DIVIDER_OBJECT = { id: 'divider' };
-const ADD_FOLDER_OBJECT = {
+export const ADD_FOLDER_OBJECT = {
   id: 'addFolder',
   onRequestAddFolder: () => SidebarActions.requestAddFolderAccountSelection(),
 };
-const NEW_FOLDER_OBJECT = {
+export const NEW_FOLDER_OBJECT = {
   id: 'newFolder',
   isHidden: true,
   newFolderAccountId: '',
   onEdited: data => SidebarActions.updateNewFolderData(data),
   onSave: () => SidebarActions.saveNewFolderRequest(),
+  onCancel: () => SidebarActions.cancelAddFolderRequest(),
 };
 const MORE_TOGGLE = { id: 'moreToggle' };
 export const nonFolderIds = [
@@ -60,57 +61,78 @@ export default class SidebarSection {
       return this.empty(account.label);
     }
 
-    const items = _.reject(
-      cats,
-      cat => cat.role && cat.role !== 'all' && cat.role !== 'none' && cat.role !== 'important'
-    ).map(cat => {
-      if (cat.role === 'all' && account.provider === 'gmail') {
-        return SidebarItem.forAllMail(cat, { editable: false, deletable: false });
-      } else {
-        return SidebarItem.forCategories([cat], { editable: false, deletable: false });
-      }
-    });
-    let standardItem = SidebarItem.forSentMails([account.id]);
+    const items = [];
+    let standardItem = SidebarItem.forInbox([account.id], { folderTreeIndex: items.length });
     if (standardItem) {
-      items.unshift(standardItem);
+      items.push(standardItem);
+    }
+    standardItem = SidebarItem.forToday([account.id], {
+      displayName: 'Today',
+      folderTreeIndex: items.length,
+    });
+    if (standardItem) {
+      items.push(standardItem);
+    }
+    standardItem = SidebarItem.forUnread([account.id], { folderTreeIndex: items.length });
+    if (standardItem) {
+      items.push(standardItem);
+    }
+    standardItem = SidebarItem.forStarred([account.id], {
+      displayName: 'Flagged',
+      folderTreeIndex: items.length,
+    });
+    if (standardItem) {
+      items.push(standardItem);
+    }
+    standardItem = SidebarItem.forDrafts([account.id], {
+      key: `standard-${account.id}`,
+      folderTreeIndex: items.length,
+    });
+    if (standardItem) {
+      items.push(standardItem);
+    }
+    standardItem = SidebarItem.forSpam([account.id], { folderTreeIndex: items.length });
+    if (standardItem) {
+      items.push(standardItem);
+    }
+    standardItem = SidebarItem.forTrash(account.id, { folderTreeIndex: items.length });
+    if (standardItem) {
+      items.push(standardItem);
     }
     if (account.provider !== 'gmail') {
-      standardItem = SidebarItem.forArchived([account.id]);
+      standardItem = SidebarItem.forArchived([account.id], { folderTreeIndex: items.length });
       if (standardItem) {
-        items.unshift(standardItem);
+        items.push(standardItem);
       }
     }
-    standardItem = SidebarItem.forTrash(account.id);
+    standardItem = SidebarItem.forSentMails([account.id], { folderTreeIndex: items.length });
     if (standardItem) {
-      items.unshift(standardItem);
+      items.push(standardItem);
     }
-    standardItem = SidebarItem.forSpam([account.id]);
-    if (standardItem) {
-      items.unshift(standardItem);
-    }
-    standardItem = SidebarItem.forDrafts([account.id], { key: `standard-${account.id}` });
-    if (standardItem) {
-      items.unshift(standardItem);
-    }
-    standardItem = SidebarItem.forStarred([account.id], { displayName: 'Flagged' });
-    if (standardItem) {
-      items.unshift(standardItem);
-    }
-    standardItem = SidebarItem.forUnread([account.id]);
-    if (standardItem) {
-      items.unshift(standardItem);
-    }
-    standardItem = SidebarItem.forToday([account.id], { displayName: 'Today' });
-    if (standardItem) {
-      items.unshift(standardItem);
-    }
-    standardItem = SidebarItem.forInbox([account.id]);
-    if (standardItem) {
-      items.unshift(standardItem);
-    }
+    _.reject(
+      cats,
+      cat => cat.role && cat.role !== 'all' && cat.role !== 'none' && cat.role !== 'important'
+    ).forEach(cat => {
+      if (cat.role === 'all' && account.provider === 'gmail') {
+        const item = SidebarItem.forAllMail(cat, {
+          editable: false,
+          deletable: false,
+          folderTreeIndex: items.length,
+        });
+        items.push(item);
+      } else {
+        const item = SidebarItem.forCategories([cat], {
+          editable: false,
+          deletable: false,
+          folderTreeIndex: items.length,
+        });
+        items.push(item);
+      }
+    });
+
     // const attachmentsMail = SidebarItem.forAttachments([account.id]);
 
-    items.push(...this.accountUserCategories(account));
+    this.accountUserCategories(account, items);
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)
       .forEach(ext => {
@@ -150,22 +172,32 @@ export default class SidebarSection {
     if (CategoryStore.categories().length === 0) {
       return this.empty('All Accounts');
     }
+    const accountItems = [];
     accounts.forEach(acc => {
-      const accountItems = this.standardSectionForAccount(acc).items;
-      const newFolder = SidebarStore().getNewFolder(acc.id);
+      const accountFolderItems = this.standardSectionForAccount(acc).items;
+      accountFolderItems.sort(SidebarSection.sortByDisplayOrder);
+      const newFolder = SidebarStore().getNewFolder();
       let forceExpand = undefined;
       if (newFolder) {
-        forceExpand = true;
-        accountItems.push(Object.assign({}, NEW_FOLDER_OBJECT, { newFolderAccountId: acc.id }));
+        forceExpand = newFolder.accountId === acc.id;
+        if (forceExpand) {
+          accountFolderItems.push(
+            Object.assign({}, NEW_FOLDER_OBJECT, { newFolderAccountId: acc.id })
+          );
+        }
       }
+      console.warn(`account items length ${accountItems.length}`);
       let item = SidebarItem.forSingleInbox(acc.id, {
         name: acc.label,
         threadTitleName: 'Inbox',
-        children: accountItems,
+        children: accountFolderItems,
+        folderTreeIndex: accountItems.length,
         forceExpand,
       });
-      items.push(item);
+      accountItems.push(item);
     });
+    accountItems.sort(SidebarSection.sortByDisplayOrder);
+    items.push(...accountItems);
     if (accounts.length > 1) {
       items.push(ADD_FOLDER_OBJECT);
     }
@@ -183,44 +215,79 @@ export default class SidebarSection {
       items.unshift(outbox);
     }
     if (accounts.length > 1) {
+      const shortcutItems = [];
       items.push(DIVIDER_OBJECT);
-      folderItem = SidebarItem.forToday(accountIds, { displayName: 'Today', key: 'all' });
+      folderItem = SidebarItem.forToday(accountIds, {
+        displayName: 'Today',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
-      folderItem = SidebarItem.forUnread(accountIds, { displayName: 'Unread', key: 'all' });
+      folderItem = SidebarItem.forUnread(accountIds, {
+        displayName: 'Unread',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
-      folderItem = SidebarItem.forStarred(accountIds, { displayName: 'Flagged', key: 'all' });
+      folderItem = SidebarItem.forStarred(accountIds, {
+        displayName: 'Flagged',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
-      folderItem = SidebarItem.forDrafts(accountIds, { displayName: 'All Drafts', key: 'all' });
+      folderItem = SidebarItem.forDrafts(accountIds, {
+        displayName: 'All Drafts',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
       // folderItem = SidebarItem.forSnoozed(accountIds, { displayName: 'Snoozed' });
       // if (folderItem) {
       //   items.push(folderItem);
       // }
-      folderItem = SidebarItem.forSpam(accountIds, { displayName: 'Spam', key: 'all' });
+      folderItem = SidebarItem.forSpam(accountIds, {
+        displayName: 'Spam',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
-      folderItem = SidebarItem.forAllTrash(accountIds, { displayName: 'Trash', key: 'all' });
+      folderItem = SidebarItem.forAllTrash(accountIds, {
+        displayName: 'Trash',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
 
-      folderItem = SidebarItem.forArchived(accountIds, { displayName: 'All Archive', key: 'all' });
+      folderItem = SidebarItem.forArchived(accountIds, {
+        displayName: 'All Archive',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
-      folderItem = SidebarItem.forSentMails(accountIds, { displayName: 'All Sent', key: 'all' });
+      folderItem = SidebarItem.forSentMails(accountIds, {
+        displayName: 'All Sent',
+        key: 'all',
+        folderTreeIndex: shortcutItems.length,
+      });
       if (folderItem) {
-        items.push(folderItem);
+        shortcutItems.push(folderItem);
       }
+      shortcutItems.sort(SidebarSection.sortByDisplayOrder);
+      items.push(...shortcutItems);
     }
     SidebarSection.forSiftCategories(accountIds, items);
 
@@ -256,17 +323,21 @@ export default class SidebarSection {
     };
   }
 
-  static accountUserCategories(account) {
-    const items = [];
-    // const isExchange = account && account.provider === 'exchange';
-    // let exchangeInboxCategory;
-    // if (isExchange) {
-    //   exchangeInboxCategory = CategoryStore.getInboxCategory(account.id);
-    // }
-    const isShowAll = AppEnv.savedState.sidebarKeysCollapsed[`${account.id}-single-moreToggle`];
-    const moreOrLess = Object.assign({}, MORE_TOGGLE, {
-      collapsed: isShowAll,
+  static accountUserCategories(account, items) {
+    const baseNumber = items.length;
+    const showAll = Object.assign({}, MORE_TOGGLE, {
+      accountIds: [account.id],
+      showAll: true,
+      collapsed: true,
       name: `${account.id}-single-moreToggle`,
+      onToggleMoreOrLess: () => SidebarActions.toggleMore(`${account.id}-single-moreToggle`, false),
+    });
+    const showLess = Object.assign({}, MORE_TOGGLE, {
+      accountIds: [account.id],
+      showAll: false,
+      collapsed: false,
+      name: `${account.id}-single-moreToggle`,
+      onToggleMoreOrLess: () => SidebarActions.toggleMore(`${account.id}-single-moreToggle`, true),
     });
     for (let category of CategoryStore.userCategories(account)) {
       let item;
@@ -274,29 +345,37 @@ export default class SidebarSection {
       if (parent) {
         continue;
       }
-      item = SidebarItem.forCategories([category], { hideWhenCrowded: items.length >= 3 }, false);
+      item = SidebarItem.forCategories(
+        [category],
+        {
+          hideWhenCrowded: items.length - baseNumber >= 3,
+          folderTreeIndex: items.length,
+        },
+        false
+      );
       if (item) {
-        if (items.length === 3 && !isShowAll) {
-          items.push(moreOrLess);
+        if (items.length - baseNumber === 3) {
+          items.push(showAll);
         }
         items.push(item);
       }
     }
-    if (isShowAll && items.length > 3) {
-      items.push(moreOrLess);
+    if (items.length - baseNumber > 3 && items[items.length - 1].id !== showLess.id) {
+      items.push(showLess);
     }
-    return items.sort((a, b) => {
-      if (DIVIDER_OBJECT.id.includes(a.id) || DIVIDER_OBJECT.id.includes(b.id)) {
-        return 0;
-      } else if (MORE_TOGGLE.id.includes(a.id)) {
-        return 1;
-      } else if (MORE_TOGGLE.id.includes(b.id)) {
-        return -1;
-      } else {
-        return a.displayOrder - b.displayOrder;
-      }
-    });
   }
+
+  static sortByDisplayOrder = (a, b) => {
+    if (DIVIDER_OBJECT.id.includes(a.id) || DIVIDER_OBJECT.id.includes(b.id)) {
+      return 0;
+    } else if (MORE_TOGGLE.id.includes(a.id)) {
+      return 1;
+    } else if (MORE_TOGGLE.id.includes(b.id)) {
+      return -1;
+    } else {
+      return a.displayOrder - b.displayOrder;
+    }
+  };
 
   static forSiftCategories(accountsOrIds, items) {
     if (!Array.isArray(accountsOrIds) || !Array.isArray(items)) {
@@ -307,23 +386,32 @@ export default class SidebarSection {
       accountIds = accountsOrIds.map(acct => acct.id);
     }
     const siftItems = [];
-    let folderItem = SidebarItem.forSift(accountIds, Sift.categories.Travel);
+    let folderItem = SidebarItem.forSift(accountIds, Sift.categories.Travel, {
+      folderTreeIndex: siftItems.length,
+    });
     if (folderItem) {
       siftItems.push(folderItem);
     }
-    folderItem = SidebarItem.forSift(accountIds, Sift.categories.Packages);
+    folderItem = SidebarItem.forSift(accountIds, Sift.categories.Packages, {
+      folderTreeIndex: siftItems.length,
+    });
     if (folderItem) {
       siftItems.push(folderItem);
     }
-    folderItem = SidebarItem.forSift(accountIds, Sift.categories.Bill);
+    folderItem = SidebarItem.forSift(accountIds, Sift.categories.Bill, {
+      folderTreeIndex: siftItems.length,
+    });
     if (folderItem) {
       siftItems.push(folderItem);
     }
-    folderItem = SidebarItem.forSift(accountIds, Sift.categories.Entertainment);
+    folderItem = SidebarItem.forSift(accountIds, Sift.categories.Entertainment, {
+      folderTreeIndex: siftItems.length,
+    });
     if (folderItem) {
       siftItems.push(folderItem);
     }
     if (siftItems.length > 0) {
+      siftItems.sort(SidebarSection.sortByDisplayOrder);
       items.push(DIVIDER_OBJECT);
       for (const item of siftItems) {
         items.push(item);

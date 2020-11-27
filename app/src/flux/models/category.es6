@@ -203,6 +203,7 @@ export default class Category extends Model {
   //   console.error('using get name()');
   //   return this.role;
   // }
+  static mergeFields = ['isNew'];
 
   static attributes = Object.assign({}, Model.attributes, {
     role: Attributes.String({
@@ -253,6 +254,11 @@ export default class Category extends Model {
       loadFromColumn: true,
       fromJSONMapping: fromDelimiterJsonMappings,
       toJSONMapping: toDelimiterJSONMappings,
+    }),
+    isNew: Attributes.Boolean({
+      modelKey: 'isNew',
+      queryable: false,
+      loadFromColumn: false,
     }),
   });
 
@@ -438,7 +444,7 @@ export default class Category extends Model {
       const otherParentName = otherCategory.displayName.slice(0, indexOfLastOtherLayer);
       return currentParentName === otherParentName;
     } else {
-      return false;
+      return currentLayers.length === 1 && currentLayers.length === otherLayers.length;
     }
   }
   areRelatives(otherCategory) {

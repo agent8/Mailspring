@@ -1,3 +1,7 @@
+export const DROP_DATA_TYPE = {
+  THREAD: 'edison-threads-data',
+  FOLDER_TREE_ITEM: 'edison-folder-tree-item-data',
+};
 export const QUERY_TYPE = {
   BACKGROUND: 'BACKGROUND',
   SEARCH_PERSPECTIVE: 'SEARCH_PERSPECTIVE',

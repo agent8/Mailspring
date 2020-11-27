@@ -19,6 +19,7 @@ Section: Models
  */
 
 export default class Model {
+  static mergeFields = []; // This is to indicate whether we want to merge native data with db data
   static passAsIs = false; // This is to indicate whether we need to re query DB on message from native
   static pseudoPrimaryJsKey = 'id';
   static getTableName() {
@@ -159,7 +160,7 @@ export default class Model {
         this.constructor.attributes[key].jsonKey ||
         this.constructor.attributes[key].modelKey ||
         key;
-      if (val && val.hasOwnProperty(jsKey)) {
+      if (val && Object.prototype.hasOwnProperty.call(val, jsKey)) {
         this[key] = this.constructor.attributes[key].fromColumn(val[jsKey]);
       }
     });

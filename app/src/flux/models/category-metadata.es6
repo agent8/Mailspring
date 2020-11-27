@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 const localStorage = window.localStorage;
 const storageKey = 'categoryMetadata';
 class CategoryMetaData {
@@ -44,9 +45,22 @@ class CategoryMetaData {
     if (!this._accounts[accountId]) {
       this._accounts[accountId] = {};
     }
-    this._accounts[accountId][id] = { displayOrder, hidden };
+    const hashId = this.hashId(id);
+    this._accounts[accountId][hashId] = { displayOrder, hidden };
     if (save) {
-      console.warn(`saving data ${accountId} ${id} to storage`);
+      this._updateStorage();
+    }
+  };
+  deleteItem = ({ accountId, id, save = true }) => {
+    if (!accountId || !id) {
+      return;
+    }
+    if (!this._accounts[accountId]) {
+      return;
+    }
+    const hashId = this.hashId(id);
+    delete this._accounts[accountId][hashId];
+    if (save) {
       this._updateStorage();
     }
   };
@@ -54,11 +68,30 @@ class CategoryMetaData {
     return this._getValue(accountId, id, 'hidden');
   };
   getDisplayOrder = ({ accountId, id } = {}) => {
-    return this._getValue(accountId, id, 'displayOrder') || 0;
+    return this._getValue(accountId, id, 'displayOrder') === null ||
+      this._getValue(accountId, id, 'displayOrder') === undefined
+      ? -1
+      : this._getValue(accountId, id, 'displayOrder');
+  };
+  updateItemsByAccountId = ({ accountId, items, save = true }) => {
+    if (!accountId) {
+      return null;
+    }
+    this._accounts[accountId] = items;
+    if (save) {
+      this._updateStorage();
+    }
+  };
+  getItemsByAccountId = accountId => {
+    if (!accountId) {
+      return null;
+    }
+    return Object.assign({}, this._accounts[accountId]);
   };
   getItem = (accountId, id) => {
+    const hashId = this.hashId(id);
     if (this._accounts[accountId]) {
-      return this._accounts[accountId][id];
+      return this._accounts[accountId][hashId];
     }
     return null;
   };
@@ -66,11 +99,21 @@ class CategoryMetaData {
     if (!this._accounts[accountId]) {
       return null;
     }
-    if (!this._accounts[accountId][id]) {
+    const hashId = this.hashId(id);
+    if (!this._accounts[accountId][hashId]) {
       return null;
     }
-    return this._accounts[accountId][id][valueType];
+    return this._accounts[accountId][hashId][valueType];
   };
+  hashId(id) {
+    if (typeof id !== 'string' || id.length === 0) {
+      return id;
+    }
+    return crypto
+      .createHash('md5')
+      .update(id)
+      .digest('hex');
+  }
 }
 
 export default new CategoryMetaData();
