@@ -10,6 +10,7 @@ import RetinaImg from './retina-img';
 import PropTypes from 'prop-types';
 import { Divider, DIVIDER_KEY, MORE_TOGGLE, ADD_FOLDER_KEY, NEW_FOLDER_KEY } from './outline-view';
 import OutlineViewEditFolderItem from './outline-view-edit-folder-item';
+import { DROP_DATA_TYPE } from '../constant';
 /*
  * Enum for counter styles
  * @readonly
@@ -121,6 +122,7 @@ class OutlineViewItem extends Component {
     provider: PropTypes.string,
     item: PropTypes.shape({
       component: PropTypes.element,
+      categoryMetaDataInfo: PropTypes.object,
       className: PropTypes.string,
       newFolderAccountId: PropTypes.string,
       id: PropTypes.string.isRequired,
@@ -146,6 +148,7 @@ class OutlineViewItem extends Component {
       toggleHide: PropTypes.func,
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
+      showAll: PropTypes.bool,
     }).isRequired,
     isEditingMenu: PropTypes.bool,
   };
@@ -157,6 +160,7 @@ class OutlineViewItem extends Component {
     this._expandTimeout = null;
     this.state = {
       isDropping: false,
+      isDragging: false,
       editing: props.item.editing || false,
       originalText: '',
       showAllChildren: false,
@@ -171,11 +175,17 @@ class OutlineViewItem extends Component {
     this._mounted = false;
   }
   checkCurrentShowAllChildren = props => {
-    if (props.item && Array.isArray(props.item.children) && this._mounted) {
-      const moreOrLess = props.item.children.find(item => item.id === 'moreToggle');
-      if (moreOrLess) {
-        this.setState({ showAllChildren: moreOrLess.collapsed });
-      }
+    if (
+      props.item &&
+      Array.isArray(props.item.accountIds) &&
+      this._mounted &&
+      props.item.accountIds.length > 0 &&
+      props.item.accountIds[0]
+    ) {
+      const accountId = props.item.accountIds[0];
+      this.setState({
+        showAllChildren: !AppEnv.savedState.sidebarKeysCollapsed[`${accountId}-single-moreToggle`],
+      });
     }
   };
 
@@ -216,14 +226,6 @@ class OutlineViewItem extends Component {
     return undefined;
   };
 
-  _shouldShowContextMenu = () => {
-    return (
-      this.props.item.onDelete != null ||
-      this.props.item.onEdited != null ||
-      this.props.item.onAllRead != null
-    );
-  };
-
   _shouldAcceptDrop = event => {
     return this._runCallback('shouldAcceptDrop', event);
   };
@@ -239,7 +241,7 @@ class OutlineViewItem extends Component {
     this.setState({ isDropping });
     if (dataItems) {
       for (let i = 0; i < dataItems.length; i++) {
-        if (dataItems[i] && dataItems[i].type === 'edison-category-data') {
+        if (dataItems[i] && dataItems[i].type === DROP_DATA_TYPE.FOLDER_TREE_ITEM) {
           this.setState({ isCategoryDropping: isDropping });
           return;
         }
@@ -263,23 +265,15 @@ class OutlineViewItem extends Component {
     this._runCallback('onCollapseToggled');
   };
 
-  _onToggleShowAllFolder = () => {
+  _onToggleShowAllFolder = showAll => {
     if (this._mounted) {
-      // this.setState({ showAllChildren: !this.state.showAllChildren });
-      // if (this.props.item.id !== 'moreToggle') {
-      //   const current = FocusedPerspectiveStore.current();
-      //   if (current && current.hideWhenCrowded) {
-      //     AppEnv.savedState.sidebarKeysCollapsed[`${this.props.item.id}-moreToggle`] = !this.state
-      //       .showAllChildren;
-      //   }
-      // }
       if (this.props.item.id === 'moreToggle') {
-        Actions.setMoreOrLessCollapsed(this.props.item.name, !this.props.item.collapsed);
+        this._runCallback('onToggleMoreOrLess');
       } else {
-        this.setState({ showAllChildren: !this.state.showAllChildren });
+        this.setState({ showAllChildren: showAll });
       }
       if (typeof this.props.onToggleShowAllFolder === 'function') {
-        this.props.onToggleShowAllFolder();
+        this.props.onToggleShowAllFolder(showAll);
       }
     }
   };
@@ -402,19 +396,32 @@ class OutlineViewItem extends Component {
       Actions.openContextMenu({ menuItems: menu, mouseEvent: event });
     }
   };
+  _onDropZoneMouseDown = event => {
+    if (this._mounted && this.props.isEditingMenu) {
+      this.setState({ isDragging: true });
+    }
+  };
+  _onDropZoneMouseUp = event => {
+    if (this._mounted) {
+      this.setState({ isDragging: false });
+    }
+  };
 
   _onDragStart = event => {
-    if (!this.props.item) {
+    if (!this.props.item || !this.props.isEditingMenu) {
       event.preventDefault();
       return;
     }
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.dropEffect = 'move';
-    event.dataTransfer.setData('edison-category-data', JSON.stringify(this.props.item));
+    event.dataTransfer.setData(
+      DROP_DATA_TYPE.FOLDER_TREE_ITEM,
+      JSON.stringify(this.props.item.categoryMetaDataInfo)
+    );
   };
   _onDragEnter = event => {
-    if (event.dataTransfer.types.includes('edison-category-data')) {
-      const categoryData = event.dataTransfer.getData('edison-category-data');
+    if (event.dataTransfer.types.includes(DROP_DATA_TYPE.FOLDER_TREE_ITEM)) {
+      const categoryData = event.dataTransfer.getData(DROP_DATA_TYPE.FOLDER_TREE_ITEM);
       try {
         const dragItem = JSON.parse(categoryData);
         this.setState({ isCategoryDropping: true, droppingItem: dragItem });
@@ -442,9 +449,12 @@ class OutlineViewItem extends Component {
       this._updateNewFolderData.bind(this, accountId, onEdited)
     );
   };
-  _onNewFolderKeyDown = ({ onSave }, event) => {
+  _onNewFolderKeyDown = ({ onSave, onCancel }, event) => {
     if (event.key === 'Escape') {
       this.setState({ newFolderName: '', newFolderIsHidden: false, newFolderDisableHidden: true });
+      if (onCancel) {
+        onCancel();
+      }
       return;
     }
     if (['Enter', 'Return'].includes(event.key)) {
@@ -538,7 +548,7 @@ class OutlineViewItem extends Component {
       </div>
     );
   }
-  _renderNewFolderInput({ accountId, onEdited, onSave }) {
+  _renderNewFolderInput({ accountId, onEdited, onSave, onCancel }) {
     return (
       <div>
         <span className="item-container selected">
@@ -550,7 +560,12 @@ class OutlineViewItem extends Component {
             folderName={this.state.newFolderName}
             onCloseClicked={this._onCancelNewFolder}
             onChange={this._onNewFolderNameChange.bind(this, accountId, onEdited)}
-            onKeyDown={this._onNewFolderKeyDown.bind(this, { accountId, onEdited, onSave })}
+            onKeyDown={this._onNewFolderKeyDown.bind(this, {
+              accountId,
+              onEdited,
+              onSave,
+              onCancel,
+            })}
           />
         </span>
       </div>
@@ -602,6 +617,46 @@ class OutlineViewItem extends Component {
       </div>
     );
   }
+  _renderDrag() {
+    if (!this.props.isEditingMenu) {
+      return null;
+    }
+    return (
+      <div className={`icon icon-drag`}>
+        <RetinaImg
+          name={'drag-handle.svg'}
+          isIcon={true}
+          style={{ width: 18, height: 18, fontSize: 18, position: 'relative', left: 14 }}
+          fallback={'folder.svg'}
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
+      </div>
+    );
+  }
+  _renderMoreOrLess() {
+    const text = this.props.item.showAll ? 'more' : 'less';
+    return (
+      <div
+        onClick={this._onToggleShowAllFolder.bind(this, this.props.item.showAll)}
+        ref={this._setSelfRef}
+        key={`moreOrLess-${text}`}
+      >
+        <span className="item-container">
+          <div className="item more-or-less-item">
+            <div className="name more-or-less">{text}</div>
+            <DisclosureTriangle
+              className={'more-or-less-triangle'}
+              collapsed={this.props.item.collapsed}
+              iconName={'down-arrow.svg'}
+              isIcon={true}
+              visible={true}
+              onCollapseToggled={this._onToggleShowAllFolder.bind(this, this.props.item.showAll)}
+            />
+          </div>
+        </span>
+      </div>
+    );
+  }
 
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
@@ -616,15 +671,22 @@ class OutlineViewItem extends Component {
       <DropZone
         id={item.id}
         className={containerClass}
+        draggable={true}
         onDrop={this._onDrop}
+        onDragStart={this._onDragStart}
+        onDragEnter={this._onDragEnter}
         onClick={this._onClick}
         onDoubleClick={this._onEdit}
         shouldAcceptDrop={this._shouldAcceptDrop}
         onDragStateChange={this._onDragStateChange}
+        onMouseDown={this._onDropZoneMouseDown}
+        onMouseUp={this._onDropZoneMouseUp}
+        onMouseOut={this._onDropZoneMouseUp}
       >
         {this._renderCount()}
         {this._renderIcon()}
         {this._renderItemContent()}
+        {this._renderDrag()}
       </DropZone>
     );
   }
@@ -643,7 +705,11 @@ class OutlineViewItem extends Component {
                 accountId: child.newFolderAccountId,
                 onEdited: child.onEdited,
                 onSave: child.onSave,
+                onCancel: child.onCancel,
               });
+            }
+            if (child.id === MORE_TOGGLE && child.showAll === this.state.showAllChildren) {
+              return null;
             }
             if (
               (this.state.showAllChildren || !child.hideWhenCrowded) &&
@@ -678,30 +744,15 @@ class OutlineViewItem extends Component {
       'item-container': true,
       selected: item.selected,
       dropping: this.state.isDropping,
+      inEditMode: this.props.isEditingMenu,
+      isDragging: this.state.isDragging,
     });
     if (item.component) {
       return <item.component />;
     }
 
     if (item.id && item.id === MORE_TOGGLE) {
-      const text = this.props.item.collapsed ? 'less' : 'more';
-      return (
-        <div onClick={this._onToggleShowAllFolder} ref={this._setSelfRef}>
-          <span className="item-container">
-            <div className="item more-or-less-item">
-              <div className="name more-or-less">{text}</div>
-              <DisclosureTriangle
-                className={'more-or-less-triangle'}
-                collapsed={!this.props.item.collapsed}
-                iconName={'down-arrow.svg'}
-                isIcon={true}
-                visible={true}
-                onCollapseToggled={this._onToggleShowAllFolder}
-              />
-            </div>
-          </span>
-        </div>
-      );
+      return this._renderMoreOrLess();
     }
     return (
       <div className={item.className ? item.className : null} ref={this._setSelfRef}>

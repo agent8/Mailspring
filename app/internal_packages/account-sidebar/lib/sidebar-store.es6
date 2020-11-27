@@ -162,7 +162,7 @@ class SidebarStore extends MailspringStore {
   _registerListeners() {
     this.listenTo(Actions.setEditingMenu, this._onSetEditingMenu);
     this.listenTo(Actions.setCollapsedSidebarItem, this._onSetCollapsedByName);
-    this.listenTo(Actions.setMoreOrLessCollapsed, this.setItemShowAllChildren);
+    this.listenTo(SidebarActions.toggleMore, this.setItemShowAllChildren);
     this.listenTo(SidebarActions.setKeyCollapsed, this._onSetCollapsedByKey);
     this.listenTo(
       SidebarActions.requestAddFolderAccountSelection,
@@ -185,6 +185,9 @@ class SidebarStore extends MailspringStore {
     );
   }
   getNewFolder(accountId) {
+    if (!accountId) {
+      return this._newFolder.accountId ? this._newFolder : null;
+    }
     if (this._newFolder.accountId === accountId) {
       return this._newFolder;
     }
@@ -376,6 +379,7 @@ class SidebarStore extends MailspringStore {
     // const multiAccount = accounts.length > 1;
 
     this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts);
+    CategoryStore.clearCategoryDisplayOrderChangeRecord();
     const keyboardFocusKey = this._findKeyboardFocusKeyFromCurrentSelected();
     if (keyboardFocusKey !== this._keyboardFocusKey) {
       this._keyboardFocusKey = keyboardFocusKey;

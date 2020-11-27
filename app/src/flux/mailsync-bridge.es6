@@ -848,9 +848,21 @@ export default class MailsyncBridge {
       const where = {};
       const construct = tmpModels[0].constructor;
       const primaryKey = tmpModels[0].constructor.pseudoPrimaryJsKey;
+      const mergeFields = {};
       tmpModels.forEach(m => {
         if (m.constructor.name !== modelClass) {
           return;
+        }
+        if (Array.isArray(m.constructor.mergeFields) && m.constructor.mergeFields.length > 0) {
+          if (!Array.isArray(mergeFields[m.constructor.name])) {
+            mergeFields[m.constructor.name] = [];
+          }
+          const fields = {};
+          m.constructor.mergeFields.forEach(key => {
+            fields[key] = m[key];
+          });
+          fields[primaryKey] = m[primaryKey];
+          mergeFields[m.constructor.name].push(fields);
         }
         if (!where[primaryKey]) {
           where[primaryKey] = [];
@@ -901,7 +913,7 @@ export default class MailsyncBridge {
           for (let m of parsedModels) {
             if (!m) {
               AppEnv.reportError(
-                new Error(`There is an null is the parsed change record models send to UI`)
+                new Error(`There is an null in the parsed change record models send to UI`)
               );
               continue;
             }
@@ -923,6 +935,19 @@ export default class MailsyncBridge {
             }
           }
           if (!duplicate) {
+            if (
+              Array.isArray(mergeFields[model.constructor.name]) &&
+              mergeFields[model.constructor.name].length > 0
+            ) {
+              for (let i = 0; i < mergeFields[model.constructor.name].length; i++) {
+                const mergeModel = mergeFields[model.constructor.name][i];
+                if (model[pseudoPrimaryKey] === mergeModel[pseudoPrimaryKey]) {
+                  console.log('new Folder: found model to merge', mergeModel);
+                  Object.assign(model, mergeModel);
+                  break;
+                }
+              }
+            }
             parsedModels.push(model);
           }
         });
