@@ -27,6 +27,8 @@ export default function authReducer(state = initialState, action) {
     case AuthActionTypes.BEGIN_GOOGLE_AUTH:
       return Object.assign({}, state, { isAuth: true, currentUser: null });
     case AuthActionTypes.SUCCESS_GOOGLE_AUTH:
+      console.log("BEAR")
+      console.log(action.payload)
       return Object.assign({}, state, {
         isAuth: false,
         providers: {
@@ -37,13 +39,16 @@ export default function authReducer(state = initialState, action) {
             ).length > 0
               ? state.providers[ProviderTypes.GOOGLE].map((e) =>
                 e.personId === action.payload.user.personId
-                  ? { ...action.payload.user, calendars: action.payload.calendars }
+                  ? {
+                    ...action.payload.user,
+                    ...action.payload.user.calendars && { calendars: action.payload.calendars },
+                  }
                   : e
               )
               : state.providers[ProviderTypes.GOOGLE]
                 .concat({
                   ...action.payload.user,
-                  calendars: action.payload.calendars
+                  ...action.payload.user.calendars && { calendars: action.payload.calendars },
                 })
         },
         expiredProviders: {

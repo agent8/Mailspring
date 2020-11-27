@@ -158,30 +158,28 @@ const createGoogleEvent = async (payload) => {
   const debug = false;
 
   if (payload.data.isRecurring) {
-    // await addGoogleEvent(
-    //   calendar.id,
-    //   auth.accessToken,
-    //   {
-    //     'summary': data.summary,
-    //     'location': data.location,
-    //     'description': data.description,
-    //     'start': {
-    //       'dateTime': data.start.dateTime.format(),
-    //       'timeZone': data.start.timezone
-    //     },
-    //     'end': {
-    //       "dateTime": data.end.dateTime.format(),
-    //       "timeZone": data.end.timezone
-    //     },
-    //     'attendees': Object.keys(data.attendee).map(key => {
-    //       return { 'email': data.attendee[key].email }
-    //     }),
-    //     'recurrence': [
-    //       'RRULE:FREQ=DAILY;COUNT=2'
-    //     ],
+    await addGoogleEvent(
+      calendar.id,
+      auth.accessToken,
+      {
+        'summary': data.summary,
+        'location': data.location,
+        'description': data.description,
+        'start': {
+          'dateTime': data.start.dateTime.format(),
+          'timeZone': data.start.timezone
+        },
+        'end': {
+          "dateTime": data.end.dateTime.format(),
+          "timeZone": data.end.timezone
+        },
+        'attendees': Object.keys(data.attendee).map(key => {
+          return { 'email': data.attendee[key].email }
+        }),
+        'recurrence': ['RRULE:'.concat(payload.data.rrule)],
 
-    //   }
-    // )
+      }
+    )
   } else {
     await addGoogleEvent(
       calendar.id,

@@ -97,7 +97,7 @@ class FilterEvents extends React.Component {
                 onChange={this.handleFilterChange}
                 checked={filterMap[calUrl]}
               />
-              <p className={`checkbox-checkmark color-picker-${cal.color}`}></p>
+              <p className={`checkbox-checkmark color-picker-${cal.color ? cal.color : 'blue'}`}></p>
               <span>{cal.displayName ? cal.displayName : cal.summary}</span>
             </label>
             <div className="dropdown">
@@ -127,7 +127,7 @@ class FilterEvents extends React.Component {
           <button className="calendar-btn">My calendars</button>
           <ul className="calendar-list">
             {props.calendarsList.map((acc) => [
-              <h4 className='email-heading' key={acc.email}>{acc.email}</h4>,
+              <h4 className='email-heading' key={`acc-${acc.email}`}>{acc.email}</h4>,
               ...this.renderCalendarList(acc, state.filterMap)
             ])}
           </ul>
@@ -156,7 +156,7 @@ const mapStateToProps = (state) => {
       email: account.email,
       type: 'GOOGLE',
       provider: JSON.stringify(account),
-      calendars: account.calendars ? account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal)) : []
+      calendars: account.calendars !== undefined ? account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal)) : []
     })),
     ...state.auth.providers.OUTLOOK.map((account) => ({
       email: account.email,
