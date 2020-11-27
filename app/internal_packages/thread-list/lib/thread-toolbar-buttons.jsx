@@ -153,7 +153,10 @@ export function ArchiveButton(props) {
   }
 
   return (
-    <BindGlobalCommands commands={{ 'core:archive-item': event => commandCb(event, _onShortCut) }}>
+    <BindGlobalCommands
+      key="archive-item"
+      commands={{ 'core:archive-item': event => commandCb(event, _onShortCut) }}
+    >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onArchive}>
         <RetinaImg
           name={'archive.svg'}
@@ -443,6 +446,7 @@ export function TrashButton(props) {
 
   return (
     <BindGlobalCommands
+      key="delete-item"
       commands={{ 'core:delete-item': event => commandCb(event, actionCallBack) }}
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={actionCallBack}>
@@ -563,6 +567,7 @@ export function MarkAsSpamButton(props) {
       }}
     >
       <button
+        key="spam"
         tabIndex={-1}
         className="btn btn-toolbar"
         title={title}
@@ -598,7 +603,13 @@ export function PrintThreadButton(props) {
   }
 
   return (
-    <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onPrintThread}>
+    <button
+      key="print"
+      tabIndex={-1}
+      className="btn btn-toolbar"
+      title={title}
+      onClick={_onPrintThread}
+    >
       <RetinaImg
         name={'print.svg'}
         style={{ width: 24, height: 24, fontSize: 24 }}
@@ -641,7 +652,10 @@ export function ToggleStarredButton(props) {
   }
 
   return (
-    <BindGlobalCommands commands={{ 'core:star-item': event => commandCb(event, _onShortcutStar) }}>
+    <BindGlobalCommands
+      key="star-item"
+      commands={{ 'core:star-item': event => commandCb(event, _onShortcutStar) }}
+    >
       <button
         tabIndex={-1}
         className={'btn btn-toolbar ' + className}
@@ -773,6 +787,7 @@ class HiddenGenericRemoveButton extends React.Component {
   render() {
     return (
       <BindGlobalCommands
+        key="show-previous-next"
         commands={{
           'core:show-previous': event => commandCb(event, this._onShift, { offset: -1 }),
           'core:show-next': event => commandCb(event, this._onShift, { offset: 1 }),
@@ -1451,7 +1466,7 @@ function FolderButton(props) {
   }
 
   return (
-    <div>
+    <div key="folder">
       <ToolbarCategoryPicker {...props} />
     </div>
   );
@@ -1551,8 +1566,33 @@ class MoreActionsButton extends React.Component {
   };
 
   render() {
-    return (
+    const { moreButtonlist } = this.props;
+    const otherCommandBindings = [];
+
+    if (moreButtonlist) {
+      moreButtonlist.forEach(button => {
+        if (button && typeof button === 'function') {
+          const menuItem = button({
+            ...this.props,
+            isMenuItem: false,
+            anchorEl: this._anchorEl,
+          });
+          // if the account has no spam folder, the menuItem is false
+          if (menuItem) {
+            if (menuItem instanceof Array) {
+              menuItem.forEach(item => {
+                otherCommandBindings.push(item);
+              });
+            } else {
+              otherCommandBindings.push(menuItem);
+            }
+          }
+        }
+      });
+    }
+    return [
       <button
+        key="btn-more"
         id={`threadToolbarMoreButton${this.props.position}`}
         tabIndex={-1}
         className="btn btn-toolbar btn-more"
@@ -1565,8 +1605,11 @@ class MoreActionsButton extends React.Component {
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
-      </button>
-    );
+      </button>,
+      <div key="other-command-bindings" style={{ display: 'none' }}>
+        {otherCommandBindings}
+      </div>,
+    ];
   }
 }
 
