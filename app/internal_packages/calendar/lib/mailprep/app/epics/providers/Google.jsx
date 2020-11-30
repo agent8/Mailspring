@@ -4,12 +4,13 @@ import { map, mergeMap, catchError } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
 import uuidv4 from 'uuid';
 import ICAL from 'ical.js';
-import { addGoogleEvent, editGoogleEvent } from '../../utils/client/google';
+import { addGoogleEvent, editGoogleEvent, deleteGoogleEvent } from '../../utils/client/google';
 
 import { getEventsSuccess, getEventsFailure, postEventSuccess } from '../../actions/events';
 import {
   CREATE_GOOGLE_EVENTS_BEGIN,
-  EDIT_GOOGLE_SINGLE_EVENT_BEGIN
+  EDIT_GOOGLE_SINGLE_EVENT_BEGIN,
+  DELETE_GOOGLE_SINGLE_EVENT_BEGIN,
 } from '../../actions/providers/google';
 import { retrieveStoreEvents } from '../../actions/db/events';
 
@@ -108,20 +109,20 @@ export const editGoogleSingleEventEpics = (action$) =>
 //     )
 //   );
 
-// export const deleteCalDavSingleEventEpics = (action$) =>
-//   action$.pipe(
-//     ofType(DELETE_CALDAV_SINGLE_EVENT_BEGIN),
-//     mergeMap((action) =>
-//       from([
-//         new Promise((resolve, reject) => {
-//           resolve(retrieveStoreEvents(action.payload.user));
-//         }),
-//         deleteCalDavSingle(action.payload)
-//           .then(() => retrieveStoreEvents(action.payload.user))
-//           .catch((err) => console.log(err))
-//       ]).mergeAll()
-//     )
-//   );
+export const deleteGoogleSingleEventEpics = (action$) =>
+  action$.pipe(
+    ofType(DELETE_GOOGLE_SINGLE_EVENT_BEGIN),
+    mergeMap((action) =>
+      from([
+        new Promise((resolve, reject) => {
+          resolve(retrieveStoreEvents(action.payload.user));
+        }),
+        deleteGoogleSingle(action.payload)
+          .then(() => retrieveStoreEvents(action.payload.user))
+          .catch((err) => console.log(err))
+      ]).mergeAll()
+    )
+  );
 
 // export const deleteCalDavAllRecurrenceEventEpics = (action$) =>
 //   action$.pipe(
@@ -244,6 +245,7 @@ const editGoogleAllFutureRecurrenceEvents = async (payload) => {
 const deleteGoogleSingle = async (payload) => {
   const { data, user } = payload;
   const debug = false;
+  await deleteGoogleEvent(data.calendarId, data.originalId, user.accessToken);
 };
 
 // TODO

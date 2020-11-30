@@ -32,6 +32,7 @@ import {
 } from '../../actions/providers/caldav';
 import {
   editGoogleSingleEventBegin,
+  deleteGoogleSingleEventBegin
 } from '../../actions/providers/google';
 import {
   deleteEwsSingleEventBegin,
@@ -250,11 +251,7 @@ const deleteSingleEvent = async (id) => {
   switch (data.providerType) {
     case Providers.GOOGLE:
       try {
-        // // Google is broken, ignore first.
-        // await loadClient();
-        // const responseFromAPI = await deleteGoogleEvent(data.get('originalId'));
-        // await query.remove();
-        console.log('Google, To-Do delete feature');
+        return deleteGoogleSingleEventBegin(payload);
       } catch (googleError) {
         console.log('Handle Google pending action here', googleError);
       }

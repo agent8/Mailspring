@@ -126,6 +126,18 @@ export const editGoogleEvent = (calendarId, eventId, accessToken, event) => {
   )
 }
 
+export const deleteGoogleEvent = (calendarId, eventId, accessToken) => {
+  return axios.delete(
+    `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?key=${GOOGLE_API_KEY}`,
+    {
+      headers: {
+        Authorization: 'Bearer '.concat(accessToken),
+        Accept: 'application/json',
+      }
+    },
+  )
+}
+
 export const filterUser = (account, calendars, accessToken, accessTokenExpiry = '') => {
   return ({
     personId: md5(account.pid),

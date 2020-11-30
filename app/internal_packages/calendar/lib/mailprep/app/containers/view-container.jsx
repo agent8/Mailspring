@@ -30,8 +30,6 @@ import { beginGetCaldavEvents } from '../actions/providers/caldav';
 import { beginGetExchangeEvents } from '../actions/providers/exchange';
 import { beginGetOutlookEvents } from '../actions/providers/outlook';
 import getFilteredEvents from '../selectors/ui-selector';
-import AccountStore from '../../../../../../src/flux/stores/account-store'
-const dav = require('dav');
 
 const mapStateToProps = (state) => {
   const calendarsList = [
