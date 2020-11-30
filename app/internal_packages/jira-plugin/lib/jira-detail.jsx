@@ -24,17 +24,30 @@ const writeFile = util.promisify(fs.writeFile);
 export default class JiraDetail extends Component {
   constructor(props) {
     super(props);
-    this.state = { allUsers: [] };
+    this.state = { allUsers: [], EditorCore: {} };
   }
   componentDidMount = async () => {
     this.mounted = true;
     this.login(this.props.config);
     this.findIssue(this.props);
     this.getCurrentUserInfo(this.props.config);
+    this.asyncLoadMoudles();
   };
   componentWillUnmount() {
     this.mounted = false;
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
   }
+  asyncLoadMoudles = () => {
+    this.timer = setTimeout(() => {
+      const EditorCore = require('@atlaskit/editor-core');
+      this.safeSetState({
+        EditorCore,
+      });
+      this.timer = null;
+    }, 1500);
+  };
   login = config => {
     if (config && Object.keys(config).length > 0) {
       const apiVersion = '3';
@@ -85,7 +98,7 @@ export default class JiraDetail extends Component {
       this.setState(data);
     }
   };
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.findIssue(nextProps);
   }
   _findIssueKey(messages) {
@@ -117,7 +130,6 @@ export default class JiraDetail extends Component {
       if (issueKey === this.issueKey) {
         return;
       }
-      this.state;
       let issue = null;
       this.safeSetState({
         issueKey,
@@ -218,7 +230,7 @@ export default class JiraDetail extends Component {
       return `<img style='display: none;' src="${jiraDirPath}/`;
     });
     // replace link href
-    html = html.replace(/href="\/secure/g, `href="https://${this.jira.host}/secure`);
+    html = html.replace(/href="\/secure\/.+?"/g, '');
     return html;
   };
   selectFilter = (inputVal, option) => {
@@ -229,7 +241,7 @@ export default class JiraDetail extends Component {
   renderUserNode(userInfo) {
     return (
       <span className="jira-user">
-        <img src={userInfo.avatarUrls['24x24']} />
+        <img src={userInfo.avatarUrls['24x24']} alt="avatar" />
         <span>{userInfo.displayName}</span>
       </span>
     );
@@ -307,7 +319,7 @@ export default class JiraDetail extends Component {
     }
     return <span className="jira-progress">{p}</span>;
   };
-  showMore = () => {
+  showMore = e => {
     this.menu = new Menu();
 
     let menuItem;
@@ -319,7 +331,7 @@ export default class JiraDetail extends Component {
       },
     });
     this.menu.append(menuItem);
-    this.menu.popup({ x: event.clientX, y: event.clientY });
+    this.menu.popup({ x: e.clientX, y: e.clientY });
   };
   openOrignalImage = e => {
     const el = e.target;
@@ -333,6 +345,9 @@ export default class JiraDetail extends Component {
           }
         }
       }
+      e.stopPropagation();
+      e.preventDefault();
+      return false;
     }
   };
   render() {
@@ -344,6 +359,7 @@ export default class JiraDetail extends Component {
       allUsers,
       issueKey,
       errorMessage,
+      EditorCore,
     } = this.state;
     if (loading) {
       return <div className="large-loading">{this._renderLoading(40)}</div>;
@@ -352,7 +368,7 @@ export default class JiraDetail extends Component {
     const userLogo = (
       <div className="jira-current-user" onClick={this.showMore}>
         {currentUser && currentUser.avatarUrls ? (
-          <img src={currentUser.avatarUrls && currentUser.avatarUrls['48x48']} />
+          <img src={currentUser.avatarUrls && currentUser.avatarUrls['48x48']} alt="avatar" />
         ) : (
           <RetinaImg name={'jira.svg'} isIcon mode={RetinaImg.Mode.ContentIsMask} />
         )}
@@ -472,6 +488,7 @@ export default class JiraDetail extends Component {
             data={fields.description}
             replaceImageSrc={this.replaceImageSrc}
             html={renderedFields.description}
+            editorCore={EditorCore}
           />
           <JiraComments
             onClick={this.openOrignalImage}
@@ -479,6 +496,7 @@ export default class JiraDetail extends Component {
             issueKey={issueKey}
             renderUserNode={this.renderUserNode}
             replaceImageSrc={this.replaceImageSrc}
+            editorCore={EditorCore}
           />
           <div className="jira-attachments">
             <span className="label">Attachments</span>
@@ -490,7 +508,7 @@ export default class JiraDetail extends Component {
                   onClick={() => this.openAttachment(item.id)}
                 >
                   {attachments[item.id] ? (
-                    <img src={attachments[item.id]} />
+                    <img src={attachments[item.id]} alt="attachment" />
                   ) : (
                     this._renderLoading(20)
                   )}
@@ -499,7 +517,7 @@ export default class JiraDetail extends Component {
             </div>
           </div>
         </div>
-        <CommentSubmit jira={this.jira} issueKey={issueKey} />
+        <CommentSubmit jira={this.jira} issueKey={issueKey} editorCore={EditorCore} />
       </div>
     );
   }
