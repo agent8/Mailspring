@@ -39,7 +39,10 @@ export default function authReducer(state = initialState, action) {
                 e.personId === action.payload.user.personId
                   ? {
                     ...action.payload.user,
-                    ...action.payload.user.calendars && { calendars: action.payload.calendars },
+                    // ...!action.payload.user.calendars && { calendars: action.payload.calendars },
+                    ...(action.payload.user.calendars
+                      && action.payload.user.calendars[0].dataValues
+                      && { calendars: action.payload.user.calendars.map(cal => cal.dataValues) }),
                   }
                   : e
               )

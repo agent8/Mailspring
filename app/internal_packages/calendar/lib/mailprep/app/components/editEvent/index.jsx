@@ -93,6 +93,7 @@ export default class EditEvent extends React.Component {
       end: {},
       colorId: '',
       visibility: '',
+      calendarId: '',
       // Guest related
       guest: '',
       organizer: '',
@@ -270,6 +271,7 @@ export default class EditEvent extends React.Component {
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const payload = {
       id: state.id,
+      calendarId: state.calendarId,
       title: state.title,
       description: state.description,
       location: state.location,
@@ -586,6 +588,7 @@ export default class EditEvent extends React.Component {
       visibleEnd: dbEventJSON.end.dateTime * 1000,
 
       id: dbEventJSON.id,
+      calendarId: dbEventJSON.calendarId,
       title: dbEventJSON.summary,
       description: dbEventJSON.description,
       colorId: dbEventJSON.colorId,
@@ -877,7 +880,7 @@ export default class EditEvent extends React.Component {
             type="textarea"
             placeholder="Add description"
             value={state.description}
-            name="desc"
+            name="description"
             onChange={this.handleChange}
           />
         </div>

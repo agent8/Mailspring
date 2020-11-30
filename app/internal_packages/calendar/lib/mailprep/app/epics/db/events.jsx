@@ -31,6 +31,9 @@ import {
   editCalDavFutureEventBegin
 } from '../../actions/providers/caldav';
 import {
+  editGoogleSingleEventBegin,
+} from '../../actions/providers/google';
+import {
   deleteEwsSingleEventBegin,
   deleteEwsAllEventBegin,
   deleteEwsFutureEventBegin,
@@ -584,7 +587,7 @@ const editSingleEvent = async (payload) => {
   switch (payload.providerType) {
     case Providers.GOOGLE:
       try {
-        console.log('Google, To-Do edit feature');
+        return editGoogleSingleEventBegin(payload)
       } catch (googleError) {
         console.log('Handle Google pending action here', googleError);
       }

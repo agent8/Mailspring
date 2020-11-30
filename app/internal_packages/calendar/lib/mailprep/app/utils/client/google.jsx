@@ -7,71 +7,71 @@ export const GOOGLE_CLIENT_ID =
   '65724758895-gc7lubjkjsqqddfhlb7jcme80i3mjqn0.apps.googleusercontent.com';
 export const GOOGLE_API_KEY = 'AIzaSyAgA9vLu54Xpv6y93yptMDUFzZ8kXyvQnA';
 
-export const loadClient = async () => {
-  const result = new Promise((resolve, reject) => {
-    if (window.gapi.client === undefined) {
-      reject(new Error('Client undefined!'));
-    }
+// export const loadClient = async () => {
+//   const result = new Promise((resolve, reject) => {
+//     if (window.gapi.client === undefined) {
+//       reject(new Error('Client undefined!'));
+//     }
 
-    resolve(window.gapi.client.load('calendar', 'v3'));
-  });
-  return result;
-};
+//     resolve(window.gapi.client.load('calendar', 'v3'));
+//   });
+//   return result;
+// };
 
-export const loadFullCalendar = async () =>
-  new Promise((resolve) => {
-    resolve(
-      window.gapi.client.calendar.events.list({
-        calendarId: 'primary'
-      })
-    );
-  });
+// export const loadFullCalendar = async () =>
+//   new Promise((resolve) => {
+//     resolve(
+//       window.gapi.client.calendar.events.list({
+//         calendarId: 'primary'
+//       })
+//     );
+//   });
 
-export const loadSyncCalendar = async (syncToken) =>
-  new Promise((resolve) => {
-    resolve(
-      window.gapi.client.calendar.events.list({
-        calendarId: 'primary',
-        syncToken
-      })
-    );
-  });
+// export const loadSyncCalendar = async (syncToken) =>
+//   new Promise((resolve) => {
+//     resolve(
+//       window.gapi.client.calendar.events.list({
+//         calendarId: 'primary',
+//         syncToken
+//       })
+//     );
+//   });
 
-export const postGoogleEvent = async (calendarObject) =>
-  new Promise((resolve) => {
-    resolve(window.gapi.client.calendar.events.insert(calendarObject));
-  });
+// export const postGoogleEvent = async (calendarObject) =>
+//   new Promise((resolve) => {
+//     resolve(window.gapi.client.calendar.events.insert(calendarObject));
+//   });
 
-export const editGoogleEvent = async (eventId, eventObject) =>
-  new Promise((resolve) => {
-    resolve(
-      window.gapi.client.calendar.events.patch({
-        calendarId: 'primary',
-        eventId,
-        resource: eventObject
-      })
-    );
-  });
+// export const editGoogleEvent = async (eventId, eventObject) =>
+//   new Promise((resolve) => {
+//     resolve(
+//       window.gapi.client.calendar.events.patch({
+//         calendarId: 'primary',
+//         eventId,
+//         resource: eventObject
+//       })
+//     );
+//   });
 
-export const deleteGoogleEvent = async (eventId) =>
-  new Promise((resolve) => {
-    resolve(
-      window.gapi.client.calendar.events.delete({
-        calendarId: 'primary',
-        eventId
-      })
-    );
-  });
+// export const deleteGoogleEvent = async (eventId) =>
+//   new Promise((resolve) => {
+//     resolve(
+//       window.gapi.client.calendar.events.delete({
+//         calendarId: 'primary',
+//         eventId
+//       })
+//     );
+//   });
 
-export const loadNextPage = async (pageToken) =>
-  new Promise((resolve) => {
-    resolve(
-      window.gapi.client.calendar.events.list({
-        calendarId: 'primary',
-        pageToken
-      })
-    );
-  });
+// export const loadNextPage = async (pageToken) =>
+//   new Promise((resolve) => {
+//     resolve(
+//       window.gapi.client.calendar.events.list({
+//         calendarId: 'primary',
+//         pageToken
+//       })
+//     );
+//   });
 
 export const getAllCalendars = (accessToken) => {
   return axios.get(
@@ -101,6 +101,20 @@ export const getCalendarEvents = async (calendarId, accessToken) => {
 export const addGoogleEvent = (calendarId, accessToken, event) => {
   return axios.post(
     `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?key=${GOOGLE_API_KEY}`,
+    event,
+    {
+      headers: {
+        Authorization: 'Bearer '.concat(accessToken),
+        Accept: 'application/json',
+        "Content-Type": 'application/json',
+      }
+    },
+  )
+}
+
+export const editGoogleEvent = (calendarId, eventId, accessToken, event) => {
+  return axios.put(
+    `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${eventId}?key=${GOOGLE_API_KEY}`,
     event,
     {
       headers: {
