@@ -27,8 +27,6 @@ export default function authReducer(state = initialState, action) {
     case AuthActionTypes.BEGIN_GOOGLE_AUTH:
       return Object.assign({}, state, { isAuth: true, currentUser: null });
     case AuthActionTypes.SUCCESS_GOOGLE_AUTH:
-      console.log("BEAR")
-      console.log(action.payload)
       return Object.assign({}, state, {
         isAuth: false,
         providers: {

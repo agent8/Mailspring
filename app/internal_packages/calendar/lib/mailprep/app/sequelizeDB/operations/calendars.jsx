@@ -49,13 +49,12 @@ export const retrieveCalendarByOwnerId = (ownerId) =>
     }
   });
 
-export const retrieveCalendarByCalendarUrl = async (calendarUrl) => {
+export const retrieveCalendarByCalendarUrl = async (calendarUrl) =>
   await Calendar.findOne({
     where: {
       calendarUrl
     }
   });
-}
 
 // For cascade deletes when account is removed
 // Deletes all calendars under the same account
