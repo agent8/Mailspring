@@ -740,7 +740,12 @@ export default class MessageControls extends React.Component {
         ) : null}
         {!this.props.hideControls ? (
           <div className="message-actions-ellipsis" onClick={this._onShowActionsMenu}>
-            <RetinaImg name={'message-actions-ellipsis.png'} mode={RetinaImg.Mode.ContentIsMask} />
+            <RetinaImg
+              name="expand-more.svg"
+              style={{ width: 24, height: 24, fontSize: 24 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
           </div>
         ) : null}
 
