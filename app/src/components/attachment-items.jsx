@@ -643,10 +643,12 @@ export class ImageAttachmentItem extends Component {
           />
           <AttachmentActionIcon
             {...this.props}
-            removeIcon="image-cancel-button.png"
-            downloadIcon="image-download-button.png"
+            removeIcon="close.svg"
+            downloadIcon="download.svg"
             isDownloading={this.state.isDownloading || this.props.isDownloading}
-            retinaImgMode={RetinaImg.Mode.ContentPreserve}
+            isIcon
+            style={{ width: 20, height: 20 }}
+            retinaImgMode={RetinaImg.Mode.ContentIsMask}
             onAbortDownload={null}
           />
           <div

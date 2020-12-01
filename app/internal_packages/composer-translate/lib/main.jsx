@@ -143,7 +143,12 @@ class TranslateButton extends React.Component {
           style={{ width: 24, verticalAlign: 'middle', fontSize: 24 }}
         />
         &nbsp;
-        <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name={'down-arrow.svg'}
+          style={{ width: 12, height: 12, fontSize: 12 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </button>
     );
   }
