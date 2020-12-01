@@ -157,7 +157,12 @@ class SendLaterButton extends Component {
         <RetinaImg name="icon-composer-sendlater.png" mode={RetinaImg.Mode.ContentIsMask} />
         {sendLaterLabel}
         <span>&nbsp;</span>
-        <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name={'down-arrow.svg'}
+          style={{ width: 12, height: 12, fontSize: 12 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </button>
     );
   }

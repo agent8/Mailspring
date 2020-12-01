@@ -33,8 +33,8 @@ export function getEmojiSuggestions(word) {
 export function getEmojiImagePath(emojiname) {
   EmojiNameToImageTable = EmojiNameToImageTable || require('./emoji-name-to-image-table');
   return process.platform === 'darwin'
-    ? `images/composer-emoji/apple/${EmojiNameToImageTable[emojiname]}`
-    : `images/composer-emoji/twitter/${EmojiNameToImageTable[emojiname]}`;
+    ? `emoji/composer-emoji/apple/${EmojiNameToImageTable[emojiname]}`
+    : `emoji/composer-emoji/twitter/${EmojiNameToImageTable[emojiname]}`;
 }
 
 function ImageBasedEmoji(props) {
