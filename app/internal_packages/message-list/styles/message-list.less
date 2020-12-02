@@ -763,7 +763,7 @@ body.platform-win32 {
   }
 
   #reply-area-marker {
-    height: 0;
+    height: 10px;
     position: static;
     background: @white;
     z-index: 99;
@@ -771,7 +771,6 @@ body.platform-win32 {
   .footer-reply-area-wrap {
     padding-bottom: 18px;
     padding-left: 30px;
-    overflow: hidden;
     line-height: 42px;
     max-width: @message-max-width;
     margin-top: -3px;
@@ -779,8 +778,18 @@ body.platform-win32 {
     flex-wrap: wrap;
 
     position: sticky;
-    bottom: 0;
+    bottom: 0px;
     z-index: 2;
+    &::after {
+      content: '';
+      display: block;
+      height: 11px;
+      width: 100%;
+      background: @white;
+      position: absolute;
+      bottom: -11px;
+      left: 0;
+    }
 
     background: @background-primary;
 
