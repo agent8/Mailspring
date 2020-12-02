@@ -1969,9 +1969,19 @@ class AttachmentStore extends MailspringStore {
     return AppEnv.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, cb);
   };
   bulkUpdateDraftFiles = ({ messageId = '', newFiles = [], onCreated = () => {} }) => {
-    const newFilesSize = newFiles.reduce((c, f) => c + f.size, 0);
+    const newFilesSize = newFiles.reduce((c, f) => {
+      const newSize = parseInt(f.size);
+      return c + (isNaN(newSize) ? 0 : newSize);
+    }, 0);
     this._applySessionChanges(messageId, files => {
-      if (files.reduce((c, f) => c + f.size, 0) + newFilesSize >= 25 * 1000000) {
+      if (
+        files.reduce((c, f) => {
+          const newSize = parseInt(f.size);
+          return c + (isNaN(newSize) ? 0 : newSize);
+        }, 0) +
+          newFilesSize >=
+        25 * 1000000
+      ) {
         AppEnv.trackingEvent('largeAttachmentSize');
         throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
       }
@@ -2134,7 +2144,14 @@ class AttachmentStore extends MailspringStore {
       await this._applySessionChanges(
         messageId,
         files => {
-          if (files.reduce((c, f) => c + f.size, 0) + file.size >= 25 * 1000000) {
+          const fileSize = parseInt(file.size);
+          const totalSize =
+            files.reduce((c, f) => {
+              const newSize = parseInt(f.size);
+              return c + (isNaN(newSize) ? 0 : newSize);
+            }, 0) + (isNaN(fileSize) ? 0 : fileSize);
+
+          if (totalSize >= 25 * 1000000) {
             AppEnv.trackingEvent('largeAttachmentSize');
             throw new Error(`Sorry, you can't attach more than 25MB of attachments`);
           }
