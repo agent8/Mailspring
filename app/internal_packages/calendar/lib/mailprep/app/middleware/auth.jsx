@@ -7,7 +7,7 @@ import {
   FolderSchema,
   FolderView
 } from 'ews-javascript-api';
-import { GOOGLE_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_SCOPE, filterUser } from '../utils/client/google';
+import { filterUser } from '../utils/client/google';
 import { buildAuthUrl, testFunc } from '../utils/client/outlook';
 
 import { filterExchangeUser } from '../utils/client/exchange';

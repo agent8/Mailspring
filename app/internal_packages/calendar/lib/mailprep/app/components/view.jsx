@@ -179,6 +179,11 @@ export default class View extends React.Component {
           props.onStartGetCaldavAuth(
             this.filterAccountOnStart(singleProviderUserData, ProviderTypes.CALDAV)
           );
+        } else if (singleProviderUserData.providerType === ProviderTypes.GOOGLE) {
+          // temp logic since refresh token logic not yet implemented
+          // props.onStartGetGoogleAuth(
+          //   this.filterAccountOnStart(singleProviderUserData, ProviderTypes.GOOGLE)
+          // );
         } else {
           const now = new Date().getTime();
           const isExpired = now > parseInt(singleProviderUserData.accessTokenExpiry, 10);
@@ -186,9 +191,9 @@ export default class View extends React.Component {
           if (!isExpired) {
             switch (singleProviderUserData.providerType) {
               case ProviderTypes.GOOGLE:
-                props.onStartGetGoogleAuth(
-                  this.filterAccountOnStart(singleProviderUserData, ProviderTypes.GOOGLE)
-                );
+                // props.onStartGetGoogleAuth(
+                //   this.filterAccountOnStart(singleProviderUserData, ProviderTypes.GOOGLE)
+                // );
                 break;
               case ProviderTypes.OUTLOOK:
                 props.onStartGetOutlookAuth(

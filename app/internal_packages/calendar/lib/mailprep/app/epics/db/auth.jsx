@@ -87,17 +87,10 @@ const storeCaldavData = async (payload) => {
 };
 
 const storeGoogleData = async (payload) => {
-  console.log(payload);
-  // debugger;
-  // db actions are async. Needed user to be stored successfully in order for calendars to be stored in db due to FK constraints
   const storeUser = await dbUserActions.insertAccountIntoDatabase(payload);
-  // debugger;
-  let storeCalendar = [];
-  // check to make sure payload.data is defined
-  // console.log(payload)
-  // debugger;
 
-  // autologin have no payload.data, also not required to stored calendars again for autologin as calendars area already stored.
+  let storeCalendar = [];
+
   if (payload.calendars) {
     storeCalendar = payload.calendars
       .map((cal) => {
