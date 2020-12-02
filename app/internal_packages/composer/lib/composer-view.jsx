@@ -391,8 +391,10 @@ export default class ComposerView extends React.Component {
         >
           <RetinaImg
             title="Remove quoted text"
-            name="image-cancel-button.png"
-            mode={RetinaImg.Mode.ContentPreserve}
+            name="closeCircle.svg"
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+            style={{ width: 20, height: 20 }}
           />
         </span>
       </a>
