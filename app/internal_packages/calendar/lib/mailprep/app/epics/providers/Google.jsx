@@ -1,10 +1,7 @@
 import { from, of } from 'rxjs';
-import moment from 'moment';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
-import uuidv4 from 'uuid';
-import ICAL from 'ical.js';
-import { addGoogleEvent, editGoogleEvent, deleteGoogleEvent } from '../../utils/client/google';
+import { addGoogleEvent, editGoogleEvent, deleteGoogleEvent, asyncGetAllGoogleEvents } from '../../utils/client/google';
 
 import { getEventsSuccess, getEventsFailure, postEventSuccess } from '../../actions/events';
 import {
@@ -204,6 +201,9 @@ const createGoogleEvent = async (payload) => {
       }
     )
   }
+
+  const allEvents = asyncGetAllGoogleEvents(auth.email, auth.accessToken)
+  return allEvents
 };
 
 // TODO
