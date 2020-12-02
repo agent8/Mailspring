@@ -1193,10 +1193,47 @@ class DraftStore extends MailspringStore {
           return;
         }
         data.ignoreEmptyBody = true;
-        Actions.composeForwardMainWindow(data);
+        data.message.missingAttachments().then(ret => {
+          if (ret.totalMissing().length > 0) {
+            AppEnv.showMessageBox({
+              title: 'Message info incomplete',
+              detail:
+                "Message's attachment(s) are still downloading, do you still want to forward?",
+              buttons: ['No', 'Yes'],
+              cancelId: 0,
+            }).then(({ response } = {}) => {
+              if (response === 0) {
+                AppEnv.logDebug(`Message missing attachments, user clicked no ${data.message.id}`);
+                Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
+                return;
+              }
+              Actions.composeForwardMainWindow(data);
+            });
+          } else {
+            Actions.composeForwardMainWindow(data);
+          }
+        });
       });
     } else {
-      Actions.composeForwardMainWindow(data);
+      data.message.missingAttachments().then(ret => {
+        if (ret.totalMissing().length > 0) {
+          AppEnv.showMessageBox({
+            title: 'Message info incomplete',
+            detail: "Message's attachment(s) are still downloading, do you still want to forward?",
+            buttons: ['No', 'Yes'],
+            cancelId: 0,
+          }).then(({ response } = {}) => {
+            if (response === 0) {
+              AppEnv.logDebug(`Message missing attachments, user clicked no ${data.message.id}`);
+              Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
+              return;
+            }
+            Actions.composeForwardMainWindow(data);
+          });
+        } else {
+          Actions.composeForwardMainWindow(data);
+        }
+      });
     }
   };
 
