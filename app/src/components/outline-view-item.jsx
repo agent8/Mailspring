@@ -1,11 +1,9 @@
 /* eslint global-require:0 */
-/* eslint jsx-a11y/tabindex-no-positive:0 */
 
 import _ from 'underscore';
 import { Utils, AccountStore, Actions } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import DisclosureTriangle from './disclosure-triangle';
 import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
@@ -118,10 +116,14 @@ class OutlineViewItem extends Component {
    * @param {string} value - The new value
    */
   static propTypes = {
+    onToggleShowAllFolder: PropTypes.func,
+    index: PropTypes.number,
+    provider: PropTypes.string,
     item: PropTypes.shape({
       className: PropTypes.string,
       id: PropTypes.string.isRequired,
       children: PropTypes.array,
+      contextMenuLabel: PropTypes.string,
       name: PropTypes.string,
       iconName: PropTypes.string,
       count: PropTypes.number,
@@ -154,6 +156,8 @@ class OutlineViewItem extends Component {
       originalText: '',
       showAllChildren: false,
     };
+    this._selfRef = null;
+    this._setSelfRef = el => (this._selfRef = el);
     this._mounted = false;
   }
   checkCurrentShowAllChildren = props => {
@@ -167,10 +171,9 @@ class OutlineViewItem extends Component {
 
   componentDidMount() {
     this._mounted = true;
-    ReactDOM.findDOMNode(this).addEventListener('contextmenu', this._onShowContextMenu);
-    this.setState({
-      targetDiv: ReactDOM.findDOMNode(this.refs[`${this.props.item.id}-span`]),
-    });
+    if (this._selfRef) {
+      this._selfRef.addEventListener('contextmenu', this._onShowContextMenu);
+    }
     this.checkCurrentShowAllChildren(this.props);
   }
 
@@ -188,7 +191,9 @@ class OutlineViewItem extends Component {
   componentWillUnmount() {
     this._mounted = false;
     clearTimeout(this._expandTimeout);
-    ReactDOM.findDOMNode(this).removeEventListener('contextmenu', this._onShowContextMenu);
+    if (this._selfRef) {
+      this._selfRef.removeEventListener('contextmenu', this._onShowContextMenu);
+    }
   }
 
   // Helpers
@@ -276,7 +281,7 @@ class OutlineViewItem extends Component {
   _onDelete = () => {
     this._runCallback('onDelete');
   };
-  _onAllRead = item => {
+  _onAllRead = () => {
     this._runCallback('onAllRead');
   };
 
@@ -514,7 +519,7 @@ class OutlineViewItem extends Component {
     if (item.id && item.id === MORE_TOGGLE) {
       const text = this.props.item.collapsed ? 'less' : 'more';
       return (
-        <div onClick={this._onToggleShowAllFolder}>
+        <div onClick={this._onToggleShowAllFolder} ref={this._setSelfRef}>
           <span className="item-container">
             <div className="item more-or-less-item">
               <div className="name more-or-less">{text}</div>
@@ -532,8 +537,8 @@ class OutlineViewItem extends Component {
       );
     }
     return (
-      <div className={item.classnames ? item.classnames : null}>
-        <span className={containerClasses} ref={`${item.id}-span`}>
+      <div className={item.className ? item.className : null} ref={this._setSelfRef}>
+        <span className={containerClasses}>
           {this._renderItem()}
           <DisclosureTriangle
             collapsed={item.collapsed}
