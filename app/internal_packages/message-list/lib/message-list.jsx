@@ -830,8 +830,6 @@ class MessageList extends React.Component {
   }
 
   _renderMinifiedBundle(bundle) {
-    const lines = bundle.messages.slice(0, 3);
-
     return (
       <div
         className="minified-bundle"
