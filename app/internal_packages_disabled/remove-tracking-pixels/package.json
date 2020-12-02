@@ -1,0 +1,13 @@
+{
+  "name": "remove-tracking-pixels",
+  "version": "0.1.0",
+  "main": "./lib/main",
+  "license": "GPL-3.0",
+  "engines": {
+    "mailspring": "*"
+  },
+  "windowTypes": {
+    "default": true,
+    "thread-popout": true
+  }
+}

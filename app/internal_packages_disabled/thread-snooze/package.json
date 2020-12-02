@@ -1,0 +1,17 @@
+{
+  "name": "thread-snooze",
+  "version": "1.0.0",
+  "title": "Thread Snooze",
+  "description": "Snooze mail!",
+  "main": "lib/main",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "windowTypes": {
+    "default": true
+  },
+  "engines": {
+    "mailspring": "*"
+  },
+  "license": "GPL-3.0"
+}
