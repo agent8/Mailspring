@@ -658,7 +658,7 @@ export default class MessageControls extends React.Component {
         <p>
           Always move conversations from
           <br />
-          <span>{`${email} to your ${toTabsName} Inbox`}</span>
+          {`${email} to your ${toTabsName} Inbox`}
         </p>
         <div className="btn-list">
           <div className="btn cancel" onClick={this._onToggleMoveFocusedOther}>
