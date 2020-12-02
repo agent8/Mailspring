@@ -122,7 +122,9 @@ export default class FindInThread extends React.Component {
                   onClick={this._onPrevResult}
                 >
                   <RetinaImg
-                    name="ic-findinthread-previous.png"
+                    name="back.svg"
+                    style={{ width: 16, height: 16, fontSize: 16 }}
+                    isIcon
                     mode={RetinaImg.Mode.ContentIsMask}
                   />
                 </button>
@@ -133,13 +135,23 @@ export default class FindInThread extends React.Component {
                   disabled={!this._navEnabled()}
                   onClick={this._onNextResult}
                 >
-                  <RetinaImg name="ic-findinthread-next.png" mode={RetinaImg.Mode.ContentIsMask} />
+                  <RetinaImg
+                    name="next.svg"
+                    style={{ width: 16, height: 16, fontSize: 16 }}
+                    isIcon
+                    mode={RetinaImg.Mode.ContentIsMask}
+                  />
                 </button>
               </div>
             </div>
 
             <button className={btnCls} onClick={this._clearSearch}>
-              <RetinaImg name="ic-findinthread-close.png" mode={RetinaImg.Mode.ContentIsMask} />
+              <RetinaImg
+                name="close.svg"
+                style={{ width: 18, height: 18, fontSize: 18 }}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
             </button>
           </div>
         </KeyCommandsRegion>
