@@ -1,0 +1,12 @@
+{
+  "name": "ui-darkside",
+  "displayName": "Darkside",
+  "theme": "ui",
+  "version": "1.0.0",
+  "description": "A customizable, dark sidebar theme for EdisonMail.",
+  "license": "MIT",
+  "engines": {
+    "mailspring": "*"
+  },
+  "private": true
+}

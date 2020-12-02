@@ -1,0 +1,130 @@
+@import 'variables';
+
+.header-container {
+  margin-right: 10px;
+}
+
+/**
+ * Buttons
+ */
+.btn-toolbar,
+.token,
+.actions > .btn,
+.new-package > .btn,
+.appearance-mode-switch > .btn {
+  box-shadow: none !important;
+  background: @white !important;
+  border: 0;
+  border-radius: @base-border-radius !important;
+  &.item-compose {
+    border: 1px solid @taiga-light;
+  }
+}
+
+.composer-action-bar-content {
+  .btn-toolbar {
+    border: 0 !important;
+    background: transparent !important;
+  }
+}
+
+body.platform-win32 {
+  .sheet-toolbar-container {
+    .btn-toolbar {
+      border: 0 !important;
+    }
+  }
+}
+
+.btn.btn-emphasis {
+  background-color: @taiga-accent !important;
+  border-color: @taiga-accent !important;
+  color: @white !important;
+
+  img.content-mask {
+    background-color: @white !important;
+  }
+}
+
+.button-dropdown.bordered {
+  .primary-item {
+    box-shadow: none !important;
+    background: @white !important;
+    border: 1px solid @taiga-light !important;
+    border-top-left-radius: @base-border-radius !important;
+    border-bottom-left-radius: @base-border-radius !important;
+    img {
+      position: relative;
+      top: -2px;
+    }
+  }
+
+  .secondary-picker {
+    box-shadow: none !important;
+    background: @white !important;
+    border: 1px solid @taiga-light !important;
+    border-top-right-radius: @base-border-radius !important;
+    border-bottom-right-radius: @base-border-radius !important;
+    margin-left: -1px !important;
+  }
+
+  .secondary-items {
+    .item {
+      color: @taiga-light !important;
+      .search-match {
+        background: @white !important;
+      }
+      .button-dropdown {
+        img {
+          background: @taiga-light !important;
+        }
+      }
+    }
+  }
+}
+
+.sheet-toolbar .btn-toolbar {
+  height: 2em !important;
+  line-height: 1 !important;
+  margin-top: 6px !important;
+}
+
+/**
+ * Dropdown
+ */
+.menu {
+  .item.selected {
+    color: @white !important;
+    .primary {
+      color: @white !important;
+    }
+    .secondary {
+      color: @taiga-lighter !important;
+    }
+  }
+  &.search-container {
+    .item {
+      background: @white !important;
+    }
+    .item.selected {
+      background: @taiga-light !important;
+      color: @white !important;
+    }
+  }
+}
+
+/**
+ * Plugin page
+ */
+.package {
+  border-radius: @base-border-radius;
+}
+
+/**
+ * Prefs page
+ */
+.appearance-mode {
+  &.active {
+    background-color: lighten(@taiga-light, 30%) !important;
+  }
+}
