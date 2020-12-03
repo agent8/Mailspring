@@ -415,14 +415,16 @@
     position: relative;
   }
   .image-wrap {
+    @maxImageHeight: 180px;
     display: inline-block;
-    max-height: 180px;
+    max-height: @maxImageHeight;
     overflow: hidden;
     a[file-preview-type] {
       cursor: pointer;
     }
     img {
-      max-width: 100%;
+      max-height: @maxImageHeight;
+      width: auto;
     }
   }
   textarea {
