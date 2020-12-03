@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { JSONTransformer } from '@atlaskit/editor-json-transformer';
 import { CSSTransitionGroup } from 'react-transition-group';
-import { DateUtils } from 'mailspring-exports';
+import { DateUtils, PropTypes } from 'mailspring-exports';
 import Modal, { ModalTransition } from '@atlaskit/modal-dialog';
 import { makeProvider } from './mention-provider';
 const { LottieImg } = require('mailspring-component-kit');
@@ -39,6 +39,14 @@ const EmptyNode = function() {
   return <span></span>;
 };
 class JiraComment extends Component {
+  static propTypes = {
+    data: PropTypes.object.isRequired,
+    jira: PropTypes.object.isRequired,
+    issueKey: PropTypes.string.isRequired,
+    findComments: PropTypes.func.isRequired,
+    html: PropTypes.string.isRequired,
+    editorCore: PropTypes.object.isRequired,
+  };
   constructor(props) {
     super(props);
     this.state = {
@@ -193,7 +201,7 @@ class JiraComment extends Component {
               onClose={this.closeDeleteDialog}
               heading={`Delete this comment?`}
             >
-              <div>Once you delete, it's gone for good.</div>
+              <div>Once you delete, it&apos;s gone for good.</div>
             </Modal>
           )}
         </ModalTransition>
@@ -203,6 +211,13 @@ class JiraComment extends Component {
 }
 
 export class JiraComments extends Component {
+  static propTypes = {
+    jira: PropTypes.object.isRequired,
+    issueKey: PropTypes.string.isRequired,
+    renderUserNode: PropTypes.func.isRequired,
+    replaceImageSrc: PropTypes.func.isRequired,
+    onClick: PropTypes.func.isRequired,
+  };
   constructor(props) {
     super(props);
     this.state = {};
@@ -284,6 +299,11 @@ export class JiraComments extends Component {
 }
 
 export class CommentSubmit extends Component {
+  static propTypes = {
+    jira: PropTypes.object.isRequired,
+    issueKey: PropTypes.string.isRequired,
+    editorCore: PropTypes.object.isRequired,
+  };
   transformer = new JSONTransformer();
   constructor(props) {
     super(props);
@@ -312,7 +332,6 @@ export class CommentSubmit extends Component {
   onSave = async editorView => {
     /* do something */
     const comment = this.transformer.encode(editorView.state.doc);
-    console.log('****data', comment, comment.content.length);
     if (!comment.content || comment.content.length === 0) {
       return;
     }
@@ -325,7 +344,7 @@ export class CommentSubmit extends Component {
       await EventBus.notify('findComments', this.props.issueKey, true);
       AppEnv.trackingEvent('Jira-AddComment-Success');
     } catch (err) {
-      console.error('****err', err);
+      AppEnv.logError(new Error('path must not be empty'), { errorData: err });
       AppEnv.trackingEvent('Jira-AddComment-Failed');
       if (err.message && err.message.includes('invalid refresh token')) {
         logout();
