@@ -145,7 +145,8 @@ class JiraComment extends Component {
     AppEnv.trackingEvent('Jira-DeleteComment-Success');
   };
   render() {
-    const { html, Editor = EmptyNode, EditorContext = EmptyNode, WithEditorActions = EmptyNode } =
+    const { html } = this.props;
+    const { Editor = EmptyNode, EditorContext = EmptyNode, WithEditorActions = EmptyNode } =
       this.props.editorCore || {};
     const { show, value, progress, showDelete } = this.state;
     const actions = [
