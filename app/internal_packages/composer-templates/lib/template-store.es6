@@ -190,6 +190,7 @@ class TemplateStore extends MailspringStore {
           title: template.title,
           CC: template.CC,
           BCC: template.BCC,
+          SUBJ: template.SUBJ,
           tsClientUpdate: new Date().getTime(),
           attachments: template.attachments || [],
         };
@@ -295,7 +296,7 @@ class TemplateStore extends MailspringStore {
 
       let newBody = `${templateBody}${current.substr(insertion)}`;
       const changeObj = { files: [] };
-      const { BCC, CC, attachments } = template;
+      const { BCC, CC, SUBJ, attachments } = template;
       // Add CC, Bcc to the draft, do not delete the original CC, BCC
       if (CC) {
         const ccContacts = await ContactStore.parseContactsInString(CC);
@@ -308,6 +309,9 @@ class TemplateStore extends MailspringStore {
         if (bccContacts.length) {
           changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
         }
+      }
+      if (SUBJ) {
+        changeObj['subject'] = SUBJ;
       }
       session.changes.add(changeObj);
       const fileMap = await AttachmentStore.addSigOrTempAttachments(

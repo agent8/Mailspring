@@ -10,7 +10,7 @@ let didWarnAboutGmailIMAP = false;
 
 const CreatePageForForm = FormComponent => {
   return class Composed extends React.Component {
-    static displayName = FormComponent.displayName;
+    static displayName = `${FormComponent.displayName}CreatePage`;
 
     static propTypes = {
       account: PropTypes.object,
@@ -331,6 +331,27 @@ const CreatePageForForm = FormComponent => {
       }
       proceedWithAccount();
     };
+    _renderGotoExchangeAdvance() {
+      if (
+        this.state.account &&
+        this.state.account.isExchange() &&
+        !this.state.submitting &&
+        this.state.populated &&
+        this.state.errorLog &&
+        FormComponent &&
+        FormComponent.displayName === 'AccountBasicSettingsForm'
+      ) {
+        return (
+          <div
+            className="go-to-advanced-settings"
+            onClick={() => OnboardingActions.moveToPage('account-settings-exchange')}
+          >
+            Advanced Settings
+          </div>
+        );
+      }
+      return null;
+    }
 
     _renderButton() {
       const { account, submitting } = this.state;
@@ -433,6 +454,7 @@ const CreatePageForForm = FormComponent => {
             onConnect={this.onConnect}
             providerConfig={providerConfig}
           />
+          {this._renderGotoExchangeAdvance()}
           <FormErrorMessage log={errorLog} message={errorMessage} />
           {/* {this._renderCredentialsNote()} */}
           <div>{this._renderButton()}</div>

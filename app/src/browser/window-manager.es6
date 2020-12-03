@@ -3,6 +3,7 @@ import { app } from 'electron';
 import WindowLauncher from './window-launcher';
 
 const MAIN_WINDOW = 'default';
+const MIGRATE_WINDOW = 'migrating';
 const SPEC_WINDOW = 'spec';
 const ONBOARDING_WINDOW = 'onboarding';
 const BUG_REPORT_WINDOW = 'bugreport';
@@ -49,6 +50,9 @@ export default class WindowManager {
       }
     });
     return ret;
+  }
+  createHotWindow() {
+    this.windowLauncher.createHotWindow();
   }
 
   getOpenWindows(type = 'all') {
@@ -210,7 +214,10 @@ export default class WindowManager {
 
     if (!win) {
       const w = this.newWindow(this._coreWindowOpts(windowKey, extraOpts));
-      if (windowKey === WindowManager.BUG_REPORT_WINDOW) {
+      if (
+        windowKey === WindowManager.BUG_REPORT_WINDOW ||
+        windowKey === WindowManager.MIGRATE_WINDOW
+      ) {
         w.show();
       }
       return;
@@ -336,6 +343,22 @@ export default class WindowManager {
       width: 685,
       height: 700,
     };
+    coreWinOpts[WindowManager.MIGRATE_WINDOW] = {
+      windowKey: WindowManager.MIGRATE_WINDOW,
+      windowType: WindowManager.MIGRATE_WINDOW,
+      title: 'Migrating Database',
+      name: 'Migrating Database',
+      // hidden: true, // Displayed by PageRouter::_initializeWindowSize
+      hidden: false,
+      frame: true, // Always false on Mac, explicitly set for Win & Linux
+      toolbar: false,
+      resizable: false,
+      width: 350,
+      height: 300,
+      disableZoom: true,
+      coldStartOnly: true,
+      titleBarStyle: 'default',
+    };
 
     // The SPEC_WINDOW gets passed its own bootstrapScript
     coreWinOpts[WindowManager.SPEC_WINDOW] = {
@@ -359,3 +382,4 @@ WindowManager.MAIN_WINDOW = MAIN_WINDOW;
 WindowManager.SPEC_WINDOW = SPEC_WINDOW;
 WindowManager.ONBOARDING_WINDOW = ONBOARDING_WINDOW;
 WindowManager.BUG_REPORT_WINDOW = BUG_REPORT_WINDOW;
+WindowManager.MIGRATE_WINDOW = MIGRATE_WINDOW;

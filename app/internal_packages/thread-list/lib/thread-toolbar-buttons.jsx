@@ -1,7 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { RetinaImg, CreateButtonGroup, BindGlobalCommands } from 'mailspring-component-kit';
+import {
+  RetinaImg,
+  CreateButtonGroup,
+  BindGlobalCommands,
+  FullScreenModal,
+} from 'mailspring-component-kit';
 import {
   AccountStore,
   Actions,
@@ -148,7 +153,10 @@ export function ArchiveButton(props) {
   }
 
   return (
-    <BindGlobalCommands commands={{ 'core:archive-item': event => commandCb(event, _onShortCut) }}>
+    <BindGlobalCommands
+      key="archive-item"
+      commands={{ 'core:archive-item': event => commandCb(event, _onShortCut) }}
+    >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onArchive}>
         <RetinaImg
           name={'archive.svg'}
@@ -438,6 +446,7 @@ export function TrashButton(props) {
 
   return (
     <BindGlobalCommands
+      key="delete-item"
       commands={{ 'core:delete-item': event => commandCb(event, actionCallBack) }}
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={actionCallBack}>
@@ -558,6 +567,7 @@ export function MarkAsSpamButton(props) {
       }}
     >
       <button
+        key="spam"
         tabIndex={-1}
         className="btn btn-toolbar"
         title={title}
@@ -593,7 +603,13 @@ export function PrintThreadButton(props) {
   }
 
   return (
-    <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onPrintThread}>
+    <button
+      key="print"
+      tabIndex={-1}
+      className="btn btn-toolbar"
+      title={title}
+      onClick={_onPrintThread}
+    >
       <RetinaImg
         name={'print.svg'}
         style={{ width: 24, height: 24, fontSize: 24 }}
@@ -636,7 +652,10 @@ export function ToggleStarredButton(props) {
   }
 
   return (
-    <BindGlobalCommands commands={{ 'core:star-item': event => commandCb(event, _onShortcutStar) }}>
+    <BindGlobalCommands
+      key="star-item"
+      commands={{ 'core:star-item': event => commandCb(event, _onShortcutStar) }}
+    >
       <button
         tabIndex={-1}
         className={'btn btn-toolbar ' + className}
@@ -768,6 +787,7 @@ class HiddenGenericRemoveButton extends React.Component {
   render() {
     return (
       <BindGlobalCommands
+        key="show-previous-next"
         commands={{
           'core:show-previous': event => commandCb(event, this._onShift, { offset: -1 }),
           'core:show-next': event => commandCb(event, this._onShift, { offset: 1 }),
@@ -854,6 +874,14 @@ export class ThreadListMoreButton extends React.Component {
     if (current && current.accountIds.length) {
       this._account = AccountStore.accountForId(current.accountIds[0]);
     }
+    this.state = { showMoveToOtherDialog: false, showMoveToFocusedDialog: false };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   UNSAFE_componentWillUpdate() {
@@ -889,20 +917,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Other',
-            click: event => {
-              const { selection, items } = this.props;
-              const threads = threadSelectionScope(this.props, selection);
-              const tasks = TaskFactory.tasksForMoveToOther(
-                Array.isArray(threads) ? threads : items
-              );
-              Actions.queueTasks(tasks);
-              if (event && typeof event.stopPropagation === 'function') {
-                event.stopPropagation();
-              }
-              if (selection) {
-                selection.clear();
-              }
-            },
+            click: this._onToggleMoveOther,
           })
         );
       }
@@ -910,20 +925,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Focused',
-            click: event => {
-              const { selection, items } = this.props;
-              const threads = threadSelectionScope(this.props, selection);
-              const tasks = TaskFactory.tasksForMoveToFocused(
-                Array.isArray(threads) ? threads : items
-              );
-              Actions.queueTasks(tasks);
-              if (event && typeof event.stopPropagation === 'function') {
-                event.stopPropagation();
-              }
-              if (selection) {
-                selection.clear();
-              }
-            },
+            click: this._onToggleMoveFocused,
           })
         );
       }
@@ -1033,9 +1035,104 @@ export class ThreadListMoreButton extends React.Component {
     }
     menu.popup({});
   };
+  _onToggleMoveOther = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: !this.state.showMoveToOtherDialog,
+      showMoveToFocusedDialog: false,
+    });
+  };
+  _onToggleMoveFocused = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: false,
+      showMoveToFocusedDialog: !this.state.showMoveToFocusedDialog,
+    });
+  };
+  _onHideMoveOtherFocusedDialog = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: false,
+      showMoveToFocusedDialog: false,
+    });
+  };
+  _onMoveToOtherFocused = () => {
+    const { selection, items } = this.props;
+    const threads = threadSelectionScope(this.props, selection);
+    let tasks;
+    if (this.state.showMoveToOtherDialog) {
+      tasks = TaskFactory.tasksForMoveToOther(Array.isArray(threads) ? threads : items);
+    } else if (this.state.showMoveToFocusedDialog) {
+      tasks = TaskFactory.tasksForMoveToFocused(Array.isArray(threads) ? threads : items);
+    }
+    Actions.queueTasks(tasks);
+    if (selection) {
+      selection.clear();
+    }
+    this._onHideMoveOtherFocusedDialog();
+  };
+
+  _renderMoveOtherFocusedPopup = () => {
+    let name;
+    if (this.state.showMoveToFocusedDialog) {
+      name = 'Focused';
+    } else if (this.state.showMoveToOtherDialog) {
+      name = 'Other';
+    }
+    return (
+      <div className="email-confirm-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onHideMoveOtherFocusedDialog}
+        />
+        <h1>{`Move to ${name} Inbox`}</h1>
+        <p>
+          Always move conversations from these senders to <br /> your {`${name} Inbox`}
+        </p>
+        <div className="btn-list">
+          <div className="btn cancel" onClick={this._onHideMoveOtherFocusedDialog}>
+            Cancel
+          </div>
+          <div className="btn confirm" onClick={this._onMoveToOtherFocused}>
+            Move
+          </div>
+        </div>
+      </div>
+    );
+  };
+  _renderMoveToOtherFocusedDialog() {
+    if (!this.state.showMoveToOtherDialog && !this.state.showMoveToFocusedDialog) {
+      return null;
+    }
+    return (
+      <FullScreenModal
+        visible={this.state.showMoveToOtherDialog || this.state.showMoveToFocusedDialog}
+        style={{
+          height: 'auto',
+          width: '400px',
+          top: '165px',
+          right: '255px',
+          left: 'auto',
+          bottom: 'auto',
+        }}
+      >
+        {this._renderMoveOtherFocusedPopup()}
+      </FullScreenModal>
+    );
+  }
 
   render() {
-    return (
+    return [
       <button
         id={`moreButton${this.props.position}`}
         ref={el => (this._anchorEl = el)}
@@ -1049,8 +1146,9 @@ export class ThreadListMoreButton extends React.Component {
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
-      </button>
-    );
+      </button>,
+      this._renderMoveToOtherFocusedDialog(),
+    ];
   }
 }
 
@@ -1368,7 +1466,7 @@ function FolderButton(props) {
   }
 
   return (
-    <div>
+    <div key="folder">
       <ToolbarCategoryPicker {...props} />
     </div>
   );
@@ -1396,6 +1494,13 @@ class MoreActionsButton extends React.Component {
     super();
   }
 
+  _canReplyAll = () => {
+    const lastMessage = (this.props.thread.__messages || MessageStore.items() || [])
+      .filter(m => !m.draft)
+      .pop();
+    return lastMessage && lastMessage.canReplyAll();
+  };
+
   _more = () => {
     const expandTitle = MessageStore.hasCollapsedItems() ? 'Expand All' : 'Collapse All';
     const menu = new Menu();
@@ -1404,15 +1509,42 @@ class MoreActionsButton extends React.Component {
     moreButtonlist.forEach(button => {
       if (button && typeof button === 'function') {
         const menuItem = button({ ...this.props, isMenuItem: true, anchorEl: this._anchorEl });
-        if (menuItem instanceof Array) {
-          menuItem.forEach(item => {
-            menu.append(item);
-          });
-        } else {
-          menu.append(menuItem);
+        // if the account has no spam folder, the menuItem is false
+        if (menuItem) {
+          if (menuItem instanceof Array) {
+            menuItem.forEach(item => {
+              menu.append(item);
+            });
+          } else {
+            menu.append(menuItem);
+          }
         }
       }
     });
+    menu.insert(
+      0,
+      new MenuItem({
+        label: `Forward`,
+        click: () => AppEnv.commands.dispatch('core:forward'),
+      })
+    );
+    if (this._canReplyAll()) {
+      menu.insert(
+        0,
+        new MenuItem({
+          label: `Reply All`,
+          click: () => AppEnv.commands.dispatch('core:reply-all'),
+        })
+      );
+    }
+    menu.insert(
+      0,
+      new MenuItem({
+        label: `Reply`,
+        click: () => AppEnv.commands.dispatch('core:reply'),
+      })
+    );
+
     if (!AppEnv.isDisableThreading()) {
       menu.append(
         new MenuItem({
@@ -1434,8 +1566,33 @@ class MoreActionsButton extends React.Component {
   };
 
   render() {
-    return (
+    const { moreButtonlist } = this.props;
+    const otherCommandBindings = [];
+
+    if (moreButtonlist) {
+      moreButtonlist.forEach(button => {
+        if (button && typeof button === 'function') {
+          const menuItem = button({
+            ...this.props,
+            isMenuItem: false,
+            anchorEl: this._anchorEl,
+          });
+          // if the account has no spam folder, the menuItem is false
+          if (menuItem) {
+            if (menuItem instanceof Array) {
+              menuItem.forEach(item => {
+                otherCommandBindings.push(item);
+              });
+            } else {
+              otherCommandBindings.push(menuItem);
+            }
+          }
+        }
+      });
+    }
+    return [
       <button
+        key="btn-more"
         id={`threadToolbarMoreButton${this.props.position}`}
         tabIndex={-1}
         className="btn btn-toolbar btn-more"
@@ -1448,8 +1605,11 @@ class MoreActionsButton extends React.Component {
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
-      </button>
-    );
+      </button>,
+      <div key="other-command-bindings" style={{ display: 'none' }}>
+        {otherCommandBindings}
+      </div>,
+    ];
   }
 }
 

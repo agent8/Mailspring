@@ -21,7 +21,8 @@ body.platform-win32 {
   }
 
   .controls-wrap {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
   }
 
   .selection-progress {
@@ -37,11 +38,13 @@ body.platform-win32 {
     box-shadow: 0 0 0;
     border-radius: 0;
     background: transparent;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
   }
   .input-wrap {
-    display: inline-block;
+    display: inline-flex;
     position: relative;
+    align-items: center;
     input {
       height: 26px;
       width: 230px;
@@ -51,8 +54,10 @@ body.platform-win32 {
     .btn-wrap {
       width: 54px;
       position: absolute;
-      top: 0;
-      right: 0;
+      right: 4px;
+      button {
+        padding: 0 0.2em;
+      }
     }
   }
 }

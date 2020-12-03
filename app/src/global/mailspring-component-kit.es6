@@ -92,7 +92,7 @@ lazyLoad('ParticipantsTextField', 'participants-text-field');
 lazyLoad('MultiselectToolbar', 'multiselect-toolbar');
 lazyLoad('ToolbarBack', 'toolbar-back');
 lazyLoad('InjectedComponentSet', 'injected-component-set');
-lazyLoad('MetadataComposerToggleButton', 'metadata-composer-toggle-button');
+// lazyLoad('MetadataComposerToggleButton', 'metadata-composer-toggle-button');
 lazyLoad('ConfigPropContainer', 'config-prop-container');
 lazyLoad('DisclosureTriangle', 'disclosure-triangle');
 lazyLoad('EditableList', 'editable-list');

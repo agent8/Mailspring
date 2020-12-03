@@ -13,19 +13,19 @@ module.exports = grunt => {
       return;
     }
     const done = this.async();
-    const zipPath = path.join(grunt.config('outputDir'), 'EdisonMail.zip');
+    const zipPath = path.join(grunt.config('outputDir'), 'Email Client for Gmail.zip');
 
     if (grunt.file.exists(zipPath)) {
       grunt.file.delete(zipPath, { force: true });
     }
 
     const orig = process.cwd();
-    process.chdir(path.join(grunt.config('outputDir'), 'Edison Mail-darwin-x64'));
+    process.chdir(path.join(grunt.config('outputDir'), 'Email Client for Gmail-darwin-x64'));
 
     spawn(
       {
         cmd: 'zip',
-        args: ['-9', '-y', '-r', '-9', '-X', zipPath, 'Edison Mail.app'],
+        args: ['-9', '-y', '-r', '-9', '-X', zipPath, 'Email Client for Gmail.app'],
       },
       error => {
         process.chdir(orig);

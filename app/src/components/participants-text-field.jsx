@@ -118,6 +118,9 @@ export default class ParticipantsTextField extends React.Component {
       updates[field] = [].concat(this.props.participants[field]);
       updates[field].splice(tokenIndex, 1, ...replacements);
       this.props.change(updates);
+      if (replacements.length > 0) {
+        ContactStore.updateContactToDB({ newContact: replacements[0], draft: this.props.draft });
+      }
     });
   };
 
