@@ -66,11 +66,18 @@ class SystemStartServiceDarwin extends SystemStartServiceBase {
 
   dontLaunchOnSystemStart() {
     app.setLoginItemSettings({ openAtLogin: false });
-    return fs.unlink(this._plistPath(), () => { });
+    return fs.unlink(this._plistPath(), () => {});
   }
 
   _launcherPath() {
-    return path.join('/', 'Applications', 'Edison Mail.app', 'Contents', 'MacOS', 'Edison Mail');
+    return path.join(
+      '/',
+      'Applications',
+      'Email Client for Gmail.app',
+      'Contents',
+      'MacOS',
+      'Email Client for Gmail'
+    );
   }
 
   _plistPath() {
@@ -128,7 +135,7 @@ class SystemStartServiceWin32 extends SystemStartServiceBase {
   }
 
   dontLaunchOnSystemStart() {
-    return fs.unlink(this._shortcutPath(), () => { });
+    return fs.unlink(this._shortcutPath(), () => {});
   }
 
   _launcherPath() {
@@ -178,12 +185,12 @@ class SystemStartServiceLinux extends SystemStartServiceBase {
       // Append the --background flag before the Exec key
       const parsedData = data.replace('%U', '--background %U');
 
-      fs.writeFile(this._shortcutPath(), parsedData, () => { });
+      fs.writeFile(this._shortcutPath(), parsedData, () => {});
     });
   }
 
   dontLaunchOnSystemStart() {
-    return fs.unlink(this._shortcutPath(), () => { });
+    return fs.unlink(this._shortcutPath(), () => {});
   }
 
   _launcherPath() {
