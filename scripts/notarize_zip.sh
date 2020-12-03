@@ -1,4 +1,4 @@
-app_path="Edison Mail-darwin-x64/Edison Mail.app"
+app_path="Email Client for Gmail-darwin-x64/Email Client for Gmail.app"
 echo "**** start notarize ZIP ****"
 ## 1. 进入目录
 cd app/dist
