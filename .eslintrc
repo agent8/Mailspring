@@ -27,6 +27,7 @@
   },
   "plugins": ["prettier"],
   "rules": {
+    "no-console": ["error", { "allow": ["log", "warn" ,"error"] }],
     "no-cond-assign": 0,
     "prettier/prettier": "error",
     "no-unused-vars": ["error", { "vars": "all", "args": "none", "ignoreRestSiblings": false }]
