@@ -16,7 +16,7 @@ const {
   Conversion: { convertFromHTML, convertToHTML },
 } = ComposerSupport;
 
-const TEMPLATEFIELDS = ['CC', 'BCC'];
+const TEMPLATEFIELDS = ['CC', 'BCC', 'SUBJ'];
 
 function fileIsImage(file) {
   const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
@@ -27,7 +27,7 @@ function fileIsImage(file) {
 class TemplateEditor extends React.Component {
   constructor(props) {
     super(props);
-    const { id, CC, BCC, attachments } = props.template || {};
+    const { id, CC, BCC, SUBJ, attachments } = props.template || {};
     const body = TemplateStore.getBodyById(id);
     this.state = {
       body,
@@ -36,6 +36,8 @@ class TemplateEditor extends React.Component {
       showCC: !!CC,
       BCC: BCC || '',
       showBCC: !!BCC,
+      SUBJ: SUBJ || '',
+      showSUBJ: !!SUBJ,
       attachments: attachments || [],
       readOnly: !props.template,
     };

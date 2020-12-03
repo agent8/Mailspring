@@ -16,6 +16,7 @@ import MakePrimaryTask from './make-primary-task';
 import MakeOtherTask from './make-other-task';
 import { bannedPathNames } from '../../constant';
 import ChangeAllUnreadTask from './change-all-unread-task';
+import ContactUpdateTask from './contact-update-task';
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -411,7 +412,10 @@ const TaskFactory = {
         threads,
         source,
         labelsToAdd: [targetCategory],
-        labelsToRemove: sourceCategory && sourceCategory.isLabel() ? [sourceCategory] : [],
+        labelsToRemove:
+          sourceCategory && sourceCategory.isLabel() && sourceCategory.role !== 'sent'
+            ? [sourceCategory]
+            : [],
         previousFolder,
       }),
     ];
@@ -474,6 +478,21 @@ const TaskFactory = {
       }
     }
     return SyncbackCategoryTask.forCreating({ name, accountId, bgColor, parentId, isExchange });
+  },
+  taskForUpdatingContact({ newContact = {}, accountId, draft = {} } = {}) {
+    if (!accountId && !newContact.accountId && !draft.accountId) {
+      AppEnv.logError('No account info, taskForUpdatingContact ignored');
+      return;
+    }
+    if (!newContact.name || !newContact.email) {
+      AppEnv.logError('No name/email info, taskForUpdatingContact ignored');
+      return;
+    }
+    accountId = accountId || draft.accountId || newContact.accountId;
+    if (accountId) {
+      return new ContactUpdateTask({ accountId, name: newContact.name, email: newContact.email });
+    }
+    return null;
   },
 
   taskForUndo({ task }) {

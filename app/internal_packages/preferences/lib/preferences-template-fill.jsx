@@ -2,6 +2,7 @@ import {
   DefaultMailClientItem,
   LaunchSystemStartItem,
   DefaultAccountSending,
+  EnableFocusInboxItem,
   DownloadSelection,
   LocalData,
   SupportId,
@@ -63,8 +64,7 @@ const preferencesTemplateFill = {
             },
             {
               label: 'Enable Focused Inbox (only show important senders in your inbox)',
-              configSchema: configSchema =>
-                configSchema.properties.workspace.properties.enableFocusedInbox,
+              component: EnableFocusInboxItem,
               keyPath: 'core.workspace.enableFocusedInbox',
               keywords: [],
             },
@@ -302,15 +302,6 @@ const preferencesTemplateFill = {
           ],
         },
         {
-          groupItem: [
-            {
-              label: 'MutedNotifications',
-              component: PreferencesMutedNotifacations,
-              keywords: [],
-            },
-          ],
-        },
-        {
           groupName: 'BADGE COUNT',
           groupItem: [
             {
@@ -318,6 +309,22 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.notifications.properties.countBadge,
               keyPath: 'core.notifications.countBadge',
+              keywords: [],
+            },
+            {
+              label: 'System tray badge count',
+              configSchema: configSchema =>
+                configSchema.properties.notifications.properties.countSystemTray,
+              keyPath: 'core.notifications.countSystemTray',
+              keywords: [],
+            },
+          ],
+        },
+        {
+          groupItem: [
+            {
+              label: 'MutedNotifications',
+              component: PreferencesMutedNotifacations,
               keywords: [],
             },
           ],

@@ -507,7 +507,12 @@ export function BuildFontSizePicker(config) {
           ref={el => (this.fontSizeBtn = el)}
         >
           <i className={config.iconClass} />
-          <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+          <RetinaImg
+            name={'down-arrow.svg'}
+            style={{ width: 12, height: 12, fontSize: 12 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </button>
       );
     }
@@ -560,7 +565,12 @@ export function BuildFontPicker(config) {
               </option>
             ))}
           </select>
-          <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+          <RetinaImg
+            name={'down-arrow.svg'}
+            style={{ width: 12, height: 12, fontSize: 12 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </button>
       );
     }

@@ -11,14 +11,14 @@ let s3options = {
 AWS.config.update(s3options);
 
 // Create S3 service object
-s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+let s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 uploadDmg(copyObject);
 
 function uploadDmg(callback) {
   // call S3 to retrieve upload file to specified bucket
   var uploadParams = { Bucket: BUCKET, Key: '', Body: '' };
-  var file = './app/dist/EdisonMail.dmg';
+  var file = './app/dist/Email Client for Gmail.dmg';
 
   // Configure the file stream and obtain the upload parameters
   var fs = require('fs');

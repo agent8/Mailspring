@@ -807,7 +807,6 @@ body.platform-win32 {
   }
   & > .key-commands-region {
     overflow: hidden;
-    padding-bottom: 40px;
   }
 }
 
@@ -826,8 +825,11 @@ body.platform-win32 {
 .layout-mode-popout .message-list-toolbar,
 .column-OutboxMessage .outbox-message-toolbar,
 .column-MessageList .message-list-toolbar {
+  position: sticky;
+  top: 0;
   height: 41px;
   border-bottom: 1px solid transparent;
+  background: @white;
   &.hide-btn-when-crowded {
     .btn-hide-when-crowded {
       display: none;
@@ -837,8 +839,7 @@ body.platform-win32 {
     transition: box-shadow 0.2s ease-in-out;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid @gray-lighter;
-    position: relative;
-    z-index: 2;
+    z-index: 4;
   }
   .divider {
     width: 1px;

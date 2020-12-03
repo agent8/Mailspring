@@ -1,12 +1,13 @@
 #!/bin/bash
 
-APP_FOLDER="app/dist/Edison Mail-mas-x64"
+APP_VERSION=`cat app/package.json | json version`
+APP_FOLDER="app/dist/Email Client for Gmail-mas-x64"
 # Name of your app.
-APP="Edison Mail"
+APP="Email Client for Gmail"
 # The path of your app to sign.
-APP_PATH="$APP_FOLDER/Edison Mail.app"
+APP_PATH="$APP_FOLDER/Email Client for Gmail.app"
 # The path to the location you want to put the signed package.
-RESULT_PATH="$APP_FOLDER/$APP.pkg"
+RESULT_PATH="$APP_FOLDER/$APP-$APP_VERSION.pkg"
 # The name of certificates you requested.
 APP_KEY="3rd Party Mac Developer Application: Edison Software Inc. (8QY2MN5UJ9)"
 INSTALLER_KEY="3rd Party Mac Developer Installer: Edison Software Inc. (8QY2MN5UJ9)"
@@ -36,6 +37,6 @@ productbuild --component "$APP_PATH" /Applications --sign "$INSTALLER_KEY" "$RES
 
 echo "****SIGN Done!****"
 echo "****Validate Start****"
-# xcrun altool --validate-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p kwtk-wowe-puxy-hnub
+# xcrun altool --validate-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p rrfj-xffk-fotj-jyup
 echo "****Validate Done****"
-# xcrun altool --upload-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p kwtk-wowe-puxy-hnub
+# xcrun altool --upload-app -t osx -f "$RESULT_PATH" -u qzs0390@sina.com  -p rrfj-xffk-fotj-jyup

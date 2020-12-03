@@ -30,7 +30,7 @@ const getSessionByMessageId = messageId => {
   });
 };
 
-export async function applySignature({ signature, messageId, skipSaving }) {
+export async function applySignature({ signature, messageId, skipSaving = false }) {
   const session = await getSessionByMessageId(messageId);
   if (!session) {
     this._displayError(`Draft Session for ${messageId} not available`);
@@ -78,7 +78,8 @@ export async function applySignature({ signature, messageId, skipSaving }) {
     const fileMap = await AttachmentStore.addSigOrTempAttachments(
       attachments,
       draft.id,
-      draft.accountId
+      draft.accountId,
+      skipSaving
     );
     function replaceStr(oldStr, searchStr, replaceStr) {
       const oldStrSplit = oldStr.split(searchStr);
@@ -89,6 +90,7 @@ export async function applySignature({ signature, messageId, skipSaving }) {
       if (file.isInline) {
         newSigBody = replaceStr(newSigBody, `src="${key}"`, `src="cid:${file.contentId}"`);
       }
+      draft.files.push(file);
     });
 
     // http://www.regexpal.com/?fam=94390

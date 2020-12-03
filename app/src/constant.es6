@@ -1,6 +1,8 @@
 export const QUERY_TYPE = {
+  BACKGROUND: 'BACKGROUND',
   SEARCH_PERSPECTIVE: 'SEARCH_PERSPECTIVE',
   SEARCH_SUBJECT: 'SEARCH_SUBJECT',
+  VACUUM: 'VACUUM',
 };
 export const OAuthList = [
   'gmail',
@@ -17,6 +19,7 @@ export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
 export const WindowLevel = {
+  Migrating: 6,
   BugReporting: 5,
   OnBoarding: 4,
   Composer: 3,

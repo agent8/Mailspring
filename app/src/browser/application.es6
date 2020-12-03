@@ -144,7 +144,6 @@ export default class Application extends EventEmitter {
     this.setupAutoPlayPolicy();
     this.setupCrosssitePolicy();
     this.handleEvents();
-    this.handleLaunchOptions(options);
     this.autoStartRestore();
 
     // add 'EdisonMail://' to LSSetDefaultHandlerForURLScheme
@@ -180,7 +179,7 @@ export default class Application extends EventEmitter {
     }
     this.makeLogFolders();
     this.initSupportInfo();
-    this._fixMailsyncTaskDelayInconsistency();
+    this._fixMailsyncInconsistency();
     // subscribe event of dark mode change
     if (process.platform === 'darwin') {
       try {
@@ -196,12 +195,25 @@ export default class Application extends EventEmitter {
     }
     this.cleaningOldFilesTimer = null;
     this._triggerCleanOldLogs(true);
+    await this._startMigrate(options);
+  }
+  async _startMigrate(options) {
+    this._migrateTimer = setTimeout(() => {
+      this._migrateTimer = null;
+      if (!this.nativeVersion) {
+        this._ensureMigrateWindowVisible();
+      }
+    }, 3000);
     try {
       const mailsync = new MailsyncProcess({
         ...options,
         disableThread: this.config.get('core.workspace.threadView') === false,
       });
       this.nativeVersion = await mailsync.migrate();
+      clearTimeout(this._migrateTimer);
+      this._closeMigrateWindow();
+      this.windowManager.createHotWindow();
+      this.handleLaunchOptions(options);
     } catch (err) {
       let message = null;
       let buttons = ['Quit'];
@@ -843,6 +855,20 @@ export default class Application extends EventEmitter {
       });
     }
   }
+  _ensureMigrateWindowVisible() {
+    const migrateWindow = this.windowManager.get(WindowManager.MIGRATE_WINDOW);
+    if (!migrateWindow) {
+      this.windowManager.ensureWindow(WindowManager.MIGRATE_WINDOW, {
+        title: 'Migrating your local data',
+      });
+    }
+  }
+  _closeMigrateWindow() {
+    const migrateWindow = this.windowManager.get(WindowManager.MIGRATE_WINDOW);
+    if (migrateWindow && migrateWindow.browserWindow) {
+      migrateWindow.browserWindow.close();
+    }
+  }
 
   ensureMainWindowVisible() {
     if (!this.config) {
@@ -866,21 +892,47 @@ export default class Application extends EventEmitter {
       }
     }
   }
-  _fixMailsyncTaskDelayInconsistency = () => {
+  _fixMailsyncInconsistency = () => {
     const taskDelay = this.config.get('core.mailsync.taskDelay');
-    if (taskDelay !== undefined) {
-      const accounts = this.config.get('accounts');
-      if (Array.isArray(accounts)) {
-        let changed = false;
-        accounts.forEach(account => {
+    const enableFocusedInbox = this.config.get('core.workspace.enableFocusedInbox');
+
+    const accounts = this.config.get('accounts');
+    const mailSync = this.config.get('core.mailsync.accounts');
+    if (Array.isArray(accounts)) {
+      let changed = false;
+      let mailsyncChanged = false;
+      accounts.forEach(account => {
+        if (taskDelay !== undefined) {
           if (account && account.mailsync && account.mailsync.taskDelay !== taskDelay) {
             changed = true;
             account.mailsync.taskDelay = taskDelay;
           }
-        });
-        if (changed) {
-          this.config.set('accounts', accounts);
         }
+        if (
+          account &&
+          account.mailsync &&
+          !!account.mailsync.core_workspace_enableFocusedInbox !== !!enableFocusedInbox
+        ) {
+          changed = true;
+          account.mailsync.core_workspace_enableFocusedInbox = !!enableFocusedInbox;
+        }
+        if (
+          mailSync &&
+          mailSync[account.id || account.pid] &&
+          !!mailSync[account.id || account.pid].core_workspace_enableFocusedInbox !==
+            !!enableFocusedInbox
+        ) {
+          mailsyncChanged = true;
+          mailSync[
+            account.id || account.pid
+          ].core_workspace_enableFocusedInbox = !!enableFocusedInbox;
+        }
+      });
+      if (mailsyncChanged) {
+        this.config.set('core.mailsync.accounts', mailSync);
+      }
+      if (changed) {
+        this.config.set('accounts', accounts);
       }
     }
   };

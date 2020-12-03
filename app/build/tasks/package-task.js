@@ -131,9 +131,9 @@ module.exports = grunt => {
         linux: undefined,
       }[platform],
       name: {
-        darwin: 'Edison Mail',
-        win32: 'Edison Mail',
-        linux: 'Edison Mail',
+        darwin: 'Email Client for Gmail',
+        win32: 'Email Client for Gmail',
+        linux: 'Email Client for Gmail',
       }[platform],
       appCopyright: `Copyright (C) 2014-${new Date().getFullYear()} Edison Software Inc. All rights reserved.`,
       derefSymlinks: false,
@@ -250,7 +250,7 @@ module.exports = grunt => {
       ],
     },
   });
-
+  let ongoing;
   grunt.registerTask(
     'package',
     'Package EdisonMail',
@@ -261,7 +261,7 @@ module.exports = grunt => {
       console.log('---> Running packager with options:');
       console.log(util.inspect(grunt.config.get('packager'), true, 7, true));
 
-      const ongoing = setInterval(() => {
+      ongoing = setInterval(() => {
         const elapsed = Math.round((Date.now() - start) / 1000.0);
         console.log(`---> Packaging for ${elapsed}s`);
       }, 1000);
@@ -282,6 +282,7 @@ module.exports = grunt => {
     err => {
       clearInterval(ongoing);
       if (err) {
+        const done = this.async();
         grunt.fail.fatal(err);
         return done(err);
       }

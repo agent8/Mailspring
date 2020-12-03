@@ -1,3 +1,4 @@
+import path from 'path';
 import React from 'react';
 import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
@@ -27,37 +28,24 @@ function ImageNode(props) {
     return <img alt="" src={src} style={style} resizable={'true'} />;
   }
 
-  let isSelect = false;
-  const selectNow = editor.value.focusKey;
-  if (selectNow) {
-    const ancestorsNode = editor.value.document.getAncestors(selectNow);
-    const selectNowAncestors = ancestorsNode.find(el => el.key === node.key);
-    if (selectNowAncestors && selectNowAncestors.key === node.key) {
-      isSelect = true;
-    }
-  }
-
   return (
-    <span {...attributes}>
-      <ResizableImg
-        src={src}
-        style={style}
-        showMask={isSelect}
-        callback={value => {
-          editor.change(change => {
-            return change.setNodeByKey(node.key, {
-              data: {
-                src: src,
-                draggerDisable: true,
-                height: value.height,
-                width: value.width,
-              },
-            });
+    <ResizableImg
+      src={src}
+      style={style}
+      callback={value => {
+        editor.change(change => {
+          return change.setNodeByKey(node.key, {
+            data: {
+              src: src,
+              draggerDisable: true,
+              height: value.height,
+              width: value.width,
+            },
           });
-        }}
-        lockAspectRatio
-      />
-    </span>
+        });
+      }}
+      lockAspectRatio
+    />
   );
 }
 
@@ -84,6 +72,8 @@ export const changes = {
 
 const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
   const cb = filePath => {
+    const dirName = path.dirname(filePath);
+    const fileName = encodeURIComponent(path.basename(filePath));
     if (!filePath) {
       return;
     }
@@ -92,7 +82,7 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
       type: IMAGE_TYPE,
       data: {
         draggerDisable: true,
-        src: filePath,
+        src: path.join(dirName, fileName),
       },
     });
 
