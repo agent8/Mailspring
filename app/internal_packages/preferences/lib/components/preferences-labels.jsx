@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { AccountStore, CategoryStore, Actions, DestroyCategoryTask } from 'mailspring-exports';
 import {
   Table,
@@ -29,6 +28,7 @@ class PreferencesLabels extends React.Component {
     this._creatingLabelTimer = null;
     this._unsubscribe = [];
     this._mounted = false;
+    this._tableRef = null;
   }
 
   componentDidMount() {
@@ -115,12 +115,7 @@ class PreferencesLabels extends React.Component {
           Edit
         </span>
         <span className="close" onClick={this._onDestroyLabel.bind(this, category)}>
-          <RetinaImg
-            name="close_1.svg"
-            style={{ width: 18, height: 18 }}
-            isIcon={true}
-            mode={RetinaImg.Mode.ContentLight}
-          />
+          <RetinaImg name="closeCircle.svg" isIcon={true} mode={RetinaImg.Mode.ContentIsMask} />
         </span>
       </TableCell>
     );
@@ -163,11 +158,8 @@ class PreferencesLabels extends React.Component {
     if (!this._tableRef) {
       return;
     }
-    const el = ReactDOM.findDOMNode(this._tableRef);
-    if (el) {
-      const box = el.getBoundingClientRect();
-      this.setState({ tableHeight: box.height - 40 });
-    }
+    const box = this._tableRef.getBoundingClientRect();
+    this.setState({ tableHeight: box.height - 40 });
   };
   _renderLabelsTable = () => {
     if (this.state.labelsDataSource) {
@@ -177,7 +169,7 @@ class PreferencesLabels extends React.Component {
           displayHeader={true}
           rowHeight={40}
           bodyHeight={this.state.tableHeight}
-          ref={ref => (this._tableRef = ref)}
+          tableRefCallback={ref => (this._tableRef = ref)}
           tableDataSource={this.state.labelsDataSource}
           CellRenderer={this._renderCell}
         />
@@ -301,8 +293,9 @@ class PreferencesLabels extends React.Component {
         <div className="config-group labels-group">
           <h6>MANAGE LABELS</h6>
           <div className="labels-description">
-            Manage your list of labels and decide what's shown in your menu list. Note: Labels are
-            only available in some accounts. Removing a label won't remove messages with that label.
+            Manage your list of labels and decide what&apos;s shown in your menu list. Note: Labels
+            are only available in some accounts. Removing a label won&apos;t remove messages with
+            that label.
           </div>
           <div className="labels-controls">
             {this._renderAccountSelection()}
