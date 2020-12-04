@@ -82,7 +82,11 @@
           display: flex;
           align-items: center;
           color: @blue;
-
+          padding-right: 15.5px;
+          padding-left: 15px;
+          span{
+            padding-left: 4px;
+          }
           .edison-icon {
             color: @blue;
           }
@@ -160,6 +164,22 @@
       td:last-of-type {
         width: 230px;
         text-align: right;
+        .close{
+          cursor: pointer;
+          width: auto;
+          height: 34px;
+          margin: 0 15px;
+          display: inline-block;
+          border-radius: unset;
+          background-color: unset;
+          text-align: center;
+          vertical-align: middle;
+          .edison-icon-closeCircle{
+            color: @gray-light;
+            line-height: 34px;
+            font-size: 34px;
+          }
+        }
       }
 
       thead {

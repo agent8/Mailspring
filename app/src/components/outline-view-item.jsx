@@ -642,7 +642,7 @@ class OutlineViewItem extends Component {
         <RetinaImg
           name={'drag-handle.svg'}
           isIcon={true}
-          style={{ width: 18, height: 18, fontSize: 18, position: 'relative', left: 14 }}
+          style={{ width: 18, height: 18, fontSize: 18, position: 'relative', left: 10 }}
           fallback={'folder.svg'}
           mode={RetinaImg.Mode.ContentIsMask}
         />

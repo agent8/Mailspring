@@ -29,6 +29,7 @@
     color: @accent-primary;
     font-weight: 600;
     letter-spacing: -0.26px;
+    padding-left: 1px;
   }
 
   .sidebar-divider {
@@ -87,9 +88,11 @@
   }
   .item-container.inEditMode{
     .disclosure-triangle{
-      margin-right: 18px;
+      transition: margin-right 300ms;
+      margin-right: 24px;
     }
-    .icon-drag{
+    .icon.icon-drag{
+      display: inline-block;
       order: 2;
       .edison-icon-drag-handle{
         color: @gray-light;
@@ -128,12 +131,15 @@
     }
     .checkmark {
       cursor: pointer;
+      &.checked::after{
+        visibility: hidden;
+      }
 
       &::after {
         display: block;
         content: '';
-        height: 16px;
-        width: 16px;
+        height: 18px;
+        width: 18px;
         border-radius: 50%;
         background: rgba(0, 0, 0, 0.15);
         position: absolute;
@@ -146,8 +152,8 @@
         top: 10px;
         left: 20px;
         display: block;
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         .icon-mixin('../static/icons/check-empty.svg', @white, 24px);
         border: none;
       }
@@ -215,9 +221,6 @@
         background-color: @source-list-active-bg;
       }
     }
-    &:hover .item-count-box{
-      visibility: hidden;
-    }
 
     .disclosure-triangle {
       position: absolute;
@@ -227,9 +230,11 @@
       background: inherit;
       width: 38px;
       margin-right: 0;
+      background-color: @source-list-active-bg;
 
       &.force-visible {
         visibility: visible;
+        background-color: transparent;
       }
     }
 
@@ -251,6 +256,10 @@
     padding-left: 47px;
     padding-right: 31px;
     transition: padding 300ms;
+    .name{
+      padding-left: 1px;
+      padding-right: 6px;
+    }
   }
 
   .item {

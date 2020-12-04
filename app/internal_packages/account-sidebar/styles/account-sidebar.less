@@ -119,7 +119,7 @@
   .btn {
     font-weight: 700;
     text-align: center;
-    font-size: 14px;
+    font-size: 12px;
     letter-spacing: 0.17px;
     line-height: 20px;
     width: 68px;
@@ -133,11 +133,18 @@
     border: none;
     color: @accent-primary;
     box-shadow: unset;
+    &:active{
+      background: unset;
+    }
   }
 
   .modal-btn-enable {
+    box-shadow: unset;
     background-color: @accent-primary;
     color: @white;
+    &:active{
+      background-color: @accent-primary;
+    }
   }
 }
 
