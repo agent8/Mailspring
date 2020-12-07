@@ -519,6 +519,7 @@ export default class MessageItem extends React.Component {
           <div className="message-item-area">
             {this._renderBlockNote()}
             {this._renderHeader()}
+            {this._renderAttachments()}
             <MessageItemBody
               pending={this.props.pending}
               message={this.props.message}
@@ -528,7 +529,6 @@ export default class MessageItem extends React.Component {
               setTrackers={this._setTrackers}
               viewOriginalEmail={this.state.viewOriginalEmail}
             />
-            {this._renderAttachments()}
             {this._renderFooterStatus()}
           </div>
         </div>
