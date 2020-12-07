@@ -461,8 +461,10 @@ const TaskFactory = {
       return;
     }
     const existingCategories = CategoryStore.categories(accountId);
+    let delimiter = '/';
     if (existingCategories.length > 0) {
       for (let i = 0; i < existingCategories.length; i++) {
+        delimiter = existingCategories[i].delimiter;
         const displayName = existingCategories[i].fullDisplayName;
         if (displayName === name) {
           AppEnv.logWarning(
@@ -477,7 +479,14 @@ const TaskFactory = {
         }
       }
     }
-    return SyncbackCategoryTask.forCreating({ name, accountId, bgColor, parentId, isExchange });
+    return SyncbackCategoryTask.forCreating({
+      name,
+      accountId,
+      bgColor,
+      parentId,
+      isExchange,
+      delimiter,
+    });
   },
   taskForUpdatingContact({ newContact = {}, accountId, draft = {} } = {}) {
     if (!accountId && !newContact.accountId && !draft.accountId) {
