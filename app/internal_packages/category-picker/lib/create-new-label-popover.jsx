@@ -11,6 +11,10 @@ export default class CreateNewFolderPopover extends Component {
     left: PropTypes.number,
     top: PropTypes.number,
     onActionCallback: PropTypes.func,
+    name: PropTypes.string,
+    buttonTimeout: PropTypes.number,
+    isMoveAction: PropTypes.bool,
+    visible: PropTypes.bool,
   };
   static defaultProps = {
     left: 490,
@@ -237,7 +241,6 @@ export default class CreateNewFolderPopover extends Component {
                     className="check-img check"
                     name="tagging-checkmark.png"
                     mode={RetinaImg.Mode.ContentPreserve}
-                    onClick={() => this._onSelectLabel(item)}
                   />
                 </div>
               );
