@@ -1,6 +1,6 @@
 const classNames = require('classnames');
 const _ = require('underscore');
-const { React, ReactDOM, PropTypes, DOMUtils } = require('mailspring-exports');
+const { React, PropTypes, DOMUtils } = require('mailspring-exports');
 import ScrollRegion from './scroll-region';
 
 /*
@@ -26,10 +26,20 @@ class MenuItem extends React.Component {
     selected: PropTypes.bool,
     checked: PropTypes.bool,
     disabled: PropTypes.bool,
+    onMouseDown: PropTypes.func,
+    onMouseOver: PropTypes.func,
+    content: PropTypes.any,
+    shortcutKey: PropTypes.string,
   };
 
   static default = {
     disabled: false,
+  };
+  _renderShortcutKey = () => {
+    if (!this.props.shortcutKey || typeof this.props.shortcutKey !== 'string') {
+      return null;
+    }
+    return <div className="shortcut-key">{this.props.shortcutKey}</div>;
   };
 
   render() {
@@ -50,6 +60,7 @@ class MenuItem extends React.Component {
           onMouseOver={this.props.onMouseOver}
         >
           {this.props.content}
+          {this._renderShortcutKey()}
         </div>
       );
     }
@@ -175,15 +186,24 @@ class Menu extends React.Component {
 
     defaultSelectedIndex: PropTypes.number,
     maxHeight: PropTypes.number,
+    refCallback: PropTypes.func,
+    autoFocus: PropTypes.bool,
   };
 
-  static defaultProps = { onEscape() {}, maxHeight: 0 };
+  static defaultProps = { onEscape() {}, maxHeight: 0, refCallback: () => {} };
 
   constructor(props) {
     super(props);
     this._mounted = false;
     this.state = {
       selectedIndex: this.props.defaultSelectedIndex || 0,
+    };
+    this._selfRef = null;
+    this._setSelfRef = ref => {
+      this._selfRef = ref;
+      if (this.props.refCallback) {
+        this.props.refCallback(ref);
+      }
     };
   }
 
@@ -205,10 +225,18 @@ class Menu extends React.Component {
 
   componentDidMount() {
     this._mounted = true;
+    if (this.props.autoFocus && this._selfRef) {
+      //Wait until Menu finishes animating, then focus
+      setTimeout(() => this._selfRef.focus(), 100);
+      AppEnv.keymaps.suspendAllKeymaps();
+    }
   }
 
   componentWillUnmount() {
     this._mounted = false;
+    if (this.props.autoFocus) {
+      AppEnv.keymaps.resumeAllKeymaps();
+    }
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -244,8 +272,11 @@ class Menu extends React.Component {
     if ((this.props.items || []).length === 0) {
       return;
     }
-    const item = ReactDOM.findDOMNode(this).querySelector('.selected');
-    const container = ReactDOM.findDOMNode(this).querySelector('.content-container');
+    if (!this._selfRef) {
+      return;
+    }
+    const item = this._selfRef.querySelector('.selected');
+    const container = this._selfRef.querySelector('.content-container');
     const adjustment = DOMUtils.scrollAdjustmentToMakeNodeVisibleInContainer(item, container);
     if (adjustment !== 0) {
       container.scrollTop += adjustment;
@@ -257,7 +288,12 @@ class Menu extends React.Component {
     const fc = this.props.footerComponents || <span />;
     const className = this.props.className ? this.props.className : '';
     return (
-      <div onKeyDown={this._onKeyDown} className={`menu ${className}`} tabIndex="-1">
+      <div
+        onKeyDown={this._onKeyDown}
+        className={`menu ${className}`}
+        tabIndex="-1"
+        ref={this._setSelfRef}
+      >
         <div className="header-container">{hc}</div>
         {this._contentContainer()}
         <div className="footer-container">{fc}</div>
@@ -281,6 +317,18 @@ class Menu extends React.Component {
     } else if (event.key === 'ArrowDown' || event.key === 'Tab') {
       this._onShiftSelectedIndex(1);
       event.preventDefault();
+    } else {
+      event.preventDefault();
+      for (let i = 0; i < this.props.items.length; i++) {
+        const shortcutKey = this.props.items[i].shortcutKey || '';
+        if (event.key.toLocaleLowerCase() === shortcutKey.toLocaleLowerCase()) {
+          this.setState({ selectedIndex: i });
+          if (this.props.onSelect) {
+            this.props.onSelect(this.props.items[i]);
+          }
+          return;
+        }
+      }
     }
   };
 
@@ -327,6 +375,7 @@ class Menu extends React.Component {
           onMouseOver={onMouseOver}
           checked={this.props.itemChecked && this.props.itemChecked(item)}
           content={content}
+          shortcutKey={item.shortcutKey}
           disabled={item.disabled}
           selected={this.state.selectedIndex === i}
         />

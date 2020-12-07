@@ -8,10 +8,20 @@ class ContextMenuPopover extends React.Component {
     menuItems: PropTypes.array,
     menuContentKey: PropTypes.string,
   };
+  constructor(props) {
+    super(props);
+  }
+  componentWillUnmount() {
+    AppEnv.keymaps.resumeAllKeymaps();
+  }
+
   _onItemClicked = item => {
     if (item.click) {
       item.click();
     }
+    this._closePopover();
+  };
+  _closePopover = () => {
     Actions.closePopover();
   };
   render() {
@@ -19,10 +29,12 @@ class ContextMenuPopover extends React.Component {
       <div className="context-menu-popover-container">
         <Menu
           className="context-menu-popover"
+          autoFocus={true}
           items={this.props.menuItems}
           itemKey={item => item.id || item[this.props.menuContentKey || 'label']}
           itemContent={item => item[this.props.menuContentKey || 'label']}
           onSelect={this._onItemClicked}
+          onEscape={this._closePopover}
         />
       </div>
     );

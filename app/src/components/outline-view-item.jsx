@@ -370,6 +370,7 @@ class OutlineViewItem extends Component {
       menu.push({
         label: `New Folder...`,
         click: this._onAddNewFolder,
+        shortcutKey: 'F',
       });
     }
     if (this.props.item.onEdited) {
