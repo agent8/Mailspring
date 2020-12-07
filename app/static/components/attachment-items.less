@@ -45,7 +45,7 @@
   &.file-attachment-item:focus {
     .file-info-wrap,
     .file-action-icon {
-      border-color: lighten(@component-active-color, 10%);
+      // border-color: lighten(@component-active-color, 10%);
     }
     .file-action-icon {
       border-left-color: @attachment-border-color;
@@ -75,7 +75,6 @@
   .inner {
     border-radius: 2px;
     color: @text-color;
-    height: 74px;
     overflow: visible;
     &:hover {
       .attachment-action-bar {
@@ -87,10 +86,8 @@
     .attachment-action-bar {
       position: absolute;
       width: auto;
-      bottom: 0;
-      right: 0;
+      right: 5px;
       display: flex;
-      height: 100%;
       justify-content: flex-end;
       .file-action-icon {
         border: none;
@@ -98,6 +95,19 @@
         cursor: pointer;
         transition: opacity 0.2s;
         opacity: 0;
+        &:hover {
+          &:after {
+            content: '';
+            display: block;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            animation: growUp 0.15s;
+            background-color: @off-white;
+          }
+        }
       }
     }
   }
@@ -107,7 +117,7 @@
     align-items: center;
     flex-grow: 2;
     min-width: 85%;
-    padding: 10px;
+    padding: 0 10px;
     height: 100%;
     border: solid 1px @gray-lighter;
     border-radius: 8px;
@@ -115,14 +125,10 @@
     align-items: center;
     cursor: pointer;
     .attachment-icon {
-      width: 55px;
-      height: 55px;
-      overflow: hidden;
-      background-color: @off-white-light;
+      width: 30px;
+      height: 30px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      border-radius: 8px;
       .file-icon {
         width: 100%;
       }
@@ -150,21 +156,18 @@
     .attachment-info {
       flex: 1;
       height: 100%;
-      padding: 0 20px;
+      padding: 10px 20px;
       position: relative;
       overflow: hidden;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       text-align: left;
       justify-content: center;
-      & > div {
-        width: 100%;
-      }
+      align-items: center;
       .attachment-name {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        word-break: break-all;
         overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
       .file-size {
         color: @gray-light;
@@ -191,6 +194,8 @@
       margin-left: auto;
       margin-right: @spacing-three-quarters;
       color: @black;
+      white-space: nowrap;
+      padding-left: 10px;
     }
     img.quicklook-icon {
       background-color: @file-icon-color;
@@ -208,20 +213,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    flex-grow: 0;
-    flex-basis: 38px;
-    margin-left: auto;
-    padding: 10px;
-    height: 105%;
-    width: 38px;
-    border: solid 1px @attachment-border-color;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-    // box-shadow: inset 0 0 0 1px @attachment-border-color;
+    position: relative;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    overflow: hidden;
 
     .edison-icon {
       color: @file-icon-color;
+      position: relative;
+      z-index: 2;
     }
 
     &:hover .edison-icon {
@@ -349,8 +350,8 @@ body.platform-win32 {
       background: none;
     }
   }
-  .file-padding:hover{
-   z-index: 0;
+  .file-padding:hover {
+    z-index: 0;
   }
   .file-preview {
     position: relative;
