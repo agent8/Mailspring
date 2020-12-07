@@ -59,7 +59,7 @@ export const filterIntoSchema = (dbEvent, type, owner, local, id, exchangeRecurr
         'attachments',
         'hangoutLink'
       ].forEach((e) => delete dbEvent[e]);
-      dbEvent.originalId = dbEvent.id;
+      dbEvent.originalId = dbEvent.iCalUID;
       dbEvent.id = md5(dbEvent.id);
       dbEvent.creator = dbEvent.creator;
       dbEvent.providerType = GOOGLE;

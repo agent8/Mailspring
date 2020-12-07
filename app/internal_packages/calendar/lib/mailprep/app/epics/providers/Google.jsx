@@ -8,6 +8,7 @@ import {
   CREATE_GOOGLE_EVENTS_BEGIN,
   EDIT_GOOGLE_SINGLE_EVENT_BEGIN,
   DELETE_GOOGLE_SINGLE_EVENT_BEGIN,
+  EDIT_GOOGLE_ALL_EVENT_BEGIN,
 } from '../../actions/providers/google';
 import { retrieveStoreEvents } from '../../actions/db/events';
 
@@ -76,20 +77,20 @@ export const editGoogleSingleEventEpics = (action$) =>
     )
   );
 
-// export const editCalDavAllRecurrenceEventEpics = (action$) =>
-//   action$.pipe(
-//     ofType(EDIT_CALDAV_ALL_EVENT_BEGIN),
-//     mergeMap((action) =>
-//       from([
-//         new Promise((resolve, reject) => {
-//           resolve(retrieveStoreEvents(action.payload.user));
-//         }),
-//         editCalDavAllRecurrenceEvents(action.payload)
-//           .then(() => retrieveStoreEvents(action.payload.user))
-//           .catch((err) => console.log(err))
-//       ]).mergeAll()
-//     )
-//   );
+export const editGoogleAllRecurrenceEventEpics = (action$) =>
+  action$.pipe(
+    ofType(EDIT_GOOGLE_ALL_EVENT_BEGIN),
+    mergeMap((action) =>
+      from([
+        new Promise((resolve, reject) => {
+          resolve(retrieveStoreEvents(action.payload.user));
+        }),
+        editGoogleAllRecurrenceEvents(action.payload)
+          .then(() => retrieveStoreEvents(action.payload.user))
+          .catch((err) => console.log(err))
+      ]).mergeAll()
+    )
+  );
 
 // export const editCalDavFutureRecurrenceEventEpics = (action$) =>
 //   action$.pipe(
@@ -155,7 +156,6 @@ export const deleteGoogleSingleEventEpics = (action$) =>
 const createGoogleEvent = async (payload) => {
   const { data, calendar, auth } = payload;
   const debug = false;
-
   if (payload.data.isRecurring) {
     await addGoogleEvent(
       calendar.id,
@@ -234,6 +234,28 @@ const editGoogleSingle = async (payload) => {
 // TODO
 const editGoogleAllRecurrenceEvents = async (payload) => {
   const debug = false;
+  console.log("PANDA")
+  console.log(payload)
+  await editGoogleEvent(
+    // calendarId
+    payload.originalId,
+    payload.user.accessToken,
+    {
+      'summary': payload.title,
+      'location': payload.location,
+      'description': payload.description,
+      'start': {
+        'dateTime': payload.start.format(),
+      },
+      'end': {
+        'dateTime': payload.end.format()
+      },
+      'recurrence': ['RRULE:'.concat(payload.rrule)],
+      'attendees': Object.keys(payload.attendee).map(key => {
+        return { 'email': payload.attendee[key].email }
+      }),
+    }
+  )
 };
 
 // TODO

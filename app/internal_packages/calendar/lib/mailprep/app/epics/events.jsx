@@ -480,6 +480,7 @@ const syncEvents = async (action) => {
             for (const event of events) {
               const dbObj = dbEvents.filter(
                 (dbEvent) =>
+                  dbEvent.providerType === event.providerType &&
                   dbEvent.start.dateTime === event.start.dateTime &&
                   dbEvent.originalId === event.originalId
               );

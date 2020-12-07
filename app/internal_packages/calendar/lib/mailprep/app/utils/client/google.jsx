@@ -2,6 +2,7 @@ import md5 from 'md5';
 import * as ProviderTypes from '../constants';
 import axios from 'axios'
 import moment from 'moment';
+import uuidv4 from 'uuid';
 
 export const GOOGLE_CLIENT_ID =
   '65724758895-gc7lubjkjsqqddfhlb7jcme80i3mjqn0.apps.googleusercontent.com';
@@ -187,13 +188,13 @@ export const asyncGetAllGoogleEvents = async (email, accessToken) => {
             },
             etag: event.etag,
             iCalUID: event.iCalUID,
-            id: event.id,
+            id: uuidv4(),
             isAllDay: event.date,
             // isMaster: true,
             isRecurring: event.recurringEventId ? true : false,
             location: event.location,
             organizer: event.organizer ? event.organizer.email : '',
-            originalId: event.id,
+            originalId: event.iCalUID,
             originalStartTime: {
               dateTime: moment(event.start.dateTime ? event.start.dateTime : event.start.date).unix()
             },
@@ -215,6 +216,6 @@ export const asyncGetAllGoogleEvents = async (email, accessToken) => {
     }
     return finalResult;
   } catch (e) {
-    throw e
+    console.log(e)
   }
 }

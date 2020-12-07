@@ -32,7 +32,8 @@ import {
 } from '../../actions/providers/caldav';
 import {
   editGoogleSingleEventBegin,
-  deleteGoogleSingleEventBegin
+  deleteGoogleSingleEventBegin,
+  editGoogleAllEventBegin
 } from '../../actions/providers/google';
 import {
   deleteEwsSingleEventBegin,
@@ -727,7 +728,8 @@ const editAllReccurenceEvent = async (payload) => {
   switch (payload.providerType) {
     case Providers.GOOGLE:
       try {
-        console.log('Google, To-Do edit all feature');
+        console.log("EDIT GOOGLE RECURR EVENT")
+        return editGoogleAllEventBegin(payload)
       } catch (googleError) {
         console.log('Handle Google pending action here', googleError);
       }

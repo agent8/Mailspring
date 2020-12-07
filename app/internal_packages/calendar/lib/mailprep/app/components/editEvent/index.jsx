@@ -307,7 +307,7 @@ export default class EditEvent extends React.Component {
     const payload = {
       // Unique Id
       id: state.id,
-
+      calendarId: state.calendarId,
       // Updating fields
       title: state.title,
       description: state.description,
