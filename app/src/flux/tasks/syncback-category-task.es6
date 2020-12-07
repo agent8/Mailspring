@@ -2,7 +2,15 @@ import utf7 from 'utf7';
 import Task from './task';
 import Attributes from '../attributes';
 import Folder from '../models/folder';
-
+const fromDelimiterJsonMappings = val => {
+  return String.fromCharCode(val);
+};
+const toDelimiterJSONMappings = val => {
+  if (typeof val !== 'string' || val.length === 0) {
+    return 47;
+  }
+  return val.charCodeAt(0);
+};
 export default class SyncbackCategoryTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
     path: Attributes.String({
@@ -21,6 +29,11 @@ export default class SyncbackCategoryTask extends Task {
       modelKey: 'created',
       itemClass: Folder,
     }),
+    delimiter: Attributes.String({
+      modelKey: 'delimiter',
+      fromJSONMapping: fromDelimiterJsonMappings,
+      toJSONMapping: toDelimiterJSONMappings,
+    }),
   });
   fromJSON(json) {
     const ret = super.fromJSON(json);
@@ -30,13 +43,21 @@ export default class SyncbackCategoryTask extends Task {
     return ret;
   }
 
-  static forCreating({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
+  static forCreating({
+    name,
+    accountId,
+    bgColor = 0,
+    parentId = '',
+    isExchange = false,
+    delimiter = '/',
+  }) {
     return new SyncbackCategoryTask({
       name: name,
       path: isExchange ? '' : utf7.imap.encode(name),
       bgColor: bgColor,
       accountId: accountId,
       parentId,
+      delimiter,
     });
   }
 
