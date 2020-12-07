@@ -844,17 +844,16 @@ class HiddenToggleImportantButton extends React.Component {
     if (!AppEnv.config.get('core.workspace.showImportant')) {
       return false;
     }
-
+    const allImportant = this.props.items.every(item =>
+      item.labels.find(c => c.role === 'important')
+    );
     const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
       this.props.items,
       'important'
     );
-    if (!allowed) {
+    if (!allowed && !allImportant) {
       return false;
     }
-    const allImportant = this.props.items.every(item =>
-      item.labels.find(c => c.role === 'important')
-    );
 
     return (
       <BindGlobalCommands
