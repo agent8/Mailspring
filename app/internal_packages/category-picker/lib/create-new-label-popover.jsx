@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg, LabelColorizer } from 'mailspring-component-kit';
-import { Actions, TaskFactory, ChangeLabelsTask, TaskQueue } from 'mailspring-exports';
+import {
+  Actions,
+  TaskFactory,
+  ChangeLabelsTask,
+  TaskQueue,
+  FocusedPerspectiveStore,
+} from 'mailspring-exports';
 
 export default class CreateNewFolderPopover extends Component {
   static propTypes = {
@@ -148,15 +154,32 @@ export default class CreateNewFolderPopover extends Component {
     const { threads } = this.props;
     const all = [];
     threads.forEach(({ labels }) => all.push(...labels));
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (currentPerspective && Array.isArray(currentPerspective.categories())) {
+      const inSpamOrTrash = currentPerspective.categories().every(cat => {
+        return cat && (cat.role === 'trash' || cat.role === 'spam');
+      });
+      if (inSpamOrTrash) {
+        Actions.queueTasks(
+          TaskFactory.tasksForChangeFolder({
+            source: 'Label Picker: New Label',
+            threads: threads,
+            folder: category,
+            currentPerspective,
+          })
+        );
+      } else {
+        Actions.queueTasks([
+          new ChangeLabelsTask({
+            source: 'Category Picker: Move to Label, deleting previous labels',
+            labelsToRemove: all.filter(label => label.isLabel && label.isLabel()),
+            labelsToAdd: [category],
+            threads: threads,
+          }),
+        ]);
+      }
+    }
 
-    Actions.queueTasks([
-      new ChangeLabelsTask({
-        source: 'Category Picker: Move to Label, deleting previous labels',
-        labelsToRemove: all.filter(label => label.isLabel && label.isLabel()),
-        labelsToAdd: [category],
-        threads: threads,
-      }),
-    ]);
     this._onActionCallback({ addedLabels: [category], removedLabels: all });
   };
 
