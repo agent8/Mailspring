@@ -51,6 +51,7 @@ class AccountExchangeSettingsForm extends React.Component {
   }
 
   renderUserInfo() {
+    this.props.account.settings['ews_username'] = '';
     return (
       <div>
         <FormField field={`settings.ews_email`} title={'Email'} {...this.props} />
