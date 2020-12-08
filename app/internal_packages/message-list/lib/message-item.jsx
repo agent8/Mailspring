@@ -9,6 +9,7 @@ import {
   BlockedSendersStore,
   EmailAvatar,
   CalendarStore,
+  CategoryStore,
   FocusedPerspectiveStore,
   TrashFromSenderTask,
 } from 'mailspring-exports';
@@ -23,6 +24,7 @@ import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
 import MessageTimestamp from './message-timestamp';
 import MessageControls from './message-controls';
+import ChangeFolderTask from '../../../src/flux/tasks/change-folder-task';
 
 export default class MessageItem extends React.Component {
   static displayName = 'MessageItem';
@@ -346,6 +348,54 @@ export default class MessageItem extends React.Component {
       );
     }
   }
+  _restoreMessageToInbox = () => {
+    const inboxFolder = CategoryStore.getCategoryByRole(this.props.message.accountId, 'inbox');
+    if (inboxFolder) {
+      Actions.queueTask(
+        new ChangeFolderTask({
+          folder: inboxFolder,
+          messages: [this.props.message],
+          source: 'Restore Single Message',
+        })
+      );
+    }
+  };
+  _renderRestoreBanner = () => {
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (
+      this.props.message &&
+      currentPerspective &&
+      Array.isArray(currentPerspective.categories())
+    ) {
+      const cats = currentPerspective.categories();
+      const inSpamOrTrashView = cats.every(cat => {
+        return cat && (cat.role === 'trash' || cat.role === 'spam');
+      });
+      if (inSpamOrTrashView) {
+        return null;
+      }
+      const messageInTrash = (this.props.message.labels || []).every(cat => {
+        return cat && cat.role === 'trash';
+      });
+      const messageInSpam = (this.props.message.labels || []).every(cat => {
+        return cat && cat.role === 'spam';
+      });
+      if (messageInSpam || messageInTrash) {
+        const message = `This message is in ${
+          messageInTrash ? 'trash' : 'spam'
+        }. Move it to your inbox?`;
+        return (
+          <div className="row">
+            <div className="show-restore-message">
+              {message}
+              <a onClick={this._restoreMessageToInbox}>Restore Message</a>
+            </div>
+          </div>
+        );
+      }
+    }
+    return null;
+  };
 
   _renderHeader() {
     const { message, thread, messages, disableDraftEdit } = this.props;
@@ -428,6 +478,7 @@ export default class MessageItem extends React.Component {
             </MessageParticipants>
           </div>
         </div>
+        {this._renderRestoreBanner()}
         {this.state.detailedHeaders && (
           <div className="row with-border">
             <MessageParticipants
