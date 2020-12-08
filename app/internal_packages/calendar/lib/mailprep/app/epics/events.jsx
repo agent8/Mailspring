@@ -27,7 +27,7 @@ import {
   ItemId,
   FolderView
 } from 'ews-javascript-api';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import _ from 'lodash';
 import uuidv4 from 'uuid';
 // import { uuidv1 } from 'uuid/v1';

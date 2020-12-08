@@ -1,5 +1,5 @@
 import { from, of, throwError } from 'rxjs';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { map, mergeMap, concatMap, catchError } from 'rxjs/operators';
 import { ofType } from 'redux-observable';
 import {

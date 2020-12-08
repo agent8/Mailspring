@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import ICAL from 'ical.js';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
 // import Modal from 'react-modal';

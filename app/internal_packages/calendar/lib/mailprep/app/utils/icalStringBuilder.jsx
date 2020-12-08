@@ -1,5 +1,5 @@
 import ICAL from 'ical.js';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { RRule, RRuleSet } from 'rrule';
 import uuidv1 from 'uuid';
 import * as icalTookKit from 'ical-toolkit';

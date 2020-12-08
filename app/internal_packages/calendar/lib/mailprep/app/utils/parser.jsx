@@ -2,7 +2,7 @@
 /* eslint-disable no-lone-blocks */
 import React from 'react';
 import ICAL from 'ical.js';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import uuidv4 from 'uuid';
 import { DateTime } from 'luxon';
 import { RRule, RRuleSet, rrulestr } from 'rrule';

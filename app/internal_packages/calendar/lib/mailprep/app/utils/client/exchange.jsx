@@ -28,7 +28,7 @@ import {
   Month,
   DayOfTheWeekIndex
 } from 'ews-javascript-api';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import uuidv4 from 'uuid';
 import ICAL from 'ical.js';
 import * as ProviderTypes from '../constants';
@@ -374,28 +374,28 @@ export const parseEwsRecurringPatterns = (
       deletedOccurrences === null
         ? ''
         : deletedOccurrences.Items.map((deletedOccur) =>
-            deletedOccur.OriginalStart.getMomentDate().format('YYYY-MM-DDTHH:mm:ssZ')
+          deletedOccur.OriginalStart.getMomentDate().format('YYYY-MM-DDTHH:mm:ssZ')
+        )
+          .filter(
+            (deletedRecurrString) =>
+              moment(deletedRecurrString).isAfter(ews.StartDate.getMomentDate()) &&
+              (ews.EndDate === null ||
+                moment(deletedRecurrString).isBefore(ews.EndDate.getMomentDate()))
           )
-            .filter(
-              (deletedRecurrString) =>
-                moment(deletedRecurrString).isAfter(ews.StartDate.getMomentDate()) &&
-                (ews.EndDate === null ||
-                  moment(deletedRecurrString).isBefore(ews.EndDate.getMomentDate()))
-            )
-            .join(','),
+          .join(','),
     recurrenceIds:
       editedOccurrences === null
         ? ''
         : editedOccurrences.Items.map((editedOccur) =>
-            editedOccur.OriginalStart.getMomentDate().format('YYYY-MM-DDTHH:mm:ssZ')
+          editedOccur.OriginalStart.getMomentDate().format('YYYY-MM-DDTHH:mm:ssZ')
+        )
+          .filter(
+            (editedRecurrString) =>
+              moment(editedRecurrString).isAfter(ews.StartDate.getMomentDate()) &&
+              (ews.EndDate === null ||
+                moment(editedRecurrString).isBefore(ews.EndDate.getMomentDate()))
           )
-            .filter(
-              (editedRecurrString) =>
-                moment(editedRecurrString).isAfter(ews.StartDate.getMomentDate()) &&
-                (ews.EndDate === null ||
-                  moment(editedRecurrString).isBefore(ews.EndDate.getMomentDate()))
-            )
-            .join(','),
+          .join(','),
     modifiedThenDeleted: false,
     weeklyPattern:
       ews.XmlElementName === 'WeeklyRecurrence'
@@ -411,8 +411,8 @@ export const parseEwsRecurringPatterns = (
       ews.DaysOfTheWeek !== undefined && ews.DaysOfTheWeek !== null
         ? parseEwsWeekDay(ews.DaysOfTheWeek)
         : ews.DayOfTheWeek !== undefined && ews.DayOfTheWeek !== null
-        ? parseEwsWeekDay({ items: [ews.DayOfTheWeek] })
-        : '()',
+          ? parseEwsWeekDay({ items: [ews.DayOfTheWeek] })
+          : '()',
     byMonth: ews.Month === undefined || ews.Month === null ? '()' : parseEwsMonth(ews.Month),
     byMonthDay:
       ews.DayOfMonth === undefined || ews.DayOfMonth === null ? '()' : `(${ews.DayOfMonth})`
