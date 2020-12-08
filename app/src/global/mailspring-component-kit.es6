@@ -54,7 +54,7 @@ const lazyLoadFrom = (prop, path) => {
     return bare[prop] ? bare[prop] : bare.default[prop];
   });
 };
-
+lazyLoad('Keystrokes', 'keystrokes');
 lazyLoad('Menu', 'menu');
 lazyLoad('DropZone', 'drop-zone');
 lazyLoad('Spinner', 'spinner');

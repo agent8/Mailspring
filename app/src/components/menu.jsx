@@ -2,6 +2,7 @@ const classNames = require('classnames');
 const _ = require('underscore');
 const { React, PropTypes, DOMUtils } = require('mailspring-exports');
 import ScrollRegion from './scroll-region';
+import Keystrokes from './keystrokes';
 
 /*
 Public: `MenuItem` components can be provided to the {Menu} by the `itemContent` function.
@@ -39,7 +40,7 @@ class MenuItem extends React.Component {
     if (!this.props.shortcutKey || typeof this.props.shortcutKey !== 'string') {
       return null;
     }
-    return <div className="shortcut-key">{this.props.shortcutKey}</div>;
+    return <Keystrokes keyString={this.props.shortcutKey} containerClassName={'shortcut-key'} />;
   };
 
   render() {
@@ -222,13 +223,29 @@ class Menu extends React.Component {
       this.setState({ selectedIndex: -1 });
     });
   };
+  _itemsShortcutExceptionKeys = () => {
+    const ret = [];
+    this.props.items.forEach(item => {
+      //Since our component can only deal with shortcuts that are one character,
+      // anything that's not one character we pass it on to keymap-manager to deal with
+      if (
+        item &&
+        item.shortcutKey &&
+        typeof item.shortcutKey === 'string' &&
+        item.shortcutKey.length > 1
+      ) {
+        ret.push(item.shortcutKey);
+      }
+    });
+    return ret;
+  };
 
   componentDidMount() {
     this._mounted = true;
     if (this.props.autoFocus && this._selfRef) {
       //Wait until Menu finishes animating, then focus
       setTimeout(() => this._selfRef.focus(), 100);
-      AppEnv.keymaps.suspendAllKeymaps();
+      AppEnv.keymaps.suspendAllKeymaps({ exception: this._itemsShortcutExceptionKeys() });
     }
   }
 
