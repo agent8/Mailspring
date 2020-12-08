@@ -40,6 +40,7 @@ const propTypes = {
   onAbortDownload: PropTypes.func,
   isDownloading: PropTypes.bool,
   isImage: PropTypes.bool,
+  percent: PropTypes.number,
 };
 
 const defaultProps = {
@@ -49,6 +50,30 @@ const defaultProps = {
 };
 
 const SPACE = ' ';
+
+function ProgressBar(props) {
+  const { isDownloading, percent, disableProgress } = props;
+
+  if (!isDownloading) {
+    return <span />;
+  }
+
+  const downloadProgressStyle = {
+    width: `${Math.min(Math.max(percent, 2.5), 97.5)}%`,
+  };
+  return (
+    <span className={`progress-bar-wrap state-downloading`}>
+      <span className="progress-background" />
+      {disableProgress ? (
+        <span className="progress-loading"></span>
+      ) : (
+        <span className="progress-foreground" style={downloadProgressStyle} />
+      )}
+    </span>
+  );
+}
+
+ProgressBar.propTypes = propTypes;
 
 function AttachmentActionIcon(props) {
   const {
@@ -315,6 +340,11 @@ export class AttachmentItem extends Component {
         {...pickHTMLProps(extraProps)}
       >
         <div className="inner">
+          <ProgressBar
+            isDownloading={this.state.isDownloading}
+            percent={this.state.percent}
+            disableProgress={this.props.disableProgress}
+          />
           <Flexbox direction="row" style={{ alignItems: 'center' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
@@ -589,6 +619,11 @@ export class ImageAttachmentItem extends Component {
         style={style}
       >
         <div>
+          <ProgressBar
+            isDownloading={this.state.isDownloading}
+            percent={this.state.percent}
+            disableProgress={this.props.disableProgress}
+          />
           <AttachmentActionIcon
             {...this.props}
             removeIcon="close.svg"
