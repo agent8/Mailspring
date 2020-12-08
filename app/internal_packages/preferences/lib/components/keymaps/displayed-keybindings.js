@@ -5,6 +5,7 @@ module.exports = [
       ['application:new-message', 'New Message'],
       ['core:focus-search', 'Search'],
       ['core:undo', 'Undo'],
+      ['core:new-folder', 'New Folder'],
     ],
   },
   {

@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { Divider, DIVIDER_KEY, MORE_TOGGLE, ADD_FOLDER_KEY, NEW_FOLDER_KEY } from './outline-view';
 import OutlineViewEditFolderItem from './outline-view-edit-folder-item';
 import { DROP_DATA_TYPE } from '../constant';
+import BindGlobalCommands from './bind-global-commands';
 /*
  * Enum for counter styles
  * @readonly
@@ -161,6 +162,7 @@ class OutlineViewItem extends Component {
     this.state = {
       isDropping: false,
       isDragging: false,
+      isHovering: false,
       editing: props.item.editing || false,
       originalText: '',
       showAllChildren: false,
@@ -367,10 +369,11 @@ class OutlineViewItem extends Component {
     const menu = [];
 
     if (this.props.item.onAddNewFolder) {
+      const commands = (AppEnv.keymaps.getBindingsForAllCommands() || {})['core:new-folder'];
       menu.push({
         label: `New Folder...`,
         click: this._onAddNewFolder,
-        shortcutKey: 'F',
+        shortcutKey: commands.length > 0 ? commands[0] : '',
       });
     }
     if (this.props.item.onEdited) {
@@ -464,6 +467,18 @@ class OutlineViewItem extends Component {
       }
       this.setState({ newFolderName: '', newFolderIsHidden: false, newFolderDisableHidden: true });
     }
+  };
+  _onEntireItemMouseEnter = () => {
+    this.setState({ isHovering: true });
+  };
+  _onEntireItemMouseLeave = () => {
+    this.setState({ isHovering: false });
+  };
+  _onNewFolderCommand = () => {
+    if (!this.state.isHovering || this.props.isEditingMenu) {
+      return;
+    }
+    this._onAddNewFolder();
   };
 
   _formatNumber(num) {
@@ -755,20 +770,31 @@ class OutlineViewItem extends Component {
     if (item.id && item.id === MORE_TOGGLE) {
       return this._renderMoreOrLess();
     }
+    const commands = {};
+    if (this.props.item && this.props.item.onAddNewFolder) {
+      commands['core:new-folder'] = this._onNewFolderCommand;
+    }
     return (
-      <div className={item.className ? item.className : null} ref={this._setSelfRef}>
-        <span className={containerClasses}>
-          {this._renderCheckmark()}
-          {this._renderItem()}
-          <DisclosureTriangle
-            collapsed={item.collapsed}
-            visible={this.props.isEditingMenu && item.children && item.children.length > 0}
-            visibleOnHover={!this.state.editing && item.children && item.children.length > 0}
-            onCollapseToggled={this._onCollapseToggled}
-          />
-        </span>
-        {this._renderChildren()}
-      </div>
+      <BindGlobalCommands commands={commands}>
+        <div
+          className={item.className ? item.className : null}
+          ref={this._setSelfRef}
+          onMouseEnter={this._onEntireItemMouseEnter}
+          onMouseLeave={this._onEntireItemMouseLeave}
+        >
+          <span className={containerClasses}>
+            {this._renderCheckmark()}
+            {this._renderItem()}
+            <DisclosureTriangle
+              collapsed={item.collapsed}
+              visible={this.props.isEditingMenu && item.children && item.children.length > 0}
+              visibleOnHover={!this.state.editing && item.children && item.children.length > 0}
+              onCollapseToggled={this._onCollapseToggled}
+            />
+          </span>
+          {this._renderChildren()}
+        </div>
+      </BindGlobalCommands>
     );
   }
 }
