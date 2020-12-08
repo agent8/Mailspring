@@ -91,27 +91,6 @@ const isSameAccount = items => {
   return true;
 };
 
-// const nextActionForRemoveFromView = (source, affectedThreads) => {
-//   if (!AppEnv.isMainWindow()) {
-//     AppEnv.logDebug('Not main window, no next action for remove from view');
-//     return;
-//   }
-//   const topSheet = WorkspaceStore.topSheet();
-//   const layoutMode = WorkspaceStore.layoutMode();
-//   const onReturn = ({ reason } = {}) => {
-//     Actions.popSheet({ reason });
-//   };
-//   const focusedThread = FocusedContentStore.focused('thread');
-//   // AppEnv.nextActionAfterRemoveFromView({
-//   //   source,
-//   //   currentFocus: focusedThread,
-//   //   affectedItems: affectedThreads,
-//   //   topSheet,
-//   //   layoutMode,
-//   //   emptyFocusContent: onReturn,
-//   // });
-// };
-
 export function ArchiveButton(props) {
   const _onShortCut = event => {
     _onArchive(event, threadSelectionScope(props, props.selection));
@@ -135,7 +114,6 @@ export function ArchiveButton(props) {
       AppEnv.debugLog(`Archive closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
 
   const allowed = FocusedPerspectiveStore.current().canArchiveThreads(props.items);
@@ -170,6 +148,11 @@ export function ArchiveButton(props) {
 }
 ArchiveButton.displayName = 'ArchiveButton';
 ArchiveButton.containerRequired = false;
+ArchiveButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 export function TrashButton(props) {
   const _onShortCutRemove = event => {
@@ -216,7 +199,6 @@ export function TrashButton(props) {
       AppEnv.debugLog(`Remove Closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
   const _onRemove = (event, threads) => {
     const affectedThreads = Array.isArray(threads) ? threads : props.items;
@@ -235,7 +217,9 @@ export function TrashButton(props) {
                 threads: JSON.stringify(props.items),
               },
             });
-          } catch (e) {}
+          } catch (e) {
+            AppEnv.logError(e);
+          }
         }
       });
     }
@@ -251,7 +235,6 @@ export function TrashButton(props) {
       AppEnv.debugLog(`Remove Closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
   const _onExpunge = (event, threads) => {
     let messages = [];
@@ -281,7 +264,9 @@ export function TrashButton(props) {
                 messages: JSON.stringify(messages),
               },
             });
-          } catch (e) {}
+          } catch (e) {
+            AppEnv.logError(e);
+          }
         }
       });
     }
@@ -306,7 +291,6 @@ export function TrashButton(props) {
     if (event) {
       event.stopPropagation();
     }
-    return;
   };
 
   const allFoldersInTrashOrSpam = (accountId, labelIds) => {
@@ -337,39 +321,39 @@ export function TrashButton(props) {
         }
       });
   };
-  const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
-    if (!Array.isArray(labelIds) || !accountId) {
-      return false;
-    }
-    const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
-    const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
-    const isExchange = AccountStore.isExchangeAccountId(accountId);
-    return labelIds
-      .map(labelId => CategoryStore.byId(accountId, labelId))
-      .some(folder => {
-        let ret = folder.role !== 'trash' && folder.role !== 'spam';
-        if (!ret) {
-          return false;
-        }
-        if (!isExchange) {
-          return (
-            !(
-              trashCategory &&
-              (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
-            ) &&
-            !(
-              spamCategory &&
-              (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder))
-            )
-          );
-        } else {
-          return (
-            !(trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) &&
-            !(spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
-          );
-        }
-      });
-  };
+  // const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
+  //   if (!Array.isArray(labelIds) || !accountId) {
+  //     return false;
+  //   }
+  //   const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
+  //   const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
+  //   const isExchange = AccountStore.isExchangeAccountId(accountId);
+  //   return labelIds
+  //     .map(labelId => CategoryStore.byId(accountId, labelId))
+  //     .some(folder => {
+  //       let ret = folder.role !== 'trash' && folder.role !== 'spam';
+  //       if (!ret) {
+  //         return false;
+  //       }
+  //       if (!isExchange) {
+  //         return (
+  //           !(
+  //             trashCategory &&
+  //             (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
+  //           ) &&
+  //           !(
+  //             spamCategory &&
+  //             (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder))
+  //           )
+  //         );
+  //       } else {
+  //         return (
+  //           !(trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) &&
+  //           !(spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
+  //         );
+  //       }
+  //     });
+  // };
   const isMixed = threads => {
     let notInTrashOrSpam = undefined;
     let inTrashOrSpam = undefined;
@@ -390,9 +374,9 @@ export function TrashButton(props) {
   const allThreadsInTrashOrSpam = threads => {
     return threads.every(thread => allFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
   };
-  const allThreadsNotInTrashOrSpam = threads => {
-    return threads.every(thread => notAllFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
-  };
+  // const allThreadsNotInTrashOrSpam = threads => {
+  //   return threads.every(thread => notAllFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
+  // };
 
   const isInSearch = props => {
     let currentPerspective = props.currentPerspective;
@@ -462,6 +446,14 @@ export function TrashButton(props) {
 }
 TrashButton.displayName = 'TrashButton';
 TrashButton.containerRequired = false;
+TrashButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  thread: PropTypes.object,
+  isMenuItem: PropTypes.bool,
+  isSearchMailbox: PropTypes.bool,
+  currentPerspective: PropTypes.object,
+};
 
 export function MarkAsSpamButton(props) {
   const _onShortcutNotSpam = event => {
@@ -485,7 +477,6 @@ export function MarkAsSpamButton(props) {
       AppEnv.debugLog(`Not Spam closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
 
   const _onShortcutMarkAsSpam = event => {
@@ -510,7 +501,6 @@ export function MarkAsSpamButton(props) {
       AppEnv.debugLog(`Closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
 
   const allInSpam = props.items.every(item => item.folders.find(c => c.role === 'spam'));
@@ -585,6 +575,11 @@ export function MarkAsSpamButton(props) {
 }
 MarkAsSpamButton.displayName = 'MarkAsSpamButton';
 MarkAsSpamButton.containerRequired = false;
+MarkAsSpamButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 export function PrintThreadButton(props) {
   const _onPrintThread = () => {
@@ -620,6 +615,9 @@ export function PrintThreadButton(props) {
   );
 }
 PrintThreadButton.displayName = 'PrintThreadButton';
+PrintThreadButton.propTypes = {
+  isMenuItem: PropTypes.bool,
+};
 
 export function ToggleStarredButton(props) {
   const _onShortcutStar = event => {
@@ -638,7 +636,6 @@ export function ToggleStarredButton(props) {
     if (props.selection) {
       props.selection.clear();
     }
-    return;
   };
   const postClickStarredState = props.items.every(t => t.starred === false);
   const title = postClickStarredState ? 'Flag' : 'Unflag';
@@ -674,6 +671,11 @@ export function ToggleStarredButton(props) {
 }
 ToggleStarredButton.displayName = 'ToggleStarredButton';
 ToggleStarredButton.containerRequired = false;
+ToggleStarredButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 export function ToggleUnreadButton(props) {
   const _onClick = event => {
@@ -682,7 +684,6 @@ export function ToggleUnreadButton(props) {
     if (event) {
       event.stopPropagation();
     }
-    return;
   };
 
   const _onShortcutChangeUnread = targetUnread => {
@@ -739,6 +740,11 @@ export function ToggleUnreadButton(props) {
 }
 ToggleUnreadButton.displayName = 'ToggleUnreadButton';
 ToggleUnreadButton.containerRequired = false;
+ToggleUnreadButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 class HiddenGenericRemoveButton extends React.Component {
   static displayName = 'HiddenGenericRemoveButton';
@@ -801,6 +807,10 @@ class HiddenGenericRemoveButton extends React.Component {
 
 class HiddenToggleImportantButton extends React.Component {
   static displayName = 'HiddenToggleImportantButton';
+  static propTypes = {
+    selection: PropTypes.object,
+    items: PropTypes.array,
+  };
 
   _onShortcutSetImportant = important => {
     this._onSetImportant(important, threadSelectionScope(this.props, this.props.selection));
@@ -834,17 +844,16 @@ class HiddenToggleImportantButton extends React.Component {
     if (!AppEnv.config.get('core.workspace.showImportant')) {
       return false;
     }
+    const allImportant = this.props.items.every(item =>
+      item.labels.find(c => c.role === 'important')
+    );
     const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
       this.props.items,
       'important'
     );
-    if (!allowed) {
+    if (!allowed && !allImportant) {
       return false;
     }
-
-    const allImportant = this.props.items.every(item =>
-      item.labels.find(c => c.role === 'important')
-    );
 
     return (
       <BindGlobalCommands
@@ -865,7 +874,10 @@ export class ThreadListMoreButton extends React.Component {
   static containerRequired = false;
 
   static propTypes = {
+    position: PropTypes.string,
+    selection: PropTypes.object,
     items: PropTypes.array.isRequired,
+    dataSource: PropTypes.any,
   };
 
   constructor(props) {
@@ -1134,6 +1146,7 @@ export class ThreadListMoreButton extends React.Component {
   render() {
     return [
       <button
+        key={`moreButton${this.props.position}`}
         id={`moreButton${this.props.position}`}
         ref={el => (this._anchorEl = el)}
         tabIndex={-1}
@@ -1141,6 +1154,7 @@ export class ThreadListMoreButton extends React.Component {
         onClick={this._more}
       >
         <RetinaImg
+          key={'moreIcon'}
           name="more.svg"
           style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
@@ -1158,6 +1172,7 @@ export class MoreButton extends React.Component {
 
   static propTypes = {
     items: PropTypes.array.isRequired,
+    position: PropTypes.string,
   };
 
   _onPrintThread = () => {
@@ -1369,6 +1384,9 @@ export const DownButton = props => {
 };
 DownButton.displayName = 'DownButton';
 DownButton.containerRequired = false;
+DownButton.propTypes = {
+  isMenuItem: PropTypes.bool,
+};
 
 export const UpButton = props => {
   const getStateFromStores = () => {
@@ -1411,6 +1429,9 @@ export const UpButton = props => {
 };
 UpButton.displayName = 'UpButton';
 UpButton.containerRequired = false;
+UpButton.propTypes = {
+  isMenuItem: PropTypes.bool,
+};
 
 export const PopoutButton = () => {
   const _onPopoutComposer = () => {
@@ -1472,6 +1493,11 @@ function FolderButton(props) {
   );
 }
 FolderButton.displayName = 'FolderButton';
+FolderButton.propTypes = {
+  anchorEl: PropTypes.node,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 const MailActionsMap = {
   archive: ArchiveButton,
@@ -1488,10 +1514,12 @@ class MoreActionsButton extends React.Component {
   static propTypes = {
     moreButtonlist: PropTypes.array.isRequired,
     items: PropTypes.array.isRequired,
+    thread: PropTypes.object,
+    position: PropTypes.string,
   };
 
   constructor(props) {
-    super();
+    super(props);
   }
 
   _canReplyAll = () => {
