@@ -234,8 +234,6 @@ const editGoogleSingle = async (payload) => {
 // TODO
 const editGoogleAllRecurrenceEvents = async (payload) => {
   const debug = false;
-  console.log("PANDA")
-  console.log(payload)
   await editGoogleEvent(
     // calendarId
     payload.originalId,
