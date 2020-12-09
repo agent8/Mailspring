@@ -51,6 +51,7 @@ class PopoverStore extends MailspringStore {
       fallbackDirection,
       closeOnAppBlur,
       disablePointer,
+      disableAutoFocus,
       isFixedToWindow = false,
       position = {},
       onClose = () => {},
@@ -66,6 +67,7 @@ class PopoverStore extends MailspringStore {
       closeOnAppBlur,
       onClose,
       disablePointer,
+      disableAutoFocus,
       isFixedToWindow,
     };
 

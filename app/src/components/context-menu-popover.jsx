@@ -25,11 +25,18 @@ class ContextMenuPopover extends React.Component {
     Actions.closePopover();
   };
   render() {
+    const hasShortcutKey = this.props.menuItems.some(
+      item =>
+        item &&
+        item.shortcutKey &&
+        typeof item.shortcutKey === 'string' &&
+        item.shortcutKey.length > 1
+    );
     return (
       <div className="context-menu-popover-container">
         <Menu
           className="context-menu-popover"
-          autoFocus={true}
+          autoFocus={hasShortcutKey}
           items={this.props.menuItems}
           itemKey={item => item.id || item[this.props.menuContentKey || 'label']}
           itemContent={item => item[this.props.menuContentKey || 'label']}

@@ -397,7 +397,7 @@ class OutlineViewItem extends Component {
       });
     }
     if (menu.length > 0) {
-      Actions.openContextMenu({ menuItems: menu, mouseEvent: event });
+      Actions.openContextMenu({ menuItems: menu, mouseEvent: event, disableAutoFocus: false });
     }
   };
   _onDropZoneMouseDown = event => {

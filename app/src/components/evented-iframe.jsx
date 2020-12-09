@@ -235,6 +235,9 @@ class EventedIFrame extends React.Component {
   // iFrame, the mouseup never fires in the parent window.
   _onIFrameClick = e => {
     e.stopPropagation();
+    if (this._contextMenuOpen) {
+      this._closeIFrameContextMenu();
+    }
     const target = this._getContainingTarget(e, { with: 'href' });
     if (target) {
       // Sometimes urls can have relative, malformed, or malicious href
@@ -341,6 +344,13 @@ class EventedIFrame extends React.Component {
 
     ReactDOM.findDOMNode(this).dispatchEvent(eventInParentDoc);
   };
+  _closeIFrameContextMenu = () => {
+    Actions.closePopover();
+    this._onIFrameContextMenuClose();
+  };
+  _onIFrameContextMenuClose = () => {
+    this._contextMenuOpen = false;
+  };
 
   _onIFrameContextualMenu = event => {
     // Build a standard-looking contextual menu with options like "Copy Link",
@@ -391,7 +401,7 @@ class EventedIFrame extends React.Component {
     const imageTarget = this._getContainingTarget(event, { with: 'src' });
     if (imageTarget) {
       const src = imageTarget.getAttribute('src');
-      const srcFilename = decodeURIComponent(path.basename(src));
+      let srcFilename = decodeURIComponent(path.basename(src));
       menu.push({
         label: 'Save Image...',
         click() {
@@ -488,7 +498,7 @@ class EventedIFrame extends React.Component {
       }
     }
 
-    if (process.platform === 'darwin') {
+    if (process.platform === 'darwin' && menu.length > 1) {
       menu.push({ type: 'divider' });
     }
     // Services menu appears here automatically
@@ -498,7 +508,9 @@ class EventedIFrame extends React.Component {
         menuItems: menu,
         mouseEvent: event,
         iframeOffset: { x: rect.left, y: rect.top },
+        onClose: this._onIFrameContextMenuClose,
       });
+      this._contextMenuOpen = true;
     }
   };
 }

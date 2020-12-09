@@ -56,6 +56,8 @@ class FixedPopover extends Component {
     }),
     isFixedToWindow: PropTypes.bool,
     focusElementWithTabIndex: PropTypes.func,
+    disableAutoFocus: PropTypes.bool,
+    disablePointer: PropTypes.bool,
     onClose: PropTypes.func,
   };
 
@@ -68,6 +70,7 @@ class FixedPopover extends Component {
   constructor(props) {
     super(props);
     this.mounted = false;
+    this.animationEnded = false;
     this.updateCount = 0;
     this.fallback = this.props.fallbackDirection;
     this.state = {
@@ -75,12 +78,19 @@ class FixedPopover extends Component {
       direction: props.direction,
       visible: false,
     };
+    this.popoverContainerRef = null;
+    this.blurTrapRef = null;
+    this.popoverRef = null;
   }
 
   componentDidMount() {
     this.mounted = true;
-    findDOMNode(this.refs.popoverContainer).addEventListener('animationend', this.onAnimationEnd);
+    this.animationEnded = false;
+    if (this.popoverContainerRef) {
+      findDOMNode(this.popoverContainerRef).addEventListener('animationend', this.onAnimationEnd);
+    }
     window.addEventListener('resize', this.onWindowResize);
+    window.addEventListener('click', this.onWindowClicked);
     _.defer(this.onPopoverRendered);
   }
 
@@ -99,19 +109,37 @@ class FixedPopover extends Component {
 
   componentWillUnmount() {
     this.mounted = false;
-    findDOMNode(this.refs.popoverContainer).removeEventListener(
-      'animationend',
-      this.onAnimationEnd
-    );
+    if (this.popoverContainerRef) {
+      findDOMNode(this.popoverContainerRef).removeEventListener(
+        'animationend',
+        this.onAnimationEnd
+      );
+    }
     window.removeEventListener('resize', this.onWindowResize);
+    window.removeEventListener('click', this.onWindowClicked);
   }
 
   onAnimationEnd = () => {
-    _.defer(this.props.focusElementWithTabIndex);
+    this.animationEnded = true;
+    if (this.props.focusElementWithTabIndex && !this.props.disableAutoFocus) {
+      _.defer(this.props.focusElementWithTabIndex);
+    }
   };
 
   onWindowResize = () => {
     Actions.closePopover(this.props.onClose);
+  };
+  onWindowClicked = e => {
+    if (!this.mounted || !this.animationEnded) {
+      return;
+    }
+    const target = e.target;
+    if (!this.props.closeOnAppBlur) {
+      return;
+    }
+    if (!target || !findDOMNode(this).contains(target)) {
+      Actions.closePopover(this.props.onClose);
+    }
   };
 
   onPopoverRendered = () => {
@@ -159,7 +187,10 @@ class FixedPopover extends Component {
   };
 
   getCurrentRect = () => {
-    return findDOMNode(this.refs.popover).getBoundingClientRect();
+    if (this.popoverRef) {
+      return findDOMNode(this.popoverRef).getBoundingClientRect();
+    }
+    return null;
   };
 
   getWindowDimensions = () => {
@@ -369,9 +400,13 @@ class FixedPopover extends Component {
 
     return (
       <div>
-        <div ref="blurTrap" className="fixed-popover-blur-trap" style={blurTrapStyle} />
         <div
-          ref="popoverContainer"
+          ref={ref => (this.blurTrapRef = ref)}
+          className="fixed-popover-blur-trap"
+          style={blurTrapStyle}
+        />
+        <div
+          ref={ref => (this.popoverContainerRef = ref)}
           style={containerStyle}
           className={`fixed-popover-container${animateClass} ${this.props.className}`}
           onKeyDown={this.onKeyDown}
@@ -379,7 +414,7 @@ class FixedPopover extends Component {
           tabIndex={-1}
         >
           <div
-            ref="popover"
+            ref={ref => (this.popoverRef = ref)}
             className={`fixed-popover ${this.props.popoverClassName}`}
             style={popoverStyle}
           >

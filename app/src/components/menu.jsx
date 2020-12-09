@@ -334,8 +334,7 @@ class Menu extends React.Component {
     } else if (event.key === 'ArrowDown' || event.key === 'Tab') {
       this._onShiftSelectedIndex(1);
       event.preventDefault();
-    } else {
-      event.preventDefault();
+    } else if (this.props.autoFocus) {
       for (let i = 0; i < this.props.items.length; i++) {
         const shortcutKey = this.props.items[i].shortcutKey || '';
         if (event.key.toLocaleLowerCase() === shortcutKey.toLocaleLowerCase()) {
@@ -343,6 +342,7 @@ class Menu extends React.Component {
           if (this.props.onSelect) {
             this.props.onSelect(this.props.items[i]);
           }
+          event.preventDefault();
           return;
         }
       }
