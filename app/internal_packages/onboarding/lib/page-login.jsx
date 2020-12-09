@@ -22,11 +22,11 @@ export default class LoginPage extends React.Component {
       const win = AppEnv.getCurrentWindow();
       // win.unmaximize();
       win.setSize(685, 700);
-      const left = Math.floor((screen.width - 685) / 2);
-      const top = Math.floor((screen.height - 700) / 2 - 30);
+      const left = Math.floor((window.screen.width - 685) / 2);
+      const top = Math.floor((window.screen.height - 700) / 2 - 30);
       win.setPosition(left, top);
       win.setResizable(false);
-    }, 10)
+    }, 10);
   };
 
   render() {
@@ -38,11 +38,11 @@ export default class LoginPage extends React.Component {
           mode={RetinaImg.Mode.ContentPreserve}
         />
         <div>
-          <h1 className="hero-text">Start Using Edison Mail for Mac</h1>
+          <h1 className="hero-text">Start Using Email Client for Gmail</h1>
           <p className="hero-subtext">Connect your account to continue using the app</p>
           <button className="btn login-button" onClick={this._onContinue}>
             Connect your account to unlock
-        </button>
+          </button>
         </div>
       </div>
     );
