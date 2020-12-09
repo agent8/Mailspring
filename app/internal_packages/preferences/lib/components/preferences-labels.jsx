@@ -73,9 +73,9 @@ class PreferencesLabels extends React.Component {
     const cat = CategoryStore.byFolderId(catId);
     if (cat) {
       if (show) {
-        CategoryStore.showCategoryInFolderTree(cat);
+        CategoryStore.showCategoryInFolderTree({ accountId: cat.accountId, id: cat.path });
       } else {
-        CategoryStore.hideCategoryInFolderTree(cat);
+        CategoryStore.hideCategoryInFolderTree({ accountId: cat.accountId, id: cat.path });
       }
     }
   };
