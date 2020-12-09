@@ -984,6 +984,19 @@ class StarredMailboxPerspective extends MailboxPerspective {
       this._categoryMetaDataId = 'all-starred';
     }
   }
+  canReceiveFolderTreeData(folderData) {
+    if (this._categoryMetaDataId === 'all-unread') {
+      return (
+        folderData.accountId &&
+        folderData.id &&
+        this._categoryMetaDataAccountId &&
+        this._categoryMetaDataAccountId === folderData.accountId &&
+        this._categoryMetaDataId !== folderData.id
+      );
+    } else {
+      return super.canReceiveFolderTreeData(folderData);
+    }
+  }
   getDisplayOrder() {
     return CategoryStore.getCategoryDisplayOrderInFolderTree({
       accountId: this._categoryMetaDataAccountId,
@@ -1584,6 +1597,15 @@ class AllSentMailboxPerspective extends CategoryMailboxPerspective {
     this.isAllSent = true;
     this._categoryMetaDataId = 'all-sent';
   }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
+  }
   toJSON() {
     const json = super.toJSON();
     json.isAllSent = true;
@@ -1600,6 +1622,15 @@ class AllSpamMailboxPerspective extends CategoryMailboxPerspective {
     this.iconName = 'spam.svg';
     this.isAllSpam = true;
     this._categoryMetaDataId = 'all-spam';
+  }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
   }
   toJSON() {
     const json = super.toJSON();
@@ -1678,6 +1709,19 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
       return ThreadCountsStore.unreadCountForCategoryId(`${this.accountIds[0]}_Today`);
     }
   }
+  canReceiveFolderTreeData(folderData) {
+    if (this._categoryMetaDataId === 'all-today') {
+      return (
+        folderData.accountId &&
+        folderData.id &&
+        this._categoryMetaDataAccountId &&
+        this._categoryMetaDataAccountId === folderData.accountId &&
+        this._categoryMetaDataId !== folderData.id
+      );
+    } else {
+      return super.canReceiveFolderTreeData(folderData);
+    }
+  }
 
   canChangeAllToRead() {
     return false;
@@ -1699,6 +1743,15 @@ class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
     this.isAllArchive = true;
     this.displayName = 'All Archive';
     this._categoryMetaDataId = 'all-archive';
+  }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
   }
   toJSON() {
     const json = super.toJSON();
@@ -1789,6 +1842,19 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
       this._categoryMetaDataId = 'unread';
     } else {
       this._categoryMetaDataId = 'all-unread';
+    }
+  }
+  canReceiveFolderTreeData(folderData) {
+    if (this._categoryMetaDataId === 'all-unread') {
+      return (
+        folderData.accountId &&
+        folderData.id &&
+        this._categoryMetaDataAccountId &&
+        this._categoryMetaDataAccountId === folderData.accountId &&
+        this._categoryMetaDataId !== folderData.id
+      );
+    } else {
+      return super.canReceiveFolderTreeData(folderData);
     }
   }
 
