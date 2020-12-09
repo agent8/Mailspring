@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
 import {
   Utils,
   Actions,
@@ -112,7 +113,7 @@ export default class MessageItem extends React.Component {
     let el = e.target;
     while (el !== e.currentTarget) {
       if (el.classList.contains('collapsed-participants')) {
-        this.setState({ detailedHeaders: true });
+        this.setState({ detailedHeaders: !this.state.detailedHeaders });
         e.stopPropagation();
         return;
       }
@@ -413,10 +414,29 @@ export default class MessageItem extends React.Component {
               </div>
             </div>
             <MessageParticipants
+              date={message.date}
               detailFrom={message.from}
               to={message.to}
               cc={message.cc}
               bcc={message.bcc}
+              isBlocked={isBlocked}
+              replyTo={message.replyTo.filter(c => !message.from.find(fc => fc.email === c.email))}
+              onClick={this._onClickParticipants}
+              isDetailed={false}
+            >
+              {this._renderHeaderDetailToggle()}
+            </MessageParticipants>
+          </div>
+        </div>
+        {this.state.detailedHeaders && (
+          <div className="row with-border">
+            <MessageParticipants
+              date={message.date}
+              detailFrom={message.from}
+              to={message.to}
+              cc={message.cc}
+              bcc={message.bcc}
+              isBlocked={isBlocked}
               replyTo={message.replyTo.filter(c => !message.from.find(fc => fc.email === c.email))}
               onClick={this._onClickParticipants}
               isDetailed={this.state.detailedHeaders}
@@ -424,7 +444,7 @@ export default class MessageItem extends React.Component {
               {this._renderHeaderDetailToggle()}
             </MessageParticipants>
           </div>
-        </div>
+        )}
         {/* {this._renderFolder()} */}
       </header>
     );
@@ -439,27 +459,13 @@ export default class MessageItem extends React.Component {
     if (this.props.pending) {
       return null;
     }
-    if (this.state.detailedHeaders) {
-      return (
-        <div
-          className="header-toggle-control"
-          style={{ display: 'inline-block', alignContent: 'center', transform: 'rotate(180deg)' }}
-          onClick={this._toggleHeaderDetail}
-        >
-          <RetinaImg
-            name={'down-arrow.svg'}
-            style={{ width: 16, height: 16, fontSize: 16 }}
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        </div>
-      );
-    }
 
     return (
       <div
-        className="header-toggle-control inactive"
-        style={{ top: 18 }}
+        className={classNames({
+          inactive: !this.state.detailedHeaders,
+          'header-toggle-control': true,
+        })}
         onClick={this._toggleHeaderDetail}
       >
         <RetinaImg
