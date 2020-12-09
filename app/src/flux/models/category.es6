@@ -337,21 +337,21 @@ export default class Category extends Model {
   }
   //Is Hidden from Folder Tree
   isHidden = () => {
-    return !!CategoryMetadata().isHidden({ accountId: this.accountId, id: this.id });
+    return !!CategoryMetadata().isHidden({ accountId: this.accountId, id: this.path });
   };
   hide(save = false) {
-    CategoryMetadata().hide({ accountId: this.accountId, id: this.id, save });
+    CategoryMetadata().hide({ accountId: this.accountId, id: this.path, save });
   }
   show(save = false) {
-    CategoryMetadata().show({ accountId: this.accountId, id: this.id, save });
+    CategoryMetadata().show({ accountId: this.accountId, id: this.path, save });
   }
   getDisplayOrder() {
-    return CategoryMetadata().getDisplayOrder({ accountId: this.accountId, id: this.id });
+    return CategoryMetadata().getDisplayOrder({ accountId: this.accountId, id: this.path });
   }
   setDisplayOrder(val, save = true) {
     CategoryMetadata().setDisplayOrder({
       accountId: this.accountId,
-      id: this.id,
+      id: this.path,
       displayOrder: val,
       save,
     });
