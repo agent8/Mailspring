@@ -12,7 +12,7 @@ export default class MessageParticipants extends React.Component {
   static displayName = 'MessageParticipants';
 
   static propTypes = {
-    date: PropTypes.number,
+    date: PropTypes.object,
     to: PropTypes.array,
     cc: PropTypes.array,
     bcc: PropTypes.array,
@@ -164,7 +164,7 @@ export default class MessageParticipants extends React.Component {
 
     if (date) {
       expanded.push(
-        <div className="participant-type">
+        <div key="date" className="participant-type">
           <div className="participant-label normal-label">Date:</div>
           <div className="participant-name">
             <div className="participant selectable">
@@ -200,7 +200,7 @@ export default class MessageParticipants extends React.Component {
 
     if (isBlocked) {
       expanded.push(
-        <div className="participant-type">
+        <div key="block" className="participant-type">
           <div className="participant-label normal-label">
             <RetinaImg
               name={'readReceipts.svg'}
