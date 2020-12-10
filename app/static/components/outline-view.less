@@ -141,7 +141,7 @@
         height: 18px;
         width: 18px;
         border-radius: 50%;
-        background: rgba(0, 0, 0, 0.15);
+        background: @gray-lighter;
         position: absolute;
         top: 10px;
         left: 20px;
@@ -189,21 +189,21 @@
     }
 
     &.dropping {
-      background-color: lighten(@source-list-bg, 20%);
+      background-color: @outline-item-active-bg;
 
       .item {
-        color: @source-list-active-color;
+        color: @outline-item-active-bg;
 
         .name {
-          color: @source-list-active-color;
+          color: @outline-item-active-bg;
         }
 
         img.content-mask {
-          background-color: @source-list-active-color;
+          background-color: @outline-item-active-bg;
         }
 
         .edison-icon {
-          color: @source-list-active-color;
+          color: @outline-item-active-bg;
         }
       }
     }
@@ -230,7 +230,7 @@
       background: inherit;
       width: 38px;
       margin-right: 0;
-      background-color: @source-list-active-bg;
+      background-color: @outline-item-active-bg;
 
       &.force-visible {
         visibility: visible;
@@ -460,15 +460,15 @@
     }
 
     &.dropping {
-      background-color: lighten(@source-list-bg, 20%);
+      background-color: lighten(@outline-item-active-bg, 20%);
       color: @source-list-active-color;
 
       img.content-mask {
-        background-color: @source-list-active-color;
+        background-color: @outline-item-active-bg;
       }
 
       .edison-icon {
-        color: @source-list-active-color;
+        color: @outline-item-active-bg;
       }
     }
 
