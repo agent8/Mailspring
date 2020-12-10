@@ -131,9 +131,9 @@ module.exports = grunt => {
         linux: undefined,
       }[platform],
       name: {
-        darwin: 'Email Client for Gmail',
-        win32: 'Email Client for Gmail',
-        linux: 'Email Client for Gmail',
+        darwin: 'Edison Mail',
+        win32: 'Edison Mail',
+        linux: 'Edison Mail',
       }[platform],
       appCopyright: `Copyright (C) 2014-${new Date().getFullYear()} Edison Software Inc. All rights reserved.`,
       derefSymlinks: false,

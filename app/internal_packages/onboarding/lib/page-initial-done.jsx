@@ -36,7 +36,7 @@ class InitialDonePage extends React.Component {
         <h4>
           We couldn't be happier to have you using
           <br />
-          Email Client for Gmail.
+          Edison Mail.
         </h4>
         <div className="footer">
           <button
