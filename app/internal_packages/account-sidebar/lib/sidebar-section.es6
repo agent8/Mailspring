@@ -186,7 +186,6 @@ export default class SidebarSection {
           );
         }
       }
-      console.warn(`account items length ${accountItems.length}`);
       let item = SidebarItem.forSingleInbox(acc.id, {
         name: acc.label,
         threadTitleName: 'Inbox',

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Actions } from 'mailspring-exports';
+import SidebarActions from '../sidebar-actions';
 
 export default class AccountSidebarControls extends React.Component {
   static displayName = 'AccountSidebarControls';
@@ -29,12 +30,10 @@ export default class AccountSidebarControls extends React.Component {
   };
 
   _cancelEditMenu = () => {
-    Actions.setEditingMenu(false);
-    Actions.cancelCategoryMeteDataChange();
+    SidebarActions.cancelMenuChanges();
   };
   _saveMenuEdit = () => {
-    Actions.setEditingMenu(false);
-    Actions.saveCategoryMetaDataChange();
+    SidebarActions.saveMenuChanges();
   };
   render() {
     if (!this.state.inEditMode) {

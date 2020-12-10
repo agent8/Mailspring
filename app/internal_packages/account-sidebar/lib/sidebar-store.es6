@@ -168,6 +168,8 @@ class SidebarStore extends MailspringStore {
       SidebarActions.requestAddFolderAccountSelection,
       this._onAddFolderAccountSelection
     );
+    this.listenTo(SidebarActions.cancelMenuChanges, this._onCancelMenuChanges);
+    this.listenTo(SidebarActions.saveMenuChanges, this._onSaveMenuChanges);
     this.listenTo(SidebarActions.addingNewFolderToAccount, this._onAddingNewFolderToAccount);
     this.listenTo(SidebarActions.updateNewFolderData, this._onUpdateNewFolderData);
     this.listenTo(SidebarActions.saveNewFolderRequest, this._onSaveNewFolderRequest);
@@ -260,9 +262,23 @@ class SidebarStore extends MailspringStore {
       Actions.queueTask(task);
     }
     this._newFolder = { accountId: null };
-    this._onSetEditingMenu(false);
+    Actions.setEditingMenu(false);
   };
 
+  _onCancelMenuChanges = () => {
+    this._newFolder = { accountId: null };
+    Actions.cancelCategoryMeteDataChange();
+    Actions.setEditingMenu(false);
+    this._updateSections();
+  };
+  _onSaveMenuChanges = () => {
+    Actions.saveCategoryMetaDataChange();
+    if (this._newFolder.accountId) {
+      this._onSaveNewFolderRequest();
+    }
+    this._newFolder = { accountId: null };
+    this._updateSections();
+  };
   _onSetEditingMenu = val => {
     if (val !== this._editingMenu) {
       this._editingMenu = val;
