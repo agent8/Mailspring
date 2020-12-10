@@ -9,6 +9,8 @@ const Actions = [
   'focusAccounts',
   'setKeyCollapsed',
   'toggleMore',
+  'saveMenuChanges',
+  'cancelMenuChanges',
   'requestAddFolderAccountSelection',
   'addingNewFolderToAccount',
   'updateNewFolderData',
