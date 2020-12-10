@@ -46,7 +46,7 @@ class NewCategoryAccountSelectPopover extends Component {
     return (
       <div className="primary-item item">
         <span>{this.state.selectedAccount.label || this.state.selectedAccount.emailAddress}</span>
-        <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg name="down-arrow.svg" isIcon={true} mode={RetinaImg.Mode.ContentIsMask} />
       </div>
     );
   };

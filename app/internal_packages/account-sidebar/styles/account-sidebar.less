@@ -51,15 +51,18 @@
           position: relative;
           top: 10px;
           padding: unset;
-
-          .primary-item .content-mask {
-            position: relative;
-            top: 6px;
+          .primary-item{
+            color: @text-color;
+            background-color: @background-primary;
+            .content-mask {
+              position: relative;
+              top: 6px;
+            }
+            &:hover:after {
+              display: none;
+            }
           }
 
-          .primary-item:hover:after {
-            display: none;
-          }
         }
 
         .secondary-items {
@@ -85,7 +88,7 @@
         .item {
           padding: unset;
           width: 100%;
-          color: @black;
+          color: @text-color;
           font-size: 14px;
           letter-spacing: -0.28px;
           line-height: 17px;
