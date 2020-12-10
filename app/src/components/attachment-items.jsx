@@ -13,6 +13,7 @@ import Actions from '../flux/actions';
 import ResizableBox from './resizable-box';
 
 const { AttachmentDownloadState } = Constant;
+const UNPREVIEWABLE_IMAGE_EXTNAMES = ['.heic'];
 
 const propTypes = {
   className: PropTypes.string,
@@ -310,7 +311,11 @@ export class AttachmentItem extends Component {
     });
     let { iconName, color } = AttachmentStore.getExtIconName(displayName);
     if (isImage) {
-      if (fs.existsSync(filePath)) {
+      const extName = displayName ? path.extname(displayName) : '';
+      if (
+        !UNPREVIEWABLE_IMAGE_EXTNAMES.includes(extName.toLowerCase()) &&
+        fs.existsSync(filePath)
+      ) {
         filePreviewPath = filePath;
       }
       iconName = 'attachment-img.svg';
