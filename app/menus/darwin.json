@@ -1,7 +1,7 @@
 {
   "menu": [
   {
-    "label": "Email Client for Gmail",
+    "label": "Edison Mail",
     "submenu": [
       { "label": "About", "command": "application:about" },
       { "label": "VERSION", "enabled": false },
@@ -13,11 +13,11 @@
       { "type": "separator" },
       { "label": "Services", "submenu": [] },
       { "type": "separator" },
-      { "label": "Hide Email Client for Gmail", "command": "application:hide" },
+      { "label": "Hide Edison Mail", "command": "application:hide" },
       { "label": "Hide Others", "command": "application:hide-other-applications" },
       { "label": "Show All", "command": "application:unhide-all-applications" },
       { "type": "separator" },
-      { "label": "Quit Email Client for Gmail", "command": "application:quit" }
+      { "label": "Quit Edison Mail", "command": "application:quit" }
     ]
   },
   {

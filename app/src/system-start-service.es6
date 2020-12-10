@@ -70,14 +70,7 @@ class SystemStartServiceDarwin extends SystemStartServiceBase {
   }
 
   _launcherPath() {
-    return path.join(
-      '/',
-      'Applications',
-      'Email Client for Gmail.app',
-      'Contents',
-      'MacOS',
-      'Email Client for Gmail'
-    );
+    return path.join('/', 'Applications', 'Edison Mail.app', 'Contents', 'MacOS', 'Edison Mail');
   }
 
   _plistPath() {

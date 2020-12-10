@@ -38,7 +38,7 @@ export default class LoginPage extends React.Component {
           mode={RetinaImg.Mode.ContentPreserve}
         />
         <div>
-          <h1 className="hero-text">Start Using Email Client for Gmail</h1>
+          <h1 className="hero-text">Start Using Edison Mail</h1>
           <p className="hero-subtext">Connect your account to continue using the app</p>
           <button className="btn login-button" onClick={this._onContinue}>
             Connect your account to unlock
