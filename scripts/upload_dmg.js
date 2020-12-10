@@ -18,7 +18,7 @@ uploadDmg(copyObject);
 function uploadDmg(callback) {
   // call S3 to retrieve upload file to specified bucket
   var uploadParams = { Bucket: BUCKET, Key: '', Body: '' };
-  var file = './app/dist/Email Client for Gmail.dmg';
+  var file = './app/dist/Edison Mail.dmg';
 
   // Configure the file stream and obtain the upload parameters
   var fs = require('fs');

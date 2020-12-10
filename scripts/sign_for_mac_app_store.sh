@@ -1,11 +1,11 @@
 #!/bin/bash
 
 APP_VERSION=`cat app/package.json | json version`
-APP_FOLDER="app/dist/Email Client for Gmail-mas-x64"
+APP_FOLDER="app/dist/Edison Mail-mas-x64"
 # Name of your app.
-APP="Email Client for Gmail"
+APP="Edison Mail"
 # The path of your app to sign.
-APP_PATH="$APP_FOLDER/Email Client for Gmail.app"
+APP_PATH="$APP_FOLDER/Edison Mail.app"
 # The path to the location you want to put the signed package.
 RESULT_PATH="$APP_FOLDER/$APP-$APP_VERSION.pkg"
 # The name of certificates you requested.
