@@ -159,7 +159,9 @@ export default class ThreadListContextMenu {
                         threads: JSON.stringify(this.threads),
                       },
                     });
-                  } catch (e) {}
+                  } catch (e) {
+                    console.error(e);
+                  }
                 }
               });
             }
@@ -199,7 +201,9 @@ export default class ThreadListContextMenu {
                     threads: JSON.stringify(this.threads),
                   },
                 });
-              } catch (e) {}
+              } catch (e) {
+                console.error(e);
+              }
             }
           });
         }
@@ -248,7 +252,12 @@ export default class ThreadListContextMenu {
 
   displayMenu(mouseEvent) {
     this.menuItemTemplate().then(template => {
-      Actions.openContextMenu({ menuItems: template, mouseEvent, menuContentKey: 'label' });
+      Actions.openContextMenu({
+        menuItems: template,
+        mouseEvent,
+        menuContentKey: 'label',
+        disableAutoFocus: false,
+      });
     });
   }
 }
