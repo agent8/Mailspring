@@ -1,13 +1,11 @@
-/* eslint jsx-a11y/tabindex-no-positive: 0 */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Menu, LabelColorizer, BoldedSearchResult } from 'mailspring-component-kit';
+import { RetinaImg, Menu, LabelColorizer, BoldedSearchResult } from 'mailspring-component-kit';
 import {
   Utils,
   Actions,
   TaskQueue,
   CategoryStore,
-  SyncbackCategoryTask,
   FocusedPerspectiveStore,
   TaskFactory,
 } from 'mailspring-exports';
@@ -19,6 +17,7 @@ export default class MovePickerPopover extends Component {
     account: PropTypes.object.isRequired,
     onCreate: PropTypes.func.isRequired,
     onActionCallback: PropTypes.func,
+    onClose: PropTypes.func,
   };
 
   constructor(props) {
@@ -329,6 +328,14 @@ export default class MovePickerPopover extends Component {
         placeholder={'Search'}
         value={this.state.searchValue}
         onChange={this._onSearchValueChange}
+      />,
+      <RetinaImg
+        key="search-icon"
+        isIcon
+        name="search.svg"
+        className="search-accessory search"
+        mode={RetinaImg.Mode.ContentIsMask}
+        style={{ height: 20, width: 20, position: 'absolute', left: '20px' }}
       />,
     ];
 
