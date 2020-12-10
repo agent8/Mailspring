@@ -6,6 +6,7 @@ export const RETRIEVE_STORED_EVENTS = 'RETRIEVE_STORED_EVENTS';
 export const SYNC_STORED_EVENTS = 'SYNC_STORED_EVENTS';
 export const DUPLICATE_ACTION = 'DUPLICATE_ACTION';
 export const UPDATE_EVENT_COLOR = 'UPDATE_EVENT_COLOR'
+export const UPDATE_DATE = 'UPDATE_DATE';
 
 export const beginStoringEvents = (payload) => ({
   type: BEGIN_STORE_EVENTS,
@@ -33,7 +34,7 @@ export const retrieveStoreEvents = (user) => ({
 
 export const updateEventColor = (calendar, account) => ({
   type: UPDATE_EVENT_COLOR,
-  payload: {calendar, account}
+  payload: { calendar, account }
 })
 
 export const syncStoredEvents = (resp) => ({
@@ -44,3 +45,8 @@ export const syncStoredEvents = (resp) => ({
 export const duplicateAction = () => ({
   type: DUPLICATE_ACTION
 });
+
+export const updateDate = (payload) => ({
+  type: UPDATE_DATE,
+  payload
+})

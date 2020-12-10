@@ -1,6 +1,7 @@
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import View from '../components/view';
+import moment from 'moment';
 import axios from 'axios';
 import {
   beginGoogleAuth,
@@ -12,7 +13,8 @@ import {
   beginExchangeAuth,
   successExchangeAuth,
   beginCaldavAuth,
-  successCaldavAuth
+  successCaldavAuth,
+  updateDate,
 } from '../actions/auth';
 import { retrieveStoreEvents } from '../actions/db/events';
 import {
@@ -136,7 +138,7 @@ const mapStateToProps = (state) => {
     });
   });
 
-  const events = getFilteredEvents(state);
+  const events = getFilteredEvents(state)
   const visibleEvents = events.filter((event) => filterMap[event.calendarId]);
 
   return {
@@ -152,6 +154,7 @@ const mapStateToProps = (state) => {
 };
 
 const mapDispatchToProps = (dispatch) => ({
+  updateDate: (resp) => dispatch(updateDate(resp)),
   // Google
   beginGetGoogleEvents: (user) => dispatch(beginGetGoogleEvents(user)),
   beginGoogleAuth: () => dispatch(beginGoogleAuth()),

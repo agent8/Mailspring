@@ -444,11 +444,11 @@ export const pollingEventsEpics = (action$) => {
     // ofType(BEGIN_POLLING_EVENTS, UPDATE_STORED_EVENTS),
     ofType(BEGIN_POLLING_EVENTS),
     switchMap((action) =>
-      interval(20 * 1000).pipe(
+      interval(60 * 1000).pipe(
         takeUntil(stopPolling$),
         switchMap(() => from(syncEvents(action))),
         map((results) => {
-          console.log(results);
+          // console.log(results);
           return syncStoredEvents(results);
         })
       )
@@ -659,8 +659,8 @@ const syncEvents = async (action) => {
               user.principalUrl,
               user.caldavType
             );
-            console.log(user);
-            console.log(events);
+            // console.log(user);
+            // console.log(events);
             // debugger;
             const dbEvents = await dbEventActions.getAllEvents();
             const updatedEvents = [];

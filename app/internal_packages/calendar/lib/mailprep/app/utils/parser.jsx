@@ -597,7 +597,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
     // For e.g. another calendar app uploads an event with 0 events for some reason
     // Therefore, expansion fails, and we ignore.
     // We could help the user tidy up their events but I think that is a dangerous game to play.
-    console.log('(Error) 0 expanded event found', recurPattern, recurMasterEvent);
+    // console.log('(Error) 0 expanded event found', recurPattern, recurMasterEvent);
     return [];
   }
   // Base TZ for all events.

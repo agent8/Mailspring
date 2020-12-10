@@ -58,6 +58,7 @@ import {
 } from '../utils/client/exchange';
 import { asyncGetAllExchangeEvents } from '../utils/client/exchangebasics';
 import { getdb } from '../sequelizeDB/index';
+import { updateDate } from '../actions/db/events';
 
 
 const dav = require('dav');
@@ -134,7 +135,8 @@ export default class View extends React.Component {
       email: '',
       pwd: '',
       accountType: 'ICLOUD',
-      dateSelected: new Date()
+      dateSelected: new Date(),
+      dateSelectedTimeStamp: moment().unix()
     };
     let incrementalSync;
 
@@ -156,14 +158,14 @@ export default class View extends React.Component {
     // Debug check on loading of main UI
     // const accounts = await AccountBlock.findAll();
     const accounts = await getAllAccounts();
-    console.log(`Accounts:`);
-    console.log(accounts.map((e) => e.toJSON()));
+    // console.log(`Accounts:`);
+    // console.log(accounts.map((e) => e.toJSON()));
     const eventData = await EventBlock.findAll();
-    console.log(`Event data:`);
-    console.log(eventData.map((e) => e.toJSON()));
+    // console.log(`Event data:`);
+    // console.log(eventData.map((e) => e.toJSON()));
     const rpData = await RpBlock.findAll();
-    console.log(`rpData:`);
-    console.log(rpData.map((e) => e.toJSON()));
+    // console.log(`rpData:`);
+    // console.log(rpData.map((e) => e.toJSON()));
 
     moment(); // In case I need moment for debugging in this function
     // debugger;
@@ -528,7 +530,12 @@ export default class View extends React.Component {
       <DragAndDropCalendar
         selectable
         localizer={localizer}
-        events={visibleEvents}
+        events={visibleEvents
+          .filter(event =>
+            moment(event.start).unix() > this.state.dateSelectedTimeStamp - 2678400 &&
+            moment(event.start).unix() < this.state.dateSelectedTimeStamp + 2678400
+          )
+        }
         views={{
           month: true,
           week: true,
@@ -542,7 +549,13 @@ export default class View extends React.Component {
           this.handleEventClick(event, target)
         }
         }
-        onNavigate={date => this.setState({ dateSelected: date })}
+        onNavigate={date => {
+          this.setState({
+            dateSelected: date,
+            dateSelectedTimeStamp: moment(date).unix()
+          })
+          updateDate(date);
+        }}
         popup
         resizable
         eventPropGetter={event => ({

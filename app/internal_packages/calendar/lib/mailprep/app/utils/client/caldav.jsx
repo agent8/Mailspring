@@ -51,7 +51,7 @@ export const asyncGetAllCalDavEvents = async (username, password, url, caldavTyp
         calendars[i].color = calDb.color
       }
     }
-    const events = PARSER.parseCalEvents(resp.calendars, calendars);
+    const events = PARSER.parseCalEvents(resp.calendars, calendars)
     const flatEvents = events.reduce((acc, val) => acc.concat(val), []);
     const filteredEvents = flatEvents.filter((event) => event !== '');
     const flatFilteredEvents = filteredEvents.reduce((acc, val) => acc.concat(val), []);

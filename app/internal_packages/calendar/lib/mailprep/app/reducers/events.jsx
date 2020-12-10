@@ -4,13 +4,16 @@ import {
   RETRIEVE_STORED_EVENTS,
   UPDATE_EVENT_COLOR,
   DUPLICATE_ACTION,
-  SYNC_STORED_EVENTS
+  SYNC_STORED_EVENTS,
+  UPDATE_DATE
 } from '../actions/db/events';
+import moment from 'moment'
 
 import * as dbEventActions from '../sequelizeDB/operations/events'
 
 const initialState = {
-  calEvents: []
+  calEvents: [],
+  dateSelected: moment().unix()
 };
 
 const mergeEvents = (oldEvents, newEvents, user) => {
@@ -120,11 +123,21 @@ export default function eventsReducer(state = initialState, action) {
     }
     case UPDATE_STORED_EVENTS: {
       const allEvents = mergeEvents(state.calEvents, action.payload.resp, action.payload.user);
-      return Object.assign({}, state, { calEvents: allEvents });
+      return Object.assign({}, state, {
+        calEvents: allEvents.filter(event =>
+          moment(event.start).unix() > state.dateSelected - 2678400 &&
+          moment(event.start).unix() < state.dateSelected + 2678400
+        )
+      });
     }
     case SUCCESS_STORED_EVENTS: {
       const newEvents = storeEvents(state.calEvents, action.payload);
-      return Object.assign({}, state, { calEvents: newEvents });
+      return Object.assign({}, state, {
+        calEvents: newEvents.filter(event =>
+          moment(event.start).unix() > state.dateSelected - 2678400 &&
+          moment(event.start).unix() < state.dateSelected + 2678400
+        )
+      });
     }
     case UPDATE_EVENT_COLOR: {
       dbEventActions.updateEventColorByCalendarId(action.payload.calendar.calendarUrl, action.payload.calendar.color);
@@ -136,13 +149,21 @@ export default function eventsReducer(state = initialState, action) {
       }
       return Object.assign({}, state, { calEvents: allEvents });
     }
+    case UPDATE_DATE: {
+      return Object.assign({}, state, { dateSelected: moment(action.payload).unix() })
+    }
 
     // Sync stored events currently is not working.
     // It is currently syncing for one user only.
     // I need it to sync for every user that is valid.
     case SYNC_STORED_EVENTS: {
       const newEvents = syncEvents(state.calEvents, action.payload);
-      return Object.assign({}, state, { calEvents: newEvents });
+      return Object.assign({}, state, {
+        calEvents: newEvents.filter(event =>
+          moment(event.start).unix() > state.dateSelected - 2678400 &&
+          moment(event.start).unix() < state.dateSelected + 2678400
+        )
+      });
     }
     case DUPLICATE_ACTION:
       return state;
