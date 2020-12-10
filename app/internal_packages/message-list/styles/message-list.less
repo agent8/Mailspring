@@ -171,7 +171,7 @@ body.platform-win32 {
       background: @text-color-search-current-match;
     }
   }
-
+  .show-restore-message,
   .show-hidden-messages {
     background-color: @blue-light;
     line-height: 25px;
@@ -183,6 +183,14 @@ body.platform-win32 {
       float: right;
       cursor: pointer;
       font-weight: @font-weight-semi-bold;
+    }
+  }
+  .show-restore-message{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    a {
+      padding-left: 10px;
     }
   }
 
@@ -687,6 +695,14 @@ body.platform-win32 {
       .participants-to {
         display: flex;
         flex-wrap: wrap;
+        line-height: 24px;
+      }
+      &.with-border {
+        border: 1px solid @border-color-primary;
+        border-radius: 10px;
+        padding: 9px 20px;
+        margin: 10px 0 0 0;
+        line-height: 22px;
       }
     }
   }
@@ -751,9 +767,13 @@ body.platform-win32 {
     color: @blue;
     font-size: 11px;
     cursor: pointer;
+    transition: transform 0.15s;
     .edison-icon {
       vertical-align: middle;
       color: @gray-light;
+    }
+    &.inactive {
+      transform: rotate(180deg);
     }
   }
   .message-item-wrap:hover {
@@ -932,6 +952,7 @@ body.platform-win32 {
     font-size: 15px;
     color: @text-color;
   }
+  .normal-label,
   .detail-from-label,
   .from-label,
   .to-label,
@@ -989,7 +1010,7 @@ body.platform-win32 {
       margin-right: 0.5em;
     }
     .participant-name {
-      color: @gray-dark;
+      color: @text-color;
     }
   }
 
@@ -997,11 +1018,16 @@ body.platform-win32 {
     //padding-right: 1.2em;
     width: 100%;
 
+    .participant-type {
+      display: flex;
+    }
+
     .participant {
       display: inline-block;
       //margin-right: 0.25em;
     }
 
+    .normal-label,
     .detail-from-label,
     .from-label,
     .to-label,
@@ -1027,10 +1053,12 @@ body.platform-win32 {
     }
 
     // .from-label { margin-right: 1em; }
+    .normal-label,
     .detail-from-label,
     .to-label,
     .reply-to-label,
     .cc-label {
+      min-width: 30px;
       margin-right: 0.5em;
     }
     .bcc-label {
@@ -1038,13 +1066,21 @@ body.platform-win32 {
     }
 
     .participant-primary {
-      color: @gray-dark;
+      color: @text-color;
       //margin-right: 0.15em;
       display: inline-block;
     }
     .participant-secondary {
-      color: @gray-dark;
+      color: @text-color;
       display: inline-block;
+      .expanded-email {
+        color: @gray-light;
+        padding-left: 3px;
+        font-size: 12px;
+      }
+      .expanded-comma {
+        padding-right: 4px;
+      }
     }
 
     .from-contact {
