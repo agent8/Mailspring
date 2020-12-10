@@ -171,7 +171,7 @@ body.platform-win32 {
       background: @text-color-search-current-match;
     }
   }
-
+  .show-restore-message,
   .show-hidden-messages {
     background-color: @blue-light;
     line-height: 25px;
@@ -183,6 +183,14 @@ body.platform-win32 {
       float: right;
       cursor: pointer;
       font-weight: @font-weight-semi-bold;
+    }
+  }
+  .show-restore-message{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    a {
+      padding-left: 10px;
     }
   }
 
