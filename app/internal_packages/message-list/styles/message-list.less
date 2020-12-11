@@ -913,13 +913,6 @@ body.platform-win32 {
 }
 
 .attachments-area {
-  padding-top: @spacing-half + 2;
-
-  // attachments are padded on both sides so that things like the remove "X" can
-  // overhang them. To make the attachments line up with the body, we need to outdent
-  margin-left: -@spacing-standard;
-  margin-right: -@spacing-standard;
-
   cursor: default;
   max-width: 870px;
 }
@@ -1057,12 +1050,10 @@ body.platform-win32 {
     .detail-from-label,
     .to-label,
     .reply-to-label,
-    .cc-label {
+    .cc-label,
+    .bcc-label {
       min-width: 30px;
       margin-right: 0.5em;
-    }
-    .bcc-label {
-      margin-right: 0;
     }
 
     .participant-primary {
