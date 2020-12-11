@@ -1,4 +1,4 @@
-app_path="Email Client for Gmail-darwin-x64/Email Client for Gmail.app"
+app_path="Edison Mail-darwin-x64/Edison Mail.app"
 echo "**** start notarize ZIP ****"
 ## 1. 进入目录
 cd app/dist
@@ -13,6 +13,6 @@ echo "**** start validate app ****"
 xcrun stapler validate "$app_path"
 ## 5. 压缩
 echo "**** start zip ****"
-rm -f "Email Client for Gmail.zip"
-zip -9 -y -r -9 -X -q "Email Client for Gmail.zip" "$app_path"
+rm -f "Edison Mail.zip"
+zip -9 -y -r -9 -X -q "Edison Mail.zip" "$app_path"
 echo "**** Done! ****"

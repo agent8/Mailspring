@@ -551,7 +551,7 @@ class DraftStore extends MailspringStore {
       return;
     }
     session.validateDraftForChangeAccount().then(ret => {
-      const { errors, warnings } = ret;
+      const { warnings } = ret;
       const dialog = remote.dialog;
       if (warnings.length > 0) {
         dialog
@@ -1208,14 +1208,16 @@ class DraftStore extends MailspringStore {
                 Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
                 return;
               }
+              data.ignoreMissingAttachments = true;
               Actions.composeForwardMainWindow(data);
             });
           } else {
+            data.ignoreMissingAttachments = true;
             Actions.composeForwardMainWindow(data);
           }
         });
       });
-    } else {
+    } else if (data.message && data.message.body) {
       data.message.missingAttachments().then(ret => {
         if (ret.totalMissing().length > 0) {
           AppEnv.showMessageBox({
@@ -1230,12 +1232,16 @@ class DraftStore extends MailspringStore {
               Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
               return;
             }
+            data.ignoreMissingAttachments = true;
             Actions.composeForwardMainWindow(data);
           });
         } else {
+          data.ignoreMissingAttachments = true;
           Actions.composeForwardMainWindow(data);
         }
       });
+    } else {
+      Actions.composeForwardMainWindow(data);
     }
   };
 
@@ -1336,11 +1342,40 @@ class DraftStore extends MailspringStore {
     messageId,
     popout,
     ignoreEmptyBody = false,
+    ignoreMissingAttachments = false,
   }) => {
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ thread: t, message: m }) => {
         if (m && (m.body || ignoreEmptyBody)) {
-          return DraftFactory.createDraftForForward({ thread: t, message: m });
+          if (ignoreMissingAttachments) {
+            return DraftFactory.createDraftForForward({ thread: t, message: m });
+          } else {
+            return new Promise((resolve, reject) => {
+              m.missingAttachments().then(missingAttachments => {
+                const isMissingAttachments = missingAttachments.totalMissing().length > 0;
+                if (isMissingAttachments) {
+                  AppEnv.showMessageBox({
+                    title: 'Message info incomplete',
+                    detail:
+                      "Message's attachment(s) are still downloading, do you still want to forward?",
+                    buttons: ['No', 'Yes'],
+                    cancelId: 0,
+                    defaultId: 0,
+                  }).then(({ response } = {}) => {
+                    if (response === 0) {
+                      AppEnv.logDebug(`Message missing attachments, user clicked no ${m.id}`);
+                      reject();
+                      return;
+                    }
+                    resolve(m);
+                  });
+                }
+                DraftFactory.createDraftForForward({ thread: t, message: m }).then(data => {
+                  resolve(data);
+                });
+              });
+            });
+          }
         } else {
           return new Promise((resolve, reject) => {
             AppEnv.showMessageBox({

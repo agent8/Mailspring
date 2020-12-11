@@ -31,28 +31,32 @@ class InitialDonePage extends React.Component {
     const { submitting } = this.state;
     return (
       <div className="page opaque" style={{ width: 900, height: '100%' }}>
-        <img
-          src={`edisonmail://onboarding/assets/onboarding-done@2x.png`}
-          alt=""
-        />
-        <h1>You're all Set!</h1>
-        <h4>We couldn't be happier to have you using Edison Mail for Mac.</h4>
+        <img src={`edisonmail://onboarding/assets/onboarding-done@2x.png`} alt="" />
+        <h1>You&apos;re all Set!</h1>
+        <h4>
+          We couldn&apos;t be happier to have you using
+          <br />
+          Edison Mail.
+        </h4>
         <div className="footer">
-          <button className={'btn btn-large ' + (submitting && 'btn-disabled')} onClick={this._onFinished}>
-            Let's Go
+          <button
+            className={'btn btn-large ' + (submitting && 'btn-disabled')}
+            onClick={this._onFinished}
+          >
+            Let&apos;s Go
           </button>
-          {
-            submitting && (
-              <LottieImg name='loading-spinner-blue'
-                size={{ width: 24, height: 24 }}
-                style={{
-                  marginLeft: '-12px',
-                  position: 'absolute',
-                  bottom: '70px',
-                  left: '50%'
-                }} />
-            )
-          }
+          {submitting && (
+            <LottieImg
+              name="loading-spinner-blue"
+              size={{ width: 24, height: 24 }}
+              style={{
+                marginLeft: '-12px',
+                position: 'absolute',
+                bottom: '70px',
+                left: '50%',
+              }}
+            />
+          )}
         </div>
       </div>
     );
@@ -64,7 +68,7 @@ class InitialDonePage extends React.Component {
     }
     AppEnv.trackingEvent('Onboarding-Done');
     this.setState({
-      submitting: true
+      submitting: true,
     });
     setTimeout(() => {
       require('electron').ipcRenderer.send('account-setup-successful');
