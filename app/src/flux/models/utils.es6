@@ -495,7 +495,7 @@ module.exports = Utils = {
       'IMAGE/HEIC',
     ];
 
-    return (contentTypes.includes(contentType) || ImageExtensions.includes(ext)) && size > 256;
+    return (contentTypes.includes(contentType) || ImageExtensions.includes(ext)) && size > 64;
   },
 
   fileIsImage(filePath) {
