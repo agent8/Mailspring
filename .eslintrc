@@ -25,9 +25,34 @@
     "jasmine": true,
     "es6": true
   },
-  "plugins": ["prettier"],
+  "plugins": ["prettier", "spellcheck"],
   "rules": {
     "no-console": ["error", { "allow": ["log", "warn" ,"error"] }],
+    "spellcheck/spell-checker": ["warn",       {
+      "comments": false,
+      "strings": true,
+      "identifiers": false,
+      "lang": "en_US",
+      "skipWords": [
+          "dict",
+          "aff",
+          "hunspellchecker",
+          "hunspell",
+          "utils",
+          "md",
+          "sha"
+      ],
+      "skipIfMatch": [
+          "http://[^s]*",
+          "file://[^s]*",
+          "cid:[^s]*",
+          "\\w-\\w",
+          "^[-\\w]+\/[-\\w\\.]+$" //For MIME Types
+      ],
+      "skipWordIfMatch": [
+      ],
+      "minLength": 3
+   }],
     "no-cond-assign": 0,
     "react/no-find-dom-node": 0,
     "prettier/prettier": "error",
