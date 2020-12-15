@@ -277,6 +277,7 @@ class SidebarStore extends MailspringStore {
       this._onSaveNewFolderRequest();
     }
     this._newFolder = { accountId: null };
+    Actions.setEditingMenu(false);
     this._updateSections();
   };
   _onSetEditingMenu = val => {
