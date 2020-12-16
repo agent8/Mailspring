@@ -44,12 +44,16 @@ class PreferencesUIStore extends MailspringStore {
           configGroup: tab.configGroup,
         });
         this._tabs.push(item);
-        if (item.tabId === MAIN_TAB_ITEM_ID) {
+        if (item.tabId === MAIN_TAB_ITEM_ID && this._selection.tabId === null) {
           this._selection.tabId = item.tabId;
         }
       }
     });
     this._tabs.sort((a, b) => a.order - b.order);
+    const currentSelectionInTabs = this._tabs.find(tab => tab.tabId === this._selection.tabId);
+    if (!currentSelectionInTabs && this._tabs.length > 0) {
+      this._selection.tabId = this._tabs[0].tabId;
+    }
     this._filterSearchTabsDebounced();
     this.trigger();
   }
