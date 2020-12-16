@@ -28,7 +28,21 @@ class ContextMenuStore extends MailspringStore {
       left: mouseEvent.clientX + iframeOffset.x,
     };
     this.menuContextKey = menuContentKey;
-    this.menuItems = menuItems;
+    this.menuItems = menuItems.filter((menuItem, index) => {
+      if (!menuItem) {
+        return false;
+      } else if (menuItem && menuItem.type !== 'divider') {
+        return true;
+      } else if (menuItem && menuItem.type === 'divider') {
+        if (index === 0 || index === menuItems.length - 1) {
+          return false;
+        } else if (menuItems[index + 1] && menuItems[index + 1].type === 'divider') {
+          return false;
+        }
+        return true;
+      }
+      return true;
+    });
     this._disableAutoFocus = disableAutoFocus;
     this._onCloseCallBack = onClose;
     this._openContextMenu();
