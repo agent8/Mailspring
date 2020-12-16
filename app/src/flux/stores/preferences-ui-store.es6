@@ -43,9 +43,14 @@ class PreferencesUIStore extends MailspringStore {
           className: tab.className,
           configGroup: tab.configGroup,
         });
-        this.registerPreferencesTab(item);
+        this._tabs.push(item);
+        if (item.tabId === MAIN_TAB_ITEM_ID) {
+          this._selection.tabId = item.tabId;
+        }
       }
     });
+    this._tabs.sort((a, b) => a.order - b.order);
+    this._filterSearchTabsDebounced();
     this.trigger();
   }
 
@@ -183,6 +188,7 @@ class PreferencesUIStore extends MailspringStore {
   */
   registerPreferencesTab = tabItem => {
     this._tabs.push(tabItem);
+    this._tabsLists.push(tabItem);
     this._tabs.sort((a, b) => a.order - b.order);
     if (tabItem.tabId === MAIN_TAB_ITEM_ID) {
       this._selection.tabId = tabItem.tabId;
