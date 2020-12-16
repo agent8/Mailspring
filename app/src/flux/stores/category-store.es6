@@ -432,6 +432,9 @@ class CategoryStore extends MailspringStore {
     }
     let changed = false;
     tasks.forEach(task => {
+      if (!task) {
+        return;
+      }
       const accountId = task.accountId;
       const isExchange = AccountStore.isExchangeAccountId(accountId);
       if (task instanceof SyncbackCategoryTask && !isExchange) {
