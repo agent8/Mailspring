@@ -100,7 +100,9 @@ class ThreadArchiveQuickAction extends React.Component {
                 thread: JSON.stringify(this.props.thread),
               },
             });
-          } catch (e) {}
+          } catch (e) {
+            console.error(e);
+          }
         }
       });
     }
@@ -240,7 +242,9 @@ class ThreadTrashQuickAction extends React.Component {
                 thread: JSON.stringify(this.props.thread),
               },
             });
-          } catch (e) {}
+          } catch (e) {
+            console.error(e);
+          }
         }
       });
     }
@@ -296,7 +300,9 @@ class ThreadStarQuickAction extends React.Component {
                 thread: JSON.stringify(this.props.thread),
               },
             });
-          } catch (e) {}
+          } catch (e) {
+            console.error(e);
+          }
         }
       });
     }
@@ -344,11 +350,106 @@ class ThreadUnreadQuickAction extends React.Component {
             thread: JSON.stringify(this.props.thread),
           },
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     }
     Actions.queueTasks([task]);
     // Don't trigger the thread row click
     return event.stopPropagation();
+  };
+}
+class ThreadSpamQuickAction extends React.Component {
+  static displayName = 'ThreadArchiveQuickAction';
+  static propTypes = { thread: PropTypes.object };
+
+  render() {
+    const allInSpam = this.props.thread.labelIds
+      .map(labelId => {
+        const cat = CategoryStore.byId(this.props.thread.accountId, labelId);
+        if (!cat) {
+          AppEnv.reportError(
+            `Category for ${this.props.thread.accountId} with label id ${labelId} is null`
+          );
+          return {};
+        }
+        return cat;
+      })
+      .every(folder => folder.role === 'spam');
+
+    if (allInSpam) {
+      return (
+        <div
+          key="spam"
+          title="Not Junk"
+          style={{ order: 100 }}
+          className="action action-spam"
+          onClick={this._onMarkAsNotSpam}
+        >
+          <RetinaImg
+            name="not-junk.svg"
+            style={{ width: 24, height: 24, fontSize: 24 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </div>
+      );
+    }
+
+    const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo([this.props.thread], 'spam');
+    if (!allowed) {
+      return false;
+    }
+
+    return (
+      <div
+        key="spam"
+        title="Mark as Spam"
+        style={{ order: 100 }}
+        className="action action-spam"
+        onClick={this._onMarkAsSpam}
+      >
+        <RetinaImg
+          name="spam.svg"
+          style={{ width: 24, height: 24, fontSize: 24 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
+      </div>
+    );
+  }
+
+  shouldComponentUpdate(newProps, newState) {
+    const newAllowed = newProps.thread.folders.find(c => c.role === 'spam');
+    const prevAllowed = this.props.thread.folders.find(c => c.role === 'spam');
+    return (
+      newProps.thread.id !== (this.props != null ? this.props.thread.id : undefined) ||
+      newAllowed !== prevAllowed
+    );
+  }
+
+  _onMarkAsSpam = event => {
+    const tasks = TaskFactory.tasksForMarkingAsSpam({
+      source: 'Quick Actions: Thread List: Mark as Spam',
+      threads: [this.props.thread],
+      currentPerspective: FocusedPerspectiveStore.current(),
+    });
+    Actions.queueTasks(tasks);
+    if (event) {
+      event.stopPropagation();
+    }
+  };
+
+  _onMarkAsNotSpam = event => {
+    const tasks = TaskFactory.tasksForMarkingNotSpam({
+      source: 'Quick Actions: Thread List: Mark as not Spam',
+      threads: [this.props.thread],
+      currentPerspective: FocusedPerspectiveStore.current(),
+    });
+    Actions.queueTasks(tasks);
+    if (event) {
+      event.stopPropagation();
+    }
   };
 }
 
@@ -358,4 +459,5 @@ module.exports = {
   ThreadArchiveQuickAction,
   ThreadTrashQuickAction,
   ThreadMoveQuickAction,
+  ThreadSpamQuickAction,
 };
