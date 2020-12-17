@@ -290,11 +290,6 @@ export default class SidebarSection {
     }
     SidebarSection.forSiftCategories(accountIds, items);
 
-    folderItem = SidebarItem.forJira(accountIds, { displayName: 'Jira' });
-    if (folderItem) {
-      items.push(folderItem);
-    }
-
     ExtensionRegistry.AccountSidebar.extensions()
       .filter(ext => ext.sidebarItem != null)
       .forEach(ext => {
@@ -404,6 +399,13 @@ export default class SidebarSection {
       siftItems.push(folderItem);
     }
     folderItem = SidebarItem.forSift(accountIds, Sift.categories.Entertainment, {
+      folderTreeIndex: siftItems.length,
+    });
+    if (folderItem) {
+      siftItems.push(folderItem);
+    }
+    folderItem = SidebarItem.forJira(accountIds, {
+      displayName: 'Jira',
       folderTreeIndex: siftItems.length,
     });
     if (folderItem) {
