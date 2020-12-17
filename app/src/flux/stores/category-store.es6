@@ -28,6 +28,7 @@ const asAccountId = a => {
 };
 
 const categoryUpdatingTimeout = 300000;
+const CategoryMetaDataAccountSpecialFolders = ['INBOX', 'today', 'unread', 'starred'];
 
 class CategoryStore extends MailspringStore {
   constructor() {
@@ -418,6 +419,13 @@ class CategoryStore extends MailspringStore {
           return;
         }
         const hashId = CategoryMetaData.hashId(cat.path);
+        const item = currentMetaDataItems[hashId];
+        if (item) {
+          newItems[hashId] = item;
+        }
+      });
+      CategoryMetaDataAccountSpecialFolders.forEach(path => {
+        const hashId = CategoryMetaData.hashId(path);
         const item = currentMetaDataItems[hashId];
         if (item) {
           newItems[hashId] = item;
