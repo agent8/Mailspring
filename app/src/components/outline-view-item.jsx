@@ -314,7 +314,7 @@ class OutlineViewItem extends Component {
   };
 
   _onEdit = () => {
-    if (this.props.item.onEdited) {
+    if (this.props.item.onEdited && !this.props.isEditingMenu) {
       this.setState({
         editing: true,
         originalText: this.props.item.name,
