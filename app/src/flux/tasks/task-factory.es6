@@ -491,10 +491,16 @@ const TaskFactory = {
     });
   },
   tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '' }) {
+    if (!name) {
+      AppEnv.logError(
+        `Task for creating path received a empty string for name, accountId ${accountId}, parentId: ${parentId}`
+      );
+      return;
+    }
     if (bannedPathNames.includes(name)) {
       AppEnv.logWarning(`TaskFactory:Creating folder ${name} is in banned`);
       AppEnv.showMessageBox({
-        title: 'Cannot creatie',
+        title: 'Cannot create',
         detail: `${name} is a reserved path`,
         buttons: ['Ok'],
       });
