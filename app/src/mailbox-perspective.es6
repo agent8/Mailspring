@@ -1793,6 +1793,15 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
     this._categoryMetaDataId = 'jira';
     this.displayName = 'Jira';
   }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
+  }
   unreadCount() {
     let sum = 0;
     for (const aid of this.accountIds) {
