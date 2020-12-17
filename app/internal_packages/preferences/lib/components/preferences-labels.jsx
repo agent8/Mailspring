@@ -53,10 +53,7 @@ class PreferencesLabels extends React.Component {
     let labelsDataSource = null;
     if (selectedAccount) {
       const categories = CategoryStore.userCategories(selectedAccount).filter(cat => {
-        if (cat && cat.isLabel() && !cat.role) {
-          return !CategoryStore.getCategoryParent(cat);
-        }
-        return false;
+        return cat.selectable;
       });
       labelsDataSource = new LabelsDataSource({
         labels: categories,
