@@ -265,6 +265,7 @@ class SidebarItem {
         onCollapseToggled: toggleItemCollapsed,
         onAllRead: perspective.canChangeAllToRead() ? onChangeAllToRead : undefined,
         onAddNewFolder: opts.onAddNewFolder ? opts.onAddNewFolder : undefined,
+        addNewFolderLabel: opts.addNewFolderLabel,
 
         onDrop(item, event) {
           const threadsString = event.dataTransfer.getData('edison-threads-data');
@@ -568,6 +569,11 @@ class SidebarItem {
       opts.fallback = `account-logo-other.png`;
       opts.mode = RetinaImg.Mode.ContentPreserve;
       opts.syncFolderList = true;
+      if (account.provider === 'gmail' || account.provider === 'onmail') {
+        opts.addNewFolderLabel = 'New Label...';
+      } else {
+        opts.addNewFolderLabel = 'New Folder...';
+      }
     }
     return this.forPerspective(id, perspective, opts);
   }

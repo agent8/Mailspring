@@ -146,6 +146,7 @@ class OutlineViewItem extends Component {
       onEdited: PropTypes.func,
       onAllRead: PropTypes.func,
       onAddNewFolder: PropTypes.func,
+      addNewFolderLabel: PropTypes.string,
       toggleHide: PropTypes.func,
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
@@ -371,10 +372,10 @@ class OutlineViewItem extends Component {
     const contextMenuLabel = item.contextMenuLabel || item.name;
     const menu = [];
 
-    if (this.props.item.onAddNewFolder) {
+    if (this.props.item.onAddNewFolder && this.props.item.addNewFolderLabel) {
       const commands = (AppEnv.keymaps.getBindingsForAllCommands() || {})['core:new-folder'];
       menu.push({
-        label: `New Folder...`,
+        label: this.props.item.addNewFolderLabel,
         click: this._onAddNewFolder,
         shortcutKey: commands.length > 0 ? commands[0] : '',
       });
