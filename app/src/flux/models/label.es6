@@ -3,14 +3,14 @@ import Attributes from '../attributes';
 
 export default class Label extends Category {
   static attributes = Object.assign({}, Category.attributes, {
-    bgColor: Attributes.String({
+    bgColor: Attributes.Number({
       modelKey: 'bgColor',
     }),
     updatedAt: Attributes.DateTime({
       queryable: true,
       modelKey: 'updatedAt',
       jsonKey: 'updatedAt',
-      loadFromColumn: true
+      loadFromColumn: true,
     }),
   });
   displayType() {
