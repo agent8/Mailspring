@@ -19,7 +19,7 @@ export default class SyncbackCategoryTask extends Task {
     name: Attributes.String({
       modelKey: 'name',
     }),
-    bgColor: Attributes.String({
+    bgColor: Attributes.Number({
       modelKey: 'bgColor',
     }),
     existingPath: Attributes.String({
