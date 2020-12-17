@@ -240,21 +240,20 @@ class SidebarStore extends MailspringStore {
     });
     if (task) {
       TaskQueue.waitForPerformRemote(task).then(finishedTask => {
-        console.warn('Task returned');
         if (!finishedTask.created) {
           AppEnv.showErrorDialog({ title: 'Error', message: `Could not create folder.` });
           return;
         }
         const category = finishedTask.created;
         if (isHidden) {
-          console.warn(`${accountId} ${category.id || category.pid} is Hidden`);
+          AppEnv.logDebug(`${accountId} ${category.id || category.pid} is Hidden`);
           CategoryStore.hideCategoryById({
             accountId,
             categoryId: category.id || category.pid,
             save: true,
           });
           this._updateSections();
-          console.warn(
+          AppEnv.logDebug(
             `${accountId} ${category.id || category.pid} category data saved to storage`
           );
         }
