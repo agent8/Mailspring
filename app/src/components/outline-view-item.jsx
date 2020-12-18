@@ -244,7 +244,6 @@ class OutlineViewItem extends Component {
   // Handlers
 
   _onDragStateChange = ({ isDropping, dataItems }) => {
-    this.setState({ isDropping });
     if (dataItems) {
       for (let i = 0; i < dataItems.length; i++) {
         if (dataItems[i] && dataItems[i].type === DROP_DATA_TYPE.FOLDER_TREE_ITEM) {
@@ -253,6 +252,7 @@ class OutlineViewItem extends Component {
         }
       }
     }
+    this.setState({ isDropping });
     const { item } = this.props;
     if (isDropping === true && item.children.length > 0 && item.collapsed) {
       this._expandTimeout = setTimeout(this._onCollapseToggled, 650);
@@ -763,6 +763,7 @@ class OutlineViewItem extends Component {
     const containerClasses = classnames({
       'item-container': true,
       selected: item.selected,
+      droppingCategory: this.state.isCategoryDropping,
       dropping: this.state.isDropping,
       inEditMode: this.props.isEditingMenu,
       isDragging: this.state.isDragging,
