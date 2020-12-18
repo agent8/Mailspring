@@ -33,6 +33,7 @@ export default class MessageControls extends React.Component {
     trackers: PropTypes.array,
     viewOriginalEmail: PropTypes.bool,
     setViewOriginalEmail: PropTypes.func,
+    selection: PropTypes.any,
   };
 
   constructor(props) {
@@ -460,10 +461,9 @@ export default class MessageControls extends React.Component {
     if (this.props.selection) {
       this.props.selection.clear();
     }
-    if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
-      Actions.popSheet({ reason: 'MessageControls:_onRemove' });
-    }
-    return;
+    // if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
+    //   Actions.popSheet({ reason: 'MessageControls:_onRemove' });
+    // }
   };
   _onExpunge = event => {
     const tasks = TaskFactory.tasksForExpungingThreadsOrMessages({
@@ -494,14 +494,13 @@ export default class MessageControls extends React.Component {
         return;
       }
       Actions.queueTasks(tasks);
-      if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
-        Actions.popSheet({ reason: 'MessageControls:_onExpunge' });
-      }
+      // if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
+      //   Actions.popSheet({ reason: 'MessageControls:_onExpunge' });
+      // }
     });
     if (event) {
       event.stopPropagation();
     }
-    return;
   };
 
   _onTrash = () => {
@@ -592,7 +591,7 @@ export default class MessageControls extends React.Component {
       <div className="remove-tracker">
         <RetinaImg name={'emailtracking-popup-image.png'} mode="" />
         <h3>Email tracking is Blocked</h3>
-        <p>Senders won't see when and where you read messages.</p>
+        <p>Senders won&#39;t see when and where you read messages.</p>
         <UserViewBtn />
         <RetinaImg
           className="close"
@@ -625,7 +624,7 @@ export default class MessageControls extends React.Component {
           <br />
           {email}
         </h1>
-        <p>You won't be notified about new mail from this sender.</p>
+        <p>You won&#39;t be notified about new mail from this sender.</p>
         <div className="btn-list">
           <div className="btn cancel" onClick={this._onToggleMuteEmail}>
             Cancel
