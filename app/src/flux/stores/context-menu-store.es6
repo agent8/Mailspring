@@ -11,6 +11,7 @@ class ContextMenuStore extends MailspringStore {
     this.rect = { top: 0, left: 0 };
     this.menuItems = [];
     this._disableAutoFocus = true;
+    this._contextMenuOpen = false;
     this.menuContextKey = 'label';
     this._onCloseCallBack = null;
     this._openContextMenu = _.throttle(this._openPopover, 100, { leading: false });
@@ -47,8 +48,12 @@ class ContextMenuStore extends MailspringStore {
     this._onCloseCallBack = onClose;
     this._openContextMenu();
   };
+  isContextMenuOpen = () => {
+    return this._contextMenuOpen;
+  };
   _onClose = () => {
-    if (this._onCloseCallBack) {
+    this._contextMenuOpen = false;
+    if (typeof this._onCloseCallBack === 'function') {
       this._onCloseCallBack();
     }
   };
@@ -63,8 +68,10 @@ class ContextMenuStore extends MailspringStore {
         closeOnAppBlur: true,
         disablePointer: true,
         disableAutoFocus: this._disableAutoFocus,
+        onClose: this._onClose,
       }
     );
+    this._contextMenuOpen = true;
   };
 }
 export default new ContextMenuStore();

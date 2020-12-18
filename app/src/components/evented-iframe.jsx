@@ -13,6 +13,7 @@ const {
   MailspringAPIRequest,
   SearchableComponentStore,
   Actions,
+  ContextMenuStore,
 } = require('mailspring-exports');
 const IFrameSearcher = require('../searchable-components/iframe-searcher').default;
 const url = require('url');
@@ -214,6 +215,9 @@ class EventedIFrame extends React.Component {
   _onIFrameBlur = event => {
     const node = ReactDOM.findDOMNode(this);
     node.contentWindow.getSelection().empty();
+    if (this._contextMenuOpen) {
+      this._closeIFrameContextMenu();
+    }
   };
 
   _onIFrameFocus = event => {
@@ -235,7 +239,7 @@ class EventedIFrame extends React.Component {
   // iFrame, the mouseup never fires in the parent window.
   _onIFrameClick = e => {
     e.stopPropagation();
-    if (this._contextMenuOpen) {
+    if (this._contextMenuOpen || ContextMenuStore.isContextMenuOpen()) {
       this._closeIFrameContextMenu();
     }
     const target = this._getContainingTarget(e, { with: 'href' });
