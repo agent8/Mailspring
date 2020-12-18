@@ -38,6 +38,8 @@ class FixedPopover extends Component {
     direction: PropTypes.string,
     fallbackDirection: PropTypes.string,
     closeOnAppBlur: PropTypes.bool,
+    disablePointer: PropTypes.bool,
+    className: PropTypes.string,
     originRect: PropTypes.shape({
       bottom: PropTypes.number,
       top: PropTypes.number,
@@ -75,7 +77,7 @@ class FixedPopover extends Component {
 
   componentDidMount() {
     this.mounted = true;
-    findDOMNode(this.refs.popoverContainer).addEventListener('animationend', this.onAnimationEnd);
+    findDOMNode(this.popoverContainer).addEventListener('animationend', this.onAnimationEnd);
     window.addEventListener('resize', this.onWindowResize);
     _.defer(this.onPopoverRendered);
   }
@@ -95,14 +97,14 @@ class FixedPopover extends Component {
 
   componentWillUnmount() {
     this.mounted = false;
-    findDOMNode(this.refs.popoverContainer).removeEventListener(
-      'animationend',
-      this.onAnimationEnd
-    );
+    findDOMNode(this.popoverContainer).removeEventListener('animationend', this.onAnimationEnd);
     window.removeEventListener('resize', this.onWindowResize);
   }
 
   onAnimationEnd = () => {
+    if (!this.props.closeOnAppBlur) {
+      return;
+    }
     _.defer(this.props.focusElementWithTabIndex);
   };
 
@@ -155,7 +157,7 @@ class FixedPopover extends Component {
   };
 
   getCurrentRect = () => {
-    return findDOMNode(this.refs.popover).getBoundingClientRect();
+    return findDOMNode(this.popover).getBoundingClientRect();
   };
 
   getWindowDimensions = () => {
@@ -347,16 +349,20 @@ class FixedPopover extends Component {
 
     return (
       <div>
-        <div ref="blurTrap" className="fixed-popover-blur-trap" style={blurTrapStyle} />
         <div
-          ref="popoverContainer"
+          ref={el => (this.blurTrap = el)}
+          className="fixed-popover-blur-trap"
+          style={blurTrapStyle}
+        />
+        <div
+          ref={el => (this.popoverContainer = el)}
           style={containerStyle}
           className={`fixed-popover-container${animateClass} ${this.props.className}`}
           onKeyDown={this.onKeyDown}
           onBlur={this.onBlur}
           tabIndex={-1}
         >
-          <div ref="popover" className={`fixed-popover`} style={popoverStyle}>
+          <div ref={el => (this.popover = el)} className={`fixed-popover`} style={popoverStyle}>
             {children}
           </div>
           {!disablePointer && <div className={`fixed-popover-pointer`} style={pointerStyle} />}
