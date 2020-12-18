@@ -49,6 +49,8 @@ const emailActionLabels = [
   actionOption('spam', 'Mark as Spam'),
   actionOption('print', 'Print Thread/Message'),
 ];
+const quickActionValues = [...actionValues, 'spam'];
+const quickActionLabels = [...actionLabels, actionOption('spam', 'Mark as Spam')];
 
 export default {
   core: {
@@ -449,32 +451,32 @@ export default {
             type: 'string',
             default: 'archive',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 1',
           },
           quickAction2: {
             type: 'string',
             default: 'flag',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 2',
           },
           quickAction3: {
             type: 'string',
             default: 'trash',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 3',
           },
           quickAction4: {
             type: 'string',
             default: 'read',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 4',
           },
         },
