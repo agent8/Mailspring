@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Mark } from 'slate';
 import { CompactPicker } from 'react-color';
 import { RetinaImg } from 'mailspring-component-kit';
-import { Actions } from 'mailspring-exports';
+import { Actions, PropTypes } from 'mailspring-exports';
 import FontSizePopover from './font-size-popover';
 import ButtonValuePickerPopover from './button-value-picker-popover';
 import { BLOCK_CONFIG } from './base-block-plugins';
@@ -161,7 +161,6 @@ export function applyValueForMark(value, type, markValue) {
 }
 
 // React Component Factories
-
 export function BuildToggleButton({
   type,
   button: {
@@ -173,7 +172,7 @@ export function BuildToggleButton({
     hideWhenCrowded = false,
   },
 }) {
-  return ({ value, onChange, className = '' }) => {
+  function ToggleButton({ value, onChange, className = '' }) {
     if (!isVisible()) {
       return null;
     }
@@ -209,7 +208,13 @@ export function BuildToggleButton({
         <i title={type} className={iconClass} />
       </button>
     );
+  }
+  ToggleButton.propTypes = {
+    value: PropTypes.object,
+    onChange: PropTypes.func,
+    className: PropTypes.string,
   };
+  return ToggleButton;
 }
 
 export function BuildMarkButtonWithValuePicker(
@@ -217,6 +222,12 @@ export function BuildMarkButtonWithValuePicker(
   { alwaysShow = false, anchorEl = null } = {}
 ) {
   return class ToolbarMarkDataPicker extends React.Component {
+    static propTypes = {
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
 
@@ -332,7 +343,6 @@ export function BuildMarkButtonWithValuePicker(
     };
 
     render() {
-      const { expanded } = this.state;
       const active = getMarkOfType(this.props.value, config.type);
       return (
         <div
@@ -375,6 +385,12 @@ export function BuildMarkButtonWithValuePicker(
 
 export function BuildColorPicker(config) {
   return class ToolbarColorPicker extends React.Component {
+    static propTypes = {
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
       this.state = {
@@ -450,6 +466,14 @@ export function BuildColorPicker(config) {
 }
 export function BuildFontSizePicker(config) {
   return class FontPicker extends React.Component {
+    static propTypes = {
+      defaultValues: PropTypes.object,
+      draftDefaultValues: PropTypes.object,
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
       config.default = (props.defaultValues || {}).fontSize || AppEnv.config.get('core.fontsize');
@@ -462,6 +486,7 @@ export function BuildFontSizePicker(config) {
         markValue = markValue / 1;
       }
       onChange(applyValueForMark(value, config.type, markValue));
+      Actions.closePopover();
     };
 
     shouldComponentUpdate(nextProps) {
@@ -484,7 +509,7 @@ export function BuildFontSizePicker(config) {
         {
           originRect: this.fontSizeBtn.getBoundingClientRect(),
           direction: 'down',
-          closeOnAppBlur: true,
+          closeOnAppBlur: false,
         }
       );
     };
@@ -504,6 +529,11 @@ export function BuildFontSizePicker(config) {
           style={{ padding: '6px, 0px', width: 40 }}
           className={`${this.props.className || ''} pull-right with-popup`}
           onClick={this.onClick}
+          onBlur={() => {
+            setTimeout(() => {
+              Actions.closePopover();
+            }, 150);
+          }}
           ref={el => (this.fontSizeBtn = el)}
         >
           <i className={config.iconClass} />
@@ -521,6 +551,13 @@ export function BuildFontSizePicker(config) {
 
 export function BuildFontPicker(config) {
   return class FontPicker extends React.Component {
+    static propTypes = {
+      defaultValues: PropTypes.object,
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
       config.default = (props.defaultValues || {}).fontFace || AppEnv.config.get('core.fontface');
