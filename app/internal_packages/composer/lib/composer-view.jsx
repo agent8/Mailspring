@@ -459,6 +459,12 @@ export default class ComposerView extends React.Component {
             }))
         );
       });
+      const isLostFocus = change.operations.every(({ type, properties }) => {
+        return type === 'set_selection' && properties && properties.isFocused === false;
+      });
+      if (isLostFocus) {
+        return;
+      }
       this.props.session.changes.add({ bodyEditorState: change.value }, { skipSaving });
     }
     const focusBlock = change.value.focusBlock;

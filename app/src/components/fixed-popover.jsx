@@ -121,6 +121,9 @@ class FixedPopover extends Component {
 
   onAnimationEnd = () => {
     this.animationEnded = true;
+    if (!this.props.closeOnAppBlur) {
+      return;
+    }
     if (this.props.focusElementWithTabIndex && !this.props.disableAutoFocus) {
       _.defer(this.props.focusElementWithTabIndex);
     }
@@ -430,4 +433,7 @@ class FixedPopover extends Component {
   }
 }
 
-export default compose(FixedPopover, AutoFocuses);
+export default compose(
+  FixedPopover,
+  AutoFocuses
+);
