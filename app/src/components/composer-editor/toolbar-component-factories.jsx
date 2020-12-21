@@ -465,7 +465,7 @@ export function BuildColorPicker(config) {
   };
 }
 export function BuildFontSizePicker(config) {
-  return class FontPicker extends React.Component {
+  return class FontSizePicker extends React.Component {
     static propTypes = {
       defaultValues: PropTypes.object,
       draftDefaultValues: PropTypes.object,
@@ -560,17 +560,36 @@ export function BuildFontPicker(config) {
 
     constructor(props) {
       super(props);
+      this._fontPickerRef = null;
+      this._setFontPickerRef = ref => (this._fontPickerRef = ref);
       config.default = (props.defaultValues || {}).fontFace || AppEnv.config.get('core.fontface');
     }
-    _onSetValue = e => {
-      AppEnv.config.set('core.fontface', e.target.value);
+    _onSetValue = item => {
+      AppEnv.config.set('core.fontface', item);
       const { onChange, value } = this.props;
-      let markValue = e.target.value !== config.default ? e.target.value : null;
+      let markValue = item !== config.default ? item : null;
       if (!(typeof config.options[0].value === 'string')) {
         markValue = markValue / 1;
       }
-
       onChange(applyValueForMark(value, config.type, markValue));
+      Actions.closePopover();
+    };
+    _onClick = e => {
+      const value = getActiveValueForMark(this.props.value, config.type) || config.default;
+      const displayed = config.convert(value, config.default);
+      Actions.openPopover(
+        <FontSizePopover
+          className={'font-popover'}
+          options={config.options}
+          selectedValue={displayed}
+          onSelect={this._onSetValue}
+        />,
+        {
+          originRect: this._fontPickerRef.getBoundingClientRect(),
+          direction: 'down',
+          closeOnAppBlur: false,
+        }
+      );
     };
 
     shouldComponentUpdate(nextProps) {
@@ -582,26 +601,26 @@ export function BuildFontPicker(config) {
 
     render() {
       const value = getActiveValueForMark(this.props.value, config.type) || config.default;
-      const displayed = config.convert(value, config.default);
-
+      const fontValue = config.convert(value, config.default);
+      const displayOption = config.options.find(option => fontValue === option.value);
+      let displayName = '';
+      if (displayOption) {
+        displayName = displayOption.name;
+      }
       return (
         <button
+          ref={this._setFontPickerRef}
           style={{ padding: 0, paddingRight: 6 }}
           className={`${this.props.className} with-select`}
+          onClick={this._onClick}
+          onBlur={() => {
+            setTimeout(() => {
+              Actions.closePopover();
+            }, 150);
+          }}
         >
           <i className={config.iconClass} />
-          <select
-            onFocus={this._onFocus}
-            value={displayed}
-            onChange={this._onSetValue}
-            tabIndex={-1}
-          >
-            {config.options.map(({ name, value }) => (
-              <option key={value} value={value}>
-                {name}
-              </option>
-            ))}
-          </select>
+          <div className="font-face-display-name">{displayName}</div>
           <RetinaImg
             name={'down-arrow.svg'}
             style={{ width: 12, height: 12, fontSize: 12 }}
