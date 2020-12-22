@@ -348,13 +348,15 @@ export default class SidebarSection {
         false
       );
       if (item) {
-        if (items.length - baseNumber === 3) {
+        const itemsShown = items.filter(cat => cat && !cat.isHidden);
+        if (itemsShown.length - baseNumber === 3) {
           items.push(showAll);
         }
         items.push(item);
       }
     }
-    if (items.length - baseNumber > 3 && items[items.length - 1].id !== showLess.id) {
+    const itemsShown = items.filter(cat => cat && !cat.isHidden);
+    if (itemsShown.length - baseNumber > 4 && items[items.length - 1].id !== showLess.id) {
       items.push(showLess);
     }
   }
