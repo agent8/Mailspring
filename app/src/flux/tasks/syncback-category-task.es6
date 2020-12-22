@@ -13,6 +13,9 @@ const toDelimiterJSONMappings = val => {
 };
 export default class SyncbackCategoryTask extends Task {
   static attributes = Object.assign({}, Task.attributes, {
+    colorChangeOnly: Attributes.Number({
+      modelKey: 'colorChangeOnly',
+    }),
     path: Attributes.String({
       modelKey: 'path',
     }),
@@ -69,13 +72,14 @@ export default class SyncbackCategoryTask extends Task {
       accountId: accountId,
     });
   }
-  static editLabel({ newName, currentName, accountId, newColor }) {
+  static editLabel({ newName, currentName, accountId, newColor, colorChangeOnly = false }) {
     return new SyncbackCategoryTask({
       existingPath: utf7.imap.encode(currentName),
       path: utf7.imap.encode(newName),
       name: newName,
       accountId: accountId,
       bgColor: newColor,
+      colorChangeOnly: colorChangeOnly ? 1 : 0,
     });
   }
 
