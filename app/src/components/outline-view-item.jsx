@@ -731,6 +731,9 @@ class OutlineViewItem extends Component {
             if (child.id === MORE_TOGGLE && child.showAll === this.state.showAllChildren) {
               return null;
             }
+            if (child.id === MORE_TOGGLE && this.props.isEditingMenu) {
+              return null;
+            }
             if (
               (this.state.showAllChildren || !child.hideWhenCrowded) &&
               (this.props.isEditingMenu || !child.isHidden)
