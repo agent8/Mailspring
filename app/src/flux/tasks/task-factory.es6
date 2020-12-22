@@ -467,10 +467,11 @@ const TaskFactory = {
       return;
     }
     const existingCategories = CategoryStore.categories(accountId);
+    let colorChangeOnly = false;
     if (existingCategories.length > 0) {
       for (let i = 0; i < existingCategories.length; i++) {
         const displayName = existingCategories[i].fullDisplayName;
-        if (displayName === newName) {
+        if (displayName === newName && existingCategories[i].bgColor === newColor) {
           AppEnv.logWarning(
             `TaskFactory:Editing label ${newName} is in conflict with existing label ${displayName}`
           );
@@ -480,6 +481,8 @@ const TaskFactory = {
             buttons: ['Ok'],
           });
           return;
+        } else if (displayName === newName && existingCategories[i].bgColor !== newColor) {
+          colorChangeOnly = true;
         }
       }
     }
@@ -488,6 +491,7 @@ const TaskFactory = {
       accountId,
       newName,
       newColor,
+      colorChangeOnly,
     });
   },
   tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '' }) {
