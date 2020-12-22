@@ -262,8 +262,23 @@ class PreferencesLabels extends React.Component {
     if (!label) {
       return;
     }
-    const task = new DestroyCategoryTask(label);
-    Actions.queueTask(task);
+    AppEnv.showMessageBox({
+      title: 'Remove Label?',
+      showInMainWindow: true,
+      detail: 'This will only remove label from messages, messages will not be deleted.',
+      buttons: ['Proceed', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+    }).then(({ response } = {}) => {
+      if (response !== 0) {
+        AppEnv.logDebug(`Removing Label in Preference canceled, user clicked cancel`);
+        return;
+      }
+      const task = new DestroyCategoryTask(
+        Object.assign({}, label, { source: 'Preference Delete' })
+      );
+      Actions.queueTask(task);
+    });
   };
 
   _renderAddNewLabel() {
