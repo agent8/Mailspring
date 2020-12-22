@@ -91,7 +91,9 @@ mailspring-workspace {
 .layout-mode-split {
   .column-OutboxMessage,
   .column-MessageList {
-    padding-top: 0;
+    & > div {
+      margin-top: 0;
+    }
   }
 }
 .layout-mode-list {
@@ -766,7 +768,9 @@ body.platform-win32 {
 }
 .column-SiftList,
 .column-Outbox,
-.column-ThreadList {
+.column-OutboxMessage,
+.column-ThreadList,
+.column-MessageList {
   & > div {
     margin-top: @search-bar-height;
   }
