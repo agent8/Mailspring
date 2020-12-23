@@ -26,6 +26,9 @@ class MenuItem extends React.Component {
     selected: PropTypes.bool,
     checked: PropTypes.bool,
     disabled: PropTypes.bool,
+    onMouseDown: PropTypes.func,
+    onMouseOver: PropTypes.func,
+    content: PropTypes.object,
   };
 
   static default = {
