@@ -113,7 +113,7 @@ export default class LabelPickerPopover extends Component {
     }
   };
 
-  _onSelectLabel = item => {
+  _onSelectLabel = (item, extraInfo = {}) => {
     const { threads } = this.props;
 
     if (threads.length === 0) return;
@@ -146,6 +146,9 @@ export default class LabelPickerPopover extends Component {
         action: 'Add',
       };
       item.usage = threads.length;
+      if (extraInfo && extraInfo.source === 'enterKey') {
+        this._onApplyChanges();
+      }
     }
   };
 
