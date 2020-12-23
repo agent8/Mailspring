@@ -432,14 +432,38 @@ export default class ComposerView extends React.Component {
   };
 
   _onEditorBlur = (event, editor, next) => {
+    let ignoreLostFocus = false;
+    if (this._els && this._els.composeBody) {
+      if (event.relatedTarget && this._els.composeBody.contains(event.relatedTarget)) {
+        AppEnv.logDebug(
+          `draft ${this.props.draft &&
+            this.props.draft.id} click is part of composer body, ignore blur`
+        );
+        ignoreLostFocus = true;
+      }
+    }
+    const toolbars = document.getElementsByClassName('RichEditor-toolbar');
+    if (toolbars) {
+      for (let i = 0; i < toolbars.length; i++) {
+        if (toolbars[0].contains(event.relatedTarget)) {
+          AppEnv.logDebug(
+            `draft ${this.props.draft &&
+              this.props.draft.id} click is part of RichEditor-toolbar, ignore blur`
+          );
+          ignoreLostFocus = true;
+        }
+      }
+    }
     this.setState({
       editorSelection: editor.value.selection,
       editorSelectedText: editor.value.fragment.text,
     });
-    this._onEditorChange(editor);
-    this._enableThreadCommand();
+    this._onEditorChange(editor, ignoreLostFocus);
+    if (!ignoreLostFocus) {
+      this._enableThreadCommand();
+    }
   };
-  _onEditorChange = change => {
+  _onEditorChange = (change, ignoreLostFocus = true) => {
     // We minimize thrashing and disable editors in multiple windows by ensuring
     // non-value changes (eg focus) to the editorState don't trigger database saves
     if (!this.props.session.isPopout()) {
@@ -460,7 +484,13 @@ export default class ComposerView extends React.Component {
         return type === 'set_selection' && properties && properties.isFocused === false;
       });
       if (isLostFocus) {
-        return;
+        AppEnv.logDebug(
+          `draft ${this.props.draft &&
+            this.props.draft.id} isLostFocus, ignore lost focus ${ignoreLostFocus}`
+        );
+        if (ignoreLostFocus) {
+          return;
+        }
       }
       this.props.session.changes.add({ bodyEditorState: change.value }, { skipSaving });
     }
