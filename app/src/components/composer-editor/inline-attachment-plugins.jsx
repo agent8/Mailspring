@@ -1,4 +1,5 @@
-const { React, PropTypes } = require('mailspring-exports');
+import React from 'react';
+import PropTypes from 'prop-types';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
 import { AttachmentStore, Actions, Utils } from 'mailspring-exports';
 import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
@@ -8,8 +9,12 @@ function formatHeightWidthToNum(val) {
   if (typeof val === 'number') {
     return val;
   } else if (typeof val === 'string') {
-    const valTmp = Number(val.replace('px', ''));
-    return valTmp ? valTmp : 0;
+    if (val.includes('px')) {
+      const valTmp = Number(val.replace('px', ''));
+      return valTmp ? valTmp : 0;
+    } else {
+      return undefined;
+    }
   }
   return undefined;
 }
@@ -110,12 +115,11 @@ function ImageNode(props) {
     />
   );
 }
-
 ImageNode.propTypes = {
   attributes: PropTypes.object,
-  node: PropTypes.node,
-  targetIsHTML: PropTypes.bool,
+  node: PropTypes.object,
   editor: PropTypes.object,
+  targetIsHTML: PropTypes.bool,
   isSelected: PropTypes.bool,
 };
 

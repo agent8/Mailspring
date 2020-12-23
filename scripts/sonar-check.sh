@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
 set -e
+
+SCRIPT_DIR=$(dirname $0)
+cd $SCRIPT_DIR/../app/src
+PROJECT_ROOT=$(pwd)
+echo "Workspace:${PROJECT_ROOT}"
+
+
+SONARQUBE_URL="https://www.edisonpark.net/sonarqube"
+SONARQUBE_TOKEN="dd35c7159e2d4bd36309a199a9089437fed2883a"
+
+PROJECT_KEY=Mailspring
+
 usage() {
   cat <<EOF
 Usage :
@@ -9,16 +21,6 @@ Usage :
   -d                            sonar check in docker mode
 EOF
 } # ----------  end of function usage  ----------
-
-SONARQUBE_URL="https://www.edisonpark.net/sonarqube"
-SONARQUBE_TOKEN="dd35c7159e2d4bd36309a199a9089437fed2883a"
-
-cd $(dirname $0)/../app/src
-ROOT_DIR=$(pwd)
-echo "Workspace:${ROOT_DIR}"
-
-PROJECT_KEY=Mailspring
-PROJECT_ROOT=${ROOT_DIR}
 
 function run_via_cli() {
   command -v sonar-scanner >/dev/null 2>&1 || { echo "I require sonar-scanner but it's not installed. Aborting."; exit 1; }
@@ -46,15 +48,14 @@ function run_via_docker() {
 mode="cli"
 while getopts :hid OPTION; do
   case $OPTION in
-  h)
-    unset mode
-    usage
-    ;;
   i)
     mode="cli"
     ;;
   d) mode="docker" ;;
-  *) ;;
+  h)
+    unset mode;;
+  *)
+    unset mode;;
   esac
 done
 if [ "$mode" = "docker" ]; then
