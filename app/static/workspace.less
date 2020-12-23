@@ -91,7 +91,9 @@ mailspring-workspace {
 .layout-mode-split {
   .column-OutboxMessage,
   .column-MessageList {
-    padding-top: 0;
+    & > div {
+      margin-top: 0;
+    }
   }
 }
 .layout-mode-list {
@@ -772,7 +774,9 @@ body.platform-win32 {
 .column-OutboxMessage,
 .column-ThreadList,
 .column-MessageList {
-  padding-top: @search-bar-height;
+  & > div {
+    margin-top: @search-bar-height;
+  }
   // -webkit-app-region: no-drag;
   div {
     // This is for DC-182 reduce height because of thread-list-empty-bar

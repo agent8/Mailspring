@@ -47,11 +47,12 @@ class AccountExchangeSettingsForm extends React.Component {
   UNSAFE_componentWillMount() {
     // auto fill username
     this.props.account.settings['ews_email'] = this.props.account.emailAddress;
-    this.props.account.settings['ews_username'] = this.props.account.emailAddress;
+    if (this.props.account.lastVerified === 0) {
+      this.props.account.settings['ews_username'] = '';
+    }
   }
 
   renderUserInfo() {
-    this.props.account.settings['ews_username'] = '';
     return (
       <div>
         <FormField field={`settings.ews_email`} title={'Email'} {...this.props} />

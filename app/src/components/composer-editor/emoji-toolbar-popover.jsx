@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import RetinaImg from '../retina-img';
 import ScrollRegion from '../scroll-region';
 
@@ -24,9 +25,12 @@ const emojiRightLastDrawPosition = emojiItemWidth * numItemsPerLine + emojiLeftS
 
 export default class EmojiToolbarPopover extends React.Component {
   static displayName = 'EmojiToolbarPopover';
+  static propTypes = {
+    onInsertEmoji: PropTypes.func.isRequired,
+  };
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     const { categoryNames, categorizedEmoji, categoryPositions } = this.getStateFromStore();
     this.state = {
       emojiName: 'Emoji Picker',
@@ -290,7 +294,15 @@ export default class EmojiToolbarPopover extends React.Component {
       position.x = categoryTextLeftStartPosition;
       position.y += emojiLineHeight + emptyLineBeforeCategoryTextLineHeight;
     }
-    ctx.fillText(category, position.x, position.y);
+    const themName = AppEnv.themes.getActiveTheme().name;
+    if (themName === 'ui-dark') {
+      const originalFillStyle = ctx.fillStyle;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fillText(category, position.x, position.y);
+      ctx.fillStyle = originalFillStyle;
+    } else {
+      ctx.fillText(category, position.x, position.y);
+    }
     position.x = emojiLeftStartingPosition;
     position.y += emptyLineAfterCategoryTextLineHeight;
 
