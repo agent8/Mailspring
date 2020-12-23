@@ -7,6 +7,7 @@ import { Actions, PropTypes } from 'mailspring-exports';
 import FontSizePopover from './font-size-popover';
 import ButtonValuePickerPopover from './button-value-picker-popover';
 import { BLOCK_CONFIG } from './base-block-plugins';
+const IMAGE_TYPE = 'inline_resizable_image';
 
 // Helper Functions
 
@@ -294,8 +295,18 @@ export function BuildMarkButtonWithValuePicker(
         },
       });
 
-      const active = getMarkOfType(this.props.value, config.type);
-      if (active) {
+      const active = getMarkOfType(value, config.type);
+      if (value.anchorInline && value.anchorInline.type === IMAGE_TYPE) {
+        var d = value.anchorInline.data.set('href', fieldValue);
+        onChange(
+          value
+            .change()
+            .setNodeByKey(value.anchorInline.key, {
+              data: d,
+            })
+            .focus()
+        );
+      } else if (active) {
         // update the active mark
         const change = value.change();
         expandSelectionToRangeOfMark(change, config.type);

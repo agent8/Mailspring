@@ -4,7 +4,7 @@ import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
 const IMAGE_TYPE = 'inline_resizable_image';
-const maxImgSize = 200 * 1000;
+const maxImgSize = 200 * 1024;
 
 function ImageNode(props) {
   const { node, targetIsHTML, editor } = props;
@@ -12,6 +12,7 @@ function ImageNode(props) {
   const src = data.get ? data.get('src') : data.src;
   const height = data.get ? data.get('height') : data.height;
   const width = data.get ? data.get('width') : data.width;
+  const href = data.get ? data.get('href') : data.href;
   const verticalAlign = data.get ? data.get('verticalAlign') : data.verticalAlign;
   const style = {};
   if (height) {
@@ -25,7 +26,11 @@ function ImageNode(props) {
     style.verticalAlign = verticalAlign;
   }
   if (targetIsHTML) {
-    return <img alt="" src={src} style={style} resizable={'true'} />;
+    return (
+      <a href={href}>
+        <img alt="" href={href} src={src} style={style} resizable={'true'} />
+      </a>
+    );
   }
 
   return (
@@ -37,6 +42,7 @@ function ImageNode(props) {
           return change.setNodeByKey(node.key, {
             data: {
               src: src,
+              href: href,
               draggerDisable: true,
               height: value.height,
               width: value.width,
@@ -156,12 +162,13 @@ const rules = [
         if (verticalAlign) {
           data.verticalAlign = verticalAlign;
         }
+        const href = el.getAttribute('href');
 
         return {
           object: 'inline',
           isVoid: true,
           type: IMAGE_TYPE,
-          data,
+          data: { ...data, href: href },
         };
       }
     },
