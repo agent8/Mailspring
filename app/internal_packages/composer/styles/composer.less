@@ -1199,10 +1199,19 @@ body.platform-win32 {
 button {
   .font-face-display-name {
     padding: 0 8px;
+    width: 94px;
+    max-width: 94px;
+    overflow-x: hidden;
+    text-overflow: clip;
+    font-size: 13px;
   }
 }
 .font-popover {
   width: 150px;
+  height: 220px;
+  .option{
+    font-size: 13px;
+  }
 }
 .emoji-button-popover {
   width: 210px;
