@@ -1,4 +1,4 @@
-import React from 'react';
+const { React, PropTypes } = require('mailspring-exports');
 import { ImageAttachmentItem } from 'mailspring-component-kit';
 import { AttachmentStore, Actions, Utils } from 'mailspring-exports';
 import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
@@ -104,6 +104,14 @@ function ImageNode(props) {
     />
   );
 }
+
+ImageNode.propTypes = {
+  attributes: PropTypes.object,
+  node: PropTypes.node,
+  targetIsHTML: PropTypes.bool,
+  editor: PropTypes.object,
+  isSelected: PropTypes.bool,
+};
 
 function renderNode(props) {
   if (props.node.type === IMAGE_TYPE) {
