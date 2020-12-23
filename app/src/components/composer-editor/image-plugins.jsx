@@ -1,5 +1,5 @@
 import path from 'path';
-import React from 'react';
+const { React, PropTypes } = require('mailspring-exports');
 import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
@@ -7,7 +7,7 @@ const IMAGE_TYPE = 'inline_resizable_image';
 const maxImgSize = 200 * 1000;
 
 function ImageNode(props) {
-  const { attributes, node, targetIsHTML, editor } = props;
+  const { node, targetIsHTML, editor } = props;
   const data = node.data;
   const src = data.get ? data.get('src') : data.src;
   const height = data.get ? data.get('height') : data.height;
@@ -48,6 +48,12 @@ function ImageNode(props) {
     />
   );
 }
+
+ImageNode.propTypes = {
+  node: PropTypes.node,
+  targetIsHTML: PropTypes.bool,
+  editor: PropTypes.object,
+};
 
 function renderNode(props) {
   if (props.node.type === IMAGE_TYPE) {
@@ -117,6 +123,12 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
       />
     </button>
   );
+};
+
+ToolbarAttachmentButton.propTypes = {
+  value: PropTypes.object,
+  onChange: PropTypes.func,
+  onAddAttachments: PropTypes.func,
 };
 
 const rules = [
