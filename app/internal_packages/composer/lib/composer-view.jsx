@@ -276,6 +276,10 @@ export default class ComposerView extends React.Component {
   }
 
   _onEditorBodyContextMenu = event => {
+    if (event && typeof event.isDefaultPrevented === 'function' && event.isDefaultPrevented()) {
+      AppEnv.logDebug('context menu event already processed, ignoring');
+      return;
+    }
     if (this._els[Fields.Body] && this.state.editorSelection) {
       this._els[Fields.Body].openContextMenu(
         {
