@@ -39,20 +39,20 @@ const isChildrenSelected = (children = [], currentPerspective) => {
   return false;
 };
 
-const isTabSelected = (perspective, currentPerspective) => {
-  if (!perspective) {
-    console.error(new Error('no perspective'));
-  }
-  if (!perspective.tab || perspective.tab.length === 0) {
-    return false;
-  }
-  for (const tab of perspective.tab) {
-    if (tab && tab.isEqual(currentPerspective)) {
-      return true;
-    }
-  }
-  return false;
-};
+// const isTabSelected = (perspective, currentPerspective) => {
+//   if (!perspective) {
+//     console.error(new Error('no perspective'));
+//   }
+//   if (!perspective.tab || perspective.tab.length === 0) {
+//     return false;
+//   }
+//   for (const tab of perspective.tab) {
+//     if (tab && tab.isEqual(currentPerspective)) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
 
 const isItemSelected = (perspective, children = []) => {
   const sheet = WorkspaceStore.topSheet();
@@ -669,9 +669,9 @@ class SidebarItem {
       return;
     }
     const isExchange = AccountStore.isExchangeAccount(account);
-    // const seenItems = {};
-    // seenItems[CategoryStore.decodePath(path)] = parentPerspective;
-    for (let category of CategoryStore.userCategories(accountId)) {
+    const categories = CategoryStore.userCategoriesForFolderTree(accountId);
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i];
       let item, parentKey;
       // let itemKey;
 
@@ -705,6 +705,7 @@ class SidebarItem {
         if (isExchange) {
           itemDisplayName = category.displayName;
         }
+        CategoryStore.removeFromFolderTreeRenderArray(accountId, i);
         item = SidebarItem.forCategories([category], { name: itemDisplayName }, false);
         if (item) {
           item.id = `${parent.id}-${item.selfId}`;
