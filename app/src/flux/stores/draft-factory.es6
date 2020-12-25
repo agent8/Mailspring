@@ -125,7 +125,7 @@ class DraftFactory {
     return `
       <font style="font-size:${defaultSize};font-family:${defaultFont}">
         <br/>
-        <br/>
+        ${'\u200b'}
       </font>
     `;
   }
