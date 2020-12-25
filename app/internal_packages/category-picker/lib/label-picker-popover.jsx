@@ -1,4 +1,3 @@
-/* eslint jsx-a11y/tabindex-no-positive: 0 */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Menu, RetinaImg, LabelColorizer, BoldedSearchResult } from 'mailspring-component-kit';
@@ -11,6 +10,8 @@ export default class LabelPickerPopover extends Component {
     threads: PropTypes.array.isRequired,
     account: PropTypes.object.isRequired,
     onActionCallback: PropTypes.func,
+    onClose: PropTypes.func,
+    onCreate: PropTypes.func,
   };
 
   constructor(props) {
@@ -112,8 +113,8 @@ export default class LabelPickerPopover extends Component {
     }
   };
 
-  _onSelectLabel = item => {
-    const { account, threads } = this.props;
+  _onSelectLabel = (item, extraInfo = {}) => {
+    const { threads } = this.props;
 
     if (threads.length === 0) return;
     if (item.newCategoryItem) {
@@ -145,6 +146,9 @@ export default class LabelPickerPopover extends Component {
         action: 'Add',
       };
       item.usage = threads.length;
+      if (extraInfo && extraInfo.source === 'enterKey') {
+        this._onApplyChanges();
+      }
     }
   };
 
@@ -276,6 +280,14 @@ export default class LabelPickerPopover extends Component {
         placeholder={'Label as...'}
         value={this.state.searchValue}
         onChange={this._onSearchValueChange}
+      />,
+      <RetinaImg
+        key="search-icon"
+        isIcon
+        name="search.svg"
+        className="search-accessory search"
+        mode={RetinaImg.Mode.ContentIsMask}
+        style={{ height: 20, width: 20, position: 'absolute', left: '20px' }}
       />,
     ];
 
