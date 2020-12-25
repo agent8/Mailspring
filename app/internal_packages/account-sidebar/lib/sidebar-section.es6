@@ -255,7 +255,7 @@ export default class SidebarSection {
       collapsed: isShowAll,
       name: `${account.id}-single-moreToggle`,
     });
-    const categories = CategoryStore.userCategoriesForFolderTree(account);
+    const categories = CategoryStore.userCategories(account);
     for (let i = 0; i < categories.length; i++) {
       const category = categories[i];
       let item;
@@ -263,7 +263,6 @@ export default class SidebarSection {
       if (parent) {
         continue;
       }
-      CategoryStore.removeFromFolderTreeRenderArray(account, i);
       item = SidebarItem.forCategories([category], { hideWhenCrowded: items.length >= 3 }, false);
       if (item) {
         if (items.length === 3 && !isShowAll) {
