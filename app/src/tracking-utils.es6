@@ -40,7 +40,7 @@ export default class TrackingAppEvents {
     let eventName = taskName.replace(/Task$/g, '');
     const source = task.source;
     const dealFuncName = this.sourceMap[source];
-    if (dealFuncName && dealFuncName && typeof dealFuncName === 'function') {
+    if (dealFuncName && typeof dealFuncName === 'function') {
       eventName = `${eventName}${dealFuncName(task)}`;
     }
     const params = {
@@ -68,7 +68,9 @@ export default class TrackingAppEvents {
     }
     try {
       TrackingAppEvents.onQueueTask(task);
-    } catch (e) {}
+    } catch (e) {
+      console.error('TrackingAppEvents.trackingTask', e);
+    }
   };
 
   trackingEvent = (...args) => {
@@ -77,6 +79,8 @@ export default class TrackingAppEvents {
     }
     try {
       TrackingAppEvents.onTrackingEvent(...args);
-    } catch (e) {}
+    } catch (e) {
+      console.error('TrackingAppEvents.trackingEvent', e);
+    }
   };
 }
