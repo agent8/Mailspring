@@ -335,7 +335,7 @@ export default class SidebarSection {
       name: `${account.id}-single-moreToggle`,
       onToggleMoreOrLess: () => SidebarActions.toggleMore(`${account.id}-single-moreToggle`, true),
     });
-    const categories = CategoryStore.userCategoriesForFolderTree(account);
+    const categories = CategoryStore.userCategories(account);
     for (let i = 0; i < categories.length; i++) {
       const category = categories[i];
       let item;
@@ -343,7 +343,6 @@ export default class SidebarSection {
       if (parent) {
         continue;
       }
-      CategoryStore.removeFromFolderTreeRenderArray(account, i);
       item = SidebarItem.forCategories(
         [category],
         {
