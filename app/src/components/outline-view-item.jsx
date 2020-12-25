@@ -735,8 +735,8 @@ class OutlineViewItem extends Component {
               return null;
             }
             if (
-              (this.state.showAllChildren || !child.hideWhenCrowded) &&
-              (this.props.isEditingMenu || !child.isHidden)
+              this.props.isEditingMenu ||
+              ((this.state.showAllChildren || !child.hideWhenCrowded) && !child.isHidden)
             ) {
               return (
                 <OutlineViewItem
