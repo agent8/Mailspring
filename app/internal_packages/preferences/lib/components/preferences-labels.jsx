@@ -231,6 +231,7 @@ class PreferencesLabels extends React.Component {
         },
         position: { top: '13%', left: '49%' },
         disablePointer: true,
+        closeOnAppBlur: false,
       }
     );
   };
@@ -255,6 +256,7 @@ class PreferencesLabels extends React.Component {
         },
         position: { top: '13%', left: '49%' },
         disablePointer: true,
+        closeOnAppBlur: false,
       }
     );
   };

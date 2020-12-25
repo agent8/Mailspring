@@ -11,6 +11,9 @@ export default class LabelPopover extends Component {
     top: PropTypes.number,
     onActionCallback: PropTypes.func,
     isNew: PropTypes.bool,
+    name: PropTypes.string,
+    buttonTimeout: PropTypes.number,
+    visible: PropTypes.bool,
   };
   static defaultProps = {
     left: 490,
@@ -57,6 +60,10 @@ export default class LabelPopover extends Component {
       e.clientY < rect.top ||
       e.clientY > rect.bottom
     ) {
+      const selection = window.getSelection();
+      if (selection && selection.isCollapsed) {
+        return;
+      }
       this.onCancel();
     }
   };
