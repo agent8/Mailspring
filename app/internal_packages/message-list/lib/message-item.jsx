@@ -121,6 +121,7 @@ export default class MessageItem extends React.Component {
       }
       el = el.parentElement;
     }
+    e.stopPropagation();
     return;
   };
 
