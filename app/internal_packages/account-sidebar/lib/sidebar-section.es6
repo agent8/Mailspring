@@ -1,6 +1,7 @@
 import Sift from '../../../src/flux/models/sift';
 const _ = require('underscore');
 const { CategoryStore, ExtensionRegistry, OutboxStore } = require('mailspring-exports');
+
 const SidebarItem = require('./sidebar-item');
 const SidebarActions = require('./sidebar-actions');
 let sidebarStore = null;
@@ -152,6 +153,7 @@ export default class SidebarSection {
   }
 
   static standardSectionForAccounts(accounts) {
+    CategoryStore.restoreCategoriesForFolderTree();
     const items = [];
     const outboxCount = OutboxStore.count();
     const outboxOpts = {
@@ -333,12 +335,15 @@ export default class SidebarSection {
       name: `${account.id}-single-moreToggle`,
       onToggleMoreOrLess: () => SidebarActions.toggleMore(`${account.id}-single-moreToggle`, true),
     });
-    for (let category of CategoryStore.userCategories(account)) {
+    const categories = CategoryStore.userCategoriesForFolderTree(account);
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i];
       let item;
       const parent = CategoryStore.getCategoryParent(category);
       if (parent) {
         continue;
       }
+      CategoryStore.removeFromFolderTreeRenderArray(account, i);
       item = SidebarItem.forCategories(
         [category],
         {

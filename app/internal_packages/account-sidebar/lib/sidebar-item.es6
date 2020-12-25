@@ -730,9 +730,9 @@ class SidebarItem {
       return;
     }
     const isExchange = AccountStore.isExchangeAccount(account);
-    // const seenItems = {};
-    // seenItems[CategoryStore.decodePath(path)] = parentPerspective;
-    for (let category of CategoryStore.userCategories(accountId)) {
+    const categories = CategoryStore.userCategoriesForFolderTree(accountId);
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i];
       let item, parentKey;
       // let itemKey;
 
@@ -756,6 +756,7 @@ class SidebarItem {
         if (isExchange) {
           itemDisplayName = category.displayName;
         }
+        CategoryStore.removeFromFolderTreeRenderArray(accountId, i);
         item = SidebarItem.forCategories(
           [category],
           { name: itemDisplayName, folderTreeIndex: parent.children.length },
