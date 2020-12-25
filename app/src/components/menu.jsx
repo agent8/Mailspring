@@ -178,13 +178,9 @@ class Menu extends React.Component {
     itemContent: PropTypes.func.isRequired,
     itemKey: PropTypes.func.isRequired,
     itemChecked: PropTypes.func,
-
     items: PropTypes.array.isRequired,
-
     onSelect: PropTypes.func.isRequired,
-
     onEscape: PropTypes.func,
-
     defaultSelectedIndex: PropTypes.number,
     maxHeight: PropTypes.number,
     refCallback: PropTypes.func,
@@ -340,7 +336,10 @@ class Menu extends React.Component {
         if (event.key.toLocaleLowerCase() === shortcutKey.toLocaleLowerCase()) {
           this.setState({ selectedIndex: i });
           if (this.props.onSelect) {
-            this.props.onSelect(this.props.items[i]);
+            this.props.onSelect(this.props.items[i], {
+              source: 'autoFocus_shortcut',
+              key: shortcutKey,
+            });
           }
           event.preventDefault();
           return;
@@ -368,7 +367,9 @@ class Menu extends React.Component {
         }
         this.setState({ selectedIndex: i });
         if (this.props.onSelect) {
-          return this.props.onSelect(item);
+          return this.props.onSelect(item, {
+            source: 'mouseDown',
+          });
         }
       };
 
@@ -450,7 +451,9 @@ class Menu extends React.Component {
   _onEnter = () => {
     const item = this.props.items[this.state.selectedIndex];
     if (item != null) {
-      this.props.onSelect(item);
+      this.props.onSelect(item, {
+        source: 'enterKey',
+      });
     }
   };
 
