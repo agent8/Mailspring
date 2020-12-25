@@ -17,6 +17,7 @@ import MakeOtherTask from './make-other-task';
 import { bannedPathNames } from '../../constant';
 import ChangeAllUnreadTask from './change-all-unread-task';
 import ContactUpdateTask from './contact-update-task';
+import AccountAliasesTask from './account-aliases-task';
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -534,6 +535,15 @@ const TaskFactory = {
     });
 
     return tasks;
+  },
+  taskForUpdateAccountAliases(accountId, aliases) {
+    if (!accountId) {
+      return null;
+    }
+    if (!Array.isArray(aliases)) {
+      return null;
+    }
+    return new AccountAliasesTask({ accountId, aliases });
   },
 
   findPreviousFolder(currentPerspective, accountId) {

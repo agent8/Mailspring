@@ -9,12 +9,19 @@ import {
   Account,
   Utils,
   AccountStore,
+  TaskFactory,
+  Actions,
 } from 'mailspring-exports';
 import { EditableList } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 import { UpdateMailSyncSettings } from '../preferences-utils';
 
 class AutoaddressControl extends Component {
+  static propTypes = {
+    autoaddress: PropTypes.object,
+    onChange: PropTypes.func,
+    onSaveChanges: PropTypes.func,
+  };
   render() {
     const { autoaddress, onChange, onSaveChanges } = this.props;
 
@@ -168,6 +175,7 @@ class PreferencesAccountDetails extends Component {
     const coercedAlias = this._makeAlias(newAlias);
     if (this._findAlias(coercedAlias) === -1) {
       const aliases = this.state.account.aliases.concat([coercedAlias]);
+      this._sendAccountAliasesTask(aliases);
       this._setStateAndSave({ aliases });
     } else {
       AppEnv.showErrorDialog({
@@ -187,6 +195,7 @@ class PreferencesAccountDetails extends Component {
         defaultAlias = coercedAlias;
       }
       aliases[idx] = coercedAlias;
+      this._sendAccountAliasesTask(aliases);
       this._setStateAndSave({ aliases, defaultAlias });
     } else {
       AppEnv.showErrorDialog({
@@ -203,8 +212,15 @@ class PreferencesAccountDetails extends Component {
       defaultAlias = null;
     }
     aliases.splice(idx, 1);
+    this._sendAccountAliasesTask(aliases);
     this._setStateAndSave({ aliases, defaultAlias });
   };
+  _sendAccountAliasesTask(aliases) {
+    const task = TaskFactory.taskForUpdateAccountAliases(this.state.account.id, aliases);
+    if (task) {
+      Actions.queueTask(task);
+    }
+  }
 
   _onDefaultAliasSelected = event => {
     const defaultAlias = event.target.value === 'None' ? null : event.target.value;
