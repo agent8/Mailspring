@@ -6,35 +6,27 @@
  */
 import Sift from '../../../src/flux/models/sift';
 const _ = require('underscore');
-const {
-  Actions,
-  SyncbackCategoryTask,
-  CategoryStore,
-  Label,
-  ExtensionRegistry,
-  RegExpUtils,
-  OutboxStore,
-} = require('mailspring-exports');
+const { CategoryStore, ExtensionRegistry, OutboxStore } = require('mailspring-exports');
 
 const SidebarItem = require('./sidebar-item');
-const SidebarActions = require('./sidebar-actions');
+// const SidebarActions = require('./sidebar-actions');
 const DIVIDER_OBJECT = { id: 'divider' };
 const MORE_TOGGLE = { id: 'moreToggle' };
 export const nonFolderIds = [DIVIDER_OBJECT.id, MORE_TOGGLE.id];
-function isSectionCollapsed(title) {
-  if (AppEnv.savedState.sidebarKeysCollapsed[title] !== undefined) {
-    return AppEnv.savedState.sidebarKeysCollapsed[title];
-  } else {
-    return false;
-  }
-}
-
-function toggleSectionCollapsed(section) {
-  if (!section) {
-    return;
-  }
-  SidebarActions.setKeyCollapsed(section.title, !isSectionCollapsed(section.title));
-}
+// function isSectionCollapsed(title) {
+//   if (AppEnv.savedState.sidebarKeysCollapsed[title] !== undefined) {
+//     return AppEnv.savedState.sidebarKeysCollapsed[title];
+//   } else {
+//     return false;
+//   }
+// }
+//
+// function toggleSectionCollapsed(section) {
+//   if (!section) {
+//     return;
+//   }
+//   SidebarActions.setKeyCollapsed(section.title, !isSectionCollapsed(section.title));
+// }
 
 export default class SidebarSection {
   static empty(title) {
@@ -124,6 +116,7 @@ export default class SidebarSection {
   }
 
   static standardSectionForAccounts(accounts) {
+    CategoryStore.restoreCategoriesForFolderTree();
     const items = [];
     const outboxCount = OutboxStore.count();
     const outboxOpts = {
@@ -133,7 +126,10 @@ export default class SidebarSection {
     if (accounts.length === 1) {
       outbox = SidebarItem.forOutbox([accounts[0].id], outboxOpts);
     } else {
-      outbox = SidebarItem.forOutbox(accounts.map(act => act.id), outboxOpts);
+      outbox = SidebarItem.forOutbox(
+        accounts.map(act => act.id),
+        outboxOpts
+      );
     }
     if (!accounts || accounts.length === 0) {
       return this.empty('All Accounts');
@@ -259,12 +255,15 @@ export default class SidebarSection {
       collapsed: isShowAll,
       name: `${account.id}-single-moreToggle`,
     });
-    for (let category of CategoryStore.userCategories(account)) {
+    const categories = CategoryStore.userCategoriesForFolderTree(account);
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i];
       let item;
       const parent = CategoryStore.getCategoryParent(category);
       if (parent) {
         continue;
       }
+      CategoryStore.removeFromFolderTreeRenderArray(account, i);
       item = SidebarItem.forCategories([category], { hideWhenCrowded: items.length >= 3 }, false);
       if (item) {
         if (items.length === 3 && !isShowAll) {
