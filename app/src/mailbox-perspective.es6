@@ -61,9 +61,9 @@ export default class MailboxPerspective {
   static forAllTrash(accountsOrIds) {
     const categories = CategoryStore.getCategoriesWithRoles(accountsOrIds, 'trash');
     if (Array.isArray(categories) && categories.length > 0) {
-      return this.forCategories(categories);
+      return new AllTrashMailboxPerspective(categories);
     } else {
-      return null;
+      return this.forNothing();
     }
   }
 
@@ -296,6 +296,11 @@ export default class MailboxPerspective {
       if (json.type === AllSentMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
         return MailboxPerspective.forAllSent(categories);
+      }
+      if (json.type === AllTrashMailboxPerspective.name) {
+        const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
+        const accountIds = categories.map(cat => cat && cat.accountId);
+        return MailboxPerspective.forAllTrash(accountIds);
       }
       if (json.type === AllArchiveCategoryMailboxPerspective.name) {
         const categories = JSON.parse(json.serializedCategories).map(Utils.convertToModel);
@@ -1761,6 +1766,32 @@ class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
 
   isEqual(other) {
     return other.isAllArchive;
+  }
+}
+class AllTrashMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(_categories) {
+    super(_categories);
+    this.name = 'all-trash';
+    this.displayName = 'Trash';
+    this.isAllTrash = true;
+    this._categoryMetaDataId = 'all-trash';
+  }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
+  }
+  toJSON() {
+    const json = super.toJSON();
+    json.isAllTrash = true;
+    return json;
+  }
+  isEqual(other) {
+    return other.isAllTrash;
   }
 }
 
