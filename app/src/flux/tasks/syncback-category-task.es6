@@ -2,6 +2,13 @@ import utf7 from 'utf7';
 import Task from './task';
 import Attributes from '../attributes';
 import Folder from '../models/folder';
+let actions = null;
+const Actions = () => {
+  if (!actions) {
+    actions = require('mailspring-exports').Actions;
+  }
+  return actions;
+};
 const fromDelimiterJsonMappings = val => {
   return String.fromCharCode(val);
 };
@@ -87,5 +94,14 @@ export default class SyncbackCategoryTask extends Task {
     return this.existingPath
       ? `Renaming ${utf7.imap.decode(this.existingPath)}`
       : `Creating ${utf7.imap.decode(this.path)}`;
+  }
+  onSuccess() {
+    if (this.colorChangeOnly) {
+      Actions().updateCategoryStoreLabelBgColor({
+        fullPath: this.path,
+        accountId: this.accountId,
+        newColor: this.bgColor,
+      });
+    }
   }
 }

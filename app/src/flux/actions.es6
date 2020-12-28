@@ -1,5 +1,4 @@
 import Reflux from 'reflux';
-import { Action } from 'rxjs/internal/scheduler/Action';
 
 const ActionScopeWindow = 'window';
 const ActionScopeGlobal = 'global';
@@ -530,6 +529,7 @@ class Actions {
   static broadcastDraftAttachmentState = ActionScopeGlobal;
   static bulkUpdateDraftFiles = ActionScopeWindow;
 
+  static updateCategoryStoreLabelBgColor = ActionScopeMainWindow;
   static syncFolders = ActionScopeMainWindow;
   static syncFolderList = ActionScopeMainWindow;
   static syncSiftFolder = ActionScopeMainWindow;
