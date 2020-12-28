@@ -202,7 +202,7 @@ class OutlineViewItem extends Component {
 
   UNSAFE_componentWillReceiveProps(newProps) {
     if (!newProps.isEditingMenu && this.props.isEditingMenu) {
-      this.setState({ newFolderName: '' });
+      this.setState({ newFolderName: '', newFolderIsHidden: false });
     }
     if (newProps.editing) {
       this.setState({ editing: newProps.editing });
