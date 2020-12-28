@@ -179,6 +179,9 @@ class CategoryStore extends MailspringStore {
     if (Array.isArray(accountsOrIds)) {
       let res = [];
       for (const accOrId of accountsOrIds) {
+        if (!accOrId) {
+          continue;
+        }
         const cats = names.map(name => this.getCategoryByRole(accOrId, name));
         res = res.concat(_.compact(cats));
       }
