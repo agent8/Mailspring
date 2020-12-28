@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import RetinaImg from './retina-img';
 import OutlineViewItem from './outline-view-item';
 import PropTypes from 'prop-types';
+import Actions from '../flux/actions';
 
 /*
  * Renders a section that contains a list of {@link OutlineViewItem}s. These items can
@@ -164,6 +165,10 @@ class OutlineView extends Component {
         }
       }
     });
+    if (ret.length === 0) {
+      ret.push(EditMenu());
+      ret.push(Divider(1));
+    }
     return ret;
   }
 
@@ -200,6 +205,18 @@ export const NEW_FOLDER_KEY = 'newFolder';
 export const MORE_TOGGLE = 'moreToggle';
 export const Divider = key => {
   return <div key={key} className="sidebar-divider" />;
+};
+const EditMenu = () => {
+  const onClick = e => {
+    e.stopPropagation();
+    e.preventDefault();
+    Actions.setEditingMenu(true);
+  };
+  return (
+    <div key="addFolder" className="item-container item name inEditMode" onClick={onClick}>
+      <span className="sidebar-add-folder">Edit Menu</span>
+    </div>
+  );
 };
 export const AddFolder = onAddFolder => {
   const onClick = e => {
