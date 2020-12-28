@@ -245,6 +245,7 @@ class PreferencesLabels extends React.Component {
         account={this.state.selectedAccount}
         name={category.name}
         isNew={false}
+        originalBgColor={category.bgColor}
         onCancel={this._onClosePopOver}
         onActionCallback={this._onLabelCreated}
       />,

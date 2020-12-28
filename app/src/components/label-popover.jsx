@@ -14,6 +14,7 @@ export default class LabelPopover extends Component {
     name: PropTypes.string,
     buttonTimeout: PropTypes.number,
     visible: PropTypes.bool,
+    originalBgColor: PropTypes.number,
   };
   static defaultProps = {
     left: 490,
@@ -28,7 +29,7 @@ export default class LabelPopover extends Component {
       newName: this.props.name || '',
       alsoMove: true,
       isBusy: false,
-      bgColor: 0,
+      bgColor: props.originalBgColor || 0,
     };
     this._mounted = false;
     this._buttonTimer = null;

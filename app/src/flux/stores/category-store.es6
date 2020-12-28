@@ -54,13 +54,37 @@ class CategoryStore extends MailspringStore {
     Actions.queueTasks.listen(this._processCategoryChangeTasks, this);
     Actions.queueTask.listen(this._processCategoryChangeTasks, this);
     Actions.syncFolders.listen(this._onSyncCategory, this);
+    Actions.updateCategoryStoreLabelBgColor.listen(this.updateCategoryColorById, this);
     Actions.cancelCategoryMeteDataChange.listen(this.cancelCategoryMetaDataChange, this);
     Actions.saveCategoryMetaDataChange.listen(this.saveCategoryMetaDataChange, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
-  // decodePath(pathString) {
-  //   return Category.pathToDisplayName(pathString);
-  // }
+  updateCategoryColorById({ fullPath, accountId, newColor } = {}) {
+    if (!fullPath || !accountId) {
+      return;
+    }
+    const category = this.getCategoryByPath(fullPath, accountId);
+    if (!category) {
+      return;
+    }
+    const updateColor = () => {
+      for (let i = 0; i < cats.length; i++) {
+        if (cats[i].id === category.id) {
+          cats[i].bgColor = newColor;
+          break;
+        }
+      }
+    };
+    let cats = this._categoryCache[accountId];
+    updateColor();
+    cats = this._userCategories[accountId];
+    updateColor();
+    cats = this._standardCategories[accountId];
+    updateColor();
+    cats = this._hiddenCategories[accountId];
+    updateColor();
+    this.trigger();
+  }
   byFolderId(categoryId) {
     if (!categoryId) {
       return null;
