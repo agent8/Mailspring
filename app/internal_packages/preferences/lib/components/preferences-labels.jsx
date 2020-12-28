@@ -52,9 +52,7 @@ class PreferencesLabels extends React.Component {
   _setupDataSource = selectedAccount => {
     let labelsDataSource = null;
     if (selectedAccount) {
-      const categories = CategoryStore.userCategories(selectedAccount).filter(cat => {
-        return cat.selectable;
-      });
+      const categories = CategoryStore.userCategories(selectedAccount);
       labelsDataSource = new LabelsDataSource({
         labels: categories,
         keys: [
@@ -106,6 +104,9 @@ class PreferencesLabels extends React.Component {
   _renderEditControls = rowIndex => {
     const categoryId = this.state.labelsDataSource.cellAt({ rowIdx: rowIndex, colIdx: 2 });
     const category = CategoryStore.byFolderId(categoryId);
+    if (!category.selectable) {
+      return <TableCell isHeader={false} />;
+    }
     return (
       <TableCell isHeader={false}>
         <span className="label-pill pill-selected" onClick={this._onEditLabel.bind(this, category)}>
