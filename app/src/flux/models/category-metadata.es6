@@ -1,20 +1,25 @@
 import crypto from 'crypto';
 const localStorage = window.localStorage;
 const storageKey = 'categoryMetadata';
+const storageVersion = 1;
+const defaultData = { sift: {}, version: storageVersion };
 class CategoryMetaData {
   constructor() {
     this._loadStorage();
   }
   _loadStorage = () => {
-    const storedString = localStorage.getItem(storageKey) || '{ "sift": {} }';
+    const storedString = localStorage.getItem(storageKey) || JSON.stringify(defaultData);
     if (storedString) {
       try {
         this._accounts = JSON.parse(storedString);
       } catch (e) {
-        console.error(storedString);
+        AppEnv.logError(storedString);
         AppEnv.logError(e);
-        this._accounts = { sift: {} };
+        this._accounts = defaultData;
       }
+    }
+    if (!Object.prototype.hasOwnProperty.call(this._accounts, 'version')) {
+      this._accounts.version = 1;
     }
   };
   _updateStorage = () => {
