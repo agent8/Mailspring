@@ -91,8 +91,11 @@ mailspring-workspace {
 .layout-mode-split {
   .column-OutboxMessage,
   .column-MessageList {
-    & > div {
-      margin-top: 0;
+    // & > div {
+    //   margin-top: 0;
+    // }
+    &::before {
+      display: none;
     }
   }
 }
@@ -771,10 +774,15 @@ body.platform-win32 {
 .column-OutboxMessage,
 .column-ThreadList,
 .column-MessageList {
-  & > div {
-    margin-top: @search-bar-height;
-  }
+  // & > div {
+  //   margin-top: @search-bar-height;
+  // }
   // -webkit-app-region: no-drag;
+  &::before {
+    content: ' ';
+    display: block;
+    min-height: @search-bar-height;
+  }
   div {
     // This is for DC-182 reduce height because of thread-list-empty-bar
     div:nth-child(2).key-commands-region.thread-list,
