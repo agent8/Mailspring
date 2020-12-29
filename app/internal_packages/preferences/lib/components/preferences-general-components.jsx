@@ -12,11 +12,14 @@ import { ListensToFluxStore, Menu, ButtonDropdown } from 'mailspring-component-k
 import ConfigSchemaItem from './config-schema-item';
 import { UpdateMailSyncSettings } from '../preferences-utils';
 import _ from 'underscore';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, shell } from 'electron';
 
 export class DefaultMailClientItem extends React.Component {
-  constructor() {
-    super();
+  static propTypes = {
+    label: PropTypes.string,
+  };
+  constructor(props) {
+    super(props);
     this.state = { defaultClient: false };
     this._helper = new DefaultClientHelper();
   }
@@ -30,7 +33,7 @@ export class DefaultMailClientItem extends React.Component {
         }
       });
     } else {
-      this.state = { defaultClient: 'unknown' };
+      this.setState({ defaultClient: 'unknown' });
     }
   }
 
@@ -95,8 +98,11 @@ export class DefaultMailClientItem extends React.Component {
 }
 
 export class LaunchSystemStartItem extends React.Component {
-  constructor() {
-    super();
+  static propTypes = {
+    label: PropTypes.string,
+  };
+  constructor(props) {
+    super(props);
     this.state = {
       available: false,
       launchOnStart: false,
@@ -151,6 +157,9 @@ export class LaunchSystemStartItem extends React.Component {
 }
 
 export class EnableFocusInboxItem extends React.Component {
+  static propTypes = {
+    label: PropTypes.string,
+  };
   constructor(props) {
     super(props);
     this.state = {
@@ -252,6 +261,11 @@ export const DefaultAccountSending = ListensToFluxStore(DefaultSendAccount, {
 
 export class DownloadSelection extends React.Component {
   static displayName = 'DownloadSelection';
+  static propTypes = {
+    config: PropTypes.object,
+    keyPath: PropTypes.string,
+    label: PropTypes.string,
+  };
 
   constructor() {
     super();
@@ -327,7 +341,12 @@ export class DownloadSelection extends React.Component {
     );
   }
 }
-
+const clearLocalStorageData = () => {
+  const localStorage = window.localStorage;
+  if (localStorage) {
+    localStorage.clear();
+  }
+};
 export class LocalData extends React.Component {
   static displayName = 'LocalData';
 
@@ -338,6 +357,7 @@ export class LocalData extends React.Component {
   }
 
   _onResetEmailCache = () => {
+    clearLocalStorageData();
     Actions.forceKillAllClients('onResetEmailCache');
   };
   _onVacuumDB = () => {
@@ -349,6 +369,7 @@ export class LocalData extends React.Component {
       return;
     }
     this.resetStarted = true;
+    clearLocalStorageData();
     AppEnv.expungeLocalAndReboot();
   };
 
@@ -373,6 +394,9 @@ export class TaskDelay extends React.Component {
   static displayName = 'TaskDelay';
   static propTypes = {
     config: PropTypes.object.isRequired,
+    keyPath: PropTypes.string,
+    configSchema: PropTypes.object,
+    label: PropTypes.string,
   };
   constructor(props) {
     super(props);
@@ -398,7 +422,7 @@ export class TaskDelay extends React.Component {
   getSelectedMenuItem(items) {
     const selected = this.props.config.get(this.props.keyPath);
     for (const item of items) {
-      const [value, label] = item;
+      const [value] = item;
       if (value === selected) {
         return this._renderMenuItem(item);
       }
