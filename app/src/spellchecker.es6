@@ -140,26 +140,30 @@ class Spellchecker {
       const corrections = this.handler.currentSpellchecker.getCorrectionsForMisspelling(word);
       if (corrections.length > 0) {
         corrections.forEach(correction => {
-          menu.push({
-            label: correction,
-            click: () => onCorrect(correction),
-          });
+          menu.append(
+            new MenuItem({
+              label: correction,
+              click: () => onCorrect(correction),
+            })
+          );
         });
       } else {
-        menu.push({ label: 'No Guesses Found' });
+        menu.append(new MenuItem({ label: 'No Guesses Found' }));
       }
-      menu.push({ type: 'divider' });
+      menu.append(new MenuItem({ type: 'separator' }));
 
-      menu.push({
-        label: 'Learn Spelling',
-        click: () => {
-          this.learnWord(word);
-          if (onDidLearn) {
-            onDidLearn(word);
-          }
-        },
-      });
-      menu.push({ type: 'divider' });
+      menu.append(
+        new MenuItem({
+          label: 'Learn Spelling',
+          click: () => {
+            this.learnWord(word);
+            if (onDidLearn) {
+              onDidLearn(word);
+            }
+          },
+        })
+      );
+      menu.append(new MenuItem({ type: 'separator' }));
     }
   };
 }

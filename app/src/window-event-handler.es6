@@ -1,10 +1,9 @@
 /* eslint global-require: 0 */
-import { shell, ipcRenderer, remote, clipboard } from 'electron';
+import { ipcRenderer, remote, clipboard } from 'electron';
 import url from 'url';
 
 let ComponentRegistry = null;
 let Spellchecker = null;
-let Actions = null;
 
 const isTextInput = node => {
   if (!node) {
@@ -339,37 +338,45 @@ export default class WindowEventHandler {
     { onCorrect, onRestoreSelection = () => {} },
     mouseEvent
   ) {
-    Actions = Actions || require('./flux/actions').default;
-    const menu = [];
+    const { Menu, MenuItem } = remote;
+    const menu = new Menu();
 
     Spellchecker = Spellchecker || require('./spellchecker').default;
     Spellchecker.appendSpellingItemsToMenu({ menu, word, onCorrect });
 
-    menu.push({
-      label: 'Cut',
-      disabled: !hasSelectedText,
-      click: () => AppEnv.commands.dispatch('core:cut', { text: word }),
-    });
-    menu.push({
-      label: 'Copy',
-      disabled: !hasSelectedText,
-      click: () => AppEnv.commands.dispatch('core:copy', { text: word }),
-    });
-    menu.push({
-      label: 'Paste',
-      click: () => {
-        onRestoreSelection();
-        AppEnv.commands.dispatch('core:paste');
-      },
-    });
-    menu.push({
-      label: 'Paste without Style',
-      click: () => {
-        onRestoreSelection();
-        AppEnv.commands.dispatch('core:paste-and-match-style');
-      },
-    });
-    Actions.openContextMenu({ menuItems: menu, mouseEvent });
+    menu.append(
+      new MenuItem({
+        label: 'Cut',
+        enabled: hasSelectedText,
+        click: () => AppEnv.commands.dispatch('core:cut', { text: word }),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        label: 'Copy',
+        enable: hasSelectedText,
+        click: () => AppEnv.commands.dispatch('core:copy', { text: word }),
+      })
+    );
+    menu.append(
+      new MenuItem({
+        label: 'Paste',
+        click: () => {
+          onRestoreSelection();
+          AppEnv.commands.dispatch('core:paste');
+        },
+      })
+    );
+    menu.append(
+      new MenuItem({
+        label: 'Paste without Style',
+        click: () => {
+          onRestoreSelection();
+          AppEnv.commands.dispatch('core:paste-and-match-style');
+        },
+      })
+    );
+    menu.popup({});
   }
 
   showDevModeMessages() {
