@@ -244,6 +244,7 @@ class SidebarItem {
         },
         toggleHide: toggleItemHide,
         isHidden: perspective.isHidden(),
+        hideOnEditingMenu: opts.hideOnEditingMenu || false,
         threadTitleName: perspective.threadTitleName,
         contextMenuLabel: perspective.displayName,
         count: countForItem(perspective),
@@ -579,6 +580,7 @@ class SidebarItem {
   }
   static forOutbox(accountIds, opts = {}) {
     opts.iconName = 'outbox.svg';
+    opts.hideOnEditingMenu = true;
     const perspective = MailboxPerspective.forOutbox(accountIds);
     const id = 'outbox';
     return this.forPerspective(id, perspective, opts);

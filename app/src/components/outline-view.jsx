@@ -145,6 +145,9 @@ class OutlineView extends Component {
       if (!this.props.isEditingMenu && item.isHidden) {
         return;
       }
+      if (this.props.isEditingMenu && item.hideOnEditingMenu) {
+        return;
+      }
       if (item.name) {
         ret.push(
           <OutlineViewItem
