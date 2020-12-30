@@ -427,6 +427,15 @@ const TaskFactory = {
   },
 
   tasksForRenamingPath({ existingPath, newName, accountId } = {}) {
+    if (typeof newName === 'string' && newName.trim().length === 0) {
+      AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in empty`);
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `It is an empty path`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -457,6 +466,15 @@ const TaskFactory = {
     return SyncbackCategoryTask.forRenaming({ path: existingPath, accountId, newName, isExchange });
   },
   tasksForEditingLabel({ currentName, newName, accountId, newColor } = {}) {
+    if (typeof newName === 'string' && newName.trim().length === 0) {
+      AppEnv.logWarning(`TaskFactory:Renaming Label ${newName} is in empty`);
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `It is an empty label`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Edit folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -499,6 +517,15 @@ const TaskFactory = {
       AppEnv.logError(
         `Task for creating path received a empty string for name, accountId ${accountId}, parentId: ${parentId}`
       );
+      return;
+    }
+    if (typeof name === 'string' && name.trim().length === 0) {
+      AppEnv.logWarning(`TaskFactory:Create folder ${name} is in empty`);
+      AppEnv.showMessageBox({
+        title: 'Cannot create',
+        detail: `It is an empty string`,
+        buttons: ['Ok'],
+      });
       return;
     }
     if (bannedPathNames.includes(name)) {
