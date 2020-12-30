@@ -14,7 +14,10 @@ class SizeToFitInput extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {};
+    this._inputRef = null;
+    this._setInputRef = ref => (this._inputRef = ref);
+    this._measureRef = null;
+    this._setMeasureRef = ref => (this._measureRef = ref);
   }
 
   componentDidMount() {
@@ -31,44 +34,51 @@ class SizeToFitInput extends React.Component {
     }
     // Measure the width of the text in the input and
     // resize the input field to fit.
-    const inputEl = ReactDOM.findDOMNode(this.refs.input);
-    const measureEl = ReactDOM.findDOMNode(this.refs.measure);
+    const inputEl = this._inputRef;
+    const measureEl = this._measureRef;
     measureEl.innerText = inputEl.value;
     measureEl.style.top = `${inputEl.offsetTop}px`;
     measureEl.style.left = `${inputEl.offsetLeft}px`;
     // The 10px comes from the 7.5px left padding and 2.5px more of
     // breathing room.
-    inputEl.style.width = `${measureEl.offsetWidth + 10}px`;
+    // inputEl.style.width = `${measureEl.offsetWidth + 10}px`;
   }
 
   select() {
-    ReactDOM.findDOMNode(this.refs.input).select();
+    if (this._inputRef) {
+      this._inputRef.select();
+    }
   }
 
   selectionRange() {
-    const inputEl = ReactDOM.findDOMNode(this.refs.input);
-    return {
-      start: inputEl.selectionStart,
-      end: inputEl.selectionEnd,
-    };
+    if (this._inputRef) {
+      return {
+        start: this._inputRef.selectionStart,
+        end: this._inputRef.selectionEnd,
+      };
+    } else {
+      return { start: null, end: null };
+    }
   }
 
   focus() {
-    ReactDOM.findDOMNode(this.refs.input).focus();
+    if (this._inputRef) {
+      this._inputRef.focus();
+    }
   }
 
   render() {
     return (
-      <span>
+      <span style={{ flexGrow: '1' }}>
         <span
           className="hidden-span"
-          ref="measure"
+          ref={this._setMeasureRef}
           style={{ visibility: 'hidden', position: 'absolute' }}
         />
         <input
-          ref="input"
+          ref={this._setInputRef}
           type="text"
-          style={{ width: 1, margin: '-2px 1px 1px 1px' }}
+          style={{ width: '100%', margin: '-2px 1px 1px 1px' }}
           {...this.props}
         />
       </span>
@@ -90,6 +100,7 @@ class Token extends React.Component {
     onAction: PropTypes.func,
     disabled: PropTypes.bool,
     onEditMotion: PropTypes.func,
+    children: PropTypes.any,
   };
 
   static defaultProps = {
@@ -98,6 +109,8 @@ class Token extends React.Component {
 
   constructor(props) {
     super(props);
+    this._inputRef = null;
+    this._setInputRef = ref => (this._inputRef = ref);
     this.state = {
       editing: false,
       editingValue: this.props.item.toString(),
@@ -113,15 +126,15 @@ class Token extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (this.state.editing && !prevState.editing) {
-      this.refs.input.select();
+    if (this.state.editing && !prevState.editing && this._inputRef) {
+      this._inputRef.select();
     }
   }
 
   _renderEditing() {
     return (
       <SizeToFitInput
-        ref="input"
+        ref={this._setInputRef}
         className="token-editing-input"
         spellCheck="false"
         value={this.state.editingValue}
@@ -393,6 +406,10 @@ export default class TokenizingTextField extends React.Component {
 
   constructor(props) {
     super(props);
+    this._inputRef = null;
+    this._setInputRef = ref => (this._inputRef = ref);
+    this._completionRef = null;
+    this._setCompletionRef = ref => (this._completionRef = ref);
     this.state = {
       inputValue: props.defaultValue || '',
       completions: [],
@@ -482,7 +499,10 @@ export default class TokenizingTextField extends React.Component {
       }
     } else if (['ArrowLeft', 'ArrowRight'].includes(event.key)) {
       const delta = event.key === 'ArrowLeft' ? -1 : 1;
-      const { start } = this.refs.input.selectionRange();
+      const { start } = this._inputRef.selectionRange();
+      if (start === null) {
+        return;
+      }
 
       // with tokens selected, arrow keys manipulate the selection
       if (this.state.selectedKeys.length > 0) {
@@ -572,8 +592,8 @@ export default class TokenizingTextField extends React.Component {
 
     // default behavior
     let token = null;
-    if (completions.length > 0) {
-      token = this.refs.completions.getSelectedItem() || completions[0];
+    if (completions.length > 0 && this._completionRef) {
+      token = this._completionRef.getSelectedItem() || completions[0];
     }
 
     // allow our container to override behavior
@@ -630,7 +650,7 @@ export default class TokenizingTextField extends React.Component {
   }
 
   focus() {
-    this.refs.input.focus();
+    this._inputRef.focus();
   }
 
   // Managing Tokens
@@ -809,7 +829,7 @@ export default class TokenizingTextField extends React.Component {
       event.clipboardData.setData('text/plain', text);
       event.clipboardData.setData('nylas-token-items', json);
 
-      const range = this.refs.input.selectionRange();
+      const range = this._inputRef.selectionRange();
       if (range.end > 0) {
         const inputSelection = this.state.inputValue.substr(range.start, range.end - range.start);
         event.clipboardData.setData('nylas-token-input', inputSelection);
@@ -900,7 +920,7 @@ export default class TokenizingTextField extends React.Component {
       props.onChange = () => 'noop';
       props.value = '';
     }
-    return <SizeToFitInput ref="input" spellCheck="false" {...props} />;
+    return <SizeToFitInput ref={this._setInputRef} spellCheck="false" {...props} />;
   }
 
   _placeholderComponent() {
@@ -964,7 +984,6 @@ export default class TokenizingTextField extends React.Component {
     return (
       <KeyCommandsRegion
         key="field-component"
-        ref="field-drop-target"
         localHandlers={{
           'core:select-all': this._onSelectAll,
         }}
@@ -1000,7 +1019,7 @@ export default class TokenizingTextField extends React.Component {
     return (
       <Menu
         className={classes}
-        ref="completions"
+        ref={this._setCompletionRef}
         items={this.state.completions}
         itemKey={item => item.id}
         itemContext={{ inputValue: this.state.inputValue }}
