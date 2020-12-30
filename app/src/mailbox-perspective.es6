@@ -762,6 +762,16 @@ class OutboxMailboxPerspective extends MailboxPerspective {
     }
     return ret.total;
   }
+  hide() {
+    //no-op
+  }
+  show() {
+    //no-op
+  }
+
+  canReceiveFolderTreeData(folderData) {
+    return false;
+  }
 
   canReceiveThreadsFromAccountIds() {
     return false;
