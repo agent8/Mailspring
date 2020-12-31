@@ -28,6 +28,7 @@ let getDeviceHash = null;
 const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
 const WebServerRoot = 'https://web-marketing.edison.tech/';
 const type = 'mac';
+const windowStateStorageVersion = 1;
 
 function ensureInteger(f, fallback) {
   let int = f;
@@ -1623,7 +1624,10 @@ export default class AppEnvConstructor {
       console.warn(`Error parsing window state: ${error.stack}`, error);
     }
     if (!this.savedState) {
-      this.savedState = {};
+      this.savedState = { version: windowStateStorageVersion };
+    }
+    if (!Object.prototype.hasOwnProperty.call(this.savedState, 'version')) {
+      this.savedState.version = 1;
     }
   }
 
