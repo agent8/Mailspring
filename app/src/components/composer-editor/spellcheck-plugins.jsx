@@ -5,6 +5,7 @@ import { BLOCK_CONFIG } from './base-block-plugins';
 import { LINK_TYPE } from './link-plugins';
 import { VARIABLE_TYPE } from './template-plugins';
 import { MARK_CONFIG } from './base-mark-plugins';
+let KeyboardLayout;
 
 /* Why not use the spellchecking built-in to Slate? It falls through to the
 native spellcheck APIs (which we also customize for the rest of the app), but
@@ -46,7 +47,12 @@ function renderMark(props) {
           }
           event.preventDefault();
           // select the entire word so that the contextual menu offers spelling suggestions
-          const { editor: { onChange, value }, node, offset, text } = props;
+          const {
+            editor: { onChange, value },
+            node,
+            offset,
+            text,
+          } = props;
           onChange(
             value.change().select(
               Range.create({
@@ -243,10 +249,20 @@ function onChange(change, editor) {
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => onSpellcheckFullDocument(editor), 1000);
 }
-function onKeyUp(event, change) {
+function onKeyUp(event, change, editor) {
   if (!['Space', ' ', 'Tab'].includes(event.key)) {
     return;
   }
+  // Japanese input issue: when using space key to choose suggestions, should not execute spellcheck
+  if (editor.state.isComposing) {
+    if (!KeyboardLayout) {
+      KeyboardLayout = require('keyboard-layout');
+    }
+    if (KeyboardLayout && KeyboardLayout.getCurrentKeyboardLayout().includes('Japanese')) {
+      return;
+    }
+  }
+
   // DC-1046 We moved from onChange because for some reason, this is causing direction key to not work when
   // attachment is part of draft.
   // We use onKeyUp because using onKeyDown will set last word as focused, which our spellchecker will ignore
