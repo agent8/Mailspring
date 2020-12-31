@@ -22,6 +22,7 @@ const AccountStore = () => {
   accountStore = accountStore || require('../stores/account-store').default;
   return accountStore;
 };
+import AccountAliasesTask from './account-aliases-task';
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -612,6 +613,15 @@ const TaskFactory = {
     });
 
     return tasks;
+  },
+  taskForUpdateAccountAliases(accountId, aliases) {
+    if (!accountId) {
+      return null;
+    }
+    if (!Array.isArray(aliases)) {
+      return null;
+    }
+    return new AccountAliasesTask({ accountId, aliases });
   },
 
   findPreviousFolder(currentPerspective, accountId) {

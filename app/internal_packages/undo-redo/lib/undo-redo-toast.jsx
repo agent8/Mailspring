@@ -1,5 +1,6 @@
+import React from 'react';
+import PropTypes from 'prop-types';
 import {
-  React,
   UndoRedoStore,
   OutboxStore,
   SyncbackMetadataTask,
@@ -25,10 +26,35 @@ function isUndoSend(block) {
     block.tasks[0] instanceof SendDraftTask
   );
 }
+const expandMessageDelay = 200;
 
 class BasicContent extends React.Component {
+  static propTypes = {
+    onClose: PropTypes.func,
+    block: PropTypes.object.isRequired,
+    onMouseEnter: PropTypes.func,
+    onMouseLeave: PropTypes.func,
+  };
   constructor(props) {
     super(props);
+    this._mounted = false;
+    this._messageHoverTimer = null;
+    this._messageLeaveTimer = null;
+    this.state = { expandMessage: false };
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
+    if (this._messageLeaveTimer) {
+      clearTimeout(this._messageLeaveTimer);
+      this._messageLeaveTimer = null;
+    }
+    if (this._messageHoverTimer) {
+      clearTimeout(this._messageHoverTimer);
+      this._messageHoverTimer = null;
+    }
   }
 
   _generateDescription() {
@@ -86,13 +112,56 @@ class BasicContent extends React.Component {
     }
     return block.description;
   }
+  _onMessageHover = e => {
+    if (!this._mounted) {
+      return;
+    }
+    e.preventDefault();
+    if (this._messageLeaveTimer) {
+      clearTimeout(this._messageLeaveTimer);
+      this._messageLeaveTimer = null;
+    }
+    if (!this._messageHoverTimer) {
+      this._messageHoverTimer = setTimeout(() => {
+        this._messageHoverTimer = null;
+        if (this._mounted) {
+          this.setState({ expandMessage: true });
+        }
+      }, expandMessageDelay);
+    }
+  };
+  _onMessageMouseLeave = e => {
+    if (!this._mounted) {
+      return;
+    }
+    e.preventDefault();
+    if (this._messageHoverTimer) {
+      clearTimeout(this._messageHoverTimer);
+      this._messageHoverTimer = null;
+    }
+    if (!this._messageLeaveTimer) {
+      this._messageLeaveTimer = setTimeout(() => {
+        this._messageLeaveTimer = null;
+        if (this._mounted) {
+          this.setState({ expandMessage: false });
+        }
+      }, expandMessageDelay);
+    }
+  };
 
   render() {
     const { block, onMouseEnter, onMouseLeave, onClose } = this.props;
     const description = this._generateDescription();
+    const className = `content ${this.state.expandMessage ? 'expand-message' : ''}`;
     return (
-      <div className="content" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-        <div className="message">{description}</div>
+      <div className={className} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        <div
+          className="message"
+          onMouseOver={this._onMessageHover}
+          onMouseLeave={this._onMessageMouseLeave}
+        >
+          {description}
+        </div>
         <div className="action">
           <RetinaImg
             name="close_1.svg"
@@ -113,11 +182,12 @@ class UndoSendContent extends BasicContent {
   constructor(props) {
     super(props);
     this.timer = null;
-    this.mounted = false;
+    this._mounted = false;
+    this.state = { expandMessage: false };
   }
 
   componentDidMount() {
-    this.mounted = true;
+    this._mounted = true;
   }
   componentWillReceiveProps(nextProps, nextContext) {
     if (nextProps.block && this.props.block && nextProps.block.id !== this.props.block.id) {
@@ -126,8 +196,16 @@ class UndoSendContent extends BasicContent {
   }
 
   componentWillUnmount() {
-    this.mounted = false;
+    this._mounted = false;
     clearTimeout(this.timer);
+    if (this._messageLeaveTimer) {
+      clearTimeout(this._messageLeaveTimer);
+      this._messageLeaveTimer = null;
+    }
+    if (this._messageHoverTimer) {
+      clearTimeout(this._messageHoverTimer);
+      this._messageHoverTimer = null;
+    }
   }
 
   onActionClicked = () => {
@@ -234,11 +312,19 @@ class UndoSendContent extends BasicContent {
     }
     return (
       <div
-        className={`content ${this.props.block.sendStatus === 'failed' ? 'failed' : ''}`}
+        className={`content ${this.props.block.sendStatus === 'failed' ? 'failed' : ''} ${
+          this.state.expandMessage ? 'expand-message' : ''
+        }`}
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
       >
-        <div className="message">{messageStatus}</div>
+        <div
+          className="message"
+          onMouseOver={this._onMessageHover}
+          onMouseLeave={this._onMessageMouseLeave}
+        >
+          {messageStatus}
+        </div>
         <div className="action">
           <RetinaImg
             name="close_1.svg"

@@ -320,6 +320,13 @@ export default class MessageItem extends React.Component {
   }
 
   _renderBlockNote() {
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (currentPerspective) {
+      const sharedRole = currentPerspective.categoriesSharedRole();
+      if (sharedRole && sharedRole === 'trash') {
+        return null;
+      }
+    }
     if (this.state.isBlocked) {
       const { message } = this.props;
       return (
