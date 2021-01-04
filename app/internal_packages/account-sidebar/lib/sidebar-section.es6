@@ -177,7 +177,7 @@ export default class SidebarSection {
     const accountItems = [];
     accounts.forEach(acc => {
       const accountFolderItems = this.standardSectionForAccount(acc).items;
-      accountFolderItems.sort(SidebarSection.sortByDisplayOrder);
+      SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(accountFolderItems);
       const newFolder = SidebarStore().getNewFolder();
       let forceExpand = undefined;
       if (newFolder) {
@@ -197,7 +197,7 @@ export default class SidebarSection {
       });
       accountItems.push(item);
     });
-    accountItems.sort(SidebarSection.sortByDisplayOrder);
+    SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(accountItems);
     items.push(...accountItems);
     if (accounts.length > 1) {
       items.push(ADD_FOLDER_OBJECT);
@@ -287,7 +287,8 @@ export default class SidebarSection {
       if (folderItem) {
         shortcutItems.push(folderItem);
       }
-      shortcutItems.sort(SidebarSection.sortByDisplayOrder);
+      SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(shortcutItems);
+
       items.push(...shortcutItems);
     }
     SidebarSection.forSiftCategories(accountIds, items);
@@ -376,6 +377,21 @@ export default class SidebarSection {
       return a.displayOrder - b.displayOrder;
     }
   };
+  static sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder = items => {
+    items.sort(SidebarSection.sortByDisplayOrder);
+    for (let i = 0; i < items.length; i++) {
+      if (
+        items[i] &&
+        items[i].perspective &&
+        typeof items[i].perspective.setDisplayOrder === 'function'
+      ) {
+        items[i].perspective.setDisplayOrder(i, false);
+      } else {
+        console.log(`no setDisplayOrder ${items[i].id}`);
+      }
+    }
+    CategoryStore.saveCategoryMetaDataChange(false);
+  };
 
   static forSiftCategories(accountsOrIds, items) {
     if (!Array.isArray(accountsOrIds) || !Array.isArray(items)) {
@@ -418,7 +434,7 @@ export default class SidebarSection {
       siftItems.push(folderItem);
     }
     if (siftItems.length > 0) {
-      siftItems.sort(SidebarSection.sortByDisplayOrder);
+      SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(siftItems);
       items.push(DIVIDER_OBJECT);
       for (const item of siftItems) {
         items.push(item);

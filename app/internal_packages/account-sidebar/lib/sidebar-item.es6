@@ -773,7 +773,7 @@ class SidebarItem {
         }
       }
     }
-    parentPerspective.children.sort(SidebarSection.sortByDisplayOrder);
+    SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(parentPerspective.children);
   }
 
   static getCategoryIds = (accountIds, categoryName) => {
