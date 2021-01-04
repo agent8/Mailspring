@@ -25,7 +25,7 @@ export default class EmailFrame extends React.Component {
   static propTypes = {
     content: PropTypes.string.isRequired,
     message: PropTypes.object,
-    messageIndex: PropTypes.numbers,
+    messageIndex: PropTypes.number,
     showQuotedText: PropTypes.bool,
     setTrackers: PropTypes.func,
     viewOriginalEmail: PropTypes.bool,
