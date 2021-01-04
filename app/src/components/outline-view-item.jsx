@@ -717,40 +717,84 @@ class OutlineViewItem extends Component {
       acc = AccountStore.accountForId(item.accountIds[0]);
     }
     if (item.children.length > 0 && !item.collapsed) {
+      const childItems = [];
+      item.children.forEach((child, idx) => {
+        if (this.props.isEditingMenu && child.id === NEW_FOLDER_KEY) {
+          childItems.push(
+            this._renderNewFolderInput({
+              accountId: child.newFolderAccountId,
+              onEdited: child.onEdited,
+              onSave: child.onSave,
+              onCancel: child.onCancel,
+            })
+          );
+          return;
+        }
+        if (child.id === MORE_TOGGLE && child.showAll === this.state.showAllChildren) {
+          return;
+        }
+        if (child.id === MORE_TOGGLE && child.showAll !== this.state.showAllChildren) {
+          childItems.push(
+            <OutlineViewItem
+              key={notFolderIds.includes(child.id) ? idx : child.id}
+              provider={acc.provider}
+              isEditingMenu={this.props.isEditingMenu}
+              index={idx}
+              item={child}
+              onToggleShowAllFolder={this._onToggleShowAllFolder}
+            />
+          );
+          return;
+        }
+        if (child.id === MORE_TOGGLE && this.props.isEditingMenu) {
+          return;
+        }
+        if (
+          this.props.isEditingMenu ||
+          (this.state.showAllChildren && !child.isHidden) ||
+          (!child.hideWhenCrowded && !child.isHidden)
+        ) {
+          childItems.push(
+            <OutlineViewItem
+              key={notFolderIds.includes(child.id) ? idx : child.id}
+              provider={acc.provider}
+              isEditingMenu={this.props.isEditingMenu}
+              index={idx}
+              item={child}
+              onToggleShowAllFolder={this._onToggleShowAllFolder}
+            />
+          );
+          return;
+        }
+        if (!this.state.showAllChildren && !child.isHidden) {
+          if (acc.provider === 'gmail' && childItems.length < 10) {
+            childItems.push(
+              <OutlineViewItem
+                key={notFolderIds.includes(child.id) ? idx : child.id}
+                provider={acc.provider}
+                isEditingMenu={this.props.isEditingMenu}
+                index={idx}
+                item={child}
+                onToggleShowAllFolder={this._onToggleShowAllFolder}
+              />
+            );
+          } else if (acc.provider !== 'gmail' && childItems.length < 9) {
+            childItems.push(
+              <OutlineViewItem
+                key={notFolderIds.includes(child.id) ? idx : child.id}
+                provider={acc.provider}
+                isEditingMenu={this.props.isEditingMenu}
+                index={idx}
+                item={child}
+                onToggleShowAllFolder={this._onToggleShowAllFolder}
+              />
+            );
+          }
+        }
+      });
       return (
         <section className="item-children" key={`${item.id}-children`}>
-          {item.children.map((child, idx) => {
-            if (this.props.isEditingMenu && child.id === NEW_FOLDER_KEY) {
-              return this._renderNewFolderInput({
-                accountId: child.newFolderAccountId,
-                onEdited: child.onEdited,
-                onSave: child.onSave,
-                onCancel: child.onCancel,
-              });
-            }
-            if (child.id === MORE_TOGGLE && child.showAll === this.state.showAllChildren) {
-              return null;
-            }
-            if (child.id === MORE_TOGGLE && this.props.isEditingMenu) {
-              return null;
-            }
-            if (
-              this.props.isEditingMenu ||
-              ((this.state.showAllChildren || !child.hideWhenCrowded) && !child.isHidden)
-            ) {
-              return (
-                <OutlineViewItem
-                  key={notFolderIds.includes(child.id) ? idx : child.id}
-                  provider={acc.provider}
-                  isEditingMenu={this.props.isEditingMenu}
-                  index={idx}
-                  item={child}
-                  onToggleShowAllFolder={this._onToggleShowAllFolder}
-                />
-              );
-            }
-            return null;
-          })}
+          {childItems}
         </section>
       );
     }

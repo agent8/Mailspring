@@ -258,13 +258,6 @@ class SidebarItem {
         perspective,
         selected: isItemSelected(perspective, opts.children),
         collapsed: collapsed != null ? collapsed : true,
-        _defaultHideWhenCrowded: !!opts.hideWhenCrowded,
-        get hideWhenCrowded() {
-          return this._defaultHideWhenCrowded && this.displayOrder >= 3;
-        },
-        set hideWhenCrowded(val) {
-          this._defaultHideWhenCrowded = val;
-        },
         counterStyle,
         onDelete: opts.deletable ? onDeleteItem : undefined,
         onEdited: opts.editable ? onEditItem : undefined,

@@ -346,7 +346,7 @@ export default class SidebarSection {
       item = SidebarItem.forCategories(
         [category],
         {
-          hideWhenCrowded: items.length - baseNumber >= 3,
+          hideWhenCrowded: true,
           folderTreeIndex: items.length,
         },
         false
