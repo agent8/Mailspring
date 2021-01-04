@@ -360,7 +360,7 @@ class ThreadUnreadQuickAction extends React.Component {
   };
 }
 class ThreadSpamQuickAction extends React.Component {
-  static displayName = 'ThreadArchiveQuickAction';
+  static displayName = 'ThreadSpamQuickAction';
   static propTypes = { thread: PropTypes.object };
 
   render() {
