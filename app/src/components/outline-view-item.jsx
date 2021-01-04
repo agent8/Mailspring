@@ -730,10 +730,12 @@ class OutlineViewItem extends Component {
           );
           return;
         }
-        if (child.id === MORE_TOGGLE && child.showAll === this.state.showAllChildren) {
+        if (child.id === MORE_TOGGLE && this.props.isEditingMenu) {
           return;
         }
-        if (child.id === MORE_TOGGLE && child.showAll !== this.state.showAllChildren) {
+        if (child.id === MORE_TOGGLE && child.showAll === this.state.showAllChildren) {
+          return;
+        } else if (child.id === MORE_TOGGLE && child.showAll !== this.state.showAllChildren) {
           childItems.push(
             <OutlineViewItem
               key={notFolderIds.includes(child.id) ? idx : child.id}
@@ -744,9 +746,6 @@ class OutlineViewItem extends Component {
               onToggleShowAllFolder={this._onToggleShowAllFolder}
             />
           );
-          return;
-        }
-        if (child.id === MORE_TOGGLE && this.props.isEditingMenu) {
           return;
         }
         if (
