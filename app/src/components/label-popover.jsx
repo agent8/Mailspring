@@ -27,13 +27,11 @@ export default class LabelPopover extends Component {
     super(props);
     this.state = {
       newName: this.props.name || '',
-      alsoMove: true,
       isBusy: false,
       bgColor: props.originalBgColor || 0,
     };
     this._mounted = false;
     this._buttonTimer = null;
-    this._buttonTimestamp = 0;
   }
 
   componentDidMount() {
@@ -69,16 +67,21 @@ export default class LabelPopover extends Component {
     }
   };
 
-  _onBusyTimeout = () => {
+  _onBusyTimeout = ({ clearBusyTimeout = false } = {}) => {
     if (!this._mounted) {
       return;
     }
+    if (clearBusyTimeout) {
+      if (this._buttonTimer) {
+        clearTimeout(this._buttonTimer);
+      }
+      this._buttonTimer = null;
+      return;
+    }
     if (!this._buttonTimer) {
-      this._buttonTimestamp = Date.now();
       this._buttonTimer = setTimeout(() => {
-        this.setState({ isBusy: false });
         this._buttonTimer = null;
-      }, this.props.buttonTimeout * 2);
+      }, this.props.buttonTimeout);
     }
   };
   _onActionCallback = data => {
@@ -86,33 +89,10 @@ export default class LabelPopover extends Component {
       this.props.onActionCallback(data);
     }
   };
-  _onResultReturned = () => {
-    if (!this._mounted) {
+  _onCreateCategory = () => {
+    if (this._buttonTimer) {
       return;
     }
-    if (!this._buttonTimer) {
-      this._buttonTimestamp = Date.now();
-      this._buttonTimer = setTimeout(() => {
-        this.setState({ isBusy: false });
-        this._buttonTimer = null;
-      }, this.props.buttonTimeout);
-    } else {
-      const now = Date.now();
-      clearTimeout(this._buttonTimer);
-      if (now - this._buttonTimestamp < this.props.buttonTimeout) {
-        this._buttonTimestamp = Date.now();
-        this._buttonTimer = setTimeout(() => {
-          this.setState({ isBusy: false });
-          this._buttonTimer = null;
-        }, this.props.buttonTimeout);
-      } else {
-        this._buttonTimer = null;
-        this.setState({ isBusy: false });
-      }
-    }
-  };
-  _onCreateCategory = () => {
-    this.setState({ isBusy: true });
     let task;
     if (this.props.isNew) {
       task = TaskFactory.tasksForCreatingPath({
@@ -128,10 +108,11 @@ export default class LabelPopover extends Component {
         newColor: this.state.bgColor,
       });
     }
-    this._onResultReturned();
+    this._onBusyTimeout();
     if (task) {
       Actions.queueTask(task);
       TaskQueue.waitForPerformRemote(task).then(finishedTask => {
+        this._onBusyTimeout({ clearBusyTimeout: true });
         if (finishedTask.error) {
           AppEnv.showErrorDialog({
             title: 'Error',
@@ -142,8 +123,8 @@ export default class LabelPopover extends Component {
           return;
         }
         this._onActionCallback({ newLabels: [finishedTask.created] });
+        Actions.closePopover();
       });
-      Actions.closePopover();
     }
   };
 
@@ -168,19 +149,11 @@ export default class LabelPopover extends Component {
         </button>
         <button
           className="create-folder-btn-create"
-          title="Create Folder"
+          title={text}
           disabled={this.state.newName.length === 0}
           onClick={this._onCreateCategory}
         >
-          {this.state.isBusy || this._buttonTimer ? (
-            <RetinaImg
-              name={'sending-spinner.gif'}
-              style={{ width: 24 }}
-              mode={RetinaImg.Mode.ContentIsMask}
-            />
-          ) : (
-            <span>{text}</span>
-          )}
+          <span>{text}</span>
         </button>
       </div>
     );
