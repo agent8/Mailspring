@@ -131,11 +131,12 @@ class CategoryStore extends MailspringStore {
   }
 
   removeFromFolderTreeRenderArray(accountOrId, index) {
-    const original = this._userCategoriesForFolderTree[asAccountId(accountOrId)] || [];
+    const original = this._userCategoriesForFolderTree[asAccountId(accountOrId)].slice() || [];
     if (original[index] && original[index].role) {
       return;
     }
-    this._userCategoriesForFolderTree[asAccountId(accountOrId)] = original.splice(index, 1);
+    original.splice(index, 1);
+    this._userCategoriesForFolderTree[asAccountId(accountOrId)] = original.slice();
   }
   restoreCategoriesForFolderTree() {
     this._userCategoriesForFolderTree = {};
@@ -145,7 +146,7 @@ class CategoryStore extends MailspringStore {
   }
   userCategoriesForFolderTree(accountOrId) {
     //This is only used when rendering Folder Tree, as the array is to be modified on every folder tree render;
-    return this._userCategoriesForFolderTree[asAccountId(accountOrId)] || [];
+    return this._userCategoriesForFolderTree[asAccountId(accountOrId)].slice() || [];
   }
   // Public: Returns all of the categories that are not part of the standard
   // category set.
