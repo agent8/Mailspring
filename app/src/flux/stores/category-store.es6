@@ -754,7 +754,6 @@ class CategoryStore extends MailspringStore {
       }
       this._hiddenCategories[accountId] = [];
       const userCats = [];
-      const newUserCats = [];
       for (const cat of cats) {
         if (cat && cat.isStandardCategory()) {
           this._standardCategories[accountId].push(cat);
@@ -762,17 +761,15 @@ class CategoryStore extends MailspringStore {
         if (cat && cat.isUserCategory()) {
           if (cat.isNew) {
             cat.isNew = false;
-            newUserCats.push(cat);
-          } else {
-            userCats.push(cat);
           }
+          userCats.push(cat);
         }
         if (cat && cat.isHiddenCategory()) {
           this._hiddenCategories[accountId].push(cat);
         }
       }
-      this._userCategories[accountId] = [...userCats, ...newUserCats];
-      this._userCategoriesForFolderTree[accountId] = [...userCats, ...newUserCats];
+      this._userCategories[accountId] = [...userCats];
+      this._userCategoriesForFolderTree[accountId] = [...userCats];
       this.clearOldCategoryMetaData({ accountId, newCategories: this._userCategories[accountId] });
     };
     if (accountId) {
