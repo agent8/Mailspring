@@ -13,6 +13,9 @@ const DIVIDER_OBJECT = { id: 'divider' };
 export const ADD_FOLDER_OBJECT = {
   id: 'addFolder',
   onRequestAddFolder: () => SidebarActions.requestAddFolderAccountSelection(),
+  get disabled() {
+    return !!SidebarStore().getNewFolder();
+  },
 };
 export const NEW_FOLDER_OBJECT = {
   id: 'newFolder',
