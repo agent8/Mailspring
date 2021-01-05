@@ -1,7 +1,7 @@
+import ScrollRegion from './scroll-region';
 const classNames = require('classnames');
 const _ = require('underscore');
 const { React, ReactDOM, PropTypes, DOMUtils } = require('mailspring-exports');
-import ScrollRegion from './scroll-region';
 
 /*
 Public: `MenuItem` components can be provided to the {Menu} by the `itemContent` function.
@@ -166,15 +166,12 @@ class Menu extends React.Component {
     itemContent: PropTypes.func.isRequired,
     itemKey: PropTypes.func.isRequired,
     itemChecked: PropTypes.func,
-
     items: PropTypes.array.isRequired,
-
     onSelect: PropTypes.func.isRequired,
-
     onEscape: PropTypes.func,
-
     defaultSelectedIndex: PropTypes.number,
     maxHeight: PropTypes.number,
+    autoFocus: PropTypes.bool,
   };
 
   static defaultProps = { onEscape() {}, maxHeight: 0 };
@@ -281,6 +278,21 @@ class Menu extends React.Component {
     } else if (event.key === 'ArrowDown' || event.key === 'Tab') {
       this._onShiftSelectedIndex(1);
       event.preventDefault();
+    } else if (this.props.autoFocus) {
+      for (let i = 0; i < this.props.items.length; i++) {
+        const shortcutKey = this.props.items[i].shortcutKey || '';
+        if (event.key.toLocaleLowerCase() === shortcutKey.toLocaleLowerCase()) {
+          this.setState({ selectedIndex: i });
+          if (this.props.onSelect) {
+            this.props.onSelect(this.props.items[i], {
+              source: 'autoFocus_shortcut',
+              key: shortcutKey,
+            });
+          }
+          event.preventDefault();
+          return;
+        }
+      }
     }
   };
 
@@ -300,7 +312,9 @@ class Menu extends React.Component {
         }
         this.setState({ selectedIndex: i });
         if (this.props.onSelect) {
-          return this.props.onSelect(item);
+          return this.props.onSelect(item, {
+            source: 'mouseDown',
+          });
         }
       };
 
@@ -381,7 +395,9 @@ class Menu extends React.Component {
   _onEnter = () => {
     const item = this.props.items[this.state.selectedIndex];
     if (item != null) {
-      this.props.onSelect(item);
+      this.props.onSelect(item, {
+        source: 'enterKey',
+      });
     }
   };
 
