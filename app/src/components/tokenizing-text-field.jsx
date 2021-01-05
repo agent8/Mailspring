@@ -207,10 +207,11 @@ class Token extends React.Component {
 
   _onClickAction = event => {
     event.stopPropagation();
+    event.persist();
     this._onClick(event);
     setImmediate(() => {
       // do this after the setState of select this token is finish
-      this._onAction();
+      this._onAction(event);
     });
   };
 
