@@ -158,7 +158,7 @@ class OutlineView extends Component {
           />
         );
       } else if (item.id === ADD_FOLDER_KEY && this.props.isEditingMenu) {
-        ret.push(AddFolder(item.onRequestAddFolder));
+        ret.push(AddFolder(item));
         ret.push(Divider(idx + 1));
       } else {
         if (ret.length > 0) {
@@ -221,14 +221,21 @@ const EditMenu = () => {
     </div>
   );
 };
-export const AddFolder = onAddFolder => {
+export const AddFolder = item => {
   const onClick = e => {
     e.stopPropagation();
     e.preventDefault();
-    onAddFolder();
+    if (item && item.onRequestAddFolder && !item.disabled) {
+      item.onRequestAddFolder();
+    }
   };
+  const disabled = item && item.disabled;
   return (
-    <div key="addFolder" className="item-container item name inEditMode" onClick={onClick}>
+    <div
+      key="addFolder"
+      className={`item-container item name inEditMode ${disabled ? 'disabled' : ''}`}
+      onClick={onClick}
+    >
       <span className="sidebar-add-folder">New Folder...</span>
     </div>
   );
