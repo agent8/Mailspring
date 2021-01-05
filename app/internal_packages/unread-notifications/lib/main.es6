@@ -227,7 +227,7 @@ export class Notifier {
           // DC-2078:Should not open email detail after reply from notification
           return;
         } else {
-          if (activationType) {
+          if (activationType && activationType !== 'clicked') {
             // { type: 'button', text: 'Mark as Read', value: 'mark_as_read' },
             // { type: 'button', text: 'Trash', value: 'trash' },
             // { type: 'button', text: 'Archive', value: 'archive' },
