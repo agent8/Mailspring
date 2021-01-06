@@ -116,7 +116,6 @@ export default class SidebarSection {
   }
 
   static standardSectionForAccounts(accounts) {
-    CategoryStore.restoreCategoriesForFolderTree();
     const items = [];
     const outboxCount = OutboxStore.count();
     const outboxOpts = {
@@ -263,7 +262,11 @@ export default class SidebarSection {
       if (parent) {
         continue;
       }
-      item = SidebarItem.forCategories([category], { hideWhenCrowded: items.length >= 3 }, false);
+      item = SidebarItem.forCategories(
+        [category],
+        { hideWhenCrowded: items.length >= 3, startIndex: i },
+        false
+      );
       if (item) {
         if (items.length === 3 && !isShowAll) {
           items.push(moreOrLess);
