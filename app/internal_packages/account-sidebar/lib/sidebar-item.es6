@@ -68,14 +68,6 @@ const isItemSelected = (perspective, children = []) => {
   }
 
   const currentSidebar = FocusedPerspectiveStore.currentSidebar();
-  if (perspective.isSingleInbox) {
-    console.log(
-      'sidebar compare',
-      currentSidebar.isEqual(perspective),
-      currentSidebar,
-      perspective
-    );
-  }
   if (currentSidebar.isEqual(perspective)) {
     return true;
   }
@@ -705,13 +697,21 @@ class SidebarItem {
     for (const accountId of accountIds) {
       const categories = parentPerspective ? parentPerspective.perspective.categories() : [];
       if (categories.length === 1) {
-        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0]);
+        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0], {
+          startIndex: parentPerspective.startIndex ? parentPerspective.startIndex : 0,
+          stopOnFirstChild: !!parentPerspective.stopOnFirstChild,
+        });
       }
     }
     return parentPerspective;
   }
 
-  static appendSubPathByAccount(accountId, parentPerspective, parentCategory) {
+  static appendSubPathByAccount(
+    accountId,
+    parentPerspective,
+    parentCategory,
+    { startIndex = 0, stopOnFirstChild = false } = {}
+  ) {
     const { path } = parentCategory;
     if (!path) {
       AppEnv.logError(new Error('path must not be empty'));
@@ -730,9 +730,16 @@ class SidebarItem {
       AppEnv.logError(new Error(`Cannot find account for ${accountId}`));
       return;
     }
+    if (parentPerspective.parentCollapsed) {
+      return;
+    }
     const isExchange = AccountStore.isExchangeAccount(account);
-    const categories = CategoryStore.userCategoriesForFolderTree(accountId);
-    for (let i = 0; i < categories.length; i++) {
+    const categories = CategoryStore.userCategories(accountId);
+    let foundParent = false;
+    if (isExchange) {
+      startIndex = 0;
+    }
+    for (let i = startIndex; i < categories.length; i++) {
       const category = categories[i];
       let item, parentKey;
       // let itemKey;
@@ -757,23 +764,39 @@ class SidebarItem {
         if (isExchange) {
           itemDisplayName = category.displayName;
         }
-        CategoryStore.removeFromFolderTreeRenderArray(accountId, i);
         item = SidebarItem.forCategories(
           [category],
-          { name: itemDisplayName, folderTreeIndex: parent.children.length },
+          {
+            name: itemDisplayName,
+            folderTreeIndex: parent.children.length,
+            startIndex: i,
+            stopOnFirstChild: parentPerspective.collapsed,
+            parentCollapsed: parentPerspective.collapsed,
+          },
           false
         );
         if (item) {
+          foundParent = true;
           item.id = `${parent.id}-${item.selfId}`;
-          item.collapsed = isItemCollapsed(item.id);
+          item.collapsed = parentPerspective.collapsed || isItemCollapsed(item.id);
           parent.children.push(item);
           if (item.selected) {
             parent.selected = true;
           }
+          if (stopOnFirstChild) {
+            break;
+          }
         }
       }
+      if (!isExchange && foundParent && !parent && !parentCategory.isAncestorOf(category)) {
+        break;
+      }
     }
-    SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(parentPerspective.children);
+    if (!stopOnFirstChild) {
+      SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(
+        parentPerspective.children
+      );
+    }
   }
 
   static getCategoryIds = (accountIds, categoryName) => {
