@@ -213,12 +213,24 @@ class SidebarItem {
     if (opts) {
       perspective = Object.assign(perspective, opts);
     }
-    const collapsed = opts.forceExpand !== undefined ? !opts.forceExpand : isItemCollapsed(id);
+    const collapsed =
+      opts.forceExpand !== undefined
+        ? !opts.forceExpand
+        : isItemCollapsed(opts.parentId ? `${opts.parentId}-${id}` : id);
 
     const ret = Object.assign(
       {
-        id,
         selfId: id,
+        _parentId: opts.parentId,
+        get parentId() {
+          return this._parentId ? `${this._parentId}-` : '';
+        },
+        set parentId(val) {
+          this._parentId = val;
+        },
+        get id() {
+          return `${this.parentId}${this.selfId}`;
+        },
         // As we are not sure if 'Drafts-' as id have any special meaning, we are adding categoryIds
         categoryIds: opts.categoryIds ? opts.categoryIds : undefined,
         accountIds: perspective.accountIds,
@@ -699,7 +711,6 @@ class SidebarItem {
       if (categories.length === 1) {
         SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0], {
           startIndex: parentPerspective.startIndex ? parentPerspective.startIndex : 0,
-          stopOnFirstChild: !!parentPerspective.stopOnFirstChild,
         });
       }
     }
@@ -710,7 +721,7 @@ class SidebarItem {
     accountId,
     parentPerspective,
     parentCategory,
-    { startIndex = 0, stopOnFirstChild = false } = {}
+    { startIndex = 0 } = {}
   ) {
     const { path } = parentCategory;
     if (!path) {
@@ -730,7 +741,10 @@ class SidebarItem {
       AppEnv.logError(new Error(`Cannot find account for ${accountId}`));
       return;
     }
-    if (parentPerspective.parentCollapsed) {
+    if (
+      typeof parentPerspective.parentCollapsed === 'function' &&
+      parentPerspective.parentCollapsed()
+    ) {
       return;
     }
     const isExchange = AccountStore.isExchangeAccount(account);
@@ -770,20 +784,22 @@ class SidebarItem {
             name: itemDisplayName,
             folderTreeIndex: parent.children.length,
             startIndex: i,
-            stopOnFirstChild: parentPerspective.collapsed,
-            parentCollapsed: parentPerspective.collapsed,
+            stopOnFirstChild: () => isItemCollapsed(parentPerspective.id),
+            parentCollapsed: () => isItemCollapsed(parentPerspective.id),
+            parentId: parent.id,
           },
           false
         );
         if (item) {
           foundParent = true;
-          item.id = `${parent.id}-${item.selfId}`;
-          item.collapsed = parentPerspective.collapsed || isItemCollapsed(item.id);
           parent.children.push(item);
           if (item.selected) {
             parent.selected = true;
           }
-          if (stopOnFirstChild) {
+          if (
+            typeof parentPerspective.stopOnFirstChild === 'function' &&
+            parentPerspective.stopOnFirstChild()
+          ) {
             break;
           }
         }
@@ -792,7 +808,10 @@ class SidebarItem {
         break;
       }
     }
-    if (!stopOnFirstChild) {
+    if (
+      typeof parentPerspective.stopOnFirstChild !== 'function' ||
+      !parentPerspective.stopOnFirstChild()
+    ) {
       SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(
         parentPerspective.children
       );
