@@ -36,7 +36,6 @@ class CategoryStore extends MailspringStore {
     this._categoryCache = {};
     this._standardCategories = {};
     this._userCategories = {};
-    this._userCategoriesForFolderTree = {};
     this._hiddenCategories = {};
     this._categorySyncState = {};
 
@@ -130,24 +129,6 @@ class CategoryStore extends MailspringStore {
     return this._hiddenCategories[asAccountId(accountOrId)] || [];
   }
 
-  removeFromFolderTreeRenderArray(accountOrId, index) {
-    const original = this._userCategoriesForFolderTree[asAccountId(accountOrId)].slice() || [];
-    if (original[index] && original[index].role) {
-      return;
-    }
-    original.splice(index, 1);
-    this._userCategoriesForFolderTree[asAccountId(accountOrId)] = original.slice();
-  }
-  restoreCategoriesForFolderTree() {
-    this._userCategoriesForFolderTree = {};
-    Object.keys(this._userCategories).forEach(accountId => {
-      this._userCategoriesForFolderTree[accountId] = this._userCategories[accountId].slice();
-    });
-  }
-  userCategoriesForFolderTree(accountOrId) {
-    //This is only used when rendering Folder Tree, as the array is to be modified on every folder tree render;
-    return this._userCategoriesForFolderTree[asAccountId(accountOrId)].slice() || [];
-  }
   // Public: Returns all of the categories that are not part of the standard
   // category set.
   //
@@ -746,10 +727,8 @@ class CategoryStore extends MailspringStore {
       this._standardCategories[accountId] = [];
       if (!this._userCategories) {
         this._userCategories = {};
-        this._userCategoriesForFolderTree = {};
       }
       this._userCategories[accountId] = [];
-      this._userCategoriesForFolderTree[accountId] = [];
       if (!this._hiddenCategories) {
         this._hiddenCategories = {};
       }
@@ -770,7 +749,6 @@ class CategoryStore extends MailspringStore {
         }
       }
       this._userCategories[accountId] = [...userCats];
-      this._userCategoriesForFolderTree[accountId] = [...userCats];
       this.clearOldCategoryMetaData({ accountId, newCategories: this._userCategories[accountId] });
     };
     if (accountId) {
