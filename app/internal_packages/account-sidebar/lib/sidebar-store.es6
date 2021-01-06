@@ -263,9 +263,8 @@ class SidebarStore extends MailspringStore {
       return;
     }
     console.log('sidebar store change');
-    // const multiAccount = accounts.length > 1;
-
     this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts);
+    console.log('sidebar store change finished');
     const keyboardFocusKey = this._findKeyboardFocusKeyFromCurrentSelected();
     if (keyboardFocusKey !== this._keyboardFocusKey) {
       this._keyboardFocusKey = keyboardFocusKey;
