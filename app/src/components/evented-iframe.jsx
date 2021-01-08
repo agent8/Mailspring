@@ -12,6 +12,7 @@ const {
   IdentityStore,
   MailspringAPIRequest,
   SearchableComponentStore,
+  Actions,
 } = require('mailspring-exports');
 const IFrameSearcher = require('../searchable-components/iframe-searcher').default;
 const url = require('url');
@@ -234,6 +235,7 @@ class EventedIFrame extends React.Component {
   // iFrame, the mouseup never fires in the parent window.
   _onIFrameClick = e => {
     e.stopPropagation();
+    Actions.iframeClicked();
     const target = this._getContainingTarget(e, { with: 'href' });
     if (target) {
       // Sometimes urls can have relative, malformed, or malicious href

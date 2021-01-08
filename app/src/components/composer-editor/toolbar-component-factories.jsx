@@ -497,7 +497,6 @@ export function BuildFontSizePicker(config) {
         markValue = markValue / 1;
       }
       onChange(applyValueForMark(value, config.type, markValue));
-      Actions.closePopover();
     };
 
     shouldComponentUpdate(nextProps) {
@@ -540,11 +539,6 @@ export function BuildFontSizePicker(config) {
           style={{ padding: '6px, 0px', width: 40 }}
           className={`${this.props.className || ''} pull-right with-popup`}
           onClick={this.onClick}
-          onBlur={() => {
-            setTimeout(() => {
-              Actions.closePopover();
-            }, 150);
-          }}
           ref={el => (this.fontSizeBtn = el)}
         >
           <i className={config.iconClass} />
@@ -583,7 +577,6 @@ export function BuildFontPicker(config) {
         markValue = markValue / 1;
       }
       onChange(applyValueForMark(value, config.type, markValue));
-      Actions.closePopover();
     };
     _onClick = e => {
       const value = getActiveValueForMark(this.props.value, config.type) || config.default;
@@ -624,11 +617,6 @@ export function BuildFontPicker(config) {
           style={{ padding: 0, paddingRight: 6 }}
           className={`${this.props.className} with-select`}
           onClick={this._onClick}
-          onBlur={() => {
-            setTimeout(() => {
-              Actions.closePopover();
-            }, 150);
-          }}
         >
           <i className={config.iconClass} />
           <div className="font-face-display-name">{displayName}</div>
