@@ -1,5 +1,4 @@
 import Reflux from 'reflux';
-import { Action } from 'rxjs/internal/scheduler/Action';
 
 const ActionScopeWindow = 'window';
 const ActionScopeGlobal = 'global';
@@ -651,6 +650,7 @@ class Actions {
   static deletedEdisonAccountOnOtherDevice = ActionScopeMainWindow;
 
   static toggleJiraPlugin = ActionScopeWindow;
+  static iframeClicked = ActionScopeWindow;
 }
 
 // Read the actions we declared on the dummy Actions object above
