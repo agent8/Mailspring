@@ -23,6 +23,7 @@ class CategoryMetaData {
     }
   };
   _updateStorage = () => {
+    this._accounts.lastUpdatedTimestamp = Date.now();
     localStorage.setItem(storageKey, JSON.stringify(this._accounts));
   };
   restore = () => {
@@ -52,6 +53,7 @@ class CategoryMetaData {
     }
     const hashId = this.hashId(id);
     this._accounts[accountId][hashId] = { displayOrder, hidden };
+    this._accounts[accountId].lastUpdatedTimestamp = Date.now();
     if (save) {
       this._updateStorage();
     }
@@ -65,6 +67,7 @@ class CategoryMetaData {
     }
     const hashId = this.hashId(id);
     delete this._accounts[accountId][hashId];
+    this._accounts[accountId].lastUpdatedTimestamp = Date.now();
     if (save) {
       this._updateStorage();
     }
@@ -83,6 +86,7 @@ class CategoryMetaData {
       return null;
     }
     this._accounts[accountId] = items;
+    this._accounts[accountId].lastUpdatedTimestamp = Date.now();
     if (save) {
       this._updateStorage();
     }
