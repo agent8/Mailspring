@@ -839,7 +839,11 @@ class OutlineViewItem extends Component {
             <DisclosureTriangle
               collapsed={item.collapsed}
               visible={this.props.isEditingMenu && item.children && item.children.length > 0}
-              visibleOnHover={!this.state.editing && item.children && item.children.length > 0}
+              visibleOnHover={
+                !this.state.editing &&
+                item.children &&
+                item.children.filter(child => !child.isHidden).length > 0
+              }
               onCollapseToggled={this._onCollapseToggled}
             />
           </span>
