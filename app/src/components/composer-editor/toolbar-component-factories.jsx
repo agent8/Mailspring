@@ -406,6 +406,7 @@ export function BuildColorPicker(config) {
       super(props);
       this.state = {
         expanded: false,
+        color: null,
       };
     }
 
@@ -415,11 +416,25 @@ export function BuildColorPicker(config) {
 
     _onBlur = e => {
       if (!this._el.contains(e.relatedTarget)) {
-        this.setState({ expanded: false });
+        const { color } = this.state;
+        const { value, onChange } = this.props;
+        if (color && color !== getActiveValueForMark(value, config.type)) {
+          onChange(applyValueForMark(value, config.type, color));
+        }
+        this.setState({ expanded: false, color: null });
       }
     };
 
-    _onChangeComplete = ({ hex }) => {
+    _onChangeComplete = color => {
+      const { hex, source } = color;
+      if (source === 'rgb' || source === 'hex') {
+        if (hex && hex !== this.state.color) {
+          this.setState({
+            color: hex,
+          });
+        }
+        return;
+      }
       this.setState({ expanded: false });
       const { value, onChange } = this.props;
       const markValue = hex !== config.default ? hex : null;
@@ -430,14 +445,20 @@ export function BuildColorPicker(config) {
       if (
         getActiveValueForMark(nProps.value, config.type) !==
         getActiveValueForMark(this.props.value, config.type)
+      ) {
+        return true;
+      }
+      if (
+        nState.expanded !== this.state.expanded ||
+        (nState.color && nState.color !== this.state.color)
       )
         return true;
-      if (nState.expanded !== this.state.expanded) return true;
       return false;
     }
 
     render() {
-      const color = getActiveValueForMark(this.props.value, config.type) || config.default;
+      const color =
+        this.state.color || getActiveValueForMark(this.props.value, config.type) || config.default;
       const { expanded } = this.state;
 
       return (
