@@ -242,6 +242,7 @@ class EventedIFrame extends React.Component {
     if (this._contextMenuOpen || ContextMenuStore.isContextMenuOpen()) {
       this._closeIFrameContextMenu();
     }
+    Actions.iframeClicked();
     const target = this._getContainingTarget(e, { with: 'href' });
     if (target) {
       // Sometimes urls can have relative, malformed, or malicious href
