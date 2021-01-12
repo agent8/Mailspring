@@ -206,12 +206,21 @@ class SidebarItem {
       perspective = Object.assign(perspective, opts);
     }
 
-    const collapsed = isItemCollapsed(id);
+    const collapsed = isItemCollapsed(opts.parentId ? `${opts.parentId}-${id}` : id);
 
     return Object.assign(
       {
-        id,
         selfId: id,
+        _parentId: opts.parentId,
+        get parentId() {
+          return this._parentId ? `${this._parentId}-` : '';
+        },
+        set parentId(val) {
+          this._parentId = val;
+        },
+        get id() {
+          return `${this.parentId}${this.selfId}`;
+        },
         // As we are not sure if 'Drafts-' as id have any special meaning, we are adding categoryIds
         categoryIds: opts.categoryIds ? opts.categoryIds : undefined,
         accountIds: perspective.accountIds,
@@ -643,13 +652,20 @@ class SidebarItem {
     for (const accountId of accountIds) {
       const categories = parentPerspective ? parentPerspective.perspective.categories() : [];
       if (categories.length === 1) {
-        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0]);
+        SidebarItem.appendSubPathByAccount(accountId, parentPerspective, categories[0], {
+          startIndex: parentPerspective.startIndex ? parentPerspective.startIndex : 0,
+        });
       }
     }
     return parentPerspective;
   }
 
-  static appendSubPathByAccount(accountId, parentPerspective, parentCategory) {
+  static appendSubPathByAccount(
+    accountId,
+    parentPerspective,
+    parentCategory,
+    { startIndex = 0 } = {}
+  ) {
     const { path } = parentCategory;
     if (!path) {
       AppEnv.logError(new Error('path must not be empty'));
@@ -668,9 +684,19 @@ class SidebarItem {
       AppEnv.logError(new Error(`Cannot find account for ${accountId}`));
       return;
     }
+    if (
+      typeof parentPerspective.parentCollapsed === 'function' &&
+      parentPerspective.parentCollapsed()
+    ) {
+      return;
+    }
     const isExchange = AccountStore.isExchangeAccount(account);
-    const categories = CategoryStore.userCategoriesForFolderTree(accountId);
-    for (let i = 0; i < categories.length; i++) {
+    const categories = CategoryStore.userCategories(accountId);
+    let foundParent = false;
+    if (isExchange) {
+      startIndex = 0;
+    }
+    for (let i = startIndex; i < categories.length; i++) {
       const category = categories[i];
       let item, parentKey;
       // let itemKey;
@@ -705,21 +731,35 @@ class SidebarItem {
         if (isExchange) {
           itemDisplayName = category.displayName;
         }
-        CategoryStore.removeFromFolderTreeRenderArray(accountId, i);
-        item = SidebarItem.forCategories([category], { name: itemDisplayName }, false);
+        item = SidebarItem.forCategories(
+          [category],
+          {
+            name: itemDisplayName,
+            startIndex: i,
+            stopOnFirstChild: () => isItemCollapsed(parentPerspective.id),
+            parentCollapsed: () => isItemCollapsed(parentPerspective.id),
+            parentId: parent.id,
+          },
+          false
+        );
         if (item) {
-          item.id = `${parent.id}-${item.selfId}`;
-          item.collapsed = isItemCollapsed(item.id);
+          foundParent = true;
           parent.children.push(item);
           if (item.selected) {
             parent.selected = true;
-            // for (let key of Object.keys(seenItems)) {
-            //   if (parentKey.includes(key)) {
-            //     seenItems[key].selected = true;
-            //   }
-            // }
+          }
+          if (
+            typeof parentPerspective.stopOnFirstChild === 'function' &&
+            parentPerspective.stopOnFirstChild()
+          ) {
+            // console.warn(`category name: ${category.name}, parent: ${parentCategory.name}`);
+            break;
           }
         }
+      }
+      if (!isExchange && foundParent && !parent && !parentCategory.isAncestorOf(category)) {
+        // console.warn(`category name: ${category.name}`);
+        break;
       }
     }
   }
