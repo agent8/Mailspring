@@ -307,6 +307,7 @@ export function convertFromHTML(html, defaultFontValues = {}) {
   const cleanupTrailingWhitespace = (node, isTopLevel) => {
     if (!node.nodes || node.isVoid) return;
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const last = node.nodes[node.nodes.length - 1];
       if (!last) {
@@ -414,10 +415,11 @@ export const convertEdisonImageFilesToInline = htmlString => {
     const originalPath = img.getAttribute('src');
     if (fileId && contentType && fileName) {
       const contentId = Utils.generateContentId();
+      const size = parseInt(fileSize, 10);
       newFiles.push({
         id: fileId,
         contentType: Utils.base64ToString(contentType),
-        size: fileSize,
+        size: isNaN(size) ? 0 : size,
         filename: Utils.base64ToString(fileName),
         isInline: true,
         contentId,

@@ -296,8 +296,8 @@ class SidebarStore extends MailspringStore {
 
   _onSetCollapsedByKey = (itemKey, collapsed) => {
     const currentValue = AppEnv.savedState.sidebarKeysCollapsed[itemKey];
-    if (currentValue !== collapsed) {
-      AppEnv.savedState.sidebarKeysCollapsed[itemKey] = collapsed;
+    if (currentValue !== !!collapsed) {
+      AppEnv.savedState.sidebarKeysCollapsed[itemKey] = !!collapsed;
       this._updateSections();
     }
   };
