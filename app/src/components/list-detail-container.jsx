@@ -1,6 +1,7 @@
 const React = require('react');
 const _ = require('underscore');
 const ResizableRegion = require('./resizable-region');
+const PropTypes = require('prop-types');
 const WorkspaceStore = require('../flux/stores/workspace-store');
 const MODE_SPLIT_KEY = 'core.workspace.mode-split';
 
@@ -8,6 +9,13 @@ class ListDetailContainer extends React.Component {
   static displayName = 'ListDetailContainer';
 
   static containerStyles = {};
+
+  static propTypes = {
+    detailComponent: PropTypes.element,
+    listComponent: PropTypes.element,
+    isOutbox: PropTypes.bool,
+  };
+
   constructor(props) {
     super(props);
     this.widthKey = `${ListDetailContainer.displayName}_width`;
@@ -53,6 +61,7 @@ class ListDetailContainer extends React.Component {
       height: '100%',
       display: 'flex',
       flexDirection: 'row',
+      overflow: 'hidden',
     };
     const detailStyles = {};
     const splitMode = AppEnv.config.get('core.workspace.mode-split');
