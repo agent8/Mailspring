@@ -167,8 +167,8 @@ class SidebarStore extends MailspringStore {
 
   _onSetCollapsedByKey = (itemKey, collapsed) => {
     const currentValue = AppEnv.savedState.sidebarKeysCollapsed[itemKey];
-    if (currentValue !== collapsed) {
-      AppEnv.savedState.sidebarKeysCollapsed[itemKey] = collapsed;
+    if (currentValue !== !!collapsed) {
+      AppEnv.savedState.sidebarKeysCollapsed[itemKey] = !!collapsed;
       this._updateSections();
     }
   };
@@ -263,9 +263,8 @@ class SidebarStore extends MailspringStore {
       return;
     }
     console.log('sidebar store change');
-    // const multiAccount = accounts.length > 1;
-
     this._sections[Sections.Standard] = SidebarSection.standardSectionForAccounts(accounts);
+    console.log('sidebar store change finished');
     const keyboardFocusKey = this._findKeyboardFocusKeyFromCurrentSelected();
     if (keyboardFocusKey !== this._keyboardFocusKey) {
       this._keyboardFocusKey = keyboardFocusKey;

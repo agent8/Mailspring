@@ -31,7 +31,6 @@ class CategoryStore extends MailspringStore {
     this._categoryCache = {};
     this._standardCategories = {};
     this._userCategories = {};
-    this._userCategoriesForFolderTree = {};
     this._hiddenCategories = {};
     this._categorySyncState = {};
 
@@ -94,23 +93,6 @@ class CategoryStore extends MailspringStore {
     return this._hiddenCategories[asAccountId(accountOrId)] || [];
   }
 
-  removeFromFolderTreeRenderArray(accountOrId, index) {
-    const original = this._userCategoriesForFolderTree[asAccountId(accountOrId)] || [];
-    if (original[index] && original[index].role) {
-      return;
-    }
-    this._userCategoriesForFolderTree[asAccountId(accountOrId)] = original.splice(index, 1);
-  }
-  restoreCategoriesForFolderTree() {
-    this._userCategoriesForFolderTree = {};
-    Object.keys(this._userCategories).forEach(accountId => {
-      this._userCategoriesForFolderTree[accountId] = this._userCategories[accountId].slice();
-    });
-  }
-  userCategoriesForFolderTree(accountOrId) {
-    //This is only used when rendering Folder Tree, as the array is to be modified on every folder tree render;
-    return this._userCategoriesForFolderTree[asAccountId(accountOrId)] || [];
-  }
   // Public: Returns all of the categories that are not part of the standard
   // category set.
   //
@@ -505,10 +487,8 @@ class CategoryStore extends MailspringStore {
       this._standardCategories[accountId] = [];
       if (!this._userCategories) {
         this._userCategories = {};
-        this._userCategoriesForFolderTree = {};
       }
       this._userCategories[accountId] = [];
-      this._userCategoriesForFolderTree[accountId] = [];
       if (!this._hiddenCategories) {
         this._hiddenCategories = {};
       }
@@ -519,7 +499,6 @@ class CategoryStore extends MailspringStore {
         }
         if (cat && cat.isUserCategory()) {
           this._userCategories[accountId].push(cat);
-          this._userCategoriesForFolderTree[accountId].push(cat);
         }
         if (cat && cat.isHiddenCategory()) {
           this._hiddenCategories[accountId].push(cat);
