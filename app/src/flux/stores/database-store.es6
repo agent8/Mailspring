@@ -7,11 +7,11 @@ import LRU from 'lru-cache';
 import Sqlite3 from 'better-sqlite3';
 import { remote } from 'electron';
 import { ExponentialBackoffScheduler } from '../../backoff-schedulers';
-import Actions from '../actions';
+// import Actions from '../actions';
 import MailspringStore from '../../global/mailspring-store';
 import Utils from '../models/utils';
 import Query from '../models/query';
-import AppMessage from '../models/app-message';
+// import AppMessage from '../models/app-message';
 import DatabaseChangeRecord from './database-change-record';
 import { QUERY_TYPE } from '../../constant';
 
@@ -34,14 +34,14 @@ const promptSlowQuery = slowQueryCache => {
       return;
     }
     if (slowQueryCache.length + 1 > NUM_SLOW_QUERY_THRESH_HOLD) {
-      const message = new AppMessage({
-        allowClose: true,
-        level: 0,
-        id: 'database-slow-query',
-        accountIds: [],
-        description: 'Edison Mail need to do some housekeeping in order to improve performance.',
-        actions: [{ text: 'Proceed', onClick: () => Actions.askVacuum() }],
-      });
+      // const message = new AppMessage({
+      //   allowClose: true,
+      //   level: 0,
+      //   id: 'database-slow-query',
+      //   accountIds: [],
+      //   description: 'Edison Mail need to do some housekeeping in order to improve performance.',
+      //   actions: [{ text: 'Proceed', onClick: () => Actions.askVacuum() }],
+      // });
       // Actions.pushAppMessage(message);
       slowQueryCache.length = 0;
       return;
@@ -313,6 +313,7 @@ class DatabaseStore extends MailspringStore {
   // If a query is made before the database has been opened, the query will be
   // held in a queue and run / resolved when the database is ready.
   _query(query, values = [], background = false, dbKey = 'main', queryType) {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       if (!this._open) {
         console.log(`db conections not ready ${dbKey}`);
@@ -374,6 +375,9 @@ class DatabaseStore extends MailspringStore {
         );
       }
     });
+  }
+  sendArbitrarySqlQuery(query, dbKey = 'main') {
+    return this._query(query, [], true, dbKey, 'SQL_DEBUG');
   }
 
   async _executeLocally(query, values, dbKey = 'main') {

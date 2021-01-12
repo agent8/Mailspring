@@ -3,6 +3,7 @@ import { ipcRenderer } from 'electron';
 import uuid from 'uuid';
 import { LottieImg } from 'mailspring-component-kit';
 import { Actions } from 'mailspring-exports';
+import BugReportSqlQuery from './bug-report-sql-query';
 export default class BugReportRoot extends React.PureComponent {
   static displayName = 'BugReportRoot';
   static containerRequired = false;
@@ -15,6 +16,7 @@ export default class BugReportRoot extends React.PureComponent {
       description: '',
       submitting: false,
       submitButtonText: 'Submit',
+      includeSqlQueryResults: false,
     };
     this.logID = uuid();
     this.mounted = false;
@@ -106,6 +108,9 @@ export default class BugReportRoot extends React.PureComponent {
   onToggleUploadLogs = () => {
     this.setState({ uploadLogs: !this.state.uploadLogs });
   };
+  onToggleSQLQuery = () => {
+    this.setState({ includeSqlQueryResults: !this.state.includeSqlQueryResults });
+  };
   onToggleUploadScreenShots = () => {
     this.setState({ uploadScreenShots: !this.state.uploadScreenShots });
   };
@@ -140,40 +145,58 @@ export default class BugReportRoot extends React.PureComponent {
       </div>
     );
   }
+  renderSqlQuery() {
+    if (this.state.includeSqlQueryResults) {
+      return <BugReportSqlQuery />;
+    }
+    return null;
+  }
 
   render() {
     return (
-      <div className="page-frame bug-report">
-        <h2>Thank you for helping Edison Mail</h2>
-        <div className="item-field">
-          <label>Please briefly describe your issue</label>
-          <textarea
-            disabled={this.state.submitting}
-            value={this.state.description}
-            placeholder="Briefly describe what you did, and what's the expected result and what was observed."
-            onChange={this.onDescriptionChange}
-          />
+      <div className="page-frame bug-report-container">
+        <div className="bug-report">
+          <h2>Thank you for helping Edison Mail</h2>
+          <div className="item-field">
+            <label>Please briefly describe your issue</label>
+            <textarea
+              disabled={this.state.submitting}
+              value={this.state.description}
+              placeholder="Briefly describe what you did, and what's the expected result and what was observed."
+              onChange={this.onDescriptionChange}
+            />
+          </div>
+          {this.renderSqlQuery()}
+          <div className="item-checkbox">
+            <input
+              type="checkbox"
+              disabled={this.state.submitting}
+              checked={this.state.includeSqlQueryResults}
+              onChange={this.onToggleSQLQuery}
+            />
+            <label onClick={this.onToggleSQLQuery}>Run manual queries</label>
+          </div>
+          <div className="item-checkbox">
+            <input
+              type="checkbox"
+              disabled={this.state.submitting}
+              checked={this.state.uploadLogs}
+              onChange={this.onToggleUploadLogs}
+            />
+            <label onClick={this.onToggleUploadLogs}>Include log files</label>
+          </div>
+          {/*<div className="item-checkbox">*/}
+          {/*  <input*/}
+          {/*    type="checkbox"*/}
+          {/*    disabled={this.state.submitting}*/}
+          {/*    checked={this.state.uploadScreenShots}*/}
+          {/*    onChange={this.onToggleUploadScreenShots}*/}
+          {/*  />*/}
+          {/*  <label onClick={this.onToggleUploadScreenShots}>*/}
+          {/*    Include app screenshot, this will ONLY include Edison Mail app screenshots.*/}
+          {/*  </label>*/}
+          {/*</div>*/}
         </div>
-        <div className="item-checkbox">
-          <input
-            type="checkbox"
-            disabled={this.state.submitting}
-            checked={this.state.uploadLogs}
-            onChange={this.onToggleUploadLogs}
-          />
-          <label onClick={this.onToggleUploadLogs}>Include log files</label>
-        </div>
-        {/*<div className="item-checkbox">*/}
-        {/*  <input*/}
-        {/*    type="checkbox"*/}
-        {/*    disabled={this.state.submitting}*/}
-        {/*    checked={this.state.uploadScreenShots}*/}
-        {/*    onChange={this.onToggleUploadScreenShots}*/}
-        {/*  />*/}
-        {/*  <label onClick={this.onToggleUploadScreenShots}>*/}
-        {/*    Include app screenshot, this will ONLY include Edison Mail app screenshots.*/}
-        {/*  </label>*/}
-        {/*</div>*/}
         {this.renderSubmitButton()}
       </div>
     );
