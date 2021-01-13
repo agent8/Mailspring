@@ -68,8 +68,15 @@ export class Notifier {
       if (msg.accountId === (account || {}).id) continue;
       // if body is not pull over
       if (!msg.hasBody) continue;
-      // if is Other, don't display notification
-      if (enableFocusedInboxKey && msg.inboxCategory === Category.InboxCategoryState.MsgOther) {
+      // if is Other and the noticeType is 'Focused Inbox', don't display notification
+      // if enableFocusedInbox, the noticeType 'All' means 'Focused Inbox'
+      const myAccount = AccountStore.accountForId(msg.accountId);
+      const { noticeType } = myAccount.notifacation;
+      if (
+        enableFocusedInboxKey &&
+        noticeType === 'All' &&
+        msg.inboxCategory === Category.InboxCategoryState.MsgOther
+      ) {
         continue;
       }
       // filter the message that dont should note by account config
@@ -146,6 +153,7 @@ export class Notifier {
       case 'None':
         return false;
       case 'All':
+      case 'All_include_other':
         var isInbox =
           (msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Inbox')) ||
           msg.labels.some(label => label.role === 'inbox'); // for Gmail we check the XGMLabels, for other providers's label role
