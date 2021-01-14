@@ -466,6 +466,8 @@ body.platform-win32 {
     white-space: nowrap;
     position: relative;
     cursor: pointer;
+    display: flex;
+    align-items: center;
     img.content-mask {
       position: relative;
       z-index: 2;
@@ -1101,6 +1103,8 @@ body.platform-win32 {
   .tokenizing-field-input {
     z-index: 1;
     margin-left: 2.8em;
+    display: flex;
+    flex-wrap: wrap;
   }
 }
 
@@ -1195,6 +1199,23 @@ body.platform-win32 {
   }
 }
 
+button {
+  .font-face-display-name {
+    padding: 0 8px;
+    width: 94px;
+    max-width: 94px;
+    overflow-x: hidden;
+    text-overflow: clip;
+    font-size: 13px;
+  }
+}
+.font-popover {
+  width: 150px;
+  height: 220px;
+  .option{
+    font-size: 13px;
+  }
+}
 .emoji-button-popover {
   width: 210px;
   height: 290px;
@@ -1228,6 +1249,12 @@ body.platform-win32 {
     }
     .emoji-search-container {
       padding: @padding-base-vertical * 1.5 @padding-base-horizontal 0;
+      input[type='text'].search{
+        background-color: @input-search-bg;
+        text-indent: 8px;
+        border: unset;
+        box-shadow: unset;
+      }
     }
   }
   .emoji-name {

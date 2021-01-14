@@ -1,5 +1,13 @@
-import { remote, clipboard } from 'electron';
-import { React, PropTypes, Utils, Contact, ContactStore, RegExpUtils } from 'mailspring-exports';
+import { clipboard } from 'electron';
+import {
+  React,
+  PropTypes,
+  Utils,
+  Contact,
+  ContactStore,
+  RegExpUtils,
+  Actions,
+} from 'mailspring-exports';
 import { TokenizingTextField, Menu, InjectedComponentSet } from 'mailspring-component-kit';
 
 const TokenRenderer = props => {
@@ -170,39 +178,27 @@ export default class ParticipantsTextField extends React.Component {
     return '';
   };
 
-  _onShowContextMenu = participants => {
-    // Warning: Menu is already initialized as Menu.es6!
-    const MenuClass = remote.Menu;
-    const MenuItem = remote.MenuItem;
-
-    const menu = new MenuClass();
+  _onShowContextMenu = (participants, mouseEvent) => {
+    const menu = [];
     if (participants.length === 1) {
-      menu.append(
-        new MenuItem({
-          label: `Copy ${participants[0].email}`,
-          click: () => clipboard.writeText(participants[0].email),
-        })
-      );
+      menu.push({
+        label: `Copy ${participants[0].email}`,
+        click: () => clipboard.writeText(participants[0].email),
+      });
     } else {
-      menu.append(
-        new MenuItem({
-          label: `Copy`,
-          click: () => clipboard.writeText(participants.map(t => t.email).join(', ')),
-        })
-      );
+      menu.push({
+        label: `Copy`,
+        click: () => clipboard.writeText(participants.map(t => t.email).join(', ')),
+      });
     }
-    menu.append(
-      new MenuItem({
-        type: 'separator',
-      })
-    );
-    menu.append(
-      new MenuItem({
-        label: 'Remove',
-        click: () => this._remove(participants),
-      })
-    );
-    menu.popup({});
+    menu.push({
+      type: 'divider',
+    });
+    menu.push({
+      label: 'Remove',
+      click: () => this._remove(participants),
+    });
+    Actions.openContextMenu({ menuItems: menu, mouseEvent });
   };
 
   _onInputTrySubmit = (inputValue, completions = [], selectedItem) => {

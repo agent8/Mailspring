@@ -186,7 +186,7 @@ function fromBinary(binary) {
 }
 function parseBase64Data(base64String = '') {
   // https://regex101.com/r/7J9c9g/3
-  const base64Regx = new RegExp(/^data\:\S+\/(\S+)\;base64,\s*(\S+)$/);
+  const base64Regx = new RegExp(/^data:\S+\/(\S+);base64,\s*(\S+)$/);
   const match = base64Regx.exec(base64String.replace(/(\s|\r|\t|\n)/g, ''));
   if (match && match.length === 3) {
     return { extension: match[1], data: match[2] };
@@ -197,13 +197,13 @@ module.exports = Utils = {
   safeSQL(keyWord) {
     return keyWord
       .replace(/\//g, '//')
-      .replace(/\'/g, "''")
-      .replace(/\"/g, '""')
+      .replace(/'/g, "''")
+      .replace(/"/g, '""')
       .replace(/\[/g, '/[')
       .replace(/\]/g, '/]')
-      .replace(/\%/g, '/%')
-      .replace(/\&/g, '/&')
-      .replace(/\_/g, '/_')
+      .replace(/%/g, '/%')
+      .replace(/&/g, '/&')
+      .replace(/_/g, '/_')
       .replace(/\(/g, '/(')
       .replace(/\)/g, '/)');
   },
@@ -261,6 +261,7 @@ module.exports = Utils = {
         .toLowerCase();
       template = Object.values(MailcoreProviderSettings).find(p => {
         for (const test of p['domain-match'] || []) {
+          // eslint-disable-next-line no-useless-escape
           if (new RegExp(`(^${test}$)|(\.${test}$)`).test(domain)) {
             // domain-exclude
             for (const testExclude of p['domain-exclude'] || []) {
@@ -340,7 +341,7 @@ module.exports = Utils = {
     if ((html != null ? html : '').trim().length === 0) {
       return '';
     }
-    if (maxLength && html.length > maxLength) {
+    if (maxLength && html && html.length > maxLength) {
       html = html.slice(0, maxLength);
     }
     return new DOMParser().parseFromString(html, 'text/html').body.innerText;
@@ -494,7 +495,7 @@ module.exports = Utils = {
       'IMAGE/HEIC',
     ];
 
-    return (contentTypes.includes(contentType) || ImageExtensions.includes(ext)) && size > 256;
+    return (contentTypes.includes(contentType) || ImageExtensions.includes(ext)) && size > 64;
   },
 
   fileIsImage(filePath) {
@@ -798,6 +799,7 @@ module.exports = Utils = {
       }
       return value;
     } else {
+      // todo
     }
     return value;
   },

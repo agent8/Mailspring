@@ -32,9 +32,9 @@ class InitialDonePage extends React.Component {
     return (
       <div className="page opaque" style={{ width: 900, height: '100%' }}>
         <img src={`edisonmail://onboarding/assets/onboarding-done@2x.png`} alt="" />
-        <h1>You're all Set!</h1>
+        <h1>You&apos;re all Set!</h1>
         <h4>
-          We couldn't be happier to have you using
+          We couldn&apos;t be happier to have you using
           <br />
           Edison Mail.
         </h4>
@@ -43,7 +43,7 @@ class InitialDonePage extends React.Component {
             className={'btn btn-large ' + (submitting && 'btn-disabled')}
             onClick={this._onFinished}
           >
-            Let's Go
+            Let&apos;s Go
           </button>
           {submitting && (
             <LottieImg

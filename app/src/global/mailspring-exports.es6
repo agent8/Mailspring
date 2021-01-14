@@ -1,5 +1,4 @@
 /* eslint global-require: 0 */
-/* eslint import/no-dynamic-require: 0 */
 import DatabaseObjectRegistry from '../registries/database-object-registry';
 
 // This module exports an empty object, with a ton of defined properties that
@@ -150,6 +149,7 @@ lazyLoadAndRegisterTask('NativeReportTask', 'native-report-task');
 lazyLoadAndRegisterTask('AppendToSentTask', 'append-to-sent-task');
 lazyLoadAndRegisterTask('ExpandMessageAttachmentTask', 'expand-message-attachment-task');
 lazyLoadAndRegisterTask('ContactUpdateTask', 'contact-update-task');
+lazyLoadAndRegisterTask('AccountAliasesTask', 'account-aliases-task');
 // Stores
 // These need to be required immediately since some Stores are
 // listen-only and not explicitly required from anywhere. Stores
@@ -161,6 +161,7 @@ load(`DraftFactory`, 'flux/stores/draft-factory');
 load(`ModalStore`, 'flux/stores/modal-store');
 load(`OutboxStore`, 'flux/stores/outbox-store');
 load(`PopoverStore`, 'flux/stores/popover-store');
+load('ContextMenuStore', 'flux/stores/context-menu-store');
 load(`AccountStore`, 'flux/stores/account-store');
 load(`SignatureStore`, 'flux/stores/signature-store');
 load(`MessageStore`, 'flux/stores/message-store');

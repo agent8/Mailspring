@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import React from 'react';
 import {
   MuteNotificationStore,
@@ -5,14 +6,20 @@ import {
   EmailAvatar,
   AccountStore,
   RegExpUtils,
+  PropTypes,
 } from 'mailspring-exports';
 import { RetinaImg, EditableList, Flexbox, FullScreenModal } from 'mailspring-component-kit';
 import classnames from 'classnames';
 import ContactList from './contact-list';
 import ContactSearch from './contact-search';
 
+const DISPLAY_LABELS = { All_include_other: 'all', All: 'all' };
+
 class CoutactSelectShow extends React.Component {
   static displayName = 'CoutactSelectShow';
+
+  static propTypes = { delSelectContact: PropTypes.func, contact: PropTypes.object };
+
   constructor() {
     super();
     this.state = {};
@@ -328,7 +335,15 @@ export class PreferencesAccountNotifacations extends React.Component {
 
   render() {
     const { accounts, selected } = this.state;
-    const { noticeType, sound } = selected.notifacation;
+    let { noticeType, sound } = selected.notifacation;
+    const enableFocusedInboxKey = AppEnv.config.get('core.workspace.enableFocusedInbox');
+    if (enableFocusedInboxKey) {
+      DISPLAY_LABELS['All'] = 'focused emails';
+    }
+    if (!enableFocusedInboxKey && noticeType === 'All_include_other') {
+      noticeType = 'All';
+    }
+
     return (
       <div className="account-notifacations">
         <EditableList
@@ -344,7 +359,8 @@ export class PreferencesAccountNotifacations extends React.Component {
             <div className="account-notifacations-note">
               {noticeType === 'None'
                 ? 'Notifications are disabled for this account.'
-                : `Notifications will be sent for ${noticeType.toLocaleLowerCase()} emails for this account.`}
+                : `Notifications will be sent for ${DISPLAY_LABELS[noticeType] ||
+                    noticeType.toLocaleLowerCase()} emails for this account.`}
             </div>
             {selected.getNoticeTypeEnum().map(item => {
               return (
@@ -357,7 +373,11 @@ export class PreferencesAccountNotifacations extends React.Component {
                         this._onChangeNoticeType(item.type);
                       }}
                     />
-                    {item.title}
+                    {item.type === 'All'
+                      ? enableFocusedInboxKey
+                        ? 'Focused Inbox'
+                        : 'All mail'
+                      : item.title}
                   </label>
                 </div>
               );

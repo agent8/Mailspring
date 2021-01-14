@@ -278,15 +278,20 @@ export default class ComposerEditor extends React.Component {
     return html.replace(/(background-color|color):[^;]*?!important;/g, '');
   }
 
-  openContextMenu = ({ word, sel, hasSelectedText }) => {
-    AppEnv.windowEventHandler.openSpellingMenuFor(word, hasSelectedText, {
-      onCorrect: correction => {
-        this.onChange(this.props.value.change().insertText(correction));
+  openContextMenu = ({ word, sel, hasSelectedText }, event) => {
+    AppEnv.windowEventHandler.openSpellingMenuFor(
+      word,
+      hasSelectedText,
+      {
+        onCorrect: correction => {
+          this.onChange(this.props.value.change().insertText(correction));
+        },
+        onRestoreSelection: () => {
+          this.onChange(this.props.value.change().select(sel));
+        },
       },
-      onRestoreSelection: () => {
-        this.onChange(this.props.value.change().select(sel));
-      },
-    });
+      event
+    );
   };
 
   onContextMenu = event => {
@@ -295,7 +300,7 @@ export default class ComposerEditor extends React.Component {
     const word = this.props.value.fragment.text;
     const sel = this.props.value.selection;
     const hasSelectedText = !sel.isCollapsed;
-    this.openContextMenu({ word, sel, hasSelectedText });
+    this.openContextMenu({ word, sel, hasSelectedText }, event);
   };
 
   onChange = nextValue => {

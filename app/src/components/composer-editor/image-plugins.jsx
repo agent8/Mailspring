@@ -1,5 +1,5 @@
 import path from 'path';
-import React from 'react';
+const { React, PropTypes } = require('mailspring-exports');
 import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
@@ -7,11 +7,12 @@ const IMAGE_TYPE = 'inline_resizable_image';
 const maxImgSize = 200 * 1000;
 
 function ImageNode(props) {
-  const { attributes, node, targetIsHTML, editor } = props;
+  const { node, targetIsHTML, editor } = props;
   const data = node.data;
   const src = data.get ? data.get('src') : data.src;
   const height = data.get ? data.get('height') : data.height;
   const width = data.get ? data.get('width') : data.width;
+  const href = data.get ? data.get('href') : data.href;
   const verticalAlign = data.get ? data.get('verticalAlign') : data.verticalAlign;
   const style = {};
   if (height) {
@@ -25,7 +26,11 @@ function ImageNode(props) {
     style.verticalAlign = verticalAlign;
   }
   if (targetIsHTML) {
-    return <img alt="" src={src} style={style} resizable={'true'} />;
+    return (
+      <a href={href}>
+        <img alt="" href={href} src={src} style={style} resizable={'true'} />
+      </a>
+    );
   }
 
   return (
@@ -37,6 +42,7 @@ function ImageNode(props) {
           return change.setNodeByKey(node.key, {
             data: {
               src: src,
+              href: href,
               draggerDisable: true,
               height: value.height,
               width: value.width,
@@ -48,6 +54,12 @@ function ImageNode(props) {
     />
   );
 }
+
+ImageNode.propTypes = {
+  node: PropTypes.node,
+  targetIsHTML: PropTypes.bool,
+  editor: PropTypes.object,
+};
 
 function renderNode(props) {
   if (props.node.type === IMAGE_TYPE) {
@@ -119,6 +131,12 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
   );
 };
 
+ToolbarAttachmentButton.propTypes = {
+  value: PropTypes.object,
+  onChange: PropTypes.func,
+  onAddAttachments: PropTypes.func,
+};
+
 const rules = [
   {
     deserialize(el, next) {
@@ -144,12 +162,13 @@ const rules = [
         if (verticalAlign) {
           data.verticalAlign = verticalAlign;
         }
+        const href = el.getAttribute('href');
 
         return {
           object: 'inline',
           isVoid: true,
           type: IMAGE_TYPE,
-          data,
+          data: { ...data, href: href },
         };
       }
     },

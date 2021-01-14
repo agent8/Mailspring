@@ -23,6 +23,7 @@ function getDeviceInfo() {
     screenType: 'computer',
     pushToken: 'string',
     timeZoneOffsetInMs: timezoneOffset,
+    timeZoneLocation: Intl.DateTimeFormat().resolvedOptions().timeZone,
     appInstalledAtInMs: appInstalledAtInMs,
     appUpdatedAtInMs: 0,
     appVersion: `${appVersion}(${buildVersion})`,

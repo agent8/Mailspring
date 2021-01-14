@@ -1,7 +1,8 @@
-import ScrollRegion from './scroll-region';
 const classNames = require('classnames');
 const _ = require('underscore');
-const { React, ReactDOM, PropTypes, DOMUtils } = require('mailspring-exports');
+const { React, PropTypes, DOMUtils } = require('mailspring-exports');
+import ScrollRegion from './scroll-region';
+import Keystrokes from './keystrokes';
 
 /*
 Public: `MenuItem` components can be provided to the {Menu} by the `itemContent` function.
@@ -26,10 +27,20 @@ class MenuItem extends React.Component {
     selected: PropTypes.bool,
     checked: PropTypes.bool,
     disabled: PropTypes.bool,
+    onMouseDown: PropTypes.func,
+    onMouseOver: PropTypes.func,
+    content: PropTypes.any,
+    shortcutKey: PropTypes.string,
   };
 
   static default = {
     disabled: false,
+  };
+  _renderShortcutKey = () => {
+    if (!this.props.shortcutKey || typeof this.props.shortcutKey !== 'string') {
+      return null;
+    }
+    return <Keystrokes keyString={this.props.shortcutKey} containerClassName={'shortcut-key'} />;
   };
 
   render() {
@@ -50,6 +61,7 @@ class MenuItem extends React.Component {
           onMouseOver={this.props.onMouseOver}
         >
           {this.props.content}
+          {this._renderShortcutKey()}
         </div>
       );
     }
@@ -171,16 +183,24 @@ class Menu extends React.Component {
     onEscape: PropTypes.func,
     defaultSelectedIndex: PropTypes.number,
     maxHeight: PropTypes.number,
+    refCallback: PropTypes.func,
     autoFocus: PropTypes.bool,
   };
 
-  static defaultProps = { onEscape() {}, maxHeight: 0 };
+  static defaultProps = { onEscape() {}, maxHeight: 0, refCallback: () => {} };
 
   constructor(props) {
     super(props);
     this._mounted = false;
     this.state = {
       selectedIndex: this.props.defaultSelectedIndex || 0,
+    };
+    this._selfRef = null;
+    this._setSelfRef = ref => {
+      this._selfRef = ref;
+      if (this.props.refCallback) {
+        this.props.refCallback(ref);
+      }
     };
   }
 
@@ -199,13 +219,37 @@ class Menu extends React.Component {
       this.setState({ selectedIndex: -1 });
     });
   };
+  _itemsShortcutExceptionKeys = () => {
+    const ret = [];
+    this.props.items.forEach(item => {
+      //Since our component can only deal with shortcuts that are one character,
+      // anything that's not one character we pass it on to keymap-manager to deal with
+      if (
+        item &&
+        item.shortcutKey &&
+        typeof item.shortcutKey === 'string' &&
+        item.shortcutKey.length > 1
+      ) {
+        ret.push(item.shortcutKey);
+      }
+    });
+    return ret;
+  };
 
   componentDidMount() {
     this._mounted = true;
+    if (this.props.autoFocus && this._selfRef) {
+      //Wait until Menu finishes animating, then focus
+      setTimeout(() => this._selfRef.focus(), 100);
+      AppEnv.keymaps.suspendAllKeymaps({ exception: this._itemsShortcutExceptionKeys() });
+    }
   }
 
   componentWillUnmount() {
     this._mounted = false;
+    if (this.props.autoFocus) {
+      AppEnv.keymaps.resumeAllKeymaps();
+    }
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -241,8 +285,11 @@ class Menu extends React.Component {
     if ((this.props.items || []).length === 0) {
       return;
     }
-    const item = ReactDOM.findDOMNode(this).querySelector('.selected');
-    const container = ReactDOM.findDOMNode(this).querySelector('.content-container');
+    if (!this._selfRef) {
+      return;
+    }
+    const item = this._selfRef.querySelector('.selected');
+    const container = this._selfRef.querySelector('.content-container');
     const adjustment = DOMUtils.scrollAdjustmentToMakeNodeVisibleInContainer(item, container);
     if (adjustment !== 0) {
       container.scrollTop += adjustment;
@@ -254,7 +301,12 @@ class Menu extends React.Component {
     const fc = this.props.footerComponents || <span />;
     const className = this.props.className ? this.props.className : '';
     return (
-      <div onKeyDown={this._onKeyDown} className={`menu ${className}`} tabIndex="-1">
+      <div
+        onKeyDown={this._onKeyDown}
+        className={`menu ${className}`}
+        tabIndex="-1"
+        ref={this._setSelfRef}
+      >
         <div className="header-container">{hc}</div>
         {this._contentContainer()}
         <div className="footer-container">{fc}</div>
@@ -304,6 +356,9 @@ class Menu extends React.Component {
       if (React.isValidElement(content) && content.type === MenuItem) {
         return content;
       }
+      if (item.type === 'divider') {
+        return <div key={i} className="menu-divider" />;
+      }
 
       const onMouseDown = event => {
         event.preventDefault();
@@ -338,6 +393,7 @@ class Menu extends React.Component {
           onMouseOver={onMouseOver}
           checked={this.props.itemChecked && this.props.itemChecked(item)}
           content={content}
+          shortcutKey={item.shortcutKey}
           disabled={item.disabled}
           selected={this.state.selectedIndex === i}
         />
@@ -375,7 +431,7 @@ class Menu extends React.Component {
 
       const itemContext = this.props.itemContent(item, this.props.itemContext).props || {};
 
-      if (itemContext.divider) {
+      if (itemContext.divider || item.type === 'divider') {
         if (delta > 0) {
           index += 1;
         } else if (delta < 0) {

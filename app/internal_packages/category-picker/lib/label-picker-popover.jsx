@@ -281,6 +281,14 @@ export default class LabelPickerPopover extends Component {
         value={this.state.searchValue}
         onChange={this._onSearchValueChange}
       />,
+      <RetinaImg
+        key="search-icon"
+        isIcon
+        name="search.svg"
+        className="search-accessory search"
+        mode={RetinaImg.Mode.ContentIsMask}
+        style={{ height: 20, width: 20, position: 'absolute', left: '20px' }}
+      />,
     ];
 
     let footerComponents = [

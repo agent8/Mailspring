@@ -13,6 +13,7 @@ import Actions from '../flux/actions';
 import ResizableBox from './resizable-box';
 
 const { AttachmentDownloadState } = Constant;
+const UNPREVIEWABLE_IMAGE_EXTNAMES = ['.heic'];
 
 const propTypes = {
   className: PropTypes.string,
@@ -38,6 +39,9 @@ const propTypes = {
   onRemoveAttachment: PropTypes.func,
   onDownloadAttachment: PropTypes.func,
   onAbortDownload: PropTypes.func,
+  isDownloading: PropTypes.bool,
+  isImage: PropTypes.bool,
+  percent: PropTypes.number,
 };
 
 const defaultProps = {
@@ -79,7 +83,6 @@ function AttachmentActionIcon(props) {
     removeIcon,
     downloadIcon,
     retinaImgMode,
-    onAbortDownload,
     onRemoveAttachment,
     onDownloadAttachment,
     disabled,
@@ -294,12 +297,10 @@ export class AttachmentItem extends Component {
       draggable,
       displayName,
       displaySize,
-      fileIconName,
       filePreviewPath,
       disabled,
       isImage,
       filePath,
-      contentType,
       ...extraProps
     } = this.props;
     const classes = classnames({
@@ -310,7 +311,11 @@ export class AttachmentItem extends Component {
     });
     let { iconName, color } = AttachmentStore.getExtIconName(displayName);
     if (isImage) {
-      if (fs.existsSync(filePath)) {
+      const extName = displayName ? path.extname(displayName) : '';
+      if (
+        !UNPREVIEWABLE_IMAGE_EXTNAMES.includes(extName.toLowerCase()) &&
+        fs.existsSync(filePath)
+      ) {
         filePreviewPath = filePath;
       }
       iconName = 'attachment-img.svg';
@@ -319,7 +324,6 @@ export class AttachmentItem extends Component {
     }
     const style = draggable ? { WebkitUserDrag: 'element' } : null;
     const tabIndex = focusable ? 0 : null;
-    const { devicePixelRatio } = window;
 
     let previewStyle = {};
     if (filePreviewPath) {
@@ -341,14 +345,6 @@ export class AttachmentItem extends Component {
         {...pickHTMLProps(extraProps)}
       >
         <div className="inner">
-          <div
-            className="popup"
-            style={{
-              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
-            }}
-          >
-            Download Success
-          </div>
           <ProgressBar
             isDownloading={this.state.isDownloading}
             percent={this.state.percent}
@@ -382,8 +378,9 @@ export class AttachmentItem extends Component {
                   {displayName}
                 </div>
                 <div className="file-size">{displaySize ? `${displaySize}` : ''}</div>
-                <div className="attachment-action-bar">
-                  {this._canPreview() ? (
+              </div>
+              <div className="attachment-action-bar">
+                {/* {this._canPreview() ? (
                     <div className="file-action-icon">
                       <RetinaImg
                         className="quicklook-icon"
@@ -394,17 +391,16 @@ export class AttachmentItem extends Component {
                         onClick={!disabled ? this._onClickQuicklookIcon : null}
                       />
                     </div>
-                  ) : null}
-                  <AttachmentActionIcon
-                    {...this.props}
-                    isDownloading={this.state.isDownloading || this.props.isDownloading}
-                    removeIcon="close.svg"
-                    downloadIcon="download.svg"
-                    isIcon
-                    style={{ width: 20, height: 20 }}
-                    retinaImgMode={RetinaImg.Mode.ContentIsMask}
-                  />
-                </div>
+                  ) : null} */}
+                <AttachmentActionIcon
+                  {...this.props}
+                  isDownloading={this.state.isDownloading || this.props.isDownloading}
+                  removeIcon="close.svg"
+                  downloadIcon="download.svg"
+                  isIcon
+                  style={{ width: 20, height: 20 }}
+                  retinaImgMode={RetinaImg.Mode.ContentIsMask}
+                />
               </div>
             </div>
           </Flexbox>
@@ -628,14 +624,6 @@ export class ImageAttachmentItem extends Component {
         style={style}
       >
         <div>
-          <div
-            className="popup"
-            style={{
-              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
-            }}
-          >
-            Download Success
-          </div>
           <ProgressBar
             isDownloading={this.state.isDownloading}
             percent={this.state.percent}
@@ -643,10 +631,12 @@ export class ImageAttachmentItem extends Component {
           />
           <AttachmentActionIcon
             {...this.props}
-            removeIcon="image-cancel-button.png"
-            downloadIcon="image-download-button.png"
+            removeIcon="close.svg"
+            downloadIcon="download.svg"
             isDownloading={this.state.isDownloading || this.props.isDownloading}
-            retinaImgMode={RetinaImg.Mode.ContentPreserve}
+            isIcon
+            style={{ width: 20, height: 20 }}
+            retinaImgMode={RetinaImg.Mode.ContentIsMask}
             onAbortDownload={null}
           />
           <div
