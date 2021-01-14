@@ -10,9 +10,18 @@ import {
   DatabaseStore,
   ThreadStore,
   MuteNotificationStore,
+  TaskFactory,
+  BlockContactTask,
 } from 'mailspring-exports';
 
 const WAIT_FOR_CHANGES_DELAY = 400;
+const NOTIFI_ACTIONS = [
+  { type: 'button', text: 'Reply', value: 'reply' },
+  { type: 'button', text: 'Mark as Read', value: 'mark_as_read' },
+  { type: 'button', text: 'Trash', value: 'trash' },
+  { type: 'button', text: 'Archive', value: 'archive' },
+  { type: 'button', text: 'Block', value: 'block' },
+];
 
 export class Notifier {
   constructor() {
@@ -59,8 +68,15 @@ export class Notifier {
       if (msg.accountId === (account || {}).id) continue;
       // if body is not pull over
       if (!msg.hasBody) continue;
-      // if is Other, don't display notification
-      if (enableFocusedInboxKey && msg.inboxCategory === Category.InboxCategoryState.MsgOther) {
+      // if is Other and the noticeType is 'Focused Inbox', don't display notification
+      // if enableFocusedInbox, the noticeType 'All' means 'Focused Inbox'
+      const myAccount = AccountStore.accountForId(msg.accountId);
+      const { noticeType } = myAccount.notifacation;
+      if (
+        enableFocusedInboxKey &&
+        noticeType === 'All' &&
+        msg.inboxCategory === Category.InboxCategoryState.MsgOther
+      ) {
         continue;
       }
       // filter the message that dont should note by account config
@@ -137,12 +153,13 @@ export class Notifier {
       case 'None':
         return false;
       case 'All':
-        const isInbox =
+      case 'All_include_other':
+        var isInbox =
           (msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Inbox')) ||
           msg.labels.some(label => label.role === 'inbox'); // for Gmail we check the XGMLabels, for other providers's label role
         return isInbox;
       case 'Important':
-        const isImportant = msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Important');
+        var isImportant = msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Important');
         return isImportant;
       default:
         return true;
@@ -211,12 +228,58 @@ export class Notifier {
       canReply: true,
       tag: 'unread-update',
       silent: true,
+      actions: NOTIFI_ACTIONS,
       onActivate: ({ response, activationType }) => {
         if (activationType === 'replied' && response && typeof response === 'string') {
           Actions.sendQuickReply({ thread, message }, response);
           // DC-2078:Should not open email detail after reply from notification
           return;
         } else {
+          if (activationType && activationType !== 'clicked') {
+            // { type: 'button', text: 'Mark as Read', value: 'mark_as_read' },
+            // { type: 'button', text: 'Trash', value: 'trash' },
+            // { type: 'button', text: 'Archive', value: 'archive' },
+            // { type: 'button', text: 'Block', value: 'block' },
+            switch (activationType) {
+              case 'mark_as_read':
+                Actions.queueTasks(
+                  TaskFactory.taskForSettingUnread({
+                    threads: [thread],
+                    unread: false,
+                    source: 'Notification mark as read',
+                  })
+                );
+                break;
+              case 'trash':
+                Actions.queueTasks(
+                  TaskFactory.tasksForMovingToTrash({
+                    messages: [message],
+                    source: 'Notification trash',
+                  })
+                );
+                break;
+              case 'archive':
+                Actions.queueTasks(
+                  TaskFactory.tasksForArchiving({
+                    threads: [thread],
+                    source: 'Notification archive',
+                  })
+                );
+                break;
+              case 'block':
+                var fromEmail = message.from[0] && message.from[0].email;
+                if (fromEmail) {
+                  Actions.queueTask(
+                    new BlockContactTask({ accountId: message.accountId, email: fromEmail })
+                  );
+                }
+                break;
+              default:
+                return;
+            }
+            return;
+          }
+
           AppEnv.displayWindow();
         }
 

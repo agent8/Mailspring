@@ -188,6 +188,7 @@ class TemplateStore extends MailspringStore {
           id: t.id,
           state: PreferencesSubListStateEnum.updated,
           title: template.title,
+          TO: template.TO,
           CC: template.CC,
           BCC: template.BCC,
           SUBJ: template.SUBJ,
@@ -296,8 +297,14 @@ class TemplateStore extends MailspringStore {
 
       let newBody = `${templateBody}${current.substr(insertion)}`;
       const changeObj = { files: [] };
-      const { BCC, CC, SUBJ, attachments } = template;
+      const { BCC, TO, CC, SUBJ, attachments } = template;
       // Add CC, Bcc to the draft, do not delete the original CC, BCC
+      if (TO) {
+        const toContacts = await ContactStore.parseContactsInString(TO);
+        if (toContacts.length) {
+          changeObj['to'] = mergeContacts(draft.to, toContacts);
+        }
+      }
       if (CC) {
         const ccContacts = await ContactStore.parseContactsInString(CC);
         if (ccContacts.length) {

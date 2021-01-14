@@ -1,7 +1,6 @@
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import { exec } from 'child_process';
 import ws from 'windows-shortcuts';
 const { app } = require('electron').remote;
 
@@ -196,7 +195,6 @@ class SystemStartServiceLinux extends SystemStartServiceBase {
   }
 }
 
-/* eslint import/no-mutable-exports: 0*/
 let SystemStartService;
 if (process.platform === 'darwin') {
   SystemStartService = SystemStartServiceDarwin;

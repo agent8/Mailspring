@@ -27,7 +27,7 @@ class PopoverStore extends MailspringStore {
     child,
     props,
     callback,
-    opts = { isFixedToWindow: false, position: { left: 0, top: 0 } },
+    opts = { isFixedToWindow: false, position: { left: 0, top: 0 } }
   ) => {
     if (opts.isFixedToWindow) {
       props.position = opts.position;
@@ -44,19 +44,30 @@ class PopoverStore extends MailspringStore {
   openPopover = (
     element,
     {
-      className = '', originRect, direction, fallbackDirection, closeOnAppBlur, disablePointer, isFixedToWindow = false, position = {}, onClose = () => {
-      }, callback = () => {
-      },
-    },
+      className = '',
+      popoverClassName = '',
+      originRect,
+      direction,
+      fallbackDirection,
+      closeOnAppBlur,
+      disablePointer,
+      disableAutoFocus,
+      isFixedToWindow = false,
+      position = {},
+      onClose = () => {},
+      callback = () => {},
+    }
   ) => {
     const props = {
       className,
+      popoverClassName,
       direction,
       originRect,
       fallbackDirection,
       closeOnAppBlur,
       onClose,
       disablePointer,
+      disableAutoFocus,
       isFixedToWindow,
     };
 
@@ -69,8 +80,7 @@ class PopoverStore extends MailspringStore {
     }
   };
 
-  closePopover = (callback = () => {
-  }) => {
+  closePopover = (callback = () => {}) => {
     ReactDOM.render(<span />, this.container, () => {
       this.isOpen = false;
       this.trigger();

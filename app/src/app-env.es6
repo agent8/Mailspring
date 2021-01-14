@@ -1,5 +1,4 @@
 /* eslint global-require: 0 */
-/* eslint import/no-dynamic-require: 0 */
 import _ from 'underscore';
 import path from 'path';
 import { ipcRenderer, remote, desktopCapturer } from 'electron';
@@ -11,7 +10,7 @@ import stream from 'stream';
 import { APIError } from './flux/errors';
 import WindowEventHandler from './window-event-handler';
 import { createHash } from 'crypto';
-import { dirExists, autoGenerateFileName, transfornImgToBase64 } from './fs-utils';
+import { dirExists, autoGenerateFileName } from './fs-utils';
 import RegExpUtils from './regexp-utils';
 import { WindowLevel } from './constant';
 import uuid from 'uuid';
@@ -29,6 +28,7 @@ let getDeviceHash = null;
 const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
 const WebServerRoot = 'https://web-marketing.edison.tech/';
 const type = 'mac';
+const windowStateStorageVersion = 1;
 
 function ensureInteger(f, fallback) {
   let int = f;
@@ -444,7 +444,7 @@ export default class AppEnvConstructor {
       if (!noStackTrace) {
         error = this._stripSensitiveData(error);
       }
-      if (!!extra.errorData) {
+      if (extra.errorData) {
         if (typeof extra.errorData === 'string') {
           extra.errorData = this._stripSensitiveData(extra.errorData);
         } else {
@@ -779,6 +779,7 @@ export default class AppEnvConstructor {
   }
 
   hide() {
+    console.log('****hide 2');
     return this.getCurrentWindow().hide();
   }
 
@@ -923,9 +924,9 @@ export default class AppEnvConstructor {
   }
 
   // Extended: Hide the current window.
-  hide() {
-    return ipcRenderer.send('call-window-method', 'hide');
-  }
+  // hide() {
+  //   return ipcRenderer.send('call-window-method', 'hide');
+  // }
 
   // Extended: Reload the current window.
   reload() {
@@ -1623,7 +1624,10 @@ export default class AppEnvConstructor {
       console.warn(`Error parsing window state: ${error.stack}`, error);
     }
     if (!this.savedState) {
-      this.savedState = {};
+      this.savedState = { version: windowStateStorageVersion };
+    }
+    if (!Object.prototype.hasOwnProperty.call(this.savedState, 'version')) {
+      this.savedState.version = 1;
     }
   }
 
@@ -1807,10 +1811,10 @@ export default class AppEnvConstructor {
     if (!accountId || accountId.length === 0) {
       return;
 
-      if (!this._taskErrorCounter[accountId]) {
-        this._taskErrorCounter[accountId] = [];
-      }
-      this._taskErrorCounter[accountId].push(data);
+      // if (!this._taskErrorCounter[accountId]) {
+      //   this._taskErrorCounter[accountId] = [];
+      // }
+      // this._taskErrorCounter[accountId].push(data);
     }
   }
 
@@ -1823,7 +1827,7 @@ export default class AppEnvConstructor {
       return [];
     }
     return this._taskErrorCounter[accountId].filter(data => {
-      if (data.hasOwnProperty(identityKey)) {
+      if (Object.prototype.hasOwnProperty.call(data, identityKey)) {
         return data[identityKey] === value;
       }
       return false;
@@ -1839,7 +1843,7 @@ export default class AppEnvConstructor {
     }
     for (let i = 0; i < this._taskErrorCounter[accountId].length; i++) {
       const tmp = this._taskErrorCounter[accountId][i];
-      if (tmp.hasOwnProperty(identityKey)) {
+      if (Object.prototype.hasOwnProperty.call(tmp, identityKey)) {
         if (tmp[identityKey] === value) {
           this._taskErrorCounter[accountId][i] = Object.assign({}, data);
           break;
@@ -1967,7 +1971,7 @@ export default class AppEnvConstructor {
       );
       response = await response.json();
       if (response.status === 200) {
-        this.config.set('invite.invitationCode', body.invitationCode);
+        this.config.set('invite.invitationCode', response.invitationCode);
       }
     } catch (err) {
       console.error('registerBetaUser ERROR:', err);

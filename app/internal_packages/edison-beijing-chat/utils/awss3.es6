@@ -3,14 +3,20 @@ const { CipherFileStream, DecryptFileStream } = require('./aes');
 import fs from 'fs';
 import uuid from 'uuid';
 
+function decrypt(ciphertext) {
+  const CryptoJS = require('crypto-js');
+  const E_KEY = 'EDISON_MAIL';
+  var bytes = CryptoJS.AES.decrypt(ciphertext, E_KEY);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
+
 // import AWS object without services
 //var AWS = require('aws-sdk/global');
 // Set the region
-
 let s3options = {
   region: process.env.S3_REGION || 'ENV_S3_REGION',
-  accessKeyId: process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID',
-  secretAccessKey: process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY',
+  accessKeyId: decrypt(process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID'),
+  secretAccessKey: decrypt(process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY'),
   Endpoint: 'http://s3.us-east-2.amazonaws.com',
 };
 
@@ -22,7 +28,7 @@ var s3 = new AWS.S3();
 // 存储桶名称在所有 S3 用户中必须是独一无二的
 
 var path = require('path');
-const BUCKET_DEV = 'edison-media-stag';
+// const BUCKET_DEV = 'edison-media-stag';
 const BUCKET_PROD = 'edison-media';
 const ENCRYPTED_SUFFIX = '.encrypted';
 
@@ -122,14 +128,14 @@ export const uploadFile = (oid, aes, file, callback, progressCallback) => {
   return request;
 };
 
-function getSize(len) {
-  if (len < 1024) {
-    return len + ' B';
-  } else if (len < 1024 * 1024) {
-    return (len / 1024).toFixed(2) + ' KB';
-  } else if (len < 1024 * 1024 * 1024) {
-    return (len / (1024 * 1024)).toFixed(2) + ' MB';
-  } else {
-    return (len / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-  }
-}
+// function getSize(len) {
+//   if (len < 1024) {
+//     return len + ' B';
+//   } else if (len < 1024 * 1024) {
+//     return (len / 1024).toFixed(2) + ' KB';
+//   } else if (len < 1024 * 1024 * 1024) {
+//     return (len / (1024 * 1024)).toFixed(2) + ' MB';
+//   } else {
+//     return (len / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+//   }
+// }

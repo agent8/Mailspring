@@ -59,6 +59,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
     this.listenTo(Actions.removeAllNoReferenceInLines, this._onRemoveAllNoReferenceInLines);
     this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
+    this.listenTo(Actions.changeDraftAccountComplete, this._onDraftAccountChangeComplete);
     this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
     this.listenTo(Actions.composeReply, this._onReply);
     this.listenTo(Actions.composeForward, this._onForward);
@@ -551,7 +552,7 @@ class DraftStore extends MailspringStore {
       return;
     }
     session.validateDraftForChangeAccount().then(ret => {
-      const { errors, warnings } = ret;
+      const { warnings } = ret;
       const dialog = remote.dialog;
       if (warnings.length > 0) {
         dialog
@@ -667,6 +668,19 @@ class DraftStore extends MailspringStore {
       ],
       { switchingAccount: true, canBeUndone: false, source: 'onDraftAccountChange' }
     );
+  };
+  _onDraftAccountChangeComplete = ({ originalHeaderMessageId, originalMessageId } = {}) => {
+    if (AppEnv.isMainWindow()) {
+      AppEnv.logDebug(
+        `Ignoring draft account change complete because of main window msgId: ${originalMessageId}`
+      );
+      return;
+    }
+    const session = this._draftSessions[originalMessageId];
+    if (session && session._isChangingAccount) {
+      this._doneWithSession(session, 'on draft account change complete');
+      AppEnv.logDebug(`Deleting session because of account change complete ${originalMessageId}`);
+    }
   };
 
   _doneWithDraft(messageId, reason = 'unknown') {
@@ -1193,7 +1207,52 @@ class DraftStore extends MailspringStore {
           return;
         }
         data.ignoreEmptyBody = true;
-        Actions.composeForwardMainWindow(data);
+        data.message.missingAttachments().then(ret => {
+          if (ret.totalMissing().length > 0) {
+            AppEnv.showMessageBox({
+              title: 'Message info incomplete',
+              detail:
+                "Message's attachment(s) are still downloading, do you still want to forward?",
+              buttons: ['No', 'Yes'],
+              cancelId: 0,
+              defaultId: 0,
+            }).then(({ response } = {}) => {
+              if (response === 0) {
+                AppEnv.logDebug(`Message missing attachments, user clicked no ${data.message.id}`);
+                Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
+                return;
+              }
+              data.ignoreMissingAttachments = true;
+              Actions.composeForwardMainWindow(data);
+            });
+          } else {
+            data.ignoreMissingAttachments = true;
+            Actions.composeForwardMainWindow(data);
+          }
+        });
+      });
+    } else if (data.message && data.message.body) {
+      data.message.missingAttachments().then(ret => {
+        if (ret.totalMissing().length > 0) {
+          AppEnv.showMessageBox({
+            title: 'Message info incomplete',
+            detail: "Message's attachment(s) are still downloading, do you still want to forward?",
+            buttons: ['No', 'Yes'],
+            cancelId: 0,
+            defaultId: 0,
+          }).then(({ response } = {}) => {
+            if (response === 0) {
+              AppEnv.logDebug(`Message missing attachments, user clicked no ${data.message.id}`);
+              Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
+              return;
+            }
+            data.ignoreMissingAttachments = true;
+            Actions.composeForwardMainWindow(data);
+          });
+        } else {
+          data.ignoreMissingAttachments = true;
+          Actions.composeForwardMainWindow(data);
+        }
       });
     } else {
       Actions.composeForwardMainWindow(data);
@@ -1297,11 +1356,40 @@ class DraftStore extends MailspringStore {
     messageId,
     popout,
     ignoreEmptyBody = false,
+    ignoreMissingAttachments = false,
   }) => {
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ thread: t, message: m }) => {
         if (m && (m.body || ignoreEmptyBody)) {
-          return DraftFactory.createDraftForForward({ thread: t, message: m });
+          if (ignoreMissingAttachments) {
+            return DraftFactory.createDraftForForward({ thread: t, message: m });
+          } else {
+            return new Promise((resolve, reject) => {
+              m.missingAttachments().then(missingAttachments => {
+                const isMissingAttachments = missingAttachments.totalMissing().length > 0;
+                if (isMissingAttachments) {
+                  AppEnv.showMessageBox({
+                    title: 'Message info incomplete',
+                    detail:
+                      "Message's attachment(s) are still downloading, do you still want to forward?",
+                    buttons: ['No', 'Yes'],
+                    cancelId: 0,
+                    defaultId: 0,
+                  }).then(({ response } = {}) => {
+                    if (response === 0) {
+                      AppEnv.logDebug(`Message missing attachments, user clicked no ${m.id}`);
+                      reject();
+                      return;
+                    }
+                    resolve(m);
+                  });
+                }
+                DraftFactory.createDraftForForward({ thread: t, message: m }).then(data => {
+                  resolve(data);
+                });
+              });
+            });
+          }
         } else {
           return new Promise((resolve, reject) => {
             AppEnv.showMessageBox({

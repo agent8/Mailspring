@@ -9,7 +9,7 @@ const {
   CalendarStore,
   AttachmentStore,
 } = require('mailspring-exports');
-import { remote } from 'electron';
+import { remote, clipboard } from 'electron';
 const moment = require('moment-timezone');
 
 class EventHeader extends React.Component {
@@ -116,10 +116,10 @@ class EventHeader extends React.Component {
     return `${duration} ${startDate}${startTime} ${end}${repeat}`;
   }
 
-  _onContextMenu = () => {
-    const menu = new remote.Menu();
-    menu.append(new remote.MenuItem({ role: 'copy' }));
-    menu.popup({});
+  _onContextMenu = mouseEvent => {
+    const selectionText = window.getSelection().toString();
+    const menuItems = [{ label: 'Copy', click: () => clipboard.writeText(selectionText) }];
+    Actions.openContextMenu({ menuItems, mouseEvent });
   };
 
   render() {

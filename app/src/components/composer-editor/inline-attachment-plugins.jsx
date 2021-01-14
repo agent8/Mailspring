@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { ImageAttachmentItem } from 'mailspring-component-kit';
 import { AttachmentStore, Actions, Utils } from 'mailspring-exports';
 import { isQuoteNode, isEmptySelection, nonPrintableKeyCode } from './base-block-plugins';
@@ -8,8 +9,12 @@ function formatHeightWidthToNum(val) {
   if (typeof val === 'number') {
     return val;
   } else if (typeof val === 'string') {
-    const valTmp = Number(val.replace('px', ''));
-    return valTmp ? valTmp : 0;
+    if (val.includes('px')) {
+      const valTmp = Number(val.replace('px', ''));
+      return valTmp ? valTmp : 0;
+    } else {
+      return undefined;
+    }
   }
   return undefined;
 }
@@ -18,12 +23,18 @@ function ImageNode(props) {
   const { attributes, node, editor, targetIsHTML, isSelected } = props;
   const contentId = node.data.get ? node.data.get('contentId') : node.data.contentId;
   const style = {};
+  let href;
   if (node.data.get) {
     style.height = node.data.get('height');
     style.width = node.data.get('width');
+    href = node.data.get('href');
   }
   if (targetIsHTML) {
-    return <img alt="" src={`cid:${contentId}`} style={style} />;
+    return (
+      <a href={href}>
+        <img href={href} alt="" src={`cid:${contentId}`} style={style} />
+      </a>
+    );
   }
 
   const { draft } = editor.props.propsForPlugins;
@@ -104,6 +115,13 @@ function ImageNode(props) {
     />
   );
 }
+ImageNode.propTypes = {
+  attributes: PropTypes.object,
+  node: PropTypes.object,
+  editor: PropTypes.object,
+  targetIsHTML: PropTypes.bool,
+  isSelected: PropTypes.bool,
+};
 
 function renderNode(props) {
   if (props.node.type === IMAGE_TYPE) {
@@ -121,6 +139,7 @@ const rules = [
         const fileId = el.getAttribute('data-edison-file-id');
         const fileName = el.getAttribute('data-edison-file-name');
         const filePath = el.getAttribute('data-edison-file-path');
+        const href = el.getAttribute('href');
         if (fileId && fileName) {
           return {
             object: 'inline',
@@ -138,6 +157,7 @@ const rules = [
               filePath: decodeURIComponent(filePath),
               width,
               height,
+              href,
             },
           };
         }
@@ -154,6 +174,7 @@ const rules = [
             draggerDisable: true,
             width,
             height,
+            href,
           },
         };
       }

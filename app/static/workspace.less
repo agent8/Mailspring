@@ -91,7 +91,12 @@ mailspring-workspace {
 .layout-mode-split {
   .column-OutboxMessage,
   .column-MessageList {
-    padding-top: 0;
+    // & > div {
+    //   margin-top: 0;
+    // }
+    &::before {
+      display: none;
+    }
   }
 }
 .layout-mode-list {
@@ -308,6 +313,9 @@ body.is-blurred {
   .toolbar-MessageList {
     height: @search-bar-height;
     border-bottom: 1px solid @border-color-primary;
+    &.account-sidebar-mask {
+      border-bottom: none;
+    }
   }
   .toolbar-ThreadList {
     -webkit-app-region: drag;
@@ -755,6 +763,7 @@ body.platform-win32 {
   flex-shrink: 0;
   box-shadow: 0 1px 20px 0 rgba(0, 0, 0, 0.1);
   z-index: 2;
+  overflow: hidden;
   &[sidebar-narrow] {
     .btn-toolbar.item-compose {
       span {
@@ -769,8 +778,15 @@ body.platform-win32 {
 .column-OutboxMessage,
 .column-ThreadList,
 .column-MessageList {
-  padding-top: @search-bar-height;
+  // & > div {
+  //   margin-top: @search-bar-height;
+  // }
   // -webkit-app-region: no-drag;
+  &::before {
+    content: ' ';
+    display: block;
+    min-height: @search-bar-height;
+  }
   div {
     // This is for DC-182 reduce height because of thread-list-empty-bar
     div:nth-child(2).key-commands-region.thread-list,
@@ -839,7 +855,7 @@ body.platform-win32 {
     transition: box-shadow 0.2s ease-in-out;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid @gray-lighter;
-    z-index: 4;
+    z-index: 6;
   }
   .divider {
     width: 1px;
