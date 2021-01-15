@@ -52,7 +52,7 @@ export default class ComposerHeaderActions extends React.Component {
           key="subject"
           onClick={() => this.props.onShowAndFocusField(Fields.Subject)}
         >
-          SUBJECT
+          SUBJ
         </span>
       );
     }
