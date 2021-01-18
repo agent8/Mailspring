@@ -81,7 +81,6 @@ export default class CategorySelection extends React.Component {
 
     const displayPath = item.name || utf7.imap.decode(item.path);
 
-    console.log('****icon', icon);
     return (
       <div className="category-item">
         {icon}
