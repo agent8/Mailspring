@@ -75,7 +75,7 @@ module.exports = grunt => {
     console.log('---> Running Babel');
 
     grunt.config('source:es6').forEach(pattern => {
-      glob.sync(pattern, { cwd: buildPath }).forEach(relPath => {
+      glob.sync(pattern, { cwd: buildPath }).forEach(async relPath => {
         const es6Path = path.join(buildPath, relPath);
         if (/(node_modules|\.js$)/.test(es6Path)) return;
         const outPath = es6Path.replace(path.extname(es6Path), '.js');
@@ -83,6 +83,7 @@ module.exports = grunt => {
         const res = babel.transformFileSync(
           es6Path,
           Object.assign(babelOptions, {
+            minified: true,
             sourceMaps: true,
             sourceRoot: '/',
             sourceMapTarget: path.relative(buildPath, outPath),
@@ -137,27 +138,27 @@ module.exports = grunt => {
       }[platform],
       appCopyright: `Copyright (C) 2014-${new Date().getFullYear()} Edison Software Inc. All rights reserved.`,
       derefSymlinks: false,
-      asar: {
-        unpack:
-          '{' +
-          [
-            'mailsync',
-            'mailsync.exe',
-            'mailsync.bin',
-            '*.so',
-            '*.so.*',
-            '*.dll',
-            '*.pdb',
-            '*.node',
-            '**/vendor/**',
-            'examples/**',
-            '**/src/tasks/**',
-            '**/src/scripts/**',
-            '**/node_modules/spellchecker/**',
-            '**/node_modules/windows-shortcuts/**',
-          ].join(',') +
-          '}',
-      },
+      // asar: {
+      //   unpack:
+      //     '{' +
+      //     [
+      //       'mailsync',
+      //       'mailsync.exe',
+      //       'mailsync.bin',
+      //       '*.so',
+      //       '*.so.*',
+      //       '*.dll',
+      //       '*.pdb',
+      //       '*.node',
+      //       '**/vendor/**',
+      //       'examples/**',
+      //       '**/src/tasks/**',
+      //       '**/src/scripts/**',
+      //       '**/node_modules/spellchecker/**',
+      //       '**/node_modules/windows-shortcuts/**',
+      //     ].join(',') +
+      //     '}',
+      // },
       ignore: [
         // These are all relative to client-app
         // top level dirs we never want
@@ -210,6 +211,16 @@ module.exports = grunt => {
             hardenedRuntime: true,
             entitlements: '../scripts/osx_plist/parent.plist',
             'entitlements-inherit': '../scripts/osx_plist/parent.plist',
+            ignore: [
+              /\.otf$/i,
+              /\.bcmap$/i,
+              /\.pak$/i,
+              /\.js$/i,
+              /\.map$/i,
+              /\.jpg$/i,
+              /\.png$/i,
+              /\.gif$/i,
+            ],
           }
         : false,
       win32metadata: {

@@ -148,6 +148,7 @@ export default class Application extends EventEmitter {
 
     // add 'EdisonMail://' to LSSetDefaultHandlerForURLScheme
     app.setAsDefaultProtocolClient('edisonmail');
+    app.allowRendererProcessReuse = false;
 
     this._draftsSendLater = {};
 
