@@ -211,7 +211,7 @@ class TemplateEditor extends React.Component {
             onRemoveAttachment={() => {
               this._onRemoveAttachment(index);
             }}
-            onOpenAttachment={() => remote.shell.openItem(filePath)}
+            onOpenAttachment={() => remote.shell.openPath(filePath)}
           />
         );
       });

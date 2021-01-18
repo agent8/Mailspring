@@ -176,7 +176,7 @@ export default class Msg extends PureComponent {
   }
 
   openFile(filePath) {
-    remote.shell.openItem(filePath);
+    remote.shell.openPath(filePath);
   }
 
   onKeyDown(event) {

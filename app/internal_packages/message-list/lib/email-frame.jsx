@@ -286,7 +286,7 @@ export default class EmailFrame extends React.Component {
 
   _openInlineImage(e) {
     if (e.target) {
-      remote.shell.openItem(decodeURIComponent(e.target.src.replace('file://', '')));
+      remote.shell.openPath(decodeURIComponent(e.target.src.replace('file://', '')));
     }
   }
 
