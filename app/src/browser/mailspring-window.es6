@@ -66,6 +66,7 @@ module.exports = class MailspringWindow extends EventEmitter {
         directWrite: true,
         nodeIntegration: true,
         webviewTag: true,
+        enableRemoteModule: true,
       },
       autoHideMenuBar,
       backgroundColor: settings.backgroundColor || '#ffffff',
