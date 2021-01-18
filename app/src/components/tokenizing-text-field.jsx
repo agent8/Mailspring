@@ -207,10 +207,11 @@ class Token extends React.Component {
 
   _onClickAction = event => {
     event.stopPropagation();
+    event.persist();
     this._onClick(event);
     setImmediate(() => {
       // do this after the setState of select this token is finish
-      this._onAction();
+      this._onAction(event);
     });
   };
 
@@ -234,7 +235,7 @@ class Token extends React.Component {
 
   _onAction = event => {
     if (this.props.disabled) return;
-    this.props.onAction(this.props.item);
+    this.props.onAction(this.props.item, event);
     if (event && typeof event.preventDefault === 'function') {
       event.preventDefault();
     }
@@ -766,15 +767,15 @@ export default class TokenizingTextField extends React.Component {
     }
   };
 
-  _showDefaultTokenMenu = token => {
+  _showDefaultTokenMenu = (token, mouseEvent) => {
     const { tokenKey, onTokenAction } = this.props;
     const selectedTokens = this._selectedTokens();
     if (onTokenAction) {
       const currentIsSelected = selectedTokens.some(contact => contact.email === token.email);
       if (currentIsSelected) {
-        onTokenAction(selectedTokens);
+        onTokenAction(selectedTokens, mouseEvent);
       } else {
-        onTokenAction([token]);
+        onTokenAction([token], mouseEvent);
         this.setState({ selectedKeys: [tokenKey(token)] });
       }
       return;

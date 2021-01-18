@@ -27,11 +27,13 @@ import {
   CustomizeEmailActions,
 } from './components/preferences-customize-components';
 import BlockedSenders from './components/preferences-blocked-senders';
+import PreferencesLabels from './components/preferences-labels';
 import { Privacy } from './components/preferences-privacy-components';
 import {
   PreferencesKeymapsHearder,
   PreferencesKeymapsContent,
 } from './components/preferences-keymaps';
+import { AccountStore } from 'mailspring-exports';
 
 const preferencesTemplateFill = {
   tables: [
@@ -326,6 +328,28 @@ const preferencesTemplateFill = {
               label: 'MutedNotifications',
               component: PreferencesMutedNotifacations,
               keywords: [],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      tabId: 'Labels',
+      displayName: 'Labels',
+      order: 4,
+      isHidden: () => {
+        const accounts = AccountStore.accounts().filter(account => {
+          return account && (account.provider === 'gmail' || account.provider === 'onmail');
+        });
+        return accounts.length === 0;
+      },
+      configGroup: [
+        {
+          groupItem: [
+            {
+              label: 'PreferencesLabels',
+              component: PreferencesLabels,
+              keywords: ['Labels'],
             },
           ],
         },

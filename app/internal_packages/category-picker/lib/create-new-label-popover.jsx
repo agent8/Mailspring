@@ -132,7 +132,7 @@ export default class CreateNewFolderPopover extends Component {
         }
         if (this.props.isMoveAction) {
           this._onMoveToCategory(finishedTask.created);
-        } else {
+        } else if (Array.isArray(this.props.threads) && this.props.threads.length > 0) {
           Actions.queueTask(
             new ChangeLabelsTask({
               source: 'Category Picker: New Label',
@@ -141,8 +141,8 @@ export default class CreateNewFolderPopover extends Component {
               labelsToAdd: [finishedTask.created],
             })
           );
-          this._onActionCallback({ addedLabels: [finishedTask.created] });
         }
+        this._onActionCallback({ addedLabels: [finishedTask.created] });
       });
       Actions.closePopover();
     }

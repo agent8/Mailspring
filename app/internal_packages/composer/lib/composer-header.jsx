@@ -162,7 +162,8 @@ export default class ComposerHeader extends React.Component {
         (showCCBCC === Constant.showCC || showCCBCC === Constant.showCCAndBCC)
       ) {
         enabledFields.push(Fields.Cc);
-      } else if (draft.bcc.length === 0 && showCCBCC === Constant.showCCAndBCC) {
+      }
+      if (draft.bcc.length === 0 && showCCBCC === Constant.showCCAndBCC) {
         enabledFields.push(Fields.Bcc);
       }
     }

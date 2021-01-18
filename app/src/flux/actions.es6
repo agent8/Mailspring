@@ -511,6 +511,9 @@ class Actions {
   // Account Sidebar
   static setCollapsedSidebarItem = ActionScopeWindow;
   static setMoreOrLessCollapsed = ActionScopeWindow;
+  static setEditingMenu = ActionScopeWindow;
+  static cancelCategoryMeteDataChange = ActionScopeWindow;
+  static saveCategoryMetaDataChange = ActionScopeWindow;
 
   // File Actions
   // Some file actions only need to be processed in their current window
@@ -526,6 +529,7 @@ class Actions {
   static broadcastDraftAttachmentState = ActionScopeGlobal;
   static bulkUpdateDraftFiles = ActionScopeWindow;
 
+  static updateCategoryStoreLabelBgColor = ActionScopeMainWindow;
   static syncFolders = ActionScopeMainWindow;
   static syncFolderList = ActionScopeMainWindow;
   static syncSiftFolder = ActionScopeMainWindow;
@@ -584,6 +588,7 @@ class Actions {
   static startReprocessingMailRules = ActionScopeWindow;
   static stopReprocessingMailRules = ActionScopeWindow;
 
+  static openContextMenu = ActionScopeWindow;
   static openPopover = ActionScopeWindow;
   static closePopover = ActionScopeWindow;
 

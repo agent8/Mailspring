@@ -9,11 +9,14 @@ export default class ComposeButton extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { creatingNewDraft: false, showLoading: false };
+    this.state = { creatingNewDraft: false, showLoading: false, isEditingMenu: false };
     this._sendButtonClickedTimer = null;
     this._loadingButtonTimer = null;
     this._mounted = false;
-    this._unlisten = Actions.composedNewBlankDraft.listen(this._onNewDraftCreated, this);
+    this._unlisten = [
+      Actions.composedNewBlankDraft.listen(this._onNewDraftCreated, this),
+      Actions.setEditingMenu.listen(this._onEditingMenu),
+    ];
   }
 
   componentDidMount() {
@@ -24,7 +27,9 @@ export default class ComposeButton extends React.Component {
     this._mounted = false;
     clearTimeout(this._sendButtonClickedTimer);
     clearTimeout(this._loadingButtonTimer);
-    this._unlisten();
+    for (let unListen of this._unlisten) {
+      unListen();
+    }
   }
 
   _timoutButton = () => {
@@ -37,6 +42,9 @@ export default class ComposeButton extends React.Component {
         this._sendButtonClickedTimer = null;
       }, buttonTimeout);
     }
+  };
+  _onEditingMenu = isEditing => {
+    this.setState({ isEditingMenu: isEditing });
   };
 
   _onNewDraftCreated = () => {
@@ -72,6 +80,9 @@ export default class ComposeButton extends React.Component {
   };
 
   render() {
+    if (this.state.isEditingMenu) {
+      return null;
+    }
     return (
       <div
         className="sheet-toolbar"

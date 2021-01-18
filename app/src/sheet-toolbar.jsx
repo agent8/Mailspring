@@ -2,7 +2,6 @@
 /* eslint global-require: 0 */
 import React from 'react';
 import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
 import { remote } from 'electron';
 import { Actions, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
 
@@ -10,9 +9,6 @@ import Flexbox from './components/flexbox';
 import RetinaImg from './components/retina-img';
 import Utils from './flux/models/utils';
 import _ from 'underscore';
-
-let Category = null;
-let FocusedPerspectiveStore = null;
 
 class ToolbarSpacer extends React.Component {
   static displayName = 'ToolbarSpacer';

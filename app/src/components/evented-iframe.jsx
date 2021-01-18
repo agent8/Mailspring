@@ -13,6 +13,7 @@ const {
   MailspringAPIRequest,
   SearchableComponentStore,
   Actions,
+  ContextMenuStore,
 } = require('mailspring-exports');
 const IFrameSearcher = require('../searchable-components/iframe-searcher').default;
 const url = require('url');
@@ -214,6 +215,9 @@ class EventedIFrame extends React.Component {
   _onIFrameBlur = event => {
     const node = ReactDOM.findDOMNode(this);
     node.contentWindow.getSelection().empty();
+    if (this._contextMenuOpen) {
+      this._closeIFrameContextMenu();
+    }
   };
 
   _onIFrameFocus = event => {
@@ -235,6 +239,9 @@ class EventedIFrame extends React.Component {
   // iFrame, the mouseup never fires in the parent window.
   _onIFrameClick = e => {
     e.stopPropagation();
+    if (this._contextMenuOpen || ContextMenuStore.isContextMenuOpen()) {
+      this._closeIFrameContextMenu();
+    }
     Actions.iframeClicked();
     const target = this._getContainingTarget(e, { with: 'href' });
     if (target) {
@@ -342,6 +349,13 @@ class EventedIFrame extends React.Component {
 
     ReactDOM.findDOMNode(this).dispatchEvent(eventInParentDoc);
   };
+  _closeIFrameContextMenu = () => {
+    Actions.closePopover();
+    this._onIFrameContextMenuClose();
+  };
+  _onIFrameContextMenuClose = () => {
+    this._contextMenuOpen = false;
+  };
 
   _onIFrameContextualMenu = event => {
     // Build a standard-looking contextual menu with options like "Copy Link",
@@ -350,51 +364,42 @@ class EventedIFrame extends React.Component {
 
     const { remote, clipboard, nativeImage } = require('electron');
     const shell = remote.shell;
-    const { Menu, MenuItem } = remote;
     const path = require('path');
     const fs = require('fs');
-    const menu = new Menu();
+    const menu = [];
 
     // Menu actions for links
     const linkTarget = this._getContainingTarget(event, { with: 'href' });
     if (linkTarget) {
       const href = linkTarget.getAttribute('href');
       if (href.startsWith('mailto')) {
-        menu.append(
-          new MenuItem({
-            label: 'Compose Message...',
-            click() {
-              AppEnv.windowEventHandler.openLink({ href });
-            },
-          })
-        );
-        menu.append(
-          new MenuItem({
-            label: 'Copy Email Address',
-            click() {
-              clipboard.writeText(href.split('mailto:').pop());
-            },
-          })
-        );
+        menu.push({
+          label: 'Compose Message...',
+          click() {
+            AppEnv.windowEventHandler.openLink({ href });
+          },
+        });
+        menu.push({
+          label: 'Copy Email Address',
+          click() {
+            clipboard.writeText(href.split('mailto:').pop());
+          },
+        });
       } else {
-        menu.append(
-          new MenuItem({
-            label: 'Open Link',
-            click() {
-              AppEnv.windowEventHandler.openLink({ href });
-            },
-          })
-        );
-        menu.append(
-          new MenuItem({
-            label: 'Copy Link Address',
-            click() {
-              clipboard.writeText(href);
-            },
-          })
-        );
+        menu.push({
+          label: 'Open Link',
+          click() {
+            AppEnv.windowEventHandler.openLink({ href });
+          },
+        });
+        menu.push({
+          label: 'Copy Link Address',
+          click() {
+            clipboard.writeText(href);
+          },
+        });
       }
-      menu.append(new MenuItem({ type: 'separator' }));
+      menu.push({ type: 'divider' });
     }
 
     // Menu actions for images
@@ -402,63 +407,59 @@ class EventedIFrame extends React.Component {
     if (imageTarget) {
       const src = imageTarget.getAttribute('src');
       let srcFilename = decodeURIComponent(path.basename(src));
-      menu.append(
-        new MenuItem({
-          label: 'Save Image...',
-          click() {
-            const base64Data = Utils.parseBase64Data(src);
-            if (base64Data) {
-              srcFilename = `untitled.${base64Data.extension}`;
+      menu.push({
+        label: 'Save Image...',
+        click() {
+          const base64Data = Utils.parseBase64Data(src);
+          if (base64Data) {
+            srcFilename = `untitled.${base64Data.extension}`;
+          }
+          AppEnv.getFilePathForSaveFile({
+            defaultPath: srcFilename,
+          }).then(function(path) {
+            if (!path) {
+              return;
             }
-            AppEnv.getFilePathForSaveFile({
-              defaultPath: srcFilename,
-            }).then(function(path) {
-              if (!path) {
-                return;
-              }
-              if (base64Data) {
-                return fs.writeFile(path, base64Data.data, { encoding: 'base64' }, err => {
-                  if (err) {
-                    AppEnv.logError(err);
-                  }
-                  shell.showItemInFolder(path);
-                });
-              }
-              const oReq = new XMLHttpRequest();
-              oReq.open('GET', src, true);
-              oReq.responseType = 'arraybuffer';
-              oReq.onload = function() {
-                const buffer = Buffer.from(new Uint8Array(oReq.response));
-                fs.writeFile(path, buffer, err => shell.showItemInFolder(path));
-              };
-              oReq.send();
-            });
-          },
-        })
-      );
-      menu.append(
-        new MenuItem({
-          label: 'Copy Image',
-          click() {
-            let img = new Image();
-            img.addEventListener(
-              'load',
-              function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                canvas.getContext('2d').drawImage(imageTarget, 0, 0);
-                const imageDataURL = canvas.toDataURL('image/png');
-                img = nativeImage.createFromDataURL(imageDataURL);
-                clipboard.writeImage(img);
-              },
-              false
-            );
-            img.src = src;
-          },
-        })
-      );
-      menu.append(new MenuItem({ type: 'separator' }));
+            if (base64Data) {
+              return fs.writeFile(path, base64Data.data, { encoding: 'base64' }, err => {
+                if (err) {
+                  AppEnv.logError(err);
+                }
+                shell.showItemInFolder(path);
+              });
+            }
+            const oReq = new XMLHttpRequest();
+            oReq.open('GET', src, true);
+            oReq.responseType = 'arraybuffer';
+            oReq.onload = function() {
+              const buffer = Buffer.from(new Uint8Array(oReq.response));
+              fs.writeFile(path, buffer, err => shell.showItemInFolder(path));
+            };
+            oReq.send();
+          });
+        },
+      });
+      menu.push({
+        label: 'Copy Image',
+        click() {
+          let img = new Image();
+          img.addEventListener(
+            'load',
+            function() {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              canvas.getContext('2d').drawImage(imageTarget, 0, 0);
+              const imageDataURL = canvas.toDataURL('image/png');
+              img = nativeImage.createFromDataURL(imageDataURL);
+              clipboard.writeImage(img);
+            },
+            false
+          );
+          img.src = src;
+        },
+      });
+      menu.push({ type: 'divider' });
     }
 
     // Menu actions for text
@@ -480,40 +481,42 @@ class EventedIFrame extends React.Component {
       } else {
         textPreview = text;
       }
-      menu.append(
-        new MenuItem({
-          label: 'Copy',
-          click() {
-            AppEnv.commands.dispatch('core:copy');
-          },
-        })
-      );
-      menu.append(
-        new MenuItem({
-          label: `Search Google for '${textPreview}'`,
-          click() {
-            shell.openExternal(`https://www.google.com/search?q=${encodeURIComponent(text)}`);
-          },
-        })
-      );
+      menu.push({
+        label: 'Copy',
+        click() {
+          AppEnv.commands.dispatch('core:copy');
+        },
+      });
+      menu.push({
+        label: `Search Google for '${textPreview}'`,
+        click() {
+          shell.openExternal(`https://www.google.com/search?q=${encodeURIComponent(text)}`);
+        },
+      });
       if (process.platform === 'darwin' && selection && !selection.isCollapsed) {
-        menu.append(
-          new MenuItem({
-            label: `Look Up '${textPreview}'`,
-            click() {
-              AppEnv.getCurrentWindow().showDefinitionForSelection();
-            },
-          })
-        );
+        menu.push({
+          label: `Look Up '${textPreview}'`,
+          click() {
+            AppEnv.getCurrentWindow().showDefinitionForSelection();
+          },
+        });
       }
     }
 
-    if (process.platform === 'darwin') {
-      menu.append(new MenuItem({ type: 'separator' }));
+    if (process.platform === 'darwin' && menu.length > 1) {
+      menu.push({ type: 'divider' });
     }
     // Services menu appears here automatically
-
-    menu.popup({});
+    if (menu.length > 0) {
+      const rect = ReactDOM.findDOMNode(this).getBoundingClientRect();
+      Actions.openContextMenu({
+        menuItems: menu,
+        mouseEvent: event,
+        iframeOffset: { x: rect.left, y: rect.top },
+        onClose: this._onIFrameContextMenuClose,
+      });
+      this._contextMenuOpen = true;
+    }
   };
 }
 

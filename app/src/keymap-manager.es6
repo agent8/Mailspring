@@ -7,13 +7,14 @@ import { Emitter, Disposable } from 'event-kit';
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
 const enableCommandsInEditor = ['core:undo', 'core:redo', 'core:paste-and-match-style'];
+let suspendKeyComboException = [];
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
 more specifically block only hotkeys that have no modifier keys (things like
 Gmail's "x", while allowing standard hotkeys.)
 */
 mousetrap.prototype.stopCallback = (e, element, combo) => {
-  if (suspended) {
+  if (suspended && !suspendKeyComboException.includes(combo)) {
     return true;
   }
 
@@ -92,13 +93,15 @@ export default class KeymapManager {
     return path.join(this.configDirPath, 'keymap.json');
   }
 
-  suspendAllKeymaps() {
+  suspendAllKeymaps({ exception = [] } = {}) {
     AppEnv.menu.sendToBrowserProcess(AppEnv.menu.template, {});
+    suspendKeyComboException = exception.slice();
     suspended = true;
   }
 
   resumeAllKeymaps() {
     AppEnv.menu.update();
+    suspendKeyComboException = [];
     suspended = false;
   }
 
