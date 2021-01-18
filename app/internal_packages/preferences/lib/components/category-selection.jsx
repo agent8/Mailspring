@@ -62,10 +62,18 @@ export default class CategorySelection extends React.Component {
       icon = <div className="empty-icon" />;
       item.path = '(None)';
     } else {
+      let iconName = item.name.toLowerCase();
+      if (iconName === 'deleted') {
+        iconName = 'trash';
+      } else if (!['sent', 'drafts', 'junk', 'archive', 'trash'].includes(iconName)) {
+        iconName = item.isLabel() ? 'label' : 'folder';
+      }
       icon = (
         <RetinaImg
-          name={`${item.name}.png`}
-          fallback={item.isLabel() ? 'tag.png' : 'folder.png'}
+          isIcon
+          name={`${iconName}.svg`}
+          fallback={item.isLabel() ? 'label.svg' : 'folder.svg'}
+          style={{ width: 20, height: 20 }}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       );
@@ -73,6 +81,7 @@ export default class CategorySelection extends React.Component {
 
     const displayPath = item.name || utf7.imap.decode(item.path);
 
+    console.log('****icon', icon);
     return (
       <div className="category-item">
         {icon}
