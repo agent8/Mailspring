@@ -83,21 +83,24 @@ export default class MessageParticipants extends React.Component {
   };
 
   _onContactContextMenu = (contact, e) => {
-    const menu = new Menu();
-    menu.append(new MenuItem({ role: 'copy' }));
-    menu.append(
-      new MenuItem({
+    const currentText = window.getSelection().toString();
+    const menus = [
+      { label: 'Copy', click: () => clipboard.writeText(currentText || '') },
+      {
         label: 'Copy Address',
         click: () => clipboard.writeText(contact.email),
-      })
-    );
-    menu.append(
-      new MenuItem({
+      },
+      {
         label: `Email ${contact.email}`,
         click: () => Actions.composeNewDraftToRecipient(contact),
-      })
-    );
-    menu.popup({});
+      },
+    ];
+    Actions.openContextMenu({ menuItems: menus, mouseEvent: e });
+    // const menu = new Menu();
+    // menu.append(new MenuItem({ role: 'copy' }));
+    // menu.append(new MenuItem());
+    // menu.append(new MenuItem());
+    // menu.popup({});
   };
 
   _renderFullContacts(contacts = []) {

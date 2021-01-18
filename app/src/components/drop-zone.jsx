@@ -29,7 +29,7 @@ export default class DropZone extends React.Component {
     }
     this._dragCounter += 1;
     if (this._dragCounter === 1 && this.props.onDragStateChange) {
-      this.props.onDragStateChange({ isDropping: true });
+      this.props.onDragStateChange({ isDropping: true, dataItems: e.dataTransfer.items });
     }
     e.stopPropagation();
     return;
@@ -41,7 +41,7 @@ export default class DropZone extends React.Component {
     }
     this._dragCounter -= 1;
     if (this._dragCounter === 0 && this.props.onDragStateChange) {
-      this.props.onDragStateChange({ isDropping: false });
+      this.props.onDragStateChange({ isDropping: false, dataItems: e.dataTransfer.items });
     }
     e.stopPropagation();
     return;

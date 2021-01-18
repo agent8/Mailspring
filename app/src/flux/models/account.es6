@@ -5,10 +5,7 @@ import ModelWithMetadata from './model-with-metadata';
 let CategoryStore = null;
 let Contact = null;
 
-const noticeTypeEnum = [
-  { type: 'None', title: 'None/Mute' },
-  { type: 'All', title: 'All mail' },
-];
+const noticeTypeEnum = [{ type: 'None', title: 'None/Mute' }, { type: 'All', title: 'All mail' }];
 const noticeTypeImportant = [{ type: 'Important', title: 'Marked as Important' }];
 /*
  * Public: The Account model represents a Account served by the Nylas Platform API.
@@ -216,6 +213,10 @@ export default class Account extends ModelWithMetadata {
 
   getNoticeTypeEnum() {
     const tmp = [...noticeTypeEnum];
+    const enableFocusedInboxKey = AppEnv.config.get('core.workspace.enableFocusedInbox');
+    if (enableFocusedInboxKey) {
+      tmp.push({ type: 'All_include_other', title: 'All mail' });
+    }
     if (this.provider === 'gmail') {
       tmp.push(...noticeTypeImportant);
     }

@@ -148,7 +148,7 @@ class Spellchecker {
           );
         });
       } else {
-        menu.append(new MenuItem({ label: 'No Guesses Found', enabled: false }));
+        menu.append(new MenuItem({ label: 'No Guesses Found' }));
       }
       menu.append(new MenuItem({ type: 'separator' }));
 

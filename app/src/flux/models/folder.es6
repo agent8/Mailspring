@@ -1,7 +1,6 @@
 import Category from './category';
 import Attributes from '../attributes';
 
-
 const FolderType = {
   Folder: 0,
   Label: 1,
@@ -14,22 +13,23 @@ export default class Folder extends Category {
       queryable: false,
     }),
     bgColor: Attributes.Number({
-      modelKey: 'bgColor',
+      jsModelKey: 'bgColor',
+      modelKey: 'bgcolor',
       queryable: true,
       loadFromColumn: true,
     }),
   });
   displayType() {
-    if(this.type === FolderType.Folder){
+    if (this.type === FolderType.Folder) {
       return 'folder';
     } else {
       return 'label';
     }
   }
-  isLabel(){
+  isLabel() {
     return this.type === FolderType.Label;
   }
-  isFolder(){
+  isFolder() {
     return this.type === FolderType.Folder;
   }
 }

@@ -1,4 +1,5 @@
 {
+  "core:new-folder": "mod+f",
   "core:undo": "mod+z",
   "core:redo": ["mod+shift+z", "mod+y"],
   "core:cut": "mod+x",

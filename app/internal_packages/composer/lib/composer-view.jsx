@@ -72,6 +72,7 @@ export default class ComposerView extends React.Component {
       missingAttachments: true,
     };
     this._deleteTimer = null;
+    this._lastCycleIgnoreLostFocus = false;
     this._unlisten = [
       Actions.destroyDraftFailed.listen(this._onDestroyedDraftProcessed, this),
       Actions.destroyDraftSucceeded.listen(this._onDestroyedDraftProcessed, this),
@@ -276,12 +277,21 @@ export default class ComposerView extends React.Component {
   }
 
   _onEditorBodyContextMenu = event => {
+    AppEnv.logDebug(`context menu, setting ignore lost focus to true`);
+    this._lastCycleIgnoreLostFocus = true;
+    if (event && typeof event.isDefaultPrevented === 'function' && event.isDefaultPrevented()) {
+      AppEnv.logDebug('context menu event already processed, ignoring');
+      return;
+    }
     if (this._els[Fields.Body] && this.state.editorSelection) {
-      this._els[Fields.Body].openContextMenu({
-        word: this.state.editorSelectedText,
-        sel: this.state.editorSelection,
-        hasSelectedText: !this.state.editorSelection.isCollapsed,
-      });
+      this._els[Fields.Body].openContextMenu(
+        {
+          word: this.state.editorSelectedText,
+          sel: this.state.editorSelection,
+          hasSelectedText: !this.state.editorSelection.isCollapsed,
+        },
+        event
+      );
     }
     event.preventDefault();
   };
@@ -432,6 +442,11 @@ export default class ComposerView extends React.Component {
   };
 
   _onEditorBlur = (event, editor, next) => {
+    if (event.isDefaultPrevented()) {
+      AppEnv.logDebug(`blur event already handled, ignoring`);
+      return;
+    }
+    event.preventDefault();
     let ignoreLostFocus = false;
     if (this._els && this._els.composeBody) {
       if (event.relatedTarget && this._els.composeBody.contains(event.relatedTarget)) {
@@ -462,8 +477,9 @@ export default class ComposerView extends React.Component {
     if (!ignoreLostFocus) {
       this._enableThreadCommand();
     }
+    this._lastCycleIgnoreLostFocus = ignoreLostFocus;
   };
-  _onEditorChange = (change, ignoreLostFocus = true) => {
+  _onEditorChange = (change, ignoreLostFocus = false) => {
     // We minimize thrashing and disable editors in multiple windows by ensuring
     // non-value changes (eg focus) to the editorState don't trigger database saves
     if (!this.props.session.isPopout()) {
@@ -484,11 +500,22 @@ export default class ComposerView extends React.Component {
         return type === 'set_selection' && properties && properties.isFocused === false;
       });
       if (isLostFocus) {
-        AppEnv.logDebug(
+        AppEnv.logWarning(
           `draft ${this.props.draft &&
-            this.props.draft.id} isLostFocus, ignore lost focus ${ignoreLostFocus}`
+            this.props.draft
+              .id} isLostFocus, ignore lost focus ${ignoreLostFocus}, last cycle lost focus ${
+            this._lastCycleIgnoreLostFocus
+          }`
         );
         if (ignoreLostFocus) {
+          return;
+        }
+        if (this._lastCycleIgnoreLostFocus) {
+          AppEnv.logWarning(
+            `draft ${this.props.draft &&
+              this.props.draft.id} isLostFocus, ignore lost focus because of last cycle`
+          );
+          this._lastCycleIgnoreLostFocus = false;
           return;
         }
       }

@@ -59,6 +59,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
     this.listenTo(Actions.removeAllNoReferenceInLines, this._onRemoveAllNoReferenceInLines);
     this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
+    this.listenTo(Actions.changeDraftAccountComplete, this._onDraftAccountChangeComplete);
     this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
     this.listenTo(Actions.composeReply, this._onReply);
     this.listenTo(Actions.composeForward, this._onForward);
@@ -667,6 +668,19 @@ class DraftStore extends MailspringStore {
       ],
       { switchingAccount: true, canBeUndone: false, source: 'onDraftAccountChange' }
     );
+  };
+  _onDraftAccountChangeComplete = ({ originalHeaderMessageId, originalMessageId } = {}) => {
+    if (AppEnv.isMainWindow()) {
+      AppEnv.logDebug(
+        `Ignoring draft account change complete because of main window msgId: ${originalMessageId}`
+      );
+      return;
+    }
+    const session = this._draftSessions[originalMessageId];
+    if (session && session._isChangingAccount) {
+      this._doneWithSession(session, 'on draft account change complete');
+      AppEnv.logDebug(`Deleting session because of account change complete ${originalMessageId}`);
+    }
   };
 
   _doneWithDraft(messageId, reason = 'unknown') {

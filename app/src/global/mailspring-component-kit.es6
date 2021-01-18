@@ -54,7 +54,7 @@ const lazyLoadFrom = (prop, path) => {
     return bare[prop] ? bare[prop] : bare.default[prop];
   });
 };
-
+lazyLoad('Keystrokes', 'keystrokes');
 lazyLoad('Menu', 'menu');
 lazyLoad('DropZone', 'drop-zone');
 lazyLoad('Spinner', 'spinner');
@@ -117,6 +117,7 @@ lazyLoad('CodeSnippet', 'code-snippet');
 lazyLoad('ResizableBox', 'resizable-box');
 lazyLoad('ResizableImg', 'resizable-img');
 lazyLoad('Banner', 'banner');
+lazyLoad('ContextMenuPopover', 'context-menu-popover');
 
 lazyLoad('ComposerEditor', 'composer-editor/composer-editor');
 lazyLoad('ComposerSupport', 'composer-editor/composer-support');
@@ -132,6 +133,7 @@ lazyLoad('MailLabelSet', 'mail-label-set');
 lazyLoad('MailImportantIcon', 'mail-important-icon');
 
 lazyLoad('ScenarioEditor', 'scenario-editor');
+lazyLoad('LabelPopover', 'label-popover');
 
 // Higher order components
 lazyLoad('ListensToObservable', 'decorators/listens-to-observable');

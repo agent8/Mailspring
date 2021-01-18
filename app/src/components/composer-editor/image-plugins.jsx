@@ -4,7 +4,7 @@ import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
 const IMAGE_TYPE = 'inline_resizable_image';
-const maxImgSize = 200 * 1024;
+const maxImgSize = 200 * 1000;
 
 function ImageNode(props) {
   const { node, targetIsHTML, editor } = props;

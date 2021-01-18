@@ -73,6 +73,7 @@ export function TableCell(props) {
 TableCell.propTypes = {
   isHeader: PropTypes.bool,
   className: PropTypes.string,
+  children: PropTypes.array,
 };
 
 export class TableRow extends Component {
@@ -142,6 +143,7 @@ export default class Table extends Component {
     extraProps: PropTypes.object,
     RowRenderer: TablePropTypes.renderer,
     CellRenderer: TablePropTypes.renderer,
+    tableRefCallback: PropTypes.func,
   };
 
   static defaultProps = {
@@ -149,6 +151,7 @@ export default class Table extends Component {
     extraProps: {},
     RowRenderer: TableRow,
     CellRenderer: TableCell,
+    tableRefCallback: () => {},
   };
 
   static TableDataSource = TableDataSource;
@@ -216,7 +219,11 @@ export default class Table extends Component {
     const { className, ...otherProps } = this.props;
 
     return (
-      <div className={`nylas-table ${className}`} {...pickHTMLProps(otherProps)}>
+      <div
+        className={`nylas-table ${className}`}
+        {...pickHTMLProps(otherProps)}
+        ref={this.props.tableRefCallback}
+      >
         <table>
           {this.renderHeader()}
           {this.renderBody()}

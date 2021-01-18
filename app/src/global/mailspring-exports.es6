@@ -161,6 +161,7 @@ load(`DraftFactory`, 'flux/stores/draft-factory');
 load(`ModalStore`, 'flux/stores/modal-store');
 load(`OutboxStore`, 'flux/stores/outbox-store');
 load(`PopoverStore`, 'flux/stores/popover-store');
+load('ContextMenuStore', 'flux/stores/context-menu-store');
 load(`AccountStore`, 'flux/stores/account-store');
 load(`SignatureStore`, 'flux/stores/signature-store');
 load(`MessageStore`, 'flux/stores/message-store');

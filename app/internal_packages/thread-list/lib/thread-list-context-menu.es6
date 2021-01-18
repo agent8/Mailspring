@@ -1,14 +1,6 @@
 /* eslint global-require: 0*/
 import _ from 'underscore';
-import {
-  Thread,
-  Actions,
-  Message,
-  TaskFactory,
-  DatabaseStore,
-  MessageStore,
-  FocusedPerspectiveStore,
-} from 'mailspring-exports';
+import { Actions, TaskFactory, MessageStore, FocusedPerspectiveStore } from 'mailspring-exports';
 
 export default class ThreadListContextMenu {
   constructor({ threadIds = [], accountIds = [], threads = [] }) {
@@ -21,18 +13,18 @@ export default class ThreadListContextMenu {
     return Promise.all([
       this.findWithFrom(),
       this.findWithSubject(),
-      { type: 'separator' },
+      { type: 'divider' },
       this.replyItem(),
       this.replyAllItem(),
       this.forwardItem(),
-      { type: 'separator' },
+      { type: 'divider' },
       this.archiveItem(),
       this.trashItem(),
       this.markAsReadItem(),
       this.starItem(),
     ]).then(menuItems => {
       return _.filter(_.compact(menuItems), (item, index) => {
-        if ((index === 0 || index === menuItems.length - 1) && item.type === 'separator') {
+        if ((index === 0 || index === menuItems.length - 1) && item.type === 'divider') {
           return false;
         }
         return true;
@@ -167,7 +159,9 @@ export default class ThreadListContextMenu {
                         threads: JSON.stringify(this.threads),
                       },
                     });
-                  } catch (e) {}
+                  } catch (e) {
+                    console.error(e);
+                  }
                 }
               });
             }
@@ -207,7 +201,9 @@ export default class ThreadListContextMenu {
                     threads: JSON.stringify(this.threads),
                   },
                 });
-              } catch (e) {}
+              } catch (e) {
+                console.error(e);
+              }
             }
           });
         }
@@ -254,10 +250,14 @@ export default class ThreadListContextMenu {
     };
   }
 
-  displayMenu() {
-    const { remote } = require('electron');
+  displayMenu(mouseEvent) {
     this.menuItemTemplate().then(template => {
-      remote.Menu.buildFromTemplate(template).popup(remote.getCurrentWindow());
+      Actions.openContextMenu({
+        menuItems: template,
+        mouseEvent,
+        menuContentKey: 'label',
+        disableAutoFocus: false,
+      });
     });
   }
 }

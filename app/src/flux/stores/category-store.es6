@@ -4,11 +4,15 @@ import DatabaseStore from './database-store';
 import AccountStore from './account-store';
 import Account from '../models/account';
 import Category from '../models/category';
+import CategoryMetaData from '../models/category-metadata';
 import Actions from '../actions';
 import FolderState from '../models/folder-state';
 import Folder from '../models/folder';
 import crypto from 'crypto';
 import utf7 from 'utf7';
+import SyncbackCategoryTask from '../tasks/syncback-category-task';
+import DestroyCategoryTask from '../tasks/destroy-category-task';
+import Task from '../tasks/task';
 const asAccount = a => {
   if (!a) {
     throw new Error('You must pass an Account or Account Id');
@@ -24,6 +28,7 @@ const asAccountId = a => {
 };
 
 const categoryUpdatingTimeout = 300000;
+const CategoryMetaDataAccountSpecialFolders = ['INBOX', 'today', 'unread', 'starred'];
 
 class CategoryStore extends MailspringStore {
   constructor() {
@@ -31,7 +36,6 @@ class CategoryStore extends MailspringStore {
     this._categoryCache = {};
     this._standardCategories = {};
     this._userCategories = {};
-    this._userCategoriesForFolderTree = {};
     this._hiddenCategories = {};
     this._categorySyncState = {};
 
@@ -46,13 +50,44 @@ class CategoryStore extends MailspringStore {
         AppEnv.logDebug(`Folders: ${JSON.stringify(results)}`);
         this._onCategoriesChanged(results);
       });
+    Actions.queueTasks.listen(this._processCategoryChangeTasks, this);
+    Actions.queueTask.listen(this._processCategoryChangeTasks, this);
     Actions.syncFolders.listen(this._onSyncCategory, this);
+    Actions.updateCategoryStoreLabelBgColor.listen(this.updateCategoryColorById, this);
+    Actions.cancelCategoryMeteDataChange.listen(this.cancelCategoryMetaDataChange, this);
+    Actions.saveCategoryMetaDataChange.listen(this.saveCategoryMetaDataChange, this);
     this.listenTo(DatabaseStore, this._onFolderStateChange);
   }
-  // decodePath(pathString) {
-  //   return Category.pathToDisplayName(pathString);
-  // }
+  updateCategoryColorById({ fullPath, accountId, newColor } = {}) {
+    if (!fullPath || !accountId) {
+      return;
+    }
+    const category = this.getCategoryByPath(fullPath, accountId);
+    if (!category) {
+      return;
+    }
+    const updateColor = () => {
+      for (let i = 0; i < cats.length; i++) {
+        if (cats[i].id === category.id) {
+          cats[i].bgColor = newColor;
+          break;
+        }
+      }
+    };
+    let cats = this._categoryCache[accountId];
+    updateColor();
+    cats = this._userCategories[accountId];
+    updateColor();
+    cats = this._standardCategories[accountId];
+    updateColor();
+    cats = this._hiddenCategories[accountId];
+    updateColor();
+    this.trigger();
+  }
   byFolderId(categoryId) {
+    if (!categoryId) {
+      return null;
+    }
     const accountIds = Object.keys(this._categoryCache);
     for (let accountId of accountIds) {
       const category = this.byId(accountId, categoryId);
@@ -94,23 +129,6 @@ class CategoryStore extends MailspringStore {
     return this._hiddenCategories[asAccountId(accountOrId)] || [];
   }
 
-  removeFromFolderTreeRenderArray(accountOrId, index) {
-    const original = this._userCategoriesForFolderTree[asAccountId(accountOrId)] || [];
-    if (original[index] && original[index].role) {
-      return;
-    }
-    this._userCategoriesForFolderTree[asAccountId(accountOrId)] = original.splice(index, 1);
-  }
-  restoreCategoriesForFolderTree() {
-    this._userCategoriesForFolderTree = {};
-    Object.keys(this._userCategories).forEach(accountId => {
-      this._userCategoriesForFolderTree[accountId] = this._userCategories[accountId].slice();
-    });
-  }
-  userCategoriesForFolderTree(accountOrId) {
-    //This is only used when rendering Folder Tree, as the array is to be modified on every folder tree render;
-    return this._userCategoriesForFolderTree[asAccountId(accountOrId)] || [];
-  }
   // Public: Returns all of the categories that are not part of the standard
   // category set.
   //
@@ -143,6 +161,9 @@ class CategoryStore extends MailspringStore {
     if (Array.isArray(accountsOrIds)) {
       let res = [];
       for (const accOrId of accountsOrIds) {
+        if (!accOrId) {
+          continue;
+        }
         const cats = names.map(name => this.getCategoryByRole(accOrId, name));
         res = res.concat(_.compact(cats));
       }
@@ -297,9 +318,193 @@ class CategoryStore extends MailspringStore {
     }
     return this._categorySyncState[categoryId].syncing;
   };
+  replaceCategoryMetaDataId = ({ accountId, oldId, newId, save = true } = {}) => {
+    const oldItem = CategoryMetaData.getItem(accountId, oldId);
+    if (oldItem) {
+      CategoryMetaData.deleteItem({ accountId, id: oldId, save: false });
+      CategoryMetaData.update({
+        accountId,
+        id: newId,
+        displayOrder: oldItem.displayOrder,
+        hidden: oldItem.hidden,
+        save,
+      });
+    }
+  };
+  removeCategoryMetaData = ({ accountId, id, save } = {}) => {
+    CategoryMetaData.deleteItem({ accountId, id, save });
+  };
+  isCategoryHiddenInFolderTree = ({ accountId, categoryId } = {}) => {
+    return CategoryMetaData.isHidden({ accountId, id: categoryId });
+  };
+  hideCategoryById = ({ accountId, categoryId, save = true } = {}) => {
+    let category;
+    if (accountId && categoryId) {
+      this.hideCategoryInFolderTree({ accountId, id: categoryId }, save);
+    } else if (categoryId) {
+      category = this.byFolderId(categoryId);
+      if (category) {
+        this.hideCategoryInFolderTree({ accountId: category.accountId, id: categoryId }, save);
+      }
+    }
+  };
+  hideCategoryInFolderTree = ({ accountId, id } = {}, save = true) => {
+    if (accountId && id) {
+      console.warn(`saving ${accountId} ${id} ${save} `);
+      if (!CategoryMetaData.isHidden({ accountId, id })) {
+        console.warn(`saved ${accountId} ${id} ${save} `);
+        CategoryMetaData.hide({ accountId, id, save });
+        this.trigger();
+      }
+    }
+  };
+  showCategoryById = ({ accountId, categoryId, save = true } = {}) => {
+    let category;
+    if (accountId && categoryId) {
+      this.showCategoryInFolderTree({ accountId, id: categoryId }, save);
+    } else if (categoryId) {
+      category = this.byFolderId(categoryId);
+      if (category) {
+        this.showCategoryInFolderTree({ accountId: category.accountId, id: categoryId }, save);
+      }
+    }
+  };
+  showCategoryInFolderTree = ({ accountId, id } = {}, save = true) => {
+    if (accountId && id) {
+      if (CategoryMetaData.isHidden({ accountId, id })) {
+        CategoryMetaData.show({ accountId, id, save });
+        this.trigger();
+      }
+    }
+  };
+
+  getCategoryDisplayOrderInFolderTree = ({ accountId, id } = {}) => {
+    if (accountId && id) {
+      return CategoryMetaData.getDisplayOrder({ accountId, id });
+    }
+    return -1;
+  };
+  recordCategoryDisplayOrderChange = (
+    droppingFolderData = { accountId: '', id: '', categories: [], displayOrder: -1 },
+    targetFolderData = { accountId: '', id: '', categories: [], displayOrder: -1 }
+  ) => {
+    this._categoryMetaDataChangeRecord = {
+      droppingFolderData,
+      targetFolderData,
+      type: 'displayOrder',
+    };
+    console.warn('dropping', droppingFolderData, 'target', targetFolderData);
+  };
+  getCategoryDisplayOrderChangeRecord = () => {
+    return this._categoryMetaDataChangeRecord;
+  };
+  clearCategoryDisplayOrderChangeRecord = (trigger = true) => {
+    if (this._categoryMetaDataChangeRecord) {
+      console.warn('clear change record');
+      this._categoryMetaDataChangeRecord = null;
+      if (trigger) {
+        this.trigger();
+      }
+    }
+  };
+  setCategoryDisplayOrderInFolderTree = ({
+    accountId,
+    id,
+    displayOrder,
+    save = true,
+    trigger = true,
+  } = {}) => {
+    if (accountId && id) {
+      CategoryMetaData.setDisplayOrder({ accountId, id, displayOrder, save });
+      if (trigger) {
+        this.trigger();
+      }
+    }
+  };
+  saveCategoryMetaDataChange = (trigger = true) => {
+    CategoryMetaData.saveToStorage();
+    this.clearCategoryDisplayOrderChangeRecord(trigger);
+    if (trigger) {
+      this.trigger();
+    }
+  };
+  cancelCategoryMetaDataChange = (trigger = true) => {
+    CategoryMetaData.restore();
+    this.clearCategoryDisplayOrderChangeRecord(trigger);
+    if (trigger) {
+      this.trigger();
+    }
+  };
+  clearOldCategoryMetaData = ({ accountId, newCategories }) => {
+    const currentMetaDataItems = CategoryMetaData.getItemsByAccountId(accountId);
+    if (!currentMetaDataItems) {
+      return;
+    }
+    const newItems = {};
+    if (Array.isArray(newCategories) && newCategories.length > 0) {
+      newCategories.forEach(cat => {
+        if (cat.accountId !== accountId) {
+          return;
+        }
+        const hashId = CategoryMetaData.hashId(cat.path);
+        const item = currentMetaDataItems[hashId];
+        if (item) {
+          newItems[hashId] = item;
+        }
+      });
+      CategoryMetaDataAccountSpecialFolders.forEach(path => {
+        const hashId = CategoryMetaData.hashId(path);
+        const item = currentMetaDataItems[hashId];
+        if (item) {
+          newItems[hashId] = item;
+        }
+      });
+      CategoryMetaData.updateItemsByAccountId({ accountId, items: newItems, save: true });
+    }
+  };
+  _processCategoryChangeTasks = tasks => {
+    if (!Array.isArray(tasks)) {
+      tasks = [tasks];
+    }
+    let changed = false;
+    tasks.forEach(task => {
+      if (!task) {
+        return;
+      }
+      const accountId = task.accountId;
+      const isExchange = AccountStore.isExchangeAccountId(accountId);
+      if (task instanceof SyncbackCategoryTask && !isExchange) {
+        if (task.error || task.status === Task.Status.Cancelled) {
+          this.replaceCategoryMetaDataId({
+            accountId,
+            newId: task.existingPath,
+            oldId: task.path,
+            save: true,
+          });
+          changed = true;
+        } else if (task.status === Task.Status.Local) {
+          this.replaceCategoryMetaDataId({
+            accountId,
+            oldId: task.existingPath,
+            newId: task.path,
+            save: true,
+          });
+        }
+      } else if (task instanceof DestroyCategoryTask && task.status === Task.Status.Local) {
+        this.removeCategoryMetaData({ accountId, id: task.path, save: true });
+        changed = true;
+      }
+    });
+    if (changed) {
+      this.trigger();
+    }
+  };
   _onFolderStateChange = ({ objectClass, objects, processAccountId }) => {
     if (objectClass === Folder.name) {
       return this._onCategoriesChanged(objects, processAccountId);
+    }
+    if (objectClass === 'Task') {
+      return this._processCategoryChangeTasks(objects);
     }
     if (objectClass !== FolderState.name) {
       return;
@@ -469,8 +674,25 @@ class CategoryStore extends MailspringStore {
         );
       }
       categoryCache[accountId] = {};
-      Object.values(categoryResults[accountId]).forEach(cat => {
+      const account = AccountStore.accountForId(accountId);
+      const isGmail = account && account.provider === 'gmail';
+      let isNewAccount = false;
+      if (Array.isArray(categoryResults[accountId])) {
+        if (isGmail) {
+          isNewAccount = !!categoryResults[accountId].find(
+            cat => cat && cat.role === 'all' && cat.isNew
+          );
+        } else {
+          isNewAccount = !!categoryResults[accountId].find(
+            cat => cat && cat.role === 'inbox' && cat.isNew
+          );
+        }
+      }
+      Object.values(categoryResults[accountId]).forEach((cat, index) => {
         categoryCache[accountId][cat.id] = cat;
+        if (cat.isNew && isNewAccount) {
+          cat.isNew = false;
+        }
       });
     });
     if (accountId) {
@@ -505,26 +727,29 @@ class CategoryStore extends MailspringStore {
       this._standardCategories[accountId] = [];
       if (!this._userCategories) {
         this._userCategories = {};
-        this._userCategoriesForFolderTree = {};
       }
       this._userCategories[accountId] = [];
-      this._userCategoriesForFolderTree[accountId] = [];
       if (!this._hiddenCategories) {
         this._hiddenCategories = {};
       }
       this._hiddenCategories[accountId] = [];
+      const userCats = [];
       for (const cat of cats) {
         if (cat && cat.isStandardCategory()) {
           this._standardCategories[accountId].push(cat);
         }
         if (cat && cat.isUserCategory()) {
-          this._userCategories[accountId].push(cat);
-          this._userCategoriesForFolderTree[accountId].push(cat);
+          if (cat.isNew) {
+            cat.isNew = false;
+          }
+          userCats.push(cat);
         }
         if (cat && cat.isHiddenCategory()) {
           this._hiddenCategories[accountId].push(cat);
         }
       }
+      this._userCategories[accountId] = [...userCats];
+      this.clearOldCategoryMetaData({ accountId, newCategories: this._userCategories[accountId] });
     };
     if (accountId) {
       filteredByAccount(accountId);
