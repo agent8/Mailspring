@@ -338,7 +338,7 @@ export class PreferencesAccountNotifacations extends React.Component {
     let { noticeType, sound } = selected.notifacation;
     const enableFocusedInboxKey = AppEnv.config.get('core.workspace.enableFocusedInbox');
     if (enableFocusedInboxKey) {
-      DISPLAY_LABELS['All'] = 'focused emails';
+      DISPLAY_LABELS['All'] = 'focused';
     }
     if (!enableFocusedInboxKey && noticeType === 'All_include_other') {
       noticeType = 'All';
