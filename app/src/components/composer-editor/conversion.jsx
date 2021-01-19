@@ -3,7 +3,7 @@ import { Value } from 'slate';
 import React from 'react';
 import BaseMarkPlugins from './base-mark-plugins';
 import TemplatePlugins from './template-plugins';
-import SpellcheckPlugins from './spellcheck-plugins';
+// import SpellcheckPlugins from './spellcheck-plugins';
 import UneditablePlugins from './uneditable-plugins';
 import BaseBlockPlugins, { BLOCK_CONFIG } from './base-block-plugins';
 import InlineAttachmentPlugins from './inline-attachment-plugins';
@@ -28,7 +28,7 @@ export const plugins = [
   ...LinkPlugins,
   ...BaseBlockPlugins,
   ...MarkdownPlugins,
-  ...SpellcheckPlugins,
+  // ...SpellcheckPlugins,
   ...CrowdedButtons,
   ...SignaturePlugins,
 ];
