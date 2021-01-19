@@ -54,7 +54,7 @@ class BlockedSenders extends React.Component {
         </div>
         <ContactList
           contacts={blockeds}
-          checkmarkNote={'blocked senders'}
+          checkmarkNote={'blocked sender'}
           handleName={'Unblock'}
           handleSelect={this._unBlockSelect}
         />

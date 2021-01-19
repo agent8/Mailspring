@@ -213,7 +213,7 @@ export class PreferencesMutedNotifacations extends React.Component {
         </div>
         <ContactList
           contacts={mutes}
-          checkmarkNote={'muted senders'}
+          checkmarkNote={'muted sender'}
           handleName={'Unmute'}
           handleSelect={this._unmuteSelect}
         />
