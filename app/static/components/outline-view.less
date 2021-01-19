@@ -86,15 +86,15 @@
       }
     }
   }
-  .item-container.inEditMode{
-    .disclosure-triangle{
+  .item-container.inEditMode {
+    .disclosure-triangle {
       transition: margin-right 300ms;
       margin-right: 24px;
     }
-    .icon.icon-drag{
+    .icon.icon-drag {
       display: inline-block;
       order: 2;
-      .edison-icon-drag-handle{
+      .edison-icon-drag-handle {
         color: @gray-light;
       }
     }
@@ -103,18 +103,18 @@
   .item-container.selected:hover.isDragging,
   .item-container.isDragging,
   .item-container:hover.isDragging {
-    &:hover .item{
+    &:hover .item {
       background-color: @white;
     }
-    &:before{
+    &:before {
       background-color: @white;
     }
     cursor: grabbing;
-    box-shadow: 0 0 10px 0 rgba(51,51,51,0.08);
+    box-shadow: 0 0 10px 0 rgba(51, 51, 51, 0.08);
     background-color: @white;
-    .item{
+    .item {
       background-color: @white;
-      .name{
+      .name {
         background-color: @white;
       }
     }
@@ -126,12 +126,12 @@
     cursor: pointer;
     // margin-bottom: 6px;
     .checkmark.disabled .inner,
-    .checkmark.disabled.checked .inner{
+    .checkmark.disabled.checked .inner {
       background-color: @gray-light;
     }
     .checkmark {
       cursor: pointer;
-      &.checked::after{
+      &.checked::after {
         visibility: hidden;
       }
 
@@ -167,15 +167,15 @@
 
     &.selected {
       //background-color: @source-list-active-bg;
-      .new-folder-edit{
-        .item-input{
+      .new-folder-edit {
+        .item-input {
           color: @gray-light;
           background-color: unset;
           border: none;
           box-shadow: unset;
           outline: unset;
         }
-        .edison-icon-close:before{
+        .edison-icon-close:before {
           color: @gray;
         }
       }
@@ -251,6 +251,17 @@
         visibility: visible;
         background-color: transparent;
       }
+      & > .edison-icon {
+        transform: rotate(0deg);
+        border-top: unset;
+        border-bottom: unset;
+        border-left: unset;
+        width: auto;
+        color: @gray-light;
+        &.collapsed {
+          transform: rotate(-90deg);
+        }
+      }
     }
 
     &:hover {
@@ -271,13 +282,13 @@
     padding-left: 47px;
     padding-right: 31px;
     transition: padding 300ms;
-    .name{
+    .name {
       padding-left: 1px;
       padding-right: 6px;
     }
-    &.disabled{
-      .sidebar-add-folder{
-        color: @gray-light
+    &.disabled {
+      .sidebar-add-folder {
+        color: @gray-light;
       }
     }
   }
@@ -510,7 +521,7 @@
           //text-indent: @padding-small-horizontal * 0.55;
           //width: 85%;
         }
-        .edison-icon-close:before{
+        .edison-icon-close:before {
           color: @gray;
         }
       }
