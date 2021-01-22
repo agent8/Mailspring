@@ -15,6 +15,7 @@
     "rebuild": "node_modules/.bin/electron-rebuild"
   },
   "dependencies": {
+    "a8": "git+ssh://github:agent8/a8.git#4770eaf",
     "@atlaskit/editor-core": "^134.0.1",
     "@atlaskit/media-core": "^32.1.2",
     "@ruoxijiang/node-tnef": "^0.1.2",
@@ -156,7 +157,8 @@
   "optionalDependencies": {},
   "devDependencies": {
     "electron-rebuild": "^1.10.1",
-    "node-gyp": "^6.0.0"
+    "node-gyp": "^6.0.0",
+    "cmake-js": "^6.1.0"
   },
   "resolutions": {
     "**/nan": "2.14.0",
