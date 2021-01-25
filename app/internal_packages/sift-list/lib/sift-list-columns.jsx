@@ -6,6 +6,7 @@ import {
   SiftTrashQuickAction,
   SiftStarQuickAction,
 } from './sift-list-quick-actions';
+import SiftQuickActions from './sift-quick-actions';
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -122,24 +123,7 @@ const TimeColumn = new ListTabular.Column({
 const HoverActions = new ListTabular.Column({
   name: 'HoverActions',
   resolver: message => {
-    const actions = [
-      <SiftTrashQuickAction message={message} key="sift-trash-quick-action" />,
-      <SiftStarQuickAction message={message} key="sift-star-quick-action" />,
-      <SiftUnreadQuickAction message={message} key="sift-unread-quick-action" />,
-    ];
-    return (
-      <div className="inner">
-        <InjectedComponentSet
-          key="injected-component-set"
-          inline={true}
-          containersRequired={false}
-          children={actions}
-          matching={{ role: 'SiftListQuickAction' }}
-          className="thread-injected-quick-actions"
-          exposedProps={{ message: message }}
-        />
-      </div>
-    );
+    return <SiftQuickActions message={message} layout="wide" />;
   },
 });
 
@@ -177,6 +161,7 @@ const cNarrow = new ListTabular.Column({
       const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
       attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
+    const quickActionsEnabled = AppEnv.config.get('core.quickActions.enabled');
     const actions = [
       <SiftTrashQuickAction message={message} key="sift-trash-quick-action" />,
       <SiftStarQuickAction message={message} key="sift-star-quick-action" />,
@@ -199,19 +184,7 @@ const cNarrow = new ListTabular.Column({
               exposedProps={{ message: message }}
               matching={{ role: 'SiftListTimestamp' }}
             />
-            <div className="list-column-HoverActions">
-              <div className="inner quick-actions">
-                <InjectedComponentSet
-                  key="injected-component-set"
-                  inline={true}
-                  containersRequired={false}
-                  children={actions}
-                  matching={{ role: 'SiftListQuickAction' }}
-                  className="thread-injected-quick-actions"
-                  exposedProps={{ message: message }}
-                />
-              </div>
-            </div>
+            <SiftQuickActions message={message} layout="narrow" />
           </div>
           <div className="subject">
             <span>{subject(message.subject)}</span>

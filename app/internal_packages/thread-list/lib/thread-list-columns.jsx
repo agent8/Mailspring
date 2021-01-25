@@ -1,13 +1,13 @@
-import QuickActions from './quick-actions';
-const React = require('react');
-const {
+import React from 'react';
+import {
   ListTabular,
   MailLabelSet,
   InjectedComponent,
   InjectedComponentSet,
-} = require('mailspring-component-kit');
+} from 'mailspring-component-kit';
+import { Utils, DateUtils, EmailAvatar, PropTypes } from 'mailspring-exports';
 
-const { Utils, DateUtils, EmailAvatar } = require('mailspring-exports');
+import QuickActions from './quick-actions';
 let draftStore = null;
 let focusedPerspectiveStore = null;
 let searchStore = null;
@@ -229,11 +229,7 @@ const c4 = new ListTabular.Column({
 const c5 = new ListTabular.Column({
   name: 'HoverActions',
   resolver: thread => {
-    return (
-      <div className="inner">
-        <QuickActions thread={thread} />
-      </div>
-    );
+    return <QuickActions thread={thread} layout="wide" />;
   },
 });
 
@@ -284,11 +280,7 @@ const cNarrow = new ListTabular.Column({
               exposedProps={{ thread: thread }}
               matching={{ role: 'ThreadListTimestamp' }}
             />
-            <div className="list-column-HoverActions">
-              <div className="inner quick-actions">
-                <QuickActions thread={thread} />
-              </div>
-            </div>
+            <QuickActions thread={thread} layout="narrow" />
           </div>
           <div className="subject">
             <span>{subject(thread.subject)}</span>
@@ -318,6 +310,10 @@ const cNarrow = new ListTabular.Column({
     );
   },
 });
+cNarrow.displayName = 'ThreadListColumnNarrow';
+cNarrow.propTypes = {
+  thread: PropTypes.object,
+};
 
 module.exports = {
   Narrow: [cNarrow],

@@ -6,12 +6,7 @@ import {
   InjectedComponent,
   OutboxSender,
 } from 'mailspring-component-kit';
-import {
-  OutboxResendQuickAction,
-  OutboxTrashQuickAction,
-  OutboxEditQuickAction,
-} from './outbox-list-quick-actions';
-const failingElapsedTimeout = AppEnv.config.get('core.outbox.failingUnlockInMs');
+import OutboxQuickActions from './outbox-quick-actions';
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -120,32 +115,7 @@ const StatusColumn = new ListTabular.Column({
 const HoverActions = new ListTabular.Column({
   name: 'HoverActions',
   resolver: draft => {
-    const actions = [];
-    if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
-      actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      actions.unshift(<OutboxEditQuickAction draft={draft} key="outbox-edit-quick-action" />);
-      actions.unshift(<OutboxResendQuickAction draft={draft} key="outbox-resend-quick-action" />);
-    } else if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
-      const timeLapsed = draft.lastUpdateTimestamp
-        ? Date.now() - draft.lastUpdateTimestamp.getTime()
-        : 0;
-      if (timeLapsed > failingElapsedTimeout) {
-        actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      }
-    }
-    return (
-      <div className="inner">
-        <InjectedComponentSet
-          key="injected-component-set"
-          inline={true}
-          containersRequired={false}
-          children={actions}
-          matching={{ role: 'OutboxListQuickAction' }}
-          className="thread-injected-quick-actions"
-          exposedProps={{ draft: draft }}
-        />
-      </div>
-    );
+    return <OutboxQuickActions draft={draft} layout="wide" />;
   },
 });
 
@@ -175,26 +145,13 @@ const cNarrow = new ListTabular.Column({
     const hasCalendar = draft.hasCalendar;
     if (hasCalendar) {
       const calendarClassName = Utils.iconClassName('feed-calendar.svg');
-      calendar = <div className={`thread-icon thread-icon-calendar ${calendarClassName}`} />;
+      calendar = <div className={`thread-icon thread-icFon-calendar ${calendarClassName}`} />;
     }
 
     const showAttachmentIcon = Utils.showIconForAttachments(draft.files);
     if (showAttachmentIcon) {
       const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
       attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
-    }
-    const actions = [];
-    if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
-      actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      actions.unshift(<OutboxEditQuickAction draft={draft} key="outbox-edit-quick-action" />);
-      actions.unshift(<OutboxResendQuickAction draft={draft} key="outbox-resend-quick-action" />);
-    } else if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
-      const timeLapsed = draft.lastUpdateTimestamp
-        ? Date.now() - draft.lastUpdateTimestamp.getTime()
-        : 0;
-      if (timeLapsed > failingElapsedTimeout) {
-        actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      }
     }
     const snippet = Utils.superTrim(getSnippet(draft));
     return (
@@ -211,19 +168,7 @@ const cNarrow = new ListTabular.Column({
               exposedProps={{ draft: draft }}
               matching={{ role: 'OutboxListTimestamp' }}
             />
-            <div className="list-column-HoverActions">
-              <div className="inner quick-actions">
-                <InjectedComponentSet
-                  key="injected-component-set"
-                  inline={true}
-                  containersRequired={false}
-                  children={actions}
-                  matching={{ role: 'OutboxListQuickAction' }}
-                  className="thread-injected-quick-actions"
-                  exposedProps={{ draft: draft }}
-                />
-              </div>
-            </div>
+            <OutboxQuickActions draft={draft} layout="narrow" />
           </div>
           <div className="subject">
             <span>{subject(draft.subject)}</span>
