@@ -2121,7 +2121,10 @@ class AttachmentStore extends MailspringStore {
       if (isSigOrTempAttachments) {
         file.isSigOrTempAttachments = true;
       }
-      if (inline === undefined && Utils.shouldDisplayAsImage(file)) {
+      const dropFileAsNormalAttachment = AppEnv.config.get(
+        'core.composing.dropFileAsNormalAttachment'
+      );
+      if (inline === undefined && Utils.shouldDisplayAsImage(file) && !dropFileAsNormalAttachment) {
         console.log('should be image but not set as inline');
         file.isInline = true;
         file.contentId = Utils.generateContentId();
