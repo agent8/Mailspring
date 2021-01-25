@@ -330,10 +330,25 @@ export default class ComposerEditor extends React.Component {
     if (!this._mounted) {
       return;
     }
+    // re-determine the language the document is written in
+    this._redetermineLanguage();
 
     this.setState(data);
-    // this.forceUpdate();
   }, 500);
+
+  _redetermineLanguage = () => {
+    if (!this._mounted) {
+      return;
+    }
+
+    const { value } = this.props;
+    if (value && value.focusBlock) {
+      const text = value.focusBlock.text;
+      if (text.length > 30) {
+        AppEnv.spellchecker.provideHintText(text.substr(text.length - 512, 512));
+      }
+    }
+  };
 
   onKeyDown = (event, spellcheckSetting) => {
     if (!spellcheckSetting) {
