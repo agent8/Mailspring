@@ -142,7 +142,13 @@ export default class WindowEventHandler {
       'core:paste-and-match-style': () => webContents.pasteAndMatchStyle(),
       'core:undo': e => (isTextInput(e.target) ? webContents.undo() : getUndoStore().undoLastOne()),
       'core:redo': e => (isTextInput(e.target) ? webContents.redo() : getUndoStore().redo()),
-      'core:select-all': e => (isTextInput(e.target) ? webContents.selectAll() : null),
+      'core:select-all': e => {
+        if (isTextInput(e.target)) {
+          webContents.selectAll();
+        } else {
+          AppEnv && AppEnv.commands.dispatch(`multiselect-list:select-all`);
+        }
+      },
     });
 
     // "Pinch to zoom" on the Mac gets translated by the system into a
