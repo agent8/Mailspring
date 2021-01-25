@@ -565,6 +565,18 @@ export default class MessageControls extends React.Component {
     clipboard.writeText(data);
   };
 
+  _consoleDebugInfo = () => {
+    const { message, thread } = this.props;
+    const data = `
+      AccountID: ${message.accountId}
+      Message ID: ${message.id}
+      Message Metadata: ${JSON.stringify(message.pluginMetadata, null, '  ')}
+      Thread ID: ${thread.id}
+      Thread Metadata: ${JSON.stringify(thread.pluginMetadata, null, '  ')}
+    `;
+    console.log('** debug info ***', data);
+  };
+
   _onClickTrackingIcon = event => {
     const originRect = event.target.getBoundingClientRect();
     Actions.openPopover(this._renderTrackingPopup(), {
@@ -718,7 +730,12 @@ export default class MessageControls extends React.Component {
             />
           </div>
         ) : null}
-        <MessageTimestamp className="message-time" isDetailed date={this.props.message.date} />
+        <MessageTimestamp
+          onClick={this._consoleDebugInfo}
+          className="message-time"
+          isDetailed
+          date={this.props.message.date}
+        />
         {!this.props.hideControls && this.props.message && !this.props.message.draft ? (
           <div className="replyBtn" title={items[0].name} onClick={items[0].select}>
             <RetinaImg
@@ -737,7 +754,7 @@ export default class MessageControls extends React.Component {
             menu={this._dropdownMenu(items.slice(1))}
           />
         ) : null}
-        {!this.props.hideControls ? (
+        {/* {!this.props.hideControls ? (
           <div className="message-actions-ellipsis" onClick={this._onShowActionsMenu}>
             <RetinaImg
               name="expand-more.svg"
@@ -746,7 +763,7 @@ export default class MessageControls extends React.Component {
               mode={RetinaImg.Mode.ContentIsMask}
             />
           </div>
-        ) : null}
+        ) : null} */}
 
         <FullScreenModal
           visible={this.state.showMuteEmailModal}
