@@ -238,7 +238,7 @@ class ContactList extends React.Component {
             ></div>
             <div className="checkmark-note">{`${
               filterList && filterList.length ? filterList.length : 0
-            } ${checkmarkNote}`}</div>
+            } ${checkmarkNote}${filterList && filterList.length > 1 ? 's' : ''}`}</div>
             <span
               className={`handleBtn${selectAllStatus ? ' show' : ''}`}
               onClick={() => this._handleSelect()}
