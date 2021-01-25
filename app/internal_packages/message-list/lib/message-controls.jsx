@@ -324,10 +324,11 @@ export default class MessageControls extends React.Component {
       ret.push(muteEmail);
     }
     if (AppEnv.config.get(EnableFocusedInboxKey)) {
-      if (this.props.message.isInInboxFocused()) {
+      const perspective = FocusedPerspectiveStore.current() || {};
+      if (this.props.message.isInInboxFocused() && !perspective.sift) {
         ret.push(moveToOther);
       }
-      if (this.props.message.isInInboxOther()) {
+      if (this.props.message.isInInboxOther() && !perspective.sift) {
         ret.push(moveToFocused);
       }
     }
