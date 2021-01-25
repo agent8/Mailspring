@@ -85,6 +85,9 @@ const ThreadListTimestamp = function({ thread }) {
 };
 
 ThreadListTimestamp.containerRequired = false;
+ThreadListTimestamp.propTypes = {
+  thread: PropTypes.object,
+};
 
 const subject = function(subj) {
   if ((subj || '').trim().length === 0) {
@@ -155,6 +158,7 @@ const c1 = new ListTabular.Column({
 const c2 = new ListTabular.Column({
   name: 'Participants',
   maxWidth: 200,
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     let calendar = null;
     const hasCalendar = thread.hasCalendar;
@@ -183,6 +187,7 @@ const c2 = new ListTabular.Column({
 const c3 = new ListTabular.Column({
   name: 'Message',
   flex: 4,
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     const messages = thread.__messages || [];
     let draft = null;
@@ -214,6 +219,7 @@ const c3 = new ListTabular.Column({
 
 const c4 = new ListTabular.Column({
   name: 'Date',
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     return (
       <InjectedComponent
@@ -228,6 +234,7 @@ const c4 = new ListTabular.Column({
 
 const c5 = new ListTabular.Column({
   name: 'HoverActions',
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     return <QuickActions thread={thread} layout="wide" />;
   },
@@ -236,6 +243,7 @@ const c5 = new ListTabular.Column({
 const cNarrow = new ListTabular.Column({
   name: 'Item',
   flex: 1,
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     let pencil = false;
     let attachment = false;
@@ -310,10 +318,6 @@ const cNarrow = new ListTabular.Column({
     );
   },
 });
-cNarrow.displayName = 'ThreadListColumnNarrow';
-cNarrow.propTypes = {
-  thread: PropTypes.object,
-};
 
 module.exports = {
   Narrow: [cNarrow],

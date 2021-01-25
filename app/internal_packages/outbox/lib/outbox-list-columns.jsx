@@ -1,5 +1,5 @@
 import React from 'react';
-import { Utils, Message, DateUtils } from 'mailspring-exports';
+import { Utils, PropTypes, DateUtils } from 'mailspring-exports';
 import {
   InjectedComponentSet,
   ListTabular,
@@ -27,6 +27,7 @@ function subject(subj) {
 
 const SenderColumn = new ListTabular.Column({
   name: 'Sender',
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     return (
       <OutboxSender
@@ -78,6 +79,7 @@ const participants = draft => {
 const ContentsColumn = new ListTabular.Column({
   name: 'Contents',
   flex: 4,
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     let attachments = [];
     const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
@@ -99,6 +101,7 @@ const ContentsColumn = new ListTabular.Column({
 
 const StatusColumn = new ListTabular.Column({
   name: 'State',
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     return (
       <InjectedComponentSet
@@ -114,6 +117,7 @@ const StatusColumn = new ListTabular.Column({
 
 const HoverActions = new ListTabular.Column({
   name: 'HoverActions',
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     return <OutboxQuickActions draft={draft} layout="wide" />;
   },
@@ -125,8 +129,8 @@ const getSnippet = function(draft) {
   }
   return (
     <div className="skeleton">
-      <div></div>
-      <div></div>
+      <div />
+      <div />
     </div>
   );
 };
@@ -134,11 +138,14 @@ const OutboxDraftTimestamp = function({ draft }) {
   const timestamp = draft.date ? DateUtils.shortTimeString(draft.date) : 'No Date';
   return <span className="timestamp">{timestamp}</span>;
 };
-
+OutboxDraftTimestamp.propTypes = {
+  draft: PropTypes.object,
+};
 OutboxDraftTimestamp.containerRequired = false;
 const cNarrow = new ListTabular.Column({
   name: 'Item',
   flex: 1,
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     let attachment = false;
     let calendar = null;
