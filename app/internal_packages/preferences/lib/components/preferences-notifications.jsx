@@ -213,7 +213,7 @@ export class PreferencesMutedNotifacations extends React.Component {
         </div>
         <ContactList
           contacts={mutes}
-          checkmarkNote={'muted senders'}
+          checkmarkNote={'muted sender'}
           handleName={'Unmute'}
           handleSelect={this._unmuteSelect}
         />
@@ -338,7 +338,7 @@ export class PreferencesAccountNotifacations extends React.Component {
     let { noticeType, sound } = selected.notifacation;
     const enableFocusedInboxKey = AppEnv.config.get('core.workspace.enableFocusedInbox');
     if (enableFocusedInboxKey) {
-      DISPLAY_LABELS['All'] = 'focused emails';
+      DISPLAY_LABELS['All'] = 'focused';
     }
     if (!enableFocusedInboxKey && noticeType === 'All_include_other') {
       noticeType = 'All';
