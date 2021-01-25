@@ -1,11 +1,6 @@
 import React from 'react';
-import { Utils, DateUtils, EmailAvatar } from 'mailspring-exports';
-import { InjectedComponentSet, ListTabular, InjectedComponent } from 'mailspring-component-kit';
-import {
-  SiftUnreadQuickAction,
-  SiftTrashQuickAction,
-  SiftStarQuickAction,
-} from './sift-list-quick-actions';
+import { PropTypes, Utils, DateUtils, EmailAvatar } from 'mailspring-exports';
+import { ListTabular, InjectedComponent } from 'mailspring-component-kit';
 import SiftQuickActions from './sift-quick-actions';
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
@@ -53,6 +48,7 @@ const participants = message => {
 
 const SenderColumn = new ListTabular.Column({
   name: 'Avatar',
+  // eslint-disable-next-line react/display-name
   resolver: message => {
     return <EmailAvatar key="email-avatar" mode="list" message={message} />;
   },
@@ -79,6 +75,7 @@ const renderIcons = message => {
 const ContentsColumn = new ListTabular.Column({
   name: 'Contents',
   flex: 4,
+  // eslint-disable-next-line react/display-name
   resolver: message => {
     return (
       <span className="details">
@@ -107,6 +104,7 @@ const AttachmentsColumn = new ListTabular.Column({
 
 const TimeColumn = new ListTabular.Column({
   name: 'Time',
+  // eslint-disable-next-line react/display-name
   resolver: message => {
     return (
       <InjectedComponent
@@ -122,6 +120,7 @@ const TimeColumn = new ListTabular.Column({
 
 const HoverActions = new ListTabular.Column({
   name: 'HoverActions',
+  // eslint-disable-next-line react/display-name
   resolver: message => {
     return <SiftQuickActions message={message} layout="wide" />;
   },
@@ -133,8 +132,8 @@ const getSnippet = function(message) {
   }
   return (
     <div className="skeleton">
-      <div></div>
-      <div></div>
+      <div />
+      <div />
     </div>
   );
 };
@@ -142,11 +141,14 @@ const SiftMessageTimestamp = function({ message }) {
   const timestamp = message.date ? DateUtils.shortTimeString(message.date) : 'No Date';
   return <span className="timestamp">{timestamp}</span>;
 };
-
+SiftMessageTimestamp.propTypes = {
+  message: PropTypes.object,
+};
 SiftMessageTimestamp.containerRequired = false;
 const cNarrow = new ListTabular.Column({
   name: 'Item',
   flex: 1,
+  // eslint-disable-next-line react/display-name
   resolver: message => {
     let attachment = false;
     let calendar = null;
@@ -161,12 +163,6 @@ const cNarrow = new ListTabular.Column({
       const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
       attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
     }
-    const quickActionsEnabled = AppEnv.config.get('core.quickActions.enabled');
-    const actions = [
-      <SiftTrashQuickAction message={message} key="sift-trash-quick-action" />,
-      <SiftStarQuickAction message={message} key="sift-star-quick-action" />,
-      <SiftUnreadQuickAction message={message} key="sift-unread-quick-action" />,
-    ];
     const snippet = Utils.superTrim(getSnippet(message));
     return (
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
