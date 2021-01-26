@@ -58,17 +58,13 @@
   flex: 0 0 40px;
 
   .multiselect-toolbar-root {
-    position: absolute;
+    position: fixed;
     bottom: 40px;
     margin: 0 auto;
-    left: 10px;
-    right: auto;
     min-height: 40px;
     border-radius: 10px;
-    z-index: 2;
-    // border: 1px solid @border-color-primary;
-    // border-bottom: 1px solid @border-color-primary;
-    // border-right: 1px solid @border-color-divider;
+    z-index: 100;
+    -webkit-app-region: no-drag;
     box-shadow: -1px 1.5px 6px rgba(0, 0, 0, 0.15);
     background-color: @blue;
     transition: opacity 0.2s ease-in-out, box-shadow 0.5s;
@@ -350,8 +346,6 @@
     display: flex;
     justify-content: center;
     .multiselect-toolbar-root {
-      left: auto;
-      width: 96%;
       .inner {
         flex-flow: wrap;
         .flex-row {
