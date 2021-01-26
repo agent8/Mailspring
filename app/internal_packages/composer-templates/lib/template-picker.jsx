@@ -130,7 +130,7 @@ class TemplatePicker extends React.Component {
         tabIndex={-1}
         className="btn btn-toolbar btn-templates narrow pull-right"
         onClick={this._onClickButton}
-        title="Insert quick reply…"
+        title="Insert template…"
       >
         <RetinaImg
           name="quick-reply.svg"
