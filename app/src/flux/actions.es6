@@ -243,11 +243,13 @@ class Actions {
   */
   static ensureCategoryIsFocused = ActionScopeWindow;
 
+  static setMessagesReadUnread = ActionScopeWindow;
   /*
   Public: If the message with the provided id is currently beign displayed in the
   thread view, this action toggles whether it's full content or snippet is shown.
 
   *Scope: Window*
+
 
   ```
   message = <Message>
