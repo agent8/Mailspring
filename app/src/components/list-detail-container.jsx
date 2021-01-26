@@ -86,11 +86,12 @@ class ListDetailContainer extends React.Component {
     return (
       <div style={containersStyles}>
         <ResizableRegion
-          style={{ overflow: 'hidden', ...listStyles }}
+          style={{ overflow: 'hidden' }}
           handle={handle}
           className={listClassName}
           onResize={w => this._onColumnResize(sizeKey, w)}
           {...listOtherProps}
+          {...listStyles}
         >
           <div style={{ height: '100%' }}>
             <List forceWidthMode={forceWidthMode} />
