@@ -336,7 +336,8 @@ class TemplateStore extends MailspringStore {
       }
       fileMap.forEach((file, key) => {
         if (file.isInline) {
-          newBody = replaceStr(newBody, `src="${key}"`, `src="cid:${file.contentId}"`);
+          const urlPath = path.join(path.dirname(key), encodeURIComponent(path.basename(key)));
+          newBody = replaceStr(newBody, `src="${urlPath}"`, `src="cid:${file.contentId}"`);
         }
       });
       session.changes.add({ body: newBody });
@@ -370,11 +371,11 @@ class TemplateStore extends MailspringStore {
         return;
       }
 
-      const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
-      if (inlineAttachment.length) {
-        this._displayError('Sorry，template does not support inline attachments.');
-        return;
-      }
+      // const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
+      // if (inlineAttachment.length) {
+      //   this._displayError('Sorry，template does not support inline attachments.');
+      //   return;
+      // }
 
       const newTemplateId = uuid().toLowerCase();
       const oldTempTitles = this.getTemplates().map(t => t.title);
@@ -392,8 +393,16 @@ class TemplateStore extends MailspringStore {
           const filePath = AttachmentStore.pathForFile(f);
           const newPath = AppEnv.copyFileToPreferences(filePath);
           if (newPath) {
+            if (f.contentId) {
+              const urlPath = path.join(
+                path.dirname(newPath),
+                encodeURIComponent(path.basename(newPath))
+              );
+              draftContents = draftContents.replace(`cid:${f.contentId}`, urlPath);
+            }
             filesAddToAttachment.push({
-              inline: false,
+              contentType: f.contentType,
+              inline: f.isInline,
               path: newPath,
             });
           }
