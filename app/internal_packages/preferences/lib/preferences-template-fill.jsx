@@ -12,7 +12,7 @@ import {
   PreferencesMutedNotifacations,
   PreferencesAccountNotifacations,
 } from './components/preferences-notifications';
-// import EdisonAccount from './components/preferences-my-account';
+import EdisonAccount from './components/preferences-my-account';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
   AppearanceScaleSlider,
