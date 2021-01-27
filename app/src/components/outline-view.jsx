@@ -236,7 +236,7 @@ export const AddFolder = item => {
       className={`item-container item name inEditMode ${disabled ? 'disabled' : ''}`}
       onClick={onClick}
     >
-      <span className="sidebar-add-folder">New Folder...</span>
+      <span className="sidebar-add-folder">{item.displayName}</span>
     </div>
   );
 };
