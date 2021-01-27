@@ -6,7 +6,7 @@ import ThreadListToolbar from './thread-list-toolbar';
 import ThreadListEmptyFolderBar from './thread-list-empty-folder-bar';
 import MessageListToolbar from './message-list-toolbar';
 import SelectedItemsStack from './selected-items-stack';
-import HiddenThreadListToolbar from './hidden-thread-list-toolbar';
+// import HiddenThreadListToolbar from './hidden-thread-list-toolbar';
 import MessageList from '../../message-list/lib/message-list';
 
 import {
@@ -41,10 +41,10 @@ export function activate() {
     });
 
     // Toolbars
-    ComponentRegistry.register(HiddenThreadListToolbar, {
-      location: WorkspaceStore.Location.ThreadList.Toolbar,
-      modes: ['list', 'split'],
-    });
+    // ComponentRegistry.register(HiddenThreadListToolbar, {
+    //   location: WorkspaceStore.Location.ThreadList.Toolbar,
+    //   modes: ['list', 'split'],
+    // });
 
     ComponentRegistry.register(ThreadListToolbar, {
       modes: ['list', 'split'],
@@ -75,10 +75,11 @@ export function activate() {
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(ThrNewThreadListeadList);
+  ComponentRegistry.unregister(ThreadListEmptyFolderBar);
+  ComponentRegistry.unregister(NewThreadList);
   ComponentRegistry.unregister(SelectedItemsStack);
   ComponentRegistry.unregister(ThreadListToolbar);
-  ComponentRegistry.unregister(HiddenThreadListToolbar);
+  // ComponentRegistry.unregister(HiddenThreadListToolbar);
   ComponentRegistry.unregister(MessageListToolbar);
   ComponentRegistry.unregister(ThreadEmptyMoreButtons);
   ComponentRegistry.unregister(MailActionsButtons);
