@@ -249,6 +249,7 @@ export const DraftAttachmentState = {
   deleted: -1,
   error: -2,
 };
+// eslint-disable-next-line no-unused-vars
 const AccountAttachmentsState = {
   ready: 1,
   busy: 2,
@@ -816,8 +817,6 @@ class AccountDrafts {
       return null;
     }
     if (!this.accounts[accountId]) {
-      {
-      }
       AppEnv.logDebug(`Accounts missing accountId ${accountId}`);
       return null;
     }
@@ -2121,7 +2120,10 @@ class AttachmentStore extends MailspringStore {
       if (isSigOrTempAttachments) {
         file.isSigOrTempAttachments = true;
       }
-      if (inline === undefined && Utils.shouldDisplayAsImage(file)) {
+      const dropFileAsNormalAttachment = AppEnv.config.get(
+        'core.composing.dropFileAsNormalAttachment'
+      );
+      if (inline === undefined && Utils.shouldDisplayAsImage(file) && !dropFileAsNormalAttachment) {
         console.log('should be image but not set as inline');
         file.isInline = true;
         file.contentId = Utils.generateContentId();

@@ -855,7 +855,7 @@ export default class ComposerView extends React.Component {
     const inlineFile = [];
     for (let i = 0; i < fileObjs.length; i++) {
       const fileObj = fileObjs[i];
-      if (Utils.shouldDisplayAsImage(fileObj)) {
+      if (Utils.shouldDisplayAsImage(fileObj) && fileObj.isInline) {
         const match = draft.files.find(f => f.id === fileObj.id);
         if (!match) {
           return;
@@ -880,7 +880,7 @@ export default class ComposerView extends React.Component {
 
   _onAttachmentCreated = fileObj => {
     if (!this._mounted) return;
-    if (Utils.shouldDisplayAsImage(fileObj)) {
+    if (Utils.shouldDisplayAsImage(fileObj) && fileObj.isInline) {
       const { draft, session } = this.props;
       const match = draft.files.find(f => f.id === fileObj.id);
       console.log(`update attachment in _onAttachmentCreated`);
