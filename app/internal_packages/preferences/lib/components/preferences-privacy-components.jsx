@@ -7,8 +7,6 @@ import {
   TaskQueue,
   SiftExpungeUserDataTask,
   SiftExportUserDataTask,
-  RESTful,
-  AccountStore,
 } from 'mailspring-exports';
 import ExportDataModal from './export-data-modal';
 
