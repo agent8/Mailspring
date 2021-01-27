@@ -7,10 +7,12 @@ import {
   TaskQueue,
   SiftExpungeUserDataTask,
   SiftExportUserDataTask,
+  RESTful,
+  AccountStore,
 } from 'mailspring-exports';
 import ExportDataModal from './export-data-modal';
 
-// const { EdisonAccountRest } = RESTful;
+const { EdisonAccountRest } = RESTful;
 
 export class Privacy extends React.Component {
   static displayName = 'PreferencesPrivacy';
