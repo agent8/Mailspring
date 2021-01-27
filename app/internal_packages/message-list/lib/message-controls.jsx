@@ -19,6 +19,7 @@ import UserViewBtn from '../../../src/components/user-review-button';
 
 const buttonTimeout = 700;
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
+const isMessageView = AppEnv.isDisableThreading();
 
 export default class MessageControls extends React.Component {
   static displayName = 'MessageControls';
@@ -232,7 +233,6 @@ export default class MessageControls extends React.Component {
 
   _items() {
     const { isMuted } = this.state;
-    const isMessageView = AppEnv.isDisableThreading();
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
@@ -324,7 +324,7 @@ export default class MessageControls extends React.Component {
     if (!this.props.message.draft && !isMessageView) {
       ret.push(trash);
     }
-    if (this.props.message) {
+    if (!isMessageView && this.props.message) {
       if (this.props.message.unread) {
         ret.push(markAsRead);
       } else {
