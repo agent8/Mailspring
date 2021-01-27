@@ -649,6 +649,8 @@ class Actions {
   static forceDatabaseTrigger = ActionScopeWindow;
 
   static dataShareOptions = ActionScopeMainWindow;
+  static dataShareOptionsSuccess = ActionScopeMainWindow;
+  static dataShareOptionsFailed = ActionScopeMainWindow;
   static expungeUserData = ActionScopeMainWindow;
   static exportUserData = ActionScopeMainWindow;
 
