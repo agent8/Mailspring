@@ -19,6 +19,7 @@ import UserViewBtn from '../../../src/components/user-review-button';
 
 const buttonTimeout = 700;
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
+const isMessageView = AppEnv.isDisableThreading();
 
 export default class MessageControls extends React.Component {
   static displayName = 'MessageControls';
@@ -232,7 +233,6 @@ export default class MessageControls extends React.Component {
 
   _items() {
     const { isMuted } = this.state;
-    const isMessageView = AppEnv.isDisableThreading();
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
@@ -293,6 +293,19 @@ export default class MessageControls extends React.Component {
       select: this._onToggleMoveFocusedOther,
     };
 
+    const markAsRead = {
+      name: 'Mark as Read',
+      image: 'read.svg',
+      iconHidden: true,
+      select: this._onMarkAsRead,
+    };
+    const markAsUnread = {
+      name: 'Mark as Unread',
+      image: 'unread.svg',
+      iconHidden: true,
+      select: this._onMarkAsUnread,
+    };
+
     const ret = [];
     if (this.props.message && !this.props.message.draft) {
       if (!this.props.message.canReplyAll()) {
@@ -310,6 +323,13 @@ export default class MessageControls extends React.Component {
 
     if (!this.props.message.draft && !isMessageView) {
       ret.push(trash);
+    }
+    if (!isMessageView && this.props.message) {
+      if (this.props.message.unread) {
+        ret.push(markAsRead);
+      } else {
+        ret.push(markAsUnread);
+      }
     }
     if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
@@ -390,6 +410,20 @@ export default class MessageControls extends React.Component {
       return true;
     }
     return false;
+  };
+  _onMarkAsRead = () => {
+    Actions.setMessagesReadUnread({
+      messageIds: [this.props.message.id],
+      unread: false,
+      source: 'MessageControl:SingleMessage:mark as read',
+    });
+  };
+  _onMarkAsUnread = () => {
+    Actions.setMessagesReadUnread({
+      messageIds: [this.props.message.id],
+      unread: true,
+      source: 'MessageControl:SingleMessage:mark as unread',
+    });
   };
 
   _onReply = () => {
