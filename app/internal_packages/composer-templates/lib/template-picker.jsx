@@ -1,4 +1,3 @@
-/* eslint jsx-a11y/tabindex-no-positive: 0 */
 import { React, ReactDOM, PropTypes, Actions } from 'mailspring-exports';
 import { Menu, RetinaImg, InputSearch } from 'mailspring-component-kit';
 import TemplateStore from './template-store';
@@ -110,6 +109,8 @@ class TemplatePicker extends React.Component {
 
   static propTypes = {
     messageId: PropTypes.string,
+    session: PropTypes.object,
+    draft: PropTypes.object,
   };
 
   _onClickButton = () => {
@@ -130,7 +131,7 @@ class TemplatePicker extends React.Component {
         tabIndex={-1}
         className="btn btn-toolbar btn-templates narrow pull-right"
         onClick={this._onClickButton}
-        title="Insert quick reply…"
+        title="Insert template…"
       >
         <RetinaImg
           name="quick-reply.svg"
