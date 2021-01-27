@@ -19,6 +19,7 @@ import UserViewBtn from '../../../src/components/user-review-button';
 
 const buttonTimeout = 700;
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
+const isMessageView = AppEnv.isDisableThreading();
 
 export default class MessageControls extends React.Component {
   static displayName = 'MessageControls';
@@ -232,7 +233,6 @@ export default class MessageControls extends React.Component {
 
   _items() {
     const { isMuted } = this.state;
-    const isMessageView = AppEnv.isDisableThreading();
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
@@ -293,6 +293,19 @@ export default class MessageControls extends React.Component {
       select: this._onToggleMoveFocusedOther,
     };
 
+    const markAsRead = {
+      name: 'Mark as Read',
+      image: 'read.svg',
+      iconHidden: true,
+      select: this._onMarkAsRead,
+    };
+    const markAsUnread = {
+      name: 'Mark as Unread',
+      image: 'unread.svg',
+      iconHidden: true,
+      select: this._onMarkAsUnread,
+    };
+
     const ret = [];
     if (this.props.message && !this.props.message.draft) {
       if (!this.props.message.canReplyAll()) {
@@ -311,6 +324,13 @@ export default class MessageControls extends React.Component {
     if (!this.props.message.draft && !isMessageView) {
       ret.push(trash);
     }
+    if (!isMessageView && this.props.message) {
+      if (this.props.message.unread) {
+        ret.push(markAsRead);
+      } else {
+        ret.push(markAsUnread);
+      }
+    }
     if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
@@ -324,10 +344,11 @@ export default class MessageControls extends React.Component {
       ret.push(muteEmail);
     }
     if (AppEnv.config.get(EnableFocusedInboxKey)) {
-      if (this.props.message.isInInboxFocused()) {
+      const perspective = FocusedPerspectiveStore.current() || {};
+      if (this.props.message.isInInboxFocused() && !perspective.sift) {
         ret.push(moveToOther);
       }
-      if (this.props.message.isInInboxOther()) {
+      if (this.props.message.isInInboxOther() && !perspective.sift) {
         ret.push(moveToFocused);
       }
     }
@@ -389,6 +410,20 @@ export default class MessageControls extends React.Component {
       return true;
     }
     return false;
+  };
+  _onMarkAsRead = () => {
+    Actions.setMessagesReadUnread({
+      messageIds: [this.props.message.id],
+      unread: false,
+      source: 'MessageControl:SingleMessage:mark as read',
+    });
+  };
+  _onMarkAsUnread = () => {
+    Actions.setMessagesReadUnread({
+      messageIds: [this.props.message.id],
+      unread: true,
+      source: 'MessageControl:SingleMessage:mark as unread',
+    });
   };
 
   _onReply = () => {
@@ -565,6 +600,18 @@ export default class MessageControls extends React.Component {
     clipboard.writeText(data);
   };
 
+  _consoleDebugInfo = () => {
+    const { message, thread } = this.props;
+    const data = `
+      AccountID: ${message.accountId}
+      Message ID: ${message.id}
+      Message Metadata: ${JSON.stringify(message.pluginMetadata, null, '  ')}
+      Thread ID: ${thread.id}
+      Thread Metadata: ${JSON.stringify(thread.pluginMetadata, null, '  ')}
+    `;
+    console.log('** debug info ***', data);
+  };
+
   _onClickTrackingIcon = event => {
     const originRect = event.target.getBoundingClientRect();
     Actions.openPopover(this._renderTrackingPopup(), {
@@ -718,7 +765,12 @@ export default class MessageControls extends React.Component {
             />
           </div>
         ) : null}
-        <MessageTimestamp className="message-time" isDetailed date={this.props.message.date} />
+        <MessageTimestamp
+          onClick={this._consoleDebugInfo}
+          className="message-time"
+          isDetailed
+          date={this.props.message.date}
+        />
         {!this.props.hideControls && this.props.message && !this.props.message.draft ? (
           <div className="replyBtn" title={items[0].name} onClick={items[0].select}>
             <RetinaImg
@@ -737,7 +789,7 @@ export default class MessageControls extends React.Component {
             menu={this._dropdownMenu(items.slice(1))}
           />
         ) : null}
-        {!this.props.hideControls ? (
+        {/* {!this.props.hideControls ? (
           <div className="message-actions-ellipsis" onClick={this._onShowActionsMenu}>
             <RetinaImg
               name="expand-more.svg"
@@ -746,7 +798,7 @@ export default class MessageControls extends React.Component {
               mode={RetinaImg.Mode.ContentIsMask}
             />
           </div>
-        ) : null}
+        ) : null} */}
 
         <FullScreenModal
           visible={this.state.showMuteEmailModal}

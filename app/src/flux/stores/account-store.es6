@@ -68,10 +68,10 @@ class AccountStore extends MailspringStore {
           );
           await MessageStore.saveMessagesAndRefresh([]);
         }
-        // // refresh the sub accounts for new sync account
-        // // Sub account list only increases but not decreases,
-        // // So we only should refresh after add account
-        // EdisonAccountRest.subAccounts();
+        // refresh the sub accounts for new sync account
+        // Sub account list only increases but not decreases,
+        // So we only should refresh after add account
+        EdisonAccountRest.subAccounts();
       });
     }
 
@@ -461,11 +461,11 @@ class AccountStore extends MailspringStore {
       }
     }
 
-    // // logout edison account
-    // const syncAccountId = AppEnv.config.get(edisonAccountKey);
-    // if (syncAccountId === id) {
-    //   await EdisonAccountRest.logoutDevice(id, AppEnv.config.get('core.support.id'));
-    // }
+    // logout edison account
+    const syncAccountId = AppEnv.config.get(edisonAccountKey);
+    if (syncAccountId === id) {
+      await EdisonAccountRest.logoutDevice(id, AppEnv.config.get('core.support.id'));
+    }
 
     this._caches = {};
 

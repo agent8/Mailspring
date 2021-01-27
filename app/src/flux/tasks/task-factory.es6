@@ -437,6 +437,7 @@ const TaskFactory = {
       });
       return;
     }
+    newName = newName.trim();
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -476,6 +477,7 @@ const TaskFactory = {
       });
       return;
     }
+    newName = newName.trim();
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Edit folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -529,6 +531,7 @@ const TaskFactory = {
       });
       return;
     }
+    name = name.trim();
     if (bannedPathNames.includes(name)) {
       AppEnv.logWarning(`TaskFactory:Creating folder ${name} is in banned`);
       AppEnv.showMessageBox({

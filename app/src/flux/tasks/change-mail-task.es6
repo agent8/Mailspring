@@ -1,6 +1,5 @@
 import Task from './task';
 import Attributes from '../attributes';
-import thread from '../models/thread';
 
 /*
 Public: The ChangeMailTask is a base class for all tasks that modify sets

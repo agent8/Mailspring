@@ -186,6 +186,12 @@ class SidebarStore extends MailspringStore {
       this._updateSections
     );
   }
+  isAllLabelAccount() {
+    const accounts = AccountStore.accounts();
+    return accounts.every(account => {
+      return account && (account.provider === 'gmail' || account.provider === 'onmail');
+    });
+  }
   getNewFolder(accountId) {
     if (!accountId) {
       return this._newFolder.accountId ? this._newFolder : null;
