@@ -12,7 +12,7 @@ import {
   PreferencesMutedNotifacations,
   PreferencesAccountNotifacations,
 } from './components/preferences-notifications';
-import EdisonAccount from './components/preferences-my-account';
+// import EdisonAccount from './components/preferences-my-account';
 import PreferencesAccounts from './components/preferences-accounts';
 import {
   AppearanceScaleSlider,
@@ -226,13 +226,20 @@ const preferencesTemplateFill = {
         //   ],
         // },
         {
-          groupName: 'DOWNLOADS',
+          groupName: 'DOWNLOADS & ATTACHMENTS',
           groupItem: [
             {
               label: 'Open containing folder after downloading attachments',
               configSchema: configSchema =>
                 configSchema.properties.attachments.properties.openFolderAfterDownload,
               keyPath: 'core.attachments.openFolderAfterDownload',
+              keywords: [],
+            },
+            {
+              label: 'When dragging files into the composer, always add as an attachment',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.dropFileAsNormalAttachment,
+              keyPath: 'core.composing.dropFileAsNormalAttachment',
               keywords: [],
             },
             // {
