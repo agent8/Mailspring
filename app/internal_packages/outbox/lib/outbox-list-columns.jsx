@@ -152,7 +152,7 @@ const cNarrow = new ListTabular.Column({
     const hasCalendar = draft.hasCalendar;
     if (hasCalendar) {
       const calendarClassName = Utils.iconClassName('feed-calendar.svg');
-      calendar = <div className={`thread-icon thread-icFon-calendar ${calendarClassName}`} />;
+      calendar = <div className={`thread-icon thread-icon-calendar ${calendarClassName}`} />;
     }
 
     const showAttachmentIcon = Utils.showIconForAttachments(draft.files);
