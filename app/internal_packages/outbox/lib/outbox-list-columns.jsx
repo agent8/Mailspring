@@ -1,17 +1,12 @@
 import React from 'react';
-import { Utils, Message, DateUtils } from 'mailspring-exports';
+import { Utils, PropTypes, DateUtils } from 'mailspring-exports';
 import {
   InjectedComponentSet,
   ListTabular,
   InjectedComponent,
   OutboxSender,
 } from 'mailspring-component-kit';
-import {
-  OutboxResendQuickAction,
-  OutboxTrashQuickAction,
-  OutboxEditQuickAction,
-} from './outbox-list-quick-actions';
-const failingElapsedTimeout = AppEnv.config.get('core.outbox.failingUnlockInMs');
+import OutboxQuickActions from './outbox-quick-actions';
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -32,6 +27,7 @@ function subject(subj) {
 
 const SenderColumn = new ListTabular.Column({
   name: 'Sender',
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     return (
       <OutboxSender
@@ -83,6 +79,7 @@ const participants = draft => {
 const ContentsColumn = new ListTabular.Column({
   name: 'Contents',
   flex: 4,
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     let attachments = [];
     const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
@@ -104,6 +101,7 @@ const ContentsColumn = new ListTabular.Column({
 
 const StatusColumn = new ListTabular.Column({
   name: 'State',
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     return (
       <InjectedComponentSet
@@ -119,33 +117,9 @@ const StatusColumn = new ListTabular.Column({
 
 const HoverActions = new ListTabular.Column({
   name: 'HoverActions',
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
-    const actions = [];
-    if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
-      actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      actions.unshift(<OutboxEditQuickAction draft={draft} key="outbox-edit-quick-action" />);
-      actions.unshift(<OutboxResendQuickAction draft={draft} key="outbox-resend-quick-action" />);
-    } else if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
-      const timeLapsed = draft.lastUpdateTimestamp
-        ? Date.now() - draft.lastUpdateTimestamp.getTime()
-        : 0;
-      if (timeLapsed > failingElapsedTimeout) {
-        actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      }
-    }
-    return (
-      <div className="inner">
-        <InjectedComponentSet
-          key="injected-component-set"
-          inline={true}
-          containersRequired={false}
-          children={actions}
-          matching={{ role: 'OutboxListQuickAction' }}
-          className="thread-injected-quick-actions"
-          exposedProps={{ draft: draft }}
-        />
-      </div>
-    );
+    return <OutboxQuickActions draft={draft} layout="wide" />;
   },
 });
 
@@ -155,8 +129,8 @@ const getSnippet = function(draft) {
   }
   return (
     <div className="skeleton">
-      <div></div>
-      <div></div>
+      <div />
+      <div />
     </div>
   );
 };
@@ -164,11 +138,14 @@ const OutboxDraftTimestamp = function({ draft }) {
   const timestamp = draft.date ? DateUtils.shortTimeString(draft.date) : 'No Date';
   return <span className="timestamp">{timestamp}</span>;
 };
-
+OutboxDraftTimestamp.propTypes = {
+  draft: PropTypes.object,
+};
 OutboxDraftTimestamp.containerRequired = false;
 const cNarrow = new ListTabular.Column({
   name: 'Item',
   flex: 1,
+  // eslint-disable-next-line react/display-name
   resolver: draft => {
     let attachment = false;
     let calendar = null;
@@ -182,19 +159,6 @@ const cNarrow = new ListTabular.Column({
     if (showAttachmentIcon) {
       const attachmentClassName = Utils.iconClassName('feed-attachments.svg');
       attachment = <div className={`thread-icon thread-icon-attachment ${attachmentClassName}`} />;
-    }
-    const actions = [];
-    if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failed)) {
-      actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      actions.unshift(<OutboxEditQuickAction draft={draft} key="outbox-edit-quick-action" />);
-      actions.unshift(<OutboxResendQuickAction draft={draft} key="outbox-resend-quick-action" />);
-    } else if (Message.compareMessageState(draft.syncState, Message.messageSyncState.failing)) {
-      const timeLapsed = draft.lastUpdateTimestamp
-        ? Date.now() - draft.lastUpdateTimestamp.getTime()
-        : 0;
-      if (timeLapsed > failingElapsedTimeout) {
-        actions.unshift(<OutboxTrashQuickAction draft={draft} key="outbox-trash-quick-action" />);
-      }
     }
     const snippet = Utils.superTrim(getSnippet(draft));
     return (
@@ -211,19 +175,7 @@ const cNarrow = new ListTabular.Column({
               exposedProps={{ draft: draft }}
               matching={{ role: 'OutboxListTimestamp' }}
             />
-            <div className="list-column-HoverActions">
-              <div className="inner quick-actions">
-                <InjectedComponentSet
-                  key="injected-component-set"
-                  inline={true}
-                  containersRequired={false}
-                  children={actions}
-                  matching={{ role: 'OutboxListQuickAction' }}
-                  className="thread-injected-quick-actions"
-                  exposedProps={{ draft: draft }}
-                />
-              </div>
-            </div>
+            <OutboxQuickActions draft={draft} layout="narrow" />
           </div>
           <div className="subject">
             <span>{subject(draft.subject)}</span>
