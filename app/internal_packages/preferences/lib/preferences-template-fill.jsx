@@ -279,22 +279,22 @@ const preferencesTemplateFill = {
         },
       ],
     },
-    // {
-    //   tabId: 'My Account',
-    //   displayName: 'My Account',
-    //   order: 2,
-    //   configGroup: [
-    //     {
-    //       groupItem: [
-    //         {
-    //           label: 'Back up & Sync',
-    //           component: EdisonAccount,
-    //           keywords: [],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // },
+    {
+      tabId: 'My Account',
+      displayName: 'My Account',
+      order: 2,
+      configGroup: [
+        {
+          groupItem: [
+            {
+              label: 'Back up & Sync',
+              component: EdisonAccount,
+              keywords: [],
+            },
+          ],
+        },
+      ],
+    },
     {
       tabId: 'Notifications',
       displayName: 'Notifications',

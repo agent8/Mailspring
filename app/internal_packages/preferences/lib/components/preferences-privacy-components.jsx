@@ -95,11 +95,11 @@ export class Privacy extends React.Component {
       this.setState({ deletingUserData: false });
     }
 
-    // // delete edison account
-    // const syncAccount = AccountStore.syncAccount();
-    // if (syncAccount) {
-    //   await EdisonAccountRest.deleteAccount(syncAccount.id);
-    // }
+    // delete edison account
+    const syncAccount = AccountStore.syncAccount();
+    if (syncAccount) {
+      await EdisonAccountRest.deleteAccount(syncAccount.id);
+    }
     AppEnv.expungeLocalAndReboot();
   };
 
