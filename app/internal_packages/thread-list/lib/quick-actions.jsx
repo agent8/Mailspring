@@ -13,7 +13,8 @@ import { FocusedPerspectiveStore } from 'mailspring-exports';
 const KEY = 'core.quickActions';
 
 export default class QuickActions extends React.Component {
-  static propTypes = { thread: PropTypes.object };
+  static propTypes = { thread: PropTypes.object, layout: PropTypes.string };
+  static displayName = 'QuickActions';
   constructor(props) {
     super(props);
     this.state = {
@@ -55,12 +56,26 @@ export default class QuickActions extends React.Component {
     }
     return null;
   }
+  renderActions(actions) {
+    if (actions.length) {
+      return <div className="thread-injected-quick-actions">{actions}</div>;
+    }
+  }
+  renderWideLayout(actions) {
+    return <div className="inner">{this.renderActions(actions)}</div>;
+  }
+  renderNarrowLayout(actions) {
+    return (
+      <div className="list-column-HoverActions">
+        <div className="inner quick-actions">{this.renderActions(actions)}</div>
+      </div>
+    );
+  }
   render() {
     const { quickActions } = this.state;
     const { thread } = this.props;
     const hasQuickActions = quickActions.enabled;
     const actions = [];
-
     if (hasQuickActions) {
       for (let i = 1; i <= 4; i++) {
         const action = this.getActionButton(i, thread);
@@ -69,8 +84,12 @@ export default class QuickActions extends React.Component {
         }
       }
     }
-    if (actions.length) {
-      return <div className="thread-injected-quick-actions">{actions}</div>;
+    if (actions.length > 0) {
+      if (this.props.layout === 'narrow') {
+        return this.renderNarrowLayout(actions);
+      } else {
+        return this.renderWideLayout(actions);
+      }
     }
     return null;
   }

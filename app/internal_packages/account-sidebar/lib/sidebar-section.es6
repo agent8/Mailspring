@@ -16,6 +16,13 @@ export const ADD_FOLDER_OBJECT = {
   get disabled() {
     return !!SidebarStore().getNewFolder();
   },
+  get displayName() {
+    if (SidebarStore().isAllLabelAccount()) {
+      return 'New Label...';
+    } else {
+      return 'New Folder...';
+    }
+  },
 };
 export const NEW_FOLDER_OBJECT = {
   id: 'newFolder',

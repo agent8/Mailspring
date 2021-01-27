@@ -11,6 +11,7 @@ class BadgeStore extends MailspringStore {
 
     this.listenTo(FocusedPerspectiveStore, this._updateCounts);
     this.listenTo(ThreadCountsStore, this._updateCounts);
+    this.listenTo(AccountStore, this._updateCounts);
 
     AppEnv.config.onDidChange('core.notifications.countBadge', ({ newValue }) => {
       if (newValue !== 'hide') {

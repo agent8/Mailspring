@@ -427,7 +427,7 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
-      this._handleResCode(data.code, account);
+      this._handleResCode(data.code, syncAccount);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       this._handleReqError(error, syncAccount.id);

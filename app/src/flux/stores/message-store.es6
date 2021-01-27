@@ -240,6 +240,7 @@ class MessageStore extends MailspringStore {
     this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
     // this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
     this.listenTo(Actions.pushToFetchAttachmentsQueue, this._onRequestAttachmentQueue);
+    this.listenTo(Actions.setMessagesReadUnread, this._markMessagesAsReadUnread);
   }
   _onRequestAttachmentQueue = (
     data = { accountId: '', missingItems: [], needProgress: false, source: '' }
@@ -638,6 +639,19 @@ class MessageStore extends MailspringStore {
   }
   markAsRead = source => {
     this._markAsRead(source);
+  };
+  _markMessagesAsReadUnread = ({ messageIds, unread, source }) => {
+    if (!this._thread) return;
+    const messages = this.getAllItems().filter(message => {
+      return message && messageIds.includes(message.id);
+    });
+    if (messages.length > 0) {
+      const tasks = TaskFactory.taskForSettingUnread({ messages, unread, source });
+      if (tasks.length > 0) {
+        this._lastMarkedAsReadThreadId = this._thread.id;
+        Actions.queueTasks(tasks);
+      }
+    }
   };
 
   _markAsRead(source = 'MessageStore:Thread Selected') {

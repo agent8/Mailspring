@@ -296,7 +296,11 @@ class TemplateStore extends MailspringStore {
       }
 
       let newBody = `${templateBody}${current.substr(insertion)}`;
-      const changeObj = { files: [] };
+      const changeObj = {
+        files: (draft.files || []).filter(file => {
+          return file && file.isInline && !pureBody.includes(file.contentId);
+        }),
+      };
       const { BCC, TO, CC, SUBJ, attachments } = template;
       // Add CC, Bcc to the draft, do not delete the original CC, BCC
       if (TO) {

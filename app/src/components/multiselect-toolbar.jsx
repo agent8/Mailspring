@@ -1,10 +1,10 @@
 import {
   Utils,
-  WorkspaceStore,
   ThreadCountsStore,
   CategoryStore,
   FocusedPerspectiveStore,
 } from 'mailspring-exports';
+import Draggable from 'react-draggable';
 import { InjectedComponentSet, RetinaImg } from 'mailspring-component-kit';
 import React, { Component } from 'react';
 import { CSSTransitionGroup } from 'react-transition-group';
@@ -15,6 +15,7 @@ import { remote } from 'electron';
 
 const { Menu, MenuItem } = remote;
 const stopRefreshingDelay = 30000;
+const POSITION_KEY = 'multiselect-toolbar-position';
 
 /*
  * MultiselectToolbar renders a toolbar inside a horizontal bar and displays
@@ -52,6 +53,7 @@ class MultiselectToolbar extends Component {
 
   constructor(props) {
     super(props);
+    const position = JSON.parse(localStorage.getItem(POSITION_KEY) || '{}');
     this.state = {
       selectAll: true,
       refreshingMessages: false,
@@ -59,6 +61,8 @@ class MultiselectToolbar extends Component {
       previousUpdatedTime: '',
       cachedSyncFolderData: null,
       lastUpdatedTime: FocusedPerspectiveStore.getLastUpdatedTime(),
+      x: position.x || 0,
+      y: position.y || 0,
     };
     this.refreshTimer = null;
     this.refreshDelay = 300;
@@ -96,6 +100,7 @@ class MultiselectToolbar extends Component {
       delete state.refreshingMessages;
     }
     this.setState(state);
+    this._reCalcPositionToVisivleArea({ x: this.state.x, y: this.state.y });
   };
 
   componentWillUnmount() {
@@ -118,7 +123,7 @@ class MultiselectToolbar extends Component {
   };
 
   selectionLabel = () => {
-    const { selectionCount, collection } = this.props;
+    const { selectionCount } = this.props;
     // if (selectionCount > 1) {
     //   return `${selectionCount} ${collection}s selected`;
     // } else if (selectionCount === 1) {
@@ -362,6 +367,65 @@ class MultiselectToolbar extends Component {
     }
   }
 
+  onDragMove = (e, position) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.setState({
+      x: position.x,
+      y: position.y,
+    });
+  };
+
+  onDragStop = (e, position) => {
+    this._reCalcPositionToVisivleArea(position, ({ x, y }) => {
+      this.setState({
+        x,
+        y,
+      });
+      localStorage.setItem(POSITION_KEY, JSON.stringify({ x, y }));
+    });
+  };
+
+  _reCalcPositionToVisivleArea = (position, callback) => {
+    if (!position.x || !position.y) {
+      return;
+    }
+    const dragNode = document.querySelector('.multiselect-toolbar-root.react-draggable');
+    if (!dragNode) {
+      return;
+    }
+    const { height, left, top, width } = dragNode.getBoundingClientRect();
+    let y = position.y;
+    let x = position.x;
+    const body = document.body;
+    let needAdjust = false;
+    if (top < 68) {
+      y = y + Math.abs(68 - top);
+      needAdjust = true;
+    }
+    if (top > body.clientHeight - height) {
+      y = y - Math.abs(top - body.clientHeight + height);
+      needAdjust = true;
+    }
+    if (left < 0) {
+      x = x + Math.abs(left);
+      needAdjust = true;
+    }
+    if (left > body.clientWidth - width) {
+      x = x - Math.abs(left - body.clientWidth + width);
+      needAdjust = true;
+    }
+    if (needAdjust) {
+      this.setState({
+        x,
+        y,
+      });
+    }
+    if (callback) {
+      callback({ x, y });
+    }
+  };
+
   renderToolbar() {
     const { toolbarElement, dataSource } = this.props;
     let totalCount = 0;
@@ -372,7 +436,6 @@ class MultiselectToolbar extends Component {
       return <span />;
     }
     const items = dataSource.itemsCurrentlyInViewMatching(() => true);
-    const checkStatus = this.checkStatus();
     const current = FocusedPerspectiveStore.current();
     let threadCounts = 0;
     // const lastUpdate = FocusedPerspectiveStore.getLastUpdatedTime();
@@ -399,21 +462,24 @@ class MultiselectToolbar extends Component {
       'no-threads': items.length === 0,
       'thread-list-toolbar': true,
     });
+    const { x, y } = this.state;
     return (
-      <div className={classes} key="absolute">
-        <div className="inner">
-          <div className="flex-row">
-            <div className="selection-label">{this.selectionLabel()}</div>
-            <button className="btn clickable btn-toggle-select-all" onClick={this._selectAll}>
-              Select All ({this._formatNumber(Math.min(totalCount, 200))})
-            </button>
-            <button className="btn clickable btn-clear-all" onClick={this._clearSelection}>
-              Cancel
-            </button>
+      <Draggable onStop={this.onDragStop} position={{ x: x, y: y }}>
+        <div className={classes} key="absolute">
+          <div className="inner">
+            <div className="flex-row">
+              <div className="selection-label">{this.selectionLabel()}</div>
+              <button className="btn clickable btn-toggle-select-all" onClick={this._selectAll}>
+                Select All ({this._formatNumber(Math.min(totalCount, 200))})
+              </button>
+              <button className="btn clickable btn-clear-all" onClick={this._clearSelection}>
+                Cancel
+              </button>
+            </div>
+            {toolbarElement}
           </div>
-          {toolbarElement}
         </div>
-      </div>
+      </Draggable>
     );
   }
   renderHiddenToolbar() {
