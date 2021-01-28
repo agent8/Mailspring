@@ -390,11 +390,22 @@ class MultiselectToolbar extends Component {
     if (!position.x || !position.y) {
       return;
     }
-    const dragNode = document.querySelector('.multiselect-toolbar-root.react-draggable');
+    let dragNode;
+    let rect;
+    let dragNodes = Array.from(
+      document.querySelectorAll('.multiselect-toolbar-root.react-draggable')
+    );
+    for (const el of dragNodes) {
+      rect = el.getBoundingClientRect();
+      if (rect && rect.height !== 0 && rect.width !== 0) {
+        dragNode = el;
+        break;
+      }
+    }
     if (!dragNode) {
       return;
     }
-    const { height, left, top, width } = dragNode.getBoundingClientRect();
+    const { height, left, top, width } = rect;
     let y = position.y;
     let x = position.x;
     const body = document.body;
