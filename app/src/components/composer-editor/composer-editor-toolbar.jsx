@@ -1,10 +1,22 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export default class ComposerEditorToolbar extends React.Component {
   static defaultProps = {
     readOnly: false,
     draftDefaultValues: {},
   };
+
+  static propTypes = {
+    value: PropTypes.object,
+    onChange: PropTypes.func,
+    onAddAttachments: PropTypes.func,
+    plugins: PropTypes.array,
+    readOnly: PropTypes.bool,
+    isCrowded: PropTypes.bool,
+    draftDefaultValues: PropTypes.object,
+  };
+
   constructor(props) {
     super(props);
     this.state = { visible: false };
@@ -17,15 +29,15 @@ export default class ComposerEditorToolbar extends React.Component {
       if (!this._mounted) return;
       this.setState({ visible: true }, () => {
         if (!this._mounted) return;
-        for (const el of document.querySelectorAll('.scroll-region-content')) {
-          el.addEventListener('scroll', this._onScroll);
-        }
+        // for (const el of document.querySelectorAll('.scroll-region-content')) {
+        //   el.addEventListener('scroll', this._onScroll);
+        // }
 
         const parentScrollRegion = this._el.closest('.scroll-region-content');
         if (parentScrollRegion) {
           this._topClip = parentScrollRegion.getBoundingClientRect().top;
           this._bottomClip = parentScrollRegion.getBoundingClientRect().bottom;
-          this._onScroll();
+          // this._onScroll();
           // window.addEventListener('resize', this._resetRectClip);
         } else {
           this._topClip = 0;
@@ -49,54 +61,54 @@ export default class ComposerEditorToolbar extends React.Component {
   componentDidUpdate() {
     if (this._el) {
       this._el.style.height = `${this._floatingEl.clientHeight}px`;
-      this._onScroll();
+      // this._onScroll();
     }
   }
 
   componentWillUnmount() {
     this._mounted = false;
-    for (const el of document.querySelectorAll('.scroll-region-content')) {
-      el.removeEventListener('scroll', this._onScroll);
-    }
+    // for (const el of document.querySelectorAll('.scroll-region-content')) {
+    //   el.removeEventListener('scroll', this._onScroll);
+    // }
     // window.removeEventListener('resize', this._resetRectClip);
   }
-  _onScroll = () => {
-    if (!this._el) return;
-    let { top, height } = this._el.getBoundingClientRect();
-    const max = this._el.parentElement.clientHeight - height;
-    if (top < this._topClip) {
-      this._floatingEl.style.position = 'absolute';
-      this._floatingEl.style.top = `${Math.min(max, this._topClip - top)}px`;
-    } else {
-      this._floatingEl.style.position = 'relative';
-      this._floatingEl.style.top = '0px';
-    }
+  // _onScroll = () => {
+  //   if (!this._el) return;
+  //   let { top, height } = this._el.getBoundingClientRect();
+  //   const max = this._el.parentElement.clientHeight - height;
+  //   if (top < this._topClip) {
+  //     this._floatingEl.style.position = 'absolute';
+  //     this._floatingEl.style.top = `${Math.min(max, this._topClip - top)}px`;
+  //   } else {
+  //     this._floatingEl.style.position = 'relative';
+  //     this._floatingEl.style.top = '0px';
+  //   }
 
-    // when send bar is out of screen, make it dock to bottom
-    // if (AppEnv.isMainWindow()) {
-    //   if (!this.sendbarForDock) {
-    //     this.sendbarForDock = document.querySelector('.sendbar-for-dock');
-    //     this.sendToolbar = document.querySelector('.composer-action-bar-wrap');
-    //     this.composer = this.sendbarForDock && this.sendbarForDock.parentElement;
-    //   }
-    //   if (this.sendbarForDock && this.sendToolbar && this.composer && this._bottomClip !== undefined) {
-    //     let { top, height, left } = this.sendToolbar.getBoundingClientRect();
-    //     let { top: composerTop } = this.composer.getBoundingClientRect();
-    //     if (top > this._bottomClip - height) {
-    //       const topForDock = this._bottomClip - composerTop - height;
-    //       if (topForDock < 100) {
-    //         this.sendbarForDock.style.display = 'none';
-    //       } else {
-    //         this.sendbarForDock.style.display = 'block';
-    //         this.sendbarForDock.style.left = left + 'px';
-    //         this.sendbarForDock.style.width = this.sendToolbar.offsetWidth + 'px';
-    //       }
-    //     } else {
-    //       this.sendbarForDock.style.display = 'none';
-    //     }
-    //   }
-    // }
-  };
+  //   // when send bar is out of screen, make it dock to bottom
+  //   // if (AppEnv.isMainWindow()) {
+  //   //   if (!this.sendbarForDock) {
+  //   //     this.sendbarForDock = document.querySelector('.sendbar-for-dock');
+  //   //     this.sendToolbar = document.querySelector('.composer-action-bar-wrap');
+  //   //     this.composer = this.sendbarForDock && this.sendbarForDock.parentElement;
+  //   //   }
+  //   //   if (this.sendbarForDock && this.sendToolbar && this.composer && this._bottomClip !== undefined) {
+  //   //     let { top, height, left } = this.sendToolbar.getBoundingClientRect();
+  //   //     let { top: composerTop } = this.composer.getBoundingClientRect();
+  //   //     if (top > this._bottomClip - height) {
+  //   //       const topForDock = this._bottomClip - composerTop - height;
+  //   //       if (topForDock < 100) {
+  //   //         this.sendbarForDock.style.display = 'none';
+  //   //       } else {
+  //   //         this.sendbarForDock.style.display = 'block';
+  //   //         this.sendbarForDock.style.left = left + 'px';
+  //   //         this.sendbarForDock.style.width = this.sendToolbar.offsetWidth + 'px';
+  //   //       }
+  //   //     } else {
+  //   //       this.sendbarForDock.style.display = 'none';
+  //   //     }
+  //   //   }
+  //   // }
+  // };
 
   render() {
     const {
