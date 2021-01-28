@@ -8,6 +8,7 @@ import {
   Version,
   DatabaseStore,
   Actions,
+  RESTful,
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import Sheet from './sheet';
@@ -15,6 +16,8 @@ import Toolbar from './sheet-toolbar';
 import Flexbox from './components/flexbox';
 import InjectedComponentSet from './components/injected-component-set';
 import InjectedComponent from './components/injected-component';
+
+const { EdisonAccountRest } = RESTful;
 
 export default class SheetContainer extends React.Component {
   static displayName = 'SheetContainer';
@@ -33,6 +36,7 @@ export default class SheetContainer extends React.Component {
         AppEnv.trackingEvent('App-Open');
       }, 6000);
       this._checkDBVersion();
+      EdisonAccountRest.checkEdisonAccount();
     }
   }
 
@@ -104,6 +108,7 @@ export default class SheetContainer extends React.Component {
   _onAppActive = () => {
     BlockedSendersStore.syncBlockedSenders();
     MuteNotificationStore.syncMuteNotifacations();
+    EdisonAccountRest.checkEdisonAccount();
   };
 
   toggleMaximize = e => {

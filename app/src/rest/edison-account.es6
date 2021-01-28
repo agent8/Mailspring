@@ -39,7 +39,7 @@ const aesEncode = data => {
   return encrypted;
 };
 
-const ResCodes = {
+export const EdisonAccountResCodes = {
   Deleted: 10002,
   EmailValid: 10003,
   AccountValid: 10004,
@@ -54,7 +54,7 @@ export default class EdisonAccount {
     if (code === 0) {
       return;
     }
-    if (code === ResCodes.Deleted) {
+    if (code === EdisonAccountResCodes.Deleted) {
       Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
     }
   }
@@ -432,6 +432,13 @@ export default class EdisonAccount {
     } catch (error) {
       this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
+    }
+  }
+
+  async checkEdisonAccount() {
+    const syncAccount = AccountStore.syncAccount();
+    if (syncAccount && syncAccount.id) {
+      await this.devicesList(syncAccount.id);
     }
   }
 }
