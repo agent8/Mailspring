@@ -177,11 +177,19 @@
   }
 }
 
+.layout-mode-popout {
+  .RichEditor-toolbar {
+    top: 0;
+  }
+}
+
 .RichEditor-toolbar {
   font-family: 'Helvetica', sans-serif;
   font-size: 14px;
   user-select: none;
-  position: relative;
+  position: sticky;
+  top: 40px;
+  z-index: 2;
   .color-picker {
     padding: 4px 5px;
     border: none;
@@ -1212,7 +1220,7 @@ button {
 .font-popover {
   width: 150px;
   height: 220px;
-  .option{
+  .option {
     font-size: 13px;
   }
 }
@@ -1249,7 +1257,7 @@ button {
     }
     .emoji-search-container {
       padding: @padding-base-vertical * 1.5 @padding-base-horizontal 0;
-      input[type='text'].search{
+      input[type='text'].search {
         background-color: @input-search-bg;
         text-indent: 8px;
         border: unset;
