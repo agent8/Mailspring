@@ -400,7 +400,9 @@ export default class SidebarSection {
         console.log(`no setDisplayOrder ${items[i].id}`);
       }
     }
-    CategoryStore.saveCategoryMetaDataChange(false);
+    if (!SidebarStore().isEditingMenu()) {
+      CategoryStore.saveCategoryMetaDataChange(false);
+    }
   };
 
   static forSiftCategories(accountsOrIds, items) {
