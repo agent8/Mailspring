@@ -404,8 +404,7 @@ export default class EdisonAccount {
     }
 
     const accounts = AccountStore.accounts();
-    const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
-    const postData = subAccounts.map(a => {
+    const postData = accounts.map(a => {
       const isExchange = AccountStore.isExchangeAccount(a);
       const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
