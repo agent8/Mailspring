@@ -1,12 +1,22 @@
 import axios from 'axios';
 import RESTResult from './result-data-format';
-import { AccountStore, Constant } from 'mailspring-exports';
+import { AccountStore, Constant, Actions } from 'mailspring-exports';
+import { EdisonAccountResCodes } from './edison-account';
 
 const { EdisonPlatformType, generateServerConfigKey } = Constant;
 
 export default class Preferences {
   constructor(host) {
     this.host = host;
+  }
+
+  _handleResCode(code, account) {
+    if (code === 0) {
+      return;
+    }
+    if (code === EdisonAccountResCodes.Deleted) {
+      Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
+    }
   }
 
   _handleReqError(error, aid) {
@@ -57,6 +67,7 @@ export default class Preferences {
           'Content-Type': 'application/json',
         },
       });
+      this._handleResCode(data.code, syncAccount);
       return data;
     } catch (error) {
       this._handleReqError(error, syncAccount.id);
