@@ -434,11 +434,4 @@ export default class EdisonAccount {
       return new RESTResult(false, error.message);
     }
   }
-
-  async checkEdisonAccount() {
-    const syncAccount = AccountStore.syncAccount();
-    if (syncAccount && syncAccount.id) {
-      await this.devicesList(syncAccount.id);
-    }
-  }
 }

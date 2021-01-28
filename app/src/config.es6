@@ -768,6 +768,10 @@ class Config {
         }
       }
     });
+    if (!configList.length) {
+      this._onSyncPreferences = false;
+      return;
+    }
     try {
       await this._syncPreferencesFromServer(configList);
       await this._singleSyncSignatureOfMobile();
