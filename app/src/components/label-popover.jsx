@@ -123,8 +123,8 @@ export default class LabelPopover extends Component {
           return;
         }
         this._onActionCallback({ newLabels: [finishedTask.created] });
-        Actions.closePopover();
       });
+      Actions.closePopover();
     }
   };
 
