@@ -18,17 +18,25 @@ class SizeToFitInput extends React.Component {
     this._setInputRef = ref => (this._inputRef = ref);
     this._measureRef = null;
     this._setMeasureRef = ref => (this._measureRef = ref);
+    this._mounted = false;
   }
 
   componentDidMount() {
+    this._mounted = true;
     this._sizeToFit();
   }
 
   componentDidUpdate() {
-    this._sizeToFit();
+    setTimeout(this._sizeToFit, 100);
+  }
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
-  _sizeToFit() {
+  _sizeToFit = () => {
+    if (!this._mounted) {
+      return;
+    }
     if (this.props.value.length === 0) {
       return;
     }
@@ -36,13 +44,12 @@ class SizeToFitInput extends React.Component {
     // resize the input field to fit.
     const inputEl = this._inputRef;
     const measureEl = this._measureRef;
-    measureEl.innerText = inputEl.value;
     measureEl.style.top = `${inputEl.offsetTop}px`;
     measureEl.style.left = `${inputEl.offsetLeft}px`;
     // The 10px comes from the 7.5px left padding and 2.5px more of
     // breathing room.
-    // inputEl.style.width = `${measureEl.offsetWidth + 10}px`;
-  }
+    inputEl.style.width = `${measureEl.offsetWidth + 10}px`;
+  };
 
   select() {
     if (this._inputRef) {
@@ -69,12 +76,14 @@ class SizeToFitInput extends React.Component {
 
   render() {
     return (
-      <span style={{ flexGrow: '1' }}>
+      <span className="size-to-fit-input-container">
         <span
           className="hidden-span"
           ref={this._setMeasureRef}
           style={{ visibility: 'hidden', position: 'absolute' }}
-        />
+        >
+          {this.props.value}
+        </span>
         <input
           ref={this._setInputRef}
           type="text"
