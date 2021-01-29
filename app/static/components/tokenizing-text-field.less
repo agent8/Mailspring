@@ -104,7 +104,7 @@
     display: inline-block;
     position: relative;
     color: @text-color;
-    padding: 0;
+    padding: 0 0.8em 0 0;
     border-radius: 1.9em * 0.5;
     max-width: 100%;
     line-height: 1.9em;
@@ -142,6 +142,7 @@
       padding-right: 1.5em;
       color: @red;
       margin-bottom: -1px;
+      margin-right: 0.8em;
       background: @off-white;
       .action {
         display: block;
@@ -206,6 +207,11 @@
     margin-left: 2.8em;
     padding-top: 9px;
     padding-bottom: 3px;
+    .size-to-fit-input-container{
+      &:last-of-type{
+        flex-grow: 1;
+      }
+    }
 
     &:hover {
       cursor: text;
