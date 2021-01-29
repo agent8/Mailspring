@@ -404,8 +404,7 @@ export default class EdisonAccount {
     }
 
     const accounts = AccountStore.accounts();
-    const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
-    const postData = subAccounts.map(a => {
+    const postData = accounts.map(a => {
       const isExchange = AccountStore.isExchangeAccount(a);
       const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
@@ -432,13 +431,6 @@ export default class EdisonAccount {
     } catch (error) {
       this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
-    }
-  }
-
-  async checkEdisonAccount() {
-    const syncAccount = AccountStore.syncAccount();
-    if (syncAccount && syncAccount.id) {
-      await this.devicesList(syncAccount.id);
     }
   }
 }
