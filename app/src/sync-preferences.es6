@@ -1,5 +1,3 @@
-import { keys } from 'underscore';
-
 const path = require('path');
 const fs = require('fs');
 const uuid = require('uuid');
@@ -16,6 +14,42 @@ const defaultSignaturesKey = 'defaultSignatures';
 function replaceStr(oldStr, searchStr, replaceStr) {
   const oldStrSplit = oldStr.split(searchStr);
   return oldStrSplit.join(replaceStr);
+}
+
+const ServerTemplageTagClassName = 'holderSpan';
+const LocalTemplageTagClassName = 'template-variable';
+
+function replaceTemplateTagToLocal(body) {
+  const box = document.createElement('div');
+  box.innerHTML = body;
+  const allSpan = box.querySelectorAll('span');
+  allSpan.forEach(span => {
+    const spanClassNames = (span.className || '').split(/\s/);
+    if (spanClassNames.includes(ServerTemplageTagClassName)) {
+      const newClassNames = spanClassNames.filter(
+        c => c !== LocalTemplageTagClassName && c !== ServerTemplageTagClassName
+      );
+      span.className = [...newClassNames, LocalTemplageTagClassName].join(' ');
+      span.setAttribute('data-tvar', span.innerText);
+    }
+  });
+  return box.innerHTML;
+}
+
+function replaceTemplateTagToServer(body) {
+  const box = document.createElement('div');
+  box.innerHTML = body;
+  const allSpan = box.querySelectorAll('span');
+  allSpan.forEach(span => {
+    const spanClassNames = (span.className || '').split(/\s/);
+    if (spanClassNames.includes(LocalTemplageTagClassName)) {
+      const newClassNames = spanClassNames.filter(
+        c => c !== LocalTemplageTagClassName && c !== ServerTemplageTagClassName
+      );
+      span.className = [...newClassNames, ServerTemplageTagClassName].join(' ');
+    }
+  });
+  return box.innerHTML;
 }
 
 async function downloadAndUnCompress(key) {
@@ -93,6 +127,7 @@ async function mkdirAndWriteJson(signatureOrTemplate, type) {
   if (type === 'template') {
     jsonObj['CC'] = signatureOrTemplate.CC;
     jsonObj['BCC'] = signatureOrTemplate.BCC;
+    jsonObj.body = replaceTemplateTagToServer(jsonObj.body);
   }
 
   const jsonFilePath = path.join(dirName, `${key}.json`);
@@ -200,6 +235,7 @@ async function generateNewListForSigOrTemp(list, type) {
       if (type === 'template') {
         newItem['CC'] = CC || '';
         newItem['BCC'] = BCC || '';
+        newItem.body = replaceTemplateTagToLocal(newItem.body);
       }
       newSignatureOrTemplateList.push(newItem);
       await cleanUpFiles(key);
