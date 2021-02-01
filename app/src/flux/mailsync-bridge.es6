@@ -8,6 +8,7 @@ import TaskQueue from './stores/task-queue';
 import IdentityStore from './stores/identity-store';
 import Account from './models/account';
 import Sift from './models/sift';
+import Matcher from './attributes/matcher';
 import AccountStore from './stores/account-store';
 import DatabaseStore from './stores/database-store';
 import OnlineStatusStore from './stores/online-status-store';
@@ -140,6 +141,7 @@ export default class MailsyncBridge {
     Actions.forceDatabaseTrigger.listen(this._onIncomingChangeRecord, this);
     Actions.dataShareOptions.listen(this.onDataShareOptionsChange, this);
     Actions.remoteSearch.listen(this._onRemoteSearch, this);
+    Actions.startDBVacuum.listen(this._onVacuum, this);
     Actions.fetchNativeRuntimeInfo.listen(this._onFetchNativeRuntimeInfo, this);
     ipcRenderer.on('mailsync-config', this._onMailsyncConfigUpdate);
     ipcRenderer.on('client-config', this._onClientConfigUpdate);
@@ -163,6 +165,7 @@ export default class MailsyncBridge {
     this._folderListTTL = 60000;
     this._cachedObservableTTL = 30000;
     this._analyzeDBTimer = null;
+    this._isVacuuming = false;
 
     if (AppEnv.isMainWindow()) {
       Actions.analyzeDB.listen(this.analyzeDataBase, this);
@@ -261,7 +264,29 @@ export default class MailsyncBridge {
     }
   }
 
-  forceKillClients(source = '') {
+  _onVacuum() {
+    if (this._isVacuuming) {
+      AppEnv.logDebug(`We are already vacuuming db`);
+      return;
+    }
+    this._isVacuuming = true;
+    setTimeout(() => {
+      AppEnv.logDebug('killing clients for vacuum');
+      this.forceKillClients('Vacuum', false);
+      this.killSift('Vacuum');
+      DatabaseStore.vaccum().then(() => {
+        AppEnv.logDebug('Vacuuming finished, starting clients');
+        this._noRelaunch = false;
+        this.ensureClients('Vacuum Finished');
+        this.startSift('Vacuum Finished');
+        Actions.endDBVacuum();
+        AppEnv.logDebug('Notifying UI Vacuum finished');
+        this._isVacuuming = false;
+      });
+    });
+  }
+
+  forceKillClients(source = '', resetDB = true) {
     if (!AppEnv.isMainWindow()) {
       return;
     }
@@ -275,9 +300,12 @@ export default class MailsyncBridge {
         }
       }
     }
-    ipcRenderer.send('command', 'application:reset-database', {
-      source: `forceKillClients:${source}`,
-    });
+    this._clients = {};
+    if (resetDB) {
+      ipcRenderer.send('command', 'application:reset-database', {
+        source: `forceKillClients:${source}`,
+      });
+    }
   }
 
   forceRelaunchClient(account) {
@@ -343,6 +371,10 @@ export default class MailsyncBridge {
   }
 
   async sendMessageToAccount(accountId, json, mailSyncMode = mailSyncModes.SYNC) {
+    if (this._isVacuuming) {
+      AppEnv.logDebug(`Message ${json} ignored, because is Vacuuming`);
+      return;
+    }
     let client;
     if (mailSyncMode !== mailSyncModes.SIFT) {
       client = this._clients[accountId];
@@ -375,7 +407,7 @@ export default class MailsyncBridge {
         });
       }
     } else if (!client && mailSyncMode === mailSyncModes.SIFT) {
-      await this._launchSift({ force: true });
+      await this._launchSift({ force: true, reason: 'Sending message to sift' });
       client = this._sift;
       if (client && !client.isSyncReadyToReceiveMessage()) {
         console.log(`sift is not ready, message not send to native yet.`);
@@ -809,7 +841,6 @@ export default class MailsyncBridge {
         continue;
       }
       let threadIndex = -1;
-      let threadCategories = [];
       if (tmpModels.length < 1) {
         return;
       }
@@ -817,9 +848,21 @@ export default class MailsyncBridge {
       const where = {};
       const construct = tmpModels[0].constructor;
       const primaryKey = tmpModels[0].constructor.pseudoPrimaryJsKey;
+      const mergeFields = {};
       tmpModels.forEach(m => {
         if (m.constructor.name !== modelClass) {
           return;
+        }
+        if (Array.isArray(m.constructor.mergeFields) && m.constructor.mergeFields.length > 0) {
+          if (!Array.isArray(mergeFields[m.constructor.name])) {
+            mergeFields[m.constructor.name] = [];
+          }
+          const fields = {};
+          m.constructor.mergeFields.forEach(key => {
+            fields[key] = m[key];
+          });
+          fields[primaryKey] = m[primaryKey];
+          mergeFields[m.constructor.name].push(fields);
         }
         if (!where[primaryKey]) {
           where[primaryKey] = [];
@@ -841,9 +884,9 @@ export default class MailsyncBridge {
             if (Array.isArray(categoryIds) && categoryIds.length > 0) {
               // console.log(`adding category constrain, ${categoryIds}`);
               Thread = Thread || require('./models/thread').default;
-              const threadPromise = DatabaseStore.findAll(Thread, where).where([
-                Thread.attributes.categories.containsAny(categoryIds),
-              ]);
+              const threadPromise = DatabaseStore.findAll(Thread, where).where(
+                new Matcher.JoinAnd([Thread.attributes.categories.containsAny(categoryIds)])
+              );
               promises.push(threadPromise);
               threadIndex = promises.length - 1;
             } else {
@@ -870,7 +913,7 @@ export default class MailsyncBridge {
           for (let m of parsedModels) {
             if (!m) {
               AppEnv.reportError(
-                new Error(`There is an null is the parsed change record models send to UI`)
+                new Error(`There is an null in the parsed change record models send to UI`)
               );
               continue;
             }
@@ -892,6 +935,19 @@ export default class MailsyncBridge {
             }
           }
           if (!duplicate) {
+            if (
+              Array.isArray(mergeFields[model.constructor.name]) &&
+              mergeFields[model.constructor.name].length > 0
+            ) {
+              for (let i = 0; i < mergeFields[model.constructor.name].length; i++) {
+                const mergeModel = mergeFields[model.constructor.name][i];
+                if (model[pseudoPrimaryKey] === mergeModel[pseudoPrimaryKey]) {
+                  console.log('new Folder: found model to merge', mergeModel);
+                  Object.assign(model, mergeModel);
+                  break;
+                }
+              }
+            }
             parsedModels.push(model);
           }
         });

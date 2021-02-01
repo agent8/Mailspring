@@ -8,6 +8,7 @@ import {
   Version,
   DatabaseStore,
   Actions,
+  RESTful,
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 import Sheet from './sheet';
@@ -15,6 +16,8 @@ import Toolbar from './sheet-toolbar';
 import Flexbox from './components/flexbox';
 import InjectedComponentSet from './components/injected-component-set';
 import InjectedComponent from './components/injected-component';
+
+const { EdisonAccountRest } = RESTful;
 
 export default class SheetContainer extends React.Component {
   static displayName = 'SheetContainer';
@@ -29,8 +32,11 @@ export default class SheetContainer extends React.Component {
     ipcRenderer.on('application-activate', this._onAppActive);
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
     if (AppEnv.isMainWindow()) {
-      AppEnv.trackingEvent('App-Open');
+      setTimeout(() => {
+        AppEnv.trackingEvent('App-Open');
+      }, 6000);
       this._checkDBVersion();
+      EdisonAccountRest.checkEdisonAccount();
     }
   }
 
@@ -102,6 +108,7 @@ export default class SheetContainer extends React.Component {
   _onAppActive = () => {
     BlockedSendersStore.syncBlockedSenders();
     MuteNotificationStore.syncMuteNotifacations();
+    EdisonAccountRest.checkEdisonAccount();
   };
 
   toggleMaximize = e => {
@@ -252,7 +259,7 @@ export default class SheetContainer extends React.Component {
               url="edisonmail://onboarding/assets/logo-light.png"
               mode={RetinaImg.Mode.ContentPreserve}
             />
-            <h1>Start Using Edison Mail for Mac</h1>
+            <h1>Start Using Edison Mail</h1>
             <p>Connect your account to continue using the app</p>
             <button className="btn login-button" onClick={this.openOnboarding}>
               Connect your account to unlock

@@ -78,3 +78,4 @@ app/package-lock.json
 /app/mailsync.dSYM
 
 .idea
+.scannerwork

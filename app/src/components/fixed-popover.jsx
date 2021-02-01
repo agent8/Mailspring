@@ -12,6 +12,7 @@ const Directions = {
   Down: 'down',
   Left: 'left',
   Right: 'right',
+  RightBottom: 'rightBottom',
 };
 
 const InverseDirections = {
@@ -19,6 +20,7 @@ const InverseDirections = {
   [Directions.Down]: Directions.Up,
   [Directions.Left]: Directions.Right,
   [Directions.Right]: Directions.Left,
+  [Directions.RightBottom]: Directions.Up,
 };
 
 const OFFSET_PADDING = 11.5;
@@ -34,6 +36,8 @@ class FixedPopover extends Component {
   static Directions = Directions;
 
   static propTypes = {
+    className: PropTypes.string,
+    popoverClassName: PropTypes.string,
     children: PropTypes.element,
     direction: PropTypes.string,
     fallbackDirection: PropTypes.string,
@@ -52,6 +56,8 @@ class FixedPopover extends Component {
     }),
     isFixedToWindow: PropTypes.bool,
     focusElementWithTabIndex: PropTypes.func,
+    disableAutoFocus: PropTypes.bool,
+    disablePointer: PropTypes.bool,
     onClose: PropTypes.func,
   };
 
@@ -64,6 +70,7 @@ class FixedPopover extends Component {
   constructor(props) {
     super(props);
     this.mounted = false;
+    this.animationEnded = false;
     this.updateCount = 0;
     this.fallback = this.props.fallbackDirection;
     this.state = {
@@ -71,12 +78,19 @@ class FixedPopover extends Component {
       direction: props.direction,
       visible: false,
     };
+    this.popoverContainerRef = null;
+    this.blurTrapRef = null;
+    this.popoverRef = null;
   }
 
   componentDidMount() {
     this.mounted = true;
-    findDOMNode(this.refs.popoverContainer).addEventListener('animationend', this.onAnimationEnd);
+    this.animationEnded = false;
+    if (this.popoverContainerRef) {
+      findDOMNode(this.popoverContainerRef).addEventListener('animationend', this.onAnimationEnd);
+    }
     window.addEventListener('resize', this.onWindowResize);
+    window.addEventListener('click', this.onWindowClicked);
     _.defer(this.onPopoverRendered);
   }
 
@@ -95,19 +109,40 @@ class FixedPopover extends Component {
 
   componentWillUnmount() {
     this.mounted = false;
-    findDOMNode(this.refs.popoverContainer).removeEventListener(
-      'animationend',
-      this.onAnimationEnd
-    );
+    if (this.popoverContainerRef) {
+      findDOMNode(this.popoverContainerRef).removeEventListener(
+        'animationend',
+        this.onAnimationEnd
+      );
+    }
     window.removeEventListener('resize', this.onWindowResize);
+    window.removeEventListener('click', this.onWindowClicked);
   }
 
   onAnimationEnd = () => {
-    _.defer(this.props.focusElementWithTabIndex);
+    this.animationEnded = true;
+    if (!this.props.closeOnAppBlur) {
+      return;
+    }
+    if (this.props.focusElementWithTabIndex && !this.props.disableAutoFocus) {
+      _.defer(this.props.focusElementWithTabIndex);
+    }
   };
 
   onWindowResize = () => {
     Actions.closePopover(this.props.onClose);
+  };
+  onWindowClicked = e => {
+    if (!this.mounted || !this.animationEnded) {
+      return;
+    }
+    const target = e.target;
+    if (!this.props.closeOnAppBlur) {
+      return;
+    }
+    if (!target || !findDOMNode(this).contains(target)) {
+      Actions.closePopover(this.props.onClose);
+    }
   };
 
   onPopoverRendered = () => {
@@ -155,7 +190,10 @@ class FixedPopover extends Component {
   };
 
   getCurrentRect = () => {
-    return findDOMNode(this.refs.popover).getBoundingClientRect();
+    if (this.popoverRef) {
+      return findDOMNode(this.popoverRef).getBoundingClientRect();
+    }
+    return null;
   };
 
   getWindowDimensions = () => {
@@ -228,7 +266,7 @@ class FixedPopover extends Component {
   };
 
   computePopoverStyles = ({ originRect, direction, offset, isFixedToWindow, position = {} }) => {
-    const { Up, Down, Left, Right } = Directions;
+    const { Up, Down, Left, Right, RightBottom } = Directions;
     let containerStyle = {};
     let popoverStyle = {};
     let pointerStyle = {};
@@ -316,6 +354,24 @@ class FixedPopover extends Component {
           top: originRect.height || 0, // Don't divide by 2 because of zoom
         };
         break;
+      case RightBottom:
+        containerStyle = {
+          // Place container on the top right corner of the rect
+          top: originRect.top || 0,
+          left: (originRect.left || 0) + (originRect.width || 0),
+          height: originRect.height || 0,
+        };
+        popoverStyle = {
+          // Center and adjust 10px for the pointer
+          transform: `translate(0, ${offset.y || 0}px) translate(10px, 0px)`,
+          top: (originRect.height || 0) / 2,
+        };
+        pointerStyle = {
+          // Center, already positioned at the right of container (adjust for rotation)
+          transform: 'translate(-12px, 0%) rotate(45deg)',
+          top: originRect.height || 0, // Don't divide by 2 because of zoom
+        };
+        break;
       default:
         break;
     }
@@ -347,16 +403,24 @@ class FixedPopover extends Component {
 
     return (
       <div>
-        <div ref="blurTrap" className="fixed-popover-blur-trap" style={blurTrapStyle} />
         <div
-          ref="popoverContainer"
+          ref={ref => (this.blurTrapRef = ref)}
+          className="fixed-popover-blur-trap"
+          style={blurTrapStyle}
+        />
+        <div
+          ref={ref => (this.popoverContainerRef = ref)}
           style={containerStyle}
           className={`fixed-popover-container${animateClass} ${this.props.className}`}
           onKeyDown={this.onKeyDown}
           onBlur={this.onBlur}
           tabIndex={-1}
         >
-          <div ref="popover" className={`fixed-popover`} style={popoverStyle}>
+          <div
+            ref={ref => (this.popoverRef = ref)}
+            className={`fixed-popover ${this.props.popoverClassName}`}
+            style={popoverStyle}
+          >
             {children}
           </div>
           {!disablePointer && <div className={`fixed-popover-pointer`} style={pointerStyle} />}

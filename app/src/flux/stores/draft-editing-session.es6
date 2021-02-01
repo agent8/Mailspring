@@ -15,7 +15,6 @@ import { Composer as ComposerExtensionRegistry } from '../../registries/extensio
 import QuotedHTMLTransformer from '../../services/quoted-html-transformer';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import uuid from 'uuid';
-import _ from 'underscore';
 import RestoreDraftTask from '../tasks/restore-draft-task';
 import { WindowLevel } from '../../constant';
 
@@ -62,7 +61,10 @@ class DraftChangeSet extends EventEmitter {
 
   add(changes, { skipSaving = false } = {}) {
     if (!skipSaving) {
-      changes.pristine = false;
+      if (!changes.files || changes.files.every(f => !f.isSigOrTempAttachments)) {
+        changes.pristine = false;
+      }
+
       changes.needUpload = true;
       // update the per-attribute flags that track our dirty state
       for (const key of Object.keys(changes)) this._lastModifiedTimes[key] = Date.now();
@@ -146,7 +148,7 @@ function hotwireDraftBodyState(draft) {
     set: function(inHTML) {
       _bodyHTMLCache = inHTML;
       try {
-        draft.bodyEditorState = convertFromHTML(inHTML);
+        draft.bodyEditorState = convertFromHTML(inHTML, draft.defaultValues);
       } catch (e) {
         AppEnv.reportError(e, { errorData: { htm: inHTML, id: (draft || {}).id } });
       }
@@ -785,15 +787,18 @@ export default class DraftEditingSession extends MailspringStore {
   get needsSyncToMain() {
     return !AppEnv.isMainWindow() && this._needsSyncWithMain;
   }
-  updateAttachments(files) {
+  updateAttachments(files, { commit = true } = {}) {
     if (this._draft && Array.isArray(files)) {
       this._draft.files = files;
       this.needUpload = true;
-      this._draft.pristine = false;
+      if (files.every(f => !f.isSigOrTempAttachments)) {
+        this._draft.pristine = false;
+      }
       this.needsSyncToMain = true;
+      console.log(`commit ${commit}`);
       if (!AppEnv.isMainWindow()) {
-        this.syncDraftDataToMainNow({ forceCommit: true });
-      } else {
+        this.syncDraftDataToMainNow({ forceCommit: commit });
+      } else if (commit) {
         this.changeSetCommit(`attachments change`);
       }
     } else {

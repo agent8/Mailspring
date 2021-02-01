@@ -111,11 +111,16 @@ export default class TokenizingContenteditable extends Component {
 
   onContextMenu = event => {
     const sel = document.getSelection();
-    AppEnv.windowEventHandler.openSpellingMenuFor(sel.toString(), !sel.isCollapsed, {
-      onCorrect: correction => {
-        document.execCommand('insertText', false, correction);
+    AppEnv.windowEventHandler.openSpellingMenuFor(
+      sel.toString(),
+      !sel.isCollapsed,
+      {
+        onCorrect: correction => {
+          document.execCommand('insertText', false, correction);
+        },
       },
-    });
+      event
+    );
   };
 
   render() {

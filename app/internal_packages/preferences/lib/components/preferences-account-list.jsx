@@ -1,15 +1,19 @@
 import React, { Component } from 'react';
 import { RetinaImg, Flexbox, EditableList } from 'mailspring-component-kit';
-import { DraftStore, AccountStore } from 'mailspring-exports';
+import { Actions, DraftStore, AccountStore } from 'mailspring-exports';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
+import { remote } from 'electron';
+import fs from 'fs';
+import path from 'path';
+const { Menu, MenuItem } = remote;
 
 class PreferencesAccountList extends Component {
   static propTypes = {
     accounts: PropTypes.array,
     selected: PropTypes.object,
     onAddAccount: PropTypes.func.isRequired,
-    onReorderAccount: PropTypes.func.isRequired,
+    onReorderAccount: PropTypes.func,
     onSelectAccount: PropTypes.func.isRequired,
     onRemoveAccount: PropTypes.func.isRequired,
   };
@@ -29,6 +33,44 @@ class PreferencesAccountList extends Component {
     return null;
   }
 
+  _showPopupMenu(account) {
+    let menu = new Menu();
+    let menuItem;
+    menuItem = new MenuItem({
+      label: 'Change profile image',
+      click: () => {
+        AppEnv.showOpenDialog(
+          {
+            title: 'Choose an image',
+            buttonLabel: 'Choose',
+            properties: ['openFile'],
+            filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }],
+          },
+          paths => {
+            if (paths && paths.length > 0) {
+              let fromPath = paths[0];
+              const destPath = path.join(
+                AppEnv.getConfigDirPath(),
+                'logo_cache',
+                `${account.emailAddress}_${Date.now()}${path.extname(fromPath)}`
+              );
+              try {
+                fs.copyFileSync(fromPath, destPath);
+                account.picture = destPath;
+              } catch (err) {
+                console.error(err);
+                account.picture = fromPath;
+              }
+              Actions.updateAccount(account.id, account);
+            }
+          }
+        );
+      },
+    });
+    menu.append(menuItem);
+    menu.popup();
+  }
+
   _renderAccount = account => {
     const label = account.label;
     // const accountSub = `${account.name || 'No name provided'} <${account.emailAddress}>`;
@@ -36,7 +78,11 @@ class PreferencesAccountList extends Component {
     const syncError = account.hasSyncStateError();
 
     return (
-      <div className={classnames({ account: true, 'sync-error': syncError })} key={account.id}>
+      <div
+        onContextMenu={() => this._showPopupMenu(account)}
+        className={classnames({ account: true, 'sync-error': syncError })}
+        key={account.id}
+      >
         <Flexbox direction="row" style={{ alignItems: 'middle' }}>
           <div className="account-picture">
             <RetinaImg
@@ -103,7 +149,6 @@ class PreferencesAccountList extends Component {
         items={this.props.accounts}
         itemContent={this._renderAccount}
         selected={this.props.selected}
-        onReorderItem={this.props.onReorderAccount}
         onCreateItem={this.props.onAddAccount}
         onSelectItem={this.props.onSelectAccount}
         onDeleteItem={this.props.onRemoveAccount}

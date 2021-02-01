@@ -348,7 +348,7 @@ const DateUtils = {
     const now = moment();
     const diff = now.diff(datetime, 'days', true);
     const isSameDay = now.isSame(datetime, 'days');
-    const isYesterday = now.add(-1, 'days').isSame(datetime, 'days');
+    // const isYesterday = now.add(-1, 'days').isSame(datetime, 'days');
     const isSameYear = now.isSame(datetime, 'years');
     let format = null;
 
@@ -363,7 +363,9 @@ const DateUtils = {
       format = getDateFormatFromConfig();
     }
 
-    return moment(datetime).format(format);
+    return moment(datetime)
+      .tz(tz)
+      .format(format);
   },
 
   /**
@@ -401,7 +403,9 @@ const DateUtils = {
       format = getDateFormatFromConfig();
     }
 
-    return moment(datetime).format(format);
+    return moment(datetime)
+      .tz(tz)
+      .format(format);
   },
 
   /**
@@ -414,7 +418,9 @@ const DateUtils = {
    */
   shortTimeStringForMessage(datetime) {
     let format = this._getFormat(datetime);
-    return moment(datetime).format(format);
+    return moment(datetime)
+      .tz(tz)
+      .format(format);
   },
 
   _getFormat(datetime, full = false) {
@@ -456,7 +462,9 @@ const DateUtils = {
     let format = this._getFormat(datetime, true);
     format += ', ' + DateUtils.getTimeFormat({ seconds: false, timeZone: false });
 
-    return moment(datetime).format(format);
+    return moment(datetime)
+      .tz(tz)
+      .format(format);
   },
 
   /**

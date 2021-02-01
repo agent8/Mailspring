@@ -49,6 +49,8 @@ const emailActionLabels = [
   actionOption('spam', 'Mark as Spam'),
   actionOption('print', 'Print Thread/Message'),
 ];
+const quickActionValues = [...actionValues, 'spam'];
+const quickActionLabels = [...actionLabels, actionOption('spam', 'Mark as Spam')];
 
 export default {
   core: {
@@ -286,6 +288,11 @@ export default {
       composing: {
         type: 'object',
         properties: {
+          dropFileAsNormalAttachment: {
+            type: 'boolean',
+            default: false,
+            title: 'When dragging files into the composer, always add as an attachment',
+          },
           showCcAndBcc: {
             type: 'string',
             default: 'cc',
@@ -449,32 +456,32 @@ export default {
             type: 'string',
             default: 'archive',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 1',
           },
           quickAction2: {
             type: 'string',
             default: 'flag',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 2',
           },
           quickAction3: {
             type: 'string',
             default: 'trash',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 3',
           },
           quickAction4: {
             type: 'string',
             default: 'read',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 4',
           },
         },
@@ -661,6 +668,15 @@ export default {
             enum: ['hide', 'unread', 'total'],
             enumLabels: ['Hide Badge', 'Show Unread Count', 'Show Total Count'],
             title: 'Dock badge count',
+            notifyNative: true,
+          },
+          countSystemTray: {
+            type: 'string',
+            default: 'hide',
+            syncToServer: true,
+            enum: ['hide', 'unread'],
+            enumLabels: ['Hide Badge', 'Show Unread Count'],
+            title: 'System tray badge count',
             notifyNative: true,
           },
         },

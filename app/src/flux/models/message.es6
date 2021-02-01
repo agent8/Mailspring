@@ -399,6 +399,7 @@ export default class Message extends ModelWithMetadata {
       joinTableName: 'SiftData',
       joinTableColumn: 'category',
       joinOnWhere: { state: 0 },
+      ignoreSubSelect: true,
       itemClass: Sift,
     }),
     deleted: Attributes.Boolean({
@@ -813,6 +814,9 @@ export default class Message extends ModelWithMetadata {
   }
   isInInboxFocused() {
     if (!this.isInInbox()) {
+      return false;
+    }
+    if (this.fromContact() && this.fromContact().isMe()) {
       return false;
     }
     return (

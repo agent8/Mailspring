@@ -5,7 +5,7 @@ import Utils from './utils';
 import _ from 'underscore';
 
 const { Matcher, AttributeJoinedData, AttributeCollection } = Attributes;
-
+const isMessageView = AppEnv.isDisableThreading();
 const isCrossDBAttr = attr => {
   return attr && typeof attr.crossDBKey === 'function';
 };
@@ -284,9 +284,9 @@ export default class ModelQuery {
     return this;
   }
 
-  structuredSearch(query, dbKey = 'main') {
+  structuredSearch({ query, accountIds = [] } = {}, dbKey = 'main') {
     this._assertNotFinalized(dbKey);
-    this._matchers[dbKey].push(new Matcher.StructuredSearch(query));
+    this._matchers[dbKey].push(new Matcher.StructuredSearch(query, accountIds));
     return this;
   }
 
@@ -612,9 +612,11 @@ export default class ModelQuery {
   sql(dbKey = 'main') {
     this.finalize(dbKey);
     const allMatchers = this.matchersFlattened(dbKey);
-    const whereSql = this._whereClause(dbKey);
+    const useSubSelect = this._hasSubSelectForJoin(allMatchers);
+    const hasSearchSubSelect = this._hasSearchSubSelect(allMatchers);
+    let order = this._count[dbKey] ? '' : this._orderClause(dbKey, useSubSelect, false);
+    let whereSql = this._whereClause(dbKey);
     const selectSql = this._getSelect(allMatchers, dbKey);
-    const order = this._count[dbKey] ? '' : this._orderClause(dbKey);
 
     let limit = '';
     if (!this._range[dbKey]) {
@@ -633,14 +635,24 @@ export default class ModelQuery {
 
     const distinct = this._distinct[dbKey] ? ' DISTINCT' : '';
 
-    const joins = allMatchers.filter(matcher => matcher.attr instanceof AttributeCollection);
-    //
-    if (joins.length === 1 && this._canSubselectForJoin(joins[0], allMatchers, dbKey)) {
-      // console.warn(`They used to use subselect sql`);
-      //   const subSql = this._subselectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
-      //   return `SELECT ${distinct} ${selectSql} FROM \`${
-      //     this._klass[dbKey].name
-      //     }\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
+    // const joins = allMatchers.filter(matcher => matcher.attr instanceof AttributeCollection);
+    // //
+    // if (joins.length === 1 && this._canSubSelectForJoin(joins[0], allMatchers, dbKey)) {
+    //   console.warn(`They used to use subselect sql`);
+    //   const subSql = this._subSelectSQL(joins[0], this._matchers[dbKey], order, limit, dbKey);
+    //   return `SELECT ${distinct} ${selectSql} FROM \`${this._klass[dbKey].name}\` WHERE \`${this._pseudoPrimaryKey[dbKey].modelKey}\` IN (${subSql}) ${order}`;
+    // }
+    if (hasSearchSubSelect) {
+      whereSql = whereSql.replace(
+        /SEARCH_MATCH_SQL/g,
+        `${this._orderClause('main', false, true)} ${limit}`
+      );
+    } else if (useSubSelect) {
+      const subSelectMatchers = this._subSelectMatchers(allMatchers);
+      const subSQL = this._subSelectSQL(subSelectMatchers, order, limit, dbKey);
+      whereSql = whereSql.replace('SUB_SELECT_SQL', subSQL);
+      order = '';
+      limit = '';
     }
 
     return `SELECT ${distinct} ${selectSql} FROM \`${this._klass[
@@ -656,7 +668,16 @@ export default class ModelQuery {
   //
   // Note: This is currently only intended for use in the thread list
   //
-  _canSubselectForJoin(matcher, allMatchers, dbKey = 'main') {
+  _hasSubSelectForJoin(matchers) {
+    return !!matchers.find(matcher => matcher.partOfSubSelectJoin) && !AppEnv.isDisableThreading();
+  }
+  _hasSearchSubSelect(matchers) {
+    return !!matchers.find(matcher => matcher.isSearchQurey);
+  }
+  _subSelectMatchers(matchers = 'main') {
+    return matchers.filter(matcher => matcher.partOfSubSelectJoin);
+  }
+  _canSubSelectForJoin(matcher, allMatchers, dbKey = 'main') {
     const joinAttribute = matcher.attribute();
 
     if (!Number.isInteger(this._range[dbKey].limit)) {
@@ -682,27 +703,30 @@ export default class ModelQuery {
     return allMatchersOnJoinTable && allOrdersOnJoinTable;
   }
 
-  _subselectSQL(returningMatcher, subselectMatchers, order, limit, dbKey = 'main') {
-    const returningAttribute = returningMatcher.attribute();
-
-    const table = returningAttribute.tableNameForJoinAgainst(this._klass[dbKey]);
-    const wheres = subselectMatchers.map(c => c.whereSQL(this._klass[dbKey])).filter(c => !!c);
-
-    let innerSQL = `SELECT \`pid\` FROM \`${table}\` WHERE ${wheres.join(
-      ' AND '
-    )} ${order} ${limit}`;
-    innerSQL = innerSQL.replace(
-      new RegExp(`\`${this._klass[dbKey].getTableName()}\``, 'g'),
-      `\`${table}\``
-    );
-    innerSQL = innerSQL.replace(
-      new RegExp(`\`${returningMatcher.joinTableRef()}\``, 'g'),
-      `\`${table}\``
-    );
+  _subSelectSQL(subSelectMatchers, order = '', limit = '', dbKey = 'main') {
+    const table = subSelectMatchers.find(matcher => matcher.attr.joinTableName).attr.joinTableName;
+    const wheres = this._subSelectWhereClause(dbKey);
+    console.log(typeof wheres.join(' AND '));
+    let innerSQL = `SELECT * FROM \`${table}\` WHERE ${wheres
+      .join(' AND ')
+      .replace(/undefined/g, table)} ${order} ${limit}`;
     return innerSQL;
   }
 
-  _whereClause(dbKey = 'main') {
+  _subSelectWhereClause(dbKey = 'main') {
+    const ret = [];
+    this._matchers[dbKey].forEach(c => {
+      if (c.partOfSubSelectJoin) {
+        const where = c.whereSQL(this._klass[dbKey], true);
+        if (where) {
+          ret.push(where);
+        }
+      }
+    });
+    return ret;
+  }
+
+  _whereClause(dbKey = 'main', useSubSelect = false) {
     let joins = [];
     this._matchers[dbKey].forEach(c => {
       const join = c.joinSQL(this._klass[dbKey]);
@@ -722,7 +746,7 @@ export default class ModelQuery {
     });
     const wheres = [];
     this._matchers[dbKey].forEach(c => {
-      const where = c.whereSQL(this._klass[dbKey]);
+      const where = c.whereSQL(this._klass[dbKey], useSubSelect);
       if (where) {
         wheres.push(where);
       }
@@ -753,7 +777,7 @@ export default class ModelQuery {
     return sql;
   }
 
-  _orderClause(dbKey = 'main') {
+  _orderClause(dbKey = 'main', useSubSelect = false, useSearchSelect = false) {
     if (this._orders[dbKey].length === 0) {
       return '';
     }
@@ -763,8 +787,22 @@ export default class ModelQuery {
     const getJoinTableRef = attr => {
       return this._getMuidByJoinTableName(allMatchers, attr.modelTable);
     };
+    const getSubSelectTableName = attr => {
+      return attr.joinTableName || attr.modelTable;
+    };
+    const getSearchTableName = () => {
+      return isMessageView ? 'MessageSearch' : 'ThreadSearch';
+    };
+    let getJoinTable;
+    if (useSubSelect) {
+      getJoinTable = getSubSelectTableName;
+    } else if (useSearchSelect) {
+      getJoinTable = getSearchTableName;
+    } else {
+      getJoinTable = getJoinTableRef;
+    }
     this._orders[dbKey].forEach((sort, index) => {
-      sql += sort.orderBySQL(this._klass[dbKey], getJoinTableRef);
+      sql += sort.orderBySQL(this._klass[dbKey], getJoinTable);
       if (index !== this._orders[dbKey].length - 1 && this._orders[dbKey].length > 1) {
         sql += ' , ';
       }

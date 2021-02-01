@@ -1,6 +1,6 @@
-const React = require('react');
 import { ipcRenderer } from 'electron';
-const { Utils, AccountStore, ReactDOM } = require('mailspring-exports');
+const React = require('react');
+const { Utils, AccountStore } = require('mailspring-exports');
 const {
   OutlineView,
   ScrollRegion,
@@ -82,6 +82,7 @@ class AccountSidebar extends React.Component {
   _getStateFromStores = () => {
     return {
       accounts: AccountStore.accounts(),
+      isEditingMenu: SidebarStore.isEditingMenu(),
       sidebarAccountIds: SidebarStore.sidebarAccountIds(),
       userSections: SidebarStore.userSections(),
       standardSection: SidebarStore.standardSection(),
@@ -132,7 +133,7 @@ class AccountSidebar extends React.Component {
   }
 
   render() {
-    const { accounts, sidebarAccountIds, userSections, standardSection } = this.state;
+    const { standardSection } = this.state;
 
     return (
       <Flexbox direction="column" style={{ order: 1, flexShrink: 1, flex: 1 }}>
@@ -153,8 +154,7 @@ class AccountSidebar extends React.Component {
           >
             {/*<AccountSwitcher accounts={accounts} sidebarAccountIds={sidebarAccountIds} />*/}
             <div className="account-sidebar-sections">
-              <OutlineView {...standardSection} />
-              {/*{this._renderUserSections(userSections)}*/}
+              <OutlineView {...standardSection} isEditingMenu={this.state.isEditingMenu} />
             </div>
           </ScrollRegion>
         </KeyCommandsRegion>

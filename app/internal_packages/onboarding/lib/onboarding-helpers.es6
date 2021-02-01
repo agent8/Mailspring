@@ -633,7 +633,9 @@ export async function buildJiraAccountFromAuthResponse(code) {
   const resources = await resourcesResp.json();
   if (!resourcesResp.ok) {
     throw new Error(
-      `Jira resources request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(me)}`
+      `Jira resources request returned ${resp.status} ${resp.statusText}: ${JSON.stringify(
+        resources
+      )}`
     );
   }
   let resource = {};
@@ -758,7 +760,8 @@ export function buildOutlookAuthURL() {
     `&scope=${encodeURIComponent(OUTLOOK_SCOPES.join(' '))}` +
     `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
-    `&response_type=code`
+    `&response_type=code` +
+    `&login_hint=email`
   );
 }
 

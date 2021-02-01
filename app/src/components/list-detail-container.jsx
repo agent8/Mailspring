@@ -1,13 +1,20 @@
 const React = require('react');
 const _ = require('underscore');
 const ResizableRegion = require('./resizable-region');
+const PropTypes = require('prop-types');
 const WorkspaceStore = require('../flux/stores/workspace-store');
 const MODE_SPLIT_KEY = 'core.workspace.mode-split';
-
 class ListDetailContainer extends React.Component {
   static displayName = 'ListDetailContainer';
 
   static containerStyles = {};
+
+  static propTypes = {
+    detailComponent: PropTypes.func,
+    listComponent: PropTypes.func,
+    isOutbox: PropTypes.bool,
+  };
+
   constructor(props) {
     super(props);
     this.widthKey = `${ListDetailContainer.displayName}_width`;
@@ -53,6 +60,7 @@ class ListDetailContainer extends React.Component {
       height: '100%',
       display: 'flex',
       flexDirection: 'row',
+      overflow: 'hidden',
     };
     const detailStyles = {};
     const splitMode = AppEnv.config.get('core.workspace.mode-split');
@@ -78,11 +86,12 @@ class ListDetailContainer extends React.Component {
     return (
       <div style={containersStyles}>
         <ResizableRegion
-          style={{ overflow: 'hidden', ...listStyles }}
+          style={{ overflow: 'hidden' }}
           handle={handle}
           className={listClassName}
           onResize={w => this._onColumnResize(sizeKey, w)}
           {...listOtherProps}
+          {...listStyles}
         >
           <div style={{ height: '100%' }}>
             <List forceWidthMode={forceWidthMode} />

@@ -1,5 +1,4 @@
 import Reflux from 'reflux';
-import { Action } from 'rxjs/internal/scheduler/Action';
 
 const ActionScopeWindow = 'window';
 const ActionScopeGlobal = 'global';
@@ -244,11 +243,13 @@ class Actions {
   */
   static ensureCategoryIsFocused = ActionScopeWindow;
 
+  static setMessagesReadUnread = ActionScopeWindow;
   /*
   Public: If the message with the provided id is currently beign displayed in the
   thread view, this action toggles whether it's full content or snippet is shown.
 
   *Scope: Window*
+
 
   ```
   message = <Message>
@@ -512,6 +513,9 @@ class Actions {
   // Account Sidebar
   static setCollapsedSidebarItem = ActionScopeWindow;
   static setMoreOrLessCollapsed = ActionScopeWindow;
+  static setEditingMenu = ActionScopeWindow;
+  static cancelCategoryMeteDataChange = ActionScopeWindow;
+  static saveCategoryMetaDataChange = ActionScopeWindow;
 
   // File Actions
   // Some file actions only need to be processed in their current window
@@ -525,7 +529,9 @@ class Actions {
   static draftInlineAttachmentRemoved = ActionScopeWindow;
   static removeAllNoReferenceInLines = ActionScopeWindow;
   static broadcastDraftAttachmentState = ActionScopeGlobal;
+  static bulkUpdateDraftFiles = ActionScopeWindow;
 
+  static updateCategoryStoreLabelBgColor = ActionScopeMainWindow;
   static syncFolders = ActionScopeMainWindow;
   static syncFolderList = ActionScopeMainWindow;
   static syncSiftFolder = ActionScopeMainWindow;
@@ -584,6 +590,7 @@ class Actions {
   static startReprocessingMailRules = ActionScopeWindow;
   static stopReprocessingMailRules = ActionScopeWindow;
 
+  static openContextMenu = ActionScopeWindow;
   static openPopover = ActionScopeWindow;
   static closePopover = ActionScopeWindow;
 
@@ -632,6 +639,9 @@ class Actions {
 
   static hideEmptyMessageList = ActionScopeWindow;
 
+  static askVacuum = ActionScopeWindow;
+  static startDBVacuum = ActionScopeWindow;
+  static endDBVacuum = ActionScopeWindow;
   static forceKillAllClients = ActionScopeWindow;
 
   static forceRelaunchClients = ActionScopeWindow;
@@ -639,6 +649,8 @@ class Actions {
   static forceDatabaseTrigger = ActionScopeWindow;
 
   static dataShareOptions = ActionScopeMainWindow;
+  static dataShareOptionsSuccess = ActionScopeMainWindow;
+  static dataShareOptionsFailed = ActionScopeMainWindow;
   static expungeUserData = ActionScopeMainWindow;
   static exportUserData = ActionScopeMainWindow;
 
@@ -647,6 +659,7 @@ class Actions {
   static deletedEdisonAccountOnOtherDevice = ActionScopeMainWindow;
 
   static toggleJiraPlugin = ActionScopeWindow;
+  static iframeClicked = ActionScopeWindow;
 }
 
 // Read the actions we declared on the dummy Actions object above

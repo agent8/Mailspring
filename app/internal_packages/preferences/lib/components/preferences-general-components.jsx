@@ -6,17 +6,20 @@ import {
   SendActionsStore,
   DefaultClientHelper,
   SystemStartService,
+  Actions,
 } from 'mailspring-exports';
 import { ListensToFluxStore, Menu, ButtonDropdown } from 'mailspring-component-kit';
 import ConfigSchemaItem from './config-schema-item';
-import rimraf from 'rimraf';
-import { Actions } from 'mailspring-exports';
+import { UpdateMailSyncSettings } from '../preferences-utils';
 import _ from 'underscore';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, shell } from 'electron';
 
 export class DefaultMailClientItem extends React.Component {
-  constructor() {
-    super();
+  static propTypes = {
+    label: PropTypes.string,
+  };
+  constructor(props) {
+    super(props);
     this.state = { defaultClient: false };
     this._helper = new DefaultClientHelper();
   }
@@ -30,7 +33,7 @@ export class DefaultMailClientItem extends React.Component {
         }
       });
     } else {
-      this.state = { defaultClient: 'unknown' };
+      this.setState({ defaultClient: 'unknown' });
     }
   }
 
@@ -95,8 +98,11 @@ export class DefaultMailClientItem extends React.Component {
 }
 
 export class LaunchSystemStartItem extends React.Component {
-  constructor() {
-    super();
+  static propTypes = {
+    label: PropTypes.string,
+  };
+  constructor(props) {
+    super(props);
     this.state = {
       available: false,
       launchOnStart: false,
@@ -145,6 +151,60 @@ export class LaunchSystemStartItem extends React.Component {
           onChange={this._toggleLaunchOnStart}
         />
         <label htmlFor="launch-on-start">{this.props.label}</label>
+      </div>
+    );
+  }
+}
+
+export class EnableFocusInboxItem extends React.Component {
+  static propTypes = {
+    label: PropTypes.string,
+  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      enabled: AppEnv.config.get('core.workspace.enableFocusedInbox'),
+    };
+    this._mounted = false;
+  }
+
+  componentDidMount() {
+    this._mounted = true;
+  }
+
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+
+  _toggleEnableFocusInbox = event => {
+    const accounts = AccountStore.accounts();
+    const newSettings = UpdateMailSyncSettings({
+      value: !this.state.enabled,
+      key: 'core_workspace_enableFocusedInbox',
+      accountIds: accounts.map(account => account.id || account.pid),
+    });
+    if (newSettings) {
+      accounts.forEach(account => {
+        const accountId = account.id || account.pid;
+        const newAccount = Object.assign(account.clone(), { mailsync: newSettings[accountId] });
+        console.log(newAccount);
+        Actions.updateAccount(accountId, newAccount);
+      });
+    }
+    AppEnv.config.set('core.workspace.enableFocusedInbox', !this.state.enabled);
+    this.setState({ enabled: !this.state.enabled });
+  };
+
+  render() {
+    return (
+      <div className="item">
+        <input
+          type="checkbox"
+          id="enabled-focused-inobx"
+          checked={this.state.enabled}
+          onChange={this._toggleEnableFocusInbox}
+        />
+        <label htmlFor="enabled-focused-inobx">{this.props.label}</label>
       </div>
     );
   }
@@ -201,6 +261,11 @@ export const DefaultAccountSending = ListensToFluxStore(DefaultSendAccount, {
 
 export class DownloadSelection extends React.Component {
   static displayName = 'DownloadSelection';
+  static propTypes = {
+    config: PropTypes.object,
+    keyPath: PropTypes.string,
+    label: PropTypes.string,
+  };
 
   constructor() {
     super();
@@ -276,7 +341,12 @@ export class DownloadSelection extends React.Component {
     );
   }
 }
-
+const clearLocalStorageData = () => {
+  const localStorage = window.localStorage;
+  if (localStorage) {
+    localStorage.clear();
+  }
+};
 export class LocalData extends React.Component {
   static displayName = 'LocalData';
 
@@ -287,7 +357,11 @@ export class LocalData extends React.Component {
   }
 
   _onResetEmailCache = () => {
+    clearLocalStorageData();
     Actions.forceKillAllClients('onResetEmailCache');
+  };
+  _onVacuumDB = () => {
+    Actions.askVacuum();
   };
 
   _onResetAccountsAndSettings = () => {
@@ -295,6 +369,7 @@ export class LocalData extends React.Component {
       return;
     }
     this.resetStarted = true;
+    clearLocalStorageData();
     AppEnv.expungeLocalAndReboot();
   };
 
@@ -307,6 +382,9 @@ export class LocalData extends React.Component {
         <div className="btn-primary buttons-reset-data" onClick={this._onResetAccountsAndSettings}>
           Reset Accounts and Settings
         </div>
+        <div className="btn-primary buttons-reset-data" onClick={this._onVacuumDB}>
+          Optimize Local Data
+        </div>
       </div>
     );
   }
@@ -316,6 +394,9 @@ export class TaskDelay extends React.Component {
   static displayName = 'TaskDelay';
   static propTypes = {
     config: PropTypes.object.isRequired,
+    keyPath: PropTypes.string,
+    configSchema: PropTypes.object,
+    label: PropTypes.string,
   };
   constructor(props) {
     super(props);
@@ -341,7 +422,7 @@ export class TaskDelay extends React.Component {
   getSelectedMenuItem(items) {
     const selected = this.props.config.get(this.props.keyPath);
     for (const item of items) {
-      const [value, label] = item;
+      const [value] = item;
       if (value === selected) {
         return this._renderMenuItem(item);
       }

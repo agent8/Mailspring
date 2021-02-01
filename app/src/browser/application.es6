@@ -9,7 +9,6 @@ import {
   systemPreferences,
   Notification,
   screen,
-  globalShortcut,
 } from 'electron';
 
 import fs from 'fs-plus';
@@ -51,22 +50,37 @@ const getStartOfDay = () => {
 };
 const logFileRetainThreshHoldInMs = 30 * 24 * 60 * 60 * 1000;
 const logFileUploadThreshHoldInMs = 48 * 60 * 60 * 1000;
+const isStag = version => {
+  const verNumList = version.split('.');
+  const lastVersionNum = Number(verNumList[verNumList.length - 1]);
+  return !lastVersionNum || lastVersionNum % 2 === 1;
+};
 export default class Application extends EventEmitter {
   async start(options) {
-    const { resourcePath, configDirPath, version, devMode, specMode, safeMode } = options;
+    const {
+      resourcePath,
+      configDirPath,
+      version,
+      buildVersion,
+      devMode,
+      specMode,
+      safeMode,
+    } = options;
+
     //BrowserWindow.addDevToolsExtension('~/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/3.4.2_0');
     // BrowserWindow.addDevToolsExtension('/Users/gtkrab/edisonSoftware/react_extension');
     //Normalize to make sure drive letter case is consistent on Windows
     this.resourcePath = resourcePath;
     this.configDirPath = configDirPath;
     this.version = version;
+    this.buildVersion = buildVersion;
     this.devMode = devMode;
     this.specMode = specMode;
     this.safeMode = safeMode;
     this.nativeVersion = '';
     const stagHost = 'https://cp.stag.easilydo.cc';
     const prodHost = 'https://cp.edison.tech';
-    this.isStag = true;
+    this.isStag = isStag(this.version);
     this.edisonServerHost = this.isStag ? stagHost : prodHost;
     // this.edisonServerHost = ;
     this.startOfDay = getStartOfDay();
@@ -102,7 +116,6 @@ export default class Application extends EventEmitter {
 
     await this.oneTimeMoveToApplications();
     await this.oneTimeAddToDock();
-    this.autoStartRestore();
 
     this.autoUpdateManager = new AutoUpdateManager(
       version,
@@ -131,7 +144,7 @@ export default class Application extends EventEmitter {
     this.setupAutoPlayPolicy();
     this.setupCrosssitePolicy();
     this.handleEvents();
-    this.handleLaunchOptions(options);
+    this.autoStartRestore();
 
     // add 'EdisonMail://' to LSSetDefaultHandlerForURLScheme
     app.setAsDefaultProtocolClient('edisonmail');
@@ -166,7 +179,7 @@ export default class Application extends EventEmitter {
     }
     this.makeLogFolders();
     this.initSupportInfo();
-    this._fixMailsyncTaskDelayInconsistency();
+    this._fixMailsyncInconsistency();
     // subscribe event of dark mode change
     if (process.platform === 'darwin') {
       try {
@@ -182,12 +195,25 @@ export default class Application extends EventEmitter {
     }
     this.cleaningOldFilesTimer = null;
     this._triggerCleanOldLogs(true);
+    await this._startMigrate(options);
+  }
+  async _startMigrate(options) {
+    this._migrateTimer = setTimeout(() => {
+      this._migrateTimer = null;
+      if (!this.nativeVersion) {
+        this._ensureMigrateWindowVisible();
+      }
+    }, 3000);
     try {
       const mailsync = new MailsyncProcess({
         ...options,
         disableThread: this.config.get('core.workspace.threadView') === false,
       });
       this.nativeVersion = await mailsync.migrate();
+      clearTimeout(this._migrateTimer);
+      this._closeMigrateWindow();
+      this.windowManager.createHotWindow();
+      this.handleLaunchOptions(options);
     } catch (err) {
       let message = null;
       let buttons = ['Quit'];
@@ -677,15 +703,15 @@ export default class Application extends EventEmitter {
 
   autoStartRestore() {
     return new Promise(resolve => {
-      if (process.platform === 'darwin') {
-        const openAtLogin = app.getLoginItemSettings().openAtLogin;
+      if (process.platform === 'darwin' && !process.mas) {
+        const { openAtLogin, openAsHidden } = app.getLoginItemSettings() || {};
         if (!openAtLogin) {
           resolve();
           return;
         }
         app.setLoginItemSettings({ openAtLogin: false });
         setTimeout(() => {
-          app.setLoginItemSettings({ openAtLogin });
+          app.setLoginItemSettings({ openAtLogin, openAsHidden });
         }, 2000);
       }
       resolve();
@@ -829,6 +855,20 @@ export default class Application extends EventEmitter {
       });
     }
   }
+  _ensureMigrateWindowVisible() {
+    const migrateWindow = this.windowManager.get(WindowManager.MIGRATE_WINDOW);
+    if (!migrateWindow) {
+      this.windowManager.ensureWindow(WindowManager.MIGRATE_WINDOW, {
+        title: 'Migrating your local data',
+      });
+    }
+  }
+  _closeMigrateWindow() {
+    const migrateWindow = this.windowManager.get(WindowManager.MIGRATE_WINDOW);
+    if (migrateWindow && migrateWindow.browserWindow) {
+      migrateWindow.browserWindow.close();
+    }
+  }
 
   ensureMainWindowVisible() {
     if (!this.config) {
@@ -852,21 +892,47 @@ export default class Application extends EventEmitter {
       }
     }
   }
-  _fixMailsyncTaskDelayInconsistency = () => {
+  _fixMailsyncInconsistency = () => {
     const taskDelay = this.config.get('core.mailsync.taskDelay');
-    if (taskDelay !== undefined) {
-      const accounts = this.config.get('accounts');
-      if (Array.isArray(accounts)) {
-        let changed = false;
-        accounts.forEach(account => {
+    const enableFocusedInbox = this.config.get('core.workspace.enableFocusedInbox');
+
+    const accounts = this.config.get('accounts');
+    const mailSync = this.config.get('core.mailsync.accounts');
+    if (Array.isArray(accounts)) {
+      let changed = false;
+      let mailsyncChanged = false;
+      accounts.forEach(account => {
+        if (taskDelay !== undefined) {
           if (account && account.mailsync && account.mailsync.taskDelay !== taskDelay) {
             changed = true;
             account.mailsync.taskDelay = taskDelay;
           }
-        });
-        if (changed) {
-          this.config.set('accounts', accounts);
         }
+        if (
+          account &&
+          account.mailsync &&
+          !!account.mailsync.core_workspace_enableFocusedInbox !== !!enableFocusedInbox
+        ) {
+          changed = true;
+          account.mailsync.core_workspace_enableFocusedInbox = !!enableFocusedInbox;
+        }
+        if (
+          mailSync &&
+          mailSync[account.id || account.pid] &&
+          !!mailSync[account.id || account.pid].core_workspace_enableFocusedInbox !==
+            !!enableFocusedInbox
+        ) {
+          mailsyncChanged = true;
+          mailSync[
+            account.id || account.pid
+          ].core_workspace_enableFocusedInbox = !!enableFocusedInbox;
+        }
+      });
+      if (mailsyncChanged) {
+        this.config.set('core.mailsync.accounts', mailSync);
+      }
+      if (changed) {
+        this.config.set('accounts', accounts);
       }
     }
   };
@@ -1138,14 +1204,14 @@ export default class Application extends EventEmitter {
       win.browserWindow.inspectElement(x, y);
     });
 
-    this.on('application:add-account', ({ existingAccountJSON } = {}) => {
+    this.on('application:add-account', ({ existingAccountJSON, edisonAccount } = {}) => {
       const onboarding = this.windowManager.get(WindowManager.ONBOARDING_WINDOW);
       if (onboarding) {
         onboarding.show();
         onboarding.focus();
       } else {
         this.windowManager.ensureWindow(WindowManager.ONBOARDING_WINDOW, {
-          windowProps: { addingAccount: true, existingAccountJSON },
+          windowProps: { addingAccount: true, existingAccountJSON, edisonAccount },
           title: '',
         });
       }

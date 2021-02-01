@@ -19,6 +19,7 @@ import UserViewBtn from '../../../src/components/user-review-button';
 
 const buttonTimeout = 700;
 const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
+const isMessageView = AppEnv.isDisableThreading();
 
 export default class MessageControls extends React.Component {
   static displayName = 'MessageControls';
@@ -33,6 +34,7 @@ export default class MessageControls extends React.Component {
     trackers: PropTypes.array,
     viewOriginalEmail: PropTypes.bool,
     setViewOriginalEmail: PropTypes.func,
+    selection: PropTypes.any,
   };
 
   constructor(props) {
@@ -231,7 +233,6 @@ export default class MessageControls extends React.Component {
 
   _items() {
     const { isMuted } = this.state;
-    const isMessageView = AppEnv.isDisableThreading();
     const reply = {
       name: 'Reply',
       image: 'reply.svg',
@@ -292,6 +293,19 @@ export default class MessageControls extends React.Component {
       select: this._onToggleMoveFocusedOther,
     };
 
+    const markAsRead = {
+      name: 'Mark as Read',
+      image: 'read.svg',
+      iconHidden: true,
+      select: this._onMarkAsRead,
+    };
+    const markAsUnread = {
+      name: 'Mark as Unread',
+      image: 'unread.svg',
+      iconHidden: true,
+      select: this._onMarkAsUnread,
+    };
+
     const ret = [];
     if (this.props.message && !this.props.message.draft) {
       if (!this.props.message.canReplyAll()) {
@@ -310,6 +324,13 @@ export default class MessageControls extends React.Component {
     if (!this.props.message.draft && !isMessageView) {
       ret.push(trash);
     }
+    if (!isMessageView && this.props.message) {
+      if (this.props.message.unread) {
+        ret.push(markAsRead);
+      } else {
+        ret.push(markAsUnread);
+      }
+    }
     if (this.state.showViewOriginalEmail) {
       ret.push(viewOriginalEmail);
     }
@@ -323,10 +344,11 @@ export default class MessageControls extends React.Component {
       ret.push(muteEmail);
     }
     if (AppEnv.config.get(EnableFocusedInboxKey)) {
-      if (this.props.message.isInInboxFocused()) {
+      const perspective = FocusedPerspectiveStore.current() || {};
+      if (this.props.message.isInInboxFocused() && !perspective.sift) {
         ret.push(moveToOther);
       }
-      if (this.props.message.isInInboxOther()) {
+      if (this.props.message.isInInboxOther() && !perspective.sift) {
         ret.push(moveToFocused);
       }
     }
@@ -388,6 +410,20 @@ export default class MessageControls extends React.Component {
       return true;
     }
     return false;
+  };
+  _onMarkAsRead = () => {
+    Actions.setMessagesReadUnread({
+      messageIds: [this.props.message.id],
+      unread: false,
+      source: 'MessageControl:SingleMessage:mark as read',
+    });
+  };
+  _onMarkAsUnread = () => {
+    Actions.setMessagesReadUnread({
+      messageIds: [this.props.message.id],
+      unread: true,
+      source: 'MessageControl:SingleMessage:mark as unread',
+    });
   };
 
   _onReply = () => {
@@ -460,10 +496,9 @@ export default class MessageControls extends React.Component {
     if (this.props.selection) {
       this.props.selection.clear();
     }
-    if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
-      Actions.popSheet({ reason: 'MessageControls:_onRemove' });
-    }
-    return;
+    // if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
+    //   Actions.popSheet({ reason: 'MessageControls:_onRemove' });
+    // }
   };
   _onExpunge = event => {
     const tasks = TaskFactory.tasksForExpungingThreadsOrMessages({
@@ -494,14 +529,13 @@ export default class MessageControls extends React.Component {
         return;
       }
       Actions.queueTasks(tasks);
-      if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
-        Actions.popSheet({ reason: 'MessageControls:_onExpunge' });
-      }
+      // if (this.props.messages && this.props.messages && this.props.messages.length === 1) {
+      //   Actions.popSheet({ reason: 'MessageControls:_onExpunge' });
+      // }
     });
     if (event) {
       event.stopPropagation();
     }
-    return;
   };
 
   _onTrash = () => {
@@ -566,6 +600,18 @@ export default class MessageControls extends React.Component {
     clipboard.writeText(data);
   };
 
+  _consoleDebugInfo = () => {
+    const { message, thread } = this.props;
+    const data = `
+      AccountID: ${message.accountId}
+      Message ID: ${message.id}
+      Message Metadata: ${JSON.stringify(message.pluginMetadata, null, '  ')}
+      Thread ID: ${thread.id}
+      Thread Metadata: ${JSON.stringify(thread.pluginMetadata, null, '  ')}
+    `;
+    console.log('** debug info ***', data);
+  };
+
   _onClickTrackingIcon = event => {
     const originRect = event.target.getBoundingClientRect();
     Actions.openPopover(this._renderTrackingPopup(), {
@@ -592,7 +638,7 @@ export default class MessageControls extends React.Component {
       <div className="remove-tracker">
         <RetinaImg name={'emailtracking-popup-image.png'} mode="" />
         <h3>Email tracking is Blocked</h3>
-        <p>Senders won't see when and where you read messages.</p>
+        <p>Senders won&#39;t see when and where you read messages.</p>
         <UserViewBtn />
         <RetinaImg
           className="close"
@@ -625,7 +671,7 @@ export default class MessageControls extends React.Component {
           <br />
           {email}
         </h1>
-        <p>You won't be notified about new mail from this sender.</p>
+        <p>You won&#39;t be notified about new mail from this sender.</p>
         <div className="btn-list">
           <div className="btn cancel" onClick={this._onToggleMuteEmail}>
             Cancel
@@ -658,7 +704,7 @@ export default class MessageControls extends React.Component {
         <p>
           Always move conversations from
           <br />
-          {`${email} to your ${toTabsName} Inbox`}
+          <span>{`${email} to your ${toTabsName} Inbox`}</span>
         </p>
         <div className="btn-list">
           <div className="btn cancel" onClick={this._onToggleMoveFocusedOther}>
@@ -719,7 +765,12 @@ export default class MessageControls extends React.Component {
             />
           </div>
         ) : null}
-        <MessageTimestamp className="message-time" isDetailed date={this.props.message.date} />
+        <MessageTimestamp
+          onClick={this._consoleDebugInfo}
+          className="message-time"
+          isDetailed
+          date={this.props.message.date}
+        />
         {!this.props.hideControls && this.props.message && !this.props.message.draft ? (
           <div className="replyBtn" title={items[0].name} onClick={items[0].select}>
             <RetinaImg
@@ -738,11 +789,16 @@ export default class MessageControls extends React.Component {
             menu={this._dropdownMenu(items.slice(1))}
           />
         ) : null}
-        {!this.props.hideControls ? (
+        {/* {!this.props.hideControls ? (
           <div className="message-actions-ellipsis" onClick={this._onShowActionsMenu}>
-            <RetinaImg name={'message-actions-ellipsis.png'} mode={RetinaImg.Mode.ContentIsMask} />
+            <RetinaImg
+              name="expand-more.svg"
+              style={{ width: 24, height: 24, fontSize: 24 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
           </div>
-        ) : null}
+        ) : null} */}
 
         <FullScreenModal
           visible={this.state.showMuteEmailModal}

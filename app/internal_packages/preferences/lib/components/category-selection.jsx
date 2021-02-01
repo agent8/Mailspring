@@ -5,7 +5,7 @@ import {
   LabelColorizer,
   BoldedSearchResult,
 } from 'mailspring-component-kit';
-import { Label, Utils, React, PropTypes } from 'mailspring-exports';
+import { Utils, React, PropTypes } from 'mailspring-exports';
 
 export default class CategorySelection extends React.Component {
   static propTypes = {
@@ -13,6 +13,7 @@ export default class CategorySelection extends React.Component {
     all: PropTypes.array,
     current: PropTypes.object,
     onSelect: PropTypes.func,
+    disabled: PropTypes.bool,
   };
 
   constructor(props) {
@@ -61,10 +62,18 @@ export default class CategorySelection extends React.Component {
       icon = <div className="empty-icon" />;
       item.path = '(None)';
     } else {
+      let iconName = item.name.toLowerCase();
+      if (iconName === 'deleted') {
+        iconName = 'trash';
+      } else if (!['sent', 'drafts', 'junk', 'archive', 'trash'].includes(iconName)) {
+        iconName = item.isLabel() ? 'label' : 'folder';
+      }
       icon = (
         <RetinaImg
-          name={`${item.name}.png`}
-          fallback={item.isLabel() ? 'tag.png' : 'folder.png'}
+          isIcon
+          name={`${iconName}.svg`}
+          fallback={item.isLabel() ? 'label.svg' : 'folder.svg'}
+          style={{ width: 20, height: 20 }}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       );
@@ -104,6 +113,14 @@ export default class CategorySelection extends React.Component {
         placeholder={placeholder}
         value={this.state.searchValue}
         onChange={this._onSearchValueChange}
+      />,
+      <RetinaImg
+        key="search-icon"
+        isIcon
+        name="search.svg"
+        className="search-accessory search"
+        mode={RetinaImg.Mode.ContentIsMask}
+        style={{ height: 20, width: 20, position: 'absolute', left: 10, marginTop: 1 }}
       />,
     ];
 

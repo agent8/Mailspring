@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { PropTypes } from 'mailspring-exports';
 import ResizableBox from './resizable-box';
+import ReactDOM from 'react-dom';
 
 function formatHeightWidthToNum(val) {
   if (typeof val === 'number') {
@@ -16,7 +17,6 @@ export default class ResizableImg extends Component {
   static propTypes = {
     src: PropTypes.string.isRequired,
     style: PropTypes.object,
-    showMask: PropTypes.bool,
     callback: PropTypes.func,
     lockAspectRatio: PropTypes.bool,
     disableOrientation: PropTypes.arrayOf(PropTypes.string),
@@ -30,6 +30,7 @@ export default class ResizableImg extends Component {
       boxWidth: 0,
       imgHeight: 0,
       imgWidth: 0,
+      showMask: false,
     };
   }
 
@@ -64,53 +65,62 @@ export default class ResizableImg extends Component {
   componentWillUnmount() {
     this._mounted = false;
   }
-
-  _processingValue = value => {
-    const { lockAspectRatio } = this.props;
-    if (!lockAspectRatio) {
-      return value;
+  _onImgSelect = () => {
+    if (!this._mounted) {
+      return;
     }
-    if (value.x === 0 || value.y === 0) {
-      return {
-        x: 0,
-        y: 0,
-      };
+    const state = { showMask: true };
+    if (this._imgRef) {
+      const el = ReactDOM.findDOMNode(this._imgRef);
+      const rect = el.getBoundingClientRect();
+      state.imgHeight = rect.height;
+      state.imgWidth = rect.width;
+      state.boxHeight = state.imgHeight;
+      state.boxWidth = state.imgWidth;
     }
-    const { imgHeight, imgWidth } = this.state;
-    const newValue = {
-      x: value.x,
-      y: (imgHeight * value.x) / imgWidth,
-    };
-    return newValue;
+    this.setState(state);
+  };
+  _onImageDeselect = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({ showMask: false });
   };
 
   render() {
-    const { boxHeight, boxWidth, imgHeight, imgWidth } = this.state;
-    const { lockAspectRatio, callback, disableOrientation, showMask } = this.props;
+    const { boxHeight, boxWidth, imgHeight, imgWidth, showMask } = this.state;
+    const { lockAspectRatio, callback, disableOrientation } = this.props;
     const disableOrientationTmp =
-      disableOrientation || (lockAspectRatio ? ['n', 's', 'w', 'e'] : []);
+      disableOrientation || (lockAspectRatio ? ['n', 's', 'w', 'e', 'ne', 'nw', 'sw'] : []);
 
+    const styles = {
+      zIndex: 2,
+      height: imgHeight > 0 ? imgHeight : 'auto',
+      width: imgWidth > 0 ? imgWidth : 'auto',
+    };
+    if (this.props.style && this.props.style.verticalAlign) {
+      styles.verticalAlign = this.props.style.verticalAlign;
+    }
     return (
       <ResizableBox
         onResize={value => {
           if (!this._mounted) {
             return;
           }
-          const valueTemp = this._processingValue(value);
           this.setState({
-            boxHeight: imgHeight + valueTemp.y,
-            boxWidth: imgWidth + valueTemp.x,
+            boxHeight: value.height,
+            boxWidth: value.width,
           });
         }}
-        onComplateResize={value => {
+        onResizeComplete={value => {
           if (!this._mounted) {
             return;
           }
-          const valueTemp = this._processingValue(value);
           this.setState(
             {
-              imgHeight: imgHeight + valueTemp.y,
-              imgWidth: imgWidth + valueTemp.x,
+              imgHeight: value.height,
+              imgWidth: value.width,
+              showMask: false,
             },
             () => {
               if (callback && typeof callback === 'function') {
@@ -122,11 +132,21 @@ export default class ResizableImg extends Component {
             }
           );
         }}
-        disableOrientation={disableOrientationTmp}
+        onMaskClicked={this._onImageDeselect}
+        disabledDragPoints={disableOrientationTmp}
         showMask={showMask}
-        style={{ height: boxHeight, width: boxWidth }}
+        lockAspectRatio={this.props.lockAspectRatio}
+        height={boxHeight}
+        width={boxWidth}
       >
-        <img alt="" src={this.props.src} style={{ height: imgHeight, width: imgWidth }} />
+        <img
+          alt=""
+          ref={ref => (this._imgRef = ref)}
+          src={this.props.src}
+          style={styles}
+          onClick={this._onImgSelect}
+          onBlur={this._onImageDeselect}
+        />
       </ResizableBox>
     );
   }

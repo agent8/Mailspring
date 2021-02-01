@@ -1,12 +1,22 @@
 import axios from 'axios';
 import RESTResult from './result-data-format';
-import { AccountStore, Constant } from 'mailspring-exports';
+import { AccountStore, Constant, Actions } from 'mailspring-exports';
+import { EdisonAccountResCodes } from './edison-account';
 
 const { EdisonPlatformType, generateServerConfigKey } = Constant;
 
 export default class Preferences {
   constructor(host) {
     this.host = host;
+  }
+
+  _handleResCode(code, account) {
+    if (code === 0) {
+      return;
+    }
+    if (code === EdisonAccountResCodes.Deleted) {
+      Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
+    }
   }
 
   _handleReqError(error, aid) {
@@ -24,17 +34,49 @@ export default class Preferences {
     }
   }
 
-  async getAllPreferences() {
-    const url = `${this.host}/api/charge/user/preference/list`;
+  _generatePostInfo = configKey => {
+    const configSchema = AppEnv.config.getSchema(configKey);
+    const platform = configSchema.syncToServerCommonKey
+      ? EdisonPlatformType.COMMON
+      : EdisonPlatformType.MAC;
+    const configKeyInServer = configSchema.syncToServerCommonKey
+      ? configSchema.syncToServerCommonKey
+      : generateServerConfigKey(configKey);
+    const version = AppEnv.config.getConfigUpdateTime(configKey);
+    return {
+      platform: platform,
+      key: configKeyInServer,
+      version: version,
+    };
+  };
+
+  _postCommonFunc = async (url, body) => {
     const syncAccount = AccountStore.syncAccount();
     if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
+      throw new Error('sync account is unexpected');
     }
-
     const token = syncAccount.settings.edison_token;
     if (!token) {
-      return new RESTResult(false, 'sync account has no token');
+      throw new Error('sync account has no token');
     }
+
+    try {
+      const { data } = await axios.post(url, body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      this._handleResCode(data.code, syncAccount);
+      return data;
+    } catch (error) {
+      this._handleReqError(error, syncAccount.id);
+      throw error;
+    }
+  };
+
+  async getAllPreferences() {
+    const url = `${this.host}/api/charge/user/preference/list`;
     const commonConfigVersion = AppEnv.config.get('commonSettingsVersion');
     const macConfigVersion = AppEnv.config.get('macSettingsVersion');
     const postData = [
@@ -43,12 +85,7 @@ export default class Preferences {
     ];
 
     try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await this._postCommonFunc(url, postData);
       const configList = (data.data || []).filter(
         conf =>
           conf.changed &&
@@ -56,8 +93,7 @@ export default class Preferences {
       );
       return new RESTResult(data.code === 0, data.message, configList);
     } catch (error) {
-      this._handleReqError(error, syncAccount.id);
-      const state = error.response.status;
+      const state = error && error.response && error.response.status;
       switch (state) {
         case 304:
           // no change in server with this version
@@ -71,41 +107,28 @@ export default class Preferences {
     }
   }
 
-  async getListTypePreference(configKey) {
-    const url = `${this.host}/api/charge/user/subPreference/list`;
-    const syncAccount = AccountStore.syncAccount();
-    if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
-    }
+  async getStringTypePreference(configKey) {
+    const url = `${this.host}/api/charge/user/preference/fetch`;
+    const { platform, key } = this._generatePostInfo(configKey);
+    const postData = { platform, key };
 
-    const token = syncAccount.settings.edison_token;
-    if (!token) {
-      return new RESTResult(false, 'sync account has no token');
-    }
-    const configSchema = AppEnv.config.getSchema(configKey);
-    const platform = configSchema.syncToServerCommonKey
-      ? EdisonPlatformType.COMMON
-      : EdisonPlatformType.MAC;
-    const configKeyInServer = configSchema.syncToServerCommonKey
-      ? configSchema.syncToServerCommonKey
-      : generateServerConfigKey(configKey);
-    const version = AppEnv.config.getConfigUpdateTime(configKey);
-    const postData = {
-      platform: platform,
-      key: configKeyInServer,
-      version: version,
-    };
     try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await this._postCommonFunc(url, postData);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
-      this._handleReqError(error, syncAccount.id);
-      const state = error.response.status;
+      return new RESTResult(false, error.message);
+    }
+  }
+
+  async getListTypePreference(configKey) {
+    const url = `${this.host}/api/charge/user/subPreference/list`;
+    const postData = this._generatePostInfo(configKey);
+
+    try {
+      const data = await this._postCommonFunc(url, postData);
+      return new RESTResult(data.code === 0, data.message, data.data);
+    } catch (error) {
+      const state = error && error.response && error.response.status;
       switch (state) {
         case 304:
           // no change in server with this version
@@ -122,132 +145,48 @@ export default class Preferences {
     }
   }
 
-  async getStringTypePreference(configKey) {
-    const url = `${this.host}/api/charge/user/preference/fetch`;
-    const syncAccount = AccountStore.syncAccount();
-    if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
-    }
-
-    const token = syncAccount.settings.edison_token;
-    if (!token) {
-      return new RESTResult(false, 'sync account has no token');
-    }
-    const configSchema = AppEnv.config.getSchema(configKey);
-    const platform = configSchema.syncToServerCommonKey
-      ? EdisonPlatformType.COMMON
-      : EdisonPlatformType.MAC;
-    const configKeyInServer = configSchema.syncToServerCommonKey
-      ? configSchema.syncToServerCommonKey
-      : generateServerConfigKey(configKey);
-
-    const postData = {
-      platform: platform,
-      key: configKeyInServer,
-    };
-
-    try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return new RESTResult(data.code === 0, data.message, data.data);
-    } catch (error) {
-      this._handleReqError(error, syncAccount.id);
-      return new RESTResult(false, error.message);
-    }
-  }
-
   async getListTypeSubPreference(configKey, subId) {
     const url = `${this.host}/api/charge/user/subPreference/fetch`;
-    const syncAccount = AccountStore.syncAccount();
-    if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
-    }
-
-    const token = syncAccount.settings.edison_token;
-    if (!token) {
-      return new RESTResult(false, 'sync account has no token');
-    }
     if (!subId) {
       return new RESTResult(false, 'subId is unexpected');
     }
-    const configSchema = AppEnv.config.getSchema(configKey);
-    const platform = configSchema.syncToServerCommonKey
-      ? EdisonPlatformType.COMMON
-      : EdisonPlatformType.MAC;
-    const configKeyInServer = configSchema.syncToServerCommonKey
-      ? configSchema.syncToServerCommonKey
-      : generateServerConfigKey(configKey);
-
-    const postData = {
-      platform: platform,
-      key: configKeyInServer,
-      subId,
-    };
+    const { platform, key } = this._generatePostInfo(configKey);
+    const postData = { platform, key, subId };
 
     try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await this._postCommonFunc(url, postData);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
-      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
 
   async getFullListTypePreferenceByServerKey({ serverKey, platform }) {
     const url = `${this.host}/api/charge/user/subPreference/list`;
-    const syncAccount = AccountStore.syncAccount();
-    if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
-    }
-
-    const token = syncAccount.settings.edison_token;
-    if (!token) {
-      return new RESTResult(false, 'sync account has no token');
-    }
-    const postData = {
-      platform: platform,
-      key: serverKey,
-      version: 0,
-    };
+    const subUrl = `${this.host}/api/charge/user/subPreference/fetch`;
+    const postData = { platform, key: serverKey, version: 0 };
     try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
+      const data = await this._postCommonFunc(url, postData);
       if (!data || data.code !== 0 || !data.data || !data.data.list) {
         return new RESTResult(false, 'data in server is empty');
       }
-
       const value = [];
       const subDataList = data.data.list;
       for (const subData of subDataList) {
         if (!subData.longFlag) {
           value.push(subData);
         } else {
-          const subDataInServer = await this.getListTypeSubPreference(configKey, subData.subId);
-          if (subDataInServer.successful) {
-            value.push({ ...subData, value: subDataInServer.data.value });
-          } else {
-            return new RESTResult(false, subDataInServer.message);
-          }
+          const data = await this._postCommonFunc(subUrl, {
+            platform,
+            key: serverKey,
+            subId: subData.subId,
+          });
+          value.push({ ...subData, value: data.data.value });
         }
       }
       return new RESTResult(true, 'success', value);
     } catch (error) {
-      this._handleReqError(error, syncAccount.id);
-      const state = error.response.status;
+      const state = error && error.response && error.response.status;
       switch (state) {
         case 404:
           // the setting in server is empty
@@ -260,139 +199,53 @@ export default class Preferences {
 
   async updateStringPreferences(configKey, value) {
     const url = `${this.host}/api/charge/user/preference/update`;
-    const syncAccount = AccountStore.syncAccount();
-    if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
-    }
-
-    const token = syncAccount.settings.edison_token;
-    if (!token) {
-      return new RESTResult(false, 'sync account has no token');
-    }
-    const configSchema = AppEnv.config.getSchema(configKey);
-    const platform = configSchema.syncToServerCommonKey
-      ? EdisonPlatformType.COMMON
-      : EdisonPlatformType.MAC;
-    const configKeyInServer = configSchema.syncToServerCommonKey
-      ? configSchema.syncToServerCommonKey
-      : generateServerConfigKey(configKey);
-    const tsClientCurrent = new Date().getTime();
-    const tsClientUpdate = AppEnv.config.getConfigUpdateTime(configKey);
+    const { platform, key, version } = this._generatePostInfo(configKey);
     const postData = {
-      preferences: [
-        {
-          platform,
-          key: configKeyInServer,
-          value: value,
-          tsClientUpdate: tsClientUpdate,
-        },
-      ],
-      tsClientCurrent: tsClientCurrent,
+      preferences: [{ platform, key, value, tsClientUpdate: version }],
+      tsClientCurrent: new Date().getTime(),
     };
 
     try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await this._postCommonFunc(url, postData);
       const resultData = data.data ? data.data[0] : {};
       return new RESTResult(data.code === 0, data.message, resultData);
     } catch (error) {
-      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
 
   async updateListPreferences(configKey, { update = [], remove = [] }) {
     const url = `${this.host}/api/charge/user/subPreference/update`;
-    const syncAccount = AccountStore.syncAccount();
-    if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
-    }
-
-    const token = syncAccount.settings.edison_token;
-    if (!token) {
-      return new RESTResult(false, 'sync account has no token');
-    }
     if (!update.length && !remove.length) {
       return new RESTResult(true, 'there is no need to update', {});
     }
-    const configSchema = AppEnv.config.getSchema(configKey);
-    const platform = configSchema.syncToServerCommonKey
-      ? EdisonPlatformType.COMMON
-      : EdisonPlatformType.MAC;
-    const configKeyInServer = configSchema.syncToServerCommonKey
-      ? configSchema.syncToServerCommonKey
-      : generateServerConfigKey(configKey);
-    const tsClientCurrent = new Date().getTime();
-    const postData = {
-      platform: platform,
-      key: configKeyInServer,
-      tsClientCurrent: tsClientCurrent,
-      update: update,
-      remove: remove,
-    };
+    const { platform, key } = this._generatePostInfo(configKey);
+    const postData = { platform, key, tsClientCurrent: new Date().getTime(), update, remove };
 
     try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await this._postCommonFunc(url, postData);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
-      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }
 
   async deletePreferences(configKeys) {
     const url = `${this.host}/api/charge/user/preference/delete`;
-    const syncAccount = AccountStore.syncAccount();
-    if (!syncAccount) {
-      return new RESTResult(false, 'sync account is unexpected');
-    }
-
-    const token = syncAccount.settings.edison_token;
-    if (!token) {
-      return new RESTResult(false, 'sync account has no token');
-    }
     const configKeyList = Array.isArray(configKeys) ? configKeys : [configKeys];
     const preferences = configKeyList.map(configKey => {
-      const configSchema = AppEnv.config.getSchema(configKey);
-      const platform = configSchema.syncToServerCommonKey
-        ? EdisonPlatformType.COMMON
-        : EdisonPlatformType.MAC;
-      const configKeyInServer = configSchema.syncToServerCommonKey
-        ? configSchema.syncToServerCommonKey
-        : generateServerConfigKey(configKey);
-      const tsClientUpdate = AppEnv.config.getConfigUpdateTime(configKey);
-      return {
-        platform: platform,
-        key: configKeyInServer,
-        tsClientUpdate: tsClientUpdate,
-      };
+      const { platform, key, version } = this._generatePostInfo(configKey);
+      return { platform, key, tsClientUpdate: version };
     });
-
-    const tsClientCurrent = new Date().getTime();
     const postData = {
       preferences: preferences,
-      tsClientCurrent: tsClientCurrent,
+      tsClientCurrent: new Date().getTime(),
     };
 
     try {
-      const { data } = await axios.post(url, postData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await this._postCommonFunc(url, postData);
       return new RESTResult(data.code === 0, data.message, data.data);
     } catch (error) {
-      this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
     }
   }

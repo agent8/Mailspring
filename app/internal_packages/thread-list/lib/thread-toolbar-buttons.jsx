@@ -1,7 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { RetinaImg, CreateButtonGroup, BindGlobalCommands } from 'mailspring-component-kit';
+import {
+  RetinaImg,
+  CreateButtonGroup,
+  BindGlobalCommands,
+  FullScreenModal,
+} from 'mailspring-component-kit';
 import {
   AccountStore,
   Actions,
@@ -86,27 +91,6 @@ const isSameAccount = items => {
   return true;
 };
 
-// const nextActionForRemoveFromView = (source, affectedThreads) => {
-//   if (!AppEnv.isMainWindow()) {
-//     AppEnv.logDebug('Not main window, no next action for remove from view');
-//     return;
-//   }
-//   const topSheet = WorkspaceStore.topSheet();
-//   const layoutMode = WorkspaceStore.layoutMode();
-//   const onReturn = ({ reason } = {}) => {
-//     Actions.popSheet({ reason });
-//   };
-//   const focusedThread = FocusedContentStore.focused('thread');
-//   // AppEnv.nextActionAfterRemoveFromView({
-//   //   source,
-//   //   currentFocus: focusedThread,
-//   //   affectedItems: affectedThreads,
-//   //   topSheet,
-//   //   layoutMode,
-//   //   emptyFocusContent: onReturn,
-//   // });
-// };
-
 export function ArchiveButton(props) {
   const _onShortCut = event => {
     _onArchive(event, threadSelectionScope(props, props.selection));
@@ -130,7 +114,6 @@ export function ArchiveButton(props) {
       AppEnv.debugLog(`Archive closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
 
   const allowed = FocusedPerspectiveStore.current().canArchiveThreads(props.items);
@@ -148,7 +131,10 @@ export function ArchiveButton(props) {
   }
 
   return (
-    <BindGlobalCommands commands={{ 'core:archive-item': event => commandCb(event, _onShortCut) }}>
+    <BindGlobalCommands
+      key="archive-item"
+      commands={{ 'core:archive-item': event => commandCb(event, _onShortCut) }}
+    >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onArchive}>
         <RetinaImg
           name={'archive.svg'}
@@ -162,6 +148,11 @@ export function ArchiveButton(props) {
 }
 ArchiveButton.displayName = 'ArchiveButton';
 ArchiveButton.containerRequired = false;
+ArchiveButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 export function TrashButton(props) {
   const _onShortCutRemove = event => {
@@ -208,7 +199,6 @@ export function TrashButton(props) {
       AppEnv.debugLog(`Remove Closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
   const _onRemove = (event, threads) => {
     const affectedThreads = Array.isArray(threads) ? threads : props.items;
@@ -227,7 +217,9 @@ export function TrashButton(props) {
                 threads: JSON.stringify(props.items),
               },
             });
-          } catch (e) {}
+          } catch (e) {
+            AppEnv.logError(e);
+          }
         }
       });
     }
@@ -243,7 +235,6 @@ export function TrashButton(props) {
       AppEnv.debugLog(`Remove Closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
   const _onExpunge = (event, threads) => {
     let messages = [];
@@ -273,7 +264,9 @@ export function TrashButton(props) {
                 messages: JSON.stringify(messages),
               },
             });
-          } catch (e) {}
+          } catch (e) {
+            AppEnv.logError(e);
+          }
         }
       });
     }
@@ -298,7 +291,6 @@ export function TrashButton(props) {
     if (event) {
       event.stopPropagation();
     }
-    return;
   };
 
   const allFoldersInTrashOrSpam = (accountId, labelIds) => {
@@ -329,39 +321,39 @@ export function TrashButton(props) {
         }
       });
   };
-  const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
-    if (!Array.isArray(labelIds) || !accountId) {
-      return false;
-    }
-    const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
-    const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
-    const isExchange = AccountStore.isExchangeAccountId(accountId);
-    return labelIds
-      .map(labelId => CategoryStore.byId(accountId, labelId))
-      .some(folder => {
-        let ret = folder.role !== 'trash' && folder.role !== 'spam';
-        if (!ret) {
-          return false;
-        }
-        if (!isExchange) {
-          return (
-            !(
-              trashCategory &&
-              (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
-            ) &&
-            !(
-              spamCategory &&
-              (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder))
-            )
-          );
-        } else {
-          return (
-            !(trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) &&
-            !(spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
-          );
-        }
-      });
-  };
+  // const notAllFoldersInTrashOrSpam = (accountId, labelIds) => {
+  //   if (!Array.isArray(labelIds) || !accountId) {
+  //     return false;
+  //   }
+  //   const trashCategory = CategoryStore.getCategoryByRole(accountId, 'trash');
+  //   const spamCategory = CategoryStore.getCategoryByRole(accountId, 'spam');
+  //   const isExchange = AccountStore.isExchangeAccountId(accountId);
+  //   return labelIds
+  //     .map(labelId => CategoryStore.byId(accountId, labelId))
+  //     .some(folder => {
+  //       let ret = folder.role !== 'trash' && folder.role !== 'spam';
+  //       if (!ret) {
+  //         return false;
+  //       }
+  //       if (!isExchange) {
+  //         return (
+  //           !(
+  //             trashCategory &&
+  //             (trashCategory.isAncestorOf(folder) || trashCategory.isParentOf(folder))
+  //           ) &&
+  //           !(
+  //             spamCategory &&
+  //             (spamCategory.isAncestorOf(folder) || spamCategory.isParentOf(folder))
+  //           )
+  //         );
+  //       } else {
+  //         return (
+  //           !(trashCategory && CategoryStore.isCategoryAParentOfB(trashCategory, folder)) &&
+  //           !(spamCategory && CategoryStore.isCategoryAParentOfB(spamCategory, folder))
+  //         );
+  //       }
+  //     });
+  // };
   const isMixed = threads => {
     let notInTrashOrSpam = undefined;
     let inTrashOrSpam = undefined;
@@ -382,9 +374,9 @@ export function TrashButton(props) {
   const allThreadsInTrashOrSpam = threads => {
     return threads.every(thread => allFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
   };
-  const allThreadsNotInTrashOrSpam = threads => {
-    return threads.every(thread => notAllFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
-  };
+  // const allThreadsNotInTrashOrSpam = threads => {
+  //   return threads.every(thread => notAllFoldersInTrashOrSpam(thread.accountId, thread.labelIds));
+  // };
 
   const isInSearch = props => {
     let currentPerspective = props.currentPerspective;
@@ -438,6 +430,7 @@ export function TrashButton(props) {
 
   return (
     <BindGlobalCommands
+      key="delete-item"
       commands={{ 'core:delete-item': event => commandCb(event, actionCallBack) }}
     >
       <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={actionCallBack}>
@@ -453,6 +446,14 @@ export function TrashButton(props) {
 }
 TrashButton.displayName = 'TrashButton';
 TrashButton.containerRequired = false;
+TrashButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  thread: PropTypes.object,
+  isMenuItem: PropTypes.bool,
+  isSearchMailbox: PropTypes.bool,
+  currentPerspective: PropTypes.object,
+};
 
 export function MarkAsSpamButton(props) {
   const _onShortcutNotSpam = event => {
@@ -476,7 +477,6 @@ export function MarkAsSpamButton(props) {
       AppEnv.debugLog(`Not Spam closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
 
   const _onShortcutMarkAsSpam = event => {
@@ -501,7 +501,6 @@ export function MarkAsSpamButton(props) {
       AppEnv.debugLog(`Closing window because in ThreadWindow`);
       AppEnv.close();
     }
-    return;
   };
 
   const allInSpam = props.items.every(item => item.folders.find(c => c.role === 'spam'));
@@ -558,6 +557,7 @@ export function MarkAsSpamButton(props) {
       }}
     >
       <button
+        key="spam"
         tabIndex={-1}
         className="btn btn-toolbar"
         title={title}
@@ -575,6 +575,11 @@ export function MarkAsSpamButton(props) {
 }
 MarkAsSpamButton.displayName = 'MarkAsSpamButton';
 MarkAsSpamButton.containerRequired = false;
+MarkAsSpamButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 export function PrintThreadButton(props) {
   const _onPrintThread = () => {
@@ -593,7 +598,13 @@ export function PrintThreadButton(props) {
   }
 
   return (
-    <button tabIndex={-1} className="btn btn-toolbar" title={title} onClick={_onPrintThread}>
+    <button
+      key="print"
+      tabIndex={-1}
+      className="btn btn-toolbar"
+      title={title}
+      onClick={_onPrintThread}
+    >
       <RetinaImg
         name={'print.svg'}
         style={{ width: 24, height: 24, fontSize: 24 }}
@@ -604,6 +615,9 @@ export function PrintThreadButton(props) {
   );
 }
 PrintThreadButton.displayName = 'PrintThreadButton';
+PrintThreadButton.propTypes = {
+  isMenuItem: PropTypes.bool,
+};
 
 export function ToggleStarredButton(props) {
   const _onShortcutStar = event => {
@@ -622,7 +636,6 @@ export function ToggleStarredButton(props) {
     if (props.selection) {
       props.selection.clear();
     }
-    return;
   };
   const postClickStarredState = props.items.every(t => t.starred === false);
   const title = postClickStarredState ? 'Flag' : 'Unflag';
@@ -636,7 +649,10 @@ export function ToggleStarredButton(props) {
   }
 
   return (
-    <BindGlobalCommands commands={{ 'core:star-item': event => commandCb(event, _onShortcutStar) }}>
+    <BindGlobalCommands
+      key="star-item"
+      commands={{ 'core:star-item': event => commandCb(event, _onShortcutStar) }}
+    >
       <button
         tabIndex={-1}
         className={'btn btn-toolbar ' + className}
@@ -655,6 +671,11 @@ export function ToggleStarredButton(props) {
 }
 ToggleStarredButton.displayName = 'ToggleStarredButton';
 ToggleStarredButton.containerRequired = false;
+ToggleStarredButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 export function ToggleUnreadButton(props) {
   const _onClick = event => {
@@ -663,7 +684,6 @@ export function ToggleUnreadButton(props) {
     if (event) {
       event.stopPropagation();
     }
-    return;
   };
 
   const _onShortcutChangeUnread = targetUnread => {
@@ -720,6 +740,11 @@ export function ToggleUnreadButton(props) {
 }
 ToggleUnreadButton.displayName = 'ToggleUnreadButton';
 ToggleUnreadButton.containerRequired = false;
+ToggleUnreadButton.propTypes = {
+  selection: PropTypes.object,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 class HiddenGenericRemoveButton extends React.Component {
   static displayName = 'HiddenGenericRemoveButton';
@@ -768,6 +793,7 @@ class HiddenGenericRemoveButton extends React.Component {
   render() {
     return (
       <BindGlobalCommands
+        key="show-previous-next"
         commands={{
           'core:show-previous': event => commandCb(event, this._onShift, { offset: -1 }),
           'core:show-next': event => commandCb(event, this._onShift, { offset: 1 }),
@@ -781,6 +807,10 @@ class HiddenGenericRemoveButton extends React.Component {
 
 class HiddenToggleImportantButton extends React.Component {
   static displayName = 'HiddenToggleImportantButton';
+  static propTypes = {
+    selection: PropTypes.object,
+    items: PropTypes.array,
+  };
 
   _onShortcutSetImportant = important => {
     this._onSetImportant(important, threadSelectionScope(this.props, this.props.selection));
@@ -814,17 +844,16 @@ class HiddenToggleImportantButton extends React.Component {
     if (!AppEnv.config.get('core.workspace.showImportant')) {
       return false;
     }
+    const allImportant = this.props.items.every(item =>
+      item.labels.find(c => c.role === 'important')
+    );
     const allowed = FocusedPerspectiveStore.current().canMoveThreadsTo(
       this.props.items,
       'important'
     );
-    if (!allowed) {
+    if (!allowed && !allImportant) {
       return false;
     }
-
-    const allImportant = this.props.items.every(item =>
-      item.labels.find(c => c.role === 'important')
-    );
 
     return (
       <BindGlobalCommands
@@ -845,7 +874,10 @@ export class ThreadListMoreButton extends React.Component {
   static containerRequired = false;
 
   static propTypes = {
+    position: PropTypes.string,
+    selection: PropTypes.object,
     items: PropTypes.array.isRequired,
+    dataSource: PropTypes.any,
   };
 
   constructor(props) {
@@ -854,6 +886,14 @@ export class ThreadListMoreButton extends React.Component {
     if (current && current.accountIds.length) {
       this._account = AccountStore.accountForId(current.accountIds[0]);
     }
+    this.state = { showMoveToOtherDialog: false, showMoveToFocusedDialog: false };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   UNSAFE_componentWillUpdate() {
@@ -889,20 +929,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Other',
-            click: event => {
-              const { selection, items } = this.props;
-              const threads = threadSelectionScope(this.props, selection);
-              const tasks = TaskFactory.tasksForMoveToOther(
-                Array.isArray(threads) ? threads : items
-              );
-              Actions.queueTasks(tasks);
-              if (event && typeof event.stopPropagation === 'function') {
-                event.stopPropagation();
-              }
-              if (selection) {
-                selection.clear();
-              }
-            },
+            click: this._onToggleMoveOther,
           })
         );
       }
@@ -910,20 +937,7 @@ export class ThreadListMoreButton extends React.Component {
         menu.append(
           new MenuItem({
             label: 'Move to Focused',
-            click: event => {
-              const { selection, items } = this.props;
-              const threads = threadSelectionScope(this.props, selection);
-              const tasks = TaskFactory.tasksForMoveToFocused(
-                Array.isArray(threads) ? threads : items
-              );
-              Actions.queueTasks(tasks);
-              if (event && typeof event.stopPropagation === 'function') {
-                event.stopPropagation();
-              }
-              if (selection) {
-                selection.clear();
-              }
-            },
+            click: this._onToggleMoveFocused,
           })
         );
       }
@@ -1033,10 +1047,106 @@ export class ThreadListMoreButton extends React.Component {
     }
     menu.popup({});
   };
+  _onToggleMoveOther = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: !this.state.showMoveToOtherDialog,
+      showMoveToFocusedDialog: false,
+    });
+  };
+  _onToggleMoveFocused = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: false,
+      showMoveToFocusedDialog: !this.state.showMoveToFocusedDialog,
+    });
+  };
+  _onHideMoveOtherFocusedDialog = () => {
+    if (!this._mounted) {
+      return;
+    }
+    this.setState({
+      showMoveToOtherDialog: false,
+      showMoveToFocusedDialog: false,
+    });
+  };
+  _onMoveToOtherFocused = () => {
+    const { selection, items } = this.props;
+    const threads = threadSelectionScope(this.props, selection);
+    let tasks;
+    if (this.state.showMoveToOtherDialog) {
+      tasks = TaskFactory.tasksForMoveToOther(Array.isArray(threads) ? threads : items);
+    } else if (this.state.showMoveToFocusedDialog) {
+      tasks = TaskFactory.tasksForMoveToFocused(Array.isArray(threads) ? threads : items);
+    }
+    Actions.queueTasks(tasks);
+    if (selection) {
+      selection.clear();
+    }
+    this._onHideMoveOtherFocusedDialog();
+  };
+
+  _renderMoveOtherFocusedPopup = () => {
+    let name;
+    if (this.state.showMoveToFocusedDialog) {
+      name = 'Focused';
+    } else if (this.state.showMoveToOtherDialog) {
+      name = 'Other';
+    }
+    return (
+      <div className="email-confirm-popup">
+        <RetinaImg
+          isIcon
+          className="close-icon"
+          style={{ width: '20', height: '20' }}
+          name="close.svg"
+          mode={RetinaImg.Mode.ContentIsMask}
+          onClick={this._onHideMoveOtherFocusedDialog}
+        />
+        <h1>{`Move to ${name} Inbox`}</h1>
+        <p>
+          Always move conversations from these senders to <br /> your {`${name} Inbox`}
+        </p>
+        <div className="btn-list">
+          <div className="btn cancel" onClick={this._onHideMoveOtherFocusedDialog}>
+            Cancel
+          </div>
+          <div className="btn confirm" onClick={this._onMoveToOtherFocused}>
+            Move
+          </div>
+        </div>
+      </div>
+    );
+  };
+  _renderMoveToOtherFocusedDialog() {
+    if (!this.state.showMoveToOtherDialog && !this.state.showMoveToFocusedDialog) {
+      return null;
+    }
+    return (
+      <FullScreenModal
+        visible={this.state.showMoveToOtherDialog || this.state.showMoveToFocusedDialog}
+        style={{
+          height: 'auto',
+          width: '400px',
+          top: '165px',
+          right: '255px',
+          left: 'auto',
+          bottom: 'auto',
+        }}
+      >
+        {this._renderMoveOtherFocusedPopup()}
+      </FullScreenModal>
+    );
+  }
 
   render() {
-    return (
+    return [
       <button
+        key={`moreButton${this.props.position}`}
         id={`moreButton${this.props.position}`}
         ref={el => (this._anchorEl = el)}
         tabIndex={-1}
@@ -1044,13 +1154,15 @@ export class ThreadListMoreButton extends React.Component {
         onClick={this._more}
       >
         <RetinaImg
+          key={'moreIcon'}
           name="more.svg"
           style={{ width: 24, height: 24, fontSize: 24 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
-      </button>
-    );
+      </button>,
+      this._renderMoveToOtherFocusedDialog(),
+    ];
   }
 }
 
@@ -1060,6 +1172,7 @@ export class MoreButton extends React.Component {
 
   static propTypes = {
     items: PropTypes.array.isRequired,
+    position: PropTypes.string,
   };
 
   _onPrintThread = () => {
@@ -1271,6 +1384,9 @@ export const DownButton = props => {
 };
 DownButton.displayName = 'DownButton';
 DownButton.containerRequired = false;
+DownButton.propTypes = {
+  isMenuItem: PropTypes.bool,
+};
 
 export const UpButton = props => {
   const getStateFromStores = () => {
@@ -1313,6 +1429,9 @@ export const UpButton = props => {
 };
 UpButton.displayName = 'UpButton';
 UpButton.containerRequired = false;
+UpButton.propTypes = {
+  isMenuItem: PropTypes.bool,
+};
 
 export const PopoutButton = () => {
   const _onPopoutComposer = () => {
@@ -1368,12 +1487,17 @@ function FolderButton(props) {
   }
 
   return (
-    <div>
+    <div key="folder">
       <ToolbarCategoryPicker {...props} />
     </div>
   );
 }
 FolderButton.displayName = 'FolderButton';
+FolderButton.propTypes = {
+  anchorEl: PropTypes.node,
+  items: PropTypes.array,
+  isMenuItem: PropTypes.bool,
+};
 
 const MailActionsMap = {
   archive: ArchiveButton,
@@ -1390,11 +1514,20 @@ class MoreActionsButton extends React.Component {
   static propTypes = {
     moreButtonlist: PropTypes.array.isRequired,
     items: PropTypes.array.isRequired,
+    thread: PropTypes.object,
+    position: PropTypes.string,
   };
 
   constructor(props) {
-    super();
+    super(props);
   }
+
+  _canReplyAll = () => {
+    const lastMessage = (this.props.thread.__messages || MessageStore.items() || [])
+      .filter(m => !m.draft)
+      .pop();
+    return lastMessage && lastMessage.canReplyAll();
+  };
 
   _more = () => {
     const expandTitle = MessageStore.hasCollapsedItems() ? 'Expand All' : 'Collapse All';
@@ -1404,15 +1537,42 @@ class MoreActionsButton extends React.Component {
     moreButtonlist.forEach(button => {
       if (button && typeof button === 'function') {
         const menuItem = button({ ...this.props, isMenuItem: true, anchorEl: this._anchorEl });
-        if (menuItem instanceof Array) {
-          menuItem.forEach(item => {
-            menu.append(item);
-          });
-        } else {
-          menu.append(menuItem);
+        // if the account has no spam folder, the menuItem is false
+        if (menuItem) {
+          if (menuItem instanceof Array) {
+            menuItem.forEach(item => {
+              menu.append(item);
+            });
+          } else {
+            menu.append(menuItem);
+          }
         }
       }
     });
+    menu.insert(
+      0,
+      new MenuItem({
+        label: `Forward`,
+        click: () => AppEnv.commands.dispatch('core:forward'),
+      })
+    );
+    if (this._canReplyAll()) {
+      menu.insert(
+        0,
+        new MenuItem({
+          label: `Reply All`,
+          click: () => AppEnv.commands.dispatch('core:reply-all'),
+        })
+      );
+    }
+    menu.insert(
+      0,
+      new MenuItem({
+        label: `Reply`,
+        click: () => AppEnv.commands.dispatch('core:reply'),
+      })
+    );
+
     if (!AppEnv.isDisableThreading()) {
       menu.append(
         new MenuItem({
@@ -1434,8 +1594,33 @@ class MoreActionsButton extends React.Component {
   };
 
   render() {
-    return (
+    const { moreButtonlist } = this.props;
+    const otherCommandBindings = [];
+
+    if (moreButtonlist) {
+      moreButtonlist.forEach(button => {
+        if (button && typeof button === 'function') {
+          const menuItem = button({
+            ...this.props,
+            isMenuItem: false,
+            anchorEl: this._anchorEl,
+          });
+          // if the account has no spam folder, the menuItem is false
+          if (menuItem) {
+            if (menuItem instanceof Array) {
+              menuItem.forEach(item => {
+                otherCommandBindings.push(item);
+              });
+            } else {
+              otherCommandBindings.push(menuItem);
+            }
+          }
+        }
+      });
+    }
+    return [
       <button
+        key="btn-more"
         id={`threadToolbarMoreButton${this.props.position}`}
         tabIndex={-1}
         className="btn btn-toolbar btn-more"
@@ -1448,8 +1633,11 @@ class MoreActionsButton extends React.Component {
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
-      </button>
-    );
+      </button>,
+      <div key="other-command-bindings" style={{ display: 'none' }}>
+        {otherCommandBindings}
+      </div>,
+    ];
   }
 }
 

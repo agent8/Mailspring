@@ -1,3 +1,5 @@
+/* eslint-disable no-misleading-character-class */
+/* eslint-disable no-control-regex */
 const _ = require('underscore');
 
 let EmojiData = null;
@@ -170,7 +172,7 @@ const RegExpUtils = {
 
       // optionally followed by: a query string and/or a #location
       // (last character must not be puncation, hence two groups)
-      "(?:(\\?[\\-\\+=&;%@\\.\\w_\\#]*[\\#\\-\\+=&;%@\\w_\\/]+)?#?(?:['\\$\\&\\(\\)\\*\\+,;=\\.\\!\\/\\\\\\w%-?]*[\\/\\\\\\w]+)?)?",
+      "(?:(\\?[\\-\\+=&;%@\\.\\w_\\#]*[\\#\\-\\+=&;%@\\w_\\/]+)?#?(?:['\\$\\&\\(\\)\\*\\+,;=\\.\\!\\/\\\\\\w%-?]*[\\/\\\\\\w@$\\.&=]+)?)?",
       ')?',
       ')',
     ];
@@ -210,7 +212,7 @@ const RegExpUtils = {
   },
 
   mailspringSignatureRegex() {
-    return /<edo\-signature id="([A-Za-z0-9-/\\]+)">[^]*<\/edo\-signature>/;
+    return /<edo-signature id="([A-Za-z0-9-/\\]+)">[^]*<\/edo-signature>/;
   },
 
   // https://regex101.com/r/zG7aW4/3

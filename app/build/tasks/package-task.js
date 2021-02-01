@@ -109,7 +109,7 @@ module.exports = grunt => {
   grunt.config.merge({
     packager: {
       appVersion: packageJSON.version,
-      buildVersion: packageJSON.version,
+      buildVersion: packageJSON.buildVersion,
       platform: isMas ? 'mas' : platform,
       dir: grunt.config('appDir'),
       appCategoryType: 'public.app-category.business',
@@ -205,7 +205,7 @@ module.exports = grunt => {
        * runs the `security find-identity` command. Note that
        * setup-mac-keychain-task needs to be run first
        */
-      osxSign: !!process.env.SIGN_BUILD
+      osxSign: process.env.SIGN_BUILD
         ? {
             hardenedRuntime: true,
             entitlements: '../scripts/osx_plist/parent.plist',
@@ -250,7 +250,7 @@ module.exports = grunt => {
       ],
     },
   });
-
+  let ongoing;
   grunt.registerTask(
     'package',
     'Package EdisonMail',
@@ -261,7 +261,7 @@ module.exports = grunt => {
       console.log('---> Running packager with options:');
       console.log(util.inspect(grunt.config.get('packager'), true, 7, true));
 
-      const ongoing = setInterval(() => {
+      ongoing = setInterval(() => {
         const elapsed = Math.round((Date.now() - start) / 1000.0);
         console.log(`---> Packaging for ${elapsed}s`);
       }, 1000);
@@ -282,6 +282,7 @@ module.exports = grunt => {
     err => {
       clearInterval(ongoing);
       if (err) {
+        const done = this.async();
         grunt.fail.fatal(err);
         return done(err);
       }

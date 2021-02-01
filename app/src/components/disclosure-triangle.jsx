@@ -8,6 +8,7 @@ class DisclosureTriangle extends React.Component {
   static propTypes = {
     collapsed: PropTypes.bool,
     visible: PropTypes.bool,
+    visibleOnHover: PropTypes.bool,
     onCollapseToggled: PropTypes.func,
     className: PropTypes.string,
     iconName: PropTypes.string,
@@ -18,7 +19,9 @@ class DisclosureTriangle extends React.Component {
   _renderImage() {
     let classNames = `${this.props.className}`;
     if (this.props.visible) {
-      classNames += ' visible';
+      classNames += ' force-visible';
+    } else if (this.props.visibleOnHover) {
+      classNames += ' hover-visible';
     }
     let retinaClassName = '';
     if (this.props.collapsed) {
@@ -43,7 +46,9 @@ class DisclosureTriangle extends React.Component {
     }
     let classnames = `${this.props.className} disclosure-triangle`;
     if (this.props.visible) {
-      classnames += ' visible';
+      classnames += ' force-visible';
+    } else if (this.props.visibleOnHover) {
+      classnames += ' hover-visible';
     }
     if (this.props.collapsed) {
       classnames += ' collapsed';

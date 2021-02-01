@@ -1,5 +1,8 @@
 import MailspringWindow from './mailspring-window';
 
+const { app } = require('electron');
+const MAIN_WINDOW = 'default';
+
 const BG_COLOR_POPOUT = '#1e1e1f';
 const BG_COLOR_MAIN_WINDOW = '#111112';
 const DEBUG_SHOW_HOT_WINDOW = process.env.SHOW_HOT_WINDOW || false;
@@ -44,7 +47,6 @@ export default class WindowLauncher {
     this.config = config;
     this.onCreatedHotWindow = onCreatedHotWindow;
     if (specMode) return;
-    this.createHotWindow();
   }
 
   newWindow(options) {
@@ -108,6 +110,14 @@ export default class WindowLauncher {
     }
 
     if (!opts.hidden && !opts.initializeInBackground) {
+      if (process.platform === 'darwin' && !process.mas && win.windowKey === MAIN_WINDOW) {
+        const loginSettings = app.getLoginItemSettings() || {};
+        // if the system setting is openAsHidden, don't show mainWindow automatically
+        if (loginSettings.openAsHidden) {
+          return win;
+        }
+      }
+
       // NOTE: In the case of a cold window, this will show it once
       // loaded. If it's a hotWindow, since hotWindows have a
       // `hidden:true` flag, nothing will show. When `setLoadSettings`

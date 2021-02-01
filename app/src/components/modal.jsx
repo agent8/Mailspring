@@ -88,9 +88,16 @@ class Modal extends React.Component {
         <div className="modal" style={modalStyle} onClick={event => event.stopPropagation()}>
           <RetinaImg
             className="modal-close"
-            style={{ width: '14', WebkitFilter: 'none', zIndex: '1', position: 'relative' }}
-            name="modal-close.png"
-            mode={RetinaImg.Mode.ContentDark}
+            name="closeCircle.svg"
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+            style={{
+              width: 14,
+              height: 14,
+              WebkitFilter: 'none',
+              zIndex: '1',
+              position: 'relative',
+            }}
             onClick={event => {
               event.stopPropagation();
               Actions.closeModal();

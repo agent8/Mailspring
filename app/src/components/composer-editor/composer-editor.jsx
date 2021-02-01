@@ -5,7 +5,12 @@ import { clipboard as ElectronClipboard } from 'electron';
 
 import KeyCommandsRegion from '../key-commands-region';
 import ComposerEditorToolbar from './composer-editor-toolbar';
-import { plugins as insidePlugins, convertFromHTML, convertToHTML } from './conversion';
+import {
+  plugins as insidePlugins,
+  convertFromHTML,
+  convertToHTML,
+  convertEdisonImageFilesToInline,
+} from './conversion';
 import { lastUnquotedNode } from './base-block-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
 import { changes as InlineResizableImageChanges } from './image-plugins';
@@ -77,8 +82,9 @@ export default class ComposerEditor extends React.Component {
 
   focus = () => {
     const { onChange, value } = this.props;
-    const defaultFont = AppEnv.config.get('core.fontface');
-    const defaultSize = AppEnv.config.get('core.fontsize');
+    const draft = (this.props.propsForPlugins || {}).draft || { defaultValues: {} };
+    const defaultFont = draft.defaultValues.fontFace || AppEnv.config.get('core.fontface');
+    const defaultSize = draft.defaultValues.fontSize || AppEnv.config.get('core.fontsize');
     onChange(
       value
         .change()
@@ -240,16 +246,26 @@ export default class ComposerEditor extends React.Component {
     // Reinstated because the bug is causing more trouble than it's worth.
     let html = event.clipboardData.getData('text/html');
     if (html) {
-      const newHtml = this._removeAllDarkModeStyles(html);
+      const darkHtml = this._removeAllDarkModeStyles(html);
       let value = null;
+      let newFiles = [];
       try {
-        value = convertFromHTML(newHtml);
+        const ret = convertEdisonImageFilesToInline(darkHtml);
+        value = convertFromHTML(ret.html);
+        newFiles = ret.newFiles;
       } catch (err) {
         console.error('Error: convertFromHTML', err);
-        value = convertFromHTML(html);
+        const ret = convertEdisonImageFilesToInline(html);
+        value = convertFromHTML(ret.html);
+        newFiles = ret.newFiles;
       }
       if (value && value.document) {
         change.insertFragment(value.document);
+        if (newFiles.length > 0) {
+          if (this.props.onPasteHtmlHasFiles) {
+            this.props.onPasteHtmlHasFiles(newFiles);
+          }
+        }
         return true;
       }
     }
@@ -262,15 +278,20 @@ export default class ComposerEditor extends React.Component {
     return html.replace(/(background-color|color):[^;]*?!important;/g, '');
   }
 
-  openContextMenu = ({ word, sel, hasSelectedText }) => {
-    AppEnv.windowEventHandler.openSpellingMenuFor(word, hasSelectedText, {
-      onCorrect: correction => {
-        this.onChange(this.props.value.change().insertText(correction));
+  openContextMenu = ({ word, sel, hasSelectedText }, event) => {
+    AppEnv.windowEventHandler.openSpellingMenuFor(
+      word,
+      hasSelectedText,
+      {
+        onCorrect: correction => {
+          this.onChange(this.props.value.change().insertText(correction));
+        },
+        onRestoreSelection: () => {
+          this.onChange(this.props.value.change().select(sel));
+        },
       },
-      onRestoreSelection: () => {
-        this.onChange(this.props.value.change().select(sel));
-      },
-    });
+      event
+    );
   };
 
   onContextMenu = event => {
@@ -279,7 +300,7 @@ export default class ComposerEditor extends React.Component {
     const word = this.props.value.fragment.text;
     const sel = this.props.value.selection;
     const hasSelectedText = !sel.isCollapsed;
-    this.openContextMenu({ word, sel, hasSelectedText });
+    this.openContextMenu({ word, sel, hasSelectedText }, event);
   };
 
   onChange = nextValue => {

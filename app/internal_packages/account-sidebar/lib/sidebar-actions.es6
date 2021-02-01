@@ -5,7 +5,18 @@
  */
 const Reflux = require('reflux');
 
-const Actions = ['focusAccounts', 'setKeyCollapsed', 'toggleMore'];
+const Actions = [
+  'focusAccounts',
+  'setKeyCollapsed',
+  'toggleMore',
+  'saveMenuChanges',
+  'cancelMenuChanges',
+  'requestAddFolderAccountSelection',
+  'addingNewFolderToAccount',
+  'updateNewFolderData',
+  'cancelAddFolderRequest',
+  'saveNewFolderRequest',
+];
 
 for (let idx of Array.from(Actions)) {
   Actions[idx] = Reflux.createAction(Actions[idx]);

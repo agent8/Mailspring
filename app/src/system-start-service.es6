@@ -1,7 +1,6 @@
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import { exec } from 'child_process';
 import ws from 'windows-shortcuts';
 const { app } = require('electron').remote;
 
@@ -66,7 +65,7 @@ class SystemStartServiceDarwin extends SystemStartServiceBase {
 
   dontLaunchOnSystemStart() {
     app.setLoginItemSettings({ openAtLogin: false });
-    return fs.unlink(this._plistPath(), () => { });
+    return fs.unlink(this._plistPath(), () => {});
   }
 
   _launcherPath() {
@@ -128,7 +127,7 @@ class SystemStartServiceWin32 extends SystemStartServiceBase {
   }
 
   dontLaunchOnSystemStart() {
-    return fs.unlink(this._shortcutPath(), () => { });
+    return fs.unlink(this._shortcutPath(), () => {});
   }
 
   _launcherPath() {
@@ -178,12 +177,12 @@ class SystemStartServiceLinux extends SystemStartServiceBase {
       // Append the --background flag before the Exec key
       const parsedData = data.replace('%U', '--background %U');
 
-      fs.writeFile(this._shortcutPath(), parsedData, () => { });
+      fs.writeFile(this._shortcutPath(), parsedData, () => {});
     });
   }
 
   dontLaunchOnSystemStart() {
-    return fs.unlink(this._shortcutPath(), () => { });
+    return fs.unlink(this._shortcutPath(), () => {});
   }
 
   _launcherPath() {
@@ -196,7 +195,6 @@ class SystemStartServiceLinux extends SystemStartServiceBase {
   }
 }
 
-/* eslint import/no-mutable-exports: 0*/
 let SystemStartService;
 if (process.platform === 'darwin') {
   SystemStartService = SystemStartServiceDarwin;

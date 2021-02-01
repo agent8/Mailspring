@@ -8,6 +8,28 @@ import KeyManager from '../key-manager';
 const { OAuthList } = Constant;
 const supportId = AppEnv.config.get('core.support.id');
 
+function getDeviceInfo() {
+  const { hostname, release } = getOSInfo();
+  const appInstallDate = new Date(AppEnv.config.get('identity.createdAt'));
+  const appInstalledAtInMs = appInstallDate.getTime();
+  const timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
+  const appVersion = AppEnv.getVersion();
+  const buildVersion = AppEnv.getBuildVersion();
+  return {
+    id: supportId,
+    name: hostname,
+    platform: process.platform === 'darwin' ? 'mac' : process.platform,
+    model: release,
+    screenType: 'computer',
+    pushToken: 'string',
+    timeZoneOffsetInMs: timezoneOffset,
+    timeZoneLocation: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    appInstalledAtInMs: appInstalledAtInMs,
+    appUpdatedAtInMs: 0,
+    appVersion: `${appVersion}(${buildVersion})`,
+  };
+}
+
 const aesEncode = data => {
   const password = 'effa43461f128bee';
   const algorithm = 'aes-128-ecb';
@@ -17,7 +39,7 @@ const aesEncode = data => {
   return encrypted;
 };
 
-const ResCodes = {
+export const EdisonAccountResCodes = {
   Deleted: 10002,
   EmailValid: 10003,
   AccountValid: 10004,
@@ -32,7 +54,7 @@ export default class EdisonAccount {
     if (code === 0) {
       return;
     }
-    if (code === ResCodes.Deleted) {
+    if (code === EdisonAccountResCodes.Deleted) {
       Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
     }
   }
@@ -110,16 +132,7 @@ export default class EdisonAccount {
     if (!account) {
       return new RESTResult(false, 'accountId is unexpected');
     }
-    const { hostname, release } = getOSInfo();
-    const supportId = AppEnv.config.get('core.support.id');
-    const device = {
-      id: supportId,
-      name: hostname,
-      platform: process.platform === 'darwin' ? 'mac' : process.platform,
-      model: release,
-      screenType: 'computer',
-      pushToken: 'string',
-    };
+    const device = getDeviceInfo();
     const emailAccount = {
       name: account.name,
       emailAddress: account.emailAddress,
@@ -257,16 +270,7 @@ export default class EdisonAccount {
     if (!password) {
       return new RESTResult(false, 'password is unexpected');
     }
-    const { hostname, release } = getOSInfo();
-    const supportId = AppEnv.config.get('core.support.id');
-    const device = {
-      id: supportId,
-      name: hostname,
-      platform: process.platform === 'darwin' ? 'mac' : process.platform,
-      model: release,
-      screenType: 'computer',
-      pushToken: 'string',
-    };
+    const device = getDeviceInfo();
     const postData = {
       emailAddress: account.emailAddress,
       password: password,
@@ -366,15 +370,12 @@ export default class EdisonAccount {
     if (!token) {
       return new RESTResult(false, 'this account has no token');
     }
-    const { hostname, release } = getOSInfo();
-    const device = {
-      id: supportId,
-      name: name || hostname,
-      platform: process.platform === 'darwin' ? 'mac' : process.platform,
-      model: release,
-      screenType: 'computer',
-      pushToken: 'string',
-    };
+
+    const device = getDeviceInfo();
+    if (name) {
+      device.name = name;
+    }
+
     try {
       const { data } = await axios.post(url, device, {
         headers: {
@@ -426,11 +427,18 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
-      this._handleResCode(data.code, account);
+      this._handleResCode(data.code, syncAccount);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       this._handleReqError(error, syncAccount.id);
       return new RESTResult(false, error.message);
+    }
+  }
+
+  async checkEdisonAccount() {
+    const syncAccount = AccountStore.syncAccount();
+    if (syncAccount && syncAccount.id) {
+      await this.devicesList(syncAccount.id);
     }
   }
 }

@@ -171,7 +171,7 @@ body.platform-win32 {
       background: @text-color-search-current-match;
     }
   }
-
+  .show-restore-message,
   .show-hidden-messages {
     background-color: @blue-light;
     line-height: 25px;
@@ -183,6 +183,14 @@ body.platform-win32 {
       float: right;
       cursor: pointer;
       font-weight: @font-weight-semi-bold;
+    }
+  }
+  .show-restore-message {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    a {
+      padding-left: 10px;
     }
   }
 
@@ -205,6 +213,10 @@ body.platform-win32 {
     margin-bottom: @padding-large-vertical;
   }
 
+  .headers {
+    padding: 0 15px;
+  }
+
   .message-subject-wrap {
     max-width: @message-max-width;
     margin: 15px auto 5px auto;
@@ -212,7 +224,7 @@ body.platform-win32 {
     line-height: 27px;
     display: flex;
     align-items: center;
-    padding: 0 12px 0 14px;
+    padding: 0 27px 0 29px;
     & > div {
       display: flex;
       align-items: center;
@@ -310,9 +322,9 @@ body.platform-win32 {
 
     .scroll-region-content-inner {
       padding-top: 0px;
-      padding-right: 15px;
-      padding-bottom: 6px;
-      padding-left: 15px;
+      // padding-bottom: 16px;
+      // padding-right: 15px;
+      // padding-left: 15px;
     }
   }
 
@@ -321,6 +333,7 @@ body.platform-win32 {
   }
 
   .message-item-wrap {
+    padding: 0 15px;
     transition: height 0.1s, opacity 0.1s;
     position: relative;
     max-width: @message-max-width;
@@ -440,6 +453,7 @@ body.platform-win32 {
   }
 
   .minified-bundle {
+    padding: 0 15px;
     position: relative;
     height: 60px;
     margin: 0 auto;
@@ -476,7 +490,7 @@ body.platform-win32 {
         font-size: 17px;
         text-align: center;
         position: absolute;
-        left: 15px;
+        left: 30px;
         top: 10px;
       }
     }
@@ -681,6 +695,14 @@ body.platform-win32 {
       .participants-to {
         display: flex;
         flex-wrap: wrap;
+        line-height: 24px;
+      }
+      &.with-border {
+        border: 1px solid @border-color-primary;
+        border-radius: 10px;
+        padding: 9px 20px;
+        margin: 10px 0 0 0;
+        line-height: 22px;
       }
     }
   }
@@ -745,9 +767,13 @@ body.platform-win32 {
     color: @blue;
     font-size: 11px;
     cursor: pointer;
+    transition: transform 0.15s;
     .edison-icon {
       vertical-align: middle;
       color: @gray-light;
+    }
+    &.inactive {
+      transform: rotate(180deg);
     }
   }
   .message-item-wrap:hover {
@@ -756,16 +782,34 @@ body.platform-win32 {
     }
   }
 
+  #reply-area-marker {
+    height: 10px;
+    position: static;
+    background: @white;
+    z-index: 99;
+  }
   .footer-reply-area-wrap {
-    padding-left: 15px;
-    padding-top: 20px;
-    overflow: hidden;
+    padding-bottom: 18px;
+    padding-left: 30px;
     line-height: 42px;
     max-width: @message-max-width;
-    margin: -3px auto 10px auto;
+    margin-top: -3px;
+    display: flex;
+    flex-wrap: wrap;
 
-    position: relative;
+    position: sticky;
+    bottom: 0px;
     z-index: 2;
+    &::after {
+      content: '';
+      display: block;
+      height: 11px;
+      width: 100%;
+      background: @white;
+      position: absolute;
+      bottom: -11px;
+      left: 0;
+    }
 
     background: @background-primary;
 
@@ -778,12 +822,19 @@ body.platform-win32 {
       cursor: default;
     }
 
+    &.has-shadow {
+      transition: box-shadow 0.2s ease-in-out;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+      z-index: 4;
+    }
+
     .btn {
+      white-space: nowrap;
       cursor: pointer;
       display: inline-block;
       position: relative;
       width: 150px;
-      margin: 0 20px 20px 0;
+      margin: 18px 20px 0 0;
       border: 1px solid @border-color-divider;
       box-shadow: none;
       overflow: hidden;
@@ -863,13 +914,6 @@ body.platform-win32 {
 }
 
 .attachments-area {
-  padding-top: @spacing-half + 2;
-
-  // attachments are padded on both sides so that things like the remove "X" can
-  // overhang them. To make the attachments line up with the body, we need to outdent
-  margin-left: -@spacing-standard;
-  margin-right: -@spacing-standard;
-
   cursor: default;
   max-width: 870px;
 }
@@ -902,6 +946,7 @@ body.platform-win32 {
     font-size: 15px;
     color: @text-color;
   }
+  .normal-label,
   .detail-from-label,
   .from-label,
   .to-label,
@@ -959,7 +1004,7 @@ body.platform-win32 {
       margin-right: 0.5em;
     }
     .participant-name {
-      color: @gray-dark;
+      color: @text-color;
     }
   }
 
@@ -967,11 +1012,16 @@ body.platform-win32 {
     //padding-right: 1.2em;
     width: 100%;
 
+    .participant-type {
+      display: flex;
+    }
+
     .participant {
       display: inline-block;
       //margin-right: 0.25em;
     }
 
+    .normal-label,
     .detail-from-label,
     .from-label,
     .to-label,
@@ -997,24 +1047,32 @@ body.platform-win32 {
     }
 
     // .from-label { margin-right: 1em; }
+    .normal-label,
     .detail-from-label,
     .to-label,
     .reply-to-label,
-    .cc-label {
-      margin-right: 0.5em;
-    }
+    .cc-label,
     .bcc-label {
-      margin-right: 0;
+      min-width: 30px;
+      margin-right: 0.5em;
     }
 
     .participant-primary {
-      color: @gray-dark;
+      color: @text-color;
       //margin-right: 0.15em;
       display: inline-block;
     }
     .participant-secondary {
-      color: @gray-dark;
+      color: @text-color;
       display: inline-block;
+      .expanded-email {
+        color: @gray-light;
+        padding-left: 3px;
+        font-size: 12px;
+      }
+      .expanded-comma {
+        padding-right: 4px;
+      }
     }
 
     .from-contact {
@@ -1053,18 +1111,6 @@ body.platform-win32 {
     margin: 0 0 18px 0;
     position: relative;
 
-    &:after {
-      content: ' ';
-      background-image: url(images/sidebar/sidebar-section-divider@2x.png);
-      background-size: 100%;
-      background-repeat: repeat-x;
-      background-color: transparent;
-      position: absolute;
-      left: -15px;
-      bottom: -10px;
-      width: calc(~'100% + 30px');
-      height: 3px;
-    }
     &:first-child {
       margin-top: 0;
     }
@@ -1131,7 +1177,7 @@ body.platform-win32 {
       display: inline-block;
       width: 100%;
       overflow: hidden;
-      white-space: nowrap;
+      overflow-wrap: break-word;
       text-overflow: ellipsis;
     }
   }

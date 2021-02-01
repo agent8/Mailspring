@@ -37,7 +37,6 @@
 
 .jira-plugin {
   border-left: 1px solid @border-color-divider;
-  border-top: 1px solid @border-color-divider;
   padding: 8px 18px 20px;
   background: @background-primary;
   color: @text-color;
@@ -416,9 +415,17 @@
     position: relative;
   }
   .image-wrap {
+    @maxImageHeight: 180px;
     display: inline-block;
-    max-height: 130px;
+    max-height: @maxImageHeight;
     overflow: hidden;
+    a[file-preview-type] {
+      cursor: pointer;
+    }
+    img {
+      max-height: @maxImageHeight;
+      width: auto;
+    }
   }
   textarea {
     margin: 20px 0px 10px 0px;

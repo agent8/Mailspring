@@ -13,7 +13,8 @@ import EmojiPlugins from './emoji-plugins';
 import ImagePlugins from './image-plugins';
 import SignaturePlugins from './signature-plugins';
 import CrowdedButtons from './crowded-buttons';
-import SystemTextReplacementsPlugins from './system-text-replacements-plugins';
+import Utils from '../../flux/models/utils';
+// import SystemTextReplacementsPlugins from './system-text-replacements-plugins';
 
 // Note: order is important here because we deserialize HTML with rules
 // in this order. <code class="var"> before <code>, etc.
@@ -188,7 +189,12 @@ function parseHtml(html) {
       cssValueIsZero(p.style.margin);
 
     // if the <p> is followed by a non-empty node and, insert a <br>
-    if (!prHasExplicitZeroMargin && p.nextSibling && p.nextSibling.nodeName !== 'P' && !nodeIsEmpty(p.nextSibling)) {
+    if (
+      !prHasExplicitZeroMargin &&
+      p.nextSibling &&
+      p.nextSibling.nodeName !== 'P' &&
+      !nodeIsEmpty(p.nextSibling)
+    ) {
       const br = document.createElement('BR');
       p.parentNode.insertBefore(br, p.nextSibling);
     }
@@ -241,7 +247,7 @@ HtmlSerializer.deserializeMark = function(mark) {
   }, []);
 };
 
-export function convertFromHTML(html) {
+export function convertFromHTML(html, defaultFontValues = {}) {
   const json = HtmlSerializer.deserialize(html, { toJSON: true });
 
   /* Slate's default sanitization just obliterates block nodes that contain both
@@ -301,6 +307,7 @@ export function convertFromHTML(html) {
   const cleanupTrailingWhitespace = (node, isTopLevel) => {
     if (!node.nodes || node.isVoid) return;
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const last = node.nodes[node.nodes.length - 1];
       if (!last) {
@@ -374,9 +381,55 @@ export function convertFromHTML(html) {
   };
 
   optimizeTextNodesForNormalization(json.document);
-
+  const injectDefaultFontValues = node => {
+    const { fontSize, fontFace } = defaultFontValues || {};
+    if (fontFace === undefined && fontSize === undefined) {
+      return;
+    }
+    const nodes = node.nodes;
+    if (nodes.length > 0) {
+      if (nodes[0].object === 'block' && nodes[0].type === BLOCK_CONFIG.div.type) {
+        nodes[0].data = nodes[0].data || {};
+        nodes[0].data.fontFamily = nodes[0].data.fontFamily || fontFace;
+        nodes[0].data.fontSize = nodes[0].data.fontSize || fontSize;
+      }
+    }
+  };
+  injectDefaultFontValues(json.document);
   return Value.fromJSON(json);
 }
+export const convertEdisonImageFilesToInline = htmlString => {
+  const parsed = new DOMParser().parseFromString(htmlString, 'text/html');
+  const pWalker = document.createTreeWalker(parsed.body, NodeFilter.SHOW_ELEMENT, {
+    acceptNode: node => {
+      return node.nodeName === 'IMG' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    },
+  });
+  const newFiles = [];
+  while (pWalker.nextNode()) {
+    const img = pWalker.currentNode;
+    const fileId = img.getAttribute('data-edison-file-id');
+    const contentType = img.getAttribute('data-edison-file-content-type');
+    const fileSize = img.getAttribute('data-edison-file-size');
+    const fileName = img.getAttribute('data-edison-file-name');
+    const originalPath = img.getAttribute('src');
+    if (fileId && contentType && fileName) {
+      const contentId = Utils.generateContentId();
+      const size = parseInt(fileSize, 10);
+      newFiles.push({
+        id: fileId,
+        contentType: Utils.base64ToString(contentType),
+        size: isNaN(size) ? 0 : size,
+        filename: Utils.base64ToString(fileName),
+        isInline: true,
+        contentId,
+      });
+      img.setAttribute('src', `cid:${contentId}`);
+      img.setAttribute('data-edison-file-path', originalPath);
+    }
+  }
+  return { newFiles, html: parsed.body.innerHTML };
+};
 
 export function convertToHTML(value) {
   return HtmlSerializer.serialize(value);
