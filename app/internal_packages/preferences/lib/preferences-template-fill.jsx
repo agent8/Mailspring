@@ -365,6 +365,7 @@ const preferencesTemplateFill = {
     {
       tabId: 'Accounts',
       displayName: 'Accounts',
+      className: 'preferences-template-accounts',
       order: 4,
       configGroup: [
         {
