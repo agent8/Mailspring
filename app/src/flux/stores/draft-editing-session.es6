@@ -114,8 +114,8 @@ class DraftChangeSet extends EventEmitter {
     this._timer = setTimeout(() => this.commit('debounceCommit'), SaveAfterIdleMSec);
   }
 
-  async commit(arg) {
-    if (this.dirtyFields().length === 0 && !this._draftDirty && arg !== 'force') {
+  async commit(arg, force = false) {
+    if (this.dirtyFields().length === 0 && !this._draftDirty && arg !== 'force' && !force) {
       return;
     }
     if (this._timer) {
@@ -554,20 +554,20 @@ export default class DraftEditingSession extends MailspringStore {
       warnings.push('without an attachment');
     }
 
-    // if (!unnamedRecipientPresent) {
-    //   // https://www.regexpal.com/?fam=99334
-    //   // note: requires that the name is capitalized, to avoid catching "Hey guys"
-    //   const englishSalutationPhrases = /(?:[y|Y]o|[h|H]ey|[h|H]i|[M|m]orning|[A|a]fternoon|[E|e]vening|[D|d]ear){1} ([A-Z][A-Za-zÀ-ÿ. ]+)[!_—,.\n\r< -]/;
-    //   const match = englishSalutationPhrases.exec(cleaned);
-    //   if (match) {
-    //     const salutation = (match[1] || '').toLowerCase();
-    //     if (!allNames.find(n => n === salutation || (n.length > 1 && salutation.includes(n)))) {
-    //       warnings.push(
-    //         `addressed to a name that doesn't appear to be a recipient ("${salutation}")`
-    //       );
-    //     }
-    //   }
-    // }
+    if (!unnamedRecipientPresent) {
+      //   // https://www.regexpal.com/?fam=99334
+      //   // note: requires that the name is capitalized, to avoid catching "Hey guys"
+      //   const englishSalutationPhrases = /(?:[y|Y]o|[h|H]ey|[h|H]i|[M|m]orning|[A|a]fternoon|[E|e]vening|[D|d]ear){1} ([A-Z][A-Za-zÀ-ÿ. ]+)[!_—,.\n\r< -]/;
+      //   const match = englishSalutationPhrases.exec(cleaned);
+      //   if (match) {
+      //     const salutation = (match[1] || '').toLowerCase();
+      //     if (!allNames.find(n => n === salutation || (n.length > 1 && salutation.includes(n)))) {
+      //       warnings.push(
+      //         `addressed to a name that doesn't appear to be a recipient ("${salutation}")`
+      //       );
+      //     }
+      //   }
+    }
 
     // Check third party warnings added via Composer extensions
     for (const extension of ComposerExtensionRegistry.extensions()) {
