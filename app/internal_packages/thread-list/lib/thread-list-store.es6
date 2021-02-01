@@ -1,10 +1,4 @@
-import {
-  Rx,
-  Actions,
-  WorkspaceStore,
-  FocusedContentStore,
-  FocusedPerspectiveStore,
-} from 'mailspring-exports';
+import { Rx, Actions, FocusedContentStore, FocusedPerspectiveStore } from 'mailspring-exports';
 import { ListTabular } from 'mailspring-component-kit';
 import ThreadListDataSource from './thread-list-data-source';
 import { ipcRenderer } from 'electron';
@@ -15,7 +9,7 @@ class ThreadListStore extends MailspringStore {
     super();
     this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
     ipcRenderer.on('refresh-start-of-day', this._onRefreshStartOfDay);
-    this.createListDataSource();
+    this.createListDataSource('constructor');
   }
   _onRefreshStartOfDay = () => {
     const perspective = FocusedPerspectiveStore.current();
@@ -30,7 +24,7 @@ class ThreadListStore extends MailspringStore {
     return this._dataSource;
   };
 
-  createListDataSource = () => {
+  createListDataSource = (source = 'Bind') => {
     if (typeof this._dataSourceUnlisten === 'function') {
       this._dataSourceUnlisten();
     }
@@ -52,7 +46,7 @@ class ThreadListStore extends MailspringStore {
     Actions.setFocus({
       collection: 'thread',
       item: null,
-      reason: 'ThreadListStore:onCreateThreadListDataSource',
+      reason: `${source}:ThreadListStore:onCreateThreadListDataSource`,
     });
   };
 
@@ -64,7 +58,7 @@ class ThreadListStore extends MailspringStore {
 
   _onPerspectiveChanged = () => {
     if (AppEnv.isMainWindow()) {
-      this.createListDataSource();
+      this.createListDataSource('onPerspectiveChange');
     } else {
       AppEnv.logDebug('not main window ignoring perspective change');
     }
