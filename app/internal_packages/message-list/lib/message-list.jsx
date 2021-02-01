@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import _ from 'underscore';
 import {
   React,
   ReactDOM,
@@ -82,6 +81,11 @@ class MessageListScrollTooltip extends React.Component {
 }
 
 class StickyShadow extends React.Component {
+  static propTypes = {
+    markerId: PropTypes.string,
+    targetId: PropTypes.string,
+    children: PropTypes.any,
+  };
   componentDidMount() {
     const { markerId, targetId } = this.props;
     this.observer = new IntersectionObserver(
@@ -356,6 +360,7 @@ class MessageList extends React.Component {
   };
 
   _getMessageContainer(headerMessageId) {
+    // eslint-disable-next-line react/no-string-refs
     return this.refs[`message-container-${headerMessageId}`];
   }
 
