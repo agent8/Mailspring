@@ -279,7 +279,7 @@ export default class ComposerEditor extends React.Component {
   }
 
   openContextMenu = ({ word, sel, hasSelectedText }, event) => {
-    AppEnv.windowEventHandler.openSpellingMenuFor(
+    AppEnv.openSpellingMenuFor(
       word,
       hasSelectedText,
       {

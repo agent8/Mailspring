@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import _ from 'underscore';
 import { remote } from 'electron';
-import { React, ReactDOM, PropTypes, Utils, RegExpUtils } from 'mailspring-exports';
+import { React, ReactDOM, PropTypes, Utils, RegExpUtils, Actions } from 'mailspring-exports';
 import { Menu } from 'mailspring-component-kit';
 
 import RetinaImg from './retina-img';
@@ -810,6 +810,7 @@ export default class TokenizingTextField extends React.Component {
         })
       );
     }
+    Actions.closeContextMenu();
     menu.popup({});
   };
 

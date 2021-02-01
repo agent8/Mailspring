@@ -691,6 +691,7 @@ class MessageList extends React.Component {
         })
       );
     }
+    Actions.closeContextMenu();
     menu.popup({});
   };
   _onLabelsRemoved = removedCategories => {
