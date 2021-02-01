@@ -128,6 +128,17 @@ const onDeleteItem = function(item) {
   if (!category) {
     return;
   }
+  const account = AccountStore.byId(category.accountId);
+  if (account && (account.provider === 'gmail' || account.provider === 'onmail')) {
+    Actions.queueTask(
+      new DestroyCategoryTask({
+        path: category.path,
+        name: category.name,
+        accountId: category.accountId,
+      })
+    );
+    return;
+  }
   DatabaseStore.findAll(ThreadCategory)
     .where({ categoryId: category.id, state: 0 })
     .count()

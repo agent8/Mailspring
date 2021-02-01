@@ -2213,7 +2213,7 @@ class DraftStore extends MailspringStore {
     // if (sendLaterMetadataValue) {
     //   session.changes.addPluginMetadata('send-later', sendLaterMetadataValue);
     // }
-    await session.changes.commit('send draft');
+    await session.changes.commit('send draft', true);
     AppEnv.logDebug(`Committing draft before sending for ${messageId}`);
     // ensureCorrectAccount / commit may assign this draft a new ID. To move forward
     // we need to have the final object with it's final ID.
