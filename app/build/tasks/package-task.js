@@ -118,6 +118,7 @@ module.exports = grunt => {
       arch: {
         win32: 'ia32',
         x64: 'x64',
+        arm64: 'arm64',
       }[arch],
       icon: {
         darwin: path.resolve(
