@@ -7,6 +7,7 @@ const MIGRATE_WINDOW = 'migrating';
 const SPEC_WINDOW = 'spec';
 const ONBOARDING_WINDOW = 'onboarding';
 const BUG_REPORT_WINDOW = 'bugreport';
+const EML_READER_WINDOW = 'emlReader';
 
 export default class WindowManager {
   constructor({
@@ -216,7 +217,8 @@ export default class WindowManager {
       const w = this.newWindow(this._coreWindowOpts(windowKey, extraOpts));
       if (
         windowKey === WindowManager.BUG_REPORT_WINDOW ||
-        windowKey === WindowManager.MIGRATE_WINDOW
+        windowKey === WindowManager.MIGRATE_WINDOW ||
+        windowKey === WindowManager.EML_READER_WINDOW
       ) {
         w.show();
       }
@@ -343,6 +345,19 @@ export default class WindowManager {
       width: 685,
       height: 700,
     };
+    coreWinOpts[WindowManager.EML_READER_WINDOW] = {
+      windowKey: WindowManager.EML_READER_WINDOW,
+      windowType: WindowManager.EML_READER_WINDOW,
+      title: 'Eml Reader',
+      name: 'Eml Reader',
+      // hidden: true, // Displayed by PageRouter::_initializeWindowSize
+      hidden: false,
+      frame: true, // Always false on Mac, explicitly set for Win & Linux
+      toolbar: false,
+      resizable: false,
+      width: 685,
+      height: 700,
+    };
     coreWinOpts[WindowManager.MIGRATE_WINDOW] = {
       windowKey: WindowManager.MIGRATE_WINDOW,
       windowType: WindowManager.MIGRATE_WINDOW,
@@ -383,3 +398,4 @@ WindowManager.SPEC_WINDOW = SPEC_WINDOW;
 WindowManager.ONBOARDING_WINDOW = ONBOARDING_WINDOW;
 WindowManager.BUG_REPORT_WINDOW = BUG_REPORT_WINDOW;
 WindowManager.MIGRATE_WINDOW = MIGRATE_WINDOW;
+WindowManager.EML_READER_WINDOW = EML_READER_WINDOW;

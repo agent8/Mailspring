@@ -4,6 +4,7 @@ import classnames from 'classnames';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
+import { simpleParser } from 'mailparser';
 import { pickHTMLProps } from 'pick-react-known-prop';
 import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
@@ -186,9 +187,26 @@ export class AttachmentItem extends Component {
   }
 
   _previewAttachment() {
-    const { filePath } = this.props;
-    const currentWin = AppEnv.getCurrentWindow();
-    currentWin.previewFile(filePath);
+    const { filePath, contentType } = this.props;
+    const extName = path.extname(filePath);
+
+    if (contentType === 'message/rfc822' || extName.toLocaleLowerCase() === '.eml') {
+      console.warn('trying to open rfc822');
+      AppEnv.newWindow({
+        hidden: false,
+        windowType: 'emlReader',
+        windowKey: `emlReader-${this.props.fileId}`,
+        accountId: this.props.accountId,
+        windowProps: {
+          accountId: this.props.accountId,
+          fileId: this.props.fileId,
+          filePath: this.props.filePath,
+        },
+      });
+    } else {
+      const currentWin = AppEnv.getCurrentWindow();
+      currentWin.previewFile(filePath);
+    }
   }
 
   _onDragStart = event => {

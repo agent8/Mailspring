@@ -1,0 +1,15 @@
+{
+  "name": "emlReader",
+  "version": "0.1.0",
+  "main": "./lib/main",
+  "description": "Eml Reader",
+  "syncInit": true,
+  "license": "GPL-3.0",
+  "private": true,
+  "engines": {
+    "mailspring": "*"
+  },
+  "windowTypes": {
+    "emlReader": true
+  }
+}
