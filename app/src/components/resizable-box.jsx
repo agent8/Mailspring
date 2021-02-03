@@ -6,7 +6,7 @@ const allDragPoints = ['n', 's', 'w', 'e', 'ne', 'nw', 'se', 'sw'];
 export default class ResizableBox extends Component {
   static propTypes = {
     disabledDragPoints: PropTypes.arrayOf(PropTypes.string),
-    onResize: PropTypes.func,
+    onContextMenu: PropTypes.func,
     onResizeComplete: PropTypes.func,
     children: PropTypes.node,
     style: PropTypes.object,
@@ -22,7 +22,10 @@ export default class ResizableBox extends Component {
     this.state = {
       disX: 0,
       disY: 0,
+      transform: '',
     };
+    this._maskRef = null;
+    this._setMaskRef = ref => (this._maskRef = ref);
     this._mounted = false;
   }
   componentDidMount() {
@@ -41,15 +44,27 @@ export default class ResizableBox extends Component {
   };
 
   renderHandleBar = Orientation => {
-    const { onResize, onResizeComplete } = this.props;
+    const { onResizeComplete } = this.props;
     const _onMouseDown = e => {
       if (!this._mounted) {
         return;
       }
-      const disX = e.screenX;
-      const disY = e.screenY;
+      if (!this._maskRef) {
+        return;
+      }
+      this._resizing = true;
+      const startX = e.screenX;
+      const startY = e.screenY;
       const originalWidth = this.props.width;
       const originalHeight = this.props.height;
+      let oppositeX = startX + originalWidth;
+      let oppositeY = startY + originalHeight;
+      if (Orientation.includes('e')) {
+        oppositeX = startX - originalWidth;
+      }
+      if (Orientation.includes('s')) {
+        oppositeY = startY - originalHeight;
+      }
       let targetWidth = this.props.width;
       let targetHeight = this.props.height;
 
@@ -58,43 +73,87 @@ export default class ResizableBox extends Component {
           document.onmousemove = null;
           return;
         }
-        const moveX = event.screenX - disX;
-        const moveY = event.screenY - disY;
-        const orientationList = Orientation.split('');
-        orientationList.forEach(o => {
-          switch (o) {
-            case 'n':
-              targetHeight = originalHeight - moveY;
-              break;
-            case 's':
-              targetHeight = originalHeight + moveY;
-              break;
-            case 'w':
-              targetWidth = originalWidth - moveX;
-              break;
-            case 'e':
-              targetWidth = originalWidth + moveX;
-              break;
-            default:
+        const currentX = event.screenX;
+        const currentY = event.screenY;
+        const deltaX = Math.abs(currentX - startX);
+        const deltaY = Math.abs(currentY - startY);
+        let xSign = 1;
+        if (currentX > startX) {
+          if (Orientation.includes('w')) {
+            xSign = -1;
+            if (currentX >= oppositeX) {
+              xSign = 0;
+            }
           }
-        });
-        if (onResize && typeof onResize === 'function') {
-          onResize(
-            this._processAspectRatio({
-              width: targetWidth,
-              height: targetHeight,
-              originalWidth,
-              originalHeight,
-            })
-          );
+        } else {
+          if (Orientation.includes('e')) {
+            xSign = -1;
+            if (currentX <= oppositeX) {
+              xSign = 0;
+            }
+          }
         }
+        let ySign = 1;
+        if (currentY > startY) {
+          if (Orientation.includes('n')) {
+            ySign = -1;
+            if (currentY >= oppositeY) {
+              ySign = 0;
+            }
+          }
+        } else {
+          if (Orientation.includes('s')) {
+            ySign = -1;
+            if (currentY <= oppositeY) {
+              ySign = 0;
+            }
+          }
+        }
+        if (!Orientation.includes('n') && !Orientation.includes('s')) {
+          ySign = 0;
+        }
+        if (!Orientation.includes('e') && !Orientation.includes('w')) {
+          xSign = 0;
+        }
+        const tmp = this._processAspectRatio({
+          width: (originalWidth + xSign * deltaX) / originalWidth,
+          height: (originalHeight + ySign * deltaY) / originalHeight,
+          originalHeight,
+          originalWidth,
+        });
+        const scaleX = tmp.width;
+        const scaleY = tmp.height;
+        targetWidth = scaleX * originalWidth;
+        targetHeight = scaleY * originalHeight;
+        let translateX = (xSign * deltaX) / 2;
+        if (Orientation.includes('w')) {
+          translateX = -1 * translateX;
+        }
+        let translateY = (ySign * deltaY) / 2;
+        if (Orientation.includes('n')) {
+          translateY = -1 * translateY;
+        }
+        const transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+        this.setState({ transform });
+        // if (onResize && typeof onResize === 'function') {
+        //   onResize(
+        //     this._processAspectRatio({
+        //       width: targetWidth,
+        //       height: targetHeight,
+        //       originalWidth,
+        //       originalHeight,
+        //     })
+        //   );
+        // }
       };
       document.onmouseup = () => {
         document.onmousemove = null;
         document.onmouseup = null;
+        this._resizing = false;
         if (!this._mounted) {
           return;
         }
+        this.setState({ transform: '' });
         if (onResizeComplete && typeof onResizeComplete === 'function') {
           onResizeComplete(
             this._processAspectRatio({
@@ -115,6 +174,14 @@ export default class ResizableBox extends Component {
         onMouseDown={_onMouseDown}
       />
     );
+  };
+  _onMaskContextMenu = event => {
+    event.stopPropagation();
+    if (this.props.onContextMenu) {
+      event.persist();
+      this.props.onContextMenu(event);
+    }
+    return;
   };
   _onMaskClicked = e => {
     e.stopPropagation();
@@ -139,14 +206,14 @@ export default class ResizableBox extends Component {
 
   render() {
     const { children, style, showMask } = this.props;
-    const containerStyle = style || {};
+    const containerStyle = Object.assign({}, style);
     if (this.props.height > 0) {
       containerStyle.height = this.props.height;
     }
     if (this.props.width > 0) {
       containerStyle.width = this.props.width;
     }
-    const maskStyle = {};
+    const maskStyle = { transform: this.state.transform };
     if (showMask) {
       maskStyle.zIndex = 1;
     }
@@ -158,6 +225,7 @@ export default class ResizableBox extends Component {
       >
         {showMask ? (
           <div
+            ref={this._setMaskRef}
             className="resizable-box-mask"
             style={maskStyle}
             contentEditable={false}
@@ -167,6 +235,7 @@ export default class ResizableBox extends Component {
               e.preventDefault();
             }}
             onClick={this._onMaskClicked}
+            onContextMenu={this._onMaskContextMenu}
           >
             {this.renderHandles()}
           </div>
