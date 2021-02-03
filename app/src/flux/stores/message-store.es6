@@ -398,10 +398,19 @@ class MessageStore extends MailspringStore {
   _onDataChanged(change) {
     if (!this._thread) return;
     if (change.objectClass === Message.name) {
-      const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
-      if (!inDisplayedThread && change.type === 'persist') return;
-      const messages = change.objects.filter(msg => msg.threadId === this._thread.id);
-      const drafts = messages.filter(msg => msg.draft && !msg.calendarReply && !msg.ignoreSift);
+      const messages = [];
+      const drafts = [];
+      change.objects.forEach(msg => {
+        if (msg && msg.threadId === this._thread.id) {
+          messages.push(msg);
+          if (msg.draft && !msg.calendarReply && !msg.ignoreSift) {
+            drafts.push(msg);
+          }
+        }
+      });
+      if (messages.length === 0 && change.type === 'persist') {
+        return;
+      }
       if (drafts.length > 0) {
         if (change.type === 'persist') {
           drafts.forEach(item => {
@@ -410,13 +419,13 @@ class MessageStore extends MailspringStore {
               AppEnv.logDebug(
                 `MessageStore: Draft ${item.id} added in db, updating items deleted ${item.deleted}`
               );
-              this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+              this._items = [].concat(this._items, [item]);
             } else {
               AppEnv.logDebug(`MessageStore: Draft ${item.id} db change, updating sync state`);
               this._items[itemIndex].syncState = item.syncState;
             }
           });
-          this._items = this._sortItemsForDisplay(this._items);
+          this._items = this._sortItemsForDisplay(this._items.filter(m => !m.isHidden()));
         } else if (change.type === 'unpersist') {
           drafts.forEach(item => {
             const itemIndex = this._items.findIndex(msg => msg.id === item.id);
