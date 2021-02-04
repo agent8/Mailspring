@@ -350,7 +350,7 @@ class EventedIFrame extends React.Component {
     ReactDOM.findDOMNode(this).dispatchEvent(eventInParentDoc);
   };
   _closeIFrameContextMenu = () => {
-    Actions.closePopover();
+    Actions.closeContextMenu();
     this._onIFrameContextMenuClose();
   };
   _onIFrameContextMenuClose = () => {

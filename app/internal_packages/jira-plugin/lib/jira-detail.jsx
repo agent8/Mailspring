@@ -12,6 +12,7 @@ import Description from './jira-description';
 import { JiraComments, CommentSubmit } from './jira-comments';
 import FixVersions from './jira-fix-versions';
 import Labels from './jira-labels';
+import { Actions, PropTypes } from 'mailspring-exports';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -22,6 +23,9 @@ const exists = util.promisify(fs.exists);
 const writeFile = util.promisify(fs.writeFile);
 
 export default class JiraDetail extends Component {
+  static propTypes = {
+    config: PropTypes.object,
+  };
   constructor(props) {
     super(props);
     this.state = { allUsers: [], EditorCore: {} };
@@ -331,6 +335,7 @@ export default class JiraDetail extends Component {
       },
     });
     this.menu.append(menuItem);
+    Actions.closeContextMenu();
     this.menu.popup({ x: e.clientX, y: e.clientY });
   };
   openOrignalImage = e => {

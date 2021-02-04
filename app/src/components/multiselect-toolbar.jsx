@@ -3,6 +3,7 @@ import {
   ThreadCountsStore,
   CategoryStore,
   FocusedPerspectiveStore,
+  Actions,
 } from 'mailspring-exports';
 import Draggable from 'react-draggable';
 import { InjectedComponentSet, RetinaImg } from 'mailspring-component-kit';
@@ -220,6 +221,7 @@ class MultiselectToolbar extends Component {
         },
       })
     );
+    Actions.closeContextMenu();
     menu.popup({});
   };
 
