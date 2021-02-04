@@ -99,6 +99,63 @@ function ImageNode(props) {
           return change.removeNodeByKey(node.key);
         })
       }
+      onContextMenu={event => {
+        event.preventDefault();
+        const { remote, clipboard, nativeImage } = require('electron');
+        const { Menu, MenuItem } = remote;
+        const menu = new Menu();
+        const removeImage = () => {
+          editor.change(change => {
+            Actions.removeAttachment({
+              headerMessageId: draft.headerMessageId,
+              messageId: draft.id,
+              accountId: draft.accountId,
+              fileToRemove: { id: fileId },
+            });
+            return change.removeNodeByKey(node.key);
+          });
+        };
+        const copyImage = cb => {
+          const urlPath = Utils.safeBrowserPath(filePath);
+          let img = new Image();
+          img.addEventListener(
+            'load',
+            function() {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              canvas.getContext('2d').drawImage(event.target, 0, 0);
+              const imageDataURL = canvas.toDataURL('image/png');
+              img = nativeImage.createFromDataURL(imageDataURL);
+              clipboard.writeImage(img);
+              if (cb) {
+                cb();
+              }
+            },
+            false
+          );
+          img.src = urlPath;
+        };
+        menu.append(
+          new MenuItem({
+            label: 'Cut',
+            enabled: true,
+            click: () => {
+              copyImage(removeImage);
+            },
+          })
+        );
+        menu.append(
+          new MenuItem({
+            label: 'Copy',
+            enabled: true,
+            click: () => {
+              copyImage();
+            },
+          })
+        );
+        menu.popup({});
+      }}
       onHover={node => {
         const selection = window.getSelection();
         if (

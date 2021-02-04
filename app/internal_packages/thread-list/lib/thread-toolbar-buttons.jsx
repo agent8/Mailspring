@@ -1045,6 +1045,7 @@ export class ThreadListMoreButton extends React.Component {
         })
       );
     }
+    Actions.closeContextMenu();
     menu.popup({});
   };
   _onToggleMoveOther = () => {
@@ -1234,6 +1235,7 @@ export class MoreButton extends React.Component {
         })
       );
     }
+    Actions.closeContextMenu();
     menu.popup({});
   };
 
@@ -1590,6 +1592,7 @@ class MoreActionsButton extends React.Component {
       menu.append(nextThread);
     }
 
+    Actions.closeContextMenu();
     menu.popup({});
   };
 
