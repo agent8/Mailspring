@@ -305,6 +305,10 @@ export default class ComposerEditor extends React.Component {
   };
 
   onContextMenu = event => {
+    if (event.isDefaultPrevented()) {
+      AppEnv.logDebug('Context Menu default prevented, ignoring');
+      return;
+    }
     event.preventDefault();
 
     const word = this.props.value.fragment.text;

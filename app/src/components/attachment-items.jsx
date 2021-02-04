@@ -418,6 +418,7 @@ export class ImageAttachmentItem extends Component {
     onHover: PropTypes.func,
     onResizeComplete: PropTypes.func,
     onShowMask: PropTypes.func,
+    onContextMenu: PropTypes.func,
     ...propTypes,
   };
 
@@ -560,6 +561,12 @@ export class ImageAttachmentItem extends Component {
       this.setState({ showResizeMask: false });
     }
   };
+  _onImageContextMenu = event => {
+    if (this.props.onContextMenu) {
+      event.persist();
+      this.props.onContextMenu(event);
+    }
+  };
 
   renderImage() {
     const { isDownloading, filePath, draggable } = this.props;
@@ -593,6 +600,7 @@ export class ImageAttachmentItem extends Component {
         onError={this._onImageError}
         onClick={this._onImageSelect}
         onBlur={this._onImageDeselect}
+        onContextMenu={this._onImageContextMenu}
         style={{ height, width }}
       />
     );
