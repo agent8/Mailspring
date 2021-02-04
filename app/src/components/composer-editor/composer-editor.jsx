@@ -25,16 +25,16 @@ const whiteSpaceAndPunctuation = ['.', ',', ';', ':', "'", '"', ' ', 'Enter'];
 export default class ComposerEditor extends React.Component {
   static propTypes = {
     readOnly: PropTypes.bool,
+    outerPlugin: PropTypes.array,
+    onChange: PropTypes.func,
+    value: PropTypes.object,
+    propsForPlugins: PropTypes.object,
+    onFileReceived: PropTypes.func,
+    onPasteHtmlHasFiles: PropTypes.func,
     className: PropTypes.string,
     onBlur: PropTypes.func,
     onDrop: PropTypes.func,
-    value: PropTypes.object,
-    propsForPlugins: PropTypes.object,
     onAddAttachments: PropTypes.func,
-    outerPlugin: PropTypes.array,
-    onChange: PropTypes.func,
-    onFileReceived: PropTypes.func,
-    onPasteHtmlHasFiles: PropTypes.func,
   };
   static defaultProps = {
     readOnly: false,
@@ -294,7 +294,7 @@ export default class ComposerEditor extends React.Component {
   }
 
   openContextMenu = ({ word, sel, hasSelectedText }, event) => {
-    AppEnv.windowEventHandler.openSpellingMenuFor(
+    AppEnv.openSpellingMenuFor(
       word,
       hasSelectedText,
       {
@@ -310,6 +310,10 @@ export default class ComposerEditor extends React.Component {
   };
 
   onContextMenu = event => {
+    if (event.isDefaultPrevented()) {
+      AppEnv.logDebug('Context Menu default prevented, ignoring');
+      return;
+    }
     event.preventDefault();
 
     const word = this.props.value.fragment.text;

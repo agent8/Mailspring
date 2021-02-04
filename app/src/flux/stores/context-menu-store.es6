@@ -8,6 +8,7 @@ class ContextMenuStore extends MailspringStore {
   constructor() {
     super();
     this.listenTo(Actions.openContextMenu, this.openContextMenu);
+    this.listenTo(Actions.closeContextMenu, this._onCloseContextMenu);
     this.rect = { top: 0, left: 0 };
     this.menuItems = [];
     this._disableAutoFocus = true;
@@ -50,6 +51,11 @@ class ContextMenuStore extends MailspringStore {
   };
   isContextMenuOpen = () => {
     return this._contextMenuOpen;
+  };
+  _onCloseContextMenu = () => {
+    if (this.isContextMenuOpen()) {
+      Actions.closePopover();
+    }
   };
   _onClose = () => {
     this._contextMenuOpen = false;
