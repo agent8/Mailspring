@@ -2,141 +2,172 @@
 
 // Preferences Specific
 .preferences-wrap {
-  .container-accounts {
-    display: flex;
+  .preferences-content > div:nth-of-type(2).scroll-region-content {
+    height: 100%;
 
-    .account-list {
-      flex: 0 0 auto;
-      display: flex;
-      flex-direction: column;
-      height: auto;
-      width: 282px;
-      padding: 40px 0 0 12px;
+    & > div:first-child.scroll-region-content-inner {
+      height: 100%;
+    }
+  }
 
-      .items-wrapper {
-        flex: 1;
-      }
+  .preferences-template-accounts {
+    display: block;
+    height: 100%;
 
-      .list-item {
-        padding: 10px 15px;
-        border-radius: 10px 0 0 10px;
-      }
-
-      .list-item:not(.selected) .sync-error {
-        color: @color-error;
-      }
-
-      .account {
-        .account-picture {
-          img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-          }
-          text-align: center;
-        }
-        .account-item {
-          flex: 1;
-          margin: 0 10px 0 20px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-
-          .account-name {
-            font-size: @font-size-large;
-            cursor: default;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            vertical-align: middle;
-          }
-
-          .account-subtext {
-            color: @gray;
-            font-size: @font-size-small;
-            cursor: default;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            vertical-align: middle;
-          }
-        }
-      }
+    & > div:first-child {
+      height: 100%;
     }
 
-    .account-details {
-      flex: 1;
-      max-width: 400px;
-      border-left: 1px solid @border-color-divider;
+    .container-accounts {
+      display: flex;
+      height: 100%;
 
-      .config-group {
-        padding-left: 20px;
-        padding-right: 10px;
-
-        .item {
-          display: flex;
-          label {
-            white-space: nowrap;
-            margin-right: 10px;
-          }
-          input {
-            border-radius: 0;
-          }
-        }
-        .notice {
-          color: @gray;
-          font-family: 'SF UI Text';
-          line-height: 16px;
-          margin: 4px 0;
-        }
-        .account-detail-btn {
-          flex: 1;
-          margin: 5px 18px 10px 0;
-        }
-      }
-
-      .aliases-edit {
-        height: 100px;
-        margin: 10px 0;
-        border: 1px solid @border-color-divider;
-      }
-
-      .key-commands-region {
-        height: inherit;
-      }
-
-      .items-wrapper {
-        height: 78px;
-      }
-
-      .account-error-detail {
+      .account-list {
+        flex: 0 0 auto;
         display: flex;
         flex-direction: column;
-        background: linear-gradient(to top, #ca2541 0%, #d55268 100%);
+        height: auto;
+        width: 282px;
+        padding: 40px 0 0 12px;
 
-        .action {
-          flex-shrink: 0;
-          background-color: rgba(0, 0, 0, 0.15);
-          text-align: center;
-          padding: 3px @padding-base-horizontal;
-          color: @text-color-inverse;
+        .items-wrapper {
+          flex: 1;
         }
-        .action:hover {
-          background-color: rgba(255, 255, 255, 0.15);
-          text-decoration: none;
+
+        .list-item {
+          padding: 10px 15px;
+          border-radius: 10px 0 0 10px;
         }
-        .message {
-          flex-grow: 1;
-          padding: 3px @padding-base-horizontal;
-          color: @text-color-inverse;
+
+        .list-item:not(.selected) .sync-error {
+          color: @color-error;
+        }
+
+        .account {
+          .account-picture {
+            img {
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              object-fit: cover;
+            }
+
+            text-align: center;
+          }
+
+          .account-item {
+            flex: 1;
+            margin: 0 10px 0 20px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            .account-name {
+              font-size: @font-size-large;
+              cursor: default;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              vertical-align: middle;
+            }
+
+            .account-subtext {
+              color: @gray;
+              font-size: @font-size-small;
+              cursor: default;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              vertical-align: middle;
+            }
+          }
         }
       }
 
-      .newsletter {
-        padding-top: @padding-base-vertical * 2;
-        input[type='checkbox'] {
-          margin: 0;
-          position: relative;
-          top: 0;
+      .account-details-container {
+        flex: 1;
+        max-width: 100%;
+        .account-details {
+          flex: 1;
+          max-width: 400px;
+          border-left: 1px solid @border-color-divider;
+
+          .config-group {
+            padding-left: 20px;
+            padding-right: 10px;
+
+            .item {
+              display: flex;
+
+              label {
+                white-space: nowrap;
+                margin-right: 10px;
+              }
+
+              input {
+                border-radius: 0;
+              }
+            }
+
+            .notice {
+              color: @gray;
+              font-family: 'SF UI Text';
+              line-height: 16px;
+              margin: 4px 0;
+            }
+
+            .account-detail-btn {
+              flex: 1;
+              margin: 5px 18px 10px 0;
+            }
+          }
+
+          .aliases-edit {
+            height: 100px;
+            margin: 10px 0;
+            border: 1px solid @border-color-divider;
+          }
+
+          .key-commands-region {
+            height: inherit;
+          }
+
+          .items-wrapper {
+            height: 78px;
+          }
+
+          .account-error-detail {
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to top, #ca2541 0%, #d55268 100%);
+
+            .action {
+              flex-shrink: 0;
+              background-color: rgba(0, 0, 0, 0.15);
+              text-align: center;
+              padding: 3px @padding-base-horizontal;
+              color: @text-color-inverse;
+            }
+
+            .action:hover {
+              background-color: rgba(255, 255, 255, 0.15);
+              text-decoration: none;
+            }
+
+            .message {
+              flex-grow: 1;
+              padding: 3px @padding-base-horizontal;
+              color: @text-color-inverse;
+            }
+          }
+
+          .newsletter {
+            padding-top: @padding-base-vertical * 2;
+
+            input[type='checkbox'] {
+              margin: 0;
+              position: relative;
+              top: 0;
+            }
+          }
         }
       }
     }
