@@ -68,6 +68,7 @@ class PreferencesAccountList extends Component {
       },
     });
     menu.append(menuItem);
+    Actions.closeContextMenu();
     menu.popup();
   }
 
