@@ -80,7 +80,13 @@ class AccountBasicSettingsForm extends React.Component {
     const { provider } = this.props.account;
     if (provider === 'icloud') {
       this._storeUnlisten.push(
-        Actions.transfterICloudToken.listen(token => {
+        Actions.transfterICloudToken.listen((userName, token) => {
+          this.props.onFieldChange({
+            target: {
+              id: 'emailAddress',
+              value: userName,
+            },
+          });
           this.props.onFieldChange({
             target: {
               id: 'settings.imap_password',

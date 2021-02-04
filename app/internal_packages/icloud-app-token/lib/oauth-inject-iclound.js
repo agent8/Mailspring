@@ -1,3 +1,10 @@
+/* eslint no-undef: 0 */
+
+const { ipcRenderer } = require('electron');
+function eventHandler(eventName, message) {
+  ipcRenderer.sendToHost(eventName, message);
+}
+
 /*
  * 传递函数给whenReady()
  * 当文档解析完毕且为操作准备就绪时，函数作为document的方法调用
@@ -45,56 +52,148 @@ var whenReady = (function() {
   };
 })();
 
-// window.onload = autoProcess;
-var maskDiv;
+/**
+   https://appleid.apple.com/account/manage
+   https://appleid.apple.com/manage/section/account/edit
+   https://appleid.apple.com/manage/section/security/edit
+ */
 whenReady(function() {
-  if (window.location.href === 'https://appleid.apple.com/account/manage') {
-    maskDiv = $('<div>Please wait...</div>').css({
-      width: '100%',
-      height: '100%',
-      position: 'fixed',
-      background: '#fff',
-      left: 0,
-      top: 0,
-      zIndex: 1999,
-      textAlign: 'center',
-      fontSize: '50px',
-      paddingTop: '100px',
-    });
-    maskDiv.appendTo('body');
-    autoProcess();
+  if (
+    [
+      'https://appleid.apple.com/account/manage',
+      'https://appleid.apple.com/manage/section/account/edit',
+      'https://appleid.apple.com/manage/section/security/edit',
+    ].includes(window.location.href)
+  ) {
+    autoProcess('Edison Mail');
+    eventHandler('loading');
   }
 });
 
-function autoProcess() {
-  if (window.location.href !== 'https://appleid.apple.com/account/manage') {
-    console.log('***return');
-    return;
-  }
+var iCloudAccount;
+function autoProcess(uuid) {
+  var isAccountTimeout = false;
+  var isRevokeTimeout = false;
+  var isCreateTimeout = false;
 
-  if (!$('.btn-app-password')) {
-    console.log('***retry');
-    setTimeout(autoProcess, 100);
-    return;
-  }
-  $('.btn-app-password').trigger('click');
-  setTimeout(() => {
-    $('.generic-input-field').attr('value', 'EdisonMail');
-    $('.generic-input-field').trigger('change');
-    $('.button-primary').trigger('click');
-    intervalCheckPassword();
-  }, 1000);
+  // fetch email address of iCloud email account
+  var accountTimer = setTimeout(() => {
+    isAccountTimeout = true;
+    eventHandler('error', 'timeout');
+  }, 30000);
+  var revokeTimer;
+  var createTimer;
+
+  $('.account-section-title').trigger('click');
+  fetchICloudAccount();
 
   var timer;
+
+  function fetchICloudAccount() {
+    if (isAccountTimeout) {
+      return;
+    }
+    if (!$('reachable string-ellipsis')) {
+      setTimeout(fetchICloudAccount, 100);
+      return;
+    }
+    let emails = $('reachable string-ellipsis').map((_, el) => {
+      return el.attributes['content-value'].value.toLowerCase();
+    });
+    let accounts = emails
+      .filter((_, email) => {
+        return (
+          email.endsWith('@mac.com') || email.endsWith('@me.com') || email.endsWith('@icloud.com')
+        );
+      })
+      .toArray();
+    iCloudAccount = accounts.pop();
+    $('.nav-cancel').trigger('click');
+    $('.security-section-title').trigger('click');
+    // stop accountTimer
+    clearTimeout(accountTimer);
+
+    // start revoke password
+    setTimeout(() => {
+      revokeTimer = setTimeout(() => {
+        isRevokeTimeout = true;
+        eventHandler('error', 'timeout');
+      }, 30000);
+      revokePassword(uuid);
+    }, 2000);
+  }
+
+  function revokePassword(uuid) {
+    if (isRevokeTimeout) {
+      return;
+    }
+    if (!$('#viewAppPasswordHistory')) {
+      setTimeout(revokePassword(uuid), 100);
+      return;
+    }
+    $('#viewAppPasswordHistory').trigger('click');
+    setTimeout(() => {
+      let passwords = $('.pass-desc');
+      for (var i = 0; i < passwords.length; i++) {
+        let pwdUuid = passwords[i].textContent.trim();
+        if (pwdUuid === uuid) {
+          $(passwords[i].parentNode.childNodes[3].childNodes[1]).trigger('click');
+          $($('.overflow-text')[2]).trigger('click');
+          break;
+        }
+      }
+      $('.nav-cancel').trigger('click');
+      // stop revoke timer
+      clearTimeout(revokeTimer);
+
+      createTimer = setTimeout(() => {
+        isCreateTimeout = true;
+        clearInterval(timer);
+        eventHandler('error', 'timeout');
+      }, 30000);
+      // start create password
+      setTimeout(() => {
+        createPassword(uuid);
+      }, 1000);
+    }, 3000);
+  }
+
+  function createPassword(uuid) {
+    if (isCreateTimeout) {
+      return;
+    }
+    if (!$('.btn-app-password')) {
+      setTimeout(createPassword(uuid), 100);
+      return;
+    }
+    $('.btn-app-password').trigger('click');
+    setTimeout(() => {
+      $('.generic-input-field').attr('value', uuid);
+      $('.generic-input-field').trigger('change');
+      $('.button-primary').trigger('click');
+      intervalCheckPassword();
+    }, 1000);
+  }
+
   function intervalCheckPassword() {
     timer = setInterval(() => {
+      // cannot create new password due to the total number limit of 25 by Apple
+      if ($('.has-errors').length > 0) {
+        eventHandler('error', 'over limit');
+        return;
+      }
+
       var el = $('#appPasswordText');
       if (el && el.val()) {
+        if (iCloudAccount === undefined) {
+          return;
+        }
+        // stop create timer
+        clearTimeout(createTimer);
         clearInterval(timer);
         // send the message to the receiver
-        console.log('icloud:' + el.val());
-        // maskDiv.text('');
+        eventHandler('token', iCloudAccount + '$edo$' + el.val());
       }
-    }, 200);
+    }, 1000);
   }
 }
