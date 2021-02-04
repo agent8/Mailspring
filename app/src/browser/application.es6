@@ -405,7 +405,7 @@ export default class Application extends EventEmitter {
         } else {
           error = this._stripSensitiveData(error);
         }
-        if (!!extra.errorData) {
+        if (extra.errorData) {
           extra.errorData = this._stripSensitiveData(extra.errorData);
         }
       } catch (e) {
@@ -1935,12 +1935,7 @@ export default class Application extends EventEmitter {
       event.returnValue = true;
     });
     ipcMain.on('grab-log', (event, params = {}) => {
-      try {
-      } catch (e) {
-        console.error(e);
-      } finally {
-        event.returnValue = true;
-      }
+      event.returnValue = true;
     });
     ipcMain.on('after-add-account', (event, account) => {
       const main = this.windowManager.get(WindowManager.MAIN_WINDOW);
