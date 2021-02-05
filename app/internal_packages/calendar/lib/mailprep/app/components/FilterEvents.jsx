@@ -144,13 +144,13 @@ const mapStateToProps = (state) => {
       type: 'CALDAV',
       caldavType: account.caldavType,
       provider: JSON.stringify(account),
-      calendars: account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal))
+      calendars: account.calendars !== undefined ? account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal)) : []
     })),
     ...state.auth.providers.EXCHANGE.map((account) => ({
       email: account.email,
       type: 'EXCHANGE',
       provider: JSON.stringify(account),
-      calendars: account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal))
+      calendars: account.calendars !== undefined ? account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal)) : []
     })),
     ...state.auth.providers.GOOGLE.map((account) => ({
       email: account.email,
@@ -162,7 +162,7 @@ const mapStateToProps = (state) => {
       email: account.email,
       type: 'OUTLOOK',
       provider: JSON.stringify(account),
-      calendars: account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal))
+      calendars: account.calendars !== undefined ? account.calendars.map((cal) => (cal.dataValues ? cal.dataValues : cal)) : []
     }))
   ];
 
