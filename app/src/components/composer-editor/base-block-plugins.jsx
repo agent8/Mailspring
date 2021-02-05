@@ -1,3 +1,5 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react/display-name */
 import React from 'react';
 import SoftBreak from 'slate-soft-break';
 import EditList from 'slate-edit-list';
@@ -79,27 +81,27 @@ function isBlockTypeOrWithinType(value, type) {
   return isMe || isParent;
 }
 
-function toggleBlockTypeWithBreakout(value, change, type) {
-  const ancestors = value.document.getAncestors(value.focusBlock.key);
+// function toggleBlockTypeWithBreakout(value, change, type) {
+//   const ancestors = value.document.getAncestors(value.focusBlock.key);
 
-  let idx = ancestors.findIndex(b => b.type === type);
-  if (idx === -1 && value.focusBlock.type === type) {
-    idx = ancestors.size - 1;
-  }
+//   let idx = ancestors.findIndex(b => b.type === type);
+//   if (idx === -1 && value.focusBlock.type === type) {
+//     idx = ancestors.size - 1;
+//   }
 
-  if (idx !== -1) {
-    const depth = ancestors.size - idx;
-    if (depth > 0) {
-      change.splitBlock(ancestors.size - idx);
-      for (let x = 0; x < depth; x++) change.unwrapBlock();
-    }
-    change.setBlock(BLOCK_CONFIG.div.type);
-  } else {
-    change.setBlock(type);
-  }
+//   if (idx !== -1) {
+//     const depth = ancestors.size - idx;
+//     if (depth > 0) {
+//       change.splitBlock(ancestors.size - idx);
+//       for (let x = 0; x < depth; x++) change.unwrapBlock();
+//     }
+//     change.setBlock(BLOCK_CONFIG.div.type);
+//   } else {
+//     change.setBlock(type);
+//   }
 
-  return change;
-}
+//   return change;
+// }
 function isStartOfDocument(value) {
   if (!value) {
     return false;
@@ -551,6 +553,13 @@ export function removeQuotedText(value) {
 
 export function hideQuotedTextByDefault(draft) {
   if (draft.isForwarded()) {
+    return false;
+  }
+  if (
+    draft.replyType === 1 && // replyType - new: 0, reply: 1, forward: 2
+    AppEnv.config.get('core.composing.includeOriginalEmailInReply') &&
+    AppEnv.config.get('core.composing.showOriginalEmailInReply')
+  ) {
     return false;
   }
   if (hasNonTrailingBlockquote(draft.bodyEditorState)) {
