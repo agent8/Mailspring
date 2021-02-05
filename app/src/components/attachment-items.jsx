@@ -746,7 +746,7 @@ export class ImageAttachmentItem extends Component {
         onMaskClicked={this._onImageDeselect}
         onContextMenu={this._onImageContextMenu}
         disabledDragPoints={['n', 's', 'w', 'e']}
-        lockAspectRatio={false}
+        lockAspectRatio={true}
         showMask={this.state.showResizeMask}
         height={this.state.resizeBoxHeight}
         width={this.state.resizeBoxWidth}
