@@ -179,6 +179,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Automatically show message history in Reply Window',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.showOriginalEmailInReply,
+              keyPath: 'core.composing.showOriginalEmailInReply',
+              keywords: [],
+            },
+            {
               label: 'Show CC, BCC when forwarding or composing new draft',
               configSchema: configSchema =>
                 configSchema.properties.composing.properties.showCcAndBcc,

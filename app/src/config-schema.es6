@@ -302,6 +302,12 @@ export default {
             syncToServer: true,
             title: 'Include original email when replying to a message',
           },
+          showOriginalEmailInReply: {
+            type: 'boolean',
+            default: false,
+            syncToServer: true,
+            title: 'Automatically show message history in Reply Window',
+          },
           spellcheck: {
             type: 'boolean',
             default: true,
