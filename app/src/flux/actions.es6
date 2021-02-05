@@ -603,7 +603,7 @@ class Actions {
   static findInThread = ActionScopeWindow;
   static nextSearchResult = ActionScopeWindow;
   static previousSearchResult = ActionScopeWindow;
-
+  static resizeImage = ActionScopeWindow;
   // Actions for the signature preferences and shared with the composer
   static addSignature = ActionScopeWindow;
   static updateSignature = ActionScopeWindow;

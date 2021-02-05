@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import uuid from 'uuid';
 import classnames from 'classnames';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
@@ -437,13 +438,18 @@ export class ImageAttachmentItem extends Component {
       imgWidth: 0,
       resizeBoxHeight: 0,
       resizeBoxWidth: 0,
+      showResizePopup: false,
+      userInputHeight: 0,
+      userInputWidth: 0,
     };
+    this.componentId = uuid();
     this._mounted = false;
   }
 
   componentDidMount() {
     this._storeUnlisten = [
       AttachmentStore.listen(this._onDownloadStoreChange),
+      Actions.resizeImage.listen(this._onImageResizeRequest, this),
       Actions.broadcastDraftAttachmentState.listen(this._onAttachmentStateChange, this),
     ];
     this._mounted = true;
@@ -531,6 +537,40 @@ export class ImageAttachmentItem extends Component {
       this.props.onHover(event.target);
     }
   };
+  _onCloseResizePopup = () => {
+    Actions.closePopover();
+  };
+  _onImageResizeRequest = ({ componentId } = {}) => {
+    if (componentId !== this.componentId) {
+      return;
+    }
+    if (this._imgRef) {
+      const el = ReactDOM.findDOMNode(this._imgRef);
+      const rect = el.getBoundingClientRect();
+      const userInputHeight = Math.floor(rect.height);
+      const userInputWidth = Math.floor(rect.width);
+      Actions.openPopover(
+        <ImageResizePopup
+          imageHeight={userInputHeight}
+          imageWidth={userInputWidth}
+          onCancel={this._onCloseResizePopup}
+          onResize={this._onResizePopupComplete}
+        />,
+        {
+          isFixedToWindow: true,
+          popoverClassName: 'fixed-popover-add-folder',
+          originRect: {
+            top: 0,
+            left: 0,
+          },
+          position: { top: '30%', left: '50%' },
+          disablePointer: true,
+          closeOnAppBlur: false,
+          onClose: this._onCloseResizePopup,
+        }
+      );
+    }
+  };
   _onImageSelect = event => {
     if (!this._mounted) {
       return;
@@ -564,7 +604,7 @@ export class ImageAttachmentItem extends Component {
   _onImageContextMenu = event => {
     if (this.props.onContextMenu) {
       event.persist();
-      this.props.onContextMenu(event);
+      this.props.onContextMenu(event, this.componentId);
     }
   };
 
@@ -612,15 +652,15 @@ export class ImageAttachmentItem extends Component {
     if (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) {
       style = {
         display: 'block',
-        width: this.state.imgWidth + 2,
+        width: this.state.imgWidth + 6,
         height: this.state.imgHeight + 2,
         maxHeight: this.state.imgHeight + 2,
-        maxWidth: this.state.imgWidth + 2,
+        maxWidth: this.state.imgWidth + 6,
       };
     } else if (this.props.resizable) {
       style = { maxWidth: 'fit-content' };
     }
-    const filePreviewStyle = {};
+    const filePreviewStyle = { paddingRight: '4px' };
     if (this.props.resizable && this.state.showResizeMask) {
       filePreviewStyle.zIndex = 0;
     }
@@ -671,6 +711,10 @@ export class ImageAttachmentItem extends Component {
       this.setState({ resizeBoxHeight: height, resizeBoxWidth: width });
     }
   };
+  _onResizePopupComplete = data => {
+    this._onCloseResizePopup();
+    this._onResizeComplete(data);
+  };
   _onResizeComplete = ({ width, height }) => {
     if (!this._mounted) {
       return;
@@ -698,10 +742,10 @@ export class ImageAttachmentItem extends Component {
   _renderResizableContainer() {
     return (
       <ResizableBox
-        onResize={this._onResize}
         onResizeComplete={this._onResizeComplete}
         onMaskClicked={this._onImageDeselect}
-        disabledDragPoints={['n', 's', 'w', 'e', 'ne', 'nw', 'sw']}
+        onContextMenu={this._onImageContextMenu}
+        disabledDragPoints={['n', 's', 'w', 'e']}
         lockAspectRatio={true}
         showMask={this.state.showResizeMask}
         height={this.state.resizeBoxHeight}
@@ -717,5 +761,107 @@ export class ImageAttachmentItem extends Component {
     } else {
       return this._renderInnerContainer();
     }
+  }
+}
+
+class ImageResizePopup extends React.PureComponent {
+  static propTypes = {
+    imageHeight: PropTypes.number,
+    imageWidth: PropTypes.number,
+    onResize: PropTypes.func,
+    onCancel: PropTypes.func,
+  };
+  static defaultProps = {
+    imageHeight: 0,
+    imageWidth: 0,
+  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      imageHeight: this.props.imageHeight,
+      imageWidth: this.props.imageWidth,
+      widthHeightRatio: this.props.imageWidth / this.props.imageHeight,
+      lockAspect: true,
+    };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+
+  _onResizePopupHeightChange = event => {
+    event.preventDefault();
+    if (this._mounted) {
+      const imageHeight = parseInt(event.target.value, 10);
+      const state = { imageHeight };
+      if (this.state.lockAspect) {
+        state.imageWidth = Math.round(imageHeight * this.state.widthHeightRatio);
+      }
+      this.setState(state);
+    }
+  };
+  _onResizePopupWidthChange = event => {
+    if (this._mounted) {
+      const imageWidth = parseInt(event.target.value, 10);
+      const state = { imageWidth };
+      if (this.state.lockAspect) {
+        state.imageHeight = Math.round(imageWidth / this.state.widthHeightRatio);
+      }
+      this.setState(state);
+    }
+  };
+  _onResize = () => {
+    if (this.props.onResize) {
+      this.props.onResize({ height: this.state.imageHeight, width: this.state.imageWidth });
+    }
+  };
+  _onCancel = () => {
+    if (this.props.onCancel) {
+      this.props.onCancel();
+    }
+  };
+  _onKeyUp = event => {
+    if (['Enter'].includes(event.key)) {
+      this._onResize();
+    }
+  };
+  render() {
+    return (
+      <div className="image-attachment-resize-popup" id="imageResizePopup">
+        <div className="user-input">
+          <div className="height">
+            <input
+              value={this.state.imageHeight}
+              onChange={this._onResizePopupHeightChange}
+              onKeyUp={this._onKeyUp}
+            />
+          </div>
+          <RetinaImg
+            style={{ height: 20, width: 20 }}
+            mode={RetinaImg.Mode.ContentIsMask}
+            isIcon={true}
+            name={'lock.svg'}
+          />
+          <div className="width">
+            <input
+              value={this.state.imageWidth}
+              onKeyUp={this._onKeyUp}
+              onChange={this._onResizePopupWidthChange}
+            />
+          </div>
+        </div>
+        <div className="user-buttons ">
+          <button className="btn resize-button-cancel" onClick={this._onCancel}>
+            Cancel
+          </button>
+          <button className="btn resize-button-confirm" onClick={this._onResize}>
+            Resize
+          </button>
+        </div>
+      </div>
+    );
   }
 }
