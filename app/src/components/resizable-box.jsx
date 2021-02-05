@@ -75,8 +75,14 @@ export default class ResizableBox extends Component {
         }
         const currentX = event.screenX;
         const currentY = event.screenY;
-        const deltaX = Math.abs(currentX - startX);
-        const deltaY = Math.abs(currentY - startY);
+        const tmp = this._processAspectRatio({
+          width: Math.abs(currentX - startX),
+          height: Math.abs(currentY - startY),
+          originalHeight,
+          originalWidth,
+        });
+        const deltaX = tmp.width;
+        const deltaY = tmp.height;
         let xSign = 1;
         if (currentX > startX) {
           if (Orientation.includes('w')) {
@@ -115,14 +121,12 @@ export default class ResizableBox extends Component {
         if (!Orientation.includes('e') && !Orientation.includes('w')) {
           xSign = 0;
         }
-        const tmp = this._processAspectRatio({
-          width: (originalWidth + xSign * deltaX) / originalWidth,
-          height: (originalHeight + ySign * deltaY) / originalHeight,
-          originalHeight,
-          originalWidth,
-        });
-        const scaleX = tmp.width;
-        const scaleY = tmp.height;
+        if (this.props.lockAspectRatio && xSign * ySign !== 1) {
+          xSign = 0;
+          ySign = 0;
+        }
+        const scaleX = (originalWidth + xSign * deltaX) / originalWidth;
+        const scaleY = (originalHeight + ySign * deltaY) / originalHeight;
         targetWidth = scaleX * originalWidth;
         targetHeight = scaleY * originalHeight;
         let translateX = (xSign * deltaX) / 2;
