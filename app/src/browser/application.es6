@@ -34,6 +34,7 @@ import MailsyncProcess from '../mailsync-process';
 import EventTriggers from './event-triggers';
 import { createHash } from 'crypto';
 import { dataUpgrade } from './data-upgrade';
+import installExtension, { REDUX_DEVTOOLS } from 'electron-devtools-installer';
 
 const LOG = require('electron-log');
 const archiver = require('archiver');
@@ -66,7 +67,11 @@ export default class Application extends EventEmitter {
       specMode,
       safeMode,
     } = options;
-
+    app.whenReady().then(() => {
+      installExtension(REDUX_DEVTOOLS)
+        .then(name => console.log(`Added Extension:  ${name}`))
+        .catch(err => console.log('An error occurred: ', err));
+    });
     //BrowserWindow.addDevToolsExtension('~/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/3.4.2_0');
     // BrowserWindow.addDevToolsExtension('/Users/gtkrab/edisonSoftware/react_extension');
     //Normalize to make sure drive letter case is consistent on Windows
