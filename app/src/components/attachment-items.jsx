@@ -442,6 +442,7 @@ export class ImageAttachmentItem extends Component {
       userInputHeight: 0,
       userInputWidth: 0,
     };
+    this._imageResizePopupOpen = false;
     this.componentId = uuid();
     this._mounted = false;
   }
@@ -457,6 +458,9 @@ export class ImageAttachmentItem extends Component {
 
   componentWillUnmount() {
     this._mounted = false;
+    if (this._imageResizePopupOpen) {
+      Actions.closePopover();
+    }
     if (this._storeUnlisten) {
       for (let un of this._storeUnlisten) {
         un();
@@ -539,8 +543,9 @@ export class ImageAttachmentItem extends Component {
   };
   _onCloseResizePopup = () => {
     Actions.closePopover();
+    this._imageResizePopupOpen = false;
   };
-  _onImageResizeRequest = ({ componentId } = {}) => {
+  _onImageResizeRequest = ({ componentId, position } = {}) => {
     if (componentId !== this.componentId) {
       return;
     }
@@ -549,6 +554,7 @@ export class ImageAttachmentItem extends Component {
       const rect = el.getBoundingClientRect();
       const userInputHeight = Math.floor(rect.height);
       const userInputWidth = Math.floor(rect.width);
+      this._imageResizePopupOpen = true;
       Actions.openPopover(
         <ImageResizePopup
           imageHeight={userInputHeight}
@@ -563,7 +569,7 @@ export class ImageAttachmentItem extends Component {
             top: 0,
             left: 0,
           },
-          position: { top: '30%', left: '50%' },
+          position,
           disablePointer: true,
           closeOnAppBlur: false,
           onClose: this._onCloseResizePopup,

@@ -137,7 +137,8 @@ function ImageNode(props) {
           img.src = urlPath;
         };
         const selectImage = () => {
-          Actions.resizeImage({ componentId });
+          const position = { left: event.clientX, top: event.clientY };
+          Actions.resizeImage({ componentId, position });
         };
         menu.append(
           new MenuItem({
