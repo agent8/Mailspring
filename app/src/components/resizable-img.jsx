@@ -91,7 +91,7 @@ export default class ResizableImg extends Component {
     const { boxHeight, boxWidth, imgHeight, imgWidth, showMask } = this.state;
     const { lockAspectRatio, callback, disableOrientation } = this.props;
     const disableOrientationTmp =
-      disableOrientation || (lockAspectRatio ? ['n', 's', 'w', 'e', 'ne', 'nw', 'sw'] : []);
+      disableOrientation || (lockAspectRatio ? ['n', 's', 'w', 'e'] : []);
 
     const styles = {
       zIndex: 2,
