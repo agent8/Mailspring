@@ -128,7 +128,7 @@ const onDeleteItem = function(item) {
   if (!category) {
     return;
   }
-  const account = AccountStore.byId(category.accountId);
+  const account = AccountStore.accountForId(category.accountId);
   if (account && (account.provider === 'gmail' || account.provider === 'onmail')) {
     Actions.queueTask(
       new DestroyCategoryTask({
