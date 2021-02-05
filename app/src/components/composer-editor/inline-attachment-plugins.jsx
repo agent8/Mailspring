@@ -99,7 +99,7 @@ function ImageNode(props) {
           return change.removeNodeByKey(node.key);
         })
       }
-      onContextMenu={event => {
+      onContextMenu={(event, componentId) => {
         event.preventDefault();
         const { remote, clipboard, nativeImage } = require('electron');
         const { Menu, MenuItem } = remote;
@@ -136,24 +136,38 @@ function ImageNode(props) {
           );
           img.src = urlPath;
         };
+        const selectImage = () => {
+          Actions.resizeImage({ componentId });
+        };
         menu.append(
           new MenuItem({
-            label: 'Cut',
+            label: 'Resize',
             enabled: true,
             click: () => {
-              copyImage(removeImage);
+              selectImage();
             },
           })
         );
-        menu.append(
-          new MenuItem({
-            label: 'Copy',
-            enabled: true,
-            click: () => {
-              copyImage();
-            },
-          })
-        );
+        if (!event.isPropagationStopped) {
+          menu.append(
+            new MenuItem({
+              label: 'Cut',
+              enabled: true,
+              click: () => {
+                copyImage(removeImage);
+              },
+            })
+          );
+          menu.append(
+            new MenuItem({
+              label: 'Copy',
+              enabled: true,
+              click: () => {
+                copyImage();
+              },
+            })
+          );
+        }
         menu.popup({});
       }}
       onHover={node => {
