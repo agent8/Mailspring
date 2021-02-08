@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { PropTypes } from 'mailspring-exports';
-import Actions from '../flux/actions';
 import ResizableBox from './resizable-box';
 import ReactDOM from 'react-dom';
 import { remote } from 'electron';
@@ -39,13 +38,11 @@ export default class ResizableImg extends Component {
     this._mounted = false;
     this._imgRef = null;
     this._setImgRef = ref => (this._imgRef = ref);
-    this._unlisten = [];
     this._imageResizePopupOpen = false;
   }
 
   componentDidMount() {
     this._mounted = true;
-    this._unlisten = [Actions.resizeImage.listen(this._onImageResizeRequest, this)];
     const { style, src } = this.props;
     if (style && style.height && style.width) {
       this.setState({
@@ -73,9 +70,6 @@ export default class ResizableImg extends Component {
 
   componentWillUnmount() {
     this._mounted = false;
-    for (let un of this._unlisten) {
-      un();
-    }
     this._imageResizePopupOpen = false;
   }
   _onCloseResizePopup = () => {
