@@ -1,4 +1,12 @@
-import { React, ReactDOM, AccountStore, SignatureStore, Actions, Utils } from 'mailspring-exports';
+import {
+  React,
+  PropTypes,
+  ReactDOM,
+  AccountStore,
+  SignatureStore,
+  Actions,
+  Utils,
+} from 'mailspring-exports';
 import {
   RetinaImg,
   Flexbox,
@@ -14,6 +22,13 @@ const {
 } = ComposerSupport;
 
 class SignatureEditor extends React.Component {
+  static propTypes = {
+    signature: PropTypes.object,
+    accounts: PropTypes.array,
+    onEditTitle: PropTypes.func,
+    defaults: PropTypes.object,
+    onEditField: PropTypes.func,
+  };
   constructor(props) {
     super(props);
     const { id, attachments } = props.signature || {};
@@ -112,6 +127,9 @@ class SignatureEditor extends React.Component {
       this.setState({ body: value, editorState: convertFromHTML(value) }, this._onSave);
     }
   };
+  _onForceSave = value => {
+    this.setState({ body: convertToHTML(value) }, this._onSave);
+  };
 
   render() {
     const { accounts, defaults, onEditTitle, signature = {} } = this.props;
@@ -144,6 +162,7 @@ class SignatureEditor extends React.Component {
               readOnly={false}
               value={editorState}
               outerPlugin={CodeBlockPlugin(this._onToggleCodeBlockEditor)}
+              propsForPlugins={{ onForceSave: this._onForceSave }}
               onChange={change => {
                 const changeHtml = convertToHTML(change.value);
                 if (changeHtml) {

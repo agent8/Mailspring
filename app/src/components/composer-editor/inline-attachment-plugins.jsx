@@ -80,12 +80,18 @@ function ImageNode(props) {
       }}
       onResizeComplete={({ width, height }) => {
         editor.change(change => {
-          return change.setNodeByKey(node.key, {
+          const { onForceSave } = editor.props.propsForPlugins;
+
+          change = change.setNodeByKey(node.key, {
             data: Object.assign({}, nodeDataJSON, {
               height: height,
               width: width,
             }),
           });
+          if (onForceSave) {
+            onForceSave(change.value);
+          }
+          return change;
         });
       }}
       onRemoveAttachment={() =>
@@ -99,9 +105,9 @@ function ImageNode(props) {
           return change.removeNodeByKey(node.key);
         })
       }
-      onContextMenu={(event, componentId) => {
+      onContextMenu={(event, { onShowPopup, onCopyImage } = {}) => {
         event.preventDefault();
-        const { remote, clipboard, nativeImage } = require('electron');
+        const { remote } = require('electron');
         const { Menu, MenuItem } = remote;
         const menu = new Menu();
         const removeImage = () => {
@@ -115,47 +121,13 @@ function ImageNode(props) {
             return change.removeNodeByKey(node.key);
           });
         };
-        const copyImage = cb => {
-          const urlPath = Utils.safeBrowserPath(filePath);
-          let img = new Image();
-          img.addEventListener(
-            'load',
-            function() {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              canvas.getContext('2d').drawImage(event.target, 0, 0);
-              const imageDataURL = canvas.toDataURL('image/png');
-              img = nativeImage.createFromDataURL(imageDataURL);
-              clipboard.writeImage(img);
-              if (cb) {
-                cb();
-              }
-            },
-            false
-          );
-          img.src = urlPath;
-        };
-        const selectImage = () => {
-          const position = { left: event.clientX, top: event.clientY };
-          Actions.resizeImage({ componentId, position });
-        };
-        menu.append(
-          new MenuItem({
-            label: 'Resize',
-            enabled: true,
-            click: () => {
-              selectImage();
-            },
-          })
-        );
-        if (!event.isPropagationStopped) {
+        if (onCopyImage) {
           menu.append(
             new MenuItem({
               label: 'Cut',
               enabled: true,
               click: () => {
-                copyImage(removeImage);
+                onCopyImage(removeImage);
               },
             })
           );
@@ -163,12 +135,17 @@ function ImageNode(props) {
             new MenuItem({
               label: 'Copy',
               enabled: true,
-              click: () => {
-                copyImage();
-              },
+              click: onCopyImage,
             })
           );
         }
+        menu.append(
+          new MenuItem({
+            label: 'Resize',
+            enabled: true,
+            click: onShowPopup,
+          })
+        );
         menu.popup({});
       }}
       onHover={node => {
