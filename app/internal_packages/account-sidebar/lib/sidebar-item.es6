@@ -129,7 +129,7 @@ const onDeleteItem = function(item) {
     return;
   }
   const account = AccountStore.accountForId(category.accountId);
-  if (account && (account.provider === 'gmail' || account.provider === 'onmail')) {
+  if (account && account.usesLabels()) {
     Actions.queueTask(
       new DestroyCategoryTask({
         path: category.path,
@@ -584,7 +584,7 @@ class SidebarItem {
       opts.fallback = `account-logo-other.png`;
       opts.mode = RetinaImg.Mode.ContentPreserve;
       opts.syncFolderList = true;
-      if (account.provider === 'gmail' || account.provider === 'onmail') {
+      if (account.usesLabels()) {
         opts.addNewFolderLabel = 'New Label...';
       } else {
         opts.addNewFolderLabel = 'New Folder...';

@@ -189,7 +189,7 @@ class SidebarStore extends MailspringStore {
   isAllLabelAccount() {
     const accounts = AccountStore.accounts();
     return accounts.every(account => {
-      return account && (account.provider === 'gmail' || account.provider === 'onmail');
+      return account && account.usesLabels();
     });
   }
   getNewFolder(accountId) {
