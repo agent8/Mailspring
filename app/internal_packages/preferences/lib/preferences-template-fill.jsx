@@ -353,7 +353,7 @@ const preferencesTemplateFill = {
       order: 4,
       isHidden: () => {
         const accounts = AccountStore.accounts().filter(account => {
-          return account && (account.provider === 'gmail' || account.provider === 'onmail');
+          return account && account.usesLabels();
         });
         return accounts.length === 0;
       },

@@ -88,7 +88,7 @@ class NewCategoryAccountSelectPopover extends Component {
     let subtext = 'Where does this folder belong?';
     if (
       this.props.accounts.every(account => {
-        return account && (account.provider === 'gmail' || account.provider === 'onmail');
+        return account && account.usesLabels();
       })
     ) {
       text = 'New Label';
