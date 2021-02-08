@@ -1,6 +1,5 @@
 import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
-import AppMessageStore from './app-message-store';
 
 const messageBlock = {
   id: 'online-offline',
@@ -19,12 +18,17 @@ class OnlineStatusStore extends MailspringStore {
     if (AppEnv.isMainWindow()) {
       window.addEventListener('online', this._onlineStatusChange);
       window.addEventListener('offline', this._onlineStatusChange);
-      if (!this._online) {
-        // Because at this point, store listening is not setup
-        AppMessageStore._onQueue(messageBlock);
-      }
+      //DC-2754 If app start up on system boot, our online status might be incorrect.
+      // Thus we delay status check for a bit
+      setTimeout(this._statusCheckOnStartUp, 15000);
     }
   }
+
+  _statusCheckOnStartUp = () => {
+    if (navigator.onLine !== this._online) {
+      this._onlineStatusChange();
+    }
+  };
 
   _onlineStatusChange = () => {
     const previousStatus = this._online;
