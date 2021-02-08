@@ -42,12 +42,12 @@ export class PreferencesKeymapsHearder extends React.Component {
       type: 'info',
       message: 'Are you sure?',
       detail: 'Delete your custom key bindings and reset to the template defaults?',
-      buttons: ['Cancel', 'Reset'],
-      defaultId: 1,
-      cancelId: 0,
+      buttons: ['Reset', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
     });
 
-    if (chosen === 1) {
+    if (chosen === 0) {
       const keymapsFile = AppEnv.keymaps.getUserKeymapPath();
       fs.writeFileSync(keymapsFile, '{}');
     }
@@ -105,6 +105,7 @@ export function PreferencesKeymapsContent() {
   const KeymapsContentGroups = displayedKeybindings.map(keybinding => {
     const groupItem = keybinding.items.map(([command, label]) => ({
       label: label,
+      // eslint-disable-next-line react/display-name
       component: () => <CommandItem key={command} command={command} label={label} />,
       keywords: [],
     }));

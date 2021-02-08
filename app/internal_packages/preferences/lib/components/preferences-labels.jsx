@@ -16,7 +16,7 @@ class PreferencesLabels extends React.Component {
   constructor(props) {
     super(props);
     const accounts = AccountStore.accounts().filter(account => {
-      return account && (account.provider === 'gmail' || account.provider === 'onmail');
+      return account && account.usesLabels();
     });
     const selectedAccount = accounts.length > 0 ? accounts[0] : null;
     this.state = {
@@ -141,7 +141,7 @@ class PreferencesLabels extends React.Component {
     }
     const state = {
       accounts: AccountStore.accounts().filter(account => {
-        return account && (account.provider === 'gmail' || account.provider === 'onmail');
+        return account && account.usesLabels();
       }),
     };
     if (this.state.selectedAccount) {
