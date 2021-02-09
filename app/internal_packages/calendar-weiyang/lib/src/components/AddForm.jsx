@@ -8,11 +8,11 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
 
 import Select from 'react-select';
-import BigButton from './BigButton';
-import RoundCheckbox from './RoundCheckbox';
-import Tabs from './Tabs';
-import EventTitle from './EventTitle';
-import Input from './Input';
+import BigButton from './MiniComponents/BigButton';
+import RoundCheckbox from './MiniComponents/RoundCheckbox';
+import Tabs from './MiniComponents/Tabs';
+import EventTitle from './MiniComponents/EventTitle';
+import Input from './MiniComponents/Input';
 import RRuleGenerator from './react-rrule-generator/src/lib';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
