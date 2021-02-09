@@ -1,5 +1,5 @@
 import path from 'path';
-const { React, PropTypes } = require('mailspring-exports');
+import { React, PropTypes } from 'mailspring-exports';
 import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
@@ -39,7 +39,8 @@ function ImageNode(props) {
       style={style}
       callback={value => {
         editor.change(change => {
-          return change.setNodeByKey(node.key, {
+          const { onForceSave } = editor.props.propsForPlugins;
+          change = change.setNodeByKey(node.key, {
             data: {
               src: src,
               href: href,
@@ -48,7 +49,48 @@ function ImageNode(props) {
               width: value.width,
             },
           });
+          if (onForceSave) {
+            onForceSave(change.value);
+          }
+          return change;
         });
+      }}
+      onContextMenu={(event, { onShowPopup, onCopyImage } = {}) => {
+        event.preventDefault();
+        const { remote } = require('electron');
+        const { Menu, MenuItem } = remote;
+        const menu = new Menu();
+        const removeImage = () => {
+          editor.change(change => {
+            return change.removeNodeByKey(node.key);
+          });
+        };
+        if (onCopyImage) {
+          menu.append(
+            new MenuItem({
+              label: 'Cut',
+              enabled: true,
+              click: () => {
+                onCopyImage(removeImage);
+              },
+            })
+          );
+          menu.append(
+            new MenuItem({
+              label: 'Copy',
+              enabled: true,
+              click: onCopyImage,
+            })
+          );
+        }
+        menu.append(
+          new MenuItem({
+            label: 'Resize',
+            enabled: true,
+            click: onShowPopup,
+          })
+        );
+        menu.popup({});
       }}
       lockAspectRatio
     />
