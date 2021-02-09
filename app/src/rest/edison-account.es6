@@ -170,6 +170,7 @@ export default class EdisonAccount {
       emailAccount['incoming'] = {
         ...emailAccount['incoming'],
         username: account.settings.ews_username,
+        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-ews_password`)),
         host: account.settings.ews_host,
         // To do
         domain: null,
