@@ -1,0 +1,106 @@
+.add-form-main-panel-container {
+  float: left;
+  flex: 1;
+  margin-left: 20px;
+  margin-right: 30px;
+  padding-top: 3%;
+}
+
+.sidebar {
+  padding-top: 3%;
+}
+
+.add-form-main-panel {
+  margin: auto;
+  min-width: 720px;
+  max-width: 80%;
+}
+
+.add-form-header {
+  display: flex;
+}
+
+.add-form-button-group {
+  display: flex;
+  float: right;
+}
+
+.add-form-details {
+  display: grid;
+  grid-template-columns: minmax(250px,250fr) minmax(250px,250fr) minmax(20px,20fr) minmax(150px,300fr);
+}
+
+.add-form-grid-item {
+  padding: 10px;
+}
+
+.add-form-start-time {
+  grid-column: 1;
+  position: relative;
+}
+
+.add-form-end-time {
+  grid-column: 2;
+  position: relative;
+}
+
+.add-form-repeat {
+  grid-column: 1;
+}
+
+.add-form-recurrence-generator {
+  grid-column: 1 / span 2;
+}
+
+.add-form-all-day {
+  grid-column: 2;
+}
+
+.add-form-guests {
+  grid-column: 4;
+  grid-row: 1 / span 5;
+}
+
+.add-form-location {
+  grid-column: 1 / span 2;
+}
+
+.add-form-calendar {
+  grid-column: 1 / span 2;
+}
+
+.add-form-description {
+  grid-column: 1 / span 2;
+}
+
+.repeating-checkbox-container {
+  float: left;
+  padding-left: 50px;
+}
+
+.all-day-checkbox-container {
+  float: right;
+  padding-right: 50px;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 45%;
+}
+::-webkit-inner-spin-button {
+  display: none;
+}
+::-webkit-calendar-picker {
+  background-color: red;
+}
+
+.modal-button-group {
+  display: flex;
+}

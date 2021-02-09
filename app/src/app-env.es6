@@ -46,6 +46,7 @@ export default class AppEnvConstructor {
   static getLoadSettings() {
     if (this.loadSettings == null) {
       this.loadSettings = JSON.parse(decodeURIComponent(window.location.search.substr(14)));
+      console.log(this.loadSettings);
     }
     return this.loadSettings;
   }

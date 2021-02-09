@@ -1,0 +1,201 @@
+/* MY CALENDARS */
+.my-calendars {
+    margin-left: 16px;
+    margin-top: 24px;
+  }
+  
+  .calendar-btn {
+    background-color: #fff;
+    border: none;
+    color: #222;
+    font-weight: bold;
+    padding: 0;
+  }
+  
+  .calendar-list {
+    margin-top: 4px;
+    list-style-type:none;
+    padding: 0;
+  }
+  
+  .email-heading {
+    font-size: 16px;
+  }
+  
+  .checkbox-container {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Hide the browser's default checkbox */
+  .checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+  
+  /* Create a custom checkbox */
+  .checkbox-checkmark {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #fff;
+    border: 1.5px solid #e9eced;
+    border-radius: 50%;
+    color: white;
+  }
+  
+  
+  /* When the checkbox is checked, add a blue background */
+  .checkbox-container input:not(:checked) ~ .checkbox-checkmark {
+    background-color: #fff;
+  }
+  
+  /* Create the checkmark/indicator (hidden when not checked) */
+  .checkbox-checkmark::after {
+    content: "";
+    position: absolute;
+    display: none;
+  }
+  
+  /* Show the checkmark when checked */
+  .checkbox-container input:checked ~ .checkbox-checkmark::after {
+    display: block;
+  }
+  
+  /* Style the checkmark/indicator */
+  .checkbox-container .checkbox-checkmark::after {
+    left: 8px;
+    top: 6px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    -webkit-transform: rotate(40deg);
+    -ms-transform: rotate(40deg);
+    transform: rotate(40deg);
+  }
+  
+  
+  
+/* THREE DOT MENU */
+.three-dot-btn {
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.three-dot-btn:hover{
+  // background-color: #f4f6f8;
+  // border-radius: 50%;
+  cursor: pointer;
+}
+
+.dropdown {
+  display: inline;
+  margin-left: auto;
+  padding-right: 5px;
+}
+
+.dropdown-content {
+  min-width: 120px;
+  overflow: auto;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.menu-btn {
+  padding-left: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.calendar-list-item {
+  display: flex;
+}
+  
+.menu-divider {
+  border: 1px solid #E9E9E4;
+  margin: 2px 0;
+}
+
+.menu-heading {
+  padding-left: 8px;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* COLOR PICKER */
+.color-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.color-picker-circle {
+  width: 22px;
+  height: 22px;
+  margin: auto;
+  border-radius: 50%;
+  margin-bottom: 0.5em;
+  cursor: pointer;
+}
+
+.checked {
+  font-size: 14px;
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
+}
+
+.color-picker-red {
+  background-color: #fd7642;
+}
+.color-picker-grey {
+  background-color: #c2c2c2;
+}
+.color-picker-green {
+  background-color: #4ad494;
+}
+
+.color-picker-orange {
+  background-color: #fd7642;
+}
+.color-picker-blue {
+  background-color: #4c88e4;
+}
+.color-picker-pink {
+  background-color: #f492b2;
+}
+
+.color-picker-beidge {
+  background-color: #ebdbde;
+}
+.color-picker-cyan {
+  background-color: #35a2b9;
+}
+.color-picker-darkgreen {
+  background-color: #22a667;
+}
+
+.color-picker-brown {
+  background-color: #cba6ac;
+}
+.color-picker-purple {
+  background-color: #b99cfc;
+}
+.color-picker-darkred {
+  background-color: #f84e38;
+}

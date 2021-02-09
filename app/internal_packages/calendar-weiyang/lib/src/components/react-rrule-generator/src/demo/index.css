@@ -1,0 +1,77 @@
+@import '~bootstrap/dist/css/bootstrap.css';
+@import '../lib/styles/index.css';
+
+.app-navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #000;
+  vertical-align: middle;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+@media screen and (max-width: 960px) {
+  .app-header-github {
+    margin-bottom: 2rem;
+  }
+}
+
+.app-navbar a {
+  opacity: 1;
+  transition: 0.1s;
+  color: white;
+}
+.app-navbar a:hover {
+  opacity: 0.5;
+  transition: 0.1s;
+  text-decoration: none;
+}
+
+.app-navbar-ghlogo {
+  height: 20px;
+  width: 20px;
+}
+
+.app-header {
+  padding: 1rem;
+  background: #222;
+  color: white;
+  text-align: center;
+}
+
+.app-desc {
+  padding: 1rem;
+  background: #444;
+  color: white;
+  text-align: center;
+}
+
+.app {
+  margin-top: 3rem;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.rrule {
+  background-color: #ffecef;
+  font-size: 80%;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+}
+
+.rrule-not-copied {
+  color: #222;
+}
+
+.rrule-not-copied:focus {
+  color: #222;
+}
+
+.rrule-copied {
+  color: #888;
+}
+
+.rrule-copied:focus {
+  color: #888;
+}
