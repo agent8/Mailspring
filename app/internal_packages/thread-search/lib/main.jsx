@@ -13,6 +13,7 @@ export function activate() {
       WorkspaceStore.Location.ThreadList,
       WorkspaceStore.Location.DraftList,
       WorkspaceStore.Location.SiftList,
+      WorkspaceStore.Location.Outbox,
     ],
     // role: 'Search-Bar',
   });
