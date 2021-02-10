@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { PropTypes } from 'mailspring-exports';
+import RetinaImg from './retina-img';
 
 const allDragPoints = ['n', 's', 'w', 'e', 'ne', 'nw', 'se', 'sw'];
 
@@ -8,6 +9,7 @@ export default class ResizableBox extends Component {
     disabledDragPoints: PropTypes.arrayOf(PropTypes.string),
     onContextMenu: PropTypes.func,
     onResizeComplete: PropTypes.func,
+    onResizePopupClosed: PropTypes.func,
     children: PropTypes.node,
     style: PropTypes.object,
     showMask: PropTypes.bool,
@@ -23,6 +25,7 @@ export default class ResizableBox extends Component {
       disX: 0,
       disY: 0,
       transform: '',
+      showResizePopup: false,
     };
     this._maskRef = null;
     this._setMaskRef = ref => (this._maskRef = ref);
@@ -33,6 +36,9 @@ export default class ResizableBox extends Component {
   }
   componentWillUnmount() {
     this._mounted = false;
+    if (this.state.showResizePopup && this.props.onResizePopupClosed) {
+      this.props.onResizePopupClosed();
+    }
   }
 
   _processAspectRatio = ({ width, height, originalWidth, originalHeight } = {}) => {
@@ -179,11 +185,39 @@ export default class ResizableBox extends Component {
       />
     );
   };
+  _onCancelPopup = () => {
+    if (this._mounted) {
+      this.setState({
+        showResizePopup: false,
+        resizePopupInitialHeight: 0,
+        resizePopupInitialWidth: 0,
+      });
+    }
+    if (this.props.onResizePopupClosed) {
+      this.props.onResizePopupClosed();
+    }
+  };
+  _onResizePopupConfirm = ({ height, width } = {}) => {
+    if (this.props.onResizeComplete) {
+      this.props.onResizeComplete({ height, width });
+    }
+    this._onCancelPopup();
+  };
+  onShowResizePopup = ({ initialHeight, initialWidth, top, left }) => {
+    if (this._mounted) {
+      this.setState({
+        showResizePopup: true,
+        resizePopupInitialHeight: initialHeight,
+        resizePopupInitialWidth: initialWidth,
+        popupPosition: { top, left },
+      });
+    }
+  };
   _onMaskContextMenu = event => {
     event.stopPropagation();
     if (this.props.onContextMenu) {
       event.persist();
-      this.props.onContextMenu(event);
+      this.props.onContextMenu(event, this.onShowResizePopup);
     }
     return;
   };
@@ -207,6 +241,19 @@ export default class ResizableBox extends Component {
     });
     return result;
   };
+  renderResizePopup() {
+    if (!this.state.showResizePopup) {
+      return null;
+    }
+    return (
+      <ResizePopup
+        initialHeight={this.state.resizePopupInitialHeight}
+        initialWidth={this.state.resizePopupInitialWidth}
+        onCancel={this._onCancelPopup}
+        onResize={this._onResizePopupConfirm}
+      />
+    );
+  }
 
   render() {
     const { children, style, showMask } = this.props;
@@ -244,7 +291,120 @@ export default class ResizableBox extends Component {
             {this.renderHandles()}
           </div>
         ) : null}
+        {this.renderResizePopup()}
         {children}
+      </div>
+    );
+  }
+}
+
+class ResizePopup extends React.PureComponent {
+  static propTypes = {
+    initialHeight: PropTypes.number,
+    initialWidth: PropTypes.number,
+    onResize: PropTypes.func,
+    onCancel: PropTypes.func,
+  };
+  static defaultProps = {
+    initialHeight: 0,
+    initialWidth: 0,
+  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      height: this.props.initialHeight,
+      width: this.props.initialWidth,
+      widthHeightRatio: this.props.initialWidth / this.props.initialHeight,
+      lockAspect: true,
+    };
+    this._mounted = false;
+  }
+  componentDidMount() {
+    this._mounted = true;
+  }
+  componentWillUnmount() {
+    this._mounted = false;
+  }
+
+  _onResizePopupHeightChange = event => {
+    event.preventDefault();
+    if (this._mounted) {
+      const height = parseInt(event.target.value, 10);
+      const state = { height };
+      if (this.state.lockAspect) {
+        state.width = Math.round(height * this.state.widthHeightRatio);
+      }
+      this.setState(state);
+    }
+  };
+  _onResizePopupWidthChange = event => {
+    if (this._mounted) {
+      const width = parseInt(event.target.value, 10);
+      const state = { width };
+      if (this.state.lockAspect) {
+        state.height = Math.round(width / this.state.widthHeightRatio);
+      }
+      this.setState(state);
+    }
+  };
+  _onResize = event => {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (this.props.onResize) {
+      this.props.onResize({ height: this.state.height, width: this.state.width });
+    }
+  };
+  _onCancel = event => {
+    event.stopPropagation();
+    if (this.props.onCancel) {
+      this.props.onCancel();
+    }
+  };
+  _onKeyUp = event => {
+    if (['Enter'].includes(event.key)) {
+      this._onResize();
+    }
+  };
+  _stopClickPropagation = event => {
+    event.stopPropagation();
+  };
+  render() {
+    return (
+      <div className="resize-popup" onClick={this._stopClickPropagation}>
+        <div className="user-input" onClick={this._stopClickPropagation}>
+          <div className="height" onClick={this._stopClickPropagation}>
+            <input
+              onClick={this._stopClickPropagation}
+              value={this.state.height}
+              onChange={this._onResizePopupHeightChange}
+              onKeyUp={this._onKeyUp}
+            />
+          </div>
+          <RetinaImg
+            onClick={this._stopClickPropagation}
+            style={{ height: 20, width: 20 }}
+            mode={RetinaImg.Mode.ContentIsMask}
+            isIcon={true}
+            name={'lock.svg'}
+          />
+          <div className="width" onClick={this._stopClickPropagation}>
+            <input
+              onClick={this._stopClickPropagation}
+              value={this.state.width}
+              onKeyUp={this._onKeyUp}
+              onChange={this._onResizePopupWidthChange}
+            />
+          </div>
+        </div>
+        <div className="user-buttons " onClick={this._stopClickPropagation}>
+          <button className="btn resize-button-cancel" onClick={this._onCancel}>
+            Cancel
+          </button>
+          <button className="btn resize-button-confirm" onClick={this._onResize}>
+            Resize
+          </button>
+        </div>
       </div>
     );
   }
