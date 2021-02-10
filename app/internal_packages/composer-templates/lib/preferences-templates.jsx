@@ -158,6 +158,10 @@ class TemplateEditor extends React.Component {
     );
   };
 
+  _onForceSave = value => {
+    this.setState({ editorState: value }, this._onSave);
+  };
+
   _renderTemplateActions = () => {
     const buttons = [];
     TEMPLATEFIELDS.forEach(field => {
@@ -252,7 +256,7 @@ class TemplateEditor extends React.Component {
             ref={c => (this._composer = c)}
             readOnly={readOnly}
             value={editorState}
-            propsForPlugins={{ inTemplateEditor: true }}
+            propsForPlugins={{ inTemplateEditor: true, onForceSave: this._onForceSave }}
             onChange={change => {
               const changeHtml = convertToHTML(change.value);
               if (changeHtml) {
