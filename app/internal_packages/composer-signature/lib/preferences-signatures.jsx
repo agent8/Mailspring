@@ -24,15 +24,17 @@ const {
 class SignatureEditor extends React.Component {
   static propTypes = {
     signature: PropTypes.object,
+    body: PropTypes.string,
+    defaults: PropTypes.object,
     accounts: PropTypes.array,
     onEditTitle: PropTypes.func,
-    defaults: PropTypes.object,
     onEditField: PropTypes.func,
   };
+
   constructor(props) {
     super(props);
-    const { id, attachments } = props.signature || {};
-    const body = SignatureStore.getBodyById(id);
+    const { attachments } = props.signature || {};
+    const body = props.body || '';
     this.state = {
       body,
       editorState: convertFromHTML(body),
@@ -47,6 +49,16 @@ class SignatureEditor extends React.Component {
     // lazy loader
     const CodeEditor = require('./code-editor').default;
     this.setState({ CodeEditor });
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const body = nextProps.body || '';
+    if (body !== this.props.body) {
+      this.setState({
+        body,
+        editorState: convertFromHTML(body || ''),
+      });
+    }
   }
 
   _onSave = () => {
@@ -215,9 +227,12 @@ export default class PreferencesSignatures extends React.Component {
   };
 
   _getStateFromStores() {
+    const selected = SignatureStore.selectedSignature();
+    const body = selected.id ? SignatureStore.getBodyById(selected.id, true) : '';
     return {
       signatures: SignatureStore.getSignatures(),
-      selectedSignature: SignatureStore.selectedSignature(),
+      selectedSignature: selected,
+      selectedBody: body,
       defaults: SignatureStore.getDefaults(),
       accounts: AccountStore.accounts(),
     };
@@ -340,6 +355,7 @@ export default class PreferencesSignatures extends React.Component {
           />
           <SignatureEditor
             signature={this.state.selectedSignature}
+            body={this.state.selectedBody}
             defaults={this.state.defaults}
             key={this.state.selectedSignature ? this.state.selectedSignature.id : 'empty'}
             accounts={this.state.accounts}
