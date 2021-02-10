@@ -57,10 +57,10 @@ class SignatureStore extends MailspringStore {
 
     AppEnv.config.onDidChange(`signatures`, () => {
       this.signatures = AppEnv.config.get(`signatures`);
-      if (!AppEnv.isMainWindow()) {
-        // compose should update the body when signature change
-        this.signaturesBody = new Map();
-      }
+      this.signaturesBody = new Map();
+      this.signatures.forEach(s => {
+        this.getBodyById(s.id, true);
+      });
       this._triggerDebounced();
     });
     AppEnv.config.onDidChange(`defaultSignatures`, () => {
@@ -109,7 +109,7 @@ class SignatureStore extends MailspringStore {
     }
   }
 
-  getBodyById(id) {
+  getBodyById(id, force = false) {
     if (!id) {
       return '';
     }
@@ -118,7 +118,7 @@ class SignatureStore extends MailspringStore {
       return '';
     }
     const bodyInTmp = this.signaturesBody.get(id);
-    if (bodyInTmp) {
+    if (bodyInTmp && !force) {
       return bodyInTmp;
     }
 

@@ -83,10 +83,10 @@ class TemplateStore extends MailspringStore {
 
     AppEnv.config.onDidChange(`templates`, () => {
       this.templates = AppEnv.config.get(`templates`);
-      if (!AppEnv.isMainWindow()) {
-        // compose should update the body when templates change
-        this.templatesBody = new Map();
-      }
+      this.templatesBody = new Map();
+      this.templates.forEach(t => {
+        this.getBodyById(t.id, true);
+      });
       this._triggerDebounced();
     });
 
@@ -111,7 +111,7 @@ class TemplateStore extends MailspringStore {
     return this._getTemplateById(this._selectedTemplateId);
   }
 
-  getBodyById(id) {
+  getBodyById(id, force = false) {
     if (!id) {
       return '';
     }
@@ -120,7 +120,7 @@ class TemplateStore extends MailspringStore {
       return '';
     }
     const bodyInTmp = this.templatesBody.get(id);
-    if (bodyInTmp) {
+    if (bodyInTmp && !force) {
       return bodyInTmp;
     }
 
