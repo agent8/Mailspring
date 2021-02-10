@@ -27,14 +27,15 @@ function fileIsImage(file) {
 class TemplateEditor extends React.Component {
   static propTypes = {
     template: PropTypes.object,
+    body: PropTypes.string,
     onEditField: PropTypes.func,
     onEditTitle: PropTypes.func,
   };
 
   constructor(props) {
     super(props);
-    const { id, TO, CC, BCC, SUBJ, attachments } = props.template || {};
-    const body = TemplateStore.getBodyById(id);
+    const { TO, CC, BCC, SUBJ, attachments } = props.template || {};
+    const body = props.body || '';
     this.state = {
       body,
       editorState: convertFromHTML(body),
@@ -49,6 +50,16 @@ class TemplateEditor extends React.Component {
       attachments: attachments || [],
       readOnly: !props.template,
     };
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const body = nextProps.body || '';
+    if (body !== this.props.body) {
+      this.setState({
+        body,
+        editorState: convertFromHTML(body),
+      });
+    }
   }
 
   _onSave = () => {
@@ -290,9 +301,12 @@ export default class PreferencesTemplates extends React.Component {
   };
 
   _getStateFromStores() {
+    const selected = TemplateStore.selectedTemplate();
+    const selectedBody = selected.id ? TemplateStore.getBodyById(selected.id, true) : '';
     return {
       templates: TemplateStore.getTemplates(),
-      selected: TemplateStore.selectedTemplate(),
+      selected,
+      selectedBody,
     };
   }
 
@@ -378,6 +392,7 @@ export default class PreferencesTemplates extends React.Component {
             onEditTitle={this._onEditTitle}
             key={selected ? selected.id : 'empty'}
             template={selected}
+            body={this.state.selectedBody}
             onEditField={this._onChangeField}
           />
         </Flexbox>
