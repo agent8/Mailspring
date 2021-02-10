@@ -38,6 +38,8 @@ export default class ResizableImg extends Component {
     this._mounted = false;
     this._imgRef = null;
     this._setImgRef = ref => (this._imgRef = ref);
+    this._resizableRef = null;
+    this._setResizableRef = ref => (this._resizableRef = ref);
     this._imageResizePopupOpen = false;
   }
 
@@ -155,7 +157,7 @@ export default class ResizableImg extends Component {
           });
           this._imageResizePopupOpen = true;
         };
-        this.props.onContextMenu(event, { showPopup, onCopyImage: this._onCopyImage });
+        this.props.onContextMenu(event, { onShowPopup: showPopup, onCopyImage: this._onCopyImage });
       }
     }
   };
@@ -176,6 +178,7 @@ export default class ResizableImg extends Component {
     }
     return (
       <ResizableBox
+        ref={this._setResizableRef}
         onResize={value => {
           if (!this._mounted) {
             return;
