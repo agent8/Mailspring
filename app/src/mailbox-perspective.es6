@@ -169,10 +169,12 @@ export default class MailboxPerspective {
       accountIds.length > 0 &&
       accountIds.every(id => typeof id === 'string')
     ) {
-      return new StarredMailboxPerspective(accountIds);
-    } else {
-      return this.forNothing();
+      const categories = CategoryStore.getCategoriesWithRoles(accountIds, 'flagged');
+      if (Array.isArray(categories) && categories.length > 0) {
+        return new StarredMailboxPerspective(accountIds);
+      }
     }
+    return this.forNothing();
   }
 
   static forUnread(categories) {
