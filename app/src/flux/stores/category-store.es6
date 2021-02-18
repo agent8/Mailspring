@@ -651,7 +651,7 @@ class CategoryStore extends MailspringStore {
       const stringA = a.name || '';
       const stringB = b.name || '';
       let compareLength = stringA.length;
-      if (stringA.length > stringB.length) {
+      if (stringA.length < stringB.length) {
         compareLength = stringB.length;
       }
       for (let i = 0; i < compareLength; i++) {

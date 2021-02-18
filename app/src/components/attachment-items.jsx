@@ -612,7 +612,7 @@ export class ImageAttachmentItem extends Component {
           });
           this._imageResizePopupOpen = true;
         };
-        this.props.onContextMenu(event, { showPopup, onCopyImage: this._onCopyImage });
+        this.props.onContextMenu(event, { onShowPopup: showPopup, onCopyImage: this._onCopyImage });
       }
     }
   };

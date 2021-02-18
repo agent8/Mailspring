@@ -861,8 +861,8 @@ class Config {
   };
 
   _syncPreferencesFromServer = async configList => {
-    const fomartData = await this._handlePreferencesFromServer(configList);
-    await this._bulkSet(fomartData);
+    const serverData = await this._handlePreferencesFromServer(configList);
+    await this._bulkSet(serverData);
   };
 
   _handlePreferencesFromServer = async configList => {
@@ -886,12 +886,15 @@ class Config {
         value = conf.value;
       }
       if (value !== null) {
-        changeList.push({
-          key: configKey,
-          type: conf.type,
-          value,
-          tsClientUpdate: conf.tsClientUpdate,
-        });
+        const { syncToServer } = this.getSchema(configKey);
+        if (syncToServer) {
+          changeList.push({
+            key: configKey,
+            type: conf.type,
+            value,
+            tsClientUpdate: conf.tsClientUpdate,
+          });
+        }
       }
     }
     return changeList;
@@ -1138,6 +1141,7 @@ class Config {
       throw new Error(`Error loading schema for ${keyPath}: schemas can only be objects!`);
     }
 
+    // eslint-disable-next-line no-constant-condition
     if (!typeof (schema.type != null)) {
       throw new Error(
         `Error loading schema for ${keyPath}: schema objects must have a type attribute`
@@ -1225,7 +1229,7 @@ class Config {
       const keys = splitKeyPath(keyPath);
       for (let key in defaults) {
         const childValue = defaults[key];
-        if (!defaults.hasOwnProperty(key)) {
+        if (!Object.prototype.hasOwnProperty.call(defaults, key)) {
           continue;
         }
         this.setDefaults(keys.concat([key]).join('.'), childValue);
@@ -1550,11 +1554,12 @@ var splitKeyPath = function(keyPath) {
   return keyPathArray;
 };
 
-var withoutEmptyObjects = function(object) {
+const withoutEmptyObjects = function(object) {
   let resultObject = undefined;
   if (isPlainObject(object)) {
     for (let key in object) {
       const value = object[key];
+      // eslint-disable-next-line no-unused-vars
       const newValue = withoutEmptyObjects(value);
       if (newValue != null) {
         if (resultObject == null) {
