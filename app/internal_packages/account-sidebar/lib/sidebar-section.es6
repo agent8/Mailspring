@@ -130,14 +130,18 @@ export default class SidebarSection {
           deletable: false,
           folderTreeIndex: items.length,
         });
-        items.push(item);
+        if (item) {
+          items.push(item);
+        }
       } else {
         const item = SidebarItem.forCategories([cat], {
           editable: false,
           deletable: false,
           folderTreeIndex: items.length,
         });
-        items.push(item);
+        if (item) {
+          items.push(item);
+        }
       }
     });
 
