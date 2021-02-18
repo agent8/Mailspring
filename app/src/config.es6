@@ -603,9 +603,6 @@ class Config {
         if (itemLastChangeTimeInLocal && itemLastChangeTimeInLocal > item.tsClientUpdate) {
           // if local change is later then server,
           // should sync local change to server.
-          // However, in order to avoid an endless loop,
-          // sync it to the server the next time it changes.
-          // So we just need to make sure that the local is new
           continue;
         }
         if (value === undefined) {
@@ -738,20 +735,20 @@ class Config {
     if (!syncAccountId) {
       return;
     }
-    if (this._onSyncPreferences) {
+    if (this._onSyncPreferencesFromServer) {
       return;
     }
-    this._onSyncPreferences = true;
+    this._onSyncPreferencesFromServer = true;
     const { PreferencesRest } = require('./rest');
     const setting = await PreferencesRest.getAllPreferences();
     if (!setting.successful) {
-      this._onSyncPreferences = false;
+      this._onSyncPreferencesFromServer = false;
       this._logError('Sync all setting from server fail', new Error(setting.message));
       return;
     }
     const { data } = setting;
     if (!Array.isArray(data) || !data.length) {
-      this._onSyncPreferences = false;
+      this._onSyncPreferencesFromServer = false;
       return;
     }
     const configList = [];
@@ -769,7 +766,7 @@ class Config {
       }
     });
     if (!configList.length) {
-      this._onSyncPreferences = false;
+      this._onSyncPreferencesFromServer = false;
       return;
     }
     try {
@@ -784,7 +781,78 @@ class Config {
     } catch (err) {
       this._logError('Sync setting from server fail', err);
     }
-    this._onSyncPreferences = false;
+    this._onSyncPreferencesFromServer = false;
+  };
+
+  syncAllPreferencesToServer = async () => {
+    const syncAccountId = this.get('edisonAccountId');
+    if (!syncAccountId) {
+      return;
+    }
+    if (this._onSyncPreferencesToServer) {
+      return;
+    }
+    this._onSyncPreferencesToServer = true;
+    const { PreferencesRest } = require('./rest');
+    const setting = await PreferencesRest.getFullPreferences();
+    if (!setting.successful) {
+      this._onSyncPreferencesToServer = false;
+      this._logError('Sync all setting from server fail', new Error(setting.message));
+      return;
+    }
+    const { data } = setting;
+    if (!Array.isArray(data) || !data.length) {
+      this._onSyncPreferencesToServer = false;
+      return;
+    }
+    const commonConfigVersionMap = new Map();
+    const macConfigVersionMap = new Map();
+    data.forEach(platformSetting => {
+      if (platformSetting.list && platformSetting.list.length) {
+        platformSetting.list.forEach(setting => {
+          if (platformSetting.platform === EdisonPlatformType.COMMON) {
+            commonConfigVersionMap.set(setting.key, setting.tsClientUpdate);
+          }
+          if (platformSetting.platform === EdisonPlatformType.MAC) {
+            macConfigVersionMap.set(setting.key, setting.tsClientUpdate);
+          }
+        });
+      }
+    });
+
+    const shouldSyncToServerList = [];
+    const shouldSyncToServer = (obj, parentKey) => {
+      Object.keys(obj).forEach(key => {
+        const nowObj = obj[key] || {};
+        const nowKey = `${parentKey ? parentKey + '.' : ''}${key}`;
+        if (nowObj.type === 'object') {
+          shouldSyncToServer(nowObj.properties, nowKey);
+        }
+        if (!nowObj.syncToServer) {
+          return;
+        }
+        const configUpdateTime = this.getConfigUpdateTime(nowKey);
+        if (!configUpdateTime) {
+          return;
+        }
+        let serverUpdateTime = 0;
+        if (nowObj.syncToServerCommonKey) {
+          serverUpdateTime = commonConfigVersionMap.get(nowObj.syncToServerCommonKey) || 0;
+        } else {
+          serverUpdateTime = macConfigVersionMap.get(generateServerConfigKey(nowKey)) || 0;
+        }
+        if (configUpdateTime > serverUpdateTime) {
+          shouldSyncToServerList.push(nowKey);
+        }
+      });
+    };
+
+    shouldSyncToServer(this.schema.properties);
+    for (const keyPath of shouldSyncToServerList) {
+      await this._syncSettingToServer(keyPath, this.get(keyPath));
+    }
+
+    this._onSyncPreferencesToServer = false;
   };
 
   clearSyncPreferencesVersion = () => {
@@ -937,7 +1005,6 @@ class Config {
         this._logError('Sync setting to server fail', error);
       }
     }
-    this.setConfigUpdateTime(keyPath, new Date().getTime());
   };
 
   _syncSimpleSettingToServer = async (keyPath, value) => {
@@ -1249,6 +1316,7 @@ class Config {
 
   setRawValue(keyPath, value, silent = false) {
     app.configPersistenceManager.setRawValue(keyPath, value, webContentsId);
+    this.setConfigUpdateTime(keyPath, new Date().getTime());
     const configSchema = this.getSchema(keyPath);
     if (process.type === 'renderer' && !silent && configSchema && configSchema.syncToServer) {
       this._syncSettingToServer(keyPath, value);
