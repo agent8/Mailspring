@@ -801,7 +801,7 @@ class Config {
       return;
     }
     const { data } = setting;
-    if (!Array.isArray(data) || !data.length) {
+    if (!Array.isArray(data)) {
       this._onSyncPreferencesToServer = false;
       return;
     }
