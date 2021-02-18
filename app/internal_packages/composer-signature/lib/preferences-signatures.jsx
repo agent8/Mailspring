@@ -228,7 +228,7 @@ export default class PreferencesSignatures extends React.Component {
 
   _getStateFromStores() {
     const selected = SignatureStore.selectedSignature();
-    const body = selected.id ? SignatureStore.getBodyById(selected.id, true) : '';
+    const body = selected && selected.id ? SignatureStore.getBodyById(selected.id, true) : '';
     return {
       signatures: SignatureStore.getSignatures(),
       selectedSignature: selected,
@@ -256,6 +256,9 @@ export default class PreferencesSignatures extends React.Component {
   _onChangeField = (field, value) => {
     const SignatureChangeFields = ['title', 'attachments'];
     if (!SignatureChangeFields.includes(field)) {
+      return;
+    }
+    if (!this.state.selectedSignature) {
       return;
     }
     const sig = Object.assign({}, this.state.selectedSignature);
@@ -318,6 +321,9 @@ export default class PreferencesSignatures extends React.Component {
 
   _renderSignatures() {
     const { signatures } = this.state;
+    if (!signatures) {
+      return null;
+    }
     const footer = (
       <div className="btn-primary buttons-add" onClick={this._onAddSignature}>
         <RetinaImg
