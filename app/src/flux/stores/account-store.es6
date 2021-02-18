@@ -553,7 +553,7 @@ class AccountStore extends MailspringStore {
     return this._accounts.map(a => a.id);
   };
 
-  loginSyncAccount = aid => {
+  loginSyncAccount = async aid => {
     if (!aid) {
       return;
     }
@@ -562,7 +562,9 @@ class AccountStore extends MailspringStore {
       aid
     );
     // sync preferences from server
-    AppEnv.config.syncAllPreferencesFromServer();
+    await AppEnv.config.syncAllPreferencesFromServer();
+    // sync preferences to server
+    await AppEnv.config.syncAllPreferencesToServer();
     // refresh the sub accounts for new sync account
     EdisonAccountRest.subAccounts();
   };

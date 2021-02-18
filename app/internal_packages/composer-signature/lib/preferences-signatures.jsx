@@ -228,7 +228,7 @@ export default class PreferencesSignatures extends React.Component {
 
   _getStateFromStores() {
     const selected = SignatureStore.selectedSignature();
-    const body = selected.id ? SignatureStore.getBodyById(selected.id, true) : '';
+    const body = selected && selected.id ? SignatureStore.getBodyById(selected.id, true) : '';
     return {
       signatures: SignatureStore.getSignatures(),
       selectedSignature: selected,
