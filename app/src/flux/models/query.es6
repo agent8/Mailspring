@@ -4,7 +4,7 @@ import QueryRange from './query-range';
 import Utils from './utils';
 import _ from 'underscore';
 
-const { Matcher, AttributeJoinedData, AttributeCollection } = Attributes;
+const { Matcher, AttributeJoinedData } = Attributes;
 const isMessageView = AppEnv.isDisableThreading();
 const isCrossDBAttr = attr => {
   return attr && typeof attr.crossDBKey === 'function';
@@ -90,7 +90,7 @@ export default class ModelQuery {
     for (let attr of attrs) {
       if (isCrossDBAttr(attr)) {
         const key = attr.crossDBKey();
-        if (!!key) {
+        if (key) {
           if (!this._crossDB.connections[key]) {
             this._crossDB.connections[key] = {
               db: attr.joinDBName(),
@@ -647,7 +647,8 @@ export default class ModelQuery {
         /SEARCH_MATCH_SQL/g,
         `${this._orderClause('main', false, true)} ${limit}`
       );
-    } else if (useSubSelect) {
+    }
+    if (useSubSelect) {
       const subSelectMatchers = this._subSelectMatchers(allMatchers);
       const subSQL = this._subSelectSQL(subSelectMatchers, order, limit, dbKey);
       whereSql = whereSql.replace('SUB_SELECT_SQL', subSQL);
