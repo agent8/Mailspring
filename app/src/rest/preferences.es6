@@ -75,6 +75,36 @@ export default class Preferences {
     }
   };
 
+  async getFullPreferences() {
+    const url = `${this.host}/api/charge/user/preference/list`;
+    const postData = [
+      { platform: EdisonPlatformType.COMMON, version: 0 },
+      { platform: EdisonPlatformType.MAC, version: 0 },
+    ];
+
+    try {
+      const data = await this._postCommonFunc(url, postData);
+      const configList = (data.data || []).filter(
+        conf =>
+          conf.changed &&
+          [EdisonPlatformType.COMMON, EdisonPlatformType.MAC].includes(conf.platform)
+      );
+      return new RESTResult(data.code === 0, data.message, configList);
+    } catch (error) {
+      const state = error && error.response && error.response.status;
+      switch (state) {
+        case 304:
+          // no change in server with this version
+          return new RESTResult(true, 'setting is nochange for version 0', []);
+        case 404:
+          // the setting in server is empty
+          return new RESTResult(true, 'setting is empty', []);
+        default:
+          return new RESTResult(false, error.message);
+      }
+    }
+  }
+
   async getAllPreferences() {
     const url = `${this.host}/api/charge/user/preference/list`;
     const commonConfigVersion = AppEnv.config.get('commonSettingsVersion');
