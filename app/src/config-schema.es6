@@ -190,7 +190,7 @@ export default {
           threadView: {
             type: 'boolean',
             default: true,
-            syncToServer: true,
+            syncToServer: false,
           },
         },
       },

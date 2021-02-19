@@ -306,7 +306,8 @@ export default class PreferencesTemplates extends React.Component {
 
   _getStateFromStores() {
     const selected = TemplateStore.selectedTemplate();
-    const selectedBody = selected.id ? TemplateStore.getBodyById(selected.id, true) : '';
+    const selectedBody =
+      selected && selected.id ? TemplateStore.getBodyById(selected.id, true) : '';
     return {
       templates: TemplateStore.getTemplates(),
       selected,
