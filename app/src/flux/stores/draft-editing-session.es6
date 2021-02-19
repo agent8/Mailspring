@@ -59,7 +59,7 @@ class DraftChangeSet extends EventEmitter {
     }
   }
 
-  add(changes, { skipSaving = false } = {}) {
+  add(changes, { skipSaving = false, skipSyncToMain = false } = {}) {
     if (!skipSaving) {
       if (!changes.files || changes.files.every(f => !f.isSigOrTempAttachments)) {
         changes.pristine = false;
@@ -74,7 +74,7 @@ class DraftChangeSet extends EventEmitter {
       this.debounceCommit();
     }
 
-    this.callbacks.onAddChanges(changes);
+    this.callbacks.onAddChanges(changes, !skipSyncToMain);
   }
 
   addPluginMetadata(pluginId, metadata) {
@@ -240,7 +240,7 @@ export default class DraftEditingSession extends MailspringStore {
 
     this.messageId = messageId;
     this.changes = new DraftChangeSet({
-      onAddChanges: changes => this.changeSetApplyChanges(changes),
+      onAddChanges: (changes, syncToMain) => this.changeSetApplyChanges(changes, syncToMain),
       onCommit: arg => this.changeSetCommit(arg), // for specs
     });
 
@@ -830,7 +830,7 @@ export default class DraftEditingSession extends MailspringStore {
     }
   };
 
-  changeSetApplyChanges = changes => {
+  changeSetApplyChanges = (changes, syncToMain = true) => {
     if (this._destroyed) {
       return;
     }
@@ -848,7 +848,9 @@ export default class DraftEditingSession extends MailspringStore {
       }
     }
     this.trigger();
-    this.needsSyncToMain = true;
+    if (syncToMain) {
+      this.needsSyncToMain = true;
+    }
   };
   _onDraftAttachmentStateChange = ({ messageId, draftState }) => {
     if (!this._draft) {
