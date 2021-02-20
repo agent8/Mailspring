@@ -211,6 +211,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
     try {
@@ -241,6 +242,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
     const postData = {
@@ -305,6 +307,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
 
@@ -331,6 +334,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
     if (!deviceId) {
@@ -369,6 +373,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
 
@@ -401,6 +406,7 @@ export default class EdisonAccount {
 
     const token = syncAccount.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(syncAccount.id);
       return new RESTResult(false, 'sync account has no token');
     }
 

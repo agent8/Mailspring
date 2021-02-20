@@ -57,6 +57,7 @@ export default class Preferences {
     }
     const token = syncAccount.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(syncAccount.id);
       throw new Error('sync account has no token');
     }
 
