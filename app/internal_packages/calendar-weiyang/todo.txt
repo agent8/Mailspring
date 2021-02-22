@@ -1,0 +1,6 @@
+Read up on reflux
+Create calendar without database first
+    - user logs in and calendar will display the intended information
+    - information is transient, and will disappear on reload
+Think of the reflux architecture and how information would be passed between calendar and API pulled
+    - do i store user information and grab API everytime? or store calendar info directly
