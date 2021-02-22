@@ -27,7 +27,7 @@ export default class Preferences {
         // wait for config change finish
         const { EdisonAccountRest } = require('./index');
         const syncAccount = AccountStore.syncAccount();
-        if (syncAccount && syncAccount.id) {
+        if (syncAccount && syncAccount.id === aid) {
           EdisonAccountRest.register(aid);
         }
       }, 3000);
