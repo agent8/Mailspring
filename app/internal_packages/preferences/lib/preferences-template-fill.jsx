@@ -296,7 +296,7 @@ const preferencesTemplateFill = {
             {
               label: 'Back up & Sync',
               component: EdisonAccount,
-              keywords: [],
+              keywords: ['My Account'],
             },
           ],
         },

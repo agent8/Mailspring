@@ -27,7 +27,7 @@ export default class Preferences {
         // wait for config change finish
         const { EdisonAccountRest } = require('./index');
         const syncAccount = AccountStore.syncAccount();
-        if (syncAccount && syncAccount.id) {
+        if (syncAccount && syncAccount.id === aid) {
           EdisonAccountRest.register(aid);
         }
       }, 3000);
@@ -57,6 +57,7 @@ export default class Preferences {
     }
     const token = syncAccount.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(syncAccount.id);
       throw new Error('sync account has no token');
     }
 
