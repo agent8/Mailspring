@@ -537,6 +537,13 @@ class AccountStore extends MailspringStore {
 
     this._save('add account');
     ipcRenderer.send('after-add-account', account);
+
+    if (existingIdx >= 0 ) {
+      const syncAccountId = AppEnv.config.get(edisonAccountKey);
+      if (cleanAccount.id === syncAccountId) {
+        await EdisonAccountRest.register(cleanAccount.id);
+      }
+    }
   };
 
   _cachedGetter(key, fn) {
@@ -575,6 +582,15 @@ class AccountStore extends MailspringStore {
     }
     AppEnv.config.set(edisonAccountKey, '');
     AppEnv.config.clearSyncPreferencesVersion();
+    const account = this.accountForId(aid);
+    const newAccountSettings = Object.assign({}, account.settings)
+    delete newAccountSettings.edisonId
+    delete newAccountSettings.edison_token
+    const newAccount = {
+      ...account,
+      settings: newAccountSettings
+    }
+    Actions.updateAccount(aid, newAccount);
   };
 
   syncAccount = () => {
