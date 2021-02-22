@@ -3,7 +3,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { remote } from 'electron';
-import { Actions, ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
+import { ComponentRegistry, WorkspaceStore } from 'mailspring-exports';
 
 import Flexbox from './components/flexbox';
 import RetinaImg from './components/retina-img';
@@ -21,103 +21,103 @@ class ToolbarSpacer extends React.Component {
   }
 }
 
-class WindowTitle extends React.Component {
-  static displayName = 'WindowTitle';
-
-  constructor(props) {
-    super(props);
-    this.state = AppEnv.getLoadSettings();
-  }
-
-  componentDidMount() {
-    this.disposable = AppEnv.onWindowPropsReceived(() => this.setState(AppEnv.getLoadSettings()));
-  }
-
-  componentWillUnmount() {
-    if (this.disposable) {
-      this.disposable.dispose();
-    }
-  }
-
-  render() {
-    return <div className="window-title">{this.state.title}</div>;
-  }
-}
-
-class ToolbarWindowControls extends React.Component {
-  static displayName = 'ToolbarWindowControls';
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      alt: false,
-      isFullScreen: AppEnv.isFullScreen(),
-      isMaximized: AppEnv.isMaximized(),
-    };
-  }
-
-  componentDidMount() {
-    if (process.platform === 'darwin') {
-      window.addEventListener('keydown', this._onAlt);
-      window.addEventListener('keyup', this._onAlt);
-    }
-  }
-
-  componentWillUnmount() {
-    if (process.platform === 'darwin') {
-      window.removeEventListener('keydown', this._onAlt);
-      window.removeEventListener('keyup', this._onAlt);
-    }
-  }
-
-  _onAlt = event => {
-    if (!this.state.isFullScreen && event.key === 'Alt') {
-      this.setState({ alt: event.altKey });
-    }
-  };
-
-  _onMaximize = event => {
-    if (process.platform === 'darwin' && (!event.altKey || this.state.isFullScreen)) {
-      AppEnv.setFullScreen(!this.state.isFullScreen);
-      this.setState({ isFullScreen: !this.state.isFullScreen });
-    } else if (!this.state.isFullScreen) {
-      if (AppEnv.isMaximized()) {
-        AppEnv.unmaximize();
-      } else {
-        AppEnv.maximize();
-      }
-      this.setState({ alt: false });
-    }
-  };
-
-  render() {
-    const enabled =
-      process.platform === 'darwin' ||
-      (process.platform === 'linux' &&
-        AppEnv.config.get('core.workspace.menubarStyle') === 'hamburger');
-
-    if (!enabled) {
-      return <span />;
-    }
-    let maxButton = <button tabIndex={-1} className="fullscreen" onClick={this._onMaximize} />;
-    if (this.state.alt) {
-      maxButton = <button tabIndex={-1} className="maximize" onClick={this._onMaximize} />;
-    } else if (this.state.isFullScreen) {
-      maxButton = <button tabIndex={-1} className="unmaximize" onClick={this._onMaximize}></button>;
-    }
-    return (
-      <div name="ToolbarWindowControls" className={`toolbar-window-controls alt-${this.state.alt}`}>
-        <button tabIndex={-1} className="close" onClick={() => AppEnv.close()} />
-        <button
-          tabIndex={-1}
-          className={`minimize${this.state.isFullScreen ? ' disabled' : ''}`}
-          onClick={() => AppEnv.minimize()}
-        />
-        {maxButton}
-      </div>
-    );
-  }
-}
+// class WindowTitle extends React.Component {
+//   static displayName = 'WindowTitle';
+//
+//   constructor(props) {
+//     super(props);
+//     this.state = AppEnv.getLoadSettings();
+//   }
+//
+//   componentDidMount() {
+//     this.disposable = AppEnv.onWindowPropsReceived(() => this.setState(AppEnv.getLoadSettings()));
+//   }
+//
+//   componentWillUnmount() {
+//     if (this.disposable) {
+//       this.disposable.dispose();
+//     }
+//   }
+//
+//   render() {
+//     return <div className="window-title">{this.state.title}</div>;
+//   }
+// }
+//
+// class ToolbarWindowControls extends React.Component {
+//   static displayName = 'ToolbarWindowControls';
+//
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       alt: false,
+//       isFullScreen: AppEnv.isFullScreen(),
+//       isMaximized: AppEnv.isMaximized(),
+//     };
+//   }
+//
+//   componentDidMount() {
+//     if (process.platform === 'darwin') {
+//       window.addEventListener('keydown', this._onAlt);
+//       window.addEventListener('keyup', this._onAlt);
+//     }
+//   }
+//
+//   componentWillUnmount() {
+//     if (process.platform === 'darwin') {
+//       window.removeEventListener('keydown', this._onAlt);
+//       window.removeEventListener('keyup', this._onAlt);
+//     }
+//   }
+//
+//   _onAlt = event => {
+//     if (!this.state.isFullScreen && event.key === 'Alt') {
+//       this.setState({ alt: event.altKey });
+//     }
+//   };
+//
+//   _onMaximize = event => {
+//     if (process.platform === 'darwin' && (!event.altKey || this.state.isFullScreen)) {
+//       AppEnv.setFullScreen(!this.state.isFullScreen);
+//       this.setState({ isFullScreen: !this.state.isFullScreen });
+//     } else if (!this.state.isFullScreen) {
+//       if (AppEnv.isMaximized()) {
+//         AppEnv.unmaximize();
+//       } else {
+//         AppEnv.maximize();
+//       }
+//       this.setState({ alt: false });
+//     }
+//   };
+//
+//   render() {
+//     const enabled =
+//       process.platform === 'darwin' ||
+//       (process.platform === 'linux' &&
+//         AppEnv.config.get('core.workspace.menubarStyle') === 'hamburger');
+//
+//     if (!enabled) {
+//       return <span />;
+//     }
+//     let maxButton = <button tabIndex={-1} className="fullscreen" onClick={this._onMaximize} />;
+//     if (this.state.alt) {
+//       maxButton = <button tabIndex={-1} className="maximize" onClick={this._onMaximize} />;
+//     } else if (this.state.isFullScreen) {
+//       maxButton = <button tabIndex={-1} className="unmaximize" onClick={this._onMaximize}></button>;
+//     }
+//     return (
+//       <div name="ToolbarWindowControls" className={`toolbar-window-controls alt-${this.state.alt}`}>
+//         <button tabIndex={-1} className="close" onClick={() => AppEnv.close()} />
+//         <button
+//           tabIndex={-1}
+//           className={`minimize${this.state.isFullScreen ? ' disabled' : ''}`}
+//           onClick={() => AppEnv.minimize()}
+//         />
+//         {maxButton}
+//       </div>
+//     );
+//   }
+// }
 
 class ToolbarMenuControl extends React.Component {
   static displayName = 'ToolbarMenuControl';
@@ -333,10 +333,10 @@ export default class Toolbar extends React.Component {
         });
         state.columns[state.columns.length - 1].push(...entries);
       }
-
-      if (state.mode === 'popout') {
-        state.columns[0].push(WindowTitle);
-      }
+      //
+      // if (state.mode === 'popout') {
+      //   state.columns[0].push(WindowTitle);
+      // }
     }
 
     return state;
