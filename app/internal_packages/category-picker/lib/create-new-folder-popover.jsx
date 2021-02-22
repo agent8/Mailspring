@@ -19,6 +19,8 @@ export default class CreateNewFolderPopover extends Component {
     defaultValue: PropTypes.string,
     currentPerspective: PropTypes.object,
     onActionCallback: PropTypes.func,
+    buttonTimeout: PropTypes.number,
+    visible: PropTypes.bool,
   };
   static defaultProps = {
     left: 490,
@@ -81,8 +83,8 @@ export default class CreateNewFolderPopover extends Component {
     if (!this._buttonTimer) {
       this._buttonTimestamp = Date.now();
       this._buttonTimer = setTimeout(() => {
-        this.setState({ isBusy: false });
         this._buttonTimer = null;
+        this.setState({ isBusy: false });
       }, this.props.buttonTimeout * 2);
     }
   };
@@ -93,8 +95,8 @@ export default class CreateNewFolderPopover extends Component {
     if (!this._buttonTimer) {
       this._buttonTimestamp = Date.now();
       this._buttonTimer = setTimeout(() => {
-        this.setState({ isBusy: false });
         this._buttonTimer = null;
+        this.setState({ isBusy: false });
       }, this.props.buttonTimeout);
     } else {
       const now = Date.now();
@@ -102,8 +104,8 @@ export default class CreateNewFolderPopover extends Component {
       if (now - this._buttonTimestamp < this.props.buttonTimeout) {
         this._buttonTimestamp = Date.now();
         this._buttonTimer = setTimeout(() => {
-          this.setState({ isBusy: false });
           this._buttonTimer = null;
+          this.setState({ isBusy: false });
         }, this.props.buttonTimeout);
       } else {
         this._buttonTimer = null;
