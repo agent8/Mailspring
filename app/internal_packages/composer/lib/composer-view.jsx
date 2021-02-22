@@ -606,6 +606,7 @@ export default class ComposerView extends React.Component {
           className="file-upload"
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
+          displaySize={file.displayFileSize()}
           isImage={true}
           accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
@@ -639,6 +640,7 @@ export default class ComposerView extends React.Component {
           className="file-upload"
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
+          displaySize={file.displayFileSize()}
           isImage={true}
           accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
