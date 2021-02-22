@@ -582,6 +582,15 @@ class AccountStore extends MailspringStore {
     }
     AppEnv.config.set(edisonAccountKey, '');
     AppEnv.config.clearSyncPreferencesVersion();
+    const account = this.accountForId(aid);
+    const newAccountSettings = Object.assign({}, account.settings)
+    delete newAccountSettings.edisonId
+    delete newAccountSettings.edison_token
+    const newAccount = {
+      ...account,
+      settings: newAccountSettings
+    }
+    Actions.updateAccount(aid, newAccount);
   };
 
   syncAccount = () => {
