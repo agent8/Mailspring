@@ -213,6 +213,7 @@ const EditMenu = () => {
   const onClick = e => {
     e.stopPropagation();
     e.preventDefault();
+    AppEnv.trackingEvent('FolderTree-EditingMenu-RightClick');
     Actions.setEditingMenu(true);
   };
   return (
@@ -226,6 +227,7 @@ export const AddFolder = item => {
     e.stopPropagation();
     e.preventDefault();
     if (item && item.onRequestAddFolder && !item.disabled) {
+      AppEnv.trackingEvent('FolderTree-AddFolder-AddFolderItem');
       item.onRequestAddFolder();
     }
   };

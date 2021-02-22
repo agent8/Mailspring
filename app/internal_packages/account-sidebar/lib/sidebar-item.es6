@@ -103,8 +103,10 @@ const onChangeAllToRead = function(item) {
 };
 const toggleItemHide = item => {
   if (item.perspective.isHidden()) {
+    AppEnv.trackingEvent('FolderTree-hideShow-show');
     item.perspective.show();
   } else {
+    AppEnv.trackingEvent('FolderTree-hideShow-hide');
     item.perspective.hide();
   }
 };
@@ -137,6 +139,7 @@ const onDeleteItem = function(item) {
         accountId: category.accountId,
       })
     );
+    AppEnv.trackingEvent('FolderTree-DeleteFolder-rightClick');
     return;
   }
   DatabaseStore.findAll(ThreadCategory)
@@ -211,6 +214,7 @@ const onEditItem = function(item, newEnteredValue, originalText) {
     accountId: category.accountId,
   });
   if (task) {
+    AppEnv.trackingEvent('FolderTree-EditFolder-RightClick');
     Actions.queueTask(task);
   }
 };
@@ -303,6 +307,7 @@ class SidebarItem {
           if (threadsString.length > 0) {
             item.perspective.receiveThreadIds(jsonData.threadIds);
           } else if (categoryString.length > 0) {
+            AppEnv.trackingEvent('FolderTree-displayOrder');
             item.perspective.receiveCategoryMetaData(jsonData);
           }
         },
