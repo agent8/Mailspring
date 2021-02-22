@@ -145,11 +145,24 @@ export default class EdisonAccount {
       },
     };
     if (OAuthList.includes(account.provider)) {
+      if (account.provider === 'office365-exchange') {
+        emailAccount.provider = 'office365';
+      }
       emailAccount['type'] = 'oauth';
       emailAccount['oauthClientId'] = account.settings.refresh_client_id;
       emailAccount['incoming'] = {
         username: account.settings.imap_username,
         password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-refresh-token`)),
+      };
+    } else if (AccountStore.isExchangeAccount(account)) {
+      emailAccount['type'] = 'exchange';
+      emailAccount['incoming'] = {
+        ...emailAccount['incoming'],
+        username: account.settings.ews_username,
+        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-ews_password`)),
+        host: account.settings.ews_host,
+        // To do
+        domain: null,
       };
     } else {
       emailAccount['type'] = 'imap';
@@ -163,17 +176,6 @@ export default class EdisonAccount {
         host: account.settings.smtp_host,
         port: account.settings.smtp_port,
         ssl: account.settings.smtp_security && account.settings.smtp_security !== 'none',
-      };
-    }
-    if (AccountStore.isExchangeAccount(account)) {
-      emailAccount['type'] = 'exchange';
-      emailAccount['incoming'] = {
-        ...emailAccount['incoming'],
-        username: account.settings.ews_username,
-        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-ews_password`)),
-        host: account.settings.ews_host,
-        // To do
-        domain: null,
       };
     }
 
