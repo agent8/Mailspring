@@ -519,7 +519,10 @@ export default class ComposerView extends React.Component {
           return;
         }
       }
-      this.props.session.changes.add({ bodyEditorState: change.value }, { skipSaving });
+      this.props.session.changes.add(
+        { bodyEditorState: change.value },
+        { skipSaving, skipSyncToMain: skipSaving }
+      );
     }
     const focusBlock = change.value.focusBlock;
     if (focusBlock && focusBlock.type === BLOCK_CONFIG.div.type) {
