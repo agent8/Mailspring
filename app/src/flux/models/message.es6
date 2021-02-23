@@ -543,10 +543,15 @@ export default class Message extends ModelWithMetadata {
       to = this.replyTo;
       cc = excludeMeAndFroms([].concat(this.to, this.cc));
       // should add fron into cc
-      if (cc) {
-        cc = cc.concat(this.from);
-      } else {
-        cc = [].concat(this.from);
+      if (this.from.length) {
+        const isFromInTo = to.filter(item => item.email === this.from[0].email).length;
+        if (!isFromInTo) {
+          if (cc) {
+            cc = cc.concat(this.from);
+          } else {
+            cc = [].concat(this.from);
+          }
+        }
       }
     } else if (this.isFromMe({ ignoreOtherAccounts: true })) {
       // If the message is from you to others, reply-all should send to the
