@@ -708,9 +708,9 @@ export default class EdisonAccount extends React.Component {
                   style={{ height: 24, width: 24 }}
                 />
                 <div className="devices-name">{`${device.platform}-${device.name}`}</div>
-                <div className="remove-btn" onClick={() => this._logout(device.id)}>
+                {/* <div className="remove-btn" onClick={() => this._logout(device.id)}>
                   Remove
-                </div>
+                </div> */}
               </li>
             );
           })}
