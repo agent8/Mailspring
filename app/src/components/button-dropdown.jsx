@@ -26,7 +26,7 @@ class ButtonDropdown extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { open: false };
+    this.state = { open: false, eventY: 0 };
     this._buttonRef = null;
     this._setButtonRef = el => (this._buttonRef = el);
   }
@@ -74,8 +74,10 @@ class ButtonDropdown extends React.Component {
               mode={RetinaImg.Mode.ContentIsMask}
             />
           </div>
-          <div className="secondary-items" onMouseDown={this._onMenuClick} style={style}>
-            {menu}
+          <div style={{ position: 'fixed', zIndex: 99, top: this.state.eventY }}>
+            <div className="secondary-items" onMouseDown={this._onMenuClick} style={style}>
+              {menu}
+            </div>
           </div>
         </div>
       );
@@ -121,15 +123,15 @@ class ButtonDropdown extends React.Component {
     }
   }
 
-  toggleDropdown = () => {
+  toggleDropdown = e => {
     if (this.state.open !== false) {
       this.setState({ open: false });
     } else if (!this.props.disabled) {
       const buttonBottom = this._buttonRef ? this._buttonRef.getBoundingClientRect().bottom : -200;
       if (buttonBottom + 200 > window.innerHeight) {
-        this.setState({ open: 'up' });
+        this.setState({ open: 'up', eventY: e.pageY });
       } else {
-        this.setState({ open: 'down' });
+        this.setState({ open: 'down', eventY: e.pageY });
       }
     }
   };
