@@ -68,8 +68,10 @@ class PreferencesLabels extends React.Component {
     const cat = CategoryStore.byFolderId(catId);
     if (cat) {
       if (show) {
+        AppEnv.trackingEvent('Preference-Label-show');
         CategoryStore.showCategoryInFolderTree({ accountId: cat.accountId, id: cat.path });
       } else {
+        AppEnv.trackingEvent('Preference-Label-hide');
         CategoryStore.hideCategoryInFolderTree({ accountId: cat.accountId, id: cat.path });
       }
     }
@@ -235,6 +237,7 @@ class PreferencesLabels extends React.Component {
         closeOnAppBlur: false,
       }
     );
+    AppEnv.trackingEvent('Preference-Label-create');
   };
   _onEditLabel = category => {
     if (!category) {
@@ -261,6 +264,7 @@ class PreferencesLabels extends React.Component {
         closeOnAppBlur: false,
       }
     );
+    AppEnv.trackingEvent('Preference-Label-edit');
   };
   _onDestroyLabel = label => {
     if (!label) {
@@ -281,6 +285,7 @@ class PreferencesLabels extends React.Component {
       const task = new DestroyCategoryTask(
         Object.assign({}, label, { source: 'Preference Delete' })
       );
+      AppEnv.trackingEvent('Preference-Label-Delete');
       Actions.queueTask(task);
     });
   };
