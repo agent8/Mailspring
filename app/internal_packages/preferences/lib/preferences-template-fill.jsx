@@ -287,8 +287,8 @@ const preferencesTemplateFill = {
       ],
     },
     {
-      tabId: 'My Account',
-      displayName: 'My Account',
+      tabId: 'Back up & Sync',
+      displayName: 'Back up & Sync',
       order: 2,
       configGroup: [
         {
@@ -296,7 +296,7 @@ const preferencesTemplateFill = {
             {
               label: 'Back up & Sync',
               component: EdisonAccount,
-              keywords: ['My Account'],
+              keywords: ['Back up & Sync'],
             },
           ],
         },
