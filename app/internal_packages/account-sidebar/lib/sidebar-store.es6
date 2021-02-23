@@ -292,6 +292,7 @@ class SidebarStore extends MailspringStore {
         this._newFolder = { accountId: null };
         this._updateSections();
       } else {
+        AppEnv.trackingEvent('FolderTree-EditingMenu');
         this.trigger();
       }
     }
