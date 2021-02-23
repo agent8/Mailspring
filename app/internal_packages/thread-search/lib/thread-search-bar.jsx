@@ -317,6 +317,9 @@ class ThreadSearchBar extends Component {
     if (this._initialQueryForPerspective() === '') {
       return 'Search all emails';
     }
+    if (this.props.perspective.unread) {
+      return `Search Unread`;
+    }
     return `Search ${this.props.perspective.name || ''}`;
   };
 
