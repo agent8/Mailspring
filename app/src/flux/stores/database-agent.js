@@ -42,6 +42,7 @@ const logError = log => {
   _log(log, 'error');
 };
 
+// eslint-disable-next-line no-unused-vars
 const logWarning = log => {
   _log(log, 'warn');
 };
@@ -119,8 +120,23 @@ process.on('message', m => {
     });
     logDebug(`returning results for ${dbpath}, ${id}`);
   } catch (err) {
-    logError(`returning results for ${dbpath}, ${id} failed, query: ${query}`);
-    logError(err);
+    const errMessage = `returning results for ${dbpath}, ${id} failed, query: ${query}`;
+    const errJSON = {
+      message: errMessage,
+      id,
+      query,
+      queryType,
+      results: [],
+      agentTime: Date.now() - start,
+      reason: err,
+    };
+    try {
+      const errString = JSON.stringify(errJSON);
+      logError(errString);
+    } catch (e) {
+      logError(errMessage);
+      logError(err);
+    }
   }
 
   clearTimeout(deathTimer);
