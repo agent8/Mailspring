@@ -621,7 +621,7 @@ export default {
         properties: {
           sounds: {
             type: 'boolean',
-            default: false,
+            default: true,
             title: 'Send mail sound',
             syncToServer: true,
             syncToServerCommonKey: 'play_sound_after_email_sent',
