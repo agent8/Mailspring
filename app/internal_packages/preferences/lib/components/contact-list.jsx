@@ -222,39 +222,46 @@ class ContactList extends React.Component {
       </div>
     );
   };
-
-  render() {
-    const { filterList, showAddContact } = this.state;
+  _renderHeader() {
     const selectAllStatus = this._checkAllStatus();
     const selectAllStatusCLassName = this._selectStatusClassName(selectAllStatus);
     const { checkmarkNote = 'select', handleName } = this.props;
+    const { filterList } = this.state;
+    return (
+      <div className="header">
+        <div
+          className={`checkmark ${selectAllStatus} ${selectAllStatusCLassName}`}
+          onClick={this._onToggleSelectAll}
+        />
+        <div className="checkmark-note">{`${
+          filterList && filterList.length ? filterList.length : 0
+        } ${checkmarkNote}${filterList && filterList.length > 1 ? 's' : ''}`}</div>
+        <span
+          className={`handleBtn${selectAllStatus ? ' show' : ''}`}
+          onClick={() => this._handleSelect()}
+        >
+          {`${handleName} Selected`}
+        </span>
+        <div style={{ flex: 1 }} />
+        <div className="search-box">
+          <InputSearch
+            showPreIcon
+            showClearIcon
+            placeholder="Find a contact"
+            onChange={this._onSearchInputChange}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  render() {
+    const { filterList, showAddContact } = this.state;
+    const { handleName } = this.props;
     return (
       <div className="contact-list">
+        {this._renderHeader()}
         <ul>
-          <div className="header">
-            <div
-              className={`checkmark ${selectAllStatus} ${selectAllStatusCLassName}`}
-              onClick={this._onToggleSelectAll}
-            ></div>
-            <div className="checkmark-note">{`${
-              filterList && filterList.length ? filterList.length : 0
-            } ${checkmarkNote}${filterList && filterList.length > 1 ? 's' : ''}`}</div>
-            <span
-              className={`handleBtn${selectAllStatus ? ' show' : ''}`}
-              onClick={() => this._handleSelect()}
-            >
-              {`${handleName} Selected`}
-            </span>
-            <div style={{ flex: 1 }}></div>
-            <div className="search-box">
-              <InputSearch
-                showPreIcon
-                showClearIcon
-                placeholder="Find a contact"
-                onChange={this._onSearchInputChange}
-              />
-            </div>
-          </div>
           {showAddContact ? (
             <li className="add-contact-list">
               <div className="avatar-icon">
@@ -283,16 +290,20 @@ class ContactList extends React.Component {
 
             return (
               <li key={contact.id} className={`${selectStatus}`}>
-                <div
-                  className={`checkmark ${selectStatus} ${selectStatusCLassName}`}
-                  onClick={() => this._onToggleSelect(contact.id)}
-                ></div>
-                <EmailAvatar
-                  key="email-avatar"
-                  account={{ name: contact.name, email: contact.email }}
-                />
-                {contact.name ? <span>{contact.name}</span> : null}
-                {contact.email}
+                <div className="checkmark-avatar-name-email-container">
+                  <div
+                    className={`checkmark ${selectStatus} ${selectStatusCLassName}`}
+                    onClick={() => this._onToggleSelect(contact.id)}
+                  />
+                  <EmailAvatar
+                    key="email-avatar"
+                    account={{ name: contact.name, email: contact.email }}
+                  />
+                  <div className="name-email-container">
+                    {contact.name ? <span>{contact.name}</span> : null}
+                    {contact.email}
+                  </div>
+                </div>
                 <span className="handleBtn" onClick={() => this._handleItem(contact.email)}>
                   {handleName}
                 </span>
