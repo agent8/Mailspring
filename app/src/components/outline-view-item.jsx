@@ -311,6 +311,7 @@ class OutlineViewItem extends Component {
   };
   _onAddNewFolder = () => {
     Actions.setEditingMenu(true);
+    AppEnv.trackingEvent('FolderTree-AddFolder-Direct');
     this._runCallback('onAddNewFolder');
   };
 
