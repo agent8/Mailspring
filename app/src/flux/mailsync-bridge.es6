@@ -22,6 +22,7 @@ import AnalyzeDBTask from './tasks/analyze-db-task';
 import SiftChangeSharingOptTask from './tasks/sift-change-sharing-opt-task';
 import Message from './models/message';
 import NativeReportTask from './tasks/native-report-task';
+import { spawn } from 'child_process';
 let FocusedPerspectiveStore = null;
 let focusedContentStore = null;
 const FocusedContentStore = () => {
@@ -1533,16 +1534,26 @@ export default class MailsyncBridge {
   };
 
   _onReadyToUnload = () => {
+    let killScript = '';
+    const processName = AppEnv.inDevMode() ? 'Electron' : 'Edison Mail';
+    const mainProcessPid = process.pid;
     for (const client of Object.values(this._clients)) {
       let id = '';
       if (client._proc && client._proc.pid) {
         id = client._proc.pid;
       }
       client.kill();
+      killScript = client.killNativeScript;
       AppEnv.debugLog(`pid@${id} mailsync-bridge _onReadyToUnload: page refresh`);
     }
     this._clients = {};
     this.killSift('onBeforeUnload');
+    AppEnv.debugLog(
+      `Main process terminating pid@${mainProcessPid}, starting kill script ${killScript}`
+    );
+    if (killScript) {
+      spawn(killScript, [mainProcessPid, processName], { detached: true, stdio: 'ignore' });
+    }
   };
 
   _onOnlineStatusChanged = ({ onlineDidChange, wakingFromSleep }) => {
