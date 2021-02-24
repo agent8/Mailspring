@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { Children } from 'react';
 import { Calendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { Fragment } from 'react';
-import AddForm from './AddForm';
+import AddForm from './create-event/AddForm';
 import Grid from '@material-ui/core/Grid';
-import Login from './Login';
+import Login from './fetch-event/Login';
 import BigButton from './MiniComponents/BigButton';
 import WyCalendarStore from '../../../../../src/flux/stores/wycalendar-store.es6';
 
+const dateClassStyleWrapper = ({ children, value }) =>
+  React.cloneElement(Children.only(children), {
+    style: {
+      ...children.style,
+      // backgroundColor: value < CURRENT_DATE ? 'lightgreen' : 'lightblue'
+    },
+  });
 const propTypes = {};
 const localizer = momentLocalizer(moment);
 class SelectableCalendar extends React.Component {
@@ -88,6 +95,22 @@ class SelectableCalendar extends React.Component {
       });
     return formattedIcloudEvent;
   };
+  generateBarColor = (calColor, isAllDay, attendees, organizer, owner) => {
+    let color = calColor;
+    if (attendees && attendees[0] && owner !== organizer) {
+      // if owner and organizer is different, it is an invited event
+      const ownerIndex = Object.keys(attendees).filter(key => attendees[key]['email'] === owner);
+      color =
+        attendees[ownerIndex] && attendees[ownerIndex]['partstat'] === 'NEEDS-ACTION'
+          ? 'invite'
+          : calColor;
+    }
+    if (isAllDay) {
+      return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue';
+    } else {
+      return color ? `event-bar--${color}` : 'event-bar--blue';
+    }
+  };
   render() {
     console.log('reflux data', this.state.icloudCalendarData);
     const formattedIcloudEvent = this.formatIcloudCalendarData();
@@ -107,8 +130,30 @@ class SelectableCalendar extends React.Component {
               selectable
               localizer={localizer}
               events={formattedIcloudEvent}
-              defaultView={Views.MONTH}
-              onSelectEvent={event => console.log('test')}
+              views={{
+                month: true,
+                week: true,
+                day: true,
+              }}
+              resizable
+              onNavigate={date => {
+                this.setState({
+                  dateSelected: date,
+                  dateSelectedTimeStamp: moment(date).unix(),
+                });
+              }}
+              eventPropGetter={event => ({
+                className: this.generateBarColor(
+                  event.colorId,
+                  event.isAllDay,
+                  event.attendee,
+                  event.organizer,
+                  event.owner
+                ),
+              })}
+              components={{
+                dateCellWrapper: dateClassStyleWrapper,
+              }}
               onSelectSlot={this.handleSelect}
             />
           </Grid>

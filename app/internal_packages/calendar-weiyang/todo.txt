@@ -1,6 +1,15 @@
-Read up on reflux
+Edit and Delete feature
 Create calendar without database first
     - user logs in and calendar will display the intended information
     - information is transient, and will disappear on reload
-Think of the reflux architecture and how information would be passed between calendar and API pulled
-    - do i store user information and grab API everytime? or store calendar info directly
+
+Bugs TODOs
+parser - fetching event with no end dates has bug —> variable ‘until’ in Caldav calendar data is undefined in this case and recurrence expansion is empty
+parser - Caldav parser can be less complicated to improve speed
+AddForm - Might have to change how data of add event is being displayed on calendar - currently the calendar UI is refreshed by pulling from server again after pushing event to server, but this causes UI to display too slowly.
+				- Original intention was to add the event data to reflux directly, but the object data differs too widely from the one pulled from server, 
+				   might need another set of helper functions to specifically delete/edit the event object that is created locally instead of pulled from server.
+Wycalendar-store logic right now can only store 1 account/calendar/calendardata per provider, meaning 1 iCloud, 1 google, 1 EWS account. 
+		       	- Can extend to store more than 1, by linking each auth details with corresponding calendar/calendardata
+AddForm - no clock display for user when adjusting date time
+AddForm - date changes when adjusting recurrence options

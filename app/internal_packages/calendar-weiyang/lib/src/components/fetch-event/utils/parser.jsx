@@ -1,11 +1,10 @@
 /* eslint-disable new-cap */
 /* eslint-disable no-lone-blocks */
-import React from 'react';
 import ICAL from 'ical.js';
 import moment from 'moment-timezone';
 import uuidv4 from 'uuid';
-import { DateTime } from 'luxon';
-import { RRule, RRuleSet, rrulestr } from 'rrule';
+import { RRule, RRuleSet } from 'rrule';
+import { CALDAV_PROVIDER } from '../../constants';
 // import * as dbRpActions from '../sequelizeDB/operations/recurrencepatterns';
 
 const TEMPORARY_RECURRENCE_END = new Date(2020, 12, 12);
@@ -133,6 +132,7 @@ export const parseCal = calendars => {
     description: calendar.description,
     timezone: calendar.timezone,
     url: calendar.url,
+    providerType: calendar.url.includes('caldav') ? CALDAV_PROVIDER : null,
   }));
   return parsedCalendars;
 };
@@ -177,22 +177,6 @@ export const newParseCalendarObjects = (calendar, calendarList) => {
     return flatFilteredEvents;
   }
 
-  map.forEach((v, k) => {
-    const recurrMaster = v.filter(events => events.recurData !== undefined)[0];
-    const exDates = v
-      .filter(events => events.recurData === undefined)
-      .forEach(exDateEvent => {
-        const exist = recurrMaster.recurData.recurrenceIds.findIndex(
-          exDate => exDate === exDateEvent.eventData.start.dateTime.toString()
-        );
-        if (exist === -1) {
-          recurrMaster.recurData.recurrenceIds.push(
-            exDateEvent.eventData.start.dateTime.toString()
-          );
-        }
-      });
-  });
-
   return flatFilteredEvents;
 };
 
@@ -233,7 +217,6 @@ export const parseCalendarData = (calendarData, etag, url, calendarId, color) =>
   console.log('masterEvent', masterEvent);
   const icalMasterEvent = new ICAL.Event(masterEvent);
   console.log('icalMasterEvent', icalMasterEvent);
-  const attendees = getAttendees(masterEvent);
 
   if (icalMasterEvent.isRecurring()) {
     const recurrenceIds = getRecurrenceIds(vevents);
@@ -517,7 +500,7 @@ export const getExDates = masterEvent => {
 
 export const getRecurrenceIds = vevents => {
   const recurrenceIds = [];
-  vevents.forEach((evt, index) => {
+  vevents.forEach(evt => {
     if (evt.getFirstPropertyValue('recurrence-id')) {
       let tz = evt.getFirstPropertyValue('tzid');
       // This means it is GMT/UTC
@@ -590,7 +573,7 @@ export const expandSeries = (recurringEvents, recurrencePatterns) => {
       recurrencePattern => recurMasterEvent.iCalUID === recurrencePattern.iCalUID
     );
     if (filteredRp.length === 0) {
-      debugger;
+      // debugger
     }
     return parseRecurrence(filteredRp[0], recurMasterEvent);
   });

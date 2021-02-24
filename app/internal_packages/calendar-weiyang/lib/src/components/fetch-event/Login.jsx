@@ -1,15 +1,9 @@
 import React, { Fragment } from 'react';
-import BigButton from './MiniComponents/BigButton';
+import BigButton from '../MiniComponents/BigButton';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
-import { getCaldavAccount } from './getCaldavAcc';
-import * as PARSER from './parser';
-import Actions from '../../../../../src/flux/actions.es6';
-
-const ICLOUD_ACCOUNT = 'ICLOUD_ACCOUNT';
-const EWS_ACCOUNT = 'EWS_ACCOUNT';
-const YAHOO_ACCOUNT = 'YAHOO_ACCOUNT';
-
-const ICLOUD_URL = 'https://caldav.icloud.com/';
+import Actions from '../../../../../../src/flux/actions.es6';
+import { fetchCaldavEvents } from './utils/fetchCaldavEvents';
+import { ICLOUD_ACCOUNT } from '../constants';
 
 class Login extends React.Component {
   constructor(props) {
@@ -30,41 +24,13 @@ class Login extends React.Component {
   };
   getCalendarData = async () => {
     const { email, password, accountType } = this.state;
-    const res = await getCaldavAccount(email, password, ICLOUD_URL);
-    console.log('res', res);
-    const calendars = PARSER.parseCal(res.calendars);
-    const events = PARSER.parseCalEvents(res.calendars, calendars);
-    console.log('events', events);
-    const flatEvents = events.reduce((acc, val) => {
-      // console.log('accumulator', acc, val);
-      return acc.concat(val);
-    }, []);
-    const filteredEvents = flatEvents.filter(event => event !== '');
-    const flatFilteredEvents = filteredEvents.reduce((acc, val) => acc.concat(val), []);
-    console.log('flatFilteredEvents', flatFilteredEvents);
-    // const eventPersons = PARSER.parseEventPersons(flatFilteredEvents);
-    const recurrencePatterns = PARSER.parseRecurrenceEvents(flatFilteredEvents);
-    console.log('recurrencePattern', recurrencePatterns);
-    const expanded = PARSER.expandRecurEvents(
-      flatFilteredEvents.map(calEvent => calEvent.eventData),
-      recurrencePatterns
-    );
-    const finalResult = [
-      ...expanded.filter(e => e.isRecurring === true),
-      ...flatFilteredEvents
-        .filter(e => e.recurData === undefined || e.recurData === null)
-        .map(e => e.eventData),
-    ];
-    finalResult.forEach(e => {
-      e.owner = email;
-      e.caldavType = accountType;
-    });
-    console.log('DATA', finalResult);
+    const finalResult = await fetchCaldavEvents(email, password, accountType);
     return finalResult;
   };
 
   handleSubmitClick = async e => {
     this.props.parentPropFunction(false);
+    // for icloud CalDav
     Actions.setIcloudCalendarData(await this.getCalendarData());
   };
   render() {
@@ -97,24 +63,6 @@ class Login extends React.Component {
                   defaultChecked
                 />
                 ICLOUD
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="accountType"
-                  value={YAHOO_ACCOUNT}
-                  onChange={this.handleChange}
-                />
-                YAHOO
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="accountType"
-                  value={EWS_ACCOUNT}
-                  onChange={this.handleChange}
-                />
-                EWS
               </label>
             </form>
           </DialogContent>

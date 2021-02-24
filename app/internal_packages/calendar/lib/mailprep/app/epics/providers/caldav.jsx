@@ -55,28 +55,27 @@ export const beginGetCaldavEventsEpics = (action$) =>
     )
   );
 
-export const createCalDavEventEpics = (action$) =>
-  action$.pipe(
-    ofType(CREATE_CALDAV_EVENTS_BEGIN),
-    mergeMap((action) =>
-      from([
-        new Promise((resolve, reject) => {
-          resolve(retrieveStoreEvents(action.payload.auth));
-        }),
-        createCalDavEvent(action.payload)
-          .then((resp) =>
-            postEventSuccess(
-              [resp],
-              [action.payload.auth],
-              action.payload.providerType,
-              action.payload.auth.email,
-              action.payload.tempEvents
-            )
+export const createCalDavEventEpics = (action$ = action$.pipe(
+  ofType(CREATE_CALDAV_EVENTS_BEGIN),
+  mergeMap((action) =>
+    from([
+      new Promise((resolve, reject) => {
+        resolve(retrieveStoreEvents(action.payload.auth));
+      }),
+      createCalDavEvent(action.payload)
+        .then((resp) =>
+          postEventSuccess(
+            [resp],
+            [action.payload.auth],
+            action.payload.providerType,
+            action.payload.auth.email,
+            action.payload.tempEvents
           )
-          .catch((err) => console.log(err))
-      ]).mergeAll()
-    )
-  );
+        )
+        .catch((err) => console.log(err))
+    ]).mergeAll()
+  )
+));
 
 export const editCalDavSingleEventEpics = (action$) =>
   action$.pipe(
@@ -600,7 +599,10 @@ const editCalDavAllRecurrenceEvents = async (payload) => {
       }
 
       const recurrenceIds = [];
-      if (recurrencePattern.recurrenceIds !== undefined && recurrencePattern.recurrenceIds !== null) {
+      if (
+        recurrencePattern.recurrenceIds !== undefined &&
+        recurrencePattern.recurrenceIds !== null
+      ) {
         if (typeof recurrencePattern.recurrenceIds === 'number') {
           recurrenceIds.push(recurrencePattern.recurrenceIds);
         } else {
@@ -683,7 +685,13 @@ const editCalDavAllRecurrenceEvents = async (payload) => {
       // The idea here is using the new iCalString generated, to create the new events to parse in.
       // So we first expand events based off the updated recurrence pattern and master.
       // After that, we append it into the events db for the redux to pick up and update.
-      const oldFutureResults = await PARSER.parseCalendarData(iCalString, etag, caldavUrl, calendarId, payload.colorId);
+      const oldFutureResults = await PARSER.parseCalendarData(
+        iCalString,
+        etag,
+        caldavUrl,
+        calendarId,
+        payload.colorId
+      );
       const oldExpanded = await PARSER.expandRecurEvents(
         oldFutureResults.map((calEvent) => calEvent.eventData)
       );
@@ -699,7 +707,6 @@ const editCalDavAllRecurrenceEvents = async (payload) => {
 
         dbEventActions.insertEventsIntoDatabase(newEvent);
       });
-
     }
 
     // #endregion

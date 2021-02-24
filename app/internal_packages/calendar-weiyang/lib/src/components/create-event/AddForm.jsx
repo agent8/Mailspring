@@ -8,12 +8,17 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
 
 import Select from 'react-select';
-import BigButton from './MiniComponents/BigButton';
-import RoundCheckbox from './MiniComponents/RoundCheckbox';
-import Tabs from './MiniComponents/Tabs';
-import EventTitle from './MiniComponents/EventTitle';
-import Input from './MiniComponents/Input';
-import RRuleGenerator from './react-rrule-generator/src/lib';
+import BigButton from '../MiniComponents/BigButton';
+import RoundCheckbox from '../MiniComponents/RoundCheckbox';
+import Tabs from '../MiniComponents/Tabs';
+import EventTitle from '../MiniComponents/EventTitle';
+import Input from '../MiniComponents/Input';
+import RRuleGenerator from '../react-rrule-generator/src/lib';
+
+import { createEvent } from './utils/CreateEventUtils';
+import WyCalendarStore from '../../../../../../src/flux/stores/wycalendar-store.es6';
+import { fetchCaldavEvents } from '../fetch-event/utils/fetchCaldavEvents';
+import { ICLOUD_URL } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -78,6 +83,12 @@ export default class AddForm extends Component {
       location: '',
       // Popup forms
       isShowConfirmForm: false,
+      selectedOption: '',
+
+      // Technically no need to subscribe to listeners, since component will need
+      // to be destroyed(ie, user leaves form page) first before adding new login auth and calendars
+      calendarLists: WyCalendarStore.getIcloudCalendarLists(),
+      auth: WyCalendarStore.getIcloudAuth(),
     };
   }
   componentDidMount() {
@@ -266,19 +277,22 @@ export default class AddForm extends Component {
   backToCalendar = () => {
     this.props.parentPropFunction(false);
   };
-  handleCalendarSelect = name => target => {
-    this.setState((state, props) => {
-      const selectedProvider = props.calendarsList.find(account =>
-        account.calendars.find(cal => cal.uuid === target.value)
-      );
-      const selectedCalendar = selectedProvider.calendars.find(cal => cal.uuid === target.value);
-      return {
-        [name]: selectedCalendar,
-        selectedCalendarName: selectedCalendar.displayName,
-        selectedProvider: selectedProvider ? selectedProvider.provider : '',
-        colorId: selectedCalendar.color,
-      };
-    });
+  handleCalendarSelect = selectedOption => {
+    const mySelectedProvider = this.state.auth.filter(
+      account => selectedOption.value.providerType === account.providerType
+    );
+    const mySelectedCalendar = this.state.calendarLists.filter(
+      calendar => selectedOption.value.calendarUrl === calendar.url
+    );
+    if (mySelectedProvider.length === 0 || mySelectedCalendar.length === 0) {
+      console.log('Not supposed to happen');
+    }
+    this.setState(prevState => ({
+      ...prevState,
+      selectedProvider: mySelectedProvider[0],
+      selectedCalendar: mySelectedCalendar[0],
+      selectedOption,
+    }));
   };
   handleSubmitClick = event => {
     event.preventDefault();
@@ -309,11 +323,76 @@ export default class AddForm extends Component {
       ),
     });
   };
-
-  handleSubmit = async () => {
-    console.log('SUBMIT TEST');
-    this.props.parentPropFunction(false);
+  determineURL = selectedCalendar => {
+    if (selectedCalendar.url.includes('caldav.icloud')) {
+      return ICLOUD_URL;
+    } else {
+      return null;
+    }
   };
+  handleSubmit = async () => {
+    // need to write validation method
+    const { props, state } = this;
+
+    // Force user to select a calendar to add to
+    if (state.selectedProvider !== '') {
+      // extract providerType property from state.SelectedProvider as its own variable
+      const { providerType } = state.selectedProvider;
+      const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // add owner as organizer
+      const attendee =
+        state.attendees !== [] ? [...state.attendees, state.selectedProvider.username] : [];
+
+      const dataForEventCreator = {
+        summary: state.title === '' ? 'Untitled Event' : state.title,
+        description: state.desc,
+        start: {
+          dateTime: moment.tz(state.startParsed, tzid),
+          timezone: tzid,
+          day: state.start,
+        },
+        end: {
+          dateTime: moment.tz(state.endParsed, tzid),
+          timezone: tzid,
+        },
+        isRecurring: state.isRepeating,
+        rrule: state.rrule.slice(6),
+        allDay: state.allDay,
+        colorId: state.colorId,
+        location: state.location,
+        attendee: Object.assign(
+          {},
+          attendee.map(att => {
+            return {
+              email: att,
+              partstat: att === state.selectedProvider.username ? 'APPROVED' : 'NEEDS-ACTION',
+            };
+          })
+        ),
+        organizer: state.selectedProvider.username,
+        calendarId: state.selectedCalendar.url,
+      };
+      const authForEventCreator = state.selectedProvider;
+      const calendarForEventCreator = state.selectedCalendar;
+      this.props.parentPropFunction(false);
+      await createEvent({
+        data: dataForEventCreator,
+        providerType: providerType,
+        auth: authForEventCreator,
+        calendar: calendarForEventCreator,
+      });
+      const finalResult = await fetchCaldavEvents(
+        state.selectedProvider.username,
+        state.selectedProvider.password,
+        this.determineURL(state.selectedCalendar)
+      );
+      Actions.setIcloudCalendarData(finalResult);
+    } else {
+      console.log('No provider selected! Disabled adding of events!!');
+    }
+  };
+
   CustomToolbar = toolbar => {
     const goToBack = () => {
       toolbar.date.setDate(toolbar.date.getDate() - 1);
@@ -380,6 +459,7 @@ export default class AddForm extends Component {
     );
   };
 
+  // Not used yet, this is another calendar tab
   renderFindATime = () => {
     const { props } = this;
     const visibleEvents = props.visibleEvents;
@@ -421,13 +501,16 @@ export default class AddForm extends Component {
     const { props, state } = this;
 
     const selectOptions = [];
-    // props.calendarsList.forEach(account => {
-    //   const options = [];
-    //   account.calendars.forEach(calendar => {
-    //     options.push({ value: calendar.uuid, label: calendar.displayName });
-    //   });
-    //   selectOptions.push({ label: account.email, options: options });
-    // });
+
+    state.calendarLists.forEach(calendar => {
+      selectOptions.push({
+        label: calendar.name,
+        value: {
+          providerType: calendar.providerType,
+          calendarUrl: calendar.url,
+        },
+      });
+    });
 
     return (
       <div className="add-form-details">
@@ -518,11 +601,13 @@ export default class AddForm extends Component {
         </div>
         {/* Select Calendar */}
         <div className="add-form-calendar add-form-grid-item ">
+          {console.log('selectedoption', state.selectedOption)}
           <Select
             options={selectOptions}
+            value={state.selectedOption || ''}
             name="selectedCalendar"
             styles={selectCustomStyles}
-            onChange={console.log('select changed')}
+            onChange={this.handleCalendarSelect}
             placeholder="Select calendar"
             isSearchable={false}
           />
@@ -543,6 +628,7 @@ export default class AddForm extends Component {
 
   render() {
     const { props, state } = this;
+    console.log(state);
     return (
       <Fragment>
         <Dialog onClose={this.backToCalendar} open={props.parentPropState} maxWidth="lg">
