@@ -81,14 +81,13 @@ function configDataUpgrade(configDirPath) {
     });
     json['templates'] = newTemplates;
   }
+  const sameUuid = '4ad7f986-de23-44a6-b579-3e2f9703b943';
   // change same uuid to new
-  const sameIdSignature = json['signatures'].find(
-    sig => sig.id === '4ad7f986-de23-44a6-b579-3e2f9703b943'
-  );
+  const sameIdSignature = json['signatures'].find(sig => sig.id === sameUuid);
   if (sameIdSignature) {
     const newId = uuid().toLowerCase();
     json['signatures'] = json['signatures'].map(sig => {
-      if (sig.id === '4ad7f986-de23-44a6-b579-3e2f9703b943') {
+      if (sig.id === sameUuid) {
         return {
           ...sig,
           id: newId,
@@ -98,18 +97,16 @@ function configDataUpgrade(configDirPath) {
       }
     });
     renameFileList.push([
-      path.join(sigDir, `4ad7f986-de23-44a6-b579-3e2f9703b943.html`),
+      path.join(sigDir, `${sameUuid}.html`),
       path.join(sigDir, `${newId}.html`),
     ]);
   }
   // change same uuid to new
-  const sameIdTemplate = json['templates'].find(
-    t => t.id === '4ad7f986-de23-44a6-b579-3e2f9703b943'
-  );
+  const sameIdTemplate = json['templates'].find(t => t.id === sameUuid);
   if (sameIdTemplate) {
     const newId = uuid().toLowerCase();
     json['templates'] = json['templates'].map(t => {
-      if (t.id === '4ad7f986-de23-44a6-b579-3e2f9703b943') {
+      if (t.id === sameUuid) {
         return {
           ...t,
           id: newId,
@@ -119,7 +116,7 @@ function configDataUpgrade(configDirPath) {
       }
     });
     renameFileList.push([
-      path.join(tempDir, `4ad7f986-de23-44a6-b579-3e2f9703b943.html`),
+      path.join(tempDir, `${sameUuid}.html`),
       path.join(tempDir, `${newId}.html`),
     ]);
   }
