@@ -1,4 +1,4 @@
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, remote } from 'electron';
 import { Emitter } from 'event-kit';
 import path from 'path';
 import fs from 'fs-plus';
@@ -6,6 +6,7 @@ import fs from 'fs-plus';
 import LessCompileCache from './less-compile-cache';
 
 const CONFIG_THEME_KEY = 'core.theme';
+const CONFIG_THEME_MODE_KEY = 'core.themeMode';
 
 /**
  * The ThemeManager observes the user's theme selection and ensures that
@@ -39,12 +40,22 @@ export default class ThemeManager {
     });
 
     AppEnv.config.onDidChange(CONFIG_THEME_KEY, () => this.updateThemePackageAndRecomputeLESS());
+    AppEnv.config.onDidChange(CONFIG_THEME_MODE_KEY, () => this.updateTheme());
   }
 
   // Called from the onboarding window to disable any custom theme
   forceBaseTheme() {
     this.baseThemeOnly = true;
     this.updateThemePackageAndRecomputeLESS();
+  }
+
+  updateTheme() {
+    const themeModel = AppEnv.config.get(CONFIG_THEME_MODE_KEY);
+    let value = themeModel;
+    if (themeModel === 'auto') {
+      value = remote.systemPreferences.isDarkMode() ? 'ui-dark' : 'ui-light';
+    }
+    this.setActiveTheme(value);
   }
 
   updateThemePackageAndRecomputeLESS() {
@@ -65,8 +76,7 @@ export default class ThemeManager {
   reloadCoreStyles() {
     console.log('Reloading /static and /internal_packages to incorporate LESS changes');
     const reloadStylesIn = folder => {
-      fs
-        .listTreeSync(folder)
+      fs.listTreeSync(folder)
         .filter(stylePath => stylePath.endsWith('.less'))
         .forEach(stylePath => {
           const styleEl = document.head.querySelector(`[source-path="${stylePath}"]`);
