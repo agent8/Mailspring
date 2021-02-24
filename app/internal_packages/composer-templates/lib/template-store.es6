@@ -35,7 +35,7 @@ function mergeContacts(oldContacts = [], contacts = []) {
   return result;
 }
 const WelcomeTemplate = {
-  id: '4ad7f986-de23-44a6-b579-3e2f9703b943',
+  id: uuid().toLowerCase(),
   title: 'Welcome to Templates',
   tsClientUpdate: 0,
   state: PreferencesSubListStateEnum.synchronized,

@@ -191,8 +191,11 @@ export default class JiraDetail extends Component {
   downloadUri = async (attachments, isThumbnail = true) => {
     let downloadApi = isThumbnail ? this.jira.downloadThumbnail : this.jira.downloadAttachment;
     for (const attachment of attachments) {
-      // Only download orginal image file
-      if (!attachment.mimeType.includes('image') && !isThumbnail) {
+      // Only download orginal image and video file
+      if (
+        !isThumbnail &&
+        !(attachment.mimeType.includes('image') || attachment.mimeType.includes('video'))
+      ) {
         return;
       }
       const localPath = path.join(
@@ -208,8 +211,9 @@ export default class JiraDetail extends Component {
       const { attachments = {}, originalFiles = {} } = this.state;
       if (!isThumbnail) {
         originalFiles[attachment.id] = localPath;
+      } else {
+        attachments[attachment.id] = localPath;
       }
-      attachments[attachment.id] = localPath;
       this.safeSetState({
         attachments,
         originalFiles,
@@ -274,9 +278,14 @@ export default class JiraDetail extends Component {
       });
     }
   };
-  openAttachment = id => {
-    const { attachments, originalFiles } = this.state;
-    const path = originalFiles[id] || attachments[id];
+  openAttachment = async id => {
+    const { originalFiles } = this.state;
+    const path = originalFiles[id];
+    const exist = await exists(path);
+    if (!exist) {
+      this._showDialog('The attachment is downloading, please wait.');
+      return;
+    }
     const currentWin = AppEnv.getCurrentWindow();
     currentWin.previewFile(path);
   };

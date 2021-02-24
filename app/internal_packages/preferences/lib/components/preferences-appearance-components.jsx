@@ -150,10 +150,6 @@ export class AppearanceThemeSwitch extends React.Component {
 
   switchTheme = value => {
     this.props.config.set(THEME_MODE_KEY, value);
-    if (value === 'auto') {
-      value = remote.systemPreferences.isDarkMode() ? 'ui-dark' : 'ui-light';
-    }
-    this.themes.setActiveTheme(value);
   };
 
   render() {

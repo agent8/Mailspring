@@ -153,7 +153,7 @@ class JiraComment extends Component {
     AppEnv.trackingEvent('Jira-DeleteComment-Success');
   };
   render() {
-    const { html } = this.props;
+    const { html, data } = this.props;
     const { Editor = EmptyNode, EditorContext = EmptyNode, WithEditorActions = EmptyNode } =
       this.props.editorCore || {};
     const { show, value, progress, showDelete } = this.state;
@@ -161,6 +161,7 @@ class JiraComment extends Component {
       { text: 'Delete', onClick: this.deleteComment },
       { text: 'Cancel', onClick: this.closeDeleteDialog },
     ];
+    const config = AppEnv.config.get(CONFIG_KEY);
     return (
       <div className="jira-comment-editor-container">
         {show ? (
@@ -185,9 +186,11 @@ class JiraComment extends Component {
               <span className="btn edit" onClick={this.showEditor}>
                 Edit
               </span>
-              <span className="btn delte" onClick={this.showDeleteDialog}>
-                Delete
-              </span>
+              {config.currentUser && config.currentUser.accountId === data.author.accountId && (
+                <span className="btn delete" onClick={this.showDeleteDialog}>
+                  Delete
+                </span>
+              )}
             </div>
           </div>
         )}
