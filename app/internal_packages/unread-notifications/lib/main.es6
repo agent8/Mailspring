@@ -28,7 +28,11 @@ class ActivationTime {
     this.accounts = {};
   }
   updateTimeForAccount = (accountId, timestamp) => {
-    this.accounts[accountId] = timestamp;
+    if (timestamp > this.appTime) {
+      this.accounts[accountId] = timestamp;
+    } else {
+      this.accounts[accountId] = this.appTime;
+    }
   };
   timeForAccount = accountId => {
     if (this.accounts[accountId]) {
@@ -63,7 +67,7 @@ export class Notifier {
     if (Array.isArray(accounts)) {
       accounts.forEach(account => {
         if (account) {
-          this.activationTime.updateTimeForAccount(account, account.lastVerified);
+          this.activationTime.updateTimeForAccount(account.id, account.lastVerified);
         }
       });
     }
