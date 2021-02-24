@@ -21,12 +21,15 @@ function configDataUpgrade(configDirPath) {
 
   const { templates, signatures, defaultSignatures = {} } = json;
   const renameFileList = [];
+  const sigDir = path.join(configDirPath, 'signatures');
+  const tempDir = path.join(configDirPath, 'templates');
+
+  // change old date(object) to new(array)
   if (signatures && !Array.isArray(signatures)) {
     const newDefaultSignatures = { ...defaultSignatures };
     const newSignature = Object.keys(signatures).map(signatureFileName => {
       const newId = uuid().toLowerCase();
       const oldValue = signatures[signatureFileName];
-      const sigDir = path.join(configDirPath, 'signatures');
       renameFileList.push([
         path.join(sigDir, `${signatureFileName}.html`),
         path.join(sigDir, `${newId}.html`),
@@ -48,8 +51,8 @@ function configDataUpgrade(configDirPath) {
     json['signatures'] = newSignature;
     json['defaultSignatures'] = newDefaultSignatures;
   }
+  // change old date(object) to new(array)
   if (!templates || !Array.isArray(templates)) {
-    const tempDir = path.join(configDirPath, 'templates');
     let templateList = [];
     if (fs.existsSync(tempDir)) {
       templateList = fs.readdirSync(tempDir).filter(fileName => path.extname(fileName) === '.html');
@@ -77,6 +80,48 @@ function configDataUpgrade(configDirPath) {
       };
     });
     json['templates'] = newTemplates;
+  }
+  // change same uuid to new
+  const sameIdSignature = json['signatures'].find(
+    sig => sig.id === '4ad7f986-de23-44a6-b579-3e2f9703b943'
+  );
+  if (sameIdSignature) {
+    const newId = uuid().toLowerCase();
+    json['signatures'] = json['signatures'].map(sig => {
+      if (sig.id === '4ad7f986-de23-44a6-b579-3e2f9703b943') {
+        return {
+          ...sig,
+          id: newId,
+        };
+      } else {
+        return sig;
+      }
+    });
+    renameFileList.push([
+      path.join(sigDir, `4ad7f986-de23-44a6-b579-3e2f9703b943.html`),
+      path.join(sigDir, `${newId}.html`),
+    ]);
+  }
+  // change same uuid to new
+  const sameIdTemplate = json['templates'].find(
+    t => t.id === '4ad7f986-de23-44a6-b579-3e2f9703b943'
+  );
+  if (sameIdTemplate) {
+    const newId = uuid().toLowerCase();
+    json['templates'] = json['templates'].map(t => {
+      if (t.id === '4ad7f986-de23-44a6-b579-3e2f9703b943') {
+        return {
+          ...t,
+          id: newId,
+        };
+      } else {
+        return t;
+      }
+    });
+    renameFileList.push([
+      path.join(tempDir, `4ad7f986-de23-44a6-b579-3e2f9703b943.html`),
+      path.join(tempDir, `${newId}.html`),
+    ]);
   }
   if (renameFileList.length) {
     renameFileList.forEach(item => {
