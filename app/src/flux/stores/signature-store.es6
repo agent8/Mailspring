@@ -9,7 +9,7 @@ import { autoGenerateNameByNameList } from '../../fs-utils';
 const { PreferencesSubListStateEnum } = Constant;
 
 const sigDefaultTemplate = {
-  id: '4ad7f986-de23-44a6-b579-3e2f9703b943',
+  id: uuid().toLowerCase(),
   title: 'Untitled',
   tsClientUpdate: 0,
   state: PreferencesSubListStateEnum.synchronized,
