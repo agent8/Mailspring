@@ -307,6 +307,11 @@ export default {
             syncToServer: true,
             title: 'Include original email when replying to a message',
           },
+          disableOriginalMessageEdit: {
+            type: 'boolean',
+            default: false,
+            title: 'Disable editing of original message when replying/forwarding',
+          },
           showOriginalEmailInReply: {
             type: 'boolean',
             default: false,
