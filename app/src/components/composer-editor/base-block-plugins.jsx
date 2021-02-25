@@ -252,14 +252,13 @@ export const BLOCK_CONFIG = {
       iconClass: 'dt-icon dt-icon-increase-indent',
       isActive: value => false,
       onToggle: (value, active, event) => {
+        let change = value.change();
+        indentListItem(change, true);
+
         if (!isMoreThanTabs(10, value)) {
-          return Handlers.onTab(
-            { lineType: 'div', getIndent: () => '    ' },
-            event,
-            value.change()
-          );
+          return Handlers.onTab({ lineType: 'div', getIndent: () => '    ' }, event, change);
         } else {
-          return value.change();
+          return change;
         }
       },
     },
@@ -273,11 +272,9 @@ export const BLOCK_CONFIG = {
       iconClass: 'dt-icon dt-icon-decrease-indent',
       isActive: value => false,
       onToggle: (value, active, event) => {
-        return Handlers.onShiftTab(
-          { lineType: 'div', getIndent: () => '    ' },
-          event,
-          value.change()
-        );
+        let change = value.change();
+        indentListItem(change, false);
+        return Handlers.onShiftTab({ lineType: 'div', getIndent: () => '    ' }, event, change);
       },
     },
   },
@@ -381,6 +378,10 @@ export const BLOCK_CONFIG = {
         style.fontSize = props.node.data.get('fontSize');
         style.fontFamily = props.node.data.get('fontFamily');
         style.color = props.node.data.get('color');
+        const marginLeft = props.node.data.marginLeft || props.node.data.get('marginLeft');
+        if (marginLeft) {
+          style.marginLeft = marginLeft;
+        }
       }
       return (
         <li {...props.attributes} style={style}>
@@ -418,6 +419,48 @@ function renderNode(props) {
 //   }
 //   return <span>{text.replace(/\s{2,}/g, "\u00A0 ")}</span>;
 // }
+
+const INDENT = 2;
+const INDENT_UNIT = 'em';
+const MAX_INDENT = 10;
+const indentListItem = (change, isIndent = true) => {
+  if (
+    isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ol_list.type) ||
+    isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ul_list.type)
+  ) {
+    for (const text of change.value.texts) {
+      const list_item = change.value.document
+        .getAncestors(text.key)
+        .find(b => b.type === BLOCK_CONFIG.list_item.type);
+      if (list_item) {
+        change = calcListItemIndent(change, list_item, isIndent);
+      }
+    }
+  }
+  return change;
+};
+const calcListItemIndent = (change, item, isIndent = true) => {
+  let indent = 0;
+  const marginLeft = item.data.get('marginLeft');
+  if (marginLeft && marginLeft.includes(INDENT_UNIT)) {
+    indent = parseInt(marginLeft.replace(INDENT_UNIT, ''));
+  }
+  if (isIndent) {
+    indent += INDENT;
+  } else {
+    indent -= INDENT;
+  }
+  if (indent > MAX_INDENT) {
+    indent = MAX_INDENT;
+  } else if (indent < 0) {
+    indent = 0;
+  }
+  var d = item.data.set('marginLeft', indent + INDENT_UNIT);
+  change.setNodeByKey(item.key, {
+    data: d,
+  });
+  return change;
+};
 
 const rules = [
   {
@@ -461,6 +504,9 @@ const rules = [
             }
             if (el.style.fontSize) {
               data.fontSize = el.style.fontSize;
+            }
+            if (el.style.marginLeft) {
+              data.marginLeft = el.style.marginLeft;
             }
           }
         }
@@ -661,16 +707,9 @@ export default [
       if (event.keyCode !== TABKey) {
         return;
       }
-      const startOffset = change.value.startOffset;
-      if (startOffset === 0) {
-        if (isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ol_list.type)) {
-          return;
-        }
-        if (isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ul_list.type)) {
-          return;
-        }
-      }
       event.preventDefault();
+      indentListItem(change, !(event.shiftKey || event.metaKey || event.optionKey));
+
       if (event.shiftKey || event.metaKey || event.optionKey) {
         return Handlers.onShiftTab({ lineType: 'div' }, event, change);
       }
