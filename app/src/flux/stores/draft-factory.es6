@@ -469,8 +469,9 @@ class DraftFactory {
           message.replyAttributionLine()
         )}</div>
         <blockquote class="gmail_quote" data-edison="true"
-          style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
+          style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;"><edo-readonly>
           ${prevBody}
+          </edo-readonly>
           <br/>
         </blockquote>
         `;
@@ -538,7 +539,7 @@ class DraftFactory {
           <br><br>
           ${fields.join('<br>')}
           <br><br>
-          ${body}
+          <edo-readonly>${body}</edo-readonly>
           <br/>
         </div>
         `,
