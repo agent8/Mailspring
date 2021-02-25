@@ -561,6 +561,14 @@ const TaskFactory = {
       }
     }
     const isExchange = AccountStore().isExchangeAccountId(accountId);
+    if (!isExchange && name.includes(delimiter)) {
+      AppEnv.showMessageBox({
+        title: 'Cannot create',
+        detail: `${name} contains special character ${delimiter}`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     return SyncbackCategoryTask.forCreating({
       name,
       accountId,
