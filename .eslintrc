@@ -62,7 +62,21 @@
           "hunspell",
           "utils",
           "md",
-          "sha"
+          "sha",
+          "edison",
+          "jira",
+          "workspace",
+          "mailsync",
+          "cc",
+          "bcc",
+          "linux",
+          "darwin",
+          "pid",
+          "msg",
+          "std",
+          "stdout",
+          "stderr",
+
         ],
         "skipIfMatch": [
           "http://[^s]*",
