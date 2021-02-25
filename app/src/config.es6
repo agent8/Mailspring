@@ -828,13 +828,12 @@ class Config {
         if (nowObj.type === 'object') {
           shouldSyncToServer(nowObj.properties, nowKey);
         }
+
         if (!nowObj.syncToServer) {
           return;
         }
+
         const configUpdateTime = this.getConfigUpdateTime(nowKey);
-        if (!configUpdateTime) {
-          return;
-        }
         let serverUpdateTime = 0;
         if (nowObj.syncToServerCommonKey) {
           serverUpdateTime = commonConfigVersionMap.get(nowObj.syncToServerCommonKey) || 0;
@@ -842,6 +841,11 @@ class Config {
           serverUpdateTime = macConfigVersionMap.get(generateServerConfigKey(nowKey)) || 0;
         }
         if (configUpdateTime > serverUpdateTime) {
+          shouldSyncToServerList.push(nowKey);
+          return;
+        }
+
+        if (JSON.stringify(nowObj.default) !== JSON.stringify(this.get(nowKey))) {
           shouldSyncToServerList.push(nowKey);
         }
       });
