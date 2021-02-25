@@ -182,6 +182,14 @@ const onEditItem = function(item, newEnteredValue, originalText) {
   if (isExchange) {
     newDisplayName = newEnteredValue;
   } else {
+    if (newEnteredValue.includes(category.delimiter)) {
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `${newEnteredValue} contain special character ${category.delimiter}`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     let index = (category.fullDisplayName || '').lastIndexOf(originalText);
     if (index === -1) {
       index = category.fullDisplayName.length;
