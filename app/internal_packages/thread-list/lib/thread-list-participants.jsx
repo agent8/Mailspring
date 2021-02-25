@@ -136,45 +136,46 @@ class ThreadListParticipants extends React.Component {
     const messages = this.props.thread.__messages;
     const tokens = [];
 
-    let field = 'from';
-    let isAllFromMe = true;
+    let fields = ['from', 'to'];
     let isAllDrafts = true;
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i];
       if (message) {
-        if (isAllFromMe) {
-          isAllFromMe = message.isFromMe({ ignoreOtherAccounts: true });
-        }
         if (isAllDrafts) {
           isAllDrafts = message.draft;
         }
       }
-      if (!isAllFromMe && !isAllDrafts) {
+      if (!isAllDrafts) {
         break;
       }
     }
 
     for (let idx = 0; idx < messages.length; idx++) {
       const message = new Message(messages[idx]);
-      let msgField = field;
+      let msgFields = fields;
       if (isAllDrafts) {
         if (Array.isArray(message.to) && message.to.length > 0) {
-          msgField = 'to';
+          msgFields = ['to'];
         } else if (Array.isArray(message.cc) && message.cc.length > 0) {
-          msgField = 'cc';
+          msgFields = ['cc'];
         } else if (Array.isArray(message.bcc) && message.bcc.length > 0) {
-          msgField = 'bcc';
+          msgFields = ['bcc'];
         } else {
           message['NoOne'] = [
             new Contact({ name: 'No Recipients' }, { accountId: message.accountId }),
           ];
-          msgField = 'NoOne';
+          msgFields = ['NoOne'];
         }
       } else if (message.draft) {
         continue;
       }
-
-      for (let contact of message[msgField]) {
+      const contacts = [];
+      msgFields.forEach(field => {
+        if (field && Array.isArray(message[field])) {
+          contacts.push(...message[field]);
+        }
+      });
+      for (let contact of contacts) {
         if (tokens.length === 0) {
           tokens.push({
             contact,
