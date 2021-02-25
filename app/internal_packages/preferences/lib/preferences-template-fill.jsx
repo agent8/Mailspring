@@ -179,6 +179,13 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Disable editing of original message when replying/forwarding',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.disableOriginalMessageEdit,
+              keyPath: 'core.composing.disableOriginalMessageEdit',
+              keywords: [],
+            },
+            {
               label: 'Automatically show message history in Reply Window',
               configSchema: configSchema =>
                 configSchema.properties.composing.properties.showOriginalEmailInReply,
