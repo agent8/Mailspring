@@ -43,7 +43,7 @@ class PreferencesTabItem extends React.Component {
         <div className="transition-box">
           <RetinaImg
             isIcon
-            name={`preference-${displayName.replace(/\s/g, '').toLocaleLowerCase()}.svg`}
+            name={`preference-${displayName.replace(/[\s&]/g, '').toLocaleLowerCase()}.svg`}
             className="preferences-icon"
             mode={RetinaImg.Mode.ContentIsMask}
             style={{ height: 17, width: 17, fontSize: 17 }}
