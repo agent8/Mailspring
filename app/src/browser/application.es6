@@ -49,7 +49,8 @@ const getStartOfDay = () => {
   return startOfDay.getTime();
 };
 const logFileRetainThreshHoldInMs = 30 * 24 * 60 * 60 * 1000;
-const logFileUploadThreshHoldInMs = 48 * 60 * 60 * 1000;
+const logFileUploadThreshHoldInMs = 7 * 24 * 60 * 60 * 1000;
+const maxLogFileUploadSizeInBytes = 30 * 1024 * 1024;
 const isStag = version => {
   const verNumList = version.split('.');
   const lastVersionNum = Number(verNumList[verNumList.length - 1]);
@@ -580,6 +581,7 @@ export default class Application extends EventEmitter {
               files,
               dirPath,
               threshHold: logFileUploadThreshHoldInMs,
+              maxTotalFileSize: maxLogFileUploadSizeInBytes,
               resultArray: uploadFiles,
               isNewerThan: true,
               onDone: appendToArchive,
@@ -679,6 +681,15 @@ export default class Application extends EventEmitter {
       'ui-log',
       `application-${Date.now()}.log`
     );
+    LOG.transports.file.archiveLog = file => {
+      file = file.toString();
+      const info = path.parse(file);
+      try {
+        fs.renameSync(file, path.join(info.dir, `${info.name}-${Date.now()}.old${info.ext}`));
+      } catch (e) {
+        console.warn('Could not rotate log', e);
+      }
+    };
     LOG.transports.console.level = false;
     LOG.transports.file.maxSize = 20485760;
     //Call once so the cpu infos will not be 0 when we actually needed it.
@@ -944,13 +955,42 @@ export default class Application extends EventEmitter {
     onDone = () => {},
     isOlderThan,
     isNewerThan,
+    maxTotalFileSize = 0,
     resultArray = [],
   } = {}) => {
+    const ret = [];
+    const sortByNewest = (a, b) => {
+      if (a.stats.mtimeMs > b.stats.mtimeMs) {
+        return -1;
+      } else if (a.stats.mtimeMs < b.stats.mtimeMs) {
+        return 1;
+      } else {
+        return 0;
+      }
+    };
+    const allComplete = () => {
+      let totalFileSize = 0;
+      if (isNewerThan) {
+        ret.sort(sortByNewest);
+      }
+      for (let i = 0; i < ret.length; i++) {
+        const item = ret[i];
+        resultArray.push(item);
+        if (maxTotalFileSize > 0) {
+          totalFileSize += item.stats.size;
+          if (totalFileSize >= maxTotalFileSize) {
+            break;
+          }
+        }
+      }
+      onDone();
+    };
     if (Array.isArray(files)) {
       const now = Date.now();
       const total = files.length;
       let processed = 0;
-      files.forEach(dirent => {
+      for (let i = 0; i < files.length; i++) {
+        const dirent = files[i];
         if (dirent.isFile()) {
           console.log(`log file name: ${dirent.name}`);
           const filePath = path.join(dirPath, dirent.name);
@@ -961,24 +1001,24 @@ export default class Application extends EventEmitter {
                 `file ${dirent.name} last modified is ${stats.mtimeMs}, now is ${now}, threshhold ${threshHold}`
               );
               if (isOlderThan && now - stats.mtimeMs > threshHold) {
-                resultArray.push({ path: filePath, stats, fileName: dirent.name });
+                ret.push({ path: filePath, stats, fileName: dirent.name });
               } else if (isNewerThan && now - stats.mtimeMs < threshHold) {
-                resultArray.push({ path: filePath, stats, fileName: dirent.name });
+                ret.push({ path: filePath, stats, fileName: dirent.name });
               }
             }
             if (processed === total) {
-              onDone();
+              allComplete();
             }
           });
         } else {
           processed++;
           if (processed === total) {
-            onDone();
+            allComplete();
           }
         }
-      });
+      }
     } else {
-      onDone();
+      allComplete();
     }
   };
 
