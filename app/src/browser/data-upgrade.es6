@@ -83,8 +83,7 @@ function configDataUpgrade(configDirPath) {
   }
   const sameUuid = '4ad7f986-de23-44a6-b579-3e2f9703b943';
   // change same uuid to new
-  const sameIdSignature = json['signatures'].find(sig => sig.id === sameUuid);
-  if (sameIdSignature) {
+  if (json['signatures'] && json['signatures'].find(sig => sig.id === sameUuid)) {
     const newId = uuid().toLowerCase();
     json['signatures'] = json['signatures'].map(sig => {
       if (sig.id === sameUuid) {
@@ -102,8 +101,7 @@ function configDataUpgrade(configDirPath) {
     ]);
   }
   // change same uuid to new
-  const sameIdTemplate = json['templates'].find(t => t.id === sameUuid);
-  if (sameIdTemplate) {
+  if (json['templates'] && json['templates'].find(t => t.id === sameUuid)) {
     const newId = uuid().toLowerCase();
     json['templates'] = json['templates'].map(t => {
       if (t.id === sameUuid) {

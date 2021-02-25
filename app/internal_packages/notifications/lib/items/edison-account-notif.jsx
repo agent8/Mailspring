@@ -41,7 +41,7 @@ export default class EdisonAccountNotif extends React.Component {
   _onClickButton = () => {
     AppEnv.config.set(PromptedEdisonAccountKey, true);
     this._onClose();
-    Actions.switchPreferencesTab('My Account');
+    Actions.switchPreferencesTab('Back up & Sync');
     Actions.openPreferences();
   };
 
