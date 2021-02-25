@@ -22,15 +22,38 @@ const NOTIFI_ACTIONS = [
   { type: 'button', text: 'Archive', value: 'archive' },
   { type: 'button', text: 'Block', value: 'block' },
 ];
+class ActivationTime {
+  constructor() {
+    this.appTime = Date.now();
+    this.accounts = {};
+  }
+  updateTimeForAccount = (accountId, timestamp) => {
+    if (timestamp > this.appTime) {
+      this.accounts[accountId] = timestamp;
+    } else {
+      this.accounts[accountId] = this.appTime;
+    }
+  };
+  timeForAccount = accountId => {
+    if (this.accounts[accountId]) {
+      return this.accounts[accountId];
+    } else {
+      return this.appTime;
+    }
+  };
+}
 
 export class Notifier {
   constructor() {
-    this.activationTime = Date.now();
+    this.activationTime = new ActivationTime();
     this.unnotifiedQueue = [];
     this.hasScheduledNotify = false;
 
     this.activeNotifications = {};
-    this.unlisteners = [DatabaseStore.listen(this._onDatabaseChanged, this)];
+    this.unlisteners = [
+      DatabaseStore.listen(this._onDatabaseChanged, this),
+      AccountStore.listen(this._onAccountsChange),
+    ];
     this.notifiedMessageIds = {};
   }
 
@@ -39,6 +62,16 @@ export class Notifier {
       unlisten();
     }
   }
+  _onAccountsChange = () => {
+    const accounts = AccountStore.accounts();
+    if (Array.isArray(accounts)) {
+      accounts.forEach(account => {
+        if (account) {
+          this.activationTime.updateTimeForAccount(account.id, account.lastVerified);
+        }
+      });
+    }
+  };
 
   // async for testing
   async _onDatabaseChanged({ objectClass, objects }) {
@@ -62,7 +95,11 @@ export class Notifier {
       // ensure the message was just created (eg: this is not a modification)
       if (msg.version !== 1) continue;
       // ensure the message was received after the app launched (eg: not syncing an old email)
-      if (!msg.date || msg.date.valueOf() < this.activationTime) continue;
+      if (
+        !msg.date ||
+        msg.date.valueOf() < this.activationTime.timeForAccount(msg.accountId || msg.aid)
+      )
+        continue;
       // ensure the message is not a loopback
       const account = msg.from[0] && AccountStore.accountForEmail(msg.from[0].email);
       if (msg.accountId === (account || {}).id) continue;
