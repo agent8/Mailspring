@@ -135,7 +135,7 @@ export default class File extends Model {
   safeDisplayName() {
     // RegExpUtils = RegExpUtils || require('../../regexp-utils');
     // return this.displayName().replace(RegExpUtils.illegalPathCharactersRegexp(), '-');
-    return this.displayName();
+    return this.displayName().replace(/\//g, ':');
   }
 
   // Public: Returns the file extension that should be used for this file.
