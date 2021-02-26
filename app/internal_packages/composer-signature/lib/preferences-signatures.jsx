@@ -68,9 +68,18 @@ class SignatureEditor extends React.Component {
     const sig = Object.assign({}, this.props.signature);
     sig.body = this.state.body;
     // if delete the inline, should filter it
-    const filterAttachment = this.state.attachments.filter(
-      a => !a.inline || this.state.body.indexOf(`src="${a.path}"`) >= 0
-    );
+    const filterAttachment = this.state.attachments.filter(a => {
+      if (!a.inline) {
+        return true;
+      }
+      if (this.state.body.indexOf(`src="${a.path}"`) >= 0) {
+        return true;
+      }
+      if (this.state.body.indexOf(`src="${Utils.filePathEncode(a.path)}"`) >= 0) {
+        return true;
+      }
+      return false;
+    });
     sig.attachments = filterAttachment;
     this.setState({ attachments: filterAttachment });
     Actions.updateSignature(sig);
