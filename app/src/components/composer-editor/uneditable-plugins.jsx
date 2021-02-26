@@ -8,14 +8,15 @@ export const UNEDITABLE_TAGS = ['table', 'center', 'edo-readonly'];
 function UneditableNode(props) {
   const { attributes, node, editor, targetIsHTML, isSelected } = props;
   const __html = node.data.get ? node.data.get('html') : node.data.html;
+  const tagName = node.data.get ? node.data.get('tagName') : node.data.tagName;
   const removeQuote = () => {
     editor.change(change => {
       change.removeNodeByKey(node.key);
     });
   };
 
-  if (targetIsHTML) {
-    return <div dangerouslySetInnerHTML={{ __html }} />;
+  if (targetIsHTML || tagName === 'edo-readonly') {
+    return <div dangerouslySetInnerHTML={{ __html }} data-edison-readonly={'true'} />;
   }
   return (
     <div
@@ -91,6 +92,7 @@ const rules = [
       const tagName = el.tagName.toLowerCase();
 
       if (UNEDITABLE_TAGS.includes(tagName)) {
+        let isVoid = tagName !== 'edo-readonly';
         if (
           tagName === 'edo-readonly' &&
           !AppEnv.config.get('core.composing.disableOriginalMessageEdit')
@@ -100,9 +102,9 @@ const rules = [
         return {
           object: 'block',
           type: UNEDITABLE_TYPE,
-          data: { html: el.outerHTML },
+          data: { html: el.outerHTML, tagName },
           nodes: [],
-          isVoid: true,
+          isVoid,
         };
       }
     },
