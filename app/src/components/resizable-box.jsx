@@ -329,7 +329,12 @@ class ResizePopup extends React.PureComponent {
   _onResizePopupHeightChange = event => {
     event.preventDefault();
     if (this._mounted) {
-      const height = parseInt(event.target.value, 10);
+      let height = parseInt(event.target.value, 10);
+      if (isNaN(height)) {
+        height = 0;
+      } else if (height < 0) {
+        height = 0;
+      }
       const state = { height };
       if (this.state.lockAspect) {
         state.width = Math.round(height * this.state.widthHeightRatio);
@@ -339,7 +344,12 @@ class ResizePopup extends React.PureComponent {
   };
   _onResizePopupWidthChange = event => {
     if (this._mounted) {
-      const width = parseInt(event.target.value, 10);
+      let width = parseInt(event.target.value, 10);
+      if (isNaN(width)) {
+        width = 0;
+      } else if (width < 0) {
+        width = 0;
+      }
       const state = { width };
       if (this.state.lockAspect) {
         state.height = Math.round(width / this.state.widthHeightRatio);
@@ -350,6 +360,16 @@ class ResizePopup extends React.PureComponent {
   _onResize = event => {
     if (event) {
       event.stopPropagation();
+    }
+    if (this.state.height === 0 || this.state.width === 0) {
+      AppEnv.showMessageBox({
+        title: 'Cannot resize image',
+        detail: 'Image dimensions must be greater than 0.',
+        buttons: ['Ok'],
+        defaultId: 0,
+        cancelId: 0,
+      });
+      return;
     }
     if (this.props.onResize) {
       this.props.onResize({ height: this.state.height, width: this.state.width });
