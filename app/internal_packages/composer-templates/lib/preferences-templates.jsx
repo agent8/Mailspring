@@ -70,9 +70,18 @@ class TemplateEditor extends React.Component {
     const template = Object.assign({}, this.props.template);
     template.body = outHTML;
     // if delete the inline, should filter it
-    const filterAttachment = this.state.attachments.filter(
-      a => !a.inline || outHTML.indexOf(`src="${a.path}"`) >= 0
-    );
+    const filterAttachment = this.state.attachments.filter(a => {
+      if (!a.inline) {
+        return true;
+      }
+      if (outHTML.indexOf(`src="${a.path}"`) >= 0) {
+        return true;
+      }
+      if (outHTML.indexOf(`src="${Utils.filePathEncode(a.path)}"`) >= 0) {
+        return true;
+      }
+      return false;
+    });
     template.attachments = filterAttachment;
     this.setState({ attachments: filterAttachment });
     TemplateActions.updateTemplate(template);
