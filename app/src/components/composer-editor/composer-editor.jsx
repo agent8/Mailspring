@@ -187,6 +187,13 @@ export default class ComposerEditor extends React.Component {
   };
 
   onCopy = (event, change, editor) => {
+    const selection = window.document.getSelection();
+    if (selection) {
+      const node = selection.anchorNode.parentElement;
+      if (node.tagName === 'edo-readonly' || node.closest('edo-readonly')) {
+        return;
+      }
+    }
     event.preventDefault();
     const document = editor.value.document.getFragmentAtRange(editor.value.selection);
     event.clipboardData.setData('text/html', convertToHTML({ document }));
