@@ -240,7 +240,7 @@ async function generateNewListForSigOrTemp(list, type) {
         newItem.body = replaceTemplateTagToLocal(newItem.body);
       }
       newSignatureOrTemplateList.push(newItem);
-      // await cleanUpFiles(key);
+      await cleanUpFiles(key);
     } catch (error) {
       console.error(error.message);
     }
