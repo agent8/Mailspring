@@ -127,9 +127,9 @@ async function mkdirAndWriteJson(signatureOrTemplate, type) {
   if (type === 'template') {
     jsonObj['CC'] = signatureOrTemplate.CC;
     jsonObj['BCC'] = signatureOrTemplate.BCC;
-    jsonObj.body = replaceTemplateTagToServer(jsonObj.body);
+    jsonObj['subject'] = signatureOrTemplate.SUBJ;
+    jsonObj.html = replaceTemplateTagToServer(jsonObj.html);
   }
-
   const jsonFilePath = path.join(dirName, `${key}.json`);
   fs.writeFileSync(jsonFilePath, JSON.stringify(jsonObj));
 
@@ -203,7 +203,7 @@ async function generateNewListForSigOrTemp(list, type) {
       const jsonPath = path.join(dirName, `${key}.json`);
       const jsonStr = fs.readFileSync(jsonPath);
       const json = JSON.parse(jsonStr);
-      const { attachments, html, name, CC, BCC } = json;
+      const { attachments, html, name, CC, BCC, subject } = json;
       const backupName =
         signatureOrTemplate.platform === EdisonPlatformType.COMMON ? 'From Mobile' : 'Untitled';
       const signatureOrTemplateName = name || backupName;
@@ -235,6 +235,8 @@ async function generateNewListForSigOrTemp(list, type) {
       if (type === 'template') {
         newItem['CC'] = CC || '';
         newItem['BCC'] = BCC || '';
+        newItem['SUBJ'] = subject || '';
+
         newItem.body = replaceTemplateTagToLocal(newItem.body);
       }
       newSignatureOrTemplateList.push(newItem);

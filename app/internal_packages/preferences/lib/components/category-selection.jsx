@@ -11,6 +11,7 @@ export default class CategorySelection extends React.Component {
   static propTypes = {
     accountUsesLabels: PropTypes.bool,
     all: PropTypes.array,
+    needToHideCategories: PropTypes.array,
     current: PropTypes.object,
     onSelect: PropTypes.func,
     disabled: PropTypes.bool,
@@ -28,6 +29,7 @@ export default class CategorySelection extends React.Component {
     if (!this.props.all) {
       return [];
     }
+    const needToHideCategories = this.props.needToHideCategories || [];
     return this.props.all
       .sort((a, b) => {
         // var pathA = utf7.imap.decode(a.name || a.path).toUpperCase();
@@ -42,9 +44,11 @@ export default class CategorySelection extends React.Component {
         }
         return 0;
       })
-      .filter(c =>
-        // Utils.wordSearchRegExp(this.state.searchValue).test(utf7.imap.decode(c.name || c.path))
-        Utils.wordSearchRegExp(this.state.searchValue).test(c.name || utf7.imap.decode(c.path))
+      .filter(
+        c =>
+          // Utils.wordSearchRegExp(this.state.searchValue).test(utf7.imap.decode(c.name || c.path))
+          Utils.wordSearchRegExp(this.state.searchValue).test(c.name || utf7.imap.decode(c.path)) &&
+          !needToHideCategories.includes(c)
       )
       .map(c => {
         c.backgroundColor = LabelColorizer.backgroundColorDark(c);

@@ -153,6 +153,9 @@ class ThreadListParticipants extends React.Component {
         break;
       }
     }
+    if (isAllFromMe) {
+      field = 'to';
+    }
 
     for (let idx = 0; idx < messages.length; idx++) {
       const message = new Message(messages[idx]);
