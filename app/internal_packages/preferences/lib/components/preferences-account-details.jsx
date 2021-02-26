@@ -534,7 +534,7 @@ class PreferencesAccountDetails extends Component {
             {this._renderDefaultAliasSelector(account)}
           </div>
           <div className="config-group">
-            <h6>FOLDERS</h6>
+            <h6>SYSTEM FOLDERS</h6>
             <PreferencesCategory account={account} />
           </div>
           <div className="config-group">
