@@ -211,6 +211,11 @@ module.exports = Utils = {
   stringToBase64: string => btoa(toBinary(string || '')),
   base64ToString: base64 => fromBinary(atob(base64)),
 
+  filePathEncode(filePath) {
+    const fileName = encodeURIComponent(path.basename(filePath));
+    return path.join(path.dirname(filePath), fileName);
+  },
+
   safeBrowserPath: filePath => {
     if (process.platform === 'win32') {
       return path.join(path.dirname(filePath), encodeURIComponent(path.win32.basename(filePath)));
