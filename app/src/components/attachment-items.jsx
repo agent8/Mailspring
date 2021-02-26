@@ -607,8 +607,8 @@ export class ImageAttachmentItem extends Component {
           onShowResizePopup({
             initialHeight: Math.floor(rect.height),
             initialWidth: Math.floor(rect.width),
-            top: rect.top,
-            left: rect.left,
+            y: event.clientY - rect.top,
+            x: event.clientX - rect.left,
           });
           this._imageResizePopupOpen = true;
         };
