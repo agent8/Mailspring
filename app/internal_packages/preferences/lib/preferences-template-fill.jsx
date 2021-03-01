@@ -233,13 +233,20 @@ const preferencesTemplateFill = {
         //   ],
         // },
         {
-          groupName: 'DOWNLOADS',
+          groupName: 'DOWNLOADS & ATTACHMENTS',
           groupItem: [
             {
               label: 'Open containing folder after downloading attachments',
               configSchema: configSchema =>
                 configSchema.properties.attachments.properties.openFolderAfterDownload,
               keyPath: 'core.attachments.openFolderAfterDownload',
+              keywords: [],
+            },
+            {
+              label: 'When dragging files into the composer, always add as an attachment',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.dropFileAsNormalAttachment,
+              keyPath: 'core.composing.dropFileAsNormalAttachment',
               keywords: [],
             },
             // {
@@ -279,22 +286,22 @@ const preferencesTemplateFill = {
         },
       ],
     },
-    // {
-    //   tabId: 'My Account',
-    //   displayName: 'My Account',
-    //   order: 2,
-    //   configGroup: [
-    //     {
-    //       groupItem: [
-    //         {
-    //           label: 'Back up & Sync',
-    //           component: EdisonAccount,
-    //           keywords: [],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // },
+    {
+      tabId: 'Back up & Sync',
+      displayName: 'Back up & Sync',
+      order: 2,
+      configGroup: [
+        {
+          groupItem: [
+            {
+              label: 'Back up & Sync',
+              component: EdisonAccount,
+              keywords: ['Back up & Sync'],
+            },
+          ],
+        },
+      ],
+    },
     {
       tabId: 'Notifications',
       displayName: 'Notifications',
@@ -346,7 +353,7 @@ const preferencesTemplateFill = {
       order: 4,
       isHidden: () => {
         const accounts = AccountStore.accounts().filter(account => {
-          return account && (account.provider === 'gmail' || account.provider === 'onmail');
+          return account && account.usesLabels();
         });
         return accounts.length === 0;
       },
@@ -365,6 +372,7 @@ const preferencesTemplateFill = {
     {
       tabId: 'Accounts',
       displayName: 'Accounts',
+      className: 'preferences-template-accounts',
       order: 4,
       configGroup: [
         {

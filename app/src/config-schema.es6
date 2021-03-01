@@ -190,7 +190,7 @@ export default {
           threadView: {
             type: 'boolean',
             default: true,
-            syncToServer: true,
+            syncToServer: false,
           },
         },
       },
@@ -288,6 +288,11 @@ export default {
       composing: {
         type: 'object',
         properties: {
+          dropFileAsNormalAttachment: {
+            type: 'boolean',
+            default: false,
+            title: 'When dragging files into the composer, always add as an attachment',
+          },
           showCcAndBcc: {
             type: 'string',
             default: 'cc',
@@ -616,7 +621,7 @@ export default {
         properties: {
           sounds: {
             type: 'boolean',
-            default: false,
+            default: true,
             title: 'Send mail sound',
             syncToServer: true,
             syncToServerCommonKey: 'play_sound_after_email_sent',

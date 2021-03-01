@@ -12,7 +12,7 @@ import {
   TaskFactory,
   Actions,
 } from 'mailspring-exports';
-import { EditableList } from 'mailspring-component-kit';
+import { EditableList, RetinaImg, ScrollRegion } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 import { UpdateMailSyncSettings } from '../preferences-utils';
 
@@ -29,14 +29,29 @@ class AutoaddressControl extends Component {
       <div>
         <div className="item">
           <label>When composing, automatically</label>
-          <select
-            value={autoaddress.type}
-            onChange={e => onChange(Object.assign({}, autoaddress, { type: e.target.value }))}
-            onBlur={onSaveChanges}
-          >
-            <option value="cc">CC</option>
-            <option value="bcc">BCC</option>
-          </select>
+          <div className="button-dropdown">
+            <select
+              className="auto-cc-bcc"
+              value={autoaddress.type}
+              onChange={e => onChange(Object.assign({}, autoaddress, { type: e.target.value }))}
+              onBlur={onSaveChanges}
+            >
+              <option value="cc">CC</option>
+              <option value="bcc">BCC</option>
+            </select>
+            <RetinaImg
+              name={'arrow-dropdown.svg'}
+              isIcon
+              style={{
+                width: 24,
+                height: 24,
+                fontSize: 20,
+                lineHeight: '24px',
+                verticalAlign: 'middle',
+              }}
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+          </div>
           &nbsp;&nbsp;:
         </div>
         <div className="item">
@@ -386,17 +401,31 @@ class PreferencesAccountDetails extends Component {
     return (
       <div className="item">
         <label>Sync mail as far back as:</label>
-        <select
-          value={mailsyncSettings.fetchEmailRange.toString()}
-          onChange={this._onFetchEmailRangeUpdate}
-          onBlur={this._saveChanges}
-        >
-          <option value="7">Within 7 days</option>
-          <option value="30">Within 30 days</option>
-          <option value="90">Within 3 months</option>
-          <option value="365">Within 1 year</option>
-          <option value="-1">All</option>
-        </select>
+        <div className="button-dropdown">
+          <select
+            value={mailsyncSettings.fetchEmailRange.toString()}
+            onChange={this._onFetchEmailRangeUpdate}
+            onBlur={this._saveChanges}
+          >
+            <option value="7">Within 7 days</option>
+            <option value="30">Within 30 days</option>
+            <option value="90">Within 3 month</option>
+            <option value="365">Within 1 year</option>
+            <option value="-1">All</option>
+          </select>
+          <RetinaImg
+            name={'arrow-dropdown.svg'}
+            isIcon
+            style={{
+              width: 24,
+              height: 24,
+              fontSize: 20,
+              lineHeight: '24px',
+              verticalAlign: 'middle',
+            }}
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </div>
       </div>
     );
   }
@@ -416,15 +445,29 @@ class PreferencesAccountDetails extends Component {
     return (
       <div className="item">
         <label>Check for mail every:</label>
-        <select
-          value={mailsyncSettings.fetchEmailInterval.toString()}
-          onChange={this._onFetchEmailIntervalUpdate}
-          onBlur={this._saveChanges}
-        >
-          <option value="1">Every minute</option>
-          <option value="3">Every 3 minutes</option>
-          <option value="5">Every 5 minutes</option>
-        </select>
+        <div className="button-dropdown">
+          <select
+            value={mailsyncSettings.fetchEmailInterval.toString()}
+            onChange={this._onFetchEmailIntervalUpdate}
+            onBlur={this._saveChanges}
+          >
+            <option value="1">Every minute</option>
+            <option value="3">Every 3 minutes</option>
+            <option value="5">Every 5 minutes</option>
+          </select>
+          <RetinaImg
+            name={'arrow-dropdown.svg'}
+            isIcon
+            style={{
+              width: 24,
+              height: 24,
+              fontSize: 20,
+              lineHeight: '24px',
+              verticalAlign: 'middle',
+            }}
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
+        </div>
       </div>
     );
   }
@@ -480,80 +523,82 @@ class PreferencesAccountDetails extends Component {
     const isExchange = AccountStore.isExchangeAccount(account);
 
     return (
-      <div className="account-details">
-        {this._renderSyncErrorDetails()}
-        <div className="config-group">
-          <h6>{account && account.displayProvider().toUpperCase()} ACCOUNT</h6>
-          <div className="item">
-            <label htmlFor={'Account Label'}>Description</label>
-            <input
-              type="text"
-              value={account.label}
-              onBlur={this._saveChanges}
-              onChange={this._onAccountLabelUpdated}
-            />
-          </div>
-          {isExchange ? null : (
+      <ScrollRegion direction="column" className="account-details-container">
+        <div className="account-details">
+          {this._renderSyncErrorDetails()}
+          <div className="config-group">
+            <h6>{account && account.displayProvider().toUpperCase()} ACCOUNT</h6>
             <div className="item">
-              <label htmlFor={'Sender Name'}>Sender Name</label>
+              <label htmlFor={'Account Label'}>Description</label>
               <input
                 type="text"
-                value={account.name}
+                value={account.label}
                 onBlur={this._saveChanges}
-                placeholder="e.g. John Smith"
-                onChange={this._onAccountNameUpdated}
+                onChange={this._onAccountLabelUpdated}
               />
             </div>
-          )}
+            {isExchange ? null : (
+              <div className="item">
+                <label htmlFor={'Sender Name'}>Sender Name</label>
+                <input
+                  type="text"
+                  value={account.name}
+                  onBlur={this._saveChanges}
+                  placeholder="e.g. John Smith"
+                  onChange={this._onAccountNameUpdated}
+                />
+              </div>
+            )}
 
-          <AutoaddressControl
-            autoaddress={account.autoaddress}
-            onChange={this._onAccountAutoaddressUpdated}
-            onSaveChanges={this._saveChanges}
-          />
-        </div>
-        <div className="config-group">
-          <h6>ALIASES</h6>
-          <div className="notice">
-            You may need to configure aliases with your mail provider (Outlook, Gmail) before using
-            them.
-          </div>
-          <div className="aliases-edit">
-            <EditableList
-              showEditIcon
-              showFooter
-              needScroll
-              items={account.aliases}
-              createInputProps={{ placeholder: aliasPlaceholder }}
-              onItemCreated={this._onAccountAliasCreated}
-              onItemEdited={this._onAccountAliasUpdated}
-              onDeleteItem={this._onAccountAliasRemoved}
+            <AutoaddressControl
+              autoaddress={account.autoaddress}
+              onChange={this._onAccountAutoaddressUpdated}
+              onSaveChanges={this._saveChanges}
             />
           </div>
-          {this._renderDefaultAliasSelector(account)}
-        </div>
-        <div className="config-group">
-          <h6>FOLDERS</h6>
-          <PreferencesCategory account={account} />
-        </div>
-        <div className="config-group">
-          <h6>ADVANCED</h6>
-          {this._renderCopyToSent()}
-          {this._renderMailFetchRange()}
-          {this._renderMailFetchInterval()}
-          <div onClick={this._onReconnect} className="btn-primary account-detail-btn">
-            {account.provider === 'imap'
-              ? 'Update Connection Settings...'
-              : 'Re-authenticate Account'}
+          <div className="config-group">
+            <h6>ALIASES</h6>
+            <div className="notice">
+              You may need to configure aliases with your mail provider (Outlook, Gmail) before
+              using them.
+            </div>
+            <div className="aliases-edit">
+              <EditableList
+                showEditIcon
+                showFooter
+                needScroll
+                items={account.aliases}
+                createInputProps={{ placeholder: aliasPlaceholder }}
+                onItemCreated={this._onAccountAliasCreated}
+                onItemEdited={this._onAccountAliasUpdated}
+                onDeleteItem={this._onAccountAliasRemoved}
+              />
+            </div>
+            {this._renderDefaultAliasSelector(account)}
           </div>
-          <div onClick={this._onResetCache} className="btn-primary account-detail-btn">
-            Rebuild Cache
+          <div className="config-group">
+            <h6>SYSTEM FOLDERS</h6>
+            <PreferencesCategory account={account} />
           </div>
-          <div className="btn-danger account-detail-btn" onClick={this._onDeleteAccount}>
-            Remove Account
+          <div className="config-group">
+            <h6>ADVANCED</h6>
+            {this._renderCopyToSent()}
+            {this._renderMailFetchRange()}
+            {this._renderMailFetchInterval()}
+            <div onClick={this._onReconnect} className="btn-primary account-detail-btn">
+              {account.provider === 'imap'
+                ? 'Update Connection Settings...'
+                : 'Re-authenticate Account'}
+            </div>
+            <div onClick={this._onResetCache} className="btn-primary account-detail-btn">
+              Rebuild Cache
+            </div>
+            <div className="btn-danger account-detail-btn" onClick={this._onDeleteAccount}>
+              Remove Account
+            </div>
           </div>
         </div>
-      </div>
+      </ScrollRegion>
     );
   }
 }

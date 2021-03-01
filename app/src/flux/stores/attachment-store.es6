@@ -249,6 +249,7 @@ export const DraftAttachmentState = {
   deleted: -1,
   error: -2,
 };
+// eslint-disable-next-line no-unused-vars
 const AccountAttachmentsState = {
   ready: 1,
   busy: 2,
@@ -816,8 +817,6 @@ class AccountDrafts {
       return null;
     }
     if (!this.accounts[accountId]) {
-      {
-      }
       AppEnv.logDebug(`Accounts missing accountId ${accountId}`);
       return null;
     }
@@ -1426,7 +1425,7 @@ class AttachmentStore extends MailspringStore {
 
   _fetchAndOpen = file => {
     return this._prepareAndResolveFilePath(file)
-      .then(filePath => remote.shell.openItem(filePath))
+      .then(filePath => remote.shell.openPath(filePath))
       .catch(this._catchFSErrors)
       .catch(error => {
         return this._presentError({ file, error });
@@ -2093,6 +2092,8 @@ class AttachmentStore extends MailspringStore {
     inline = undefined,
     isSigOrTempAttachments = false,
     skipSaving = false,
+    contentType = null,
+    contentId = null,
     onCreated = () => {},
   }) => {
     this._assertIdPresent(messageId);
@@ -2111,17 +2112,20 @@ class AttachmentStore extends MailspringStore {
         id: `local-${uuid()}`,
         filename: filename,
         size: stats.size,
-        contentType: null,
+        contentType,
         messageId,
         accountId,
-        contentId: inline ? Utils.generateContentId() : null,
+        contentId: inline ? contentId || Utils.generateContentId() : null,
         isInline: inline,
       });
       // Is the attachment is in signature or template
       if (isSigOrTempAttachments) {
         file.isSigOrTempAttachments = true;
       }
-      if (inline === undefined && Utils.shouldDisplayAsImage(file)) {
+      const dropFileAsNormalAttachment = AppEnv.config.get(
+        'core.composing.dropFileAsNormalAttachment'
+      );
+      if (inline === undefined && Utils.shouldDisplayAsImage(file) && !dropFileAsNormalAttachment) {
         console.log('should be image but not set as inline');
         file.isInline = true;
         file.contentId = Utils.generateContentId();
@@ -2168,7 +2172,7 @@ class AttachmentStore extends MailspringStore {
 
   addSigOrTempAttachments = async (attachments, messageId, accountId, skipSaving = false) => {
     const fileMap = new Map();
-    const addPromise = (path, inline) => {
+    const addPromise = ({ path, inline, contentId, contentType } = {}) => {
       return new Promise((resolve, reject) => {
         const onCreated = file => {
           resolve(file);
@@ -2178,7 +2182,9 @@ class AttachmentStore extends MailspringStore {
             messageId: messageId,
             accountId: accountId,
             filePath: path,
-            inline: inline,
+            inline,
+            contentId,
+            contentType,
             isSigOrTempAttachments: true,
             skipSaving,
             onCreated,
@@ -2188,9 +2194,14 @@ class AttachmentStore extends MailspringStore {
         }
       });
     };
-    for (const atta of attachments) {
-      const file = await addPromise(atta.path, atta.inline);
-      fileMap.set(atta.path, file);
+    for (const attachment of attachments) {
+      const file = await addPromise({
+        path: attachment.path,
+        inline: attachment.inline,
+        contentId: attachment.contentId,
+        contentType: attachment.contentType,
+      });
+      fileMap.set(attachment.path, file);
     }
     return fileMap;
   };

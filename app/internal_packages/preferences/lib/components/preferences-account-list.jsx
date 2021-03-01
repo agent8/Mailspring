@@ -13,7 +13,7 @@ class PreferencesAccountList extends Component {
     accounts: PropTypes.array,
     selected: PropTypes.object,
     onAddAccount: PropTypes.func.isRequired,
-    onReorderAccount: PropTypes.func.isRequired,
+    onReorderAccount: PropTypes.func,
     onSelectAccount: PropTypes.func.isRequired,
     onRemoveAccount: PropTypes.func.isRequired,
   };
@@ -68,6 +68,7 @@ class PreferencesAccountList extends Component {
       },
     });
     menu.append(menuItem);
+    Actions.closeContextMenu();
     menu.popup();
   }
 
@@ -149,7 +150,6 @@ class PreferencesAccountList extends Component {
         items={this.props.accounts}
         itemContent={this._renderAccount}
         selected={this.props.selected}
-        onReorderItem={this.props.onReorderAccount}
         onCreateItem={this.props.onAddAccount}
         onSelectItem={this.props.onSelectAccount}
         onDeleteItem={this.props.onRemoveAccount}

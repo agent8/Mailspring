@@ -11,7 +11,8 @@ import Spinner from './spinner';
 import { AttachmentStore, MessageStore, Utils, Constant } from 'mailspring-exports';
 import Actions from '../flux/actions';
 import ResizableBox from './resizable-box';
-
+import { remote } from 'electron';
+const { nativeImage, clipboard } = remote;
 const { AttachmentDownloadState } = Constant;
 const UNPREVIEWABLE_IMAGE_EXTNAMES = ['.heic'];
 
@@ -418,6 +419,7 @@ export class ImageAttachmentItem extends Component {
     onHover: PropTypes.func,
     onResizeComplete: PropTypes.func,
     onShowMask: PropTypes.func,
+    onContextMenu: PropTypes.func,
     ...propTypes,
   };
 
@@ -436,7 +438,13 @@ export class ImageAttachmentItem extends Component {
       imgWidth: 0,
       resizeBoxHeight: 0,
       resizeBoxWidth: 0,
+      showResizePopup: false,
+      userInputHeight: 0,
+      userInputWidth: 0,
     };
+    this._imageResizePopupOpen = false;
+    this._resizableRef = null;
+    this._setResizableRef = ref => (this._resizableRef = ref);
     this._mounted = false;
   }
 
@@ -530,6 +538,9 @@ export class ImageAttachmentItem extends Component {
       this.props.onHover(event.target);
     }
   };
+  _onCloseResizePopup = () => {
+    this._imageResizePopupOpen = false;
+  };
   _onImageSelect = event => {
     if (!this._mounted) {
       return;
@@ -558,6 +569,51 @@ export class ImageAttachmentItem extends Component {
     }
     if (this.props.resizable) {
       this.setState({ showResizeMask: false });
+    }
+  };
+  _onCopyImage = cb => {
+    if (this._imgRef) {
+      let img = new Image();
+      img.addEventListener(
+        'load',
+        () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(this._imgRef, 0, 0);
+          const imageDataURL = canvas.toDataURL('image/png');
+          img = nativeImage.createFromDataURL(imageDataURL);
+          clipboard.writeImage(img);
+          if (cb) {
+            cb();
+          }
+        },
+        false
+      );
+      img.src = this._imgRef.src;
+    }
+  };
+
+  _onImageContextMenu = (event, onShowResizePopup) => {
+    if (this.props.onContextMenu) {
+      event.persist();
+      if (this._imgRef && !this._imageResizePopupOpen) {
+        const el = ReactDOM.findDOMNode(this._imgRef);
+        const rect = el.getBoundingClientRect();
+        const showPopup = () => {
+          if (!onShowResizePopup && this._resizableRef) {
+            onShowResizePopup = this._resizableRef.onShowResizePopup;
+          }
+          onShowResizePopup({
+            initialHeight: Math.floor(rect.height),
+            initialWidth: Math.floor(rect.width),
+            y: event.clientY - rect.top,
+            x: event.clientX - rect.left,
+          });
+          this._imageResizePopupOpen = true;
+        };
+        this.props.onContextMenu(event, { onShowPopup: showPopup, onCopyImage: this._onCopyImage });
+      }
     }
   };
 
@@ -593,6 +649,7 @@ export class ImageAttachmentItem extends Component {
         onError={this._onImageError}
         onClick={this._onImageSelect}
         onBlur={this._onImageDeselect}
+        onContextMenu={this._onImageContextMenu}
         style={{ height, width }}
       />
     );
@@ -604,15 +661,15 @@ export class ImageAttachmentItem extends Component {
     if (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) {
       style = {
         display: 'block',
-        width: this.state.imgWidth + 2,
+        width: this.state.imgWidth + 6,
         height: this.state.imgHeight + 2,
         maxHeight: this.state.imgHeight + 2,
-        maxWidth: this.state.imgWidth + 2,
+        maxWidth: this.state.imgWidth + 6,
       };
     } else if (this.props.resizable) {
       style = { maxWidth: 'fit-content' };
     }
-    const filePreviewStyle = {};
+    const filePreviewStyle = { paddingRight: '4px' };
     if (this.props.resizable && this.state.showResizeMask) {
       filePreviewStyle.zIndex = 0;
     }
@@ -690,10 +747,12 @@ export class ImageAttachmentItem extends Component {
   _renderResizableContainer() {
     return (
       <ResizableBox
-        onResize={this._onResize}
+        ref={this._setResizableRef}
+        onResizePopupClosed={this._onCloseResizePopup}
         onResizeComplete={this._onResizeComplete}
         onMaskClicked={this._onImageDeselect}
-        disabledDragPoints={['n', 's', 'w', 'e', 'ne', 'nw', 'sw']}
+        onContextMenu={this._onImageContextMenu}
+        disabledDragPoints={['n', 's', 'w', 'e']}
         lockAspectRatio={true}
         showMask={this.state.showResizeMask}
         height={this.state.resizeBoxHeight}

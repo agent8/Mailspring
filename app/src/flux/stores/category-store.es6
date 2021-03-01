@@ -648,7 +648,32 @@ class CategoryStore extends MailspringStore {
       this._categoryResult = [];
     }
     const sortByName = (a, b) => {
-      return (a.name || '').localeCompare(b.name || '');
+      const stringA = a.name || '';
+      const stringB = b.name || '';
+      let compareLength = stringA.length;
+      if (stringA.length < stringB.length) {
+        compareLength = stringB.length;
+      }
+      for (let i = 0; i < compareLength; i++) {
+        if (i < stringA.length && i < stringB.length) {
+          const tmpA = stringA.charAt(i);
+          const tmpB = stringB.charAt(i);
+          const compareRet = tmpA.localeCompare(tmpB);
+          if (compareRet !== 0) {
+            if (tmpA === a.delimiter) {
+              return -1;
+            } else if (tmpB === a.delimiter) {
+              return 1;
+            }
+            return compareRet;
+          }
+        } else if (i >= stringA.length) {
+          return -1;
+        } else {
+          return 1;
+        }
+      }
+      return 0;
     };
 
     const categoryResults = {};

@@ -1,66 +1,72 @@
 import React, { Component } from 'react';
-import ThreadSearchBar from './thread-search-bar';
-import { HasTutorialTip } from 'mailspring-component-kit';
+import PropTypes from 'prop-types';
 import SearchStore from './search-store';
 import { ListensToFluxStore } from 'mailspring-component-kit';
 import { Actions, FocusedPerspectiveStore, ThreadCountsStore } from 'mailspring-exports';
+// import ThreadSearchBar from './thread-search-bar';
+// import { HasTutorialTip } from 'mailspring-component-kit';
 
-const ThreadSearchBarWithTip = HasTutorialTip(ThreadSearchBar, {
-  title: 'Search with ease',
-  instructions: (
-    <span>
-      Combine your search queries with Gmail-style terms like <strong>in: folder</strong> and{' '}
-      <strong>since: "last month"</strong> to find anything in your mailbox.
-    </span>
-  ),
-});
+// const ThreadSearchBarWithTip = HasTutorialTip(ThreadSearchBar, {
+//   title: 'Search with ease',
+//   instructions: (
+//     <span>
+//       Combine your search queries with Gmail-style terms like <strong>in: folder</strong> and{' '}
+//       <strong>since: "last month"</strong> to find anything in your mailbox.
+//     </span>
+//   ),
+// });
 
 class TitleSearchBar extends Component {
   static displayName = 'TitleSearchBar';
   MIN_FONT_SIZE = 14;
   INITIAL_FONT_SIZE = 32;
+  static propTypes = {
+    fontSize: PropTypes.number,
+    current: PropTypes.object,
+    perspective: PropTypes.object,
+  };
   constructor(props) {
     super(props);
-    this.state = {
-      fontSize: this.props.fontSize || this.INITIAL_FONT_SIZE,
-    };
+    // this.state = {
+    //   fontSize: this.props.fontSize || this.INITIAL_FONT_SIZE,
+    // };
   }
 
-  UNSAFE_componentWillReceiveProps() {
-    this.state.fontSize = this.props.fontSize || this.INITIAL_FONT_SIZE;
-  }
+  // UNSAFE_componentWillReceiveProps() {
+  //   this.state.fontSize = this.props.fontSize || this.INITIAL_FONT_SIZE;
+  // }
 
-  componentDidMount() {
-    setTimeout(() => {
-      if (this.titleEl) {
-        const container = this.titleEl.closest('.item-container');
-        this.containerWidth = container ? container.clientWidth : 0;
-        this.adjustFontSize();
-      }
-    }, 200);
-  }
+  // componentDidMount() {
+  //   setTimeout(() => {
+  //     if (this.titleEl) {
+  //       const container = this.titleEl.closest('.item-container');
+  //       this.containerWidth = container ? container.clientWidth : 0;
+  //       this.adjustFontSize();
+  //     }
+  //   }, 200);
+  // }
 
   componentDidUpdate() {
     this.adjustFontSize();
   }
 
   adjustFontSize() {
-    if (!this.titleEl) {
-      return;
-    }
-    const minFontSize = this.props.minFontSize || this.MIN_FONT_SIZE;
-    if (this.titleEl.offsetWidth > this.containerWidth) {
-      const newSize = this.state.fontSize - 1;
-      if (newSize < minFontSize) {
-        this.titleEl.style.visibility = 'visible';
-        return;
-      }
-      this.setState({
-        fontSize: newSize,
-      });
-    } else {
-      this.titleEl.style.visibility = 'visible';
-    }
+    // if (!this.titleEl) {
+    //   return;
+    // }
+    // const minFontSize = this.props.minFontSize || this.MIN_FONT_SIZE;
+    // if (this.titleEl.offsetWidth > this.containerWidth) {
+    //   const newSize = this.state.fontSize - 1;
+    //   if (newSize < minFontSize) {
+    //     this.titleEl.style.visibility = 'visible';
+    //     return;
+    //   }
+    //   this.setState({
+    //     fontSize: newSize,
+    //   });
+    // } else {
+    //   this.titleEl.style.visibility = 'visible';
+    // }
   }
 
   render() {
@@ -104,7 +110,7 @@ class TitleSearchBar extends Component {
             style={{
               width: 'max-content',
               maxWidth: '100%',
-              fontSize: this.state.fontSize,
+              // fontSize: this.state.fontSize,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}

@@ -80,12 +80,18 @@ function ImageNode(props) {
       }}
       onResizeComplete={({ width, height }) => {
         editor.change(change => {
-          return change.setNodeByKey(node.key, {
+          const { onForceSave } = editor.props.propsForPlugins;
+
+          change = change.setNodeByKey(node.key, {
             data: Object.assign({}, nodeDataJSON, {
               height: height,
               width: width,
             }),
           });
+          if (onForceSave) {
+            onForceSave(change.value);
+          }
+          return change;
         });
       }}
       onRemoveAttachment={() =>
@@ -99,6 +105,49 @@ function ImageNode(props) {
           return change.removeNodeByKey(node.key);
         })
       }
+      onContextMenu={(event, { onShowPopup, onCopyImage } = {}) => {
+        event.preventDefault();
+        const { remote } = require('electron');
+        const { Menu, MenuItem } = remote;
+        const menu = new Menu();
+        const removeImage = () => {
+          editor.change(change => {
+            Actions.removeAttachment({
+              headerMessageId: draft.headerMessageId,
+              messageId: draft.id,
+              accountId: draft.accountId,
+              fileToRemove: { id: fileId },
+            });
+            return change.removeNodeByKey(node.key);
+          });
+        };
+        if (onCopyImage) {
+          menu.append(
+            new MenuItem({
+              label: 'Cut',
+              enabled: true,
+              click: () => {
+                onCopyImage(removeImage);
+              },
+            })
+          );
+          menu.append(
+            new MenuItem({
+              label: 'Copy',
+              enabled: true,
+              click: onCopyImage,
+            })
+          );
+        }
+        menu.append(
+          new MenuItem({
+            label: 'Resize',
+            enabled: true,
+            click: onShowPopup,
+          })
+        );
+        menu.popup({});
+      }}
       onHover={node => {
         const selection = window.getSelection();
         if (

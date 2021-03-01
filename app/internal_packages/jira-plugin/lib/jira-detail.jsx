@@ -12,6 +12,7 @@ import Description from './jira-description';
 import { JiraComments, CommentSubmit } from './jira-comments';
 import FixVersions from './jira-fix-versions';
 import Labels from './jira-labels';
+import { Actions, PropTypes } from 'mailspring-exports';
 const cheerio = require('cheerio');
 const { RetinaImg, LottieImg } = require('mailspring-component-kit');
 const configDirPath = AppEnv.getConfigDirPath();
@@ -22,6 +23,9 @@ const exists = util.promisify(fs.exists);
 const writeFile = util.promisify(fs.writeFile);
 
 export default class JiraDetail extends Component {
+  static propTypes = {
+    config: PropTypes.object,
+  };
   constructor(props) {
     super(props);
     this.state = { allUsers: [], EditorCore: {} };
@@ -187,8 +191,11 @@ export default class JiraDetail extends Component {
   downloadUri = async (attachments, isThumbnail = true) => {
     let downloadApi = isThumbnail ? this.jira.downloadThumbnail : this.jira.downloadAttachment;
     for (const attachment of attachments) {
-      // Only download orginal image file
-      if (!attachment.mimeType.includes('image') && !isThumbnail) {
+      // Only download orginal image and video file
+      if (
+        !isThumbnail &&
+        !(attachment.mimeType.includes('image') || attachment.mimeType.includes('video'))
+      ) {
         return;
       }
       const localPath = path.join(
@@ -204,8 +211,9 @@ export default class JiraDetail extends Component {
       const { attachments = {}, originalFiles = {} } = this.state;
       if (!isThumbnail) {
         originalFiles[attachment.id] = localPath;
+      } else {
+        attachments[attachment.id] = localPath;
       }
-      attachments[attachment.id] = localPath;
       this.safeSetState({
         attachments,
         originalFiles,
@@ -270,9 +278,14 @@ export default class JiraDetail extends Component {
       });
     }
   };
-  openAttachment = id => {
-    const { attachments, originalFiles } = this.state;
-    const path = originalFiles[id] || attachments[id];
+  openAttachment = async id => {
+    const { originalFiles } = this.state;
+    const path = originalFiles[id];
+    const exist = await exists(path);
+    if (!exist) {
+      this._showDialog('The attachment is downloading, please wait.');
+      return;
+    }
     const currentWin = AppEnv.getCurrentWindow();
     currentWin.previewFile(path);
   };
@@ -331,6 +344,7 @@ export default class JiraDetail extends Component {
       },
     });
     this.menu.append(menuItem);
+    Actions.closeContextMenu();
     this.menu.popup({ x: e.clientX, y: e.clientY });
   };
   openOrignalImage = e => {

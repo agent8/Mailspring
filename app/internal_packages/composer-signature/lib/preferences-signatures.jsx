@@ -1,4 +1,12 @@
-import { React, ReactDOM, AccountStore, SignatureStore, Actions, Utils } from 'mailspring-exports';
+import {
+  React,
+  PropTypes,
+  ReactDOM,
+  AccountStore,
+  SignatureStore,
+  Actions,
+  Utils,
+} from 'mailspring-exports';
 import {
   RetinaImg,
   Flexbox,
@@ -14,10 +22,19 @@ const {
 } = ComposerSupport;
 
 class SignatureEditor extends React.Component {
+  static propTypes = {
+    signature: PropTypes.object,
+    body: PropTypes.string,
+    defaults: PropTypes.object,
+    accounts: PropTypes.array,
+    onEditTitle: PropTypes.func,
+    onEditField: PropTypes.func,
+  };
+
   constructor(props) {
     super(props);
-    const { id, attachments } = props.signature || {};
-    const body = SignatureStore.getBodyById(id);
+    const { attachments } = props.signature || {};
+    const body = props.body || '';
     this.state = {
       body,
       editorState: convertFromHTML(body),
@@ -34,6 +51,16 @@ class SignatureEditor extends React.Component {
     this.setState({ CodeEditor });
   }
 
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const body = nextProps.body || '';
+    if (body !== this.props.body) {
+      this.setState({
+        body,
+        editorState: convertFromHTML(body || ''),
+      });
+    }
+  }
+
   _onSave = () => {
     if (this.state.readOnly) {
       return;
@@ -41,9 +68,18 @@ class SignatureEditor extends React.Component {
     const sig = Object.assign({}, this.props.signature);
     sig.body = this.state.body;
     // if delete the inline, should filter it
-    const filterAttachment = this.state.attachments.filter(
-      a => !a.inline || this.state.body.indexOf(`src="${a.path}"`) >= 0
-    );
+    const filterAttachment = this.state.attachments.filter(a => {
+      if (!a.inline) {
+        return true;
+      }
+      if (this.state.body.indexOf(`src="${a.path}"`) >= 0) {
+        return true;
+      }
+      if (this.state.body.indexOf(`src="${Utils.filePathEncode(a.path)}"`) >= 0) {
+        return true;
+      }
+      return false;
+    });
     sig.attachments = filterAttachment;
     this.setState({ attachments: filterAttachment });
     Actions.updateSignature(sig);
@@ -112,6 +148,9 @@ class SignatureEditor extends React.Component {
       this.setState({ body: value, editorState: convertFromHTML(value) }, this._onSave);
     }
   };
+  _onForceSave = value => {
+    this.setState({ body: convertToHTML(value) }, this._onSave);
+  };
 
   render() {
     const { accounts, defaults, onEditTitle, signature = {} } = this.props;
@@ -144,6 +183,7 @@ class SignatureEditor extends React.Component {
               readOnly={false}
               value={editorState}
               outerPlugin={CodeBlockPlugin(this._onToggleCodeBlockEditor)}
+              propsForPlugins={{ onForceSave: this._onForceSave }}
               onChange={change => {
                 const changeHtml = convertToHTML(change.value);
                 if (changeHtml) {
@@ -196,9 +236,12 @@ export default class PreferencesSignatures extends React.Component {
   };
 
   _getStateFromStores() {
+    const selected = SignatureStore.selectedSignature();
+    const body = selected && selected.id ? SignatureStore.getBodyById(selected.id, true) : '';
     return {
       signatures: SignatureStore.getSignatures(),
-      selectedSignature: SignatureStore.selectedSignature(),
+      selectedSignature: selected,
+      selectedBody: body,
       defaults: SignatureStore.getDefaults(),
       accounts: AccountStore.accounts(),
     };
@@ -222,6 +265,9 @@ export default class PreferencesSignatures extends React.Component {
   _onChangeField = (field, value) => {
     const SignatureChangeFields = ['title', 'attachments'];
     if (!SignatureChangeFields.includes(field)) {
+      return;
+    }
+    if (!this.state.selectedSignature) {
       return;
     }
     const sig = Object.assign({}, this.state.selectedSignature);
@@ -284,6 +330,9 @@ export default class PreferencesSignatures extends React.Component {
 
   _renderSignatures() {
     const { signatures } = this.state;
+    if (!signatures) {
+      return null;
+    }
     const footer = (
       <div className="btn-primary buttons-add" onClick={this._onAddSignature}>
         <RetinaImg
@@ -321,6 +370,7 @@ export default class PreferencesSignatures extends React.Component {
           />
           <SignatureEditor
             signature={this.state.selectedSignature}
+            body={this.state.selectedBody}
             defaults={this.state.defaults}
             key={this.state.selectedSignature ? this.state.selectedSignature.id : 'empty'}
             accounts={this.state.accounts}

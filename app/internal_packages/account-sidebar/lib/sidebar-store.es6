@@ -186,6 +186,12 @@ class SidebarStore extends MailspringStore {
       this._updateSections
     );
   }
+  isAllLabelAccount() {
+    const accounts = AccountStore.accounts();
+    return accounts.every(account => {
+      return account && account.usesLabels();
+    });
+  }
   getNewFolder(accountId) {
     if (!accountId) {
       return this._newFolder.accountId ? this._newFolder : null;
@@ -286,6 +292,7 @@ class SidebarStore extends MailspringStore {
         this._newFolder = { accountId: null };
         this._updateSections();
       } else {
+        AppEnv.trackingEvent('FolderTree-EditingMenu');
         this.trigger();
       }
     }

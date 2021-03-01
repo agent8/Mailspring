@@ -75,7 +75,8 @@ export function activate() {
 }
 
 export function deactivate() {
-  ComponentRegistry.unregister(ThrNewThreadListeadList);
+  ComponentRegistry.unregister(ThreadListEmptyFolderBar);
+  ComponentRegistry.unregister(NewThreadList);
   ComponentRegistry.unregister(SelectedItemsStack);
   ComponentRegistry.unregister(ThreadListToolbar);
   ComponentRegistry.unregister(HiddenThreadListToolbar);

@@ -437,6 +437,7 @@ const TaskFactory = {
       });
       return;
     }
+    newName = newName.trim();
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -476,6 +477,7 @@ const TaskFactory = {
       });
       return;
     }
+    newName = newName.trim();
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Edit folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -529,6 +531,7 @@ const TaskFactory = {
       });
       return;
     }
+    name = name.trim();
     if (bannedPathNames.includes(name)) {
       AppEnv.logWarning(`TaskFactory:Creating folder ${name} is in banned`);
       AppEnv.showMessageBox({
@@ -558,6 +561,14 @@ const TaskFactory = {
       }
     }
     const isExchange = AccountStore().isExchangeAccountId(accountId);
+    if (!isExchange && name.includes(delimiter)) {
+      AppEnv.showMessageBox({
+        title: 'Cannot create',
+        detail: `${name} contains special character ${delimiter}`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     return SyncbackCategoryTask.forCreating({
       name,
       accountId,

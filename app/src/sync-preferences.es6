@@ -1,9 +1,7 @@
-import { keys } from 'underscore';
-
 const path = require('path');
 const fs = require('fs');
 const uuid = require('uuid');
-
+const { Utils } = require('mailspring-exports');
 const { downloadFile, uploadFile } = require('./s3-utils');
 const { dirExists, deleteFileOrFolder, unCompressDir, compressDir } = require('./fs-utils');
 const { PreferencesSubListStateEnum, EdisonPlatformType } = require('./constant');
@@ -16,6 +14,42 @@ const defaultSignaturesKey = 'defaultSignatures';
 function replaceStr(oldStr, searchStr, replaceStr) {
   const oldStrSplit = oldStr.split(searchStr);
   return oldStrSplit.join(replaceStr);
+}
+
+const ServerTemplageTagClassName = 'holderSpan';
+const LocalTemplageTagClassName = 'template-variable';
+
+function replaceTemplateTagToLocal(body) {
+  const box = document.createElement('div');
+  box.innerHTML = body;
+  const allSpan = box.querySelectorAll('span');
+  allSpan.forEach(span => {
+    const spanClassNames = (span.className || '').split(/\s/);
+    if (spanClassNames.includes(ServerTemplageTagClassName)) {
+      const newClassNames = spanClassNames.filter(
+        c => c !== LocalTemplageTagClassName && c !== ServerTemplageTagClassName
+      );
+      span.className = [...newClassNames, LocalTemplageTagClassName].join(' ');
+      span.setAttribute('data-tvar', span.innerText);
+    }
+  });
+  return box.innerHTML;
+}
+
+function replaceTemplateTagToServer(body) {
+  const box = document.createElement('div');
+  box.innerHTML = body;
+  const allSpan = box.querySelectorAll('span');
+  allSpan.forEach(span => {
+    const spanClassNames = (span.className || '').split(/\s/);
+    if (spanClassNames.includes(LocalTemplageTagClassName)) {
+      const newClassNames = spanClassNames.filter(
+        c => c !== LocalTemplageTagClassName && c !== ServerTemplageTagClassName
+      );
+      span.className = [...newClassNames, ServerTemplageTagClassName].join(' ');
+    }
+  });
+  return box.innerHTML;
 }
 
 async function downloadAndUnCompress(key) {
@@ -74,7 +108,7 @@ async function mkdirAndWriteJson(signatureOrTemplate, type) {
     const extName = path.extname(name);
     const fileAttId = `${uuid()}${extName}`;
     fs.copyFileSync(file.path, path.join(dirName, fileAttId));
-    body = replaceStr(body, file.path, `file://${fileAttId}`);
+    body = replaceStr(body, Utils.filePathEncode(file.path), `file://${fileAttId}`);
     return {
       attId: fileAttId,
       inline: file.inline,
@@ -93,8 +127,9 @@ async function mkdirAndWriteJson(signatureOrTemplate, type) {
   if (type === 'template') {
     jsonObj['CC'] = signatureOrTemplate.CC;
     jsonObj['BCC'] = signatureOrTemplate.BCC;
+    jsonObj['subject'] = signatureOrTemplate.SUBJ;
+    jsonObj.html = replaceTemplateTagToServer(jsonObj.html);
   }
-
   const jsonFilePath = path.join(dirName, `${key}.json`);
   fs.writeFileSync(jsonFilePath, JSON.stringify(jsonObj));
 
@@ -168,7 +203,7 @@ async function generateNewListForSigOrTemp(list, type) {
       const jsonPath = path.join(dirName, `${key}.json`);
       const jsonStr = fs.readFileSync(jsonPath);
       const json = JSON.parse(jsonStr);
-      const { attachments, html, name, CC, BCC } = json;
+      const { attachments, html, name, CC, BCC, subject } = json;
       const backupName =
         signatureOrTemplate.platform === EdisonPlatformType.COMMON ? 'From Mobile' : 'Untitled';
       const signatureOrTemplateName = name || backupName;
@@ -200,6 +235,9 @@ async function generateNewListForSigOrTemp(list, type) {
       if (type === 'template') {
         newItem['CC'] = CC || '';
         newItem['BCC'] = BCC || '';
+        newItem['SUBJ'] = subject || '';
+
+        newItem.body = replaceTemplateTagToLocal(newItem.body);
       }
       newSignatureOrTemplateList.push(newItem);
       await cleanUpFiles(key);

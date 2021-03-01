@@ -323,7 +323,7 @@ class EventHeader extends React.Component {
     if (file) {
       const filePath = AttachmentStore.pathForFile(file);
       if (filePath) {
-        remote.shell.openItem(filePath);
+        remote.shell.openPath(filePath);
       }
     }
   }, 500);

@@ -9,8 +9,8 @@
     "url": "git+https://github.com/agent8/Mailspring.git"
   },
   "engines": {
-    "node": "12.4.x",
-    "npm": "6.4.x"
+    "node": "12.x.x",
+    "npm": "6.x.x"
   },
   "devDependencies": {
     "appdmg": "^0.6.0",
@@ -22,6 +22,7 @@
     "chalk": "1.x.x",
     "crypto-js": "^4.0.0",
     "devtron": "^1.4.0",
+    "electron": "11.2.0",
     "electron-installer-dmg": "^3.0.0",
     "electron-packager": "^15.1.0",
     "electron-packager-languages": "^0.4.0",
@@ -97,7 +98,6 @@
   "dependencies": {
     "aws-sdk": "^2.336.0",
     "cheerio": "^1.0.0-rc.3",
-    "electron": "6.1.12",
     "electron-platform": "^1.2.0",
     "fs-xattr": "^0.3.0",
     "mkdirp": "^0.5.1",

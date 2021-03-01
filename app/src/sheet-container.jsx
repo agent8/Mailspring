@@ -33,6 +33,7 @@ export default class SheetContainer extends React.Component {
         AppEnv.trackingEvent('App-Open');
       }, 6000);
       this._checkDBVersion();
+      AppEnv.config.syncAllPreferencesFromServer();
     }
   }
 
@@ -104,6 +105,7 @@ export default class SheetContainer extends React.Component {
   _onAppActive = () => {
     BlockedSendersStore.syncBlockedSenders();
     MuteNotificationStore.syncMuteNotifacations();
+    AppEnv.config.syncAllPreferencesFromServer();
   };
 
   toggleMaximize = e => {

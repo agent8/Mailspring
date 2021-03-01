@@ -39,7 +39,7 @@ const aesEncode = data => {
   return encrypted;
 };
 
-const ResCodes = {
+export const EdisonAccountResCodes = {
   Deleted: 10002,
   EmailValid: 10003,
   AccountValid: 10004,
@@ -54,7 +54,7 @@ export default class EdisonAccount {
     if (code === 0) {
       return;
     }
-    if (code === ResCodes.Deleted) {
+    if (code === EdisonAccountResCodes.Deleted) {
       Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
     }
   }
@@ -145,11 +145,24 @@ export default class EdisonAccount {
       },
     };
     if (OAuthList.includes(account.provider)) {
+      if (account.provider === 'office365-exchange') {
+        emailAccount.provider = 'office365';
+      }
       emailAccount['type'] = 'oauth';
       emailAccount['oauthClientId'] = account.settings.refresh_client_id;
       emailAccount['incoming'] = {
         username: account.settings.imap_username,
         password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-refresh-token`)),
+      };
+    } else if (AccountStore.isExchangeAccount(account)) {
+      emailAccount['type'] = 'exchange';
+      emailAccount['incoming'] = {
+        ...emailAccount['incoming'],
+        username: account.settings.ews_username,
+        password: aesEncode(await KeyManager.getPassword(`${account.emailAddress}-ews_password`)),
+        host: account.settings.ews_host,
+        // To do
+        domain: null,
       };
     } else {
       emailAccount['type'] = 'imap';
@@ -163,16 +176,6 @@ export default class EdisonAccount {
         host: account.settings.smtp_host,
         port: account.settings.smtp_port,
         ssl: account.settings.smtp_security && account.settings.smtp_security !== 'none',
-      };
-    }
-    if (AccountStore.isExchangeAccount(account)) {
-      emailAccount['type'] = 'exchange';
-      emailAccount['incoming'] = {
-        ...emailAccount['incoming'],
-        username: account.settings.ews_username,
-        host: account.settings.ews_host,
-        // To do
-        domain: null,
       };
     }
 
@@ -210,6 +213,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
     try {
@@ -240,6 +244,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
     const postData = {
@@ -304,6 +309,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
 
@@ -330,6 +336,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
     if (!deviceId) {
@@ -368,6 +375,7 @@ export default class EdisonAccount {
     }
     const token = account.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(account.id);
       return new RESTResult(false, 'this account has no token');
     }
 
@@ -400,12 +408,12 @@ export default class EdisonAccount {
 
     const token = syncAccount.settings.edison_token;
     if (!token) {
+      AccountStore.logoutSyncAccount(syncAccount.id);
       return new RESTResult(false, 'sync account has no token');
     }
 
     const accounts = AccountStore.accounts();
-    const subAccounts = accounts.filter(a => a.id !== syncAccount.id);
-    const postData = subAccounts.map(a => {
+    const postData = accounts.map(a => {
       const isExchange = AccountStore.isExchangeAccount(a);
       const host = isExchange ? a.settings.ews_host : a.settings.imap_host;
       const postData = {
@@ -427,7 +435,7 @@ export default class EdisonAccount {
           'Content-Type': 'application/json',
         },
       });
-      this._handleResCode(data.code, account);
+      this._handleResCode(data.code, syncAccount);
       return new RESTResult(data.code === 0, data.message);
     } catch (error) {
       this._handleReqError(error, syncAccount.id);

@@ -311,6 +311,7 @@ class OutlineViewItem extends Component {
   };
   _onAddNewFolder = () => {
     Actions.setEditingMenu(true);
+    AppEnv.trackingEvent('FolderTree-AddFolder-Direct');
     this._runCallback('onAddNewFolder');
   };
 
@@ -838,6 +839,10 @@ class OutlineViewItem extends Component {
             {this._renderItem()}
             <DisclosureTriangle
               collapsed={item.collapsed}
+              className={'disclosure-triangle'}
+              iconName={'arrow-dropdown.svg'}
+              fontSize={18}
+              isIcon={true}
               visible={this.props.isEditingMenu && item.children && item.children.length > 0}
               visibleOnHover={
                 !this.state.editing &&

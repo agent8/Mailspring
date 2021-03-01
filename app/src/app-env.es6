@@ -1261,6 +1261,11 @@ export default class AppEnvConstructor {
     remote.app.emit('will-exit');
     remote.process.exit(status);
   }
+  openSpellingMenuFor(...args) {
+    const { Actions } = require('mailspring-exports');
+    Actions.closeContextMenu();
+    this.windowEventHandler.openSpellingMenuFor(...args);
+  }
 
   cachePreferenceFiles(callback) {
     this.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, paths => {

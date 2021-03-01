@@ -16,6 +16,13 @@ export const ADD_FOLDER_OBJECT = {
   get disabled() {
     return !!SidebarStore().getNewFolder();
   },
+  get displayName() {
+    if (SidebarStore().isAllLabelAccount()) {
+      return 'New Label...';
+    } else {
+      return 'New Folder...';
+    }
+  },
 };
 export const NEW_FOLDER_OBJECT = {
   id: 'newFolder',
@@ -123,14 +130,18 @@ export default class SidebarSection {
           deletable: false,
           folderTreeIndex: items.length,
         });
-        items.push(item);
+        if (item) {
+          items.push(item);
+        }
       } else {
         const item = SidebarItem.forCategories([cat], {
           editable: false,
           deletable: false,
           folderTreeIndex: items.length,
         });
-        items.push(item);
+        if (item) {
+          items.push(item);
+        }
       }
     });
 
@@ -393,7 +404,9 @@ export default class SidebarSection {
         console.log(`no setDisplayOrder ${items[i].id}`);
       }
     }
-    CategoryStore.saveCategoryMetaDataChange(false);
+    if (!SidebarStore().isEditingMenu()) {
+      CategoryStore.saveCategoryMetaDataChange(false);
+    }
   };
 
   static forSiftCategories(accountsOrIds, items) {

@@ -84,6 +84,16 @@ class NewCategoryAccountSelectPopover extends Component {
     );
   }
   render() {
+    let text = 'New Folder';
+    let subtext = 'Where does this folder belong?';
+    if (
+      this.props.accounts.every(account => {
+        return account && account.usesLabels();
+      })
+    ) {
+      text = 'New Label';
+      subtext = 'Where does this label belong?';
+    }
     return (
       <div ref={el => (this.container = el)} className="create-folder-container">
         <div className={'header-row'}>
@@ -97,8 +107,8 @@ class NewCategoryAccountSelectPopover extends Component {
           </span>
         </div>
         <div className="header-text-container">
-          <div className="header-text">New Folder</div>
-          <div className="header-subtext">Where does this folder belong?</div>
+          <div className="header-text">{text}</div>
+          <div className="header-subtext">{subtext}</div>
         </div>
         {this.renderAccounts()}
         {this.renderButtons()}

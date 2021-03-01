@@ -591,6 +591,7 @@ class Actions {
   static stopReprocessingMailRules = ActionScopeWindow;
 
   static openContextMenu = ActionScopeWindow;
+  static closeContextMenu = ActionScopeWindow;
   static openPopover = ActionScopeWindow;
   static closePopover = ActionScopeWindow;
 
@@ -602,7 +603,6 @@ class Actions {
   static findInThread = ActionScopeWindow;
   static nextSearchResult = ActionScopeWindow;
   static previousSearchResult = ActionScopeWindow;
-
   // Actions for the signature preferences and shared with the composer
   static addSignature = ActionScopeWindow;
   static updateSignature = ActionScopeWindow;
@@ -649,6 +649,8 @@ class Actions {
   static forceDatabaseTrigger = ActionScopeWindow;
 
   static dataShareOptions = ActionScopeMainWindow;
+  static dataShareOptionsSuccess = ActionScopeMainWindow;
+  static dataShareOptionsFailed = ActionScopeMainWindow;
   static expungeUserData = ActionScopeMainWindow;
   static exportUserData = ActionScopeMainWindow;
 

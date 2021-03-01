@@ -26,12 +26,12 @@ const notifications = [
   DisabledMailRulesNotification,
   UpdateNotification,
   DiskUsageNotification,
-  // EdisonAccountNotif,
+  EdisonAccountNotif,
   FocusedInboxNotif,
   DatabaseVacuumNotification,
   ImproveDataNotif,
   WhatsNew,
-  // EdisonAccountDeletedNotif,
+  EdisonAccountDeletedNotif,
 ];
 
 export function activate() {

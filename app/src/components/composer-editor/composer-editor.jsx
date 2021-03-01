@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from '../slate-react';
 import { clipboard as ElectronClipboard } from 'electron';
+import _ from 'underscore';
 
 import KeyCommandsRegion from '../key-commands-region';
 import ComposerEditorToolbar from './composer-editor-toolbar';
@@ -18,9 +19,22 @@ import { shortCutsUtils } from './system-text-replacements-plugins';
 
 const TOOLBAR_MIN_WIDTH = 628;
 
+// The key for trigger spellcheck
+const whiteSpaceAndPunctuation = ['.', ',', ';', ':', "'", '"', ' ', 'Enter'];
+
 export default class ComposerEditor extends React.Component {
   static propTypes = {
     readOnly: PropTypes.bool,
+    outerPlugin: PropTypes.array,
+    onChange: PropTypes.func,
+    value: PropTypes.object,
+    propsForPlugins: PropTypes.object,
+    onFileReceived: PropTypes.func,
+    onPasteHtmlHasFiles: PropTypes.func,
+    className: PropTypes.string,
+    onBlur: PropTypes.func,
+    onDrop: PropTypes.func,
+    onAddAttachments: PropTypes.func,
   };
   static defaultProps = {
     readOnly: false,
@@ -50,6 +64,7 @@ export default class ComposerEditor extends React.Component {
     });
     this.state = {
       isCrowded: false,
+      spellCheckEnabled: true,
     };
   }
 
@@ -279,7 +294,7 @@ export default class ComposerEditor extends React.Component {
   }
 
   openContextMenu = ({ word, sel, hasSelectedText }, event) => {
-    AppEnv.windowEventHandler.openSpellingMenuFor(
+    AppEnv.openSpellingMenuFor(
       word,
       hasSelectedText,
       {
@@ -295,6 +310,10 @@ export default class ComposerEditor extends React.Component {
   };
 
   onContextMenu = event => {
+    if (event.isDefaultPrevented()) {
+      AppEnv.logDebug('Context Menu default prevented, ignoring');
+      return;
+    }
     event.preventDefault();
 
     const word = this.props.value.fragment.text;
@@ -311,15 +330,56 @@ export default class ComposerEditor extends React.Component {
     this.props.onChange(nextValue);
   };
 
+  _debounceSetState = _.debounce(data => {
+    if (!this._mounted) {
+      return;
+    }
+    // re-determine the language the document is written in
+    this._redetermineLanguage();
+
+    this.setState(data);
+  }, 500);
+
+  _redetermineLanguage = () => {
+    if (!this._mounted) {
+      return;
+    }
+
+    const { value } = this.props;
+    if (value && value.focusBlock) {
+      const text = value.focusBlock.text;
+      if (text.length > 30) {
+        AppEnv.spellchecker.provideHintText(text.substr(text.length - 512, 512));
+      }
+    }
+  };
+
+  onKeyDown = (event, spellcheckSetting) => {
+    if (!spellcheckSetting) {
+      return;
+    }
+    if (!this._mounted) {
+      return;
+    }
+    const spellCheckEnabled = whiteSpaceAndPunctuation.includes(event.key);
+    if (spellCheckEnabled !== this.state.spellCheckEnabled) {
+      this.setState({ spellCheckEnabled });
+    }
+    // enable check, after user stop typing
+    this._debounceSetState({ spellCheckEnabled: true });
+  };
+
   // Event Handlers
   render() {
     const { className, onBlur, onDrop, value, propsForPlugins, onAddAttachments } = this.props;
+    const { spellCheckEnabled } = this.state;
     const draftDefaultValues =
       this.props.propsForPlugins && this.props.propsForPlugins.draft
         ? this.props.propsForPlugins.draft.defaultValues
         : {};
     const defaultFontFace = (draftDefaultValues || {}).fontFace || 'sans-serif';
     const defaultFontSize = (draftDefaultValues || {}).fontSize || '14px';
+    const spellcheckSetting = AppEnv.config.get('core.composing.spellcheck');
     return (
       <KeyCommandsRegion
         className={`RichEditor-root ${className || ''}`}
@@ -345,6 +405,7 @@ export default class ComposerEditor extends React.Component {
               <p.topLevelComponent key={idx} value={value} onChange={this.onChange} />
             ))}
           <Editor
+            onKeyDown={e => this.onKeyDown(e, spellcheckSetting)}
             style={{ fontFace: defaultFontFace, fontSize: defaultFontSize }}
             value={value}
             onChange={this.onChange}
@@ -353,7 +414,10 @@ export default class ComposerEditor extends React.Component {
             onCut={this.onCut}
             onCopy={this.onCopy}
             onPaste={this.onPaste}
-            spellCheck={false}
+            onFocus={() => {
+              this.setState({ spellCheckEnabled: true });
+            }}
+            spellCheck={spellcheckSetting && spellCheckEnabled}
             readOnly={this.props.readOnly}
             plugins={this.plugins}
             propsForPlugins={propsForPlugins}

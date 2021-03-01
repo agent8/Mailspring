@@ -51,7 +51,7 @@ class MessageItemBodyFile extends Component {
   }
 
   openFile(filePath) {
-    remote.shell.openItem(filePath);
+    remote.shell.openPath(filePath);
   }
 
   render() {

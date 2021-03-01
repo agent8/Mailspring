@@ -8,7 +8,12 @@
       "jsx": true
     }
   },
-  "extends": ["eslint:recommended", "plugin:react/recommended", "prettier", "prettier/react"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "prettier",
+    "prettier/react"
+  ],
   "globals": {
     "AppEnv": "readonly",
     "$m": false,
@@ -25,38 +30,78 @@
     "jasmine": true,
     "es6": true
   },
-  "plugins": ["prettier", "spellcheck"],
+  "plugins": [
+    "prettier",
+    "spellcheck"
+  ],
   "rules": {
-    "no-console": ["error", { "allow": ["log", "warn" ,"error"] }],
-    "spellcheck/spell-checker": ["warn",       {
-      "comments": false,
-      "strings": true,
-      "identifiers": false,
-      "lang": "en_US",
-      "skipWords": [
+    "no-console": [
+      "error",
+      {
+        "allow": [
+          "log",
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "spellcheck/spell-checker": [
+      "warn",
+      {
+        "comments": false,
+        "strings": true,
+        "identifiers": false,
+        "lang": "en_US",
+        "skipWords": [
+          "svg",
+          "gmail",
+          "onmail",
           "dict",
           "aff",
           "hunspellchecker",
           "hunspell",
           "utils",
           "md",
-          "sha"
-      ],
-      "skipIfMatch": [
+          "sha",
+          "edison",
+          "jira",
+          "workspace",
+          "mailsync",
+          "cc",
+          "bcc",
+          "linux",
+          "darwin",
+          "pid",
+          "msg",
+          "std",
+          "stdout",
+          "stderr",
+
+        ],
+        "skipIfMatch": [
           "http://[^s]*",
           "file://[^s]*",
           "cid:[^s]*",
           "\\w-\\w",
-          "^[-\\w]+\/[-\\w\\.]+$" //For MIME Types
-      ],
-      "skipWordIfMatch": [
-      ],
-      "minLength": 3
-   }],
+          "^[-\\w]+\/[-\\w\\.]+$"
+          //For MIME Types
+        ],
+        "skipWordIfMatch": [
+        ],
+        "minLength": 3
+      }
+    ],
     "no-cond-assign": 0,
     "react/no-find-dom-node": 0,
     "prettier/prettier": "error",
-    "no-unused-vars": ["error", { "vars": "all", "args": "none", "ignoreRestSiblings": false }]
+    "no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "args": "none",
+        "ignoreRestSiblings": false
+      }
+    ]
   },
   "settings": {
     "react": {
@@ -70,7 +115,14 @@
       "mailspring-observables"
     ],
     "import/resolver": {
-      "node": { "extensions": [".es6", ".jsx", ".json", ".js"] }
+      "node": {
+        "extensions": [
+          ".es6",
+          ".jsx",
+          ".json",
+          ".js"
+        ]
+      }
     }
   }
 }

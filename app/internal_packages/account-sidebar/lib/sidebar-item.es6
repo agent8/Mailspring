@@ -103,8 +103,10 @@ const onChangeAllToRead = function(item) {
 };
 const toggleItemHide = item => {
   if (item.perspective.isHidden()) {
+    AppEnv.trackingEvent('FolderTree-hideShow-show');
     item.perspective.show();
   } else {
+    AppEnv.trackingEvent('FolderTree-hideShow-hide');
     item.perspective.hide();
   }
 };
@@ -126,6 +128,18 @@ const onDeleteItem = function(item) {
   }
   const category = item.perspective.category();
   if (!category) {
+    return;
+  }
+  const account = AccountStore.accountForId(category.accountId);
+  if (account && account.usesLabels()) {
+    Actions.queueTask(
+      new DestroyCategoryTask({
+        path: category.path,
+        name: category.name,
+        accountId: category.accountId,
+      })
+    );
+    AppEnv.trackingEvent('FolderTree-DeleteFolder-rightClick');
     return;
   }
   DatabaseStore.findAll(ThreadCategory)
@@ -168,6 +182,14 @@ const onEditItem = function(item, newEnteredValue, originalText) {
   if (isExchange) {
     newDisplayName = newEnteredValue;
   } else {
+    if (newEnteredValue.includes(category.delimiter)) {
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `${newEnteredValue} contain special character ${category.delimiter}`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
     let index = (category.fullDisplayName || '').lastIndexOf(originalText);
     if (index === -1) {
       index = category.fullDisplayName.length;
@@ -200,6 +222,7 @@ const onEditItem = function(item, newEnteredValue, originalText) {
     accountId: category.accountId,
   });
   if (task) {
+    AppEnv.trackingEvent('FolderTree-EditFolder-RightClick');
     Actions.queueTask(task);
   }
 };
@@ -292,6 +315,7 @@ class SidebarItem {
           if (threadsString.length > 0) {
             item.perspective.receiveThreadIds(jsonData.threadIds);
           } else if (categoryString.length > 0) {
+            AppEnv.trackingEvent('FolderTree-displayOrder');
             item.perspective.receiveCategoryMetaData(jsonData);
           }
         },
@@ -573,7 +597,7 @@ class SidebarItem {
       opts.fallback = `account-logo-other.png`;
       opts.mode = RetinaImg.Mode.ContentPreserve;
       opts.syncFolderList = true;
-      if (account.provider === 'gmail' || account.provider === 'onmail') {
+      if (account.usesLabels()) {
         opts.addNewFolderLabel = 'New Label...';
       } else {
         opts.addNewFolderLabel = 'New Folder...';

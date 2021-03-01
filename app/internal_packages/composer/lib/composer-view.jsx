@@ -519,7 +519,10 @@ export default class ComposerView extends React.Component {
           return;
         }
       }
-      this.props.session.changes.add({ bodyEditorState: change.value }, { skipSaving });
+      this.props.session.changes.add(
+        { bodyEditorState: change.value },
+        { skipSaving, skipSyncToMain: skipSaving }
+      );
     }
     const focusBlock = change.value.focusBlock;
     if (focusBlock && focusBlock.type === BLOCK_CONFIG.div.type) {
@@ -538,7 +541,7 @@ export default class ComposerView extends React.Component {
             this._els[Fields.Body] = el;
           }
         }}
-        className={this.state.quotedTextHidden && 'hiding-quoted-text'}
+        className={this.state.quotedTextHidden ? 'hiding-quoted-text' : ''}
         propsForPlugins={{ draft: this.props.draft, session: this.props.session }}
         value={this.props.draft.bodyEditorState}
         onFileReceived={this._onFileReceived}
@@ -603,6 +606,7 @@ export default class ComposerView extends React.Component {
           className="file-upload"
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
+          displaySize={file.displayFileSize()}
           isImage={true}
           accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
@@ -636,6 +640,7 @@ export default class ComposerView extends React.Component {
           className="file-upload"
           filePath={AttachmentStore.pathForFile(file)}
           displayName={file.filename}
+          displaySize={file.displayFileSize()}
           isImage={true}
           accountId={this.props.draft.accountId}
           onRemoveAttachment={() => {
@@ -855,7 +860,7 @@ export default class ComposerView extends React.Component {
     const inlineFile = [];
     for (let i = 0; i < fileObjs.length; i++) {
       const fileObj = fileObjs[i];
-      if (Utils.shouldDisplayAsImage(fileObj)) {
+      if (Utils.shouldDisplayAsImage(fileObj) && fileObj.isInline) {
         const match = draft.files.find(f => f.id === fileObj.id);
         if (!match) {
           return;
@@ -880,7 +885,7 @@ export default class ComposerView extends React.Component {
 
   _onAttachmentCreated = fileObj => {
     if (!this._mounted) return;
-    if (Utils.shouldDisplayAsImage(fileObj)) {
+    if (Utils.shouldDisplayAsImage(fileObj) && fileObj.isInline) {
       const { draft, session } = this.props;
       const match = draft.files.find(f => f.id === fileObj.id);
       console.log(`update attachment in _onAttachmentCreated`);

@@ -389,7 +389,7 @@ export default class MailsyncProcess extends EventEmitter {
       const pid = this._proc.pid;
       console.warn(`Terminating mailsync... @ pid ${this._proc.pid}`);
       this._proc.kill();
-      spawn(this.killNativeScript, [pid], { detached: true, stdio: 'ignore' });
+      spawn(this.killNativeScript, [pid, 'mailsync'], { detached: true, stdio: 'ignore' });
     }
   }
 

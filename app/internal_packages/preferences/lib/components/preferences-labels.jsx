@@ -16,7 +16,7 @@ class PreferencesLabels extends React.Component {
   constructor(props) {
     super(props);
     const accounts = AccountStore.accounts().filter(account => {
-      return account && (account.provider === 'gmail' || account.provider === 'onmail');
+      return account && account.usesLabels();
     });
     const selectedAccount = accounts.length > 0 ? accounts[0] : null;
     this.state = {
@@ -68,8 +68,10 @@ class PreferencesLabels extends React.Component {
     const cat = CategoryStore.byFolderId(catId);
     if (cat) {
       if (show) {
+        AppEnv.trackingEvent('Preference-Label-show');
         CategoryStore.showCategoryInFolderTree({ accountId: cat.accountId, id: cat.path });
       } else {
+        AppEnv.trackingEvent('Preference-Label-hide');
         CategoryStore.hideCategoryInFolderTree({ accountId: cat.accountId, id: cat.path });
       }
     }
@@ -141,7 +143,7 @@ class PreferencesLabels extends React.Component {
     }
     const state = {
       accounts: AccountStore.accounts().filter(account => {
-        return account && (account.provider === 'gmail' || account.provider === 'onmail');
+        return account && account.usesLabels();
       }),
     };
     if (this.state.selectedAccount) {
@@ -235,6 +237,7 @@ class PreferencesLabels extends React.Component {
         closeOnAppBlur: false,
       }
     );
+    AppEnv.trackingEvent('Preference-Label-create');
   };
   _onEditLabel = category => {
     if (!category) {
@@ -261,6 +264,7 @@ class PreferencesLabels extends React.Component {
         closeOnAppBlur: false,
       }
     );
+    AppEnv.trackingEvent('Preference-Label-edit');
   };
   _onDestroyLabel = label => {
     if (!label) {
@@ -281,6 +285,7 @@ class PreferencesLabels extends React.Component {
       const task = new DestroyCategoryTask(
         Object.assign({}, label, { source: 'Preference Delete' })
       );
+      AppEnv.trackingEvent('Preference-Label-Delete');
       Actions.queueTask(task);
     });
   };

@@ -32,7 +32,14 @@ const EnableFocusedInboxKey = 'core.workspace.enableFocusedInbox';
 
 export default class MailboxPerspective {
   // Factory Methods
-  static forNothing(data) {
+  static forNothing(
+    data = {
+      name: '',
+      iconName: 'folder.svg',
+      categoryMetaDataAccountId: null,
+      categoryMetaDataId: '',
+    }
+  ) {
     return new EmptyMailboxPerspective(data);
   }
 
@@ -63,7 +70,10 @@ export default class MailboxPerspective {
     if (Array.isArray(categories) && categories.length > 0) {
       return new AllTrashMailboxPerspective(categories);
     } else {
-      return this.forNothing();
+      return this.forNothing({
+        categoryMetaDataAccountId: 'shortcuts',
+        categoryMetaDataId: 'all-trash',
+      });
     }
   }
 
@@ -130,7 +140,10 @@ export default class MailboxPerspective {
     if (Array.isArray(categories) && categories.length > 0) {
       return new SingleInboxPerspective([categories[0]]);
     } else {
-      return this.forNothing();
+      return this.forNothing({
+        categoryMetaDataAccountId: 'singleInboxes',
+        categoryMetaDataId: accountId,
+      });
     }
   }
 
@@ -157,9 +170,8 @@ export default class MailboxPerspective {
       accountIds.every(id => typeof id === 'string')
     ) {
       return new StarredMailboxPerspective(accountIds);
-    } else {
-      return this.forNothing();
     }
+    return this.forNothing();
   }
 
   static forUnread(categories) {
@@ -1143,10 +1155,17 @@ class AttachementMailboxPerspective extends MailboxPerspective {
 }
 
 class EmptyMailboxPerspective extends MailboxPerspective {
-  constructor({ name = '', iconName = 'folder.svg' } = {}) {
+  constructor({
+    name = '',
+    iconName = 'folder.svg',
+    categoryMetaDataAccountId = null,
+    categoryMetaDataId = '',
+  } = {}) {
     super([]);
     this.name = name;
     this.iconName = iconName;
+    this._categoryMetaDataAccountId = categoryMetaDataAccountId;
+    this._categoryMetaDataId = categoryMetaDataId;
   }
 
   threads() {
