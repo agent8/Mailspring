@@ -514,10 +514,6 @@ class SidebarItem {
   }
 
   static forStarred(accountIds, opts = {}) {
-    const categories = CategoryStore.getCategoriesWithRoles(accountIds, 'flagged');
-    if (!Array.isArray(categories) || categories.length === 0) {
-      return null;
-    }
     opts.iconName = 'flag.svg';
     const perspective = MailboxPerspective.forStarred(accountIds);
     let id = 'Starred';
