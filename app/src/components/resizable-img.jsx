@@ -154,6 +154,8 @@ export default class ResizableImg extends Component {
           onShowResizePopup({
             initialHeight: Math.floor(rect.height),
             initialWidth: Math.floor(rect.width),
+            y: event.clientY - rect.top,
+            x: event.clientX - rect.left,
           });
           this._imageResizePopupOpen = true;
         };
