@@ -18,7 +18,7 @@ import SignatureAccountDefaultPicker from './signature-account-default-picker';
 import { CodeBlockPlugin } from './code-block';
 
 const {
-  Conversion: { convertFromHTML, convertToHTML },
+  Conversion: { convertFromHTML, convertToHTML, convertLocalImageFilesToSignatureImageFiles },
 } = ComposerSupport;
 
 class SignatureEditor extends React.Component {
@@ -125,9 +125,23 @@ class SignatureEditor extends React.Component {
     });
   };
 
-  _onSubmitEditHTML = html => {
-    const value = html || '<br />';
-    this._updateBodyAndEditorHTMLByBodyHTML(value);
+  _onSubmitEditHTML = htmlString => {
+    const { newFiles, html } = convertLocalImageFilesToSignatureImageFiles(htmlString || '<br />');
+    if (newFiles.length > 0) {
+      const newAttachments = [...this.state.attachments];
+      newFiles.forEach(newPath => {
+        newAttachments.push({ path: newPath, inline: true });
+      });
+      this.setState(
+        {
+          attachments: newAttachments,
+        },
+        () => {
+          this.props.onEditField('attachments', newAttachments);
+        }
+      );
+    }
+    this._updateBodyAndEditorHTMLByBodyHTML(html);
     this._onToggleCodeBlockEditor();
   };
 
