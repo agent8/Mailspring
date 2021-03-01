@@ -587,6 +587,7 @@ class SidebarItem {
     if (Array.isArray(perspective.accountIds) && perspective.accountIds.length === 0) {
       opts.accountIds = [accountId];
     }
+    opts.isSingleInbox = true;
     opts.onAddNewFolder = () => {
       SidebarActions.addingNewFolderToAccount({ accountId });
     };
