@@ -1,0 +1,16 @@
+{
+  "name": "note-plugin",
+  "version": "0.1.0",
+  "main": "./lib/main",
+  "description": "Note Plugin",
+  "license": "GPL-3.0",
+  "private": true,
+  "syncInit": false,
+  "engines": {
+    "mailspring": "*"
+  },
+  "windowTypes": {
+    "default": true,
+    "thread-popout": true
+  }
+}
