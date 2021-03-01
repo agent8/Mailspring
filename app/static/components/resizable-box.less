@@ -8,8 +8,6 @@
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    width: 230px;
-    height: 100px;
     color: @text-color;
     background-color: @background-primary;
     padding: 4px;
@@ -19,6 +17,8 @@
     top: 10%;
     left: 10%;
     cursor: default;
+    font-size: @font-size-large !important;
+    font-family: @font-family !important;
     .user-input {
       display: flex;
       flex-direction: row;
@@ -30,6 +30,8 @@
         border: none;
         outline: none;
         border-radius: 3px;
+        margin-left: 4px;
+        margin-right: 12px;
       }
       .width{
         position: relative;

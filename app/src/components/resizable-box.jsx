@@ -26,6 +26,7 @@ export default class ResizableBox extends Component {
       disY: 0,
       transform: '',
       showResizePopup: false,
+      popUpPosition: null,
     };
     this._maskRef = null;
     this._setMaskRef = ref => (this._maskRef = ref);
@@ -189,6 +190,7 @@ export default class ResizableBox extends Component {
     if (this._mounted) {
       this.setState({
         showResizePopup: false,
+        popUpPosition: null,
         resizePopupInitialHeight: 0,
         resizePopupInitialWidth: 0,
       });
@@ -203,13 +205,15 @@ export default class ResizableBox extends Component {
     }
     this._onCancelPopup();
   };
-  onShowResizePopup = ({ initialHeight, initialWidth, top, left }) => {
+  onShowResizePopup = ({ initialHeight, initialWidth, x, y }) => {
     if (this._mounted) {
+      const left = Math.floor((Math.abs(x - ResizePopup.containerWidth / 2) / initialWidth) * 100);
+      const top = Math.floor((Math.abs(y - ResizePopup.containerHeight / 2) / initialHeight) * 100);
       this.setState({
         showResizePopup: true,
         resizePopupInitialHeight: initialHeight,
         resizePopupInitialWidth: initialWidth,
-        popupPosition: { top, left },
+        popUpPosition: { top, left: left },
       });
     }
   };
@@ -249,6 +253,7 @@ export default class ResizableBox extends Component {
       <ResizePopup
         initialHeight={this.state.resizePopupInitialHeight}
         initialWidth={this.state.resizePopupInitialWidth}
+        popUpPosition={this.state.popUpPosition}
         onCancel={this._onCancelPopup}
         onResize={this._onResizePopupConfirm}
       />
@@ -299,15 +304,19 @@ export default class ResizableBox extends Component {
 }
 
 class ResizePopup extends React.PureComponent {
+  static containerWidth = 250;
+  static containerHeight = 100;
   static propTypes = {
     initialHeight: PropTypes.number,
     initialWidth: PropTypes.number,
     onResize: PropTypes.func,
     onCancel: PropTypes.func,
+    popUpPosition: PropTypes.shape({ top: PropTypes.number, left: PropTypes.number }),
   };
   static defaultProps = {
     initialHeight: 0,
     initialWidth: 0,
+    popUpPosition: {},
   };
   constructor(props) {
     super(props);
@@ -390,8 +399,17 @@ class ResizePopup extends React.PureComponent {
     event.stopPropagation();
   };
   render() {
+    const style = { width: ResizePopup.containerWidth, height: ResizePopup.containerHeight };
+    if (this.props.popUpPosition) {
+      if (this.props.popUpPosition.top > 0) {
+        style.top = `${this.props.popUpPosition.top}%`;
+      }
+      if (this.props.popUpPosition.left > 0) {
+        style.left = `${this.props.popUpPosition.left}%`;
+      }
+    }
     return (
-      <div className="resize-popup" onClick={this._stopClickPropagation}>
+      <div className="resize-popup" onClick={this._stopClickPropagation} style={style}>
         <div className="user-input" onClick={this._stopClickPropagation}>
           <div className="height" onClick={this._stopClickPropagation}>
             <input
@@ -406,7 +424,7 @@ class ResizePopup extends React.PureComponent {
             style={{ height: 20, width: 20 }}
             mode={RetinaImg.Mode.ContentIsMask}
             isIcon={true}
-            name={'lock.svg'}
+            name={'close.svg'}
           />
           <div className="width" onClick={this._stopClickPropagation}>
             <input
