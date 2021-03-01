@@ -284,7 +284,7 @@ export default class MessageItem extends React.Component {
     });
 
     return (
-      <div>
+      <div className="attachments-wrap">
         {attachedFiles.length > 0 && (
           <div className="attachments-area">
             <InjectedComponent
