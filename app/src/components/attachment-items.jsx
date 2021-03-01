@@ -351,7 +351,7 @@ export class AttachmentItem extends Component {
             percent={this.state.percent}
             disableProgress={this.props.disableProgress}
           />
-          <Flexbox direction="row" style={{ alignItems: 'center' }}>
+          <Flexbox direction="row" style={{ alignItems: 'center', height: 'auto' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
                 {filePreviewPath ? (

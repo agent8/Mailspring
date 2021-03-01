@@ -153,3 +153,13 @@ pre {
   border: 1px solid darkgoldenrod;
   border-top: 0;
 }
+
+.avatar-icon {
+  display: none;
+}
+.message-item-area > div.attachments-wrap {
+  display: block !important;
+}
+.message-item-area > div.attachments-wrap .attachment-icon {
+  display: none;
+}
