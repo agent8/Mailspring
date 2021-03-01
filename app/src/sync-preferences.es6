@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const uuid = require('uuid');
-
+const { Utils } = require('mailspring-exports');
 const { downloadFile, uploadFile } = require('./s3-utils');
 const { dirExists, deleteFileOrFolder, unCompressDir, compressDir } = require('./fs-utils');
 const { PreferencesSubListStateEnum, EdisonPlatformType } = require('./constant');
@@ -108,7 +108,7 @@ async function mkdirAndWriteJson(signatureOrTemplate, type) {
     const extName = path.extname(name);
     const fileAttId = `${uuid()}${extName}`;
     fs.copyFileSync(file.path, path.join(dirName, fileAttId));
-    body = replaceStr(body, file.path, `file://${fileAttId}`);
+    body = replaceStr(body, Utils.filePathEncode(file.path), `file://${fileAttId}`);
     return {
       attId: fileAttId,
       inline: file.inline,
