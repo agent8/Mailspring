@@ -66,15 +66,6 @@ export default {
           },
         },
       },
-      account: {
-        type: 'object',
-        properties: {
-          colors: {
-            type: 'object',
-            default: {},
-          },
-        },
-      },
       support: {
         type: 'object',
         properties: {
@@ -713,7 +704,7 @@ export default {
           showAccountColor: {
             type: 'boolean',
             default: false,
-            title: 'Show account colors',
+            title: 'Color Coding for Accounts',
           },
           previewLines: {
             type: 'number',

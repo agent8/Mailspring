@@ -307,11 +307,11 @@
     clear: both;
 
     .account-color {
-      height: 44%;
+      height: 22px;
       position: absolute;
-      left: 10px;
-      top: 30%;
-      width: 3px;
+      left: 12px;
+      width: 2px;
+      margin-top: 2px;
     }
 
     transition: padding-left 300ms;
@@ -562,19 +562,24 @@
       .icon {
         display: none;
       }
+
+      .account-color {
+        left: 16px;
+      }
     }
   }
 }
 
 .account-color-popover {
-  width: 360px;
-  padding: 10px 6px;
+  padding: 10px 8px;
   text-align: center;
   .color-choice {
+    width: 346px;
     display: flex;
     flex-flow: row wrap;
     justify-content: center;
     margin: 0;
+    cursor: pointer;
     & > div {
       flex: 0 1 20px;
       height: 20px;
@@ -584,7 +589,7 @@
       text-align: center;
       img {
         visibility: hidden;
-        margin-top: 2px;
+        margin-top: 9px;
       }
       &.checked {
         img {
@@ -599,8 +604,4 @@
       }
     }
   }
-}
-
-img.check-img {
-  margin-bottom: 5px;
 }

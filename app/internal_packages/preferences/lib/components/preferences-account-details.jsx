@@ -133,7 +133,7 @@ class PreferencesAccountDetails extends Component {
     this.props.onAccountUpdated(this.props.account, this.state.account);
   };
 
-  _setState = (updates, callback = () => { }) => {
+  _setState = (updates, callback = () => {}) => {
     const account = Object.assign(this.state.account.clone(), updates);
     this.setState({ account }, callback);
   };
@@ -516,10 +516,15 @@ class PreferencesAccountDetails extends Component {
   }
 
   onCheckColor = bgColor => {
-    const { account } = this.state;
-    const colors = AppEnv.config.get('core.account.colors') || {};
-    colors[account.emailAddress] = bgColor;
-    AppEnv.config.set('core.account.colors', colors);
+    this._setState(
+      {
+        color: bgColor,
+      },
+      () => {
+        this._saveChanges();
+        Actions.changeAccountColor();
+      }
+    );
   };
 
   render() {
@@ -528,77 +533,13 @@ class PreferencesAccountDetails extends Component {
       `Your Alias <alias@${account.emailAddress.split('@')[1]}>`
     );
     const isExchange = AccountStore.isExchangeAccount(account);
-
+    const accountIds = AccountStore.accounts().map(account => account.id);
     return (
-<<<<<<< HEAD
-      <div className="account-details">
-        {this._renderSyncErrorDetails()}
-        <div className="config-group">
-          <h6>{account && account.displayProvider().toUpperCase()} ACCOUNT</h6>
-          <div className="item">
-            <label htmlFor={'Account Label'}>Description</label>
-            <input
-              type="text"
-              value={account.label}
-              onBlur={this._saveChanges}
-              onChange={this._onAccountLabelUpdated}
-            />
-          </div>
-          <div className="item">
-            <label htmlFor={'Sender Name'}>Sender Name</label>
-            <input
-              type="text"
-              value={account.name}
-              onBlur={this._saveChanges}
-              placeholder="e.g. John Smith"
-              onChange={this._onAccountNameUpdated}
-            />
-          </div>
-          {AppEnv.config.get('core.appearance.showAccountColor') ? (
-            <div className="item">
-              <div>
-                <label style={{ display: 'block' }} htmlFor={'Account Color'}>
-                  Account Color
-                </label>
-              </div>
-
-              <div className="color-choice">
-                {LabelColorizer.colors.map((color, idx) => {
-                  const colors = AppEnv.config.get('core.account.colors') || {};
-                  const accounts = AccountStore.accounts().map(account => account.emailAddress);
-                  let className = '';
-                  if (colors[account.emailAddress] !== undefined) {
-                    className = colors[account.emailAddress] === idx ? 'checked' : '';
-                  } else {
-                    const accountIndex = accounts.findIndex(acc => acc === account.id) + 1;
-                    className = accountIndex === idx ? 'checked' : '';
-                  }
-                  return (
-                    <div
-                      key={color}
-                      className={className}
-                      style={{ background: color }}
-                      onClick={() => this.onCheckColor(idx)}
-                    >
-                      <RetinaImg
-                        className="check-img check"
-                        name="tagging-checkmark.png"
-                        mode={RetinaImg.Mode.ContentPreserve}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-          {isExchange ? null : (
-=======
       <ScrollRegion direction="column" className="account-details-container">
         <div className="account-details">
           {this._renderSyncErrorDetails()}
           <div className="config-group">
             <h6>{account && account.displayProvider().toUpperCase()} ACCOUNT</h6>
->>>>>>> release
             <div className="item">
               <label htmlFor={'Account Label'}>Description</label>
               <input
@@ -626,6 +567,41 @@ class PreferencesAccountDetails extends Component {
               onChange={this._onAccountAutoaddressUpdated}
               onSaveChanges={this._saveChanges}
             />
+
+            {AppEnv.config.get('core.appearance.showAccountColor') ? (
+              <div className="item">
+                <div>
+                  <label style={{ display: 'block' }} htmlFor={'Account Color'}>
+                    Account Color
+                  </label>
+                </div>
+                <div className="color-choice">
+                  {LabelColorizer.colors.map((color, idx) => {
+                    const accountIndex = accountIds.findIndex(acc => acc === account.id) + 1;
+                    let className = '';
+                    if (account.color) {
+                      className = account.color === idx ? 'checked' : '';
+                    } else {
+                      className = accountIndex === idx ? 'checked' : '';
+                    }
+                    return (
+                      <div
+                        key={color}
+                        className={className}
+                        style={{ background: color }}
+                        onClick={() => this.onCheckColor(idx)}
+                      >
+                        <RetinaImg
+                          className="check-img check"
+                          name="tagging-checkmark.png"
+                          mode={RetinaImg.Mode.ContentPreserve}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="config-group">
             <h6>ALIASES</h6>
