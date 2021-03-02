@@ -146,6 +146,7 @@ class OutlineViewItem extends Component {
       onEdited: PropTypes.func,
       onAllRead: PropTypes.func,
       onAddNewFolder: PropTypes.func,
+      isSingleInbox: PropTypes.bool,
       addNewFolderLabel: PropTypes.string,
       toggleHide: PropTypes.func,
       bgColor: PropTypes.string,
@@ -719,6 +720,20 @@ class OutlineViewItem extends Component {
     }
     if (item.children.length > 0 && !item.collapsed) {
       const childItems = [];
+      let userCategoryItemCount = 0;
+      const updateUserCategoryItemsCount = c => {
+        if (!this.props.item.isSingleInbox) {
+          return;
+        }
+        if (c && c.perspective) {
+          const categories = c.perspective.categories();
+          const hasRole = categories.find(cat => cat.role);
+          if (!hasRole) {
+            userCategoryItemCount++;
+          }
+        }
+      };
+
       item.children.forEach((child, idx) => {
         if (this.props.isEditingMenu && child.id === NEW_FOLDER_KEY) {
           childItems.push(
@@ -729,6 +744,7 @@ class OutlineViewItem extends Component {
               onCancel: child.onCancel,
             })
           );
+          updateUserCategoryItemsCount(child);
           return;
         }
         if (child.id === MORE_TOGGLE && this.props.isEditingMenu) {
@@ -747,6 +763,7 @@ class OutlineViewItem extends Component {
               onToggleShowAllFolder={this._onToggleShowAllFolder}
             />
           );
+          updateUserCategoryItemsCount(child);
           return;
         }
         if (
@@ -764,10 +781,11 @@ class OutlineViewItem extends Component {
               onToggleShowAllFolder={this._onToggleShowAllFolder}
             />
           );
+          updateUserCategoryItemsCount(child);
           return;
         }
         if (!this.state.showAllChildren && !child.isHidden) {
-          if (acc.provider === 'gmail' && childItems.length < 10) {
+          if (userCategoryItemCount <= 3 || !this.props.item.isSingleInbox) {
             childItems.push(
               <OutlineViewItem
                 key={notFolderIds.includes(child.id) ? idx : child.id}
@@ -778,17 +796,7 @@ class OutlineViewItem extends Component {
                 onToggleShowAllFolder={this._onToggleShowAllFolder}
               />
             );
-          } else if (acc.provider !== 'gmail' && childItems.length < 9) {
-            childItems.push(
-              <OutlineViewItem
-                key={notFolderIds.includes(child.id) ? idx : child.id}
-                provider={acc.provider}
-                isEditingMenu={this.props.isEditingMenu}
-                index={idx}
-                item={child}
-                onToggleShowAllFolder={this._onToggleShowAllFolder}
-              />
-            );
+            updateUserCategoryItemsCount(child);
           }
         }
       });
