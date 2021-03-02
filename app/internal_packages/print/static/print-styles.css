@@ -1,3 +1,7 @@
+* {
+  box-sizing: unset;
+}
+
 body {
   overflow: auto !important;
   -webkit-filter: none !important;
@@ -8,6 +12,7 @@ body {
 h1,
 .message-list,
 .message-list * {
+  color: #000 !important;
   background: transparent !important;
 }
 h1,
@@ -147,4 +152,14 @@ pre {
   font-size: 0.9em;
   border: 1px solid darkgoldenrod;
   border-top: 0;
+}
+
+.avatar-icon {
+  display: none;
+}
+.message-item-area > div.attachments-wrap {
+  display: block !important;
+}
+.message-item-area > div.attachments-wrap .attachment-icon {
+  display: none;
 }
