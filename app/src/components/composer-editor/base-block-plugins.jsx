@@ -400,6 +400,17 @@ export const BLOCK_CONFIG = {
     tagNames: ['h2'],
     render: props => <h2 {...props.attributes}>{props.children}</h2>,
   },
+  edo_readonly: {
+    type: 'edo_readonly',
+    tagNames: ['edo-readonly'],
+    render: props => {
+      if (props.targetIsHTML) {
+        return <edo-readonly {...props.attributes}>{props.children}</edo-readonly>;
+      } else {
+        return BLOCK_CONFIG.div.render(props);
+      }
+    },
+  },
 };
 
 const EditListPlugin = new EditList({
