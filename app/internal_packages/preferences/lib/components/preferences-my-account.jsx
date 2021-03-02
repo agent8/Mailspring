@@ -1,5 +1,5 @@
 import React from 'react';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, remote } from 'electron';
 import { AccountStore, RESTful, Actions } from 'mailspring-exports';
 import { FullScreenModal, RetinaImg, Flexbox, LottieImg } from 'mailspring-component-kit';
 
@@ -34,7 +34,6 @@ const modeSwitchList = [
   },
 ];
 const StartSyncStep = {
-  fail: -1,
   start: 1,
   verifying: 2,
   chooseAccounts: 3,
@@ -106,10 +105,10 @@ class StartSyncModal extends React.Component {
     const result = await EdisonAccountRest.checkAccounts(accountIds);
     // error
     if (!result.successful) {
-      this.setState({
-        step: StartSyncStep.fail,
-        message: result.message,
-      });
+      this.props.onClose();
+      setTimeout(() => {
+        remote.dialog.showErrorBox('Back up & Sync Error', 'Please try again later');
+      }, 200);
       return;
     }
     const mainAccountIds = result.data;
@@ -205,7 +204,7 @@ class StartSyncModal extends React.Component {
     if (chooseAccount) {
       onSelectAccount(chooseAccount);
     } else {
-      ipcRenderer.send('command', 'application:add-account');
+      ipcRenderer.send('command', 'application:add-account', { edisonAccount: emailHost });
     }
     onClose();
   };
@@ -352,10 +351,6 @@ class StartSyncModal extends React.Component {
     );
   }
 
-  _renderError() {
-    return <div>has some error</div>;
-  }
-
   render() {
     const { step } = this.state;
     return (
@@ -364,7 +359,6 @@ class StartSyncModal extends React.Component {
         {step === StartSyncStep.verifying ? this._renderVerifying() : null}
         {step === StartSyncStep.chooseAccounts ? this._renderChooseAccount() : null}
         {step === StartSyncStep.addAccount ? this._renderAddAccount() : null}
-        {step === StartSyncStep.fail ? this._renderError() : null}
       </div>
     );
   }
@@ -449,6 +443,9 @@ export default class EdisonAccount extends React.Component {
       });
     }
     if (!registerResult.successful) {
+      setTimeout(() => {
+        remote.dialog.showErrorBox('Back up & Sync Error', 'Please try again later');
+      }, 200);
       AppEnv.reportError(new Error(`Register edison account fail: ${registerResult.message}`));
     }
   };
@@ -506,6 +503,9 @@ export default class EdisonAccount extends React.Component {
       });
     }
     if (!logoutResult.successful) {
+      setTimeout(() => {
+        remote.dialog.showErrorBox('Logout Error', 'Please try again later');
+      }, 200);
       AppEnv.reportError(new Error(`Logout edison account fail: ${logoutResult.message}`));
     } else {
       this._getDevices();
@@ -536,6 +536,9 @@ export default class EdisonAccount extends React.Component {
     }
     const deleteResult = await EdisonAccountRest.deleteAccount(account.id);
     if (!deleteResult.successful) {
+      setTimeout(() => {
+        remote.dialog.showErrorBox('Delete Error', 'Please try again later');
+      }, 200);
       AppEnv.reportError(new Error(`Delete edison account fail: ${deleteResult.message}`));
     } else {
       AppEnv.expungeLocalAndReboot();
@@ -705,9 +708,9 @@ export default class EdisonAccount extends React.Component {
                   style={{ height: 24, width: 24 }}
                 />
                 <div className="devices-name">{`${device.platform}-${device.name}`}</div>
-                <div className="remove-btn" onClick={() => this._logout(device.id)}>
+                {/* <div className="remove-btn" onClick={() => this._logout(device.id)}>
                   Remove
-                </div>
+                </div> */}
               </li>
             );
           })}

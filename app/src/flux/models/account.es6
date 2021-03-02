@@ -211,11 +211,15 @@ export default class Account extends ModelWithMetadata {
   }
 
   usesLabels() {
-    return this.provider === 'gmail';
+    return this.provider === 'gmail' || this.provider === 'onmail';
   }
 
   getNoticeTypeEnum() {
     const tmp = [...noticeTypeEnum];
+    const enableFocusedInboxKey = AppEnv.config.get('core.workspace.enableFocusedInbox');
+    if (enableFocusedInboxKey) {
+      tmp.push({ type: 'All_include_other', title: 'All mail' });
+    }
     if (this.provider === 'gmail') {
       tmp.push(...noticeTypeImportant);
     }

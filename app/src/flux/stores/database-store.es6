@@ -1,16 +1,19 @@
 /* eslint global-require: 0 */
 import path from 'path';
+import fs from 'fs';
 import createDebug from 'debug';
 import childProcess from 'child_process';
 import LRU from 'lru-cache';
 import Sqlite3 from 'better-sqlite3';
 import { remote } from 'electron';
 import { ExponentialBackoffScheduler } from '../../backoff-schedulers';
-
+// import Actions from '../actions';
 import MailspringStore from '../../global/mailspring-store';
 import Utils from '../models/utils';
 import Query from '../models/query';
+// import AppMessage from '../models/app-message';
 import DatabaseChangeRecord from './database-change-record';
+import { QUERY_TYPE } from '../../constant';
 
 const debug = createDebug('app:RxDB');
 const debugVerbose = createDebug('app:RxDB:all');
@@ -20,6 +23,32 @@ const DEBUG_QUERY_PLANS = AppEnv.inDevMode();
 const BASE_RETRY_LOCK_DELAY = 50;
 const MAX_RETRY_LOCK_DELAY = 500;
 const SLOW_QUERY_THRESH_HOLD = 1500;
+const SLOW_QUERY_PROMPT_THRESH_HOLD = 3000;
+const SLOW_QUERY_PROMPT_MAX_INTERVAL = 2000;
+const NUM_SLOW_QUERY_THRESH_HOLD = 10;
+const promptSlowQuery = slowQueryCache => {
+  const now = Date.now();
+  if (slowQueryCache.length > 0) {
+    if (now - slowQueryCache[slowQueryCache.length - 1] > SLOW_QUERY_PROMPT_MAX_INTERVAL) {
+      slowQueryCache.length = 0;
+      return;
+    }
+    if (slowQueryCache.length + 1 > NUM_SLOW_QUERY_THRESH_HOLD) {
+      // const message = new AppMessage({
+      //   allowClose: true,
+      //   level: 0,
+      //   id: 'database-slow-query',
+      //   accountIds: [],
+      //   description: 'Edison Mail need to do some housekeeping in order to improve performance.',
+      //   actions: [{ text: 'Proceed', onClick: () => Actions.askVacuum() }],
+      // });
+      // Actions.pushAppMessage(message);
+      slowQueryCache.length = 0;
+      return;
+    }
+  }
+  slowQueryCache.push(now);
+};
 export const AuxDBs = {
   MessageBody: 'embody.db',
 };
@@ -49,10 +78,10 @@ function handleUnrecoverableDatabaseError(
   });
 }
 
-async function openDatabase(dbPath, retryCnt = 0) {
+async function openDatabase(dbPath, retryCnt = 0, options = { readonly: true }) {
   try {
     const database = await new Promise((resolve, reject) => {
-      const db = new Sqlite3(dbPath, { readonly: true });
+      const db = new Sqlite3(dbPath, options);
       // db.on('close', reject);
       // db.on('open', () => {
       // https://www.sqlite.org/wal.html
@@ -189,6 +218,8 @@ class DatabaseStore extends MailspringStore {
     this._open = false;
     this._waiting = [];
     this._preparedStatementCache = LRU({ max: 500 });
+    this._slowQueryCache = [];
+    this._agent = {};
 
     this.setupEmitter();
     this._emitter.setMaxListeners(100);
@@ -196,7 +227,7 @@ class DatabaseStore extends MailspringStore {
     this._databasePath = databasePath(AppEnv.getConfigDirPath(), AppEnv.inSpecMode());
     console.log('this._databasePath', this._databasePath);
 
-    if (!AppEnv.inSpecMode()) {
+    if (!AppEnv.inSpecMode() && !AppEnv.isMigrateWindow()) {
       this.open();
     }
   }
@@ -211,6 +242,21 @@ class DatabaseStore extends MailspringStore {
     }
     this._waiting = [];
     this._emitter.emit('ready');
+  }
+  close(source = '') {
+    AppEnv.logDebug(`Closing db connections because ${source}`);
+    Object.values(this._db).forEach(db => {
+      try {
+        db.close();
+      } catch (err) {
+        AppEnv.logError(`Closing db connections because ${source} failed: ${err}`);
+      }
+    });
+    this._open = false;
+    this._waiting = [];
+    this._preparedStatementCache.reset();
+    this._slowQueryCache = [];
+    AppEnv.logDebug(`Connections closed`);
   }
 
   _prettyConsoleLog(qa) {
@@ -267,6 +313,7 @@ class DatabaseStore extends MailspringStore {
   // If a query is made before the database has been opened, the query will be
   // held in a queue and run / resolved when the database is ready.
   _query(query, values = [], background = false, dbKey = 'main', queryType) {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       if (!this._open) {
         console.log(`db conections not ready ${dbKey}`);
@@ -300,6 +347,9 @@ class DatabaseStore extends MailspringStore {
           this._prettyConsoleLog(
             `DatabaseStore._executeLocally took more than ${SLOW_QUERY_THRESH_HOLD}ms - ${msec}msec: ${query}`
           );
+          if (msec > SLOW_QUERY_PROMPT_THRESH_HOLD) {
+            promptSlowQuery(this._slowQueryCache);
+          }
         }
         resolve(results);
       } else {
@@ -316,6 +366,9 @@ class DatabaseStore extends MailspringStore {
               this._prettyConsoleLog(
                 `${msgPrefix}${msec}msec (${backgroundTime}msec in background): ${query}`
               );
+              if (backgroundTime > SLOW_QUERY_PROMPT_THRESH_HOLD) {
+                promptSlowQuery(this._slowQueryCache);
+              }
             }
             resolve(results);
           }
@@ -406,113 +459,154 @@ class DatabaseStore extends MailspringStore {
     }
     return results;
   }
-
-  _executeInBackground(query, values, dbKey = 'main', queryType = null) {
-    let _queryForLog = query;
-    if (AppEnv.enabledBackgroundQueryLog) {
-      console.log(`-------------------background query for ${dbKey}----------------`);
-      AppEnv.logDebug(`background query - ${query}`);
-      console.log(`--------------------background query for ${dbKey} end---------------`);
+  _sendToAgent = (data, queryType = QUERY_TYPE.BACKGROUND) => {
+    if (!this._agent[queryType]) {
+      AppEnv.logError(`Agent not available for background db query, ${data.id} not send`);
+      return;
     }
-    const sendToAgent = data => {
-      if (!this._agent) {
-        AppEnv.logError(`Agent not available for background db query, ${data.id} not send`);
-        return;
-      }
-      AppEnv.logDebug(`Sending query for ${data.id} to agent`);
-      this._agent.send(data);
-    };
-    if (!this._agent) {
+    AppEnv.logDebug(`Sending query for ${data.id} to agent`);
+    this._agent[queryType].send(data);
+  };
+  _registerAndStartAgent = (queryForLog, queryType = QUERY_TYPE.BACKGROUND, { onMessage } = {}) => {
+    if (!this._agent[queryType]) {
       AppEnv.logDebug(`DBStore:Agent not available, starting agent`);
       this._agentOpenQueries = {};
       this._agentQueues = {};
-      this._agent = childProcess.fork(
+      this._agent[queryType] = childProcess.fork(
         path.join(path.dirname(__filename), 'database-agent.js'),
-        [AppEnv.getConfigDirPath()],
+        [AppEnv.getConfigDirPath(), queryType],
         {
           silent: true,
         }
       );
-      const clearOpenQueries = () => {
+      const clearOpenQueries = (queryType, reason = 'unknown') => {
         for (const id in this._agentOpenQueries) {
           if (this._agentOpenQueries[id]) {
             this._agentOpenQueries[id]({ results: [] });
           }
         }
         this._agentOpenQueries = {};
-        this._agentQueues = {};
+        if (queryType && Array.isArray(this._agentQueues[queryType])) {
+          this._agentQueues[queryType].forEach(item => {
+            if (typeof item.resolve === 'function') {
+              AppEnv.logDebug(`DBStore: Clearing agentQueues ${queryType}, because ${reason}`);
+              item.resolve({ results: [] });
+            }
+          });
+          delete this._agentQueues[queryType];
+        }
       };
-      this._agent.stdout.on('data', data => console.log(data.toString()));
-      this._agent.stderr.on('data', data => {
-        AppEnv.reportError(new Error(`database-store._executeInBackground error`), {
-          errorData: data.toString(),
-          query: _queryForLog,
-        });
-        console.error(data.toString(), _queryForLog);
+      const resolveAndPopAgentQueries = ({ returnQueryType, result, id }) => {
+        const item =
+          this._agentQueues[returnQueryType].length > 0
+            ? this._agentQueues[returnQueryType][0]
+            : null;
+        const newItem =
+          this._agentQueues[returnQueryType].length > 1
+            ? this._agentQueues[returnQueryType][1]
+            : null;
+        if (item && item.id === id && item.resolve) {
+          AppEnv.logDebug(
+            `DBStore:Background results for ${id} of type ${returnQueryType} match, resolving`
+          );
+          item.resolve(result);
+        } else {
+          AppEnv.logError(
+            `DBStore:Background results for ${id} of type ${returnQueryType} not resolve`
+          );
+        }
+        if (newItem && newItem.data) {
+          AppEnv.logDebug(
+            `DBStore:old item ${id} new item in queue, ${newItem.data.id} query type ${returnQueryType}, sending`
+          );
+          this._sendToAgent(newItem.data, returnQueryType);
+        }
+        if (newItem) {
+          this._agentQueues[returnQueryType] = [newItem];
+        } else {
+          this._agentQueues[returnQueryType] = [];
+        }
+      };
+
+      this._agent[queryType].stdout.on('data', data => console.log(data.toString()));
+      this._agent[queryType].stderr.on('data', data => {
+        try {
+          const json = JSON.parse(data.toString());
+          if (json.id) {
+            AppEnv.reportError(new Error(`database-store._executeInBackground error`), {
+              errorData: json.message,
+              query: json.query,
+              queryType: json.queryType,
+            });
+            console.error(data.toString());
+            resolveAndPopAgentQueries({
+              returnQueryType: queryType,
+              id: json.id,
+              result: { results: json.results, backgroundTime: json.agentTime },
+            });
+          }
+        } catch (e) {
+          AppEnv.reportError(new Error(`database-store._executeInBackground error`), {
+            errorData: data.toString(),
+            query: queryForLog,
+          });
+          console.error(data.toString(), queryForLog);
+          clearOpenQueries(queryType, 'stderr:none-JSON');
+        }
       });
-      this._agent.on('disconnect', () => {
+      this._agent[queryType].on('disconnect', () => {
         AppEnv.logError(`database background agent disconnected`);
         debug(`Query Agent: disconnected`);
-        if (this._agent) {
-          this._agent.kill('SIGTERM');
+        if (this._agent[queryType]) {
+          this._agent[queryType].kill('SIGTERM');
         }
-        this._agent = null;
-        clearOpenQueries();
+        this._agent[queryType] = null;
+        clearOpenQueries(queryType, 'disconnect');
       });
-      this._agent.on('exit', code => {
+      this._agent[queryType].on('exit', code => {
         AppEnv.logDebug(`database background agent exited with code ${code}`);
         debug(`Query Agent: exited with code ${code}`);
-        this._agent = null;
-        clearOpenQueries();
+        this._agent[queryType] = null;
+        clearOpenQueries(queryType, 'exit');
       });
-      this._agent.on('close', code => {
+      this._agent[queryType].on('close', code => {
         AppEnv.logDebug(`database background agent closed with code ${code}`);
         debug(`Query Agent: closed with code ${code}`);
-        this._agent = null;
-        clearOpenQueries();
+        this._agent[queryType] = null;
+        clearOpenQueries(queryType, 'close');
       });
-      this._agent.on('error', err => {
+      this._agent[queryType].on('error', err => {
         AppEnv.reportError(
           new Error(`Query Agent: failed to start or receive message: ${err.toString()}`)
         );
-        this._agent.kill('SIGTERM');
-        this._agent = null;
-        clearOpenQueries();
+        this._agent[queryType].kill('SIGTERM');
+        this._agent[queryType] = null;
+        clearOpenQueries(queryType, 'error');
       });
-      this._agent.on('message', ({ type, id, results, agentTime, queryType }) => {
-        const result = { results, backgroundTime: agentTime };
-        if (!queryType && type === 'results' && this._agentOpenQueries[id]) {
-          this._agentOpenQueries[id](result);
-          delete this._agentOpenQueries[id];
-        } else if (type === 'results' && queryType && this._agentQueues[queryType]) {
-          const item =
-            this._agentQueues[queryType].length > 0 ? this._agentQueues[queryType][0] : null;
-          const newItem =
-            this._agentQueues[queryType].length > 1 ? this._agentQueues[queryType][1] : null;
-          if (item && item.id === id && item.resolve) {
-            AppEnv.logDebug(
-              `DBStore:Background results for ${id} of type ${queryType} match, resolving`
-            );
-            item.resolve(result);
-          } else {
-            AppEnv.logError(
-              `DBStore:Background results for ${id} of type ${queryType} not resolve`
-            );
+      if (onMessage) {
+        this._agent[queryType].on('message', onMessage);
+      } else {
+        this._agent[queryType].on('message', ({ type, id, results, agentTime, queryType }) => {
+          const result = { results, backgroundTime: agentTime };
+          if (!queryType && type === 'results' && this._agentOpenQueries[id]) {
+            this._agentOpenQueries[id](result);
+            delete this._agentOpenQueries[id];
+          } else if (type === 'results' && queryType && this._agentQueues[queryType]) {
+            resolveAndPopAgentQueries({ returnQueryType: queryType, result, id });
           }
-          if (newItem && newItem.data) {
-            AppEnv.logDebug(
-              `DBStore:old item ${id} new item in queue, ${newItem.data.id} query type ${queryType}, sending`
-            );
-            sendToAgent(newItem.data);
-          }
-          if (newItem) {
-            this._agentQueues[queryType] = [newItem];
-          } else {
-            this._agentQueues[queryType] = [];
-          }
-        }
-      });
+        });
+      }
     }
+  };
+
+  _executeInBackground(query, values, dbKey = 'main', queryType = null) {
+    if (AppEnv.enabledBackgroundQueryLog) {
+      console.log(`-------------------background query for ${dbKey}----------------`);
+      AppEnv.logDebug(`background query - ${query}`);
+      console.log(`--------------------background query for ${dbKey} end---------------`);
+    }
+    this._registerAndStartAgent(query, queryType);
+
     return new Promise(resolve => {
       const id = Utils.generateTempId();
       let ignore = false;
@@ -543,7 +637,7 @@ class DatabaseStore extends MailspringStore {
       }
       if (!ignore) {
         AppEnv.logDebug(`DBStore:No pending request for ${id} of type ${queryType}, sending`);
-        sendToAgent(data);
+        this._sendToAgent(data, queryType);
         return;
       }
       AppEnv.logDebug(`DBStore:Request pending,  request for ${id} of type ${queryType} not send`);
@@ -554,6 +648,73 @@ class DatabaseStore extends MailspringStore {
 
   // ActiveRecord-style Querying
 
+  vaccum() {
+    const configPath = AppEnv.getConfigDirPath();
+    const dbKeys = [];
+    const executeVacuumQuery = (dbKey, index) => {
+      const dbPath = path.join(configPath, dbKey);
+      AppEnv.logDebug(`Vacuuming ${dbKey} db`);
+
+      return new Promise(resolve => {
+        const onMessage = ({ id } = {}) => {
+          console.warn(`resolving ${id}`);
+          resolve();
+        };
+        try {
+          this._registerAndStartAgent('', `${QUERY_TYPE.VACUUM}${index}`, { onMessage });
+          const data = {
+            query: 'Vacuum',
+            values: [],
+            id: `${QUERY_TYPE.VACUUM}${index}`,
+            dbpath: dbPath,
+            queryType: `${QUERY_TYPE.VACUUM}${index}`,
+          };
+          this._sendToAgent(data, `${QUERY_TYPE.VACUUM}${index}`);
+        } catch (err) {
+          AppEnv.logError(`Opening db ${dbKey} for vacuum failed ${err}`);
+        }
+      });
+    };
+    return new Promise((resolve, reject) => {
+      this.close('Vacuum DB');
+      AppEnv.logDebug(`Finding all db files`);
+      fs.readdir(configPath, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
+        if (err) {
+          AppEnv.logError(`Reading config path for Vacuum failed, ${err}`);
+          reject(err);
+          return;
+        }
+        files.forEach(dirent => {
+          if (dirent.isFile()) {
+            if (dirent.name.match(/\S+\.db$/g)) {
+              dbKeys.push(dirent.name);
+            }
+          }
+        });
+        const total = dbKeys.length;
+        let finished = 0;
+        dbKeys.forEach((key, index) => {
+          executeVacuumQuery(key, index).then(() => {
+            finished++;
+            if (finished === total) {
+              AppEnv.logDebug(`Vacuuming dbs finished, restarting UI db connections`);
+              this.open()
+                .then(() => {
+                  AppEnv.logDebug(`DBs connections restarted, notifying UI`);
+                  setTimeout(() => {
+                    resolve();
+                  }, 2000);
+                })
+                .catch(err => {
+                  AppEnv.logError(err);
+                  resolve();
+                });
+            }
+          });
+        });
+      });
+    });
+  }
   // Public: Creates a new Model Query for retrieving a single model specified by
   // the class and id.
   //

@@ -1,9 +1,9 @@
 import { Utils } from 'mailspring-exports';
 import React, { Component } from 'react';
-import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import OutlineViewItem from './outline-view-item';
 import PropTypes from 'prop-types';
+import Actions from '../flux/actions';
 
 /*
  * Renders a section that contains a list of {@link OutlineViewItem}s. These items can
@@ -48,6 +48,7 @@ class OutlineView extends Component {
     title: PropTypes.string,
     iconName: PropTypes.string,
     items: PropTypes.array,
+    isEditingMenu: PropTypes.bool,
     collapsed: PropTypes.bool,
     onItemCreated: PropTypes.func,
     onCollapseToggled: PropTypes.func,
@@ -106,7 +107,6 @@ class OutlineView extends Component {
       this.setState({ showCreateInput: false });
     }
   };
-
   // Renderers
 
   _renderCreateInput(props = this.props) {
@@ -139,32 +139,40 @@ class OutlineView extends Component {
     );
   }
 
-  _renderHeading(allowCreate, collapsed, collapsible) {
-    const collapseLabel = collapsed ? 'Show' : 'Hide';
-    return (
-      <DropZone
-        className="heading"
-        onDrop={() => true}
-        onDragStateChange={this._onDragStateChange}
-        shouldAcceptDrop={() => true}
-      >
-        <span className="text" title={this.props.title}>
-          {this.props.title}
-        </span>
-        {allowCreate ? this._renderCreateButton() : null}
-        {collapsible ? (
-          <span className="collapse-button" onClick={this._onCollapseToggled}>
-            {collapseLabel}
-          </span>
-        ) : null}
-      </DropZone>
-    );
-  }
-
   _renderItems() {
-    return this.props.items.map((item, idx) =>
-      item.name ? <OutlineViewItem key={item.id} item={item} index={idx} /> : <Divider key={idx} />
-    );
+    const ret = [];
+    this.props.items.forEach((item, idx) => {
+      if (!this.props.isEditingMenu && item.isHidden) {
+        return;
+      }
+      if (this.props.isEditingMenu && item.hideOnEditingMenu) {
+        return;
+      }
+      if (item.name) {
+        ret.push(
+          <OutlineViewItem
+            key={item.id}
+            item={item}
+            index={idx}
+            isEditingMenu={this.props.isEditingMenu}
+          />
+        );
+      } else if (item.id === ADD_FOLDER_KEY && this.props.isEditingMenu) {
+        ret.push(AddFolder(item));
+        ret.push(Divider(idx + 1));
+      } else {
+        if (ret.length > 0) {
+          if (ret[ret.length - 1] && isNaN(ret[ret.length - 1].key)) {
+            ret.push(Divider(idx));
+          }
+        }
+      }
+    });
+    if (ret.length === 0) {
+      ret.push(EditMenu());
+      ret.push(Divider(1));
+    }
+    return ret;
   }
 
   _renderOutline(allowCreate, collapsed) {
@@ -182,14 +190,12 @@ class OutlineView extends Component {
   }
 
   render() {
-    const collapsible = this.props.onCollapseToggled;
     const collapsed = this.props.collapsed;
     const allowCreate = this.props.onItemCreated != null && !collapsed;
     const avatarClass = AppEnv.config.get('core.appearance.sidebaricons') ? '' : 'name-only';
 
     return (
       <section className={`nylas-outline-view ${avatarClass}`}>
-        {/* {this._renderHeading(allowCreate, collapsed, collapsible)} */}
         {this._renderOutline(allowCreate, collapsed)}
       </section>
     );
@@ -197,12 +203,44 @@ class OutlineView extends Component {
 }
 
 export const DIVIDER_KEY = 'divider';
+export const ADD_FOLDER_KEY = 'addFolder';
+export const NEW_FOLDER_KEY = 'newFolder';
 export const MORE_TOGGLE = 'moreToggle';
-export const Divider = () => {
-  return <div className="sidebar-divider" />;
+export const Divider = key => {
+  return <div key={key} className="sidebar-divider" />;
 };
-const More = props => {
-  return <div className="sidebar-more" onClick={props.onClick} />;
+const EditMenu = () => {
+  const onClick = e => {
+    e.stopPropagation();
+    e.preventDefault();
+    AppEnv.trackingEvent('FolderTree-EditingMenu-RightClick');
+    Actions.setEditingMenu(true);
+  };
+  return (
+    <div key="addFolder" className="item-container item name inEditMode" onClick={onClick}>
+      <span className="sidebar-add-folder">Edit Menu</span>
+    </div>
+  );
+};
+export const AddFolder = item => {
+  const onClick = e => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (item && item.onRequestAddFolder && !item.disabled) {
+      AppEnv.trackingEvent('FolderTree-AddFolder-AddFolderItem');
+      item.onRequestAddFolder();
+    }
+  };
+  const disabled = item && item.disabled;
+  return (
+    <div
+      key="addFolder"
+      className={`item-container item name inEditMode ${disabled ? 'disabled' : ''}`}
+      onClick={onClick}
+    >
+      <span className="sidebar-add-folder">{item.displayName}</span>
+    </div>
+  );
 };
 
 export default OutlineView;

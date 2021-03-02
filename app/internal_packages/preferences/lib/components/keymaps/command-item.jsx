@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import _ from 'underscore';
-import { Flexbox, RetinaImg } from 'mailspring-component-kit';
+import { Flexbox, RetinaImg, Keystrokes } from 'mailspring-component-kit';
 import fs from 'fs';
 import displayedKeybindings from './displayed-keybindings';
 
@@ -49,58 +49,6 @@ export default class CommandKeybinding extends React.Component {
       }
     }
   }
-
-  _formatKeystrokes(original) {
-    // On Windows, display cmd-shift-c
-    if (process.platform === 'win32') return original;
-
-    // Replace "cmd" => ⌘, etc.
-    const modifiers = [
-      [/\+(?!$)/gi, ''],
-      [/command/gi, '⌘'],
-      [/meta/gi, '⌘'],
-      [/alt/gi, '⌥'],
-      [/shift/gi, '⇧'],
-      [/ctrl/gi, '^'],
-      [/mod/gi, process.platform === 'darwin' ? '⌘' : '^'],
-    ];
-    let clean = original;
-    for (const [regexp, char] of modifiers) {
-      clean = clean.replace(regexp, char);
-    }
-
-    // ⌘⇧c => ⌘⇧C
-    if (clean !== original) {
-      clean = clean.toUpperCase();
-    }
-
-    // backspace => Backspace
-    if (original.length > 1 && clean === original) {
-      clean = clean[0].toUpperCase() + clean.slice(1);
-    }
-    return clean;
-  }
-
-  _renderKeystrokes = (keystrokes, idx) => {
-    const elements = [];
-    const splitKeystrokes = keystrokes.split(' ');
-    splitKeystrokes.forEach((keystroke, kidx) => {
-      elements.push(<span key={kidx}>{this._formatKeystrokes(keystroke)}</span>);
-      if (kidx < splitKeystrokes.length - 1) {
-        elements.push(
-          <span className="then" key={`then${kidx}`}>
-            {' '}
-            then{' '}
-          </span>
-        );
-      }
-    });
-    return (
-      <span key={`keystrokes-${idx}`} className="shortcut-value">
-        {elements}
-      </span>
-    );
-  };
 
   _onEdit = () => {
     this.setState({ editing: true, editingBinding: null, keys: [], modifiers: [] });
@@ -216,7 +164,9 @@ export default class CommandKeybinding extends React.Component {
 
     let value = 'None';
     if (showBindings.length > 0) {
-      value = _.uniq(showBindings).map(this._renderKeystrokes);
+      value = _.uniq(showBindings).map((keystroke, index) => {
+        return <Keystrokes key={index} keyString={keystroke} />;
+      });
     }
 
     let classnames = 'shortcut';

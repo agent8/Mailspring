@@ -1,3 +1,5 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react/display-name */
 import React from 'react';
 import SoftBreak from 'slate-soft-break';
 import EditList from 'slate-edit-list';
@@ -79,27 +81,27 @@ function isBlockTypeOrWithinType(value, type) {
   return isMe || isParent;
 }
 
-function toggleBlockTypeWithBreakout(value, change, type) {
-  const ancestors = value.document.getAncestors(value.focusBlock.key);
+// function toggleBlockTypeWithBreakout(value, change, type) {
+//   const ancestors = value.document.getAncestors(value.focusBlock.key);
 
-  let idx = ancestors.findIndex(b => b.type === type);
-  if (idx === -1 && value.focusBlock.type === type) {
-    idx = ancestors.size - 1;
-  }
+//   let idx = ancestors.findIndex(b => b.type === type);
+//   if (idx === -1 && value.focusBlock.type === type) {
+//     idx = ancestors.size - 1;
+//   }
 
-  if (idx !== -1) {
-    const depth = ancestors.size - idx;
-    if (depth > 0) {
-      change.splitBlock(ancestors.size - idx);
-      for (let x = 0; x < depth; x++) change.unwrapBlock();
-    }
-    change.setBlock(BLOCK_CONFIG.div.type);
-  } else {
-    change.setBlock(type);
-  }
+//   if (idx !== -1) {
+//     const depth = ancestors.size - idx;
+//     if (depth > 0) {
+//       change.splitBlock(ancestors.size - idx);
+//       for (let x = 0; x < depth; x++) change.unwrapBlock();
+//     }
+//     change.setBlock(BLOCK_CONFIG.div.type);
+//   } else {
+//     change.setBlock(type);
+//   }
 
-  return change;
-}
+//   return change;
+// }
 function isStartOfDocument(value) {
   if (!value) {
     return false;
@@ -203,7 +205,32 @@ export const BLOCK_CONFIG = {
       }
 
       if (targetIsHTML && nodeIsEmpty(node)) {
+        if (!node.data) {
+          return <br {...attributes} />;
+        }
+        const fontSize = node.data.get('fontSize');
+        const fontFamily = node.data.get('fontFamily');
+        if (fontSize || fontFamily) {
+          return (
+            <font style={{ fontFamily, fontSize }}>
+              <br {...attributes} />
+            </font>
+          );
+        }
         return <br {...attributes} />;
+      }
+      const fontSize = node.data.get('fontSize');
+      const fontFamily = node.data.get('fontFamily');
+      if (fontSize || fontFamily) {
+        return (
+          <div
+            {...attributes}
+            {...explicitHTMLAttributes}
+            className={node.data.className || node.data.get('className')}
+          >
+            <font style={{ fontFamily, fontSize }}>{children}</font>
+          </div>
+        );
       }
       return (
         <div
@@ -225,14 +252,13 @@ export const BLOCK_CONFIG = {
       iconClass: 'dt-icon dt-icon-increase-indent',
       isActive: value => false,
       onToggle: (value, active, event) => {
+        let change = value.change();
+        indentListItem(change, true);
+
         if (!isMoreThanTabs(10, value)) {
-          return Handlers.onTab(
-            { lineType: 'div', getIndent: () => '    ' },
-            event,
-            value.change()
-          );
+          return Handlers.onTab({ lineType: 'div', getIndent: () => '    ' }, event, change);
         } else {
-          return value.change();
+          return change;
         }
       },
     },
@@ -246,11 +272,9 @@ export const BLOCK_CONFIG = {
       iconClass: 'dt-icon dt-icon-decrease-indent',
       isActive: value => false,
       onToggle: (value, active, event) => {
-        return Handlers.onShiftTab(
-          { lineType: 'div', getIndent: () => '    ' },
-          event,
-          value.change()
-        );
+        let change = value.change();
+        indentListItem(change, false);
+        return Handlers.onShiftTab({ lineType: 'div', getIndent: () => '    ' }, event, change);
       },
     },
   },
@@ -354,6 +378,10 @@ export const BLOCK_CONFIG = {
         style.fontSize = props.node.data.get('fontSize');
         style.fontFamily = props.node.data.get('fontFamily');
         style.color = props.node.data.get('color');
+        const marginLeft = props.node.data.marginLeft || props.node.data.get('marginLeft');
+        if (marginLeft) {
+          style.marginLeft = marginLeft;
+        }
       }
       return (
         <li {...props.attributes} style={style}>
@@ -371,6 +399,17 @@ export const BLOCK_CONFIG = {
     type: 'heading_two',
     tagNames: ['h2'],
     render: props => <h2 {...props.attributes}>{props.children}</h2>,
+  },
+  edo_readonly: {
+    type: 'edo_readonly',
+    tagNames: ['edo-readonly'],
+    render: props => {
+      if (props.targetIsHTML) {
+        return <edo-readonly {...props.attributes}>{props.children}</edo-readonly>;
+      } else {
+        return BLOCK_CONFIG.div.render(props);
+      }
+    },
   },
 };
 
@@ -391,6 +430,48 @@ function renderNode(props) {
 //   }
 //   return <span>{text.replace(/\s{2,}/g, "\u00A0 ")}</span>;
 // }
+
+const INDENT = 2;
+const INDENT_UNIT = 'em';
+const MAX_INDENT = 10;
+const indentListItem = (change, isIndent = true) => {
+  if (
+    isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ol_list.type) ||
+    isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ul_list.type)
+  ) {
+    for (const text of change.value.texts) {
+      const list_item = change.value.document
+        .getAncestors(text.key)
+        .find(b => b.type === BLOCK_CONFIG.list_item.type);
+      if (list_item) {
+        change = calcListItemIndent(change, list_item, isIndent);
+      }
+    }
+  }
+  return change;
+};
+const calcListItemIndent = (change, item, isIndent = true) => {
+  let indent = 0;
+  const marginLeft = item.data.get('marginLeft');
+  if (marginLeft && marginLeft.includes(INDENT_UNIT)) {
+    indent = parseInt(marginLeft.replace(INDENT_UNIT, ''));
+  }
+  if (isIndent) {
+    indent += INDENT;
+  } else {
+    indent -= INDENT;
+  }
+  if (indent > MAX_INDENT) {
+    indent = MAX_INDENT;
+  } else if (indent < 0) {
+    indent = 0;
+  }
+  var d = item.data.set('marginLeft', indent + INDENT_UNIT);
+  change.setNodeByKey(item.key, {
+    data: d,
+  });
+  return change;
+};
 
 const rules = [
   {
@@ -434,6 +515,9 @@ const rules = [
             }
             if (el.style.fontSize) {
               data.fontSize = el.style.fontSize;
+            }
+            if (el.style.marginLeft) {
+              data.marginLeft = el.style.marginLeft;
             }
           }
         }
@@ -526,6 +610,13 @@ export function removeQuotedText(value) {
 
 export function hideQuotedTextByDefault(draft) {
   if (draft.isForwarded()) {
+    return false;
+  }
+  if (
+    draft.replyType === 1 && // replyType - new: 0, reply: 1, forward: 2
+    AppEnv.config.get('core.composing.includeOriginalEmailInReply') &&
+    AppEnv.config.get('core.composing.showOriginalEmailInReply')
+  ) {
     return false;
   }
   if (hasNonTrailingBlockquote(draft.bodyEditorState)) {
@@ -627,16 +718,9 @@ export default [
       if (event.keyCode !== TABKey) {
         return;
       }
-      const startOffset = change.value.startOffset;
-      if (startOffset === 0) {
-        if (isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ol_list.type)) {
-          return;
-        }
-        if (isBlockTypeOrWithinType(change.value, BLOCK_CONFIG.ul_list.type)) {
-          return;
-        }
-      }
       event.preventDefault();
+      indentListItem(change, !(event.shiftKey || event.metaKey || event.optionKey));
+
       if (event.shiftKey || event.metaKey || event.optionKey) {
         return Handlers.onShiftTab({ lineType: 'div' }, event, change);
       }

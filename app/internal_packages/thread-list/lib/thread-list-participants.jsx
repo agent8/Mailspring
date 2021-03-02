@@ -178,6 +178,13 @@ class ThreadListParticipants extends React.Component {
     }
 
     flush();
+    if (spans.length === 0) {
+      spans.push(
+        <span key={spans.length} className={`unread-${accumulatedUnread}`}>
+          No Sender
+        </span>
+      );
+    }
 
     return spans;
   }

@@ -1,9 +1,10 @@
 #!/bin/sh
-if [ "$#" -ne 1 ]; then
-    logger "EdisonMail: no pid set to monitor"
+if [ "$#" -ne 2 ]; then
+    logger "EdisonMail: need to set pid and process name"
     exit 1
 fi
 pidValue=$1
+processName=$2
 echo $pidValue | grep "[^0-9]" > /dev/null 2>&1
 
 if [ "$?" -eq "0" ]; then
@@ -17,12 +18,12 @@ if [ $pidValue -lt 1 ]; then
 fi
 logger "EdisonMail: monitoring pid $pidValue"
 sleep 5
-ps -p $pidValue -o command= | grep 'mailsync' > /dev/null 2>&1
+ps -p $pidValue -o command= | grep "$processName" > /dev/null 2>&1
 if [ "$?" -eq "0" ]; then
-    logger "EdisonMail: mailsync for pid $pidValue still running, killing it now"
+    logger "EdisonMail: $processName for pid $pidValue still running, killing it now"
     kill -9 $pidValue
 fi
-logger "EdisonMail: mailsync for pid $pidValue have died"
+logger "EdisonMail: $processName for pid $pidValue have died"
 exit 0
 
 

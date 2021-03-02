@@ -1,13 +1,13 @@
-import QuickActions from './quick-actions';
-const React = require('react');
-const {
+import React from 'react';
+import {
   ListTabular,
   MailLabelSet,
   InjectedComponent,
   InjectedComponentSet,
-} = require('mailspring-component-kit');
+} from 'mailspring-component-kit';
+import { Utils, DateUtils, EmailAvatar, PropTypes } from 'mailspring-exports';
 
-const { Utils, DateUtils, EmailAvatar } = require('mailspring-exports');
+import QuickActions from './quick-actions';
 let draftStore = null;
 let focusedPerspectiveStore = null;
 let searchStore = null;
@@ -85,6 +85,9 @@ const ThreadListTimestamp = function({ thread }) {
 };
 
 ThreadListTimestamp.containerRequired = false;
+ThreadListTimestamp.propTypes = {
+  thread: PropTypes.object,
+};
 
 const subject = function(subj) {
   if ((subj || '').trim().length === 0) {
@@ -155,6 +158,7 @@ const c1 = new ListTabular.Column({
 const c2 = new ListTabular.Column({
   name: 'Participants',
   maxWidth: 200,
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     let calendar = null;
     const hasCalendar = thread.hasCalendar;
@@ -183,6 +187,7 @@ const c2 = new ListTabular.Column({
 const c3 = new ListTabular.Column({
   name: 'Message',
   flex: 4,
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     const messages = thread.__messages || [];
     let draft = null;
@@ -214,6 +219,7 @@ const c3 = new ListTabular.Column({
 
 const c4 = new ListTabular.Column({
   name: 'Date',
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     return (
       <InjectedComponent
@@ -228,18 +234,16 @@ const c4 = new ListTabular.Column({
 
 const c5 = new ListTabular.Column({
   name: 'HoverActions',
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
-    return (
-      <div className="inner">
-        <QuickActions thread={thread} />
-      </div>
-    );
+    return <QuickActions thread={thread} layout="wide" />;
   },
 });
 
 const cNarrow = new ListTabular.Column({
   name: 'Item',
   flex: 1,
+  // eslint-disable-next-line react/display-name
   resolver: thread => {
     let pencil = false;
     let attachment = false;
@@ -284,11 +288,7 @@ const cNarrow = new ListTabular.Column({
               exposedProps={{ thread: thread }}
               matching={{ role: 'ThreadListTimestamp' }}
             />
-            <div className="list-column-HoverActions">
-              <div className="inner quick-actions">
-                <QuickActions thread={thread} />
-              </div>
-            </div>
+            <QuickActions thread={thread} layout="narrow" />
           </div>
           <div className="subject">
             <span>{subject(thread.subject)}</span>

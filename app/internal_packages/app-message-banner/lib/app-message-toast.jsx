@@ -13,6 +13,10 @@ class BasicContent extends React.Component {
         onClick: PropTypes.func.isRequired,
       })
     ),
+    block: PropTypes.object,
+    onClose: PropTypes.func,
+    onMouseEnter: PropTypes.func,
+    onMouseLeave: PropTypes.func,
   };
   static defaultProps = {
     level: 0,
@@ -181,12 +185,12 @@ export default class AppMessageToast extends React.Component {
     }
     const left = sidebar.getBoundingClientRect().width;
     let width = '100%';
-    const threadList = document.querySelector('.toolbar-ThreadList');
+    const threadList = document.querySelector('.title-search-bar');
     const siftList = document.querySelector('.toolbar-SiftList');
     const messageList = document.querySelector('.toolbar-MessageList');
     const draftList = document.querySelector('.toolbar-DraftList');
-    const outboxList = document.querySelector('.toolbar-Outbox');
-    const outboxMessage = document.querySelector('.toolbar-OutboxMessage');
+    const outboxList = document.querySelector('.column-Outbox');
+    const outboxMessage = document.querySelector('.column-OutboxMessage');
     const chatView = document.querySelector('.column-ChatView');
     if (chatView) {
       width = chatView.getBoundingClientRect().width;
@@ -205,8 +209,7 @@ export default class AppMessageToast extends React.Component {
     } else if (draftList) {
       width = draftList.getBoundingClientRect().width;
     } else if (outboxList && outboxMessage) {
-      width =
-        outboxList.getBoundingClientRect().width + outboxMessage.getBoundingClientRect().width;
+      width = outboxList.getBoundingClientRect().width;
     }
     if (typeof width !== 'string') {
       width -= 28;

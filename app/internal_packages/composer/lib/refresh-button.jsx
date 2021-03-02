@@ -30,6 +30,7 @@ class RefreshButton extends Component {
       previousUpdatedTime: '',
       cachedSyncFolderData: null,
       lastUpdatedTime: FocusedPerspectiveStore.getLastUpdatedTime(),
+      inEditMenuMode: false,
     };
     this.refreshTimer = null;
     this.refreshDelay = 300;
@@ -43,6 +44,7 @@ class RefreshButton extends Component {
     this._unlisten = [
       CategoryStore.listen(this._onCategoryChange),
       FocusedPerspectiveStore.listen(this._onCategoryChange),
+      Actions.setEditingMenu.listen(this._onEditingMenu),
     ];
   }
 
@@ -79,6 +81,14 @@ class RefreshButton extends Component {
       });
     }
   }
+  _onEditingMenu = isEditing => {
+    if (!this.mounted) {
+      return;
+    }
+    if (isEditing !== this.state.inEditMenuMode) {
+      this.setState({ inEditMenuMode: isEditing });
+    }
+  };
 
   _onCategoryChange = () => {
     if (this.mounted) {
@@ -158,6 +168,9 @@ class RefreshButton extends Component {
   }
 
   render() {
+    if (this.state.inEditMenuMode) {
+      return null;
+    }
     const current = FocusedPerspectiveStore.current();
     return this.renderRefreshButton(current);
   }

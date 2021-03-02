@@ -25,6 +25,7 @@ class SystemTrayIconStore {
 
   constructor() {
     this._windowBlurred = false;
+    this.displayUnread = AppEnv.config.get('core.notifications.countSystemTray') !== 'hide';
     // application can't read the config-schema
     // So should register the default value of 'core.workspace.systemTray'
     // at the first time of tray loading
@@ -38,6 +39,15 @@ class SystemTrayIconStore {
     }, 2000);
     this._unsubscribers = [];
     this._unsubscribers.push(BadgeStore.listen(this._updateIcon));
+
+    AppEnv.config.onDidChange('core.notifications.countSystemTray', ({ newValue }) => {
+      if (newValue !== 'hide') {
+        this.displayUnread = true;
+      } else {
+        this.displayUnread = false;
+      }
+      this._updateIcon();
+    });
 
     window.addEventListener('browser-window-blur', this._onWindowBlur);
     window.addEventListener('browser-window-focus', this._onWindowFocus);
@@ -76,13 +86,19 @@ class SystemTrayIconStore {
 
   _updateIcon = () => {
     const unread = BadgeStore.unread();
-    const unreadString = (+unread).toLocaleString();
+    // const unreadString = (+unread).toLocaleString();
     const isInboxZero = BadgeStore.total() === 0;
     const { iconPath, isTemplateImg, chatIconPath } = this._getIconImageData(
       isInboxZero,
       this._windowBlurred
     );
-    ipcRenderer.send('update-system-tray', iconPath, unreadString, isTemplateImg, chatIconPath);
+    ipcRenderer.send(
+      'update-system-tray',
+      iconPath,
+      this.displayUnread ? unread : 0,
+      isTemplateImg,
+      chatIconPath
+    );
   };
 }
 

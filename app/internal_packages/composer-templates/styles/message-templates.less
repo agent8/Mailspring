@@ -115,6 +115,10 @@
       pointer-events: none;
     }
 
+    .RichEditor-toolbar {
+      top: -1px;
+    }
+
     .section.basic-info {
       display: flex;
       justify-content: space-between;
@@ -155,9 +159,25 @@
     }
 
     .RichEditor-root {
-      padding: 10px;
+      padding: 0;
       padding-top: 2px;
       min-height: 248px;
+      .RichEditor-toolbar {
+        margin: 0 10px;
+        .hide-in-composer {
+          display: block;
+        }
+        .show-in-signature {
+          display: block;
+        }
+      }
+      .RichEditor-content {
+        margin: 0;
+        padding: 0;
+        & > div[data-slate-editor] {
+          padding: 12px 20px 20px 20px;
+        }
+      }
     }
 
     .section.editor {
@@ -174,9 +194,9 @@
         display: flex;
         align-items: center;
         .field-label {
-          color: #797d80;
+          color: @gray;
           font-weight: bold;
-          width: 36px;
+          width: 38px;
           flex: 0 0 auto;
         }
         input {

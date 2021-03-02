@@ -1,7 +1,7 @@
 {
   "menu": [
   {
-    "label": "EdisonMail",
+    "label": "Edison Mail",
     "submenu": [
       { "label": "About", "command": "application:about" },
       { "label": "VERSION", "enabled": false },
@@ -13,7 +13,7 @@
       { "type": "separator" },
       { "label": "Services", "submenu": [] },
       { "type": "separator" },
-      { "label": "Hide EdisonMail", "command": "application:hide" },
+      { "label": "Hide Edison Mail", "command": "application:hide" },
       { "label": "Hide Others", "command": "application:hide-other-applications" },
       { "label": "Show All", "command": "application:unhide-all-applications" },
       { "type": "separator" },

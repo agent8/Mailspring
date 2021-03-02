@@ -1,8 +1,15 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { TokenAndTermRegexp } from './search-bar-util';
-import NavbarCollapse from 'react-bootstrap/lib/NavbarCollapse';
 
 export default class TokenizingContenteditable extends Component {
+  static propTypes = {
+    value: PropTypes.string,
+    onChange: PropTypes.func,
+    onKeyDown: PropTypes.func,
+    onBlur: PropTypes.func,
+    onFocus: PropTypes.func,
+  };
   shouldComponentUpdate(nextProps) {
     if (nextProps.value !== this._textEl.innerText.replace(/\s/g, ' ')) {
       this._textEl.innerHTML = nextProps.value.replace(/\s/g, '&nbsp;');
@@ -111,11 +118,16 @@ export default class TokenizingContenteditable extends Component {
 
   onContextMenu = event => {
     const sel = document.getSelection();
-    AppEnv.windowEventHandler.openSpellingMenuFor(sel.toString(), !sel.isCollapsed, {
-      onCorrect: correction => {
-        document.execCommand('insertText', false, correction);
+    AppEnv.openSpellingMenuFor(
+      sel.toString(),
+      !sel.isCollapsed,
+      {
+        onCorrect: correction => {
+          document.execCommand('insertText', false, correction);
+        },
       },
-    });
+      event
+    );
   };
 
   render() {

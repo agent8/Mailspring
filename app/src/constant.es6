@@ -1,6 +1,12 @@
+export const DROP_DATA_TYPE = {
+  THREAD: 'edison-threads-data',
+  FOLDER_TREE_ITEM: 'edison-folder-tree-item-data',
+};
 export const QUERY_TYPE = {
+  BACKGROUND: 'BACKGROUND',
   SEARCH_PERSPECTIVE: 'SEARCH_PERSPECTIVE',
   SEARCH_SUBJECT: 'SEARCH_SUBJECT',
+  VACUUM: 'VACUUM',
 };
 export const OAuthList = [
   'gmail',
@@ -17,6 +23,7 @@ export function DisableAttachmentProgressProvider(provider) {
   return provider.includes('exchange');
 }
 export const WindowLevel = {
+  Migrating: 6,
   BugReporting: 5,
   OnBoarding: 4,
   Composer: 3,
@@ -195,12 +202,19 @@ export const inboxNotOtherCategories = (opts = { toString: false, radix: 10 }) =
   return ret;
 };
 
+function decrypt(ciphertext) {
+  const CryptoJS = require('crypto-js');
+  const E_KEY = 'EDISON_MAIL';
+  var bytes = CryptoJS.AES.decrypt(ciphertext, E_KEY);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
+
 export const AwsBucketStag = 'edison-media-stag';
 export const AwsBucketProd = 'edison-media';
 export const AwsRegionType = process.env.S3_REGION || 'ENV_S3_REGION';
 export const AwsEndpointUrl = 'https://s3.us-east-2.amazonaws.com';
-export const AWSAccessKey = process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID';
-export const AWSSecretKey = process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY';
+export const AWSAccessKey = decrypt(process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID');
+export const AWSSecretKey = decrypt(process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY');
 
 export const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
 

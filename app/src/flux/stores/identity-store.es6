@@ -20,9 +20,10 @@ class IdentityStore extends MailspringStore {
       Hot windows don't receive any action-bridge-messages, which include DB updates.
       Since the hot window loads first, it may have a stale verison of the Identity.
       */
-      AppEnv.onWindowPropsReceived(() => {
-        this._onIdentityChanged();
-      });
+      // commment out by quanzs: no need to do this operation in popout window
+      // AppEnv.onWindowPropsReceived(() => {
+      //   this._onIdentityChanged();
+      // });
       return;
     }
 

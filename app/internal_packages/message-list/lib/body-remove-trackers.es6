@@ -1,6 +1,6 @@
-const digit0123 = '\\s*=\\s*[\'"]?(?:(?:0*(?:1|2|3)\\D)|0+\\D)';
+const digit0123 = '\\s*[=:]\\s*[\'"]?(?:(?:0*(?:1|2|3)\\D)|0+\\D)';
 const invisibleReStr = '(?:display\\s*:[\'"]?\\s*none)|(?:visibility\\s*:[\'"]?\\s*hidden)';
-const smallOrInvisible = `(?:(?:width${digit0123})|(?:height${digit0123})|${invisibleReStr})`;
+const smallOrInvisible = `(?:(?:[^-](max-)?width${digit0123})|(?:[^-](max-)?height${digit0123})|${invisibleReStr})`;
 
 // Dont support double html tag with content
 // 不支持有内容的双标签
@@ -46,8 +46,9 @@ function noEmbedTagsHandle(src, regEx, reRegEx, trackers) {
     } else {
       const patternAttr = new RegExp(reRegEx, 'g');
       const matcherAttr = patternAttr.test(rematchStr);
+      const isInlineImage = /class='inline-image'/g.test(rematchStr);
 
-      if (matcherAttr) {
+      if (matcherAttr && !isInlineImage) {
         builder += src.substring(currentIndex, start);
         trackers.push(rematchStr);
         currentIndex = end;
@@ -57,7 +58,7 @@ function noEmbedTagsHandle(src, regEx, reRegEx, trackers) {
       }
     }
   }
-  if (currentIndex == 0) {
+  if (currentIndex === 0) {
     return src;
   } else {
     builder += src.substring(currentIndex);

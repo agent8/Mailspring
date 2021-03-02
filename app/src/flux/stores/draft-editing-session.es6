@@ -15,7 +15,6 @@ import { Composer as ComposerExtensionRegistry } from '../../registries/extensio
 import QuotedHTMLTransformer from '../../services/quoted-html-transformer';
 import SyncbackDraftTask from '../tasks/syncback-draft-task';
 import uuid from 'uuid';
-import _ from 'underscore';
 import RestoreDraftTask from '../tasks/restore-draft-task';
 import { WindowLevel } from '../../constant';
 
@@ -60,9 +59,12 @@ class DraftChangeSet extends EventEmitter {
     }
   }
 
-  add(changes, { skipSaving = false } = {}) {
+  add(changes, { skipSaving = false, skipSyncToMain = false } = {}) {
     if (!skipSaving) {
-      changes.pristine = false;
+      if (!changes.files || changes.files.every(f => !f.isSigOrTempAttachments)) {
+        changes.pristine = false;
+      }
+
       changes.needUpload = true;
       // update the per-attribute flags that track our dirty state
       for (const key of Object.keys(changes)) this._lastModifiedTimes[key] = Date.now();
@@ -72,7 +74,7 @@ class DraftChangeSet extends EventEmitter {
       this.debounceCommit();
     }
 
-    this.callbacks.onAddChanges(changes);
+    this.callbacks.onAddChanges(changes, !skipSyncToMain);
   }
 
   addPluginMetadata(pluginId, metadata) {
@@ -112,8 +114,8 @@ class DraftChangeSet extends EventEmitter {
     this._timer = setTimeout(() => this.commit('debounceCommit'), SaveAfterIdleMSec);
   }
 
-  async commit(arg) {
-    if (this.dirtyFields().length === 0 && !this._draftDirty && arg !== 'force') {
+  async commit(arg, force = false) {
+    if (this.dirtyFields().length === 0 && !this._draftDirty && arg !== 'force' && !force) {
       return;
     }
     if (this._timer) {
@@ -146,7 +148,7 @@ function hotwireDraftBodyState(draft) {
     set: function(inHTML) {
       _bodyHTMLCache = inHTML;
       try {
-        draft.bodyEditorState = convertFromHTML(inHTML);
+        draft.bodyEditorState = convertFromHTML(inHTML, draft.defaultValues);
       } catch (e) {
         AppEnv.reportError(e, { errorData: { htm: inHTML, id: (draft || {}).id } });
       }
@@ -238,7 +240,7 @@ export default class DraftEditingSession extends MailspringStore {
 
     this.messageId = messageId;
     this.changes = new DraftChangeSet({
-      onAddChanges: changes => this.changeSetApplyChanges(changes),
+      onAddChanges: (changes, syncToMain) => this.changeSetApplyChanges(changes, syncToMain),
       onCommit: arg => this.changeSetCommit(arg), // for specs
     });
 
@@ -552,20 +554,20 @@ export default class DraftEditingSession extends MailspringStore {
       warnings.push('without an attachment');
     }
 
-    // if (!unnamedRecipientPresent) {
-    //   // https://www.regexpal.com/?fam=99334
-    //   // note: requires that the name is capitalized, to avoid catching "Hey guys"
-    //   const englishSalutationPhrases = /(?:[y|Y]o|[h|H]ey|[h|H]i|[M|m]orning|[A|a]fternoon|[E|e]vening|[D|d]ear){1} ([A-Z][A-Za-zÀ-ÿ. ]+)[!_—,.\n\r< -]/;
-    //   const match = englishSalutationPhrases.exec(cleaned);
-    //   if (match) {
-    //     const salutation = (match[1] || '').toLowerCase();
-    //     if (!allNames.find(n => n === salutation || (n.length > 1 && salutation.includes(n)))) {
-    //       warnings.push(
-    //         `addressed to a name that doesn't appear to be a recipient ("${salutation}")`
-    //       );
-    //     }
-    //   }
-    // }
+    if (!unnamedRecipientPresent) {
+      //   // https://www.regexpal.com/?fam=99334
+      //   // note: requires that the name is capitalized, to avoid catching "Hey guys"
+      //   const englishSalutationPhrases = /(?:[y|Y]o|[h|H]ey|[h|H]i|[M|m]orning|[A|a]fternoon|[E|e]vening|[D|d]ear){1} ([A-Z][A-Za-zÀ-ÿ. ]+)[!_—,.\n\r< -]/;
+      //   const match = englishSalutationPhrases.exec(cleaned);
+      //   if (match) {
+      //     const salutation = (match[1] || '').toLowerCase();
+      //     if (!allNames.find(n => n === salutation || (n.length > 1 && salutation.includes(n)))) {
+      //       warnings.push(
+      //         `addressed to a name that doesn't appear to be a recipient ("${salutation}")`
+      //       );
+      //     }
+      //   }
+    }
 
     // Check third party warnings added via Composer extensions
     for (const extension of ComposerExtensionRegistry.extensions()) {
@@ -785,15 +787,18 @@ export default class DraftEditingSession extends MailspringStore {
   get needsSyncToMain() {
     return !AppEnv.isMainWindow() && this._needsSyncWithMain;
   }
-  updateAttachments(files) {
+  updateAttachments(files, { commit = true } = {}) {
     if (this._draft && Array.isArray(files)) {
       this._draft.files = files;
       this.needUpload = true;
-      this._draft.pristine = false;
+      if (files.every(f => !f.isSigOrTempAttachments)) {
+        this._draft.pristine = false;
+      }
       this.needsSyncToMain = true;
+      console.log(`commit ${commit}`);
       if (!AppEnv.isMainWindow()) {
-        this.syncDraftDataToMainNow({ forceCommit: true });
-      } else {
+        this.syncDraftDataToMainNow({ forceCommit: commit });
+      } else if (commit) {
         this.changeSetCommit(`attachments change`);
       }
     } else {
@@ -825,7 +830,7 @@ export default class DraftEditingSession extends MailspringStore {
     }
   };
 
-  changeSetApplyChanges = changes => {
+  changeSetApplyChanges = (changes, syncToMain = true) => {
     if (this._destroyed) {
       return;
     }
@@ -843,7 +848,9 @@ export default class DraftEditingSession extends MailspringStore {
       }
     }
     this.trigger();
-    this.needsSyncToMain = true;
+    if (syncToMain) {
+      this.needsSyncToMain = true;
+    }
   };
   _onDraftAttachmentStateChange = ({ messageId, draftState }) => {
     if (!this._draft) {

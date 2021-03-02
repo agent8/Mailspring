@@ -5,14 +5,16 @@ import {
   LabelColorizer,
   BoldedSearchResult,
 } from 'mailspring-component-kit';
-import { Label, Utils, React, PropTypes } from 'mailspring-exports';
+import { Utils, React, PropTypes } from 'mailspring-exports';
 
 export default class CategorySelection extends React.Component {
   static propTypes = {
     accountUsesLabels: PropTypes.bool,
     all: PropTypes.array,
+    needToHideCategories: PropTypes.array,
     current: PropTypes.object,
     onSelect: PropTypes.func,
+    disabled: PropTypes.bool,
   };
 
   constructor(props) {
@@ -27,6 +29,7 @@ export default class CategorySelection extends React.Component {
     if (!this.props.all) {
       return [];
     }
+    const needToHideCategories = this.props.needToHideCategories || [];
     return this.props.all
       .sort((a, b) => {
         // var pathA = utf7.imap.decode(a.name || a.path).toUpperCase();
@@ -41,9 +44,11 @@ export default class CategorySelection extends React.Component {
         }
         return 0;
       })
-      .filter(c =>
-        // Utils.wordSearchRegExp(this.state.searchValue).test(utf7.imap.decode(c.name || c.path))
-        Utils.wordSearchRegExp(this.state.searchValue).test(c.name || utf7.imap.decode(c.path))
+      .filter(
+        c =>
+          // Utils.wordSearchRegExp(this.state.searchValue).test(utf7.imap.decode(c.name || c.path))
+          Utils.wordSearchRegExp(this.state.searchValue).test(c.name || utf7.imap.decode(c.path)) &&
+          !needToHideCategories.includes(c)
       )
       .map(c => {
         c.backgroundColor = LabelColorizer.backgroundColorDark(c);
@@ -61,10 +66,18 @@ export default class CategorySelection extends React.Component {
       icon = <div className="empty-icon" />;
       item.path = '(None)';
     } else {
+      let iconName = item.name.toLowerCase();
+      if (iconName === 'deleted') {
+        iconName = 'trash';
+      } else if (!['sent', 'drafts', 'junk', 'archive', 'trash'].includes(iconName)) {
+        iconName = item.isLabel() ? 'label' : 'folder';
+      }
       icon = (
         <RetinaImg
-          name={`${item.name}.png`}
-          fallback={item.isLabel() ? 'tag.png' : 'folder.png'}
+          isIcon
+          name={`${iconName}.svg`}
+          fallback={item.isLabel() ? 'label.svg' : 'folder.svg'}
+          style={{ width: 20, height: 20 }}
           mode={RetinaImg.Mode.ContentIsMask}
         />
       );
@@ -104,6 +117,14 @@ export default class CategorySelection extends React.Component {
         placeholder={placeholder}
         value={this.state.searchValue}
         onChange={this._onSearchValueChange}
+      />,
+      <RetinaImg
+        key="search-icon"
+        isIcon
+        name="search.svg"
+        className="search-accessory search"
+        mode={RetinaImg.Mode.ContentIsMask}
+        style={{ height: 20, width: 20, position: 'absolute', left: 10, marginTop: 1 }}
       />,
     ];
 

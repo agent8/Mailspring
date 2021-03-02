@@ -2,6 +2,8 @@ import MailspringStore from 'mailspring-store';
 import Actions from '../actions';
 import Message from '../models/message';
 import Thread from '../models/thread';
+import Matcher from '../attributes/matcher';
+import JoinTable from '../models/join-table';
 import Category from '../models/category';
 import DatabaseStore from './database-store';
 import DraftCacheStore from './draft-cache-store';
@@ -14,6 +16,7 @@ import FocusedContentStore from './focused-content-store';
 import * as ExtensionRegistry from '../../registries/extension-registry';
 import { ipcRenderer } from 'electron';
 import fs from 'fs';
+const isMessageView = AppEnv.isDisableThreading();
 
 const FolderNamesHiddenByDefault = ['spam', 'trash'];
 const AutoDownloadSizeThreshHold = 2 * 1024 * 1024;
@@ -237,6 +240,7 @@ class MessageStore extends MailspringStore {
     this.listenTo(AttachmentStore, this._onAttachmentCacheChange);
     // this.listenTo(Actions.focusThreadMainWindow, this._onFocusThreadMainWindow);
     this.listenTo(Actions.pushToFetchAttachmentsQueue, this._onRequestAttachmentQueue);
+    this.listenTo(Actions.setMessagesReadUnread, this._markMessagesAsReadUnread);
   }
   _onRequestAttachmentQueue = (
     data = { accountId: '', missingItems: [], needProgress: false, source: '' }
@@ -394,10 +398,19 @@ class MessageStore extends MailspringStore {
   _onDataChanged(change) {
     if (!this._thread) return;
     if (change.objectClass === Message.name) {
-      const inDisplayedThread = change.objects.some(obj => obj.threadId === this._thread.id);
-      if (!inDisplayedThread && change.type === 'persist') return;
-      const messages = change.objects.filter(msg => msg.threadId === this._thread.id);
-      const drafts = messages.filter(msg => msg.draft && !msg.calendarReply && !msg.ignoreSift);
+      const messages = [];
+      const drafts = [];
+      change.objects.forEach(msg => {
+        if (msg && msg.threadId === this._thread.id) {
+          messages.push(msg);
+          if (msg.draft && !msg.calendarReply && !msg.ignoreSift) {
+            drafts.push(msg);
+          }
+        }
+      });
+      if (messages.length === 0 && change.type === 'persist') {
+        return;
+      }
       if (drafts.length > 0) {
         if (change.type === 'persist') {
           drafts.forEach(item => {
@@ -406,13 +419,13 @@ class MessageStore extends MailspringStore {
               AppEnv.logDebug(
                 `MessageStore: Draft ${item.id} added in db, updating items deleted ${item.deleted}`
               );
-              this._items = [].concat(this._items, [item]).filter(m => !m.isHidden());
+              this._items = [].concat(this._items, [item]);
             } else {
               AppEnv.logDebug(`MessageStore: Draft ${item.id} db change, updating sync state`);
               this._items[itemIndex].syncState = item.syncState;
             }
           });
-          this._items = this._sortItemsForDisplay(this._items);
+          this._items = this._sortItemsForDisplay(this._items.filter(m => !m.isHidden()));
         } else if (change.type === 'unpersist') {
           drafts.forEach(item => {
             const itemIndex = this._items.findIndex(msg => msg.id === item.id);
@@ -451,7 +464,14 @@ class MessageStore extends MailspringStore {
             }
           });
           if (categoryIds.length > 0) {
-            query.where([Thread.attributes.categories.containsAny(categoryIds)]);
+            query.where(
+              new Matcher.JoinAnd([
+                Thread.attributes.categories.containsAny(categoryIds),
+                JoinTable.useAttribute(isMessageView ? 'messageId' : 'threadId', 'String').equal(
+                  this._thread.id
+                ),
+              ])
+            );
           }
         }
         query.then(thread => {
@@ -628,6 +648,19 @@ class MessageStore extends MailspringStore {
   }
   markAsRead = source => {
     this._markAsRead(source);
+  };
+  _markMessagesAsReadUnread = ({ messageIds, unread, source }) => {
+    if (!this._thread) return;
+    const messages = this.getAllItems().filter(message => {
+      return message && messageIds.includes(message.id);
+    });
+    if (messages.length > 0) {
+      const tasks = TaskFactory.taskForSettingUnread({ messages, unread, source });
+      if (tasks.length > 0) {
+        this._lastMarkedAsReadThreadId = this._thread.id;
+        Actions.queueTasks(tasks);
+      }
+    }
   };
 
   _markAsRead(source = 'MessageStore:Thread Selected') {

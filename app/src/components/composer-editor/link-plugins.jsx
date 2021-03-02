@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Mark, Block, Text } from 'slate';
-import AutoReplace from 'slate-auto-replace';
+// import AutoReplace from 'slate-auto-replace';
 import { RegExpUtils } from 'mailspring-exports';
 import { BLOCK_CONFIG } from './base-block-plugins';
 import { BuildMarkButtonWithValuePicker, getMarkOfType } from './toolbar-component-factories';
@@ -77,44 +77,45 @@ function onPaste(event, change, editor) {
   }
 }
 
-function buildAutoReplaceHandler({ hrefPrefix = '' } = {}) {
-  return function (transform, e, matches, editor) {
-    if (transform.value.activeMarks.find(m => m.type === LINK_TYPE)) {
-      if (['Return', 'Enter'].includes(e.key)) {
-        e.preventDefault();
-        return transform.splitBlock();
-      } else {
-        return transform.insertText(TriggerKeyValues[e.key]);
-      }
-    }
-    const link = matches.before[matches.before.length - 1];
-    let originalText = '';
-    for (let i = 0; i < transform.value.texts.size; i++) {
-      originalText += transform.value.texts.get(i).text;
-    }
-    if (transform.value.endOffset) {
-      originalText = originalText.slice(0, transform.value.endOffset);
-    }
-    const linkIndex = originalText.lastIndexOf(link);
-    const mark = Mark.create({ type: LINK_TYPE, data: { href: hrefPrefix + link } });
-    let deleteLength;
-    if (linkIndex === originalText.length - link.length) {
-      deleteLength = link.length;
-      transform.deleteBackward(deleteLength)
-        .addMark(mark)
-        .insertText(link)
-        .removeMark(mark);
-      console.log('replaced removed');
-    }
-    console.log(`bulidAutoReplaceHandler ${originalText} ${JSON.stringify(matches)}`);
-    if (['Return', 'Enter'].includes(e.key)) {
-      e.preventDefault();
-      return transform.splitBlock();
-    } else {
-      return transform.insertText(TriggerKeyValues[e.key]);
-    }
-  };
-}
+// function buildAutoReplaceHandler({ hrefPrefix = '' } = {}) {
+//   return function(transform, e, matches, editor) {
+//     if (transform.value.activeMarks.find(m => m.type === LINK_TYPE)) {
+//       if (['Return', 'Enter'].includes(e.key)) {
+//         e.preventDefault();
+//         return transform.splitBlock();
+//       } else {
+//         return transform.insertText(TriggerKeyValues[e.key]);
+//       }
+//     }
+//     const link = matches.before[matches.before.length - 1];
+//     let originalText = '';
+//     for (let i = 0; i < transform.value.texts.size; i++) {
+//       originalText += transform.value.texts.get(i).text;
+//     }
+//     if (transform.value.endOffset) {
+//       originalText = originalText.slice(0, transform.value.endOffset);
+//     }
+//     const linkIndex = originalText.lastIndexOf(link);
+//     const mark = Mark.create({ type: LINK_TYPE, data: { href: hrefPrefix + link } });
+//     let deleteLength;
+//     if (linkIndex === originalText.length - link.length) {
+//       deleteLength = link.length;
+//       transform
+//         .deleteBackward(deleteLength)
+//         .addMark(mark)
+//         .insertText(link)
+//         .removeMark(mark);
+//       console.log('replaced removed');
+//     }
+//     console.log(`bulidAutoReplaceHandler ${originalText} ${JSON.stringify(matches)}`);
+//     if (['Return', 'Enter'].includes(e.key)) {
+//       e.preventDefault();
+//       return transform.splitBlock();
+//     } else {
+//       return transform.insertText(TriggerKeyValues[e.key]);
+//     }
+//   };
+// }
 
 function renderMark({ mark, children, targetIsHTML }) {
   if (mark.type !== LINK_TYPE) {
@@ -138,7 +139,7 @@ function renderMark({ mark, children, targetIsHTML }) {
       }
     };
     return (
-      <span className="link" title={href} onClick={onClick}>
+      <span className="link" spellCheck={false} title={href} onClick={onClick}>
         {children}
       </span>
     );
@@ -166,11 +167,11 @@ const rules = [
   },
 ];
 
-const TriggerKeyValues = {
-  ' ': ' ',
-  Enter: '\n',
-  Return: '\n',
-};
+// const TriggerKeyValues = {
+//   ' ': ' ',
+//   Enter: '\n',
+//   Return: '\n',
+// };
 
 export default [
   {

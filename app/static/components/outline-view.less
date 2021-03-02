@@ -5,6 +5,7 @@
 
 .nylas-outline-view {
   order: 1;
+
   .missing-shadow-patch(@bgColor: @source-list-active-bg) {
     content: '';
     display: block;
@@ -22,6 +23,13 @@
   section.item-children {
     padding-left: @padding-base-horizontal;
     margin-bottom: 0;
+  }
+
+  .sidebar-add-folder {
+    color: @accent-primary;
+    font-weight: 600;
+    letter-spacing: -0.26px;
+    padding-left: 1px;
   }
 
   .sidebar-divider {
@@ -53,9 +61,11 @@
       margin-left: @padding-small-horizontal;
       margin-right: @padding-small-horizontal;
       cursor: pointer;
+
       img {
         background: @text-color-very-subtle;
       }
+
       display: none;
     }
 
@@ -76,42 +86,151 @@
       }
     }
   }
+  .item-container.inEditMode {
+    .disclosure-triangle {
+      transition: margin-right 300ms;
+      margin-right: 24px;
+    }
+    .icon.icon-drag {
+      display: inline-block;
+      order: 2;
+      .edison-icon-drag-handle {
+        color: @gray-light;
+      }
+    }
+  }
+  .item-container.selected.isDragging,
+  .item-container.selected:hover.isDragging,
+  .item-container.isDragging,
+  .item-container:hover.isDragging {
+    &:hover .item {
+      background-color: @white;
+    }
+    &:before {
+      background-color: @white;
+    }
+    cursor: grabbing;
+    box-shadow: 0 0 10px 0 rgba(51, 51, 51, 0.08);
+    background-color: @white;
+    .item {
+      background-color: @white;
+      .name {
+        background-color: @white;
+      }
+    }
+  }
 
   .item-container {
     display: flex;
     position: relative;
     cursor: pointer;
     // margin-bottom: 6px;
+    .checkmark.disabled .inner,
+    .checkmark.disabled.checked .inner {
+      background-color: @gray-light;
+    }
+    .checkmark {
+      cursor: pointer;
+      &.checked::after {
+        visibility: hidden;
+      }
+
+      &::after {
+        display: block;
+        content: '';
+        height: 18px;
+        width: 18px;
+        border-radius: 50%;
+        background: @gray-lighter;
+        position: absolute;
+        top: 10px;
+        left: 20px;
+      }
+
+      .inner {
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        display: block;
+        width: 18px;
+        height: 18px;
+        .icon-mixin('../static/icons/check-empty.svg', @white, 24px);
+        border: none;
+      }
+
+      &.checked {
+        .inner {
+          .icon-mixin('../static/icons/check.svg', @blue, 24px);
+        }
+      }
+    }
+
     &.selected {
-      background-color: @source-list-active-bg;
+      //background-color: @source-list-active-bg;
+      .new-folder-edit {
+        .item-input {
+          color: @gray-light;
+          background-color: unset;
+          border: none;
+          box-shadow: unset;
+          outline: unset;
+        }
+        .edison-icon-close:before {
+          color: @gray;
+        }
+      }
       .name {
         font-weight: 600;
       }
+
       &:before {
         .missing-shadow-patch(@source-list-active-bg);
       }
     }
+
     &.dropping {
       background-color: lighten(@source-list-bg, 20%);
+
       .item {
         color: @source-list-active-color;
-        .name{
+
+        .name {
           color: @source-list-active-color;
         }
+
         img.content-mask {
           background-color: @source-list-active-color;
         }
+
         .edison-icon {
           color: @source-list-active-color;
         }
       }
     }
+    &.droppingCategory {
+      background-color: @outline-item-active-bg;
+
+      .item {
+        color: @outline-item-active-bg;
+
+        img.content-mask {
+          background-color: @outline-item-active-bg;
+        }
+
+        .edison-icon {
+          color: @outline-item-active-bg;
+        }
+      }
+    }
+
     &.selected:hover,
     &:hover {
-      background-color: @source-list-active-bg;
+      //background-color: @source-list-active-bg;
+
       &:before {
         .missing-shadow-patch(@source-list-active-bg);
       }
+
       .item.selected,
       .item {
         background-color: @source-list-active-bg;
@@ -126,16 +245,50 @@
       background: inherit;
       width: 38px;
       margin-right: 0;
-      &.visible {
-        visibility: hidden;
+      background-color: @outline-item-active-bg;
+
+      &.force-visible {
+        visibility: visible;
+        background-color: transparent;
+      }
+      & > .edison-icon {
+        transform: rotate(0deg);
+        border-top: unset;
+        border-bottom: unset;
+        border-left: unset;
+        width: auto;
+        color: @gray-light;
+        &.collapsed {
+          transform: rotate(-90deg);
+        }
       }
     }
 
     &:hover {
       .disclosure-triangle {
-        &.visible {
+        &.hover-visible {
           visibility: visible;
         }
+      }
+    }
+  }
+
+  .item-dropping-mirage {
+    background: red;
+    height: 36px;
+  }
+
+  .item.inEditMode {
+    padding-left: 47px;
+    padding-right: 31px;
+    transition: padding 300ms;
+    .name {
+      padding-left: 1px;
+      padding-right: 6px;
+    }
+    &.disabled {
+      .sidebar-add-folder {
+        color: @gray-light;
       }
     }
   }
@@ -161,9 +314,11 @@
       width: 3px;
     }
 
+    transition: padding-left 300ms;
     // The overflow needs to be `hidden` in order for the name to flex
     // fit within the contained space.
     overflow: hidden;
+
     &.more-or-less-item {
       justify-content: flex-start;
 
@@ -174,22 +329,27 @@
           }
         }
       }
+
       .more-or-less-triangle {
         order: 2;
         margin-left: 4px;
+
         .edison-icon-down-arrow {
           transform: rotate(180deg);
           color: @gray-light;
+
           &.collapsed {
             transform: rotate(0deg);
           }
         }
       }
     }
+
     img.content-mask {
       background-color: @light-grey;
       vertical-align: text-bottom;
     }
+
     .edison-icon {
       vertical-align: middle;
       color: @light-grey;
@@ -198,6 +358,7 @@
     .icon {
       flex-shrink: 0;
       order: 1;
+
       img {
         border-radius: 50%;
         vertical-align: bottom;
@@ -220,16 +381,19 @@
             background-color: @blue;
           }
         }
+
         &.sift-Bill {
           img {
             background-color: @green;
           }
         }
+
         &.sift-Packages {
           img {
             background-color: @purple;
           }
         }
+
         &.sift-Entertainment {
           img {
             background-color: @orange;
@@ -237,6 +401,7 @@
         }
       }
     }
+
     .name {
       order: 2;
       padding-left: 12px;
@@ -249,6 +414,7 @@
       white-space: nowrap;
       flex: 1;
     }
+
     .more-or-less {
       order: 1;
       flex: unset;
@@ -259,6 +425,7 @@
       letter-spacing: -0.26px;
       line-height: 14px;
     }
+
     .item-count-box {
       order: 3;
       flex-shrink: 0;
@@ -267,6 +434,9 @@
       margin-left: @padding-small-horizontal * 0.8;
       // box-shadow: 0 0.5px 0 @count-color, 0 -0.5px 0 @count-color, 0.5px 0 0 @count-color, -0.5px 0 0 @count-color;
       text-align: right;
+      //&:hover{
+      //  visibility: hidden;
+      //}
       .count {
         &::after {
           content: '+';
@@ -275,6 +445,7 @@
           position: relative;
           top: -1px;
         }
+
         &.over-99 {
           &::after {
             visibility: visible;
@@ -282,16 +453,19 @@
         }
       }
     }
+
     .item-count-box.critical-count {
       line-height: initial;
       color: @outbox-failed;
     }
+
     .item-count-box.alt-count {
       line-height: initial;
       color: @gray-light;
       background: none;
       box-shadow: none;
     }
+
     .item-count-box.archive,
     .item-count-box.all,
     .item-count-box.spam {
@@ -301,17 +475,21 @@
     &.selected {
       background: @source-list-active-bg;
       color: @source-list-active-color;
+
       img.content-mask {
         background-color: @text-color;
       }
+
       .edison-icon {
         color: @text-color;
       }
+
       .name {
         font-weight: bold;
         color: @text-color;
         opacity: 0.87;
       }
+
       &.jira-icon {
         .edison-icon {
           color: #0052cc;
@@ -320,29 +498,44 @@
         }
       }
     }
+
     &.dropping {
-      background-color: lighten(@source-list-bg, 20%);
+      background-color: lighten(@outline-item-active-bg, 20%);
       color: @source-list-active-color;
+
       img.content-mask {
-        background-color: @source-list-active-color;
+        background-color: @outline-item-active-bg;
       }
+
       .edison-icon {
-        color: @source-list-active-color;
+        color: @outline-item-active-bg;
       }
     }
+
     &.editing {
       align-items: center;
-
-      .item-input {
+      .edit-folder-container {
         order: 2;
-        font-size: @font-size-small;
-        margin-left: @padding-small-horizontal * 0.3;
-        height: 22px;
-        padding-left: 0;
-        text-indent: @padding-small-horizontal * 0.55;
-        width: 85%;
+        .item-input {
+          color: @gray-light;
+          background-color: unset;
+          border: none;
+          box-shadow: unset;
+          outline: unset;
+          order: 2;
+          //font-size: @font-size-small;
+          //margin-left: @padding-small-horizontal * 0.3;
+          //height: 22px;
+          //padding-left: 0;
+          //text-indent: @padding-small-horizontal * 0.55;
+          //width: 85%;
+        }
+        .edison-icon-close:before {
+          color: @gray;
+        }
       }
     }
+
     // &:hover {
     //   cursor: default;
     // }
@@ -353,16 +546,19 @@
       .name {
         display: none;
       }
+
       .icon {
         display: block;
       }
     }
   }
+
   &.name-only {
     .item {
       .name {
         display: block;
       }
+
       .icon {
         display: none;
       }

@@ -86,7 +86,7 @@ export default class File extends Model {
     if (!tmp.contentType && tmp.mimeType) {
       tmp.contentType = tmp.mimeType;
     }
-    tmp.missingData = !tmp.hasOwnProperty('size');
+    tmp.missingData = !Object.prototype.hasOwnProperty.call(tmp, 'size');
     return tmp;
   }
   constructor({ mimeType = '', ...extra } = {}) {
@@ -96,6 +96,10 @@ export default class File extends Model {
     }
     if (this.mimeType && !this.contentType) {
       this.contentType = this.mimeType;
+    }
+    if (this.size && typeof this.size === 'string') {
+      const tmp = parseInt(this.size, 10);
+      this.size = isNaN(tmp) ? 0 : tmp;
     }
   }
   fromJSON(json) {
@@ -131,7 +135,7 @@ export default class File extends Model {
   safeDisplayName() {
     // RegExpUtils = RegExpUtils || require('../../regexp-utils');
     // return this.displayName().replace(RegExpUtils.illegalPathCharactersRegexp(), '-');
-    return this.displayName();
+    return this.displayName().replace(/\//g, ':');
   }
 
   // Public: Returns the file extension that should be used for this file.

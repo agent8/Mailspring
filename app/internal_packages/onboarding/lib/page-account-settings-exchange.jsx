@@ -24,7 +24,7 @@ class AccountExchangeSettingsForm extends React.Component {
   };
 
   static subtitleLabel = () => {
-    return 'Complete the User and Server info below to connect your account.\n Support Exchange Server 2013 SP1 or newer.';
+    return 'Complete the User and Server info below to connect your account.\n Support Exchange Server 2010 SP2 or newer.';
   };
 
   static validateAccount = account => {
@@ -47,7 +47,9 @@ class AccountExchangeSettingsForm extends React.Component {
   UNSAFE_componentWillMount() {
     // auto fill username
     this.props.account.settings['ews_email'] = this.props.account.emailAddress;
-    this.props.account.settings['ews_username'] = this.props.account.emailAddress;
+    if (this.props.account.lastVerified === 0) {
+      this.props.account.settings['ews_username'] = '';
+    }
   }
 
   renderUserInfo() {

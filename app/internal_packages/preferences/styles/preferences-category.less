@@ -5,6 +5,9 @@
   margin: @padding-large-vertical * 1.5 0;
 }
 .category-picker-dropdown.readonly {
+  .edison-icon {
+    color: @gray;
+  }
   img.content-mask {
     background-color: @gray;
   }
@@ -20,38 +23,37 @@ input.search {
   box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.05), 0 1px 0 rgba(0, 0, 0, 0.05);
   color: @text-color;
   padding-left: 0;
-  background-repeat: no-repeat;
-  background-image: url('../static/images/search/searchloupe@2x.png');
-  background-size: 15px 15px;
-  background-position: 7px 4px;
   text-indent: 31px;
 }
 
-.role-section {
-  height: 25px;
-  padding: 2px 0;
-  display: flex;
-  line-height: 19px;
-  &.inbox {
-    display: none;
-  }
+.category-mapper-container {
+  .role-section {
+    height: 25px;
+    padding: 2px 0;
+    display: flex;
+    line-height: 24px;
+    margin-bottom: 8px;
+    &.inbox {
+      display: none;
+    }
 
-  .col-left {
-    width: 68px;
-  }
-  .col-right {
-    flex: 1;
+    .col-left {
+      width: 68px;
+    }
+    .col-right {
+      flex: 1;
 
-    .btn.dropdown-menu {
-      border: 1px solid @dropdown-default-border-color;
-      color: @dropdown-default-text-color;
-      background: @dropdown-default-bg-color;
-      border-radius: 5px;
-      box-shadow: 0 0.5px 1px 0 rgba(0, 0, 0, 0.1);
-      vertical-align: top;
-      padding-right: 0;
-      .content-container {
-        padding-left: 11px;
+      .btn.dropdown-menu {
+        border: 1px solid @dropdown-default-border-color;
+        color: @dropdown-default-text-color;
+        background: @dropdown-default-bg-color;
+        border-radius: 5px;
+        box-shadow: 0 0.5px 1px 0 rgba(0, 0, 0, 0.1);
+        vertical-align: top;
+        padding-right: 0;
+        .content-container {
+          padding-left: 11px;
+        }
       }
     }
   }

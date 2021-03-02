@@ -2,10 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from '../slate-react';
 import { clipboard as ElectronClipboard } from 'electron';
+import _ from 'underscore';
 
 import KeyCommandsRegion from '../key-commands-region';
 import ComposerEditorToolbar from './composer-editor-toolbar';
-import { plugins as insidePlugins, convertFromHTML, convertToHTML } from './conversion';
+import {
+  plugins as insidePlugins,
+  convertFromHTML,
+  convertToHTML,
+  convertEdisonImageFilesToInline,
+} from './conversion';
 import { lastUnquotedNode } from './base-block-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
 import { changes as InlineResizableImageChanges } from './image-plugins';
@@ -13,9 +19,22 @@ import { shortCutsUtils } from './system-text-replacements-plugins';
 
 const TOOLBAR_MIN_WIDTH = 628;
 
+// The key for trigger spellcheck
+const whiteSpaceAndPunctuation = ['.', ',', ';', ':', "'", '"', ' ', 'Enter'];
+
 export default class ComposerEditor extends React.Component {
   static propTypes = {
     readOnly: PropTypes.bool,
+    outerPlugin: PropTypes.array,
+    onChange: PropTypes.func,
+    value: PropTypes.object,
+    propsForPlugins: PropTypes.object,
+    onFileReceived: PropTypes.func,
+    onPasteHtmlHasFiles: PropTypes.func,
+    className: PropTypes.string,
+    onBlur: PropTypes.func,
+    onDrop: PropTypes.func,
+    onAddAttachments: PropTypes.func,
   };
   static defaultProps = {
     readOnly: false,
@@ -45,6 +64,7 @@ export default class ComposerEditor extends React.Component {
     });
     this.state = {
       isCrowded: false,
+      spellCheckEnabled: true,
     };
   }
 
@@ -77,8 +97,9 @@ export default class ComposerEditor extends React.Component {
 
   focus = () => {
     const { onChange, value } = this.props;
-    const defaultFont = AppEnv.config.get('core.fontface');
-    const defaultSize = AppEnv.config.get('core.fontsize');
+    const draft = (this.props.propsForPlugins || {}).draft || { defaultValues: {} };
+    const defaultFont = draft.defaultValues.fontFace || AppEnv.config.get('core.fontface');
+    const defaultSize = draft.defaultValues.fontSize || AppEnv.config.get('core.fontsize');
     onChange(
       value
         .change()
@@ -171,6 +192,13 @@ export default class ComposerEditor extends React.Component {
   };
 
   onCopy = (event, change, editor) => {
+    const selection = window.document.getSelection();
+    if (selection) {
+      const node = selection.anchorNode.parentElement;
+      if (node.tagName === 'edo-readonly' || node.closest('edo-readonly')) {
+        return;
+      }
+    }
     event.preventDefault();
     const document = editor.value.document.getFragmentAtRange(editor.value.selection);
     event.clipboardData.setData('text/html', convertToHTML({ document }));
@@ -240,16 +268,26 @@ export default class ComposerEditor extends React.Component {
     // Reinstated because the bug is causing more trouble than it's worth.
     let html = event.clipboardData.getData('text/html');
     if (html) {
-      const newHtml = this._removeAllDarkModeStyles(html);
+      const darkHtml = this._removeAllDarkModeStyles(html);
       let value = null;
+      let newFiles = [];
       try {
-        value = convertFromHTML(newHtml);
+        const ret = convertEdisonImageFilesToInline(darkHtml);
+        value = convertFromHTML(ret.html);
+        newFiles = ret.newFiles;
       } catch (err) {
         console.error('Error: convertFromHTML', err);
-        value = convertFromHTML(html);
+        const ret = convertEdisonImageFilesToInline(html);
+        value = convertFromHTML(ret.html);
+        newFiles = ret.newFiles;
       }
       if (value && value.document) {
         change.insertFragment(value.document);
+        if (newFiles.length > 0) {
+          if (this.props.onPasteHtmlHasFiles) {
+            this.props.onPasteHtmlHasFiles(newFiles);
+          }
+        }
         return true;
       }
     }
@@ -262,24 +300,33 @@ export default class ComposerEditor extends React.Component {
     return html.replace(/(background-color|color):[^;]*?!important;/g, '');
   }
 
-  openContextMenu = ({ word, sel, hasSelectedText }) => {
-    AppEnv.windowEventHandler.openSpellingMenuFor(word, hasSelectedText, {
-      onCorrect: correction => {
-        this.onChange(this.props.value.change().insertText(correction));
+  openContextMenu = ({ word, sel, hasSelectedText }, event) => {
+    AppEnv.openSpellingMenuFor(
+      word,
+      hasSelectedText,
+      {
+        onCorrect: correction => {
+          this.onChange(this.props.value.change().insertText(correction));
+        },
+        onRestoreSelection: () => {
+          this.onChange(this.props.value.change().select(sel));
+        },
       },
-      onRestoreSelection: () => {
-        this.onChange(this.props.value.change().select(sel));
-      },
-    });
+      event
+    );
   };
 
   onContextMenu = event => {
+    if (event.isDefaultPrevented()) {
+      AppEnv.logDebug('Context Menu default prevented, ignoring');
+      return;
+    }
     event.preventDefault();
 
     const word = this.props.value.fragment.text;
     const sel = this.props.value.selection;
     const hasSelectedText = !sel.isCollapsed;
-    this.openContextMenu({ word, sel, hasSelectedText });
+    this.openContextMenu({ word, sel, hasSelectedText }, event);
   };
 
   onChange = nextValue => {
@@ -290,15 +337,56 @@ export default class ComposerEditor extends React.Component {
     this.props.onChange(nextValue);
   };
 
+  _debounceSetState = _.debounce(data => {
+    if (!this._mounted) {
+      return;
+    }
+    // re-determine the language the document is written in
+    this._redetermineLanguage();
+
+    this.setState(data);
+  }, 500);
+
+  _redetermineLanguage = () => {
+    if (!this._mounted) {
+      return;
+    }
+
+    const { value } = this.props;
+    if (value && value.focusBlock) {
+      const text = value.focusBlock.text;
+      if (text.length > 30) {
+        AppEnv.spellchecker.provideHintText(text.substr(text.length - 512, 512));
+      }
+    }
+  };
+
+  onKeyDown = (event, spellcheckSetting) => {
+    if (!spellcheckSetting) {
+      return;
+    }
+    if (!this._mounted) {
+      return;
+    }
+    const spellCheckEnabled = whiteSpaceAndPunctuation.includes(event.key);
+    if (spellCheckEnabled !== this.state.spellCheckEnabled) {
+      this.setState({ spellCheckEnabled });
+    }
+    // enable check, after user stop typing
+    this._debounceSetState({ spellCheckEnabled: true });
+  };
+
   // Event Handlers
   render() {
     const { className, onBlur, onDrop, value, propsForPlugins, onAddAttachments } = this.props;
+    const { spellCheckEnabled } = this.state;
     const draftDefaultValues =
       this.props.propsForPlugins && this.props.propsForPlugins.draft
         ? this.props.propsForPlugins.draft.defaultValues
         : {};
     const defaultFontFace = (draftDefaultValues || {}).fontFace || 'sans-serif';
     const defaultFontSize = (draftDefaultValues || {}).fontSize || '14px';
+    const spellcheckSetting = AppEnv.config.get('core.composing.spellcheck');
     return (
       <KeyCommandsRegion
         className={`RichEditor-root ${className || ''}`}
@@ -324,6 +412,7 @@ export default class ComposerEditor extends React.Component {
               <p.topLevelComponent key={idx} value={value} onChange={this.onChange} />
             ))}
           <Editor
+            onKeyDown={e => this.onKeyDown(e, spellcheckSetting)}
             style={{ fontFace: defaultFontFace, fontSize: defaultFontSize }}
             value={value}
             onChange={this.onChange}
@@ -332,7 +421,10 @@ export default class ComposerEditor extends React.Component {
             onCut={this.onCut}
             onCopy={this.onCopy}
             onPaste={this.onPaste}
-            spellCheck={false}
+            onFocus={() => {
+              this.setState({ spellCheckEnabled: true });
+            }}
+            spellCheck={spellcheckSetting && spellCheckEnabled}
             readOnly={this.props.readOnly}
             plugins={this.plugins}
             propsForPlugins={propsForPlugins}

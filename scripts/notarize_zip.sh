@@ -13,6 +13,6 @@ echo "**** start validate app ****"
 xcrun stapler validate "$app_path"
 ## 5. 压缩
 echo "**** start zip ****"
-rm -f EdisonMail.zip
-zip -9 -y -r -9 -X -q "EdisonMail.zip" "$app_path"
+rm -f "Edison Mail.zip"
+zip -9 -y -r -9 -X -q "Edison Mail.zip" "$app_path"
 echo "**** Done! ****"

@@ -21,6 +21,7 @@ class NativeNotifications {
     canReply,
     silent = false,
     onActivate = () => {},
+    actions = [],
   } = {}) {
     let notif = null;
     if (tag && this._notificationsByTag[tag]) {
@@ -28,15 +29,20 @@ class NativeNotifications {
     }
     notif = remote.getGlobal('application').getNotification({
       title,
-      // bundleId: 'com.edisonmail.edisonmail',
+      bundleId: 'com.edisonmail.edisonmail',
       hasReply: canReply,
       subtitle: subtitle,
       body: body,
+      actions: actions,
       silent: silent,
+      closeButtonText: canReply ? 'Close' : null,
     });
     notif.show();
     notif.on('reply', (event, response) => {
       onActivate({ response, activationType: 'replied' });
+    });
+    notif.on('action', (event, index) => {
+      onActivate({ event, activationType: actions[index] && actions[index].value });
     });
     notif.on('click', () => {
       onActivate({ response: null, activationType: 'clicked' });

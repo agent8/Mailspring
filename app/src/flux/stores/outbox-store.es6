@@ -1,7 +1,4 @@
 import MailspringStore from 'mailspring-store';
-import SendDraftTask from '../tasks/send-draft-task';
-import SyncbackDraftTask from '../tasks/syncback-draft-task';
-import TaskQueue from './task-queue';
 import DatabaseStore from './database-store';
 import Message from '../models/message';
 import FocusedPerspectiveStore from './focused-perspective-store';
@@ -54,7 +51,6 @@ class OutboxStore extends MailspringStore {
 
   constructor() {
     super();
-    this._tasks = [];
     this._dataSource = null;
     this._dataSourceUnlisten = null;
     this._totalInOutbox = 0;
@@ -63,7 +59,6 @@ class OutboxStore extends MailspringStore {
     this._resendingDrafts = {};
     this._resendDraftCheckTimer = null;
     if (AppEnv.isMainWindow()) {
-      this.listenTo(TaskQueue, this._populate);
       this.listenTo(FocusedPerspectiveStore, this._onPerspectiveChanged);
       this.listenTo(FocusedContentStore, this._onFocusedContentChanged);
       this.listenTo(DatabaseStore, this._onDataChanged);
@@ -242,17 +237,9 @@ class OutboxStore extends MailspringStore {
           item: null,
           reason: 'OutboxStore:perspectiveChange',
         });
+        this._selectedDraft = null;
+        this.trigger();
       }
-      this._selectedDraft = null;
-      // if (typeof this._dataSourceUnlisten === 'function') {
-      //   this._dataSourceUnlisten();
-      // }
-      // if (this._dataSource) {
-      //   this.dataSource().selection.clear();
-      //   this._dataSource.cleanup();
-      //   this._dataSource = null;
-      // }
-      this.trigger();
     }
   };
 
@@ -342,17 +329,6 @@ class OutboxStore extends MailspringStore {
     }
     return ret;
   };
-
-  _populate() {
-    const nextTasks = TaskQueue.queue().filter(
-      task => task instanceof SendDraftTask || task instanceof SyncbackDraftTask
-    );
-    if (this._tasks.length === 0 && nextTasks.length === 0) {
-      return;
-    }
-    this._tasks = nextTasks;
-    this.trigger();
-  }
 }
 
 const store = new OutboxStore();

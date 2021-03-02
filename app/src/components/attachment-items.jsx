@@ -8,10 +8,13 @@ import { pickHTMLProps } from 'pick-react-known-prop';
 import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
-import { AttachmentStore, MessageStore, Utils, Constant } from 'mailspring-exports';
+import { AttachmentStore, MessageStore, Utils, Constant, RegExpUtils } from 'mailspring-exports';
 import Actions from '../flux/actions';
-
+import ResizableBox from './resizable-box';
+import { remote } from 'electron';
+const { nativeImage, clipboard } = remote;
 const { AttachmentDownloadState } = Constant;
+const UNPREVIEWABLE_IMAGE_EXTNAMES = ['.heic'];
 
 const propTypes = {
   className: PropTypes.string,
@@ -37,6 +40,9 @@ const propTypes = {
   onRemoveAttachment: PropTypes.func,
   onDownloadAttachment: PropTypes.func,
   onAbortDownload: PropTypes.func,
+  isDownloading: PropTypes.bool,
+  isImage: PropTypes.bool,
+  percent: PropTypes.number,
 };
 
 const defaultProps = {
@@ -78,7 +84,6 @@ function AttachmentActionIcon(props) {
     removeIcon,
     downloadIcon,
     retinaImgMode,
-    onAbortDownload,
     onRemoveAttachment,
     onDownloadAttachment,
     disabled,
@@ -104,6 +109,8 @@ function AttachmentActionIcon(props) {
   if (actionIconName === removeIcon) {
     fileActionIconStyle.opacity = 1;
     fileActionIconStyle.transform = 'scale(0.7)';
+    fileActionIconStyle.width = 'fit-content';
+    fileActionIconStyle.height = 'fit-content';
   }
 
   return (
@@ -188,9 +195,12 @@ export class AttachmentItem extends Component {
   _onDragStart = event => {
     const { contentType, filePath } = this.props;
     if (fs.existsSync(filePath)) {
+      let safeFileName = path
+        .basename(filePath)
+        .replace(RegExpUtils.illegalPathCharactersRegexp(), '_');
       // Note: From trial and error, it appears that the second param /MUST/ be the
       // same as the last component of the filePath URL, or the download fails.
-      const downloadURL = `${contentType}:${path.basename(filePath)}:file://${filePath}`;
+      const downloadURL = `${contentType}:${path.basename(safeFileName)}:file://${filePath}`;
       event.dataTransfer.setData('DownloadURL', downloadURL);
       event.dataTransfer.setData('text/nylas-file-url', downloadURL);
       const el = ReactDOM.findDOMNode(this._fileIconComponent);
@@ -291,12 +301,10 @@ export class AttachmentItem extends Component {
       draggable,
       displayName,
       displaySize,
-      fileIconName,
       filePreviewPath,
       disabled,
       isImage,
       filePath,
-      contentType,
       ...extraProps
     } = this.props;
     const classes = classnames({
@@ -307,7 +315,11 @@ export class AttachmentItem extends Component {
     });
     let { iconName, color } = AttachmentStore.getExtIconName(displayName);
     if (isImage) {
-      if (fs.existsSync(filePath)) {
+      const extName = displayName ? path.extname(displayName) : '';
+      if (
+        !UNPREVIEWABLE_IMAGE_EXTNAMES.includes(extName.toLowerCase()) &&
+        fs.existsSync(filePath)
+      ) {
         filePreviewPath = filePath;
       }
       iconName = 'attachment-img.svg';
@@ -316,7 +328,6 @@ export class AttachmentItem extends Component {
     }
     const style = draggable ? { WebkitUserDrag: 'element' } : null;
     const tabIndex = focusable ? 0 : null;
-    const { devicePixelRatio } = window;
 
     let previewStyle = {};
     if (filePreviewPath) {
@@ -338,20 +349,12 @@ export class AttachmentItem extends Component {
         {...pickHTMLProps(extraProps)}
       >
         <div className="inner">
-          <div
-            className="popup"
-            style={{
-              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
-            }}
-          >
-            Download Success
-          </div>
           <ProgressBar
             isDownloading={this.state.isDownloading}
             percent={this.state.percent}
             disableProgress={this.props.disableProgress}
           />
-          <Flexbox direction="row" style={{ alignItems: 'center' }}>
+          <Flexbox direction="row" style={{ alignItems: 'center', height: 'auto' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
                 {filePreviewPath ? (
@@ -379,8 +382,9 @@ export class AttachmentItem extends Component {
                   {displayName}
                 </div>
                 <div className="file-size">{displaySize ? `${displaySize}` : ''}</div>
-                <div className="attachment-action-bar">
-                  {this._canPreview() ? (
+              </div>
+              <div className="attachment-action-bar">
+                {/* {this._canPreview() ? (
                     <div className="file-action-icon">
                       <RetinaImg
                         className="quicklook-icon"
@@ -391,17 +395,16 @@ export class AttachmentItem extends Component {
                         onClick={!disabled ? this._onClickQuicklookIcon : null}
                       />
                     </div>
-                  ) : null}
-                  <AttachmentActionIcon
-                    {...this.props}
-                    isDownloading={this.state.isDownloading || this.props.isDownloading}
-                    removeIcon="close.svg"
-                    downloadIcon="download.svg"
-                    isIcon
-                    style={{ width: 20, height: 20 }}
-                    retinaImgMode={RetinaImg.Mode.ContentIsMask}
-                  />
-                </div>
+                  ) : null} */}
+                <AttachmentActionIcon
+                  {...this.props}
+                  isDownloading={this.state.isDownloading || this.props.isDownloading}
+                  removeIcon="close.svg"
+                  downloadIcon="download.svg"
+                  isIcon
+                  style={{ width: 20, height: 20 }}
+                  retinaImgMode={RetinaImg.Mode.ContentIsMask}
+                />
               </div>
             </div>
           </Flexbox>
@@ -417,6 +420,9 @@ export class ImageAttachmentItem extends Component {
   static propTypes = {
     imgProps: PropTypes.object,
     onHover: PropTypes.func,
+    onResizeComplete: PropTypes.func,
+    onShowMask: PropTypes.func,
+    onContextMenu: PropTypes.func,
     ...propTypes,
   };
 
@@ -431,7 +437,17 @@ export class ImageAttachmentItem extends Component {
       percent: 0,
       displaySupportPopup: false,
       notReady: false,
+      imgHeight: 0,
+      imgWidth: 0,
+      resizeBoxHeight: 0,
+      resizeBoxWidth: 0,
+      showResizePopup: false,
+      userInputHeight: 0,
+      userInputWidth: 0,
     };
+    this._imageResizePopupOpen = false;
+    this._resizableRef = null;
+    this._setResizableRef = ref => (this._resizableRef = ref);
     this._mounted = false;
   }
 
@@ -525,6 +541,84 @@ export class ImageAttachmentItem extends Component {
       this.props.onHover(event.target);
     }
   };
+  _onCloseResizePopup = () => {
+    this._imageResizePopupOpen = false;
+  };
+  _onImageSelect = event => {
+    if (!this._mounted) {
+      return;
+    }
+    if (this.props.resizable && !this.state.showResizeMask) {
+      const state = { showResizeMask: true };
+      if (this._imgRef) {
+        const el = ReactDOM.findDOMNode(this._imgRef);
+        const rect = el.getBoundingClientRect();
+        state.imgHeight = rect.height;
+        state.imgWidth = rect.width;
+        state.resizeBoxHeight = state.imgHeight;
+        state.resizeBoxWidth = state.imgWidth;
+      }
+      this.setState(state);
+      if (this.props.onShowMask) {
+        this.props.onShowMask(event.target);
+      }
+    } else if (this.props.resizable && this.state.showResizeMask) {
+      this.setState({ showResizeMask: false });
+    }
+  };
+  _onImageDeselect = () => {
+    if (!this._mounted) {
+      return;
+    }
+    if (this.props.resizable) {
+      this.setState({ showResizeMask: false });
+    }
+  };
+  _onCopyImage = cb => {
+    if (this._imgRef) {
+      let img = new Image();
+      img.addEventListener(
+        'load',
+        () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(this._imgRef, 0, 0);
+          const imageDataURL = canvas.toDataURL('image/png');
+          img = nativeImage.createFromDataURL(imageDataURL);
+          clipboard.writeImage(img);
+          if (cb) {
+            cb();
+          }
+        },
+        false
+      );
+      img.src = this._imgRef.src;
+    }
+  };
+
+  _onImageContextMenu = (event, onShowResizePopup) => {
+    if (this.props.onContextMenu) {
+      event.persist();
+      if (this._imgRef && !this._imageResizePopupOpen) {
+        const el = ReactDOM.findDOMNode(this._imgRef);
+        const rect = el.getBoundingClientRect();
+        const showPopup = () => {
+          if (!onShowResizePopup && this._resizableRef) {
+            onShowResizePopup = this._resizableRef.onShowResizePopup;
+          }
+          onShowResizePopup({
+            initialHeight: Math.floor(rect.height),
+            initialWidth: Math.floor(rect.width),
+            y: event.clientY - rect.top,
+            x: event.clientX - rect.left,
+          });
+          this._imageResizePopupOpen = true;
+        };
+        this.props.onContextMenu(event, { onShowPopup: showPopup, onCopyImage: this._onCopyImage });
+      }
+    }
+  };
 
   renderImage() {
     const { isDownloading, filePath, draggable } = this.props;
@@ -535,6 +629,18 @@ export class ImageAttachmentItem extends Component {
         </div>
       );
     }
+    let height, width;
+    if (
+      (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) ||
+      this.props.imgProps
+    ) {
+      width =
+        this.state.imgWidth ||
+        ((this.props.imgProps || {}).width > 0 ? this.props.imgProps.width : 'auto');
+      height =
+        this.state.imgHeight ||
+        ((this.props.imgProps || {}).height > 0 ? this.props.imgProps.height : 'auto');
+    }
     return (
       <img
         ref={ref => (this._imgRef = ref)}
@@ -544,24 +650,40 @@ export class ImageAttachmentItem extends Component {
         alt={`${this.state.notReady}`}
         onLoad={this._onImgLoaded}
         onError={this._onImageError}
+        onClick={this._onImageSelect}
+        onBlur={this._onImageDeselect}
+        onContextMenu={this._onImageContextMenu}
+        style={{ height, width }}
       />
     );
   }
-
-  render() {
+  _renderInnerContainer() {
     const { className, displayName, disabled, ...extraProps } = this.props;
     const classes = `nylas-attachment-item image-attachment-item ${className || ''}`;
+    let style = {};
+    if (this.props.resizable && this.state.imgHeight > 0 && this.state.imgWidth > 0) {
+      style = {
+        display: 'block',
+        width: this.state.imgWidth + 6,
+        height: this.state.imgHeight + 2,
+        maxHeight: this.state.imgHeight + 2,
+        maxWidth: this.state.imgWidth + 6,
+      };
+    } else if (this.props.resizable) {
+      style = { maxWidth: 'fit-content' };
+    }
+    const filePreviewStyle = { paddingRight: '4px' };
+    if (this.props.resizable && this.state.showResizeMask) {
+      filePreviewStyle.zIndex = 0;
+    }
     return (
-      <div className={classes} {...pickHTMLProps(extraProps)} onMouseUp={this._onImageHover}>
+      <div
+        className={classes}
+        {...pickHTMLProps(extraProps)}
+        onMouseUp={this._onImageHover}
+        style={style}
+      >
         <div>
-          <div
-            className="popup"
-            style={{
-              display: `${this.state.displaySupportPopup ? 'inline-block' : 'none'}`,
-            }}
-          >
-            Download Success
-          </div>
           <ProgressBar
             isDownloading={this.state.isDownloading}
             percent={this.state.percent}
@@ -569,13 +691,19 @@ export class ImageAttachmentItem extends Component {
           />
           <AttachmentActionIcon
             {...this.props}
-            removeIcon="image-cancel-button.png"
-            downloadIcon="image-download-button.png"
+            removeIcon="close.svg"
+            downloadIcon="download.svg"
             isDownloading={this.state.isDownloading || this.props.isDownloading}
-            retinaImgMode={RetinaImg.Mode.ContentPreserve}
+            isIcon
+            style={{ width: 20, height: 20 }}
+            retinaImgMode={RetinaImg.Mode.ContentIsMask}
             onAbortDownload={null}
           />
-          <div className="file-preview" onDoubleClick={!disabled ? this._onOpenAttachment : null}>
+          <div
+            className="file-preview"
+            style={filePreviewStyle}
+            onDoubleClick={!disabled ? this._onOpenAttachment : null}
+          >
             <div className="file-name-container">
               <div className="file-name" title={displayName}>
                 {displayName}
@@ -586,5 +714,62 @@ export class ImageAttachmentItem extends Component {
         </div>
       </div>
     );
+  }
+  _onResize = ({ width, height }) => {
+    if (!this._mounted) {
+      return;
+    }
+    if (width > 0 && height > 0) {
+      this.setState({ resizeBoxHeight: height, resizeBoxWidth: width });
+    }
+  };
+  _onResizeComplete = ({ width, height }) => {
+    if (!this._mounted) {
+      return;
+    }
+    if (width > 0 && height > 0) {
+      this.setState(
+        {
+          imgHeight: height,
+          imgWidth: width,
+          resizeBoxHeight: height,
+          resizeBoxWidth: width,
+          showResizeMask: false,
+        },
+        () => {
+          if (!this._mounted) {
+            return;
+          }
+          if (typeof this.props.onResizeComplete === 'function') {
+            this.props.onResizeComplete({ width, height });
+          }
+        }
+      );
+    }
+  };
+  _renderResizableContainer() {
+    return (
+      <ResizableBox
+        ref={this._setResizableRef}
+        onResizePopupClosed={this._onCloseResizePopup}
+        onResizeComplete={this._onResizeComplete}
+        onMaskClicked={this._onImageDeselect}
+        onContextMenu={this._onImageContextMenu}
+        disabledDragPoints={['n', 's', 'w', 'e']}
+        lockAspectRatio={true}
+        showMask={this.state.showResizeMask}
+        height={this.state.resizeBoxHeight}
+        width={this.state.resizeBoxWidth}
+      >
+        {this._renderInnerContainer()}
+      </ResizableBox>
+    );
+  }
+  render() {
+    if (this.props.resizable) {
+      return this._renderResizableContainer();
+    } else {
+      return this._renderInnerContainer();
+    }
   }
 }

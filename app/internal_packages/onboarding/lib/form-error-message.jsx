@@ -14,7 +14,7 @@ const FormErrorMessage = props => {
     const onViewLog = () => {
       const logPath = temp.path({ suffix: '.log' });
       fs.writeFileSync(logPath, log);
-      remote.shell.openItem(logPath);
+      remote.shell.openPath(logPath);
     };
     rawLogLink = (
       <a href="" onClick={onViewLog} style={{ paddingLeft: 5 }}>

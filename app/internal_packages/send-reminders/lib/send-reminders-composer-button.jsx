@@ -86,7 +86,12 @@ export default class SendRemindersComposerButton extends Component {
       <button tabIndex={-1} className={className} title={reminderLabel} onClick={this.onClick}>
         <RetinaImg name="icon-composer-reminders.png" mode={RetinaImg.Mode.ContentIsMask} />
         <span>&nbsp;</span>
-        <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+        <RetinaImg
+          name={'down-arrow.svg'}
+          style={{ width: 12, height: 12, fontSize: 12 }}
+          isIcon
+          mode={RetinaImg.Mode.ContentIsMask}
+        />
       </button>
     );
   }

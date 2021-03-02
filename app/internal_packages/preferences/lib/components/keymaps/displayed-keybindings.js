@@ -5,6 +5,7 @@ module.exports = [
       ['application:new-message', 'New Message'],
       ['core:focus-search', 'Search'],
       ['core:undo', 'Undo'],
+      ['core:new-folder', 'New Folder'],
     ],
   },
   {
@@ -21,7 +22,7 @@ module.exports = [
       ['core:change-folders', 'Move to folder'],
       ['core:mark-as-read', 'Mark read'],
       ['core:mark-as-unread', 'Mark unread'],
-      ['core:report-as-unread', 'Mark spam'],
+      ['core:report-as-spam', 'Mark spam'],
       ['core:mark-important', 'Mark as important (Gmail)'],
       ['core:mark-unimportant', 'Mark unimportant (Gmail)'],
     ],

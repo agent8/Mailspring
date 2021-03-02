@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import _ from 'underscore';
 import {
   React,
   ReactDOM,
@@ -78,6 +77,46 @@ class MessageListScrollTooltip extends React.Component {
         {this.state.idx} of {this.state.count}
       </div>
     );
+  }
+}
+
+class StickyShadow extends React.Component {
+  static propTypes = {
+    markerId: PropTypes.string,
+    targetId: PropTypes.string,
+    children: PropTypes.any,
+  };
+  componentDidMount() {
+    const { markerId, targetId } = this.props;
+    this.observer = new IntersectionObserver(
+      entries => {
+        if (!entries.length) {
+          return;
+        }
+        const toolbar = document.querySelector(`#${targetId}`);
+        if (!toolbar) {
+          return;
+        }
+        if (entries[0].intersectionRatio === 0) {
+          toolbar.classList.add('has-shadow');
+        } else {
+          toolbar.classList.remove('has-shadow');
+        }
+      },
+      {
+        threshold: [0, 0.1, 0.95, 1],
+      }
+    );
+    // abserve for toolbar shadow display
+    this.observer.observe(document.querySelector(`#${markerId}`));
+  }
+  componentWillUnmount() {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  }
+  render() {
+    return this.props.children;
   }
 }
 
@@ -321,6 +360,7 @@ class MessageList extends React.Component {
   };
 
   _getMessageContainer(headerMessageId) {
+    // eslint-disable-next-line react/no-string-refs
     return this.refs[`message-container-${headerMessageId}`];
   }
 
@@ -656,6 +696,7 @@ class MessageList extends React.Component {
         })
       );
     }
+    Actions.closeContextMenu();
     menu.popup({});
   };
   _onLabelsRemoved = removedCategories => {
@@ -752,47 +793,49 @@ class MessageList extends React.Component {
   }
   _renderReplyArea() {
     return (
-      <div
-        className="footer-reply-area-wrap"
-        onClick={this.state.popedOut ? this._onPopoutThread : null}
-        key="reply-area"
-      >
-        <div className="btn" onClick={() => this._onClickReplyArea('reply')}>
-          <RetinaImg
-            name={`reply.svg`}
-            style={{ width: 24, height: 24, fontSize: 24 }}
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-          <span className="reply-text">Reply</span>
-        </div>
-        {this._canReplyAll() && (
-          <div className="btn" onClick={() => this._onClickReplyArea('reply-all')}>
+      <StickyShadow key="reply-area" markerId="reply-area-marker" targetId="footer-reply-area-wrap">
+        <div
+          className="footer-reply-area-wrap"
+          id="footer-reply-area-wrap"
+          onClick={this.state.popedOut ? this._onPopoutThread : null}
+        >
+          <div className="btn" onClick={() => this._onClickReplyArea('reply')}>
             <RetinaImg
-              name={`reply-all.svg`}
+              name={`reply.svg`}
               style={{ width: 24, height: 24, fontSize: 24 }}
               isIcon
               mode={RetinaImg.Mode.ContentIsMask}
             />
-            <span className="reply-text">Reply All</span>
+            <span className="reply-text">Reply</span>
           </div>
-        )}
-        <div className="btn" onClick={this._onForward}>
-          <RetinaImg
-            name={`forward.svg`}
-            style={{ width: 24, height: 24, fontSize: 24 }}
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-          <span className="reply-text">Forward</span>
+          {this._canReplyAll() && (
+            <div className="btn" onClick={() => this._onClickReplyArea('reply-all')}>
+              <RetinaImg
+                name={`reply-all.svg`}
+                style={{ width: 24, height: 24, fontSize: 24 }}
+                isIcon
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
+              <span className="reply-text">Reply All</span>
+            </div>
+          )}
+          <div className="btn" onClick={this._onForward}>
+            <RetinaImg
+              name={`forward.svg`}
+              style={{ width: 24, height: 24, fontSize: 24 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+            />
+            <span className="reply-text">Forward</span>
+          </div>
         </div>
-      </div>
+        {/* don't delete this empty tag, it's for calulate shadow for #message-list-toolbar */}
+        <div key="reply-area-marker" id="reply-area-marker"></div>
+      </StickyShadow>
     );
   }
 
   _renderMinifiedBundle(bundle) {
-    const lines = bundle.messages.slice(0, 3);
-
     return (
       <div
         className="minified-bundle"
@@ -807,37 +850,9 @@ class MessageList extends React.Component {
     );
   }
 
-  _calcScrollPosition = _.throttle(scrollTop => {
-    const toolbar = document.querySelector('#message-list-toolbar');
-    if (toolbar) {
-      if (scrollTop > 0) {
-        if (toolbar.className.indexOf('has-shadow') === -1) {
-          toolbar.className += ' has-shadow';
-        }
-      } else {
-        toolbar.className = toolbar.className.replace(' has-shadow', '');
-      }
-    }
-  }, 100);
-
-  _onScroll = e => {
-    if (e.target) {
-      this._calcScrollPosition(e.target.scrollTop);
-    }
-  };
   renderOutboxMessage(wrapClass, messageListClass) {
     return (
       <KeyCommandsRegion>
-        <div className={'outbox-message-toolbar'} id="outbox-message-toolbar">
-          <InjectedComponentSet
-            className="item-container"
-            matching={{ role: 'OutboxMessageToolbar' }}
-            exposedProps={{
-              draft: this.state.selectedDraft,
-              hiddenLocations: WorkspaceStore.hiddenLocations(),
-            }}
-          />
-        </div>
         <div className={messageListClass} id="outbox-message">
           <ScrollRegion
             tabIndex="-1"
@@ -847,8 +862,25 @@ class MessageList extends React.Component {
             ref={el => {
               this._messageWrapEl = el;
             }}
-            onScroll={this._onScroll}
           >
+            <StickyShadow
+              key="reply-area"
+              markerId="outbox-message-toolbar-marker"
+              targetId="outbox-message-toolbar"
+            >
+              {/* don't delete this empty tag, it's for calulate shadow for #message-list-toolbar */}
+              <div id="outbox-message-toolbar-marker"></div>
+              <div className={'outbox-message-toolbar'} id="outbox-message-toolbar">
+                <InjectedComponentSet
+                  className="item-container"
+                  matching={{ role: 'OutboxMessageToolbar' }}
+                  exposedProps={{
+                    draft: this.state.selectedDraft,
+                    hiddenLocations: WorkspaceStore.hiddenLocations(),
+                  }}
+                />
+              </div>
+            </StickyShadow>
             {this._renderSubject()}
             <div className="headers" style={{ position: 'relative' }}>
               <InjectedComponentSet
@@ -915,18 +947,6 @@ class MessageList extends React.Component {
     return (
       <KeyCommandsRegion globalHandlers={this._globalKeymapHandlers()}>
         <FindInThread />
-        <div className={'message-list-toolbar' + hideButtons} id="message-list-toolbar">
-          <InjectedComponentSet
-            className="item-container"
-            matching={{ role: 'MessageListToolbar' }}
-            exposedProps={{
-              thread: currentThread,
-              messages: messages,
-              position: 'messageList',
-              onActionCallback: this._onCategoriesChange,
-            }}
-          />
-        </div>
         <div className={messageListClass} id="message-list">
           <ScrollRegion
             tabIndex="-1"
@@ -936,8 +956,27 @@ class MessageList extends React.Component {
             ref={el => {
               this._messageWrapEl = el;
             }}
-            onScroll={this._onScroll}
           >
+            <StickyShadow
+              key="message-toolbar"
+              markerId="message-list-toolbar-marker"
+              targetId="message-list-toolbar"
+            >
+              {/* don't delete this empty tag, it's for calulate shadow for #message-list-toolbar */}
+              <div id="message-list-toolbar-marker"></div>
+              <div className={'message-list-toolbar' + hideButtons} id="message-list-toolbar">
+                <InjectedComponentSet
+                  className="item-container"
+                  matching={{ role: 'MessageListToolbar' }}
+                  exposedProps={{
+                    thread: currentThread,
+                    messages: messages,
+                    position: 'messageList',
+                    onActionCallback: this._onCategoriesChange,
+                  }}
+                />
+              </div>
+            </StickyShadow>
             {this._renderSubject()}
             <div className="headers" style={{ position: 'relative' }}>
               <InjectedComponentSet
@@ -956,6 +995,7 @@ class MessageList extends React.Component {
             exposedProps={{ thread: currentThread, messages: messages }}
           />
         </div>
+        <div style={{ height: '16px', background: 'red', position: 'static', zIndex: 3 }}></div>
       </KeyCommandsRegion>
     );
   }

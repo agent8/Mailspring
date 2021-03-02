@@ -1,6 +1,5 @@
 import Task from './task';
 import Attributes from '../attributes';
-import thread from '../models/thread';
 
 /*
 Public: The ChangeMailTask is a base class for all tasks that modify sets
@@ -76,7 +75,7 @@ export default class ChangeMailTask extends Task {
     if (this.canBeUndone === undefined) {
       this.canBeUndone = true;
     }
-    if ((!!threads[0] || !!messages[0]) && !this.accountId) {
+    if ((!!threads[0] || !!messages[0]) && !this.accountId && !this.folderId) {
       AppEnv.reportError(new Error(`Mail Task missing accountId`), {
         errorData: { thread: threads[0], message: messages[0] },
       });

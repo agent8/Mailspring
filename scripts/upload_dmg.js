@@ -1,24 +1,32 @@
 var AWS = require('aws-sdk');
 const { version } = require('../app/package.json');
 const BUCKET = 'edison-static2';
+
+function decrypt(ciphertext) {
+  const CryptoJS = require('crypto-js');
+  const E_KEY = 'EDISON_MAIL';
+  var bytes = CryptoJS.AES.decrypt(ciphertext, E_KEY);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
+
 let s3options = {
   region: process.env.S3_REGION || 'ENV_S3_REGION',
-  accessKeyId: process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID',
-  secretAccessKey: process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY',
+  accessKeyId: decrypt(process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID'),
+  secretAccessKey: decrypt(process.env.S3_SECRET_ACCESSKEY_FOR_STATIC || 'ENV_S3_SECRET_ACCESSKEY'),
   Endpoint: 'http://s3.us-east-2.amazonaws.com',
 };
 // Set the region
 AWS.config.update(s3options);
 
 // Create S3 service object
-s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+let s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 uploadDmg(copyObject);
 
 function uploadDmg(callback) {
   // call S3 to retrieve upload file to specified bucket
   var uploadParams = { Bucket: BUCKET, Key: '', Body: '' };
-  var file = './app/dist/EdisonMail.dmg';
+  var file = './app/dist/Edison Mail.dmg';
 
   // Configure the file stream and obtain the upload parameters
   var fs = require('fs');

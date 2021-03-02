@@ -59,6 +59,7 @@ class DraftStore extends MailspringStore {
     this.listenTo(Actions.draftInlineAttachmentRemoved, this._onInlineItemRemoved);
     this.listenTo(Actions.removeAllNoReferenceInLines, this._onRemoveAllNoReferenceInLines);
     this.listenTo(Actions.broadcastChangeAccount, this._onBroadcastChangeAccount);
+    this.listenTo(Actions.changeDraftAccountComplete, this._onDraftAccountChangeComplete);
     this.listenTo(Actions.broadcastServerDraftSession, this._onSessionForServerDraftReply);
     this.listenTo(Actions.composeReply, this._onReply);
     this.listenTo(Actions.composeForward, this._onForward);
@@ -551,7 +552,7 @@ class DraftStore extends MailspringStore {
       return;
     }
     session.validateDraftForChangeAccount().then(ret => {
-      const { errors, warnings } = ret;
+      const { warnings } = ret;
       const dialog = remote.dialog;
       if (warnings.length > 0) {
         dialog
@@ -667,6 +668,19 @@ class DraftStore extends MailspringStore {
       ],
       { switchingAccount: true, canBeUndone: false, source: 'onDraftAccountChange' }
     );
+  };
+  _onDraftAccountChangeComplete = ({ originalHeaderMessageId, originalMessageId } = {}) => {
+    if (AppEnv.isMainWindow()) {
+      AppEnv.logDebug(
+        `Ignoring draft account change complete because of main window msgId: ${originalMessageId}`
+      );
+      return;
+    }
+    const session = this._draftSessions[originalMessageId];
+    if (session && session._isChangingAccount) {
+      this._doneWithSession(session, 'on draft account change complete');
+      AppEnv.logDebug(`Deleting session because of account change complete ${originalMessageId}`);
+    }
   };
 
   _doneWithDraft(messageId, reason = 'unknown') {
@@ -1193,7 +1207,52 @@ class DraftStore extends MailspringStore {
           return;
         }
         data.ignoreEmptyBody = true;
-        Actions.composeForwardMainWindow(data);
+        data.message.missingAttachments().then(ret => {
+          if (ret.totalMissing().length > 0) {
+            AppEnv.showMessageBox({
+              title: 'Message info incomplete',
+              detail:
+                "Message's attachment(s) are still downloading, do you still want to forward?",
+              buttons: ['No', 'Yes'],
+              cancelId: 0,
+              defaultId: 0,
+            }).then(({ response } = {}) => {
+              if (response === 0) {
+                AppEnv.logDebug(`Message missing attachments, user clicked no ${data.message.id}`);
+                Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
+                return;
+              }
+              data.ignoreMissingAttachments = true;
+              Actions.composeForwardMainWindow(data);
+            });
+          } else {
+            data.ignoreMissingAttachments = true;
+            Actions.composeForwardMainWindow(data);
+          }
+        });
+      });
+    } else if (data.message && data.message.body) {
+      data.message.missingAttachments().then(ret => {
+        if (ret.totalMissing().length > 0) {
+          AppEnv.showMessageBox({
+            title: 'Message info incomplete',
+            detail: "Message's attachment(s) are still downloading, do you still want to forward?",
+            buttons: ['No', 'Yes'],
+            cancelId: 0,
+            defaultId: 0,
+          }).then(({ response } = {}) => {
+            if (response === 0) {
+              AppEnv.logDebug(`Message missing attachments, user clicked no ${data.message.id}`);
+              Actions.draftReplyForwardCreated({ messageId: data.message.id, type: data.type });
+              return;
+            }
+            data.ignoreMissingAttachments = true;
+            Actions.composeForwardMainWindow(data);
+          });
+        } else {
+          data.ignoreMissingAttachments = true;
+          Actions.composeForwardMainWindow(data);
+        }
       });
     } else {
       Actions.composeForwardMainWindow(data);
@@ -1297,11 +1356,40 @@ class DraftStore extends MailspringStore {
     messageId,
     popout,
     ignoreEmptyBody = false,
+    ignoreMissingAttachments = false,
   }) => {
     return Promise.props(this._modelifyContext({ thread, threadId, message, messageId }))
       .then(({ thread: t, message: m }) => {
         if (m && (m.body || ignoreEmptyBody)) {
-          return DraftFactory.createDraftForForward({ thread: t, message: m });
+          if (ignoreMissingAttachments) {
+            return DraftFactory.createDraftForForward({ thread: t, message: m });
+          } else {
+            return new Promise((resolve, reject) => {
+              m.missingAttachments().then(missingAttachments => {
+                const isMissingAttachments = missingAttachments.totalMissing().length > 0;
+                if (isMissingAttachments) {
+                  AppEnv.showMessageBox({
+                    title: 'Message info incomplete',
+                    detail:
+                      "Message's attachment(s) are still downloading, do you still want to forward?",
+                    buttons: ['No', 'Yes'],
+                    cancelId: 0,
+                    defaultId: 0,
+                  }).then(({ response } = {}) => {
+                    if (response === 0) {
+                      AppEnv.logDebug(`Message missing attachments, user clicked no ${m.id}`);
+                      reject();
+                      return;
+                    }
+                    resolve(m);
+                  });
+                }
+                DraftFactory.createDraftForForward({ thread: t, message: m }).then(data => {
+                  resolve(data);
+                });
+              });
+            });
+          }
         } else {
           return new Promise((resolve, reject) => {
             AppEnv.showMessageBox({
@@ -1383,7 +1471,7 @@ class DraftStore extends MailspringStore {
     return queries;
   }
 
-  _finalizeAndPersistNewMessage(
+  async _finalizeAndPersistNewMessage(
     draft,
     {
       popout = AppEnv.config.get('core.reading.openReplyInNewWindow') ||
@@ -1395,13 +1483,17 @@ class DraftStore extends MailspringStore {
     // doesn't need to do a query for it a second from now when the composer wants it.
     const session = this._createSession(draft.id, draft);
 
+    // open the draft window first, if [openReplyInNewWindow] is ON
+    if (popout) {
+      session.setPopout(true);
+    }
+
     // Give extensions an opportunity to perform additional setup to the draft
-    ExtensionRegistry.Composer.extensions().forEach(extension => {
-      if (!extension.prepareNewDraft) {
-        return;
+    for (const extension of ExtensionRegistry.Composer.extensions()) {
+      if (extension.prepareNewDraft) {
+        await extension.prepareNewDraft({ draft });
       }
-      extension.prepareNewDraft({ draft });
-    });
+    }
 
     // open the draft window first, if [openReplyInNewWindow] is ON
     if (popout) {
@@ -1424,24 +1516,23 @@ class DraftStore extends MailspringStore {
         }
       }, 300);
     });
-    return Promise.race([taskPromise, draftCachePromise])
-      .then(data => {
-        if (data && data.draftCache) {
-          AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
-        }
-        if (originalMessageId) {
-          Actions.draftReplyForwardCreated({ messageId: originalMessageId, type: messageType });
-        }
-        return { messageId: draft.id, draft };
-      })
-      .catch(t => {
-        AppEnv.reportError(
-          new Error('SyncbackDraft Task not returned, and draft cache have no value'),
-          { errorData: task },
-          { grabLogs: true }
-        );
-        return { messageId: draft.id, draft };
-      });
+    try {
+      const data = await Promise.race([taskPromise, draftCachePromise]);
+      if (data && data.draftCache) {
+        AppEnv.reportLog(`For ${draft.id}, draftCache returned first 300ms`);
+      }
+      if (originalMessageId) {
+        Actions.draftReplyForwardCreated({ messageId: originalMessageId, type: messageType });
+      }
+      return { messageId: draft.id, draft };
+    } catch (t) {
+      AppEnv.reportError(
+        new Error('SyncbackDraft Task not returned, and draft cache have no value'),
+        { errorData: task },
+        { grabLogs: true }
+      );
+      return { messageId: draft.id, draft };
+    }
   }
 
   _createSession(messageId, draft, options = {}) {
@@ -2122,7 +2213,7 @@ class DraftStore extends MailspringStore {
     // if (sendLaterMetadataValue) {
     //   session.changes.addPluginMetadata('send-later', sendLaterMetadataValue);
     // }
-    await session.changes.commit('send draft');
+    await session.changes.commit('send draft', true);
     AppEnv.logDebug(`Committing draft before sending for ${messageId}`);
     // ensureCorrectAccount / commit may assign this draft a new ID. To move forward
     // we need to have the final object with it's final ID.

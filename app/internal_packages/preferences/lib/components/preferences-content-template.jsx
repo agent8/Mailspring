@@ -12,7 +12,7 @@ class PreferencesContentTemplate extends React.Component {
   };
 
   constructor(props) {
-    super();
+    super(props);
   }
 
   _renderConfigGroup = (config, index) => {

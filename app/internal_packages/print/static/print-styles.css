@@ -1,3 +1,7 @@
+* {
+  box-sizing: unset;
+}
+
 body {
   overflow: auto !important;
   -webkit-filter: none !important;
@@ -8,6 +12,7 @@ body {
 h1,
 .message-list,
 .message-list * {
+  color: #000 !important;
   background: transparent !important;
 }
 h1,
@@ -97,6 +102,10 @@ pre {
 .message-item-white-wrap {
   box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.28), 0 1px 1.5px rgba(0, 0, 0, 0.08) !important;
 }
+.message-list-toolbar,
+.footer-reply-area-wrap {
+  display: none !important;
+}
 
 @media only print {
   body,
@@ -143,4 +152,14 @@ pre {
   font-size: 0.9em;
   border: 1px solid darkgoldenrod;
   border-top: 0;
+}
+
+.avatar-icon {
+  display: none;
+}
+.message-item-area > div.attachments-wrap {
+  display: block !important;
+}
+.message-item-area > div.attachments-wrap .attachment-icon {
+  display: none;
 }

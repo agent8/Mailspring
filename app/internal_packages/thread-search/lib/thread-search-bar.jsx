@@ -5,8 +5,6 @@ import { Actions, FocusedPerspectiveStore, WorkspaceStore, EmailAvatar } from 'm
 import SearchStore from './search-store';
 import TokenizingContenteditable from './tokenizing-contenteditable';
 
-var utf7 = require('utf7').imap;
-
 import {
   LearnMoreURL,
   TokenSuggestions,
@@ -58,7 +56,7 @@ class ThreadSearchBar extends Component {
       return '';
     }
     const rolesAndPaths = [
-      ...new Set(perspective.categories().map(c => c.role || wrapInQuotes(c.path))),
+      ...new Set(perspective.categories().map(c => c.role || wrapInQuotes(c.name))),
     ];
     for (const i in rolesAndPaths) {
       let path = rolesAndPaths[i];
@@ -319,6 +317,9 @@ class ThreadSearchBar extends Component {
     if (this._initialQueryForPerspective() === '') {
       return 'Search all emails';
     }
+    if (this.props.perspective.unread) {
+      return `Search Unread`;
+    }
     return `Search ${this.props.perspective.name || ''}`;
   };
 
@@ -361,7 +362,7 @@ class ThreadSearchBar extends Component {
         )}
         <TokenizingContenteditable
           ref={el => (this._fieldEl = el)}
-          value={showPlaceholder ? this._placeholder() : utf7.decode(query)}
+          value={showPlaceholder ? this._placeholder() : query}
           onKeyDown={this._onKeyDown}
           onFocus={this._onFocus}
           onBlur={this._onBlur}

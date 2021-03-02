@@ -15,6 +15,14 @@ import SyncbackCategoryTask from './syncback-category-task';
 import MakePrimaryTask from './make-primary-task';
 import MakeOtherTask from './make-other-task';
 import { bannedPathNames } from '../../constant';
+import ChangeAllUnreadTask from './change-all-unread-task';
+import ContactUpdateTask from './contact-update-task';
+let accountStore = null;
+const AccountStore = () => {
+  accountStore = accountStore || require('../stores/account-store').default;
+  return accountStore;
+};
+import AccountAliasesTask from './account-aliases-task';
 
 const TaskFactory = {
   tasksForThreadsByAccountId(threads, callback) {
@@ -259,6 +267,17 @@ const TaskFactory = {
 
     return tasks;
   },
+  taskForChangingAllToRead({ category, source }) {
+    if (category && category.id) {
+      return new ChangeAllUnreadTask({
+        accountId: category.accountId,
+        folderId: category.id,
+        unread: false,
+        source,
+      });
+    }
+    return null;
+  },
 
   taskForInvertingStarred({ threads, source }) {
     const starred = threads.every(t => t.starred === false);
@@ -399,13 +418,26 @@ const TaskFactory = {
         threads,
         source,
         labelsToAdd: [targetCategory],
-        labelsToRemove: sourceCategory && sourceCategory.isLabel() ? [sourceCategory] : [],
+        labelsToRemove:
+          sourceCategory && sourceCategory.isLabel() && sourceCategory.role !== 'sent'
+            ? [sourceCategory]
+            : [],
         previousFolder,
       }),
     ];
   },
 
-  tasksForRenamingPath({ existingPath, newName, accountId, isExchange = false } = {}) {
+  tasksForRenamingPath({ existingPath, newName, accountId } = {}) {
+    if (typeof newName === 'string' && newName.trim().length === 0) {
+      AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in empty`);
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `It is an empty path`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
+    newName = newName.trim();
     if (bannedPathNames.includes(newName)) {
       AppEnv.logWarning(`TaskFactory:Renaming folder ${newName} is in banned`);
       AppEnv.showMessageBox({
@@ -432,21 +464,88 @@ const TaskFactory = {
         }
       }
     }
+    const isExchange = AccountStore().isExchangeAccountId(accountId);
     return SyncbackCategoryTask.forRenaming({ path: existingPath, accountId, newName, isExchange });
   },
-  tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '', isExchange = false }) {
+  tasksForEditingLabel({ currentName, newName, accountId, newColor } = {}) {
+    if (typeof newName === 'string' && newName.trim().length === 0) {
+      AppEnv.logWarning(`TaskFactory:Renaming Label ${newName} is in empty`);
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `It is an empty label`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
+    newName = newName.trim();
+    if (bannedPathNames.includes(newName)) {
+      AppEnv.logWarning(`TaskFactory:Edit folder ${newName} is in banned`);
+      AppEnv.showMessageBox({
+        title: 'Cannot rename',
+        detail: `${newName} is a reserved name`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
+    const existingCategories = CategoryStore.categories(accountId);
+    let colorChangeOnly = false;
+    if (existingCategories.length > 0) {
+      for (let i = 0; i < existingCategories.length; i++) {
+        const displayName = existingCategories[i].fullDisplayName;
+        if (displayName === newName && existingCategories[i].bgColor === newColor) {
+          AppEnv.logWarning(
+            `TaskFactory:Editing label ${newName} is in conflict with existing label ${displayName}`
+          );
+          AppEnv.showMessageBox({
+            title: 'Cannot rename',
+            detail: `${newName} already exists`,
+            buttons: ['Ok'],
+          });
+          return;
+        } else if (displayName === newName && existingCategories[i].bgColor !== newColor) {
+          colorChangeOnly = true;
+        }
+      }
+    }
+    return SyncbackCategoryTask.editLabel({
+      currentName,
+      accountId,
+      newName,
+      newColor,
+      colorChangeOnly,
+    });
+  },
+  tasksForCreatingPath({ name, accountId, bgColor = 0, parentId = '' }) {
+    if (!name) {
+      AppEnv.logError(
+        `Task for creating path received a empty string for name, accountId ${accountId}, parentId: ${parentId}`
+      );
+      return;
+    }
+    if (typeof name === 'string' && name.trim().length === 0) {
+      AppEnv.logWarning(`TaskFactory:Create folder ${name} is in empty`);
+      AppEnv.showMessageBox({
+        title: 'Cannot create',
+        detail: `It is an empty string`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
+    name = name.trim();
     if (bannedPathNames.includes(name)) {
       AppEnv.logWarning(`TaskFactory:Creating folder ${name} is in banned`);
       AppEnv.showMessageBox({
-        title: 'Cannot creatie',
+        title: 'Cannot create',
         detail: `${name} is a reserved path`,
         buttons: ['Ok'],
       });
       return;
     }
     const existingCategories = CategoryStore.categories(accountId);
+    let delimiter = '/';
     if (existingCategories.length > 0) {
       for (let i = 0; i < existingCategories.length; i++) {
+        delimiter = existingCategories[i].delimiter;
         const displayName = existingCategories[i].fullDisplayName;
         if (displayName === name) {
           AppEnv.logWarning(
@@ -461,7 +560,38 @@ const TaskFactory = {
         }
       }
     }
-    return SyncbackCategoryTask.forCreating({ name, accountId, bgColor, parentId, isExchange });
+    const isExchange = AccountStore().isExchangeAccountId(accountId);
+    if (!isExchange && name.includes(delimiter)) {
+      AppEnv.showMessageBox({
+        title: 'Cannot create',
+        detail: `${name} contains special character ${delimiter}`,
+        buttons: ['Ok'],
+      });
+      return;
+    }
+    return SyncbackCategoryTask.forCreating({
+      name,
+      accountId,
+      bgColor,
+      parentId,
+      isExchange,
+      delimiter,
+    });
+  },
+  taskForUpdatingContact({ newContact = {}, accountId, draft = {} } = {}) {
+    if (!accountId && !newContact.accountId && !draft.accountId) {
+      AppEnv.logError('No account info, taskForUpdatingContact ignored');
+      return;
+    }
+    if (!newContact.name || !newContact.email) {
+      AppEnv.logError('No name/email info, taskForUpdatingContact ignored');
+      return;
+    }
+    accountId = accountId || draft.accountId || newContact.accountId;
+    if (accountId) {
+      return new ContactUpdateTask({ accountId, name: newContact.name, email: newContact.email });
+    }
+    return null;
   },
 
   taskForUndo({ task }) {
@@ -494,6 +624,15 @@ const TaskFactory = {
     });
 
     return tasks;
+  },
+  taskForUpdateAccountAliases(accountId, aliases) {
+    if (!accountId) {
+      return null;
+    }
+    if (!Array.isArray(aliases)) {
+      return null;
+    }
+    return new AccountAliasesTask({ accountId, aliases });
   },
 
   findPreviousFolder(currentPerspective, accountId) {

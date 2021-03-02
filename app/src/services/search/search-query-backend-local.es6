@@ -9,7 +9,7 @@ import {
   MatchQueryExpression,
   SpecialCharacterQueryExpression,
 } from './search-query-ast';
-import { DateUtils } from 'mailspring-exports';
+import { DateUtils, Utils } from 'mailspring-exports';
 
 const isMessageView = AppEnv.isDisableThreading();
 
@@ -177,9 +177,10 @@ class MatchCompatibleQueryCondenser extends SearchQueryExpressionVisitor {
  * uses a MATCH clause.
  */
 class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
-  constructor(className) {
+  constructor(className, accountIds = []) {
     super();
     this._className = className;
+    this._accountIds = accountIds;
   }
 
   visit(root) {
@@ -187,6 +188,19 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
   }
 
   visitAnd(node) {
+    if (!node.noDatesOptimize) {
+      if (node.e1 instanceof DateQueryExpression && node.e2 instanceof MatchQueryExpression) {
+        node.e2.dates = [node.e1];
+      } else if (
+        node.e2 instanceof DateQueryExpression &&
+        node.e1 instanceof MatchQueryExpression
+      ) {
+        node.e1.dates = [node.e2];
+      } else {
+        node.e1.noDatesOptimize = true;
+        node.e2.noDatesOptimize = true;
+      }
+    }
     const lhs = this.visitAndGetResult(node.e1);
     const rhs = this.visitAndGetResult(node.e2);
     this._result = `(${lhs} AND ${rhs})`;
@@ -238,41 +252,74 @@ class StructuredSearchQueryVisitor extends SearchQueryExpressionVisitor {
 
   visitSpecialCharacter(node) {
     const text = node.text.token.s;
-    this._result = `(\`${this._className}\`.\`subject\` like '${text}')`;
+    this._result = `(\`${this._className}\`.\`subject\` like '${Utils.safeSQL(text)}' escape '/')`;
   }
 
-  visitDate(node) {
+  visitDate(node, klassName = '') {
+    this._result = StructuredSearchQueryVisitor.dateQuery(node, klassName);
+  }
+  static dateQuery(node, klassName = '') {
     const comparator = node.direction === 'before' ? '<' : '>';
     const date = DateUtils.getChronoPast().parseDate(node.text.token.s);
+    if (!klassName) {
+      klassName = isMessageView ? 'Message' : 'Thread';
+    }
     if (!date) {
-      this._result = '';
-      return;
+      if (isFinite(parseInt(node.text.token.s))) {
+        return `${
+          isMessageView ? ` ${klassName}.date ` : ` ${klassName}.lastDate `
+        } ${comparator} ${node.text.token.s}`;
+      }
+      return '';
     }
     const ts = Math.floor(date.getTime() / 1000);
-    this._result = `(SELECT \`lastDate\` FROM \`ThreadCategory\` WHERE \`ThreadCategory\`.\`threadId\` = \`${this._className}\`.\`pid\`) ${comparator} ${ts}`;
+    return `${
+      isMessageView ? ` ${klassName}.date ` : ` ${klassName}.lastDate`
+    } ${comparator} ${ts}`;
   }
 
   visitMatch(node) {
     const searchTable = `${this._className}Search`;
+    let dateQuery = ' SEARCH_MATCH_SQL ';
+    if (!node.noDatesOptimize && Array.isArray(node.dates) && node.dates.length > 0) {
+      const klassName = isMessageView ? 'MessageSearch' : 'ThreadSearch';
+      dateQuery =
+        ' AND ' +
+        node.dates
+          .map(d => {
+            return StructuredSearchQueryVisitor.dateQuery(d, klassName);
+          })
+          .join(' AND ') +
+        ' SEARCH_MATCH_SQL ';
+    }
+    let accountQuery = '';
+    if (Array.isArray(this._accountIds) && this._accountIds.length === 1 && this._accountIds[0]) {
+      accountQuery = ` \`${searchTable}\`.\`accountId\` = '${this._accountIds[0]}' AND `;
+    } else if (Array.isArray(this._accountIds) && this._accountIds.length > 1) {
+      accountQuery = ` \`${searchTable}\`.\`accountId\` in ('${this._accountIds.join(
+        "','"
+      )}') AND `;
+    }
 
     // in sqlite3, you use '' to escape a '. Weird right?
     const escaped = node.rawQuery.replace(/'/g, "''");
     this._result = `(\`${this._className}\`.\`pid\` IN (SELECT \`${
       isMessageView ? 'messageId' : 'threadId'
-    }\` FROM \`${searchTable}\` WHERE \`${searchTable}\` MATCH '${escaped}'))`;
+    }\` FROM \`${searchTable}\` WHERE ${accountQuery} \`${searchTable}\` MATCH '${escaped}' ${dateQuery} ))`;
   }
 }
 
 export default class LocalSearchQueryBackend {
-  constructor(modelClassName) {
+  constructor(modelClassName, accountIds = []) {
     this._modelClassName = modelClassName;
+    this._accountIds = accountIds;
   }
 
   compile(ast) {
     const condenser = new MatchCompatibleQueryCondenser();
     const intermediateAST = condenser.visit(ast);
 
-    const codegen = new StructuredSearchQueryVisitor(`${this._modelClassName}`);
+    const codegen = new StructuredSearchQueryVisitor(`${this._modelClassName}`, this._accountIds);
     return codegen.visit(intermediateAST);
   }
 }

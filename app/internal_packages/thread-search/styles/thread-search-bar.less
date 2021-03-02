@@ -5,9 +5,11 @@
 @search-bar-height: 68px;
 
 .title-search-bar {
-  position: relative;
+  position: absolute;
+  top: 0;
   overflow: visible;
-  // -webkit-app-region: drag;
+  border-bottom: 1px solid @border-color-primary;
+  -webkit-app-region: drag;
   height: @search-bar-height;
   min-height: @search-bar-height;
   font-size: 15px;
@@ -24,7 +26,6 @@
   text-overflow: ellipsis;
   h1 {
     padding-left: 20px;
-    visibility: hidden;
     margin: 0;
     font-size: 32px;
     line-height: @search-bar-height;

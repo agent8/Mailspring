@@ -107,9 +107,9 @@ class Spellchecker {
     if (!this.handler) {
       return false;
     }
-    if ({}.hasOwnProperty.call(this._customDict, word)) {
-      return false;
-    }
+    // if ({}.hasOwnProperty.call(this._customDict, word)) {
+    //   return false;
+    // }
     if ({}.hasOwnProperty.call(this.isMisspelledCache, word)) {
       return this.isMisspelledCache[word];
     }
@@ -118,9 +118,14 @@ class Spellchecker {
     return misspelled;
   };
 
-  learnWord = word => {
-    this._customDict[word] = '';
-    this._saveCustomDict();
+  learnWord = async word => {
+    // this._customDict[word] = '';
+    // this._saveCustomDict();
+    try {
+      await this.handler.addToDictionary(word);
+    } catch (e) {
+      console.error(`Failed to add entry to dictionary: ${e.message}`);
+    }
   };
 
   unlearnWord = word => {
@@ -148,7 +153,7 @@ class Spellchecker {
           );
         });
       } else {
-        menu.append(new MenuItem({ label: 'No Guesses Found', enabled: false }));
+        menu.append(new MenuItem({ label: 'No Guesses Found' }));
       }
       menu.append(new MenuItem({ type: 'separator' }));
 
