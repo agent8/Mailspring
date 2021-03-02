@@ -54,6 +54,9 @@ const maxLogFileUploadSizeInBytes = 30 * 1024 * 1024;
 const isStag = version => {
   const verNumList = version.split('.');
   const lastVersionNum = Number(verNumList[verNumList.length - 1]);
+  if (lastVersionNum === 0) {
+    return false;
+  }
   return !lastVersionNum || lastVersionNum % 2 === 1;
 };
 export default class Application extends EventEmitter {
