@@ -1,53 +1,52 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { AccountStore, Actions } from 'mailspring-exports';
 import { LabelColorizer } from 'mailspring-component-kit';
 import RetinaImg from './retina-img';
 
 export default class AccountColorPopover extends Component {
+  static propTypes = {
+    item: PropTypes.shape({
+      accountIds: PropTypes.array,
+    }),
+  };
+
   constructor(props) {
     super(props);
     this.wrapperRef = React.createRef();
+    const { item } = this.props;
+    let color = null;
+    if (item.accountIds && item.accountIds.length === 1) {
+      color = AccountStore.accountForId(item.accountIds[0]).color;
+    }
     this.state = {
-      colors: AppEnv.config.get('core.account.colors') || {},
+      color,
     };
-  }
-
-  componentDidMount() {
-    this.disposable = AppEnv.config.onDidChange('core.account.colors', () => {
-      this.setState({
-        colors: AppEnv.config.get('core.account.colors') || {},
-      });
-    });
-  }
-
-  componentWillUnmount() {
-    this.disposable.dispose();
   }
 
   onCheckColor = bgColor => {
     const { item } = this.props;
-    const colors = AppEnv.config.get('core.account.colors') || {};
-    const emailAddress = AccountStore.accounts().find(account => account.id === item.accountIds[0]).emailAddress;
-    colors[emailAddress] = bgColor;
-    AppEnv.config.set('core.account.colors', colors);
+    if (item.accountIds && item.accountIds.length === 1) {
+      Actions.updateAccount(item.accountIds[0], { color: bgColor });
+      Actions.changeAccountColor();
+    }
+
     Actions.closePopover();
   };
 
   render() {
     const { item } = this.props;
-    const { colors } = this.state;
-    const accounts = AccountStore.accounts().map(account => account.id);
+    const { color: selectedColor } = this.state;
+    const accountIds = AccountStore.accounts().map(account => account.id);
+    const accountIndex = accountIds.findIndex(account => account === item.accountIds[0]) + 1;
     return (
       <div className="account-color-popover" ref={this.wrapperRef}>
         <div className="color-choice">
           {LabelColorizer.colors.map((color, idx) => {
             let className = '';
-            if (colors[item.accountIds[0]] !== undefined) {
-              const emailAddress = AccountStore.accounts().find(account => account.id === item.accountIds[0]).emailAddress;
-              className = colors[emailAddress] === idx ? 'checked' : '';
+            if (selectedColor) {
+              className = selectedColor === idx ? 'checked' : '';
             } else {
-              const accountIndex =
-                accounts.findIndex(account => account === item.accountIds[0]) + 1;
               className = accountIndex === idx ? 'checked' : '';
             }
             return (
