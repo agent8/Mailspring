@@ -148,9 +148,9 @@ export default class OAuthSignInPage extends React.Component {
     this.setState(Object.assign({ loading: false }, err));
   }
 
-  _onError(err) {
+  _onError(err, extra = '') {
     this.moveToLoginError({ authStage: 'error', errorMessage: err.message });
-    AppEnv.reportError(err, { oAuthURL: this.props.providerAuthPageUrl });
+    AppEnv.reportError(err, { oAuthURL: this.props.providerAuthPageUrl, extra });
   }
 
   async _onReceivedCode(code) {
@@ -167,7 +167,7 @@ export default class OAuthSignInPage extends React.Component {
       AppEnv.trackingEvent('AddAccount-Failed', { provider: this.props.serviceName });
       // }
       if (!this._mounted) return;
-      this._onError(err);
+      this._onError(err, code);
       return;
     }
     if (!this._mounted) return;
