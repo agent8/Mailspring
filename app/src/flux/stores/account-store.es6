@@ -68,6 +68,10 @@ class AccountStore extends MailspringStore {
           );
           await MessageStore.saveMessagesAndRefresh([]);
         }
+        // refresh the sub accounts for new sync account
+        // Sub account list only increases but not decreases,
+        // So we only should refresh after add account
+        EdisonAccountRest.subAccounts();
       });
     }
 
@@ -533,10 +537,13 @@ class AccountStore extends MailspringStore {
 
     this._save('add account');
     ipcRenderer.send('after-add-account', account);
-    // refresh the sub accounts for new sync account
-    // Sub account list only increases but not decreases,
-    // So we only should refresh after add account
-    EdisonAccountRest.subAccounts();
+
+    if (existingIdx >= 0 ) {
+      const syncAccountId = AppEnv.config.get(edisonAccountKey);
+      if (cleanAccount.id === syncAccountId) {
+        await EdisonAccountRest.register(cleanAccount.id);
+      }
+    }
   };
 
   _cachedGetter(key, fn) {
@@ -553,7 +560,7 @@ class AccountStore extends MailspringStore {
     return this._accounts.map(a => a.id);
   };
 
-  loginSyncAccount = aid => {
+  loginSyncAccount = async aid => {
     if (!aid) {
       return;
     }
@@ -562,7 +569,9 @@ class AccountStore extends MailspringStore {
       aid
     );
     // sync preferences from server
-    AppEnv.config.syncAllPreferencesFromServer();
+    await AppEnv.config.syncAllPreferencesFromServer();
+    // sync preferences to server
+    await AppEnv.config.syncAllPreferencesToServer();
     // refresh the sub accounts for new sync account
     EdisonAccountRest.subAccounts();
   };
@@ -573,6 +582,15 @@ class AccountStore extends MailspringStore {
     }
     AppEnv.config.set(edisonAccountKey, '');
     AppEnv.config.clearSyncPreferencesVersion();
+    const account = this.accountForId(aid);
+    const newAccountSettings = Object.assign({}, account.settings)
+    delete newAccountSettings.edisonId
+    delete newAccountSettings.edison_token
+    const newAccount = {
+      ...account,
+      settings: newAccountSettings
+    }
+    Actions.updateAccount(aid, newAccount);
   };
 
   syncAccount = () => {

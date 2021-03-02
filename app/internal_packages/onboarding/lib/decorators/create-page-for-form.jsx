@@ -10,7 +10,7 @@ let didWarnAboutGmailIMAP = false;
 
 const CreatePageForForm = FormComponent => {
   return class Composed extends React.Component {
-    static displayName = FormComponent.displayName;
+    static displayName = `${FormComponent.displayName}CreatePage`;
 
     static propTypes = {
       account: PropTypes.object,
@@ -79,7 +79,9 @@ const CreatePageForForm = FormComponent => {
         next[parent][key] = val;
         // change emailAddress field
         if (event.target.id === 'settings.imap_username') {
-          next['emailAddress'] = val;
+          if ((val || '').includes('@')) {
+            next['emailAddress'] = val;
+          }
           next['name'] = val;
         }
       } else {
@@ -301,7 +303,7 @@ const CreatePageForForm = FormComponent => {
       // and allow them to go back
       if (
         !didWarnAboutGmailIMAP &&
-        account.provider === 'imap' &&
+        ['imap', 'exchange'].includes(account.provider) &&
         account.settings.imap_host &&
         account.settings.imap_host.includes('outlook.office365.com')
       ) {
@@ -313,9 +315,7 @@ const CreatePageForForm = FormComponent => {
             defaultId: 0,
             cancelId: 2,
             message: 'Are you sure?',
-            detail:
-              `This looks like an Office365 account! While it's possible to setup an App ` +
-              `Password and connect to Office365 via IMAP, EdisonMail also supports "Office365 OAuth".`,
+            detail: `This looks like an Office365 account! While it's possible to connect to Office365 via ${account.provider.toUpperCase()}, EdisonMail also supports "Office365 OAuth".`,
           })
           .then(({ response }) => {
             if (response === 2) {
@@ -331,6 +331,27 @@ const CreatePageForForm = FormComponent => {
       }
       proceedWithAccount();
     };
+    _renderGotoExchangeAdvance() {
+      if (
+        this.state.account &&
+        this.state.account.isExchange() &&
+        !this.state.submitting &&
+        this.state.populated &&
+        this.state.errorLog &&
+        FormComponent &&
+        FormComponent.displayName === 'AccountBasicSettingsForm'
+      ) {
+        return (
+          <div
+            className="go-to-advanced-settings"
+            onClick={() => OnboardingActions.moveToPage('account-settings-exchange')}
+          >
+            Advanced Settings
+          </div>
+        );
+      }
+      return null;
+    }
 
     _renderButton() {
       const { account, submitting } = this.state;
@@ -433,6 +454,7 @@ const CreatePageForForm = FormComponent => {
             onConnect={this.onConnect}
             providerConfig={providerConfig}
           />
+          {this._renderGotoExchangeAdvance()}
           <FormErrorMessage log={errorLog} message={errorMessage} />
           {/* {this._renderCredentialsNote()} */}
           <div>{this._renderButton()}</div>

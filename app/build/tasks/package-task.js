@@ -75,7 +75,7 @@ module.exports = grunt => {
     console.log('---> Running Babel');
 
     grunt.config('source:es6').forEach(pattern => {
-      glob.sync(pattern, { cwd: buildPath }).forEach(relPath => {
+      glob.sync(pattern, { cwd: buildPath }).forEach(async relPath => {
         const es6Path = path.join(buildPath, relPath);
         if (/(node_modules|\.js$)/.test(es6Path)) return;
         const outPath = es6Path.replace(path.extname(es6Path), '.js');
@@ -83,6 +83,7 @@ module.exports = grunt => {
         const res = babel.transformFileSync(
           es6Path,
           Object.assign(babelOptions, {
+            minified: true,
             sourceMaps: true,
             sourceRoot: '/',
             sourceMapTarget: path.relative(buildPath, outPath),
@@ -109,7 +110,7 @@ module.exports = grunt => {
   grunt.config.merge({
     packager: {
       appVersion: packageJSON.version,
-      buildVersion: packageJSON.version,
+      buildVersion: packageJSON.buildVersion,
       platform: isMas ? 'mas' : platform,
       dir: grunt.config('appDir'),
       appCategoryType: 'public.app-category.business',
@@ -137,27 +138,27 @@ module.exports = grunt => {
       }[platform],
       appCopyright: `Copyright (C) 2014-${new Date().getFullYear()} Edison Software Inc. All rights reserved.`,
       derefSymlinks: false,
-      asar: {
-        unpack:
-          '{' +
-          [
-            'mailsync',
-            'mailsync.exe',
-            'mailsync.bin',
-            '*.so',
-            '*.so.*',
-            '*.dll',
-            '*.pdb',
-            '*.node',
-            '**/vendor/**',
-            'examples/**',
-            '**/src/tasks/**',
-            '**/src/scripts/**',
-            '**/node_modules/spellchecker/**',
-            '**/node_modules/windows-shortcuts/**',
-          ].join(',') +
-          '}',
-      },
+      // asar: {
+      //   unpack:
+      //     '{' +
+      //     [
+      //       'mailsync',
+      //       'mailsync.exe',
+      //       'mailsync.bin',
+      //       '*.so',
+      //       '*.so.*',
+      //       '*.dll',
+      //       '*.pdb',
+      //       '*.node',
+      //       '**/vendor/**',
+      //       'examples/**',
+      //       '**/src/tasks/**',
+      //       '**/src/scripts/**',
+      //       '**/node_modules/spellchecker/**',
+      //       '**/node_modules/windows-shortcuts/**',
+      //     ].join(',') +
+      //     '}',
+      // },
       ignore: [
         // These are all relative to client-app
         // top level dirs we never want
@@ -205,11 +206,21 @@ module.exports = grunt => {
        * runs the `security find-identity` command. Note that
        * setup-mac-keychain-task needs to be run first
        */
-      osxSign: !!process.env.SIGN_BUILD
+      osxSign: process.env.SIGN_BUILD
         ? {
             hardenedRuntime: true,
             entitlements: '../scripts/osx_plist/parent.plist',
             'entitlements-inherit': '../scripts/osx_plist/parent.plist',
+            ignore: [
+              /\.otf$/i,
+              /\.bcmap$/i,
+              /\.pak$/i,
+              /\.js$/i,
+              /\.map$/i,
+              /\.jpg$/i,
+              /\.png$/i,
+              /\.gif$/i,
+            ],
           }
         : false,
       win32metadata: {
@@ -250,7 +261,7 @@ module.exports = grunt => {
       ],
     },
   });
-
+  let ongoing;
   grunt.registerTask(
     'package',
     'Package EdisonMail',
@@ -261,7 +272,7 @@ module.exports = grunt => {
       console.log('---> Running packager with options:');
       console.log(util.inspect(grunt.config.get('packager'), true, 7, true));
 
-      const ongoing = setInterval(() => {
+      ongoing = setInterval(() => {
         const elapsed = Math.round((Date.now() - start) / 1000.0);
         console.log(`---> Packaging for ${elapsed}s`);
       }, 1000);
@@ -282,6 +293,7 @@ module.exports = grunt => {
     err => {
       clearInterval(ongoing);
       if (err) {
+        const done = this.async();
         grunt.fail.fatal(err);
         return done(err);
       }

@@ -70,6 +70,13 @@ export default class PreferencesCategory extends React.Component {
     if (this.state.old_assignments && !this.state.old_assignments[role]) {
       old = false;
     }
+    let otherAssignments = [];
+    if (this.state.assignments) {
+      otherAssignments = SELECTABLE_ROLES.filter(item => item !== role).map(
+        role => this.state.assignments[role]
+      );
+    }
+
     return (
       <div className={'role-section ' + role} key={`${account.id}-${role}`}>
         <div className="col-left">{`${role[0].toUpperCase()}${role.substr(1)}`}:</div>
@@ -77,6 +84,7 @@ export default class PreferencesCategory extends React.Component {
           <CategorySelection
             all={this.state.all}
             current={this.state.assignments ? this.state.assignments[role] : null}
+            needToHideCategories={otherAssignments}
             onSelect={category => this._onCategorySelection(account, role, category)}
             accountUsesLabels={account.usesLabels()}
             disabled={!!old}

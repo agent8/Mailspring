@@ -43,8 +43,13 @@
 input:focus {
   outline: none;
 }
-
+.bottom-divider,
 .mode-list {
+  .column-DraftList {
+    .list-container .list-item:hover {
+      box-shadow: 0 2px 10px fade(@text-color, 12%);
+    }
+  }
   .list-container .list-item {
     &:hover {
       box-shadow: none;
@@ -342,7 +347,7 @@ input:focus {
     text-overflow: ellipsis;
     text-align: left;
     overflow: hidden;
-    line-height: 24px;
+    // line-height: 24px;
     padding-left: 4px;
     color: @red;
     search-match,
@@ -555,11 +560,6 @@ input:focus {
   }
 }
 
-// quick actions
-@archive-img: '../static/images/thread-list-quick-actions/ic-quick-button-archive@2x.png';
-@trash-img: '../static/images/thread-list-quick-actions/ic-quick-button-trash@2x.png';
-@snooze-img: '../static/images/thread-list-quick-actions/ic-quickaction-snooze@2x.png';
-
 @hoverActionsHeight: 55px;
 .sift-list .list-item .list-column-HoverActions,
 .outbox-list .list-item .list-column-HoverActions,
@@ -609,13 +609,10 @@ input:focus {
     line-height: @hoverActionsHeight;
   }
   .action.action-archive {
-    //background: url(@archive-img) center no-repeat, @background-gradient;
   }
   .action.action-trash {
-    //background: url(@trash-img) center no-repeat, @background-gradient;
   }
   .action.action-snooze {
-    background: url(@snooze-img) center no-repeat, @background-gradient;
   }
 }
 body.platform-win32 {
@@ -670,7 +667,6 @@ body.platform-win32 {
     @list-focused-bg 100%
   ) !important;
   .action.action-snooze {
-    background: url(@snooze-img) center no-repeat;
   }
 }
 
@@ -1003,13 +999,10 @@ body.platform-win32 {
     //   -webkit-filter: brightness(300%);
     // }
     .action.action-archive {
-      //background: url(@archive-img) center no-repeat;
     }
     .action.action-trash {
-      //background: url(@trash-img) center no-repeat;
     }
     .action.action-snooze {
-      background: url(@snooze-img) center no-repeat;
     }
   }
 }

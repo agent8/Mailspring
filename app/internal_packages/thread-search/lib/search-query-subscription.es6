@@ -56,7 +56,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
       //   const defaultFolderStr = [...defaultFolder].join(` or `);
       //   parsedQuery = SearchQueryParser.parse(`${defaultFolderStr} ${this._searchQuery}`);
       // }
-      dbQuery = dbQuery.structuredSearch(parsedQuery);
+      dbQuery = dbQuery.structuredSearch({ query: parsedQuery, accountIds: this._accountIds });
     } catch (e) {
       console.info('Failed to parse local search query, falling back to generic query', e);
       dbQuery = dbQuery.search(this._searchQuery);
@@ -89,7 +89,7 @@ class SearchQuerySubscription extends MutableQuerySubscription {
         firstInQueryExpression.text &&
         firstInQueryExpression.text.token &&
         firstInQueryExpression.text.token.s
-          ? utf7.decode(firstInQueryExpression.text.token.s)
+          ? firstInQueryExpression.text.token.s
           : '';
       queryJSON = parsedQuery;
       genericText = IMAPSearchQueryBackend.folderNamesForQuery(parsedQuery);

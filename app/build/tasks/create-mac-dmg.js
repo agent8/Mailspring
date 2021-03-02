@@ -13,7 +13,7 @@ module.exports = grunt => {
     createDMG(
       {
         appPath: path.join(grunt.config('outputDir'), 'Edison Mail-darwin-x64', 'Edison Mail.app'),
-        name: 'EdisonMail',
+        name: 'Edison Mail',
         background: path.resolve(
           grunt.config('appDir'),
           'build',
@@ -21,15 +21,22 @@ module.exports = grunt => {
           'mac',
           'installer-background.png'
         ),
-        icon: path.resolve(grunt.config('appDir'), 'build', 'resources', 'mac', 'EdisonMailAppIcon.icns'),
+        icon: path.resolve(
+          grunt.config('appDir'),
+          'build',
+          'resources',
+          'mac',
+          'EdisonMailAppIcon.icns'
+        ),
         overwrite: true,
         out: grunt.config('outputDir'),
         iconSize: 114,
-        contents: function (opts) {
+        contents: function(opts) {
           return [
             { x: 494, y: 280, type: 'link', path: '/Applications' },
-            { x: 164, y: 280, type: 'file', path: opts.appPath }];
-        }
+            { x: 164, y: 280, type: 'file', path: opts.appPath },
+          ];
+        },
       },
       err => {
         if (err) {

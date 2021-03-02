@@ -4,17 +4,7 @@ import PreferencesRoot from './preferences-root';
 import preferencesTemplateFills from './preferences-template-fill';
 
 export function activate() {
-  const tabItemList = preferencesTemplateFills.tables;
-  tabItemList.forEach(tab => {
-    const item = new PreferencesUIStore.TabItem({
-      tabId: tab.tabId,
-      displayName: tab.displayName,
-      order: tab.order,
-      className: tab.className,
-      configGroup: tab.configGroup,
-    });
-    PreferencesUIStore.registerPreferencesTab(item);
-  });
+  PreferencesUIStore.registerTabs(preferencesTemplateFills.tables);
 
   WorkspaceStore.defineSheet(
     'Preferences',

@@ -6,7 +6,7 @@ import {
   ComposerSupport,
   AttachmentItem,
 } from 'mailspring-component-kit';
-import { React, ReactDOM, Actions, Utils } from 'mailspring-exports';
+import { React, ReactDOM, Actions, Utils, PropTypes } from 'mailspring-exports';
 import { shell, remote } from 'electron';
 import path from 'path';
 import TemplateStore from './template-store';
@@ -16,7 +16,7 @@ const {
   Conversion: { convertFromHTML, convertToHTML },
 } = ComposerSupport;
 
-const TEMPLATEFIELDS = ['CC', 'BCC'];
+const TEMPLATEFIELDS = ['TO', 'CC', 'BCC', 'SUBJ'];
 
 function fileIsImage(file) {
   const extensions = ['.jpg', '.bmp', '.gif', '.png', '.jpeg', '.heic'];
@@ -25,20 +25,41 @@ function fileIsImage(file) {
 }
 
 class TemplateEditor extends React.Component {
+  static propTypes = {
+    template: PropTypes.object,
+    body: PropTypes.string,
+    onEditField: PropTypes.func,
+    onEditTitle: PropTypes.func,
+  };
+
   constructor(props) {
     super(props);
-    const { id, CC, BCC, attachments } = props.template || {};
-    const body = TemplateStore.getBodyById(id);
+    const { TO, CC, BCC, SUBJ, attachments } = props.template || {};
+    const body = props.body || '';
     this.state = {
       body,
       editorState: convertFromHTML(body),
+      TO: TO || '',
+      showTO: !!TO,
       CC: CC || '',
       showCC: !!CC,
       BCC: BCC || '',
       showBCC: !!BCC,
+      SUBJ: SUBJ || '',
+      showSUBJ: !!SUBJ,
       attachments: attachments || [],
       readOnly: !props.template,
     };
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const body = nextProps.body || '';
+    if (body !== this.props.body) {
+      this.setState({
+        body,
+        editorState: convertFromHTML(body),
+      });
+    }
   }
 
   _onSave = () => {
@@ -49,9 +70,18 @@ class TemplateEditor extends React.Component {
     const template = Object.assign({}, this.props.template);
     template.body = outHTML;
     // if delete the inline, should filter it
-    const filterAttachment = this.state.attachments.filter(
-      a => !a.inline || outHTML.indexOf(`src="${a.path}"`) >= 0
-    );
+    const filterAttachment = this.state.attachments.filter(a => {
+      if (!a.inline) {
+        return true;
+      }
+      if (outHTML.indexOf(`src="${a.path}"`) >= 0) {
+        return true;
+      }
+      if (outHTML.indexOf(`src="${Utils.filePathEncode(a.path)}"`) >= 0) {
+        return true;
+      }
+      return false;
+    });
     template.attachments = filterAttachment;
     this.setState({ attachments: filterAttachment });
     TemplateActions.updateTemplate(template);
@@ -137,6 +167,10 @@ class TemplateEditor extends React.Component {
     );
   };
 
+  _onForceSave = value => {
+    this.setState({ editorState: value }, this._onSave);
+  };
+
   _renderTemplateActions = () => {
     const buttons = [];
     TEMPLATEFIELDS.forEach(field => {
@@ -201,7 +235,7 @@ class TemplateEditor extends React.Component {
             onRemoveAttachment={() => {
               this._onRemoveAttachment(index);
             }}
-            onOpenAttachment={() => remote.shell.openItem(filePath)}
+            onOpenAttachment={() => remote.shell.openPath(filePath)}
           />
         );
       });
@@ -231,7 +265,7 @@ class TemplateEditor extends React.Component {
             ref={c => (this._composer = c)}
             readOnly={readOnly}
             value={editorState}
-            propsForPlugins={{ inTemplateEditor: true }}
+            propsForPlugins={{ inTemplateEditor: true, onForceSave: this._onForceSave }}
             onChange={change => {
               const changeHtml = convertToHTML(change.value);
               if (changeHtml) {
@@ -280,9 +314,13 @@ export default class PreferencesTemplates extends React.Component {
   };
 
   _getStateFromStores() {
+    const selected = TemplateStore.selectedTemplate();
+    const selectedBody =
+      selected && selected.id ? TemplateStore.getBodyById(selected.id, true) : '';
     return {
       templates: TemplateStore.getTemplates(),
-      selected: TemplateStore.selectedTemplate(),
+      selected,
+      selectedBody,
     };
   }
 
@@ -368,6 +406,7 @@ export default class PreferencesTemplates extends React.Component {
             onEditTitle={this._onEditTitle}
             key={selected ? selected.id : 'empty'}
             template={selected}
+            body={this.state.selectedBody}
             onEditField={this._onChangeField}
           />
         </Flexbox>

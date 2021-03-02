@@ -1,5 +1,5 @@
 /* eslint global-require: 0 */
-import { shell, ipcRenderer, remote, clipboard } from 'electron';
+import { ipcRenderer, remote, clipboard } from 'electron';
 import url from 'url';
 
 let ComponentRegistry = null;
@@ -142,7 +142,13 @@ export default class WindowEventHandler {
       'core:paste-and-match-style': () => webContents.pasteAndMatchStyle(),
       'core:undo': e => (isTextInput(e.target) ? webContents.undo() : getUndoStore().undoLastOne()),
       'core:redo': e => (isTextInput(e.target) ? webContents.redo() : getUndoStore().redo()),
-      'core:select-all': e => (isTextInput(e.target) ? webContents.selectAll() : null),
+      'core:select-all': e => {
+        if (isTextInput(e.target)) {
+          webContents.selectAll();
+        } else {
+          AppEnv && AppEnv.commands.dispatch(`multiselect-list:select-all`);
+        }
+      },
     });
 
     // "Pinch to zoom" on the Mac gets translated by the system into a
@@ -318,16 +324,26 @@ export default class WindowEventHandler {
     }
     const word = event.target.value.substr(wordStart, wordEnd - wordStart);
 
-    this.openSpellingMenuFor(word, hasSelectedText, {
-      onCorrect: correction => {
-        const insertionPoint = wordStart + correction.length;
-        event.target.value = event.target.value.replace(word, correction);
-        event.target.setSelectionRange(insertionPoint, insertionPoint);
+    this.openSpellingMenuFor(
+      word,
+      hasSelectedText,
+      {
+        onCorrect: correction => {
+          const insertionPoint = wordStart + correction.length;
+          event.target.value = event.target.value.replace(word, correction);
+          event.target.setSelectionRange(insertionPoint, insertionPoint);
+        },
       },
-    });
+      event
+    );
   }
 
-  openSpellingMenuFor(word, hasSelectedText, { onCorrect, onRestoreSelection = () => {} }) {
+  openSpellingMenuFor(
+    word,
+    hasSelectedText,
+    { onCorrect, onRestoreSelection = () => {} },
+    mouseEvent
+  ) {
     const { Menu, MenuItem } = remote;
     const menu = new Menu();
 
@@ -344,7 +360,7 @@ export default class WindowEventHandler {
     menu.append(
       new MenuItem({
         label: 'Copy',
-        enabled: hasSelectedText,
+        enable: hasSelectedText,
         click: () => AppEnv.commands.dispatch('core:copy', { text: word }),
       })
     );

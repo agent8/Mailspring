@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
 import {
   Utils,
   Actions,
@@ -8,6 +9,7 @@ import {
   BlockedSendersStore,
   EmailAvatar,
   CalendarStore,
+  CategoryStore,
   FocusedPerspectiveStore,
   TrashFromSenderTask,
 } from 'mailspring-exports';
@@ -22,6 +24,7 @@ import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
 import MessageTimestamp from './message-timestamp';
 import MessageControls from './message-controls';
+import ChangeFolderTask from '../../../src/flux/tasks/change-folder-task';
 
 export default class MessageItem extends React.Component {
   static displayName = 'MessageItem';
@@ -112,12 +115,13 @@ export default class MessageItem extends React.Component {
     let el = e.target;
     while (el !== e.currentTarget) {
       if (el.classList.contains('collapsed-participants')) {
-        this.setState({ detailedHeaders: true });
+        this.setState({ detailedHeaders: !this.state.detailedHeaders });
         e.stopPropagation();
         return;
       }
       el = el.parentElement;
     }
+    e.stopPropagation();
     return;
   };
 
@@ -280,7 +284,7 @@ export default class MessageItem extends React.Component {
     });
 
     return (
-      <div>
+      <div className="attachments-wrap">
         {attachedFiles.length > 0 && (
           <div className="attachments-area">
             <InjectedComponent
@@ -316,6 +320,13 @@ export default class MessageItem extends React.Component {
   }
 
   _renderBlockNote() {
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (currentPerspective) {
+      const sharedRole = currentPerspective.categoriesSharedRole();
+      if (sharedRole && sharedRole === 'trash') {
+        return null;
+      }
+    }
     if (this.state.isBlocked) {
       const { message } = this.props;
       return (
@@ -333,7 +344,7 @@ export default class MessageItem extends React.Component {
   _renderEmailAvatar() {
     if (this.props.isOutboxDraft) {
       return (
-        <OutboxSender draft={this.props.message} lottieStyle={{ margin: '-45px auto 0px -5px' }} />
+        <OutboxSender draft={this.props.message} lottieStyle={{ margin: '-57px auto 0px -5px' }} />
       );
     } else {
       return (
@@ -345,6 +356,54 @@ export default class MessageItem extends React.Component {
       );
     }
   }
+  _restoreMessageToInbox = () => {
+    const inboxFolder = CategoryStore.getCategoryByRole(this.props.message.accountId, 'inbox');
+    if (inboxFolder) {
+      Actions.queueTask(
+        new ChangeFolderTask({
+          folder: inboxFolder,
+          messages: [this.props.message],
+          source: 'Restore Single Message',
+        })
+      );
+    }
+  };
+  _renderRestoreBanner = () => {
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (
+      this.props.message &&
+      currentPerspective &&
+      Array.isArray(currentPerspective.categories())
+    ) {
+      const cats = currentPerspective.categories();
+      const inSpamOrTrashView = cats.every(cat => {
+        return cat && (cat.role === 'trash' || cat.role === 'spam');
+      });
+      if (inSpamOrTrashView) {
+        return null;
+      }
+      const messageInTrash = (this.props.message.labels || []).every(cat => {
+        return cat && cat.role === 'trash';
+      });
+      const messageInSpam = (this.props.message.labels || []).every(cat => {
+        return cat && cat.role === 'spam';
+      });
+      if (messageInSpam || messageInTrash) {
+        const message = `This message is in ${
+          messageInTrash ? 'trash' : 'spam'
+        }. Move it to your inbox?`;
+        return (
+          <div className="row">
+            <div className="show-restore-message">
+              {message}
+              <a onClick={this._restoreMessageToInbox}>Restore Message</a>
+            </div>
+          </div>
+        );
+      }
+    }
+    return null;
+  };
 
   _renderHeader() {
     const { message, thread, messages, disableDraftEdit } = this.props;
@@ -413,10 +472,30 @@ export default class MessageItem extends React.Component {
               </div>
             </div>
             <MessageParticipants
+              date={message.date}
               detailFrom={message.from}
               to={message.to}
               cc={message.cc}
               bcc={message.bcc}
+              isBlocked={isBlocked}
+              replyTo={message.replyTo.filter(c => !message.from.find(fc => fc.email === c.email))}
+              onClick={this._onClickParticipants}
+              isDetailed={false}
+            >
+              {this._renderHeaderDetailToggle()}
+            </MessageParticipants>
+          </div>
+        </div>
+        {this._renderRestoreBanner()}
+        {this.state.detailedHeaders && (
+          <div className="row with-border">
+            <MessageParticipants
+              date={message.date}
+              detailFrom={message.from}
+              to={message.to}
+              cc={message.cc}
+              bcc={message.bcc}
+              isBlocked={isBlocked}
               replyTo={message.replyTo.filter(c => !message.from.find(fc => fc.email === c.email))}
               onClick={this._onClickParticipants}
               isDetailed={this.state.detailedHeaders}
@@ -424,7 +503,7 @@ export default class MessageItem extends React.Component {
               {this._renderHeaderDetailToggle()}
             </MessageParticipants>
           </div>
-        </div>
+        )}
         {/* {this._renderFolder()} */}
       </header>
     );
@@ -439,27 +518,13 @@ export default class MessageItem extends React.Component {
     if (this.props.pending) {
       return null;
     }
-    if (this.state.detailedHeaders) {
-      return (
-        <div
-          className="header-toggle-control"
-          style={{ display: 'inline-block', alignContent: 'center', transform: 'rotate(180deg)' }}
-          onClick={this._toggleHeaderDetail}
-        >
-          <RetinaImg
-            name={'down-arrow.svg'}
-            style={{ width: 16, height: 16, fontSize: 16 }}
-            isIcon
-            mode={RetinaImg.Mode.ContentIsMask}
-          />
-        </div>
-      );
-    }
 
     return (
       <div
-        className="header-toggle-control inactive"
-        style={{ top: 18 }}
+        className={classNames({
+          inactive: !this.state.detailedHeaders,
+          'header-toggle-control': true,
+        })}
         onClick={this._toggleHeaderDetail}
       >
         <RetinaImg
@@ -519,6 +584,7 @@ export default class MessageItem extends React.Component {
           <div className="message-item-area">
             {this._renderBlockNote()}
             {this._renderHeader()}
+            {this._renderAttachments()}
             <MessageItemBody
               pending={this.props.pending}
               message={this.props.message}
@@ -528,7 +594,6 @@ export default class MessageItem extends React.Component {
               setTrackers={this._setTrackers}
               viewOriginalEmail={this.state.viewOriginalEmail}
             />
-            {this._renderAttachments()}
             {this._renderFooterStatus()}
           </div>
         </div>

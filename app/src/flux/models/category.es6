@@ -7,7 +7,11 @@ import {
   inboxNotOtherCategories,
   inboxOtherCategories,
 } from '../../constant';
-
+let categoryMetadata = null;
+const CategoryMetadata = () => {
+  categoryMetadata = categoryMetadata || require('./category-metadata').default;
+  return categoryMetadata;
+};
 // We look for a few standard categories and display them in the Mailboxes
 // portion of the left sidebar. Note that these may not all be present on
 // a particular account.
@@ -102,6 +106,21 @@ const toDelimiterJSONMappings = val => {
 };
 const ignoredPrefixes = ['INBOX', '[Gmail]', '[Google Mail]'];
 export default class Category extends Model {
+  isState(targetState) {
+    try {
+      const current = parseInt(this.state);
+      const target = parseInt(targetState);
+      return current === target;
+    } catch (e) {
+      AppEnv.reportError(new Error('currentState or targetState cannot be converted to int'), {
+        errorData: {
+          current: this.state,
+          target: targetState,
+        },
+      });
+      return false;
+    }
+  }
   get displayName() {
     return Category.pathToDisplayName(this.name, this.delimiter);
   }
@@ -184,6 +203,7 @@ export default class Category extends Model {
   //   console.error('using get name()');
   //   return this.role;
   // }
+  static mergeFields = ['isNew'];
 
   static attributes = Object.assign({}, Model.attributes, {
     role: Attributes.String({
@@ -218,6 +238,11 @@ export default class Category extends Model {
       queryable: true,
       loadFromColumn: true,
     }),
+    displayOrder: Attributes.Number({
+      modelKey: 'displayOrder',
+      queryable: false,
+      loadFromColumn: false,
+    }),
     type: Attributes.Number({
       modelKey: 'type',
       queryable: true,
@@ -229,6 +254,11 @@ export default class Category extends Model {
       loadFromColumn: true,
       fromJSONMapping: fromDelimiterJsonMappings,
       toJSONMapping: toDelimiterJSONMappings,
+    }),
+    isNew: Attributes.Boolean({
+      modelKey: 'isNew',
+      queryable: false,
+      loadFromColumn: false,
     }),
   });
 
@@ -303,7 +333,28 @@ export default class Category extends Model {
   }
 
   isDeleted() {
-    return this.state === 1;
+    return this.state === Category.DELETED;
+  }
+  //Is Hidden from Folder Tree
+  isHidden = () => {
+    return !!CategoryMetadata().isHidden({ accountId: this.accountId, id: this.path });
+  };
+  hide(save = false) {
+    CategoryMetadata().hide({ accountId: this.accountId, id: this.path, save });
+  }
+  show(save = false) {
+    CategoryMetadata().show({ accountId: this.accountId, id: this.path, save });
+  }
+  getDisplayOrder() {
+    return CategoryMetadata().getDisplayOrder({ accountId: this.accountId, id: this.path });
+  }
+  setDisplayOrder(val, save = true) {
+    CategoryMetadata().setDisplayOrder({
+      accountId: this.accountId,
+      id: this.path,
+      displayOrder: val,
+      save,
+    });
   }
   areStrangers(otherCategory) {
     if (!(otherCategory instanceof Category)) {
@@ -393,7 +444,7 @@ export default class Category extends Model {
       const otherParentName = otherCategory.displayName.slice(0, indexOfLastOtherLayer);
       return currentParentName === otherParentName;
     } else {
-      return false;
+      return currentLayers.length === 1 && currentLayers.length === otherLayers.length;
     }
   }
   areRelatives(otherCategory) {

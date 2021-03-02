@@ -4,7 +4,7 @@ import MailspringStore from 'mailspring-store';
 import WorkspaceStore from './workspace-store';
 import FocusedPerspectiveStore from './focused-perspective-store';
 import Actions from '../actions';
-
+import AccountStore from './account-store';
 const MAIN_TAB_ITEM_ID = 'General';
 
 class TabItem {
@@ -28,7 +28,34 @@ class PreferencesUIStore extends MailspringStore {
     this._filterTabs = [];
     this._filterSearchTabsDebounced = _.debounce(() => this._filterSearchTabs(), 100);
     this._triggerDebounced = _.debounce(() => this.trigger(), 20);
+    this._tabsLists = [];
     this.setupListeners();
+  }
+  registerTabs(tabItemList) {
+    this._tabsLists = tabItemList || this._tabsLists;
+    this._tabs = [];
+    this._tabsLists.forEach(tab => {
+      if (!tab.isHidden || (tab.isHidden && !tab.isHidden())) {
+        const item = new TabItem({
+          tabId: tab.tabId,
+          displayName: tab.displayName,
+          order: tab.order,
+          className: tab.className,
+          configGroup: tab.configGroup,
+        });
+        this._tabs.push(item);
+        if (item.tabId === MAIN_TAB_ITEM_ID && this._selection.tabId === null) {
+          this._selection.tabId = item.tabId;
+        }
+      }
+    });
+    this._tabs.sort((a, b) => a.order - b.order);
+    const currentSelectionInTabs = this._tabs.find(tab => tab.tabId === this._selection.tabId);
+    if (!currentSelectionInTabs && this._tabs.length > 0) {
+      this._selection.tabId = this._tabs[0].tabId;
+    }
+    this._filterSearchTabsDebounced();
+    this.trigger();
   }
 
   get TabItem() {
@@ -41,6 +68,7 @@ class PreferencesUIStore extends MailspringStore {
       ipcRenderer.on('open-preferences', this.openPreferences);
 
       this.listenTo(Actions.switchPreferencesTab, this.switchPreferencesTab);
+      this.listenTo(AccountStore, this._onAccountsChange);
     }
 
     AppEnv.commands.add(document.body, 'core:show-keybindings', () => {
@@ -48,6 +76,9 @@ class PreferencesUIStore extends MailspringStore {
       Actions.switchPreferencesTab('Shortcuts');
     });
   }
+  _onAccountsChange = () => {
+    this.registerTabs();
+  };
 
   tabs() {
     return this._filterTabs;
@@ -161,6 +192,7 @@ class PreferencesUIStore extends MailspringStore {
   */
   registerPreferencesTab = tabItem => {
     this._tabs.push(tabItem);
+    this._tabsLists.push(tabItem);
     this._tabs.sort((a, b) => a.order - b.order);
     if (tabItem.tabId === MAIN_TAB_ITEM_ID) {
       this._selection.tabId = tabItem.tabId;

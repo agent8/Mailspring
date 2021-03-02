@@ -119,13 +119,11 @@ function AfterPlugin() {
     // slate selection [isCollapsed] but real dom it's not [isCollapsed]
     if (selection.isCollapsed && !native.isCollapsed) {
       if (native.anchorOffset !== selection.anchorOffset) {
-        const delta = native.focusOffset - native.anchorOffset;
-        const distance = selection.anchorOffset - native.anchorOffset;
         const range = {
           anchorKey: selection.anchorKey,
-          anchorOffset: native.anchorOffset + distance - delta,
+          anchorOffset: native.anchorOffset,
           focusKey: selection.focusKey,
-          focusOffset: native.anchorOffset + distance,
+          focusOffset: native.focusOffset,
         };
         change.select(range).delete();
       }

@@ -2,6 +2,7 @@ import {
   DefaultMailClientItem,
   LaunchSystemStartItem,
   DefaultAccountSending,
+  EnableFocusInboxItem,
   DownloadSelection,
   LocalData,
   SupportId,
@@ -26,11 +27,13 @@ import {
   CustomizeEmailActions,
 } from './components/preferences-customize-components';
 import BlockedSenders from './components/preferences-blocked-senders';
+import PreferencesLabels from './components/preferences-labels';
 import { Privacy } from './components/preferences-privacy-components';
 import {
   PreferencesKeymapsHearder,
   PreferencesKeymapsContent,
 } from './components/preferences-keymaps';
+import { AccountStore } from 'mailspring-exports';
 
 const preferencesTemplateFill = {
   tables: [
@@ -63,8 +66,7 @@ const preferencesTemplateFill = {
             },
             {
               label: 'Enable Focused Inbox (only show important senders in your inbox)',
-              configSchema: configSchema =>
-                configSchema.properties.workspace.properties.enableFocusedInbox,
+              component: EnableFocusInboxItem,
               keyPath: 'core.workspace.enableFocusedInbox',
               keywords: [],
             },
@@ -177,6 +179,20 @@ const preferencesTemplateFill = {
               keywords: [],
             },
             {
+              label: 'Disable editing of original message when replying/forwarding',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.disableOriginalMessageEdit,
+              keyPath: 'core.composing.disableOriginalMessageEdit',
+              keywords: [],
+            },
+            {
+              label: 'Automatically show message history in Reply Window',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.showOriginalEmailInReply,
+              keyPath: 'core.composing.showOriginalEmailInReply',
+              keywords: [],
+            },
+            {
               label: 'Show CC, BCC when forwarding or composing new draft',
               configSchema: configSchema =>
                 configSchema.properties.composing.properties.showCcAndBcc,
@@ -224,13 +240,20 @@ const preferencesTemplateFill = {
         //   ],
         // },
         {
-          groupName: 'DOWNLOADS',
+          groupName: 'DOWNLOADS & ATTACHMENTS',
           groupItem: [
             {
               label: 'Open containing folder after downloading attachments',
               configSchema: configSchema =>
                 configSchema.properties.attachments.properties.openFolderAfterDownload,
               keyPath: 'core.attachments.openFolderAfterDownload',
+              keywords: [],
+            },
+            {
+              label: 'When dragging files into the composer, always add as an attachment',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.dropFileAsNormalAttachment,
+              keyPath: 'core.composing.dropFileAsNormalAttachment',
               keywords: [],
             },
             // {
@@ -271,8 +294,8 @@ const preferencesTemplateFill = {
       ],
     },
     {
-      tabId: 'My Account',
-      displayName: 'My Account',
+      tabId: 'Back up & Sync',
+      displayName: 'Back up & Sync',
       order: 2,
       configGroup: [
         {
@@ -280,7 +303,7 @@ const preferencesTemplateFill = {
             {
               label: 'Back up & Sync',
               component: EdisonAccount,
-              keywords: [],
+              keywords: ['Back up & Sync'],
             },
           ],
         },
@@ -302,15 +325,6 @@ const preferencesTemplateFill = {
           ],
         },
         {
-          groupItem: [
-            {
-              label: 'MutedNotifications',
-              component: PreferencesMutedNotifacations,
-              keywords: [],
-            },
-          ],
-        },
-        {
           groupName: 'BADGE COUNT',
           groupItem: [
             {
@@ -320,6 +334,44 @@ const preferencesTemplateFill = {
               keyPath: 'core.notifications.countBadge',
               keywords: [],
             },
+            {
+              label: 'System tray badge count',
+              configSchema: configSchema =>
+                configSchema.properties.notifications.properties.countSystemTray,
+              keyPath: 'core.notifications.countSystemTray',
+              keywords: [],
+            },
+          ],
+        },
+        {
+          groupItem: [
+            {
+              label: 'MutedNotifications',
+              component: PreferencesMutedNotifacations,
+              keywords: [],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      tabId: 'Labels',
+      displayName: 'Labels',
+      order: 4,
+      isHidden: () => {
+        const accounts = AccountStore.accounts().filter(account => {
+          return account && account.usesLabels();
+        });
+        return accounts.length === 0;
+      },
+      configGroup: [
+        {
+          groupItem: [
+            {
+              label: 'PreferencesLabels',
+              component: PreferencesLabels,
+              keywords: ['Labels'],
+            },
           ],
         },
       ],
@@ -327,6 +379,7 @@ const preferencesTemplateFill = {
     {
       tabId: 'Accounts',
       displayName: 'Accounts',
+      className: 'preferences-template-accounts',
       order: 4,
       configGroup: [
         {

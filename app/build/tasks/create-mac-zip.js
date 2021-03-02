@@ -13,7 +13,7 @@ module.exports = grunt => {
       return;
     }
     const done = this.async();
-    const zipPath = path.join(grunt.config('outputDir'), 'EdisonMail.zip');
+    const zipPath = path.join(grunt.config('outputDir'), 'Edison Mail.zip');
 
     if (grunt.file.exists(zipPath)) {
       grunt.file.delete(zipPath, { force: true });

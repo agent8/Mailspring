@@ -25,6 +25,7 @@ export default class EmailFrame extends React.Component {
   static propTypes = {
     content: PropTypes.string.isRequired,
     message: PropTypes.object,
+    messageIndex: PropTypes.number,
     showQuotedText: PropTypes.bool,
     setTrackers: PropTypes.func,
     viewOriginalEmail: PropTypes.bool,
@@ -46,32 +47,45 @@ export default class EmailFrame extends React.Component {
     this._unlisten = EmailFrameStylesStore.listen(this._writeContent);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps = nextProps => {
     if (
       nextProps.message.id === this.props.message.id &&
       nextProps.content === this.props.content &&
-      (nextProps.message.version > this.props.message.version ||
-        this.props.messageIndex !== nextProps.messageIndex)
+      this.props.messageIndex !== nextProps.messageIndex
     ) {
       this._writeContent();
     }
-  }
+  };
 
   shouldComponentUpdate(nextProps) {
     const { content, showQuotedText, message = {}, viewOriginalEmail, messageIndex } = this.props;
     const nextMessage = nextProps.message || {};
-
+    const files = (this.props.message.files || [])
+      .filter(f => f && f.isInline)
+      .map(f => {
+        if (this.props.downloads[f.id]) {
+          return Object.assign({}, f, this.props.downloads[f.id]);
+        } else {
+          return f;
+        }
+      });
+    const nextFiles = (nextProps.message.files || [])
+      .filter(f => f && f.isInline)
+      .map(f => {
+        if (nextProps.downloads[f.id]) {
+          return Object.assign({}, f, nextProps.downloads[f.id]);
+        } else {
+          return f;
+        }
+      });
     return (
       messageIndex !== nextProps.messageIndex ||
       content !== nextProps.content ||
       showQuotedText !== nextProps.showQuotedText ||
       message.id !== nextMessage.id ||
-      (message.id === nextMessage.id &&
-        nextMessage.version > message.version &&
-        content === nextProps.content) ||
       !Utils.isEqualReact(message.pluginMetadata, nextMessage.pluginMetadata) ||
       nextProps.viewOriginalEmail !== viewOriginalEmail ||
-      !_.isEqual(this.props.downloads, nextProps.downloads)
+      !_.isEqual(files, nextFiles)
     );
   }
 
@@ -234,7 +248,7 @@ export default class EmailFrame extends React.Component {
       }
     }
 
-    // add traciking for clicking link
+    // add tracking for clicking link
     const links = doc.querySelectorAll('a');
     if (links && links.length > 0) {
       for (let link of links) {
@@ -263,7 +277,7 @@ export default class EmailFrame extends React.Component {
         }
         if (fallbackSrc) {
           img.src = fallbackSrc;
-        } else {
+        } else if (!/^file:\/\/.*/.test(img.src)) {
           img.src = '../static/icons/empty.svg';
         }
       }
@@ -272,7 +286,7 @@ export default class EmailFrame extends React.Component {
 
   _openInlineImage(e) {
     if (e.target) {
-      remote.shell.openItem(decodeURIComponent(e.target.src.replace('file://', '')));
+      remote.shell.openPath(decodeURIComponent(e.target.src.replace('file://', '')));
     }
   }
 
@@ -374,21 +388,21 @@ export default class EmailFrame extends React.Component {
   };
 
   reversedColor = (r, g, b, prop) => {
-    var isBackground = prop == 'background-color';
+    const isBackground = prop == 'background-color';
     //if color is dark or bright (http://alienryderflex.com/hsp.html)
-    var hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+    const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
     if (hsp < 130 && !isBackground) {
       //foreground dark color
-      var delta = 255 - hsp;
-      var nr = Math.min(r + delta, 234);
-      var ng = Math.min(g + delta, 234);
-      var nb = Math.min(b + delta, 234);
+      const delta = 255 - hsp;
+      const nr = Math.min(r + delta, 234);
+      const ng = Math.min(g + delta, 234);
+      const nb = Math.min(b + delta, 234);
       return 'rgb(' + nr + ',' + ng + ', ' + nb + ')';
     } else if (hsp > 200 && isBackground) {
       //bg color brighter than #cccccc
-      var nr = Math.max(r - hsp, 27);
-      var ng = Math.max(g - hsp, 28);
-      var nb = Math.max(b - hsp, 30);
+      const nr = Math.max(r - hsp, 27);
+      const ng = Math.max(g - hsp, 28);
+      const nb = Math.max(b - hsp, 30);
       return 'rgb(' + nr + ',' + ng + ', ' + nb + ')';
     } else {
       return this.desatruate(r, g, b);

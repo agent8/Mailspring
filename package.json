@@ -9,8 +9,8 @@
     "url": "git+https://github.com/agent8/Mailspring.git"
   },
   "engines": {
-    "node": "12.4.x",
-    "npm": "6.4.x"
+    "node": "12.x.x",
+    "npm": "6.x.x"
   },
   "devDependencies": {
     "appdmg": "^0.6.0",
@@ -20,22 +20,24 @@
     "babel-preset-electron": "^1.4.15",
     "babel-preset-react": "6.x.x",
     "chalk": "1.x.x",
+    "crypto-js": "^4.0.0",
     "devtron": "^1.4.0",
-    "electron": "6.1.12",
+    "electron": "11.2.0",
     "electron-installer-dmg": "^3.0.0",
-    "electron-packager": "^14.1.0",
+    "electron-packager": "^15.1.0",
     "electron-packager-languages": "^0.4.0",
     "electron-rebuild": "^1.8.6",
     "electron-winstaller": "2.x.x",
-    "eslint": "^4.7.2",
-    "eslint-config-prettier": "^2.9.0",
-    "eslint-config-react-app": "^2.0.0",
-    "eslint-plugin-flowtype": "^2.36.0",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-jsx-a11y": "^5.1.1",
-    "eslint-plugin-prettier": "^2.5.0",
-    "eslint-plugin-react": "^7.4.0",
-    "eslint_d": "4.2.0",
+    "eslint": "^7.14.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-config-react-app": "^6.0.0",
+    "eslint-plugin-flowtype": "^5.2.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.21.5",
+    "eslint-plugin-spellcheck": "^0.0.17",
+    "eslint_d": "^9.1.2",
     "fs-extra": "2.x.x",
     "fs-plus": "2.x.x",
     "gitbook-cli": "^2.3.2",
@@ -50,12 +52,14 @@
     "grunt-contrib-csslint": "0.5.x",
     "grunt-contrib-less": "0.8.x",
     "grunt-lesslint": "0.13.x",
+    "grunt-string-replace": "^1.3.1",
     "gulp": "^4.0.2",
     "gulp-iconfont": "^10.0.3",
     "gulp-iconfont-css": "^3.0.0",
     "handlebars": "^4.0.10",
     "jasmine": "2.x.x",
     "joanna": "0.0.9",
+    "json": "^10.0.0",
     "load-grunt-parent-tasks": "^0.1.2",
     "meta-marked": "^0.4.2",
     "prettier": "^1.10.0",
@@ -66,6 +70,7 @@
     "underscore": "1.8.x"
   },
   "scripts": {
+    "sonar": "sh scripts/sonar-check.sh",
     "build-native": "sh scripts/build-native.sh",
     "uploaddmg": "node scripts/upload_dmg.js",
     "uploadpkg": "node scripts/upload_pkg.js",
@@ -87,7 +92,8 @@
     "sign-mac-mas": "sh scripts/sign_for_mac_app_store.sh",
     "build-mac-mas": "npm run rebuild && SIGN_BUILD=true npm run build-mas && npm run sign-mac-mas",
     "build-mas": "grunt build-client --is-mas=true --gruntfile=app/build/Gruntfile.js --base=./",
-    "icon-font": "gulp -f scripts/generate-icon-font.js Iconfont"
+    "icon-font": "gulp -f scripts/generate-icon-font.js Iconfont",
+    "enforce-git-policy": "cp ./git_pre-commit .git/hooks/pre-commit && chmod u+x .git/hooks/pre-commit"
   },
   "dependencies": {
     "aws-sdk": "^2.336.0",
@@ -97,7 +103,8 @@
     "mkdirp": "^0.5.1",
     "node-gyp": "^6.0.0",
     "plist": "^3.0.1",
-    "react-bootstrap": "^0.32.4"
+    "react-bootstrap": "^0.32.4",
+    "sonar-scanner": "^3.1.0"
   },
   "resolutions": {
     "**/nan": "2.14.0",

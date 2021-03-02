@@ -29,8 +29,11 @@ export default class SheetContainer extends React.Component {
     ipcRenderer.on('application-activate', this._onAppActive);
     this.unsubscribe = WorkspaceStore.listen(this._onStoreChange);
     if (AppEnv.isMainWindow()) {
-      AppEnv.trackingEvent('App-Open');
+      setTimeout(() => {
+        AppEnv.trackingEvent('App-Open');
+      }, 6000);
       this._checkDBVersion();
+      AppEnv.config.syncAllPreferencesFromServer();
     }
   }
 
@@ -102,6 +105,7 @@ export default class SheetContainer extends React.Component {
   _onAppActive = () => {
     BlockedSendersStore.syncBlockedSenders();
     MuteNotificationStore.syncMuteNotifacations();
+    AppEnv.config.syncAllPreferencesFromServer();
   };
 
   toggleMaximize = e => {
@@ -252,7 +256,7 @@ export default class SheetContainer extends React.Component {
               url="edisonmail://onboarding/assets/logo-light.png"
               mode={RetinaImg.Mode.ContentPreserve}
             />
-            <h1>Start Using Edison Mail for Mac</h1>
+            <h1>Start Using Edison Mail</h1>
             <p>Connect your account to continue using the app</p>
             <button className="btn login-button" onClick={this.openOnboarding}>
               Connect your account to unlock

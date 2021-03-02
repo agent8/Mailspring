@@ -97,7 +97,7 @@ export default class EmailAvatar extends Component {
         bccList = [];
       messages.forEach(msg => {
         const account = AccountStore.accountForId(msg.accountId);
-        const filterCurrent = contact => !account.isMyEmail(contact.email);
+        const filterCurrent = contact => account && !account.isMyEmail(contact.email);
         fromList.push(...(msg.from || []).filter(filterCurrent));
         toList.push(...(msg.to || []).filter(filterCurrent));
         ccList.push(...(msg.cc || []).filter(filterCurrent));
@@ -171,8 +171,9 @@ export default class EmailAvatar extends Component {
     let styles = {
       backgroundImage: bgColor,
       backgroundPosition: 'center',
-      backgroundSize: '100% auto',
+      backgroundSize: 'cover',
       backgroundRepeat: 'no-repeat',
+      backgroundColor: bgColor && bgColor.includes('url') ? 'white' : null,
     };
     if (this.props.styles) {
       styles = Object.assign(styles, this.props.styles);

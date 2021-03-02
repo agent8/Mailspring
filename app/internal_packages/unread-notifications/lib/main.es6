@@ -10,18 +10,50 @@ import {
   DatabaseStore,
   ThreadStore,
   MuteNotificationStore,
+  TaskFactory,
+  BlockContactTask,
 } from 'mailspring-exports';
 
 const WAIT_FOR_CHANGES_DELAY = 400;
+const NOTIFI_ACTIONS = [
+  { type: 'button', text: 'Reply', value: 'reply' },
+  { type: 'button', text: 'Mark as Read', value: 'mark_as_read' },
+  { type: 'button', text: 'Trash', value: 'trash' },
+  { type: 'button', text: 'Archive', value: 'archive' },
+  { type: 'button', text: 'Block', value: 'block' },
+];
+class ActivationTime {
+  constructor() {
+    this.appTime = Date.now();
+    this.accounts = {};
+  }
+  updateTimeForAccount = (accountId, timestamp) => {
+    if (timestamp > this.appTime) {
+      this.accounts[accountId] = timestamp;
+    } else {
+      this.accounts[accountId] = this.appTime;
+    }
+  };
+  timeForAccount = accountId => {
+    if (this.accounts[accountId]) {
+      return this.accounts[accountId];
+    } else {
+      return this.appTime;
+    }
+  };
+}
 
 export class Notifier {
   constructor() {
-    this.activationTime = Date.now();
+    this.activationTime = new ActivationTime();
     this.unnotifiedQueue = [];
     this.hasScheduledNotify = false;
 
     this.activeNotifications = {};
-    this.unlisteners = [DatabaseStore.listen(this._onDatabaseChanged, this)];
+    this.unlisteners = [
+      DatabaseStore.listen(this._onDatabaseChanged, this),
+      AccountStore.listen(this._onAccountsChange),
+    ];
     this.notifiedMessageIds = {};
   }
 
@@ -30,6 +62,16 @@ export class Notifier {
       unlisten();
     }
   }
+  _onAccountsChange = () => {
+    const accounts = AccountStore.accounts();
+    if (Array.isArray(accounts)) {
+      accounts.forEach(account => {
+        if (account) {
+          this.activationTime.updateTimeForAccount(account.id, account.lastVerified);
+        }
+      });
+    }
+  };
 
   // async for testing
   async _onDatabaseChanged({ objectClass, objects }) {
@@ -53,14 +95,25 @@ export class Notifier {
       // ensure the message was just created (eg: this is not a modification)
       if (msg.version !== 1) continue;
       // ensure the message was received after the app launched (eg: not syncing an old email)
-      if (!msg.date || msg.date.valueOf() < this.activationTime) continue;
+      if (
+        !msg.date ||
+        msg.date.valueOf() < this.activationTime.timeForAccount(msg.accountId || msg.aid)
+      )
+        continue;
       // ensure the message is not a loopback
       const account = msg.from[0] && AccountStore.accountForEmail(msg.from[0].email);
       if (msg.accountId === (account || {}).id) continue;
       // if body is not pull over
       if (!msg.hasBody) continue;
-      // if is Other, don't display notification
-      if (enableFocusedInboxKey && msg.inboxCategory === Category.InboxCategoryState.MsgOther) {
+      // if is Other and the noticeType is 'Focused Inbox', don't display notification
+      // if enableFocusedInbox, the noticeType 'All' means 'Focused Inbox'
+      const myAccount = AccountStore.accountForId(msg.accountId);
+      const { noticeType } = myAccount.notifacation;
+      if (
+        enableFocusedInboxKey &&
+        noticeType === 'All' &&
+        msg.inboxCategory === Category.InboxCategoryState.MsgOther
+      ) {
         continue;
       }
       // filter the message that dont should note by account config
@@ -137,12 +190,13 @@ export class Notifier {
       case 'None':
         return false;
       case 'All':
-        const isInbox =
+      case 'All_include_other':
+        var isInbox =
           (msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Inbox')) ||
           msg.labels.some(label => label.role === 'inbox'); // for Gmail we check the XGMLabels, for other providers's label role
         return isInbox;
       case 'Important':
-        const isImportant = msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Important');
+        var isImportant = msg.XGMLabels && msg.XGMLabels.some(label => label === '\\Important');
         return isImportant;
       default:
         return true;
@@ -211,12 +265,58 @@ export class Notifier {
       canReply: true,
       tag: 'unread-update',
       silent: true,
+      actions: NOTIFI_ACTIONS,
       onActivate: ({ response, activationType }) => {
         if (activationType === 'replied' && response && typeof response === 'string') {
           Actions.sendQuickReply({ thread, message }, response);
           // DC-2078:Should not open email detail after reply from notification
           return;
         } else {
+          if (activationType && activationType !== 'clicked') {
+            // { type: 'button', text: 'Mark as Read', value: 'mark_as_read' },
+            // { type: 'button', text: 'Trash', value: 'trash' },
+            // { type: 'button', text: 'Archive', value: 'archive' },
+            // { type: 'button', text: 'Block', value: 'block' },
+            switch (activationType) {
+              case 'mark_as_read':
+                Actions.queueTasks(
+                  TaskFactory.taskForSettingUnread({
+                    threads: [thread],
+                    unread: false,
+                    source: 'Notification mark as read',
+                  })
+                );
+                break;
+              case 'trash':
+                Actions.queueTasks(
+                  TaskFactory.tasksForMovingToTrash({
+                    messages: [message],
+                    source: 'Notification trash',
+                  })
+                );
+                break;
+              case 'archive':
+                Actions.queueTasks(
+                  TaskFactory.tasksForArchiving({
+                    threads: [thread],
+                    source: 'Notification archive',
+                  })
+                );
+                break;
+              case 'block':
+                var fromEmail = message.from[0] && message.from[0].email;
+                if (fromEmail) {
+                  Actions.queueTask(
+                    new BlockContactTask({ accountId: message.accountId, email: fromEmail })
+                  );
+                }
+                break;
+              default:
+                return;
+            }
+            return;
+          }
+
           AppEnv.displayWindow();
         }
 

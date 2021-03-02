@@ -10,7 +10,20 @@ The Attribute class also exposes convenience methods for generating {Matcher} ob
 Section: Database
 */
 export default class Attribute {
-  constructor({mergeIntoModel = false, isPseudoPrimary = false, modelKey, jsModelKey = false, queryable = false, jsonKey, loadFromColumn = false, isJoinTable = false, modelTable, toJSONMapping = false, fromJSONMapping = false }) {
+  constructor({
+    mergeIntoModel = false,
+    isPseudoPrimary = false,
+    modelKey,
+    jsModelKey = false,
+    queryable = false,
+    jsonKey,
+    loadFromColumn = false,
+    isJoinTable = false,
+    modelTable,
+    toJSONMapping = false,
+    fromJSONMapping = false,
+    ignoreSubSelect = false,
+  }) {
     this.modelKey = modelKey;
     this.jsModelKey = jsModelKey || modelKey;
     this.tableColumn = modelKey;
@@ -26,11 +39,11 @@ export default class Attribute {
     this.fromJSONMapping = fromJSONMapping;
     this.isPseudoPrimary = isPseudoPrimary && queryable;
     // Use to indicate if field must be in the select sql.
-    if(mergeIntoModel && !loadFromColumn){
+    if (mergeIntoModel && !loadFromColumn) {
       throw new Error(`mergeIntoModel requires loadFromColumn`);
     }
     this.mergeIntoModel = mergeIntoModel && loadFromColumn;
-
+    this.ignoreSubSelect = ignoreSubSelect;
   }
 
   _assertPresentAndQueryable(fnName, val) {
@@ -59,9 +72,7 @@ export default class Attribute {
     }
     if (val.length === 0) {
       console.warn(
-        `Attribute::in (${
-        this.modelKey
-        }) called with an empty set. You should avoid this useless query!`
+        `Attribute::in (${this.modelKey}) called with an empty set. You should avoid this useless query!`
       );
     }
     if (val.length === 1) {
@@ -100,7 +111,7 @@ export default class Attribute {
   }
 
   fromJSON(val) {
-    if (typeof this.fromJSONMapping === 'function'){
+    if (typeof this.fromJSONMapping === 'function') {
       return this.fromJSONMapping(val);
     }
     return val || null;

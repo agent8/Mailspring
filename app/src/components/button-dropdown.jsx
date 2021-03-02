@@ -1,10 +1,12 @@
 const RetinaImg = require('./retina-img').default;
-const { React, ReactDOM, PropTypes } = require('mailspring-exports');
+const { React, PropTypes } = require('mailspring-exports');
 const classnames = require('classnames');
 
 class ButtonDropdown extends React.Component {
   static displayName = 'ButtonDropdown';
   static propTypes = {
+    className: PropTypes.string,
+    primaryTitle: PropTypes.string,
     primaryItem: PropTypes.element,
     primaryClick: PropTypes.func,
     bordered: PropTypes.bool,
@@ -13,6 +15,7 @@ class ButtonDropdown extends React.Component {
     closeOnMenuClick: PropTypes.bool,
     attachment: PropTypes.string,
     disabled: PropTypes.bool,
+    disableDropdownArrow: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -23,7 +26,9 @@ class ButtonDropdown extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = { open: false };
+    this.state = { open: false, eventY: 0 };
+    this._buttonRef = null;
+    this._setButtonRef = el => (this._buttonRef = el);
   }
 
   render() {
@@ -48,7 +53,7 @@ class ButtonDropdown extends React.Component {
     if (this.props.primaryClick) {
       return (
         <div
-          ref="button"
+          ref={this._setButtonRef}
           onBlur={this._onBlur}
           tabIndex={-1}
           className={`${classes} ${this.props.className || ''}`}
@@ -69,15 +74,17 @@ class ButtonDropdown extends React.Component {
               mode={RetinaImg.Mode.ContentIsMask}
             />
           </div>
-          <div className="secondary-items" onMouseDown={this._onMenuClick} style={style}>
-            {menu}
+          <div style={{ position: 'fixed', zIndex: 99, top: this.state.eventY }}>
+            <div className="secondary-items" onMouseDown={this._onMenuClick} style={style}>
+              {menu}
+            </div>
           </div>
         </div>
       );
     } else {
       return (
         <div
-          ref="button"
+          ref={this._setButtonRef}
           onBlur={this._onBlur}
           tabIndex={-1}
           className={`${classes} ${this.props.className || ''}`}
@@ -89,18 +96,20 @@ class ButtonDropdown extends React.Component {
             onClick={this.toggleDropdown}
           >
             {this.props.primaryItem}
-            <RetinaImg
-              name={'arrow-dropdown.svg'}
-              isIcon
-              style={{
-                width: 24,
-                height: 24,
-                fontSize: 20,
-                lineHeight: '24px',
-                verticalAlign: 'middle',
-              }}
-              mode={RetinaImg.Mode.ContentIsMask}
-            />
+            {this.props.disableDropdownArrow ? null : (
+              <RetinaImg
+                name={'arrow-dropdown.svg'}
+                isIcon
+                style={{
+                  width: 24,
+                  height: 24,
+                  fontSize: 20,
+                  lineHeight: '24px',
+                  verticalAlign: 'middle',
+                }}
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
+            )}
           </div>
           <div
             className={`secondary-items ${this.props.attachment}`}
@@ -114,20 +123,20 @@ class ButtonDropdown extends React.Component {
     }
   }
 
-  toggleDropdown = () => {
+  toggleDropdown = e => {
     if (this.state.open !== false) {
       this.setState({ open: false });
     } else if (!this.props.disabled) {
-      const buttonBottom = ReactDOM.findDOMNode(this).getBoundingClientRect().bottom;
+      const buttonBottom = this._buttonRef ? this._buttonRef.getBoundingClientRect().bottom : -200;
       if (buttonBottom + 200 > window.innerHeight) {
-        this.setState({ open: 'up' });
+        this.setState({ open: 'up', eventY: e.pageY });
       } else {
-        this.setState({ open: 'down' });
+        this.setState({ open: 'down', eventY: e.pageY });
       }
     }
   };
 
-  _onMenuClick = event => {
+  _onMenuClick = () => {
     if (this.props.closeOnMenuClick) {
       this.setState({ open: false });
     }
@@ -135,7 +144,7 @@ class ButtonDropdown extends React.Component {
 
   _onBlur = event => {
     const target = event.nativeEvent.relatedTarget;
-    if (target != null && ReactDOM.findDOMNode(this.refs.button).contains(target)) {
+    if (target != null && this._buttonRef && this._buttonRef.contains(target)) {
       return;
     }
     this.setState({ open: false });

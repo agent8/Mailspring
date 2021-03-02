@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg, LabelColorizer } from 'mailspring-component-kit';
-import { Actions, TaskFactory, ChangeLabelsTask, TaskQueue } from 'mailspring-exports';
+import {
+  Actions,
+  TaskFactory,
+  ChangeLabelsTask,
+  TaskQueue,
+  FocusedPerspectiveStore,
+} from 'mailspring-exports';
 
 export default class CreateNewFolderPopover extends Component {
   static propTypes = {
@@ -11,6 +17,10 @@ export default class CreateNewFolderPopover extends Component {
     left: PropTypes.number,
     top: PropTypes.number,
     onActionCallback: PropTypes.func,
+    name: PropTypes.string,
+    buttonTimeout: PropTypes.number,
+    isMoveAction: PropTypes.bool,
+    visible: PropTypes.bool,
   };
   static defaultProps = {
     left: 490,
@@ -60,18 +70,6 @@ export default class CreateNewFolderPopover extends Component {
     }
   };
 
-  _onBusyTimeout = () => {
-    if (!this._mounted) {
-      return;
-    }
-    if (!this._buttonTimer) {
-      this._buttonTimestamp = Date.now();
-      this._buttonTimer = setTimeout(() => {
-        this.setState({ isBusy: false });
-        this._buttonTimer = null;
-      }, this.props.buttonTimeout * 2);
-    }
-  };
   _onActionCallback = data => {
     if (typeof this.props.onActionCallback === 'function') {
       this.props.onActionCallback(data);
@@ -84,8 +82,8 @@ export default class CreateNewFolderPopover extends Component {
     if (!this._buttonTimer) {
       this._buttonTimestamp = Date.now();
       this._buttonTimer = setTimeout(() => {
-        this.setState({ isBusy: false });
         this._buttonTimer = null;
+        this.setState({ isBusy: false });
       }, this.props.buttonTimeout);
     } else {
       const now = Date.now();
@@ -93,8 +91,8 @@ export default class CreateNewFolderPopover extends Component {
       if (now - this._buttonTimestamp < this.props.buttonTimeout) {
         this._buttonTimestamp = Date.now();
         this._buttonTimer = setTimeout(() => {
-          this.setState({ isBusy: false });
           this._buttonTimer = null;
+          this.setState({ isBusy: false });
         }, this.props.buttonTimeout);
       } else {
         this._buttonTimer = null;
@@ -122,7 +120,7 @@ export default class CreateNewFolderPopover extends Component {
         }
         if (this.props.isMoveAction) {
           this._onMoveToCategory(finishedTask.created);
-        } else {
+        } else if (Array.isArray(this.props.threads) && this.props.threads.length > 0) {
           Actions.queueTask(
             new ChangeLabelsTask({
               source: 'Category Picker: New Label',
@@ -131,8 +129,8 @@ export default class CreateNewFolderPopover extends Component {
               labelsToAdd: [finishedTask.created],
             })
           );
-          this._onActionCallback({ addedLabels: [finishedTask.created] });
         }
+        this._onActionCallback({ addedLabels: [finishedTask.created] });
       });
       Actions.closePopover();
     }
@@ -144,15 +142,32 @@ export default class CreateNewFolderPopover extends Component {
     const { threads } = this.props;
     const all = [];
     threads.forEach(({ labels }) => all.push(...labels));
+    const currentPerspective = FocusedPerspectiveStore.current();
+    if (currentPerspective && Array.isArray(currentPerspective.categories())) {
+      const inSpamOrTrash = currentPerspective.categories().every(cat => {
+        return cat && (cat.role === 'trash' || cat.role === 'spam');
+      });
+      if (inSpamOrTrash) {
+        Actions.queueTasks(
+          TaskFactory.tasksForChangeFolder({
+            source: 'Label Picker: New Label',
+            threads: threads,
+            folder: category,
+            currentPerspective,
+          })
+        );
+      } else {
+        Actions.queueTasks([
+          new ChangeLabelsTask({
+            source: 'Category Picker: Move to Label, deleting previous labels',
+            labelsToRemove: all.filter(label => label.isLabel && label.isLabel()),
+            labelsToAdd: [category],
+            threads: threads,
+          }),
+        ]);
+      }
+    }
 
-    Actions.queueTasks([
-      new ChangeLabelsTask({
-        source: 'Category Picker: Move to Label, deleting previous labels',
-        labelsToRemove: all.filter(label => label.isLabel && label.isLabel()),
-        labelsToAdd: [category],
-        threads: threads,
-      }),
-    ]);
     this._onActionCallback({ addedLabels: [category], removedLabels: all });
   };
 
@@ -237,7 +252,6 @@ export default class CreateNewFolderPopover extends Component {
                     className="check-img check"
                     name="tagging-checkmark.png"
                     mode={RetinaImg.Mode.ContentPreserve}
-                    onClick={() => this._onSelectLabel(item)}
                   />
                 </div>
               );

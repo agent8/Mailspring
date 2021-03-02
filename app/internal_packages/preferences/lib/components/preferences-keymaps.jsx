@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import path from 'path';
 import fs from 'fs';
 import { remote } from 'electron';
-import { Flexbox } from 'mailspring-component-kit';
+import { Flexbox, RetinaImg } from 'mailspring-component-kit';
 
 import displayedKeybindings from './keymaps/displayed-keybindings';
 import CommandItem from './keymaps/command-item';
@@ -42,12 +42,12 @@ export class PreferencesKeymapsHearder extends React.Component {
       type: 'info',
       message: 'Are you sure?',
       detail: 'Delete your custom key bindings and reset to the template defaults?',
-      buttons: ['Cancel', 'Reset'],
-      defaultId: 1,
-      cancelId: 0,
+      buttons: ['Reset', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
     });
 
-    if (chosen === 1) {
+    if (chosen === 0) {
       const keymapsFile = AppEnv.keymaps.getUserKeymapPath();
       fs.writeFileSync(keymapsFile, '{}');
     }
@@ -78,6 +78,18 @@ export class PreferencesKeymapsHearder extends React.Component {
                   );
                 })}
               </select>
+              <RetinaImg
+                name={'arrow-dropdown.svg'}
+                isIcon
+                style={{
+                  width: 24,
+                  height: 24,
+                  fontSize: 20,
+                  lineHeight: '24px',
+                  verticalAlign: 'middle',
+                }}
+                mode={RetinaImg.Mode.ContentIsMask}
+              />
             </div>
           </div>
           <div className="btn-danger shortcuts-reset-btn" onClick={this._onDeleteUserKeymap}>
@@ -93,6 +105,7 @@ export function PreferencesKeymapsContent() {
   const KeymapsContentGroups = displayedKeybindings.map(keybinding => {
     const groupItem = keybinding.items.map(([command, label]) => ({
       label: label,
+      // eslint-disable-next-line react/display-name
       component: () => <CommandItem key={command} command={command} label={label} />,
       keywords: [],
     }));

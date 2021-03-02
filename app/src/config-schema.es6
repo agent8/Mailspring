@@ -49,6 +49,8 @@ const emailActionLabels = [
   actionOption('spam', 'Mark as Spam'),
   actionOption('print', 'Print Thread/Message'),
 ];
+const quickActionValues = [...actionValues, 'spam'];
+const quickActionLabels = [...actionLabels, actionOption('spam', 'Mark as Spam')];
 
 export default {
   core: {
@@ -197,7 +199,7 @@ export default {
           threadView: {
             type: 'boolean',
             default: true,
-            syncToServer: true,
+            syncToServer: false,
           },
         },
       },
@@ -295,6 +297,11 @@ export default {
       composing: {
         type: 'object',
         properties: {
+          dropFileAsNormalAttachment: {
+            type: 'boolean',
+            default: false,
+            title: 'When dragging files into the composer, always add as an attachment',
+          },
           showCcAndBcc: {
             type: 'string',
             default: 'cc',
@@ -308,6 +315,17 @@ export default {
             default: true,
             syncToServer: true,
             title: 'Include original email when replying to a message',
+          },
+          disableOriginalMessageEdit: {
+            type: 'boolean',
+            default: false,
+            title: 'Disable editing of original message when replying/forwarding',
+          },
+          showOriginalEmailInReply: {
+            type: 'boolean',
+            default: false,
+            syncToServer: true,
+            title: 'Automatically show message history in Reply Window',
           },
           spellcheck: {
             type: 'boolean',
@@ -458,32 +476,32 @@ export default {
             type: 'string',
             default: 'archive',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 1',
           },
           quickAction2: {
             type: 'string',
             default: 'flag',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 2',
           },
           quickAction3: {
             type: 'string',
             default: 'trash',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 3',
           },
           quickAction4: {
             type: 'string',
             default: 'read',
             syncToServer: true,
-            enum: actionValues,
-            enumLabels: actionLabels,
+            enum: quickActionValues,
+            enumLabels: quickActionLabels,
             title: 'Action 4',
           },
         },
@@ -617,7 +635,7 @@ export default {
         properties: {
           sounds: {
             type: 'boolean',
-            default: false,
+            default: true,
             title: 'Send mail sound',
             syncToServer: true,
             syncToServerCommonKey: 'play_sound_after_email_sent',
@@ -670,6 +688,15 @@ export default {
             enum: ['hide', 'unread', 'total'],
             enumLabels: ['Hide Badge', 'Show Unread Count', 'Show Total Count'],
             title: 'Dock badge count',
+            notifyNative: true,
+          },
+          countSystemTray: {
+            type: 'string',
+            default: 'hide',
+            syncToServer: true,
+            enum: ['hide', 'unread'],
+            enumLabels: ['Hide Badge', 'Show Unread Count'],
+            title: 'System tray badge count',
             notifyNative: true,
           },
         },

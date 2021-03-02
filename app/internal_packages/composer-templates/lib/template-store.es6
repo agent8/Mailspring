@@ -35,7 +35,7 @@ function mergeContacts(oldContacts = [], contacts = []) {
   return result;
 }
 const WelcomeTemplate = {
-  id: '4ad7f986-de23-44a6-b579-3e2f9703b943',
+  id: uuid().toLowerCase(),
   title: 'Welcome to Templates',
   tsClientUpdate: 0,
   state: PreferencesSubListStateEnum.synchronized,
@@ -83,10 +83,10 @@ class TemplateStore extends MailspringStore {
 
     AppEnv.config.onDidChange(`templates`, () => {
       this.templates = AppEnv.config.get(`templates`);
-      if (!AppEnv.isMainWindow()) {
-        // compose should update the body when templates change
-        this.templatesBody = new Map();
-      }
+      this.templatesBody = new Map();
+      this.templates.forEach(t => {
+        this.getBodyById(t.id, true);
+      });
       this._triggerDebounced();
     });
 
@@ -111,7 +111,7 @@ class TemplateStore extends MailspringStore {
     return this._getTemplateById(this._selectedTemplateId);
   }
 
-  getBodyById(id) {
+  getBodyById(id, force = false) {
     if (!id) {
       return '';
     }
@@ -120,7 +120,7 @@ class TemplateStore extends MailspringStore {
       return '';
     }
     const bodyInTmp = this.templatesBody.get(id);
-    if (bodyInTmp) {
+    if (bodyInTmp && !force) {
       return bodyInTmp;
     }
 
@@ -188,8 +188,10 @@ class TemplateStore extends MailspringStore {
           id: t.id,
           state: PreferencesSubListStateEnum.updated,
           title: template.title,
+          TO: template.TO,
           CC: template.CC,
           BCC: template.BCC,
+          SUBJ: template.SUBJ,
           tsClientUpdate: new Date().getTime(),
           attachments: template.attachments || [],
         };
@@ -294,9 +296,19 @@ class TemplateStore extends MailspringStore {
       }
 
       let newBody = `${templateBody}${current.substr(insertion)}`;
-      const changeObj = { files: [] };
-      const { BCC, CC, attachments } = template;
+      const changeObj = {
+        files: (draft.files || []).filter(file => {
+          return file && file.isInline && !pureBody.includes(file.contentId);
+        }),
+      };
+      const { BCC, TO, CC, SUBJ, attachments } = template;
       // Add CC, Bcc to the draft, do not delete the original CC, BCC
+      if (TO) {
+        const toContacts = await ContactStore.parseContactsInString(TO);
+        if (toContacts.length) {
+          changeObj['to'] = mergeContacts(draft.to, toContacts);
+        }
+      }
       if (CC) {
         const ccContacts = await ContactStore.parseContactsInString(CC);
         if (ccContacts.length) {
@@ -308,6 +320,9 @@ class TemplateStore extends MailspringStore {
         if (bccContacts.length) {
           changeObj['bcc'] = mergeContacts(draft.bcc, bccContacts);
         }
+      }
+      if (SUBJ) {
+        changeObj['subject'] = SUBJ;
       }
       session.changes.add(changeObj);
       const fileMap = await AttachmentStore.addSigOrTempAttachments(
@@ -321,7 +336,8 @@ class TemplateStore extends MailspringStore {
       }
       fileMap.forEach((file, key) => {
         if (file.isInline) {
-          newBody = replaceStr(newBody, `src="${key}"`, `src="cid:${file.contentId}"`);
+          const urlPath = path.join(path.dirname(key), encodeURIComponent(path.basename(key)));
+          newBody = replaceStr(newBody, `src="${urlPath}"`, `src="cid:${file.contentId}"`);
         }
       });
       session.changes.add({ body: newBody });
@@ -355,11 +371,11 @@ class TemplateStore extends MailspringStore {
         return;
       }
 
-      const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
-      if (inlineAttachment.length) {
-        this._displayError('Sorry，template does not support inline attachments.');
-        return;
-      }
+      // const inlineAttachment = (draft.files || []).filter(attachment => attachment.isInline);
+      // if (inlineAttachment.length) {
+      //   this._displayError('Sorry，template does not support inline attachments.');
+      //   return;
+      // }
 
       const newTemplateId = uuid().toLowerCase();
       const oldTempTitles = this.getTemplates().map(t => t.title);
@@ -377,8 +393,16 @@ class TemplateStore extends MailspringStore {
           const filePath = AttachmentStore.pathForFile(f);
           const newPath = AppEnv.copyFileToPreferences(filePath);
           if (newPath) {
+            if (f.contentId) {
+              const urlPath = path.join(
+                path.dirname(newPath),
+                encodeURIComponent(path.basename(newPath))
+              );
+              draftContents = draftContents.replace(`cid:${f.contentId}`, urlPath);
+            }
             filesAddToAttachment.push({
-              inline: false,
+              contentType: f.contentType,
+              inline: f.isInline,
               path: newPath,
             });
           }

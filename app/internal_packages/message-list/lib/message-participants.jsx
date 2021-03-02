@@ -1,15 +1,18 @@
 import _ from 'underscore';
 import classnames from 'classnames';
 import { React, PropTypes, Actions } from 'mailspring-exports';
+import { RetinaImg } from 'mailspring-component-kit';
 import { remote, clipboard } from 'electron';
-
+import MessageTimestamp from './message-timestamp';
 const { Menu, MenuItem } = remote;
+
 const MAX_COLLAPSED = 5;
 
 export default class MessageParticipants extends React.Component {
   static displayName = 'MessageParticipants';
 
   static propTypes = {
+    date: PropTypes.object,
     to: PropTypes.array,
     cc: PropTypes.array,
     bcc: PropTypes.array,
@@ -17,6 +20,9 @@ export default class MessageParticipants extends React.Component {
     from: PropTypes.array,
     onClick: PropTypes.func,
     isDetailed: PropTypes.bool,
+    detailFrom: PropTypes.array,
+    isBlocked: PropTypes.bool,
+    children: PropTypes.element,
   };
 
   static defaultProps = {
@@ -77,28 +83,31 @@ export default class MessageParticipants extends React.Component {
   };
 
   _onContactContextMenu = (contact, e) => {
-    const menu = new Menu();
-    menu.append(new MenuItem({ role: 'copy' }));
-    menu.append(
-      new MenuItem({
+    const currentText = window.getSelection().toString();
+    const menus = [
+      { label: 'Copy', click: () => clipboard.writeText(currentText || '') },
+      {
         label: 'Copy Address',
         click: () => clipboard.writeText(contact.email),
-      })
-    );
-    menu.append(
-      new MenuItem({
+      },
+      {
         label: `Email ${contact.email}`,
         click: () => Actions.composeNewDraftToRecipient(contact),
-      })
-    );
-    menu.popup({});
+      },
+    ];
+    Actions.openContextMenu({ menuItems: menus, mouseEvent: e });
+    // const menu = new Menu();
+    // menu.append(new MenuItem({ role: 'copy' }));
+    // menu.append(new MenuItem());
+    // menu.append(new MenuItem());
+    // menu.popup({});
   };
 
   _renderFullContacts(contacts = []) {
     return contacts.map((c, i) => {
-      let comma = ',';
+      let comma = <span className="expanded-comma">,&nbsp;</span>;
       if (contacts.length === 1 || i === contacts.length - 1) {
-        comma = '';
+        comma = null;
       }
 
       if (c.name && c.name.length > 0 && c.name !== c.email) {
@@ -114,10 +123,8 @@ export default class MessageParticipants extends React.Component {
               {this.props.isDetailed ? c.fullOriginal() : c.fullName()}
             </div>
             <div className="participant-secondary">
-              {' <'}
-              <span>{c.email}</span>
-              {`>`}
-              <span>{comma}</span>
+              <span className="expanded-email">&nbsp;{c.email}</span>
+              {comma}
             </div>
           </div>
         );
@@ -155,9 +162,32 @@ export default class MessageParticipants extends React.Component {
   }
 
   _renderExpanded() {
-    const { detailFrom, from, replyTo, to, cc, bcc } = this.props;
-
+    const { detailFrom, from, replyTo, to, cc, bcc, isBlocked, date } = this.props;
     const expanded = [];
+
+    if (date) {
+      expanded.push(
+        <div key="date" className="participant-type">
+          <div className="participant-label normal-label">Date:</div>
+          <div className="participant-name">
+            <div className="participant selectable">
+              <div className="participant-primary"></div>
+              <div className="participant-secondary">
+                <MessageTimestamp isDetailed date={date} />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (detailFrom && detailFrom.length > 0) {
+      expanded.push(this._renderExpandedField('detail-from', detailFrom));
+    }
+
+    if (replyTo.length > 0) {
+      expanded.push(this._renderExpandedField('reply-to', replyTo));
+    }
 
     if (to.length > 0) {
       expanded.push(this._renderExpandedField('to', to));
@@ -171,20 +201,34 @@ export default class MessageParticipants extends React.Component {
       expanded.push(this._renderExpandedField('bcc', bcc));
     }
 
-    if (detailFrom && detailFrom.length > 0) {
+    if (isBlocked) {
       expanded.push(
-        this._renderExpandedField('detail-from', detailFrom, { includeChildren: true })
+        <div key="block" className="participant-type">
+          <div className="participant-label normal-label">
+            <RetinaImg
+              name={'readReceipts.svg'}
+              style={{ width: 16, height: 16, fontSize: 16 }}
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+              onClick={this._onClickTrackingIcon}
+            />
+          </div>
+          <div className="participant-name">
+            <div className="participant selectable">
+              <div className="participant-primary"></div>
+              <div className="participant-secondary">Email tracking is blocked</div>
+            </div>
+          </div>
+        </div>
       );
     }
 
     if (from.length > 0) {
       expanded.push(this._renderExpandedField('from', from, { includeLabel: false }));
     }
-
-    if (replyTo.length > 0) {
-      expanded.push(this._renderExpandedField('reply-to', replyTo));
+    if (!expanded || expanded.length === 0) {
+      return null;
     }
-
     return <div className="expanded-participants">{expanded}</div>;
   }
 
@@ -222,6 +266,7 @@ export default class MessageParticipants extends React.Component {
       participants: true,
       'message-participants': true,
       collapsed: !isDetailed,
+      expanded: isDetailed,
       'from-participants': from.length > 0,
       'to-participants': this._allToParticipants().length > 0,
     });

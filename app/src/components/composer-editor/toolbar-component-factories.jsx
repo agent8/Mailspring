@@ -3,10 +3,11 @@ import ReactDOM from 'react-dom';
 import { Mark } from 'slate';
 import { CompactPicker } from 'react-color';
 import { RetinaImg } from 'mailspring-component-kit';
-import { Actions } from 'mailspring-exports';
+import { Actions, PropTypes } from 'mailspring-exports';
 import FontSizePopover from './font-size-popover';
 import ButtonValuePickerPopover from './button-value-picker-popover';
 import { BLOCK_CONFIG } from './base-block-plugins';
+const IMAGE_TYPE = 'inline_resizable_image';
 
 // Helper Functions
 
@@ -161,7 +162,6 @@ export function applyValueForMark(value, type, markValue) {
 }
 
 // React Component Factories
-
 export function BuildToggleButton({
   type,
   button: {
@@ -173,7 +173,7 @@ export function BuildToggleButton({
     hideWhenCrowded = false,
   },
 }) {
-  return ({ value, onChange, className = '' }) => {
+  function ToggleButton({ value, onChange, className = '' }) {
     if (!isVisible()) {
       return null;
     }
@@ -209,7 +209,13 @@ export function BuildToggleButton({
         <i title={type} className={iconClass} />
       </button>
     );
+  }
+  ToggleButton.propTypes = {
+    value: PropTypes.object,
+    onChange: PropTypes.func,
+    className: PropTypes.string,
   };
+  return ToggleButton;
 }
 
 export function BuildMarkButtonWithValuePicker(
@@ -217,6 +223,12 @@ export function BuildMarkButtonWithValuePicker(
   { alwaysShow = false, anchorEl = null } = {}
 ) {
   return class ToolbarMarkDataPicker extends React.Component {
+    static propTypes = {
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
 
@@ -283,8 +295,18 @@ export function BuildMarkButtonWithValuePicker(
         },
       });
 
-      const active = getMarkOfType(this.props.value, config.type);
-      if (active) {
+      const active = getMarkOfType(value, config.type);
+      if (value.anchorInline && value.anchorInline.type === IMAGE_TYPE) {
+        var d = value.anchorInline.data.set('href', fieldValue);
+        onChange(
+          value
+            .change()
+            .setNodeByKey(value.anchorInline.key, {
+              data: d,
+            })
+            .focus()
+        );
+      } else if (active) {
         // update the active mark
         const change = value.change();
         expandSelectionToRangeOfMark(change, config.type);
@@ -332,7 +354,6 @@ export function BuildMarkButtonWithValuePicker(
     };
 
     render() {
-      const { expanded } = this.state;
       const active = getMarkOfType(this.props.value, config.type);
       return (
         <div
@@ -375,10 +396,17 @@ export function BuildMarkButtonWithValuePicker(
 
 export function BuildColorPicker(config) {
   return class ToolbarColorPicker extends React.Component {
+    static propTypes = {
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
       this.state = {
         expanded: false,
+        color: null,
       };
     }
 
@@ -388,11 +416,25 @@ export function BuildColorPicker(config) {
 
     _onBlur = e => {
       if (!this._el.contains(e.relatedTarget)) {
-        this.setState({ expanded: false });
+        const { color } = this.state;
+        const { value, onChange } = this.props;
+        if (color && color !== getActiveValueForMark(value, config.type)) {
+          onChange(applyValueForMark(value, config.type, color));
+        }
+        this.setState({ expanded: false, color: null });
       }
     };
 
-    _onChangeComplete = ({ hex }) => {
+    _onChangeComplete = color => {
+      const { hex, source } = color;
+      if (source === 'rgb' || source === 'hex') {
+        if (hex && hex !== this.state.color) {
+          this.setState({
+            color: hex,
+          });
+        }
+        return;
+      }
       this.setState({ expanded: false });
       const { value, onChange } = this.props;
       const markValue = hex !== config.default ? hex : null;
@@ -403,14 +445,20 @@ export function BuildColorPicker(config) {
       if (
         getActiveValueForMark(nProps.value, config.type) !==
         getActiveValueForMark(this.props.value, config.type)
+      ) {
+        return true;
+      }
+      if (
+        nState.expanded !== this.state.expanded ||
+        (nState.color && nState.color !== this.state.color)
       )
         return true;
-      if (nState.expanded !== this.state.expanded) return true;
       return false;
     }
 
     render() {
-      const color = getActiveValueForMark(this.props.value, config.type) || config.default;
+      const color =
+        this.state.color || getActiveValueForMark(this.props.value, config.type) || config.default;
       const { expanded } = this.state;
 
       return (
@@ -449,7 +497,15 @@ export function BuildColorPicker(config) {
   };
 }
 export function BuildFontSizePicker(config) {
-  return class FontPicker extends React.Component {
+  return class FontSizePicker extends React.Component {
+    static propTypes = {
+      defaultValues: PropTypes.object,
+      draftDefaultValues: PropTypes.object,
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
       config.default = (props.defaultValues || {}).fontSize || AppEnv.config.get('core.fontsize');
@@ -484,7 +540,7 @@ export function BuildFontSizePicker(config) {
         {
           originRect: this.fontSizeBtn.getBoundingClientRect(),
           direction: 'down',
-          closeOnAppBlur: true,
+          closeOnAppBlur: false,
         }
       );
     };
@@ -507,7 +563,12 @@ export function BuildFontSizePicker(config) {
           ref={el => (this.fontSizeBtn = el)}
         >
           <i className={config.iconClass} />
-          <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+          <RetinaImg
+            name={'down-arrow.svg'}
+            style={{ width: 12, height: 12, fontSize: 12 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </button>
       );
     }
@@ -516,19 +577,44 @@ export function BuildFontSizePicker(config) {
 
 export function BuildFontPicker(config) {
   return class FontPicker extends React.Component {
+    static propTypes = {
+      defaultValues: PropTypes.object,
+      value: PropTypes.object,
+      onChange: PropTypes.func,
+      className: PropTypes.string,
+    };
+
     constructor(props) {
       super(props);
+      this._fontPickerRef = null;
+      this._setFontPickerRef = ref => (this._fontPickerRef = ref);
       config.default = (props.defaultValues || {}).fontFace || AppEnv.config.get('core.fontface');
     }
-    _onSetValue = e => {
-      AppEnv.config.set('core.fontface', e.target.value);
+    _onSetValue = item => {
+      AppEnv.config.set('core.fontface', item);
       const { onChange, value } = this.props;
-      let markValue = e.target.value !== config.default ? e.target.value : null;
+      let markValue = item !== config.default ? item : null;
       if (!(typeof config.options[0].value === 'string')) {
         markValue = markValue / 1;
       }
-
       onChange(applyValueForMark(value, config.type, markValue));
+    };
+    _onClick = e => {
+      const value = getActiveValueForMark(this.props.value, config.type) || config.default;
+      const displayed = config.convert(value, config.default);
+      Actions.openPopover(
+        <FontSizePopover
+          className={'font-popover'}
+          options={config.options}
+          selectedValue={displayed}
+          onSelect={this._onSetValue}
+        />,
+        {
+          originRect: this._fontPickerRef.getBoundingClientRect(),
+          direction: 'down',
+          closeOnAppBlur: false,
+        }
+      );
     };
 
     shouldComponentUpdate(nextProps) {
@@ -540,27 +626,27 @@ export function BuildFontPicker(config) {
 
     render() {
       const value = getActiveValueForMark(this.props.value, config.type) || config.default;
-      const displayed = config.convert(value, config.default);
-
+      const fontValue = config.convert(value, config.default);
+      const displayOption = config.options.find(option => fontValue === option.value);
+      let displayName = '';
+      if (displayOption) {
+        displayName = displayOption.name;
+      }
       return (
         <button
+          ref={this._setFontPickerRef}
           style={{ padding: 0, paddingRight: 6 }}
           className={`${this.props.className} with-select`}
+          onClick={this._onClick}
         >
           <i className={config.iconClass} />
-          <select
-            onFocus={this._onFocus}
-            value={displayed}
-            onChange={this._onSetValue}
-            tabIndex={-1}
-          >
-            {config.options.map(({ name, value }) => (
-              <option key={value} value={value}>
-                {name}
-              </option>
-            ))}
-          </select>
-          <RetinaImg name="icon-composer-dropdown.png" mode={RetinaImg.Mode.ContentIsMask} />
+          <div className="font-face-display-name">{displayName}</div>
+          <RetinaImg
+            name={'down-arrow.svg'}
+            style={{ width: 12, height: 12, fontSize: 12 }}
+            isIcon
+            mode={RetinaImg.Mode.ContentIsMask}
+          />
         </button>
       );
     }

@@ -24,6 +24,14 @@
       }
 
       .account {
+        .account-picture {
+          img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+          }
+        }
         .account-item {
           flex: 1;
           margin: 0 10px 0 20px;
@@ -115,6 +123,9 @@
   width: 520px;
   .add-mute-contact-popup {
     padding: 30px;
+    .content-container {
+      max-height: 268px;
+    }
     .close-icon {
       position: absolute;
       top: 15px;

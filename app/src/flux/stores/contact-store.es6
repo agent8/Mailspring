@@ -5,6 +5,12 @@ import RegExpUtils from '../../regexp-utils';
 import DatabaseStore from './database-store';
 import AccountStore from './account-store';
 import ComponentRegistry from '../../registries/component-registry';
+import TaskFactory from '../tasks/task-factory';
+import Actions from '../actions';
+const contactKey = 'contacts';
+const currentVersion = 1;
+const defaultData = { version: currentVersion };
+const localStorage = window.localStorage;
 
 /**
 Public: ContactStore provides convenience methods for searching contacts and
@@ -55,7 +61,7 @@ class ContactStore extends MailspringStore {
       .limit(limit * accountCount)
       .order([
         Contact.attributes.sentToFrequency.descending(),
-        Contact.attributes.fromFrequency.descending(),
+        Contact.attributes.sendToCount.descending(),
       ]);
 
     return query.then(async _results => {
@@ -80,7 +86,7 @@ class ContactStore extends MailspringStore {
       .limit(limit * accountCount)
       .order([
         Contact.attributes.sentToFrequency.descending(),
-        Contact.attributes.fromFrequency.descending(),
+        Contact.attributes.sendToCount.descending(),
       ])
       .then(async _results => {
         let results = this._distinctByEmail(_results);
@@ -179,6 +185,29 @@ class ContactStore extends MailspringStore {
       }
     }
     return Object.values(uniq);
+  }
+  updateContactToDB({ newContact, accountId, draft } = {}) {
+    const task = TaskFactory.taskForUpdatingContact({ newContact, accountId, draft });
+    if (task) {
+      Actions.queueTask(task);
+      try {
+        let localContactStr = localStorage.getItem(contactKey);
+        if (!localContactStr) {
+          localContactStr = JSON.stringify(defaultData);
+        }
+        const localContacts = JSON.parse(localContactStr);
+        if (!Object.prototype.hasOwnProperty.call(localContacts, 'version')) {
+          localContacts.version = 1;
+        }
+        if (!localContacts[task.accountId]) {
+          localContacts[task.accountId] = {};
+        }
+        localContacts[task.accountId][newContact.email] = newContact.name;
+        localStorage.setItem(contactKey, JSON.stringify(localContacts));
+      } catch (e) {
+        AppEnv.logError(`Saving contact update to localstorage failed ${e}`);
+      }
+    }
   }
 }
 

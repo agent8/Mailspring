@@ -10,7 +10,6 @@ import {
   RESTful,
   AccountStore,
 } from 'mailspring-exports';
-import rimraf from 'rimraf';
 import ExportDataModal from './export-data-modal';
 
 const { EdisonAccountRest } = RESTful;
@@ -30,13 +29,19 @@ export class Privacy extends React.Component {
       optOutModalVisible: false,
       exportDataModalVisible: false,
       exportingSiftData: false,
+      dataShareOptionChanging: false,
     };
     this._mounted = false;
     this._expungeUserDataTimout = null;
+    this._unlisten = [];
   }
 
   componentDidMount() {
     this._mounted = true;
+    this._unlisten = [
+      Actions.dataShareOptionsFailed.listen(this._onDataShareFailed, this),
+      Actions.dataShareOptionsSuccess.listen(this._onDataShareSuccess, this),
+    ];
   }
 
   componentWillUnmount() {
@@ -44,6 +49,9 @@ export class Privacy extends React.Component {
     if (this._expungeUserDataTimout) {
       clearTimeout(this._expungeUserDataTimout);
     }
+    this._unlisten.forEach(un => {
+      un();
+    });
   }
 
   renderExportDataButton() {
@@ -102,7 +110,7 @@ export class Privacy extends React.Component {
     AppEnv.showMessageBox({
       title: 'Are you sure?',
       detail:
-        'By deleting your data on our servers, you are also discontinuing your use of the Email application. This action cannot be undon. ',
+        'By deleting your data on our servers, you are also discontinuing your use of the Email application. This action cannot be undone. ',
       showInMainWindow: true,
       buttons: ['Delete', 'Cancel'],
       defaultId: 0,
@@ -142,10 +150,26 @@ export class Privacy extends React.Component {
       </div>
     );
   }
+  _onDataShareSuccess = () => {
+    if (this._mounted) {
+      this.setState({ dataShareOptionChanging: false });
+    }
+  };
+  _onDataShareFailed = (err, optIn) => {
+    AppEnv.config.set('core.privacy.dataShare.optOut', !!optIn);
+    if (this._mounted) {
+      this.setState({ dataShareOptionChanging: false });
+    }
+    AppEnv.showErrorDialog({
+      title: 'Changing data sharing option failed.',
+      message: 'Data sharing option change failed. Please try again',
+    });
+  };
 
   toggleDataShare = value => {
     AppEnv.config.set('core.privacy.dataShare.optOut', !!value);
     Actions.dataShareOptions({ optOut: !!value });
+    this.setState({ dataShareOptionChanging: true });
   };
 
   _onCloseOptOutModal = () => {
@@ -181,7 +205,11 @@ export class Privacy extends React.Component {
   };
 
   renderDataShareOption() {
-    if (this.state.deleteUserDataPopupOpen || this.state.deletingUserData) {
+    if (
+      this.state.deleteUserDataPopupOpen ||
+      this.state.deletingUserData ||
+      this.state.dataShareOptionChanging
+    ) {
       return (
         <div className="btn-danger privacys-button">
           {this.renderSpinner()}Opt-out of Data Sharing

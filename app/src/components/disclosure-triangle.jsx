@@ -8,30 +8,43 @@ class DisclosureTriangle extends React.Component {
   static propTypes = {
     collapsed: PropTypes.bool,
     visible: PropTypes.bool,
+    visibleOnHover: PropTypes.bool,
     onCollapseToggled: PropTypes.func,
     className: PropTypes.string,
     iconName: PropTypes.string,
     isIcon: PropTypes.bool,
+    fontSize: PropTypes.number,
   };
 
   static defaultProps = { onCollapseToggled() {}, className: '', iconName: '' };
   _renderImage() {
-    let classNames = `${this.props.className}`;
-    if (this.props.visible) {
-      classNames += ' visible';
+    const {
+      onCollapseToggled,
+      className,
+      visible,
+      visibleOnHover,
+      collapsed,
+      iconName,
+      fontSize,
+    } = this.props;
+    let classNames = `${className}`;
+    if (visible) {
+      classNames += ' force-visible';
+    } else if (visibleOnHover) {
+      classNames += ' hover-visible';
     }
     let retinaClassName = '';
-    if (this.props.collapsed) {
+    if (collapsed) {
       retinaClassName = ' collapsed';
     }
     return (
-      <div className={classNames} onClick={this.props.onCollapseToggled}>
+      <div className={classNames} onClick={onCollapseToggled}>
         <RetinaImg
           className={retinaClassName}
-          name={this.props.iconName}
+          name={iconName}
           isIcon={true}
           mode={RetinaImg.Mode.ContentIsMask}
-          style={{ fontSize: 14 }}
+          style={{ fontSize: fontSize ? fontSize : 14 }}
         />
       </div>
     );
@@ -43,7 +56,9 @@ class DisclosureTriangle extends React.Component {
     }
     let classnames = `${this.props.className} disclosure-triangle`;
     if (this.props.visible) {
-      classnames += ' visible';
+      classnames += ' force-visible';
+    } else if (this.props.visibleOnHover) {
+      classnames += ' hover-visible';
     }
     if (this.props.collapsed) {
       classnames += ' collapsed';

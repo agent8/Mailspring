@@ -59,6 +59,15 @@ mailspring-workspace {
 
 .layout-mode-popout {
   // -webkit-app-region: no-drag;
+  .message-list-toolbar {
+    -webkit-app-region: drag;
+    .button-group {
+      -webkit-app-region: no-drag;
+    }
+  }
+  .sheet-toolbar {
+    -webkit-app-region: drag;
+  }
 }
 .layout-mode-list {
   // -webkit-app-region: drag;
@@ -82,7 +91,12 @@ mailspring-workspace {
 .layout-mode-split {
   .column-OutboxMessage,
   .column-MessageList {
-    padding-top: 0;
+    // & > div {
+    //   margin-top: 0;
+    // }
+    &::before {
+      display: none;
+    }
   }
 }
 .layout-mode-list {
@@ -297,8 +311,11 @@ body.is-blurred {
   .toolbar-ThreadList,
   .toolbar-OutboxMessage,
   .toolbar-MessageList {
+    display: none !important;
     height: @search-bar-height;
-    border-bottom: 1px solid @border-color-primary;
+    &.account-sidebar-mask {
+      border-bottom: none;
+    }
   }
   .toolbar-ThreadList {
     -webkit-app-region: drag;
@@ -746,6 +763,7 @@ body.platform-win32 {
   flex-shrink: 0;
   box-shadow: 0 1px 20px 0 rgba(0, 0, 0, 0.1);
   z-index: 2;
+  overflow: hidden;
   &[sidebar-narrow] {
     .btn-toolbar.item-compose {
       span {
@@ -760,8 +778,15 @@ body.platform-win32 {
 .column-OutboxMessage,
 .column-ThreadList,
 .column-MessageList {
-  padding-top: @search-bar-height;
+  // & > div {
+  //   margin-top: @search-bar-height;
+  // }
   // -webkit-app-region: no-drag;
+  &::before {
+    content: ' ';
+    display: block;
+    min-height: @search-bar-height;
+  }
   div {
     // This is for DC-182 reduce height because of thread-list-empty-bar
     div:nth-child(2).key-commands-region.thread-list,
@@ -798,13 +823,11 @@ body.platform-win32 {
   }
   & > .key-commands-region {
     overflow: hidden;
-    padding-bottom: 40px;
   }
 }
 
 .column-DraftList {
-  margin-top: @search-bar-height;
-  padding-bottom: @search-bar-height;
+  padding-top: @search-bar-height;
   // -webkit-app-region: no-drag;
   border-top: 1px solid @border-color-primary;
 }
@@ -817,8 +840,11 @@ body.platform-win32 {
 .layout-mode-popout .message-list-toolbar,
 .column-OutboxMessage .outbox-message-toolbar,
 .column-MessageList .message-list-toolbar {
+  position: sticky;
+  top: 0;
   height: 41px;
   border-bottom: 1px solid transparent;
+  background: @white;
   &.hide-btn-when-crowded {
     .btn-hide-when-crowded {
       display: none;
@@ -828,8 +854,7 @@ body.platform-win32 {
     transition: box-shadow 0.2s ease-in-out;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid @gray-lighter;
-    position: relative;
-    z-index: 2;
+    z-index: 6;
   }
   .divider {
     width: 1px;

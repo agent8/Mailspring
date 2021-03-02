@@ -1,16 +1,19 @@
-import React from 'react';
+import path from 'path';
+import { React, PropTypes } from 'mailspring-exports';
 import { Inline } from 'slate';
 import { RetinaImg, ResizableImg } from 'mailspring-component-kit';
 
 const IMAGE_TYPE = 'inline_resizable_image';
-const maxImgSize = 50 * 1000;
+const maxImgSize = 200 * 1000;
 
 function ImageNode(props) {
-  const { attributes, node, targetIsHTML, editor } = props;
+  const { node, targetIsHTML, editor } = props;
   const data = node.data;
   const src = data.get ? data.get('src') : data.src;
   const height = data.get ? data.get('height') : data.height;
   const width = data.get ? data.get('width') : data.width;
+  const href = data.get ? data.get('href') : data.href;
+  const verticalAlign = data.get ? data.get('verticalAlign') : data.verticalAlign;
   const style = {};
   if (height) {
     style.height = height;
@@ -19,43 +22,86 @@ function ImageNode(props) {
     style.width = width;
   }
 
-  if (targetIsHTML) {
-    return <img alt="" src={src} style={style} resizable={'true'} />;
+  if (verticalAlign) {
+    style.verticalAlign = verticalAlign;
   }
-
-  let isSelect = false;
-  const selectNow = editor.value.focusKey;
-  if (selectNow) {
-    const ancestorsNode = editor.value.document.getAncestors(selectNow);
-    const selectNowAncestors = ancestorsNode.find(el => el.key === node.key);
-    if (selectNowAncestors && selectNowAncestors.key === node.key) {
-      isSelect = true;
-    }
+  if (targetIsHTML) {
+    return (
+      <a href={href}>
+        <img alt="" href={href} src={src} style={style} resizable={'true'} />
+      </a>
+    );
   }
 
   return (
-    <span {...attributes}>
-      <ResizableImg
-        src={src}
-        style={style}
-        showMask={isSelect}
-        callback={value => {
-          editor.change(change => {
-            return change.setNodeByKey(node.key, {
-              data: {
-                src: src,
-                draggerDisable: true,
-                height: value.height,
-                width: value.width,
-              },
-            });
+    <ResizableImg
+      src={src}
+      style={style}
+      callback={value => {
+        editor.change(change => {
+          const { onForceSave } = editor.props.propsForPlugins;
+          change = change.setNodeByKey(node.key, {
+            data: {
+              src: src,
+              href: href,
+              draggerDisable: true,
+              height: value.height,
+              width: value.width,
+            },
           });
-        }}
-        lockAspectRatio
-      />
-    </span>
+          if (onForceSave) {
+            onForceSave(change.value);
+          }
+          return change;
+        });
+      }}
+      onContextMenu={(event, { onShowPopup, onCopyImage } = {}) => {
+        event.preventDefault();
+        const { remote } = require('electron');
+        const { Menu, MenuItem } = remote;
+        const menu = new Menu();
+        const removeImage = () => {
+          editor.change(change => {
+            return change.removeNodeByKey(node.key);
+          });
+        };
+        if (onCopyImage) {
+          menu.append(
+            new MenuItem({
+              label: 'Cut',
+              enabled: true,
+              click: () => {
+                onCopyImage(removeImage);
+              },
+            })
+          );
+          menu.append(
+            new MenuItem({
+              label: 'Copy',
+              enabled: true,
+              click: onCopyImage,
+            })
+          );
+        }
+        menu.append(
+          new MenuItem({
+            label: 'Resize',
+            enabled: true,
+            click: onShowPopup,
+          })
+        );
+        menu.popup({});
+      }}
+      lockAspectRatio
+    />
   );
 }
+
+ImageNode.propTypes = {
+  node: PropTypes.node,
+  targetIsHTML: PropTypes.bool,
+  editor: PropTypes.object,
+};
 
 function renderNode(props) {
   if (props.node.type === IMAGE_TYPE) {
@@ -80,6 +126,8 @@ export const changes = {
 
 const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
   const cb = filePath => {
+    const dirName = path.dirname(filePath);
+    const fileName = encodeURIComponent(path.basename(filePath));
     if (!filePath) {
       return;
     }
@@ -88,7 +136,7 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
       type: IMAGE_TYPE,
       data: {
         draggerDisable: true,
-        src: filePath,
+        src: path.join(dirName, fileName),
       },
     });
 
@@ -125,6 +173,12 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
   );
 };
 
+ToolbarAttachmentButton.propTypes = {
+  value: PropTypes.object,
+  onChange: PropTypes.func,
+  onAddAttachments: PropTypes.func,
+};
+
 const rules = [
   {
     deserialize(el, next) {
@@ -138,18 +192,25 @@ const rules = [
           draggerDisable: true,
         };
         const style = el.style;
-        if (style.height) {
-          data.height = style.height;
+        const height = style.height || el.getAttribute('height');
+        if (height) {
+          data.height = height;
         }
-        if (style.width) {
-          data.width = style.width;
+        const width = style.width || el.getAttribute('width');
+        if (width) {
+          data.width = width;
         }
+        const verticalAlign = style.verticalAlign || el.getAttribute('verticalAlign');
+        if (verticalAlign) {
+          data.verticalAlign = verticalAlign;
+        }
+        const href = el.getAttribute('href');
 
         return {
           object: 'inline',
           isVoid: true,
           type: IMAGE_TYPE,
-          data,
+          data: { ...data, href: href },
         };
       }
     },
