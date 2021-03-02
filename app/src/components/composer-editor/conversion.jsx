@@ -431,6 +431,32 @@ export const convertEdisonImageFilesToInline = htmlString => {
   return { newFiles, html: parsed.body.innerHTML };
 };
 
+export const convertLocalImageFilesToSignatureImageFiles = htmlString => {
+  const parsed = new DOMParser().parseFromString(htmlString, 'text/html');
+  const pWalker = document.createTreeWalker(parsed.body, NodeFilter.SHOW_ELEMENT, {
+    acceptNode: node => {
+      if (node.nodeName.toLocaleUpperCase() === 'IMG') {
+        const imgSrc = node.getAttribute('src');
+        if (imgSrc.startsWith('file://')) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+      return NodeFilter.FILTER_SKIP;
+    },
+  });
+  const newFiles = [];
+  while (pWalker.nextNode()) {
+    const img = pWalker.currentNode;
+    const originalPath = img.getAttribute('src').replace('file:///', '');
+    const newFilePath = AppEnv.copyFileToPreferences(originalPath);
+    if (newFilePath) {
+      img.setAttribute('src', newFilePath);
+      newFiles.push(newFilePath);
+    }
+  }
+  return { newFiles, html: parsed.body.innerHTML };
+};
+
 export function convertToHTML(value) {
   return HtmlSerializer.serialize(value);
 }
