@@ -7,6 +7,8 @@ import AccountStore from './account-store';
 import ComponentRegistry from '../../registries/component-registry';
 import TaskFactory from '../tasks/task-factory';
 import Actions from '../actions';
+import MailcoreProviderSettings from '../../../internal_packages/onboarding/lib/mailcore-provider-settings';
+import Utils from '../models/utils';
 const contactKey = 'contacts';
 const currentVersion = 1;
 const defaultData = { version: currentVersion };
@@ -20,6 +22,70 @@ with additional actions.
 Section: Stores
 */
 class ContactStore extends MailspringStore {
+  findAllContactsByEmail(emailAddress) {
+    return DatabaseStore.findAll(Contact).where([Contact.attributes.email.equal(emailAddress)]);
+  }
+  getMergedContactByEmail = emailAddress => {
+    return new Promise((resolve, reject) => {
+      this.findAllContactsByEmail(emailAddress).then(result => {
+        let ret = null;
+        if (Array.isArray(result) && result.length > 0) {
+          result.forEach(contact => {
+            if (ret && contact) {
+              ret.refs += contact.refs;
+              ret.sendToCount += contact.sendToCount;
+              ret.recvFromCount += contact.recvFromCount;
+            } else {
+              ret = contact;
+            }
+          });
+        }
+        return ret;
+      }, reject);
+    });
+  };
+  getContactTypeForAllAccount = emailAddress => {
+    return new Promise((resolve, reject) => {
+      if (
+        typeof emailAddress === 'string' &&
+        emailAddress.length > 0 &&
+        emailAddress.includes('@')
+      ) {
+        this.getMergedContactByEmail(emailAddress).then(contact => {
+          const ret = { isColleague: false, isStrange: false, isWellKnownProvider: false };
+          const domain = emailAddress
+            .split('@')
+            .pop()
+            .toLocaleLowerCase();
+          for (const template of Object.values(MailcoreProviderSettings)) {
+            if (ret.isWellKnownProvider) {
+              break;
+            }
+            if (Array.isArray(template['domain-match'])) {
+              for (const test of template['domain-match']) {
+                if (new RegExp(`(^${test}$)|(\.${test}$)`).test(domain)) {
+                  ret.isWellKnownProvider = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (!ret.isWellKnownProvider) {
+            for (const myEmail of AccountStore.emailAddresses()) {
+              if (Utils.emailsHaveSameDomain(emailAddress, myEmail)) {
+                ret.isColleague = true;
+              }
+            }
+          }
+          const isNewContact = contact.sendToCount < 1 && contact.recvFromCount < 5;
+          ret.isStrange = !ret.isColleague && isNewContact;
+          resolve(ret);
+        }, reject);
+      } else {
+        reject(new Error('Email Address invalid'));
+      }
+    });
+  };
   // Public: Search the user's contact list for the given search term.
   // This method compares the `search` string against each Contact's
   // `name` and `email`.

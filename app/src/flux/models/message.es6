@@ -261,6 +261,46 @@ export default class Message extends ModelWithMetadata {
       modelKey: 'subjectChanged',
       queryable: false,
     }),
+    sender: Attributes.Object({
+      modelKey: 'sender',
+      queryable: false,
+      itemClass: Contact,
+    }),
+    returnPath: Attributes.String({
+      modelKey: 'returnPath',
+      jsonKey: 'Return-Path',
+      queryable: false,
+    }),
+    dkimSignature: Attributes.String({
+      modelKey: 'dkimSignature',
+      jsonKey: 'DKIM-Signature',
+      queryable: false,
+    }),
+    authenticationResults: Attributes.String({
+      modelKey: 'authenticationResults',
+      jsonKey: 'Authentication-Results',
+      queryable: false,
+    }),
+    arcSeal: Attributes.String({
+      modelKey: 'arcSeal',
+      jsonKey: 'ARC-Seal',
+      queryable: false,
+    }),
+    arcMessageSignature: Attributes.String({
+      modelKey: 'arcMessageSignature',
+      jsonKey: 'ARC-Message-Signature',
+      queryable: false,
+    }),
+    arcAuthenticationResults: Attributes.String({
+      modelKey: 'arcAuthenticationResults',
+      jsonKey: 'ARC-Authentication-Results',
+      queryable: false,
+    }),
+    received: Attributes.Collection({
+      modelKey: 'received',
+      jsonKey: 'Received',
+      queryable: false,
+    }),
     data: Attributes.Object({
       modelKey: 'data',
       queryable: true,
