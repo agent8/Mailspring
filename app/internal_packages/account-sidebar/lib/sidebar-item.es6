@@ -115,17 +115,6 @@ const onDeleteItem = function(item) {
   if (item.deleted === true) {
     return;
   }
-  if (item.children.length > 0) {
-    _.defer(() => {
-      AppEnv.showErrorDialog({
-        title: `Cannot delete ${(item.contextMenuLabel || item.name).toLocaleLowerCase()}`,
-        message: `Must delete sub-${(
-          item.contextMenuLabel || item.name
-        ).toLocaleLowerCase()} first`,
-      });
-    });
-    return;
-  }
   const category = item.perspective.category();
   if (!category) {
     return;
@@ -140,6 +129,17 @@ const onDeleteItem = function(item) {
       })
     );
     AppEnv.trackingEvent('FolderTree-DeleteFolder-rightClick');
+    return;
+  }
+  if (item.children.length > 0) {
+    _.defer(() => {
+      AppEnv.showErrorDialog({
+        title: `Cannot delete ${(item.contextMenuLabel || item.name).toLocaleLowerCase()}`,
+        message: `Must delete sub-${(
+          item.contextMenuLabel || item.name
+        ).toLocaleLowerCase()} first`,
+      });
+    });
     return;
   }
   DatabaseStore.findAll(ThreadCategory)
