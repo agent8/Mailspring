@@ -55,7 +55,8 @@ export default class EdisonAccount {
       return;
     }
     if (code === EdisonAccountResCodes.Deleted) {
-      Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
+      // Actions.deletedEdisonAccountOnOtherDevice(account.emailAddress);
+      AccountStore.logoutSyncAccount(account.id);
     }
   }
 
