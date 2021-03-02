@@ -509,9 +509,12 @@
       z-index: 2;
 
       .inner {
+        position: relative;
+        top: -1px;
+        left: -1px;
         display: block;
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         .icon-mixin('../static/icons/check-empty.svg', #afbec9, 24px);
         border: none;
       }
@@ -521,14 +524,14 @@
         cursor: pointer;
         &::after {
           content: '';
-          height: 18px;
-          width: 18px;
+          height: 20px;
+          width: 20px;
           border-radius: 50%;
           background: rgba(0, 0, 0, 0.15);
           display: none;
           position: absolute;
-          top: 18.5px;
-          left: 15px;
+          top: 17.5px;
+          left: 14px;
         }
         &:hover {
           &:after {
