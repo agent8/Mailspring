@@ -727,7 +727,7 @@ class OutlineViewItem extends Component {
         return null;
       }
       let colorId;
-      if (account.color) {
+      if (account.color !== undefined) {
         colorId = account.color;
       } else {
         colorId = accountIds.findIndex(account => account === item.accountIds[0]) + 1;

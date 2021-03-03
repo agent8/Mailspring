@@ -32,9 +32,10 @@ function renderAccountColor(draft) {
   const accounts = AccountStore.accounts().map(account => account.id);
   const accountId = draft.accountId;
   const account = AccountStore.accountForId(accountId);
-  const color = account.color
-    ? account.color
-    : accounts.findIndex(account => account === accountId) + 1;
+  const color =
+    account.color !== undefined
+      ? account.color
+      : accounts.findIndex(account => account === accountId) + 1;
   return (
     <div className={`account-color`} style={{ background: LabelColorizer.colors[color] }}></div>
   );
