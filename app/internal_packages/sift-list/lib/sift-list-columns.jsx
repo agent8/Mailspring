@@ -1,6 +1,13 @@
 import React from 'react';
-import { PropTypes, Utils, DateUtils, EmailAvatar } from 'mailspring-exports';
-import { ListTabular, InjectedComponent } from 'mailspring-component-kit';
+import {
+  PropTypes,
+  Utils,
+  DateUtils,
+  EmailAvatar,
+  AccountStore,
+  FocusedPerspectiveStore,
+} from 'mailspring-exports';
+import { ListTabular, InjectedComponent, LabelColorizer } from 'mailspring-component-kit';
 import SiftQuickActions from './sift-quick-actions';
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
@@ -19,6 +26,26 @@ function subject(subj) {
   }
   return Utils.extractTextFromHtml(subj);
 }
+
+const renderAccountColor = message => {
+  if (!AppEnv.config.get('core.appearance.showAccountColor')) {
+    return null;
+  }
+  const current = FocusedPerspectiveStore.current();
+  if (current.accountIds.length <= 1) {
+    return null;
+  }
+  const accounts = AccountStore.accounts().map(account => account.id);
+  const accountId = message.accountId;
+  const account = AccountStore.accountForId(accountId);
+  const color =
+    account.color !== undefined
+      ? account.color
+      : accounts.findIndex(account => account === accountId) + 1;
+  return (
+    <div className={`account-color`} style={{ background: LabelColorizer.colors[color] }}></div>
+  );
+};
 
 const participants = message => {
   let isSent = false;
@@ -39,10 +66,13 @@ const participants = message => {
         <div className="participants-inner">
           <span>{list.map(p => p.displayName()).join(', ')}</span>
         </div>
+        {renderAccountColor(message)}
       </div>
     );
   } else {
-    return <div className="participants no-recipients">(No Recipients)</div>;
+    return (
+      <div className="participants no-recipients">(No Recipients){renderAccountColor(message)}</div>
+    );
   }
 };
 
