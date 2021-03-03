@@ -515,8 +515,9 @@ export default class EdisonAccount extends React.Component {
   _ondelete = () => {
     AppEnv.showMessageBox({
       type: 'info',
-      title: 'Are You Sure?',
-      detail: 'This CANNOT be undone. All your account information and data will be deleted.',
+      title: 'Delete Account',
+      detail:
+        'You use this email to Back up & Sync your preferences across all your devices. If you delete it, your saved preferences and account type will be lost, and you’ll be logged out.\n\nAre you sure you want to delete your account?',
       showInMainWindow: true,
       buttons: ['Delete', 'Cancel'],
       defaultId: 1,
