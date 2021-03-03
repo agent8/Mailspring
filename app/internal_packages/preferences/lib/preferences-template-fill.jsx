@@ -410,6 +410,13 @@ const preferencesTemplateFill = {
               keywords: ['sidebar', 'left', 'icons', 'avatar'],
             },
             {
+              label: 'Color Coding for Accounts',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.showAccountColor,
+              keyPath: 'core.appearance.showAccountColor',
+              keywords: ['account', 'colors'],
+            },
+            {
               label: 'Preview lines (two panel view only)',
               configSchema: configSchema =>
                 configSchema.properties.appearance.properties.previewLines,

@@ -24,9 +24,12 @@ class DraftList extends React.Component {
     this._isOpeningTimer = false;
   }
   componentDidMount() {
+    this.unsubscribers = [];
+    this.unsubscribers.push(Actions.changeAccountColor.listen(this.forceUpdate, this));
     this._mounted = true;
   }
   componentWillUnmount() {
+    this.unsubscribers.map(unsubscribe => unsubscribe());
     this._mounted = false;
     clearTimeout(this._deletingTimer);
     clearTimeout(this._isOpeningTimer);

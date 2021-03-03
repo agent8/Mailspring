@@ -660,6 +660,8 @@ class Actions {
 
   static toggleJiraPlugin = ActionScopeWindow;
   static iframeClicked = ActionScopeWindow;
+
+  static changeAccountColor = ActionScopeWindow;
 }
 
 // Read the actions we declared on the dummy Actions object above

@@ -698,6 +698,9 @@ class Config {
     const serverCommonKeyMap = new Map();
     const serverMacKeyMap = new Map();
     function traversingObj(obj, parentKey) {
+      if (!obj) {
+        return;
+      }
       Object.keys(obj).forEach(key => {
         const nowObj = obj[key] || {};
         const nowKey = `${parentKey ? parentKey + '.' : ''}${key}`;
