@@ -1,6 +1,7 @@
 /* eslint global-require:0 */
 
 import _ from 'underscore';
+import { LabelColorizer } from 'mailspring-component-kit';
 import { Utils, AccountStore, Actions } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
@@ -8,6 +9,7 @@ import DisclosureTriangle from './disclosure-triangle';
 import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import PropTypes from 'prop-types';
+import AccountColorPopover from './account-color-popover';
 import { Divider, DIVIDER_KEY, MORE_TOGGLE, ADD_FOLDER_KEY, NEW_FOLDER_KEY } from './outline-view';
 import OutlineViewEditFolderItem from './outline-view-edit-folder-item';
 import { DROP_DATA_TYPE } from '../constant';
@@ -152,6 +154,7 @@ class OutlineViewItem extends Component {
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
       showAll: PropTypes.bool,
+      accountIds: PropTypes.array,
     }).isRequired,
     isEditingMenu: PropTypes.bool,
   };
@@ -168,6 +171,7 @@ class OutlineViewItem extends Component {
       editing: props.item.editing || false,
       originalText: '',
       showAllChildren: false,
+      showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
       isCategoryDropping: false,
       editingFolderName: '',
       newFolderName: '',
@@ -199,6 +203,16 @@ class OutlineViewItem extends Component {
       this._selfRef.addEventListener('contextmenu', this._onShowContextMenu);
     }
     this.checkCurrentShowAllChildren(this.props);
+    this.disposables = [];
+    this.unsubscribers = [];
+    this.disposables.push(
+      AppEnv.config.onDidChange('core.appearance.showAccountColor', () => {
+        this.setState({
+          showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
+        });
+      })
+    );
+    this.unsubscribers.push(Actions.changeAccountColor.listen(this.forceUpdate, this));
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -216,6 +230,10 @@ class OutlineViewItem extends Component {
   }
 
   componentWillUnmount() {
+    if (this.disposables) {
+      this.disposables.forEach(disposable => disposable.dispose());
+    }
+    this.unsubscribers.map(unsubscribe => unsubscribe());
     this._mounted = false;
     clearTimeout(this._expandTimeout);
     if (this._selfRef) {
@@ -373,6 +391,24 @@ class OutlineViewItem extends Component {
     const item = this.props.item;
     const contextMenuLabel = item.contextMenuLabel || item.name;
     const menu = [];
+
+    if (AppEnv.config.get('core.appearance.showAccountColor') && item.id.endsWith('-single')) {
+      const originRect = event.target.getBoundingClientRect();
+      menu.push({
+        label: `Change Account Color`,
+        click: () => {
+          Actions.openPopover(
+            <AccountColorPopover onCheckColor={this.onCheckColor} item={item} />,
+            {
+              originRect,
+              disablePointer: true,
+              direction: 'left',
+              className: 'popout-container',
+            }
+          );
+        },
+      });
+    }
 
     if (this.props.item.onAddNewFolder && this.props.item.addNewFolderLabel) {
       const commands = (AppEnv.keymaps.getBindingsForAllCommands() || {})['core:new-folder'];
@@ -680,6 +716,29 @@ class OutlineViewItem extends Component {
     );
   }
 
+  _renderAccountColor() {
+    const { item } = this.props;
+    const { showAccountColor } = this.state;
+    const accountIds = AccountStore.accounts().map(account => account.id);
+
+    if (showAccountColor && item.id.endsWith('-single')) {
+      const account = AccountStore.accounts().find(account => account.id === item.accountIds[0]);
+      if (!account) {
+        return null;
+      }
+      let colorId;
+      if (account.color) {
+        colorId = account.color;
+      } else {
+        colorId = accountIds.findIndex(account => account === item.accountIds[0]) + 1;
+      }
+      const color = LabelColorizer.colors[colorId];
+      return <div className="account-color" style={{ background: color }}></div>;
+    } else {
+      return null;
+    }
+  }
+
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
       item: true,
@@ -705,6 +764,7 @@ class OutlineViewItem extends Component {
         onMouseUp={this._onDropZoneMouseUp}
         onMouseOut={this._onDropZoneMouseUp}
       >
+        {this._renderAccountColor()}
         {this._renderCount()}
         {this._renderIcon()}
         {this._renderItemContent()}

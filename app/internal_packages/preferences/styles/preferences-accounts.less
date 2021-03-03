@@ -87,7 +87,7 @@
         max-width: 100%;
         .account-details {
           flex: 1;
-          max-width: 400px;
+          max-width: 468px;
           border-left: 1px solid @border-color-divider;
 
           .config-group {
@@ -169,6 +169,41 @@
             }
           }
         }
+      }
+
+      .color-choice {
+        width: 346px;
+        display: flex;
+        flex-flow: row wrap;
+        margin: 0;
+        & > div {
+          flex: 0 1 20px;
+          height: 20px;
+          width: 20px;
+          margin: 4.5px;
+          border-radius: 50%;
+          text-align: center;
+          cursor: pointer;
+          img {
+            visibility: hidden;
+            margin-top: 9px;
+          }
+          &.checked {
+            img {
+              visibility: visible;
+            }
+          }
+          &:nth-child(12n + 1) {
+            margin-left: 0;
+          }
+          &:nth-child(12n + 12) {
+            margin-right: 0;
+          }
+        }
+      }
+
+      img.check-img {
+        margin-bottom: 5px;
       }
     }
   }

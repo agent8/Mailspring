@@ -7,12 +7,12 @@ import {
   RegExpUtils,
   KeyManager,
   Account,
-  Utils,
   AccountStore,
+  Utils,
   TaskFactory,
   Actions,
 } from 'mailspring-exports';
-import { EditableList, RetinaImg, ScrollRegion } from 'mailspring-component-kit';
+import { EditableList, RetinaImg, ScrollRegion, LabelColorizer } from 'mailspring-component-kit';
 import PreferencesCategory from './preferences-category';
 import { UpdateMailSyncSettings } from '../preferences-utils';
 
@@ -515,13 +515,25 @@ class PreferencesAccountDetails extends Component {
     );
   }
 
+  onCheckColor = bgColor => {
+    this._setState(
+      {
+        color: bgColor,
+      },
+      () => {
+        this._saveChanges();
+        Actions.changeAccountColor();
+      }
+    );
+  };
+
   render() {
     const { account } = this.state;
     const aliasPlaceholder = this._makeAlias(
       `Your Alias <alias@${account.emailAddress.split('@')[1]}>`
     );
     const isExchange = AccountStore.isExchangeAccount(account);
-
+    const accountIds = AccountStore.accounts().map(account => account.id);
     return (
       <ScrollRegion direction="column" className="account-details-container">
         <div className="account-details">
@@ -555,6 +567,41 @@ class PreferencesAccountDetails extends Component {
               onChange={this._onAccountAutoaddressUpdated}
               onSaveChanges={this._saveChanges}
             />
+
+            {AppEnv.config.get('core.appearance.showAccountColor') ? (
+              <div className="item">
+                <div>
+                  <label style={{ display: 'block' }} htmlFor={'Account Color'}>
+                    Account Color
+                  </label>
+                </div>
+                <div className="color-choice">
+                  {LabelColorizer.colors.map((color, idx) => {
+                    const accountIndex = accountIds.findIndex(acc => acc === account.id) + 1;
+                    let className = '';
+                    if (account.color) {
+                      className = account.color === idx ? 'checked' : '';
+                    } else {
+                      className = accountIndex === idx ? 'checked' : '';
+                    }
+                    return (
+                      <div
+                        key={color}
+                        className={className}
+                        style={{ background: color }}
+                        onClick={() => this.onCheckColor(idx)}
+                      >
+                        <RetinaImg
+                          className="check-img check"
+                          name="tagging-checkmark.png"
+                          mode={RetinaImg.Mode.ContentPreserve}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="config-group">
             <h6>ALIASES</h6>

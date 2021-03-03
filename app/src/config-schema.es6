@@ -701,6 +701,11 @@ export default {
             syncToServer: true,
             title: 'Show icons in the left-hand menu.',
           },
+          showAccountColor: {
+            type: 'boolean',
+            default: false,
+            title: 'Color Coding for Accounts',
+          },
           previewLines: {
             type: 'number',
             default: '2',
