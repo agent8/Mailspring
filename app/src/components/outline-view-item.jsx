@@ -723,7 +723,7 @@ class OutlineViewItem extends Component {
 
     if (showAccountColor && item.id.endsWith('-single')) {
       const account = AccountStore.accounts().find(account => account.id === item.accountIds[0]);
-      if (!account) {
+      if (!account || accountIds.length <= 1) {
         return null;
       }
       let colorId;
