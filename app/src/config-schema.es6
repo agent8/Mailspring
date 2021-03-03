@@ -704,7 +704,9 @@ export default {
           showAccountColor: {
             type: 'boolean',
             default: false,
-            title: 'Color Coding for Accounts',
+            title: 'Show account colors in the email list.',
+            note:
+              'A small strip of color appears on email rows in grouped folders. Account colors are set in the Email Accounts Preferences.',
           },
           previewLines: {
             type: 'number',
