@@ -133,7 +133,7 @@ class PreferencesAccountList extends Component {
             return {
               message: 'Warning',
               detail:
-                'You use this account to sync preferences across all your devices. If you remove it, your saved preferences will be lost, and can not be recovered. Are you sure you want to delete your account?',
+                'You use this email for Back up & Sync. If you delete it, your preferences will no longer be saved across all your devices.\n\nAre you sure you want to delete this account?',
             };
           }
           const drafts = DraftStore.findDraftsByAccountId(account.id);
