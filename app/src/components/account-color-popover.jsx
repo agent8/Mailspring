@@ -44,7 +44,7 @@ export default class AccountColorPopover extends Component {
         <div className="color-choice">
           {LabelColorizer.colors.map((color, idx) => {
             let className = '';
-            if (selectedColor) {
+            if (selectedColor !== undefined) {
               className = selectedColor === idx ? 'checked' : '';
             } else {
               className = accountIndex === idx ? 'checked' : '';
