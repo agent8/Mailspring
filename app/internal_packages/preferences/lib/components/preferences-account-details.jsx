@@ -572,14 +572,14 @@ class PreferencesAccountDetails extends Component {
               <div className="item">
                 <div>
                   <label style={{ display: 'block' }} htmlFor={'Account Color'}>
-                    Account Color
+                    Color
                   </label>
                 </div>
                 <div className="color-choice">
                   {LabelColorizer.colors.map((color, idx) => {
                     const accountIndex = accountIds.findIndex(acc => acc === account.id) + 1;
                     let className = '';
-                    if (account.color) {
+                    if (account.color !== undefined) {
                       className = account.color === idx ? 'checked' : '';
                     } else {
                       className = accountIndex === idx ? 'checked' : '';

@@ -26,7 +26,9 @@ class ThreadListParticipants extends React.Component {
     const accounts = AccountStore.accounts().map(account => account.id);
     const accountId = this.props.thread.accountId;
     const account = AccountStore.accountForId(accountId);
-    return account.color ? account.color : accounts.findIndex(account => account === accountId) + 1;
+    return account.color !== undefined
+      ? account.color
+      : accounts.findIndex(account => account === accountId) + 1;
   };
 
   componentDidMount() {
