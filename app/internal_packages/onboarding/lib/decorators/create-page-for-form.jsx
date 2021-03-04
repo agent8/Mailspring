@@ -1,6 +1,6 @@
 import { shell, remote } from 'electron';
 import { ScrollRegion, RetinaImg, LottieImg } from 'mailspring-component-kit';
-import { React, ReactDOM, PropTypes, AccountStore } from 'mailspring-exports';
+import { React, ReactDOM, PropTypes, AccountStore, RegExpUtils } from 'mailspring-exports';
 import OnboardingActions from '../onboarding-actions';
 import { finalizeAndValidateAccount } from '../onboarding-helpers';
 import FormErrorMessage from '../form-error-message';
@@ -79,7 +79,7 @@ const CreatePageForForm = FormComponent => {
         next[parent][key] = val;
         // change emailAddress field
         if (event.target.id === 'settings.imap_username') {
-          if ((val || '').includes('@')) {
+          if (RegExpUtils.emailRegex().test(val || '')) {
             next['emailAddress'] = val;
           }
           next['name'] = val;
@@ -429,7 +429,7 @@ const CreatePageForForm = FormComponent => {
         throw new Error(`Cannot find account provider ${accProvider}`);
       }
 
-      const hideTitle = errorMessage && errorMessage.length > 120;
+      // const hideTitle = errorMessage && errorMessage.length > 120;
 
       return (
         <ScrollRegion className={`page account-setup ${FormComponent.displayName}`}>
