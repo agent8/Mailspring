@@ -58,7 +58,12 @@ class AccountIMAPSettingsForm extends React.Component {
     if (!['imap', 'smtp'].includes(protocol)) {
       throw new Error(`Can't render port dropdown for protocol '${protocol}'`);
     }
-    const { account: { settings }, submitting, onFieldKeyPress, onFieldChange } = this.props;
+    const {
+      account: { settings },
+      submitting,
+      onFieldKeyPress,
+      onFieldChange,
+    } = this.props;
     const field = `${protocol}_port`;
     // set default port
     if (!settings[field] && field === 'imap_port') {
@@ -108,7 +113,7 @@ class AccountIMAPSettingsForm extends React.Component {
             ))}
             <option value={customValue} key="custom">
               Custom
-          </option>
+            </option>
           </select>
         </div>
         {!isStandard && (
@@ -131,7 +136,12 @@ class AccountIMAPSettingsForm extends React.Component {
   }
 
   renderSecurityDropdown(protocol) {
-    const { account: { settings }, submitting, onFieldKeyPress, onFieldChange } = this.props;
+    const {
+      account: { settings },
+      submitting,
+      onFieldKeyPress,
+      onFieldChange,
+    } = this.props;
 
     return (
       <div>
@@ -161,7 +171,12 @@ class AccountIMAPSettingsForm extends React.Component {
   }
 
   renderSecurityCheckbox(protocol) {
-    const { account: { settings }, submitting, onFieldKeyPress, onFieldChange } = this.props;
+    const {
+      account: { settings },
+      submitting,
+      onFieldKeyPress,
+      onFieldChange,
+    } = this.props;
 
     return (
       <div>
@@ -184,8 +199,12 @@ class AccountIMAPSettingsForm extends React.Component {
 
   UNSAFE_componentWillMount() {
     // auto fill username
-    this.props.account.settings['imap_username'] = this.props.account.emailAddress;
-    this.props.account.settings['smtp_username'] = this.props.account.emailAddress;
+    if (!this.props.account.settings['imap_username']) {
+      this.props.account.settings['imap_username'] = this.props.account.emailAddress;
+    }
+    if (!this.props.account.settings['smtp_username']) {
+      this.props.account.settings['smtp_username'] = this.props.account.emailAddress;
+    }
   }
 
   renderFieldsForType(type) {
@@ -199,7 +218,12 @@ class AccountIMAPSettingsForm extends React.Component {
           </div>
           {this.renderSecurityCheckbox(type)}
         </div>
-        <FormField field={`settings.${type}_username`} title={'Username'} hideColon {...this.props} />
+        <FormField
+          field={`settings.${type}_username`}
+          title={'Username'}
+          hideColon
+          {...this.props}
+        />
         <FormField
           field={`settings.${type}_password`}
           title={'Password'}
@@ -215,11 +239,15 @@ class AccountIMAPSettingsForm extends React.Component {
     return (
       <div className="twocol advance-settings">
         <div className="col">
-          <div className="col-heading"><span>INCOMING MAIL SERVER (IMAP)</span></div>
+          <div className="col-heading">
+            <span>INCOMING MAIL SERVER (IMAP)</span>
+          </div>
           {this.renderFieldsForType('imap')}
         </div>
         <div className="col">
-          <div className="col-heading"><span>OUTGOING MAIL SERVER (SMTP)</span></div>
+          <div className="col-heading">
+            <span>OUTGOING MAIL SERVER (SMTP)</span>
+          </div>
           {this.renderFieldsForType('smtp')}
         </div>
       </div>
