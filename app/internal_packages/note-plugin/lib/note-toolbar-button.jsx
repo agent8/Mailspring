@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import NoteEditor from './note-editor';
 const { RetinaImg } = require('mailspring-component-kit');
-const { AccountStore, Actions } = require('mailspring-exports');
+const { AccountStore } = require('mailspring-exports');
 export default class NoteToolbarButton extends Component {
   static propTypes = {
     thread: PropTypes.object,
@@ -13,12 +14,21 @@ export default class NoteToolbarButton extends Component {
       active: false,
     };
   }
-  toggleJira = () => {
-    Actions.toggleJiraPlugin(!this.state.active);
+
+  UNSAFE_componentWillReceiveProps = nextProps => {
+    if (nextProps.thread || nextProps.thread.id !== this.props.thread.id) {
+      this.setState({
+        active: false,
+      });
+    }
+  };
+
+  toggleInput = () => {
     this.setState({
       active: !this.state.active,
     });
   };
+
   render() {
     const accounts = AccountStore.accounts();
     let isEdisonMail = false;
@@ -31,13 +41,14 @@ export default class NoteToolbarButton extends Component {
     if (!this.props.thread || !isEdisonMail) {
       return null;
     }
+    const { active } = this.state;
     return (
-      <div className="button-group" style={{ order: -1 }}>
+      <div className="button-group message-toolbar-note" style={{ order: -1 }}>
         <div
-          className={`btn-toolbar message-toolbar-note ${this.state.active ? 'active' : ''}`}
+          className={`btn-toolbar ${active ? 'active' : ''}`}
           key="note-plugin"
           title="note plugin"
-          onClick={this.toggleJira}
+          onClick={this.toggleInput}
         >
           <RetinaImg
             name={'attachment-doc.svg'}
@@ -45,13 +56,10 @@ export default class NoteToolbarButton extends Component {
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
           />
-          <div className="note-input-area">
-            <textarea rows="10"></textarea>
-            <div className="note-labels"></div>
-            <button>Delete</button>
-            <button>Save</button>
-          </div>
         </div>
+        {active && (
+          <NoteEditor thread={this.props.thread} onClose={() => this.setState({ active: false })} />
+        )}
       </div>
     );
   }

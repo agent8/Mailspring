@@ -195,6 +195,7 @@ lazyLoad('ThreadStore', 'flux/stores/thread-store');
 lazyLoad('BlockedSendersStore', 'flux/stores/blocked-senders-store');
 lazyLoad('MuteNotificationStore', 'flux/stores/mute-notification-store');
 lazyLoad('SearchStore', '../internal_packages/thread-search/lib/search-store');
+lazyLoad('NoteStore', '../internal_packages/note-plugin/lib/note-store');
 
 lazyLoad(`ServiceRegistry`, `registries/service-registry`);
 lazyLoad(`RESTful`, `rest/index`);

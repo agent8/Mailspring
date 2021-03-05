@@ -14,6 +14,7 @@ import {
   OutboxStore,
   SearchStore,
   FocusedPerspectiveStore,
+  NoteStore,
 } from 'mailspring-exports';
 
 import {
@@ -977,6 +978,10 @@ class MessageList extends React.Component {
                 />
               </div>
             </StickyShadow>
+            <InjectedComponentSet
+              matching={{ role: 'EditableNote' }}
+              exposedProps={{ thread: currentThread }}
+            />
             {this._renderSubject()}
             <div className="headers" style={{ position: 'relative' }}>
               <InjectedComponentSet
@@ -986,6 +991,7 @@ class MessageList extends React.Component {
                 direction="column"
               />
             </div>
+
             {this._messageElements()}
           </ScrollRegion>
           <Spinner visible={loading} />

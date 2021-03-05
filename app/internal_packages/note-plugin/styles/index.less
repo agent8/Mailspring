@@ -1,16 +1,98 @@
 @import 'ui-variables';
 
-.column-MessageList .message-list-toolbar .item-container .btn-toolbar.message-toolbar-note {
-  position: static;
-  .note-input-area {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background: yellow;
-    textarea {
-      background: yellow;
+.layout-mode-popout .message-list-toolbar,
+.column-OutboxMessage .outbox-message-toolbar,
+.column-MessageList .message-list-toolbar {
+  z-index: 9;
+  .item-container .button-group.message-toolbar-note {
+    position: static;
+    .note-input-area {
+      position: absolute;
+      top: 100%;
+      left: 0;
       width: 100%;
+      background: @white;
+      padding: 0 30px 10px;
+    }
+  }
+}
+
+.editable-note {
+  margin: 0 30px;
+  width: 100%;
+  .note-content {
+    border-radius: 10px;
+    background-color: @off-white;
+    white-space: pre-line;
+    padding: 8px 15px;
+    font-size: 14px;
+    .note-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: @blue;
+      margin-right: 6px;
+    }
+  }
+}
+
+.note-labels {
+  display: inline-flex;
+  align-items: center;
+  & > span {
+    margin-right: 10px;
+    .edison-icon {
+      color: @text-color !important;
+      display: none;
+    }
+    &.checked {
+      .edison-icon {
+        display: flex;
+        position: absolute;
+      }
+    }
+  }
+  .color {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    &.red {
+      background: red;
+    }
+    &.yellow {
+      background: yellow;
+    }
+    &.green {
+      background: green;
+    }
+  }
+}
+
+.note-input-area {
+  textarea {
+    padding: 10px;
+    border-radius: 10px;
+    border-color: @gray-lightest;
+    background: transparent;
+    width: 100%;
+    box-shadow: -1px 1.5px 6px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.5s;
+    &:focus,
+    &:hover {
+      box-shadow: -2px 2.5px 10px rgba(0, 0, 0, 0.35);
+    }
+  }
+  .button-wrapper {
+    margin-top: 6px;
+    display: flex;
+    .btn {
+      color: @blue;
+      padding: 0 14px;
+      margin-right: 10px;
+      font-weight: bold;
+      &.btn-trash {
+        margin-left: auto;
+      }
     }
   }
 }
