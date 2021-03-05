@@ -701,13 +701,6 @@ export default {
             syncToServer: true,
             title: 'Show icons in the left-hand menu.',
           },
-          showAccountColor: {
-            type: 'boolean',
-            default: false,
-            title: 'Show account colors in the email list.',
-            note:
-              'A small strip of color appears on email rows in grouped folders. Account colors are set in the Email Accounts Preferences.',
-          },
           previewLines: {
             type: 'number',
             default: '2',
@@ -715,6 +708,11 @@ export default {
             enum: [0, 1, 2, 3, 4],
             enumLabels: ['None', '1 line', '2 lines', '3 lines', '4 lines'],
             title: 'Preview lines (two panel view only)',
+          },
+          showAccountColor: {
+            type: 'boolean',
+            default: false,
+            title: 'Show account colors in the email list.',
           },
           profile: {
             type: 'boolean',

@@ -177,10 +177,10 @@
         flex-flow: row wrap;
         margin: 0;
         & > div {
-          flex: 0 1 20px;
-          height: 20px;
-          width: 20px;
-          margin: 4.5px;
+          flex: 0 1 22px;
+          height: 22px;
+          width: 22px;
+          margin: 3.4px;
           border-radius: 50%;
           text-align: center;
           cursor: pointer;
@@ -199,11 +199,31 @@
           &:nth-child(12n + 12) {
             margin-right: 0;
           }
+          &.transparent-color {
+            border: 1px solid @gray-lighter;
+            position: relative;
+            justify-content: center;
+            img.check {
+              z-index: 2;
+              position: relative;
+            }
+            &:after {
+              position: absolute;
+              content: ' ';
+              display: block;
+              background: @red;
+              height: 1px;
+              width: 100%;
+              transform: rotate(-45deg);
+              top: 50%;
+            }
+            &.checked {
+              &:after {
+                opacity: 0;
+              }
+            }
+          }
         }
-      }
-
-      img.check-img {
-        margin-bottom: 5px;
       }
     }
   }

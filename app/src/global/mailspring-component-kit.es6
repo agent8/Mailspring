@@ -144,3 +144,4 @@ lazyLoad('CreateButtonGroup', 'decorators/create-button-group');
 lazyLoad('SlimNotification', 'slim-notification');
 
 lazyLoad('ListDetailContainer', 'list-detail-container');
+lazyLoad('AccountColorPopover', 'account-color-popover');

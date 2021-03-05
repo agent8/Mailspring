@@ -527,6 +527,11 @@ class PreferencesAccountDetails extends Component {
     );
   };
 
+  gotoAppearancePage = () => {
+    Actions.switchPreferencesTab('Appearance');
+    AppEnv.trackingEvent(`Preferences-${'Appearance'}`);
+  };
+
   render() {
     const { account } = this.state;
     const aliasPlaceholder = this._makeAlias(
@@ -568,40 +573,53 @@ class PreferencesAccountDetails extends Component {
               onSaveChanges={this._saveChanges}
             />
 
-            {AppEnv.config.get('core.appearance.showAccountColor') ? (
-              <div className="item">
-                <div>
-                  <label style={{ display: 'block' }} htmlFor={'Account Color'}>
-                    Color
-                  </label>
-                </div>
-                <div className="color-choice">
-                  {LabelColorizer.colors.map((color, idx) => {
-                    const accountIndex = accountIds.findIndex(acc => acc === account.id) + 1;
-                    let className = '';
-                    if (account.color !== undefined) {
-                      className = account.color === idx ? 'checked' : '';
-                    } else {
-                      className = accountIndex === idx ? 'checked' : '';
-                    }
-                    return (
-                      <div
-                        key={color}
-                        className={className}
-                        style={{ background: color }}
-                        onClick={() => this.onCheckColor(idx)}
-                      >
-                        <RetinaImg
-                          className="check-img check"
-                          name="tagging-checkmark.png"
-                          mode={RetinaImg.Mode.ContentPreserve}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="item">
+              <div>
+                <label style={{ display: 'block' }} htmlFor={'Account Color'}>
+                  Color
+                </label>
               </div>
-            ) : null}
+              <div className="color-choice">
+                {LabelColorizer.accountColors().map((color, idx) => {
+                  const accountIndex = accountIds.findIndex(acc => acc === account.id) + 1;
+                  let className = '';
+                  if (account.color !== undefined) {
+                    className = account.color === idx ? 'checked' : '';
+                  } else {
+                    className = accountIndex === idx ? 'checked' : '';
+                  }
+                  if (color === 'transparent') {
+                    className += ' transparent-color';
+                  }
+                  return (
+                    <div
+                      key={color}
+                      className={className}
+                      style={{ background: color }}
+                      onClick={() => this.onCheckColor(idx)}
+                    >
+                      <RetinaImg
+                        className="check-img check"
+                        name="tagging-checkmark.png"
+                        mode={RetinaImg.Mode.ContentPreserve}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {AppEnv.config.get('core.appearance.showAccountColor') ? (
+              <div className="platform-note account-color-note">
+                A small strip of color will appear on email rows in grouped folders. Turn this off{' '}
+                <a onClick={this.gotoAppearancePage}>here</a>.
+              </div>
+            ) : (
+              <div className="platform-note account-color-note">
+                Color coding of accounts is disabled in the Appearance page. Turn it on{' '}
+                <a onClick={this.gotoAppearancePage}>here</a> if you would like to see a small bar
+                of color on email rows in grouped folders.
+              </div>
+            )}
           </div>
           <div className="config-group">
             <h6>ALIASES</h6>
