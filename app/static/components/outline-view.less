@@ -569,39 +569,3 @@
     }
   }
 }
-
-.account-color-popover {
-  padding: 10px 8px;
-  text-align: center;
-  .color-choice {
-    width: 346px;
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: center;
-    margin: 0;
-    cursor: pointer;
-    & > div {
-      flex: 0 1 20px;
-      height: 20px;
-      width: 20px;
-      margin: 6px 4px;
-      border-radius: 50%;
-      text-align: center;
-      img {
-        visibility: hidden;
-        margin-top: 9px;
-      }
-      &.checked {
-        img {
-          visibility: visible;
-        }
-      }
-      &:nth-child(12n + 1) {
-        margin-left: 0;
-      }
-      &:nth-child(12n + 12) {
-        margin-right: 0;
-      }
-    }
-  }
-}

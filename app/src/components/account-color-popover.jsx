@@ -6,48 +6,63 @@ import RetinaImg from './retina-img';
 
 export default class AccountColorPopover extends Component {
   static propTypes = {
-    item: PropTypes.shape({
-      accountIds: PropTypes.array,
-    }),
+    accountId: PropTypes.string.isRequired,
   };
 
   constructor(props) {
     super(props);
     this.wrapperRef = React.createRef();
-    const { item } = this.props;
-    let color = null;
-    if (item.accountIds && item.accountIds.length === 1) {
-      color = AccountStore.accountForId(item.accountIds[0]).color;
-    }
+    const { accountId } = this.props;
+    const account = AccountStore.accountForId(accountId);
+    const { color, emailAddress } = account;
     this.state = {
       color,
+      emailAddress,
     };
   }
 
   onCheckColor = bgColor => {
-    const { item } = this.props;
-    if (item.accountIds && item.accountIds.length === 1) {
-      Actions.updateAccount(item.accountIds[0], { color: bgColor });
-      Actions.changeAccountColor();
-    }
+    this.setState({ color: bgColor });
+  };
 
+  onSave = () => {
+    Actions.updateAccount(this.props.accountId, { color: this.state.color });
+    Actions.changeAccountColor();
     Actions.closePopover();
   };
 
   render() {
-    const { item } = this.props;
-    const { color: selectedColor } = this.state;
+    const { accountId } = this.props;
+    const { color: selectedColor, emailAddress } = this.state;
     const accountIds = AccountStore.accounts().map(account => account.id);
-    const accountIndex = accountIds.findIndex(account => account === item.accountIds[0]) + 1;
+    const accountIndex = accountIds.findIndex(id => id === accountId) + 1;
     return (
-      <div className="account-color-popover" ref={this.wrapperRef}>
+      <div className="account-color-container" ref={this.wrapperRef} style={{ height: '230px' }}>
+        <div className="header-row">
+          <span className="close" onClick={() => Actions.closePopover()}>
+            <RetinaImg
+              name="close_1.svg"
+              isIcon
+              mode={RetinaImg.Mode.ContentIsMask}
+              style={{ width: 20, height: 20 }}
+            />
+          </span>
+        </div>
+        <div className="header-text-container">
+          <div className="header-text">Account Color</div>
+          <div className="header-subtext">{emailAddress}</div>
+        </div>
         <div className="color-choice">
-          {LabelColorizer.colors.map((color, idx) => {
+          {LabelColorizer.accountColors().map((color, idx) => {
             let className = '';
             if (selectedColor !== undefined) {
               className = selectedColor === idx ? 'checked' : '';
             } else {
               className = accountIndex === idx ? 'checked' : '';
+            }
+
+            if (color === 'transparent') {
+              className += ' transparent-color';
             }
             return (
               <div
@@ -64,6 +79,18 @@ export default class AccountColorPopover extends Component {
               </div>
             );
           })}
+        </div>
+        <div className="button-row">
+          <button
+            className="account-color-btn-cancel"
+            title="Cancel"
+            onClick={() => Actions.closePopover()}
+          >
+            <span>Cancel</span>
+          </button>
+          <button className="account-color-btn-save" title="Save" onClick={this.onSave}>
+            <span>Save</span>
+          </button>
         </div>
       </div>
     );

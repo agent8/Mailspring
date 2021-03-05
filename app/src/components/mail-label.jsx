@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import RetinaImg from './retina-img';
 const Colr = require('colr');
 
+let accountColors;
 export const LabelColorizer = {
   colors: [
     '#E7E7E7',
@@ -30,6 +31,14 @@ export const LabelColorizer = {
     '#EF9A9A',
     '#F44336',
   ],
+  accountColors() {
+    if (!accountColors) {
+      accountColors = [...LabelColorizer.colors]
+        .map(c => (c === '#E7E7E7' ? 'transparent' : c))
+        .reverse();
+    }
+    return accountColors;
+  },
   sanitize(label) {
     if (label.bgColor && (label.bgColor < 0 || label.bgColor >= LabelColorizer.colors.length)) {
       console.warn(`Label bgColor incorrect ${label.bgColor}, setting to 0`);

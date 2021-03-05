@@ -37,7 +37,10 @@ function renderAccountColor(draft) {
       ? account.color
       : accounts.findIndex(account => account === accountId) + 1;
   return (
-    <div className={`account-color`} style={{ background: LabelColorizer.colors[color] }}></div>
+    <div
+      className={`account-color`}
+      style={{ background: LabelColorizer.accountColors()[color] }}
+    ></div>
   );
 }
 
