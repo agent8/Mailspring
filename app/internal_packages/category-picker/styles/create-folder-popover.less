@@ -1,5 +1,6 @@
 @import 'ui-variables';
 
+.account-color-container,
 .create-folder-container {
   &.has-color-choice {
     height: 310px;
@@ -25,6 +26,10 @@
     display: block;
     .edison-icon {
       color: @black;
+      &.edison-icon-close_1 {
+        color: @gray;
+        cursor: pointer;
+      }
       &:hover {
         color: @blue;
       }
@@ -86,10 +91,12 @@
       &:hover {
         box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.15);
       }
+      &.account-color-btn-cancel,
       &.create-folder-btn-cancel {
         color: @accent-primary;
         background-color: @white;
       }
+      &.account-color-btn-save,
       &.create-folder-btn-create {
         background-color: @accent-primary;
         color: @white;
@@ -105,10 +112,11 @@
     flex-flow: row wrap;
     margin: 8px 0 30px 0;
     & > div {
-      flex: 0 1 20px;
-      height: 20px;
-      width: 20px;
-      margin: 4.5px;
+      flex: 0 1 22px;
+      height: 22px;
+      width: 22px;
+      border: 1px solid transparent;
+      margin: 3.4px;
       border-radius: 50%;
       text-align: center;
       cursor: pointer;
@@ -126,6 +134,33 @@
       }
       &:nth-child(12n + 12) {
         margin-right: 0;
+      }
+    }
+  }
+}
+
+.account-color-container {
+  .color-choice > div.transparent-color {
+    border: 1px solid @gray-lighter;
+    position: relative;
+    justify-content: center;
+    img.check {
+      z-index: 2;
+      position: relative;
+    }
+    &:after {
+      position: absolute;
+      content: ' ';
+      display: block;
+      background: @red;
+      height: 1px;
+      width: 100%;
+      transform: rotate(-45deg);
+      top: 50%;
+    }
+    &.checked {
+      &:after {
+        opacity: 0;
       }
     }
   }

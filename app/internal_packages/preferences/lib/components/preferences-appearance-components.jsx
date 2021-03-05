@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { RetinaImg } from 'mailspring-component-kit';
-import { Actions } from 'mailspring-exports';
+import { RetinaImg, LabelColorizer, AccountColorPopover } from 'mailspring-component-kit';
+import { Actions, AccountStore } from 'mailspring-exports';
 import ModeSwitch from './mode-switch';
 import { remote } from 'electron';
 import ConfigSchemaItem from './config-schema-item';
@@ -82,6 +82,52 @@ export function AppearanceProfileOptions(props) {
       }}
     />
   );
+}
+
+export class AppearanceAccountColorList extends Component {
+  openColorPicker(e, accountId) {
+    const originRect = e.target.getBoundingClientRect();
+    Actions.openPopover(
+      <AccountColorPopover onCheckColor={this.onCheckColor} accountId={accountId} />,
+      {
+        originRect,
+        disablePointer: true,
+        direction: 'left',
+        className: 'account-color-popout',
+      }
+    );
+  }
+  render() {
+    const accounts = AccountStore.accounts();
+    const accountIds = accounts.map(account => account.id);
+    return (
+      <div className="appearance-account-list">
+        {accounts.map(account => {
+          const accountIndex = accountIds.findIndex(acc => acc === account.id) + 1;
+          let color = '';
+          if (account.color !== undefined) {
+            color = account.color;
+          } else {
+            color = accountIndex;
+          }
+          return (
+            <div key={account.id} onClick={e => this.openColorPicker(e, account.id)}>
+              {LabelColorizer.accountColors()[color] === 'transparent' ? (
+                <div className="selected-color transparent-color"></div>
+              ) : (
+                <div
+                  className="selected-color"
+                  style={{ background: LabelColorizer.colors[color] }}
+                ></div>
+              )}
+
+              {account.emailAddress}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 }
 
 export function AppearancePanelOptions(props) {
