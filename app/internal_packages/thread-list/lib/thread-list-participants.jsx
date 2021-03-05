@@ -81,7 +81,10 @@ class ThreadListParticipants extends React.Component {
         return null;
       }
       return (
-        <div className={`account-color`} style={{ background: LabelColorizer.colors[color] }}></div>
+        <div
+          className={`account-color`}
+          style={{ background: LabelColorizer.accountColors()[color] }}
+        ></div>
       );
     } else {
       return null;

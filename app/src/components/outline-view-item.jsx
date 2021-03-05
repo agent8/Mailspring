@@ -1,7 +1,7 @@
 /* eslint global-require:0 */
 
 import _ from 'underscore';
-import { LabelColorizer } from 'mailspring-component-kit';
+import { LabelColorizer, AccountColorPopover } from 'mailspring-component-kit';
 import { Utils, AccountStore, Actions } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
@@ -9,7 +9,6 @@ import DisclosureTriangle from './disclosure-triangle';
 import DropZone from './drop-zone';
 import RetinaImg from './retina-img';
 import PropTypes from 'prop-types';
-import AccountColorPopover from './account-color-popover';
 import { Divider, DIVIDER_KEY, MORE_TOGGLE, ADD_FOLDER_KEY, NEW_FOLDER_KEY } from './outline-view';
 import OutlineViewEditFolderItem from './outline-view-edit-folder-item';
 import { DROP_DATA_TYPE } from '../constant';
@@ -394,20 +393,26 @@ class OutlineViewItem extends Component {
 
     if (AppEnv.config.get('core.appearance.showAccountColor') && item.id.endsWith('-single')) {
       const originRect = event.target.getBoundingClientRect();
-      menu.push({
-        label: `Change Account Color`,
-        click: () => {
-          Actions.openPopover(
-            <AccountColorPopover onCheckColor={this.onCheckColor} item={item} />,
-            {
-              originRect,
-              disablePointer: true,
-              direction: 'left',
-              className: 'popout-container',
-            }
-          );
-        },
-      });
+      if (item.accountIds && item.accountIds.length === 1) {
+        menu.push({
+          label: `Change Account Color`,
+          click: () => {
+            Actions.openPopover(
+              <AccountColorPopover
+                onCheckColor={this.onCheckColor}
+                accountId={item.accountIds[0]}
+              />,
+              {
+                originRect,
+                disablePointer: true,
+                closeOnAppBlur: false,
+                direction: 'left',
+                className: 'popout-container',
+              }
+            );
+          },
+        });
+      }
     }
 
     if (this.props.item.onAddNewFolder && this.props.item.addNewFolderLabel) {
@@ -732,7 +737,7 @@ class OutlineViewItem extends Component {
       } else {
         colorId = accountIds.findIndex(account => account === item.accountIds[0]) + 1;
       }
-      const color = LabelColorizer.colors[colorId];
+      const color = LabelColorizer.accountColors()[colorId];
       return <div className="account-color" style={{ background: color }}></div>;
     } else {
       return null;
