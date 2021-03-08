@@ -167,8 +167,8 @@ class A8 extends A8Base {
   static parseMessage(message, { onComplete, onError } = {}) {
     return new A8(message, { onComplete, onError });
   }
-  static getRootDomainFormMessage(message) {
-    let ret = '';
+  static getDomainsFormMessage(message) {
+    const ret = [];
     if (message && Array.isArray(message.from) && message.from[0]) {
       const email = message.from[0].email || '';
       if (email.includes('@')) {
@@ -176,7 +176,9 @@ class A8 extends A8Base {
         if (splits.length === 2) {
           const domains = splits[1].split('.');
           if (domains.length >= 2) {
-            ret = domains.split(domains.length - 1).join('.');
+            for (let i = 0; i < domains.length - 1; i++) {
+              ret.push(domains.slice(i).join('.'));
+            }
           }
         }
       }
@@ -278,10 +280,10 @@ class EmailSecurityStore extends MailspringStore {
         }
       };
       if (method === 'fetchOrganizationInfo') {
-        const domain = A8.getRootDomainFormMessage(message);
-        if (domain) {
+        const domains = A8.getDomainsFormMessage(message);
+        if (domains.length > 0) {
           a8.fetchOrganizationInfo({
-            domains: [domain],
+            domains,
             onComplete: onSuccess,
             onError: onFailed,
             maxWaitSeconds: 90,
@@ -367,10 +369,53 @@ class EmailSecurityStore extends MailspringStore {
   };
   fetchSenderInfo = ({ message, onError, onData } = {}) => {
     let organizationInfo = null;
+    const orgInfoScore = orgInfo => {
+      let ret = 0;
+      if (orgInfo.homepage.length > 0) {
+        ret = 1;
+        if (orgInfo.description.length > 0) {
+          ret += 3;
+        }
+        if (orgInfo.facebookUrl.length > 0) {
+          ret++;
+        }
+        if (orgInfo.twitterUrl.length > 0) {
+          ret++;
+        }
+        if (orgInfo.profileImageUrl.length > 0) {
+          ret += 2;
+        }
+        if (orgInfo.linkedinUrl.length > 0) {
+          ret++;
+        }
+      }
+      return ret;
+    };
     const onOrganizationInfo = info => {
       organizationInfo = info.data;
       if (onData) {
         onData({ id: info.id, data: { organizationInfo, userInfo: null } });
+      }
+      let domain = '';
+      let highestOrgScore = 0;
+      let orgName = '';
+      if (organizationInfo) {
+        Object.values(organizationInfo).forEach(org => {
+          if (org && org.domain.length > 0) {
+            const currentScore = orgInfoScore(org);
+            if (currentScore > highestOrgScore) {
+              highestOrgScore = currentScore;
+              domain = org.domain;
+              orgName = org.name;
+            } else if (currentScore === highestOrgScore && org.domain.length > domain.length) {
+              domain = org.domain;
+              orgName = org.name;
+            }
+          }
+        });
+      }
+      if (domain.length > 0) {
+        organizationInfo[domain].inUse = true;
       }
       const onUserInfo = info => {
         if (onData) {
@@ -379,7 +424,7 @@ class EmailSecurityStore extends MailspringStore {
       };
       this._callA8Action('fetchLinkedInProfile', {
         message,
-        organization: organizationInfo ? organizationInfo.name : '',
+        organization: orgName,
         onError,
         onComplete: onUserInfo,
       });

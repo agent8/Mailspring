@@ -109,6 +109,7 @@ export default class EmailSecurityStatus extends Component {
   _onFetchSenderInfoFailed = ({ id, error }) => {};
   _onFetchSenderInfoDataReturned = ({ id, data }) => {
     if (this._mounted && this.props.message && this.props.message.id === id) {
+      console.warn('sender info', data);
       this.setState({ userInfo: data.userInfo, organizationInfo: data.organizationInfo });
     }
   };
