@@ -117,7 +117,7 @@ export class AppearanceAccountColorList extends Component {
               ) : (
                 <div
                   className="selected-color"
-                  style={{ background: LabelColorizer.colors[color] }}
+                  style={{ background: LabelColorizer.accountColors()[color] }}
                 ></div>
               )}
 
