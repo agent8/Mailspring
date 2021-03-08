@@ -40,7 +40,7 @@ class ContactStore extends MailspringStore {
             }
           });
         }
-        return ret;
+        resolve(ret);
       }, reject);
     });
   };
@@ -63,7 +63,7 @@ class ContactStore extends MailspringStore {
             }
             if (Array.isArray(template['domain-match'])) {
               for (const test of template['domain-match']) {
-                if (new RegExp(`(^${test}$)|(\.${test}$)`).test(domain)) {
+                if (new RegExp(`(^${test}$)|(.${test}$)`).test(domain)) {
                   ret.isWellKnownProvider = true;
                   break;
                 }

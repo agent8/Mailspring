@@ -8,14 +8,14 @@
   "license": "GPL-3.0",
   "main": "./src/browser/main.js",
   "engines": {
-    "node": "12.18.x",
+    "node": "12.x.x",
     "npm": "6.4.x"
   },
   "scripts": {
     "rebuild": "node_modules/.bin/electron-rebuild"
   },
   "dependencies": {
-    "a8": "git+ssh://github:agent8/a8.git#4770eaf",
+    "a8": "git+ssh://github:agent8/a8.git#38734571",
     "@atlaskit/editor-core": "^134.0.1",
     "@atlaskit/media-core": "^32.1.2",
     "@ruoxijiang/node-tnef": "^0.1.2",
