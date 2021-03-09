@@ -664,6 +664,8 @@ class Actions {
   static setIcloudCalendarData = ActionScopeGlobal;
   static setIcloudCalendarLists = ActionScopeGlobal;
   static setIcloudAuth = ActionScopeGlobal;
+  static deleteIcloudCalendarData = ActionScopeGlobal;
+  static setIcloudRpLists = ActionScopeGlobal;
 }
 
 // Read the actions we declared on the dummy Actions object above

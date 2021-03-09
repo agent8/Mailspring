@@ -7,6 +7,12 @@ import Grid from '@material-ui/core/Grid';
 import Login from './fetch-event/Login';
 import BigButton from './MiniComponents/BigButton';
 import WyCalendarStore from '../../../../../src/flux/stores/wycalendar-store.es6';
+import { Actions } from 'mailspring-exports';
+import {
+  deleteSingleEvent,
+  deleteAllEvents,
+  deleteFutureEvents,
+} from './delete-event/DeleteEventUtils';
 
 const dateClassStyleWrapper = ({ children, value }) =>
   React.cloneElement(Children.only(children), {
@@ -111,6 +117,124 @@ class SelectableCalendar extends React.Component {
       return color ? `event-bar--${color}` : 'event-bar--blue';
     }
   };
+  handleEventClick = async (event, target) => {
+    const eventPresent = WyCalendarStore.getIcloudCalendarData().filter(
+      storedEvent => storedEvent.id === event.id
+    );
+    if (eventPresent.length === 0) {
+      return;
+    }
+    this.renderEventPopup(event, target);
+  };
+  closeModal = () => {
+    Actions.closePopover();
+    Actions.closeModal();
+  };
+  handleDeleteEvent = event => {
+    if (event.isRecurring) {
+      Actions.openModal({
+        component: (
+          <div className="popup-modal">
+            <h5>You're deleting an event</h5>
+            <p>
+              Do you want to delete all occurrences of this event, or only the selected occurrence?
+            </p>
+            <div className="modal-button-group">
+              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
+                Cancel
+              </BigButton>
+              {event.isMaster ? (
+                <BigButton
+                  variant="small-white"
+                  onClick={() => this.deleteAllRecurrenceEvent(event)}
+                >
+                  Delete All
+                </BigButton>
+              ) : (
+                <BigButton
+                  variant="small-white"
+                  onClick={() => this.deleteFutureRecurrenceEvent(event)}
+                >
+                  Delete All Future Events
+                </BigButton>
+              )}
+              <BigButton variant="small-white" onClick={() => this.deleteEvent(event)}>
+                Delete Only This Event
+              </BigButton>
+            </div>
+          </div>
+        ),
+        width: 510,
+        height: 170,
+      });
+    } else {
+      this.deleteEvent(event);
+    }
+  };
+  // #region Delete functionality
+  deleteEvent = event => {
+    deleteSingleEvent(event.id);
+    this.closeModal();
+  };
+
+  deleteAllRecurrenceEvent = event => {
+    deleteAllEvents(event.id);
+    this.closeModal();
+  };
+
+  deleteFutureRecurrenceEvent = event => {
+    deleteFutureEvents(event.id);
+    this.closeModal();
+  };
+  editEvent = event => {
+    const { props } = this;
+    console.log('EDIT EVENT', event);
+  };
+
+  renderEventPopup = (event, target) => {
+    Actions.openPopover(
+      <div style={{ height: 300, width: 400 }}>
+        <div className="modal-btn-grp">
+          <button className="modal-btn" type="button" onClick={() => this.handleDeleteEvent(event)}>
+            &#128465;
+          </button>
+          <button className="modal-btn" type="button" onClick={() => this.editEvent(event)}>
+            &#9998;
+          </button>
+          <button className="modal-btn" type="button" onClick={this.closeModal}>
+            &#120;
+          </button>
+        </div>
+
+        <div style={{ paddingLeft: 10, paddingRight: 10 }}>
+          <h4 ref={subtitle => (this.subtitle = subtitle)}>{event.title}</h4>
+          <p className="modal-date-text">
+            {moment(event.start).format('MMMM D YYYY, h:mm a')} -{' '}
+            {moment(event.end).format('MMMM D YYYY, h:mm a')}
+          </p>
+          {event.attendee && Object.keys(event.attendee).length > 1 ? (
+            <div>
+              <p>{Object.keys(event.attendee).length} Guests</p>
+              {Object.keys(event.attendee).map((key, index) =>
+                event.owner === event.organizer &&
+                event.attendee[key]['email'] === event.owner ? null : (
+                  <p key={index}>{event.attendee[key]['email']}</p>
+                )
+              )}
+            </div>
+          ) : null}
+        </div>
+      </div>,
+      {
+        // originRect,
+        originRect: { top: target.clientY, left: target.clientX },
+        disablePointer: true,
+        direction: 'right',
+        className: 'popout-container',
+      }
+    );
+  };
+
   render() {
     console.log('reflux data', this.state.icloudCalendarData);
     const formattedIcloudEvent = this.formatIcloudCalendarData();
@@ -155,6 +279,10 @@ class SelectableCalendar extends React.Component {
                 dateCellWrapper: dateClassStyleWrapper,
               }}
               onSelectSlot={this.handleSelect}
+              onSelectEvent={(event, target) => {
+                target.persist();
+                this.handleEventClick(event, target);
+              }}
             />
           </Grid>
           <Grid item xs={3}>

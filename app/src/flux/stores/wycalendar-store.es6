@@ -1,5 +1,10 @@
 /* eslint global-require:0 */
 import MailspringStore from 'mailspring-store';
+import {
+  ALL_RECURRING_EVENTS,
+  SINGLE_EVENT,
+  FUTURE_RECCURRING_EVENTS,
+} from '../../../internal_packages/calendar-weiyang/lib/src/components/constants';
 import Actions from '../actions';
 
 class WyCalendarStore extends MailspringStore {
@@ -9,12 +14,35 @@ class WyCalendarStore extends MailspringStore {
     this.listenTo(Actions.setIcloudCalendarData, this.setIcloudCalendarData);
     this.listenTo(Actions.setIcloudCalendarLists, this.setIcloudCalendarLists);
     this.listenTo(Actions.setIcloudAuth, this.setIcloudAuth);
+    this.listenTo(Actions.deleteIcloudCalendarData, this.deleteIcloudCalendarData);
+    this.listenTo(Actions.setIcloudRpLists, this.setIcloudRpLists);
 
     this._icloudCalendarData = [];
     this._icloudCalendarLists = [];
     this._icloudAuth = [];
+    this._icloudRpLists = [];
   }
 
+  deleteIcloudCalendarData = (dataId, type, dataDatetime = null) => {
+    if (type === SINGLE_EVENT) {
+      this._icloudCalendarData = this._icloudCalendarData.filter(event => {
+        return event.id !== dataId;
+      });
+    } else if (type === ALL_RECURRING_EVENTS) {
+      this._icloudCalendarData = this._icloudCalendarData.filter(event => {
+        return event.recurringEventId !== dataId;
+      });
+    } else if (type == FUTURE_RECCURRING_EVENTS) {
+      this._icloudCalendarData = this._icloudCalendarData.filter(event => {
+        // include only when 1) iCalUID matches and datetime is earlier. 2) iCalUID doesn't match
+        return (
+          (event.iCalUID === dataId && event.start.dateTime < dataDatetime) ||
+          event.iCalUID !== dataId
+        );
+      });
+    }
+    this.trigger();
+  };
   setIcloudCalendarData = data => {
     this._icloudCalendarData = [...data];
     this.trigger();
@@ -44,6 +72,12 @@ class WyCalendarStore extends MailspringStore {
   };
   getIcloudAuth = () => {
     return this._icloudAuth;
+  };
+  setIcloudRpLists = rpLists => {
+    this._icloudRpLists = [...rpLists];
+  };
+  getIcloudRpLists = () => {
+    return this._icloudRpLists;
   };
 }
 

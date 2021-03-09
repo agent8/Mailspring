@@ -10,12 +10,21 @@ class Login extends React.Component {
     super(props);
     this.state = {
       email: 'piadruids@gmail.com',
-      password: 'xjnf-ttgi-ttyt-jebw',
+      password: '',
       accountType: ICLOUD_ACCOUNT,
       calendarData: {},
     };
   }
-
+  componentDidMount() {
+    fetch('calendar/icloud-test.txt')
+      .then(res => res.text())
+      .then(text =>
+        this.setState({
+          ...this.state,
+          password: text,
+        })
+      );
+  }
   handleChange = e => {
     this.setState({ [e.target.name]: e.target.value });
   };

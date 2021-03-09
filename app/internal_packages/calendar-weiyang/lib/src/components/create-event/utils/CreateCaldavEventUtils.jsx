@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid';
 import ICAL from 'ical.js';
 import { CALDAV_PROVIDER } from '../../constants';
-import * as icalTookKit from 'ical-toolkit';
+import * as IcalStringBuilder from '../../common-utils/icalStringBuilder';
 const dav = require('dav');
 
 export const createCaldavEvent = async payload => {
@@ -56,12 +56,12 @@ export const createCaldavEvent = async payload => {
       }
     }
     // Creates Recurring event.
-    newiCalString = buildICALStringCreateRecurEvent(payload.data, jsonRecurr);
+    newiCalString = IcalStringBuilder.buildICALStringCreateRecurEvent(payload.data, jsonRecurr);
+    console.log('newicalstring', newiCalString);
   } else {
     data.isRecurring = false;
-
     // Creates non Recurring event.
-    newiCalString = buildICALStringCreateEvent(payload.data);
+    newiCalString = IcalStringBuilder.buildICALStringCreateEvent(payload.data);
   }
   data.iCALString = newiCalString;
 
@@ -79,165 +79,4 @@ export const createCaldavEvent = async payload => {
   if (debug) {
     console.log('(postEventsCalDav)', addResult);
   }
-};
-
-export const buildICALStringCreateRecurEvent = (eventObject, rpObject) => {
-  const builder = icalTookKit.createIcsFileBuilder();
-  const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  builder.calname = eventObject.summary;
-
-  // THIS IS IMPORTANT, PLZ READ
-  // In order to respect the user created location, we need to get their local tzid
-  // This WILL affect recurrence pattern expansion in ways its hard to explain
-  builder.tzid = tzid;
-  const icsCalendarContent = builder.toString();
-
-  const vcalendar = new ICAL.Component(ICAL.parse(icsCalendarContent));
-
-  // Create new event structure, and parse it into a component.
-  const jcalData = ICAL.parse(new ICAL.Event().toString());
-  const vevent = new ICAL.Component(jcalData);
-
-  // The order might matter, did not test it yet, but sequence is usually at the top.
-  vevent.updatePropertyWithValue('sequence', 0);
-
-  // Take UID from previous object, so that it will replace it.
-  vevent.updatePropertyWithValue('uid', eventObject.originalId);
-
-  // Updating Single Recurring event, so update the recurrence-id based off the start time.
-  const startDateTime = ICAL.Time.fromJSDate(new Date(eventObject.start.dateTime.toDate()), false);
-  const endDateTime = ICAL.Time.fromJSDate(new Date(eventObject.end.dateTime.toDate()), false);
-  const duration = endDateTime.subtractDate(startDateTime);
-
-  if (eventObject.allDay) {
-    startDateTime.isDate = true;
-  }
-
-  // DateTime start of the selected event, set the Timezone ID properly.
-  vevent.updatePropertyWithValue('dtstart', startDateTime);
-  vevent.getFirstProperty('dtstart').setParameter('tzid', tzid);
-
-  // Temp set the duration to all an hour, Will change in the future. (TO-DO)
-  vevent.updatePropertyWithValue('duration', duration.toString());
-
-  // The other fields.
-  vevent.updatePropertyWithValue('created', ICAL.Time.now());
-  vevent.updatePropertyWithValue('dtstamp', ICAL.Time.now());
-  vevent.updatePropertyWithValue('priority', 0);
-
-  // Currently, only updating the title. (TO-DO)
-  // Update all the events based of the new event property.
-  vevent.updatePropertyWithValue('summary', eventObject.summary);
-  vevent.updatePropertyWithValue('description', eventObject.description);
-
-  // The other fields.
-  vevent.updatePropertyWithValue('status', 'CONFIRMED');
-  vevent.updatePropertyWithValue('transp', 'OPAQUE');
-  vevent.updatePropertyWithValue('class', 'PUBLIC');
-  vevent.updatePropertyWithValue('location', eventObject.location);
-  const organizerProperty = vevent.updatePropertyWithValue(
-    'organizer',
-    `mailto:${eventObject.organizer}`
-  );
-  organizerProperty.setParameter('email', eventObject.organizer);
-
-  Object.keys(eventObject.attendee).forEach(key => {
-    const attendee = eventObject.attendee[key];
-    const email = attendee['email'];
-    const partstat = attendee['partstat'];
-
-    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${email}`);
-    attendeeProperty.setParameter('email', email);
-    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
-    attendeeProperty.setParameter('partstat', partstat);
-    if (email === eventObject.organizer) {
-      attendeeProperty.setParameter('role', 'CHAIR');
-    }
-  });
-
-  const rrule = new ICAL.Recur(rpObject);
-  vevent.updatePropertyWithValue('rrule', rrule);
-  vcalendar.addSubcomponent(vevent);
-  return vcalendar.toString();
-};
-export const buildICALStringCreateEvent = eventObject => {
-  // debugger;
-  const builder = icalTookKit.createIcsFileBuilder();
-  const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  builder.calname = eventObject.summary;
-
-  // THIS IS IMPORTANT, PLZ READ
-  // In order to respect the user created location, we need to get their local tzid
-  // This WILL affect recurrence pattern expansion in ways its hard to explain
-  builder.tzid = tzid;
-
-  // Try to build
-  const icsCalendarContent = builder.toString();
-  const vcalendar = new ICAL.Component(ICAL.parse(icsCalendarContent));
-
-  // Create new event structure, and parse it into a component.
-  const jcalData = ICAL.parse(new ICAL.Event().toString());
-  const vevent = new ICAL.Component(jcalData);
-
-  // The order might matter, did not test it yet, but sequence is usually at the top.
-  vevent.updatePropertyWithValue('sequence', 0);
-
-  // Take UID from previous object, so that it will replace it.
-  vevent.updatePropertyWithValue('uid', eventObject.originalId);
-
-  // Updating Single Recurring event, so update the recurrence-id based off the start time.
-  const startDateTime = ICAL.Time.fromJSDate(new Date(eventObject.start.dateTime.toDate()), false);
-  const endDateTime = ICAL.Time.fromJSDate(new Date(eventObject.end.dateTime.toDate()), false);
-  const duration = endDateTime.subtractDate(startDateTime);
-
-  if (eventObject.allDay) {
-    startDateTime.isDate = true;
-  }
-
-  // DateTime start of the selected event, set the Timezone ID properly.
-  vevent.updatePropertyWithValue('dtstart', startDateTime);
-  vevent.getFirstProperty('dtstart').setParameter('tzid', tzid);
-
-  vevent.updatePropertyWithValue('dtstart', startDateTime);
-
-  // Temp set the duration to all an hour, Will change in the future. (TO-DO)
-  vevent.updatePropertyWithValue('duration', duration.toString());
-
-  // The other fields.
-  vevent.updatePropertyWithValue('created', ICAL.Time.now());
-  vevent.updatePropertyWithValue('dtstamp', ICAL.Time.now());
-  vevent.updatePropertyWithValue('priority', 0);
-
-  // Currently, only updating the title. (TO-DO)
-  // Update all the events based of the new event property.
-  vevent.updatePropertyWithValue('summary', eventObject.summary);
-  vevent.updatePropertyWithValue('description', eventObject.description);
-
-  // The other fields.
-  vevent.updatePropertyWithValue('status', 'CONFIRMED');
-  vevent.updatePropertyWithValue('transp', 'OPAQUE');
-  vevent.updatePropertyWithValue('class', 'PUBLIC');
-  const organizerProperty = vevent.updatePropertyWithValue(
-    'organizer',
-    `mailto:${eventObject.organizer}`
-  );
-  organizerProperty.setParameter('email', eventObject.organizer);
-
-  Object.keys(eventObject.attendee).forEach(key => {
-    const attendee = eventObject.attendee[key];
-    const email = attendee['email'];
-    const partstat = attendee['partstat'];
-
-    const attendeeProperty = vevent.addPropertyWithValue('attendee', `mailto:${email}`);
-    attendeeProperty.setParameter('email', email);
-    attendeeProperty.setParameter('cutype', 'INDIVIDUAL');
-    attendeeProperty.setParameter('partstat', partstat);
-    if (email === eventObject.organizer) {
-      attendeeProperty.setParameter('role', 'CHAIR');
-    }
-  });
-
-  vevent.updatePropertyWithValue('location', eventObject.location);
-  vcalendar.addSubcomponent(vevent);
-  return vcalendar.toString();
 };

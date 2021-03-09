@@ -1,3 +1,4 @@
+B
 ##### Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
@@ -71,6 +72,9 @@ client_secret.json
 
 # Package lock json
 app/package-lock.json
+
+# testing icloud calendar
+app/static/calendar/icloud-test.txt
 
 **.so*
 **.bin

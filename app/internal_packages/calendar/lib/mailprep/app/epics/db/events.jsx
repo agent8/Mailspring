@@ -585,7 +585,7 @@ const editSingleEvent = async (payload) => {
   switch (payload.providerType) {
     case Providers.GOOGLE:
       try {
-        return editGoogleSingleEventBegin(payload)
+        return editGoogleSingleEventBegin(payload);
       } catch (googleError) {
         console.log('Handle Google pending action here', googleError);
       }
@@ -728,8 +728,8 @@ const editAllReccurenceEvent = async (payload) => {
   switch (payload.providerType) {
     case Providers.GOOGLE:
       try {
-        console.log("EDIT GOOGLE RECURR EVENT")
-        return editGoogleAllEventBegin(payload)
+        console.log('EDIT GOOGLE RECURR EVENT');
+        return editGoogleAllEventBegin(payload);
       } catch (googleError) {
         console.log('Handle Google pending action here', googleError);
       }

@@ -7,7 +7,8 @@ import { RRule, RRuleSet } from 'rrule';
 import { CALDAV_PROVIDER } from '../../constants';
 // import * as dbRpActions from '../sequelizeDB/operations/recurrencepatterns';
 
-const TEMPORARY_RECURRENCE_END = new Date(2020, 12, 12);
+const oneYearFromNow = new Date();
+const TEMPORARY_RECURRENCE_END = oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
 export const parseRecurrenceEvents = calEvents => {
   const recurringEvents = [];
@@ -18,6 +19,10 @@ export const parseRecurrenceEvents = calEvents => {
       options.dtstart = new Date(moment.unix(calEvent.eventData.start.dateTime));
       const rrule = new RRule(options);
       console.log('rrule', rrule);
+      console.log(
+        'UNTIL 2',
+        moment.tz(calEvent.recurData.rrule.until, calEvent.eventData.start.timezone)
+      );
       recurringEvents.push({
         id: uuidv4(),
         recurringTypeId: calEvent.eventData.start.dateTime,
@@ -30,7 +35,8 @@ export const parseRecurrenceEvents = calEvents => {
             : calEvent.recurData.rrule.interval,
         until:
           calEvent.recurData.rrule.until !== undefined
-            ? moment(calEvent.recurData.rrule.until)
+            ? moment
+                .tz(calEvent.recurData.rrule.until, calEvent.eventData.start.timezone)
                 .unix()
                 .toString()
             : undefined,
@@ -327,7 +333,7 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId, c
       dateTime: moment(dtstart).unix(),
       timezone: 'America/Los_Angeles',
     },
-    providerType: 'CALDAV',
+    providerType: CALDAV_PROVIDER,
     isRecurring: true,
     etag,
     caldavUrl: url,
@@ -440,7 +446,7 @@ export const parseEvent = (component, isRecurring, etag, url, calendarId, cdIsMa
       dateTime: moment(dtstart).unix(),
       timezone: tz,
     },
-    providerType: 'CALDAV',
+    providerType: CALDAV_PROVIDER,
     isRecurring,
     etag,
     caldavUrl: url,
@@ -469,6 +475,7 @@ export const getRuleJSON = (masterEvent, icalMasterEvent) => {
       }
     }
   }
+  console.log('rruleJSON', rruleJSON);
   return rruleJSON;
 };
 
@@ -547,7 +554,7 @@ export const expandRecurEvents = (results, recurrencePatterns) => {
   const recurringEvents = nonMTDresults.filter(
     nonMTDresult =>
       nonMTDresult.isRecurring &&
-      nonMTDresult.providerType === 'CALDAV' &&
+      nonMTDresult.providerType === CALDAV_PROVIDER &&
       nonMTDresult.isMaster === true
   );
   let finalResults = [];
@@ -560,14 +567,6 @@ export const expandRecurEvents = (results, recurrencePatterns) => {
 };
 
 export const expandSeries = (recurringEvents, recurrencePatterns) => {
-  // const resolved = await Promise.all(
-  //   recurringEvents.map(async recurMasterEvent => {
-  //     const recurPatternRecurId = await dbRpActions.getOneRpByOId(recurMasterEvent.iCalUID);
-  //     return parseRecurrence(recurPatternRecurId.toJSON(), recurMasterEvent);
-  //   })
-  // );
-
-  // below is without use of database
   const resolved = recurringEvents.map(recurMasterEvent => {
     const filteredRp = recurrencePatterns.filter(
       recurrencePattern => recurMasterEvent.iCalUID === recurrencePattern.iCalUID
@@ -582,6 +581,7 @@ export const expandSeries = (recurringEvents, recurrencePatterns) => {
 };
 
 export const parseRecurrence = (recurPattern, recurMasterEvent) => {
+  console.log('parserRecurrence', recurMasterEvent, recurPattern);
   const recurEvents = [];
   const ruleSet = buildRuleSet(
     recurPattern,
@@ -603,9 +603,8 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
       .map(str => parseInt(str, 10)),
   ];
 
-  console.log('ruleSet', ruleSet);
   const allDates = ruleSet.all();
-
+  console.log('ALL DATES', allDates);
   if (allDates.length <= 0) {
     // This means that the caldav server has an event that when expanded,
     // has 0 events to deal with. This could be due to several reasons
@@ -651,20 +650,17 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
   } else {
     recurDates = ruleSet.all().map(date => moment(date.toJSON()).unix());
   }
-  console.log('passed through parseRecurrence3');
   recurDates = recurDates.filter(date => !mergedList.includes(date));
   const duration = getDuration(recurMasterEvent);
   let vevents = [];
   // new event creation will have no icalstring yet
   if (recurMasterEvent.iCALString) {
-    // eslint-disable-next-line prettier/prettier
     vevents = new ICAL.Component.fromString(recurMasterEvent.iCALString).getAllSubcomponents(
       'vevent'
     );
     vevents.shift(); // removes vevents[0], all exact copies of masterevent ignored
   }
   const exceptionMap = {};
-  // eslint-disable-next-line prettier/prettier
   if (vevents.length > 0) {
     // exist exceptions to the repeat
     vevents.forEach(vevent => {
@@ -675,7 +671,10 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
       exceptionMap[unixStart] = vevent;
     });
   }
+  let containMaster = false;
   recurDates.forEach(recurDateTime => {
+    // check if master event is inside recurDates
+    containMaster = recurMasterEvent.start.dateTime === recurDateTime ? true : containMaster;
     // recurDateTime not inside exceptionMap. ie, current recurDateTime is follows master exactly
     if (!exceptionMap[recurDateTime]) {
       recurEvents.push({
@@ -756,7 +755,41 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
       });
     }
   });
-  console.log('passed through parseRecurrence4');
+  // Adding the master event, if it isn't inside(occurs when expanded RRULE didn't take into account the initial master event)
+  if (!containMaster && !exDateContainsMaster(recurMasterEvent.end.dateTime, recurPattern)) {
+    recurEvents.push({
+      id: uuidv4(),
+      end: {
+        dateTime: recurMasterEvent.end.dateTime,
+        timezone: eventTz,
+      },
+      start: {
+        dateTime: recurMasterEvent.start.dateTime,
+        timezone: eventTz,
+      },
+      summary: recurMasterEvent.summary,
+      recurringEventId: recurMasterEvent.iCalUID,
+      iCalUID: recurMasterEvent.iCalUID,
+      iCALString: recurMasterEvent.iCALString,
+      originalId: recurMasterEvent.originalId,
+      owner: recurMasterEvent.owner,
+      isRecurring: recurMasterEvent.isRecurring,
+      providerType: recurMasterEvent.providerType,
+      calendarId: recurMasterEvent.calendarId,
+      colorId: recurMasterEvent.colorId,
+      created: recurMasterEvent.created,
+      description: recurMasterEvent.description,
+      etag: recurMasterEvent.etag,
+      caldavUrl: recurMasterEvent.caldavUrl,
+      location: recurMasterEvent.location,
+      organizer: recurMasterEvent.organizer,
+      attendee: recurMasterEvent.attendee,
+      originalStartTime: recurMasterEvent.originalStartTime,
+      updated: recurMasterEvent.updated,
+      isAllDay: recurMasterEvent.allDay,
+      isMaster: true,
+    });
+  }
   return recurEvents;
 };
 
@@ -809,23 +842,12 @@ export const parseWeekDayNoToString = stringEwsWeekDay => {
 };
 
 export const buildRuleObject = (pattern, startTime, tz) => {
+  console.log('pattern', pattern, startTime, tz);
   const ruleObject = {};
   ruleObject.interval = pattern.interval;
   const jsonObj = moment.tz(startTime * 1000, tz);
   ruleObject.dtstart = jsonObj.toDate();
 
-  // // Not used at the moment, Need to ensure other providers do not use them too.
-  // ruleObject.bymonthday = pattern.byMonthDay ? pattern.byMonthDay : null;
-  // ruleObject.byyearday = pattern.byYearDay ? pattern.byYearDay : null;
-
-  // // Probably not used. Too detailed and not needed.
-  // ruleObject.byhour = pattern.byHour ? pattern.byHour : null;
-  // ruleObject.bysetpos = pattern.bySetPos ? pattern.bySetPos : null;
-  // ruleObject.byminute = pattern.byMinute ? pattern.byMinute : null;
-  // ruleObject.bysecond = pattern.bySecond ? pattern.bySecond : null;
-  // ruleObject.byeaster = pattern.byEaster ? pattern.byEaster : null;
-
-  // This is where it gets really really tricky, fml.
   // Due to RRule api limiation, if I set a byweekday/byweekno value and
   // it is a monthly recurrence, it will become weekly when .all() is called.
   // Resulting in a weird expansion of the recurrence series.
@@ -838,17 +860,17 @@ export const buildRuleObject = (pattern, startTime, tz) => {
       {
         ruleObject.freq = RRule.YEARLY;
         // Using the recurrence pattern, if it is blank which means '()',
-        // .all behavior is it will auto expand on the frequency alone.
+        // .all behavior will auto expand on the frequency alone.
         // Therefore, I cannot even have a blank array, aka, ruleObject.byweekday.
         const byMonth = parseInt(pattern.byMonth, 10);
 
         if (byMonth) {
           ruleObject.bymonth = byMonth;
           const byWeekDay = pattern.byWeekDay
-            .slice(1, -1)
-            .split(',')
-            .filter(str => str !== undefined && str !== null && str !== '')
-            .map(day => parseStringToWeekDayNo(day));
+            .slice(1, -1) // get rid of brackets '()'
+            .split(',') // turn into array
+            .filter(str => str !== undefined && str !== null && str !== '') // isn't empty
+            .map(day => parseStringToWeekDayNo(day)); // set to integer based on weekday string
 
           const byWeekNo = pattern.byWeekNo
             .slice(1, -1)
@@ -881,10 +903,10 @@ export const buildRuleObject = (pattern, startTime, tz) => {
         // .all behavior is it will auto expand on the frequency alone.
         // Therefore, I cannot even have a blank array, aka, ruleObject.byweekday.
         const byWeekDay = pattern.byWeekDay
-          .slice(1, -1)
-          .split(',')
-          .filter(str => str !== undefined && str !== null && str !== '')
-          .map(day => parseStringToWeekDayNo(day));
+          .slice(1, -1) // get rid of brackets '()'
+          .split(',') // turn into array
+          .filter(str => str !== undefined && str !== null && str !== '') // isn't empty
+          .map(day => parseStringToWeekDayNo(day)); // set to integer
 
         const byWeekNo = pattern.byWeekNo
           .slice(1, -1)
@@ -893,6 +915,7 @@ export const buildRuleObject = (pattern, startTime, tz) => {
           .map(weekNo => parseInt(weekNo, 10));
 
         if (byWeekNo.length !== byWeekDay.length) {
+          // expands into weekly occurrence when both byweekno and byweekday isn't parsed
           console.log('(Monthly) WeekNo length not equals to WeekDay length!');
         } else if (byWeekNo.length !== 0) {
           // Both ways, you need to set the by week day number.
@@ -951,17 +974,10 @@ export const buildRuleObject = (pattern, startTime, tz) => {
   } else if (pattern.until === undefined || pattern.until === null || pattern.until === '') {
     ruleObject.count = pattern.numberOfRepeats;
   } else if (pattern.until !== 'Invalid date') {
-    const patternJson = moment.tz(pattern.until * 1000, tz).toObject();
-    ruleObject.until = new Date(
-      Date.UTC(
-        patternJson.years,
-        patternJson.months,
-        patternJson.date,
-        patternJson.hours,
-        patternJson.minutes
-      )
-    );
+    const patternToDate = moment.tz(pattern.until * 1000, tz).toDate();
+    ruleObject.until = new Date(patternToDate);
   }
+  console.log('ruleobject', ruleObject);
   return ruleObject;
 };
 
@@ -978,6 +994,7 @@ export const getModifiedThenDeletedDates = (exDates, recurDates) => {
 };
 
 export const buildRuleSet = (pattern, start, tz) => {
+  console.log('buildruleset', pattern, start, tz);
   // Create new ruleset based off the rule object.
   const rruleSet = new RRuleSet();
   const ruleObject = buildRuleObject(pattern, start, tz);
@@ -1009,6 +1026,17 @@ export const buildRuleSet = (pattern, start, tz) => {
 
   // const modifiedThenDeletedDates = getModifiedThenDeletedDates(exDates, recurrenceIds);
   return rruleSet;
+};
+
+const exDateContainsMaster = (masterDatetime, recurPattern) => {
+  const [containMaster] = recurPattern.exDates
+    .split(',')
+    .filter(exDate => exDate === masterDatetime);
+  if (containMaster !== undefined) {
+    return true;
+  } else {
+    return false;
+  }
 };
 
 export default {

@@ -4,8 +4,8 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { Calendar as MiniCalendar } from 'react-calendar';
 import moment from 'moment';
 // import Modal from 'react-modal';
-import { Modal } from 'mailspring-component-kit'
-import { Actions } from 'mailspring-exports'
+import { Modal } from 'mailspring-component-kit';
+import { Actions } from 'mailspring-exports';
 import RRule from 'rrule';
 import ICAL from 'ical.js';
 import fileSystem from 'fs';
@@ -60,7 +60,6 @@ import { asyncGetAllExchangeEvents } from '../utils/client/exchangebasics';
 import { getdb } from '../sequelizeDB/index';
 import { updateDate } from '../actions/db/events';
 
-
 const dav = require('dav');
 const uuidv1 = require('uuid/v1');
 
@@ -68,7 +67,6 @@ const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 // CREATE constants here for now, decide how to store colors later
-
 
 const customStyles = {
   overlay: {
@@ -83,7 +81,7 @@ const customStyles = {
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
     backgroundColor: '#f9fafa',
-    boxShadow: '0px 0px 10px -5px',
+    boxShadow: '0px 0px 10px -5px'
     // height: '32%',
     // maxHeight: '95%',
     // width: '32%',
@@ -109,7 +107,7 @@ const deleteModalStyles = {
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
     backgroundColor: '#f9fafa',
-    boxShadow: '0px 0px 10px -5px',
+    boxShadow: '0px 0px 10px -5px'
   }
 };
 
@@ -327,11 +325,11 @@ export default class View extends React.Component {
 
   // #region On Event Clicks
   handleEventClick = async (event, target) => {
-    const eventPresent = await dbEventActions.getOneEventById(event.id)
+    const eventPresent = await dbEventActions.getOneEventById(event.id);
     if (eventPresent === null) {
       return;
     }
-    this.renderEventPopup(event, target)
+    this.renderEventPopup(event, target);
     this.setState({
       // isShowEvent: true,
       currentEvent: event,
@@ -361,7 +359,7 @@ export default class View extends React.Component {
     } else {
       this.authorizeCaldavCodeRequest(email, pwd, accountType);
     }
-    this.setState({ isShowLoginForm: false })
+    this.setState({ isShowLoginForm: false });
   };
   // #endregion
 
@@ -390,35 +388,44 @@ export default class View extends React.Component {
   handleDeleteEvent = (event) => {
     if (event.isRecurring) {
       Actions.openModal({
-        component:
+        component: (
           <div className="popup-modal">
             <h5>You're deleting an event</h5>
-            <p>Do you want to delete all occurrences of this event, or only the selected occurrence?</p>
+            <p>
+              Do you want to delete all occurrences of this event, or only the selected occurrence?
+            </p>
             <div className="modal-button-group">
               <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
                 Cancel
-            </BigButton>
-              {event.isMaster
-                ? <BigButton variant="small-white" onClick={() => this.deleteAllRecurrenceEvent(event)}>
+              </BigButton>
+              {event.isMaster ? (
+                <BigButton
+                  variant="small-white"
+                  onClick={() => this.deleteAllRecurrenceEvent(event)}
+                >
                   Delete All
-                  </BigButton>
-                : <BigButton variant="small-white" onClick={() => this.deleteFutureRecurrenceEvent(event)}>
+                </BigButton>
+              ) : (
+                <BigButton
+                  variant="small-white"
+                  onClick={() => this.deleteFutureRecurrenceEvent(event)}
+                >
                   Delete All Future Events
-                  </BigButton>
-              }
+                </BigButton>
+              )}
               <BigButton variant="small-white" onClick={() => this.deleteEvent(event)}>
                 Delete Only This Event
-                </BigButton>
-
+              </BigButton>
             </div>
-          </div>,
+          </div>
+        ),
         width: 510,
         height: 170
-      })
+      });
     } else {
       this.deleteEvent(event);
     }
-  }
+  };
   // #region Delete functionality
   deleteEvent = (event) => {
     const { props } = this;
@@ -484,12 +491,11 @@ export default class View extends React.Component {
   renderDayContent = (date, view) => {
     const event = this.eventPresent(date);
     if (view === 'month' && event) {
-      return (<p className={`event-dot dot-${event.colorId}`}>&#8226;</p>);
+      return <p className={`event-dot dot-${event.colorId}`}>&#8226;</p>;
+    } else {
+      return <p className={'empty-event-dot'}>.</p>;
     }
-    else {
-      return (<p className={'empty-event-dot'}>.</p>);
-    }
-  }
+  };
 
   eventPresent = (date) => {
     const visibleEvents = this.props.visibleEvents;
@@ -508,21 +514,24 @@ export default class View extends React.Component {
       }
     }
     return false;
-  }
+  };
 
   generateBarColor = (calColor, isAllDay, attendees, organizer, owner) => {
     let color = calColor;
     if (attendees && attendees[0] && owner !== organizer) {
       // if owner and organizer is different, it is an invited event
-      const ownerIndex = Object.keys(attendees).filter(key => attendees[key]['email'] === owner)
-      color = attendees[ownerIndex] && attendees[ownerIndex]['partstat'] === 'NEEDS-ACTION' ? 'invite' : calColor;
+      const ownerIndex = Object.keys(attendees).filter((key) => attendees[key]['email'] === owner);
+      color =
+        attendees[ownerIndex] && attendees[ownerIndex]['partstat'] === 'NEEDS-ACTION'
+          ? 'invite'
+          : calColor;
     }
     if (isAllDay) {
-      return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue'
+      return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue';
     } else {
-      return color ? `event-bar--${color}` : 'event-bar--blue'
+      return color ? `event-bar--${color}` : 'event-bar--blue';
     }
-  }
+  };
   // #region Render functionality
   renderCalendar = (props) => {
     const visibleEvents = props.visibleEvents;
@@ -530,12 +539,11 @@ export default class View extends React.Component {
       <DragAndDropCalendar
         selectable
         localizer={localizer}
-        events={visibleEvents
-          .filter(event =>
+        events={visibleEvents.filter(
+          (event) =>
             moment(event.start).unix() > this.state.dateSelectedTimeStamp - 2678400 &&
             moment(event.start).unix() < this.state.dateSelectedTimeStamp + 2678400
-          )
-        }
+        )}
         views={{
           month: true,
           week: true,
@@ -545,28 +553,26 @@ export default class View extends React.Component {
         onEventResize={this.resizeEvent}
         onSelectSlot={this.addEvent}
         onSelectEvent={(event, target) => {
-          target.persist()
-          this.handleEventClick(event, target)
-        }
-        }
-        onNavigate={date => {
+          target.persist();
+          this.handleEventClick(event, target);
+        }}
+        onNavigate={(date) => {
           this.setState({
             dateSelected: date,
             dateSelectedTimeStamp: moment(date).unix()
-          })
+          });
           updateDate(date);
         }}
         popup
         resizable
-        eventPropGetter={event => ({
-          className:
-            this.generateBarColor(
-              event.colorId,
-              event.isAllDay,
-              event.attendee,
-              event.organizer,
-              event.owner
-            )
+        eventPropGetter={(event) => ({
+          className: this.generateBarColor(
+            event.colorId,
+            event.isAllDay,
+            event.attendee,
+            event.organizer,
+            event.owner
+          )
         })}
         // eventPropGetter={this.eventStyleGetter}
         components={{
@@ -594,18 +600,20 @@ export default class View extends React.Component {
         <div style={{ paddingLeft: 10, paddingRight: 10 }}>
           <h4 ref={(subtitle) => (this.subtitle = subtitle)}>{event.title}</h4>
           <p className="modal-date-text">
-            {moment(event.start).format('MMMM D YYYY, h:mm a')} - {moment(event.end).format('MMMM D YYYY, h:mm a')}
+            {moment(event.start).format('MMMM D YYYY, h:mm a')} -{' '}
+            {moment(event.end).format('MMMM D YYYY, h:mm a')}
           </p>
-          {event.attendee && Object.keys(event.attendee).length > 1 ?
+          {event.attendee && Object.keys(event.attendee).length > 1 ? (
             <div>
               <p>{Object.keys(event.attendee).length} Guests</p>
               {Object.keys(event.attendee).map((key, index) =>
-                event.owner === event.organizer
-                  && event.attendee[key]['email'] === event.owner
-                  ? null
-                  : <p key={index}>{event.attendee[key]['email']}</p>
+                event.owner === event.organizer &&
+                event.attendee[key]['email'] === event.owner ? null : (
+                  <p key={index}>{event.attendee[key]['email']}</p>
+                )
               )}
-            </div> : null}
+            </div>
+          ) : null}
         </div>
       </div>,
       {
@@ -613,7 +621,7 @@ export default class View extends React.Component {
         originRect: { top: target.clientY, left: target.clientX },
         disablePointer: true,
         direction: 'right',
-        className: 'popout-container',
+        className: 'popout-container'
       }
     );
   };
@@ -630,8 +638,6 @@ export default class View extends React.Component {
   //           Done
   //         </button>
   //       </Modal> */}
-
-
 
   renderSignupLinks = (props, state) => {
     const providers = [];
@@ -667,11 +673,14 @@ export default class View extends React.Component {
       );
     }
 
-    return state.isShowLoginForm ?
-      (
-        <Modal isOpen={state.isShowLoginForm} style={deleteModalStyles} onRequestClose={() => this.setState({ isShowLoginForm: false })}>
-          <div>
-            {/* <a
+    return state.isShowLoginForm ? (
+      <Modal
+        isOpen={state.isShowLoginForm}
+        style={deleteModalStyles}
+        onRequestClose={() => this.setState({ isShowLoginForm: false })}
+      >
+        <div>
+          {/* <a
           role="button"
           tabIndex="0"
           className="waves-effect waves-light btn"
@@ -703,47 +712,47 @@ export default class View extends React.Component {
         >
           <i className="material-icons left">close</i>End Pending Actions
         </a>{' '} */}
-            <form onSubmit={this.handleSubmit}>
+          <form onSubmit={this.handleSubmit}>
+            <input
+              type="text"
+              name="email"
+              value={state.email}
+              onChange={this.handleChange}
+              placeholder="Email"
+            />
+            <input
+              type="text"
+              name="pwd"
+              value={state.pwd}
+              onChange={this.handleChange}
+              placeholder="Password"
+            />
+            <label>
               <input
-                type="text"
-                name="email"
-                value={state.email}
+                type="radio"
+                name="accountType"
+                value="ICLOUD"
                 onChange={this.handleChange}
-                placeholder="Email"
+                defaultChecked
               />
-              <input
-                type="text"
-                name="pwd"
-                value={state.pwd}
-                onChange={this.handleChange}
-                placeholder="Password"
-              />
-              <label>
-                <input
-                  type="radio"
-                  name="accountType"
-                  value="ICLOUD"
-                  onChange={this.handleChange}
-                  defaultChecked
-                />
-                ICLOUD
-              </label>
-              {/* <label>
+              ICLOUD
+            </label>
+            {/* <label>
                 <input type="radio" name="accountType" value="GOOGLE" onChange={this.handleChange} />
                   GOOGLE
               </label> */}
-              <label>
-                <input type="radio" name="accountType" value="YAHOO" onChange={this.handleChange} />
-                  YAHOO
-              </label>
-              <label>
-                <input type="radio" name="accountType" value="EWS" onChange={this.handleChange} />
-                  EWS
-              </label>
-              <input type="submit" value="Submit" />
-            </form>
-            {/* this is for out of sync tokens. */}
-            {/* {providers}
+            <label>
+              <input type="radio" name="accountType" value="YAHOO" onChange={this.handleChange} />
+              YAHOO
+            </label>
+            <label>
+              <input type="radio" name="accountType" value="EWS" onChange={this.handleChange} />
+              EWS
+            </label>
+            <input type="submit" value="Submit" />
+          </form>
+          {/* this is for out of sync tokens. */}
+          {/* {providers}
         <a
           role="button"
           tabIndex="0"
@@ -800,10 +809,9 @@ export default class View extends React.Component {
         >
           <i className="material-icons left">close</i>Clear all Events
         </a> */}
-          </div>
-        </Modal>
-
-      ) : null;
+        </div>
+      </Modal>
+    ) : null;
   };
 
   render() {
@@ -830,14 +838,27 @@ export default class View extends React.Component {
               prev2Label={null}
               minDetail="month"
               maxDetail="month"
-              onActiveStartDateChange={({ activeStartDate, value, view }) => this.setState({ dateSelected: activeStartDate })}
-              formatShortWeekday={(locale, date) => [`S`, `M`, `T`, `W`, `T`, `F`, `S`][date.getDay()]}
+              onActiveStartDateChange={({ activeStartDate, value, view }) =>
+                this.setState({ dateSelected: activeStartDate })
+              }
+              formatShortWeekday={(locale, date) =>
+                [`S`, `M`, `T`, `W`, `T`, `F`, `S`][date.getDay()]
+              }
               tileContent={({ date, view }) => this.renderDayContent(date, view)}
             />
             <FilterCalendar />
-            <BigButton variant="small-blue" onClick={() => this.setState({ isShowLoginForm: true })}>Login</BigButton>
-            <BigButton variant="small-blue" onClick={() => this.authorizeGoogleCodeRequest()}>Google Auth</BigButton>
-            <BigButton variant="small-blue" onClick={() => this.authorizeExchangeCodeRequest()}>Exchange</BigButton>
+            <BigButton
+              variant="small-blue"
+              onClick={() => this.setState({ isShowLoginForm: true })}
+            >
+              Login
+            </BigButton>
+            <BigButton variant="small-blue" onClick={() => this.authorizeGoogleCodeRequest()}>
+              Google Auth
+            </BigButton>
+            <BigButton variant="small-blue" onClick={() => this.authorizeExchangeCodeRequest()}>
+              Exchange
+            </BigButton>
           </div>
         </div>
       );

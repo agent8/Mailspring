@@ -2,3 +2,7 @@ export const ICLOUD_ACCOUNT = 'ICLOUD_ACCOUNT';
 export const ICLOUD_URL = 'https://caldav.icloud.com/';
 
 export const CALDAV_PROVIDER = 'CALDAV_PROVIDER';
+
+export const SINGLE_EVENT = 'SINGLE_EVENT';
+export const ALL_RECURRING_EVENTS = 'ALL_RECURRING EVENTS';
+export const FUTURE_RECCURRING_EVENTS = 'FUTURE_RECURRING_EVENTS'

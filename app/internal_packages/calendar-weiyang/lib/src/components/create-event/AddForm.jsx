@@ -436,50 +436,6 @@ export default class AddForm extends Component {
     }
   };
 
-  renderCalendar = props => {
-    const visibleEvents = props.visibleEvents;
-
-    return (
-      <DragAndDropCalendar
-        defaultDate={new Date(this.state.startParsed)}
-        localizer={localizer}
-        events={visibleEvents}
-        defaultView={'day'}
-        views={{
-          day: true,
-        }}
-        popup
-        eventPropGetter={event => ({
-          className: this.generateBarColor(event.colorId, event.isAllDay),
-        })}
-        components={{
-          toolbar: this.CustomToolbar,
-        }}
-      />
-    );
-  };
-
-  // Not used yet, this is another calendar tab
-  renderFindATime = () => {
-    const { props } = this;
-    const visibleEvents = props.visibleEvents;
-
-    return (
-      <DragAndDropCalendar
-        localizer={localizer}
-        events={visibleEvents}
-        defaultView={'week'}
-        views={{
-          week: true,
-        }}
-        popup
-        eventPropGetter={event => ({
-          className: this.generateBarColor(event.colorId, event.isAllDay),
-        })}
-      />
-    );
-  };
-
   handleChangeTab = (event, tabLabel) => {
     this.setState({
       activeTab: tabLabel,
@@ -490,8 +446,6 @@ export default class AddForm extends Component {
     switch (activeTab) {
       case 'Details':
         return this.renderAddDetails();
-      case 'Find a Time':
-        return this.renderFindATime();
       default:
         return <h1>Error</h1>;
     }
@@ -657,12 +611,8 @@ export default class AddForm extends Component {
 
                   {/* Main add event page */}
                   {this.renderAddDetails()}
-
-                  {/* Find a Time tab */}
-                  {/* <div className="add-form-find-a-time" /> */}
                 </div>
               </div>
-              {/* <div className="sidebar">{this.renderCalendar(props)}</div> */}
             </div>
           </DialogContent>
           <DialogActions>
