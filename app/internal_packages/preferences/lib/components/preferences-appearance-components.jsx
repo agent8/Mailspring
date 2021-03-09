@@ -121,7 +121,7 @@ export class AppearanceAccountColorList extends Component {
                 ></div>
               )}
 
-              {account.emailAddress}
+              {account.label || account.emailAddress}
             </div>
           );
         })}
