@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 function lintIt () {
-  OUTPUT=$(git diff --cached --name-only | grep -E '(.js|.jsx|.es6)$')
+  OUTPUT=$(git diff --cached --name-status | grep -E '(.js|.jsx|.es6)$' | grep -E '^(A|M)' | awk '{print $2}')
   if [ ${#OUTPUT} -lt 1 ]; then
     echo "No JS related file in commit, eslint check skipped"
     exit 0
