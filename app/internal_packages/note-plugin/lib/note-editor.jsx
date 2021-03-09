@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { RetinaImg } from 'mailspring-component-kit';
-const { Actions, NoteStore } = require('mailspring-exports');
+import { Actions, NoteStore } from 'mailspring-exports';
+import { labelOptions } from './note-labels';
 export default class NoteEditor extends Component {
   static propTypes = {
     thread: PropTypes.object,
@@ -69,46 +70,31 @@ export default class NoteEditor extends Component {
   };
 
   setLabel = label => {
-    const { labels = {} } = this.state;
-    const isChecked = !labels[label];
-    labels[label] = isChecked;
+    const { labels = [] } = this.state;
+    const isChecked = !labels.includes(label);
+    if (isChecked) {
+      labels.push(label);
+    } else {
+      labels.splice(labels.indexOf(label), 1);
+    }
+
     this.setState({ labels });
-    NoteStore.setLabel(this.props.thread.id, this.inputRef.value, isChecked);
+    NoteStore.setLabels(this.props.thread.id, labels);
   };
 
   _renderLabel() {
-    const { labels = {} } = this.state;
-    const labelOptions = [
-      {
-        value: 'red',
-        label: '',
-      },
-      {
-        value: 'yellow',
-        label: '',
-      },
-      {
-        value: 'green',
-        label: '',
-      },
-      {
-        value: 'todo',
-        label: 'Todo',
-      },
-      {
-        value: 'done',
-        label: 'Done',
-      },
-    ];
+    const { labels = [] } = this.state;
     return labelOptions.map(({ value, label }) => (
       <span
         onClick={() => this.setLabel(value)}
         key={value}
-        className={`${value} ${label ? 'label' : 'color'} ${labels[value] ? 'checked' : ''}`}
+        className={`${value} ${label ? 'label' : 'color'} ${
+          labels.includes(value) ? 'checked' : ''
+        }`}
       >
         <RetinaImg
           name={'check-alone.svg'}
-          style={{ width: 24, height: 24, fontSize: 24 }}
+          style={{ width: 18, height: 18, fontSize: 18 }}
           isIcon
           mode={RetinaImg.Mode.ContentIsMask}
         />
@@ -125,6 +111,21 @@ export default class NoteEditor extends Component {
     // }, 10);
   };
 
+  dateRender = (date, today) => {
+    return (
+      <div
+        style={{
+          width: 80,
+          height: 80,
+          borderTop: '3px solid #CCC',
+          borderTopColor: date.isSame(today, 'date') ? 'blue' : '#CCC',
+        }}
+      >
+        {date.date()}
+      </div>
+    );
+  };
+
   render() {
     if (!this.props.thread) {
       return null;
@@ -135,7 +136,7 @@ export default class NoteEditor extends Component {
         <textarea
           autoFocus
           ref={el => (this.inputRef = el)}
-          rows="8"
+          rows="7"
           onInput={this.save}
           defaultValue={content}
         ></textarea>
@@ -147,6 +148,7 @@ export default class NoteEditor extends Component {
             Close
           </button>
           <div className="note-labels">{this._renderLabel()}</div>
+          <button className="btn">Add a reminder</button>
           <button className="btn btn-trash" onClick={this.delete}>
             <RetinaImg
               name={'trash.svg'}

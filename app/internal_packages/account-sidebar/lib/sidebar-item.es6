@@ -14,6 +14,7 @@ const {
   DatabaseStore,
   TaskFactory,
   Constant,
+  NoteStore,
 } = require('mailspring-exports');
 
 const SidebarActions = require('./sidebar-actions');
@@ -345,6 +346,9 @@ class SidebarItem {
 
         onSelect(item) {
           // FocusedPerspectiveStore.refreshPerspectiveMessages({perspective: item});
+          if (item.perspective._categoryMetaDataId === 'note') {
+            NoteStore.clearLabelFilter();
+          }
           Actions.focusMailboxPerspective(item.perspective);
           if (item.syncFolderList && item.children.length === 0) {
             Actions.syncFolderList({ accountIds: item.accountIds, source: 'onSelectItem' });
@@ -573,6 +577,33 @@ class SidebarItem {
     opts.className = 'jira-icon';
     const perspective = MailboxPerspective.forJira(categories);
     let id = 'Jira';
+    if (opts.key) {
+      id += `-${opts.key}`;
+    }
+    return this.forPerspective(id, perspective, opts);
+  }
+
+  static forNote(accountIds, opts = {}) {
+    const accounts = AccountStore.accounts();
+    let isEdisonMail = false;
+    for (const acc of accounts) {
+      if (acc.emailAddress.includes('edison.tech')) {
+        isEdisonMail = true;
+        break;
+      }
+    }
+    if (!isEdisonMail) {
+      return null;
+    }
+    let categories = accountIds.map(accId => {
+      return CategoryStore.getCategoryByRole(accId, 'inbox');
+    });
+
+    categories = _.compact(categories);
+    opts.iconName = 'note.svg';
+    opts.className = 'note-icon';
+    const perspective = MailboxPerspective.forNote(categories);
+    let id = 'Note';
     if (opts.key) {
       id += `-${opts.key}`;
     }

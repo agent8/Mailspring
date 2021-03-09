@@ -176,10 +176,7 @@ export default class SidebarSection {
     if (accounts.length === 1) {
       outbox = SidebarItem.forOutbox([accounts[0].id], outboxOpts);
     } else {
-      outbox = SidebarItem.forOutbox(
-        accounts.map(act => act.id),
-        outboxOpts
-      );
+      outbox = SidebarItem.forOutbox(accounts.map(act => act.id), outboxOpts);
     }
     if (!accounts || accounts.length === 0) {
       return this.empty('All Accounts');
@@ -444,6 +441,13 @@ export default class SidebarSection {
     }
     folderItem = SidebarItem.forJira(accountIds, {
       displayName: 'Jira',
+      folderTreeIndex: siftItems.length,
+    });
+    if (folderItem) {
+      siftItems.push(folderItem);
+    }
+    folderItem = SidebarItem.forNote(accountIds, {
+      displayName: 'Note',
       folderTreeIndex: siftItems.length,
     });
     if (folderItem) {

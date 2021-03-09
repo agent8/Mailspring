@@ -1,5 +1,4 @@
 import MailspringStore from 'mailspring-store';
-// import { Actions } from 'mailspring-exports';
 import _ from 'underscore';
 
 const STORE_KEY = 'notes';
@@ -22,7 +21,37 @@ class NoteStore extends MailspringStore {
     if (!threadId) {
       return '';
     }
-    return this.notes[threadId] ? this.notes[threadId] : { content: '', labels: {} };
+    return this.notes[threadId] ? this.notes[threadId] : { content: '', labels: [] };
+  };
+
+  getAllNoteIds = () => {
+    if (!this.notes) {
+      return [];
+    }
+    const allIds = Object.keys(this.notes);
+    if (!this.labelFilter || this.labelFilter.length === 0) {
+      return allIds;
+    }
+    const rst = [];
+    for (const threadId in this.notes) {
+      let labels = this.notes[threadId].labels || [];
+      const matched = _.intersection(labels, this.labelFilter);
+      if (matched && matched.length) {
+        rst.push(threadId);
+      }
+    }
+    return rst;
+  };
+
+  addLabelFilter = label => {
+    this.labelFilter = this.labelFilter || [];
+    if (!this.labelFilter.includes(label)) {
+      this.labelFilter.push(label);
+    }
+  };
+
+  clearLabelFilter = () => {
+    this.labelFilter = [];
   };
 
   saveNote(threadId, content) {
@@ -33,12 +62,12 @@ class NoteStore extends MailspringStore {
     this._save();
   }
 
-  setLabel(threadId, label, checked) {
+  setLabels(threadId, labels) {
     const note = this.getNoteById(threadId);
     if (!note.labels) {
-      note.labels = {};
+      note.labels = [];
     }
-    note.labels[label] = checked;
+    note.labels = [...labels];
     this.notes[threadId] = note;
     this._save();
   }

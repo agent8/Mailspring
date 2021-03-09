@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import NoteEditor from './note-editor';
-import { RetinaImg } from 'mailspring-component-kit';
-const { AccountStore, Actions, NoteStore } = require('mailspring-exports');
+import { AccountStore, Actions, NoteStore } from 'mailspring-exports';
+import { labelOptions } from './note-labels';
 export default class EditableNote extends Component {
   static propTypes = {
     thread: PropTypes.object,
@@ -58,31 +58,9 @@ export default class EditableNote extends Component {
   };
 
   _renderLabel() {
-    const { labels = {} } = this.state;
-    const labelOptions = [
-      {
-        value: 'red',
-        label: '',
-      },
-      {
-        value: 'yellow',
-        label: '',
-      },
-      {
-        value: 'green',
-        label: '',
-      },
-      {
-        value: 'todo',
-        label: 'Todo',
-      },
-      {
-        value: 'done',
-        label: 'Done',
-      },
-    ];
+    const { labels = [] } = this.state;
     return labelOptions
-      .filter(({ value }) => labels[value])
+      .filter(({ value }) => labels.includes(value))
       .map(({ value, label }) => (
         <span key={value} className={`${value} ${label ? 'label' : 'color'}`}>
           {label}
@@ -91,17 +69,17 @@ export default class EditableNote extends Component {
   }
 
   _renderNote = () => {
-    const { content } = this.state;
-    if (!content || content.trim().length === 0) {
+    const { content, labels } = this.state;
+    if ((!content || content.trim().length === 0) && (!labels || labels.length === 0)) {
       return null;
     }
     return (
       <div>
         <div className="note-content" onClick={() => this.setState({ active: true })}>
-          <span className="note-title">Note:</span>
+          <div className="note-labels">{this._renderLabel()}</div>
+          {content && <span className="note-title">Note:</span>}
           {content}
           <br />
-          <div className="note-labels">{this._renderLabel()}</div>
         </div>
       </div>
     );

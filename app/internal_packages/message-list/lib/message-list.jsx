@@ -14,7 +14,6 @@ import {
   OutboxStore,
   SearchStore,
   FocusedPerspectiveStore,
-  NoteStore,
 } from 'mailspring-exports';
 
 import {

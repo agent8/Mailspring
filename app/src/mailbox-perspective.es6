@@ -182,6 +182,10 @@ export default class MailboxPerspective {
     return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
   }
 
+  static forNote(categories) {
+    return categories.length > 0 ? new NoteMailboxPerspective(categories) : this.forNothing();
+  }
+
   static forInboxFocused(categories) {
     return categories.length > 0
       ? new InboxMailboxFocusedPerspective(categories)
@@ -1324,10 +1328,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(
-        this.categories().map(c => c.id),
-        other.categories().map(c => c.id)
-      )
+      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
     );
   }
 
@@ -1891,6 +1892,56 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 
+class NoteMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(_categories) {
+    super(_categories);
+    this._categoryMetaDataAccountId = 'sift';
+    this._categoryMetaDataId = 'note';
+    this.displayName = 'Note';
+    this.noteStore;
+  }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
+  }
+  unreadCount() {
+    let sum = 0;
+    for (const aid of this.accountIds) {
+      sum += ThreadCountsStore.unreadCountForCategoryId(`${aid}_NOTE`);
+    }
+    return sum;
+  }
+  threads() {
+    if (!this.noteStore) {
+      this.noteStore = require('../internal_packages/note-plugin/lib/note-store.es6').default;
+    }
+    const noteIds = this.noteStore.getAllNoteIds();
+    const query = DatabaseStore.findAll(Thread)
+      .where([
+        Thread.attributes.id.in(noteIds),
+        Thread.attributes.inAllMail.equal(true),
+        Thread.attributes.state.equal(0),
+      ])
+      .order([Thread.attributes.lastMessageTimestamp.descending()])
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
 class UnreadMailboxPerspective extends CategoryMailboxPerspective {
   constructor(categories) {
     super(categories);
@@ -2158,9 +2209,6 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(
-      this.categories().map(c => c.id),
-      this.isOther
-    );
+    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
   }
 }

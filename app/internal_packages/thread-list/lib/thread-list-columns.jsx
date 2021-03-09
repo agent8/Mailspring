@@ -280,6 +280,12 @@ const cNarrow = new ListTabular.Column({
           <div className="participants-wrapper">
             <ThreadListParticipants thread={thread} />
             {pencil}
+            <InjectedComponent
+              key="thread-injected-note-labels"
+              className="thread-injected-note-labels"
+              exposedProps={{ thread: thread }}
+              matching={{ role: 'NoteLabels' }}
+            />
             <span style={{ flex: 1 }} />
             <InjectedComponent
               key="thread-injected-timestamp"

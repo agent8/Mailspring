@@ -51,7 +51,7 @@ export default class NoteToolbarButton extends Component {
           onClick={this.toggleInput}
         >
           <RetinaImg
-            name={'attachment-doc.svg'}
+            name={'note.svg'}
             style={{ width: 24, height: 24, fontSize: 24 }}
             isIcon
             mode={RetinaImg.Mode.ContentIsMask}
