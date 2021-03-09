@@ -1,19 +1,14 @@
 import React from 'react';
-import {
-  Utils,
-  PropTypes,
-  DateUtils,
-  AccountStore,
-  FocusedPerspectiveStore,
-} from 'mailspring-exports';
+import { Utils, PropTypes, DateUtils } from 'mailspring-exports';
 import {
   InjectedComponentSet,
   ListTabular,
   InjectedComponent,
   OutboxSender,
-  LabelColorizer,
 } from 'mailspring-component-kit';
 import OutboxQuickActions from './outbox-quick-actions';
+import AccountColor from '../../account-color/lib/account-color';
+
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -46,29 +41,6 @@ const SenderColumn = new ListTabular.Column({
   },
 });
 
-const renderAccountColor = message => {
-  if (!AppEnv.config.get('core.appearance.showAccountColor')) {
-    return null;
-  }
-  const current = FocusedPerspectiveStore.current();
-  if (current.accountIds.length <= 1) {
-    return null;
-  }
-  const accounts = AccountStore.accounts().map(account => account.id);
-  const accountId = message.accountId;
-  const account = AccountStore.accountForId(accountId);
-  const color =
-    account.color !== undefined
-      ? account.color
-      : accounts.findIndex(account => account === accountId) + 1;
-  return (
-    <div
-      className={`account-color`}
-      style={{ background: LabelColorizer.accountColors()[color] }}
-    ></div>
-  );
-};
-
 const ParticipantsColumn = new ListTabular.Column({
   name: 'Participants',
   width: 180,
@@ -95,14 +67,14 @@ const participants = draft => {
         <div className="participants-inner">
           <span>{list.map(p => p.displayName()).join(', ')}</span>
         </div>
-        {renderAccountColor(draft)}
+        <AccountColor message={draft} />
       </div>
     );
   } else {
     return (
       <div className="participants no-recipients" style={{ flex: 1 }}>
         (No Recipients)
-        {renderAccountColor(draft)}
+        <AccountColor message={draft} />
       </div>
     );
   }

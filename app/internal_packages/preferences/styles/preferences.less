@@ -311,12 +311,27 @@
     width: 500px;
     padding: 4px 10px;
     border: 1px solid @border-color-primary;
-    max-height: 123px;
+    max-height: 120px;
     overflow: auto;
+    &::-webkit-scrollbar {
+      display: block !important;
+      width: 4px;
+      height: 1px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: @gray-lighter;
+      visibility: visible;
+      opacity: 1;
+    }
+    &::-webkit-scrollbar-track {
+      background: none;
+      border: none;
+      outline: none;
+    }
     & > div {
       display: flex;
       align-items: center;
-      height: 24px;
+      height: 25px;
       width: fit-content;
       .selected-color {
         cursor: pointer;
