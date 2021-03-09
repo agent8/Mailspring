@@ -41,8 +41,6 @@ class SiftList extends React.Component {
         previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
       });
     });
-    this.unsubscribers = [];
-    this.unsubscribers.push(Actions.changeAccountColor.listen(this.forceUpdate, this));
     this._onResize();
   }
 
@@ -50,7 +48,6 @@ class SiftList extends React.Component {
     this._mounted = false;
     window.removeEventListener('resize', this._onResize, true);
     this.disposable.dispose();
-    this.unsubscribers.map(unsubscribe => unsubscribe());
     clearTimeout(this._deletingTimer);
   }
 
