@@ -41,8 +41,6 @@ class OutboxList extends React.Component {
         previewLines: AppEnv.config.get(PREVIEW_LINES_KEY),
       });
     });
-    this.unsubscribers = [];
-    this.unsubscribers.push(Actions.changeAccountColor.listen(this.forceUpdate, this));
   }
 
   componentWillUnmount() {
@@ -50,7 +48,6 @@ class OutboxList extends React.Component {
     window.removeEventListener('resize', this._onResize, true);
     clearTimeout(this._deletingTimer);
     this.disposable.dispose();
-    this.unsubscribers.map(unsubscribe => unsubscribe());
   }
 
   _calcScrollPosition = _.throttle(scrollTop => {

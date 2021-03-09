@@ -1,0 +1,12 @@
+{
+  "name": "account-color",
+  "version": "0.1.0",
+  "main": "./lib/main",
+  "description": "Account Color",
+  "license": "GPL-3.0",
+  "private": true,
+  "syncInit": true,
+  "engines": {
+    "mailspring": "*"
+  }
+}
