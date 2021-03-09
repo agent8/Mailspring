@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import SearchStore from './search-store';
-import { ListensToFluxStore } from 'mailspring-component-kit';
+import { ListensToFluxStore, InjectedComponentSet } from 'mailspring-component-kit';
 import { Actions, FocusedPerspectiveStore, ThreadCountsStore } from 'mailspring-exports';
 // import ThreadSearchBar from './thread-search-bar';
 // import { HasTutorialTip } from 'mailspring-component-kit';
@@ -122,8 +122,20 @@ class TitleSearchBar extends Component {
         </div>
       );
     }
-
-    return <div className="title-search-bar">{TitleComponent}</div>;
+    const pulgins = (
+      <InjectedComponentSet
+        deferred
+        className="title-plugins"
+        matching={{ role: 'TitlePlugin' }}
+        exposedProps={{}}
+      />
+    );
+    return (
+      <div className="title-search-bar">
+        {TitleComponent}
+        {pulgins}
+      </div>
+    );
   }
 }
 

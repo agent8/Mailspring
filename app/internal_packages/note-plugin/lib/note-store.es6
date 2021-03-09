@@ -43,11 +43,8 @@ class NoteStore extends MailspringStore {
     return rst;
   };
 
-  addLabelFilter = label => {
-    this.labelFilter = this.labelFilter || [];
-    if (!this.labelFilter.includes(label)) {
-      this.labelFilter.push(label);
-    }
+  setLabelFilter = labels => {
+    this.labelFilter = labels || [];
   };
 
   clearLabelFilter = () => {

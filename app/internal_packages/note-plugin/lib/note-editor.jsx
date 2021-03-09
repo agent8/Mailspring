@@ -148,7 +148,9 @@ export default class NoteEditor extends Component {
             Close
           </button>
           <div className="note-labels">{this._renderLabel()}</div>
-          <button className="btn">Add a reminder</button>
+          <button className="btn" onClick={() => alert('Not implement yet.')}>
+            Add a reminder
+          </button>
           <button className="btn btn-trash" onClick={this.delete}>
             <RetinaImg
               name={'trash.svg'}

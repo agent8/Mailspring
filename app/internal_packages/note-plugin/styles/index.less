@@ -142,4 +142,46 @@
       }
     }
   }
+  .note-labels {
+    & > span {
+      cursor: pointer;
+    }
+  }
+}
+
+.note-filter {
+  margin-left: 10px;
+  display: flex;
+  flex-direction: row;
+  .btn {
+    box-shadow: none;
+    &.active {
+      .edison-icon {
+        color: @blue;
+      }
+    }
+  }
+  .note-labels {
+    display: flex;
+    opacity: 0;
+    width: 0;
+    z-index: 9;
+    transition: all 0.3s;
+    overflow: hidden;
+    &.visible {
+      width: 100%;
+      opacity: 1;
+    }
+    & > div {
+      cursor: pointer;
+      margin-left: 10px;
+      height: 70%;
+      align-items: center;
+      position: relative;
+      display: flex;
+      .check-mark {
+        position: absolute;
+      }
+    }
+  }
 }
