@@ -17,7 +17,7 @@ import RRuleGenerator from '../react-rrule-generator/src/lib';
 
 import { createEvent } from './utils/CreateEventUtils';
 import WyCalendarStore from '../../../../../../src/flux/stores/wycalendar-store.es6';
-import { fetchCaldavEvents } from '../fetch-event/utils/fetchCaldavEvents';
+import { fetchCaldavEvents } from '../fetch-event/utils/FetchCaldavEvents';
 import { ICLOUD_URL } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
@@ -27,9 +27,6 @@ const TIME_OFFSET = 12;
 const START_INDEX_OF_DATE = 0;
 const END_INDEX_OF_DATE = 11;
 const END_INDEX_OF_MINUTE = 16;
-
-const localizer = momentLocalizer(moment);
-const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 const selectCustomStyles = {
   control: provided => ({
@@ -85,8 +82,6 @@ export default class AddForm extends Component {
       isShowConfirmForm: false,
       selectedOption: '',
 
-      // Technically no need to subscribe to listeners, since component will need
-      // to be destroyed(ie, user leaves form page) first before adding new login auth and calendars
       calendarLists: WyCalendarStore.getIcloudCalendarLists(),
       auth: WyCalendarStore.getIcloudAuth(),
     };
@@ -601,13 +596,6 @@ export default class AddForm extends Component {
                       onChange={this.handleChange}
                     />
                   </div>
-
-                  {/* Details or Find a Time tab toggle */}
-                  {/* <Tabs
-                    handleChangeTab={this.handleChangeTab}
-                    activeTab={state.activeTab}
-                    tabList={["Details", "Find a Time"]}
-                  /> */}
 
                   {/* Main add event page */}
                   {this.renderAddDetails()}

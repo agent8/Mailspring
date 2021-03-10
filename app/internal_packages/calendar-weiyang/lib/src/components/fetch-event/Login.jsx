@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import BigButton from '../MiniComponents/BigButton';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
 import Actions from '../../../../../../src/flux/actions.es6';
-import { fetchCaldavEvents } from './utils/fetchCaldavEvents';
+import { fetchCaldavEvents } from './utils/FetchCaldavEvents';
 import { ICLOUD_ACCOUNT } from '../constants';
 
 class Login extends React.Component {

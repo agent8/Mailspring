@@ -1,7 +1,7 @@
 import Actions from '../../../../../../../src/flux/actions.es6';
 import { CALDAV_PROVIDER, ICLOUD_URL } from '../../constants';
-import { getCaldavAccount } from './getCaldavAcc';
-import * as PARSER from './parser';
+import { getCaldavAccount } from './GetCaldavAcc';
+import * as PARSER from '../../common-utils/Parser';
 const dav = require('dav');
 
 export const fetchCaldavEvents = async (email, password, accountType) => {
@@ -53,6 +53,7 @@ export const fetchCaldavEvents = async (email, password, accountType) => {
 // Happens when there's no events but recurrences exists,
 // caused by deleting all specific events in the recurrences
 const deleteStaleEventsDEBUG = async (email, password, flatFilteredEvents, finalResult) => {
+  // if there's event in the expansion, returns immediately, even though there might be stale recurrences
   if (finalResult.length > 0) {
     return;
   }

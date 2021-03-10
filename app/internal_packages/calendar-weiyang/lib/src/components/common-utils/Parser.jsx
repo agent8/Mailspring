@@ -4,7 +4,7 @@ import ICAL from 'ical.js';
 import moment from 'moment-timezone';
 import uuidv4 from 'uuid';
 import { RRule, RRuleSet } from 'rrule';
-import { CALDAV_PROVIDER } from '../../constants';
+import { CALDAV_PROVIDER } from '../constants';
 // import * as dbRpActions from '../sequelizeDB/operations/recurrencepatterns';
 
 const oneYearFromNow = new Date();

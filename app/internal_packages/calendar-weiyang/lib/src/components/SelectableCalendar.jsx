@@ -3,6 +3,7 @@ import { Calendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { Fragment } from 'react';
 import AddForm from './create-event/AddForm';
+import EditForm from './edit-event/EditForm';
 import Grid from '@material-ui/core/Grid';
 import Login from './fetch-event/Login';
 import BigButton from './MiniComponents/BigButton';
@@ -30,7 +31,9 @@ class SelectableCalendar extends React.Component {
       events: [],
       start: '',
       end: '',
+      editId: '',
       addFormPopout: false,
+      editFormPopout: false,
       loginFormPopout: false,
       icloudCalendarData: WyCalendarStore.getIcloudCalendarData(),
     };
@@ -59,6 +62,12 @@ class SelectableCalendar extends React.Component {
       end: end,
     }));
     this.setAddFormPopout(true);
+  };
+  setEditFormPopout = boolValue => {
+    this.setState(prevState => ({
+      ...prevState,
+      editFormPopout: boolValue,
+    }));
   };
   setAddFormPopout = boolValue => {
     this.setState(prevState => ({
@@ -122,8 +131,13 @@ class SelectableCalendar extends React.Component {
       storedEvent => storedEvent.id === event.id
     );
     if (eventPresent.length === 0) {
+      console.log('Event not in reflux');
       return;
     }
+    this.setState(prevState => ({
+      ...prevState,
+      editId: event.id,
+    }));
     this.renderEventPopup(event, target);
   };
   closeModal = () => {
@@ -188,7 +202,6 @@ class SelectableCalendar extends React.Component {
   };
   editEvent = event => {
     const { props } = this;
-    console.log('EDIT EVENT', event);
   };
 
   renderEventPopup = (event, target) => {
@@ -246,6 +259,13 @@ class SelectableCalendar extends React.Component {
             end={this.state.end}
             parentPropFunction={this.setAddFormPopout}
             parentPropState={this.state.addFormPopout}
+          />
+        ) : null}
+        {this.state.editFormPopout ? (
+          <EditForm
+            id={this.state.editId}
+            parentPropFunction={this.setEditFormPopout}
+            parentPropState={this.state.editFormPopout}
           />
         ) : null}
         <Grid container spacing={3}>
