@@ -305,6 +305,15 @@
     padding-left: 19px;
     letter-spacing: 0.17px;
     clear: both;
+
+    .account-color {
+      height: 22px;
+      position: absolute;
+      left: 12px;
+      width: 2px;
+      margin-top: 2px;
+    }
+
     transition: padding-left 300ms;
     // The overflow needs to be `hidden` in order for the name to flex
     // fit within the contained space.
@@ -552,6 +561,10 @@
 
       .icon {
         display: none;
+      }
+
+      .account-color {
+        left: 16px;
       }
     }
   }

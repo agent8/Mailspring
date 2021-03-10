@@ -1,6 +1,8 @@
+/* eslint-disable react/display-name */
 import React from 'react';
-import { Utils } from 'mailspring-exports';
-import { InjectedComponentSet, ListTabular } from 'mailspring-component-kit';
+import { Utils, AccountStore, FocusedPerspectiveStore } from 'mailspring-exports';
+import { InjectedComponentSet, ListTabular, LabelColorizer } from 'mailspring-component-kit';
+import AccountColor from '../../account-color/lib/account-color';
 
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
@@ -32,10 +34,16 @@ const ParticipantsColumn = new ListTabular.Column({
           <div className="participants-inner">
             <span>{list.map(p => p.displayName()).join(', ')}</span>
           </div>
+          <AccountColor message={draft} />
         </div>
       );
     } else {
-      return <div className="participants no-recipients">(No Recipients)</div>;
+      return (
+        <div className="participants no-recipients">
+          (No Recipients)
+          <AccountColor message={draft} />
+        </div>
+      );
     }
   },
 });

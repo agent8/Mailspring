@@ -1,7 +1,16 @@
 import React from 'react';
-import { PropTypes, Utils, DateUtils, EmailAvatar } from 'mailspring-exports';
-import { ListTabular, InjectedComponent } from 'mailspring-component-kit';
+import {
+  PropTypes,
+  Utils,
+  DateUtils,
+  EmailAvatar,
+  AccountStore,
+  FocusedPerspectiveStore,
+} from 'mailspring-exports';
+import { ListTabular, InjectedComponent, LabelColorizer } from 'mailspring-component-kit';
 import SiftQuickActions from './sift-quick-actions';
+import AccountColor from '../../account-color/lib/account-color';
+
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -39,10 +48,16 @@ const participants = message => {
         <div className="participants-inner">
           <span>{list.map(p => p.displayName()).join(', ')}</span>
         </div>
+        <AccountColor message={message} />
       </div>
     );
   } else {
-    return <div className="participants no-recipients">(No Recipients)</div>;
+    return (
+      <div className="participants no-recipients">
+        (No Recipients)
+        <AccountColor message={message} />
+      </div>
+    );
   }
 };
 

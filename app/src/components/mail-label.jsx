@@ -3,33 +3,42 @@ import PropTypes from 'prop-types';
 import RetinaImg from './retina-img';
 const Colr = require('colr');
 
+let accountColors;
 export const LabelColorizer = {
   colors: [
-    '#f4f6f8', // '#e4e3e4',
-    '#aec9f1',
-    '#8fd1bf',
-    '#dfd3fe',
-    '#ff0400',
-    '#f9cddc',
-    '#efa99f',
-    '#bababa',
-    '#427de0',
-    '#2e96b0',
-    '#f297a9',
-    '#f74431',
-    '#fec1a8',
-    '#fed8ae',
-    '#f9e47e',
-    '#fce9bb',
-    '#acebcd',
-    '#9ad6b9',
-    '#fd6a3a',
-    '#fda248',
-    '#e8d6d9',
-    '#c49ca2',
-    '#41ce89',
-    '#209c5c',
+    '#E7E7E7',
+    '#A4A4A4',
+    '#A1887F',
+    '#6D4C41',
+    '#FFD38A',
+    '#FB8C00',
+    '#F8F88C',
+    '#FDD835',
+    '#BFECB8',
+    '#4CAF50',
+    '#8EE6E6',
+    '#00BCD4',
+    '#B6E3FF',
+    '#2196F3',
+    '#B2C2FF',
+    '#3F51B5',
+    '#B39DDB',
+    '#673AB7',
+    '#F497FD',
+    '#9C27B0',
+    '#F8BBD0',
+    '#EC407A',
+    '#EF9A9A',
+    '#F44336',
   ],
+  accountColors() {
+    if (!accountColors) {
+      accountColors = [...LabelColorizer.colors]
+        .map(c => (c === '#E7E7E7' ? 'transparent' : c))
+        .reverse();
+    }
+    return accountColors;
+  },
   sanitize(label) {
     if (label.bgColor && (label.bgColor < 0 || label.bgColor >= LabelColorizer.colors.length)) {
       console.warn(`Label bgColor incorrect ${label.bgColor}, setting to 0`);

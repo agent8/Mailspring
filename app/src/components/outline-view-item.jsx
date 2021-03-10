@@ -1,6 +1,7 @@
 /* eslint global-require:0 */
 
 import _ from 'underscore';
+import { LabelColorizer, AccountColorPopover } from 'mailspring-component-kit';
 import { Utils, AccountStore, Actions } from 'mailspring-exports';
 import classnames from 'classnames';
 import React, { Component } from 'react';
@@ -146,11 +147,13 @@ class OutlineViewItem extends Component {
       onEdited: PropTypes.func,
       onAllRead: PropTypes.func,
       onAddNewFolder: PropTypes.func,
+      isSingleInbox: PropTypes.bool,
       addNewFolderLabel: PropTypes.string,
       toggleHide: PropTypes.func,
       bgColor: PropTypes.string,
       iconColor: PropTypes.string,
       showAll: PropTypes.bool,
+      accountIds: PropTypes.array,
     }).isRequired,
     isEditingMenu: PropTypes.bool,
   };
@@ -167,6 +170,7 @@ class OutlineViewItem extends Component {
       editing: props.item.editing || false,
       originalText: '',
       showAllChildren: false,
+      showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
       isCategoryDropping: false,
       editingFolderName: '',
       newFolderName: '',
@@ -198,6 +202,16 @@ class OutlineViewItem extends Component {
       this._selfRef.addEventListener('contextmenu', this._onShowContextMenu);
     }
     this.checkCurrentShowAllChildren(this.props);
+    this.disposables = [];
+    this.unsubscribers = [];
+    this.disposables.push(
+      AppEnv.config.onDidChange('core.appearance.showAccountColor', () => {
+        this.setState({
+          showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
+        });
+      })
+    );
+    this.unsubscribers.push(Actions.changeAccountColor.listen(this.forceUpdate, this));
   }
 
   UNSAFE_componentWillReceiveProps(newProps) {
@@ -215,6 +229,10 @@ class OutlineViewItem extends Component {
   }
 
   componentWillUnmount() {
+    if (this.disposables) {
+      this.disposables.forEach(disposable => disposable.dispose());
+    }
+    this.unsubscribers.map(unsubscribe => unsubscribe());
     this._mounted = false;
     clearTimeout(this._expandTimeout);
     if (this._selfRef) {
@@ -372,6 +390,30 @@ class OutlineViewItem extends Component {
     const item = this.props.item;
     const contextMenuLabel = item.contextMenuLabel || item.name;
     const menu = [];
+
+    if (AppEnv.config.get('core.appearance.showAccountColor') && item.id.endsWith('-single')) {
+      const originRect = event.target.getBoundingClientRect();
+      if (item.accountIds && item.accountIds.length === 1) {
+        menu.push({
+          label: `Change Account Color`,
+          click: () => {
+            Actions.openPopover(
+              <AccountColorPopover
+                onCheckColor={this.onCheckColor}
+                accountId={item.accountIds[0]}
+              />,
+              {
+                originRect,
+                disablePointer: true,
+                closeOnAppBlur: false,
+                direction: 'left',
+                className: 'popout-container',
+              }
+            );
+          },
+        });
+      }
+    }
 
     if (this.props.item.onAddNewFolder && this.props.item.addNewFolderLabel) {
       const commands = (AppEnv.keymaps.getBindingsForAllCommands() || {})['core:new-folder'];
@@ -679,6 +721,29 @@ class OutlineViewItem extends Component {
     );
   }
 
+  _renderAccountColor() {
+    const { item } = this.props;
+    const { showAccountColor } = this.state;
+    const accountIds = AccountStore.accounts().map(account => account.id);
+
+    if (showAccountColor && item.id.endsWith('-single')) {
+      const account = AccountStore.accounts().find(account => account.id === item.accountIds[0]);
+      if (!account || accountIds.length <= 1) {
+        return null;
+      }
+      let colorId;
+      if (account.color !== undefined) {
+        colorId = account.color;
+      } else {
+        colorId = accountIds.findIndex(account => account === item.accountIds[0]) + 1;
+      }
+      const color = LabelColorizer.accountColors()[colorId];
+      return <div className="account-color" style={{ background: color }}></div>;
+    } else {
+      return null;
+    }
+  }
+
   _renderItem(item = this.props.item, state = this.state) {
     const containerClass = classnames({
       item: true,
@@ -704,6 +769,7 @@ class OutlineViewItem extends Component {
         onMouseUp={this._onDropZoneMouseUp}
         onMouseOut={this._onDropZoneMouseUp}
       >
+        {this._renderAccountColor()}
         {this._renderCount()}
         {this._renderIcon()}
         {this._renderItemContent()}
@@ -719,6 +785,20 @@ class OutlineViewItem extends Component {
     }
     if (item.children.length > 0 && !item.collapsed) {
       const childItems = [];
+      let userCategoryItemCount = 0;
+      const updateUserCategoryItemsCount = c => {
+        if (!this.props.item.isSingleInbox) {
+          return;
+        }
+        if (c && c.perspective) {
+          const categories = c.perspective.categories();
+          const hasRole = categories.find(cat => cat.role);
+          if (!hasRole) {
+            userCategoryItemCount++;
+          }
+        }
+      };
+
       item.children.forEach((child, idx) => {
         if (this.props.isEditingMenu && child.id === NEW_FOLDER_KEY) {
           childItems.push(
@@ -729,6 +809,7 @@ class OutlineViewItem extends Component {
               onCancel: child.onCancel,
             })
           );
+          updateUserCategoryItemsCount(child);
           return;
         }
         if (child.id === MORE_TOGGLE && this.props.isEditingMenu) {
@@ -747,6 +828,7 @@ class OutlineViewItem extends Component {
               onToggleShowAllFolder={this._onToggleShowAllFolder}
             />
           );
+          updateUserCategoryItemsCount(child);
           return;
         }
         if (
@@ -764,10 +846,11 @@ class OutlineViewItem extends Component {
               onToggleShowAllFolder={this._onToggleShowAllFolder}
             />
           );
+          updateUserCategoryItemsCount(child);
           return;
         }
         if (!this.state.showAllChildren && !child.isHidden) {
-          if (acc.provider === 'gmail' && childItems.length < 10) {
+          if (userCategoryItemCount <= 3 || !this.props.item.isSingleInbox) {
             childItems.push(
               <OutlineViewItem
                 key={notFolderIds.includes(child.id) ? idx : child.id}
@@ -778,17 +861,7 @@ class OutlineViewItem extends Component {
                 onToggleShowAllFolder={this._onToggleShowAllFolder}
               />
             );
-          } else if (acc.provider !== 'gmail' && childItems.length < 9) {
-            childItems.push(
-              <OutlineViewItem
-                key={notFolderIds.includes(child.id) ? idx : child.id}
-                provider={acc.provider}
-                isEditingMenu={this.props.isEditingMenu}
-                index={idx}
-                item={child}
-                onToggleShowAllFolder={this._onToggleShowAllFolder}
-              />
-            );
+            updateUserCategoryItemsCount(child);
           }
         }
       });

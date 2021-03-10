@@ -20,6 +20,7 @@ import {
   AppearancePanelOptions,
   AppearanceThemeSwitch,
   AppearanceViewOptions,
+  AppearanceAccountColorList,
 } from './components/preferences-appearance-components';
 import {
   CustomizeQuickActions,
@@ -176,6 +177,13 @@ const preferencesTemplateFill = {
               configSchema: configSchema =>
                 configSchema.properties.composing.properties.includeOriginalEmailInReply,
               keyPath: 'core.composing.includeOriginalEmailInReply',
+              keywords: [],
+            },
+            {
+              label: 'Disable editing of original message when replying/forwarding',
+              configSchema: configSchema =>
+                configSchema.properties.composing.properties.disableOriginalMessageEdit,
+              keyPath: 'core.composing.disableOriginalMessageEdit',
               keywords: [],
             },
             {
@@ -415,6 +423,23 @@ const preferencesTemplateFill = {
                 configSchema.properties.appearance.properties.dateFormat,
               keyPath: 'core.appearance.dateFormat',
               keywords: [],
+            },
+          ],
+        },
+        {
+          groupName: 'ACCOUNT COLORS',
+          groupItem: [
+            {
+              label: 'Show account colors in the email list.',
+              configSchema: configSchema =>
+                configSchema.properties.appearance.properties.showAccountColor,
+              keyPath: 'core.appearance.showAccountColor',
+              keywords: ['account', 'colors'],
+            },
+            {
+              label: 'Account color list',
+              component: AppearanceAccountColorList,
+              keywords: ['account', 'colors'],
             },
           ],
         },

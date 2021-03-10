@@ -17,6 +17,7 @@ import { remote } from 'electron';
 const { Menu, MenuItem } = remote;
 const stopRefreshingDelay = 30000;
 const POSITION_KEY = 'multiselect-toolbar-position';
+const MIN_WINDOW_WIDTH = 600;
 
 /*
  * MultiselectToolbar renders a toolbar inside a horizontal bar and displays
@@ -411,22 +412,38 @@ class MultiselectToolbar extends Component {
     let y = position.y;
     let x = position.x;
     const body = document.body;
-    let needAdjust = false;
+    let needAdjust = 0;
+    const reason = [];
     if (top < 68) {
       y = y + Math.abs(68 - top);
-      needAdjust = true;
+      needAdjust++;
+      reason.push('top');
     }
     if (top > body.clientHeight - height) {
       y = y - Math.abs(top - body.clientHeight + height);
-      needAdjust = true;
+      needAdjust++;
+      reason.push('bottom');
     }
     if (left < 0) {
       x = x + Math.abs(left);
-      needAdjust = true;
+      needAdjust++;
+      reason.push('left');
     }
     if (left > body.clientWidth - width) {
       x = x - Math.abs(left - body.clientWidth + width);
-      needAdjust = true;
+      needAdjust++;
+      reason.push('right');
+    }
+    // if less than MIN_WINDOW_WIDTH, don't adjust x postion
+    if (
+      window.innerWidth < MIN_WINDOW_WIDTH &&
+      (reason.includes('left') || reason.includes('right'))
+    ) {
+      if (this.state.x === 0) {
+        this.setState({ y });
+        return;
+      }
+      x = 0;
     }
     if (needAdjust) {
       this.setState({

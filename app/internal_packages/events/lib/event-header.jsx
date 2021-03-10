@@ -15,7 +15,10 @@ const moment = require('moment-timezone');
 class EventHeader extends React.Component {
   static displayName = 'EventHeader';
 
-  static propTypes = { message: PropTypes.instanceOf(Message).isRequired };
+  static propTypes = {
+    message: PropTypes.instanceOf(Message).isRequired,
+    calendar: PropTypes.object,
+  };
 
   constructor(props) {
     super(props);
@@ -200,7 +203,7 @@ class EventHeader extends React.Component {
     let organizerStr;
     if (this.state.event.organizer) {
       organizerStr = (
-        <div className="participant-name">
+        <div className="participant-name" key={'organizer'}>
           {this.state.event.organizer.name} <span className="organizer-label">(organizer)</span>,
         </div>
       );

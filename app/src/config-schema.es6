@@ -307,6 +307,11 @@ export default {
             syncToServer: true,
             title: 'Include original email when replying to a message',
           },
+          disableOriginalMessageEdit: {
+            type: 'boolean',
+            default: false,
+            title: 'Disable editing of original message when replying/forwarding',
+          },
           showOriginalEmailInReply: {
             type: 'boolean',
             default: false,
@@ -703,6 +708,11 @@ export default {
             enum: [0, 1, 2, 3, 4],
             enumLabels: ['None', '1 line', '2 lines', '3 lines', '4 lines'],
             title: 'Preview lines (two panel view only)',
+          },
+          showAccountColor: {
+            type: 'boolean',
+            default: false,
+            title: 'Show account colors in the email list.',
           },
           profile: {
             type: 'boolean',

@@ -9,7 +9,6 @@ import {
   MultiselectList,
 } from 'mailspring-component-kit';
 import OutboxListColumns from './outbox-list-columns';
-import { OutboxTrashQuickAction } from './outbox-list-quick-actions';
 
 const buttonTimer = 500;
 const PREVIEW_LINES_KEY = 'core.appearance.previewLines';

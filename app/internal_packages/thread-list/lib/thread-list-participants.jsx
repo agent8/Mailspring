@@ -1,15 +1,62 @@
-import { React, PropTypes, Utils, Message, Contact } from 'mailspring-exports';
+import { React, PropTypes, Utils, Message, Contact, Actions } from 'mailspring-exports';
+import { AccountStore, FocusedPerspectiveStore } from 'mailspring-exports';
+import { LabelColorizer } from 'mailspring-component-kit';
 
 class ThreadListParticipants extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
+      color: this.getAccountColor(),
+    };
+  }
   static displayName = 'ThreadListParticipants';
 
   static propTypes = { thread: PropTypes.object.isRequired };
 
-  shouldComponentUpdate(nextProps) {
-    if (nextProps.thread === this.props.thread) {
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextProps.thread === this.props.thread && nextState === this.state) {
       return false;
     }
     return true;
+  }
+
+  getAccountColor = () => {
+    const accounts = AccountStore.accounts().map(account => account.id);
+    const accountId = this.props.thread.accountId;
+    const account = AccountStore.accountForId(accountId);
+    return account.color !== undefined
+      ? account.color
+      : accounts.findIndex(account => account === accountId) + 1;
+  };
+
+  componentDidMount() {
+    this.disposables = [];
+    this.unsubscribers = [];
+    this.disposables.push(
+      AppEnv.config.onDidChange('core.appearance.showAccountColor', () => {
+        this.setState({
+          showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
+        });
+      })
+    );
+    this.unsubscribers.push(
+      Actions.changeAccountColor.listen(() => {
+        this.setState({
+          color: this.getAccountColor(),
+        });
+      }, this)
+    );
+  }
+
+  componentWillUnmount() {
+    if (this.disposables) {
+      this.disposables.forEach(disposable => {
+        disposable.dispose();
+      });
+    }
+    this.unsubscribers.map(unsubscribe => unsubscribe());
   }
 
   render() {
@@ -17,11 +64,32 @@ class ThreadListParticipants extends React.Component {
     return (
       <div className="participants">
         {this.renderIcons()}
-        <div className="participants-inner">{this.renderSpans(items)}</div>
+        <div className="participants-inner">
+          {this.renderAccountColors()}
+          {this.renderSpans(items)}
+        </div>
         {this.renderMessageCount()}
       </div>
     );
   }
+
+  renderAccountColors = () => {
+    const { showAccountColor, color } = this.state;
+    if (showAccountColor) {
+      const current = FocusedPerspectiveStore.current();
+      if (current.accountIds.length <= 1) {
+        return null;
+      }
+      return (
+        <div
+          className={`account-color`}
+          style={{ background: LabelColorizer.accountColors()[color] }}
+        ></div>
+      );
+    } else {
+      return null;
+    }
+  };
 
   renderMessageCount = () => {
     const messages =

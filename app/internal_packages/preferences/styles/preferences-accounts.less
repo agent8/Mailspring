@@ -87,7 +87,7 @@
         max-width: 100%;
         .account-details {
           flex: 1;
-          max-width: 400px;
+          max-width: 418px;
           border-left: 1px solid @border-color-divider;
 
           .config-group {
@@ -166,6 +166,61 @@
               margin: 0;
               position: relative;
               top: 0;
+            }
+          }
+        }
+      }
+
+      .color-choice {
+        width: 346px;
+        display: flex;
+        flex-flow: row wrap;
+        margin: 0;
+        & > div {
+          flex: 0 1 22px;
+          height: 22px;
+          width: 22px;
+          margin: 3.4px;
+          border-radius: 50%;
+          text-align: center;
+          cursor: pointer;
+          img {
+            visibility: hidden;
+            margin-top: 9px;
+          }
+          &.checked {
+            img {
+              visibility: visible;
+            }
+          }
+          &:nth-child(12n + 1) {
+            margin-left: 0;
+          }
+          &:nth-child(12n + 12) {
+            margin-right: 0;
+          }
+          &.transparent-color {
+            border: 1px solid @gray-lighter;
+            position: relative;
+            justify-content: center;
+            img.check {
+              z-index: 2;
+              position: relative;
+            }
+            &:after {
+              position: absolute;
+              content: ' ';
+              display: block;
+              background: @red;
+              height: 1px;
+              width: 100%;
+              transform: rotate(-45deg);
+              top: 50%;
+            }
+            &.checked {
+              &:after {
+                opacity: 0;
+              }
             }
           }
         }

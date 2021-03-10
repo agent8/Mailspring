@@ -8,7 +8,7 @@ import { pickHTMLProps } from 'pick-react-known-prop';
 import RetinaImg from './retina-img';
 import Flexbox from './flexbox';
 import Spinner from './spinner';
-import { AttachmentStore, MessageStore, Utils, Constant } from 'mailspring-exports';
+import { AttachmentStore, MessageStore, Utils, Constant, RegExpUtils } from 'mailspring-exports';
 import Actions from '../flux/actions';
 import ResizableBox from './resizable-box';
 import { remote } from 'electron';
@@ -195,9 +195,12 @@ export class AttachmentItem extends Component {
   _onDragStart = event => {
     const { contentType, filePath } = this.props;
     if (fs.existsSync(filePath)) {
+      let safeFileName = path
+        .basename(filePath)
+        .replace(RegExpUtils.illegalPathCharactersRegexp(), '_');
       // Note: From trial and error, it appears that the second param /MUST/ be the
       // same as the last component of the filePath URL, or the download fails.
-      const downloadURL = `${contentType}:${path.basename(filePath)}:file://${filePath}`;
+      const downloadURL = `${contentType}:${path.basename(safeFileName)}:file://${filePath}`;
       event.dataTransfer.setData('DownloadURL', downloadURL);
       event.dataTransfer.setData('text/nylas-file-url', downloadURL);
       const el = ReactDOM.findDOMNode(this._fileIconComponent);
@@ -351,7 +354,7 @@ export class AttachmentItem extends Component {
             percent={this.state.percent}
             disableProgress={this.props.disableProgress}
           />
-          <Flexbox direction="row" style={{ alignItems: 'center' }}>
+          <Flexbox direction="row" style={{ alignItems: 'center', height: 'auto' }}>
             <div className="file-info-wrap">
               <div className="attachment-icon">
                 {filePreviewPath ? (

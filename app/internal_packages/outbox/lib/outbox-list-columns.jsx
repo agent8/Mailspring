@@ -7,6 +7,8 @@ import {
   OutboxSender,
 } from 'mailspring-component-kit';
 import OutboxQuickActions from './outbox-quick-actions';
+import AccountColor from '../../account-color/lib/account-color';
+
 function snippet(html) {
   if (!(html && typeof html === 'string')) {
     return '';
@@ -65,12 +67,14 @@ const participants = draft => {
         <div className="participants-inner">
           <span>{list.map(p => p.displayName()).join(', ')}</span>
         </div>
+        <AccountColor message={draft} />
       </div>
     );
   } else {
     return (
       <div className="participants no-recipients" style={{ flex: 1 }}>
         (No Recipients)
+        <AccountColor message={draft} />
       </div>
     );
   }
