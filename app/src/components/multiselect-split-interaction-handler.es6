@@ -4,7 +4,7 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-
+const { ThreadStore } = require('mailspring-exports');
 module.exports = class MultiselectSplitInteractionHandler {
   constructor(props) {
     this.props = props;
@@ -32,6 +32,9 @@ module.exports = class MultiselectSplitInteractionHandler {
     const noneSelected = this.props.dataSource.selection.ids();
     if (noneSelected) {
       this.props.onSetCursorPosition(item);
+    }
+    if (!item.draft) {
+      ThreadStore.addRecent(item.id);
     }
     this.onFocusItem(item);
     // this.props.dataSource.selection.clear();

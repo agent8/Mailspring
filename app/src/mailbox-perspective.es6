@@ -7,6 +7,7 @@ import AccountStore from './flux/stores/account-store';
 import CategoryStore from './flux/stores/category-store';
 import DatabaseStore from './flux/stores/database-store';
 import OutboxStore from './flux/stores/outbox-store';
+import ThreadStore from './flux/stores/thread-store';
 import ThreadCountsStore from './flux/stores/thread-counts-store';
 import MutableQuerySubscription from './flux/models/mutable-query-subscription';
 import UnreadQuerySubscription from './flux/models/unread-query-subscription';
@@ -180,6 +181,10 @@ export default class MailboxPerspective {
 
   static forJira(categories) {
     return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
+  }
+
+  static forRecent(categories) {
+    return new RecentMailboxPerspective(categories);
   }
 
   static forInboxFocused(categories) {
@@ -1324,10 +1329,7 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(
-        this.categories().map(c => c.id),
-        other.categories().map(c => c.id)
-      )
+      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
     );
   }
 
@@ -1891,6 +1893,48 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 
+class RecentMailboxPerspective extends CategoryMailboxPerspective {
+  constructor(_categories) {
+    super(_categories);
+    this._categoryMetaDataAccountId = 'shortcuts';
+    this._categoryMetaDataId = 'recent';
+    this.isRecent = true;
+    this.displayName = 'Recent';
+  }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
+  }
+  unreadCount() {
+    return 0;
+  }
+  threads() {
+    const query = DatabaseStore.findAll(Thread)
+      .where([
+        Thread.attributes.inAllMail.equal(true),
+        Thread.attributes.state.equal(0),
+        Thread.attributes.id.in(ThreadStore.getRecent()),
+      ])
+      .order([Thread.attributes.lastMessageTimestamp.descending()])
+      .limit(0);
+
+    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+      // The user has multiple categories in the same account selected, which
+      // means our result set could contain multiple copies of the same threads
+      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+      // can be /much/ slower and we shouldn't do it if we know we don't need it.
+      query.distinct();
+    }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
 class UnreadMailboxPerspective extends CategoryMailboxPerspective {
   constructor(categories) {
     super(categories);
@@ -2158,9 +2202,6 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(
-      this.categories().map(c => c.id),
-      this.isOther
-    );
+    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
   }
 }
