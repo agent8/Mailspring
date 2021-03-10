@@ -3,7 +3,7 @@ import WyCalendarStore from '../../../../../../src/flux/stores/wycalendar-store.
 import ICAL from 'ical.js';
 import * as IcalStringBuilder from '../common-utils/icalStringBuilder';
 import moment from 'moment-timezone';
-import * as PARSER from '../fetch-event/utils/parser';
+import * as PARSER from '../common-utils/Parser';
 
 export const deleteCaldavSingle = async payload => {
   const { data, user } = payload;
@@ -260,6 +260,8 @@ export const deleteCaldavFuture = async payload => {
         url: caldavUrl,
         calendarData,
       };
+      console.log(iCalString);
+      console.log(calendarData);
       // Result will throw error, we can do a seperate check here if needed.
       const result = await dav.updateCalendarObject(calendarObject, option);
     }
@@ -270,34 +272,16 @@ export const deleteCaldavFuture = async payload => {
 
 // append a Z at the end of the RRule, might have better way to do this
 const updateIcalString = iCalString => {
-  let RRULEindex = null;
-  let arrayOfProperties = iCalString.split('\n');
-  const [RRULEPropertyString] = arrayOfProperties.filter((property, idx) => {
-    if (property.includes('RRULE:')) {
-      RRULEindex = idx;
-      return property;
-    }
-  });
-  if (RRULEPropertyString === undefined || RRULEindex === null) {
+  let originalUNTILrrule = iCalString.match(
+    /UNTIL=\d{4}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])T([0-1]\d|2[0-3])[0-5]\d[0-5]\dZ?/g
+  );
+  // second expression short circuits if res isn't null
+  if (originalUNTILrrule === null || originalUNTILrrule[[originalUNTILrrule.length - 1] === 'Z']) {
     return iCalString;
+  } else if (originalUNTILrrule[originalUNTILrrule.length - 1] !== 'Z') {
+    let updatedUNTILrrule = originalUNTILrrule + 'Z';
+    let updatedICalString = iCalString.replace(originalUNTILrrule, updatedUNTILrrule);
+    return updatedICalString;
   }
-  let UNTILindex = null;
-  let arrayOfRRULEProperties = RRULEPropertyString.split(';');
-  const [UNTILString] = arrayOfRRULEProperties.filter((subproperty, idx) => {
-    if (subproperty.includes('UNTIL=')) {
-      UNTILindex = idx;
-      return subproperty;
-    }
-  });
-  if (UNTILString === undefined || UNTILString === null) {
-    return iCalString;
-  }
-  let updatedUNTILString = UNTILString.substr(0, UNTILString.length - 1); // -1 to remove whitespace
-  if (updatedUNTILString[updatedUNTILString.length-1] !== 'Z') {
-    console.log('check last', updatedUNTILString[updatedUNTILString.length-1]);
-    updatedUNTILString += 'Z';
-  }
-  arrayOfRRULEProperties[UNTILindex] = updatedUNTILString;
-  arrayOfProperties[RRULEindex] = arrayOfRRULEProperties.join(';');
-  return arrayOfProperties.join('\n');
+  return iCalString;
 };
