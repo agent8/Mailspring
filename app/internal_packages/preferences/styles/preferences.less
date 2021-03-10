@@ -320,13 +320,17 @@
     }
     &::-webkit-scrollbar-thumb {
       background-color: @gray-lighter;
-      visibility: visible;
-      opacity: 1;
+      visibility: hidden;
+      opacity: 0;
     }
     &::-webkit-scrollbar-track {
       background: none;
       border: none;
       outline: none;
+    }
+    &:hover::-webkit-scrollbar-thumb {
+      visibility: visible;
+      opacity: 1;
     }
     & > div {
       display: flex;
