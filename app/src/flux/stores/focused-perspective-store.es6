@@ -6,7 +6,6 @@ import WorkspaceStore from './workspace-store';
 import MailboxPerspective from '../../mailbox-perspective';
 import CategoryStore from './category-store';
 import Actions from '../actions';
-import Label from '../models/label';
 
 class FocusedPerspectiveStore extends MailspringStore {
   constructor() {
