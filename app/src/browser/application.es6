@@ -479,9 +479,9 @@ export default class Application extends EventEmitter {
         reg = new RegExp(`"${key}":${leftRegStr}(\\s|\\S)*?${rightRegStr},"`, 'g');
       }
 
-      return strData.replace(reg, (str, match) => {
+      return strData.replace(reg, (strInput, match) => {
         const hash = createHash('md5')
-          .update(str.replace(`"${key}":${leftStr}`, '').replace(`${rightRegStr},"`, ''))
+          .update(strInput.replace(`"${key}":${leftStr}`, '').replace(`${rightRegStr},"`, ''))
           .digest('hex');
         return `"${key}":${leftStr}${hash}${rightStr},"`;
       });
@@ -779,9 +779,9 @@ export default class Application extends EventEmitter {
           console.log('\nDeleteFileWithRetry Callback not called');
         }
       };
-      const callbackWithRetry = err => {
-        if (err && err.message.indexOf('no such file') === -1) {
-          console.log(`File Error: ${err.message} - retrying in 150msec`);
+      const callbackWithRetry = error => {
+        if (error && error.message.indexOf('no such file') === -1) {
+          console.log(`File Error: ${error.message} - retrying in 150msec`);
           setTimeout(() => {
             this.deleteFileWithRetry(filePath, callback, retries - 1);
           }, 150);
@@ -1075,14 +1075,14 @@ export default class Application extends EventEmitter {
     const uiLogPath = path.join(this.configDirPath, 'ui-log');
     const uploadPath = path.join(this.configDirPath, 'upload-log');
     const nativeLogPath = path.join(this.configDirPath, 'ms-log');
-    const clearLogs = path => {
-      console.log(`###################cleaning old logs in ${path}`);
-      fs.readdir(path, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
+    const clearLogs = filePath => {
+      console.log(`###################cleaning old logs in ${filePath}`);
+      fs.readdir(filePath, { encoding: 'utf8', withFileTypes: true }, (err, files) => {
         if (err) {
           console.log(err);
           return;
         }
-        this._removeOldFiles(files, path, cleanAll);
+        this._removeOldFiles(files, filePath, cleanAll);
       });
     };
     clearLogs(uploadPath);
@@ -1488,9 +1488,9 @@ export default class Application extends EventEmitter {
       } else if (/\/auth\/(.+)$/g.test(urlToOpen)) {
         const onboardingWindow = this.windowManager.get(WindowManager.ONBOARDING_WINDOW);
         matchs = /\/auth\/(.+)$/g.exec(urlToOpen);
-        const url = decodeURIComponent(matchs[1]);
+        const redirectUrl = decodeURIComponent(matchs[1]);
         if (onboardingWindow) {
-          onboardingWindow.sendMessage('oauth-redirect-url', { url });
+          onboardingWindow.sendMessage('oauth-redirect-url', { url: redirectUrl });
         }
       } else {
         this.openUrl(urlToOpen);
