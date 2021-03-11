@@ -26,7 +26,7 @@
     "electron-installer-dmg": "^3.0.0",
     "electron-packager": "^15.1.0",
     "electron-packager-languages": "^0.4.0",
-    "electron-rebuild": "^1.8.6",
+    "electron-rebuild": "^2.3.5",
     "electron-winstaller": "2.x.x",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",

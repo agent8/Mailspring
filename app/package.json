@@ -155,7 +155,7 @@
   },
   "optionalDependencies": {},
   "devDependencies": {
-    "electron-rebuild": "^1.10.1",
+    "electron-rebuild": "^2.3.5",
     "node-gyp": "^6.0.0"
   },
   "resolutions": {
