@@ -118,7 +118,9 @@ process.on('message', m => {
       agentTime: Date.now() - start,
       queryType: queryType,
     });
-    logDebug(`returning results for ${dbpath}, ${id}`);
+    logDebug(
+      `returning results with length ${results.length ? results.length : 0} for ${dbpath}, ${id}`
+    );
   } catch (err) {
     const errMessage = `returning results for ${dbpath}, ${id} failed, query: ${query}`;
     const errJSON = {
