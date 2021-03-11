@@ -4,7 +4,10 @@ import {
   MessageStore,
   QueryResultSet,
   QuerySubscription,
+  FocusedPerspectiveStore,
+  ThreadStore,
 } from 'mailspring-exports';
+import _ from 'underscore';
 import UnreadQuerySubscription from '../../../src/flux/models/unread-query-subscription';
 import { allInboxCategories } from '../../../src/constant';
 
@@ -76,6 +79,11 @@ const _flatMapJoiningMessages = $threadsResultSet => {
           clone.__messages = clone.__messages.filter(m => !m.isHidden());
           threadsWithMessages[clone.id] = clone;
         });
+
+        const current = FocusedPerspectiveStore.current();
+        if (current && current.isRecent) {
+          threadsResultSet._ids = _.intersection(ThreadStore.getRecent(), threadsResultSet._ids);
+        }
 
         return Rx.Observable.from([
           QueryResultSet.setByApplyingModels(threadsResultSet, threadsWithMessages),

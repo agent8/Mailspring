@@ -176,10 +176,7 @@ export default class SidebarSection {
     if (accounts.length === 1) {
       outbox = SidebarItem.forOutbox([accounts[0].id], outboxOpts);
     } else {
-      outbox = SidebarItem.forOutbox(
-        accounts.map(act => act.id),
-        outboxOpts
-      );
+      outbox = SidebarItem.forOutbox(accounts.map(act => act.id), outboxOpts);
     }
     if (!accounts || accounts.length === 0) {
       return this.empty('All Accounts');
@@ -228,8 +225,8 @@ export default class SidebarSection {
     if (outboxCount.total > 0) {
       items.unshift(outbox);
     }
+    const shortcutItems = [];
     if (accounts.length > 1) {
-      const shortcutItems = [];
       items.push(DIVIDER_OBJECT);
       folderItem = SidebarItem.forToday(accountIds, {
         displayName: 'Today',
@@ -300,10 +297,17 @@ export default class SidebarSection {
       if (folderItem) {
         shortcutItems.push(folderItem);
       }
-      SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(shortcutItems);
-
-      items.push(...shortcutItems);
     }
+    folderItem = SidebarItem.forRecent(accountIds, {
+      displayName: 'Recently Seen',
+      key: 'all',
+      folderTreeIndex: shortcutItems.length,
+    });
+    if (folderItem) {
+      shortcutItems.push(folderItem);
+    }
+    SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(shortcutItems);
+    items.push(...shortcutItems);
     SidebarSection.forSiftCategories(accountIds, items);
 
     ExtensionRegistry.AccountSidebar.extensions()
