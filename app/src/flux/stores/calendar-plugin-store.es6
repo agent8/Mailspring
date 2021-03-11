@@ -7,7 +7,7 @@ import {
 } from '../../../internal_packages/calendar-weiyang/lib/src/components/constants';
 import Actions from '../actions';
 
-class WyCalendarStore extends MailspringStore {
+class CalendarPluginStore extends MailspringStore {
   constructor(props) {
     super(props);
 
@@ -81,4 +81,4 @@ class WyCalendarStore extends MailspringStore {
   };
 }
 
-export default new WyCalendarStore();
+export default new CalendarPluginStore();

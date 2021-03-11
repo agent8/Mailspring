@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid';
 import ICAL from 'ical.js';
 import { CALDAV_PROVIDER } from '../../constants';
-import * as IcalStringBuilder from '../../common-utils/icalStringBuilder';
+import * as IcalStringBuilder from '../../common-utils/ical-string-builder';
 const dav = require('dav');
 
 export const createCaldavEvent = async payload => {

@@ -1,7 +1,7 @@
 import Actions from '../../../../../../../src/flux/actions.es6';
 import { CALDAV_PROVIDER, ICLOUD_URL } from '../../constants';
-import { getCaldavAccount } from './GetCaldavAcc';
-import * as PARSER from '../../common-utils/Parser';
+import { getCaldavAccount } from './get-caldav-account';
+import * as PARSER from '../../common-utils/parser';
 const dav = require('dav');
 
 export const fetchCaldavEvents = async (email, password, accountType) => {

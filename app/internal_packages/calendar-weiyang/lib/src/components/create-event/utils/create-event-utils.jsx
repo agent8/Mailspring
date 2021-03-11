@@ -1,5 +1,5 @@
 import { CALDAV_PROVIDER } from '../../constants';
-import { createCaldavEvent } from './CreateCaldavEventUtils';
+import { createCaldavEvent } from './create-caldav-event-utils';
 
 // Parameter payload contains:
 //  data, --> calendar event to be added

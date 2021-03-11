@@ -1,9 +1,9 @@
 const dav = require('dav');
-import WyCalendarStore from '../../../../../../src/flux/stores/wycalendar-store.es6';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import ICAL from 'ical.js';
-import * as IcalStringBuilder from '../common-utils/icalStringBuilder';
+import * as IcalStringBuilder from '../common-utils/ical-string-builder';
 import moment from 'moment-timezone';
-import * as PARSER from '../common-utils/Parser';
+import * as PARSER from '../common-utils/parser';
 
 export const deleteCaldavSingle = async payload => {
   const { data, user } = payload;
@@ -38,7 +38,7 @@ export const deleteCaldavSingle = async payload => {
     // Updating is done by pushing the entire iCal string to the server
     if (data.isRecurring) {
       // Get recurring pattern to build new iCal string for updating
-      const [recurrencePattern] = WyCalendarStore.getIcloudRpLists().filter(
+      const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
         rp => data.iCalUID === rp.iCalUID
       );
       if (recurrencePattern === undefined) {
@@ -167,7 +167,7 @@ export const deleteCaldavFuture = async payload => {
     // As we are deleting this and future events, we just need to update the end condition.
     // Updating is done by pushing the entire iCal string to the server
     // Get recurring pattern to build new iCal string for updating
-    const [recurrencePattern] = WyCalendarStore.getIcloudRpLists().filter(
+    const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
       rp => data.iCalUID === rp.iCalUID
     );
     if (recurrencePattern === undefined) {

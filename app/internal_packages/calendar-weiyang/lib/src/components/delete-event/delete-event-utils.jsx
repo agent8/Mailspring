@@ -1,17 +1,16 @@
-import WyCalendarStore from '../../../../../../src/flux/stores/wycalendar-store.es6';
-import Actions from '../../../../../../src/flux/actions.es6';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import {
   CALDAV_PROVIDER,
   ALL_RECURRING_EVENTS,
   SINGLE_EVENT,
   FUTURE_RECCURRING_EVENTS,
 } from '../constants';
-import { deleteCaldavSingle, deleteCaldavAll, deleteCaldavFuture } from './DeleteCaldavEventUtils';
+import { deleteCaldavSingle, deleteCaldavAll, deleteCaldavFuture } from './delete-caldav-event-utils';
 export const deleteSingleEvent = async id => {
   const debug = false;
   // #region Getting information
   // Get Information
-  const [data] = WyCalendarStore.getIcloudCalendarData().filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
   console.log('my data', data);
   // more than 1 event from 1 id or no event found
   if (data === undefined) {
@@ -27,7 +26,7 @@ export const deleteSingleEvent = async id => {
       console.log('Not supposed to reach here');
       break;
   }
-  const [user] = WyCalendarStore.getIcloudAuth().filter(
+  const [user] = CalendarPluginStore.getIcloudAuth().filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
   );
@@ -63,7 +62,7 @@ export const deleteAllEvents = async id => {
 
   // #region Getting information
   // Get Information
-  const [data] = WyCalendarStore.getIcloudCalendarData().filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
   // more than 1 event from 1 id or no event found
   if (data === undefined) {
     console.log('error');
@@ -79,7 +78,7 @@ export const deleteAllEvents = async id => {
       console.log('Not supposed to reach here');
       break;
   }
-  const [user] = WyCalendarStore.getIcloudAuth().filter(
+  const [user] = CalendarPluginStore.getIcloudAuth().filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
   );
@@ -119,13 +118,13 @@ export const deleteFutureEvents = async id => {
 
   // #region Getting information
   // Get Information
-  const [data] = WyCalendarStore.getIcloudCalendarData().filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
   // more than 1 event from 1 id or no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
-  const [user] = WyCalendarStore.getIcloudAuth().filter(
+  const [user] = CalendarPluginStore.getIcloudAuth().filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
   );

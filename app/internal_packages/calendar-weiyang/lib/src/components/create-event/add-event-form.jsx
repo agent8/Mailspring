@@ -2,22 +2,18 @@
 import React, { Component, Fragment } from 'react';
 import moment from 'moment';
 import ICAL from 'ical.js';
-import { Actions } from 'mailspring-exports';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
 
 import Select from 'react-select';
-import BigButton from '../MiniComponents/BigButton';
-import RoundCheckbox from '../MiniComponents/RoundCheckbox';
-import Tabs from '../MiniComponents/Tabs';
-import EventTitle from '../MiniComponents/EventTitle';
-import Input from '../MiniComponents/Input';
+import BigButton from '../MiniComponents/big-button';
+import RoundCheckbox from '../MiniComponents/round-checkbox';
+import EventTitle from '../MiniComponents/event-title';
+import Input from '../MiniComponents/input';
 import RRuleGenerator from '../react-rrule-generator/src/lib';
 
-import { createEvent } from './utils/CreateEventUtils';
-import WyCalendarStore from '../../../../../../src/flux/stores/wycalendar-store.es6';
-import { fetchCaldavEvents } from '../fetch-event/utils/FetchCaldavEvents';
+import { createEvent } from './utils/create-event-utils';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
+import { fetchCaldavEvents } from '../fetch-event/utils/fetch-caldav-event';
 import { ICLOUD_URL } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
@@ -82,8 +78,8 @@ export default class AddForm extends Component {
       isShowConfirmForm: false,
       selectedOption: '',
 
-      calendarLists: WyCalendarStore.getIcloudCalendarLists(),
-      auth: WyCalendarStore.getIcloudAuth(),
+      calendarLists: CalendarPluginStore.getIcloudCalendarLists(),
+      auth: CalendarPluginStore.getIcloudAuth(),
     };
   }
   componentDidMount() {

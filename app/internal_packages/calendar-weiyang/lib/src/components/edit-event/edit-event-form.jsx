@@ -2,17 +2,16 @@ import React, { Fragment } from 'react';
 import moment from 'moment-timezone';
 import uuidv4 from 'uuid';
 import Select from 'react-select';
-import EventTitle from '../MiniComponents/EventTitle';
-import BigButton from '../MiniComponents/BigButton';
-import Input from '../MiniComponents/Input';
-import RoundCheckbox from '../MiniComponents/RoundCheckbox';
+import EventTitle from '../MiniComponents/event-title';
+import BigButton from '../MiniComponents/big-button';
+import Input from '../MiniComponents/input';
+import RoundCheckbox from '../MiniComponents/round-checkbox';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import ICAL from 'ical.js';
 import RRuleGenerator from '../react-rrule-generator/src/lib';
-import * as recurrenceOptions from '../common-utils/recurrenceOptions';
-import { Actions } from 'mailspring-exports';
-import wycalendarStoreEs6 from '../../../../../../src/flux/stores/wycalendar-store.es6';
+import * as recurrenceOptions from '../common-utils/recurrence-options';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
@@ -383,7 +382,7 @@ export default class EditForm extends React.Component {
       In order to retrive the event, I need to make a query from the script to get the javascript ews object. However, once I have it, I can update it easily.
   */
   retrieveEvent = id => {
-    const [eventPresent] = wycalendarStoreEs6
+    const [eventPresent] = CalendarPluginStore
       .getIcloudCalendarData()
       .filter(storedEvent => storedEvent.id === id);
 
@@ -394,7 +393,7 @@ export default class EditForm extends React.Component {
     const secondRecurrOptions = recurrenceOptions.secondRecurrOptions(eventPresent.start, text);
 
     if (eventPresent.isRecurring) {
-      const [eventRecurrence] = wycalendarStoreEs6
+      const [eventRecurrence] = CalendarPluginStore
         .getIcloudRpLists()
         .filter(storedRp => storedRp.originalId === eventPresent.recurringEventId);
       const thirdRecurrChoice = recurrenceOptions.parseThirdRecurrOption(

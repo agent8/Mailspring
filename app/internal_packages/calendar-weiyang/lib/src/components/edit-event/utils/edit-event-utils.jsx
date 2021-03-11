@@ -1,5 +1,4 @@
-import WyCalendarStore from '../../../../../../../src/flux/stores/wycalendar-store.es6';
-import Actions from '../../../../../../../src/flux/actions.es6';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import {
   CALDAV_PROVIDER,
   ALL_RECURRING_EVENTS,
@@ -30,31 +29,6 @@ export const editSingleEvent = async payload => {
     attendee: JSON.stringify(payload.attendee),
   });
   // #endregion
-
-  // if it is a recurring event originally, I need to add it into the recurrenceIds
-  if (payload.isRecurring) {
-    switch (payload.providerType) {
-      case Providers.GOOGLE:
-        console.log(payload.providerType, ' not handling adding of exDates for recurring pattern');
-        break;
-      case Providers.OUTLOOK:
-        console.log(payload.providerType, ' not handling adding of exDates for recurring pattern');
-        break;
-      case Providers.EXCHANGE:
-        await dbRpActions.addRecurrenceIdsByiCalUID(payload.iCalUID, payload.start.dateTime);
-        break;
-      case Providers.CALDAV:
-        await dbRpActions.addRecurrenceIdsByiCalUID(payload.iCalUID, payload.start.dateTime);
-        break;
-      default:
-        console.log(
-          'Unhandled provider: ',
-          payload.providerType,
-          ' for adding of exDates for recurring pattern'
-        );
-        break;
-    }
-  }
 
   // Based off which provider, we will have different edit functions.
   switch (payload.providerType) {

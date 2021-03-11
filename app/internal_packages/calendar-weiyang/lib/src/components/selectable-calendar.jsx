@@ -2,18 +2,17 @@ import React, { Children } from 'react';
 import { Calendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { Fragment } from 'react';
-import AddForm from './create-event/AddForm';
-import EditForm from './edit-event/EditForm';
+import AddForm from './create-event/add-event-form';
+import EditForm from './edit-event/edit-event-form';
 import Grid from '@material-ui/core/Grid';
-import Login from './fetch-event/Login';
-import BigButton from './MiniComponents/BigButton';
-import WyCalendarStore from '../../../../../src/flux/stores/wycalendar-store.es6';
-import { Actions } from 'mailspring-exports';
+import Login from './fetch-event/login-view';
+import BigButton from './MiniComponents/big-button';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import {
   deleteSingleEvent,
   deleteAllEvents,
   deleteFutureEvents,
-} from './delete-event/DeleteEventUtils';
+} from './delete-event/delete-event-utils';
 
 const dateClassStyleWrapper = ({ children, value }) =>
   React.cloneElement(Children.only(children), {
@@ -35,14 +34,14 @@ class SelectableCalendar extends React.Component {
       addFormPopout: false,
       editFormPopout: false,
       loginFormPopout: false,
-      icloudCalendarData: WyCalendarStore.getIcloudCalendarData(),
+      icloudCalendarData: CalendarPluginStore.getIcloudCalendarData(),
     };
     this.mounted = false;
   }
   componentDidMount = () => {
     this.mounted = true;
     this.unsubscribers = [];
-    this.unsubscribers.push(WyCalendarStore.listen(this.onStoreChange));
+    this.unsubscribers.push(CalendarPluginStore.listen(this.onStoreChange));
   };
   componentWillUnmount() {
     return this.unsubscribers.map(unsubscribe => unsubscribe());
@@ -51,7 +50,7 @@ class SelectableCalendar extends React.Component {
     if (this.mounted) {
       return this.setState(prevState => ({
         ...prevState,
-        icloudCalendarData: WyCalendarStore.getIcloudCalendarData(),
+        icloudCalendarData: CalendarPluginStore.getIcloudCalendarData(),
       }));
     }
   };
@@ -127,7 +126,7 @@ class SelectableCalendar extends React.Component {
     }
   };
   handleEventClick = async (event, target) => {
-    const eventPresent = WyCalendarStore.getIcloudCalendarData().filter(
+    const eventPresent = CalendarPluginStore.getIcloudCalendarData().filter(
       storedEvent => storedEvent.id === event.id
     );
     if (eventPresent.length === 0) {

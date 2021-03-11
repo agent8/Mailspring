@@ -1,8 +1,8 @@
 import ICAL from 'ical.js';
 import uuidv4 from 'uuid';
 import moment from 'moment-timezone';
-import * as IcalStringBuilder from '../../common-utils/icalStringBuilder';
-import * as PARSER from '../../common-utils/Parser';
+import * as IcalStringBuilder from '../../common-utils/ical-string-builder';
+import * as PARSER from '../../common-utils/parser';
 
 export const editCalDavSingle = async payload => {
   const debug = false;
