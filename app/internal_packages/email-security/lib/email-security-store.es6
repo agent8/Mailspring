@@ -1,7 +1,14 @@
 import path from 'path';
 import crypto from 'crypto';
 import MailspringStore from 'mailspring-store';
-import { ContactStore, AccountStore } from 'mailspring-exports';
+import {
+  ContactStore,
+  AccountStore,
+  DatabaseStore,
+  Thread,
+  SearchQueryParser,
+  Constant,
+} from 'mailspring-exports';
 import EmailSecurityActions from './email-security-actions';
 import * as a8 from 'a8';
 
@@ -249,6 +256,7 @@ class EmailSecurityStore extends MailspringStore {
     this.listenTo(EmailSecurityActions.checkEmail, this.checkEmail);
     this.listenTo(EmailSecurityActions.spamAndSMTPCheck, this.spamAndSMTPCheck);
     this.listenTo(EmailSecurityActions.fetchSenderInfo, this.fetchSenderInfo);
+    this.listenTo(EmailSecurityActions.fetchSenderEmails, this.fetchSenderEmails);
   }
   _onAccountsChange = () => {
     const numAccounts = (AccountStore.accounts() || []).length;
@@ -434,6 +442,44 @@ class EmailSecurityStore extends MailspringStore {
       onError,
       onComplete: onOrganizationInfo,
     });
+  };
+
+  fetchSenderEmails = ({ message, onError, onComplete } = {}) => {
+    const onFailed = err => {
+      if (onError) {
+        onError({ id: message.id, error: err });
+      }
+    };
+    const onSuccess = data => {
+      if (onComplete) {
+        onComplete({ id: message.id, data });
+      }
+    };
+    if (message) {
+      let email = '';
+      if (message.from[0]) {
+        email = message.from[0].email;
+      } else if (message.replyTo[0]) {
+        email = message.replyTo[0].email;
+      }
+      let parsedQuery;
+      let dbQuery = DatabaseStore.findAll(Thread);
+      try {
+        parsedQuery = SearchQueryParser.parse(`from: ${email}`);
+        dbQuery = dbQuery.structuredSearch({ query: parsedQuery, accountIds: [] });
+      } catch (e) {
+        onFailed(`Failed to parse 'from: ${email}'`);
+      }
+      dbQuery
+        .background()
+        .setQueryType(Constant.QUERY_TYPE.SEARCH_PERSPECTIVE)
+        .where({ state: 0 })
+        .order(Thread.attributes.lastMessageTimestamp.descending())
+        .limit(50)
+        .then(result => {
+          onSuccess(result);
+        }, onFailed);
+    }
   };
 }
 

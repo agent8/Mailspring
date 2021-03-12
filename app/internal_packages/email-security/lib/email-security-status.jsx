@@ -38,8 +38,9 @@ export default class EmailSecurityStatus extends Component {
 
   _onFullRefresh = () => {
     this._checkHeaders();
-    this._spamAndSMTPCheck();
-    this._fetchSenderInfo();
+    // this._spamAndSMTPCheck();
+    // this._fetchSenderInfo();
+    this._fetchSenderEmails();
   };
   _onCheckEmailComplete = ({ id, data }) => {
     if (this._mounted && this.props.message && id === this.props.message.id) {
@@ -119,6 +120,22 @@ export default class EmailSecurityStatus extends Component {
         message: this.props.message,
         onData: this._onFetchSenderInfoDataReturned,
         onError: this._onFetchSenderInfoFailed,
+      });
+    }
+  }
+  _onFetchSenderEmailsFailed = ({ id, error }) => {};
+  _onFetchSenderEmailsSuccess = ({ id, data }) => {
+    if (this._mounted && this.props.message && this.props.message.id === id) {
+      console.warn('sender eamils', data);
+      this.setState({ emails: data });
+    }
+  };
+  _fetchSenderEmails() {
+    if (this.props.message) {
+      EmailSecurityActions.fetchSenderEmails({
+        message: this.props.message,
+        onComplete: this._onFetchSenderEmailsSuccess,
+        onError: this._onFetchSenderEmailsFailed,
       });
     }
   }
