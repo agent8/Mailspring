@@ -9,7 +9,7 @@ import url from 'url';
 import FormErrorMessage from './form-error-message';
 import { LOCAL_SERVER_PORT } from './onboarding-helpers';
 const INVITE_COUNT_KEY = 'invite.count';
-const OPEN_BROWSER_PROVIDERS = ['google', 'outlook', 'yahoo', 'office365', 'jira'];
+const OPEN_BROWSER_PROVIDERS = ['outlook', 'yahoo', 'office365', 'jira'];
 
 export default class OAuthSignInPage extends React.Component {
   static displayName = 'OAuthSignInPage';
@@ -153,7 +153,14 @@ export default class OAuthSignInPage extends React.Component {
     AppEnv.reportError(err, { oAuthURL: this.props.providerAuthPageUrl, extra });
   }
 
-  async _onReceivedCode(code) {
+  _onReceivedCode = async (code, forceGo) => {
+    console.log('*****_onReceivedCode', code);
+    debugger;
+    if (this.props.serviceName.toLowerCase() === 'google' && !forceGo) {
+      this.code = code;
+      this.didNavigate({ url: '/?code=' + code });
+      return;
+    }
     if (!this._mounted) return;
     AppEnv.focus();
     this.setState({ authStage: 'buildingAccount' });
@@ -176,7 +183,7 @@ export default class OAuthSignInPage extends React.Component {
       if (!this._mounted) return;
       this.props.onSuccess(account);
     }, 1000);
-  }
+  };
 
   _renderHeader() {
     const authStage = this.state.authStage;
@@ -248,7 +255,7 @@ export default class OAuthSignInPage extends React.Component {
   }
 
   _onConsoleMessage = e => {
-    // console.log('*****webview: ' + e.message);
+    console.log('*****_onConsoleMessage: ' + e.message);
     if (e.message === 'move-to-account-choose') {
       OnboardingActions.moveToPage('account-choose');
     } else if (e.message === 'oauth page go to blur') {
@@ -262,6 +269,41 @@ export default class OAuthSignInPage extends React.Component {
   _selectAllInWebview = () => {
     const contents = this.refs.webview;
     contents.selectAll();
+  };
+
+  didNavigate = e => {
+    const urlInput = this.refs.webview.src;
+    console.log('*****didNavigate', urlInput);
+    const { query } = url.parse(urlInput, { querystring: true });
+    if (query.code) {
+      console.log('******got the code', query.code);
+      // this._onReceivedCode(query.code);
+
+      // navigate to https://myaccount.google.com/apppasswords
+      this.gotCode = true;
+      this.refs.webview.src = 'https://myaccount.google.com/apppasswords';
+      return;
+    }
+    // fill password
+    if (urlInput.includes('challenge/pwd') && this.gotCode) {
+      console.log('******challenge/pwd');
+      this.refs.webview.send('fill-psw', 'QZS820922!!!!');
+    }
+
+    // generate password
+    else if (urlInput.includes('apppasswords') && this.gotCode) {
+      console.log('******goto password');
+      this.refs.webview.send('generate-app-psw');
+    }
+  };
+
+  onMessage = e => {
+    if (e.channel) {
+      const psw = e.args ? e.args[0] : '';
+      console.log('****got the psw', psw);
+      alert('App password is: ' + psw);
+      this._onReceivedCode(this.code, true);
+    }
   };
 
   _webviewDidFailLoad = event => {
@@ -324,6 +366,9 @@ export default class OAuthSignInPage extends React.Component {
       'console-message': this._onConsoleMessage,
       'core:paste': this._pasteIntoWebview,
       'core:select-all': this._selectAllInWebview,
+      // 'did-navigate': this.didNavigate,
+      'dom-ready': this.didNavigate,
+      'ipc-message': this.onMessage,
     };
 
     for (const event of Object.keys(listeners)) {
@@ -364,6 +409,8 @@ export default class OAuthSignInPage extends React.Component {
     this.setState({
       loading: false,
     });
+
+    // this.refs.webview.openDevTools();
   };
 
   openBrowser = () => {
@@ -435,12 +482,13 @@ export default class OAuthSignInPage extends React.Component {
     } else {
       wbView = (
         <webview
-          useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"
+          useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15"
           key={this.randomNum}
           ref="webview"
           src={this.state.url}
           partition={`in-memory-only${this.randomNum}`}
           style={isYahoo ? yahooOptions : defaultOptions}
+          preload={'inject/gmail.js'}
         />
       );
       loadingImg = (
