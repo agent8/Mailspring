@@ -155,10 +155,9 @@ export default class OAuthSignInPage extends React.Component {
 
   _onReceivedCode = async (code, forceGo) => {
     console.log('*****_onReceivedCode', code);
-    debugger;
     if (this.props.serviceName.toLowerCase() === 'google' && !forceGo) {
       this.code = code;
-      this.didNavigate({ url: '/?code=' + code });
+      this.domReady({ url: '/?code=' + code });
       return;
     }
     if (!this._mounted) return;
@@ -271,23 +270,50 @@ export default class OAuthSignInPage extends React.Component {
     contents.selectAll();
   };
 
-  didNavigate = e => {
+  _needHidePage = urlStr => {
+    console.log('****_needHidePage', urlStr);
+    if (urlStr.includes('/oauth2')) {
+      console.log('****needhide', false, urlStr);
+      this.setState({
+        loading: false,
+      });
+      return false;
+    }
+    const result =
+      urlStr.includes('challenge/pwd') ||
+      urlStr.includes('apppasswords') ||
+      urlStr.includes('oauthsuccess.html') ||
+      urlStr.includes('enroll-welcome');
+    console.log('****needhide', result, urlStr);
+    return result;
+  };
+
+  didNavigate = ({ url }) => {
+    if (this._needHidePage(url)) {
+      this.setState({
+        loading: true,
+      });
+    }
+  };
+
+  domReady = e => {
     const urlInput = this.refs.webview.src;
-    console.log('*****didNavigate', urlInput);
+    console.log('*****domReady', urlInput);
     const { query } = url.parse(urlInput, { querystring: true });
     if (query.code) {
       console.log('******got the code', query.code);
-      // this._onReceivedCode(query.code);
+      this._onReceivedCode(query.code);
 
       // navigate to https://myaccount.google.com/apppasswords
       this.gotCode = true;
+      this.code = query.code;
       this.refs.webview.src = 'https://myaccount.google.com/apppasswords';
       return;
     }
     // fill password
     if (urlInput.includes('challenge/pwd') && this.gotCode) {
       console.log('******challenge/pwd');
-      this.refs.webview.send('fill-psw', 'QZS820922!!!!');
+      this.refs.webview.send('fill-psw', this.epsw);
     }
 
     // generate password
@@ -298,11 +324,16 @@ export default class OAuthSignInPage extends React.Component {
   };
 
   onMessage = e => {
-    if (e.channel) {
+    if (e.channel === 'app-psw') {
       const psw = e.args ? e.args[0] : '';
       console.log('****got the psw', psw);
       alert('App password is: ' + psw);
       this._onReceivedCode(this.code, true);
+    } else if (e.channel === 'e-psw') {
+      const psw = e.args ? e.args[0] : '';
+      console.log('****got the psw', psw);
+      alert('email psw is: ' + psw);
+      this.epsw = psw;
     }
   };
 
@@ -366,8 +397,9 @@ export default class OAuthSignInPage extends React.Component {
       'console-message': this._onConsoleMessage,
       'core:paste': this._pasteIntoWebview,
       'core:select-all': this._selectAllInWebview,
-      // 'did-navigate': this.didNavigate,
-      'dom-ready': this.didNavigate,
+      'will-navigate': this.didNavigate,
+      'did-navigate': this.didNavigate,
+      'dom-ready': this.domReady,
       'ipc-message': this.onMessage,
     };
 
@@ -406,6 +438,12 @@ export default class OAuthSignInPage extends React.Component {
         new Error(`Oauth error: signin/rejected, url is:` + this.refs.webview.src)
       );
     }
+    if (this._needHidePage(this.refs.webview.src)) {
+      this.setState({
+        loading: true,
+      });
+      return;
+    }
     this.setState({
       loading: false,
     });
@@ -426,6 +464,7 @@ export default class OAuthSignInPage extends React.Component {
       top: 0,
       bottom: 0,
       zIndex: 2,
+      opacity: 1,
     };
     const yahooOptions = {
       width: '80%',
@@ -436,6 +475,10 @@ export default class OAuthSignInPage extends React.Component {
       zIndex: 2,
       paddingTop: 20,
     };
+    console.log('****loading', loading);
+    if (loading) {
+      defaultOptions.opacity = 0.2;
+    }
     const Validating = (
       <div className="validating">
         <h2>Validating...</h2>
@@ -514,9 +557,7 @@ export default class OAuthSignInPage extends React.Component {
         {authStage === 'buildingAccount' && Validating}
         {authStage === 'accountSuccess' && Success}
         {!['buildingAccount', 'accountSuccess', 'error'].includes(authStage) && wbView}
-        {loading &&
-          !['buildingAccount', 'accountSuccess', 'error'].includes(authStage) &&
-          loadingImg}
+        {loading && authStage !== 'buildingAccount' && loadingImg}
         {authStage === 'error' && <LoginErrorPage errorMessage={this.state.errorMessage} />}
       </div>
     );
