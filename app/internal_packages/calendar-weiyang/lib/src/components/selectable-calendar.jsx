@@ -200,7 +200,7 @@ class SelectableCalendar extends React.Component {
     this.closeModal();
   };
   editEvent = event => {
-    const { props } = this;
+    this.setEditFormPopout(true);
   };
 
   renderEventPopup = (event, target) => {
@@ -248,7 +248,6 @@ class SelectableCalendar extends React.Component {
   };
 
   render() {
-    console.log('reflux data', this.state.icloudCalendarData);
     const formattedIcloudEvent = this.formatIcloudCalendarData();
     return (
       <Fragment>

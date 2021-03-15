@@ -756,7 +756,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
     }
   });
   // Adding the master event, if it isn't inside(occurs when expanded RRULE didn't take into account the initial master event)
-  if (!containMaster && !exDateContainsMaster(recurMasterEvent.end.dateTime, recurPattern)) {
+  if (!containMaster && !exDateContainsMaster(recurMasterEvent.start.dateTime, recurPattern)) {
     recurEvents.push({
       id: uuidv4(),
       end: {

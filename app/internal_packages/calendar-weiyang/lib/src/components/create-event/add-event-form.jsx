@@ -55,7 +55,7 @@ export default class AddForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      title: '',
+      title: 'Untitled Event',
       desc: '',
       startParsed: '',
       endParsed: '',
@@ -80,6 +80,8 @@ export default class AddForm extends Component {
 
       calendarLists: CalendarPluginStore.getIcloudCalendarLists(),
       auth: CalendarPluginStore.getIcloudAuth(),
+
+      invitePopup: false,
     };
   }
   componentDidMount() {
@@ -116,6 +118,12 @@ export default class AddForm extends Component {
       monthlyRule: `RRULE:${rruleMonthlyByWeekNoAndDay.toString()}`,
     });
   }
+  setInvitePopup = boolValue => {
+    this.setState(prevState => ({
+      ...prevState,
+      invitePopup: boolValue,
+    }));
+  };
   processStringForUTC = dateInString => {
     let dateInStringInUTC;
     if (dateInString.substring(START_INDEX_OF_UTC_FORMAT) === 'pm') {
@@ -290,29 +298,43 @@ export default class AddForm extends Component {
     const { state } = this;
     // Display confirmation to send modal if there are guests
     if (state.attendees.length !== 0) {
-      this.renderPopup();
+      this.setInvitePopup(true);
     } else {
       this.handleSubmit();
     }
   };
   renderPopup = () => {
     const { state } = this;
-    Actions.openModal({
-      component: (
-        <div className="popup-modal">
-          <h5>You are about to send an invitation for "{state.title}"</h5>
-          <p>Do you want to send "{state.title}" now or continue editing the event?</p>
-          <div className="modal-button-group">
-            <BigButton type="button" variant="small-blue" onClick={() => Actions.closeModal()}>
+    const title = state.title === '' ? 'Untitled Event' : state.title;
+    return (
+      <Fragment>
+        <Dialog
+          onClose={() => this.setInvitePopup(false)}
+          open={this.state.invitePopup}
+          maxWidth="md"
+        >
+          <DialogContent>
+            <div className="popup-modal">
+              <h5>You are about to send an invitation for "{title}"</h5>
+              <p>Do you want to send "{title}" now or continue editing the event?</p>
+              <div className="modal-button-group"></div>
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <BigButton
+              type="button"
+              variant="small-blue"
+              onClick={() => this.setInvitePopup(false)}
+            >
               Edit
             </BigButton>
             <BigButton type="button" variant="small-white" onClick={this.handleSubmit}>
               Send
             </BigButton>
-          </div>
-        </div>
-      ),
-    });
+          </DialogActions>
+        </Dialog>
+      </Fragment>
+    );
   };
   determineURL = selectedCalendar => {
     if (selectedCalendar.url.includes('caldav.icloud')) {
@@ -570,48 +592,47 @@ export default class AddForm extends Component {
       </div>
     );
   };
-
   render() {
     const { props, state } = this;
-    console.log(state);
     return (
-      <Fragment>
-        <Dialog onClose={this.backToCalendar} open={props.parentPropState} maxWidth="lg">
-          <DialogContent>
-            <div className="calendar">
-              <div className="add-form-main-panel-container">
-                <div className="add-form-main-panel">
-                  {/* Add form header */}
-                  <div className="add-form-header">
-                    {/* Event Title Input */}
-                    <EventTitle
-                      type="text"
-                      value={state.value}
-                      name="title"
-                      placeholder="Untitled event"
-                      onChange={this.handleChange}
-                    />
-                  </div>
+      <Dialog onClose={this.backToCalendar} open={props.parentPropState} maxWidth="lg">
+        <DialogContent>
+          {/* Guest invitation confirmation */}
+          {state.invitePopup ? this.renderPopup() : null}
 
-                  {/* Main add event page */}
-                  {this.renderAddDetails()}
+          <div className="calendar">
+            <div className="add-form-main-panel-container">
+              <div className="add-form-main-panel">
+                {/* Add form header */}
+                <div className="add-form-header">
+                  {/* Event Title Input */}
+                  <EventTitle
+                    type="text"
+                    value={state.value}
+                    name="title"
+                    placeholder="Untitled event"
+                    onChange={this.handleChange}
+                  />
                 </div>
+
+                {/* Main add event page */}
+                {this.renderAddDetails()}
               </div>
             </div>
-          </DialogContent>
-          <DialogActions>
-            {/* Save/Cancel buttons */}
-            <div className="add-form-button-group">
-              <BigButton variant="big-white" onClick={this.backToCalendar}>
-                Cancel
-              </BigButton>
-              <BigButton variant="big-blue" onClick={this.handleSubmitClick}>
-                Save
-              </BigButton>
-            </div>
-          </DialogActions>
-        </Dialog>
-      </Fragment>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          {/* Save/Cancel buttons */}
+          <div className="add-form-button-group">
+            <BigButton variant="big-white" onClick={this.backToCalendar}>
+              Cancel
+            </BigButton>
+            <BigButton variant="big-blue" onClick={this.handleSubmitClick}>
+              Save
+            </BigButton>
+          </div>
+        </DialogActions>
+      </Dialog>
     );
   }
 }

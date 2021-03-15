@@ -255,7 +255,7 @@ export const deleteCaldavFuture = async payload => {
 
       // NOTE: updateIcalString function is a temporary hotfix as ICAL library
       //   doesn't include the UTC 'Z' timezone in the RRule, causing datetime mismatch when fetching
-      const calendarData = updateIcalString(iCalString);
+      const calendarData = iCalString;
       const calendarObject = {
         url: caldavUrl,
         calendarData,
@@ -263,25 +263,9 @@ export const deleteCaldavFuture = async payload => {
       console.log(iCalString);
       console.log(calendarData);
       // Result will throw error, we can do a seperate check here if needed.
-      const result = await dav.updateCalendarObject(calendarObject, option);
+      await dav.updateCalendarObject(calendarObject, option);
     }
   } catch (caldavError) {
     console.log('Handle Caldav pending action here', caldavError);
   }
-};
-
-// append a Z at the end of the RRule, might have better way to do this
-const updateIcalString = iCalString => {
-  let originalUNTILrrule = iCalString.match(
-    /UNTIL=\d{4}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])T([0-1]\d|2[0-3])[0-5]\d[0-5]\dZ?/g
-  );
-  // second expression short circuits if res isn't null
-  if (originalUNTILrrule === null || originalUNTILrrule[[originalUNTILrrule.length - 1] === 'Z']) {
-    return iCalString;
-  } else if (originalUNTILrrule[originalUNTILrrule.length - 1] !== 'Z') {
-    let updatedUNTILrrule = originalUNTILrrule + 'Z';
-    let updatedICalString = iCalString.replace(originalUNTILrrule, updatedUNTILrrule);
-    return updatedICalString;
-  }
-  return iCalString;
 };

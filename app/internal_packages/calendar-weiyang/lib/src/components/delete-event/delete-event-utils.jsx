@@ -1,31 +1,36 @@
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import {
   CALDAV_PROVIDER,
-  ALL_RECURRING_EVENTS,
-  SINGLE_EVENT,
-  FUTURE_RECCURRING_EVENTS,
+  DELETE_ALL_RECURRING_EVENTS,
+  DELETE_SINGLE_EVENT,
+  DELETE_FUTURE_RECCURRING_EVENTS,
+  GET_ALL_EVENT,
 } from '../constants';
-import { deleteCaldavSingle, deleteCaldavAll, deleteCaldavFuture } from './delete-caldav-event-utils';
+import {
+  deleteCaldavSingle,
+  deleteCaldavAll,
+  deleteCaldavFuture,
+} from './delete-caldav-event-utils';
 export const deleteSingleEvent = async id => {
-  const debug = false;
   // #region Getting information
   // Get Information
   const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
-  console.log('my data', data);
-  // more than 1 event from 1 id or no event found
+  // no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
+
   // In order to show immediate deletion on calendar
   switch (data.providerType) {
     case CALDAV_PROVIDER:
-      Actions.deleteIcloudCalendarData(id, SINGLE_EVENT);
+      Actions.deleteIcloudCalendarData(id, DELETE_SINGLE_EVENT);
       break;
     default:
       console.log('Not supposed to reach here');
       break;
   }
+
   const [user] = CalendarPluginStore.getIcloudAuth().filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
@@ -58,12 +63,10 @@ export const deleteSingleEvent = async id => {
 };
 
 export const deleteAllEvents = async id => {
-  const debug = false;
-
   // #region Getting information
   // Get Information
   const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
-  // more than 1 event from 1 id or no event found
+  // no event found
   if (data === undefined) {
     console.log('error');
     return;
@@ -72,7 +75,7 @@ export const deleteAllEvents = async id => {
   // In order to show immediate deletion on calendar
   switch (data.providerType) {
     case CALDAV_PROVIDER:
-      Actions.deleteIcloudCalendarData(data.recurringEventId, ALL_RECURRING_EVENTS);
+      Actions.deleteIcloudCalendarData(data.recurringEventId, DELETE_ALL_RECURRING_EVENTS);
       break;
     default:
       console.log('Not supposed to reach here');
@@ -86,10 +89,6 @@ export const deleteAllEvents = async id => {
   if (user === undefined) {
     console.log('error');
     return;
-  }
-
-  if (debug) {
-    console.log(data, user);
   }
   // #endregion
 
@@ -114,12 +113,10 @@ export const deleteAllEvents = async id => {
   }
 };
 export const deleteFutureEvents = async id => {
-  const debug = false;
-
   // #region Getting information
   // Get Information
   const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
-  // more than 1 event from 1 id or no event found
+  // no event found
   if (data === undefined) {
     console.log('error');
     return;
@@ -137,7 +134,7 @@ export const deleteFutureEvents = async id => {
   // In order to show immediate deletion
   switch (data.providerType) {
     case CALDAV_PROVIDER:
-      Actions.deleteIcloudCalendarData(data.iCalUID, FUTURE_RECCURRING_EVENTS, data.start.dateTime);
+      Actions.deleteIcloudCalendarData(data.iCalUID, DELETE_FUTURE_RECCURRING_EVENTS, data.start.dateTime);
       break;
     default:
       console.log('Not supposed to reach here');
