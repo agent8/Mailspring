@@ -209,14 +209,14 @@ class AccountStore extends MailspringStore {
           json.pid = json.id;
         }
         this._accounts.push(new Account().fromJSON(json));
-        let fetchEmailInterval = 60000;
-        if (json.mailsync && json.mailsync.fetchEmailInterval) {
-          try {
-            fetchEmailInterval = parseInt(json.mailsync.fetchEmailInterval, 10) * 60000;
-          } catch (e) {
-            AppEnv.reportError(e);
-          }
-        }
+        // let fetchEmailInterval = 60000;
+        // if (json.mailsync && json.mailsync.fetchEmailInterval) {
+        //   try {
+        // fetchEmailInterval = parseInt(json.mailsync.fetchEmailInterval, 10) * 60000;
+        // } catch (e) {
+        // AppEnv.reportError(e);
+        // }
+        // }
         // this._updateWakeWorkerTimer(json.pid, fetchEmailInterval);
       }
       this._removeDeleteAccountTimers();
@@ -227,6 +227,7 @@ class AccountStore extends MailspringStore {
       AppEnv.reportError(error);
     }
 
+    // eslint-disable-next-line no-undef
     this._trigger(arguments);
   };
 
@@ -455,6 +456,7 @@ class AccountStore extends MailspringStore {
         });
         ContactStore.contacts = [];
         await ContactStore.refreshContacts();
+        // eslint-disable-next-line no-undef
         xmpp.removeXmpp(jid);
         removeMyApps(chatAccount.userId);
         // await AppStore.refreshAppsEmailContacts();
