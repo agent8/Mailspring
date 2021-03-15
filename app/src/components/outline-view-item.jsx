@@ -697,7 +697,7 @@ class OutlineViewItem extends Component {
     );
   }
   _renderMoreOrLess() {
-    const text = this.props.item.showAll ? 'more' : 'less';
+    const text = this.props.item.showAll ? 'More' : 'Less';
     return (
       <div
         onClick={this._onToggleShowAllFolder.bind(this, this.props.item.showAll)}
