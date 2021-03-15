@@ -580,19 +580,9 @@ class SidebarItem {
   }
 
   static forRecent(accountIds, opts = {}) {
-    let categories = accountIds.map(accId => {
-      return CategoryStore.getCategoryByRole(accId, 'inbox');
-    });
-
-    // NOTE: It's possible for an account to not yet have an `inbox`
-    // category. Since the `SidebarStore` triggers on `AccountStore`
-    // changes, it'll trigger the exact moment an account is added to the
-    // config. However, the API has not yet come back with the list of
-    // `categories` for that account.
-    categories = _.compact(categories);
     opts.iconName = 'history-search.svg';
     opts.className = 'recent-icon';
-    const perspective = MailboxPerspective.forRecent(categories);
+    const perspective = MailboxPerspective.forRecent(accountIds);
     let id = 'Recent';
     if (opts.key) {
       id += `-${opts.key}`;
