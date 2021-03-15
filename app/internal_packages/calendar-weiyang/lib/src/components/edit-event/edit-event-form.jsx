@@ -1,18 +1,21 @@
 import React, { Fragment } from 'react';
 import moment from 'moment-timezone';
-import uuidv4 from 'uuid';
 import Select from 'react-select';
 import EventTitle from '../MiniComponents/event-title';
 import BigButton from '../MiniComponents/big-button';
 import Input from '../MiniComponents/input';
 import RoundCheckbox from '../MiniComponents/round-checkbox';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import ICAL from 'ical.js';
 import RRuleGenerator from '../react-rrule-generator/src/lib';
 import * as recurrenceOptions from '../common-utils/recurrence-options';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
+import {
+  editAllReccurenceEvent,
+  editFutureReccurenceEvent,
+  editSingleEvent,
+} from '../edit-event/utils/edit-event-utils';
+import { fetchCaldavEvents } from '../fetch-event/utils/fetch-caldav-event';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -22,8 +25,6 @@ const START_INDEX_OF_DATE = 0;
 const END_INDEX_OF_DATE = 11;
 const END_INDEX_OF_MINUTE = 16;
 
-const localizer = momentLocalizer(moment);
-const DragAndDropCalendar = withDragAndDrop(Calendar);
 const selectStyles = {
   control: provided => ({
     ...provided,
@@ -101,9 +102,16 @@ export default class EditForm extends React.Component {
 
       // Update form
       isShowUpdateForm: false,
+
+      confirmationPopup: false,
     };
   }
-
+  setConfirmationPopup = boolValue => {
+    this.setState(prevState => ({
+      ...prevState,
+      confirmationPopup: boolValue,
+    }));
+  };
   componentDidMount() {
     const { props, state } = this;
     this.retrieveEvent(props.id);
@@ -164,7 +172,6 @@ export default class EditForm extends React.Component {
   };
 
   handleCheckboxChange = event => {
-    const { props } = this;
     const { state } = this;
 
     const startDateParsed = moment(state.start.dateTime * 1000).startOf('day');
@@ -187,23 +194,6 @@ export default class EditForm extends React.Component {
     });
   };
 
-  createDbRecurrenceObj = () => {
-    const { state } = this;
-    return {
-      id: uuidv4(),
-      originalId: state.recurringMasterId,
-      freq: recurrenceOptions.parseFreqByNumber(state.firstSelectedOption),
-      interval: parseInt(state.recurrInterval, 10),
-      recurringTypeId: state.recurrStartDate,
-      until: state.thirdRecurrOptions === 'n' ? '' : state.recurrEndDate,
-      numberOfRepeats: state.thirdRecurrOptions === 'a' ? state.thirdOptionAfter : 0,
-      weeklyPattern: state.firstSelectedOption === 1 ? state.selectedSecondRecurrOption[1] : [],
-      exDates: [],
-      recurrenceIds: [],
-      modifiedThenDeleted: false,
-    };
-  };
-
   handleEditEvent = () => {
     const { state } = this;
     const attendees = state.attendees;
@@ -214,17 +204,24 @@ export default class EditForm extends React.Component {
       }
     });
     if (state.initialRrule && (state.initialRrule !== state.updatedRrule || state.isRecurring)) {
-      this.renderPopup();
+      this.setConfirmationPopup(true);
     } else {
       this.editEvent();
     }
   };
-
+  updateStoreFromServer = async () => {
+    const { state } = this;
+    // only ical caldav currently
+    const [user] = CalendarPluginStore.getIcloudAuth().filter(
+      auth => auth.username === state.owner
+    );
+    const finalResult = await fetchCaldavEvents(user.username, user.password, state.providerType);
+    Actions.setIcloudCalendarData(finalResult);
+  };
   editEvent = () => {
     const { props, state } = this;
-    const user = props.providers[state.providerType].filter(
-      object => object.email === state.owner
-    )[0];
+    // using ical caldav only for now
+    const [user] = CalendarPluginStore.getIcloudAuth().filter(auth => auth.username === state.owner);
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const payload = {
       id: state.id,
@@ -249,16 +246,17 @@ export default class EditForm extends React.Component {
       oldRpJson: state.oldRpJson,
     };
     // debugger;
-    Actions.closeModal();
-    props.beginEditEvent(payload);
-    props.history.push('/');
+    editSingleEvent(payload);
+    // this.updateStoreFromServer();
+    this.backToCalendar();
   };
 
   editAllRecurrenceEvent = () => {
     const { props, state } = this;
-    const user = props.providers[state.providerType].filter(
-      object => object.email === state.owner
-    )[0];
+    // using ical caldav only for now
+    const [user] = CalendarPluginStore.getIcloudAuth().filter(
+      auth => auth.username === state.owner
+    );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const payload = {
@@ -308,16 +306,16 @@ export default class EditForm extends React.Component {
       oldRpJson: state.oldRpJson,
     };
     // debugger;
-    Actions.closeModal();
-    props.beginEditRecurrenceSeries(payload);
-    props.history.push('/');
+    editAllReccurenceEvent(payload);
+    // this.updateStoreFromServer();
+    this.backToCalendar();
   };
 
   editFutureRecurrenceEvent = () => {
     const { props, state } = this;
-    const user = props.providers[state.providerType].filter(
-      object => object.email === state.owner
-    )[0];
+    const [user] = CalendarPluginStore.getIcloudAuth().filter(
+      auth => auth.username === state.owner
+    );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const payload = {
       // Unique Id
@@ -361,9 +359,9 @@ export default class EditForm extends React.Component {
       oldRpJson: state.oldRpJson,
     };
     // debugger;
-    Actions.closeModal();
-    props.beginEditFutureRecurrenceSeries(payload);
-    props.history.push('/');
+    editFutureReccurenceEvent(payload);
+    // this.updateStoreFromServer();
+    this.backToCalendar();
   };
 
   backToCalendar = () => {
@@ -382,9 +380,9 @@ export default class EditForm extends React.Component {
       In order to retrive the event, I need to make a query from the script to get the javascript ews object. However, once I have it, I can update it easily.
   */
   retrieveEvent = id => {
-    const [eventPresent] = CalendarPluginStore
-      .getIcloudCalendarData()
-      .filter(storedEvent => storedEvent.id === id);
+    const [eventPresent] = CalendarPluginStore.getIcloudCalendarData().filter(
+      storedEvent => storedEvent.id === id
+    );
 
     // Remember to moment.unix because dateTime is stored in seconds instead of miliseconds
     const text = recurrenceOptions.parseString(
@@ -393,9 +391,9 @@ export default class EditForm extends React.Component {
     const secondRecurrOptions = recurrenceOptions.secondRecurrOptions(eventPresent.start, text);
 
     if (eventPresent.isRecurring) {
-      const [eventRecurrence] = CalendarPluginStore
-        .getIcloudRpLists()
-        .filter(storedRp => storedRp.originalId === eventPresent.recurringEventId);
+      const [eventRecurrence] = CalendarPluginStore.getIcloudRpLists().filter(
+        storedRp => storedRp.originalId === eventPresent.recurringEventId
+      );
       const thirdRecurrChoice = recurrenceOptions.parseThirdRecurrOption(
         eventRecurrence.until,
         eventRecurrence.numberOfRepeats
@@ -458,12 +456,18 @@ export default class EditForm extends React.Component {
         });
       }
 
+      // to ensure RRuleGenerator display no error caused by undefined INTERVAL
+      const intervalInRrule = eventRecurrence.iCALString.match(/INTERVAL=.+?;/g);
+      let updatedRruleWithInterval = eventRecurrence.iCALString;
+      if (intervalInRrule === null) {
+        updatedRruleWithInterval += ';INTERVAL=' + eventRecurrence.interval;
+      }
       this.setState({
         updatedIsRecurring: true,
-        updatedRrule: eventRecurrence.iCALString,
+        updatedRrule: updatedRruleWithInterval,
         isRecurring: true,
         showRruleGenerator: true,
-        initialRrule: eventRecurrence.iCALString,
+        initialRrule: updatedRruleWithInterval,
         isMaster: eventPresent.isMaster,
         recurringEventId: eventPresent.recurringEventId,
         recurrInterval: eventRecurrence.interval,
@@ -486,7 +490,7 @@ export default class EditForm extends React.Component {
             : `(${moment(eventPresent.start).date()})`,
         recurrByWeekDay: eventRecurrence.byWeekDay,
         recurrByWeekNo: eventRecurrence.byWeekNo,
-        oldRpJson: eventRecurrence.toJSON(),
+        oldRpJson: eventRecurrence,
       });
     }
 
@@ -565,7 +569,6 @@ export default class EditForm extends React.Component {
 
     // CHANGING OF DATE DYNAMICALLY
     const { state } = this;
-    // eslint-disable-next-line no-underscore-dangle
     const rruleObj = ICAL.Recur._stringToData(selectedRrule);
     if (rruleObj.until !== undefined) {
       rruleObj.until.adjust(1, 0, 0, 0, 0);
@@ -647,52 +650,64 @@ export default class EditForm extends React.Component {
   renderPopup = () => {
     const { state } = this;
     if (state.initialRrule !== state.updatedRrule) {
-      Actions.openModal({
-        component: (
-          <div className="popup-modal">
-            <h5>You're changing a repeating event's rule.</h5>
-            <p>Do you want to change all occurrences?</p>
-            <div className="modal-button-group">
-              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
-                Cancel
-              </BigButton>
+      return (
+        <Dialog
+          onClose={() => this.setConfirmationPopup(false)}
+          open={state.confirmationPopup}
+          maxWidth="md"
+        >
+          <DialogContent>
+            <div className="popup-modal">
+              <h5>You're changing a repeating event's rule.</h5>
+              <p>Do you want to change all occurrences?</p>
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <BigButton variant="small-blue" onClick={() => this.setConfirmationPopup(false)}>
+              Cancel
+            </BigButton>
+            <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
+              Update All
+            </BigButton>
+          </DialogActions>
+        </Dialog>
+      );
+    } else {
+      return (
+        <Dialog
+          onClose={() => this.setConfirmationPopup(false)}
+          open={state.confirmationPopup}
+          maxWidth="md"
+        >
+          <DialogContent>
+            <div className="popup-modal">
+              <h5>You're changing a repeating event.</h5>
+              <p>Do you want to change only this occurrence of the event, or all occurrences?</p>
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <BigButton variant="small-blue" onClick={() => this.setConfirmationPopup(false)}>
+              Cancel
+            </BigButton>
+            {state.isMaster ? (
               <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
                 Update All
               </BigButton>
-            </div>
-          </div>
-        ),
-      });
-    } else {
-      Actions.openModal({
-        component: (
-          <div className="popup-modal">
-            <h5>You're changing a repeating event.</h5>
-            <p>Do you want to change only this occurrence of the event, or all occurrences?</p>
-            <div className="modal-button-group">
-              <BigButton variant="small-blue" onClick={() => Actions.closeModal()}>
-                Cancel
+            ) : (
+              <BigButton
+                variant="small-white"
+                type="button"
+                onClick={this.editFutureRecurrenceEvent}
+              >
+                Update All Future Events
               </BigButton>
-              {state.isMaster ? (
-                <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
-                  Update All
-                </BigButton>
-              ) : (
-                <BigButton
-                  variant="small-white"
-                  type="button"
-                  onClick={this.editFutureRecurrenceEvent}
-                >
-                  Update All Future Events
-                </BigButton>
-              )}
-              <BigButton variant="small-white" onClick={this.editEvent}>
-                Update Only This Event
-              </BigButton>
-            </div>
-          </div>
-        ),
-      });
+            )}
+            <BigButton variant="small-white" onClick={this.editEvent}>
+              Update Only This Event
+            </BigButton>
+          </DialogActions>
+        </Dialog>
+      );
     }
   };
 
@@ -708,6 +723,7 @@ export default class EditForm extends React.Component {
       { value: 'DECLINED', label: 'No' },
       { value: 'TENTATIVE', label: 'Maybe' },
     ];
+
     return (
       <div className="add-form-details">
         <div className="add-form-start-time add-form-grid-item">
@@ -731,8 +747,8 @@ export default class EditForm extends React.Component {
           />
         </div>
         <div className="add-form-repeat add-form-grid-item">
+          {console.log('updatedRrule', state.updatedRrule)}
           <RRuleGenerator
-            // onChange={(rrule) => console.log(`RRule changed, now it's ${rrule}`)}
             key="rrulegenerator"
             onChange={this.handleRruleChange}
             name="rrule"
@@ -748,7 +764,7 @@ export default class EditForm extends React.Component {
           <div className="all-day-checkbox-container">
             <RoundCheckbox
               id="allday-checkmark"
-              checked={state.allDay}
+              checked={state.allDay || false}
               onChange={this.handleCheckboxChange}
               label="All day"
             />
@@ -832,110 +848,10 @@ export default class EditForm extends React.Component {
     );
   };
 
-  renderFindATime = () => {
-    const { props } = this;
-    const visibleEvents = props.visibleEvents;
-
-    return (
-      <DragAndDropCalendar
-        localizer={localizer}
-        events={visibleEvents}
-        defaultView={'week'}
-        views={{
-          week: true,
-        }}
-        popup
-        eventPropGetter={event => ({
-          className: this.generateBarColor(event.colorId, event.isAllDay),
-        })}
-      />
-    );
-  };
-
   handleChangeTab = (event, tabLabel) => {
     this.setState({
       activeTab: tabLabel,
     });
-  };
-
-  renderTab = activeTab => {
-    switch (activeTab) {
-      case 'Details':
-        return this.renderAddDetails();
-        break;
-      case 'Find a Time':
-        return this.renderFindATime();
-        break;
-      default:
-        return <h1>Error</h1>;
-        break;
-    }
-  };
-
-  CustomToolbar = toolbar => {
-    const goToBack = () => {
-      toolbar.date.setDate(toolbar.date.getDate() - 1);
-      toolbar.onNavigate('<');
-    };
-
-    const goToNext = () => {
-      toolbar.date.setDate(toolbar.date.getDate() + 1);
-      toolbar.onNavigate('>');
-    };
-
-    const label = () => {
-      const date = moment(toolbar.date);
-      return (
-        <span className={'sidebar-label'}>
-          {date.format('MMM')} {date.format('DD')}, {date.format('YYYY')}
-        </span>
-      );
-    };
-
-    return (
-      <div className={'rbc-toolbar'}>
-        {label()}
-        <div className={'rbc-navigate'}>
-          <button className={'rbc-navigate-btn'} onClick={goToBack}>
-            &#8249;
-          </button>
-          <button className={'rbc-navigate-btn'} onClick={goToNext}>
-            &#8250;
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  generateBarColor = (color, isAllDay) => {
-    if (isAllDay) {
-      return color ? `event-bar-allday--${color}` : 'event-bar-allday--blue';
-    } else {
-      return color ? `event-bar--${color}` : 'event-bar--blue';
-    }
-  };
-
-  renderCalendar = props => {
-    const visibleEvents = props.visibleEvents;
-    return (
-      <DragAndDropCalendar
-        // have to use .props here somehow, should not have to use it.
-        defaultDate={new Date(this.state.updatedStartDateTime).props}
-        localizer={localizer}
-        events={visibleEvents}
-        defaultView={'day'}
-        views={{
-          day: true,
-        }}
-        popup
-        eventPropGetter={event => ({
-          className: this.generateBarColor(event.colorId, event.isAllDay),
-        })}
-        components={{
-          toolbar: this.CustomToolbar,
-        }}
-      />
-    );
   };
 
   render() {
@@ -943,45 +859,45 @@ export default class EditForm extends React.Component {
 
     if (state.start.dateTime !== undefined && state.start.dateTime !== undefined) {
       return (
-        <Fragment>
-          <Dialog onClose={this.backToCalendar} open={props.parentPropState} maxWidth="lg">
-            <DialogContent>
-              <div className="calendar">
-                <div className="add-form-main-panel-container">
-                  <div className="add-form-main-panel">
-                    {/* Add form header */}
-                    <div className="add-form-header">
-                      {/* Event Title Input */}
-                      <EventTitle
-                        type="text"
-                        value={state.title}
-                        name="title"
-                        placeholder="Untitled event"
-                        onChange={this.handleChange}
-                      />
-                    </div>
-
-                    {/* Main edit event page*/}
-                    {this.renderAddDetails()}
+        <Dialog onClose={this.backToCalendar} open={props.parentPropState} maxWidth="md">
+          <DialogContent>
+            {state.confirmationPopup ? this.renderPopup() : null}
+            <div className="calendar">
+              <div className="add-form-main-panel-container">
+                <div className="add-form-main-panel">
+                  {/* Add form header */}
+                  <div className="add-form-header">
+                    {/* Event Title Input */}
+                    <EventTitle
+                      type="text"
+                      value={state.title}
+                      name="title"
+                      placeholder="Untitled event"
+                      onChange={this.handleChange}
+                    />
                   </div>
+
+                  {/* Main edit event page*/}
+                  {this.renderAddDetails()}
                 </div>
               </div>
-            </DialogContent>
-            <DialogActions>
-              {/* Save/Cancel buttons */}
-              <div className="add-form-button-group">
-                <BigButton variant="big-white" onClick={this.backToCalendar}>
-                  Cancel
-                </BigButton>
-                <BigButton variant="big-blue" onClick={this.handleEditEvent}>
-                  Save
-                </BigButton>
-              </div>
-            </DialogActions>
-          </Dialog>
-        </Fragment>
+            </div>
+          </DialogContent>
+          <DialogActions>
+            {/* Save/Cancel buttons */}
+            <div className="add-form-button-group">
+              <BigButton variant="big-white" onClick={this.backToCalendar}>
+                Cancel
+              </BigButton>
+              <BigButton variant="big-blue" onClick={this.handleEditEvent}>
+                Save
+              </BigButton>
+            </div>
+          </DialogActions>
+        </Dialog>
       );
+    } else {
+      return null;
     }
-    return null;
   }
 }

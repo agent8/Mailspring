@@ -136,7 +136,7 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       vcalendar.addSubcomponent(findingEditedComp[0]);
     }
   });
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
 };
 
 export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, updatedObject) => {
@@ -148,7 +148,7 @@ export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, 
   // Remove Timezone data as there might be duplicates.
   // const timezoneMetadata = vcalendar.getFirstSubcomponent('vtimezone');
   // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
-  const tzid = eventObject.dataValues.start.timezone;
+  const tzid = eventObject.start.timezone;
   const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
   const jcalTimezoneData = ICAL.parse(icalTimezoneData);
   const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
@@ -226,7 +226,7 @@ export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, 
   vcalendar.addSubcomponent(vevent);
   vcalendar.addSubcomponent(timezoneMetadata);
   // debugger;
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
 };
 
 export const buildICALStringUpdateSingleEvent = (
@@ -244,7 +244,7 @@ export const buildICALStringUpdateSingleEvent = (
   // Remove Timezone data as there might be duplicates.
   // const timezoneMetadata = calendarComp.getFirstSubcomponent('vtimezone');
   // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
-  const tzid = calendarObject.dataValues.start.timezone;
+  const tzid = calendarObject.start.timezone;
   const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
   const jcalTimezoneData = ICAL.parse(icalTimezoneData);
   const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
@@ -331,7 +331,7 @@ export const buildICALStringUpdateSingleEvent = (
   calendarComp.addSubcomponent(timezoneMetadata);
 
   // debugger;
-  return calendarComp.toString();
+  return updateIcalString(calendarComp.toString());
 };
 
 export const buildICALStringUpdateAllRecurEvent = (
@@ -346,7 +346,7 @@ export const buildICALStringUpdateAllRecurEvent = (
   // Remove Timezone data as there might be duplicates.
   // const timezoneMetadata = vcalendar.getFirstSubcomponent('vtimezone');
   // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
-  const tzid = eventObject.dataValues.start.timezone;
+  const tzid = eventObject.start.timezone;
   const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
   const jcalTimezoneData = ICAL.parse(icalTimezoneData);
   const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
@@ -426,7 +426,7 @@ export const buildICALStringUpdateAllRecurEvent = (
   vcalendar.removeSubcomponent(recurringMaster);
   vcalendar.addSubcomponent(vevent);
   vcalendar.addSubcomponent(timezoneMetadata);
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
 };
 
 export const buildICALStringUpdateFutureRecurMasterEvent = (
@@ -441,7 +441,7 @@ export const buildICALStringUpdateFutureRecurMasterEvent = (
   // Remove Timezone data as there might be duplicates.
   // const timezoneMetadata = vcalendar.getFirstSubcomponent('vtimezone');
   // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
-  const tzid = eventObject.dataValues.start.timezone;
+  const tzid = eventObject.start.timezone;
   const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
   const jcalTimezoneData = ICAL.parse(icalTimezoneData);
   const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
@@ -560,7 +560,7 @@ export const buildICALStringUpdateFutureRecurMasterEvent = (
   vcalendar.addSubcomponent(vevent);
   recurringChildren.forEach(e => vcalendar.addSubcomponent(e));
   vcalendar.addSubcomponent(timezoneMetadata);
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
 };
 
 export const buildICALStringUpdateFutureRecurCreateEvent = (
@@ -575,7 +575,7 @@ export const buildICALStringUpdateFutureRecurCreateEvent = (
   // Remove Timezone data as there might be duplicates.
   // const timezoneMetadata = vcalendar.getFirstSubcomponent('vtimezone');
   // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
-  const tzid = eventObject.dataValues.start.timezone;
+  const tzid = eventObject.start.timezone;
   const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
   const jcalTimezoneData = ICAL.parse(icalTimezoneData);
   const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
@@ -735,7 +735,7 @@ export const buildICALStringUpdateFutureRecurCreateEvent = (
   vcalendar.addSubcomponent(vevent);
   recurringChildren.forEach(e => vcalendar.addSubcomponent(e));
   vcalendar.addSubcomponent(timezoneMetadata);
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
 };
 
 export const buildICALStringCreateRecurEvent = (eventObject, rpObject) => {
@@ -815,7 +815,7 @@ export const buildICALStringCreateRecurEvent = (eventObject, rpObject) => {
   const rrule = new ICAL.Recur(rpObject);
   vevent.updatePropertyWithValue('rrule', rrule);
   vcalendar.addSubcomponent(vevent);
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
 };
 
 export const buildICALStringCreateEvent = eventObject => {
@@ -897,7 +897,7 @@ export const buildICALStringCreateEvent = eventObject => {
 
   vevent.updatePropertyWithValue('location', eventObject.location);
   vcalendar.addSubcomponent(vevent);
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
 };
 
 export const editICALStringRecurringToSingle = (updatedData, masterEventData) => {
@@ -907,7 +907,7 @@ export const editICALStringRecurringToSingle = (updatedData, masterEventData) =>
   // Remove Timezone data as there might be duplicates.
   // const timezoneMetadata = calendarComp.getFirstSubcomponent('vtimezone');
   // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
-  const tzid = masterEventData.dataValues.start.timezone;
+  const tzid = masterEventData.start.timezone;
   const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
   const jcalTimezoneData = ICAL.parse(icalTimezoneData);
   const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
@@ -966,5 +966,21 @@ export const editICALStringRecurringToSingle = (updatedData, masterEventData) =>
   vcalendar.addSubcomponent(timezoneMetadata);
 
   // debugger;
-  return vcalendar.toString();
+  return updateIcalString(vcalendar.toString());
+};
+
+// append a Z at the end of the RRule, might have better way to do this
+const updateIcalString = iCalString => {
+  let originalUNTILrrule = iCalString.match(
+    /UNTIL=\d{4}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])T([0-1]\d|2[0-3])[0-5]\d[0-5]\dZ?/g
+  );
+  // second expression short circuits if res isn't null
+  if (originalUNTILrrule === null || originalUNTILrrule[originalUNTILrrule.length - 1] === 'Z') {
+    return iCalString;
+  } else if (originalUNTILrrule[originalUNTILrrule.length - 1] !== 'Z') {
+    let updatedUNTILrrule = originalUNTILrrule + 'Z';
+    let updatedICalString = iCalString.replace(originalUNTILrrule, updatedUNTILrrule);
+    return updatedICalString;
+  }
+  return iCalString;
 };

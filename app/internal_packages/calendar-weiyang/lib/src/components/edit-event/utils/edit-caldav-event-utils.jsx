@@ -3,15 +3,36 @@ import uuidv4 from 'uuid';
 import moment from 'moment-timezone';
 import * as IcalStringBuilder from '../../common-utils/ical-string-builder';
 import * as PARSER from '../../common-utils/parser';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
+import {
+  DELETE_ALL_RECURRING_EVENTS,
+  DELETE_NON_MASTER_EVENTS,
+  GET_ALL_EVENT,
+  GET_MASTER_EVENT,
+  UPDATE_ICALSTRING,
+  UPDATE_MASTER_EVENT,
+  UPDATE_RECURRENCE_PATTERN,
+  UPDATE_SINGLE_EVENT,
+  UPSERT_RECURRENCE_PATTERN,
+} from '../../constants';
+const dav = require('dav');
 
 export const editCalDavSingle = async payload => {
+  console.log('entered editcaldavsingle');
   const debug = false;
   try {
     let iCalString;
 
     // #region Getting information
-    // Get Information (Sequlize)
-    const data = await dbEventActions.getOneEventById(payload.id);
+    // Get Information from flux store
+    const [data] = CalendarPluginStore.getIcloudCalendarData().filter(
+      event => event.id === payload.id
+    );
+    // no event found
+    if (data === undefined) {
+      console.log('error');
+      return;
+    }
     const { user } = payload;
     // #endregion
 
@@ -25,7 +46,7 @@ export const editCalDavSingle = async payload => {
     // Parse user information from account layer to dav object.
     const xhrObject = new dav.transport.Basic(
       new dav.Credentials({
-        username: user.email,
+        username: user.username,
         password: user.password,
       })
     );
@@ -37,31 +58,26 @@ export const editCalDavSingle = async payload => {
 
     // #region Updating of Single event, based on Recurring or not
     if (payload.isRecurring) {
-      if (debug) {
-        const resultCheck = await dbRpActions.getOneRpByOId(data.iCalUID);
-        console.log(resultCheck.toJSON());
+      const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
+        rp => data.iCalUID === rp.iCalUID
+      );
+      if (recurrencePattern === undefined) {
+        console.log('error');
+        return;
       }
-
-      dbRpActions.addRecurrenceIdsByOid(data.iCalUID, data.start.dateTime);
-      const recurrence = await dbRpActions.getOneRpByOId(data.iCalUID);
-      const recurrencePattern = recurrence.toJSON();
-
       // Builds the iCal string
       iCalString = IcalStringBuilder.buildICALStringUpdateRecurEvent(
         recurrencePattern,
         data,
         payload
       );
-      if (debug) {
-        console.log(iCalString);
-      }
-      // console.log(iCalString);
-      // debugger;
+
       // Due to how there is no master,
       // We need to ensure all events that are part of the series
       // have the same iCal string such that we do not have inconsistency.
-      // Run a db query, to update them all to the new iCalString.
-      await dbEventActions.updateEventiCalString(data.iCalUID, iCalString);
+      // Update them all to the new iCalString.
+      const toBeEditedIcalstring = { iCALString: iCalString };
+      Actions.updateIcloudCalendarData(data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
     } else if (!payload.isRecurring && payload.updatedIsRecurring) {
       // if event is originally single and is going to become recurring
       iCalString = IcalStringBuilder.buildICALStringUpdateSingleEvent(
@@ -69,12 +85,8 @@ export const editCalDavSingle = async payload => {
         data,
         payload.updatedRrule
       );
-      // console.log(iCalString);
-      // debugger;
     } else {
       iCalString = IcalStringBuilder.buildICALStringUpdateSingleEvent(payload, data);
-      // console.log(iCalString);
-      // debugger;
     }
     // #endregion
 
@@ -85,11 +97,7 @@ export const editCalDavSingle = async payload => {
       masterEvent.isRecurring = 1;
       masterEvent.isMaster = 1;
       masterEvent.iCALString = iCalString;
-      console.log(masterEvent);
-      // debugger;
-      // eslint-disable-next-line no-underscore-dangle
       const rruleObj = ICAL.Recur._stringToData(payload.updatedRrule);
-      // debugger;
       let untilJson;
       if (rruleObj.until !== undefined) {
         untilJson = rruleObj.until.toJSON();
@@ -113,22 +121,11 @@ export const editCalDavSingle = async payload => {
           },
         },
       ]);
-      const expandedRecurrEvents = PARSER.parseRecurrence(recurrencePattern[0], masterEvent);
-      await dbRpActions.insertOrUpdateRp(recurrencePattern[0]);
-      await Promise.all(
-        expandedRecurrEvents.map(event => dbEventActions.insertEventsIntoDatabase(event))
-      );
-    } else {
-      // all other edit single event
-      await dbEventActions.updateEventById(payload.id, {
-        summary: payload.title,
-        allDay: payload.allDay,
-      });
-    }
+      const expandedRecurEvents = PARSER.parseRecurrence(recurrencePattern[0], masterEvent);
+      CalendarPluginStore.updateIcloudRpLists(recurrencePattern[0], UPSERT_RECURRENCE_PATTERN);
 
-    if (debug) {
-      const alldata = await dbEventActions.getAllEvents();
-      console.log(alldata.map(e => e.toJSON()));
+      // add expanded events into reflux
+      Actions.addIcloudCalendarData(expandedRecurEvents);
     }
     // #endregion
 
@@ -140,42 +137,26 @@ export const editCalDavSingle = async payload => {
       calendarData: iCalString,
     };
     // Result will throw error, we can do a seperate check here if needed.
-    const result = await dav.updateCalendarObject(calendarObject, option);
-    if (debug) {
-      console.log(result);
-    }
+    await dav.updateCalendarObject(calendarObject, option);
     // #endregion
   } catch (error) {
-    console.log('(editCalDavSingle) Error, retrying with pending action!', error, payload.id);
+    console.log('(editCalDavSingle) Error', error, payload.id);
   }
-
-  // retrieve event from server and force resync the db
-  // #region
-  const allEvents = await asyncGetAllCalDavEvents(
-    payload.user.email,
-    payload.user.password,
-    payload.user.principalUrl,
-    payload.user.caldavType
-  );
-
-  // filter out events with the same iCalUID (under the same recurrence series)
-  const updatedEvents = allEvents.filter(event => event.iCalUID === payload.iCalUID);
-  await Promise.all(updatedEvents.map(event => dbEventActions.insertEventsIntoDatabase(event)));
-  // #endregion
-
-  payload.props.history.push('/');
-  return {
-    providerType: Providers.EXCHANGE,
-    user: payload.user,
-  };
 };
 
 export const editCalDavAllRecurrenceEvents = async payload => {
   const debug = false;
   try {
     // #region Getting information
-    // Get Information (Sequlize)
-    const data = await dbEventActions.getOneEventById(payload.id);
+    // Get Information from flux store
+    const [data] = CalendarPluginStore.getIcloudCalendarData().filter(
+      event => event.id === payload.id
+    );
+    // no event found
+    if (data === undefined) {
+      console.log('error');
+      return;
+    }
     const { user } = payload;
     // #endregion
 
@@ -189,7 +170,7 @@ export const editCalDavAllRecurrenceEvents = async payload => {
     // Parse user information from account layer to dav object.
     const xhrObject = new dav.transport.Basic(
       new dav.Credentials({
-        username: user.email,
+        username: user.username,
         password: user.password,
       })
     );
@@ -209,20 +190,18 @@ export const editCalDavAllRecurrenceEvents = async payload => {
     // recur -> single
     if (!payload.updatedIsRecurring) {
       // delete recurrencePattern
-      await dbRpActions.deleteRpByiCalUID(data.iCalUID);
-
+      CalendarPluginStore.deleteIcloudRpLists(data.iCalUID);
       // retrieve master
-      const masterEvent = await dbEventActions.getMasterEventByRecurringEventId(
-        data.recurringEventId
+      const [masterEvent] = CalendarPluginStore.getIcloudCalendarData().filter(
+        event => event.isMaster && event.recurringEventId === data.recurringEventId
       );
       // delete non-master
-      await dbEventActions.deleteAllNonMasterEventsByRecurringEventId(data.recurringEventId);
-
+      Actions.deleteIcloudCalendarData(data.recurringEventId, DELETE_NON_MASTER_EVENTS);
       // update iCal string
       iCalString = IcalStringBuilder.editICALStringRecurringToSingle(payload, masterEvent);
 
       // update db
-      await dbEventActions.updateEventById(masterEvent.id, {
+      const toBeEditedData = {
         summary: payload.title,
         description: payload.description,
         allDay: payload.allDay,
@@ -235,13 +214,13 @@ export const editCalDavAllRecurrenceEvents = async payload => {
         isRecurring: false,
         isMaster: null,
         iCALString: iCalString,
-      });
+      };
+      Actions.updateIcloudCalendarData(masterEvent.id, toBeEditedData, UPDATE_MASTER_EVENT);
     } else {
       // Get recurring pattern to build new iCal string for updating
-      const recurrence = await dbRpActions.getOneRpByOId(data.iCalUID);
-      const recurrencePattern = recurrence.toJSON();
-
-      // eslint-disable-next-line no-underscore-dangle
+      const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
+        rp => rp.originalId === data.iCalUID
+      );
       const jsonRecurr = ICAL.Recur._stringToData(payload.rrule);
       if (jsonRecurr.until !== undefined) {
         jsonRecurr.until.adjust(1, 0, 0, 0, 0);
@@ -299,7 +278,7 @@ export const editCalDavAllRecurrenceEvents = async payload => {
         }
       }
 
-      await dbRpActions.updateRpByOid(data.iCalUID, {
+      const toBeEditedRp = {
         freq: jsonRecurr.freq,
         interval: jsonRecurr.interval ? jsonRecurr.interval : 1,
         iCALString: payload.rrule,
@@ -308,7 +287,13 @@ export const editCalDavAllRecurrenceEvents = async payload => {
         recurrenceIds: recurrenceIds.join(','),
         ...(jsonRecurr.count && { numberOfRepeats: jsonRecurr.count }),
         ...(jsonRecurr.until && { until: jsonRecurr.until.toUnixTime() }),
-      });
+      };
+      // update specific recurrence pattern via data.iCalUID
+      CalendarPluginStore.updateIcloudRpLists(
+        toBeEditedRp,
+        UPDATE_RECURRENCE_PATTERN,
+        data.iCalUID
+      );
 
       // Builds the iCal string
       iCalString = IcalStringBuilder.buildICALStringUpdateAllRecurEvent(jsonRecurr, data, payload);
@@ -320,59 +305,28 @@ export const editCalDavAllRecurrenceEvents = async payload => {
       // We need to ensure all events that are part of the series
       // have the same iCal string such that we do not have inconsistency.
       // Run a db query, to update them all to the new iCalString.
-      await dbEventActions.updateEventiCalString(data.iCalUID, iCalString);
+      const toBeEditedIcalstring = { iCALString: iCalString };
+      Actions.updateIcloudCalendarData(data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
 
       // However, we need to run an update on all the events that are not edited
       // to ensure that all the fields are updated
       // TO-DO, ADD MORE FIELDS HERE
 
-      // const allSpecificRecurringEvent = await nonEditedRecurringEvent.exec();
-      // console.log(allSpecificRecurringEvent);
-      const allSpecificRecurringEvent = await dbEventActions.getAllEventByOriginalId(
-        payload.originalId
-      );
-
-      const newData = allSpecificRecurringEvent
-        .map(e => e.toJSON())
-        .filter(e => {
-          const dt = moment.tz(e.start.dateTime, e.start.timezone);
-          for (let index = 0; index < recurrencePattern.recurrenceIds.length; index += 1) {
-            const element = moment.tz(recurrencePattern.recurrenceIds[index], e.start.timezone);
-            if (element.isSame(dt)) {
-              return false;
-            }
-          }
-          return true;
-        });
-
-      await Promise.all(
-        newData.map(
-          e =>
-            dbEventActions.updateEventByiCalUIDandStartDateTime(
-              payload.originalId,
-              e.start.dateTime
-            ),
-          {
-            summary: payload.title,
-          }
-        )
-      );
-
       // #region Delete away all old previous data
-      await dbEventActions.deleteEventByOriginaliCalUID(data.iCalUID);
+      Actions.deleteIcloudCalendarData(data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
 
       // #region Updating Calendar, Local Side
       // The idea here is using the new iCalString generated, to create the new events to parse in.
       // So we first expand events based off the updated recurrence pattern and master.
-      // After that, we append it into the events db for the redux to pick up and update.
-      const oldFutureResults = await PARSER.parseCalendarData(
+      // After that, we append it into the reflux store
+      const oldFutureResults = PARSER.parseCalendarData(
         iCalString,
         etag,
         caldavUrl,
         calendarId,
         payload.colorId
       );
-      const oldExpanded = await PARSER.expandRecurEvents(
+      const oldExpanded = PARSER.expandRecurEvents(
         oldFutureResults.map(calEvent => calEvent.eventData)
       );
       const oldFinalResult = [
@@ -381,14 +335,12 @@ export const editCalDavAllRecurrenceEvents = async payload => {
           .filter(e => e.recurData === undefined || e.recurData === null)
           .map(e => e.eventData),
       ];
-      await oldFinalResult.forEach(newEvent => {
-        newEvent.owner = user.email;
+      oldFinalResult.forEach(newEvent => {
+        newEvent.owner = user.username;
         newEvent.caldavType = user.caldavType;
-
-        dbEventActions.insertEventsIntoDatabase(newEvent);
       });
+      Actions.addIcloudCalendarData(oldFinalResult);
     }
-
     // #endregion
 
     // #region Updating Calendar, Server Side
@@ -396,40 +348,31 @@ export const editCalDavAllRecurrenceEvents = async payload => {
       url: caldavUrl,
       calendarData: iCalString,
     };
-
     // Result will throw error, we can do a seperate check here if needed.
-    const result = await dav.updateCalendarObject(calendarObject, option);
-    if (debug) {
-      console.log(result);
-    }
+    await dav.updateCalendarObject(calendarObject, option);
     // #endregion
-
-    const allEvents = await dbEventActions.getAllEvents();
-    const allRp = await dbRpActions.getAllRp();
-    if (debug) {
-      console.log(allEvents, allRp);
-    }
   } catch (error) {
     console.log(
       '(editCalDavAllRecurrenceEvents) Error, retrying with pending action!',
       error,
       payload.id
     );
-    // debugger;
   }
-  payload.props.history.push('/');
-  return {
-    providerType: Providers.EXCHANGE,
-    user: payload.user,
-  };
 };
 
 export const editCalDavAllFutureRecurrenceEvents = async payload => {
   const debug = false;
   try {
     // #region Getting information
-    // Get Information (Sequlize)
-    const data = await dbEventActions.getOneEventById(payload.id);
+    // Get Information from flux store
+    const [data] = CalendarPluginStore.getIcloudCalendarData().filter(
+      event => event.id === payload.id
+    );
+    // no event found
+    if (data === undefined) {
+      console.log('error');
+      return;
+    }
     const { user } = payload;
     // #endregion
 
@@ -443,7 +386,7 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
     // Parse user information from account layer to dav object.
     const xhrObject = new dav.transport.Basic(
       new dav.Credentials({
-        username: user.email,
+        username: user.username,
         password: user.password,
       })
     );
@@ -455,19 +398,15 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
     // #endregion
 
     // #region Recurrence Pattern updating
-    const recurPattern = await dbRpActions.getOneRpByOId(data.iCalUID);
-    const pattern = recurPattern.toJSON();
-    if (debug) {
-      console.log(recurPattern.toJSON());
-    }
-
+    const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
+      rp => rp.originalId === data.iCalUID
+    );
     const updatedId = uuidv4();
     const updatedUid = uuidv4();
 
     const oldRecurringPattern = {};
     const newRecurrencePattern = {};
 
-    // eslint-disable-next-line no-underscore-dangle
     const jsonRecurr = ICAL.Recur._stringToData(payload.rrule);
     if (jsonRecurr.until !== undefined) {
       jsonRecurr.until.adjust(1, 0, 0, 0, 0);
@@ -496,11 +435,11 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
       id: updatedId,
       originalId: updatedUid,
       // // Temp take from the recurrence master first, will take from the UI in future.
-      freq: pattern.freq,
+      freq: recurrencePattern.freq,
       // interval: pattern.interval,
       interval: payload.recurrInterval,
       until: payload.untilDate,
-      exDates: pattern.exDates
+      exDates: recurrencePattern.exDates
         .split(',')
         .map(str => parseInt(str, 10))
         .filter(exDate =>
@@ -509,7 +448,7 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
             .isAfter(moment.tz(data.start.dateTime * 1000, data.start.timezone))
         )
         .join(','),
-      recurrenceIds: pattern.recurrenceIds
+      recurrenceIds: recurrencePattern.recurrenceIds
         .split(',')
         .map(str => parseInt(str, 10))
         .filter(recurrId =>
@@ -528,19 +467,20 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
     });
 
     if (
-      (pattern.until === undefined || pattern.until === null) &&
-      (pattern.numberOfRepeats === undefined || pattern.numberOfRepeats === null)
+      (recurrencePattern.until === undefined || recurrencePattern.until === null) &&
+      (recurrencePattern.numberOfRepeats === undefined ||
+        recurrencePattern.numberOfRepeats === null)
     ) {
       // No end condition for this, figure out later LOL
-    } else if (pattern.until === undefined || pattern.until === null) {
+    } else if (recurrencePattern.until === undefined || recurrencePattern.until === null) {
       // Parse deleted and edited instances over.
       const exDates = [];
-      if (pattern.exDates !== undefined && pattern.exDates !== null) {
-        if (typeof pattern.exDates === 'number') {
-          exDates.push(pattern.exDates);
+      if (recurrencePattern.exDates !== undefined && recurrencePattern.exDates !== null) {
+        if (typeof recurrencePattern.exDates === 'number') {
+          exDates.push(recurrencePattern.exDates);
         } else {
           exDates.push(
-            ...pattern.exDates
+            ...recurrencePattern.exDates
               .split(',')
               .map(str => parseInt(str, 10))
               .filter(exDate =>
@@ -553,12 +493,13 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
       }
 
       const recurrenceIds = [];
-      if (pattern.recurrenceIds !== undefined && pattern.recurrenceIds !== null) {
-        if (typeof pattern.recurrenceIds === 'number') {
-          recurrenceIds.push(pattern.recurrenceIds);
+      // eslint-disable-next-line prettier/prettier
+      if (recurrencePattern.recurrenceIds !== undefined && recurrencePattern.recurrenceIds !== null) {
+        if (typeof recurrencePattern.recurrenceIds === 'number') {
+          recurrenceIds.push(recurrencePattern.recurrenceIds);
         } else {
           recurrenceIds.push(
-            ...pattern.recurrenceIds
+            ...recurrencePattern.recurrenceIds
               .split(',')
               .map(str => parseInt(str, 10))
               .filter(recurrenceId =>
@@ -579,13 +520,13 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
       // We also need to ensure that the id is the same due to updating of database.
       // Originalid is the caldavUID given by the server.
       Object.assign(oldRecurringPattern, {
-        id: pattern.id,
-        originalId: pattern.originalId,
-        freq: pattern.freq,
-        interval: pattern.interval,
+        id: recurrencePattern.id,
+        originalId: recurrencePattern.originalId,
+        freq: recurrencePattern.freq,
+        interval: recurrencePattern.interval,
         exDates: exDates.join(','),
         recurrenceIds: recurrenceIds.join(','),
-        recurringTypeId: pattern.recurringTypeId,
+        recurringTypeId: recurrencePattern.recurringTypeId,
         until: moment
           .tz(data.start.dateTime * 1000, data.start.timezone)
           .subtract(1, 'second')
@@ -602,7 +543,7 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
       // As we editing this event, we need the minus one.
       const ruleSet = PARSER.buildRuleSet(
         oldRecurringPattern,
-        pattern.recurringTypeId,
+        recurrencePattern.recurringTypeId,
         data.start.timezone
       );
       // Recur Dates only hold events and not exceptions.
@@ -624,15 +565,17 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
         isCount: true,
       });
 
-      await dbRpActions.updateRpByOid(data.iCalUID, {
+      const toBeEditedRp1 = {
         numberOfRepeats: recurDates.length - 1, // Old RP needs to repeat till the selected event minus one.
         isCount: true,
-      });
+      };
+      // eslint-disable-next-line prettier/prettier
+      CalendarPluginStore.updateIcloudRpLists(toBeEditedRp1, UPDATE_RECURRENCE_PATTERN, data.iCalUID)
     } else {
       // Here, we assign the end condition for our recurrence pattern.
       // We set the until, and the UI will take care of the rest.
       Object.assign(newRecurrencePattern, {
-        until: pattern.until,
+        until: recurrencePattern.until,
         isCount: false,
       });
 
@@ -645,12 +588,12 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
 
       // Parse deleted and edited instances over.
       const exDates = [];
-      if (pattern.exDates !== undefined && pattern.exDates !== null) {
-        if (typeof pattern.exDates === 'number') {
-          exDates.push(pattern.exDates);
+      if (recurrencePattern.exDates !== undefined && recurrencePattern.exDates !== null) {
+        if (typeof recurrencePattern.exDates === 'number') {
+          exDates.push(recurrencePattern.exDates);
         } else {
           exDates.push(
-            ...pattern.exDates
+            ...recurrencePattern.exDates
               .split(',')
               .map(str => parseInt(str, 10))
               .filter(exDate =>
@@ -663,12 +606,13 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
       }
 
       const recurrenceIds = [];
-      if (pattern.recurrenceIds !== undefined && pattern.recurrenceIds !== null) {
-        if (typeof pattern.recurrenceIds === 'number') {
-          recurrenceIds.push(pattern.recurrenceIds);
+      // eslint-disable-next-line prettier/prettier
+      if (recurrencePattern.recurrenceIds !== undefined && recurrencePattern.recurrenceIds !== null) {
+        if (typeof recurrencePattern.recurrenceIds === 'number') {
+          recurrenceIds.push(recurrencePattern.recurrenceIds);
         } else {
           recurrenceIds.push(
-            ...pattern.recurrenceIds
+            ...recurrencePattern.recurrenceIds
               .split(',')
               .map(str => parseInt(str, 10))
               .filter(recurrenceId =>
@@ -682,46 +626,39 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
 
       // Update the old pattern to the start date of the selected event.
       // Ensure that the exdate and recurrenceid does not have duplicates.
-      await dbRpActions.updateRpByOid(data.iCalUID, {
+      const toBeEditedRp2 = {
         until: updatedUntil,
         isCount: false,
         exDates: exDates.join(','),
         recurrenceIds: recurrenceIds.join(','),
-      });
+      };
+      // eslint-disable-next-line prettier/prettier
+      CalendarPluginStore.updateIcloudRpLists(toBeEditedRp2, UPDATE_RECURRENCE_PATTERN, data.iCalUID);
     }
     // Debug, also meant for generating the new icalstring based off the recurrence pattern.
     // const updatedOldRecurPattern = await recurPatternQuery.exec();
-    const updatedOldRecurPattern = await dbRpActions.getOneRpByOId(data.iCalUID);
-    const updatedOldPattern = updatedOldRecurPattern.toJSON();
-    if (debug) {
-      console.log(updatedOldPattern);
-    }
+    const [updatedOldPattern] = CalendarPluginStore.getIcloudRpLists().filter(
+      rp => rp.originalId === data.iCalUID
+    );
     // Builds the old iCal string, which has edited based off the recurring pattern.
     const oldiCalString = IcalStringBuilder.buildICALStringUpdateFutureRecurMasterEvent(
       updatedOldPattern,
       data,
       payload
     );
-    if (debug) {
-      console.log(oldiCalString);
-    }
     // Builds the new iCal string, which has been created based off the recurring pattern.
     const newiCalString = IcalStringBuilder.buildICALStringUpdateFutureRecurCreateEvent(
       newRecurrencePattern,
       data,
       payload
     );
-    if (debug) {
-      console.log(newiCalString);
-      console.log('New Recurrence Pattern: ', newRecurrencePattern);
-    }
-    // Insert the new recurrence pattern into database, as it is new, should not have any issues.
-    await dbRpActions.insertOrUpdateRp(newRecurrencePattern);
+    // insert the new recurrence pattern into database, as it is new, should not have any issues.
+    CalendarPluginStore.updateIcloudRpLists(newRecurrencePattern, UPSERT_RECURRENCE_PATTERN);
 
     // Update the old recurrence pattern with the new iCalString.
-    await dbRpActions.updateRpByOid(data.iCalUID, {
-      iCALString: updatedOldPattern.iCALString,
-    });
+    const toBeEditedCalstring = { iCALString: updatedOldPattern.iCALString };
+    // eslint-disable-next-line prettier/prettier
+    CalendarPluginStore.updateIcloudRpLists(toBeEditedCalstring, UPDATE_RECURRENCE_PATTERN, data.iCalUID);
     // #endregion
 
     // #region Updating Calendar, Server Side
@@ -776,13 +713,13 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
     // #endregion
 
     // #region Delete away all old previous data
-    await dbEventActions.deleteEventByOriginaliCalUID(iCalUID);
+    Actions.deleteIcloudCalendarData(iCalUID, DELETE_ALL_RECURRING_EVENTS);
     // #endregion
 
     // #region Updating Calendar, Local Side
-    // The idea here is using the new iCalString generated, to create the new events to parse in.
+    // The idea here is using the old iCalString generated, to create the new events to parse in.
     // So we first expand events based off the updated recurrence pattern and master.
-    // After that, we append it into the events db for the redux to pick up and update.
+    // After that, we append it into the reflux store
     const oldFutureResults = PARSER.parseCalendarData(oldiCalString, etag, caldavUrl, calendarId);
     const oldExpanded = await PARSER.expandRecurEvents(
       oldFutureResults.map(calEvent => calEvent.eventData)
@@ -793,20 +730,13 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
         .filter(e => e.recurData === undefined || e.recurData === null)
         .map(e => e.eventData),
     ];
-    const oldFinalResultPromises = oldFinalResult.map(newEvent => {
-      newEvent.owner = user.email;
+    oldFinalResult.forEach(newEvent => {
+      newEvent.owner = user.username;
       newEvent.caldavType = user.caldavType;
-
-      return dbEventActions.insertEventsIntoDatabase(newEvent);
     });
+    Actions.addIcloudCalendarData(oldFinalResult);
     // #endregion
 
-    // #region Adding Future Events, Server Side
-    // Here, we are roughly doing the same as the updating the calendar itself.
-    // However, the problem is the the etag is not part of the iCalString.
-    // And as the server does not respond correctly, due to Pg 28 of RFC 4791,
-    // We do a full sync of the items, and match the etags to the event itself.
-    // We sync the caldav url also, just incase.
     const newFutureResults = PARSER.parseCalendarData(
       newiCalString,
       newETag,
@@ -823,29 +753,8 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
         .map(e => e.eventData),
     ];
 
-    // You have to do a full sync as the .ics endpoint might not be valid
-    const allEvents = await asyncGetAllCalDavEvents(user.email, user.password, user.principalUrl);
-    const newFinalResultPromises = newFinalResult.map(newEvent => {
-      newEvent.owner = user.email;
-      return dbEventActions.insertEventsIntoDatabase(newEvent);
-    });
-    const newResult = await Promise.all(newFinalResultPromises);
-    const oldResult = await Promise.all(oldFinalResultPromises);
-    // console.log(newResult.map((e) => e.toJSON()), oldResult.map((e) => e.toJSON()));
-
-    // Here, we update the etag of every event we have appended into the database,
-    // and we update them accordingly after that again.
-    const updateEtag = newResult.map(json => {
-      const foundItem = allEvents.filter(event => event.iCalUID === json.iCalUID)[0];
-      json.caldavType = user.caldavType;
-      json.etag = foundItem.etag;
-      json.caldavUrl = foundItem.caldavUrl;
-      return dbEventActions.insertEventsIntoDatabase(json);
-    });
-
-    // Ensure that all etags have been updated, before going back to the main screen.
-    await Promise.all(updateEtag);
-    // #endregion
+    newFinalResult.forEach(event => (event.owner = user.username));
+    Actions.addIcloudCalendarData(newFinalResult);
   } catch (error) {
     console.log(
       '(editCalDavFutureRecurrenceEventEpics) Error, retrying with pending action!',
@@ -853,9 +762,4 @@ export const editCalDavAllFutureRecurrenceEvents = async payload => {
       payload.id
     );
   }
-  payload.props.history.push('/');
-  return {
-    providerType: Providers.EXCHANGE,
-    user: payload.user,
-  };
 };
