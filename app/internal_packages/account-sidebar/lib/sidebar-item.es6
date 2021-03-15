@@ -442,7 +442,7 @@ class SidebarItem {
       return null;
     }
     const perspective =
-      cats.length === 1
+      cats.length === 1 && accountIds.length === 1
         ? MailboxPerspective.forCategories(cats)
         : MailboxPerspective.forAllSpam(cats);
     let id = 'spam';
@@ -537,7 +537,7 @@ class SidebarItem {
     // `categories` for that account.
     categories = _.compact(categories);
     opts.iconName = 'unread.svg';
-    const perspective = MailboxPerspective.forUnread(categories);
+    const perspective = MailboxPerspective.forUnread(categories, accountIds.length > 1);
     let id = 'Unread';
     if (opts.key) {
       id += `-${opts.key}`;
