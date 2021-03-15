@@ -32,6 +32,12 @@ const _flatMapJoiningMessages = $threadsResultSet => {
   return (
     $threadsResultSet
       .flatMapLatest(threadsResultSet => {
+        // resort order when current folder is [Recently Seen]
+        const current = FocusedPerspectiveStore.current();
+        if (current && current.isRecent) {
+          threadsResultSet._ids = _.intersection(ThreadStore.getRecent(), threadsResultSet._ids);
+        }
+
         const missingIds = threadsResultSet.ids().filter(id => !$messagesResultSets[id]);
         let promise = null;
         if (missingIds.length === 0) {
@@ -79,11 +85,6 @@ const _flatMapJoiningMessages = $threadsResultSet => {
           clone.__messages = clone.__messages.filter(m => !m.isHidden());
           threadsWithMessages[clone.id] = clone;
         });
-
-        const current = FocusedPerspectiveStore.current();
-        if (current && current.isRecent) {
-          threadsResultSet._ids = _.intersection(ThreadStore.getRecent(), threadsResultSet._ids);
-        }
 
         return Rx.Observable.from([
           QueryResultSet.setByApplyingModels(threadsResultSet, threadsWithMessages),
