@@ -5,6 +5,7 @@ import {
   TaskFactory,
   FocusedPerspectiveStore,
   CategoryStore,
+  AccountStore,
 } from 'mailspring-exports';
 import { RetinaImg } from 'mailspring-component-kit';
 const ToolbarCategoryPicker = require('../../category-picker/lib/toolbar-category-picker');
@@ -50,7 +51,32 @@ class ThreadArchiveQuickAction extends React.Component {
   static propTypes = { thread: PropTypes.object };
 
   render() {
-    const allowed = FocusedPerspectiveStore.current().canArchiveThreads([this.props.thread]);
+    let allowed = FocusedPerspectiveStore.current().canArchiveThreads([this.props.thread]);
+    if (allowed) {
+      const accountId = this.props.thread.accountId;
+      const account = AccountStore.accountForId(accountId);
+      const isGmail = account && account.provider === 'gmail';
+      let folder;
+      if (isGmail) {
+        folder = CategoryStore.getCategoryByRole(accountId, 'inbox');
+        if (
+          folder &&
+          this.props.thread.labelIds &&
+          !this.props.thread.labelIds.includes(folder.id)
+        ) {
+          allowed = false;
+        }
+      } else {
+        folder = CategoryStore.getCategoryByRole(accountId, 'archive');
+        if (
+          folder &&
+          this.props.thread.labelIds &&
+          this.props.thread.labelIds.includes(folder.id)
+        ) {
+          allowed = false;
+        }
+      }
+    }
     if (!allowed) {
       // DC-570 [Actions] The actions on last email cannot be active in special steps
       // Don't know why, but if we render a <span/>, the hover will not work as intended

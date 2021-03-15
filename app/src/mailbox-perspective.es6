@@ -183,8 +183,15 @@ export default class MailboxPerspective {
     return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
   }
 
-  static forRecent(categories) {
-    return new RecentMailboxPerspective(categories);
+  static forRecent(accountIds) {
+    if (
+      Array.isArray(accountIds) &&
+      accountIds.length > 0 &&
+      accountIds.every(id => typeof id === 'string')
+    ) {
+      return new RecentMailboxPerspective(accountIds);
+    }
+    return this.forNothing();
   }
 
   static forInboxFocused(categories) {
@@ -1848,12 +1855,14 @@ class AllMailMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 
-class JiraMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(_categories) {
-    super(_categories);
+class JiraMailboxPerspective extends MailboxPerspective {
+  constructor(accountIds) {
+    super(accountIds);
+    this.name = 'Jira';
+    this.iconName = 'jira.svg';
+    this.displayName = 'Jira';
     this._categoryMetaDataAccountId = 'sift';
     this._categoryMetaDataId = 'jira';
-    this.displayName = 'Jira';
   }
   canReceiveFolderTreeData(folderData) {
     return (
@@ -1863,6 +1872,32 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
       this._categoryMetaDataAccountId === folderData.accountId &&
       this._categoryMetaDataId !== folderData.id
     );
+  }
+  getDisplayOrder() {
+    return CategoryStore.getCategoryDisplayOrderInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      id: this._categoryMetaDataId,
+    });
+  }
+  isHidden() {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+    });
+  }
+  hide() {
+    return CategoryStore.hideCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
+  }
+  show() {
+    return CategoryStore.showCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
   }
   unreadCount() {
     let sum = 0;
@@ -1881,25 +1916,59 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
       .order([Thread.attributes.lastMessageTimestamp.descending()])
       .limit(0);
 
-    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
-      // The user has multiple categories in the same account selected, which
-      // means our result set could contain multiple copies of the same threads
-      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
-      // can be /much/ slower and we shouldn't do it if we know we don't need it.
-      query.distinct();
-    }
+    // if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+    //   // The user has multiple categories in the same account selected, which
+    //   // means our result set could contain multiple copies of the same threads
+    //   // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+    //   // can be /much/ slower and we shouldn't do it if we know we don't need it.
+    //   query.distinct();
+    // }
 
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
 }
 
-class RecentMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(_categories) {
-    super(_categories);
-    this._categoryMetaDataAccountId = 'shortcuts';
-    this._categoryMetaDataId = 'recent';
+class RecentMailboxPerspective extends MailboxPerspective {
+  constructor(accountIds) {
+    super(accountIds);
+    this.name = 'Recent';
+    this.iconName = 'history-search.svg';
     this.isRecent = true;
     this.displayName = 'Recent';
+    this._categoryMetaDataId = 'recent';
+    if (accountIds.length === 1 && this.accountIds[0]) {
+      this._categoryMetaDataAccountId = accountIds[0];
+      this._categoryMetaDataId = 'recent';
+    } else {
+      this._categoryMetaDataAccountId = 'shortcuts';
+      this._categoryMetaDataId = 'all-recent';
+    }
+  }
+  getDisplayOrder() {
+    return CategoryStore.getCategoryDisplayOrderInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      id: this._categoryMetaDataId,
+    });
+  }
+  isHidden() {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+    });
+  }
+  hide() {
+    return CategoryStore.hideCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
+  }
+  show() {
+    return CategoryStore.showCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
   }
   canReceiveFolderTreeData(folderData) {
     return (
@@ -1923,13 +1992,13 @@ class RecentMailboxPerspective extends CategoryMailboxPerspective {
       .order([Thread.attributes.lastMessageTimestamp.descending()])
       .limit(0);
 
-    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
-      // The user has multiple categories in the same account selected, which
-      // means our result set could contain multiple copies of the same threads
-      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
-      // can be /much/ slower and we shouldn't do it if we know we don't need it.
-      query.distinct();
-    }
+    // if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+    //   // The user has multiple categories in the same account selected, which
+    //   // means our result set could contain multiple copies of the same threads
+    //   // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+    //   // can be /much/ slower and we shouldn't do it if we know we don't need it.
+    //   query.distinct();
+    // }
 
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }

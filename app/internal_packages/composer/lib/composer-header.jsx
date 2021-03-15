@@ -233,6 +233,10 @@ export default class ComposerHeader extends React.Component {
   };
 
   _onSubjectChange = event => {
+    if (event.target.value === this.props.draft.subject) {
+      return;
+    }
+
     this.props.session.changes.add({ subject: event.target.value, subjectChanged: true });
   };
 
@@ -259,6 +263,7 @@ export default class ComposerHeader extends React.Component {
           value={this.props.draft.subject}
           onKeyDown={this._onSubjectKeyDown}
           onChange={this._onSubjectChange}
+          onBlur={this._onSubjectChange}
           disabled={this._draftNotReady()}
         />
       </KeyCommandsRegion>
