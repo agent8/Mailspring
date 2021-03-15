@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Flexbox, RetinaImg, LottieImg, FullScreenModal } from 'mailspring-component-kit';
 import {
   Actions,
-  Utils,
   TaskQueue,
   SiftExpungeUserDataTask,
   SiftExportUserDataTask,
@@ -76,20 +75,16 @@ export class Privacy extends React.Component {
   }
 
   renderExportData() {
-    if (Utils.needGDPR()) {
-      return (
-        <div className="config-group">
-          <h6>EXPORT YOUR DATA</h6>
-          <div className="privacys-note">
-            Get a zipped archive of all your user and email related information for all your
-            connected emails on Edison Mail.
-          </div>
-          <Flexbox>{this.renderExportDataButton()}</Flexbox>
+    return (
+      <div className="config-group">
+        <h6>EXPORT YOUR DATA</h6>
+        <div className="privacys-note">
+          Get a zipped archive of all your user and email related information for all your connected
+          emails on Edison Mail.
         </div>
-      );
-    } else {
-      return null;
-    }
+        <Flexbox>{this.renderExportDataButton()}</Flexbox>
+      </div>
+    );
   }
 
   expungeLocalAndReboot = async () => {
