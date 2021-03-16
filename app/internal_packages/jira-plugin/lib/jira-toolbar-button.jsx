@@ -9,12 +9,18 @@ export default class JiraToolbarButton extends Component {
       active: false,
     };
   }
+  componentDidMount() {
+    this._showIntro(this.props);
+  }
   UNSAFE_componentWillReceiveProps(nextProps) {
-    if (this.shouldDisplayPlugin(nextProps)) {
+    this._showIntro(nextProps);
+  }
+  _showIntro = props => {
+    if (this.shouldDisplayPlugin(props)) {
       window
         .introJs()
         .setOptions({
-          skipLabel: 'Skip',
+          skipLabel: 'x',
           steps: [
             {
               element: document.querySelector('.btn-toolbar.message-toolbar-jira'),
@@ -31,7 +37,7 @@ export default class JiraToolbarButton extends Component {
           console.log('***exit');
         });
     }
-  }
+  };
   toggleJira = () => {
     Actions.toggleJiraPlugin(!this.state.active);
     this.setState({
