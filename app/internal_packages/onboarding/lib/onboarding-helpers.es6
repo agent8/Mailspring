@@ -696,6 +696,7 @@ export function buildYahooAuthURL() {
     `client_id=${YAHOO_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
+    `&prompt=login` +
     `&response_type=code`
   );
 }

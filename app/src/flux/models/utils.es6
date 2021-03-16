@@ -802,9 +802,6 @@ module.exports = Utils = {
       if (value === false) {
         console.log('isEqual is false', a, b, options);
       }
-      return value;
-    } else {
-      // todo
     }
     return value;
   },
