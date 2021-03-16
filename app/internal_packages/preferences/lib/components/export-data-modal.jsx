@@ -12,8 +12,11 @@ const Instructions = ({ onContinue }) => (
     />
     <h2>Export Your Data</h2>
     <p>
-      Edison Mail respects your right to control your data and we protect your privacy, read how. In
-      compliance with GDPR regulations, you can export all of the data we collect at any time.
+      Edison Mail respects your right to control your data and we protect your privacy,{' '}
+      <a href="https://mailsupport.edison.tech/hc/en-us/articles/360004592871-What-steps-does-Edison-take-to-protect-personal-data-">
+        read how
+      </a>
+      . In compliance with GDPR regulations, you can export all of the data we collect at any time.
       <br />
       <br />
       <b>Proceed with caution and read all instructions carefully.</b>
@@ -157,7 +160,7 @@ const WhereDoWeSendIt = ({ sendEmail, onSelectSendEmail }) => {
   );
 
   return (
-    <div>
+    <div className="where-to-send">
       <RetinaImg
         name={`send-data.png`}
         mode={RetinaImg.Mode.ContentPreserve}
@@ -184,7 +187,7 @@ const YourDataArchive = ({ sendEmail, checkedNotice, onToggleCheckedNotice }) =>
   const accountList = AccountStore.accounts();
 
   return (
-    <div>
+    <div className="data-archive-container">
       <h2>Your Data Archive</h2>
       <p>
         Email data associated with your connected accounts will be zipped and sent to:&nbsp;
