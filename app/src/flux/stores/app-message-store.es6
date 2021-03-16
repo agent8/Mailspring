@@ -54,7 +54,7 @@ class AppMessageStore extends MailspringStore {
       return;
     }
     tasks.forEach(task => {
-      if (!task.hasOwnProperty('allowClose')) {
+      if (!Object.prototype.hasOwnProperty.call(task, 'allowClose')) {
         task.allowClose = true;
       }
       if (task.id && this._silentCache[task.id]) {
@@ -242,6 +242,7 @@ class AppMessageStore extends MailspringStore {
       default:
         priority = 'low';
     }
+    console.warn('removed block', block);
     this._messages[priority] = this._messages[priority].filter(b => {
       return b.id !== block.id;
     });
@@ -262,7 +263,7 @@ class AppMessageStore extends MailspringStore {
   _findHighestPriority = ({ tasks }) => {
     let priority = AppMessageStore.priority.low;
     for (let task of tasks) {
-      if (task.hasOwnProperty('priority')) {
+      if (Object.prototype.hasOwnProperty.call(task, 'priority')) {
         if (task.priority === AppMessageStore.priority.critical) {
           return AppMessageStore.priority.critical;
         }
