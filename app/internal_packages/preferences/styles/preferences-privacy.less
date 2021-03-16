@@ -181,6 +181,20 @@
 
     .component-content {
       flex: 1;
+      overflow: hidden;
+      .data-archive-container {
+        height: fit-content;
+        max-height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .where-to-send {
+        .button-dropdown.bordered{
+          width: fit-content;
+          max-width: 280px;
+        }
+      }
       h2 {
         font-size: 24px;
         font-weight: 700;
@@ -249,7 +263,8 @@
         list-style: none;
         margin: 0;
         padding: 5px 0;
-
+        max-height: 100%;
+        overflow: auto;
         .title {
           color: @gray-light;
           font-size: 11px;
