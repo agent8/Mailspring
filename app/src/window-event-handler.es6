@@ -350,6 +350,20 @@ export default class WindowEventHandler {
     Spellchecker = Spellchecker || require('./spellchecker').default;
     Spellchecker.appendSpellingItemsToMenu({ menu, word, onCorrect });
 
+    // Mac only
+    if (process.platform === 'darwin') {
+      if (word && hasSelectedText) {
+        menu.append(
+          new MenuItem({
+            label: `Look Up '${word.trim()}'`,
+            enabled: hasSelectedText,
+            click: () => AppEnv.getCurrentWindow().showDefinitionForSelection(),
+          })
+        );
+        menu.append(new MenuItem({ type: 'separator' }));
+      }
+    }
+
     menu.append(
       new MenuItem({
         label: 'Cut',
