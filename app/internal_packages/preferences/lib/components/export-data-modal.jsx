@@ -12,8 +12,11 @@ const Instructions = ({ onContinue }) => (
     />
     <h2>Export Your Data</h2>
     <p>
-      Edison Mail respects your right to control your data and we protect your privacy, read how. In
-      compliance with GDPR regulations, you can export all of the data we collect at any time.
+      Edison Mail respects your right to control your data and we protect your privacy,{' '}
+      <a href="https://mailsupport.edison.tech/hc/en-us/articles/360004592871-What-steps-does-Edison-take-to-protect-personal-data-">
+        read how
+      </a>
+      . In compliance with GDPR regulations, you can export all of the data we collect at any time.
       <br />
       <br />
       <b>Proceed with caution and read all instructions carefully.</b>
@@ -31,6 +34,9 @@ const Instructions = ({ onContinue }) => (
     </div>
   </div>
 );
+Instructions.propTypes = {
+  onContinue: PropTypes.func,
+};
 
 const StepComponent = ({ stepList, nowStepIndex, setStep }) => {
   const nowStep = stepList[nowStepIndex];
@@ -97,7 +103,11 @@ const StepComponent = ({ stepList, nowStepIndex, setStep }) => {
     </div>
   );
 };
-
+StepComponent.propTypes = {
+  stepList: PropTypes.array,
+  nowStepIndex: PropTypes.number,
+  setStep: PropTypes.func,
+};
 const WhatIsInYourData = () => {
   return (
     <div>
@@ -106,7 +116,7 @@ const WhatIsInYourData = () => {
         mode={RetinaImg.Mode.ContentPreserve}
         style={{ width: 200, height: 200 }}
       />
-      <h2>What's in your data?</h2>
+      <h2>What&apos;s in your data?</h2>
       <p>
         Information to support smart assistant features like Travel, Packages, Bills & Receipts,
         Entertainment, etc. These smart features help you find things faster, organize your inbox,
@@ -157,7 +167,7 @@ const WhereDoWeSendIt = ({ sendEmail, onSelectSendEmail }) => {
   );
 
   return (
-    <div>
+    <div className="where-to-send">
       <RetinaImg
         name={`send-data.png`}
         mode={RetinaImg.Mode.ContentPreserve}
@@ -179,12 +189,15 @@ const WhereDoWeSendIt = ({ sendEmail, onSelectSendEmail }) => {
     </div>
   );
 };
-
+WhereDoWeSendIt.propTypes = {
+  sendEmail: PropTypes.object,
+  onSelectSendEmail: PropTypes.func,
+};
 const YourDataArchive = ({ sendEmail, checkedNotice, onToggleCheckedNotice }) => {
   const accountList = AccountStore.accounts();
 
   return (
-    <div>
+    <div className="data-archive-container">
       <h2>Your Data Archive</h2>
       <p>
         Email data associated with your connected accounts will be zipped and sent to:&nbsp;
@@ -213,7 +226,11 @@ const YourDataArchive = ({ sendEmail, checkedNotice, onToggleCheckedNotice }) =>
     </div>
   );
 };
-
+YourDataArchive.propTypes = {
+  sendEmail: PropTypes.object,
+  checkedNotice: PropTypes.bool,
+  onToggleCheckedNotice: PropTypes.func,
+};
 export default class ExportDataModal extends React.Component {
   static displayName = 'ExportDataModal';
 
