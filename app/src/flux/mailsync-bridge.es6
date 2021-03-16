@@ -111,7 +111,7 @@ class CrashTracker {
       this._timestamps[key].length >= 5 &&
       Date.now() - this._timestamps[key][4] < 5 * 60 * 1000
     ) {
-      this._tooManyFailures[key] = true;
+      this._tooManyFailures[key] = error ? error.statusCode || true : true;
     }
   }
 
@@ -392,8 +392,14 @@ export default class MailsyncBridge {
         const fullAccountJSON = (await KeyManager.insertAccountSecrets(account)).toJSON();
         if (this._crashTracker.tooManyFailures(fullAccountJSON)) {
           delete this._clientsStartTime[account.id];
+          const reason = this._crashTracker.tooManyFailures(fullAccountJSON);
+          const isAuthError =
+            typeof reason === 'string' &&
+            (reason === 'ErrorAuthentication' ||
+              reason === 'ErrorAccountDisabled' ||
+              reason === 'ErrorAuthenticationRequired');
           Actions.updateAccount(account.pid || account.id, {
-            syncState: Account.SYNC_STATE_ERROR,
+            syncState: isAuthError ? Account.SYNC_STATE_AUTH_FAILED : Account.SYNC_STATE_ERROR,
             syncError: null,
           });
           return;

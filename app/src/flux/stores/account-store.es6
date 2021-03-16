@@ -103,6 +103,7 @@ class AccountStore extends MailspringStore {
         // updated to uncollapse the inbox for the new account
         Actions.setCollapsedSidebarItem('Inbox', false);
       }
+      this._parseErrorAccount();
     });
   }
   isExchangeAccountId = id => {
@@ -208,14 +209,14 @@ class AccountStore extends MailspringStore {
           json.pid = json.id;
         }
         this._accounts.push(new Account().fromJSON(json));
-        let fetchEmailInterval = 60000;
-        if (json.mailsync && json.mailsync.fetchEmailInterval) {
-          try {
-            fetchEmailInterval = parseInt(json.mailsync.fetchEmailInterval, 10) * 60000;
-          } catch (e) {
-            AppEnv.reportError(e);
-          }
-        }
+        // let fetchEmailInterval = 60000;
+        // if (json.mailsync && json.mailsync.fetchEmailInterval) {
+        //   try {
+        // fetchEmailInterval = parseInt(json.mailsync.fetchEmailInterval, 10) * 60000;
+        // } catch (e) {
+        // AppEnv.reportError(e);
+        // }
+        // }
         // this._updateWakeWorkerTimer(json.pid, fetchEmailInterval);
       }
       this._removeDeleteAccountTimers();
@@ -226,6 +227,7 @@ class AccountStore extends MailspringStore {
       AppEnv.reportError(error);
     }
 
+    // eslint-disable-next-line no-undef
     this._trigger(arguments);
   };
 
@@ -312,7 +314,7 @@ class AccountStore extends MailspringStore {
           : `local-${updated.id}-${updated.emailAddress}-${updated.name}`;
       const sig = SignatureStore.signatureForDefaultSignatureId(oldAccountSigId);
       if (sig) {
-        SignatureStore.removeDefaultSignature(oldAccountSigId)
+        SignatureStore.removeDefaultSignature(oldAccountSigId);
         SignatureStore.setDefaultSignature(newAccountSigId, sig.id);
       }
     }
@@ -337,7 +339,7 @@ class AccountStore extends MailspringStore {
   _parseErrorAccount() {
     const erroredAccounts = this._accounts.filter(a => a.hasSyncStateError());
     const okAccounts = this._accounts.filter(a => !a.hasSyncStateError());
-    if (erroredAccounts.length !== 0 && okAccounts.length !== 0) {
+    if (okAccounts.length !== 0) {
       const okAccountMessages = [];
       okAccounts.forEach(acct => {
         if (acct) {
@@ -454,6 +456,7 @@ class AccountStore extends MailspringStore {
         });
         ContactStore.contacts = [];
         await ContactStore.refreshContacts();
+        // eslint-disable-next-line no-undef
         xmpp.removeXmpp(jid);
         removeMyApps(chatAccount.userId);
         // await AppStore.refreshAppsEmailContacts();
@@ -538,7 +541,7 @@ class AccountStore extends MailspringStore {
     this._save('add account');
     ipcRenderer.send('after-add-account', account);
 
-    if (existingIdx >= 0 ) {
+    if (existingIdx >= 0) {
       const syncAccountId = AppEnv.config.get(edisonAccountKey);
       if (cleanAccount.id === syncAccountId) {
         await EdisonAccountRest.register(cleanAccount.id);
@@ -564,10 +567,7 @@ class AccountStore extends MailspringStore {
     if (!aid) {
       return;
     }
-    AppEnv.config.set(
-      edisonAccountKey,
-      aid
-    );
+    AppEnv.config.set(edisonAccountKey, aid);
     // sync preferences from server
     await AppEnv.config.syncAllPreferencesFromServer();
     // sync preferences to server
@@ -583,13 +583,13 @@ class AccountStore extends MailspringStore {
     AppEnv.config.set(edisonAccountKey, '');
     AppEnv.config.clearSyncPreferencesVersion();
     const account = this.accountForId(aid);
-    const newAccountSettings = Object.assign({}, account.settings)
-    delete newAccountSettings.edisonId
-    delete newAccountSettings.edison_token
+    const newAccountSettings = Object.assign({}, account.settings);
+    delete newAccountSettings.edisonId;
+    delete newAccountSettings.edison_token;
     const newAccount = {
       ...account,
-      settings: newAccountSettings
-    }
+      settings: newAccountSettings,
+    };
     Actions.updateAccount(aid, newAccount);
   };
 
