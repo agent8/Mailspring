@@ -598,8 +598,8 @@ class DraftStore extends MailspringStore {
     originalHeaderMessageId,
     newParticipants,
   }) => {
-    const session = this._draftSessions[originalMessageId];
     if (AppEnv.isComposerWindow() || AppEnv.isThreadWindow()) {
+      const session = this._draftSessions[originalMessageId];
       if (session) {
         const oldDraft = session.draft();
         if (oldDraft) {
@@ -614,13 +614,9 @@ class DraftStore extends MailspringStore {
         AppEnv.logDebug(`OldDraft ${originalMessageId} is missing from session`);
         session.syncDraftDataToMainNow();
         this._doneWithSession(session, 'draft account change');
+      } else {
+        AppEnv.logDebug(`Original draft ${originalMessageId} not in this window, ignoring`);
       }
-      Actions.toMainChangeDraftAccount({
-        originalHeaderMessageId,
-        originalMessageId,
-        newParticipants,
-      });
-      return;
     }
   };
 
