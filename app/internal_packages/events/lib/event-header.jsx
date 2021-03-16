@@ -116,7 +116,7 @@ class EventHeader extends React.Component {
             .format(DateUtils.getTimeFormat({ timeZone: true }));
       }
     }
-    return `${duration} ${startDate}${startTime} ${end}${repeat}`;
+    return `${duration}${startDate}${startTime}${end}${repeat}`;
   }
 
   _onContextMenu = mouseEvent => {
@@ -302,11 +302,14 @@ class EventHeader extends React.Component {
         <div className="location-text">{locationString}</div>
         {this.state.event.location && (
           <div className="open-external" onClick={this._openMapExternally}>
-            <RetinaImg
-              name={'map-preview.png'}
-              mode={RetinaImg.Mode.ContentPreserve}
-              style={{ width: 40, height: 40 }}
-            />
+            <div className="image-wrap">
+              <RetinaImg
+                name={'map-preview.png'}
+                mode={RetinaImg.Mode.ContentPreserve}
+                style={{ width: 40, height: 40 }}
+              />
+            </div>
+            <div className="tooltip-text">Map</div>
           </div>
         )}
       </div>
