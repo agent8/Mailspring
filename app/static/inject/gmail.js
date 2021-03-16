@@ -88,6 +88,17 @@ whenReady(async function() {
     console.log('****buttons[buttons.length - 1]', buttons[buttons.length - 1]);
     buttons[buttons.length - 1].click();
   }
+  // input phone number page, hide necessary components
+  else if (window.location.href.includes('two-step-verification/enroll?')) {
+    const phoneNumberWrapper = document.querySelector('[data-phone-number]');
+    if (phoneNumberWrapper && phoneNumberWrapper.children && phoneNumberWrapper.children[0]) {
+      phoneNumberWrapper.children[0].style.display = 'none';
+    }
+    const navi = document.querySelector('[data-back-url=security]');
+    if (navi && navi.parentElement && navi.parentElement.parentElement) {
+      navi.parentElement.parentElement.style.display = 'none';
+    }
+  }
   // 2-step is ready
   else if (
     window.location.href.includes('signinoptions/two-step-verification') &&
