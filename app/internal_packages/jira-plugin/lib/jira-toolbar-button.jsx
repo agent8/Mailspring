@@ -9,14 +9,37 @@ export default class JiraToolbarButton extends Component {
       active: false,
     };
   }
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    if (this.shouldDisplayPlugin(nextProps)) {
+      window
+        .introJs()
+        .setOptions({
+          skipLabel: 'Skip',
+          steps: [
+            {
+              element: document.querySelector('.btn-toolbar.message-toolbar-jira'),
+              intro: 'Can assign, change status and add comments through Jira plugin.',
+            },
+            {
+              element: document.querySelector('.account-sidebar-sections .jira-icon'),
+              intro: 'All Jira are list here.',
+            },
+          ],
+        })
+        .start()
+        .onexit(() => {
+          console.log('***exit');
+        });
+    }
+  }
   toggleJira = () => {
     Actions.toggleJiraPlugin(!this.state.active);
     this.setState({
       active: !this.state.active,
     });
   };
-  _isJIRA() {
-    const { thread } = this.props;
+  _isJIRA(props) {
+    const { thread } = props;
     // if (thread && thread.participants) {
     //   for (const att of thread.participants) {
     //     if (att.email && (att.email.split('@')[1] || '').includes('atlassian.net')) {
@@ -33,9 +56,9 @@ export default class JiraToolbarButton extends Component {
       }
     }
     // return false;
-    return this.props.thread.isJIRA;
+    return props.thread.isJIRA;
   }
-  render() {
+  shouldDisplayPlugin = props => {
     const accounts = AccountStore.accounts();
     let isEdisonMail = false;
     for (const acc of accounts) {
@@ -44,7 +67,13 @@ export default class JiraToolbarButton extends Component {
         break;
       }
     }
-    if (!this.props.thread || !this._isJIRA() || !isEdisonMail) {
+    if (!props.thread || !this._isJIRA(props) || !isEdisonMail) {
+      return false;
+    }
+    return true;
+  };
+  render() {
+    if (!this.shouldDisplayPlugin(this.props)) {
       return null;
     }
     return (
