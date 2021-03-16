@@ -53,7 +53,7 @@ export default class MailboxPerspective {
   }
 
   static forDrafts(accountsOrIds) {
-    return new DraftsMailboxPerspective(accountsOrIds);
+    return new DraftsMailboxPerspective(accountsOrIds, accountsOrIds.length > 1);
   }
   static forSiftCategory({ siftCategory, accountIds } = {}) {
     return new SiftMailboxPerspective({ siftCategory, accountIds });
@@ -69,7 +69,7 @@ export default class MailboxPerspective {
   static forAllTrash(accountsOrIds) {
     const categories = CategoryStore.getCategoriesWithRoles(accountsOrIds, 'trash');
     if (Array.isArray(categories) && categories.length > 0) {
-      return new AllTrashMailboxPerspective(categories);
+      return new AllTrashMailboxPerspective(categories, true);
     } else {
       return this.forNothing({
         categoryMetaDataAccountId: 'shortcuts',
@@ -104,7 +104,7 @@ export default class MailboxPerspective {
     }
     let ret;
     try {
-      ret = new TodayMailboxPerspective(categories);
+      ret = new TodayMailboxPerspective(categories, accountIds.length > 1);
     } catch (e) {
       ret = this.forNothing();
       AppEnv.reportError(new Error('Today view perspective error'), {
@@ -175,8 +175,10 @@ export default class MailboxPerspective {
     return this.forNothing();
   }
 
-  static forUnread(categories) {
-    return categories.length > 0 ? new UnreadMailboxPerspective(categories) : this.forNothing();
+  static forUnread(categories, isShortcut = false) {
+    return categories.length > 0
+      ? new UnreadMailboxPerspective(categories, isShortcut)
+      : this.forNothing();
   }
 
   static forJira(categories) {
@@ -227,7 +229,7 @@ export default class MailboxPerspective {
     // config. However, the API has not yet come back with the list of
     // `categories` for that account.
     categories = _.compact(categories);
-    return MailboxPerspective.forUnread(categories);
+    return MailboxPerspective.forUnread(categories, accountIds.length > 1);
   }
 
   static getCategoryIds = (accountsOrIds, categoryName) => {
@@ -820,7 +822,7 @@ class OutboxMailboxPerspective extends MailboxPerspective {
 }
 
 class DraftsMailboxPerspective extends MailboxPerspective {
-  constructor(accountIds) {
+  constructor(accountIds, isShortcut = false) {
     super(accountIds);
     this.name = 'Drafts';
     this.iconName = 'drafts.svg';
@@ -836,7 +838,7 @@ class DraftsMailboxPerspective extends MailboxPerspective {
       this.displayName = 'All Drafts';
     }
 
-    if (this._categories.length === 1 && this._categories[0]) {
+    if (this._categories.length === 1 && this._categories[0] && !isShortcut) {
       this._categoryMetaDataAccountId = this._categories[0].accountId;
       this._categoryMetaDataId = this._categories[0].path;
     } else {
@@ -1197,7 +1199,7 @@ class EmptyMailboxPerspective extends MailboxPerspective {
 }
 
 class CategoryMailboxPerspective extends MailboxPerspective {
-  constructor(_categories) {
+  constructor(_categories, isShortCut = false) {
     super(_.uniq(_categories.map(c => c.accountId)));
     this._categories = _categories;
 
@@ -1214,6 +1216,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         .filter(cat => !!cat)
         .map(cat => cat.path)
         .join('-');
+    }
+    if (isShortCut) {
+      this._categoryMetaDataAccountId = 'shortcuts';
     }
   }
   categoryMetaDataInfo = () => {
@@ -1336,7 +1341,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   isEqual(other) {
     return (
       super.isEqual(other) &&
-      _.isEqual(this.categories().map(c => c.id), other.categories().map(c => c.id))
+      _.isEqual(
+        this.categories().map(c => c.id),
+        other.categories().map(c => c.id)
+      )
     );
   }
 
@@ -1634,7 +1642,7 @@ class NoneSelectablePerspective extends CategoryMailboxPerspective {
 }
 class AllSentMailboxPerspective extends CategoryMailboxPerspective {
   constructor(props) {
-    super(props);
+    super(props, true);
     this.name = 'All Sent';
     this.iconName = 'sent.svg';
     this.isAllSent = true;
@@ -1660,7 +1668,7 @@ class AllSentMailboxPerspective extends CategoryMailboxPerspective {
 }
 class AllSpamMailboxPerspective extends CategoryMailboxPerspective {
   constructor(props) {
-    super(props);
+    super(props, true);
     this.name = 'Spam';
     this.iconName = 'spam.svg';
     this.isAllSpam = true;
@@ -1685,13 +1693,13 @@ class AllSpamMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 class TodayMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(categories) {
-    super(categories);
+  constructor(categories, isShortcut = false) {
+    super(categories, isShortcut);
     this.name = 'Today';
     this.iconName = 'today.svg';
     this._categories = categories;
     this.isToday = true;
-    if (this._categories.length === 1) {
+    if (this._categories.length === 1 && !isShortcut) {
       this._categoryMetaDataId = 'today';
     } else {
       this._categoryMetaDataId = 'all-today';
@@ -1782,7 +1790,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
 }
 class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
   constructor(data) {
-    super(data);
+    super(data, true);
     this.isAllArchive = true;
     this.displayName = 'All Archive';
     this._categoryMetaDataId = 'all-archive';
@@ -1808,7 +1816,7 @@ class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
 }
 class AllTrashMailboxPerspective extends CategoryMailboxPerspective {
   constructor(_categories) {
-    super(_categories);
+    super(_categories, true);
     this.name = 'all-trash';
     this.displayName = 'Trash';
     this.isAllTrash = true;
@@ -2005,8 +2013,8 @@ class RecentMailboxPerspective extends MailboxPerspective {
 }
 
 class UnreadMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(categories) {
-    super(categories);
+  constructor(categories, isShortcut = false) {
+    super(categories, isShortcut);
     this.unread = true;
     this.name = 'Unread';
     this.iconName = 'unread.svg';
@@ -2020,7 +2028,7 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
         new UnreadMailboxOtherPerspective(this._categories),
       ];
     }
-    if (Array.isArray(this._categories) && this._categories.length === 1) {
+    if (Array.isArray(this._categories) && this._categories.length === 1 && !isShortcut) {
       this._categoryMetaDataId = 'unread';
     } else {
       this._categoryMetaDataId = 'all-unread';
@@ -2271,6 +2279,9 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
+    return new UnreadQuerySubscription(
+      this.categories().map(c => c.id),
+      this.isOther
+    );
   }
 }
