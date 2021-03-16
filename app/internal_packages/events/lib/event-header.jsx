@@ -311,8 +311,10 @@ class EventHeader extends React.Component {
   };
 
   _openMapExternally = _.throttle(() => {
-    const searchQueryBase = 'https://www.openstreetmap.org/search?commit=Go&query=';
-    const searchQuery = `${searchQueryBase}${encodeURI(this.state.event.location)}`;
+    const language = navigator.language.split('-')[0];
+    const searchQuery = `https://www.google.com/maps/search/${encodeURI(
+      this.state.event.location
+    )}?hl=${language}`;
     remote.shell.openExternal(searchQuery);
   }, 500);
 
