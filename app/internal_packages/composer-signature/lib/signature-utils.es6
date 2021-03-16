@@ -6,6 +6,7 @@ import {
   Actions,
   Constant,
 } from 'mailspring-exports';
+import path from 'path';
 
 export function currentSignatureId(body) {
   let replyEnd = body.search(RegExpUtils.nativeQuoteStartRegex());
@@ -81,14 +82,15 @@ export async function applySignature({ signature, messageId, skipSaving = false 
       draft.accountId,
       skipSaving
     );
-    function replaceStr(oldStr, searchStr, replaceStr) {
+    const replaceStr = (oldStr, searchStr, replaceStr) => {
       const oldStrSplit = oldStr.split(searchStr);
       return oldStrSplit.join(replaceStr);
-    }
+    };
     let newSigBody = sigBody;
     fileMap.forEach((file, key) => {
       if (file.isInline) {
-        newSigBody = replaceStr(newSigBody, `src="${key}"`, `src="cid:${file.contentId}"`);
+        const urlPath = path.join(path.dirname(key), encodeURIComponent(path.basename(key)));
+        newSigBody = replaceStr(newSigBody, `src="${urlPath}"`, `src="cid:${file.contentId}"`);
       }
       draft.files.push(file);
     });
