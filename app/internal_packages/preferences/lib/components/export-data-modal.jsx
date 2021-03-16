@@ -34,6 +34,9 @@ const Instructions = ({ onContinue }) => (
     </div>
   </div>
 );
+Instructions.propTypes = {
+  onContinue: PropTypes.func,
+};
 
 const StepComponent = ({ stepList, nowStepIndex, setStep }) => {
   const nowStep = stepList[nowStepIndex];
@@ -100,7 +103,11 @@ const StepComponent = ({ stepList, nowStepIndex, setStep }) => {
     </div>
   );
 };
-
+StepComponent.propTypes = {
+  stepList: PropTypes.array,
+  nowStepIndex: PropTypes.number,
+  setStep: PropTypes.func,
+};
 const WhatIsInYourData = () => {
   return (
     <div>
@@ -109,7 +116,7 @@ const WhatIsInYourData = () => {
         mode={RetinaImg.Mode.ContentPreserve}
         style={{ width: 200, height: 200 }}
       />
-      <h2>What's in your data?</h2>
+      <h2>What&apos;s in your data?</h2>
       <p>
         Information to support smart assistant features like Travel, Packages, Bills & Receipts,
         Entertainment, etc. These smart features help you find things faster, organize your inbox,
@@ -182,7 +189,10 @@ const WhereDoWeSendIt = ({ sendEmail, onSelectSendEmail }) => {
     </div>
   );
 };
-
+WhereDoWeSendIt.propTypes = {
+  sendEmail: PropTypes.object,
+  onSelectSendEmail: PropTypes.func,
+};
 const YourDataArchive = ({ sendEmail, checkedNotice, onToggleCheckedNotice }) => {
   const accountList = AccountStore.accounts();
 
@@ -216,7 +226,11 @@ const YourDataArchive = ({ sendEmail, checkedNotice, onToggleCheckedNotice }) =>
     </div>
   );
 };
-
+YourDataArchive.propTypes = {
+  sendEmail: PropTypes.object,
+  checkedNotice: PropTypes.bool,
+  onToggleCheckedNotice: PropTypes.func,
+};
 export default class ExportDataModal extends React.Component {
   static displayName = 'ExportDataModal';
 
