@@ -7,6 +7,12 @@ export default class AccountColor extends Component {
   static propTypes = {
     message: PropTypes.object,
   };
+  constructor(props) {
+    super(props);
+    this.state = {
+      showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
+    };
+  }
   componentDidMount() {
     this.unsubscribers = [];
     this.unsubscribers.push(
@@ -16,14 +22,23 @@ export default class AccountColor extends Component {
         }
       }, this)
     );
+    this.disposables = [];
+    this.disposables.push(
+      AppEnv.config.onDidChange('core.appearance.showAccountColor', () => {
+        this.setState({
+          showAccountColor: AppEnv.config.get('core.appearance.showAccountColor'),
+        });
+      })
+    );
     this._mounted = true;
   }
   componentWillUnmount() {
     this.unsubscribers.map(unsubscribe => unsubscribe());
+    this.disposables.forEach(disposable => disposable.dispose());
     this._mounted = false;
   }
   render() {
-    if (!AppEnv.config.get('core.appearance.showAccountColor')) {
+    if (!this.state.showAccountColor) {
       return null;
     }
     const { message } = this.props;
