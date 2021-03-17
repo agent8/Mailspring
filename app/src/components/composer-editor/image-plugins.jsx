@@ -129,12 +129,13 @@ export const changes = {
 };
 
 const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
-  const cb = filePath => {
-    const dirName = path.dirname(filePath);
-    const fileName = encodeURIComponent(path.basename(filePath));
+  const cb = fileInfo => {
+    const filePath = fileInfo.path;
     if (!filePath) {
       return;
     }
+    const dirName = path.dirname(filePath);
+    const fileName = encodeURIComponent(path.basename(filePath));
     const inline = Inline.create({
       isVoid: true,
       type: IMAGE_TYPE,
@@ -147,6 +148,7 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
     onAddAttachments({
       path: filePath,
       inline: true,
+      stats: fileInfo.stats,
     });
 
     setTimeout(() => {
