@@ -5,8 +5,6 @@ import {
   ContactStore,
   AttachmentStore,
   Actions,
-  QuotedHTMLTransformer,
-  RegExpUtils,
   Constant,
   FsUtils,
 } from 'mailspring-exports';
@@ -357,9 +355,10 @@ class TemplateStore extends MailspringStore {
       }
       const draftName = draft.subject;
 
-      let draftContents = QuotedHTMLTransformer.removeQuotedHTML(draft.body);
-      const sigIndex = draftContents.search(RegExpUtils.mailspringSignatureRegex());
-      draftContents = sigIndex > -1 ? draftContents.substr(0, sigIndex) : draftContents;
+      let draftContents = draft.body;
+      // QuotedHTMLTransformer.removeQuotedHTML(draft.body);
+      // const sigIndex = draftContents.search(RegExpUtils.mailspringSignatureRegex());
+      // draftContents = sigIndex > -1 ? draftContents.substr(0, sigIndex) : draftContents;
 
       if (!draftName || draftName.length === 0) {
         this._displayError('Give your draft a subject to name your template.');
