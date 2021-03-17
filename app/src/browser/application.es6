@@ -159,6 +159,12 @@ export default class Application extends EventEmitter {
     if (app.dock) {
       const dockMenu = Menu.buildFromTemplate([
         {
+          label: 'Compose Email',
+          click: () => {
+            this.emit('application:new-message');
+          },
+        },
+        {
           role: 'window',
           submenu: [
             {
