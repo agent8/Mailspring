@@ -754,6 +754,9 @@ export default class MailboxPerspective {
     }
     return [];
   }
+  shouldEnableSwipe(threads) {
+    return false;
+  }
 }
 //
 // class SingleAccountMailboxPerspective extends MailboxPerspective {
@@ -1490,6 +1493,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   // - if finished category === "archive" remove the label
   // - if finished category === "trash" move to trash folder, keep labels intact
   //
+  shouldEnableSwipe(threads) {
+    return this.tasksForRemovingItems(threads, 'Should enable swipe').length > 0;
+  }
+
   tasksForRemovingItems(threads, source = 'Removed from list') {
     FocusedPerspectiveStore =
       FocusedPerspectiveStore || require('./flux/stores/focused-perspective-store').default;
@@ -1990,6 +1997,10 @@ class RecentMailboxPerspective extends MailboxPerspective {
   unreadCount() {
     return 0;
   }
+  shouldEnableSwipe(threads) {
+    return true;
+  }
+
   threads() {
     const query = DatabaseStore.findAll(Thread)
       .where([
