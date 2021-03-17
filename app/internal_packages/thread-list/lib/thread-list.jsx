@@ -1,3 +1,5 @@
+/* eslint-disable react/no-string-refs */
+import PropTypes from 'prop-types';
 const _ = require('underscore');
 const React = require('react');
 const ReactDOM = require('react-dom');
@@ -8,7 +10,6 @@ const {
   FocusContainer,
   EmptyListState,
   FluxContainer,
-  SyncingListState,
 } = require('mailspring-component-kit');
 
 const {
@@ -34,7 +35,9 @@ const PREVIEW_LINES_KEY = 'core.appearance.previewLines';
 
 class ThreadList extends React.Component {
   static displayName = 'ThreadList';
-
+  static propTypes = {
+    forceWidthMode: PropTypes.bool,
+  };
   static containerStyles = {
     minWidth: 375,
     maxWidth: 3000,
@@ -240,18 +243,20 @@ class ThreadList extends React.Component {
 
     if (taskOption) {
       switch (taskOption.action) {
-        case 'flag':
+        case 'flag': {
           const starred = threads.every(t => t.starred === false);
           if (!starred) {
             taskOption.action = 'unflag';
           }
           break;
-        case 'read':
+        }
+        case 'read': {
           const unread = threads.every(t => t.unread === false);
           if (unread) {
             taskOption.action = 'unread';
           }
           break;
+        }
         default:
       }
     }
@@ -294,8 +299,7 @@ class ThreadList extends React.Component {
 
     props.shouldEnableSwipe = () => {
       const perspective = FocusedPerspectiveStore.current();
-      const tasks = perspective.tasksForRemovingItems([item], 'Swipe');
-      return tasks.length > 0;
+      return perspective.shouldEnableSwipe([item], 'Swipe');
     };
 
     props.onSwipeRightClass = (step = 0) => this._onSwipeClass(step, item, 'swipeRight');
