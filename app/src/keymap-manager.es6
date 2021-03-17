@@ -6,7 +6,12 @@ import { Emitter, Disposable } from 'event-kit';
 
 let suspended = false;
 const templateConfigKey = 'core.keymapTemplate';
-const enableCommandsInEditor = ['core:undo', 'core:redo', 'core:paste-and-match-style'];
+const enableCommandsInEditor = [
+  'core:undo',
+  'core:redo',
+  'core:paste-and-match-style',
+  'window:close',
+];
 let suspendKeyComboException = [];
 /*
 By default, Mousetrap stops all hotkeys within text inputs. Override this to
