@@ -121,8 +121,10 @@ class EventHeader extends React.Component {
 
   _onContextMenu = mouseEvent => {
     const selectionText = window.getSelection().toString();
-    const menuItems = [{ label: 'Copy', click: () => clipboard.writeText(selectionText) }];
-    Actions.openContextMenu({ menuItems, mouseEvent });
+    if (selectionText.length > 0) {
+      const menuItems = [{ label: 'Copy', click: () => clipboard.writeText(selectionText) }];
+      Actions.openContextMenu({ menuItems, mouseEvent });
+    }
   };
 
   render() {
