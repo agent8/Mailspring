@@ -6,7 +6,7 @@ import {
   ComposerSupport,
   AttachmentItem,
 } from 'mailspring-component-kit';
-import { React, ReactDOM, Actions, Utils, PropTypes } from 'mailspring-exports';
+import { React, ReactDOM, Actions, Utils, PropTypes, File } from 'mailspring-exports';
 import { shell, remote } from 'electron';
 import path from 'path';
 import TemplateStore from './template-store';
@@ -87,8 +87,8 @@ class TemplateEditor extends React.Component {
     TemplateActions.updateTemplate(template);
   };
 
-  _onAddInlineImage = ({ path, inline }) => {
-    const newAttachments = [...this.state.attachments, { inline: inline, path: path }];
+  _onAddInlineImage = ({ path, inline, stats }) => {
+    const newAttachments = [...this.state.attachments, { inline: inline, path: path, stats }];
     this.setState(
       {
         attachments: newAttachments,
@@ -103,10 +103,10 @@ class TemplateEditor extends React.Component {
     if (!Utils.fileIsImage(filePath)) {
       return;
     }
-    const newFilePath = AppEnv.copyFileToPreferences(filePath);
+    const newFile = AppEnv.copyFileToPreferences(filePath, { moreFileInfo: true });
     if (this._composer) {
-      this._composer.insertInlineResizableImage(newFilePath);
-      this._onAddInlineImage({ path: newFilePath, inline: true });
+      this._composer.insertInlineResizableImage(newFile.path);
+      this._onAddInlineImage({ path: newFile.path, inline: true, stats: newFile.stats });
     }
   };
 
@@ -131,26 +131,30 @@ class TemplateEditor extends React.Component {
   };
 
   _onAddAttachment = () => {
-    AppEnv.cachePreferenceFiles(paths => {
-      if (!paths || !paths.length) {
-        return;
-      }
-      const addAttachments = paths.map(p => {
-        return {
-          inline: false,
-          path: p,
-        };
-      });
-      const newAttachments = [...this.state.attachments, ...addAttachments];
-      this.setState(
-        {
-          attachments: newAttachments,
-        },
-        () => {
-          this.props.onEditField('attachments', newAttachments);
+    AppEnv.cachePreferenceFiles(
+      files => {
+        if (!files || !files.length) {
+          return;
         }
-      );
-    });
+        const addAttachments = files.map(f => {
+          return {
+            inline: false,
+            path: f.path,
+            stats: f.stats,
+          };
+        });
+        const newAttachments = [...this.state.attachments, ...addAttachments];
+        this.setState(
+          {
+            attachments: newAttachments,
+          },
+          () => {
+            this.props.onEditField('attachments', newAttachments);
+          }
+        );
+      },
+      { moreFileInfo: true }
+    );
   };
 
   _onRemoveAttachment = index => {
@@ -230,6 +234,7 @@ class TemplateEditor extends React.Component {
             className="template-file"
             filePath={filePath}
             displayName={fileName}
+            displaySize={File.displayFileSize(file.stats ? file.stats.size : 0)}
             isImage={fileIsImage(fileName)}
             accountId={''}
             onRemoveAttachment={() => {

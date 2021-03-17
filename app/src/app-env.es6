@@ -1267,7 +1267,7 @@ export default class AppEnvConstructor {
     this.windowEventHandler.openSpellingMenuFor(...args);
   }
 
-  cachePreferenceFiles(callback) {
+  cachePreferenceFiles(callback, { moreFileInfo = false } = {}) {
     this.showOpenDialog({ properties: ['openFile', 'multiSelections'] }, paths => {
       if (!paths) {
         callback([]);
@@ -1279,31 +1279,54 @@ export default class AppEnvConstructor {
       }
       const catchFiles = [];
       for (const filepath of pathsToCopy) {
-        const newPath = this.copyFileToPreferences(filepath);
-        if (newPath) {
-          catchFiles.push(newPath);
+        if (moreFileInfo) {
+          const fileInfo = this.copyFileToPreferences(filepath, { moreFileInfo });
+          if (fileInfo.path) {
+            catchFiles.push(fileInfo);
+          }
+        } else {
+          const newPath = this.copyFileToPreferences(filepath);
+          if (newPath) {
+            catchFiles.push(newPath);
+          }
         }
       }
       callback(catchFiles);
     });
   }
 
-  copyFileToPreferences(filepath) {
+  copyFileToPreferences(filepath, { moreFileInfo = false } = {}) {
     const filename = path.basename(filepath);
     const preferenceDir = path.join(this.getConfigDirPath(), 'preference');
     const newFileDirName = path.join(preferenceDir, uuid());
     const newFilePath = path.join(newFileDirName, filename);
+    let fd;
+    let fStat;
     try {
-      if (!fs.existsSync(filepath)) {
-        return null;
+      fd = fs.openSync(filepath, 'r');
+      if (fd) {
+        if (moreFileInfo) {
+          fStat = fs.fstatSync(fd);
+        }
+        fs.closeSync(fd);
       }
       fs.mkdirSync(newFileDirName, {
         recursive: true,
       });
       fs.copyFileSync(filepath, newFilePath);
+      if (moreFileInfo) {
+        if (fStat) {
+          return { path: newFilePath, stats: fStat };
+        } else {
+          return { path: newFilePath };
+        }
+      }
       return newFilePath;
     } catch (err) {
       this.logError(err);
+      if (fd) {
+        fs.close(fd);
+      }
       return null;
     }
   }
@@ -1375,7 +1398,7 @@ export default class AppEnvConstructor {
               );
             }
             const newFilePath = this.copyFileToPreferences(filePath);
-            cb(newFilePath);
+            cb({ path: newFilePath, stats });
           } catch (err) {
             this.showErrorDialog(err.message);
           }

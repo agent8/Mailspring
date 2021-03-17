@@ -147,12 +147,11 @@ export default class File extends Model {
   displayExtension() {
     return path.extname(this.displayName().toLowerCase()).substr(1);
   }
-
-  displayFileSize(bytes = this.size) {
+  static displayFileSize(bytes = 0, fileId = '') {
     if (bytes === 0) {
       return 'Empty';
     }
-    if (this && !(this.id || '').includes('local-')) {
+    if (!(fileId || '').includes('local-')) {
       bytes = Math.floor(((bytes || 0) * 3) / 4);
     }
     const units = ['B', 'KB', 'MB', 'GB'];
@@ -170,6 +169,10 @@ export default class File extends Model {
     const decimalPoints = idx >= 2 ? 1 : 0;
     const rounded = parseFloat(result.toFixed(decimalPoints));
     return `${rounded} ${units[idx]}`;
+  }
+
+  displayFileSize(bytes = this.size) {
+    return File.displayFileSize(bytes, this.id);
   }
   isTNEFType() {
     return MS_TNEF_TYPES.includes((this.contentType || '').toLocaleLowerCase());
