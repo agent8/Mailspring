@@ -357,6 +357,7 @@ class DraftFactory {
       savedOnRemote: false,
       hasRefOldDraftOnRemote: false,
       hasNewID: false,
+      labelIds: [],
       accountId: account.id,
       needUpload: true,
     });
