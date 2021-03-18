@@ -77,8 +77,8 @@ class CrashTracker {
     return log;
   }
 
-  recordClientCrash(fullAccountJSON, { code, error, signal }) {
-    this._appendCrashToHistory(fullAccountJSON, { code, error, signal });
+  recordClientCrash(fullAccountJSON, { code, error, signal, isAuthFailure }) {
+    this._appendCrashToHistory(fullAccountJSON, { code, error, signal, isAuthFailure });
 
     // We now let crashpad do this, because Sentry was losing it's mind.
   }
@@ -87,7 +87,7 @@ class CrashTracker {
     return JSON.stringify({ id, settings });
   }
 
-  _appendCrashToHistory(fullAccountJSON, { code = 0, error, signal } = {}) {
+  _appendCrashToHistory(fullAccountJSON, { code = 0, error, signal, isAuthFailure = false } = {}) {
     const key = this._keyFor(fullAccountJSON);
     if (code === null) {
       console.log('mailsync crashed');
@@ -111,7 +111,10 @@ class CrashTracker {
       this._timestamps[key].length >= 5 &&
       Date.now() - this._timestamps[key][4] < 5 * 60 * 1000
     ) {
-      this._tooManyFailures[key] = error ? error.statusCode || true : true;
+      this._tooManyFailures[key] = isAuthFailure ? 'isAuthFailure' : true;
+    }
+    if (typeof this._tooManyFailures[key] !== 'string') {
+      console.warn(error);
     }
   }
 
@@ -393,11 +396,7 @@ export default class MailsyncBridge {
         if (this._crashTracker.tooManyFailures(fullAccountJSON)) {
           delete this._clientsStartTime[account.id];
           const reason = this._crashTracker.tooManyFailures(fullAccountJSON);
-          const isAuthError =
-            typeof reason === 'string' &&
-            (reason === 'ErrorAuthentication' ||
-              reason === 'ErrorAccountDisabled' ||
-              reason === 'ErrorAuthenticationRequired');
+          const isAuthError = typeof reason === 'string' && reason.includes('isAuthFailure');
           Actions.updateAccount(account.pid || account.id, {
             syncState: isAuthError ? Account.SYNC_STATE_AUTH_FAILED : Account.SYNC_STATE_ERROR,
             syncError: null,
@@ -622,12 +621,12 @@ export default class MailsyncBridge {
       if (signal === 'SIGTERM') {
         return;
       }
-      this._crashTracker.recordClientCrash(fullAccountJSON, { code, error, signal });
-
       const isAuthFailure =
         `${error}`.includes('Response Code: 401') || // mailspring services
         `${error}`.includes('Response Code: 403') || // mailspring services
         `${error}`.includes('ErrorAuthentication'); // mailcore
+      console.error('mailsync error', error, code);
+      this._crashTracker.recordClientCrash(fullAccountJSON, { code, error, signal, isAuthFailure });
 
       if (this._crashTracker.tooManyFailures(fullAccountJSON)) {
         Actions.updateAccount(account.id, {
