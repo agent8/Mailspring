@@ -176,7 +176,10 @@ export default class SidebarSection {
     if (accounts.length === 1) {
       outbox = SidebarItem.forOutbox([accounts[0].id], outboxOpts);
     } else {
-      outbox = SidebarItem.forOutbox(accounts.map(act => act.id), outboxOpts);
+      outbox = SidebarItem.forOutbox(
+        accounts.map(act => act.id),
+        outboxOpts
+      );
     }
     if (!accounts || accounts.length === 0) {
       return this.empty('All Accounts');
@@ -199,7 +202,7 @@ export default class SidebarSection {
         }
       }
       let item = SidebarItem.forSingleInbox(acc.id, {
-        name: acc.label,
+        name: (acc.label || '').trim().length > 0 ? acc.label.trim() : acc.emailAddress,
         threadTitleName: 'Inbox',
         children: accountFolderItems,
         folderTreeIndex: accountItems.length,
