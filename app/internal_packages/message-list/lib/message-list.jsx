@@ -635,7 +635,7 @@ class MessageList extends React.Component {
     this._messageWrapEl.scrollTop += height * direction;
   };
 
-  _onChange = _.debounce(() => {
+  _onChange = _.throttle(() => {
     const newState = this._getStateFromStores();
     if (
       !newState.inOutbox &&
