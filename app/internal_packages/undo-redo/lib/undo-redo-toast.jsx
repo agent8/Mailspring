@@ -26,7 +26,6 @@ function isUndoSend(block) {
     block.tasks[0] instanceof SendDraftTask
   );
 }
-const expandMessageDelay = 200;
 
 class BasicContent extends React.Component {
   static propTypes = {
@@ -34,27 +33,19 @@ class BasicContent extends React.Component {
     block: PropTypes.object.isRequired,
     onMouseEnter: PropTypes.func,
     onMouseLeave: PropTypes.func,
+    maxWidth: PropTypes.number,
   };
   constructor(props) {
     super(props);
     this._mounted = false;
     this._messageHoverTimer = null;
     this._messageLeaveTimer = null;
-    this.state = { expandMessage: false };
   }
   componentDidMount() {
     this._mounted = true;
   }
   componentWillUnmount() {
     this._mounted = false;
-    if (this._messageLeaveTimer) {
-      clearTimeout(this._messageLeaveTimer);
-      this._messageLeaveTimer = null;
-    }
-    if (this._messageHoverTimer) {
-      clearTimeout(this._messageHoverTimer);
-      this._messageHoverTimer = null;
-    }
   }
 
   _generateDescription() {
@@ -112,56 +103,19 @@ class BasicContent extends React.Component {
     }
     return block.description;
   }
-  _onMessageHover = e => {
-    if (!this._mounted) {
-      return;
-    }
-    e.preventDefault();
-    if (this._messageLeaveTimer) {
-      clearTimeout(this._messageLeaveTimer);
-      this._messageLeaveTimer = null;
-    }
-    if (!this._messageHoverTimer) {
-      this._messageHoverTimer = setTimeout(() => {
-        this._messageHoverTimer = null;
-        if (this._mounted) {
-          this.setState({ expandMessage: true });
-        }
-      }, expandMessageDelay);
-    }
-  };
-  _onMessageMouseLeave = e => {
-    if (!this._mounted) {
-      return;
-    }
-    e.preventDefault();
-    if (this._messageHoverTimer) {
-      clearTimeout(this._messageHoverTimer);
-      this._messageHoverTimer = null;
-    }
-    if (!this._messageLeaveTimer) {
-      this._messageLeaveTimer = setTimeout(() => {
-        this._messageLeaveTimer = null;
-        if (this._mounted) {
-          this.setState({ expandMessage: false });
-        }
-      }, expandMessageDelay);
-    }
-  };
 
   render() {
     const { block, onMouseEnter, onMouseLeave, onClose } = this.props;
     const description = this._generateDescription();
-    const className = `content ${this.state.expandMessage ? 'expand-message' : ''}`;
+    const className = 'content';
     return (
-      <div className={className} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-        <div
-          className="message"
-          onMouseOver={this._onMessageHover}
-          onMouseLeave={this._onMessageMouseLeave}
-        >
-          {description}
-        </div>
+      <div
+        className={className}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        style={{ maxWidth: this.props.maxWidth }}
+      >
+        <div className="message">{description}</div>
         <div className="action">
           <RetinaImg
             name="close_1.svg"
@@ -183,7 +137,6 @@ class UndoSendContent extends BasicContent {
     super(props);
     this.timer = null;
     this._mounted = false;
-    this.state = { expandMessage: false };
   }
 
   componentDidMount() {
@@ -198,14 +151,6 @@ class UndoSendContent extends BasicContent {
   componentWillUnmount() {
     this._mounted = false;
     clearTimeout(this.timer);
-    if (this._messageLeaveTimer) {
-      clearTimeout(this._messageLeaveTimer);
-      this._messageLeaveTimer = null;
-    }
-    if (this._messageHoverTimer) {
-      clearTimeout(this._messageHoverTimer);
-      this._messageHoverTimer = null;
-    }
   }
 
   onActionClicked = () => {
@@ -312,19 +257,12 @@ class UndoSendContent extends BasicContent {
     }
     return (
       <div
-        className={`content ${this.props.block.sendStatus === 'failed' ? 'failed' : ''} ${
-          this.state.expandMessage ? 'expand-message' : ''
-        }`}
+        className={`content ${this.props.block.sendStatus === 'failed' ? 'failed' : ''} `}
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
+        style={{ maxWidth: this.props.maxWidth }}
       >
-        <div
-          className="message"
-          onMouseOver={this._onMessageHover}
-          onMouseLeave={this._onMessageMouseLeave}
-        >
-          {messageStatus}
-        </div>
+        <div className="message">{messageStatus}</div>
         <div className="action">
           <RetinaImg
             name="close_1.svg"
@@ -347,35 +285,48 @@ export default class UndoRedoToast extends React.Component {
     super(props);
 
     this._timeout = [];
-    this._unlisten = null;
+    this._unlisten = [];
     this._mounted = false;
     this.state = {
       block: null,
       blocks: [],
+      appWidth: Math.floor(window.innerWidth / 2),
     };
   }
 
   componentDidMount() {
     this._mounted = true;
-    this._unlisten = UndoRedoStore.listen(() => {
-      if (!this._mounted) {
-        return;
-      }
-      const blocks = UndoRedoStore.getUndos({
-        critical: AppEnv.config.get('core.task.undoQueueOnlyShowOne') ? 1 : 0,
-      });
-      this.setState({
-        blocks: [...blocks.critical, ...blocks.high, ...blocks.medium, ...blocks.low],
-      });
-    });
+    this._unlisten = [
+      UndoRedoStore.listen(() => {
+        if (!this._mounted) {
+          return;
+        }
+        const blocks = UndoRedoStore.getUndos({
+          critical: AppEnv.config.get('core.task.undoQueueOnlyShowOne') ? 1 : 0,
+        });
+        this.setState({
+          blocks: [...blocks.critical, ...blocks.high, ...blocks.medium, ...blocks.low],
+        });
+      }),
+    ];
+    window.addEventListener('resize', this._onAppWidthChange);
   }
 
   componentWillUnmount() {
     this._mounted = false;
-    if (this._unlisten) {
-      this._unlisten();
-    }
+    this._unlisten.forEach(unlisten => {
+      if (unlisten) {
+        unlisten();
+      }
+    });
+    window.removeEventListener('resize', this._onAppWidthChange);
   }
+  _onAppWidthChange = () => {
+    const width = Math.floor(window.innerWidth / 2);
+    if (width !== this.state.appWidth) {
+      this.setState({ appWidth: width });
+    }
+  };
 
   _clearTimeout({ block }) {
     const timer = this._timeouts[block.id];
@@ -419,6 +370,7 @@ export default class UndoRedoToast extends React.Component {
                 <Component
                   key={block.displayId}
                   block={block}
+                  maxWidth={this.state.appWidth}
                   onMouseEnter={this._onMouseEnter}
                   onMouseLeave={this._onMouseLeave}
                   onClose={this._closeToaster}
