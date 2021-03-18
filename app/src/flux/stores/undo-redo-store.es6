@@ -5,6 +5,7 @@ import { ipcRenderer } from 'electron';
 import uuid from 'uuid';
 import SendDraftTask from '../tasks/send-draft-task';
 const undoOnlyShowOne = 'core.task.undoQueueOnlyShowOne';
+const minimumToastDisplayTimeDurationInMs = 2000;
 const isUndoSend = block => {
   return (
     (block.tasks.length === 1 &&
@@ -214,7 +215,7 @@ class UndoRedoStore extends MailspringStore {
     this.undoQueuing.push(block);
     this._timeouts[block.id] = setTimeout(
       this._onBlockTimedOut.bind(this, { block }),
-      block.delayDuration
+      Math.max(block.delayDuration, minimumToastDisplayTimeDurationInMs)
     );
   };
   _onBlockTimedOut = ({ block }) => {
@@ -377,7 +378,7 @@ class UndoRedoStore extends MailspringStore {
   _findHighestPriority = ({ tasks }) => {
     let priority = this.priority.low;
     for (let task of tasks) {
-      if (task.hasOwnProperty('priority')) {
+      if (Object.prototype.hasOwnProperty.call(task, 'priority')) {
         if (task.priority === this.priority.critical) {
           return this.priority.critical;
         }

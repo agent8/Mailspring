@@ -103,6 +103,16 @@ class BasicContent extends React.Component {
     }
     return block.description;
   }
+  _renderUndo(block) {
+    if (!block.delayDuration) {
+      return null;
+    }
+    return (
+      <div className="undo-action-text" onClick={() => UndoRedoStore.undo({ block })}>
+        Undo
+      </div>
+    );
+  }
 
   render() {
     const { block, onMouseEnter, onMouseLeave, onClose } = this.props;
@@ -123,9 +133,7 @@ class BasicContent extends React.Component {
             mode={RetinaImg.Mode.ContentIsMask}
             onClick={() => onClose(block)}
           />
-          <div className="undo-action-text" onClick={() => UndoRedoStore.undo({ block })}>
-            Undo
-          </div>
+          {this._renderUndo(block)}
         </div>
       </div>
     );
@@ -188,7 +196,7 @@ class UndoSendContent extends BasicContent {
     if (!this.props.block) {
       return null;
     }
-    if (!this.props.block.due) {
+    if (!this.props.block.due && this.props.block.delayDuration) {
       return (
         <div className="undo-action-text" onClick={this.onActionClicked}>
           Undo
