@@ -166,6 +166,7 @@ const ToolbarAttachmentButton = ({ value, onChange, onAddAttachments }) => {
         AppEnv.addInlineImageDialog(cb, maxImgSize);
       }}
       className={'hide show-in-preferences'}
+      title="Insert photo"
     >
       <RetinaImg
         name={'inline-image.svg'}

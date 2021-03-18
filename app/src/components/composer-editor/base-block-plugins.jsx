@@ -280,6 +280,7 @@ export const BLOCK_CONFIG = {
   },
   blockquote: {
     type: 'blockquote',
+    tip: 'quote',
     tagNames: ['blockquote'],
     render: props => {
       const className =
@@ -313,6 +314,7 @@ export const BLOCK_CONFIG = {
   },
   code: {
     type: 'code',
+    tip: 'code block',
     tagNames: ['code'],
     render: props => (
       <code {...props.attributes}>
@@ -343,6 +345,7 @@ export const BLOCK_CONFIG = {
   },
   ol_list: {
     type: 'ol_list',
+    tip: 'ordered list',
     tagNames: ['ol'],
     render: props => <ol {...props.attributes}>{props.children}</ol>,
     button: {
@@ -357,6 +360,7 @@ export const BLOCK_CONFIG = {
   },
   ul_list: {
     type: 'ul_list',
+    tip: 'unordered list',
     tagNames: ['ul'],
     render: props => <ul {...props.attributes}>{props.children}</ul>,
     button: {

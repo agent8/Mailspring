@@ -105,6 +105,7 @@ export default [
     toolbarComponents: [
       BuildToggleButton({
         type: VARIABLE_TYPE,
+        tip: 'Template variable',
         button: {
           iconClass: 'fa fa-tag',
           isActive: value => value.inlines.find(i => i.type === VARIABLE_TYPE),
