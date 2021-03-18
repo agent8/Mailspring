@@ -625,7 +625,6 @@ export default class MailsyncBridge {
         `${error}`.includes('Response Code: 401') || // mailspring services
         `${error}`.includes('Response Code: 403') || // mailspring services
         `${error}`.includes('ErrorAuthentication'); // mailcore
-      console.error('mailsync error', error, code);
       this._crashTracker.recordClientCrash(fullAccountJSON, { code, error, signal, isAuthFailure });
 
       if (this._crashTracker.tooManyFailures(fullAccountJSON)) {
