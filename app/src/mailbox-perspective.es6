@@ -387,10 +387,15 @@ export default class MailboxPerspective {
     this._categoryMetaDataId = '';
   }
   categoryMetaDataInfo() {
+    const cats = this.categories()
+      .filter(cat => cat)
+      .map(cat => {
+        return { accountId: cat.accountId || cat.aid, id: cat.id || cat.pid };
+      });
     return {
       accountId: this._categoryMetaDataAccountId,
       id: this._categoryMetaDataId,
-      categories: [],
+      categories: cats,
     };
   }
   canReceiveFolderTreeData(folderData) {
@@ -1224,18 +1229,6 @@ class CategoryMailboxPerspective extends MailboxPerspective {
       this._categoryMetaDataAccountId = 'shortcuts';
     }
   }
-  categoryMetaDataInfo = () => {
-    const cats = this.categories()
-      .filter(cat => cat)
-      .map(cat => {
-        return { accountId: cat.accountId, id: cat.id || cat.pid };
-      });
-    return {
-      accountId: this._categoryMetaDataAccountId,
-      id: this._categoryMetaDataId,
-      categories: cats,
-    };
-  };
   canReceiveFolderTreeData(folderData) {
     const sameAccount = super.canReceiveFolderTreeData(folderData);
     if (!sameAccount) {
@@ -1253,6 +1246,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         (!folderParent && !currentParent) ||
         (folderParent && currentParent && folderParent.id === currentParent.id)
       );
+    } else if (cats.length === 0) {
+      //DC-3020 This is for when dropping 'flagged' category
+      return true;
     }
     return cats.length > 1 && this.categories().length > 1;
   }
