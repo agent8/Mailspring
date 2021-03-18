@@ -302,6 +302,7 @@ export function TrashButton(props) {
     const isExchange = AccountStore.isExchangeAccountId(accountId);
     return labelIds
       .map(labelId => CategoryStore.byId(accountId, labelId))
+      .filter(folder => folder)
       .every(folder => {
         let ret = folder.role === 'trash' || folder.role === 'spam';
         if (ret) {
