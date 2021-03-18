@@ -316,6 +316,7 @@ const ToolbarEmojiButton = ({ value, onChange, anchorEl = null, closePopover = n
           onClick(e.target.getBoundingClientRect());
         }
       }}
+      title="emoji"
     >
       <i className="dt-icon dt-icon-emoji" />
     </button>

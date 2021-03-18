@@ -164,6 +164,7 @@ export function applyValueForMark(value, type, markValue) {
 // React Component Factories
 export function BuildToggleButton({
   type,
+  tip,
   button: {
     iconClass,
     isActive,
@@ -189,6 +190,7 @@ export function BuildToggleButton({
             hideWhenCrowded ? 'hide-when-crowded' : ''
           }`}
           onMouseDown={onMouseDown}
+          title={tip || type}
         >
           <RetinaImg
             style={{ width: 18, height: 18, fontSize: 18 }}
@@ -205,8 +207,9 @@ export function BuildToggleButton({
           hideWhenCrowded ? 'hide-when-crowded' : ''
         }`}
         onMouseDown={onMouseDown}
+        title={tip || type}
       >
-        <i title={type} className={iconClass} />
+        <i title={tip || type} className={iconClass} />
       </button>
     );
   }
@@ -360,6 +363,7 @@ export function BuildMarkButtonWithValuePicker(
           className={`${this.props.className} link-picker ${alwaysShow ? '' : 'hide-when-crowded'}`}
           ref={el => (this._el = el)}
           tabIndex={-1}
+          title="link"
         >
           {active ? (
             <button className="active" onMouseDown={this.onPrompt}>
@@ -468,6 +472,7 @@ export function BuildColorPicker(config) {
           ref={el => (this._el = el)}
           className={this.props.className + ' color-picker'}
           style={{ display: 'inline-block', position: 'relative' }}
+          title="Font color"
         >
           <button
             onClick={this._onToggleExpanded}
@@ -561,6 +566,7 @@ export function BuildFontSizePicker(config) {
           className={`${this.props.className || ''} pull-right with-popup`}
           onClick={this.onClick}
           ref={el => (this.fontSizeBtn = el)}
+          title="Font size"
         >
           <i className={config.iconClass} />
           <RetinaImg
@@ -638,6 +644,7 @@ export function BuildFontPicker(config) {
           style={{ padding: 0, paddingRight: 6 }}
           className={`${this.props.className} with-select`}
           onClick={this._onClick}
+          title="font"
         >
           <i className={config.iconClass} />
           <div className="font-face-display-name">{displayName}</div>

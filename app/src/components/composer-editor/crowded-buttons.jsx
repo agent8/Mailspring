@@ -30,6 +30,7 @@ const CrowdedButton = ({ value, onChange, isCrowded = false }) => {
     <Divider key="more_buttons_divider" />,
     <button
       key="more_buttons"
+      title="more"
       className="show-when-crowded pull-right"
       onClick={e => {
         Actions.openPopover(
