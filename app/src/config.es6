@@ -1073,7 +1073,7 @@ class Config {
           this._syncPreferencesFromServer(createConfigList);
         } else {
           if (callback && typeof callback === 'function') {
-            callback();
+            callback(result.data);
           }
         }
       } else {
