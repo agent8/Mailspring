@@ -6,7 +6,7 @@ import SearchStore from './search-store';
 import TokenizingContenteditable from './tokenizing-contenteditable';
 
 import {
-  LearnMoreURL,
+  // LearnMoreURL,
   TokenSuggestions,
   TokenSuggestionsForEmpty,
   TokenAndTermRegexp,
@@ -288,7 +288,7 @@ class ThreadSearchBar extends Component {
   };
 
   _onSubmitSearchQuery = (nextQuery, forceQuery) => {
-    const SPACE = ' ';
+    // const SPACE = ' ';
     // for the chinese folder name
     // const input = nextQuery.split(SPACE).map(item => {
     //   if (item.indexOf('in:') !== -1) {
