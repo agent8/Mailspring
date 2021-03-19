@@ -320,7 +320,7 @@ class ThreadSearchBar extends Component {
     if (this.props.perspective.unread) {
       return `Search Unread`;
     }
-    return `Search ${this.props.perspective.name || ''}`;
+    return `Search ${this.props.perspective.displayName || this.props.perspective.name || ''}`;
   };
 
   render() {
