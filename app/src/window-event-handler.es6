@@ -316,6 +316,9 @@ export default class WindowEventHandler {
       wordStart = event.target.value.lastIndexOf(' ', event.target.selectionStart);
       if (wordStart === -1) {
         wordStart = 0;
+      } else {
+        // skip the space
+        wordStart += 1;
       }
       wordEnd = event.target.value.indexOf(' ', event.target.selectionStart);
       if (wordEnd === -1) {
