@@ -647,11 +647,19 @@ class MessageList extends React.Component {
     this.safeSetState(newState);
   }, 2);
 
+  _isDraftThread(thread) {
+    if (thread && thread.__messages) {
+      const messages = thread.__messages;
+      return messages.length === 0 || messages.every(item => item.draft);
+    }
+    return true;
+  }
+
   _getStateFromStores() {
     const sheet = WorkspaceStore.rootSheet();
     if (sheet.id !== 'Outbox') {
       const currentThread = MessageStore.thread();
-      if (currentThread) {
+      if (currentThread && !this._isDraftThread(currentThread)) {
         const current = FocusedPerspectiveStore.current();
         if (current && !current.isRecent) {
           ThreadStore.addRecent(currentThread.id);
