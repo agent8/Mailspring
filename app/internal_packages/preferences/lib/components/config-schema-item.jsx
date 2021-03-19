@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'underscore';
-import _str from 'underscore.string';
 import { Menu, ButtonDropdown } from 'mailspring-component-kit';
 
 /*
@@ -54,6 +53,23 @@ class ConfigSchemaItem extends React.Component {
         }
       }
     }
+    if (
+      this.props.keyPath.includes('core.swipeActions') &&
+      this.props.keyPath !== 'core.swipeActions.enabled'
+    ) {
+      const swipeActions = [
+        'core.swipeActions.leftShortAction',
+        'core.swipeActions.leftLongAction',
+        'core.swipeActions.rightShortAction',
+        'core.swipeActions.rightLongAction',
+      ].filter(item => item !== this.props.keyPath);
+      for (const key of swipeActions) {
+        if (this.props.config.get(key) === value) {
+          AppEnv.config.set(key, '');
+          break;
+        }
+      }
+    }
     // **** process for quick acions setting --- end ****
     this._dropdownComponent.toggleDropdown();
   };
@@ -65,6 +81,7 @@ class ConfigSchemaItem extends React.Component {
   getSelectedMenuItem(items) {
     const selected = this.props.config.get(this.props.keyPath);
     for (const item of items) {
+      // eslint-disable-next-line no-unused-vars
       const [value, label] = item;
       if (value === selected) {
         return this._renderMenuItem(item);
