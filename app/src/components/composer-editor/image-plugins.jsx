@@ -111,16 +111,20 @@ function renderNode(props) {
 
 export const changes = {
   insert: (change, filePath) => {
-    return change
-      .insertInline({
-        isVoid: true,
-        type: IMAGE_TYPE,
-        data: {
-          draggerDisable: true,
-          src: filePath,
-        },
-      })
-      .collapseToStartOfNextText();
+    const dirName = path.dirname(filePath);
+    const fileName = encodeURIComponent(path.basename(filePath));
+    if (!filePath) {
+      return;
+    }
+    const inline = Inline.create({
+      isVoid: true,
+      type: IMAGE_TYPE,
+      data: {
+        draggerDisable: true,
+        src: path.join(dirName, fileName),
+      },
+    });
+    return change.insertInline(inline).collapseToStartOfNextText();
   },
 };
 

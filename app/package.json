@@ -1,8 +1,8 @@
 {
   "name": "edisonmail",
   "productName": "EdisonMail",
-  "version": "1.10.16",
-  "buildVersion": "450",
+  "version": "1.10.28",
+  "buildVersion": "459",
   "commitHash": "COMMIT_INSERTED_DURING_PACKAGING",
   "description": "The best email app for people and teams at work",
   "license": "GPL-3.0",
@@ -155,7 +155,7 @@
   },
   "optionalDependencies": {},
   "devDependencies": {
-    "electron-rebuild": "^1.10.1",
+    "electron-rebuild": "^2.3.5",
     "node-gyp": "^6.0.0"
   },
   "resolutions": {

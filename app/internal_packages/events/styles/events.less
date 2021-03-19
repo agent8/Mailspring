@@ -99,8 +99,33 @@
           left: 6px;
           float: right;
           //overflow: hidden;
-          margin-top: -8px;
-          clip-path: circle(20px at center);
+          margin-top: -12px;
+          .image-wrap{
+            clip-path: circle(16px at center);
+          }
+          .tooltip-text{
+            opacity: 0;
+            transition: opacity 600ms;
+            min-width: 80px;
+            max-width: 150px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow-x: hidden;
+            background-color: @black;
+            color: @text-color-inverse;
+            text-align: center;
+            padding: 5px 0;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            top: 6px;
+            left: 40px;
+          }
+          &:hover{
+            .tooltip-text{
+              opacity: 100;
+            }
+          }
         }
       }
       .event-participants {

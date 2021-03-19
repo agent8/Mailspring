@@ -27,7 +27,7 @@ let getDeviceHash = null;
 // To add a new user
 const WebServerApiKey = 'bdH0VGExAEIhPq0z5vwdyVuHVzWx0hcR';
 const WebServerRoot = 'https://web-marketing.edison.tech/';
-const type = 'mac';
+const platform_type = 'mac';
 const windowStateStorageVersion = 1;
 
 function ensureInteger(f, fallback) {
@@ -508,9 +508,9 @@ export default class AppEnvConstructor {
         reg = new RegExp(`"${key}":${leftRegStr}(\\s|\\S)*?${rightRegStr},"`, 'g');
       }
 
-      return strData.replace(reg, (str, match) => {
+      return strData.replace(reg, (strInput, match) => {
         const hash = createHash('md5')
-          .update(str.replace(`"${key}":${leftStr}`, '').replace(`${rightRegStr},"`, ''))
+          .update(strInput.replace(`"${key}":${leftStr}`, '').replace(`${rightRegStr},"`, ''))
           .digest('hex');
         return `"${key}":${leftStr}${hash}${rightStr},"`;
       });
@@ -1968,7 +1968,7 @@ export default class AppEnvConstructor {
       response = await fetch(
         WebServerRoot +
           'registerBetaUser?type=' +
-          type +
+          platform_type +
           '&apiKey=' +
           WebServerApiKey +
           '&email=' +
@@ -1994,7 +1994,7 @@ export default class AppEnvConstructor {
       response = await fetch(
         WebServerRoot +
           'getUserInviteEmailBody?type=' +
-          type +
+          platform_type +
           '&apiKey=' +
           WebServerApiKey +
           '&email=' +
@@ -2006,7 +2006,7 @@ export default class AppEnvConstructor {
         response = await fetch(
           WebServerRoot +
             'getUserInviteEmailBody?type=' +
-            type +
+            platform_type +
             '&apiKey=' +
             WebServerApiKey +
             '&email=' +
@@ -2033,7 +2033,7 @@ export default class AppEnvConstructor {
       response = await fetch(
         WebServerRoot +
           'unlock?type=' +
-          type +
+          platform_type +
           '&apiKey=' +
           WebServerApiKey +
           '&email=' +

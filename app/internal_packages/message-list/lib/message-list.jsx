@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import _ from 'underscore';
 import {
   React,
   ReactDOM,
@@ -14,6 +15,7 @@ import {
   OutboxStore,
   SearchStore,
   FocusedPerspectiveStore,
+  ThreadStore,
 } from 'mailspring-exports';
 
 import {
@@ -633,7 +635,7 @@ class MessageList extends React.Component {
     this._messageWrapEl.scrollTop += height * direction;
   };
 
-  _onChange = () => {
+  _onChange = _.throttle(() => {
     const newState = this._getStateFromStores();
     if (
       !newState.inOutbox &&
@@ -643,17 +645,24 @@ class MessageList extends React.Component {
     }
     this._onResize();
     this.safeSetState(newState);
-  };
+  }, 2);
 
   _getStateFromStores() {
     const sheet = WorkspaceStore.rootSheet();
     if (sheet.id !== 'Outbox') {
+      const currentThread = MessageStore.thread();
+      if (currentThread) {
+        const current = FocusedPerspectiveStore.current();
+        if (current && !current.isRecent) {
+          ThreadStore.addRecent(currentThread.id);
+        }
+      }
       return {
         messages: MessageStore.items() || [],
         messagesExpandedState: MessageStore.itemsExpandedState(),
         canCollapse: MessageStore.items().length > 1,
         hasCollapsedItems: MessageStore.hasCollapsedItems(),
-        currentThread: MessageStore.thread(),
+        currentThread,
         loading: MessageStore.itemsLoading(),
         popedOut: MessageStore.isPopedOut(),
         isOnline: OnlineStatusStore.isOnline(),

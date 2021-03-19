@@ -7,6 +7,7 @@ import AccountStore from './flux/stores/account-store';
 import CategoryStore from './flux/stores/category-store';
 import DatabaseStore from './flux/stores/database-store';
 import OutboxStore from './flux/stores/outbox-store';
+import ThreadStore from './flux/stores/thread-store';
 import ThreadCountsStore from './flux/stores/thread-counts-store';
 import MutableQuerySubscription from './flux/models/mutable-query-subscription';
 import UnreadQuerySubscription from './flux/models/unread-query-subscription';
@@ -52,7 +53,7 @@ export default class MailboxPerspective {
   }
 
   static forDrafts(accountsOrIds) {
-    return new DraftsMailboxPerspective(accountsOrIds);
+    return new DraftsMailboxPerspective(accountsOrIds, accountsOrIds.length > 1);
   }
   static forSiftCategory({ siftCategory, accountIds } = {}) {
     return new SiftMailboxPerspective({ siftCategory, accountIds });
@@ -68,7 +69,7 @@ export default class MailboxPerspective {
   static forAllTrash(accountsOrIds) {
     const categories = CategoryStore.getCategoriesWithRoles(accountsOrIds, 'trash');
     if (Array.isArray(categories) && categories.length > 0) {
-      return new AllTrashMailboxPerspective(categories);
+      return new AllTrashMailboxPerspective(categories, true);
     } else {
       return this.forNothing({
         categoryMetaDataAccountId: 'shortcuts',
@@ -103,7 +104,7 @@ export default class MailboxPerspective {
     }
     let ret;
     try {
-      ret = new TodayMailboxPerspective(categories);
+      ret = new TodayMailboxPerspective(categories, accountIds.length > 1);
     } catch (e) {
       ret = this.forNothing();
       AppEnv.reportError(new Error('Today view perspective error'), {
@@ -174,12 +175,25 @@ export default class MailboxPerspective {
     return this.forNothing();
   }
 
-  static forUnread(categories) {
-    return categories.length > 0 ? new UnreadMailboxPerspective(categories) : this.forNothing();
+  static forUnread(categories, isShortcut = false) {
+    return categories.length > 0
+      ? new UnreadMailboxPerspective(categories, isShortcut)
+      : this.forNothing();
   }
 
   static forJira(categories) {
     return categories.length > 0 ? new JiraMailboxPerspective(categories) : this.forNothing();
+  }
+
+  static forRecent(accountIds) {
+    if (
+      Array.isArray(accountIds) &&
+      accountIds.length > 0 &&
+      accountIds.every(id => typeof id === 'string')
+    ) {
+      return new RecentMailboxPerspective(accountIds);
+    }
+    return this.forNothing();
   }
 
   static forInboxFocused(categories) {
@@ -215,7 +229,7 @@ export default class MailboxPerspective {
     // config. However, the API has not yet come back with the list of
     // `categories` for that account.
     categories = _.compact(categories);
-    return MailboxPerspective.forUnread(categories);
+    return MailboxPerspective.forUnread(categories, accountIds.length > 1);
   }
 
   static getCategoryIds = (accountsOrIds, categoryName) => {
@@ -373,10 +387,15 @@ export default class MailboxPerspective {
     this._categoryMetaDataId = '';
   }
   categoryMetaDataInfo() {
+    const cats = this.categories()
+      .filter(cat => cat)
+      .map(cat => {
+        return { accountId: cat.accountId || cat.aid, id: cat.id || cat.pid };
+      });
     return {
       accountId: this._categoryMetaDataAccountId,
       id: this._categoryMetaDataId,
-      categories: [],
+      categories: cats,
     };
   }
   canReceiveFolderTreeData(folderData) {
@@ -740,6 +759,9 @@ export default class MailboxPerspective {
     }
     return [];
   }
+  shouldEnableSwipe(threads) {
+    return false;
+  }
 }
 //
 // class SingleAccountMailboxPerspective extends MailboxPerspective {
@@ -808,7 +830,7 @@ class OutboxMailboxPerspective extends MailboxPerspective {
 }
 
 class DraftsMailboxPerspective extends MailboxPerspective {
-  constructor(accountIds) {
+  constructor(accountIds, isShortcut = false) {
     super(accountIds);
     this.name = 'Drafts';
     this.iconName = 'drafts.svg';
@@ -824,7 +846,7 @@ class DraftsMailboxPerspective extends MailboxPerspective {
       this.displayName = 'All Drafts';
     }
 
-    if (this._categories.length === 1 && this._categories[0]) {
+    if (this._categories.length === 1 && this._categories[0] && !isShortcut) {
       this._categoryMetaDataAccountId = this._categories[0].accountId;
       this._categoryMetaDataId = this._categories[0].path;
     } else {
@@ -1185,7 +1207,7 @@ class EmptyMailboxPerspective extends MailboxPerspective {
 }
 
 class CategoryMailboxPerspective extends MailboxPerspective {
-  constructor(_categories) {
+  constructor(_categories, isShortCut = false) {
     super(_.uniq(_categories.map(c => c.accountId)));
     this._categories = _categories;
 
@@ -1203,19 +1225,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         .map(cat => cat.path)
         .join('-');
     }
+    if (isShortCut) {
+      this._categoryMetaDataAccountId = 'shortcuts';
+    }
   }
-  categoryMetaDataInfo = () => {
-    const cats = this.categories()
-      .filter(cat => cat)
-      .map(cat => {
-        return { accountId: cat.accountId, id: cat.id || cat.pid };
-      });
-    return {
-      accountId: this._categoryMetaDataAccountId,
-      id: this._categoryMetaDataId,
-      categories: cats,
-    };
-  };
   canReceiveFolderTreeData(folderData) {
     const sameAccount = super.canReceiveFolderTreeData(folderData);
     if (!sameAccount) {
@@ -1233,6 +1246,9 @@ class CategoryMailboxPerspective extends MailboxPerspective {
         (!folderParent && !currentParent) ||
         (folderParent && currentParent && folderParent.id === currentParent.id)
       );
+    } else if (cats.length === 0) {
+      //DC-3020 This is for when dropping 'flagged' category
+      return true;
     }
     return cats.length > 1 && this.categories().length > 1;
   }
@@ -1473,6 +1489,10 @@ class CategoryMailboxPerspective extends MailboxPerspective {
   // - if finished category === "archive" remove the label
   // - if finished category === "trash" move to trash folder, keep labels intact
   //
+  shouldEnableSwipe(threads) {
+    return this.tasksForRemovingItems(threads, 'Should enable swipe').length > 0;
+  }
+
   tasksForRemovingItems(threads, source = 'Removed from list') {
     FocusedPerspectiveStore =
       FocusedPerspectiveStore || require('./flux/stores/focused-perspective-store').default;
@@ -1625,7 +1645,7 @@ class NoneSelectablePerspective extends CategoryMailboxPerspective {
 }
 class AllSentMailboxPerspective extends CategoryMailboxPerspective {
   constructor(props) {
-    super(props);
+    super(props, true);
     this.name = 'All Sent';
     this.iconName = 'sent.svg';
     this.isAllSent = true;
@@ -1651,7 +1671,7 @@ class AllSentMailboxPerspective extends CategoryMailboxPerspective {
 }
 class AllSpamMailboxPerspective extends CategoryMailboxPerspective {
   constructor(props) {
-    super(props);
+    super(props, true);
     this.name = 'Spam';
     this.iconName = 'spam.svg';
     this.isAllSpam = true;
@@ -1676,13 +1696,13 @@ class AllSpamMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 class TodayMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(categories) {
-    super(categories);
+  constructor(categories, isShortcut = false) {
+    super(categories, isShortcut);
     this.name = 'Today';
     this.iconName = 'today.svg';
     this._categories = categories;
     this.isToday = true;
-    if (this._categories.length === 1) {
+    if (this._categories.length === 1 && !isShortcut) {
       this._categoryMetaDataId = 'today';
     } else {
       this._categoryMetaDataId = 'all-today';
@@ -1773,7 +1793,7 @@ class TodayMailboxPerspective extends CategoryMailboxPerspective {
 }
 class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
   constructor(data) {
-    super(data);
+    super(data, true);
     this.isAllArchive = true;
     this.displayName = 'All Archive';
     this._categoryMetaDataId = 'all-archive';
@@ -1799,7 +1819,7 @@ class AllArchiveCategoryMailboxPerspective extends CategoryMailboxPerspective {
 }
 class AllTrashMailboxPerspective extends CategoryMailboxPerspective {
   constructor(_categories) {
-    super(_categories);
+    super(_categories, true);
     this.name = 'all-trash';
     this.displayName = 'Trash';
     this.isAllTrash = true;
@@ -1846,12 +1866,14 @@ class AllMailMailboxPerspective extends CategoryMailboxPerspective {
   }
 }
 
-class JiraMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(_categories) {
-    super(_categories);
+class JiraMailboxPerspective extends MailboxPerspective {
+  constructor(accountIds) {
+    super(accountIds);
+    this.name = 'Jira';
+    this.iconName = 'jira.svg';
+    this.displayName = 'Jira';
     this._categoryMetaDataAccountId = 'sift';
     this._categoryMetaDataId = 'jira';
-    this.displayName = 'Jira';
   }
   canReceiveFolderTreeData(folderData) {
     return (
@@ -1861,6 +1883,32 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
       this._categoryMetaDataAccountId === folderData.accountId &&
       this._categoryMetaDataId !== folderData.id
     );
+  }
+  getDisplayOrder() {
+    return CategoryStore.getCategoryDisplayOrderInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      id: this._categoryMetaDataId,
+    });
+  }
+  isHidden() {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+    });
+  }
+  hide() {
+    return CategoryStore.hideCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
+  }
+  show() {
+    return CategoryStore.showCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
   }
   unreadCount() {
     let sum = 0;
@@ -1879,21 +1927,101 @@ class JiraMailboxPerspective extends CategoryMailboxPerspective {
       .order([Thread.attributes.lastMessageTimestamp.descending()])
       .limit(0);
 
-    if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
-      // The user has multiple categories in the same account selected, which
-      // means our result set could contain multiple copies of the same threads
-      // (since we do an inner join) and we need SELECT DISTINCT. Note that this
-      // can be /much/ slower and we shouldn't do it if we know we don't need it.
-      query.distinct();
+    // if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+    //   // The user has multiple categories in the same account selected, which
+    //   // means our result set could contain multiple copies of the same threads
+    //   // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+    //   // can be /much/ slower and we shouldn't do it if we know we don't need it.
+    //   query.distinct();
+    // }
+
+    return new MutableQuerySubscription(query, { emitResultSet: true });
+  }
+}
+
+class RecentMailboxPerspective extends MailboxPerspective {
+  constructor(accountIds) {
+    super(accountIds);
+    this.name = 'Recent';
+    this.iconName = 'history-search.svg';
+    this.isRecent = true;
+    this.displayName = 'Recent';
+    this._categoryMetaDataId = 'recent';
+    if (accountIds.length === 1 && this.accountIds[0]) {
+      this._categoryMetaDataAccountId = accountIds[0];
+      this._categoryMetaDataId = 'recent';
+    } else {
+      this._categoryMetaDataAccountId = 'shortcuts';
+      this._categoryMetaDataId = 'all-recent';
     }
+  }
+  getDisplayOrder() {
+    return CategoryStore.getCategoryDisplayOrderInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      id: this._categoryMetaDataId,
+    });
+  }
+  isHidden() {
+    return CategoryStore.isCategoryHiddenInFolderTree({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+    });
+  }
+  hide() {
+    return CategoryStore.hideCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
+  }
+  show() {
+    return CategoryStore.showCategoryById({
+      accountId: this._categoryMetaDataAccountId,
+      categoryId: this._categoryMetaDataId,
+      save: false,
+    });
+  }
+  canReceiveFolderTreeData(folderData) {
+    return (
+      folderData.accountId &&
+      folderData.id &&
+      this._categoryMetaDataAccountId &&
+      this._categoryMetaDataAccountId === folderData.accountId &&
+      this._categoryMetaDataId !== folderData.id
+    );
+  }
+  unreadCount() {
+    return 0;
+  }
+  shouldEnableSwipe(threads) {
+    return true;
+  }
+
+  threads() {
+    const query = DatabaseStore.findAll(Thread)
+      .where([
+        Thread.attributes.inAllMail.equal(true),
+        Thread.attributes.state.equal(0),
+        Thread.attributes.id.in(ThreadStore.getRecent()),
+      ])
+      .order([Thread.attributes.lastMessageTimestamp.descending()])
+      .limit(0);
+
+    // if (this._categories.length > 1 && this.accountIds.length < this._categories.length) {
+    //   // The user has multiple categories in the same account selected, which
+    //   // means our result set could contain multiple copies of the same threads
+    //   // (since we do an inner join) and we need SELECT DISTINCT. Note that this
+    //   // can be /much/ slower and we shouldn't do it if we know we don't need it.
+    //   query.distinct();
+    // }
 
     return new MutableQuerySubscription(query, { emitResultSet: true });
   }
 }
 
 class UnreadMailboxPerspective extends CategoryMailboxPerspective {
-  constructor(categories) {
-    super(categories);
+  constructor(categories, isShortcut = false) {
+    super(categories, isShortcut);
     this.unread = true;
     this.name = 'Unread';
     this.iconName = 'unread.svg';
@@ -1907,7 +2035,7 @@ class UnreadMailboxPerspective extends CategoryMailboxPerspective {
         new UnreadMailboxOtherPerspective(this._categories),
       ];
     }
-    if (Array.isArray(this._categories) && this._categories.length === 1) {
+    if (Array.isArray(this._categories) && this._categories.length === 1 && !isShortcut) {
       this._categoryMetaDataId = 'unread';
     } else {
       this._categoryMetaDataId = 'all-unread';

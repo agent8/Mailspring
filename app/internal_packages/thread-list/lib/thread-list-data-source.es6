@@ -4,7 +4,10 @@ import {
   MessageStore,
   QueryResultSet,
   QuerySubscription,
+  FocusedPerspectiveStore,
+  ThreadStore,
 } from 'mailspring-exports';
+import _ from 'underscore';
 import UnreadQuerySubscription from '../../../src/flux/models/unread-query-subscription';
 import { allInboxCategories } from '../../../src/constant';
 
@@ -29,6 +32,12 @@ const _flatMapJoiningMessages = $threadsResultSet => {
   return (
     $threadsResultSet
       .flatMapLatest(threadsResultSet => {
+        // resort order when current folder is [Recently Seen]
+        const current = FocusedPerspectiveStore.current();
+        if (current && current.isRecent) {
+          threadsResultSet._ids = _.intersection(ThreadStore.getRecent(), threadsResultSet._ids);
+        }
+
         const missingIds = threadsResultSet.ids().filter(id => !$messagesResultSets[id]);
         let promise = null;
         if (missingIds.length === 0) {

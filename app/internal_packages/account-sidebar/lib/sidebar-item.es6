@@ -442,7 +442,7 @@ class SidebarItem {
       return null;
     }
     const perspective =
-      cats.length === 1
+      cats.length === 1 && accountIds.length === 1
         ? MailboxPerspective.forCategories(cats)
         : MailboxPerspective.forAllSpam(cats);
     let id = 'spam';
@@ -537,7 +537,7 @@ class SidebarItem {
     // `categories` for that account.
     categories = _.compact(categories);
     opts.iconName = 'unread.svg';
-    const perspective = MailboxPerspective.forUnread(categories);
+    const perspective = MailboxPerspective.forUnread(categories, accountIds.length > 1);
     let id = 'Unread';
     if (opts.key) {
       id += `-${opts.key}`;
@@ -559,20 +559,22 @@ class SidebarItem {
     if (!isEdisonMail) {
       return null;
     }
-    let categories = accountIds.map(accId => {
-      return CategoryStore.getCategoryByRole(accId, 'inbox');
-    });
 
-    // NOTE: It's possible for an account to not yet have an `inbox`
-    // category. Since the `SidebarStore` triggers on `AccountStore`
-    // changes, it'll trigger the exact moment an account is added to the
-    // config. However, the API has not yet come back with the list of
-    // `categories` for that account.
-    categories = _.compact(categories);
     opts.iconName = 'jira.svg';
     opts.className = 'jira-icon';
-    const perspective = MailboxPerspective.forJira(categories);
+    const perspective = MailboxPerspective.forJira(accountIds);
     let id = 'Jira';
+    if (opts.key) {
+      id += `-${opts.key}`;
+    }
+    return this.forPerspective(id, perspective, opts);
+  }
+
+  static forRecent(accountIds, opts = {}) {
+    opts.iconName = 'history-search.svg';
+    opts.className = 'recent-icon';
+    const perspective = MailboxPerspective.forRecent(accountIds);
+    let id = 'Recent';
     if (opts.key) {
       id += `-${opts.key}`;
     }

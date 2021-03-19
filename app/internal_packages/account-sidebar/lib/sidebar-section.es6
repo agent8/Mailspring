@@ -202,7 +202,7 @@ export default class SidebarSection {
         }
       }
       let item = SidebarItem.forSingleInbox(acc.id, {
-        name: acc.label,
+        name: (acc.label || '').trim().length > 0 ? acc.label.trim() : acc.emailAddress,
         threadTitleName: 'Inbox',
         children: accountFolderItems,
         folderTreeIndex: accountItems.length,
@@ -228,8 +228,8 @@ export default class SidebarSection {
     if (outboxCount.total > 0) {
       items.unshift(outbox);
     }
+    const shortcutItems = [];
     if (accounts.length > 1) {
-      const shortcutItems = [];
       items.push(DIVIDER_OBJECT);
       folderItem = SidebarItem.forToday(accountIds, {
         displayName: 'Today',
@@ -300,10 +300,17 @@ export default class SidebarSection {
       if (folderItem) {
         shortcutItems.push(folderItem);
       }
-      SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(shortcutItems);
-
-      items.push(...shortcutItems);
     }
+    folderItem = SidebarItem.forRecent(accountIds, {
+      displayName: 'Recently Seen',
+      key: 'all',
+      folderTreeIndex: shortcutItems.length,
+    });
+    if (folderItem) {
+      shortcutItems.push(folderItem);
+    }
+    SidebarSection.sortByDisplayOrderAndUpdateDisplayOrderToIndexOrder(shortcutItems);
+    items.push(...shortcutItems);
     SidebarSection.forSiftCategories(accountIds, items);
 
     ExtensionRegistry.AccountSidebar.extensions()
