@@ -173,7 +173,7 @@ async function getTheDifferenceForSigOrTemp(list, type) {
         continue;
     }
   }
-  const cb = () => {
+  const cb = serverReturnData => {
     const removeIds = removes.map(item => item.subId);
     const updateIds = updates.map(item => item.subId);
     const configKey = ConfigType[type].configKey;
@@ -182,7 +182,24 @@ async function getTheDifferenceForSigOrTemp(list, type) {
       .filter(s => !removeIds.includes(s.id))
       .map(s => {
         if (updateIds.includes(s.id)) {
-          return { ...s, state: PreferencesSubListStateEnum.synchronized };
+          let newTsClientUpdate = s.tsClientUpdate || 0;
+          if (serverReturnData && Array.isArray(serverReturnData.updateResults)) {
+            for (let i = 0; i < serverReturnData.updateResults.length; i++) {
+              if (
+                serverReturnData.updateResults[i].subId === s.id &&
+                typeof serverReturnData.updateResults[i].version === 'number' &&
+                newTsClientUpdate < serverReturnData.updateResults[i].version
+              ) {
+                newTsClientUpdate = serverReturnData.updateResults[i].version;
+                break;
+              }
+            }
+          }
+          return {
+            ...s,
+            state: PreferencesSubListStateEnum.synchronized,
+            tsClientUpdate: newTsClientUpdate,
+          };
         }
         return s;
       });
@@ -342,7 +359,9 @@ export const mergeServerDefaultSignaturesToLocal = async defaultSigInServer => {
     try {
       const newConfig = JSON.parse(configInServer.value);
       return newConfig;
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   }
   const configInLocal = AppEnv.config.get(defaultSignaturesKey);
   return configInLocal;
