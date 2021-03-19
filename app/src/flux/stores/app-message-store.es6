@@ -242,7 +242,6 @@ class AppMessageStore extends MailspringStore {
       default:
         priority = 'low';
     }
-    console.warn('removed block', block);
     this._messages[priority] = this._messages[priority].filter(b => {
       return b.id !== block.id;
     });
