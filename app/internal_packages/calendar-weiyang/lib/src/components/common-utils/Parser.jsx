@@ -18,11 +18,6 @@ export const parseRecurrenceEvents = calEvents => {
       const options = RRule.parseString(calEvent.recurData.rrule.stringFormat);
       options.dtstart = new Date(moment.unix(calEvent.eventData.start.dateTime));
       const rrule = new RRule(options);
-      console.log('rrule', rrule);
-      console.log(
-        'UNTIL 2',
-        moment.tz(calEvent.recurData.rrule.until, calEvent.eventData.start.timezone)
-      );
       recurringEvents.push({
         id: uuidv4(),
         recurringTypeId: calEvent.eventData.start.dateTime,
@@ -201,15 +196,11 @@ export const parseCalendarObject = (calendarObject, calendarId, color) => {
 export const parseCalendarData = (calendarData, etag, url, calendarId, color) => {
   const results = [];
   const jCalData = ICAL.parse(calendarData);
-  console.log('calendardata', calendarData);
   const comp = new ICAL.Component(jCalData);
-  console.log('comp', comp);
   const vevents = comp.getAllSubcomponents('vevent');
-  console.log('vevents', vevents);
   const modifiedEvents = vevents.filter(indivComp => !indivComp.hasProperty('rrule'));
-  console.log('modifiedEvents', modifiedEvents);
   let masterEvent;
-  // This means it is recurring because there is more than one event per ics.
+  // This means it is recurring with edited events because there is more than one event per ics.
   if (vevents.length > 1) {
     masterEvent = vevents.filter(indivComp => indivComp.hasProperty('rrule'))[0];
   } else {
@@ -220,31 +211,32 @@ export const parseCalendarData = (calendarData, etag, url, calendarId, color) =>
   if (masterEvent === undefined) {
     // debugger;
   }
-  console.log('masterEvent', masterEvent);
   const icalMasterEvent = new ICAL.Event(masterEvent);
-  console.log('icalMasterEvent', icalMasterEvent);
 
   if (icalMasterEvent.isRecurring()) {
     const recurrenceIds = getRecurrenceIds(vevents);
     const exDates = getExDates(masterEvent);
 
-    // I need to figure out how to parse the data into db here.
     const rrule = getRuleJSON(masterEvent, icalMasterEvent);
-    console.log('parseCalender', rrule);
     const modifiedThenDeleted = isModifiedThenDeleted(masterEvent, exDates);
-
+    const masterRruleUntil = moment(rrule.until).unix();
     const iCALString = masterEvent.getFirstPropertyValue('rrule').toString();
-    console.log('getAllProperty', masterEvent.getFirstPropertyValue());
-    console.log('iCalString', iCALString);
     if (recurrenceIds.length > 0) {
       // modified events from recurrence series
       for (let i = 0; i < modifiedEvents.length; i += 1) {
         results.push({
-          eventData: parseModifiedEvent(comp, etag, url, modifiedEvents[i], calendarId, color),
+          eventData: parseModifiedEvent(
+            comp,
+            etag,
+            url,
+            modifiedEvents[i],
+            calendarId,
+            color,
+            masterRruleUntil
+          ),
         });
       }
     }
-
     // Recurring event
     results.push({
       recurData: { rrule, exDates, recurrenceIds, modifiedThenDeleted, iCALString },
@@ -256,10 +248,18 @@ export const parseCalendarData = (calendarData, etag, url, calendarId, color) =>
       eventData: parseEvent(comp, false, etag, url, calendarId, false, color),
     });
   }
-  return results;
+  return results.filter(result => result.eventData !== null);
 };
 
-export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId, color) => {
+export const parseModifiedEvent = (
+  comp,
+  etag,
+  url,
+  modifiedEvent,
+  calendarId,
+  color,
+  masterRruleUntil
+) => {
   const dtstart =
     modifiedEvent.getFirstPropertyValue('dtstart') == null
       ? ''
@@ -270,8 +270,10 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId, c
     tz = moment.tz.guess(true);
   }
   let dtstartMoment = moment.tz(dtstart.toUnixTime() * 1000, tz);
-  dtstartMoment = dtstartMoment.tz('GMT').tz(tz, true);
-
+  dtstartMoment = dtstartMoment.tz('UTC').tz(tz, true);
+  if (dtstartMoment.unix() > masterRruleUntil) {
+    return null;
+  }
   let dtend;
   let dtendMoment;
   if (modifiedEvent.hasProperty('dtend')) {
@@ -302,6 +304,20 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId, c
 
   return {
     id: uuidv4(),
+    attendee:
+      modifiedEvent.getFirstPropertyValue('attendee') == null
+        ? ''
+        : JSON.stringify(
+            Object.assign(
+              {},
+              modifiedEvent.getAllProperties('attendee').map(attendee => {
+                return {
+                  email: attendee.getParameter('email'),
+                  partstat: attendee.getParameter('partstat'),
+                };
+              })
+            )
+          ),
     start: {
       dateTime: dtstartMoment.unix(),
       timezone: tz,
@@ -331,15 +347,18 @@ export const parseModifiedEvent = (comp, etag, url, modifiedEvent, calendarId, c
         : modifiedEvent.getFirstPropertyValue('location'),
     originalStartTime: {
       dateTime: moment(dtstart).unix(),
-      timezone: 'America/Los_Angeles',
+      timezone: tz,
     },
     providerType: CALDAV_PROVIDER,
+    recurringEventId: modifiedEvent.getFirstPropertyValue('uid'),
     isRecurring: true,
     etag,
     caldavUrl: url,
     calendarId,
     colorId: color,
     iCALString: comp.toString(),
+    allDay: modifiedEvent.getFirstProperty('dtstart').type === 'date',
+    isAllDay: modifiedEvent.getFirstProperty('dtstart').type === 'date',
   };
 };
 
@@ -361,10 +380,7 @@ export const parseEvent = (component, isRecurring, etag, url, calendarId, cdIsMa
   if (component.getFirstSubcomponent('vtimezone')) {
     tz = component.getFirstSubcomponent('vtimezone').getFirstPropertyValue('tzid');
   }
-  const dtstart =
-    masterEvent.getFirstPropertyValue('dtstart') == null
-      ? ''
-      : masterEvent.getFirstPropertyValue('dtstart');
+  const dtstart = masterEvent.getFirstPropertyValue('dtstart');
 
   let dtstartMoment = moment.tz(dtstart.toUnixTime() * 1000, tz);
   dtstartMoment = dtstartMoment.tz('GMT').tz(tz, true);
@@ -509,7 +525,7 @@ export const getRecurrenceIds = vevents => {
   const recurrenceIds = [];
   vevents.forEach(evt => {
     if (evt.getFirstPropertyValue('recurrence-id')) {
-      let tz = evt.getFirstPropertyValue('tzid');
+      let tz = evt.getFirstProperty('recurrence-id').getFirstValue().timezone;
       // This means it is GMT/UTC
       if (tz === null) {
         tz = 'UTC';
@@ -581,7 +597,6 @@ export const expandSeries = (recurringEvents, recurrencePatterns) => {
 };
 
 export const parseRecurrence = (recurPattern, recurMasterEvent) => {
-  console.log('parserRecurrence', recurMasterEvent, recurPattern);
   const recurEvents = [];
   const ruleSet = buildRuleSet(
     recurPattern,
@@ -604,7 +619,6 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
   ];
 
   const allDates = ruleSet.all();
-  console.log('ALL DATES', allDates);
   if (allDates.length <= 0) {
     // This means that the caldav server has an event that when expanded,
     // has 0 events to deal with. This could be due to several reasons
@@ -675,7 +689,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
   recurDates.forEach(recurDateTime => {
     // check if master event is inside recurDates
     containMaster = recurMasterEvent.start.dateTime === recurDateTime ? true : containMaster;
-    // recurDateTime not inside exceptionMap. ie, current recurDateTime is follows master exactly
+    // recurDateTime not inside exceptionMap. ie, current recurDateTime follows master exactly
     if (!exceptionMap[recurDateTime]) {
       recurEvents.push({
         id: uuidv4(),
@@ -755,8 +769,10 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
       });
     }
   });
-  // Adding the master event, if it isn't inside(occurs when expanded RRULE didn't take into account the initial master event)
-  if (!containMaster && !exDateContainsMaster(recurMasterEvent.start.dateTime, recurPattern)) {
+  // Adding the first master event, if it isn't inside(occurs when expanded RRULE didn't take into account the initial master event)
+  // If first master event inside exdate/recurrenceIds, hide it
+  // eslint-disable-next-line prettier/prettier
+  if (!containMaster && !exDateAndRecurIdsContainsMaster(recurMasterEvent.start.dateTime, recurPattern)) {
     recurEvents.push({
       id: uuidv4(),
       end: {
@@ -1024,15 +1040,18 @@ export const buildRuleSet = (pattern, start, tz) => {
       });
   }
 
-  // const modifiedThenDeletedDates = getModifiedThenDeletedDates(exDates, recurrenceIds);
   return rruleSet;
 };
 
-const exDateContainsMaster = (masterDatetime, recurPattern) => {
-  const [containMaster] = recurPattern.exDates
+const exDateAndRecurIdsContainsMaster = (masterDatetime, recurPattern) => {
+  const [exdateInMaster] = recurPattern.exDates
     .split(',')
-    .filter(exDate => exDate === masterDatetime);
-  if (containMaster !== undefined) {
+    .filter(exDate => parseInt(exDate) === masterDatetime);
+  const [recurrenceIdsInMaster] = recurPattern.recurrenceIds
+    .split(',')
+    .filter(recurId => parseInt(recurId) === masterDatetime);
+  if (exdateInMaster !== undefined || recurrenceIdsInMaster !== undefined) {
+    // Either exdate or recurrenceIds contains master event, ie master event is deleted/edited from series
     return true;
   } else {
     return false;

@@ -40,8 +40,14 @@ class CalendarPluginStore extends MailspringStore {
   };
 
   addIcloudCalendarData = events => {
-    this._icloudCalendarData = { ...this._icloudCalendarData, ...events };
-    this.trigger();
+    if (events.length > 0) {
+      // remove any related event by iCalUID since new events to be added would have similar copies
+      this._icloudCalendarData = this._icloudCalendarData.filter(
+        evt => evt.iCalUID !== events[0].iCalUID
+      );
+      this._icloudCalendarData = [...this._icloudCalendarData, ...events];
+      this.trigger();
+    }
   };
 
   updateIcloudRpLists = (editedRp, updateType, id = null) => {
@@ -57,7 +63,7 @@ class CalendarPluginStore extends MailspringStore {
         });
         if (foundRpIndex === null) {
           // inserting new rp
-          this._icloudRpLists = { ...this._icloudRpLists, editedRp };
+          this._icloudRpLists = [...this._icloudRpLists, editedRp];
         } else if (foundRp.length === 1) {
           // updating old rp
           editedRp.id = foundRp[0].id; // assign back local id

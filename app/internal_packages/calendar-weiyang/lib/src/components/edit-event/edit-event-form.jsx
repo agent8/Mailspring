@@ -291,11 +291,10 @@ export default class EditForm extends React.Component {
       byWeekDay: state.recurrByWeekDay,
       byWeekNo: state.recurrByWeekNo,
       isRecurring: state.isRecurring,
-      rrule: state.updatedRrule,
+      updatedRrule: state.updatedRrule,
 
       // Updated fields
       updatedIsRecurring: state.updatedIsRecurring,
-      updatedRrule: state.updatedIsRecurring ? state.updatedRrule.slice(6) : undefined, // remove the 'rrule:' from the front which interferes with parsing of the updated string into iCal string with ical.js later, remove field if recur -> single
 
       // User and moving information
       user,
@@ -310,7 +309,6 @@ export default class EditForm extends React.Component {
     // this.updateStoreFromServer();
     this.backToCalendar();
   };
-
   editFutureRecurrenceEvent = () => {
     const { props, state } = this;
     const [user] = CalendarPluginStore.getIcloudAuth().filter(
@@ -505,10 +503,10 @@ export default class EditForm extends React.Component {
         : moment(eventPresent.end.dateTime * 1000).format('YYYY-MM-DDThh:mm')
     );
 
-    // right now caldav server retrieved events do not have guests by default
+    // right now caldav server generated events do not have guests by default
     let attendees = {};
     let partstat = '';
-    if (eventPresent.attendee !== '') {
+    if (eventPresent.attendee !== '' && eventPresent.attendee !== undefined) {
       attendees = JSON.parse(eventPresent.attendee);
       const ownerIndex = Object.keys(attendees).filter(
         key => attendees[key].email === eventPresent.owner
@@ -562,88 +560,15 @@ export default class EditForm extends React.Component {
   };
 
   handleRruleChange = selectedRrule => {
-    this.setState((state, props) => ({
-      updatedRrule: selectedRrule.slice(6),
-      updatedIsRecurring: selectedRrule.slice(6) === '' ? false : true,
-    }));
-
-    // CHANGING OF DATE DYNAMICALLY
-    const { state } = this;
-    const rruleObj = ICAL.Recur._stringToData(selectedRrule);
-    if (rruleObj.until !== undefined) {
-      rruleObj.until.adjust(1, 0, 0, 0, 0);
-    }
-
-    if (rruleObj === null || rruleObj['rrule:freq'] === 'DAILY') {
+    if (selectedRrule === '') {
+      this.setState({
+        updatedIsRecurring: false,
+      });
       return;
     }
-
-    const dayOfWeek = {
-      SU: 0,
-      MO: 1,
-      TU: 2,
-      WE: 3,
-      TH: 4,
-      FR: 5,
-      SA: 6,
-    };
-    // Change Date based on Weekly/Monthly/Yearly
-    let newStartDateParsed = moment(state.updatedStartDateTime);
-    let newEndDateParsed = moment(state.updatedEndDateTime);
-    if (rruleObj['rrule:freq'] === 'WEEKLY' && rruleObj.BYDAY !== undefined) {
-      let nextDayDiff;
-      const currentDay = moment(state.updatedStartDateTime).day();
-
-      // If only one day is selected, it will be a string. Else it will be an array
-      if (Array.isArray(rruleObj.BYDAY)) {
-        nextDayDiff =
-          dayOfWeek[rruleObj.BYDAY.includes('SU') ? 'SU' : rruleObj.BYDAY[0]] - currentDay;
-      } else {
-        nextDayDiff = dayOfWeek[rruleObj.BYDAY] - currentDay;
-      }
-
-      // Calculate and set the new date
-      newStartDateParsed = moment(state.updatedStartDateTime).add(nextDayDiff, 'days');
-      newEndDateParsed = moment(state.updatedEndDateTime).add(nextDayDiff, 'days');
-    } else if (rruleObj['rrule:freq'] === 'MONTHLY') {
-      if (rruleObj.BYDAY !== undefined) {
-        newStartDateParsed = moment(newStartDateParsed)
-          .set('date', 1)
-          .isoWeekday(dayOfWeek[rruleObj.BYDAY] + 7 * rruleObj.BYSETPOS);
-        newEndDateParsed = moment(newEndDateParsed)
-          .set('date', 1)
-          .isoWeekday(dayOfWeek[rruleObj.BYDAY] + 7 * rruleObj.BYSETPOS);
-      } else if (rruleObj.BYMONTHDAY !== undefined) {
-        newStartDateParsed = moment(newStartDateParsed).set('date', rruleObj.BYMONTHDAY);
-        newEndDateParsed = moment(newEndDateParsed).set('date', rruleObj.BYMONTHDAY);
-      }
-    } else if (rruleObj['rrule:freq'] === 'YEARLY') {
-      const newYear =
-        moment(state.start).month() > rruleObj.BYMONTH
-          ? moment(state.start).year() + 1
-          : moment(state.start).year();
-      newStartDateParsed = moment()
-        .set('year', newYear)
-        .set('month', rruleObj.BYMONTH - 1);
-
-      if (rruleObj.BYMONTHDAY !== undefined) {
-        newStartDateParsed.set('date', rruleObj.BYMONTHDAY);
-      } else {
-        newStartDateParsed
-          .set('date', 1)
-          .isoWeekday(dayOfWeek[rruleObj.BYDAY] + 7 * rruleObj.BYSETPOS);
-      }
-
-      newEndDateParsed = moment(state.end)
-        .set('year', newYear)
-        .set('month', rruleObj.BYMONTH - 1)
-        .set('date', newStartDateParsed.date());
-    }
     this.setState({
-      start: { dateTime: newStartDateParsed.unix(), timezone: 'Asia/Singapore' },
-      end: { dateTime: newEndDateParsed.unix(), timezone: 'Asia/Singapore' },
-      updatedStartDateTime: this.processStringForUTC(newStartDateParsed.format('YYYY-MM-DDThh:mm')),
-      updatedEndDateTime: this.processStringForUTC(newEndDateParsed.format('YYYY-MM-DDThh:mm')),
+      updatedRrule: selectedRrule.slice(6),
+      updatedIsRecurring: true,
     });
   };
 
@@ -755,6 +680,7 @@ export default class EditForm extends React.Component {
             value={state.updatedRrule}
             config={{
               hideStart: true,
+              hideError: true,
               repeat: ['Never', 'Yearly', 'Monthly', 'Weekly', 'Daily'],
               end: ['On date', 'After'],
             }}
@@ -856,7 +782,6 @@ export default class EditForm extends React.Component {
 
   render() {
     const { props, state } = this;
-
     if (state.start.dateTime !== undefined && state.start.dateTime !== undefined) {
       return (
         <Dialog onClose={this.backToCalendar} open={props.parentPropState} maxWidth="md">

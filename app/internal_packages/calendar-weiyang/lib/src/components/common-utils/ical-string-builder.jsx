@@ -60,22 +60,35 @@ export const buildRruleObject = recurrencePattern => {
 export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, iCalStringJson) => {
   // Build the Dav Calendar Object from the iCalString
   const calendarData = ICAL.parse(eventObject.iCALString);
-  const vcalendar = new ICAL.Component(calendarData);
+
   // Get the master event, as they are in order, and remove the ExDates.
   // ExDates are from the recurrence pattern.
-  // const vevents = cloneDeep(vcalendar.getAllSubcomponents('vevent'));
+  const vcalendar = new ICAL.Component(calendarData);
   const vevents = vcalendar.getAllSubcomponents('vevent');
-  const vevent = vevents.filter(comp => comp.hasProperty('rrule'))[0];
-  vevent.removeAllProperties('exdate');
+  const masterEvent = vevents.filter(comp => comp.hasProperty('rrule'))[0];
+  masterEvent.removeAllProperties('exdate');
 
-  // Get all the Edited event to work on later.
-  const allEditedEvent = vcalendar
-    .getAllSubcomponents('vevent')
-    .filter(e => e.getFirstPropertyValue('recurrence-id') !== null);
+  console.log('eventobject', eventObject);
+  // Check if eventObject is an edited event
+  const nonMasterVevents = vevents.filter(comp => !comp.hasProperty('rrule'));
+  const [foundVevent] = nonMasterVevents.filter(vevt => {
+    // Calculating unix time. JS Date is in milliseconds, Unix is in secomds
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTime
+    // eslint-disable-next-line prettier/prettier
+    if (
+      vevt
+        .getFirstPropertyValue('dtstart')
+        .toJSDate()
+        .getTime() /
+        1000 ===
+      eventObject.start.dateTime
+    ) {
+      return vevt;
+    }
+  });
 
+  // Based off the ExDates, set the new master event accordingly.
   const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  // Based off the ExDates, set the new event accordingly.
   recurrencePattern.exDates.split(',').forEach(date => {
     if (date === '') {
       return;
@@ -92,15 +105,29 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       },
       new ICAL.Timezone({ tzid })
     );
-    vevent.addPropertyWithValue('exdate', timezone);
+    masterEvent.addPropertyWithValue('exdate', timezone);
   });
 
-  // Build the new recurrence pattern off the database which is updated.
   let rrule;
-  // temporary, need to settle data flow for delete this and future events
-  if (iCalStringJson !== undefined) {
-    // delete one event in recurrence
-    const datetime = moment.tz(eventObject.start.dateTime * 1000, tzid);
+  let allEditedEvent = [];
+
+  // deleting a single edited event, iCalStringJson is undefined OR
+  // delete single event via inserting exdate into master vevent/deleting future via changing UNTIL rrule
+  if (foundVevent !== undefined && iCalStringJson !== undefined) {
+    // event that is going to be deleted has been edited before, follow algo:
+    // delete foundVevent that represents the edited event, add foundvevent's recurrenceIds to mainVevent's exdate
+
+    // all edited events that are not foundVevent
+    allEditedEvent = vevents.filter(
+      evt => evt !== foundVevent && evt.getFirstPropertyValue('recurrence-id') !== null
+    );
+    // add foundVevent's recurrenceIds into mainVevent's exdate
+    const foundVeventRecurIds = foundVevent
+      .getFirstPropertyValue('recurrence-id')
+      .toJSDate()
+      .getTime();
+    console.log('foundVevent', foundVeventRecurIds);
+    const datetime = moment.tz(foundVeventRecurIds, tzid);
     const toBeDeleted = new ICAL.Time().fromData(
       {
         year: datetime.year(),
@@ -112,30 +139,51 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       },
       new ICAL.Timezone({ tzid })
     );
-    vevent.addPropertyWithValue('exdate', toBeDeleted);
+    masterEvent.addPropertyWithValue('exdate', toBeDeleted);
+    // Build the new recurrence pattern off the database which is updated.
     rrule = new ICAL.Recur(iCalStringJson);
   } else {
-    // delete future events in recurrence
-    rrule = new ICAL.Recur(buildRruleObject(recurrencePattern));
-  }
-  vevent.updatePropertyWithValue('rrule', rrule);
+    // Get all the Edited event to work on later.
+    allEditedEvent = vevents.filter(e => e.getFirstPropertyValue('recurrence-id') !== null);
 
+    // temporary, need to settle data flow for delete this and future events
+    if (iCalStringJson !== undefined) {
+      // delete one event in recurrence
+      const datetime = moment.tz(eventObject.start.dateTime * 1000, tzid);
+      const toBeDeleted = new ICAL.Time().fromData(
+        {
+          year: datetime.year(),
+          month: datetime.month() + 1,
+          day: datetime.date(),
+          hour: datetime.hour(),
+          minute: datetime.minute(),
+          second: datetime.second(),
+        },
+        new ICAL.Timezone({ tzid })
+      );
+      // Build the new recurrence pattern off the database which is updated.
+      masterEvent.addPropertyWithValue('exdate', toBeDeleted);
+      rrule = new ICAL.Recur(iCalStringJson);
+    } else {
+      // delete future events in recurrence
+
+      // Build the new recurrence pattern off the database which is updated.
+      rrule = new ICAL.Recur(buildRruleObject(recurrencePattern));
+    }
+  }
+  masterEvent.updatePropertyWithValue('rrule', rrule);
   // Ensure the proper Timezone ID.
-  vevent.getAllProperties('exdate').forEach(e => e.setParameter('tzid', tzid));
+  masterEvent.getAllProperties('exdate').forEach(e => e.setParameter('tzid', tzid));
 
   // This removes all the edited event and the master, and add the new master.
   vcalendar.removeAllSubcomponents('vevent');
-  vcalendar.addSubcomponent(vevent);
-  // For each edited event, find the right one to add.
-  recurrencePattern.recurrenceIds.split(',').forEach(date => {
-    const editedEvent = moment.tz(date * 1000, eventObject.start.timezone);
-    const findingEditedComp = allEditedEvent.filter(e2 =>
-      moment(e2.getFirstPropertyValue().toJSDate()).isSame(editedEvent, 'day')
-    );
-    if (findingEditedComp.length > 0) {
-      vcalendar.addSubcomponent(findingEditedComp[0]);
-    }
+  vcalendar.addSubcomponent(masterEvent);
+
+  // Add back the remaining events
+  allEditedEvent.forEach(vevt => {
+    vcalendar.addSubcomponent(vevt);
   });
+  console.log(updateIcalString(vcalendar.toString()));
   return updateIcalString(vcalendar.toString());
 };
 
@@ -144,95 +192,130 @@ export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, 
   // Build the Dav Calendar Object from the iCalString.
   const calendarData = ICAL.parse(eventObject.iCALString);
   const vcalendar = new ICAL.Component(calendarData);
-
   // Remove Timezone data as there might be duplicates.
-  // const timezoneMetadata = vcalendar.getFirstSubcomponent('vtimezone');
-  // const tzid = timezoneMetadata.getFirstPropertyValue('tzid');
   const tzid = eventObject.start.timezone;
   const icalTimezoneData = `BEGIN:VTIMEZONE\nTZID:${tzid}\nEND:VTIMEZONE`;
   const jcalTimezoneData = ICAL.parse(icalTimezoneData);
   const timezoneMetadata = new ICAL.Component(jcalTimezoneData);
   vcalendar.removeSubcomponent('vtimezone');
 
-  // Create new event structure, and parse it into a component.
-  const iCalendarData = 'BEGIN:VEVENT\nEND:VEVENT\n';
-  const jcalData = ICAL.parse(iCalendarData);
-  const vevent = new ICAL.Component(jcalData);
+  // parse updated/original datetime to ICAL format
+  const updatedStartDatetime = ICAL.Time.fromJSDate(new Date(updatedObject.start.toDate()), false);
+  const originalStartDatetimeInMoment = moment.tz(eventObject.start.dateTime * 1000, tzid);
+  const originalStartDatetime = ICAL.Time.fromJSDate(
+    new Date(originalStartDatetimeInMoment.toDate()),
+    false
+  );
+  const updatedEndDatetime = ICAL.Time.fromJSDate(new Date(updatedObject.end.toDate()), false);
+  const duration = updatedEndDatetime.subtractDate(updatedStartDatetime);
 
-  // debugger;
-
-  // Updating Single Recurring event, so update the recurrence-id based off the start time.
-  const startDateTime = ICAL.Time.fromJSDate(new Date(updatedObject.start.toDate()), false);
-  const endDateTime = ICAL.Time.fromJSDate(new Date(updatedObject.end.toDate()), false);
-  const duration = endDateTime.subtractDate(startDateTime);
-
-  if (updatedObject.allDay) {
-    startDateTime.isDate = true;
-  } else {
-    startDateTime.isDate = false;
-  }
-
-  vevent.updatePropertyWithValue('recurrence-id', startDateTime);
-  vevent.getFirstProperty('recurrence-id').setParameter('tzid', tzid);
-
-  // UID ensures the connection to the Recurring Master
-  vevent.updatePropertyWithValue('uid', eventObject.iCalUID);
-
-  // DateTime start of the selected event, set the Timezone ID properly.
-  vevent.updatePropertyWithValue('dtstart', startDateTime);
-  vevent.getFirstProperty('dtstart').setParameter('tzid', tzid);
-
-  // Temp set the duration to all an hour, Will change in the future. (TO-DO)
-  vevent.updatePropertyWithValue('duration', duration);
-
-  // The other fields.
-  vevent.updatePropertyWithValue('sequence', 0);
-  vevent.updatePropertyWithValue('created', ICAL.Time.now());
-  vevent.updatePropertyWithValue('dtstamp', ICAL.Time.now());
-
-  vevent.updatePropertyWithValue('priority', 0);
-
-  // Currently, only updating the title. (TO-DO)
-  vevent.updatePropertyWithValue('summary', updatedObject.title);
-  vevent.updatePropertyWithValue('description', updatedObject.description);
-
-  // Update the rule based off the recurrence pattern.
-  const rrule = new ICAL.Recur(buildRruleObject(recurrencePattern));
-  recurrencePattern.iCALString = rrule.toString();
-
-  // The other fields.
-  vevent.updatePropertyWithValue('status', 'CONFIRMED');
-  vevent.updatePropertyWithValue('transp', 'OPAQUE');
-  vevent.updatePropertyWithValue('class', 'PUBLIC');
-
-  // Ensure no duplicates!
-  const filteredResult = vcalendar
+  // get all the non master vevents
+  const notMainVevents = vcalendar
     .getAllSubcomponents('vevent')
-    .filter(e => e.getFirstPropertyValue('recurrence-id') !== null)
-    .map(e => ({
-      e,
-      result: moment(e.getFirstPropertyValue('recurrence-id').toJSDate()).isSame(
-        moment.tz(eventObject.start.dateTime * 1000, eventObject.start.timezone)
-      ),
-    }));
-  const hasDuplicate = filteredResult.filter(anyTrue => anyTrue.result === true).length > 0;
+    .filter(comp => !comp.hasProperty('rrule'));
 
-  if (hasDuplicate) {
-    const removingVEvents = filteredResult.filter(anyTrue => anyTrue.result === true);
-    removingVEvents.forEach(obj => vcalendar.removeSubcomponent(obj.e));
+  // check if any of the vevents' dtstart == eventObject's dtstart
+  // If there is, means the original single event has been edited before, just have to update the vevent found
+  // Note that we exclude master event since master event dtstart is same as first event's dtstart
+  const [foundVevent] = notMainVevents.filter(comp => {
+    const dtstart = comp.getFirstPropertyValue('dtstart');
+    let dtstartMoment = moment(dtstart.toUnixTime() * 1000);
+    dtstartMoment = dtstartMoment.tz('GMT').tz(tzid, true);
+    return dtstartMoment.unix() === eventObject.start.dateTime;
+  });
+  if (foundVevent !== undefined) {
+    // Update foundVevent since the single event has been edited before
+
+    const remainingVevents = vcalendar.getAllSubcomponents('vevent').filter(comp => {
+      return (
+        comp.getFirstPropertyValue('dtstart').toUnixTime() !== eventObject.start.dateTime ||
+        comp.hasProperty('rrule')
+      );
+    });
+
+    // DateTime start of the selected event, set the Timezone ID properly.
+    foundVevent.updatePropertyWithValue('dtstart', updatedStartDatetime);
+    foundVevent.getFirstProperty('dtstart').setParameter('tzid', tzid);
+
+    // Temp set the duration to all an hour, Will change in the future. (TO-DO)
+    foundVevent.updatePropertyWithValue('duration', duration);
+
+    // The other fields.
+    foundVevent.updatePropertyWithValue('sequence', 0);
+    foundVevent.updatePropertyWithValue('created', ICAL.Time.now());
+    foundVevent.updatePropertyWithValue('dtstamp', ICAL.Time.now());
+
+    foundVevent.updatePropertyWithValue('priority', 0);
+
+    // Currently, only updating the title. (TO-DO)
+    foundVevent.updatePropertyWithValue('summary', updatedObject.title);
+    foundVevent.updatePropertyWithValue('description', updatedObject.description);
+    foundVevent.updatePropertyWithValue('location', updatedObject.location);
+
+    // The other fields.
+    foundVevent.updatePropertyWithValue('status', 'CONFIRMED');
+    foundVevent.updatePropertyWithValue('transp', 'OPAQUE');
+    foundVevent.updatePropertyWithValue('class', 'PUBLIC');
+    vcalendar.removeAllSubcomponents('vevent');
+    remainingVevents.forEach(vevt => {
+      vcalendar.addSubcomponent(vevt);
+    });
+    vcalendar.addSubcomponent(foundVevent);
+  } else {
+    // Create new vevent for the newly edited event
+
+    // New event structure, and parse it into a component.
+    const iCalendarData = 'BEGIN:VEVENT\nEND:VEVENT\n';
+    const jcalData = ICAL.parse(iCalendarData);
+    const vevent = new ICAL.Component(jcalData);
+
+    if (updatedObject.allDay) {
+      updatedStartDatetime.isDate = true;
+    } else {
+      updatedStartDatetime.isDate = false;
+    }
+
+    vevent.updatePropertyWithValue('recurrence-id', originalStartDatetime);
+    vevent.getFirstProperty('recurrence-id').setParameter('tzid', tzid);
+
+    // UID ensures the connection to the Recurring Master
+    vevent.updatePropertyWithValue('uid', eventObject.iCalUID);
+
+    // DateTime start of the selected event, set the Timezone ID properly.
+    vevent.updatePropertyWithValue('dtstart', updatedStartDatetime);
+    vevent.getFirstProperty('dtstart').setParameter('tzid', tzid);
+
+    // Temp set the duration to all an hour, Will change in the future. (TO-DO)
+    vevent.updatePropertyWithValue('duration', duration);
+
+    // The other fields.
+    vevent.updatePropertyWithValue('sequence', 0);
+    vevent.updatePropertyWithValue('created', ICAL.Time.now());
+    vevent.updatePropertyWithValue('dtstamp', ICAL.Time.now());
+
+    vevent.updatePropertyWithValue('priority', 0);
+
+    // Currently, only updating the title. (TO-DO)
+    vevent.updatePropertyWithValue('summary', updatedObject.title);
+    vevent.updatePropertyWithValue('description', updatedObject.description);
+    vevent.updatePropertyWithValue('location', updatedObject.location);
+
+    // The other fields.
+    vevent.updatePropertyWithValue('status', 'CONFIRMED');
+    vevent.updatePropertyWithValue('transp', 'OPAQUE');
+    vevent.updatePropertyWithValue('class', 'PUBLIC');
+
+    // Add the new edited event, and the timezone after that.
+    vcalendar.addSubcomponent(vevent);
   }
-
-  // Add the new master, and the timezone after that.
-  vcalendar.addSubcomponent(vevent);
   vcalendar.addSubcomponent(timezoneMetadata);
-  // debugger;
   return updateIcalString(vcalendar.toString());
 };
 
-export const buildICALStringUpdateSingleEvent = (
+export const buildICALStringUpdateSingleAndAllEvent = (
   updatedEvent,
   calendarObject,
-  rruleString = undefined
+  rruleObj = undefined
 ) => {
   // Build the Dav Calendar Object from the iCalString.
   const calendarData = ICAL.parse(calendarObject.iCALString);
@@ -251,7 +334,7 @@ export const buildICALStringUpdateSingleEvent = (
 
   calendarComp.removeSubcomponent('vtimezone');
 
-  // Remove the previous event, as we are building a new one.
+  // Remove the previous master event, as we are building a new one.
   calendarComp.removeSubcomponent('vevent');
 
   // Create new event structure, and parse it into a component.
@@ -296,9 +379,9 @@ export const buildICALStringUpdateSingleEvent = (
   vevent.updatePropertyWithValue('description', updatedEvent.description);
 
   // Add new rrule if present
-  if (rruleString) {
+  if (rruleObj) {
     // eslint-disable-next-line no-underscore-dangle
-    const rrule = ICAL.Recur._stringToData(rruleString);
+    const rrule = new ICAL.Recur(rruleObj);
     vevent.updatePropertyWithValue('rrule', rrule);
     // debugger;
   }
@@ -366,7 +449,6 @@ export const buildICALStringUpdateAllRecurEvent = (
   const endDateTime = ICAL.Time.fromJSDate(new Date(updatedObject.end.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
-  // Updating Single Recurring event, so update the recurrence-id based off the start time.
   if (updatedObject.allDay) {
     // eslint-disable-next-line no-underscore-dangle
     recurringMaster.getFirstPropertyValue('dtstart')._time.isDate = true;
@@ -975,9 +1057,12 @@ const updateIcalString = iCalString => {
     /UNTIL=\d{4}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])T([0-1]\d|2[0-3])[0-5]\d[0-5]\dZ?/g
   );
   // second expression short circuits if res isn't null
-  if (originalUNTILrrule === null || originalUNTILrrule[originalUNTILrrule.length - 1] === 'Z') {
+  if (
+    originalUNTILrrule === null ||
+    originalUNTILrrule[0][originalUNTILrrule[0].length - 1] === 'Z'
+  ) {
     return iCalString;
-  } else if (originalUNTILrrule[originalUNTILrrule.length - 1] !== 'Z') {
+  } else if (originalUNTILrrule[0][originalUNTILrrule[0].length - 1] !== 'Z') {
     let updatedUNTILrrule = originalUNTILrrule + 'Z';
     let updatedICalString = iCalString.replace(originalUNTILrrule, updatedUNTILrrule);
     return updatedICalString;

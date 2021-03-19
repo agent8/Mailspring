@@ -163,7 +163,8 @@ export default class AddForm extends Component {
     }
   };
   handleRruleChange = rrule => {
-    if (rrule === 'never') {
+    console.log('rrule', rrule);
+    if (rrule === '') {
       this.setState({
         isRepeating: false,
       });
@@ -173,81 +174,6 @@ export default class AddForm extends Component {
     this.setState({
       rrule,
       isRepeating: true,
-    });
-
-    // CHANGING OF DATE DYNAMICALLY
-    const rruleObj = ICAL.Recur._stringToData(rrule);
-    if (rruleObj.until !== undefined) {
-      rruleObj.until.adjust(1, 0, 0, 0, 0);
-    }
-
-    if (rrule === null || rruleObj['rrule:freq'] === 'DAILY') {
-      return;
-    }
-
-    const dayOfWeek = {
-      SU: 0,
-      MO: 1,
-      TU: 2,
-      WE: 3,
-      TH: 4,
-      FR: 5,
-      SA: 6,
-    };
-    // Change Date based on Weekly/Monthly/Yearly
-    let newStartDateParsed = moment(state.start);
-    let newEndDateParsed = moment(state.end);
-    if (rruleObj['rrule:freq'] === 'WEEKLY' && rruleObj.BYDAY !== undefined) {
-      let nextDayDiff;
-      const currentDay = moment(state.start).day();
-
-      // If only one day is selected, it will be a string. Else it will be an array
-      if (Array.isArray(rruleObj.BYDAY)) {
-        nextDayDiff =
-          dayOfWeek[rruleObj.BYDAY.includes('SU') ? 'SU' : rruleObj.BYDAY[0]] - currentDay;
-      } else {
-        nextDayDiff = dayOfWeek[rruleObj.BYDAY] - currentDay;
-      }
-
-      // Calculate and set the new date
-      newStartDateParsed = moment(state.start).add(nextDayDiff, 'days');
-      newEndDateParsed = moment(state.end).add(nextDayDiff, 'days');
-    } else if (rruleObj['rrule:freq'] === 'MONTHLY') {
-      if (rruleObj.BYDAY !== undefined) {
-        newStartDateParsed = moment(newStartDateParsed)
-          .set('date', 1)
-          .isoWeekday(dayOfWeek[rruleObj.BYDAY] + 7 * rruleObj.BYSETPOS);
-      } else if (rruleObj.BYMONTHDAY !== undefined) {
-        newStartDateParsed = moment(newStartDateParsed).set('date', rruleObj.BYMONTHDAY);
-      }
-      newEndDateParsed = moment(state.end).add(
-        moment(newStartDateParsed).date() - moment(state.end).date(),
-        'days'
-      );
-    } else if (rruleObj['rrule:freq'] === 'YEARLY') {
-      const newYear = moment(state.start).year();
-      newStartDateParsed = moment()
-        .set('year', newYear)
-        .set('month', rruleObj.BYMONTH - 1);
-
-      if (rruleObj.BYMONTHDAY !== undefined) {
-        newStartDateParsed.set('date', rruleObj.BYMONTHDAY);
-      } else {
-        newStartDateParsed
-          .set('date', 1)
-          .isoWeekday(dayOfWeek[rruleObj.BYDAY] + 7 * rruleObj.BYSETPOS);
-      }
-
-      newEndDateParsed = moment(state.end)
-        .set('year', newYear)
-        .set('month', rruleObj.BYMONTH - 1)
-        .set('date', newStartDateParsed.date());
-    }
-    this.setState({
-      start: newStartDateParsed,
-      end: newEndDateParsed,
-      startParsed: this.processStringForUTC(newStartDateParsed.format('YYYY-MM-DDThh:mm')),
-      endParsed: this.processStringForUTC(newEndDateParsed.format('YYYY-MM-DDThh:mm')),
     });
   };
 
@@ -386,6 +312,7 @@ export default class AddForm extends Component {
         organizer: state.selectedProvider.username,
         calendarId: state.selectedCalendar.url,
       };
+      console.log('data', dataForEventCreator);
       const authForEventCreator = state.selectedProvider;
       const calendarForEventCreator = state.selectedCalendar;
       this.props.parentPropFunction(false);

@@ -6,6 +6,7 @@ const dav = require('dav');
 
 export const createCaldavEvent = async payload => {
   const debug = false;
+  console.log('data 1', payload.data.isRecurring);
 
   // Parse user information from account layer to dav object.
   const xhrObject = new dav.transport.Basic(
@@ -44,7 +45,7 @@ export const createCaldavEvent = async payload => {
     }
     const { freq } = jsonRecurr;
     if (freq === 'MONTHLY') {
-      // If there is a setpos, I need ot merge them up into one param
+      // If there is a setpos, I need to merge them up into one param
       // RRule gen splits them into bysetpos and byday, but server takes in byday
       // E.g. bysetpos = 1, byday = TU, merge to byday = 1TU
       // If there is no setpos, it means it is a by month day event

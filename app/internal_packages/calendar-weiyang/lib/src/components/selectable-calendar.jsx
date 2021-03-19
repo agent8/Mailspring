@@ -34,7 +34,7 @@ class SelectableCalendar extends React.Component {
       addFormPopout: false,
       editFormPopout: false,
       loginFormPopout: false,
-      icloudCalendarData: CalendarPluginStore.getIcloudCalendarData(),
+      icloudCalendarData: [],
     };
     this.mounted = false;
   }

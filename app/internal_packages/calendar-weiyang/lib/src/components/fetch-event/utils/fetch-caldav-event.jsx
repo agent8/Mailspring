@@ -73,7 +73,6 @@ const deleteStaleEventsDEBUG = async (email, password, flatFilteredEvents, final
     const calendarObject = {
       url: flatFilteredEvent.eventData.caldavUrl,
     };
-    // Result will throw error, we can do a seperate check here if needed.
     await dav.deleteCalendarObject(calendarObject, option);
-  })
+  });
 };

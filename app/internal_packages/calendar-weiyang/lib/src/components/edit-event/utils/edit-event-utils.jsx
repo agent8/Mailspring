@@ -2,33 +2,12 @@ import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import {
   CALDAV_PROVIDER,
   UPDATE_FUTURE_RECURRING_EVENTS,
-  UPDATE_SINGLE_EVENT,
   UPDATE_ALL_RECURRING_EVENTS,
 } from '../../constants';
 import { editCalDavAllRecurrenceEvents, editCalDavSingle } from './edit-caldav-event-utils';
 
 export const editSingleEvent = async payload => {
-  // #region Display available information immediately via flux store
-  const toBeEditedEvent = {
-    summary: payload.title,
-    description: payload.description,
-    start: { dateTime: payload.start.unix(), timezone: payload.start.tz() },
-    end: { dateTime: payload.end.unix(), timezone: payload.end.tz() },
-    allDay: payload.allDay,
-    location: payload.location,
-    attendee: JSON.stringify(payload.attendee),
-  };
-  // In order to show immediate edit on calendar
-  console.log('payload', payload);
-  switch (payload.providerType) {
-    case CALDAV_PROVIDER:
-      Actions.updateIcloudCalendarData(payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
-      break;
-    default:
-      console.log('Not supposed to reach here');
-      break;
-  }
-  // #endregion
+  // Immediate editing of events from reflux is done within the corresponding methods under the switch statement
 
   // Based off which provider, we will have different edit functions.
   switch (payload.providerType) {
