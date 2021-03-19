@@ -220,7 +220,11 @@ async function generateNewListForSigOrTemp(list, type) {
             recursive: true,
           });
           fs.copyFileSync(filePath, newFilePath);
-          body = replaceStr(body, `file://${file.attId}`, newFilePath);
+          const urlPath = path.join(
+            path.dirname(newFilePath),
+            encodeURIComponent(path.basename(newFilePath))
+          );
+          body = replaceStr(body, `file://${file.attId}`, urlPath);
           return { inline: file.inline, path: newFilePath };
         });
       }
@@ -342,7 +346,9 @@ export const mergeServerDefaultSignaturesToLocal = async defaultSigInServer => {
     try {
       const newConfig = JSON.parse(configInServer.value);
       return newConfig;
-    } catch (err) {}
+    } catch (err) {
+      console.error(err);
+    }
   }
   const configInLocal = AppEnv.config.get(defaultSignaturesKey);
   return configInLocal;
