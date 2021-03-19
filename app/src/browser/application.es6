@@ -9,6 +9,7 @@ import {
   systemPreferences,
   Notification,
   screen,
+  nativeTheme,
 } from 'electron';
 
 import fs from 'fs-plus';
@@ -1830,6 +1831,12 @@ export default class Application extends EventEmitter {
             this.config.set('core.theme', '');
           }
         });
+    });
+    ipcMain.on('change-app-level-theme', (event, { themeValue } = {}) => {
+      const currentTheme = systemPreferences.appLevelAppearance;
+      if (themeValue !== currentTheme) {
+        nativeTheme.themeSource = themeValue;
+      }
     });
 
     ipcMain.on('inline-style-parse', (event, { html, key }) => {

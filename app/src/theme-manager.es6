@@ -53,9 +53,16 @@ export default class ThemeManager {
     const themeModel = AppEnv.config.get(CONFIG_THEME_MODE_KEY);
     let value = themeModel;
     if (themeModel === 'auto') {
-      value = remote.systemPreferences.isDarkMode() ? 'ui-dark' : 'ui-light';
+      value = remote.nativeTheme.shouldUseDarkColors ? 'ui-dark' : 'ui-light';
     }
     this.setActiveTheme(value);
+    let themeValue = 'system';
+    if (themeModel.includes('light')) {
+      themeValue = 'light';
+    } else if (themeModel.includes('dark')) {
+      themeValue = 'dark';
+    }
+    ipcRenderer.send('change-app-level-theme', { themeValue });
   }
 
   updateThemePackageAndRecomputeLESS() {
