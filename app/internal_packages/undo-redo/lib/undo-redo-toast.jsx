@@ -17,7 +17,18 @@ import DeleteThreadsTask from '../../../src/flux/tasks/delete-threads-task';
 import ExpungeMessagesTask from '../../../src/flux/tasks/expunge-messages-task';
 import SendDraftTask from '../../../src/flux/tasks/send-draft-task';
 import DestroyDraftTask from '../../../src/flux/tasks/destroy-draft-task';
-
+const undoToastMinimumMaxWidth = 600;
+const _calculateToastMaxWidth = () => {
+  const appWidth = window.innerWidth;
+  const app50Width = Math.floor(appWidth / 2);
+  if (app50Width >= undoToastMinimumMaxWidth) {
+    return app50Width;
+  } else if (appWidth <= undoToastMinimumMaxWidth) {
+    return appWidth - 40 > 0 ? appWidth - 40 : appWidth;
+  } else {
+    return undoToastMinimumMaxWidth;
+  }
+};
 function isUndoSend(block) {
   return (
     (block.tasks.length === 1 &&
@@ -290,7 +301,7 @@ export default class UndoRedoToast extends React.Component {
     this.state = {
       block: null,
       blocks: [],
-      appWidth: Math.floor(window.innerWidth / 2),
+      appWidth: _calculateToastMaxWidth(),
     };
   }
 
@@ -322,7 +333,7 @@ export default class UndoRedoToast extends React.Component {
     window.removeEventListener('resize', this._onAppWidthChange);
   }
   _onAppWidthChange = () => {
-    const width = Math.floor(window.innerWidth / 2);
+    const width = _calculateToastMaxWidth();
     if (width !== this.state.appWidth) {
       this.setState({ appWidth: width });
     }
