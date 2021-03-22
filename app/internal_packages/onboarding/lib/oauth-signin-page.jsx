@@ -154,8 +154,12 @@ export default class OAuthSignInPage extends React.Component {
   }
 
   _onReceivedCode = async (code, forceGo) => {
-    console.log('*****_onReceivedCode', code);
-    if (this.props.serviceName.toLowerCase() === 'google' && !forceGo) {
+    if (
+      this.email &&
+      this.email.includes('@gmail.com') &&
+      this.props.serviceName.toLowerCase() === 'google' &&
+      !forceGo
+    ) {
       this.code = code;
       this.domReady({ url: '/?code=' + code });
       return;
@@ -254,7 +258,6 @@ export default class OAuthSignInPage extends React.Component {
   }
 
   _onConsoleMessage = e => {
-    console.log('*****_onConsoleMessage: ' + e.message);
     if (e.message === 'move-to-account-choose') {
       OnboardingActions.moveToPage('account-choose');
     } else if (e.message === 'oauth page go to blur') {
@@ -271,9 +274,7 @@ export default class OAuthSignInPage extends React.Component {
   };
 
   _needHidePage = urlStr => {
-    console.log('****_needHidePage', urlStr);
     if (urlStr.includes('/oauth2')) {
-      console.log('****needhide', false, urlStr);
       this.setState({
         loading: false,
       });
@@ -284,7 +285,6 @@ export default class OAuthSignInPage extends React.Component {
       urlStr.includes('apppasswords') ||
       urlStr.includes('oauthsuccess.html') ||
       urlStr.includes('enroll-welcome');
-    console.log('****needhide', result, urlStr);
     return result;
   };
 
@@ -298,12 +298,8 @@ export default class OAuthSignInPage extends React.Component {
 
   domReady = e => {
     const urlInput = this.refs.webview.src;
-    console.log('*****domReady', urlInput);
     const { query } = url.parse(urlInput, { querystring: true });
     if (query.code && !this.gotCode) {
-      console.log('******got the code', query.code);
-      this._onReceivedCode(query.code);
-
       // navigate to https://myaccount.google.com/apppasswords
       this.gotCode = true;
       this.code = query.code;
@@ -312,13 +308,11 @@ export default class OAuthSignInPage extends React.Component {
     }
     // fill password
     if (urlInput.includes('challenge/pwd') && this.gotCode) {
-      console.log('******challenge/pwd');
       this.refs.webview.send('fill-psw', this.epsw);
     }
 
     // generate password
     else if (urlInput.includes('apppasswords') && this.gotCode) {
-      console.log('******goto password');
       this.refs.webview.send('generate-app-psw');
     }
   };
@@ -326,12 +320,18 @@ export default class OAuthSignInPage extends React.Component {
   onMessage = e => {
     if (e.channel === 'app-psw') {
       const psw = e.args ? e.args[0] : '';
-      console.log('****got the psw', psw);
       alert('App password is: ' + psw);
       this._onReceivedCode(this.code, true);
     } else if (e.channel === 'e-psw') {
       const psw = e.args ? e.args[0] : '';
       this.epsw = psw;
+    } else if (e.channel === 'e-mail') {
+      const email = e.args ? e.args[0] : '';
+      this.email = email;
+    } else if (e.channel === 'fallback') {
+      const reason = e.args ? e.args[0] : '';
+      alert('****reason:' + reason);
+      this._onReceivedCode(this.code, true);
     }
   };
 
@@ -392,7 +392,7 @@ export default class OAuthSignInPage extends React.Component {
       'did-fail-load': this._webviewDidFailLoad,
       'did-finish-load': this._loaded,
       // 'did-get-response-details': this._webviewDidGetResponseDetails,
-      'console-message': this._onConsoleMessage,
+      // 'console-message': this._onConsoleMessage,
       'core:paste': this._pasteIntoWebview,
       'core:select-all': this._selectAllInWebview,
       'will-navigate': this.didNavigate,
@@ -445,7 +445,6 @@ export default class OAuthSignInPage extends React.Component {
     this.setState({
       loading: false,
     });
-
     // this.refs.webview.openDevTools();
   };
 
@@ -473,7 +472,6 @@ export default class OAuthSignInPage extends React.Component {
       zIndex: 2,
       paddingTop: 20,
     };
-    console.log('****loading', loading);
     if (loading) {
       defaultOptions.opacity = 0.2;
     }

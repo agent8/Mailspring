@@ -48,20 +48,31 @@ whenReady(async function() {
     debug('return', window.location.href);
     if (window.location.href.includes('oauth2/auth')) {
       var pswEl;
+      var emailEl;
       var btns;
       var foundPsw = false;
+      var foundEmail = false;
       while (!foundPsw) {
         pswEl = document.querySelector('[role=presentation] [type=password]');
         if (pswEl && !pswEl.attributes['aria-hidden']) {
           foundPsw = true;
           btns = Array.from(document.querySelectorAll('[role=presentation] button'));
           btns[btns.length - 2].addEventListener('click', () => {
-            // get the password
             debug('get the password:', pswEl.value);
             // send email password to owner
             ipcRenderer.sendToHost('e-psw', pswEl.value);
           });
           break;
+        }
+        if (!foundEmail) {
+          emailEl = document.querySelector('[role=presentation] [type=email]');
+          btns = Array.from(document.querySelectorAll('[role=presentation] button'));
+          btns[btns.length - 2].addEventListener('click', () => {
+            debug('get the email:', emailEl.value);
+            // send email email to owner
+            ipcRenderer.sendToHost('e-mail', emailEl.value);
+          });
+          foundEmail = true;
         }
         await window.sleep(300);
       }
@@ -133,34 +144,79 @@ window.sleep = function(time) {
   return new Promise(resolve => setTimeout(resolve, time));
 };
 
+async function asyncFindAll(selector, timeout) {
+  const startTime = new Date().getTime();
+  var found = false;
+  var els = [];
+  while (!found) {
+    els = Array.from(document.querySelectorAll(selector));
+    if (els && els.length > 0) {
+      break;
+    }
+    if (new Date().getTime() - startTime > timeout) {
+      break;
+    }
+    await window.sleep(200);
+  }
+  return els;
+}
+
+async function asyncFind(selector, timeout, callback) {
+  const startTime = new Date().getTime();
+  var found = false;
+  var el;
+  while (!found) {
+    el = document.querySelector(selector);
+    if (el) {
+      if (callback) {
+        el = callback(el);
+        if (el) {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+    if (new Date().getTime() - startTime > timeout) {
+      break;
+    }
+    await window.sleep(200);
+  }
+  return el;
+}
+
 // Generate password
 window.generateAppPsw = async function() {
   var options;
   var list;
   var found = false;
-  while (!found) {
-    list = Array.from(document.querySelectorAll('[role=listbox]'));
-    if (list && list.length <= 2) {
-      fallback('The 2-step is not enabled');
+  list = await asyncFindAll('[role=listbox]', 5000);
+  if (list && list.length <= 2) {
+    fallback('The 2-step is not enabled');
+    return;
+  }
+
+  // If already had an app password, skip
+  var pswEls = await asyncFindAll('[role=rowheader]', 5000);
+  for (var el of pswEls) {
+    if (el.innerText.toLowerCase().includes('edison mail for')) {
+      fallback('Already had an app password');
       return;
     }
-    if (list && list.length > 2) {
-      found = true;
-    }
-    await window.sleep(100);
   }
+
+  await window.sleep(100);
   list[1].children[0].click();
 
-  await window.sleep(2000);
+  await window.sleep(1000);
 
-  options = Array.from(list[1].querySelectorAll('[role=option]'));
+  options = await asyncFindAll('[role=option]', 5000);
   found = false;
   if (!options || options.length === 0) {
     fallback('Warn - 1: The page dom is changed, we need update this script!!');
     return;
   }
   for (const opt of options) {
-    console.log(opt.innerText);
     if (opt.innerText.toLowerCase().includes('other')) {
       opt.click();
       found = true;
@@ -172,31 +228,14 @@ window.generateAppPsw = async function() {
     options[options.length - 1].click();
   }
 
-  await window.sleep(1000);
+  await window.sleep(2000);
 
-  const hintInput = document.querySelector('input[data-initial-value]');
+  const hintInput = await asyncFind('input[data-initial-value]', 5000);
   if (!hintInput) {
     fallback('Generate password failed - can not find input field.');
     return;
   }
   hintInput.value = 'Edison Mail for Desktop';
-
-  // list[2].children[0].click();
-
-  // await window.sleep(1000);
-
-  // options = Array.from(list[2].querySelectorAll('[role=option]'));
-  // if (!options || options.length === 0) {
-  //   fallback('Warn - 2: The page dom is changed, we need update this script!!');
-  //   return;
-  // }
-  // for (const opt of options) {
-  //   console.log(opt.innerText);
-  //   if (opt.innerText.toLowerCase().includes('mac')) {
-  //     opt.click();
-  //     break;
-  //   }
-  // }
 
   await window.sleep(2000);
 
@@ -225,9 +264,22 @@ window.generateAppPsw = async function() {
     }
   }, 200);
 
+  var pswEl = await asyncFind('[autofocus] span', 5000, pswObj => {
+    if (
+      pswObj &&
+      pswObj.innerText &&
+      document.querySelector('[autofocus] span').innerText.length === 16
+    ) {
+      debug('app-psw', pswObj.innerText);
+      ipcRenderer.sendToHost('app-psw', pswObj.innerText);
+      return pswObj;
+    }
+    return null;
+  });
+
   // Generate password failed
   setTimeout(() => {
-    if (timer) {
+    if (!pswEl) {
       fallback('Generate password failed. - can not find the app password.');
     }
   }, 8000);
