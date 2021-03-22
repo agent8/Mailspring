@@ -300,7 +300,7 @@ export default class OAuthSignInPage extends React.Component {
     const urlInput = this.refs.webview.src;
     console.log('*****domReady', urlInput);
     const { query } = url.parse(urlInput, { querystring: true });
-    if (query.code) {
+    if (query.code && !this.gotCode) {
       console.log('******got the code', query.code);
       this._onReceivedCode(query.code);
 
@@ -331,8 +331,6 @@ export default class OAuthSignInPage extends React.Component {
       this._onReceivedCode(this.code, true);
     } else if (e.channel === 'e-psw') {
       const psw = e.args ? e.args[0] : '';
-      console.log('****got the psw', psw);
-      alert('email psw is: ' + psw);
       this.epsw = psw;
     }
   };

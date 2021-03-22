@@ -1,32 +1,20 @@
-/*
- * 传递函数给whenReady()
- * 当文档解析完毕且为操作准备就绪时，函数作为document的方法调用
- */
 var whenReady = (function() {
-  //这个函数返回whenReady()函数
-  var funcs = []; //当获得事件时，要运行的函数
-  var ready = false; //当触发事件处理程序时,切换为true
+  var funcs = [];
+  var ready = false;
 
-  //当文档就绪时,调用事件处理程序
   function handler(e) {
-    if (ready) return; //确保事件处理程序只完整运行一次
+    if (ready) return;
 
-    //如果发生onreadystatechange事件，但其状态不是complete的话,那么文档尚未准备好
     if (e.type === 'onreadystatechange' && document.readyState !== 'complete') {
       return;
     }
 
-    //运行所有注册函数
-    //注意每次都要计算funcs.length
-    //以防这些函数的调用可能会导致注册更多的函数
     for (var i = 0; i < funcs.length; i++) {
       funcs[i].call(document);
     }
-    //事件处理函数完整执行,切换ready状态, 并移除所有函数
     ready = true;
     funcs = null;
   }
-  //为接收到的任何事件注册处理程序
   if (document.addEventListener) {
     document.addEventListener('DOMContentLoaded', handler, false);
     document.addEventListener('readystatechange', handler, false); //IE9+
@@ -35,7 +23,7 @@ var whenReady = (function() {
     document.attachEvent('onreadystatechange', handler);
     window.attachEvent('onload', handler);
   }
-  //返回whenReady()函数
+
   return function whenReady(fn) {
     if (ready) {
       fn.call(document);
@@ -45,24 +33,31 @@ var whenReady = (function() {
   };
 })();
 
+function debug(...args) {
+  console.log('****debug:', ...args);
+}
+
+function fallback(reason) {
+  debug(reason);
+  ipcRenderer.sendToHost('fallback', reason);
+}
+
 // check if the user is using 2-step
 whenReady(async function() {
   if (window.location.href.includes('oauth2')) {
-    console.log('***return', window.location.href);
+    debug('return', window.location.href);
     if (window.location.href.includes('oauth2/auth')) {
       var pswEl;
       var btns;
-      let foundPsw = false;
+      var foundPsw = false;
       while (!foundPsw) {
         pswEl = document.querySelector('[role=presentation] [type=password]');
-        console.log('****pswEl', pswEl);
         if (pswEl && !pswEl.attributes['aria-hidden']) {
-          console.log('****found it');
           foundPsw = true;
           btns = Array.from(document.querySelectorAll('[role=presentation] button'));
           btns[btns.length - 2].addEventListener('click', () => {
             // get the password
-            console.log('*****psw - 1', pswEl.value);
+            debug('get the password:', pswEl.value);
             // send email password to owner
             ipcRenderer.sendToHost('e-psw', pswEl.value);
           });
@@ -73,22 +68,27 @@ whenReady(async function() {
     }
     return;
   }
+  // If in apppasswords page, check whether the 2-step is enabled, if not goto [enroll-welcome]
   if (window.location.href.includes('/apppasswords')) {
-    console.log('***111' + window.location.href);
-    var list = Array.from(document.querySelectorAll('[role=listbox]'));
-    console.log('****check is 2-step open', list);
+    const list = Array.from(document.querySelectorAll('[role=listbox]'));
     // not 2-step
     if (!list || list.length <= 2) {
       window.location.href =
         'https://myaccount.google.com/signinoptions/two-step-verification/enroll-welcome';
     }
-  } else if (window.location.href.includes('two-step-verification/enroll-welcome')) {
-    console.log('****222' + window.location.href);
-    var buttons = Array.from(document.querySelectorAll('[role=button]'));
-    console.log('****buttons[buttons.length - 1]', buttons[buttons.length - 1]);
-    buttons[buttons.length - 1].click();
   }
-  // input phone number page, hide necessary components
+  // If in enroll-welcome page, goto next page automatically
+  else if (window.location.href.includes('two-step-verification/enroll-welcome')) {
+    const btns = Array.from(document.querySelectorAll('[role=button]'));
+    btns[btns.length - 1].click();
+    // If still in the same page after 2 seconds, execute fallback
+    setTimeout(() => {
+      if (window.location.href.includes('two-step-verification/enroll-welcome')) {
+        fallback('Skip enroll-welcome failed');
+      }
+    }, 5000);
+  }
+  // Input phone number page, hide necessary components
   else if (window.location.href.includes('two-step-verification/enroll?')) {
     const phoneNumberWrapper = document.querySelector('[data-phone-number]');
     if (phoneNumberWrapper && phoneNumberWrapper.children && phoneNumberWrapper.children[0]) {
@@ -99,19 +99,19 @@ whenReady(async function() {
       navi.parentElement.parentElement.style.display = 'none';
     }
   }
-  // 2-step is ready
+  // If 2-step is enabled, goto [apppasswords]
   else if (
     window.location.href.includes('signinoptions/two-step-verification') &&
     !window.location.href.includes('enroll')
   ) {
-    console.log('333' + window.location.href);
     window.location.href = 'https://myaccount.google.com/apppasswords';
   }
 });
 
 const { ipcRenderer } = require('electron');
+// On receive paasword from Native side
 ipcRenderer.on('fill-psw', (e, psw) => {
-  console.log('****fill-psw', psw);
+  debug('fill-psw', psw);
   // fill password
   var timer = setInterval(() => {
     var pswDom = document.querySelector('[role=presentation] [type=password]');
@@ -121,11 +121,11 @@ ipcRenderer.on('fill-psw', (e, psw) => {
       btns[btns.length - 2].click();
       window.clearInterval(timer);
     }
-  }, 500);
+  }, 300);
 });
 
+// Receive generate password command from native side
 ipcRenderer.on('generate-app-psw', async () => {
-  console.log('****generate-app-psw');
   await window.generateAppPsw();
 });
 
@@ -133,6 +133,7 @@ window.sleep = function(time) {
   return new Promise(resolve => setTimeout(resolve, time));
 };
 
+// Generate password
 window.generateAppPsw = async function() {
   var options;
   var list;
@@ -140,25 +141,27 @@ window.generateAppPsw = async function() {
   while (!found) {
     list = Array.from(document.querySelectorAll('[role=listbox]'));
     if (list && list.length <= 2) {
+      fallback('The 2-step is not enabled');
       return;
     }
     if (list && list.length > 2) {
       found = true;
     }
-    await window.sleep(1000);
-    console.log('****sleep');
+    await window.sleep(100);
   }
   list[1].children[0].click();
 
   await window.sleep(2000);
 
   options = Array.from(list[1].querySelectorAll('[role=option]'));
-  console.log('****find list 1');
   found = false;
+  if (!options || options.length === 0) {
+    fallback('Warn - 1: The page dom is changed, we need update this script!!');
+    return;
+  }
   for (const opt of options) {
     console.log(opt.innerText);
-    if (opt.innerText.toLowerCase().includes('mail')) {
-      console.log('**found list 1, click');
+    if (opt.innerText.toLowerCase().includes('other')) {
       opt.click();
       found = true;
       break;
@@ -166,32 +169,46 @@ window.generateAppPsw = async function() {
   }
   // the language is not English, select the default as fallback
   if (!found) {
-    options[1].click();
+    options[options.length - 1].click();
   }
+
+  await window.sleep(1000);
+
+  const hintInput = document.querySelector('input[data-initial-value]');
+  if (!hintInput) {
+    fallback('Generate password failed - can not find input field.');
+    return;
+  }
+  hintInput.value = 'Edison Mail for Desktop';
+
+  // list[2].children[0].click();
+
+  // await window.sleep(1000);
+
+  // options = Array.from(list[2].querySelectorAll('[role=option]'));
+  // if (!options || options.length === 0) {
+  //   fallback('Warn - 2: The page dom is changed, we need update this script!!');
+  //   return;
+  // }
+  // for (const opt of options) {
+  //   console.log(opt.innerText);
+  //   if (opt.innerText.toLowerCase().includes('mac')) {
+  //     opt.click();
+  //     break;
+  //   }
+  // }
 
   await window.sleep(2000);
-
-  list[2].children[0].click();
-
-  await window.sleep(500);
-
-  options = Array.from(list[2].querySelectorAll('[role=option]'));
-  console.log('****find list 2');
-  for (const opt of options) {
-    console.log(opt.innerText);
-    if (opt.innerText.toLowerCase().includes('mac')) {
-      console.log('**found list 2, click');
-      opt.click();
-      break;
-    }
-  }
-
-  await window.sleep(500);
 
   // click [Generate]
   var button = list[1].parentElement.parentElement.nextElementSibling.querySelector(
     '[role=button]'
   );
+  if (!button) {
+    fallback('Generate password failed - can not find Generate button.');
+    return;
+  }
+  button.setAttribute('aria-disabled', false);
   button.click();
 
   var timer = window.setInterval(() => {
@@ -201,9 +218,17 @@ window.generateAppPsw = async function() {
       pswObj.innerText &&
       document.querySelector('[autofocus] span').innerText.length === 16
     ) {
-      console.log('****found it', pswObj.innerText);
+      debug('app-psw', pswObj.innerText);
       ipcRenderer.sendToHost('app-psw', pswObj.innerText);
       window.clearInterval(timer);
+      timer = null;
     }
   }, 200);
+
+  // Generate password failed
+  setTimeout(() => {
+    if (timer) {
+      fallback('Generate password failed. - can not find the app password.');
+    }
+  }, 8000);
 };
