@@ -1,6 +1,19 @@
+@import 'ui-variables';
 .outbox-message-toolbar {
   .item-container {
     justify-content: flex-end;
     align-items: center;
   }
+}
+.outbox-message-failed-reason{
+  background-color: @outbox-failed;
+  color: @text-color-inverse;
+  margin: @padding-base-vertical 0;
+  padding: 8px @padding-base-horizontal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
 }

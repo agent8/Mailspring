@@ -12,7 +12,7 @@ import AccountStore from '../stores/account-store';
 import MessageBody from './message-body';
 import CategoryStore from '../stores/category-store';
 import Category from './category';
-import { FileState } from '../../constant';
+import { FileState, MailcoreReturnCodeEnum } from '../../constant';
 
 let attachmentStore = null;
 const AttachmentStore = () => {
@@ -105,6 +105,16 @@ export default class Message extends ModelWithMetadata {
     // display in
     // outbox
     failed: '-1', // This state indicates that draft have failed to send.
+  };
+  static DraftSendErrorsMessages = {
+    ErrorSendMessageIllegalAttachment: 'Provider indicates message contains illegal attachment(s)',
+    ErrorSendMessageNotAllowed: 'Provider indicates account not allowed to send message',
+    ErrorSendMessage: 'Provider indicates message not send for unspecific reason',
+    ErrorAuthenticationRequired: 'Account authentication required',
+    ErrorYahooSendMessageSpamSuspected:
+      'Provider indicates message not send because it is marked as spam',
+    ErrorYahooSendMessageDailyLimitExceeded:
+      'Provider indicates daily maximum number of message send have reached',
   };
   static compareMessageState(currentState, targetState) {
     try {
@@ -259,6 +269,10 @@ export default class Message extends ModelWithMetadata {
     }),
     subjectChanged: Attributes.Boolean({
       modelKey: 'subjectChanged',
+      queryable: false,
+    }),
+    sentResponseCode: Attributes.Number({
+      modelKey: 'sentResponseCode',
       queryable: false,
     }),
     data: Attributes.Object({
@@ -621,6 +635,19 @@ export default class Message extends ModelWithMetadata {
     }
     return ret;
   }
+  get draftFailedReason() {
+    if (!this.sentResponseCode) {
+      return '';
+    }
+    const responseKey = MailcoreReturnCodeEnum[this.sentResponseCode];
+    if (responseKey && Message.DraftSendErrorsMessages[responseKey]) {
+      return (
+        Message.DraftSendErrorsMessages[responseKey] ||
+        Message.DraftSendErrorsMessages.ErrorSendMessage
+      );
+    }
+    return Message.DraftSendErrorsMessages.ErrorSendMessage;
+  }
 
   missingAttachments() {
     return new Promise(resolve => {
@@ -862,7 +889,7 @@ export default class Message extends ModelWithMetadata {
       return true;
     }
 
-    const re = /(?:<edo\-signature [^>]*>.*<\/edo\-signature>)|(?:<.+?>)|\s/gim;
+    const re = /(?:<edo-signature [^>]*>.*<\/edo-signature>)|(?:<.+?>)|\s/gim;
     return this.body.replace(re, '').length === 0;
   }
 
