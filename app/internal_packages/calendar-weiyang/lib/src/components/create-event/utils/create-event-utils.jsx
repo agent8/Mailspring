@@ -7,7 +7,6 @@ import { createCaldavEvent } from './create-caldav-event-utils';
 //  auth --> auth details to push data into server
 //  calendar --> calendar for event to be added
 export const createEvent = async payload => {
-  console.log('payload', payload.data);
   // Based off which provider
   switch (payload.providerType) {
     case CALDAV_PROVIDER:

@@ -6,9 +6,10 @@ import moment from 'moment-timezone';
 import * as PARSER from '../common-utils/parser';
 
 export const deleteCaldavSingle = async payload => {
+  console.log('payload', payload);
   const { data, user } = payload;
   const debug = true;
-
+  console.log('data', data);
   // Try catch for HTTP errors, offline etc.
   try {
     let result;
@@ -45,6 +46,7 @@ export const deleteCaldavSingle = async payload => {
         console.log('error');
         return;
       }
+      console.log('recurrencepattern', recurrencePattern);
       const jsonRecurr = ICAL.Recur._stringToData(recurrencePattern.iCALString);
       // debugger;
       const { freq } = jsonRecurr;
@@ -78,7 +80,10 @@ export const deleteCaldavSingle = async payload => {
         calendarData,
       };
       // Result will throw error, we can do a seperate check here if needed.
+      console.log('calendarobject', calendarObject);
+      debugger;
       result = await dav.updateCalendarObject(calendarObject, option);
+      console.log('results', result);
     } else {
       // As we are deleting a single object, non recurring event
       // It is identified by etag. So for our calendar object,

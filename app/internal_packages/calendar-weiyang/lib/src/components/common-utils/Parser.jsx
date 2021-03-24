@@ -18,6 +18,7 @@ export const parseRecurrenceEvents = calEvents => {
       const options = RRule.parseString(calEvent.recurData.rrule.stringFormat);
       options.dtstart = new Date(moment.unix(calEvent.eventData.start.dateTime));
       const rrule = new RRule(options);
+      console.log('origoptions', rrule.origOptions);
       recurringEvents.push({
         id: uuidv4(),
         recurringTypeId: calEvent.eventData.start.dateTime,

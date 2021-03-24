@@ -289,7 +289,6 @@ export default class AddForm extends Component {
         start: {
           dateTime: moment.tz(state.startParsed, tzid),
           timezone: tzid,
-          day: state.start,
         },
         end: {
           dateTime: moment.tz(state.endParsed, tzid),
@@ -312,7 +311,6 @@ export default class AddForm extends Component {
         organizer: state.selectedProvider.username,
         calendarId: state.selectedCalendar.url,
       };
-      console.log('data', dataForEventCreator);
       const authForEventCreator = state.selectedProvider;
       const calendarForEventCreator = state.selectedCalendar;
       this.props.parentPropFunction(false);
@@ -322,12 +320,12 @@ export default class AddForm extends Component {
         auth: authForEventCreator,
         calendar: calendarForEventCreator,
       });
-      const finalResult = await fetchCaldavEvents(
-        state.selectedProvider.username,
-        state.selectedProvider.password,
-        this.determineURL(state.selectedCalendar)
-      );
-      Actions.setIcloudCalendarData(finalResult);
+      // const finalResult = await fetchCaldavEvents(
+      //   state.selectedProvider.username,
+      //   state.selectedProvider.password,
+      //   this.determineURL(state.selectedCalendar)
+      // );
+      // Actions.setIcloudCalendarData(finalResult);
     } else {
       console.log('No provider selected! Disabled adding of events!!');
     }

@@ -1,8 +1,35 @@
-import Actions from '../../../../../../../src/flux/actions.es6';
 import { CALDAV_PROVIDER, ICLOUD_URL } from '../../constants';
 import { getCaldavAccount } from './get-caldav-account';
 import * as PARSER from '../../common-utils/parser';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
 const dav = require('dav');
+
+const getUidFromIcalstring = iCalstring => {
+  let regexMatchedString = iCalstring.match(/UID:.+/g);
+  return regexMatchedString[0].substr(4).trim();
+};
+
+export const getEtagAndIcalstringFromIcalUID = async (email, password, accountType, iCalUID) => {
+  const res = await getCaldavAccount(email, password, accountType);
+  const calendars = res.calendars;
+  let trimmedData = [];
+  calendars.forEach(calendar => {
+    const calendarObjects = calendar.objects;
+    calendarObjects.forEach(calObj => {
+      if (calObj.calendarData !== undefined && calObj.calendarData !== '') {
+        const foundUid = getUidFromIcalstring(calObj.calendarData);
+        const etag = calObj.etag.slice(1, -1); // remove quotes from front and end
+        trimmedData.push({ iCalUID: foundUid, etag: etag, iCalstring: calObj.calendarData });
+      }
+    });
+  });
+  const [foundObj] = trimmedData.filter(data => data.iCalUID === iCalUID);
+  if (foundObj === undefined) {
+    console.log('no iCalUID found in server');
+    return undefined;
+  }
+  return foundObj;
+};
 
 export const fetchCaldavEvents = async (email, password, accountType) => {
   const res = await getCaldavAccount(email, password, ICLOUD_URL);
@@ -47,6 +74,7 @@ export const fetchCaldavEvents = async (email, password, accountType) => {
 
   deleteStaleEventsDEBUG(email, password, flatFilteredEvents, finalResult);
 
+  console.log('calendar', CalendarPluginStore.getIcloudCalendarLists());
   return finalResult;
 };
 // Delete stale recurrences during developement
