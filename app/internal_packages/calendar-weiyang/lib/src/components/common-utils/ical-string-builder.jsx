@@ -1,6 +1,7 @@
 import ICAL from 'ical.js';
 import moment from 'moment-timezone';
 import * as icalTookKit from 'ical-toolkit';
+import { DELETE_EDITED_EVENT, DELETE_NON_EDITED_EVENT } from '../constants';
 
 export const buildRruleObject = recurrencePattern => {
   // debugger;
@@ -56,6 +57,25 @@ export const buildRruleObject = recurrencePattern => {
     return returnObj;
   }
 };
+export const buildICALStringDeleteEditedSingleEvent = (exdate, iCALString) => {
+  // Add exdate to the iCalString built with the buildICALStringDeleteRecurEvent function
+  const calendarData = ICAL.parse(iCALString);
+  const vcalendar = new ICAL.Component(calendarData);
+  const vevents = vcalendar.getAllSubcomponents('vevent');
+  const masterEvent = vevents.filter(comp => comp.hasProperty('rrule'))[0];
+  const allEditedEvent = vevents.filter(e => e.getFirstPropertyValue('recurrence-id') !== null);
+
+  masterEvent.addPropertyWithValue('exdate', exdate);
+  vcalendar.removeAllSubcomponents('vevent');
+  vcalendar.addSubcomponent(masterEvent);
+  // Add back the remaining events
+  allEditedEvent.forEach(vevt => {
+    vcalendar.addSubcomponent(vevt);
+  });
+  const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  masterEvent.getAllProperties('exdate').forEach(e => e.setParameter('tzid', tzid));
+  return updateIcalString(vcalendar.toString());
+};
 
 export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, iCalStringJson) => {
   // Build the Dav Calendar Object from the iCalString
@@ -67,6 +87,7 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
   const vevents = vcalendar.getAllSubcomponents('vevent');
   const masterEvent = vevents.filter(comp => comp.hasProperty('rrule'))[0];
   const [vTimezone] = vcalendar.getAllSubcomponents('vtimezone');
+  let exdateToReturn = undefined;
   vcalendar.removeSubcomponent('vtimezone');
   masterEvent.removeAllProperties('exdate');
 
@@ -110,10 +131,11 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
   let allEditedEvent = [];
 
   if (foundVevent !== undefined && iCalStringJson !== undefined) {
-    // deleting a single edited event, iCalStringJson isn't undefined
+    // deleting a single edited event - parameter iCalStringJson isn't undefined
 
     // event that is going to be deleted has been edited before, follow algo:
-    // delete foundVevent that represents the edited event, add foundvevent's recurrenceIds to mainVevent's exdate
+    // delete foundVevent that represents the edited event
+    // add foundvevent's recurrenceIds to mainVevent's exdate
 
     // all edited events that are not foundVevent
     allEditedEvent = vevents.filter(
@@ -124,7 +146,6 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       .getFirstPropertyValue('recurrence-id')
       .toJSDate()
       .getTime();
-    console.log('foundVevent', foundVeventRecurIds);
     const datetime = moment.tz(foundVeventRecurIds, tzid);
     const toBeDeleted = new ICAL.Time().fromData(
       {
@@ -137,7 +158,8 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       },
       new ICAL.Timezone({ tzid })
     );
-    masterEvent.addPropertyWithValue('exdate', toBeDeleted);
+    exdateToReturn = toBeDeleted;
+    // masterEvent.addPropertyWithValue('exdate', toBeDeleted);
     // Build the new recurrence pattern off the database which is updated.
     rrule = new ICAL.Recur(iCalStringJson);
   } else {
@@ -163,7 +185,6 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       );
       // Build the new recurrence pattern off the database which is updated.
       masterEvent.addPropertyWithValue('exdate', toBeDeleted);
-      console.log('icalstringjon', iCalStringJson);
       rrule = new ICAL.Recur(iCalStringJson);
     } else {
       // delete future events in recurrence
@@ -186,7 +207,7 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
   });
   vcalendar.addSubcomponent(vTimezone);
   console.log(updateIcalString(vcalendar.toString()));
-  return updateIcalString(vcalendar.toString());
+  return [updateIcalString(vcalendar.toString()), exdateToReturn];
 };
 
 export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, updatedObject) => {

@@ -276,6 +276,7 @@ export default class EditForm extends React.Component {
       start: moment.tz(state.updatedStartDateTime, tzid),
       end: moment.tz(state.updatedEndDateTime, tzid),
       providerType: state.providerType,
+      tzid,
 
       // Recurrence pattern details
       recurringEventId: state.recurringEventId,

@@ -21,16 +21,6 @@ export const deleteSingleEvent = async id => {
     return;
   }
 
-  // In order to show immediate deletion on calendar
-  switch (data.providerType) {
-    case CALDAV_PROVIDER:
-      Actions.deleteIcloudCalendarData(id, DELETE_SINGLE_EVENT);
-      break;
-    default:
-      console.log('Not supposed to reach here');
-      break;
-  }
-
   const [user] = CalendarPluginStore.getIcloudAuth().filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
@@ -72,15 +62,6 @@ export const deleteAllEvents = async id => {
     return;
   }
 
-  // In order to show immediate deletion on calendar
-  switch (data.providerType) {
-    case CALDAV_PROVIDER:
-      Actions.deleteIcloudCalendarData(data.recurringEventId, DELETE_ALL_RECURRING_EVENTS);
-      break;
-    default:
-      console.log('Not supposed to reach here');
-      break;
-  }
   const [user] = CalendarPluginStore.getIcloudAuth().filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
@@ -129,16 +110,6 @@ export const deleteFutureEvents = async id => {
   if (user === undefined) {
     console.log('error');
     return;
-  }
-
-  // In order to show immediate deletion
-  switch (data.providerType) {
-    case CALDAV_PROVIDER:
-      Actions.deleteIcloudCalendarData(data.iCalUID, DELETE_FUTURE_RECCURRING_EVENTS, data.start.dateTime);
-      break;
-    default:
-      console.log('Not supposed to reach here');
-      break;
   }
   // #endregion
 
