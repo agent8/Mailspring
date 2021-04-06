@@ -9,6 +9,7 @@ import {
   DELETE_ALL_RECURRING_EVENTS,
   DELETE_FUTURE_RECCURRING_EVENTS,
   DELETE_NON_MASTER_EVENTS,
+  ICLOUD_ACCOUNT,
   UPDATE_ICALSTRING,
   UPDATE_MASTER_EVENT,
   UPDATE_RECURRENCE_PATTERN,
@@ -24,7 +25,7 @@ export const editCaldavSingle = async payload => {
 
   // #region Getting information
   // Get Information from flux store
-  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(
+  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
     event => event.id === payload.id
   );
   // no event found
@@ -72,14 +73,14 @@ export const editCaldavSingle = async payload => {
   }
   const updatedRruleString = ICAL.Recur.fromData(updatedRruleObj).toString();
   // #region Updating of Single event, based on Recurring or not
-  const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
-    rp => data.iCalUID === rp.iCalUID
-  );
-  if (recurrencePattern === undefined) {
-    throw 'recurrence pattern cannot be found';
-  }
   if (payload.isRecurring) {
     try {
+      const [recurrencePattern] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
+        rp => data.iCalUID === rp.iCalUID
+      );
+      if (recurrencePattern === undefined) {
+        throw 'recurrence pattern cannot be found';
+      }
       // Builds the iCal string, adding/updating vevent
       iCalString = IcalStringBuilder.buildICALStringUpdateRecurEvent(
         recurrencePattern,
@@ -100,7 +101,7 @@ export const editCaldavSingle = async payload => {
         description: payload.description,
         start: { dateTime: payload.start.unix(), timezone: payload.start.tz() },
         end: { dateTime: payload.end.unix(), timezone: payload.end.tz() },
-        allDay: payload.allDay,
+        isAllDay: payload.isAllDay,
         location: payload.location,
         attendee: JSON.stringify(payload.attendee),
       };
@@ -127,7 +128,7 @@ export const editCaldavSingle = async payload => {
       masterEvent.isRecurring = 1;
       masterEvent.isMaster = 1;
       masterEvent.iCALString = iCalString;
-      masterEvent.allDay = payload.allDay;
+      masterEvent.isAllDay = payload.isAllDay;
       masterEvent.attendee = JSON.stringify(payload.attendee);
       masterEvent.description = payload.description;
       masterEvent.end = {
@@ -164,8 +165,10 @@ export const editCaldavSingle = async payload => {
         },
       ]);
       const expandedRecurEvents = PARSER.parseRecurrence(recurrencePattern[0], masterEvent);
-      CalendarPluginStore.updateIcloudRpLists(recurrencePattern[0], UPSERT_RECURRENCE_PATTERN);
-      // add expanded events into reflux
+      CalendarPluginStore.upsertIcloudRpLists(recurrencePattern[0]);
+
+      // add all expanded events into reflux and remove any existing similar icaluid from reflux store
+      Actions.deleteIcloudCalendarData(expandedRecurEvents[0].iCalUID, DELETE_ALL_RECURRING_EVENTS);
       Actions.addIcloudCalendarData(expandedRecurEvents);
     } catch (error) {
       console.log('error updating single event to recurring event', error);
@@ -184,7 +187,7 @@ export const editCaldavSingle = async payload => {
         description: payload.description,
         start: { dateTime: payload.start.unix(), timezone: payload.start.tz() },
         end: { dateTime: payload.end.unix(), timezone: payload.end.tz() },
-        allDay: payload.allDay,
+        isAllDay: payload.isAllDay,
         location: payload.location,
         attendee: JSON.stringify(payload.attendee),
       };
@@ -201,7 +204,7 @@ export const editCaldavAll = async payload => {
   // #region Getting information
   // Get Information from flux store
 
-  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(
+  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
     event => event.id === payload.id
   );
   // no event found
@@ -222,7 +225,7 @@ export const editCaldavAll = async payload => {
   }
 
   try {
-    const [selectedCalendar] = CalendarPluginStore.getIcloudCalendarLists().filter(
+    const [selectedCalendar] = CalendarPluginStore.getCalendarLists(ICLOUD_ACCOUNT).filter(
       calendar => calendar.url === data.calendarId
     );
     const createFutureEventData = {
@@ -238,7 +241,7 @@ export const editCaldavAll = async payload => {
       },
       isRecurring: payload.isRecurring,
       rrule: payload.updatedRrule,
-      allDay: payload.allDay,
+      isAllDay: payload.isAllDay,
       colorId: data.colorId,
       location: payload.location,
       attendee: payload.attendee,
@@ -264,7 +267,7 @@ export const editCaldavFuture = async payload => {
   // the edited events are no longer in the same recurrence series
   // #region Getting information
   // Get Information from flux store
-  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(
+  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
     event => event.id === payload.id
   );
   // no event found
@@ -289,7 +292,7 @@ export const editCaldavFuture = async payload => {
   }
 
   try {
-    const [selectedCalendar] = CalendarPluginStore.getIcloudCalendarLists().filter(
+    const [selectedCalendar] = CalendarPluginStore.getCalendarLists(ICLOUD_ACCOUNT).filter(
       calendar => calendar.url === data.calendarId
     );
     const createFutureEventData = {
@@ -305,7 +308,7 @@ export const editCaldavFuture = async payload => {
       },
       isRecurring: payload.isRecurring,
       rrule: payload.rrule,
-      allDay: payload.allDay,
+      isAllDay: payload.isAllDay,
       colorId: data.colorId,
       location: payload.location,
       attendee: payload.attendee,

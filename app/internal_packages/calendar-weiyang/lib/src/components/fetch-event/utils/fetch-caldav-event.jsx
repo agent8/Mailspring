@@ -1,7 +1,16 @@
-import { CALDAV_PROVIDER, ICLOUD_URL } from '../../constants';
-import { getCaldavAccount } from './get-caldav-account';
+import {
+  CALDAV_PROVIDER,
+  DELETE_SINGLE_EVENT,
+  ICLOUD_ACCOUNT,
+  ICLOUD_URL,
+  SYNC_CALENDAR_DATA,
+  SYNC_CALENDAR_LISTS,
+  SYNC_RECURRENCE_PATTERN,
+} from '../../constants';
+import { getCaldavAccount, syncCaldavCalendar } from './get-caldav-account';
 import * as PARSER from '../../common-utils/parser';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
+import { syncLocalData } from './sync-caldav';
 const dav = require('dav');
 
 const getUidFromIcalstring = iCalstring => {
@@ -35,14 +44,15 @@ export const fetchCaldavEvents = async (email, password, accountType) => {
   const res = await getCaldavAccount(email, password, ICLOUD_URL);
   console.log('res', res);
   const authObject = {
-    // only caldav for now
-    providerType: res.server.includes('caldav') ? CALDAV_PROVIDER : null,
+    providerType: CALDAV_PROVIDER,
+    caldavType: accountType,
     username: res.credentials.username,
     password: res.credentials.password,
   };
-  Actions.setIcloudAuth(authObject);
+  Actions.setAuth(authObject, ICLOUD_ACCOUNT);
   const calendars = PARSER.parseCal(res.calendars);
-  Actions.setIcloudCalendarLists(calendars);
+  console.log('calendar', calendars);
+  syncLocalData(calendars, SYNC_CALENDAR_LISTS);
   const events = PARSER.parseCalEvents(res.calendars, calendars);
   console.log('events', events);
   const flatEvents = events.reduce((acc, val) => {
@@ -54,7 +64,7 @@ export const fetchCaldavEvents = async (email, password, accountType) => {
   console.log('flatFilteredEvents', flatFilteredEvents);
   // const eventPersons = PARSER.parseEventPersons(flatFilteredEvents);
   const recurrencePatterns = PARSER.parseRecurrenceEvents(flatFilteredEvents);
-  Actions.setIcloudRpLists(recurrencePatterns);
+  syncLocalData(recurrencePatterns, SYNC_RECURRENCE_PATTERN);
   console.log('recurrencePattern', recurrencePatterns);
   const expanded = PARSER.expandRecurEvents(
     flatFilteredEvents.map(calEvent => calEvent.eventData),
@@ -70,11 +80,11 @@ export const fetchCaldavEvents = async (email, password, accountType) => {
     e.owner = email;
     e.caldavType = accountType;
   });
+  syncLocalData(finalResult, SYNC_CALENDAR_DATA);
   console.log('DATA', finalResult);
 
   deleteStaleEventsDEBUG(email, password, flatFilteredEvents, finalResult);
 
-  console.log('calendar', CalendarPluginStore.getIcloudCalendarLists());
   return finalResult;
 };
 // Delete stale recurrences during developement

@@ -10,6 +10,7 @@ import {
   DELETE_FUTURE_RECCURRING_EVENTS,
   DELETE_NON_EDITED_EVENT,
   DELETE_SINGLE_EVENT,
+  ICLOUD_ACCOUNT,
   UPDATE_ICALSTRING,
 } from '../constants';
 
@@ -42,7 +43,7 @@ export const deleteCaldavSingle = async payload => {
   if (data.isRecurring) {
     try {
       // Get recurring pattern to build new iCal string for updating
-      const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
+      const [recurrencePattern] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
         rp => data.iCalUID === rp.iCalUID
       );
 
@@ -177,7 +178,7 @@ export const deleteCaldavFuture = async payload => {
   // As we are deleting this and future events, we just need to update the end condition.
   // Updating is done by pushing the entire iCal string to the server
   // Get recurring pattern to build new iCal string for updating
-  const [recurrencePattern] = CalendarPluginStore.getIcloudRpLists().filter(
+  const [recurrencePattern] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
     rp => data.iCalUID === rp.iCalUID
   );
   if (recurrencePattern === undefined) {

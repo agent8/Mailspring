@@ -45,7 +45,7 @@ export const parseRecurrenceEvents = calEvents => {
         iCalUID: calEvent.eventData.iCalUID,
         iCALString: calEvent.recurData.iCALString,
         wkSt: calEvent.recurData.rrule.wkst, // Prob not working
-        isAllDay: calEvent.eventData.allDay,
+        isAllDay: calEvent.eventData.isAllDay,
         byMonth:
           rrule.origOptions.bymonth === undefined ? '' : rrule.origOptions.bymonth.toString(),
         byMonthDay:
@@ -129,6 +129,7 @@ export const parseEventPersons = events => {
 export const parseCal = calendars => {
   const parsedCalendars = calendars.map(calendar => ({
     calendarId: calendar.data.href,
+    checked: true,
     ownerId: calendar.account.credentials.username,
     name: calendar.displayName,
     description: calendar.description,
@@ -358,7 +359,6 @@ export const parseModifiedEvent = (
     calendarId,
     colorId: color,
     iCALString: comp.toString(),
-    allDay: modifiedEvent.getFirstProperty('dtstart').type === 'date',
     isAllDay: modifiedEvent.getFirstProperty('dtstart').type === 'date',
   };
 };
@@ -471,9 +471,8 @@ export const parseEvent = (component, isRecurring, etag, url, calendarId, cdIsMa
     colorId: color,
     isMaster: cdIsMaster,
     iCALString: component.toString(),
-    // Temporary fix for wrong initial render of full day events, should only have one allday flag
-    allDay: masterEvent.getFirstProperty('dtstart').type === 'date',
     isAllDay: masterEvent.getFirstProperty('dtstart').type === 'date',
+    recurringEventId: undefined,
   };
   // debugger;
   return event;
@@ -627,7 +626,6 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
     // Therefore, expansion fails, and we ignore.
     // We could help the user tidy up their events but I think that is a dangerous game to play.
     console.log('(Error) 0 expanded event found', recurPattern, recurMasterEvent);
-    return [];
   }
   // Base TZ for all events.
   const base = allDates[0];
@@ -724,7 +722,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
         attendee: recurMasterEvent.attendee,
         originalStartTime: recurMasterEvent.originalStartTime,
         updated: recurMasterEvent.updated,
-        isAllDay: recurMasterEvent.allDay,
+        isAllDay: recurMasterEvent.isAllDay,
         ...(recurMasterEvent.start.dateTime === recurDateTime && {
           isMaster: true,
         }),
@@ -763,7 +761,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
         attendee: recurMasterEvent.attendee,
         originalStartTime: recurMasterEvent.originalStartTime,
         updated: recurMasterEvent.updated,
-        isAllDay: recurMasterEvent.allDay,
+        isAllDay: recurMasterEvent.isAllDay,
         ...(recurMasterEvent.start.dateTime === recurDateTime && {
           isMaster: true,
         }),
@@ -803,7 +801,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
       attendee: recurMasterEvent.attendee,
       originalStartTime: recurMasterEvent.originalStartTime,
       updated: recurMasterEvent.updated,
-      isAllDay: recurMasterEvent.allDay,
+      isAllDay: recurMasterEvent.isAllDay,
       isMaster: true,
     });
   }

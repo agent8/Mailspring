@@ -1,7 +1,14 @@
 export const ICLOUD_ACCOUNT = 'ICLOUD_ACCOUNT';
+export const EWS_ACCOUNT = 'EWS_ACCOUNT';
+export const GMAIL_ACCOUNT = 'GMAIL_ACCOUNT';
+
 export const ICLOUD_URL = 'https://caldav.icloud.com/';
 
 export const CALDAV_PROVIDER = 'CALDAV_PROVIDER';
+
+export const SYNC_CALENDAR_DATA = 'SYNC_CALENDAR_DATA';
+export const SYNC_CALENDAR_LISTS = 'SYNC_CALENDAR_LISTS';
+export const SYNC_RECURRENCE_PATTERN = 'SYNC_RECURRENCE_PATTERN';
 
 export const DELETE_SINGLE_EVENT = 'DELETE_SINGLE_EVENT';
 export const DELETE_ALL_RECURRING_EVENTS = 'DELETE_ALL_RECURRING EVENTS';
@@ -22,3 +29,5 @@ export const GET_ALL_EVENT = 'GET_ALL_EVENT';
 
 export const DELETE_EDITED_EVENT = 'DELETE_EDITED_EVENT';
 export const DELETE_NON_EDITED_EVENT = 'DELETE_NON_EDITED_EVENT';
+
+export const DB_ROUTE = 'app/internal_packages/calendar-weiyang/calendar-plugin.db';

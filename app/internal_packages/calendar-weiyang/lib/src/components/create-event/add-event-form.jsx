@@ -14,7 +14,7 @@ import RRuleGenerator from '../react-rrule-generator/src/lib';
 import { createEvent } from './utils/create-event-utils';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import { fetchCaldavEvents } from '../fetch-event/utils/fetch-caldav-event';
-import { ICLOUD_URL } from '../constants';
+import { ICLOUD_ACCOUNT, ICLOUD_URL } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -69,7 +69,7 @@ export default class AddForm extends Component {
       weeklyRule: '',
       monthlyRule: '',
       yearlyRule: '',
-      allDay: false,
+      isAllDay: false,
       activeTab: 'Details',
       guest: '',
       attendees: [],
@@ -78,8 +78,8 @@ export default class AddForm extends Component {
       isShowConfirmForm: false,
       selectedOption: '',
 
-      calendarLists: CalendarPluginStore.getIcloudCalendarLists(),
-      auth: CalendarPluginStore.getIcloudAuth(),
+      calendarLists: CalendarPluginStore.getCalendarLists(ICLOUD_ACCOUNT),
+      auth: CalendarPluginStore.getAuth(ICLOUD_ACCOUNT),
 
       invitePopup: false,
     };
@@ -186,15 +186,15 @@ export default class AddForm extends Component {
     // if currently is not all day means its going to switch to all day so format has to
     // in date format and vice versa.
     const startDateParsedInUTC = this.processStringForUTC(
-      state.allDay
+      state.isAllDay
         ? startDateParsed.format('YYYY-MM-DDThh:mm a')
         : startDateParsed.format('YYYY-MM-DD')
     );
     const endDateParsedInUTC = this.processStringForUTC(
-      state.allDay ? endDateParsed.format('YYYY-MM-DDThh:mm a') : endDateParsed.format('YYYY-MM-DD')
+      state.isAllDay ? endDateParsed.format('YYYY-MM-DDThh:mm a') : endDateParsed.format('YYYY-MM-DD')
     );
     this.setState({
-      allDay: e.target.checked,
+      isAllDay: e.target.checked,
       startParsed: startDateParsedInUTC,
       endParsed: endDateParsedInUTC,
     });
@@ -296,7 +296,7 @@ export default class AddForm extends Component {
         },
         isRecurring: state.isRepeating,
         rrule: state.rrule.slice(6),
-        allDay: state.allDay,
+        isAllDay: state.isAllDay,
         colorId: state.colorId,
         location: state.location,
         attendee: Object.assign(
@@ -325,7 +325,7 @@ export default class AddForm extends Component {
       //   state.selectedProvider.password,
       //   this.determineURL(state.selectedCalendar)
       // );
-      // Actions.setIcloudCalendarData(finalResult);
+      // Actions.setCalendarData(finalResult, ICLOUD_ACCOUNT);
     } else {
       console.log('No provider selected! Disabled adding of events!!');
     }
@@ -410,7 +410,7 @@ export default class AddForm extends Component {
           {/* Start Time and Date */}
           <Input
             label="Starts"
-            type={state.allDay ? 'date' : 'datetime-local'}
+            type={state.isAllDay ? 'date' : 'datetime-local'}
             value={new Date(state.startParsed)}
             name="startParsed"
             onChange={date => this.setState({ startParsed: date })}
@@ -420,7 +420,7 @@ export default class AddForm extends Component {
           {/* End Time and Date */}
           <Input
             label="Ends"
-            type={state.allDay ? 'date' : 'datetime-local'}
+            type={state.isAllDay ? 'date' : 'datetime-local'}
             value={new Date(state.endParsed)}
             name="endParsed"
             onChange={date => this.setState({ endParsed: date })}
@@ -446,7 +446,7 @@ export default class AddForm extends Component {
           <div className="all-day-checkbox-container">
             <RoundCheckbox
               id="allday-checkmark"
-              checked={state.allDay}
+              checked={state.isAllDay}
               onChange={this.toggleAllDay}
               label="All day"
             />

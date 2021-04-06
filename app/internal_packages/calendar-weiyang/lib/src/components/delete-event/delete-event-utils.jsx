@@ -5,6 +5,7 @@ import {
   DELETE_SINGLE_EVENT,
   DELETE_FUTURE_RECCURRING_EVENTS,
   GET_ALL_EVENT,
+  ICLOUD_ACCOUNT,
 } from '../constants';
 import {
   deleteCaldavSingle,
@@ -14,14 +15,14 @@ import {
 export const deleteSingleEvent = async id => {
   // #region Getting information
   // Get Information
-  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(event => event.id === id);
   // no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
 
-  const [user] = CalendarPluginStore.getIcloudAuth().filter(
+  const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
   );
@@ -55,14 +56,14 @@ export const deleteSingleEvent = async id => {
 export const deleteAllEvents = async id => {
   // #region Getting information
   // Get Information
-  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(event => event.id === id);
   // no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
 
-  const [user] = CalendarPluginStore.getIcloudAuth().filter(
+  const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
   );
@@ -96,13 +97,13 @@ export const deleteAllEvents = async id => {
 export const deleteFutureEvents = async id => {
   // #region Getting information
   // Get Information
-  const [data] = CalendarPluginStore.getIcloudCalendarData().filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(event => event.id === id);
   // no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
-  const [user] = CalendarPluginStore.getIcloudAuth().filter(
+  const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
     icloudAccount =>
       icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
   );

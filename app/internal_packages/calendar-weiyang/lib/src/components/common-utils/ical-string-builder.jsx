@@ -108,6 +108,7 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
 
   // Based off the ExDates, set the new master event accordingly.
   const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  console.log(recurrencePattern.exDates);
   recurrencePattern.exDates.split(',').forEach(date => {
     if (date === '') {
       return;
@@ -124,6 +125,7 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       },
       new ICAL.Timezone({ tzid })
     );
+    console.log('delete', timezone)
     masterEvent.addPropertyWithValue('exdate', timezone);
   });
 
@@ -159,8 +161,6 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
       new ICAL.Timezone({ tzid })
     );
     exdateToReturn = toBeDeleted;
-    // masterEvent.addPropertyWithValue('exdate', toBeDeleted);
-    // Build the new recurrence pattern off the database which is updated.
     rrule = new ICAL.Recur(iCalStringJson);
   } else {
     // delete single event via inserting exdate into master vevent or deleting future via changing UNTIL rrule
@@ -183,7 +183,6 @@ export const buildICALStringDeleteRecurEvent = (recurrencePattern, eventObject, 
         },
         new ICAL.Timezone({ tzid })
       );
-      // Build the new recurrence pattern off the database which is updated.
       masterEvent.addPropertyWithValue('exdate', toBeDeleted);
       rrule = new ICAL.Recur(iCalStringJson);
     } else {
@@ -292,7 +291,7 @@ export const buildICALStringUpdateRecurEvent = (recurrencePattern, eventObject, 
     const jcalData = ICAL.parse(iCalendarData);
     const vevent = new ICAL.Component(jcalData);
 
-    if (updatedObject.allDay) {
+    if (updatedObject.isAllDay) {
       updatedStartDatetime.isDate = true;
     } else {
       updatedStartDatetime.isDate = false;
@@ -370,7 +369,7 @@ export const buildICALStringUpdateSingleAndAllEvent = (
   const endDateTime = ICAL.Time.fromJSDate(new Date(updatedEvent.end.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
-  if (updatedEvent.allDay) {
+  if (updatedEvent.isAllDay) {
     startDateTime.isDate = true;
   } else {
     startDateTime.isDate = false;
@@ -466,7 +465,7 @@ export const buildICALStringUpdateAllRecurEvent = (
   const endDateTime = ICAL.Time.fromJSDate(new Date(updatedObject.end.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
-  if (updatedObject.allDay) {
+  if (updatedObject.isAllDay) {
     // eslint-disable-next-line no-underscore-dangle
     recurringMaster.getFirstPropertyValue('dtstart')._time.isDate = true;
   } else {
@@ -735,7 +734,7 @@ export const buildICALStringUpdateFutureRecurCreateEvent = (
   const endDateTime = ICAL.Time.fromJSDate(new Date(updatedObject.end.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
-  if (updatedObject.allDay) {
+  if (updatedObject.isAllDay) {
     startDateTime.isDate = true;
   }
 
@@ -864,7 +863,7 @@ export const buildICALStringCreateRecurEvent = (eventObject, rpObject) => {
   const endDateTime = ICAL.Time.fromJSDate(new Date(eventObject.end.dateTime.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
-  if (eventObject.allDay) {
+  if (eventObject.isAllDay) {
     startDateTime.isDate = true;
   }
 
@@ -946,7 +945,7 @@ export const buildICALStringCreateEvent = eventObject => {
   const endDateTime = ICAL.Time.fromJSDate(new Date(eventObject.end.dateTime.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
-  if (eventObject.allDay) {
+  if (eventObject.isAllDay) {
     startDateTime.isDate = true;
   }
 
@@ -1025,7 +1024,7 @@ export const editICALStringRecurringToSingle = (updatedData, masterEventData) =>
   const endDateTime = ICAL.Time.fromJSDate(new Date(updatedData.end.toDate()), false);
   const duration = endDateTime.subtractDate(startDateTime);
 
-  if (updatedData.allDay) {
+  if (updatedData.isAllDay) {
     startDateTime.isDate = true;
   } else {
     startDateTime.isDate = false;

@@ -13,6 +13,9 @@ import {
   deleteAllEvents,
   deleteFutureEvents,
 } from './delete-event/delete-event-utils';
+import { CALDAV_PROVIDER, ICLOUD_ACCOUNT, ICLOUD_URL } from './constants';
+import CalendarListView from './calendar-list-view';
+import { fetchCaldavEvents } from './fetch-event/utils/fetch-caldav-event';
 
 const dateClassStyleWrapper = ({ children, value }) =>
   React.cloneElement(Children.only(children), {
@@ -34,7 +37,8 @@ class SelectableCalendar extends React.Component {
       addFormPopout: false,
       editFormPopout: false,
       loginFormPopout: false,
-      icloudCalendarData: [],
+      calendarData: [],
+      calendarLists: [],
     };
     this.mounted = false;
   }
@@ -42,17 +46,42 @@ class SelectableCalendar extends React.Component {
     this.mounted = true;
     this.unsubscribers = [];
     this.unsubscribers.push(CalendarPluginStore.listen(this.onStoreChange));
+    // trigger data from db
+    Actions.fetchTrigger();
   };
   componentWillUnmount() {
     return this.unsubscribers.map(unsubscribe => unsubscribe());
   }
   onStoreChange = () => {
     if (this.mounted) {
+      let checkedArr = CalendarPluginStore.getCalendarLists().map(calendar => {
+        return { [calendar.calendarId]: calendar.checked };
+      });
+      let checked = Object.assign({}, ...checkedArr);
+      console.log(checked);
       return this.setState(prevState => ({
         ...prevState,
-        icloudCalendarData: CalendarPluginStore.getIcloudCalendarData(),
+        calendarData: CalendarPluginStore.getCalendarData().filter(event => {
+          const eventCalendarId = event.calendarId.replace(ICLOUD_URL, '/');
+          return checked[eventCalendarId];
+        }),
+        calendarLists: CalendarPluginStore.getCalendarLists(),
       }));
     }
+  };
+  manualSync = () => {
+    const auth = CalendarPluginStore.getAuth();
+    auth.forEach(account => {
+      if (account.providerType === CALDAV_PROVIDER) {
+        switch (account.caldavType) {
+          case ICLOUD_ACCOUNT:
+            fetchCaldavEvents(account.username, account.password, ICLOUD_ACCOUNT);
+            break;
+          default:
+            throw 'no such provider';
+        }
+      }
+    });
   };
   handleSelect = ({ start, end }) => {
     this.setState(prevState => ({
@@ -81,7 +110,7 @@ class SelectableCalendar extends React.Component {
     }));
   };
   formatIcloudCalendarData = () => {
-    const formattedIcloudEvent = this.state.icloudCalendarData
+    const formattedIcloudEvent = this.state.calendarData
       .filter(event => !event.hide)
       .map(event => {
         return {
@@ -126,7 +155,7 @@ class SelectableCalendar extends React.Component {
     }
   };
   handleEventClick = async (event, target) => {
-    const eventPresent = CalendarPluginStore.getIcloudCalendarData().filter(
+    const eventPresent = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
       storedEvent => storedEvent.id === event.id
     );
     if (eventPresent.length === 0) {
@@ -202,7 +231,6 @@ class SelectableCalendar extends React.Component {
   editEvent = event => {
     this.setEditFormPopout(true);
   };
-
   renderEventPopup = (event, target) => {
     Actions.openPopover(
       <div style={{ height: 300, width: 400 }}>
@@ -311,6 +339,10 @@ class SelectableCalendar extends React.Component {
             <BigButton variant="small-blue" onClick={() => this.setLoginFormPopout(true)}>
               Login
             </BigButton>
+            <BigButton variant="small-blue" onClick={() => this.manualSync()}>
+              Sync
+            </BigButton>
+            <CalendarListView calendarLists={this.state.calendarLists} />
           </Grid>
         </Grid>
       </Fragment>

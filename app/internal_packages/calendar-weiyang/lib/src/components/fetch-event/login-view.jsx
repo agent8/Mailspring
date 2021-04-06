@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import BigButton from '../MiniComponents/big-button';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
-import Actions from '../../../../../../src/flux/actions.es6';
+import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import { fetchCaldavEvents } from './utils/fetch-caldav-event';
 import { ICLOUD_ACCOUNT } from '../constants';
 
@@ -40,7 +40,7 @@ class Login extends React.Component {
   handleSubmitClick = async e => {
     this.props.parentPropFunction(false);
     // for icloud CalDav
-    Actions.setIcloudCalendarData(await this.getCalendarData());
+    await this.getCalendarData();
   };
   render() {
     const { props, state } = this;

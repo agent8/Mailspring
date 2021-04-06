@@ -1,10 +1,11 @@
 import uuidv4 from 'uuid';
 import ICAL from 'ical.js';
-import { CALDAV_PROVIDER, ICLOUD_ACCOUNT, ICLOUD_URL, UPDATE_ALL_RECURRING_EVENTS, UPSERT_RECURRENCE_PATTERN } from '../../constants';
+import { CALDAV_PROVIDER, DELETE_ALL_RECURRING_EVENTS, ICLOUD_ACCOUNT, ICLOUD_URL, UPDATE_ALL_RECURRING_EVENTS, UPSERT_RECURRENCE_PATTERN } from '../../constants';
 import * as IcalStringBuilder from '../../common-utils/ical-string-builder';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import * as PARSER from '../../common-utils/parser';
 import { getEtagAndIcalstringFromIcalUID } from '../../fetch-event/utils/fetch-caldav-event';
+import { syncCaldavCalendar } from '../../fetch-event/utils/get-caldav-account';
 const dav = require('dav');
 
 export const createCaldavEvent = async payload => {
@@ -64,7 +65,7 @@ export const createCaldavEvent = async payload => {
 
     // Add data to reflux store for immediate UI display
     const masterEvent = {
-      allDay: data.allDay,
+      isAllDay: data.isAllDay,
       attendee: JSON.stringify(data.attendee),
       caldavType: data.caldavType,
       calendarId: ICLOUD_URL + payload.calendar.calendarId.slice(1),
@@ -77,7 +78,6 @@ export const createCaldavEvent = async payload => {
       iCALString: newiCalString,
       iCalUID: data.iCalUID,
       id: data.id,
-      isAllDay: data.allDay,
       isMaster: true,
       isRecurring: data.isRecurring,
       location: data.location,
@@ -121,7 +121,7 @@ export const createCaldavEvent = async payload => {
     populateReflux = PARSER.parseRecurrence(recurrencePattern[0], masterEvent);
     console.log('rp', recurrencePattern[0]);
     // add new rp into store
-    CalendarPluginStore.updateIcloudRpLists(recurrencePattern[0], UPSERT_RECURRENCE_PATTERN);
+    CalendarPluginStore.upsertIcloudRpLists(recurrencePattern[0], UPSERT_RECURRENCE_PATTERN);
   } else {
     data.isRecurring = false;
 
@@ -130,7 +130,6 @@ export const createCaldavEvent = async payload => {
 
     // Add data into reflux store for immediate UI display
     const masterEvent = {
-      allDay: data.allDay,
       attendee: JSON.stringify(data.attendee),
       caldavType: data.caldavType,
       calendarId: ICLOUD_URL + payload.calendar.calendarId.slice(1),
@@ -143,7 +142,7 @@ export const createCaldavEvent = async payload => {
       iCALString: newiCalString,
       iCalUID: data.iCalUID,
       id: data.id,
-      isAllDay: data.allDay,
+      isAllDay: data.isAllDay,
       isMaster: false,
       isRecurring: data.isRecurring,
       location: data.location,
@@ -173,6 +172,11 @@ export const createCaldavEvent = async payload => {
   };
   try {
     await dav.createCalendarObject(calendar, addCalendarObject);
+    // remove existing and add new
+    CalendarPluginStore.deleteIcloudCalendarData(
+      populateReflux[0].iCalUID,
+      DELETE_ALL_RECURRING_EVENTS
+    );
     CalendarPluginStore.addIcloudCalendarData(populateReflux);
   } catch (error) {
     console.log(error);
@@ -188,5 +192,5 @@ export const createCaldavEvent = async payload => {
     { etag: foundObj.etag, iCALString: foundObj.iCalstring }, // update etag and icalstring(icalstring not rly needed)
     UPDATE_ALL_RECURRING_EVENTS
   );
-  console.log('reflux', CalendarPluginStore.getIcloudCalendarData());
+  console.log('reflux', CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT));
 };

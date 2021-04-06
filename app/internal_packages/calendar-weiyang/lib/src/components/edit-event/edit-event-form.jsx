@@ -16,6 +16,7 @@ import {
   editSingleEvent,
 } from '../edit-event/utils/edit-event-utils';
 import { fetchCaldavEvents } from '../fetch-event/utils/fetch-caldav-event';
+import { ICLOUD_ACCOUNT } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -59,7 +60,7 @@ export default class EditForm extends React.Component {
       attendees: [],
       partstat: '',
 
-      allDay: false,
+      isAllDay: false,
       conference: '',
       hangoutLink: '',
       startDay: '',
@@ -179,16 +180,16 @@ export default class EditForm extends React.Component {
     // if currently is not all day means its going to switch to all day so format has to
     // in date format and vice versa.
     const startDateParsedInUTC = this.processStringForUTC(
-      state.allDay
+      state.isAllDay
         ? startDateParsed.format('YYYY-MM-DDThh:mm a')
         : startDateParsed.format('YYYY-MM-DD')
     );
     const endDateParsedInUTC = this.processStringForUTC(
-      state.allDay ? endDateParsed.format('YYYY-MM-DDThh:mm a') : endDateParsed.format('YYYY-MM-DD')
+      state.isAllDay ? endDateParsed.format('YYYY-MM-DDThh:mm a') : endDateParsed.format('YYYY-MM-DD')
     );
 
     this.setState({
-      allDay: event.target.checked,
+      isAllDay: event.target.checked,
       updatedStartDateTime: startDateParsedInUTC,
       updatedEndDateTime: endDateParsedInUTC,
     });
@@ -212,16 +213,16 @@ export default class EditForm extends React.Component {
   updateStoreFromServer = async () => {
     const { state } = this;
     // only ical caldav currently
-    const [user] = CalendarPluginStore.getIcloudAuth().filter(
+    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
       auth => auth.username === state.owner
     );
     const finalResult = await fetchCaldavEvents(user.username, user.password, state.providerType);
-    Actions.setIcloudCalendarData(finalResult);
+    Actions.setCalendarData(finalResult, ICLOUD_ACCOUNT);
   };
   editEvent = () => {
     const { props, state } = this;
     // using ical caldav only for now
-    const [user] = CalendarPluginStore.getIcloudAuth().filter(auth => auth.username === state.owner);
+    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(auth => auth.username === state.owner);
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const payload = {
       id: state.id,
@@ -233,7 +234,7 @@ export default class EditForm extends React.Component {
       attendee: state.attendees,
       originalId: state.originalId,
       iCalUID: state.iCalUID,
-      allDay: state.allDay,
+      isAllDay: state.isAllDay,
       start: moment.tz(state.updatedStartDateTime, tzid),
       end: moment.tz(state.updatedEndDateTime, tzid),
       isRecurring: state.isRecurring,
@@ -254,7 +255,7 @@ export default class EditForm extends React.Component {
   editAllRecurrenceEvent = () => {
     const { props, state } = this;
     // using ical caldav only for now
-    const [user] = CalendarPluginStore.getIcloudAuth().filter(
+    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
       auth => auth.username === state.owner
     );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -272,7 +273,7 @@ export default class EditForm extends React.Component {
       attendee: state.attendees,
       originalId: state.originalId,
       iCalUID: state.iCalUID,
-      allDay: state.allDay,
+      isAllDay: state.isAllDay,
       start: moment.tz(state.updatedStartDateTime, tzid),
       end: moment.tz(state.updatedEndDateTime, tzid),
       providerType: state.providerType,
@@ -312,7 +313,7 @@ export default class EditForm extends React.Component {
   };
   editFutureRecurrenceEvent = () => {
     const { props, state } = this;
-    const [user] = CalendarPluginStore.getIcloudAuth().filter(
+    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
       auth => auth.username === state.owner
     );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -328,7 +329,7 @@ export default class EditForm extends React.Component {
       attendee: state.attendees,
       originalId: state.originalId,
       iCalUID: state.iCalUID,
-      allDay: state.allDay,
+      isAllDay: state.isAllDay,
       start: moment.tz(state.updatedStartDateTime, tzid),
       end: moment.tz(state.updatedEndDateTime, tzid),
       providerType: state.providerType,
@@ -380,7 +381,7 @@ export default class EditForm extends React.Component {
       In order to retrive the event, I need to make a query from the script to get the javascript ews object. However, once I have it, I can update it easily.
   */
   retrieveEvent = id => {
-    const [eventPresent] = CalendarPluginStore.getIcloudCalendarData().filter(
+    const [eventPresent] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
       storedEvent => storedEvent.id === id
     );
 
@@ -391,7 +392,7 @@ export default class EditForm extends React.Component {
     const secondRecurrOptions = recurrenceOptions.secondRecurrOptions(eventPresent.start, text);
 
     if (eventPresent.isRecurring) {
-      const [eventRecurrence] = CalendarPluginStore.getIcloudRpLists().filter(
+      const [eventRecurrence] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
         storedRp => storedRp.originalId === eventPresent.recurringEventId
       );
       const thirdRecurrChoice = recurrenceOptions.parseThirdRecurrOption(
@@ -495,12 +496,12 @@ export default class EditForm extends React.Component {
     }
 
     const startDateParsedInUTC = this.processStringForUTC(
-      eventPresent.allDay
+      eventPresent.isAllDay
         ? moment(eventPresent.start.dateTime * 1000).format('YYYY-MM-DD')
         : moment(eventPresent.start.dateTime * 1000).format('YYYY-MM-DDThh:mm')
     );
     const endDateParsedInUTC = this.processStringForUTC(
-      eventPresent.allDay
+      eventPresent.isAllDay
         ? moment(eventPresent.end.dateTime * 1000).format('YYYY-MM-DD')
         : moment(eventPresent.end.dateTime * 1000).format('YYYY-MM-DDThh:mm')
     );
@@ -546,7 +547,7 @@ export default class EditForm extends React.Component {
       originalId: eventPresent.originalId,
       iCalUID: eventPresent.iCalUID,
       oldEventJson: eventPresent,
-      allDay: eventPresent.allDay,
+      isAllDay: eventPresent.isAllDay,
     });
   };
 
@@ -657,7 +658,7 @@ export default class EditForm extends React.Component {
           {/* Start Time and Date */}
           <Input
             label="Starts"
-            type={state.allDay ? 'date' : 'datetime-local'}
+            type={state.isAllDay ? 'date' : 'datetime-local'}
             value={new Date(state.updatedStartDateTime)}
             name="updatedStartDateTime"
             onChange={date => this.setState({ updatedStartDateTime: date })}
@@ -667,7 +668,7 @@ export default class EditForm extends React.Component {
           {/* End Time and Date */}
           <Input
             label="Ends"
-            type={state.allDay ? 'date' : 'datetime-local'}
+            type={state.isAllDay ? 'date' : 'datetime-local'}
             value={new Date(state.updatedEndDateTime)}
             name="updatedEndDateTime"
             onChange={date => this.setState({ updatedEndDateTime: date })}
@@ -692,7 +693,7 @@ export default class EditForm extends React.Component {
           <div className="all-day-checkbox-container">
             <RoundCheckbox
               id="allday-checkmark"
-              checked={state.allDay || false}
+              checked={state.isAllDay || false}
               onChange={this.handleCheckboxChange}
               label="All day"
             />
