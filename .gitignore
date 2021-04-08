@@ -75,7 +75,7 @@ app/package-lock.json
 
 # testing icloud calendar
 app/static/calendar/icloud-test.txt
-
+app/internal_packages/calendar-weiyang/calendar-plugin.db
 **.so*
 **.bin
 **.tar.gz

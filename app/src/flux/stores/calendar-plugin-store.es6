@@ -138,7 +138,8 @@ class CalendarPluginStore extends MailspringStore {
             this._auth.icloud.push(row);
             fetchCaldavEvents(row.username, row.password, ICLOUD_URL);
             // periodic background sync
-            if (AppEnv.isMainWindow) {
+            console.log('appenv mainwindow', AppEnv.isMainwindow);
+            if (AppEnv.isMainwindow) {
               setInterval(() => {
                 console.log('testing interval every 3min');
                 fetchCaldavEvents(row.username, row.password, ICLOUD_URL);
