@@ -74,6 +74,7 @@ client_secret.json
 app/package-lock.json
 
 # testing icloud calendar
+app/static/calendar/token.txt
 app/static/calendar/icloud-test.txt
 app/internal_packages/calendar-weiyang/calendar-plugin.db
 **.so*
