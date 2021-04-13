@@ -1436,6 +1436,7 @@ export default class Application extends EventEmitter {
     });
 
     app.on('open-url', (event, urlToOpen) => {
+      console.log('urltoopen', urlToOpen);
       // if want to open thread by url, url should this format edisonmail://email/accountId/threadId/view
       let matchs = /\/email\/(.+)\/(.+)\/view$/g.exec(urlToOpen);
       if (matchs && matchs.length === 3) {

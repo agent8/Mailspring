@@ -511,6 +511,7 @@ class AccountStore extends MailspringStore {
   };
 
   addAccount = async account => {
+    console.log(account)
     if (!account.emailAddress || !account.provider || !(account instanceof Account)) {
       throw new Error(`Returned account data is invalid: ${JSON.stringify(account)}`);
     }

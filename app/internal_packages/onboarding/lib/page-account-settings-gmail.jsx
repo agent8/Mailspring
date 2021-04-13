@@ -20,6 +20,7 @@ export default class AccountSettingsPageGmail extends React.Component {
   }
 
   onSuccess(account) {
+    console.log(account);
     OnboardingActions.finishAndAddAccount(account);
   }
 

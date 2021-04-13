@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import BigButton from '../MiniComponents/big-button';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
-import { fetchCaldavEvents } from './utils/fetch-caldav-event';
+import { fetchCaldavEvents } from './utils/fetch-events-utils';
 import { ICLOUD_ACCOUNT } from '../constants';
 
 class Login extends React.Component {

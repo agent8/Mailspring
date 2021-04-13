@@ -4,7 +4,7 @@ import { CALDAV_PROVIDER, DELETE_ALL_RECURRING_EVENTS, ICLOUD_ACCOUNT, ICLOUD_UR
 import * as IcalStringBuilder from '../../common-utils/ical-string-builder';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import * as PARSER from '../../common-utils/parser';
-import { getEtagAndIcalstringFromIcalUID } from '../../fetch-event/utils/fetch-caldav-event';
+import { getEtagAndIcalstringFromIcalUID } from '../../fetch-event/utils/fetch-events-utils';
 import { syncCaldavCalendar } from '../../fetch-event/utils/get-caldav-account';
 const dav = require('dav');
 
@@ -37,7 +37,7 @@ export const createCaldavEvent = async payload => {
   data.caldavUrl = caldavUrl + `${newIcsUid}.ics`;
   data.iCalUID = data.originalId;
   data.providerType = CALDAV_PROVIDER;
-  data.caldavType = ICLOUD_ACCOUNT;
+  data.caldavType = ICLOUD_URL;
   let populateReflux = [];
   if (payload.data.isRecurring) {
     const rruleObject = ICAL.Recur._stringToData(data.rrule);
@@ -121,7 +121,7 @@ export const createCaldavEvent = async payload => {
     populateReflux = PARSER.parseRecurrence(recurrencePattern[0], masterEvent);
     console.log('rp', recurrencePattern[0]);
     // add new rp into store
-    CalendarPluginStore.upsertIcloudRpLists(recurrencePattern[0], UPSERT_RECURRENCE_PATTERN);
+    CalendarPluginStore.upsertRpList(recurrencePattern[0], UPSERT_RECURRENCE_PATTERN);
   } else {
     data.isRecurring = false;
 
@@ -173,11 +173,12 @@ export const createCaldavEvent = async payload => {
   try {
     await dav.createCalendarObject(calendar, addCalendarObject);
     // remove existing and add new
-    CalendarPluginStore.deleteIcloudCalendarData(
+    CalendarPluginStore.deleteCalendarData(
+      ICLOUD_ACCOUNT,
       populateReflux[0].iCalUID,
       DELETE_ALL_RECURRING_EVENTS
     );
-    CalendarPluginStore.addIcloudCalendarData(populateReflux);
+    CalendarPluginStore.addCalendarData(populateReflux, ICLOUD_ACCOUNT);
   } catch (error) {
     console.log(error);
   }
@@ -187,7 +188,8 @@ export const createCaldavEvent = async payload => {
     ICLOUD_URL,
     data.iCalUID
   );
-  CalendarPluginStore.updateIcloudCalendarData(
+  CalendarPluginStore.updateCalendarData(
+    ICLOUD_ACCOUNT,
     data.iCalUID,
     { etag: foundObj.etag, iCALString: foundObj.iCalstring }, // update etag and icalstring(icalstring not rly needed)
     UPDATE_ALL_RECURRING_EVENTS

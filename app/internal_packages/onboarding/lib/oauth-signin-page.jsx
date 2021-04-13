@@ -182,6 +182,7 @@ export default class OAuthSignInPage extends React.Component {
     this.setState({ authStage: 'accountSuccess' });
     setTimeout(() => {
       if (!this._mounted) return;
+      console.log(account);
       this.props.onSuccess(account);
     }, 1000);
   }

@@ -15,7 +15,7 @@ import {
   editFutureReccurenceEvent,
   editSingleEvent,
 } from '../edit-event/utils/edit-event-utils';
-import { fetchCaldavEvents } from '../fetch-event/utils/fetch-caldav-event';
+import { fetchCaldavEvents } from '../fetch-event/utils/fetch-events-utils';
 import { ICLOUD_ACCOUNT } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;

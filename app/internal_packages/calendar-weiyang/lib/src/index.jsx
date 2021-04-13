@@ -1,8 +1,11 @@
 import React from 'react';
 import SelectableCalendar from './components/selectable-calendar';
-import { Actions, CalendarPluginStore } from 'mailspring-exports';
+import { Actions, CalendarPluginStore, AccountStore } from 'mailspring-exports';
 import { getCaldavAccount } from './components/fetch-event/utils/get-caldav-account';
+import axios from 'axios';
+import KeyManager from '../../../../src/key-manager';
 const dav = require('dav');
+const { google } = require('googleapis');
 
 export default class Calendar extends React.Component {
   constructor(...args) {
@@ -14,20 +17,6 @@ export default class Calendar extends React.Component {
 
   componentDidMount = () => {
     dav.debug.enabled = true;
-    const xhr = new dav.transport.OAuth2(
-      new dav.Credentials({
-        clientId: '',
-        clientSecret: '',
-        tokenUrl:"https://accounts.google.com/o/oauth2/token",
-        username: '',
-        password: '',
-      })
-    );
-    dav
-      .createAccount({ server: 'https://apidata.googleusercontent.com/caldav/v2/', xhr: xhr })
-      .then(account => {
-        console.log(account);
-      });
   };
   render() {
     return <SelectableCalendar />;

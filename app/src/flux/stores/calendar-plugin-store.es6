@@ -29,8 +29,9 @@ import {
   GMAIL_ACCOUNT,
   EWS_ACCOUNT,
   ICLOUD_URL,
+  GOOGLE_PROVIDER,
 } from '../../../internal_packages/calendar-weiyang/lib/src/components/constants';
-import { fetchCaldavEvents } from '../../../internal_packages/calendar-weiyang/lib/src/components/fetch-event/utils/fetch-caldav-event';
+import { fetchCaldavEvents } from '../../../internal_packages/calendar-weiyang/lib/src/components/fetch-event/utils/fetch-events-utils';
 import Actions from '../actions';
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
@@ -40,16 +41,16 @@ class CalendarPluginStore extends MailspringStore {
   constructor(props) {
     super(props);
 
-    this.listenTo(Actions.addIcloudCalendarData, this.addIcloudCalendarData);
-    this.listenTo(Actions.deleteIcloudCalendarData, this.deleteIcloudCalendarData);
-    this.listenTo(Actions.updateIcloudCalendarData, this.updateIcloudCalendarData);
+    this.listenTo(Actions.addCalendarData, this.addCalendarData);
+    this.listenTo(Actions.deleteCalendarData, this.deleteCalendarData);
+    this.listenTo(Actions.updateCalendarData, this.updateCalendarData);
 
-    this.listenTo(Actions.upsertIcloudRpLists, this.upsertIcloudRpLists);
-    this.listenTo(Actions.deleteIcloudRpLists, this.deleteIcloudRpLists);
+    this.listenTo(Actions.upsertRpList, this.upsertRpList);
+    this.listenTo(Actions.deleteRpList, this.deleteRpList);
 
-    this.listenTo(Actions.addIcloudCalendarLists, this.addIcloudCalendarLists);
-    this.listenTo(Actions.toggleCalendarLists, this.toggleCalendarLists);
-    this.listenTo(Actions.deleteIcloudCalendarLists, this.deleteIcloudCalendarLists);
+    this.listenTo(Actions.addCalendarList, this.addCalendarList);
+    this.listenTo(Actions.toggleCalendarList, this.toggleCalendarList);
+    this.listenTo(Actions.deleteCalendarList, this.deleteCalendarList);
 
     this.listenTo(Actions.setAuth, this.setAuth);
 
@@ -57,6 +58,9 @@ class CalendarPluginStore extends MailspringStore {
 
     this.listenTo(Actions.fetchTrigger, this.fetchTrigger);
 
+    this.listenTo(Actions.setSelectedYear, this.setSelectedYear);
+
+    this._selectedYear = new Date().getFullYear();
     this._calendarData = {
       icloud: [],
       gmail: [],
@@ -96,22 +100,30 @@ class CalendarPluginStore extends MailspringStore {
           throw err;
         }
         rows.forEach(row => {
-          console.log('calendar data row', row);
-          if (row.providerType === CALDAV_PROVIDER && row.caldavType === ICLOUD_URL) {
-            row.start = JSON.parse(row.start);
-            row.end = JSON.parse(row.end);
-            row.originalStartTime = JSON.parse(row.originalStartTime);
-            this._calendarData.icloud.push(row);
+          let accessor = '';
+          switch (row.providerType) {
+            case CALDAV_PROVIDER:
+              accessor = 'icloud';
+              break;
+            case GOOGLE_PROVIDER:
+              accessor = 'gmail';
+              break;
+            default:
+              throw 'no such provider';
           }
+          row.start = JSON.parse(row.start);
+          row.end = JSON.parse(row.end);
+          row.originalStartTime = JSON.parse(row.originalStartTime);
+          this._calendarData[accessor].push(row);
         });
-        console.log(this._calendarData);
+        this.trigger();
+        console.log(this._calendarData.gmail);
       });
 
       this._userDb.all(FETCH_RECURRENCE_PATTERN, [], (err, rows) => {
         if (err) {
           throw err;
         }
-        // TODO gotta check if EWS has recurpatterns, and how to separate gmail/icloud caldav
         this._recurPatternLists.icloud = [...this._recurPatternLists.icloud, ...rows];
         console.log(this._recurPatternLists);
       });
@@ -120,14 +132,22 @@ class CalendarPluginStore extends MailspringStore {
         if (err) {
           throw err;
         }
-        console.log(rows);
         rows.forEach(row => {
-          if (row.providerType === CALDAV_PROVIDER && row.url.includes('icloud')) {
-            this._calendarLists.icloud.push(row);
+          let accessor = '';
+          switch (row.providerType) {
+            case CALDAV_PROVIDER:
+              accessor = 'icloud';
+              break;
+            case GOOGLE_PROVIDER:
+              accessor = 'gmail';
+              break;
+            default:
+              throw 'no such provider';
           }
+          this._calendarLists[accessor].push(row);
         });
-        console.log(this._calendarLists);
       });
+      console.log(this._calendarLists);
 
       this._userDb.all(FETCH_AUTH, [], (err, rows) => {
         if (err) {
@@ -136,10 +156,8 @@ class CalendarPluginStore extends MailspringStore {
         rows.forEach(row => {
           if (row.providerType === CALDAV_PROVIDER && row.caldavType === ICLOUD_ACCOUNT) {
             this._auth.icloud.push(row);
-            fetchCaldavEvents(row.username, row.password, ICLOUD_URL);
             // periodic background sync
-            console.log('appenv mainwindow', AppEnv.isMainwindow);
-            if (AppEnv.isMainwindow) {
+            if (AppEnv.isMainWindow()) {
               setInterval(() => {
                 console.log('testing interval every 3min');
                 fetchCaldavEvents(row.username, row.password, ICLOUD_URL);
@@ -151,6 +169,12 @@ class CalendarPluginStore extends MailspringStore {
     });
   }
 
+  setSelectedYear = date => {
+    if (date.getFullYear() !== this._selectedYear) {
+      // trigger sync
+      this._selectedYear = date.getFullYear();
+    }
+  };
   closeDb = () => {
     this._userDb.close(err => {
       return err ? console.log('error while closing db', err) : null;
@@ -239,7 +263,7 @@ class CalendarPluginStore extends MailspringStore {
     return dbFormat;
   };
 
-  deleteIcloudRpLists = toBeDeletedId => {
+  deleteRpList = toBeDeletedId => {
     this._recurPatternLists.icloud = this._recurPatternLists.icloud.filter(
       rp => rp.iCalUID !== toBeDeletedId
     );
@@ -249,34 +273,50 @@ class CalendarPluginStore extends MailspringStore {
       }
     });
   };
-  toggleCalendarLists = (type, calendarId, value) => {
+  toggleCalendarList = (type, calendarId, value) => {
     let sqlCommand = '';
     let prepareStatement = '';
     let values = null;
+    let accessor = '';
     switch (type) {
-      case ICLOUD_ACCOUNT:
-        this._calendarLists.icloud.forEach(calendar => {
-          if (calendar.calendarId === calendarId) {
-            calendar.checked = value;
-          }
-        });
-        sqlCommand = 'UPDATE Calendar SET checked=? WHERE calendarId=?';
-        prepareStatement = this._userDb.prepare(sqlCommand);
-        values = [value, calendarId];
-        prepareStatement.run(values, err => {
-          if (err) {
-            return console.log(err.message);
-          }
-        });
+      case CALDAV_PROVIDER:
+        accessor = 'icloud';
+        break;
+      case GOOGLE_PROVIDER:
+        accessor = 'gmail';
         break;
       default:
-        throw 'no such provider';
+        throw 'no such type';
     }
+    this._calendarLists[accessor].forEach(calendar => {
+      if (calendar.calendarId === calendarId) {
+        calendar.checked = value;
+      }
+    });
+    sqlCommand = 'UPDATE Calendar SET checked=? WHERE calendarId=?';
+    prepareStatement = this._userDb.prepare(sqlCommand);
+    values = [value, calendarId];
+    prepareStatement.run(values, err => {
+      if (err) {
+        return console.log(err.message);
+      }
+    });
     this.trigger();
   };
-  addIcloudCalendarLists = calendarLists => {
+  addCalendarList = (calendarLists, type) => {
+    let accessor = '';
+    switch (type) {
+      case ICLOUD_ACCOUNT:
+        accessor = 'icloud';
+        break;
+      case GMAIL_ACCOUNT:
+        accessor = 'gmail';
+        break;
+      default:
+        throw 'no such type';
+    }
     if (calendarLists.length > 0) {
-      this._calendarLists.icloud = [...this._calendarLists.icloud, ...calendarLists];
+      this._calendarLists[accessor] = [...this._calendarLists[accessor], ...calendarLists];
       let placeholders = '(?,?,?,?,?,?,?,?)';
       let sqlCommand =
         'INSERT INTO Calendar(calendarId, checked, description, name, ownerId, providerType, timezone, url) VALUES' +
@@ -294,8 +334,21 @@ class CalendarPluginStore extends MailspringStore {
       this.trigger();
     }
   };
-  deleteIcloudCalendarLists = toBeDeleted => {
-    this._calendarLists.icloud.filter(calendar => calendar.calendarId !== toBeDeleted.calendarId);
+  deleteCalendarList = (type, toBeDeleted) => {
+    let accessor = '';
+    switch (type) {
+      case ICLOUD_ACCOUNT:
+        accessor = 'icloud';
+        break;
+      case GMAIL_ACCOUNT:
+        accessor = 'gmail';
+        break;
+      default:
+        throw 'no such type';
+    }
+    this._calendarLists[accessor].filter(
+      calendar => calendar.calendarId !== toBeDeleted.calendarId
+    );
     this._userDb.run(`DELETE FROM Calendar WHERE calendarId=?`, toBeDeleted.calendarId, err => {
       if (err) {
         return console.log(err.message);
@@ -303,10 +356,21 @@ class CalendarPluginStore extends MailspringStore {
     });
     this.trigger();
   };
-  addIcloudCalendarData = events => {
+  addCalendarData = (events, type) => {
+    let accessor = '';
+    switch (type) {
+      case ICLOUD_ACCOUNT:
+        accessor = 'icloud';
+        break;
+      case GMAIL_ACCOUNT:
+        accessor = 'gmail';
+        break;
+      default:
+        throw 'no such type';
+    }
     if (events.length > 0) {
       // remove any related event by iCalUID since new expanded events to be added would have similar copies
-      this._calendarData.icloud = this._calendarData.icloud.filter(
+      this._calendarData[accessor] = this._calendarData[accessor].filter(
         evt => evt.iCalUID !== events[0].iCalUID
       );
       this._userDb.run(`DELETE FROM CalendarData WHERE iCalUID=?`, events[0].iCalUID, err => {
@@ -316,7 +380,7 @@ class CalendarPluginStore extends MailspringStore {
       });
 
       // add the events
-      this._calendarData.icloud = [...this._calendarData.icloud, ...events];
+      this._calendarData[accessor] = [...this._calendarData[accessor], ...events];
       let placeholders = '(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
       let sqlCommand =
         'INSERT INTO CalendarData(attendee, caldavType, id, caldavUrl, calendarId, colorId, created, description, end, etag, iCALString, iCalUID, isAllDay, isMaster, isRecurring, location, organizer, originalId, originalStartTime, owner, providerType, recurringEventId, start, summary, updated) VALUES' +
@@ -335,7 +399,7 @@ class CalendarPluginStore extends MailspringStore {
     }
   };
 
-  upsertIcloudRpLists = editedRp => {
+  upsertRpList = editedRp => {
     // Insert if rp doesn't exist, update if it exist
     let foundRpIndex = null;
     let foundRp = [];
@@ -386,7 +450,18 @@ class CalendarPluginStore extends MailspringStore {
     }
   };
 
-  updateIcloudCalendarData = (id, editedData, updateType, dataDateTime = null) => {
+  updateCalendarData = (type, id, editedData, updateType, dataDateTime = null) => {
+    let accessor = '';
+    switch (type) {
+      case ICLOUD_ACCOUNT:
+        accessor = 'icloud';
+        break;
+      case GMAIL_ACCOUNT:
+        accessor = 'gmail';
+        break;
+      default:
+        throw 'no such type';
+    }
     let toBeEditedEventIds = [];
     let toBeEditedEvents = [];
     let sqlCommand = '';
@@ -396,7 +471,7 @@ class CalendarPluginStore extends MailspringStore {
       case UPDATE_SINGLE_EVENT:
       case UPDATE_MASTER_EVENT:
         // update single event via id
-        toBeEditedEvents = this._calendarData.icloud.filter((event, eventId) => {
+        toBeEditedEvents = this._calendarData[accessor].filter((event, eventId) => {
           if (event.id === id) {
             toBeEditedEventIds.push(eventId);
             return event;
@@ -405,7 +480,7 @@ class CalendarPluginStore extends MailspringStore {
         break;
       case UPDATE_FUTURE_RECURRING_EVENTS:
         // updates future events via iCalUID and datetime restriction
-        toBeEditedEvents = this._calendarData.icloud.filter((event, eventId) => {
+        toBeEditedEvents = this._calendarData[accessor].filter((event, eventId) => {
           if (event.iCalUID === id && event.start.dateTime >= dataDateTime) {
             toBeEditedEventIds.push(eventId);
             return event;
@@ -415,7 +490,7 @@ class CalendarPluginStore extends MailspringStore {
       case UPDATE_ICALSTRING:
       case UPDATE_ALL_RECURRING_EVENTS:
         // updates icalstring/all events via iCalUID
-        toBeEditedEvents = this._calendarData.icloud.filter((event, eventId) => {
+        toBeEditedEvents = this._calendarData[accessor].filter((event, eventId) => {
           if (event.iCalUID === id) {
             toBeEditedEventIds.push(eventId);
             return event;
@@ -427,12 +502,12 @@ class CalendarPluginStore extends MailspringStore {
     }
     for (let i = 0; i < toBeEditedEventIds.length; i++) {
       let toBeEditedId = toBeEditedEventIds[i];
-      this._calendarData.icloud[toBeEditedId] = { ...toBeEditedEvents[i], ...editedData };
+      this._calendarData[accessor][toBeEditedId] = { ...toBeEditedEvents[i], ...editedData };
       sqlCommand =
         'UPDATE CalendarData SET attendee=?, caldavType=?, id=?, caldavUrl=?, calendarId=?, colorId=?, created=?, description=?, end=?, etag=?, iCALString=?, iCALUID=?, isAllDay=?, isMaster=?, isRecurring=?, location=?, organizer=?, originalId=?, originalStartTime=?, owner=?, providerType=?, recurringEventId=?, start=?, summary=?, updated=? WHERE id=?';
       prepareStatement = this._userDb.prepare(sqlCommand);
       values = [
-        this.parseCalendarDataIntoDBformat(this._calendarData.icloud[toBeEditedId]),
+        this.parseCalendarDataIntoDBformat(this._calendarData[accessor][toBeEditedId]),
         toBeEditedEvents[i].id,
       ];
       prepareStatement.run(values, err => {
@@ -445,11 +520,22 @@ class CalendarPluginStore extends MailspringStore {
     this.trigger();
   };
 
-  deleteIcloudCalendarData = (dataId, deleteType, dataDatetime = null) => {
+  deleteCalendarData = (type, dataId, deleteType, dataDatetime = null) => {
+    let accessor = '';
+    switch (type) {
+      case ICLOUD_ACCOUNT:
+        accessor = 'icloud';
+        break;
+      case GMAIL_ACCOUNT:
+        accessor = 'gmail';
+        break;
+      default:
+        throw 'no such type';
+    }
     switch (deleteType) {
       case DELETE_SINGLE_EVENT:
         // delete via local id
-        this._calendarData.icloud = this._calendarData.icloud.filter(event => {
+        this._calendarData[accessor] = this._calendarData[accessor].filter(event => {
           return event.id !== dataId;
         });
         this._userDb.run(`DELETE FROM CalendarData WHERE id=?`, dataId, err => {
@@ -460,7 +546,7 @@ class CalendarPluginStore extends MailspringStore {
         break;
       case DELETE_ALL_RECURRING_EVENTS:
         // delete via recurringEventId
-        this._calendarData.icloud = this._calendarData.icloud.filter(event => {
+        this._calendarData[accessor] = this._calendarData[accessor].filter(event => {
           return event.recurringEventId !== dataId;
         });
         this._userDb.run(`DELETE FROM CalendarData WHERE recurringEventId=?`, dataId, err => {
@@ -471,7 +557,7 @@ class CalendarPluginStore extends MailspringStore {
         break;
       case DELETE_FUTURE_RECCURRING_EVENTS:
         // delete via iCalUID
-        this._calendarData.icloud = this._calendarData.icloud.filter(event => {
+        this._calendarData[accessor] = this._calendarData[accessor].filter(event => {
           // delete events that are equal or later than datetime and id matches
           if (!(event.iCalUID === dataId && event.start.dateTime >= dataDatetime)) {
             return event;
@@ -485,7 +571,7 @@ class CalendarPluginStore extends MailspringStore {
         });
         break;
       case DELETE_NON_MASTER_EVENTS:
-        this._calendarData.icloud = this._calendarData.icloud.filter(event => {
+        this._calendarData[accessor] = this._calendarData[accessor].filter(event => {
           // deletes event that are not master and id matches
           if (
             !(
@@ -595,6 +681,9 @@ class CalendarPluginStore extends MailspringStore {
         );
     }
   };
+  getSelectedYear = () => {
+    return this._selectedYear;
+  }
 }
 
 export default new CalendarPluginStore();

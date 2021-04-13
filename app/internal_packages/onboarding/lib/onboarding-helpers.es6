@@ -45,8 +45,8 @@ const GMAIL_SCOPES = [
 ];
 
 const GMAIL_CALENDAR_CLIENT_ID =
-  '190108842853-2o3l63c3qlgjjg4pp2v9suoacrbfpgva.apps.googleusercontent.com';
-const GMAIL_CALENDAR_CLIENT_SECRET = 'atSqQBGyYhlJAba9NiZe47r6';
+  '484203886260-ihd7d4mo5jo4aq4d8110gn3uv5ffrfsr.apps.googleusercontent.com';
+const GMAIL_CALENDAR_CLIENT_SECRET = 'v-yRG45fqIRF0zyOyyOQ2KBH';
 const GMAIL_CALENDAR_SCOPES = [
   // Edison
   'https://mail.google.com/',

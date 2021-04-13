@@ -13,7 +13,7 @@ import RRuleGenerator from '../react-rrule-generator/src/lib';
 
 import { createEvent } from './utils/create-event-utils';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
-import { fetchCaldavEvents } from '../fetch-event/utils/fetch-caldav-event';
+import { fetchCaldavEvents } from '../fetch-event/utils/fetch-events-utils';
 import { ICLOUD_ACCOUNT, ICLOUD_URL } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;

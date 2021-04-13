@@ -94,7 +94,7 @@ export const editCaldavSingle = async payload => {
       await dav.updateCalendarObject(calendarObject, option);
       // Update them all to the new iCalString.
       const toBeEditedIcalstring = { iCALString: iCalString };
-      Actions.updateIcloudCalendarData(data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
+      Actions.updateCalendarData(ICLOUD_ACCOUNT, data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
       // update single edited event via reflux
       const toBeEditedEvent = {
         summary: payload.title,
@@ -105,7 +105,7 @@ export const editCaldavSingle = async payload => {
         location: payload.location,
         attendee: JSON.stringify(payload.attendee),
       };
-      Actions.updateIcloudCalendarData(payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
+      Actions.updateCalendarData(ICLOUD_ACCOUNT, payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
     } catch (error) {
       console.log('error updating single event from recurring series', error);
     }
@@ -165,11 +165,11 @@ export const editCaldavSingle = async payload => {
         },
       ]);
       const expandedRecurEvents = PARSER.parseRecurrence(recurrencePattern[0], masterEvent);
-      CalendarPluginStore.upsertIcloudRpLists(recurrencePattern[0]);
+      CalendarPluginStore.upsertRpList(recurrencePattern[0]);
 
       // add all expanded events into reflux and remove any existing similar icaluid from reflux store
-      Actions.deleteIcloudCalendarData(expandedRecurEvents[0].iCalUID, DELETE_ALL_RECURRING_EVENTS);
-      Actions.addIcloudCalendarData(expandedRecurEvents);
+      Actions.deleteCalendarData(ICLOUD_ACCOUNT, expandedRecurEvents[0].iCalUID, DELETE_ALL_RECURRING_EVENTS);
+      Actions.addCalendarData(expandedRecurEvents, ICLOUD_ACCOUNT);
     } catch (error) {
       console.log('error updating single event to recurring event', error);
     }
@@ -191,7 +191,7 @@ export const editCaldavSingle = async payload => {
         location: payload.location,
         attendee: JSON.stringify(payload.attendee),
       };
-      Actions.updateIcloudCalendarData(payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
+      Actions.updateCalendarData(ICLOUD_ACCOUNT, payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
     } catch (error) {
       console.log('error updating single event from single series', error);
     }
@@ -219,7 +219,7 @@ export const editCaldavAll = async payload => {
       user,
     };
     await deleteCaldavAll(deleteAllPayload);
-    Actions.deleteIcloudCalendarData(data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
+    Actions.deleteCalendarData(ICLOUD_ACCOUNT, data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
   } catch (error) {
     console.log('delete failed while editing all recurrence', error);
   }
@@ -282,7 +282,8 @@ export const editCaldavFuture = async payload => {
       user,
     };
     await deleteCaldavFuture(deleteFuturePayload);
-    Actions.deleteIcloudCalendarData(
+    Actions.deleteCalendarData(
+      ICLOUD_ACCOUNT,
       data.iCalUID,
       DELETE_FUTURE_RECCURRING_EVENTS,
       data.start.dateTime

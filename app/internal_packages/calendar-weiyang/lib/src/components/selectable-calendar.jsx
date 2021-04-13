@@ -1,3 +1,4 @@
+/* eslint-disable spellcheck/spell-checker */
 import React, { Children } from 'react';
 import { Calendar, Views, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
@@ -13,9 +14,9 @@ import {
   deleteAllEvents,
   deleteFutureEvents,
 } from './delete-event/delete-event-utils';
-import { CALDAV_PROVIDER, ICLOUD_ACCOUNT, ICLOUD_URL } from './constants';
-import CalendarListView from './calendar-list-view';
-import { fetchCaldavEvents } from './fetch-event/utils/fetch-caldav-event';
+import { CALDAV_PROVIDER, GOOGLE_PROVIDER, ICLOUD_ACCOUNT, ICLOUD_URL } from './constants';
+import CalendarListSidebar from './calendar-list-sidebar';
+import { fetchCaldavEvents, fetchGmailEvents } from './fetch-event/utils/fetch-events-utils';
 
 const dateClassStyleWrapper = ({ children, value }) =>
   React.cloneElement(Children.only(children), {
@@ -39,6 +40,7 @@ class SelectableCalendar extends React.Component {
       loginFormPopout: false,
       calendarData: [],
       calendarLists: [],
+      selectedYear: new Date().getFullYear(),
     };
     this.mounted = false;
   }
@@ -58,16 +60,34 @@ class SelectableCalendar extends React.Component {
         return { [calendar.calendarId]: calendar.checked };
       });
       let checked = Object.assign({}, ...checkedArr);
-      console.log(checked);
       return this.setState(prevState => ({
         ...prevState,
         calendarData: CalendarPluginStore.getCalendarData().filter(event => {
-          const eventCalendarId = event.calendarId.replace(ICLOUD_URL, '/');
-          return checked[eventCalendarId];
+          switch (event.providerType) {
+            case CALDAV_PROVIDER:
+              return checked[event.calendarId.replace(ICLOUD_URL, '/')];
+            case GOOGLE_PROVIDER:
+              return checked[event.calendarId];
+            default:
+              return;
+          }
         }),
         calendarLists: CalendarPluginStore.getCalendarLists(),
       }));
     }
+  };
+  setSelectedYear = date => {
+    if (date.getFullYear() !== this.state.selectedYear) {
+      this.setState(state => ({
+        ...state,
+        selectedYear: date.getFullYear(),
+      }));
+      return true;
+    }
+    return false;
+  };
+  loginGmail = async () => {
+    await fetchGmailEvents(this.state.selectedYear);
   };
   manualSync = () => {
     const auth = CalendarPluginStore.getAuth();
@@ -307,6 +327,7 @@ class SelectableCalendar extends React.Component {
               }}
               resizable
               onNavigate={date => {
+                this.setSelectedYear(date) ? fetchGmailEvents(this.state.selectedYear) : null;
                 this.setState({
                   dateSelected: date,
                   dateSelectedTimeStamp: moment(date).unix(),
@@ -339,10 +360,13 @@ class SelectableCalendar extends React.Component {
             <BigButton variant="small-blue" onClick={() => this.setLoginFormPopout(true)}>
               Login
             </BigButton>
+            <BigButton variant="small-blue" onClick={() => this.loginGmail()}>
+              Gmail Login
+            </BigButton>
             <BigButton variant="small-blue" onClick={() => this.manualSync()}>
               Sync
             </BigButton>
-            <CalendarListView calendarLists={this.state.calendarLists} />
+            <CalendarListSidebar calendarLists={this.state.calendarLists} />
           </Grid>
         </Grid>
       </Fragment>

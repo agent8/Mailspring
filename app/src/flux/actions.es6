@@ -661,17 +661,18 @@ class Actions {
   static toggleJiraPlugin = ActionScopeWindow;
   static iframeClicked = ActionScopeWindow;
 
-  static addIcloudCalendarData = ActionScopeGlobal;
+  static addCalendarData = ActionScopeGlobal;
   static setAuth = ActionScopeGlobal;
-  static deleteIcloudCalendarData = ActionScopeGlobal;
-  static toggleCalendarLists = ActionScopeGlobal;
-  static deleteIcloudRpLists = ActionScopeGlobal;
-  static updateIcloudCalendarData = ActionScopeGlobal;
-  static upsertIcloudRpLists = ActionScopeGlobal;
+  static deleteCalendarData = ActionScopeGlobal;
+  static toggleCalendarList = ActionScopeGlobal;
+  static deleteRpList = ActionScopeGlobal;
+  static updateCalendarData = ActionScopeGlobal;
+  static upsertRpList = ActionScopeGlobal;
   static closeDb = ActionScopeGlobal;
   static fetchTrigger = ActionScopeGlobal;
-  static addIcloudCalendarLists = ActionScopeGlobal;
-  static deleteIcloudCalendarLists = ActionScopeGlobal;
+  static addCalendarList = ActionScopeGlobal;
+  static deleteCalendarList = ActionScopeGlobal;
+  static setSelectedYear = ActionScopeGlobal;
 }
 
 // Read the actions we declared on the dummy Actions object above
