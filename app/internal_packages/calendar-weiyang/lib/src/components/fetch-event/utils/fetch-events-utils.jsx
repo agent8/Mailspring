@@ -184,47 +184,101 @@ const parseGoogleCalendar = myCalendar => {
   };
 };
 
+// export const fetchGmailEvents = async selectedYear => {
+//   const calendar = await fetchGmailAccount('placeholder');
+//   const calendarResults = new Promise((resolve, reject) => {
+//     calendar.calendarList.list(
+//       {
+//         minAccessRole: 'owner',
+//       },
+//       (err, res) => {
+//         if (err) reject(err);
+//         const calendarList = res.data.items;
+//         if (calendarList.length) {
+//           resolve(calendarList);
+//         }
+//       }
+//     );
+//   });
+//   syncGoogleLocalData(data.events, SYNC_CALENDAR_DATA, selectedYear);
+//   calendarResults.then(data => {
+//     const parsedCalendars = data.map(myCalendar => parseGoogleCalendar(myCalendar));
+//     syncGoogleLocalData(parsedCalendars, SYNC_CALENDAR_LISTS);
+//     const upperBoundDate = moment.tz([selectedYear + 1, 11, 31], 'GMT');
+//     const lowerBoundDate = moment.tz([selectedYear - 1, 0, 1], 'GMT');
+//     // MAX RESULTS IS 250 events fetched, TODO: use pageToken to get all events
+//     const subResults = new Promise((resolve, reject) => {
+//       let sub = [];
+//       calendar.events.list(
+//         {
+//           calendarId: myCalendar.id,
+//           singleEvents: true,
+//           timeMax: upperBoundDate.toISOString(),
+//           timeMin: lowerBoundDate.toISOString(),
+//         },
+//         (err, res) => {
+//           if (err) reject(err);
+//           const events = res.data.items;
+//           console.log(events);
+//           if (events.length) {
+//             events.map(event => {
+//               sub.push(parseGoogleEvent(event, myCalendar));
+//             });
+//           }
+//         }
+//       );
+//       resolve(sub);
+//     });
+//   });
+// };
+
 export const fetchGmailEvents = async selectedYear => {
-  let finalCalendars = [];
-  let calendarResults = [];
   const calendar = await fetchGmailAccount('placeholder');
-  calendar.calendarList.list(
-    {
-      minAccessRole: 'owner',
-    },
-    (err, res) => {
-      if (err) return err;
-      const calendarList = res.data.items;
-      if (calendarList.length) {
-        calendarList.map(myCalendar => {
-          let calendarToPush = parseGoogleCalendar(myCalendar);
-          finalCalendars.push(calendarToPush);
-          const upperBoundDate = moment.tz([selectedYear, 11, 31], 'GMT');
-          const lowerBoundDate = moment.tz([selectedYear, 0, 1], 'GMT');
-          // MAX RESULTS IS 250 events fetched, TODO: use pageToken to get all events
-          calendar.events.list(
-            {
-              calendarId: myCalendar.id,
-              singleEvents: true,
-              timeMax: upperBoundDate.toISOString(),
-              timeMin: lowerBoundDate.toISOString(),
-            },
-            (err, res) => {
-              if (err) return err;
-              const events = res.data.items;
-              console.log(events);
-              if (events.length) {
-                events.map((event, i) => {
-                  const eventToPush = parseGoogleEvent(event, myCalendar);
-                  calendarResults.push(eventToPush);
-                });
-              }
-            }
-          );
-        });
-        syncGoogleLocalData(calendarResults, SYNC_CALENDAR_DATA, selectedYear);
-        syncGoogleLocalData(finalCalendars, SYNC_CALENDAR_LISTS);
+  const calendarResults = new Promise((resolve, reject) => {
+    calendar.calendarList.list(
+      {
+        minAccessRole: 'owner',
+      },
+      (err, res) => {
+        if (err) reject(err);
+        const calendarList = res.data.items;
+        if (calendarList.length) {
+          resolve(calendarList);
+        }
       }
-    }
-  );
+    );
+  });
+  calendarResults.then(data => {
+    console.log(data);
+    const parsedCalendars = data.map(calendar => parseGoogleCalendar(calendar));
+    syncGoogleLocalData(parsedCalendars, SYNC_CALENDAR_LISTS);
+    const eventResults = data.map(myCalendar => {
+      const upperBoundDate = moment.tz([selectedYear + 1, 11, 31], 'GMT');
+      const lowerBoundDate = moment.tz([selectedYear - 1, 0, 1], 'GMT');
+      return new Promise((resolve, reject) => {
+        // MAX RESULTS IS 250 events fetched, TODO: use pageToken to get all events
+        calendar.events.list(
+          {
+            calendarId: myCalendar.id,
+            singleEvents: true,
+            timeMax: upperBoundDate.toISOString(),
+            timeMin: lowerBoundDate.toISOString(),
+          },
+          (err, res) => {
+            if (err) reject(err);
+            const events = res.data.items;
+            if (events.length) {
+              resolve(events.map(event => parseGoogleEvent(event, myCalendar)));
+            }
+          }
+        );
+      });
+    });
+    Promise.all(eventResults).then(data => {
+      let flatData = [];
+      console.log(flatData);
+      data.map(arrOfEvents => (flatData = [...flatData, ...arrOfEvents]));
+      syncGoogleLocalData(flatData, SYNC_CALENDAR_DATA, selectedYear);
+    });
+  });
 };

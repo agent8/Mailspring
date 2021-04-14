@@ -145,11 +145,11 @@ export const syncGoogleLocalData = (fetchedData, type, selectedYear = null) => {
   let sorter = null;
   switch (type) {
     case SYNC_CALENDAR_DATA:
-      console.log(CalendarPluginStore.getCalendarData(GMAIL_ACCOUNT));
+      console.log(fetchedData);
       subjectData = CalendarPluginStore.getCalendarData(GMAIL_ACCOUNT).filter(
         event =>
-          event.start.dateTime <= moment.tz([selectedYear, 0, 1], 'GMT').unix() &&
-          event.start.dateTime >= moment.tz([selectedYear, 11, 31], 'GMT').unix()
+          event.start.dateTime <= moment.tz([selectedYear + 1, 11, 31], 'GMT').unix() &&
+          event.start.dateTime >= moment.tz([selectedYear - 1, 0, 1], 'GMT').unix()
       );
       sorter = findObjectSorter;
       break;
