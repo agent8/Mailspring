@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react';
 import { Checkbox, FormControlLabel } from '@material-ui/core';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
-import { CALDAV_PROVIDER, ICLOUD_ACCOUNT, GOOGLE_PROVIDER } from './constants';
+import { CALDAV_PROVIDER, GOOGLE_PROVIDER } from './constants';
 
 class CalendarListSidebar extends React.Component {
   constructor(props) {

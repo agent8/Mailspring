@@ -1,11 +1,10 @@
-export const ICLOUD_ACCOUNT = 'ICLOUD_ACCOUNT';
-export const EWS_ACCOUNT = 'EWS_ACCOUNT';
-export const GMAIL_ACCOUNT = 'GMAIL_ACCOUNT';
-
 export const ICLOUD_URL = 'https://caldav.icloud.com/';
 
+export const EXCHANGE_PROVIDER = 'EXCHANGE_PROVIDER';
 export const CALDAV_PROVIDER = 'CALDAV_PROVIDER';
 export const GOOGLE_PROVIDER = 'GOOGLE_PROVIDER';
+
+export const NOTHING_TO_RESOLVE = 'NOTHING TO RESOLVE';
 
 export const SYNC_CALENDAR_DATA = 'SYNC_CALENDAR_DATA';
 export const SYNC_CALENDAR_LISTS = 'SYNC_CALENDAR_LISTS';

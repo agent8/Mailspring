@@ -3,7 +3,7 @@ import BigButton from '../MiniComponents/big-button';
 import { Dialog, DialogActions, DialogContent } from '@material-ui/core';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import { fetchCaldavEvents } from './utils/fetch-events-utils';
-import { ICLOUD_ACCOUNT } from '../constants';
+import { CALDAV_PROVIDER } from '../constants';
 
 class Login extends React.Component {
   constructor(props) {
@@ -11,7 +11,7 @@ class Login extends React.Component {
     this.state = {
       email: 'piadruids@gmail.com',
       password: '',
-      accountType: ICLOUD_ACCOUNT,
+      accountType: CALDAV_PROVIDER,
       calendarData: {},
     };
   }
@@ -67,7 +67,7 @@ class Login extends React.Component {
                 <input
                   type="radio"
                   name="accountType"
-                  value={ICLOUD_ACCOUNT}
+                  value={CALDAV_PROVIDER}
                   onChange={this.handleChange}
                   defaultChecked
                 />

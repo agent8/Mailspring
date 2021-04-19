@@ -1,6 +1,12 @@
 import uuidv4 from 'uuid';
 import ICAL from 'ical.js';
-import { CALDAV_PROVIDER, DELETE_ALL_RECURRING_EVENTS, ICLOUD_ACCOUNT, ICLOUD_URL, UPDATE_ALL_RECURRING_EVENTS, UPSERT_RECURRENCE_PATTERN } from '../../constants';
+import {
+  CALDAV_PROVIDER,
+  DELETE_ALL_RECURRING_EVENTS,
+  ICLOUD_URL,
+  UPDATE_ALL_RECURRING_EVENTS,
+  UPSERT_RECURRENCE_PATTERN,
+} from '../../constants';
 import * as IcalStringBuilder from '../../common-utils/ical-string-builder';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import * as PARSER from '../../common-utils/parser';
@@ -174,11 +180,11 @@ export const createCaldavEvent = async payload => {
     await dav.createCalendarObject(calendar, addCalendarObject);
     // remove existing and add new
     CalendarPluginStore.deleteCalendarData(
-      ICLOUD_ACCOUNT,
+      CALDAV_PROVIDER,
       populateReflux[0].iCalUID,
       DELETE_ALL_RECURRING_EVENTS
     );
-    CalendarPluginStore.addCalendarData(populateReflux, ICLOUD_ACCOUNT);
+    CalendarPluginStore.addCalendarData(populateReflux, CALDAV_PROVIDER);
   } catch (error) {
     console.log(error);
   }
@@ -189,10 +195,10 @@ export const createCaldavEvent = async payload => {
     data.iCalUID
   );
   CalendarPluginStore.updateCalendarData(
-    ICLOUD_ACCOUNT,
+    CALDAV_PROVIDER,
     data.iCalUID,
     { etag: foundObj.etag, iCALString: foundObj.iCalstring }, // update etag and icalstring(icalstring not rly needed)
     UPDATE_ALL_RECURRING_EVENTS
   );
-  console.log('reflux', CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT));
+  console.log('reflux', CalendarPluginStore.getCalendarData(CALDAV_PROVIDER));
 };

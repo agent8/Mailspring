@@ -16,7 +16,7 @@ import {
   editSingleEvent,
 } from '../edit-event/utils/edit-event-utils';
 import { fetchCaldavEvents } from '../fetch-event/utils/fetch-events-utils';
-import { ICLOUD_ACCOUNT } from '../constants';
+import { CALDAV_PROVIDER } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -213,16 +213,16 @@ export default class EditForm extends React.Component {
   updateStoreFromServer = async () => {
     const { state } = this;
     // only ical caldav currently
-    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
+    const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(
       auth => auth.username === state.owner
     );
     const finalResult = await fetchCaldavEvents(user.username, user.password, state.providerType);
-    Actions.setCalendarData(finalResult, ICLOUD_ACCOUNT);
+    Actions.setCalendarData(finalResult, CALDAV_PROVIDER);
   };
   editEvent = () => {
     const { props, state } = this;
     // using ical caldav only for now
-    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(auth => auth.username === state.owner);
+    const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(auth => auth.username === state.owner);
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const payload = {
       id: state.id,
@@ -255,7 +255,7 @@ export default class EditForm extends React.Component {
   editAllRecurrenceEvent = () => {
     const { props, state } = this;
     // using ical caldav only for now
-    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
+    const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(
       auth => auth.username === state.owner
     );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -313,7 +313,7 @@ export default class EditForm extends React.Component {
   };
   editFutureRecurrenceEvent = () => {
     const { props, state } = this;
-    const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
+    const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(
       auth => auth.username === state.owner
     );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -381,7 +381,7 @@ export default class EditForm extends React.Component {
       In order to retrive the event, I need to make a query from the script to get the javascript ews object. However, once I have it, I can update it easily.
   */
   retrieveEvent = id => {
-    const [eventPresent] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
+    const [eventPresent] = CalendarPluginStore.getCalendarData(CALDAV_PROVIDER).filter(
       storedEvent => storedEvent.id === id
     );
 
@@ -392,7 +392,7 @@ export default class EditForm extends React.Component {
     const secondRecurrOptions = recurrenceOptions.secondRecurrOptions(eventPresent.start, text);
 
     if (eventPresent.isRecurring) {
-      const [eventRecurrence] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
+      const [eventRecurrence] = CalendarPluginStore.getRpLists(CALDAV_PROVIDER).filter(
         storedRp => storedRp.originalId === eventPresent.recurringEventId
       );
       const thirdRecurrChoice = recurrenceOptions.parseThirdRecurrOption(

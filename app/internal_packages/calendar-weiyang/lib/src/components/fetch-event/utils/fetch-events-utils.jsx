@@ -1,8 +1,7 @@
 import {
-  CALDAV_PROVIDER,
   DELETE_SINGLE_EVENT,
   GOOGLE_PROVIDER,
-  ICLOUD_ACCOUNT,
+  CALDAV_PROVIDER,
   ICLOUD_URL,
   SYNC_CALENDAR_DATA,
   SYNC_CALENDAR_LISTS,
@@ -52,7 +51,7 @@ export const fetchCaldavEvents = async (email, password, accountType) => {
     username: res.credentials.username,
     password: res.credentials.password,
   };
-  Actions.setAuth(authObject, ICLOUD_ACCOUNT);
+  Actions.setAuth(authObject, CALDAV_PROVIDER);
   const calendars = PARSER.parseCal(res.calendars);
   console.log('calendar', calendars);
   syncIcalLocalData(calendars, SYNC_CALENDAR_LISTS);
@@ -118,7 +117,7 @@ const deleteStaleEventsDEBUG = async (email, password, flatFilteredEvents, final
   });
 };
 
-const parseGoogleEvent = (event, myCalendar) => {
+const parseGoogleEvent = (event, myCalendar, isMaster) => {
   return {
     attendee: event.attendees
       ? JSON.stringify({
@@ -145,10 +144,10 @@ const parseGoogleEvent = (event, myCalendar) => {
     etag: event.etag,
     iCalUID: event.iCalUID,
     id: event.id,
-    isAllDay: event.date,
-    isMaster: undefined,
+    isAllDay: event.start.date ? true : false,
+    isMaster: isMaster,
     isRecurring: event.recurringEventId ? true : false,
-    location: event.location,
+    location: event.location ? event.location : '',
     organizer: event.organizer ? event.organizer.email : '',
     originalId: event.iCalUID,
     originalStartTime: {
@@ -162,7 +161,7 @@ const parseGoogleEvent = (event, myCalendar) => {
       dateTime: moment(event.start.dateTime ? event.start.dateTime : event.start.date).unix(),
       timezone: event.start.timeZone ? event.start.timeZone : myCalendar.timeZone,
     },
-    summary: event.summary ? event.summary : '',
+    summary: event.summary ? event.summary : 'Untitled Event',
     updated: 0,
     // CALDAV Fields: Not relevant
     iCALString: '',
@@ -184,58 +183,20 @@ const parseGoogleCalendar = myCalendar => {
   };
 };
 
-// export const fetchGmailEvents = async selectedYear => {
-//   const calendar = await fetchGmailAccount('placeholder');
-//   const calendarResults = new Promise((resolve, reject) => {
-//     calendar.calendarList.list(
-//       {
-//         minAccessRole: 'owner',
-//       },
-//       (err, res) => {
-//         if (err) reject(err);
-//         const calendarList = res.data.items;
-//         if (calendarList.length) {
-//           resolve(calendarList);
-//         }
-//       }
-//     );
-//   });
-//   syncGoogleLocalData(data.events, SYNC_CALENDAR_DATA, selectedYear);
-//   calendarResults.then(data => {
-//     const parsedCalendars = data.map(myCalendar => parseGoogleCalendar(myCalendar));
-//     syncGoogleLocalData(parsedCalendars, SYNC_CALENDAR_LISTS);
-//     const upperBoundDate = moment.tz([selectedYear + 1, 11, 31], 'GMT');
-//     const lowerBoundDate = moment.tz([selectedYear - 1, 0, 1], 'GMT');
-//     // MAX RESULTS IS 250 events fetched, TODO: use pageToken to get all events
-//     const subResults = new Promise((resolve, reject) => {
-//       let sub = [];
-//       calendar.events.list(
-//         {
-//           calendarId: myCalendar.id,
-//           singleEvents: true,
-//           timeMax: upperBoundDate.toISOString(),
-//           timeMin: lowerBoundDate.toISOString(),
-//         },
-//         (err, res) => {
-//           if (err) reject(err);
-//           const events = res.data.items;
-//           console.log(events);
-//           if (events.length) {
-//             events.map(event => {
-//               sub.push(parseGoogleEvent(event, myCalendar));
-//             });
-//           }
-//         }
-//       );
-//       resolve(sub);
-//     });
-//   });
-// };
-
 export const fetchGmailEvents = async selectedYear => {
-  const calendar = await fetchGmailAccount('placeholder');
+  // below line will be in use once production client id is ready, hardcoded gmail accounts are used for now
+  // const gmailAccounts = AccountStore.accounts().filter(account => account.provider === 'gmail');
+
+  const services = await fetchGmailAccount('account info');
+  const authObject = {
+    providerType: GOOGLE_PROVIDER,
+    caldavType: '',
+    username: 'piadruids@gmail.com',
+    password: '',
+  };
+  Actions.setAuth(authObject, GOOGLE_PROVIDER);
   const calendarResults = new Promise((resolve, reject) => {
-    calendar.calendarList.list(
+    services.calendarList.list(
       {
         minAccessRole: 'owner',
       },
@@ -253,32 +214,67 @@ export const fetchGmailEvents = async selectedYear => {
     const parsedCalendars = data.map(calendar => parseGoogleCalendar(calendar));
     syncGoogleLocalData(parsedCalendars, SYNC_CALENDAR_LISTS);
     const eventResults = data.map(myCalendar => {
-      const upperBoundDate = moment.tz([selectedYear + 1, 11, 31], 'GMT');
-      const lowerBoundDate = moment.tz([selectedYear - 1, 0, 1], 'GMT');
+      const upperBoundDate = moment.tz([selectedYear, 11, 31], 'GMT');
+      const lowerBoundDate = moment.tz([selectedYear, 0, 1], 'GMT');
       return new Promise((resolve, reject) => {
-        // MAX RESULTS IS 250 events fetched, TODO: use pageToken to get all events
-        calendar.events.list(
+        //DEBUG
+        services.events.list(
           {
             calendarId: myCalendar.id,
-            singleEvents: true,
             timeMax: upperBoundDate.toISOString(),
             timeMin: lowerBoundDate.toISOString(),
           },
           (err, res) => {
             if (err) reject(err);
+            console.log('debug purposes', res);
+          }
+        );
+        //DEBUG END
+        let duplicateIcalUIDChecker = new Set();
+        // MAX RESULTS IS 250 events fetched, TODO: use pageToken to get all events
+        services.events.list(
+          {
+            calendarId: myCalendar.id,
+            singleEvents: true,
+            timeMax: upperBoundDate.toISOString(),
+            timeMin: lowerBoundDate.toISOString(),
+            orderBy: 'startTime',
+          },
+          (err, res) => {
+            if (err) reject(err);
             const events = res.data.items;
+            console.log(events);
             if (events.length) {
-              resolve(events.map(event => parseGoogleEvent(event, myCalendar)));
+              resolve(
+                events.map(event => {
+                  // No way to directly find out master event of recurring events,
+                  // hence current soln: order by starttime, earliest event that doesn't have duplicated iCalUID and has recurringEventId is the master event.
+                  if (event.recurringEventId && !duplicateIcalUIDChecker.has(event.iCalUID)) {
+                    duplicateIcalUIDChecker.add(event.iCalUID);
+                    return parseGoogleEvent(event, myCalendar, true);
+                  } else {
+                    return parseGoogleEvent(event, myCalendar, false);
+                  }
+                })
+              );
+            } else {
+              // no events in calendar
+              resolve([]);
             }
           }
         );
       });
     });
-    Promise.all(eventResults).then(data => {
-      let flatData = [];
-      console.log(flatData);
-      data.map(arrOfEvents => (flatData = [...flatData, ...arrOfEvents]));
-      syncGoogleLocalData(flatData, SYNC_CALENDAR_DATA, selectedYear);
-    });
+    console.log(eventResults);
+    Promise.all(eventResults)
+      .then(data => {
+        let flatData = [];
+        console.log(data);
+        data.map(arrOfEvents => (flatData = [...flatData, ...arrOfEvents]));
+        syncGoogleLocalData(flatData, SYNC_CALENDAR_DATA, selectedYear);
+      })
+      .catch(err => {
+        throw err;
+      });
   });
 };

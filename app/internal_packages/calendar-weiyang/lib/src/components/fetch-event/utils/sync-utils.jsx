@@ -1,11 +1,11 @@
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import {
   DELETE_SINGLE_EVENT,
-  ICLOUD_ACCOUNT,
   SYNC_CALENDAR_LISTS,
   SYNC_RECURRENCE_PATTERN,
   SYNC_CALENDAR_DATA,
-  GMAIL_ACCOUNT,
+  CALDAV_PROVIDER,
+  GOOGLE_PROVIDER,
 } from '../../constants';
 import moment from 'moment';
 
@@ -17,15 +17,15 @@ export const syncIcalLocalData = (fetchedData, type) => {
   let sorter = null;
   switch (type) {
     case SYNC_CALENDAR_DATA:
-      subjectData = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT);
+      subjectData = CalendarPluginStore.getCalendarData(CALDAV_PROVIDER);
       sorter = findIcalstringSorter;
       break;
     case SYNC_CALENDAR_LISTS:
-      subjectData = CalendarPluginStore.getCalendarLists(ICLOUD_ACCOUNT);
+      subjectData = CalendarPluginStore.getCalendarLists(CALDAV_PROVIDER);
       sorter = findCalendarListSorter;
       break;
     case SYNC_RECURRENCE_PATTERN:
-      subjectData = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT);
+      subjectData = CalendarPluginStore.getRpLists(CALDAV_PROVIDER);
       sorter = findObjectSorter;
       break;
     default:
@@ -83,20 +83,20 @@ export const syncIcalLocalData = (fetchedData, type) => {
     case SYNC_CALENDAR_DATA:
       // delete stale events according to caldav server
       toBeDeleted.forEach(idx => {
-        Actions.deleteCalendarData(ICLOUD_ACCOUNT, sortedSubjectData[idx].id, DELETE_SINGLE_EVENT);
+        Actions.deleteCalendarData(CALDAV_PROVIDER, sortedSubjectData[idx].id, DELETE_SINGLE_EVENT);
       });
       // insert new events according to caldav server
       toAdd = toBeInserted.map(idx => sortedTargetData[idx]);
-      Actions.addCalendarData(toAdd, ICLOUD_ACCOUNT);
+      Actions.addCalendarData(toAdd, CALDAV_PROVIDER);
       break;
     case SYNC_CALENDAR_LISTS:
       // delete stale events according to caldav server
       toBeDeleted.forEach(idx => {
-        Actions.deleteCalendarList(ICLOUD_ACCOUNT, sortedSubjectData[idx]);
+        Actions.deleteCalendarList(CALDAV_PROVIDER, sortedSubjectData[idx]);
       });
       // insert new events according to caldav server
       toAdd = toBeInserted.map(idx => sortedTargetData[idx]);
-      Actions.addCalendarList(toAdd, ICLOUD_ACCOUNT);
+      Actions.addCalendarList(toAdd, CALDAV_PROVIDER);
       console.log(toAdd);
       break;
     case SYNC_RECURRENCE_PATTERN:
@@ -146,15 +146,15 @@ export const syncGoogleLocalData = (fetchedData, type, selectedYear = null) => {
   switch (type) {
     case SYNC_CALENDAR_DATA:
       console.log(fetchedData);
-      subjectData = CalendarPluginStore.getCalendarData(GMAIL_ACCOUNT).filter(
+      subjectData = CalendarPluginStore.getCalendarData(GOOGLE_PROVIDER).filter(
         event =>
-          event.start.dateTime <= moment.tz([selectedYear + 1, 11, 31], 'GMT').unix() &&
-          event.start.dateTime >= moment.tz([selectedYear - 1, 0, 1], 'GMT').unix()
+          event.start.dateTime <= moment.tz([selectedYear, 11, 31], 'GMT').unix() &&
+          event.start.dateTime >= moment.tz([selectedYear, 0, 1], 'GMT').unix()
       );
       sorter = findObjectSorter;
       break;
     case SYNC_CALENDAR_LISTS:
-      subjectData = CalendarPluginStore.getCalendarLists(GMAIL_ACCOUNT);
+      subjectData = CalendarPluginStore.getCalendarLists(GOOGLE_PROVIDER);
       sorter = findCalendarListSorter;
       break;
     default:
@@ -214,22 +214,22 @@ export const syncGoogleLocalData = (fetchedData, type, selectedYear = null) => {
     case SYNC_CALENDAR_DATA:
       // delete stale events according to caldav server
       toBeDeleted.forEach(idx => {
-        Actions.deleteCalendarData(GMAIL_ACCOUNT, sortedSubjectData[idx].id, DELETE_SINGLE_EVENT);
+        Actions.deleteCalendarData(GOOGLE_PROVIDER, sortedSubjectData[idx].id, DELETE_SINGLE_EVENT);
       });
       console.log('todelete', toBeDeleted);
       // insert new events according to caldav server
       toAdd = toBeInserted.map(idx => sortedTargetData[idx]);
       console.log('toadd', toAdd);
-      Actions.addCalendarData(toAdd, GMAIL_ACCOUNT);
+      Actions.addCalendarData(toAdd, GOOGLE_PROVIDER);
       break;
     case SYNC_CALENDAR_LISTS:
       // delete stale events according to caldav server
       toBeDeleted.forEach(idx => {
-        Actions.deleteCalendarList(GMAIL_ACCOUNT, sortedSubjectData[idx]);
+        Actions.deleteCalendarList(GOOGLE_PROVIDER, sortedSubjectData[idx]);
       });
       // insert new events according to caldav server
       toAdd = toBeInserted.map(idx => sortedTargetData[idx]);
-      Actions.addCalendarList(toAdd, GMAIL_ACCOUNT);
+      Actions.addCalendarList(toAdd, GOOGLE_PROVIDER);
       console.log(toAdd);
       break;
     default:

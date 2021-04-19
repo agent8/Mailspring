@@ -1,6 +1,6 @@
 import { createAccount, syncCaldavAccount, transport, Credentials, request } from 'dav';
 import { Actions, CalendarPluginStore, AccountStore } from 'mailspring-exports';
-import { ICLOUD_ACCOUNT } from '../../constants';
+import { CALDAV_PROVIDER } from '../../constants';
 import { parse, stringify } from 'flatted';
 import axios from 'axios';
 import KeyManager from '../../../../../../../src/key-manager';
@@ -40,15 +40,15 @@ export const fetchGmailAccount = async account => {
     token_type: 'Bearer',
   };
   oAuth2Client.setCredentials(token);
-  const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
-  console.log(calendar);
-  return calendar;
+  const services = google.calendar({ version: 'v3', auth: oAuth2Client });
+  console.log(services);
+  return services;
 };
 
-// this function is a swift method to retrieve changed events, however only the etag is retrieved
+// this function is a swift method to retrieve changed events for icalendar using DAV, however only the etag is retrieved
 // have to figure out if the etag retrieved could be used to expand into events data
 export const syncCaldavCalendar = async (username, password) => {
-  const [auth] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
+  const [auth] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(
     account => account.username === username && account.password === password
   );
   if (auth === undefined) {

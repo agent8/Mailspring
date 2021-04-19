@@ -1,35 +1,32 @@
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
-import {
-  CALDAV_PROVIDER,
-  DELETE_ALL_RECURRING_EVENTS,
-  DELETE_SINGLE_EVENT,
-  DELETE_FUTURE_RECCURRING_EVENTS,
-  GET_ALL_EVENT,
-  ICLOUD_ACCOUNT,
-} from '../constants';
+import { GOOGLE_PROVIDER, CALDAV_PROVIDER } from '../constants';
 import {
   deleteCaldavSingle,
   deleteCaldavAll,
   deleteCaldavFuture,
 } from './delete-caldav-event-utils';
+import {
+  deleteGoogleSingle,
+  deleteGoogleAll,
+  deleteGoogleFuture,
+} from './delete-google-event-utils';
+
 export const deleteSingleEvent = async id => {
   // #region Getting information
   // Get Information
-  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getCalendarData().filter(event => event.id === id);
   // no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
 
-  const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
-    icloudAccount =>
-      icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
+  const [user] = CalendarPluginStore.getAuth().filter(
+    account => account.providerType === data.providerType && account.owner === data.username
   );
   // more than 1 user found or no user found
   if (user === undefined) {
-    console.log('error');
-    return;
+    throw 'user not found';
   }
 
   // Set up the payload for the providers to handle.
@@ -47,6 +44,13 @@ export const deleteSingleEvent = async id => {
         console.log('Handle Caldav pending action here', caldavError);
       }
       break;
+    case GOOGLE_PROVIDER:
+      try {
+        await deleteGoogleSingle(payload);
+      } catch (googleError) {
+        console.log('Handle Google pending action here', googleError);
+      }
+      break;
     default:
       console.log(`Delete feature for ${data.providerType} not handled`);
       break;
@@ -56,16 +60,15 @@ export const deleteSingleEvent = async id => {
 export const deleteAllEvents = async id => {
   // #region Getting information
   // Get Information
-  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getCalendarData().filter(event => event.id === id);
   // no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
 
-  const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
-    icloudAccount =>
-      icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
+  const [user] = CalendarPluginStore.getAuth().filter(
+    account => account.providerType === data.providerType && account.owner === data.username
   );
   // more than 1 user found or no user found
   if (user === undefined) {
@@ -84,9 +87,16 @@ export const deleteAllEvents = async id => {
   switch (data.providerType) {
     case CALDAV_PROVIDER:
       try {
-        deleteCaldavAll(payload);
+        await deleteCaldavAll(payload);
       } catch (caldavError) {
-        console.log('Handle Caldav pending action here', caldavError);
+        console.log('handle caldav pending action here', caldavError);
+      }
+      break;
+    case GOOGLE_PROVIDER:
+      try {
+        await deleteGoogleAll(payload);
+      } catch (googleError) {
+        console.log('handle google pending action here', googleError);
       }
       break;
     default:
@@ -97,15 +107,14 @@ export const deleteAllEvents = async id => {
 export const deleteFutureEvents = async id => {
   // #region Getting information
   // Get Information
-  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(event => event.id === id);
+  const [data] = CalendarPluginStore.getCalendarData().filter(event => event.id === id);
   // no event found
   if (data === undefined) {
     console.log('error');
     return;
   }
-  const [user] = CalendarPluginStore.getAuth(ICLOUD_ACCOUNT).filter(
-    icloudAccount =>
-      icloudAccount.providerType === data.providerType && icloudAccount.owner === data.username
+  const [user] = CalendarPluginStore.getAuth().filter(
+    account => account.providerType === data.providerType && account.owner === data.username
   );
   // more than 1 user found or no user found
   if (user === undefined) {
@@ -124,9 +133,16 @@ export const deleteFutureEvents = async id => {
   switch (data.providerType) {
     case CALDAV_PROVIDER:
       try {
-        deleteCaldavFuture(payload);
+        await deleteCaldavFuture(payload);
       } catch (caldavError) {
         console.log('Handle Caldav pending action here', caldavError);
+      }
+      break;
+    case GOOGLE_PROVIDER:
+      try {
+        await deleteGoogleFuture(payload);
+      } catch (googleError) {
+        console.log('Handle Google pending action here', googleError);
       }
       break;
     default:

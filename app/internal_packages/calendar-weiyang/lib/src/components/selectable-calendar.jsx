@@ -14,7 +14,7 @@ import {
   deleteAllEvents,
   deleteFutureEvents,
 } from './delete-event/delete-event-utils';
-import { CALDAV_PROVIDER, GOOGLE_PROVIDER, ICLOUD_ACCOUNT, ICLOUD_URL } from './constants';
+import { CALDAV_PROVIDER, GOOGLE_PROVIDER, ICLOUD_URL } from './constants';
 import CalendarListSidebar from './calendar-list-sidebar';
 import { fetchCaldavEvents, fetchGmailEvents } from './fetch-event/utils/fetch-events-utils';
 
@@ -48,6 +48,7 @@ class SelectableCalendar extends React.Component {
     this.mounted = true;
     this.unsubscribers = [];
     this.unsubscribers.push(CalendarPluginStore.listen(this.onStoreChange));
+
     // trigger data from db
     Actions.fetchTrigger();
   };
@@ -92,14 +93,12 @@ class SelectableCalendar extends React.Component {
   manualSync = () => {
     const auth = CalendarPluginStore.getAuth();
     auth.forEach(account => {
-      if (account.providerType === CALDAV_PROVIDER) {
-        switch (account.caldavType) {
-          case ICLOUD_ACCOUNT:
-            fetchCaldavEvents(account.username, account.password, ICLOUD_ACCOUNT);
-            break;
-          default:
-            throw 'no such provider';
-        }
+      switch (account.providerType) {
+        case CALDAV_PROVIDER:
+          fetchCaldavEvents(account.username, account.password, CALDAV_PROVIDER);
+          break;
+        default:
+          throw 'no such provider';
       }
     });
   };
@@ -135,7 +134,7 @@ class SelectableCalendar extends React.Component {
       .map(event => {
         return {
           id: event.id,
-          title: event.summary,
+          title: event.summary || event.summary !== '' ? event.summary : 'Untitled Event',
           // The format here is crucial, it converts the unix time, which is in gmt,
           // To the machine timezone, therefore, displaying it accordingly.
           // moment.unix() because time is stored in seconds, not miliseconds.
@@ -175,7 +174,7 @@ class SelectableCalendar extends React.Component {
     }
   };
   handleEventClick = async (event, target) => {
-    const eventPresent = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
+    const eventPresent = CalendarPluginStore.getCalendarData().filter(
       storedEvent => storedEvent.id === event.id
     );
     if (eventPresent.length === 0) {

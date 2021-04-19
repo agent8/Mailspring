@@ -71,7 +71,7 @@ export const CREATE_TABLE_AUTH =
   'CREATE TABLE IF NOT EXISTS Auth(\
     providerType TEXT NOT NULL, \
     caldavType TEXT NULL, \
-    username TEXT PRIMARY KEY NOT NULL, \
+    username TEXT NOT NULL, \
     password TEXT NOT NULL);';
 
 export const CREATE_TABLE_PENDING_TASKS =

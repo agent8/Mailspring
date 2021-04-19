@@ -14,7 +14,7 @@ import RRuleGenerator from '../react-rrule-generator/src/lib';
 import { createEvent } from './utils/create-event-utils';
 import { Actions, CalendarPluginStore } from 'mailspring-exports';
 import { fetchCaldavEvents } from '../fetch-event/utils/fetch-events-utils';
-import { ICLOUD_ACCOUNT, ICLOUD_URL } from '../constants';
+import { CALDAV_PROVIDER, ICLOUD_URL } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -78,8 +78,8 @@ export default class AddForm extends Component {
       isShowConfirmForm: false,
       selectedOption: '',
 
-      calendarLists: CalendarPluginStore.getCalendarLists(ICLOUD_ACCOUNT),
-      auth: CalendarPluginStore.getAuth(ICLOUD_ACCOUNT),
+      calendarLists: CalendarPluginStore.getCalendarLists(CALDAV_PROVIDER),
+      auth: CalendarPluginStore.getAuth(CALDAV_PROVIDER),
 
       invitePopup: false,
     };
@@ -320,12 +320,6 @@ export default class AddForm extends Component {
         auth: authForEventCreator,
         calendar: calendarForEventCreator,
       });
-      // const finalResult = await fetchCaldavEvents(
-      //   state.selectedProvider.username,
-      //   state.selectedProvider.password,
-      //   this.determineURL(state.selectedCalendar)
-      // );
-      // Actions.setCalendarData(finalResult, ICLOUD_ACCOUNT);
     } else {
       console.log('No provider selected! Disabled adding of events!!');
     }

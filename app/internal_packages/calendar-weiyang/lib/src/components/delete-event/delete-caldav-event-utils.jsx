@@ -6,11 +6,9 @@ import moment from 'moment-timezone';
 import * as PARSER from '../common-utils/parser';
 import {
   DELETE_ALL_RECURRING_EVENTS,
-  DELETE_EDITED_EVENT,
   DELETE_FUTURE_RECCURRING_EVENTS,
-  DELETE_NON_EDITED_EVENT,
   DELETE_SINGLE_EVENT,
-  ICLOUD_ACCOUNT,
+  CALDAV_PROVIDER,
   UPDATE_ICALSTRING,
 } from '../constants';
 
@@ -43,7 +41,7 @@ export const deleteCaldavSingle = async payload => {
   if (data.isRecurring) {
     try {
       // Get recurring pattern to build new iCal string for updating
-      const [recurrencePattern] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
+      const [recurrencePattern] = CalendarPluginStore.getRpLists(CALDAV_PROVIDER).filter(
         rp => data.iCalUID === rp.iCalUID
       );
 
@@ -89,10 +87,15 @@ export const deleteCaldavSingle = async payload => {
         await dav.updateCalendarObject(updatedCalendarObject, option);
       }
       // Delete event from reflux store
-      Actions.deleteCalendarData(ICLOUD_ACCOUNT, data.id, DELETE_SINGLE_EVENT);
+      Actions.deleteCalendarData(CALDAV_PROVIDER, data.id, DELETE_SINGLE_EVENT);
       // Update them all to the new iCalString.
       const toBeEditedIcalstring = { iCALString: iCalString };
-      Actions.updateCalendarData(ICLOUD_ACCOUNT, data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
+      Actions.updateCalendarData(
+        CALDAV_PROVIDER,
+        data.iCalUID,
+        toBeEditedIcalstring,
+        UPDATE_ICALSTRING
+      );
     } catch (error) {
       console.log('error deleting single event from recurring series', error);
     }
@@ -107,7 +110,7 @@ export const deleteCaldavSingle = async payload => {
       // Result will throw error, we can do a seperate check here if needed.
       await dav.deleteCalendarObject(calendarObject, option);
       // Delete event from reflux store
-      Actions.deleteCalendarData(ICLOUD_ACCOUNT, data.id, DELETE_SINGLE_EVENT);
+      Actions.deleteCalendarData(CALDAV_PROVIDER, data.id, DELETE_SINGLE_EVENT);
     } catch (error) {
       console.log('error deleting single event from non recurring', error);
     }
@@ -143,7 +146,7 @@ export const deleteCaldavAll = async payload => {
     };
     // Result will throw error, we can do a seperate check here if needed.
     await dav.deleteCalendarObject(calendarObject, option);
-    Actions.deleteCalendarData(ICLOUD_ACCOUNT, data.recurringEventId, DELETE_ALL_RECURRING_EVENTS);
+    Actions.deleteCalendarData(CALDAV_PROVIDER, data.recurringEventId, DELETE_ALL_RECURRING_EVENTS);
   } catch (error) {
     console.log('error deleting all events from recurring series', error);
   }
@@ -178,7 +181,7 @@ export const deleteCaldavFuture = async payload => {
   // As we are deleting this and future events, we just need to update the end condition.
   // Updating is done by pushing the entire iCal string to the server
   // Get recurring pattern to build new iCal string for updating
-  const [recurrencePattern] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
+  const [recurrencePattern] = CalendarPluginStore.getRpLists(CALDAV_PROVIDER).filter(
     rp => data.iCalUID === rp.iCalUID
   );
   if (recurrencePattern === undefined) {
@@ -253,10 +256,9 @@ export const deleteCaldavFuture = async payload => {
       // Result will throw error, we can do a seperate check here if needed.
       await dav.deleteCalendarObject(calendarObject, option);
       Actions.deleteCalendarData(
-        ICLOUD_ACCOUNT,
-        data.iCalUID,
-        DELETE_FUTURE_RECCURRING_EVENTS,
-        data.start.dateTime
+        CALDAV_PROVIDER,
+        data.recurringEventId,
+        DELETE_ALL_RECURRING_EVENTS
       );
     } catch (error) {
       console.log('error deleting all events via future recurrences', error);
@@ -280,14 +282,19 @@ export const deleteCaldavFuture = async payload => {
       // Result will throw error, we can do a seperate check here if needed.
       await dav.updateCalendarObject(calendarObject, option);
       Actions.deleteCalendarData(
-        ICLOUD_ACCOUNT,
-        data.iCalUID,
+        CALDAV_PROVIDER,
+        data.recurringEventId,
         DELETE_FUTURE_RECCURRING_EVENTS,
         data.start.dateTime
       );
       // Update them all to the new iCalString.
       const toBeEditedIcalstring = { iCALString: iCalString };
-      Actions.updateCalendarData(ICLOUD_ACCOUNT, data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
+      Actions.updateCalendarData(
+        CALDAV_PROVIDER,
+        data.iCalUID,
+        toBeEditedIcalstring,
+        UPDATE_ICALSTRING
+      );
     } catch (error) {
       console.log('error deleting future recurrences', error);
     }

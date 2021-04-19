@@ -9,7 +9,7 @@ import {
   DELETE_ALL_RECURRING_EVENTS,
   DELETE_FUTURE_RECCURRING_EVENTS,
   DELETE_NON_MASTER_EVENTS,
-  ICLOUD_ACCOUNT,
+  CALDAV_PROVIDER,
   UPDATE_ICALSTRING,
   UPDATE_MASTER_EVENT,
   UPDATE_RECURRENCE_PATTERN,
@@ -25,7 +25,7 @@ export const editCaldavSingle = async payload => {
 
   // #region Getting information
   // Get Information from flux store
-  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
+  const [data] = CalendarPluginStore.getCalendarData(CALDAV_PROVIDER).filter(
     event => event.id === payload.id
   );
   // no event found
@@ -75,7 +75,7 @@ export const editCaldavSingle = async payload => {
   // #region Updating of Single event, based on Recurring or not
   if (payload.isRecurring) {
     try {
-      const [recurrencePattern] = CalendarPluginStore.getRpLists(ICLOUD_ACCOUNT).filter(
+      const [recurrencePattern] = CalendarPluginStore.getRpLists(CALDAV_PROVIDER).filter(
         rp => data.iCalUID === rp.iCalUID
       );
       if (recurrencePattern === undefined) {
@@ -94,7 +94,7 @@ export const editCaldavSingle = async payload => {
       await dav.updateCalendarObject(calendarObject, option);
       // Update them all to the new iCalString.
       const toBeEditedIcalstring = { iCALString: iCalString };
-      Actions.updateCalendarData(ICLOUD_ACCOUNT, data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
+      Actions.updateCalendarData(CALDAV_PROVIDER, data.iCalUID, toBeEditedIcalstring, UPDATE_ICALSTRING);
       // update single edited event via reflux
       const toBeEditedEvent = {
         summary: payload.title,
@@ -105,7 +105,7 @@ export const editCaldavSingle = async payload => {
         location: payload.location,
         attendee: JSON.stringify(payload.attendee),
       };
-      Actions.updateCalendarData(ICLOUD_ACCOUNT, payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
+      Actions.updateCalendarData(CALDAV_PROVIDER, payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
     } catch (error) {
       console.log('error updating single event from recurring series', error);
     }
@@ -168,8 +168,8 @@ export const editCaldavSingle = async payload => {
       CalendarPluginStore.upsertRpList(recurrencePattern[0]);
 
       // add all expanded events into reflux and remove any existing similar icaluid from reflux store
-      Actions.deleteCalendarData(ICLOUD_ACCOUNT, expandedRecurEvents[0].iCalUID, DELETE_ALL_RECURRING_EVENTS);
-      Actions.addCalendarData(expandedRecurEvents, ICLOUD_ACCOUNT);
+      Actions.deleteCalendarData(CALDAV_PROVIDER, expandedRecurEvents[0].iCalUID, DELETE_ALL_RECURRING_EVENTS);
+      Actions.addCalendarData(expandedRecurEvents, CALDAV_PROVIDER);
     } catch (error) {
       console.log('error updating single event to recurring event', error);
     }
@@ -191,7 +191,7 @@ export const editCaldavSingle = async payload => {
         location: payload.location,
         attendee: JSON.stringify(payload.attendee),
       };
-      Actions.updateCalendarData(ICLOUD_ACCOUNT, payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
+      Actions.updateCalendarData(CALDAV_PROVIDER, payload.id, toBeEditedEvent, UPDATE_SINGLE_EVENT);
     } catch (error) {
       console.log('error updating single event from single series', error);
     }
@@ -204,7 +204,7 @@ export const editCaldavAll = async payload => {
   // #region Getting information
   // Get Information from flux store
 
-  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
+  const [data] = CalendarPluginStore.getCalendarData(CALDAV_PROVIDER).filter(
     event => event.id === payload.id
   );
   // no event found
@@ -219,13 +219,13 @@ export const editCaldavAll = async payload => {
       user,
     };
     await deleteCaldavAll(deleteAllPayload);
-    Actions.deleteCalendarData(ICLOUD_ACCOUNT, data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
+    Actions.deleteCalendarData(CALDAV_PROVIDER, data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
   } catch (error) {
     console.log('delete failed while editing all recurrence', error);
   }
 
   try {
-    const [selectedCalendar] = CalendarPluginStore.getCalendarLists(ICLOUD_ACCOUNT).filter(
+    const [selectedCalendar] = CalendarPluginStore.getCalendarLists(CALDAV_PROVIDER).filter(
       calendar => calendar.url === data.calendarId
     );
     const createFutureEventData = {
@@ -267,7 +267,7 @@ export const editCaldavFuture = async payload => {
   // the edited events are no longer in the same recurrence series
   // #region Getting information
   // Get Information from flux store
-  const [data] = CalendarPluginStore.getCalendarData(ICLOUD_ACCOUNT).filter(
+  const [data] = CalendarPluginStore.getCalendarData(CALDAV_PROVIDER).filter(
     event => event.id === payload.id
   );
   // no event found
@@ -283,8 +283,8 @@ export const editCaldavFuture = async payload => {
     };
     await deleteCaldavFuture(deleteFuturePayload);
     Actions.deleteCalendarData(
-      ICLOUD_ACCOUNT,
-      data.iCalUID,
+      CALDAV_PROVIDER,
+      data.recurringEventId,
       DELETE_FUTURE_RECCURRING_EVENTS,
       data.start.dateTime
     );
@@ -293,7 +293,7 @@ export const editCaldavFuture = async payload => {
   }
 
   try {
-    const [selectedCalendar] = CalendarPluginStore.getCalendarLists(ICLOUD_ACCOUNT).filter(
+    const [selectedCalendar] = CalendarPluginStore.getCalendarLists(CALDAV_PROVIDER).filter(
       calendar => calendar.url === data.calendarId
     );
     const createFutureEventData = {
