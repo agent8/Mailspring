@@ -61,7 +61,7 @@ export default class AddForm extends Component {
       endParsed: '',
       start: '',
       end: '',
-      selectedProvider: '',
+      selectedAccount: '',
       selectedCalendar: '',
       rrule: '',
       isRepeating: false,
@@ -78,8 +78,8 @@ export default class AddForm extends Component {
       isShowConfirmForm: false,
       selectedOption: '',
 
-      calendarLists: CalendarPluginStore.getCalendarLists(CALDAV_PROVIDER),
-      auth: CalendarPluginStore.getAuth(CALDAV_PROVIDER),
+      calendarLists: CalendarPluginStore.getCalendarLists(),
+      auth: CalendarPluginStore.getAuth(),
 
       invitePopup: false,
     };
@@ -191,7 +191,9 @@ export default class AddForm extends Component {
         : startDateParsed.format('YYYY-MM-DD')
     );
     const endDateParsedInUTC = this.processStringForUTC(
-      state.isAllDay ? endDateParsed.format('YYYY-MM-DDThh:mm a') : endDateParsed.format('YYYY-MM-DD')
+      state.isAllDay
+        ? endDateParsed.format('YYYY-MM-DDThh:mm a')
+        : endDateParsed.format('YYYY-MM-DD')
     );
     this.setState({
       isAllDay: e.target.checked,
@@ -203,18 +205,20 @@ export default class AddForm extends Component {
     this.props.parentPropFunction(false);
   };
   handleCalendarSelect = selectedOption => {
-    const mySelectedProvider = this.state.auth.filter(
-      account => selectedOption.value.providerType === account.providerType
+    const mySelectedCalendar = this.state.calendarLists.filter(calendar => {
+      return selectedOption.value.calendarId === calendar.calendarId;
+    });
+    const mySelectedAccount = this.state.auth.filter(
+      account =>
+        selectedOption.value.providerType === account.providerType &&
+        selectedOption.value.ownerId === account.username
     );
-    const mySelectedCalendar = this.state.calendarLists.filter(
-      calendar => selectedOption.value.calendarUrl === calendar.url
-    );
-    if (mySelectedProvider.length === 0 || mySelectedCalendar.length === 0) {
-      console.log('Not supposed to happen');
+    if (mySelectedAccount.length === 0 || mySelectedCalendar.length === 0) {
+      throw 'error selecting calendar, cannot find either account or calendar in database';
     }
     this.setState(prevState => ({
       ...prevState,
-      selectedProvider: mySelectedProvider[0],
+      selectedAccount: mySelectedAccount[0],
       selectedCalendar: mySelectedCalendar[0],
       selectedOption,
     }));
@@ -274,14 +278,14 @@ export default class AddForm extends Component {
     const { props, state } = this;
 
     // Force user to select a calendar to add to
-    if (state.selectedProvider !== '') {
+    if (state.selectedAccount !== '') {
       // extract providerType property from state.SelectedProvider as its own variable
-      const { providerType } = state.selectedProvider;
+      const { providerType } = state.selectedAccount;
       const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       // add owner as organizer
       const attendee =
-        state.attendees !== [] ? [...state.attendees, state.selectedProvider.username] : [];
+        state.attendees !== [] ? [...state.attendees, state.selectedAccount.username] : [];
 
       const dataForEventCreator = {
         summary: state.title === '' ? 'Untitled Event' : state.title,
@@ -304,14 +308,14 @@ export default class AddForm extends Component {
           attendee.map(att => {
             return {
               email: att,
-              partstat: att === state.selectedProvider.username ? 'APPROVED' : 'NEEDS-ACTION',
+              partstat: att === state.selectedAccount.username ? 'APPROVED' : 'NEEDS-ACTION',
             };
           })
         ),
-        organizer: state.selectedProvider.username,
+        organizer: state.selectedAccount.username,
         calendarId: state.selectedCalendar.url,
       };
-      const authForEventCreator = state.selectedProvider;
+      const authForEventCreator = state.selectedAccount;
       const calendarForEventCreator = state.selectedCalendar;
       this.props.parentPropFunction(false);
       await createEvent({
@@ -393,7 +397,8 @@ export default class AddForm extends Component {
         label: calendar.name,
         value: {
           providerType: calendar.providerType,
-          calendarUrl: calendar.url,
+          calendarId: calendar.calendarId,
+          ownerId: calendar.ownerId,
         },
       });
     });

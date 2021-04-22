@@ -227,10 +227,11 @@ export const syncGoogleLocalData = (fetchedData, type, selectedYear = null) => {
       toBeDeleted.forEach(idx => {
         Actions.deleteCalendarList(GOOGLE_PROVIDER, sortedSubjectData[idx]);
       });
+      console.log('todelete', toBeDeleted);
       // insert new events according to caldav server
       toAdd = toBeInserted.map(idx => sortedTargetData[idx]);
       Actions.addCalendarList(toAdd, GOOGLE_PROVIDER);
-      console.log(toAdd);
+      console.log('toadd', toAdd);
       break;
     default:
       throw 'err, no such type available to sync';

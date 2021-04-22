@@ -16,7 +16,7 @@ import {
   editSingleEvent,
 } from '../edit-event/utils/edit-event-utils';
 import { fetchCaldavEvents } from '../fetch-event/utils/fetch-events-utils';
-import { CALDAV_PROVIDER } from '../constants';
+import { CALDAV_PROVIDER, GOOGLE_PROVIDER } from '../constants';
 
 const START_INDEX_OF_UTC_FORMAT = 17;
 const START_INDEX_OF_HOUR = 11;
@@ -185,7 +185,9 @@ export default class EditForm extends React.Component {
         : startDateParsed.format('YYYY-MM-DD')
     );
     const endDateParsedInUTC = this.processStringForUTC(
-      state.isAllDay ? endDateParsed.format('YYYY-MM-DDThh:mm a') : endDateParsed.format('YYYY-MM-DD')
+      state.isAllDay
+        ? endDateParsed.format('YYYY-MM-DDThh:mm a')
+        : endDateParsed.format('YYYY-MM-DD')
     );
 
     this.setState({
@@ -212,7 +214,6 @@ export default class EditForm extends React.Component {
   };
   updateStoreFromServer = async () => {
     const { state } = this;
-    // only ical caldav currently
     const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(
       auth => auth.username === state.owner
     );
@@ -221,8 +222,9 @@ export default class EditForm extends React.Component {
   };
   editEvent = () => {
     const { props, state } = this;
-    // using ical caldav only for now
-    const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(auth => auth.username === state.owner);
+    const [user] = CalendarPluginStore.getAuth().filter(
+      auth => auth.username === state.owner && auth.providerType === state.providerType
+    );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const payload = {
       id: state.id,
@@ -254,9 +256,8 @@ export default class EditForm extends React.Component {
 
   editAllRecurrenceEvent = () => {
     const { props, state } = this;
-    // using ical caldav only for now
-    const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(
-      auth => auth.username === state.owner
+    const [user] = CalendarPluginStore.getAuth().filter(
+      auth => auth.username === state.owner && auth.providerType === state.providerType
     );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -313,8 +314,8 @@ export default class EditForm extends React.Component {
   };
   editFutureRecurrenceEvent = () => {
     const { props, state } = this;
-    const [user] = CalendarPluginStore.getAuth(CALDAV_PROVIDER).filter(
-      auth => auth.username === state.owner
+    const [user] = CalendarPluginStore.getAuth().filter(
+      auth => auth.username === state.owner && auth.providerType === state.providerType
     );
     const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const payload = {
@@ -370,128 +371,38 @@ export default class EditForm extends React.Component {
     props.parentPropFunction(false);
   };
 
-  /*
-    In order to edit a generic event, we have to choose for each individual event.
-
-    Google - Retrive ID from our local DB and post with the ID, Google handles everything else
-    Outlook - Same as google
-    Exchange - This one requires more thought.
-      Exchange updates the data different. Not a post request. A function call in the ews-javascript-api call.
-      Have to think how to call the function when I might not have the object. This means that perhaps I should store the object in the main object.
-      In order to retrive the event, I need to make a query from the script to get the javascript ews object. However, once I have it, I can update it easily.
-  */
   retrieveEvent = id => {
-    const [eventPresent] = CalendarPluginStore.getCalendarData(CALDAV_PROVIDER).filter(
+    const [eventPresent] = CalendarPluginStore.getCalendarData().filter(
       storedEvent => storedEvent.id === id
     );
-
-    // Remember to moment.unix because dateTime is stored in seconds instead of miliseconds
-    const text = recurrenceOptions.parseString(
-      Math.ceil(moment.unix(eventPresent.start.dateTime).date() / 7)
-    );
-    const secondRecurrOptions = recurrenceOptions.secondRecurrOptions(eventPresent.start, text);
-
+    console.log(eventPresent.iCALString);
     if (eventPresent.isRecurring) {
-      const [eventRecurrence] = CalendarPluginStore.getRpLists(CALDAV_PROVIDER).filter(
-        storedRp => storedRp.originalId === eventPresent.recurringEventId
-      );
-      const thirdRecurrChoice = recurrenceOptions.parseThirdRecurrOption(
-        eventRecurrence.until,
-        eventRecurrence.numberOfRepeats
-      );
-
-      const firstSelected = recurrenceOptions.parseFreq(eventRecurrence.freq);
-      const secondSelected = recurrenceOptions.parseFreqNumber(firstSelected);
-
-      let monthlySelected = 0;
-      let yearlySelected = 0;
-      if (secondSelected === 'month') {
-        if (eventRecurrence.byMonthDay === '()') {
-          monthlySelected = 1;
-        } else {
-          monthlySelected = 0;
-        }
-      } else if (secondSelected === 'year') {
-        if (eventRecurrence.byMonthDay === '()') {
-          yearlySelected = 1;
-        } else {
-          yearlySelected = 0;
-        }
+      let iCalStringRrule = '';
+      switch (eventPresent.providerType) {
+        case CALDAV_PROVIDER:
+          iCalStringRrule = eventPresent.iCALString
+            .match(/RRULE:.+?(?=\s)/g)[0]
+            .replace(/RRULE:/g, '');
+          break;
+        case GOOGLE_PROVIDER:
+          iCalStringRrule = eventPresent.iCALString.replace(/RRULE:/g, '');
+          break;
+        default:
+          throw 'No such provider while showing event to be edited';
       }
-
-      if (firstSelected === 1) {
-        this.setState({
-          selectedSecondRecurrOption: [
-            0,
-            eventRecurrence.weeklyPattern
-              .split(',')
-              .filter(e => e !== '')
-              .map(e => parseInt(e, 10)),
-            0,
-            0,
-          ],
-        });
-      } else if (firstSelected === 2) {
-        this.setState({
-          selectedSecondRecurrOption: [
-            0,
-            eventRecurrence.weeklyPattern
-              .split(',')
-              .filter(e => e !== '')
-              .map(e => parseInt(e, 10)),
-            monthlySelected,
-            0,
-          ],
-        });
-      } else if (firstSelected === 3) {
-        this.setState({
-          selectedSecondRecurrOption: [
-            0,
-            eventRecurrence.weeklyPattern
-              .split(',')
-              .filter(e => e !== '')
-              .map(e => parseInt(e, 10)),
-            0,
-            yearlySelected,
-          ],
-        });
-      }
-
       // to ensure RRuleGenerator display no error caused by undefined INTERVAL
-      const intervalInRrule = eventRecurrence.iCALString.match(/INTERVAL=.+?;/g);
-      let updatedRruleWithInterval = eventRecurrence.iCALString;
+      const intervalInRrule = iCalStringRrule.match(/INTERVAL=.+?;/g);
       if (intervalInRrule === null) {
-        updatedRruleWithInterval += ';INTERVAL=' + eventRecurrence.interval;
+        iCalStringRrule += ';INTERVAL=' + 1;
       }
       this.setState({
         updatedIsRecurring: true,
-        updatedRrule: updatedRruleWithInterval,
+        updatedRrule: iCalStringRrule,
         isRecurring: true,
         showRruleGenerator: true,
-        initialRrule: updatedRruleWithInterval,
+        initialRrule: iCalStringRrule,
         isMaster: eventPresent.isMaster,
         recurringEventId: eventPresent.recurringEventId,
-        recurrInterval: eventRecurrence.interval,
-        firstSelectedOption: firstSelected,
-        secondRecurrOptions: secondRecurrOptions[secondSelected],
-        thirdRecurrOptions: thirdRecurrChoice,
-        recurrStartDate: moment(eventRecurrence.recurringTypeId).format('YYYY-MM-DDTHH:mm:ssZ'),
-        recurrEndDate:
-          eventRecurrence.until !== null
-            ? moment(eventRecurrence.until).format('YYYY-MM-DDTHH:mm:ssZ')
-            : null,
-        recurringMasterId: eventRecurrence.originalId,
-        recurrPatternId: eventRecurrence.id,
-        thirdOptionAfter: eventRecurrence.numberOfRepeats,
-
-        recurrByMonth: eventRecurrence.byMonth,
-        recurrByMonthDay:
-          eventRecurrence.byMonthDay !== '()'
-            ? eventRecurrence.byMonthDay
-            : `(${moment(eventPresent.start).date()})`,
-        recurrByWeekDay: eventRecurrence.byWeekDay,
-        recurrByWeekNo: eventRecurrence.byWeekNo,
-        oldRpJson: eventRecurrence,
       });
     }
 
@@ -506,7 +417,6 @@ export default class EditForm extends React.Component {
         : moment(eventPresent.end.dateTime * 1000).format('YYYY-MM-DDThh:mm')
     );
 
-    // right now caldav server generated events do not have guests by default
     let attendees = {};
     let partstat = '';
     if (eventPresent.attendee !== '' && eventPresent.attendee !== undefined) {
@@ -548,12 +458,7 @@ export default class EditForm extends React.Component {
       iCalUID: eventPresent.iCalUID,
       oldEventJson: eventPresent,
       isAllDay: eventPresent.isAllDay,
-    });
-  };
-
-  handleIntervalChange = event => {
-    this.setState({
-      recurrInterval: event.target.value,
+      isMaster: eventPresent.isMaster,
     });
   };
 
@@ -577,66 +482,40 @@ export default class EditForm extends React.Component {
 
   renderPopup = () => {
     const { state } = this;
-    if (state.initialRrule !== state.updatedRrule) {
-      return (
-        <Dialog
-          onClose={() => this.setConfirmationPopup(false)}
-          open={state.confirmationPopup}
-          maxWidth="md"
-        >
-          <DialogContent>
-            <div className="popup-modal">
-              <h5>You're changing a repeating event's rule.</h5>
-              <p>Do you want to change all occurrences?</p>
-            </div>
-          </DialogContent>
-          <DialogActions>
-            <BigButton variant="small-blue" onClick={() => this.setConfirmationPopup(false)}>
-              Cancel
-            </BigButton>
+    return (
+      <Dialog
+        onClose={() => this.setConfirmationPopup(false)}
+        open={state.confirmationPopup}
+        maxWidth="md"
+      >
+        <DialogContent>
+          <div className="popup-modal">
+            <h5>You're changing a repeating event.</h5>
+            <p>
+              Do you want to change only this occurrence of the event,
+              {state.isMaster ? ' or all occurences?' : ' or this and following occurences?'}
+            </p>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <BigButton variant="small-blue" onClick={() => this.setConfirmationPopup(false)}>
+            Cancel
+          </BigButton>
+          {state.isMaster ? (
             <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
               Update All
             </BigButton>
-          </DialogActions>
-        </Dialog>
-      );
-    } else {
-      return (
-        <Dialog
-          onClose={() => this.setConfirmationPopup(false)}
-          open={state.confirmationPopup}
-          maxWidth="md"
-        >
-          <DialogContent>
-            <div className="popup-modal">
-              <h5>You're changing a repeating event.</h5>
-              <p>Do you want to change only this occurrence of the event, or all occurrences?</p>
-            </div>
-          </DialogContent>
-          <DialogActions>
-            <BigButton variant="small-blue" onClick={() => this.setConfirmationPopup(false)}>
-              Cancel
+          ) : (
+            <BigButton variant="small-white" type="button" onClick={this.editFutureRecurrenceEvent}>
+              Update All Future Events
             </BigButton>
-            {state.isMaster ? (
-              <BigButton variant="small-white" onClick={this.editAllRecurrenceEvent}>
-                Update All
-              </BigButton>
-            ) : (
-              <BigButton
-                variant="small-white"
-                type="button"
-                onClick={this.editFutureRecurrenceEvent}
-              >
-                Update All Future Events
-              </BigButton>
-            )}
-            <BigButton variant="small-white" onClick={this.editEvent}>
-              Update Only This Event
-            </BigButton>
-          </DialogActions>
-        </Dialog>
-      );
-    }
+          )}
+          <BigButton variant="small-white" onClick={this.editEvent}>
+            Update Only This Event
+          </BigButton>
+        </DialogActions>
+      </Dialog>
+    );
   };
 
   renderAddDetails = () => {
@@ -675,7 +554,6 @@ export default class EditForm extends React.Component {
           />
         </div>
         <div className="add-form-repeat add-form-grid-item">
-          {console.log('updatedRrule', state.updatedRrule)}
           <RRuleGenerator
             key="rrulegenerator"
             onChange={this.handleRruleChange}

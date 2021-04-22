@@ -1,10 +1,11 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable new-cap */
 /* eslint-disable no-lone-blocks */
 import ICAL from 'ical.js';
 import moment from 'moment-timezone';
 import uuidv4 from 'uuid';
 import { RRule, RRuleSet } from 'rrule';
-import { CALDAV_PROVIDER } from '../constants';
+import { CALDAV_PROVIDER, GOOGLE_PROVIDER } from '../constants';
 // import * as dbRpActions from '../sequelizeDB/operations/recurrencepatterns';
 
 const oneYearFromNow = new Date();
@@ -596,7 +597,7 @@ export const expandSeries = (recurringEvents, recurrencePatterns) => {
   return expandedSeries;
 };
 
-export const parseRecurrence = (recurPattern, recurMasterEvent) => {
+export const parseRecurrence = (recurPattern, recurMasterEvent, providerType) => {
   const recurEvents = [];
   const ruleSet = buildRuleSet(
     recurPattern,
@@ -667,7 +668,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
   const duration = getDuration(recurMasterEvent);
   let vevents = [];
   // new event creation will have no icalstring yet
-  if (recurMasterEvent.iCALString) {
+  if (recurMasterEvent.iCALString && providerType !== GOOGLE_PROVIDER) {
     vevents = new ICAL.Component.fromString(recurMasterEvent.iCALString).getAllSubcomponents(
       'vevent'
     );
@@ -769,8 +770,7 @@ export const parseRecurrence = (recurPattern, recurMasterEvent) => {
     }
   });
   // Adding the first master event, if it isn't inside(occurs when expanded RRULE didn't take into account the initial master event)
-  // If first master event inside exdate/recurrenceIds, hide it
-  // eslint-disable-next-line prettier/prettier
+  // If first master event inside exdate/recurrenceIds, means master event is deleted
   if (!containMaster && !exDateAndRecurIdsContainsMaster(recurMasterEvent.start.dateTime, recurPattern)) {
     recurEvents.push({
       id: uuidv4(),

@@ -12,9 +12,9 @@ export const deleteGoogleSingle = async payload => {
   const { data, user } = payload;
   // account to be used to fetch gmail account once production client id is ready to be used
   const [account] = AccountStore.accounts().filter(
-    account => account.emailAddress == user.username
+    account => account.emailAddress == user.username && account.provider === 'gmail'
   );
-  const services = await fetchGmailAccount('placeholder');
+  const services = await fetchGmailAccount(account);
   services.events.delete(
     {
       calendarId: data.calendarId,
@@ -33,9 +33,9 @@ export const deleteGoogleAll = async payload => {
   const { data, user } = payload;
   // account to be used to fetch gmail account once production client id is ready to be used
   const [account] = AccountStore.accounts().filter(
-    account => account.emailAddress == user.username
+    account => account.emailAddress == user.username && account.provider === 'gmail'
   );
-  const services = await fetchGmailAccount('placeholder');
+  const services = await fetchGmailAccount(account);
   services.events.delete(
     {
       calendarId: data.calendarId,
@@ -43,11 +43,7 @@ export const deleteGoogleAll = async payload => {
     },
     (err, res) => {
       if (err) return err;
-      Actions.deleteCalendarData(
-        GOOGLE_PROVIDER,
-        data.recurringEventId,
-        DELETE_ALL_RECURRING_EVENTS
-      );
+      Actions.deleteCalendarData(GOOGLE_PROVIDER, data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
     }
   );
 };
@@ -65,6 +61,7 @@ const generateDeleteFuturePattern = (recurringPatternToEdit, data, services, use
           orderBy: 'startTime',
           showDeleted: true, // ensure ordering and hence, COUNT is correct
           singleEvents: true,
+          maxResults: 2500,
         },
         (err, res) => {
           if (err) reject(err);
@@ -94,12 +91,14 @@ const generateDeleteFuturePattern = (recurringPatternToEdit, data, services, use
   } else {
     // if UNTIL rrule, or infinite rrule(neither UNTIL nor COUNT), we set UNTIL in both
     results = new Promise((resolve, reject) => {
+      // MAX RESULTS IS 2500 events fetched, TODO: use pageToken to get all events
       services.events.list(
         {
           calendarId: data.calendarId,
           iCalUID: data.iCalUID,
           orderBy: 'startTime',
           singleEvents: true,
+          maxResults: 2500,
         },
         (err, res) => {
           if (err) reject(err);
@@ -113,19 +112,33 @@ const generateDeleteFuturePattern = (recurringPatternToEdit, data, services, use
               'Unable to find corresponding id while deleting google future recurrence events'
             );
           }
-          const dateTime = firstEvent.start.dateTime
+          // pre-edited datetime
+          const originalStartTime = firstEvent.originalStartTime.dateTime
+            ? firstEvent.originalStartTime.dateTime
+            : firstEvent.originalStartTime.date;
+          // edited datetime
+          const currentDateTime = firstEvent.start.dateTime
             ? firstEvent.start.dateTime
             : firstEvent.start.date;
+          // choose the earliest datetime out of original&latest from first event fetched from server
+          const dateTime =
+            new Date(originalStartTime).getTime() > new Date(currentDateTime).getTime()
+              ? currentDateTime
+              : originalStartTime;
           let firstEventUnix = new Date(dateTime).getTime() / 1000; // convert from millis to seconds
           console.log(firstEventUnix);
-          console.log(data.start.dateTime);
-          if (data.start.dateTime <= firstEventUnix) {
+          // choose earliest datetime out of original&latest from local db
+          const localDataStartTime =
+            data.start.dateTime > data.originalStartTime.dateTime
+              ? data.originalStartTime.dateTime
+              : data.start.dateTime;
+          if (localDataStartTime <= firstEventUnix) {
             // delete all events - user clicked the very first event for deletion
             const payload = { data, user };
             deleteGoogleAll(payload);
             resolve(NOTHING_TO_RESOLVE);
           } else {
-            let updatedUntilRrule = new Date(data.start.dateTime * 1000 - 1)
+            let updatedUntilRrule = new Date(localDataStartTime * 1000 - 1)
               .toISOString()
               .replace(/(-|:|\....)/g, '');
             updatedUntilRrule = 'UNTIL=' + updatedUntilRrule;
@@ -134,6 +147,7 @@ const generateDeleteFuturePattern = (recurringPatternToEdit, data, services, use
                 /UNTIL=\d{4}(0[1-9]|1[0-2])(0[1-9]|[1-2]\d|3[0-1])T([0-1]\d|2[0-3])[0-5]\d[0-5]\dZ?/g
               );
               const allDayRrule = rrule.match(/UNTIL=(20\d{2})(\d{2})(\d{2})/g);
+              // all day and non day events has different datetime rrule
               recurringPatternToEdit.recurrence = [
                 rrule.replace(
                   nonAllDayRrule === null ? allDayRrule : nonAllDayRrule,
@@ -157,9 +171,9 @@ export const deleteGoogleFuture = async payload => {
   const { data, user } = payload;
   // account to be used to fetch gmail account once production client id is ready to be used
   const [account] = AccountStore.accounts().filter(
-    account => account.emailAddress == user.username
+    account => account.emailAddress == user.username && account.provider === 'gmail'
   );
-  const services = await fetchGmailAccount('placeholder');
+  const services = await fetchGmailAccount(account);
   const recurringResults = new Promise((resolve, reject) => {
     services.events.list(
       {

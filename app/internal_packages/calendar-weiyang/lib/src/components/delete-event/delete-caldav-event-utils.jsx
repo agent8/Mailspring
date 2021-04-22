@@ -146,7 +146,7 @@ export const deleteCaldavAll = async payload => {
     };
     // Result will throw error, we can do a seperate check here if needed.
     await dav.deleteCalendarObject(calendarObject, option);
-    Actions.deleteCalendarData(CALDAV_PROVIDER, data.recurringEventId, DELETE_ALL_RECURRING_EVENTS);
+    Actions.deleteCalendarData(CALDAV_PROVIDER, data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
   } catch (error) {
     console.log('error deleting all events from recurring series', error);
   }
@@ -189,7 +189,6 @@ export const deleteCaldavFuture = async payload => {
     return;
   }
 
-  // **LEGACY CODE** not sure why this is needed - March 2021 **
   // Problem here is that updating the rp based on the exDates and recurringIds.
   // This means we need to remove it from the rp and build the rp based on them.
   // Note that we cannot edit the RxDoc directly, therefore, we use the JsonObject
@@ -255,11 +254,7 @@ export const deleteCaldavFuture = async payload => {
       };
       // Result will throw error, we can do a seperate check here if needed.
       await dav.deleteCalendarObject(calendarObject, option);
-      Actions.deleteCalendarData(
-        CALDAV_PROVIDER,
-        data.recurringEventId,
-        DELETE_ALL_RECURRING_EVENTS
-      );
+      Actions.deleteCalendarData(CALDAV_PROVIDER, data.iCalUID, DELETE_ALL_RECURRING_EVENTS);
     } catch (error) {
       console.log('error deleting all events via future recurrences', error);
     }

@@ -373,18 +373,19 @@ class CalendarPluginStore extends MailspringStore {
         throw 'no such type';
     }
     if (events.length > 0) {
-      if (type === CALDAV_PROVIDER) {
-        // remove any related event by iCalUID since new expanded events to be added would have similar copies
-        // applies for icloud DAV only
-        this._calendarData[accessor] = this._calendarData[accessor].filter(
-          evt => evt.iCalUID !== events[0].iCalUID
-        );
-        this._userDb.run(`DELETE FROM CalendarData WHERE iCalUID=?`, events[0].iCalUID, err => {
-          if (err) {
-            return console.log(err.message);
-          }
-        });
-      }
+      // if (type === CALDAV_PROVIDER) {
+      //   // remove any related event by iCalUID since new expanded events to be added would have similar copies
+      //   // applies for icloud DAV only
+      //   this._calendarData[accessor] = this._calendarData[accessor].filter(
+      //     evt => evt.iCalUID !== events[0].iCalUID
+      //   );
+      //   this._userDb.run(`DELETE FROM CalendarData WHERE iCalUID=?`, events[0].iCalUID, err => {
+      //     if (err) {
+      //       return console.log(err.message);
+      //     }
+      //   });
+      // }
+
       // add the events
       console.log(events);
       this._calendarData[accessor] = [...this._calendarData[accessor], ...events];
@@ -443,7 +444,7 @@ class CalendarPluginStore extends MailspringStore {
         'UPDATE RecurrencePattern SET byEaster=?, byHour=?, byMinute=?, byMonth=?, byMonthDay=?, bySecond=?, bySetPos=?, byWeekDay=?, byWeekNo=?, byYearDay=?, colorId=?, exDates=?, freq=?, iCALString=?, iCalUID=?, id=?, interval=?, isAllDay=?, modifiedThenDeleted=?, numberOfRepeats=?, originalId=?, recurrenceIds=?, recurringTypeId=?, until=?, weeklyPattern=?, wkSt=? WHERE id=?';
       prepareStatement = this._userDb.prepare(sqlCommand);
       values = [
-        this.parseRecurrencePatternIntoDbFormat(this._recurPatternLists[foundRpIndex]),
+        ...this.parseRecurrencePatternIntoDbFormat(this._recurPatternLists[foundRpIndex]),
         foundRp[0].id,
       ];
       prepareStatement.run(values, err => {
@@ -457,9 +458,9 @@ class CalendarPluginStore extends MailspringStore {
     }
   };
 
-  updateCalendarData = (type, id, editedData, updateType, dataDateTime = null) => {
+  updateCalendarData = (providerType, id, editedData, updateType, dataDateTime = null) => {
     let accessor = '';
-    switch (type) {
+    switch (providerType) {
       case CALDAV_PROVIDER:
         accessor = 'icloud';
         break;
@@ -471,9 +472,10 @@ class CalendarPluginStore extends MailspringStore {
     }
     let toBeEditedEventIds = [];
     let toBeEditedEvents = [];
-    let sqlCommand = '';
+    let sqlCommand =
+      'UPDATE CalendarData SET attendee=?, caldavType=?, id=?, caldavUrl=?, calendarId=?, colorId=?, created=?, description=?, end=?, etag=?, iCALString=?, iCALUID=?, isAllDay=?, isMaster=?, isRecurring=?, location=?, organizer=?, originalId=?, originalStartTime=?, owner=?, providerType=?, recurringEventId=?, start=?, summary=?, updated=? WHERE id=?';
+    let prepareStatement = this._userDb.prepare(sqlCommand);
     let values = '';
-    let prepareStatement = '';
     switch (updateType) {
       case UPDATE_SINGLE_EVENT:
       case UPDATE_MASTER_EVENT:
@@ -510,20 +512,19 @@ class CalendarPluginStore extends MailspringStore {
     for (let i = 0; i < toBeEditedEventIds.length; i++) {
       let toBeEditedId = toBeEditedEventIds[i];
       this._calendarData[accessor][toBeEditedId] = { ...toBeEditedEvents[i], ...editedData };
-      sqlCommand =
-        'UPDATE CalendarData SET attendee=?, caldavType=?, id=?, caldavUrl=?, calendarId=?, colorId=?, created=?, description=?, end=?, etag=?, iCALString=?, iCALUID=?, isAllDay=?, isMaster=?, isRecurring=?, location=?, organizer=?, originalId=?, originalStartTime=?, owner=?, providerType=?, recurringEventId=?, start=?, summary=?, updated=? WHERE id=?';
-      prepareStatement = this._userDb.prepare(sqlCommand);
       values = [
-        this.parseCalendarDataIntoDBformat(this._calendarData[accessor][toBeEditedId]),
+        ...this.parseCalendarDataIntoDBformat(this._calendarData[accessor][toBeEditedId]),
         toBeEditedEvents[i].id,
       ];
+      console.log(values);
       prepareStatement.run(values, err => {
         if (err) {
-          return console.log(err.message);
+          throw err.message;
         }
       });
     }
     prepareStatement.finalize();
+    console.log('updated', this._calendarData[accessor]);
     this.trigger();
   };
 
@@ -552,11 +553,11 @@ class CalendarPluginStore extends MailspringStore {
         });
         break;
       case DELETE_ALL_RECURRING_EVENTS:
-        // delete via recurringEventId
+        // delete via iCalUID
         this._calendarData[accessor] = this._calendarData[accessor].filter(event => {
-          return event.recurringEventId !== dataId;
+          return event.iCalUID !== dataId;
         });
-        this._userDb.run(`DELETE FROM CalendarData WHERE recurringEventId=?`, dataId, err => {
+        this._userDb.run(`DELETE FROM CalendarData WHERE iCalUID=?`, dataId, err => {
           if (err) {
             return console.log(err.message);
           }

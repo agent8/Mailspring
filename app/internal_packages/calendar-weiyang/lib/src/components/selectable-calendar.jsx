@@ -97,6 +97,9 @@ class SelectableCalendar extends React.Component {
         case CALDAV_PROVIDER:
           fetchCaldavEvents(account.username, account.password, CALDAV_PROVIDER);
           break;
+        case GOOGLE_PROVIDER:
+          fetchGmailEvents(this.state.selectedYear);
+          break;
         default:
           throw 'no such provider';
       }

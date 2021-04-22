@@ -1,9 +1,10 @@
-import { CALDAV_PROVIDER } from '../../constants';
+import { CALDAV_PROVIDER, GOOGLE_PROVIDER } from '../../constants';
 import { createCaldavEvent } from './create-caldav-event-utils';
+import { createGoogleEvent } from './create-google-event-utils';
 
 // Parameter payload contains:
 //  data, --> calendar event to be added
-//  providerType, --> CALDAV, EWS etc
+//  providerType, --> ical CALDAV, GOOGLE etc
 //  auth --> auth details to push data into server
 //  calendar --> calendar for event to be added
 export const createEvent = async payload => {
@@ -14,6 +15,13 @@ export const createEvent = async payload => {
         await createCaldavEvent(payload);
       } catch (caldavError) {
         console.log('Handle Caldav pending action here', caldavError);
+      }
+      break;
+    case GOOGLE_PROVIDER:
+      try {
+        await createGoogleEvent(payload);
+      } catch (googleError) {
+        console.log('Handle Google pending action here', googleError);
       }
       break;
     default:

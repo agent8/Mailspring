@@ -47,7 +47,6 @@ export const createCaldavEvent = async payload => {
   let populateReflux = [];
   if (payload.data.isRecurring) {
     const rruleObject = ICAL.Recur._stringToData(data.rrule);
-    // not sure what adjust() does, leftover from legacy code
     if (rruleObject.until !== undefined) {
       rruleObject.until.adjust(1, 0, 0, 0, 0);
     }
@@ -129,8 +128,6 @@ export const createCaldavEvent = async payload => {
     // add new rp into store
     CalendarPluginStore.upsertRpList(recurrencePattern[0], UPSERT_RECURRENCE_PATTERN);
   } else {
-    data.isRecurring = false;
-
     // Creates non Recurring event.
     newiCalString = IcalStringBuilder.buildICALStringCreateEvent(payload.data);
 
@@ -178,12 +175,6 @@ export const createCaldavEvent = async payload => {
   };
   try {
     await dav.createCalendarObject(calendar, addCalendarObject);
-    // remove existing and add new
-    CalendarPluginStore.deleteCalendarData(
-      CALDAV_PROVIDER,
-      populateReflux[0].iCalUID,
-      DELETE_ALL_RECURRING_EVENTS
-    );
     CalendarPluginStore.addCalendarData(populateReflux, CALDAV_PROVIDER);
   } catch (error) {
     console.log(error);
