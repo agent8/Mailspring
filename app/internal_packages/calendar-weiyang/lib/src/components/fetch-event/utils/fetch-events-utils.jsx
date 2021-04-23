@@ -192,9 +192,78 @@ const parseGoogleCalendar = (myCalendar, email) => {
     url: '',
   };
 };
+/**
+ * recursion via pagetoken to retrieve all possible single events
+ */
+const fetchRecurrenceWithToken = async (
+  services,
+  myCalendar,
+  upperBoundDate,
+  lowerBoundDate,
+  nextPageToken,
+  allRecurrences
+) => {
+  const res = await services.events.list({
+    calendarId: myCalendar.id,
+    timeMax: upperBoundDate.toISOString(),
+    timeMin: lowerBoundDate.toISOString(),
+    maxResults: 2500,
+    ...(nextPageToken && { pageToken: nextPageToken }),
+  });
+  allRecurrences = [...allRecurrences, ...res.data.items];
+  if (res.data.nextPageToken) {
+    console.log(res.data.nextPageToken);
+    return await fetchRecurrenceWithToken(
+      services,
+      myCalendar,
+      upperBoundDate,
+      lowerBoundDate,
+      res.data.nextPageToken,
+      allRecurrences
+    );
+  } else {
+    return allRecurrences;
+  }
+};
 
+/**
+ * recursion via pagetoken to retrieve all possible single events
+ */
+const fetchEventsWithToken = async (
+  services,
+  myCalendar,
+  upperBoundDate,
+  lowerBoundDate,
+  nextPageToken,
+  allEvents
+) => {
+  const res = await services.events.list({
+    calendarId: myCalendar.id,
+    singleEvents: true,
+    timeMax: upperBoundDate.toISOString(),
+    timeMin: lowerBoundDate.toISOString(),
+    orderBy: 'startTime',
+    maxResults: 2500,
+    ...(nextPageToken && { pageToken: nextPageToken }),
+  });
+  console.log('res', res);
+  console.log('res.data.items', res.data.items);
+  allEvents = [...allEvents, ...res.data.items];
+  if (res.data.nextPageToken) {
+    return await fetchEventsWithToken(
+      services,
+      myCalendar,
+      upperBoundDate,
+      lowerBoundDate,
+      res.data.nextPageToken,
+      allEvents
+    );
+  } else {
+    return allEvents;
+  }
+};
 export const fetchGmailEvents = async selectedYear => {
-  // below line will be in use once production client id is ready, hardcoded gmail accounts are used for now
+  // below line of code will be in use once production client id is ready, hardcoded gmail accounts are used for now
   // const gmailAccounts = AccountStore.accounts().filter(account => account.provider === 'gmail');
   // gmailAccounts.forEach(gmailAccount => {
   let gmailAccountAddress = 'piadruids@gmail.com';
@@ -209,117 +278,76 @@ export const fetchGmailEvents = async selectedYear => {
     password: '',
   };
   Actions.setAuth(authObject, GOOGLE_PROVIDER);
-  const calendarResults = new Promise((resolve, reject) => {
-    services.calendarList.list(
-      {
-        minAccessRole: 'owner',
-      },
-      (err, res) => {
-        if (err) reject(err);
-        const calendarList = res.data.items;
-        if (calendarList.length) {
-          resolve(calendarList);
-        }
-      }
-    );
+  const calendarResults = await services.calendarList.list({
+    minAccessRole: 'owner',
   });
+  const calendar = calendarResults.data.items;
   const upperBoundDate = moment.tz([selectedYear, 11, 31], 'GMT');
   const lowerBoundDate = moment.tz([selectedYear, 0, 1], 'GMT');
-  calendarResults.then(calendar => {
-    console.log(calendar);
-    const parsedCalendars = calendar.map(calendar =>
-      parseGoogleCalendar(calendar, gmailAccountAddress)
+  console.log(calendar);
+  const parsedCalendars = calendar.map(calendar =>
+    parseGoogleCalendar(calendar, gmailAccountAddress)
+  );
+  syncGoogleLocalData(parsedCalendars, SYNC_CALENDAR_LISTS);
+  let eventResults = [];
+  for (const myCalendar of calendar) {
+    const allEventsInSingleCalendar = await fetchEventsWithToken(
+      services,
+      myCalendar,
+      upperBoundDate,
+      lowerBoundDate,
+      null,
+      []
     );
-    syncGoogleLocalData(parsedCalendars, SYNC_CALENDAR_LISTS);
-    let eventResults = [];
-    calendar.forEach(myCalendar => {
-      eventResults.push(
-        new Promise((resolve, reject) => {
-          let duplicateIcalUIDChecker = new Set();
-          // MAX RESULTS IS 2500 events fetched, TODO: use pageToken to get all events
-          services.events.list(
-            {
-              calendarId: myCalendar.id,
-              singleEvents: true,
-              timeMax: upperBoundDate.toISOString(),
-              timeMin: lowerBoundDate.toISOString(),
-              orderBy: 'startTime',
-              maxResults: 2500,
-            },
-            (err, res) => {
-              if (err) reject(err);
-              const events = res.data.items;
-              console.log(res);
-              if (events.length) {
-                resolve(
-                  events.map(event => {
-                    // No way to directly find out master event of recurring events,
-                    // hence current soln: order by starttime, earliest event that doesn't have duplicated iCalUID and has recurringEventId is the master event.
-                    if (event.recurringEventId && !duplicateIcalUIDChecker.has(event.iCalUID)) {
-                      duplicateIcalUIDChecker.add(event.iCalUID);
-                      return parseGoogleEvent(event, myCalendar, true, gmailAccountAddress);
-                    } else {
-                      return parseGoogleEvent(event, myCalendar, false, gmailAccountAddress);
-                    }
-                  })
-                );
-              } else {
-                // no events in calendar
-                resolve([]);
-              }
-            }
-          );
-        })
-      );
+    let duplicateIcalUIDChecker = new Set();
+    eventResults.push(
+      allEventsInSingleCalendar.map(event => {
+        // No way to directly find out master event of recurring events,
+        // hence current soln: order by starttime, earliest event that doesn't have duplicated iCalUID and has recurringEventId is the master event.
+        if (event.recurringEventId && !duplicateIcalUIDChecker.has(event.iCalUID)) {
+          duplicateIcalUIDChecker.add(event.iCalUID);
+          return parseGoogleEvent(event, myCalendar, true, gmailAccountAddress);
+        } else {
+          return parseGoogleEvent(event, myCalendar, false, gmailAccountAddress);
+        }
+      })
+    );
+  }
+  console.log(eventResults);
+  let flatData = [];
+  console.log(eventResults);
+  eventResults.map(arrOfEvents => (flatData = [...flatData, ...arrOfEvents]));
+  syncGoogleLocalData(flatData, SYNC_CALENDAR_DATA, selectedYear);
+
+  // Retrieve recurring events from server and update events in reflux with the RRULE needed for UI display
+  let allRecurrenceList = [];
+  for (const myCalendar of calendar) {
+    let recurrenceList = {};
+    const recurrences = await fetchRecurrenceWithToken(
+      services,
+      myCalendar,
+      upperBoundDate,
+      lowerBoundDate,
+      null,
+      []
+    );
+    console.log(recurrences);
+    recurrences.map(recurEvent => {
+      recurEvent.recurrence
+        ? (recurrenceList = { ...recurrenceList, [recurEvent.iCalUID]: recurEvent.recurrence[0] })
+        : null;
     });
-    console.log(eventResults);
-    Promise.all(eventResults)
-      .then(data => {
-        let flatData = [];
-        console.log(data);
-        data.map(arrOfEvents => (flatData = [...flatData, ...arrOfEvents]));
-        syncGoogleLocalData(flatData, SYNC_CALENDAR_DATA, selectedYear);
-        const recurrenceResult = calendar.map(myCalendar => {
-          return new Promise((resolve, reject) => {
-            // retrieve events by recurrence instead of single event to store the rrule into event's iCALString
-            let recurrenceList = {};
-            services.events.list(
-              {
-                calendarId: myCalendar.id,
-                timeMax: upperBoundDate.toISOString(),
-                timeMin: lowerBoundDate.toISOString(),
-                maxResults: 2500,
-              },
-              (err, res) => {
-                if (err) reject(err);
-                res.data.items.map(event =>
-                  event.recurrence
-                    ? (recurrenceList = { ...recurrenceList, [event.iCalUID]: event.recurrence[0] })
-                    : null
-                );
-                resolve(recurrenceList);
-              }
-            );
-          });
-        });
-        return recurrenceResult;
-      })
-      .then(recurrenceResult => {
-        Promise.all(recurrenceResult).then(recurrences => {
-          recurrences.map(obj => {
-            for (let iCalUID in obj) {
-              Actions.updateCalendarData(
-                GOOGLE_PROVIDER,
-                iCalUID,
-                { iCALString: obj[iCalUID] },
-                UPDATE_ICALSTRING
-              );
-            }
-          });
-        });
-      })
-      .catch(err => {
-        throw err;
-      });
+    allRecurrenceList.push(recurrenceList);
+  }
+  allRecurrenceList.map(obj => {
+    for (let iCalUID in obj) {
+      console.log(iCalUID);
+      Actions.updateCalendarData(
+        GOOGLE_PROVIDER,
+        iCalUID,
+        { iCALString: obj[iCalUID] },
+        UPDATE_ICALSTRING
+      );
+    }
   });
 };

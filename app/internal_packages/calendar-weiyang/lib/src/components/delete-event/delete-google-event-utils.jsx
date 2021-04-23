@@ -52,14 +52,18 @@ const generateDeleteFuturePattern = (recurringPatternToEdit, data, services, use
   let results = null;
   if (rrule.match(/COUNT/g)) {
     // To edit the COUNT rrule, we order fetched events by start time, search for corresponding event id that user selected event
-    // the index in the ordered array will be the new COUNT
+    // The index in the ordered array will be the new COUNT
     results = new Promise((resolve, reject) => {
+      // MAX RESULTS IS 2500 events fetched, TODO: use pageToken to get all events
+      // page token isn't used for this case as it is virtually impossible(there is still a chance though) that
+      // a user would exceed the 2500 limit for a single recurring event. If page token is used, one must
+      // take note that there might be a chance of infinite recursion if RRULE is infinite, ie no UNTIL/COUNT rrule.
       services.events.list(
         {
           calendarId: data.calendarId,
           iCalUID: data.iCalUID,
           orderBy: 'startTime',
-          showDeleted: true, // ensure ordering and hence, COUNT is correct
+          showDeleted: true, // ensure ordering by including deleted to make sure COUNT is correct
           singleEvents: true,
           maxResults: 2500,
         },
@@ -98,7 +102,7 @@ const generateDeleteFuturePattern = (recurringPatternToEdit, data, services, use
           iCalUID: data.iCalUID,
           orderBy: 'startTime',
           singleEvents: true,
-          maxResults: 2500,
+          maxResults: 1,
         },
         (err, res) => {
           if (err) reject(err);
@@ -108,9 +112,7 @@ const generateDeleteFuturePattern = (recurringPatternToEdit, data, services, use
           if (items.length > 0) {
             firstEvent = items[0];
           } else {
-            reject(
-              'Unable to find corresponding id while deleting google future recurrence events'
-            );
+            reject('Unable to find the first event of selected iCalUID');
           }
           // pre-edited datetime
           const originalStartTime = firstEvent.originalStartTime.dateTime

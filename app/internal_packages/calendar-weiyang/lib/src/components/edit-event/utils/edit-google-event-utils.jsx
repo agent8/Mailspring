@@ -25,6 +25,8 @@ export const editGoogleSingle = async payload => {
     account => account.emailAddress == user.username && account.provider === 'gmail'
   );
   const services = await fetchGmailAccount(account);
+  const upperBoundDate = moment.tz([payload.selectedYear, 11, 31], 'GMT');
+  const lowerBoundDate = moment.tz([payload.selectedYear, 0, 1], 'GMT');
   const result = new Promise((resolve, reject) => {
     // MAX RESULTS IS 2500 events fetched, TODO: use pageToken to get all events
     services.events.list(
@@ -33,6 +35,8 @@ export const editGoogleSingle = async payload => {
         iCalUID: data.iCalUID,
         singleEvents: true,
         maxResults: 2500,
+        timeMax: upperBoundDate.toISOString(),
+        timeMin: lowerBoundDate.toISOString(),
       },
       (err, res) => {
         if (err) reject(err);

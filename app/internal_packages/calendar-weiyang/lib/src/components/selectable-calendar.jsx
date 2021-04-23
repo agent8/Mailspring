@@ -312,6 +312,7 @@ class SelectableCalendar extends React.Component {
         {this.state.editFormPopout ? (
           <EditForm
             id={this.state.editId}
+            selectedYear={this.state.selectedYear}
             parentPropFunction={this.setEditFormPopout}
             parentPropState={this.state.editFormPopout}
           />

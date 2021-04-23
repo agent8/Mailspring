@@ -116,6 +116,10 @@ export default class EditForm extends React.Component {
   componentDidMount() {
     const { props, state } = this;
     this.retrieveEvent(props.id);
+    this.setState(state => ({
+      ...state,
+      selectedYear: props.selectedYear,
+    }));
   }
 
   processStringForUTC = dateInString => {
@@ -247,6 +251,7 @@ export default class EditForm extends React.Component {
       providerType: state.providerType,
       oldEventJson: state.oldEventJson,
       oldRpJson: state.oldRpJson,
+      selectedYear: state.selectedYear,
     };
     // debugger;
     editSingleEvent(payload);
