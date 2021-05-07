@@ -79,9 +79,9 @@ const CreatePageForForm = FormComponent => {
         next[parent][key] = val;
         // change emailAddress field
         if (event.target.id === 'settings.imap_username') {
-          if (RegExpUtils.emailRegex().test(val || '')) {
-            next['emailAddress'] = val;
-          }
+          // if (RegExpUtils.emailRegex().test(val || '')) {
+          //   next['emailAddress'] = val;
+          // }
           next['name'] = val;
         }
       } else {

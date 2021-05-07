@@ -264,6 +264,7 @@ export default class ComposerHeader extends React.Component {
           onKeyDown={this._onSubjectKeyDown}
           onChange={this._onSubjectChange}
           onBlur={this._onSubjectChange}
+          onClick={this._onSubjectChange}
           disabled={this._draftNotReady()}
         />
       </KeyCommandsRegion>
