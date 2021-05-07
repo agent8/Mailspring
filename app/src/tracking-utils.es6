@@ -63,24 +63,24 @@ export default class TrackingAppEvents {
   }
 
   trackingTask = task => {
-    if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
-      return;
-    }
-    try {
-      TrackingAppEvents.onQueueTask(task);
-    } catch (e) {
-      console.error('TrackingAppEvents.trackingTask', e);
-    }
+    // if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
+    //   return;
+    // }
+    // try {
+    //   TrackingAppEvents.onQueueTask(task);
+    // } catch (e) {
+    //   console.error('TrackingAppEvents.trackingTask', e);
+    // }
   };
 
   trackingEvent = (...args) => {
-    if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
-      return;
-    }
-    try {
-      TrackingAppEvents.onTrackingEvent(...args);
-    } catch (e) {
-      console.error('TrackingAppEvents.trackingEvent', e);
-    }
+    // if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
+    //   return;
+    // }
+    // try {
+    //   TrackingAppEvents.onTrackingEvent(...args);
+    // } catch (e) {
+    //   console.error('TrackingAppEvents.trackingEvent', e);
+    // }
   };
 }
