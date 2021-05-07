@@ -63,24 +63,26 @@ export default class TrackingAppEvents {
   }
 
   trackingTask = task => {
-    if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
-      return;
-    }
-    try {
-      TrackingAppEvents.onQueueTask(task);
-    } catch (e) {
-      console.error('TrackingAppEvents.trackingTask', e);
-    }
+    console.log('****tracking task');
+    // if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
+    //   return;
+    // }
+    // try {
+    //   TrackingAppEvents.onQueueTask(task);
+    // } catch (e) {
+    //   console.error('TrackingAppEvents.trackingTask', e);
+    // }
   };
 
   trackingEvent = (...args) => {
-    if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
-      return;
-    }
-    try {
-      TrackingAppEvents.onTrackingEvent(...args);
-    } catch (e) {
-      console.error('TrackingAppEvents.trackingEvent', e);
-    }
+    console.log('****tracking event');
+    // if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
+    //   return;
+    // }
+    // try {
+    //   TrackingAppEvents.onTrackingEvent(...args);
+    // } catch (e) {
+    //   console.error('TrackingAppEvents.trackingEvent', e);
+    // }
   };
 }
