@@ -63,7 +63,6 @@ export default class TrackingAppEvents {
   }
 
   trackingTask = task => {
-    console.log('****tracking task');
     // if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
     //   return;
     // }
@@ -75,7 +74,6 @@ export default class TrackingAppEvents {
   };
 
   trackingEvent = (...args) => {
-    console.log('****tracking event');
     // if (this.devMode || (AppEnv && AppEnv.config.get('core.workspace.sendUsageData') === false)) {
     //   return;
     // }
