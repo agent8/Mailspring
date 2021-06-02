@@ -2,7 +2,7 @@ import { shell, remote } from 'electron';
 import { ScrollRegion, RetinaImg, LottieImg } from 'mailspring-component-kit';
 import { React, ReactDOM, PropTypes, AccountStore, RegExpUtils } from 'mailspring-exports';
 import OnboardingActions from '../onboarding-actions';
-import { finalizeAndValidateAccount } from '../onboarding-helpers';
+import { finalizeAndValidateAccount, ONMAIL_2FA_ERROR } from '../onboarding-helpers';
 import FormErrorMessage from '../form-error-message';
 import AccountProviders from '../account-providers';
 
@@ -162,6 +162,23 @@ const CreatePageForForm = FormComponent => {
             OnboardingActions.finishAndAddAccount(validated);
           })
           .catch(err => {
+            if (err.message === ONMAIL_2FA_ERROR) {
+              if (this._mounted) {
+                this.setState({
+                  submitting: false,
+                });
+                remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                  type: 'warning',
+                  buttons: ['OKay, Got it'],
+                  defaultId: 0,
+                  cancelId: 0,
+                  message: 'There was an issue authenticating your account.',
+                  detail: `Make sure your password is correct. If you have 2-Step Authentication turned on in OnMail you may need to manage your account in the OnMail app to take advantage of increased security for your account.`,
+                });
+                return;
+              }
+            }
+
             // If we're connecting from the `basic` settings page with an IMAP account,
             // the settings are from a template. If authentication fails, move the user
             // to the full settings since our guesses may have been wrong.
