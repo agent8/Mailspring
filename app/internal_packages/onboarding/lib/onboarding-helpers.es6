@@ -29,6 +29,7 @@ const EDISON_OAUTH_KEYWORD = 'edison_desktop';
 const EDISON_REDIRECT_URI = 'http://email.easilydo.com';
 const NEW_EDISON_REDIRECT_URI = 'https://mail.edison.tech/oauthsuccess.html';
 
+export const ONMAIL_2FA_ERROR = 'OnMail 2FA user can not login EdisonMail';
 export const LOCAL_SERVER_PORT = 12141;
 export const LOCAL_REDIRECT_URI = `http://127.0.0.1:${LOCAL_SERVER_PORT}`;
 const GMAIL_CLIENT_ID = '533632962939-g0m1obkdahbh4pva3rohik5skarb2pon.apps.googleusercontent.com';
@@ -746,6 +747,22 @@ export async function finalizeAndValidateAccount(account) {
   }
   if (account.label && account.label.includes('@')) {
     account.label = account.emailAddress;
+  }
+
+  if (account.settings && account.settings.provider_key === 'onmail') {
+    const headers = {
+      'x-Auth-User': account.settings.imap_username,
+      'x-Auth-Password': account.settings.imap_password,
+      'Content-Type': 'application/json',
+    };
+
+    const loginResp = await edisonFetch('https://mail.onmail.com/v1/m/login', {
+      method: 'GET',
+      headers,
+    });
+    if (loginResp.status === 309) {
+      throw new Error(ONMAIL_2FA_ERROR);
+    }
   }
 
   // Test connections to IMAP and SMTP
