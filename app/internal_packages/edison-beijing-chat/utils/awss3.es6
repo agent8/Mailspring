@@ -14,9 +14,9 @@ function decrypt(ciphertext) {
 //var AWS = require('aws-sdk/global');
 // Set the region
 let s3options = {
-  region: process.env.S3_REGION || 'us-east-2',
-  accessKeyId: decrypt(process.env.S3_ACCESSKEY_ID || 'U2FsdGVkX1+tWDy9ns7ym/5FqivkEIdalzSyIhO8FKajHoO+3HBn971VlCmvgAyF'),
-  secretAccessKey: decrypt(process.env.S3_SECRET_ACCESSKEY || 'U2FsdGVkX1+hi/9JVoakUW7e+2zceDHisFiHw4BJRsRogXOuySiVpiBRnVasqz2BUndff+XWFpMflCLJd1ZYUA=='),
+  region: process.env.S3_REGION || 'ENV_S3_REGION',
+  accessKeyId: decrypt(process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID'),
+  secretAccessKey: decrypt(process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY'),
   Endpoint: 'http://s3.us-east-2.amazonaws.com',
 };
 
