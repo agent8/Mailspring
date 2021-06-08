@@ -211,10 +211,10 @@ function decrypt(ciphertext) {
 
 export const AwsBucketStag = 'edison-media-stag';
 export const AwsBucketProd = 'edison-media';
-export const AwsRegionType = process.env.S3_REGION || 'us-east-2';
+export const AwsRegionType = process.env.S3_REGION || 'ENV_S3_REGION';
 export const AwsEndpointUrl = 'https://s3.us-east-2.amazonaws.com';
-export const AWSAccessKey = decrypt(process.env.S3_ACCESSKEY_ID || 'U2FsdGVkX1+tWDy9ns7ym/5FqivkEIdalzSyIhO8FKajHoO+3HBn971VlCmvgAyF');
-export const AWSSecretKey = decrypt(process.env.S3_SECRET_ACCESSKEY || 'U2FsdGVkX1+hi/9JVoakUW7e+2zceDHisFiHw4BJRsRogXOuySiVpiBRnVasqz2BUndff+XWFpMflCLJd1ZYUA==');
+export const AWSAccessKey = decrypt(process.env.S3_ACCESSKEY_ID || 'ENV_S3_ACCESSKEY_ID');
+export const AWSSecretKey = decrypt(process.env.S3_SECRET_ACCESSKEY || 'ENV_S3_SECRET_ACCESSKEY');
 
 export const INVALID_TEMPLATE_NAME_REGEX = /[^\w\-\u00C0-\u017F\u4e00-\u9fa5 ]+/g;
 
