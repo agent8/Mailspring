@@ -130,7 +130,7 @@ process.on('message', m => {
       queryType,
       results: [],
       agentTime: Date.now() - start,
-      reason: err,
+      reason: err.toString(),
     };
     try {
       const errString = JSON.stringify(errJSON);
