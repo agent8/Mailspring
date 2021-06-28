@@ -65,8 +65,8 @@ class BadgeStore extends MailspringStore {
     }
 
     const count = badgePref === 'unread' ? this._unread : this._total;
-    if (count > 999) {
-      this._setBadge('999+');
+    if (count > 99) {
+      this._setBadge('99+');
     } else if (count > 0) {
       this._setBadge(`${count}`);
     } else {
