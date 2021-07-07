@@ -854,7 +854,7 @@ export default class Message extends ModelWithMetadata {
   }
 
   formattedDate() {
-    return moment(this.date).format('MMM D YYYY, [at] h:mm a');
+    return moment(this.date).format('MMM D YYYY, [at] h:mm A');
   }
 
   hasEmptyBody() {
