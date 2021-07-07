@@ -326,7 +326,7 @@ const DateUtils = {
       if (opts && opts.upperCase) {
         console.error('upperCase time format no longer used');
       }
-      timeFormat += 'a';
+      timeFormat += ' A';
     }
 
     if (opts && opts.timeZone) {
