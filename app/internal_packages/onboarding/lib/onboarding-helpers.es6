@@ -676,7 +676,7 @@ export function buildOffice365AuthURL() {
   );
 }
 
-export function buildOutlookAuthURL() {
+export function buildOutlookAuthURL(emailAddress) {
   return (
     // `https://login.microsoftonline.com/common/oauth2/v2.0/authorize` +
     `https://login.live.com/oauth20_authorize.srf` +
@@ -686,7 +686,7 @@ export function buildOutlookAuthURL() {
     `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
     `&response_type=code` +
-    `&login_hint=email`
+    `&login_hint=${emailAddress ? 'new' + emailAddress : 'email'}`
   );
 }
 

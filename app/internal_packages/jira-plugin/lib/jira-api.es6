@@ -33,7 +33,6 @@ export default class JiraApi extends JiraApiBase {
     }
     const { access_token } = json;
     this.baseOptions.auth.bearer = access_token;
-    console.log('******get new token', access_token);
     AppEnv.config.set('plugin.jira.config.access_token', access_token);
   };
   async safeDoRequest(url) {
