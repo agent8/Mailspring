@@ -16,7 +16,12 @@ export default class AccountSettingsPageOutlook extends React.Component {
 
   constructor() {
     super();
-    this._outlookAuthUrl = buildOutlookAuthURL();
+    const { existingAccountJSON } = AppEnv.getWindowProps();
+    let emailAddress;
+    if (existingAccountJSON && existingAccountJSON.provider === 'outlook') {
+      emailAddress = existingAccountJSON.emailAddress;
+    }
+    this._outlookAuthUrl = buildOutlookAuthURL(emailAddress);
   }
 
   onSuccess = account => {
