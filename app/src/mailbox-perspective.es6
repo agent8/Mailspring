@@ -1074,6 +1074,20 @@ class StarredMailboxPerspective extends MailboxPerspective {
     });
   }
 
+  categories() {
+    if (this.providers.every(item => item.provider === 'gmail')) {
+      const categories = [];
+      this.accountIds.forEach(accountId => {
+        const cat = CategoryStore.categories(accountId).filter(cat => cat.role === 'flagged');
+        if (cat && cat.length) {
+          categories.push(...cat);
+        }
+      });
+      return categories;
+    }
+    return [];
+  }
+
   gmailThreads() {
     const categoryIds = [];
     this.accountIds.forEach(accountId => {
@@ -2286,9 +2300,6 @@ class UnreadMailboxOtherPerspective extends UnreadMailboxPerspective {
   }
 
   threads() {
-    return new UnreadQuerySubscription(
-      this.categories().map(c => c.id),
-      this.isOther
-    );
+    return new UnreadQuerySubscription(this.categories().map(c => c.id), this.isOther);
   }
 }
