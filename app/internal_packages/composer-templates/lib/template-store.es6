@@ -411,6 +411,17 @@ class TemplateStore extends MailspringStore {
         }
       }
 
+      if (draft.subject) {
+        newTemplate['SUBJ'] = draft.subject;
+      }
+      if (draft.to && draft.to.length) {
+        const toStr = draft.to
+          .map(contact => {
+            return contact.email;
+          })
+          .join(',');
+        newTemplate['TO'] = toStr;
+      }
       if (draft.cc && draft.cc.length) {
         const ccStr = draft.cc
           .map(contact => {
@@ -435,6 +446,9 @@ class TemplateStore extends MailspringStore {
       this._triggerDebounced();
       this._saveTemplates();
       this._onShowTemplates();
+      if (!AppEnv.isMainWindow()) {
+        setTimeout(() => Actions.selectTemplate(newTemplateId), 100);
+      }
     });
   };
 
