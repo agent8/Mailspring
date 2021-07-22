@@ -686,7 +686,7 @@ export function buildOutlookAuthURL(emailAddress) {
     `&redirect_uri=${encodeURIComponent(NEW_EDISON_REDIRECT_URI)}` +
     `&state=${EDISON_OAUTH_KEYWORD}` +
     `&response_type=code` +
-    `&login_hint=${emailAddress ? 'new' + emailAddress : 'email'}`
+    `&login_hint=${emailAddress ? emailAddress : 'email'}`
   );
 }
 
